@@ -32,8 +32,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     metricKind: any;
     valueType: any;
   };
-  defaultDropdownValue = 'select metric';
-  defaultServiceValue = 'all';
+  defaultDropdownValue = 'Select Metric';
+  defaultServiceValue = 'All Services';
   defaultRemoveGroupByValue = '-- remove group by --';
   loadLabelsPromise: Promise<any>;
   stackdriverConstants;
@@ -59,8 +59,11 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     valueType: '',
   };
 
+  service: string;
+  metricType: string;
   metricDescriptors: any[];
   metrics: any[];
+  services: any[];
   groupBySegments: any[];
   removeSegment: any;
   showHelp: boolean;
@@ -77,6 +80,9 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     _.defaultsDeep(this.target, this.defaults);
     this.metricDescriptors = [];
     this.metrics = [];
+    this.services = [];
+    this.metricType = this.defaultDropdownValue;
+    this.service = this.defaultServiceValue;
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     this.getCurrentProject()
@@ -126,14 +132,15 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   async loadMetricDescriptors() {
     if (this.target.project.id !== 'default') {
       this.metricDescriptors = await this.datasource.getMetricTypes(this.target.project.id);
-      this.metrics = this.getMetrics();
+      this.services = this.getServicesList();
+      this.metrics = this.getMetricsList();
       return this.metricDescriptors;
     } else {
       return [];
     }
   }
 
-  getServices() {
+  getServicesList() {
     const defaultValue = { value: this.defaultServiceValue, text: this.defaultServiceValue };
     const services = this.metricDescriptors.map(m => {
       const [service] = m.type.split('/');
@@ -143,10 +150,15 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         text: serviceShortName,
       };
     });
+
+    if (services.find(m => m.value === this.target.service)) {
+      this.service = this.target.service;
+    }
+
     return services.length > 0 ? [defaultValue, ..._.uniqBy(services, 'value')] : [];
   }
 
-  getMetrics() {
+  getMetricsList() {
     const metrics = this.metricDescriptors.map(m => {
       const [service] = m.type.split('/');
       const [serviceShortName] = service.split('.');
@@ -159,20 +171,19 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       };
     });
 
+    let result;
     if (this.target.service === this.defaultServiceValue) {
-      return metrics.map(m => ({ ...m, text: `${m.service} - ${m.text}` }));
+      result = metrics.map(m => ({ ...m, text: `${m.service} - ${m.text}` }));
     } else {
-      return metrics.filter(m => m.service === this.target.service);
+      result = metrics.filter(m => m.service === this.target.service);
     }
-  }
 
-  onServiceChange() {
-    this.metrics = this.getMetrics();
-    if (!this.metrics.find(m => m.value === this.target.metricType)) {
-      this.target.metricType = this.defaultDropdownValue;
-    } else {
-      this.refresh();
+    if (result.find(m => m.value === this.target.metricType)) {
+      this.metricType = this.target.metricType;
+    } else if (result.length > 0) {
+      this.metricType = this.target.metricType = result[0].value;
     }
+    return result;
   }
 
   async getLabels() {
@@ -190,13 +201,29 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     });
   }
 
+  onServiceChange() {
+    this.target.service = this.service;
+    this.metrics = this.getMetricsList();
+    this.setMetricType();
+    if (!this.metrics.find(m => m.value === this.target.metricType)) {
+      this.target.metricType = this.defaultDropdownValue;
+    } else {
+      this.refresh();
+    }
+  }
+
   async onMetricTypeChange() {
+    this.setMetricType();
+    this.refresh();
+    this.getLabels();
+  }
+
+  setMetricType() {
+    this.target.metricType = this.metricType;
     const { valueType, metricKind } = this.metricDescriptors.find(m => m.type === this.target.metricType);
     this.target.valueType = valueType;
     this.target.metricKind = metricKind;
     this.$scope.$broadcast('metricTypeChanged');
-    this.refresh();
-    this.getLabels();
   }
 
   async getGroupBys(segment, index, removeText?: string, removeUsed = true) {

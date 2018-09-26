@@ -1,19 +1,9 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
-  <!-- <div class="gf-form-inline">
-    <div class="gf-form">
-      <span class="gf-form-label width-9">Metric Type</span>
-      <gf-form-dropdown model="ctrl.target.metricType" get-options="ctrl.getMetricTypes($query)" class="min-width-20"
-        disabled type="text" allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.onMetricTypeChange()"></gf-form-dropdown>
-    </div>
-    <div class="gf-form gf-form--grow">
-      <div class="gf-form-label gf-form-label--grow"></div>
-    </div>
-  </div> -->
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Service</span>
-      <gf-form-dropdown model="ctrl.target.service" get-options="ctrl.getServices()" class="min-width-20" disabled type="text"
-        allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.onServiceChange(ctrl.target.metricService)"></gf-form-dropdown>
+      <gf-form-dropdown model="ctrl.service" get-options="ctrl.services" class="min-width-20" disabled type="text"
+        allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.onServiceChange(ctrl.service)"></gf-form-dropdown>
     </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
@@ -22,7 +12,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Metric</span>
-      <gf-form-dropdown model="ctrl.target.metricType" get-options="ctrl.metrics" class="min-width-20" disabled type="text"
+      <gf-form-dropdown model="ctrl.metricType" get-options="ctrl.metrics" class="min-width-20" disabled type="text"
         allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.onMetricTypeChange()"></gf-form-dropdown>
     </div>
     <div class="gf-form gf-form--grow">
