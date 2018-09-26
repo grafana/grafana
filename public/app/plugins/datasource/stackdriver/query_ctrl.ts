@@ -19,7 +19,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       name: string;
     };
     metricType: string;
-    metricService: string;
+    resourceType: string;
     refId: string;
     aggregation: {
       crossSeriesReducer: string;
@@ -44,7 +44,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       name: 'loading project...',
     },
     metricType: this.defaultDropdownValue,
-    metricService: this.defaultMetricResourcesValue,
+    resourceType: this.defaultMetricResourcesValue,
     metric: '',
     aggregation: {
       crossSeriesReducer: 'REDUCE_MEAN',
@@ -80,7 +80,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     this.getCurrentProject()
-      .then(this.getMetricTypes.bind(this))
+      .then(this.loadMetricDescriptors.bind(this))
       .then(this.getLabels.bind(this));
     this.initSegments();
   }
@@ -123,21 +123,17 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
   }
 
-  async getMetricTypes() {
+  async loadMetricDescriptors() {
     if (this.target.project.id !== 'default') {
-      const metricTypes = await this.datasource.getMetricTypes(this.target.project.id);
-      this.metricDescriptors = metricTypes;
-      if (this.target.metricType === this.defaultDropdownValue && metricTypes.length > 0) {
-        this.$scope.$apply(() => (this.target.metricType = metricTypes[0].id));
-      }
-
-      return metricTypes.map(mt => ({ value: mt.type, text: mt.type }));
+      this.metricDescriptors = await this.datasource.getMetricTypes(this.target.project.id);
+      this.metrics = this.getMetrics();
+      return this.metricDescriptors;
     } else {
       return [];
     }
   }
 
-  getMetricServices() {
+  getResourceTypes() {
     const defaultValue = { value: this.defaultMetricResourcesValue, text: this.defaultMetricResourcesValue };
     const resources = this.metricDescriptors.map(m => {
       const [resource] = m.type.split('/');
@@ -162,10 +158,11 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         title: m.description,
       };
     });
-    if (this.target.metricService === this.defaultMetricResourcesValue) {
+
+    if (this.target.resourceType === this.defaultMetricResourcesValue) {
       return metrics.map(m => ({ ...m, text: `${m.service} - ${m.text}` }));
     } else {
-      return metrics.filter(m => m.resource === this.target.metricService);
+      return metrics.filter(m => m.resource === this.target.resourceType);
     }
   }
 
@@ -182,12 +179,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.loadLabelsPromise = new Promise(async resolve => {
       try {
         const data = await this.datasource.getLabels(this.target.metricType, this.target.refId);
-
         this.metricLabels = data.results[this.target.refId].meta.metricLabels;
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
-
-        this.target.valueType = data.results[this.target.refId].meta.valueType;
-        this.target.metricKind = data.results[this.target.refId].meta.metricKind;
         resolve();
       } catch (error) {
         console.log(error.data.message);
@@ -198,6 +191,9 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   }
 
   async onMetricTypeChange() {
+    const { valueType, metricKind } = this.metricDescriptors.find(m => m.type === this.target.metricType);
+    this.target.valueType = valueType;
+    this.target.metricKind = metricKind;
     this.refresh();
     this.getLabels();
   }

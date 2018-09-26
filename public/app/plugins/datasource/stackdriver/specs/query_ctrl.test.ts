@@ -373,8 +373,8 @@ function createCtrlWithFakes(existingFilters?: string[]) {
     refresh: () => {},
   };
   StackdriverQueryCtrl.prototype.target = createTarget(existingFilters);
-  StackdriverQueryCtrl.prototype.getMetricTypes = () => {
-    return Promise.resolve();
+  StackdriverQueryCtrl.prototype.loadMetricDescriptors = () => {
+    return Promise.resolve([]);
   };
   StackdriverQueryCtrl.prototype.getLabels = () => {
     return Promise.resolve();

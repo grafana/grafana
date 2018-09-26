@@ -55,7 +55,7 @@ export class StackdriverAggregationCtrl {
 
   getAlignOptions() {
     return !this.target.valueType
-      ? options.alignOptions
+      ? []
       : options.alignOptions.filter(i => {
           return (
             i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
@@ -65,7 +65,7 @@ export class StackdriverAggregationCtrl {
 
   getAggOptions() {
     return !this.target.metricKind
-      ? options.aggOptions
+      ? []
       : options.aggOptions.filter(i => {
           return (
             i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
