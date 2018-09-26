@@ -12,7 +12,7 @@ weight = 11
 
 # Using Google Stackdriver in Grafana
 
-Grafana ships with built-in support for Google Stackdriver. You just have to add it as a datasource and you will be ready to build dashboards for your Stackdriver metrics.
+Grafana ships with built-in support for Google Stackdriver. Just add it as a datasource and you are ready to build dashboards for your Stackdriver metrics. It is only available in Grafana 5.3+. The datasource is currently a beta feature and is subject to change.
 
 ## Adding the data source to Grafana
 
@@ -20,7 +20,7 @@ Grafana ships with built-in support for Google Stackdriver. You just have to add
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select `Stackdriver` from the *Type* dropdown.
-5. Upload or paste in the Service Account Key (JWT) file. See below for steps to create one.
+5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -28,7 +28,7 @@ Name | Description
 ------------ | -------------
 *Name* | The datasource name. This is how you refer to the datasource in panels & queries.
 *Default* | Default datasource means that it will be pre-selected for new panels.
-*Service Account Key* | Service Account File for a GCP Project. Instructions below on how to create it.
+*Service Account Key* | Service Account Key File for a GCP Project. Instructions below on how to create it.
 
 ## Authentication
 
@@ -77,21 +77,47 @@ The aggregation field lets you combine time series based on common statistics. R
 
 The `Aligner` field allows you to align multiple time series after the same group by time interval. Read more about how it works [here](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
 
+#### Alignment Period/Group by Time
+
+The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Stackdriver default groupings (which allows you to compare graphs in Grafana with graphs in the Stackdriver UI).
+The option is called `Stackdriver auto` and the defaults are:
+
+- 1m for time ranges < 5 hours
+- 5m for time ranges > 5 hours and < 23 hours
+- 1h for time ranges > 23 hours
+
+The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/reference/templating/#the-interval-variable).
+
+It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
+
 ### Group By
 
-Group by resource or metric labels to reduce the number of time series.
+Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
 
 ### Alias Patterns
 
-The Alias field allows you to control the format of the metric names in the legend. The default is to show the metric name, labels and the resource. This can be long and hard to read. Using the following patterns in the alias field, you can format the metric name in the legend the way you want it.
+The Alias By field allows you to control the format of the legend keys. The default is to show the metric name and labels. This can be long and hard to read. Using the following patterns in the alias field, you can format the legend key the way you want it.
 
-Example Pattern: `{{metric.type}} - {{metric.labels.instance_name}}`
+#### Metric Type Patterns
+
+Alias Pattern | Description | Example Result
+----------------- | ---------------------------- | -------------
+`{{metric.type}}` | returns the full Metric Type | `compute.googleapis.com/instance/cpu/utilization`
+`{{metric.name}}` | returns the metric name part | `instance/cpu/utilization`
+`{{metric.service}}` | returns the service part | `compute`
+
+#### Label Patterns
+
+In the Group By dropdown, you can see a list of metric and resource labels for a metric. These can be included in the legend key using alias patterns.
+
+Alias Pattern Format | Description | Alias Pattern Example | Example Result
+---------------------- | ---------------------------------- | ---------------------------- | -------------
+`{{metric.label.xxx}}` | returns the metric label value | `{{metric.label.instance_name}}` | `grafana-1-prod`
+`{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}` | `us-east1-b`
+
+Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
 
 Example Result: `compute.googleapis.com/instance/cpu/usage_time - server1-prod`
-
-### Table Format / Raw Data
-
-Change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
 
 ## Templating
 
@@ -104,13 +130,7 @@ types of template variables.
 
 ### Query Variable
 
-If you add a template variable of the type `Query`, this allows you to query Stackdriver for things like metric names and filter keys. The Stackdriver datasource provides the following functions you can use in the `Query` input field:
-
-Name | Description
----- | --------
-*metrics(project_id, filter expression)* | Returns a list of metrics matching the filter expression.
-*label_values(project_id, path to label name, filter expression)* | Returns a list of label values matching the filter expression.
-*groups(project_id)* | Returns a list of groups.
+Writing variable queries is not supported yet.
 
 ### Using variables in queries
 
