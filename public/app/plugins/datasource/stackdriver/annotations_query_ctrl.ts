@@ -1,5 +1,4 @@
 import _ from 'lodash';
-
 import './query_filter_ctrl';
 
 export class StackdriverAnnotationsQueryCtrl {
@@ -16,7 +15,7 @@ export class StackdriverAnnotationsQueryCtrl {
       name: 'loading project...',
     },
     metricType: this.defaultDropdownValue,
-    metricService: this.defaultServiceValue,
+    service: this.defaultServiceValue,
     metric: '',
     filters: [],
     metricKind: '',
