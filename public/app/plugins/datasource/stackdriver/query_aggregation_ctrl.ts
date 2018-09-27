@@ -19,6 +19,7 @@ export class StackdriverAggregation {
 }
 
 export class StackdriverAggregationCtrl {
+  /** @ngInject */
   constructor(private $scope) {
     $scope.aggOptions = options.aggOptions;
     this.setAggOptions();

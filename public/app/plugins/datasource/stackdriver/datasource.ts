@@ -1,11 +1,13 @@
 import { stackdriverUnitMappings } from './constants';
-/** @ngInject */
+import appEvents from 'app/core/app_events';
+
 export default class StackdriverDatasource {
   id: number;
   url: string;
   baseUrl: string;
   projectName: string;
 
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
@@ -121,6 +123,49 @@ export default class StackdriverDatasource {
     return { data: result };
   }
 
+  async annotationQuery(options) {
+    const annotation = options.annotation;
+    const queries = [
+      {
+        refId: 'annotationQuery',
+        datasourceId: this.id,
+        metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
+        primaryAggregation: 'REDUCE_NONE',
+        perSeriesAligner: 'ALIGN_NONE',
+        title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
+        text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
+        tags: this.templateSrv.replace(annotation.target.tags, options.scopedVars || {}),
+        view: 'FULL',
+        filters: (annotation.target.filters || []).map(f => {
+          return this.templateSrv.replace(f, options.scopedVars || {});
+        }),
+        type: 'annotationQuery',
+      },
+    ];
+
+    const { data } = await this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries,
+      },
+    });
+
+    const results = data.results['annotationQuery'].tables[0].rows.map(v => {
+      return {
+        annotation: annotation,
+        time: Date.parse(v[0]),
+        title: v[1],
+        tags: [v[2]],
+        text: v[3],
+      };
+    });
+
+    return results;
+  }
+
   testDatasource() {
     const path = `v3/projects/${this.projectName}/metricDescriptors`;
     return this.doRequest(`${this.baseUrl}${path}`)
@@ -161,12 +206,30 @@ export default class StackdriverDatasource {
   }
 
   async getDefaultProject() {
-    const projects = await this.getProjects();
-    if (projects && projects.length > 0) {
-      const test = projects.filter(p => p.id === this.projectName)[0];
-      return test;
-    } else {
-      throw new Error('No projects found');
+    try {
+      const projects = await this.getProjects();
+      if (projects && projects.length > 0) {
+        const test = projects.filter(p => p.id === this.projectName)[0];
+        return test;
+      } else {
+        throw new Error('No projects found');
+      }
+    } catch (error) {
+      let message = 'Projects cannot be fetched: ';
+      message += error.statusText ? error.statusText + ': ' : '';
+      if (error && error.data && error.data.error && error.data.error.message) {
+        if (error.data.error.code === 403) {
+          message += `
+            A list of projects could not be fetched from the Google Cloud Resource Manager API.
+            You might need to enable it first:
+            https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com`;
+        } else {
+          message += error.data.error.code + '. ' + error.data.error.message;
+        }
+      } else {
+        message += 'Cannot connect to Stackdriver API';
+      }
+      appEvents.emit('ds-request-error', message);
     }
   }
 
