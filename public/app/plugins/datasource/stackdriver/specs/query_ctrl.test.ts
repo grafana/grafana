@@ -417,6 +417,7 @@ function createTarget(existingFilters?: string[]) {
       id: '',
       name: '',
     },
+    unit: '',
     metricType: 'ametric',
     service: '',
     refId: 'A',
