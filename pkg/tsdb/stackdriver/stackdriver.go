@@ -122,33 +122,17 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	for _, query := range tsdbQuery.Queries {
 		var target string
 
-		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
-			target = fixIntervalFormat(fullTarget)
-		} else {
-			target = fixIntervalFormat(query.Model.Get("target").MustString())
-		}
-
 		metricType := query.Model.Get("metricType").MustString()
 		filterParts := query.Model.Get("filters").MustArray()
-
-		filterString := ""
-		for i, part := range filterParts {
-			mod := i % 4
-			if part == "AND" {
-				filterString += " "
-			} else if mod == 2 {
-				filterString += fmt.Sprintf(`"%s"`, part)
-			} else {
-				filterString += part.(string)
-			}
-		}
 
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
-		params.Add("filter", strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " "))
+		params.Add("filter", buildFilterString(metricType, filterParts))
 		params.Add("view", query.Model.Get("view").MustString())
 		setAggParams(&params, query, durationSeconds)
+
+		target = params.Encode()
 
 		if setting.Env == setting.DEV {
 			slog.Debug("Stackdriver request", "params", params)
@@ -172,6 +156,21 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	}
 
 	return stackdriverQueries, nil
+}
+
+func buildFilterString(metricType string, filterParts []interface{}) string {
+	filterString := ""
+	for i, part := range filterParts {
+		mod := i % 4
+		if part == "AND" {
+			filterString += " "
+		} else if mod == 2 {
+			filterString += fmt.Sprintf(`"%s"`, part)
+		} else {
+			filterString += part.(string)
+		}
+	}
+	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
 }
 
 func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
@@ -458,18 +457,4 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
 	return req, nil
-}
-
-func fixIntervalFormat(target string) string {
-	rMinute := regexp.MustCompile(`'(\d+)m'`)
-	rMin := regexp.MustCompile("m")
-	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
-		return rMin.ReplaceAllString(m, "min")
-	})
-	rMonth := regexp.MustCompile(`'(\d+)M'`)
-	rMon := regexp.MustCompile("M")
-	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
-		return rMon.ReplaceAllString(M, "mon")
-	})
-	return target
 }
