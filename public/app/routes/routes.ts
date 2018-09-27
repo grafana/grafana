@@ -3,10 +3,10 @@ import './ReactContainer';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
-import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
 import TeamPages from 'app/features/teams/TeamPages';
 import TeamList from 'app/features/teams/TeamList';
-import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
+import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
+import FolderPermissions from 'app/features/folders/FolderPermissions';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -99,7 +99,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/dashboards/f/:uid/:slug/settings', {
       template: '<react-container />',
       resolve: {
-        component: () => FolderSettings,
+        component: () => FolderSettingsPage,
       },
     })
     .when('/dashboards/f/:uid/:slug', {
@@ -116,7 +116,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       resolve: {
         roles: () => ['Editor', 'Admin'],
-        component: () => import(/* webpackChunkName: "explore" */ 'app/containers/Explore/Wrapper'),
+        component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })
     .when('/org', {

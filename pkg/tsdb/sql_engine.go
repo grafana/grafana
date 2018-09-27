@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -42,6 +43,8 @@ var engineCache = engineCacheType{
 	cache:    make(map[int64]*xorm.Engine),
 	versions: make(map[int64]int),
 }
+
+var sqlIntervalCalculator = NewIntervalCalculator(nil)
 
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
@@ -126,7 +129,15 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 		queryResult := &QueryResult{Meta: simplejson.New(), RefId: query.RefId}
 		result.Results[query.RefId] = queryResult
 
-		rawSQL, err := e.macroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSQL)
+		// global substitutions
+		rawSQL, err := Interpolate(query, tsdbQuery.TimeRange, rawSQL)
+		if err != nil {
+			queryResult.Error = err
+			continue
+		}
+
+		// datasource specific substitutions
+		rawSQL, err = e.macroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSQL)
 		if err != nil {
 			queryResult.Error = err
 			continue
@@ -161,6 +172,20 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	return result, nil
+}
+
+// global macros/substitutions for all sql datasources
+var Interpolate = func(query *Query, timeRange *TimeRange, sql string) (string, error) {
+	minInterval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+	if err != nil {
+		return sql, nil
+	}
+	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
+
+	sql = strings.Replace(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10), -1)
+	sql = strings.Replace(sql, "$__interval", interval.Text, -1)
+
+	return sql, nil
 }
 
 func (e *sqlQueryEndpoint) transformToTable(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error {
@@ -588,4 +613,27 @@ func SetupFillmode(query *Query, interval time.Duration, fillmode string) error 
 	}
 
 	return nil
+}
+
+type SqlMacroEngineBase struct{}
+
+func NewSqlMacroEngineBase() *SqlMacroEngineBase {
+	return &SqlMacroEngineBase{}
+}
+
+func (m *SqlMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
+	result := ""
+	lastIndex := 0
+
+	for _, v := range re.FindAllSubmatchIndex([]byte(str), -1) {
+		groups := []string{}
+		for i := 0; i < len(v); i += 2 {
+			groups = append(groups, str[v[i]:v[i+1]])
+		}
+
+		result += str[lastIndex:v[0]] + repl(groups)
+		lastIndex = v[1]
+	}
+
+	return result + str[lastIndex:]
 }

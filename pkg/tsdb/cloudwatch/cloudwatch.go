@@ -196,7 +196,7 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, query *CloudWatch
 		params.ExtendedStatistics = query.ExtendedStatistics
 	}
 
-	// 1 minutes resolutin metrics is stored for 15 days, 15 * 24 * 60 = 21600
+	// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 	if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
 		return nil, errors.New("too long query period")
 	}
@@ -267,7 +267,7 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		ScanBy:    aws.String("TimestampAscending"),
 	}
 	for _, query := range queries {
-		// 1 minutes resolutin metrics is stored for 15 days, 15 * 24 * 60 = 21600
+		// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
 			return nil, errors.New("too long query period")
 		}

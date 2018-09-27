@@ -46,7 +46,7 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
 
     // Check for monotony
     const datapoints: number[][] = s.datapoints;
-    if (datapoints.length > 1) {
+    if (query.indexOf('rate(') === -1 && datapoints.length > 1) {
       let increasing = false;
       const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
         if (index === 0) {
@@ -487,14 +487,20 @@ export class PrometheusDatasource {
           .value();
 
         for (const value of series.values) {
-          if (value[1] === '1') {
+          const valueIsTrue = value[1] === '1'; // e.g. ALERTS
+          if (valueIsTrue || annotation.useValueForTime) {
             const event = {
               annotation: annotation,
-              time: Math.floor(parseFloat(value[0])) * 1000,
               title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
               tags: tags,
               text: self.resultTransformer.renderTemplate(textFormat, series.metric),
             };
+
+            if (annotation.useValueForTime) {
+              event['time'] = Math.floor(parseFloat(value[1]));
+            } else {
+              event['time'] = Math.floor(parseFloat(value[0])) * 1000;
+            }
 
             eventList.push(event);
           }
@@ -576,6 +582,14 @@ export class PrometheusDatasource {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() / 1000);
+  }
+
+  getTimeRange(): { start: number; end: number } {
+    const range = this.timeSrv.timeRange();
+    return {
+      start: this.getPrometheusTime(range.from, false),
+      end: this.getPrometheusTime(range.to, true),
+    };
   }
 
   getOriginalMetricName(labelData) {

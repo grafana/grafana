@@ -138,13 +138,13 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 
 		body := string(reqBody)
-		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Value.Nanoseconds()/int64(time.Millisecond), 10), -1)
+		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10), -1)
 		body = strings.Replace(body, "$__interval", r.interval.Text, -1)
 
 		payload.WriteString(body + "\n")
 	}
 
-	elapsed := time.Now().Sub(start)
+	elapsed := time.Since(start)
 	clientLog.Debug("Encoded batch requests to json", "took", elapsed)
 
 	return payload.Bytes(), nil
@@ -187,7 +187,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*h
 
 	start := time.Now()
 	defer func() {
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
 	return ctxhttp.Do(c.ctx, httpClient, req)
@@ -215,7 +215,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		return nil, err
 	}
 
-	elapsed := time.Now().Sub(start)
+	elapsed := time.Since(start)
 	clientLog.Debug("Decoded multisearch json response", "took", elapsed)
 
 	msr.Status = res.StatusCode

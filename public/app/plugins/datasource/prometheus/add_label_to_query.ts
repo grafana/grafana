@@ -15,7 +15,7 @@ const builtInWords = [
   .join('|')
   .split('|');
 
-const metricNameRegexp = /([A-Za-z]\w*)\b(?![\(\]{=!",])/g;
+const metricNameRegexp = /([A-Za-z:][\w:]*)\b(?![\(\]{=!",])/g;
 const selectorRegexp = /{([^{]*)}/g;
 
 // addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
