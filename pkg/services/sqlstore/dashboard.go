@@ -225,7 +225,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	var res []DashboardSearchProjection
 
 	sql, params := sb.ToSql()
-	err := x.Sql(sql, params...).Find(&res)
+	err := x.SQL(sql, params...).Find(&res)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 					ORDER BY term`
 
 	query.Result = make([]*m.DashboardTagCloudItem, 0)
-	sess := x.Sql(sql, query.OrgId)
+	sess := x.SQL(sql, query.OrgId)
 	err := sess.Find(&query.Result)
 	return err
 }
@@ -413,7 +413,7 @@ func GetDashboardPermissionsForUser(query *m.GetDashboardPermissionsForUserQuery
 	params = append(params, query.UserId)
 	params = append(params, dialect.BooleanStr(false))
 
-	err := x.Sql(sql, params...).Find(&query.Result)
+	err := x.SQL(sql, params...).Find(&query.Result)
 
 	for _, p := range query.Result {
 		p.PermissionName = p.Permission.String()
@@ -632,7 +632,7 @@ func HasEditPermissionInFolders(query *m.HasEditPermissionInFoldersQuery) error 
 	}
 
 	resp := make([]*folderCount, 0)
-	if err := x.Sql(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
+	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
 		return err
 	}
 

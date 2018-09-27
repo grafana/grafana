@@ -145,6 +145,29 @@
       }
     }
 
+    /* Fail info */
+    .preloader__text--fail {
+      display: none;
+    }
+
+    /* stop logo animation */
+    .preloader--done .preloader__bounce,
+    .preloader--done .preloader__logo {
+      animation-name: none;
+      display: none;
+    }
+
+    .preloader--done .preloader__logo,
+    .preloader--done .preloader__text {
+      display: none;
+      color: #ff5705 !important;
+      font-size: 15px;
+    }
+
+    .preloader--done .preloader__text--fail {
+      display: block;
+    }
+
     [ng\:cloak],
     [ng-cloak],
     .ng-cloak {
@@ -159,6 +182,20 @@
       </div>
     </div>
     <div class="preloader__text">Loading Grafana</div>
+    <div class="preloader__text preloader__text--fail">
+      <p>
+      <strong>If you're seeing this Grafana has failed to load its application files</strong>
+        <br />
+        <br />
+      </p>
+      <p>
+        1. This could be caused by your reverse proxy settings.<br /><br />
+        2. If you host grafana under subpath make sure your grafana.ini root_path setting includes subpath<br /> <br />
+        3. If you have a local dev build make sure you build frontend using: npm run dev, npm run watch, or npm run
+        build<br /> <br />
+        4. Sometimes restarting grafana-server can help<br />
+      </p>
+    </div>
   </div>
 
   <grafana-app class="grafana-app" ng-cloak>
@@ -236,6 +273,10 @@
 
     // insert it at the end of the head in a legacy-friendly manner
     document.head.insertBefore(myCSS, document.head.childNodes[document.head.childNodes.length - 1].nextSibling);
+    // switch loader to show all has loaded
+    window.onload = function() {
+      document.getElementsByClassName("preloader")[0].className = "preloader preloader--done";
+    };
   </script>
 
 	[[if .GoogleTagManagerId]]

@@ -46,16 +46,19 @@ func (e *Error) Error() string {
 	return e.s
 }
 
+const (
+	grafanaCom = "grafana_com"
+)
+
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom}
 )
 
 func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-
-	allOauthes := []string{"github", "gitlab", "google", "generic_oauth", "grafananet", "grafana_com"}
 
 	for _, name := range allOauthes {
 		sec := setting.Raw.Section("auth." + name)
@@ -83,7 +86,7 @@ func NewOAuthService() {
 		}
 
 		if name == "grafananet" {
-			name = "grafana_com"
+			name = grafanaCom
 		}
 
 		setting.OAuthService.OAuthInfos[name] = info
@@ -160,7 +163,7 @@ func NewOAuthService() {
 			}
 		}
 
-		if name == "grafana_com" {
+		if name == grafanaCom {
 			config = oauth2.Config{
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
@@ -172,7 +175,7 @@ func NewOAuthService() {
 				Scopes:      info.Scopes,
 			}
 
-			SocialMap["grafana_com"] = &SocialGrafanaCom{
+			SocialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase: &SocialBase{
 					Config: &config,
 					log:    logger,
@@ -183,4 +186,27 @@ func NewOAuthService() {
 			}
 		}
 	}
+}
+
+// GetOAuthProviders returns available oauth providers and if they're enabled or not
+var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
+	result := map[string]bool{}
+
+	if cfg == nil || cfg.Raw == nil {
+		return result
+	}
+
+	for _, name := range allOauthes {
+		if name == "grafananet" {
+			name = grafanaCom
+		}
+
+		sec := cfg.Raw.Section("auth." + name)
+		if sec == nil {
+			continue
+		}
+		result[name] = sec.Key("enabled").MustBool()
+	}
+
+	return result
 }

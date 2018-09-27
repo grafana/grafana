@@ -12,6 +12,7 @@ export interface TeamMember {
   avatarUrl: string;
   email: string;
   login: string;
+  labels: string[];
 }
 
 export interface TeamGroup {

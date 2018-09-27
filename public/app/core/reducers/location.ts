@@ -9,8 +9,8 @@ export const initialState: LocationState = {
   routeParams: {},
 };
 
-function renderUrl(path: string, query: UrlQueryMap): string {
-  if (Object.keys(query).length > 0) {
+function renderUrl(path: string, query: UrlQueryMap | undefined): string {
+  if (query && Object.keys(query).length > 0) {
     path += '?' + toUrlParams(query);
   }
   return path;

@@ -13,19 +13,20 @@ import (
 
 const HeaderNameNoBackendCache = "X-Grafana-NoCache"
 
-func (hs *HTTPServer) getDatasourceByID(id int64, orgID int64, nocache bool) (*m.DataSource, error) {
+func (hs *HTTPServer) getDatasourceFromCache(id int64, c *m.ReqContext) (*m.DataSource, error) {
+	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"
 	cacheKey := fmt.Sprintf("ds-%d", id)
 
 	if !nocache {
 		if cached, found := hs.cache.Get(cacheKey); found {
 			ds := cached.(*m.DataSource)
-			if ds.OrgId == orgID {
+			if ds.OrgId == c.OrgId {
 				return ds, nil
 			}
 		}
 	}
 
-	query := m.GetDataSourceByIdQuery{Id: id, OrgId: orgID}
+	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
@@ -37,10 +38,7 @@ func (hs *HTTPServer) getDatasourceByID(id int64, orgID int64, nocache bool) (*m
 func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
-	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"
-
-	ds, err := hs.getDatasourceByID(c.ParamsInt64(":id"), c.OrgId, nocache)
-
+	ds, err := hs.getDatasourceFromCache(c.ParamsInt64(":id"), c)
 	if err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
 		return
