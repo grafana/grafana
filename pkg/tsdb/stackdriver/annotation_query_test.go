@@ -1,9 +1,7 @@
 package stackdriver
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -14,28 +12,22 @@ import (
 func TestStackdriverAnnotationQuery(t *testing.T) {
 	Convey("Stackdriver Annotation Query Executor", t, func() {
 		executor := &StackdriverExecutor{}
-		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
-			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-			tsdbQuery := &tsdb.TsdbQuery{
-				TimeRange: &tsdb.TimeRange{
-					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
-				},
-				Queries: []*tsdb.Query{
-					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"metricType": "a/metric/type",
-							"view":       "FULL",
-							"type":       "annotationQuery",
-						}),
-						RefId: "annotationQuery",
-					},
-				},
-			}
-			query, err := executor.buildAnnotationQuery(tsdbQuery)
+		Convey("When parsing the stackdriver api response", func() {
+			data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
+			So(err, ShouldBeNil)
+			So(len(data.TimeSeries), ShouldEqual, 3)
+
+			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
+			query := &StackdriverQuery{}
+			err = executor.parseToAnnotations(res, data, query, "atitle", "atext", "atag")
 			So(err, ShouldBeNil)
 
-			So(query, ShouldNotBeNil)
+			Convey("Should return annotations table", func() {
+				So(len(res.Tables), ShouldEqual, 1)
+				So(len(res.Tables[0].Rows), ShouldEqual, 9)
+				So(res.Tables[0].Rows[0][1], ShouldEqual, "atitle")
+				So(res.Tables[0].Rows[0][3], ShouldEqual, "atext")
+			})
 		})
 	})
 }

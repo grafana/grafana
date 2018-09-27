@@ -1,13 +1,16 @@
-<div class="gf-form-group">
+<stackdriver-filter target="ctrl.annotation.target" refresh="ctrl.refresh()" datasource="ctrl.datasource"
+  default-dropdown-value="ctrl.defaultDropdownValue" default-service-value="ctrl.defaultServiceValue" hide-group-bys="true"></stackdriver-filter>
+
+<div class="gf-form-inline">
   <div class="gf-form">
-    <span class="gf-form-label width-12">Graphite query</span>
-    <input type="text" class="gf-form-input" ng-model='ctrl.annotation.target' placeholder="Example: statsd.application.counters.*.count"></input>
+    <span class="gf-form-label query-keyword width-9">Title</span>
+    <input type="text" class="gf-form-input width-20" ng-model="ctrl.annotation.target.title" />
   </div>
-
-	<h5 class="section-heading">Or</h5>
-
   <div class="gf-form">
-    <span class="gf-form-label width-12">Graphite events tags</span>
-    <input type="text" class="gf-form-input" ng-model='ctrl.annotation.tags' placeholder="Example: event_tag_name"></input>
+    <span class="gf-form-label query-keyword width-9">Text</span>
+    <input type="text" class="gf-form-input width-20" ng-model="ctrl.annotation.target.text" />
+  </div>
+  <div class="gf-form gf-form--grow">
+    <div class="gf-form-label gf-form-label--grow"></div>
   </div>
 </div>

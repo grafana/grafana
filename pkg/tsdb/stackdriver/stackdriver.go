@@ -93,9 +93,13 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query, tsdbQuery)
+		queryRes, resp, err := e.executeQuery(ctx, query, tsdbQuery)
 		if err != nil {
 			return nil, err
+		}
+		err = e.parseResponse(queryRes, resp, query)
+		if err != nil {
+			queryRes.Error = err
 		}
 		result.Results[query.RefID] = queryRes
 	}
@@ -219,13 +223,13 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 	}
 }
 
-func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, error) {
+func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, nil
+		return queryResult, StackdriverResponse{}, nil
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
@@ -257,22 +261,16 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, nil
+		return queryResult, StackdriverResponse{}, nil
 	}
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
 		queryResult.Error = err
-		return queryResult, nil
+		return queryResult, StackdriverResponse{}, nil
 	}
 
-	err = e.parseResponse(queryResult, data, query)
-	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
-	}
-
-	return queryResult, nil
+	return queryResult, data, nil
 }
 
 func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackdriverResponse, error) {
@@ -429,7 +427,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 
 	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/", nil)
 	if err != nil {
-		slog.Info("Failed to create request", "error", err)
+		slog.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
 	}
 

@@ -16,6 +16,7 @@ export class StackdriverFilter {
         refresh: '&',
         defaultDropdownValue: '<',
         defaultServiceValue: '<',
+        hideGroupBys: '<',
       },
     };
   }
@@ -54,15 +55,18 @@ export class StackdriverFilterCtrl {
       .then(this.loadMetricDescriptors.bind(this))
       .then(this.getLabels.bind(this));
 
-    this.initSegments();
+    this.initSegments($scope.hideGroupBys);
   }
 
-  initSegments() {
-    this.groupBySegments = this.target.aggregation.groupBys.map(groupBy => {
-      return this.uiSegmentSrv.getSegmentForValue(groupBy);
-    });
+  initSegments(hideGroupBys: boolean) {
+    if (!hideGroupBys) {
+      this.groupBySegments = this.target.aggregation.groupBys.map(groupBy => {
+        return this.uiSegmentSrv.getSegmentForValue(groupBy);
+      });
+      this.ensurePlusButton(this.groupBySegments);
+    }
+
     this.removeSegment = this.uiSegmentSrv.newSegment({ fake: true, value: '-- remove group by --' });
-    this.ensurePlusButton(this.groupBySegments);
 
     this.filterSegments = new FilterSegments(
       this.uiSegmentSrv,
@@ -142,7 +146,11 @@ export class StackdriverFilterCtrl {
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
         resolve();
       } catch (error) {
-        console.log(error.data.message);
+        if (error.data && error.data.message) {
+          console.log(error.data.message);
+        } else {
+          console.log(error);
+        }
         appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
         resolve();
       }
