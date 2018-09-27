@@ -159,7 +159,7 @@ class Graph extends Component<any, any> {
     }
     return (
       <div>
-        {this.props.data.length > 20 &&
+        {this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
           !this.state.showAllTimeSeries && (
             <div className="time-series-disclaimer">
               <i className="fa fa-fw fa-warning disclaimer-icon" />
