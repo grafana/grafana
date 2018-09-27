@@ -14,16 +14,16 @@ describe('StackdriverAggregationCtrl', () => {
 
         it('should populate all aggregate options except two', () => {
           ctrl.setAggOptions();
-          expect(ctrl.$scope.aggOptions.length).toBe(11);
-          expect(ctrl.$scope.aggOptions.map(o => o.value)).toEqual(
+          expect(ctrl.aggOptions.length).toBe(11);
+          expect(ctrl.aggOptions.map(o => o.value)).toEqual(
             expect['not'].arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
           );
         });
 
         it('should populate all alignment options except two', () => {
           ctrl.setAlignOptions();
-          expect(ctrl.$scope.alignOptions.length).toBe(10);
-          expect(ctrl.$scope.alignOptions.map(o => o.value)).toEqual(
+          expect(ctrl.alignOptions.length).toBe(9);
+          expect(ctrl.alignOptions.map(o => o.value)).toEqual(
             expect['not'].arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
           );
         });
