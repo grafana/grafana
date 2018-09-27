@@ -1,8 +1,8 @@
-import { StackdriverQueryCtrl } from '../query_ctrl';
+import { StackdriverFilterCtrl } from '../query_filter_ctrl';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { DefaultRemoveFilterValue, DefaultFilterValue } from '../filter_segments';
 
-describe('StackdriverQueryCtrl', () => {
+describe('StackdriverQueryFilterCtrl', () => {
   let ctrl;
   let result;
 
@@ -367,16 +367,16 @@ describe('StackdriverQueryCtrl', () => {
 });
 
 function createCtrlWithFakes(existingFilters?: string[]) {
-  StackdriverQueryCtrl.prototype.panelCtrl = {
-    events: { on: () => {} },
-    panel: { scopedVars: [], targets: [] },
-    refresh: () => {},
-  };
-  StackdriverQueryCtrl.prototype.target = createTarget(existingFilters);
-  StackdriverQueryCtrl.prototype.loadMetricDescriptors = () => {
+  // StackdriverFilterCtrl.prototype.panelCtrl = {
+  //   events: { on: () => {} },
+  //   panel: { scopedVars: [], targets: [] },
+  //   refresh: () => {},
+  // };
+  // StackdriverFilterCtrl.prototype.target =
+  StackdriverFilterCtrl.prototype.loadMetricDescriptors = () => {
     return Promise.resolve([]);
   };
-  StackdriverQueryCtrl.prototype.getLabels = () => {
+  StackdriverFilterCtrl.prototype.getLabels = () => {
     return Promise.resolve();
   };
 
@@ -408,7 +408,19 @@ function createCtrlWithFakes(existingFilters?: string[]) {
       return { type: 'condition', value: val };
     },
   };
-  return new StackdriverQueryCtrl(null, null, fakeSegmentServer, new TemplateSrvStub());
+  const scope = {
+    target: createTarget(existingFilters),
+    datasource: {
+      getDefaultProject: () => {
+        return 'project';
+      },
+    },
+    defaultDropdownValue: 'Select Metric',
+    defaultServiceValue: 'All Services',
+    refresh: () => {},
+  };
+
+  return new StackdriverFilterCtrl(scope, fakeSegmentServer, new TemplateSrvStub());
 }
 
 function createTarget(existingFilters?: string[]) {
