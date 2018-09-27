@@ -115,7 +115,9 @@ export class TimeSrv {
   }
 
   private timeHasChangedSinceLoad() {
-    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
+    const from = moment.isMoment(this.time.from) ? !this.time.from.isSame(this.timeAtLoad.from) : this.time.from !== this.timeAtLoad.from;
+    const to = moment.isMoment(this.time.to) ? !this.time.to.isSame(this.timeAtLoad.to) : this.time.to !== this.timeAtLoad.to;
+    return from || to;
   }
 
   setAutoRefresh(interval) {
