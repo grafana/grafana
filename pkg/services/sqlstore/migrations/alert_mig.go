@@ -122,10 +122,11 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "version", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
-			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: IndexType},
+			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: UniqueIndex},
 		},
 	}
 
 	mg.AddMigration("create alert_notification_state table v1", NewAddTableMigration(alert_notification_state))
-	mg.AddMigration("add index alert_notification_state org_id & alert_id & notifier_id", NewAddIndexMigration(alert_notification_state, notification_journal.Indices[0]))
+	mg.AddMigration("add index alert_notification_state org_id & alert_id & notifier_id",
+		NewAddIndexMigration(alert_notification_state, alert_notification_state.Indices[0]))
 }

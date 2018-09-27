@@ -18,8 +18,8 @@ func init() {
 	bus.AddHandler("sql", DeleteAlertNotification)
 	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
-	bus.AddHandlerCtx("sql", RecordNotificationJournal)
-	bus.AddHandlerCtx("sql", GetLatestNotification)
+	bus.AddHandlerCtx("sql", InsertAlertNotificationState)
+	bus.AddHandlerCtx("sql", GetAlertNotificationState)
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
@@ -228,32 +228,71 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 	})
 }
 
-func RecordNotificationJournal(ctx context.Context, cmd *m.UpdateAlertNotificationStateCommand) error {
+func InsertAlertNotificationState(ctx context.Context, cmd *m.InsertAlertNotificationCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
-		journalEntry := &m.AlertNotificationState{
+		notificationState := &m.AlertNotificationState{
 			OrgId:      cmd.OrgId,
 			AlertId:    cmd.AlertId,
 			NotifierId: cmd.NotifierId,
 			SentAt:     cmd.SentAt,
+			State:      cmd.State,
 		}
 
-		_, err := sess.Insert(journalEntry)
+		_, err := sess.Insert(notificationState)
+
+		if err == nil {
+			return nil
+		}
+
+		if strings.HasPrefix(err.Error(), "UNIQUE constraint failed") {
+			return m.ErrAlertNotificationStateAllreadyExist
+		}
+
 		return err
 	})
 }
 
-func GetLatestNotification(ctx context.Context, cmd *m.GetNotificationStateQuery) error {
+func UpdateAlertNotificationState(ctx context.Context, cmd *m.UpdateAlertNotificationStateCommand) error {
+	return withDbSession(ctx, func(sess *DBSession) error {
+		sql := `UPDATE alert_notification_state SET 
+			state= ?,  
+			version = ?
+		WHERE
+			id = ? AND
+			version = ?
+		`
+
+		res, err := sess.Exec(sql, cmd.State, cmd.Version+1, cmd.Id, cmd.Version)
+		if err != nil {
+			return err
+		}
+
+		affected, _ := res.RowsAffected()
+
+		if affected == 0 {
+			return m.ErrAlertNotificationStateVersionConflict
+		}
+
+		return nil
+	})
+}
+
+func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQuery) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
 		nj := &m.AlertNotificationState{}
 
-		err := sess.Desc("alert_notification_journal.sent_at").
-			Where("alert_notification_journal.org_id = ?", cmd.OrgId).
-			Where("alert_notification_journal.alert_id = ?", cmd.AlertId).
-			Where("alert_notification_journal.notifier_id = ?", cmd.NotifierId).
-			Find(&nj)
+		exist, err := sess.Desc("alert_notification_state.sent_at").
+			Where("alert_notification_state.org_id = ?", cmd.OrgId).
+			Where("alert_notification_state.alert_id = ?", cmd.AlertId).
+			Where("alert_notification_state.notifier_id = ?", cmd.NotifierId).
+			Get(nj)
 
 		if err != nil {
 			return err
+		}
+
+		if !exist {
+			return m.ErrAlertNotificationStateNotFound
 		}
 
 		cmd.Result = nj

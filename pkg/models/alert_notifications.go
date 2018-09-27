@@ -8,8 +8,17 @@ import (
 )
 
 var (
-	ErrNotificationFrequencyNotFound = errors.New("Notification frequency not specified")
-	ErrJournalingNotFound            = errors.New("alert notification journaling not found")
+	ErrNotificationFrequencyNotFound         = errors.New("Notification frequency not specified")
+	ErrAlertNotificationStateNotFound        = errors.New("alert notification state not found")
+	ErrAlertNotificationStateVersionConflict = errors.New("alert notification state update version conflict")
+	ErrAlertNotificationStateAllreadyExist   = errors.New("alert notification state allready exists.")
+)
+
+type AlertNotificationStateType string
+
+var (
+	AlertNotificationStatePending   = AlertNotificationStateType("pending")
+	AlertNotificationStateCompleted = AlertNotificationStateType("completed")
 )
 
 type AlertNotification struct {
@@ -82,16 +91,15 @@ type AlertNotificationState struct {
 	AlertId    int64
 	NotifierId int64
 	SentAt     int64
-	State      string
+	State      AlertNotificationStateType
 	Version    int64
 }
 
 type UpdateAlertNotificationStateCommand struct {
-	OrgId      int64
-	AlertId    int64
-	NotifierId int64
-	SentAt     int64
-	State      bool
+	Id      int64
+	SentAt  int64
+	State   AlertNotificationStateType
+	Version int64
 }
 
 type GetNotificationStateQuery struct {
@@ -107,5 +115,5 @@ type InsertAlertNotificationCommand struct {
 	AlertId    int64
 	NotifierId int64
 	SentAt     int64
-	State      string
+	State      AlertNotificationStateType
 }
