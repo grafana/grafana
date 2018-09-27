@@ -11,7 +11,7 @@ var (
 	ErrNotificationFrequencyNotFound         = errors.New("Notification frequency not specified")
 	ErrAlertNotificationStateNotFound        = errors.New("alert notification state not found")
 	ErrAlertNotificationStateVersionConflict = errors.New("alert notification state update version conflict")
-	ErrAlertNotificationStateAllreadyExist   = errors.New("alert notification state allready exists.")
+	ErrAlertNotificationStateAlreadyExist    = errors.New("alert notification state already exists.")
 )
 
 type AlertNotificationStateType string
@@ -95,11 +95,15 @@ type AlertNotificationState struct {
 	Version    int64
 }
 
-type UpdateAlertNotificationStateCommand struct {
+type SetAlertNotificationStateToPendingCommand struct {
 	Id      int64
 	SentAt  int64
-	State   AlertNotificationStateType
 	Version int64
+}
+
+type SetAlertNotificationStateToCompleteCommand struct {
+	Id     int64
+	SentAt int64
 }
 
 type GetNotificationStateQuery struct {

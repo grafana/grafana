@@ -38,22 +38,27 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				err = InsertAlertNotificationState(context.Background(), createCmd)
-				So(err, ShouldEqual, models.ErrAlertNotificationStateAllreadyExist)
+				So(err, ShouldEqual, models.ErrAlertNotificationStateAlreadyExist)
 
 				Convey("should be able to update alert notifier state", func() {
-					updateCmd := &models.UpdateAlertNotificationStateCommand{
+					updateCmd := &models.SetAlertNotificationStateToPendingCommand{
 						Id:      1,
 						SentAt:  1,
-						State:   models.AlertNotificationStatePending,
 						Version: 0,
 					}
 
-					err := UpdateAlertNotificationState(context.Background(), updateCmd)
+					err := SetAlertNotificationStateToPendingCommand(context.Background(), updateCmd)
 					So(err, ShouldBeNil)
 
-					Convey("should not be able to update older versions", func() {
-						err = UpdateAlertNotificationState(context.Background(), updateCmd)
+					Convey("should not be able to set pending on old version", func() {
+						err = SetAlertNotificationStateToPendingCommand(context.Background(), updateCmd)
 						So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
+					})
+
+					Convey("should be able to set state to completed", func() {
+						cmd := &models.SetAlertNotificationStateToCompleteCommand{Id: 1}
+						err = SetAlertNotificationStateToCompleteCommand(context.Background(), cmd)
+						So(err, ShouldBeNil)
 					})
 				})
 			})

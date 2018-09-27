@@ -20,6 +20,8 @@ func init() {
 	bus.AddHandler("sql", GetAllAlertNotifications)
 	bus.AddHandlerCtx("sql", InsertAlertNotificationState)
 	bus.AddHandlerCtx("sql", GetAlertNotificationState)
+	bus.AddHandlerCtx("sql", SetAlertNotificationStateToCompleteCommand)
+	bus.AddHandlerCtx("sql", SetAlertNotificationStateToPendingCommand)
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
@@ -244,25 +246,54 @@ func InsertAlertNotificationState(ctx context.Context, cmd *m.InsertAlertNotific
 			return nil
 		}
 
-		if strings.HasPrefix(err.Error(), "UNIQUE constraint failed") {
-			return m.ErrAlertNotificationStateAllreadyExist
+		uniqenessIndexFailureCodes := []string{
+			"UNIQUE constraint failed",
+			"pq: duplicate key value violates unique constraint",
+			"Error 1062: Duplicate entry ",
+		}
+
+		for _, code := range uniqenessIndexFailureCodes {
+			if strings.HasPrefix(err.Error(), code) {
+				return m.ErrAlertNotificationStateAlreadyExist
+			}
 		}
 
 		return err
 	})
 }
 
-func UpdateAlertNotificationState(ctx context.Context, cmd *m.UpdateAlertNotificationStateCommand) error {
+func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToCompleteCommand) error {
+	return withDbSession(ctx, func(sess *DBSession) error {
+		sql := `UPDATE alert_notification_state SET 
+			state= ?
+		WHERE
+			id = ?`
+
+		res, err := sess.Exec(sql, m.AlertNotificationStateCompleted, cmd.Id)
+		if err != nil {
+			return err
+		}
+
+		affected, _ := res.RowsAffected()
+
+		if affected == 0 {
+			return m.ErrAlertNotificationStateVersionConflict
+		}
+
+		return nil
+	})
+}
+
+func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToPendingCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
 		sql := `UPDATE alert_notification_state SET 
 			state= ?,  
 			version = ?
 		WHERE
 			id = ? AND
-			version = ?
-		`
+			version = ?`
 
-		res, err := sess.Exec(sql, cmd.State, cmd.Version+1, cmd.Id, cmd.Version)
+		res, err := sess.Exec(sql, m.AlertNotificationStatePending, cmd.Version+1, cmd.Id, cmd.Version)
 		if err != nil {
 			return err
 		}

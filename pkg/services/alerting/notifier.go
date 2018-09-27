@@ -64,6 +64,8 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 		err := bus.InTransaction(evalContext.Ctx, func(ctx context.Context) error {
 			n.log.Debug("trying to send notification", "id", not.GetNotifierId())
 
+			// insert if needed
+
 			// Verify that we can send the notification again
 			// but this time within the same transaction.
 			// if !evalContext.IsTestRun && !not.ShouldNotify(ctx, evalContext) {
