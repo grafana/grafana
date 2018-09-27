@@ -1,7 +1,7 @@
 import React, { SFC } from 'react';
 import classNames from 'classnames/bind';
 import PluginListItem from './PluginListItem';
-import { PluginListItem } from 'app/types';
+import { Plugin } from 'app/types';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 
 interface Props {

@@ -1,8 +1,8 @@
 import React, { SFC } from 'react';
-import { PluginListItem } from 'app/types';
+import { Plugin } from 'app/types';
 
 interface Props {
-  plugin: PluginListItem;
+  plugin: Plugin;
 }
 
 const PluginListItem: SFC<Props> = props => {

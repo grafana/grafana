@@ -27,7 +27,7 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface PluginListItem {
+export interface Plugin {
   defaultNavUrl: string;
   enabled: boolean;
   hasUpdate: boolean;
@@ -41,7 +41,7 @@ export interface PluginListItem {
 }
 
 export interface PluginsState {
-  plugins: PluginListItem[];
+  plugins: Plugin[];
   searchQuery: string;
   layoutMode: string;
 }

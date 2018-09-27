@@ -1,9 +1,9 @@
 import { Action, ActionTypes } from './actions';
-import { PluginListItem, PluginsState } from 'app/types';
+import { Plugin, PluginsState } from 'app/types';
 import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 
 export const initialState: PluginsState = {
-  plugins: [] as PluginListItem[],
+  plugins: [] as Plugin[],
   searchQuery: '',
   layoutMode: LayoutModes.Grid,
 };
