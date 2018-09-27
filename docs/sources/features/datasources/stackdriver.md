@@ -19,16 +19,16 @@ Grafana ships with built-in support for Google Stackdriver. Just add it as a dat
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
-4. Select `Stackdriver` from the *Type* dropdown.
+4. Select `Stackdriver` from the _Type_ dropdown.
 5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
-Name | Description
------------- | -------------
-*Name* | The datasource name. This is how you refer to the datasource in panels & queries.
-*Default* | Default datasource means that it will be pre-selected for new panels.
-*Service Account Key* | Service Account Key File for a GCP Project. Instructions below on how to create it.
+| Name                  | Description                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| _Name_                | The datasource name. This is how you refer to the datasource in panels & queries.   |
+| _Default_             | Default datasource means that it will be pre-selected for new panels.               |
+| _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it. |
 
 ## Authentication
 
@@ -40,8 +40,8 @@ To authenticate with the Stackdriver API, you need to create a Google Cloud Plat
 
 The following APIs need to be enabled first:
 
-- [Monitoring API](https://console.cloud.google.com/apis/library/monitoring.googleapis.com)
-- [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
+* [Monitoring API](https://console.cloud.google.com/apis/library/monitoring.googleapis.com)
+* [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
 
 Click on the links above and click the `Enable` button:
 
@@ -52,18 +52,21 @@ Click on the links above and click the `Enable` button:
 1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-    ![Create service account button](/img/docs/v54/stackdriver_create_service_account_button.png)
+   ![Create service account button](/img/docs/v54/stackdriver_create_service_account_button.png)
+
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-    ![Create service account key](/img/docs/v54/stackdriver_create_service_account_key.png)
+   ![Create service account key](/img/docs/v54/stackdriver_create_service_account_key.png)
+
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-    ![Choose role](/img/docs/v54/stackdriver_service_account_choose_role.png)
+   ![Choose role](/img/docs/v54/stackdriver_service_account_choose_role.png)
+
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
-     ![Choose role](/img/docs/v54/stackdriver_grafana_upload_key.png)
+   ![Choose role](/img/docs/v54/stackdriver_grafana_upload_key.png)
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
-     ![Choose role](/img/docs/v54/stackdriver_grafana_key_uploaded.png)
+   ![Choose role](/img/docs/v54/stackdriver_grafana_key_uploaded.png)
 
 ## Metric Query Editor
 
@@ -82,9 +85,9 @@ The `Aligner` field allows you to align multiple time series after the same grou
 The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Stackdriver default groupings (which allows you to compare graphs in Grafana with graphs in the Stackdriver UI).
 The option is called `Stackdriver auto` and the defaults are:
 
-- 1m for time ranges < 5 hours
-- 5m for time ranges > 5 hours and < 23 hours
-- 1h for time ranges > 23 hours
+* 1m for time ranges < 23 hours
+* 5m for time ranges >= 23 hours and < 6 days
+* 1h for time ranges >= 6 days
 
 The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/reference/templating/#the-interval-variable).
 
@@ -100,20 +103,20 @@ The Alias By field allows you to control the format of the legend keys. The defa
 
 #### Metric Type Patterns
 
-Alias Pattern | Description | Example Result
------------------ | ---------------------------- | -------------
-`{{metric.type}}` | returns the full Metric Type | `compute.googleapis.com/instance/cpu/utilization`
-`{{metric.name}}` | returns the metric name part | `instance/cpu/utilization`
-`{{metric.service}}` | returns the service part | `compute`
+| Alias Pattern        | Description                  | Example Result                                    |
+| -------------------- | ---------------------------- | ------------------------------------------------- |
+| `{{metric.type}}`    | returns the full Metric Type | `compute.googleapis.com/instance/cpu/utilization` |
+| `{{metric.name}}`    | returns the metric name part | `instance/cpu/utilization`                        |
+| `{{metric.service}}` | returns the service part     | `compute`                                         |
 
 #### Label Patterns
 
 In the Group By dropdown, you can see a list of metric and resource labels for a metric. These can be included in the legend key using alias patterns.
 
-Alias Pattern Format | Description | Alias Pattern Example | Example Result
----------------------- | ---------------------------------- | ---------------------------- | -------------
-`{{metric.label.xxx}}` | returns the metric label value | `{{metric.label.instance_name}}` | `grafana-1-prod`
-`{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}` | `us-east1-b`
+| Alias Pattern Format     | Description                      | Alias Pattern Example            | Example Result   |
+| ------------------------ | -------------------------------- | -------------------------------- | ---------------- |
+| `{{metric.label.xxx}}`   | returns the metric label value   | `{{metric.label.instance_name}}` | `grafana-1-prod` |
+| `{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}`        | `us-east1-b`     |
 
 Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
 
@@ -136,10 +139,10 @@ Writing variable queries is not supported yet.
 
 There are two syntaxes:
 
-- `$<varname>`  Example: rate(http_requests_total{job=~"$job"}[5m])
-- `[[varname]]` Example: rate(http_requests_total{job=~"[[job]]"}[5m])
+* `$<varname>` Example: rate(http_requests_total{job=~"$job"}[5m])
+* `[[varname]]` Example: rate(http_requests_total{job=~"[[job]]"}[5m])
 
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value* options are enabled, Grafana converts the labels from plain text to a regex compatible string, which means you have to use `=~` instead of `=`.
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a regex compatible string, which means you have to use `=~` instead of `=`.
 
 ## Annotations
 
