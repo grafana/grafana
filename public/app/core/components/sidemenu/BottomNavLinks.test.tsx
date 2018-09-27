@@ -14,6 +14,7 @@ const setup = (propOverrides?: object) => {
       user: {
         isGrafanaAdmin: false,
         isSignedIn: false,
+        monthDayFormat: '',
         orgCount: 2,
         orgRole: '',
         orgId: 1,
