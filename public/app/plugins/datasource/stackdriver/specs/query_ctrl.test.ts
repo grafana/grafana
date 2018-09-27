@@ -418,6 +418,7 @@ function createTarget(existingFilters?: string[]) {
       name: '',
     },
     metricType: 'ametric',
+    service: '',
     refId: 'A',
     aggregation: {
       crossSeriesReducer: '',

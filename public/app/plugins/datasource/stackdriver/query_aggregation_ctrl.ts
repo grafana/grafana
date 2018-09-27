@@ -1,7 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
 import * as options from './constants';
-import * as options from './constants';
 import kbn from 'app/core/utils/kbn';
 
 export class StackdriverAggregation {
