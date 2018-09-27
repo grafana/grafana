@@ -1,13 +1,13 @@
 import { Variable, assignModelProperties, variableTypes } from './variable';
 
-export class TextVariable implements Variable {
+export class TextBoxVariable implements Variable {
   query: string;
   current: any;
   options: any[];
   skipUrlSync: boolean;
 
   defaults = {
-    type: 'text',
+    type: 'textbox',
     name: '',
     hide: 2,
     label: '',
@@ -51,8 +51,8 @@ export class TextVariable implements Variable {
   }
 }
 
-variableTypes['text'] = {
-  name: 'Text',
-  ctor: TextVariable,
+variableTypes['textbox'] = {
+  name: 'Text box',
+  ctor: TextBoxVariable,
   description: 'Define a textbox variable, where users can enter any arbitrary string',
 };
