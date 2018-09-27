@@ -5,7 +5,7 @@ import { Plugin } from 'app/types';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 
 interface Props {
-  plugins: PluginListItem[];
+  plugins: Plugin[];
   layoutMode: LayoutMode;
 }
 
