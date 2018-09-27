@@ -19,7 +19,7 @@
 	</button>
 
   <button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
-		<i class="fa fa-refresh"></i>
+    <i class="fa fa-refresh" ng-class="{'fa-spin': ctrl.timeSrv.loading}"></i>
 	</button>
 </div>
 

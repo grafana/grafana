@@ -12,6 +12,7 @@ export class TimeSrv {
   dashboard: any;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
+  loading: boolean;
 
   /** @ngInject */
   constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
@@ -20,6 +21,7 @@ export class TimeSrv {
 
     $rootScope.$on('zoom-out', this.zoomOut.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
+    $rootScope.$on('refresh', this.onRefresh.bind(this));
 
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
@@ -141,8 +143,13 @@ export class TimeSrv {
     }
   }
 
+  onRefresh() {
+    this.loading = false;
+  }
+
   refreshDashboard() {
     if (this.dashboard.updateVariablesOnTimeRangeChange) {
+      this.loading = true;
       this.$rootScope.appEvent('time-range-changed');
     } else {
       this.$rootScope.$broadcast('refresh');
