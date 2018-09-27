@@ -170,7 +170,6 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             {apiKeys.length > 0 ? (
               <tbody>
                 {apiKeys.map(key => {
-                  // id, name, role
                   return (
                     <tr key={key.id}>
                       <td>{key.name}</td>
