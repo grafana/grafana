@@ -1,9 +1,7 @@
 import React from 'react';
-import { observer } from 'mobx-react';
-import { NavModel, NavModelItem } from '../../nav_model_srv';
+import { NavModel, NavModelItem } from 'app/types';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
-import { toJS } from 'mobx';
 
 export interface Props {
   model: NavModel;
@@ -81,7 +79,6 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
   );
 };
 
-@observer
 export default class PageHeader extends React.Component<Props, any> {
   constructor(props) {
     super(props);
@@ -148,7 +145,7 @@ export default class PageHeader extends React.Component<Props, any> {
       return null;
     }
 
-    const main = toJS(model.main); // Convert to JS if its a mobx observable
+    const main = model.main;
 
     return (
       <div className="page-header-canvas">

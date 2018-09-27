@@ -42,6 +42,11 @@ func TestMySQL(t *testing.T) {
 			return x, nil
 		}
 
+		origInterpolate := tsdb.Interpolate
+		tsdb.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+			return sql, nil
+		}
+
 		endpoint, err := newMysqlQueryEndpoint(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
@@ -54,6 +59,7 @@ func TestMySQL(t *testing.T) {
 		Reset(func() {
 			sess.Close()
 			tsdb.NewXormEngine = origXormEngine
+			tsdb.Interpolate = origInterpolate
 		})
 
 		Convey("Given a table with different native data types", func() {
@@ -293,6 +299,40 @@ func TestMySQL(t *testing.T) {
 				// check for NULL values inserted by fill
 				So(points[6][0].Valid, ShouldBeFalse)
 
+			})
+
+			Convey("When doing a metric query using timeGroup and $__interval", func() {
+				mockInterpolate := tsdb.Interpolate
+				tsdb.Interpolate = origInterpolate
+
+				Reset(func() {
+					tsdb.Interpolate = mockInterpolate
+				})
+
+				Convey("Should replace $__interval", func() {
+					query := &tsdb.TsdbQuery{
+						Queries: []*tsdb.Query{
+							{
+								DataSource: &models.DataSource{},
+								Model: simplejson.NewFromAny(map[string]interface{}{
+									"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+									"format": "time_series",
+								}),
+								RefId: "A",
+							},
+						},
+						TimeRange: &tsdb.TimeRange{
+							From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+							To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
+						},
+					}
+
+					resp, err := endpoint.Query(nil, nil, query)
+					So(err, ShouldBeNil)
+					queryResult := resp.Results["A"]
+					So(queryResult.Error, ShouldBeNil)
+					So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+				})
 			})
 
 			Convey("When doing a metric query using timeGroup with value fill enabled", func() {

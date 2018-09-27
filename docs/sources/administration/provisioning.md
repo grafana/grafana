@@ -71,6 +71,7 @@ Puppet | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/pupp
 Ansible | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)
 Chef | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
 Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)
+Jsonnet | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)
 
 ## Datasources
 
@@ -154,7 +155,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
-| timeInterval | string | Elastic, InfluxDB & Prometheus | Lowest interval/step value that should be used for this data source |
+| timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
 | esVersion | number | Elastic | Elasticsearch version as a number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
@@ -199,7 +200,7 @@ providers:
   folder: ''
   type: file
   disableDeletion: false
-  updateIntervalSeconds: 3 #how often Grafana will scan for changed dashboards
+  updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
   options:
     path: /var/lib/grafana/dashboards
 ```

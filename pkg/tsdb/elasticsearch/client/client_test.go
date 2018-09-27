@@ -40,7 +40,7 @@ func TestClient(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("When unspported version set should return error", func() {
+			Convey("When unsupported version set should return error", func() {
 				ds := &models.DataSource{
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
 						"esVersion": 6,

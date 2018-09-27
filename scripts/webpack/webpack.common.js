@@ -24,6 +24,9 @@ module.exports = {
       path.resolve('node_modules')
     ],
   },
+  stats: {
+    warningsFilter: /export .* was not found in/
+  },
   node: {
     fs: 'empty',
   },

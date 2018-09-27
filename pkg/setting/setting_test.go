@@ -97,7 +97,7 @@ func TestLoadingSettings(t *testing.T) {
 				Args: []string{
 					"cfg:default.server.domain=test2",
 				},
-				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
+				Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 			})
 
 			So(Domain, ShouldEqual, "test2")
@@ -108,7 +108,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override_windows.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
 				})
 
@@ -117,7 +117,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:default.paths.data=/tmp/data"},
 				})
 
@@ -130,7 +130,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override_windows.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:paths.data=c:\tmp\data`},
 				})
 
@@ -139,7 +139,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:paths.data=/tmp/data"},
 				})
 
