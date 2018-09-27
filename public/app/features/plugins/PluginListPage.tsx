@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import PageHeader from '../../core/components/PageHeader/PageHeader';
 import PluginActionBar from './PluginActionBar';
 import PluginList from './PluginList';
-import { NavModel, Plugin } from '../../types';
+import { NavModel, PluginListItem } from '../../types';
 import { loadPlugins } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
 import { getLayoutMode, getPlugins } from './state/selectors';
@@ -12,7 +12,7 @@ import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector'
 
 export interface Props {
   navModel: NavModel;
-  plugins: Plugin[];
+  plugins: PluginListItem[];
   layoutMode: LayoutMode;
   loadPlugins: typeof loadPlugins;
 }

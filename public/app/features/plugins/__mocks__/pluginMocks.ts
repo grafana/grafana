@@ -1,6 +1,6 @@
-import { Plugin } from 'app/types';
+import { PluginListItem } from 'app/types';
 
-export const getMockPlugins = (amount: number): Plugin[] => {
+export const getMockPlugins = (amount: number): PluginListItem[] => {
   const plugins = [];
 
   for (let i = 0; i <= amount; i++) {

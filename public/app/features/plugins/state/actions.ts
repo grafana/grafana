@@ -1,4 +1,4 @@
-import { Plugin, StoreState } from 'app/types';
+import { PluginListItem, StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
@@ -11,7 +11,7 @@ export enum ActionTypes {
 
 export interface LoadPluginsAction {
   type: ActionTypes.LoadPlugins;
-  payload: Plugin[];
+  payload: PluginListItem[];
 }
 
 export interface SetPluginsSearchQueryAction {
@@ -34,7 +34,7 @@ export const setPluginsSearchQuery = (query: string): SetPluginsSearchQueryActio
   payload: query,
 });
 
-const pluginsLoaded = (plugins: Plugin[]): LoadPluginsAction => ({
+const pluginsLoaded = (plugins: PluginListItem[]): LoadPluginsAction => ({
   type: ActionTypes.LoadPlugins,
   payload: plugins,
 });
