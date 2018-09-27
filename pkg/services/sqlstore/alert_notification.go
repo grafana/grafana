@@ -240,31 +240,21 @@ func InsertAlertNotificationState(ctx context.Context, cmd *m.InsertAlertNotific
 			State:      cmd.State,
 		}
 
-		_, err := sess.Insert(notificationState)
-
-		if err == nil {
-			return nil
-		}
-
-		uniqenessIndexFailureCodes := []string{
-			"UNIQUE constraint failed",
-			"pq: duplicate key value violates unique constraint",
-			"Error 1062: Duplicate entry ",
-		}
-
-		for _, code := range uniqenessIndexFailureCodes {
-			if strings.HasPrefix(err.Error(), code) {
+		if _, err := sess.Insert(notificationState); err != nil {
+			if dialect.IsUniqueConstraintViolation(err) {
 				return m.ErrAlertNotificationStateAlreadyExist
 			}
+
+			return err
 		}
 
-		return err
+		return nil
 	})
 }
 
 func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToCompleteCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
-		sql := `UPDATE alert_notification_state SET 
+		sql := `UPDATE alert_notification_state SET
 			state= ?
 		WHERE
 			id = ?`
@@ -286,8 +276,8 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 
 func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToPendingCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
-		sql := `UPDATE alert_notification_state SET 
-			state= ?,  
+		sql := `UPDATE alert_notification_state SET
+			state= ?,
 			version = ?
 		WHERE
 			id = ? AND
