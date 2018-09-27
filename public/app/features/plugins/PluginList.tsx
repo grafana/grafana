@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { SFC } from 'react';
 import classNames from 'classnames/bind';
 import PluginListItem from './PluginListItem';
+import { Plugin } from 'app/types';
+import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 
-export default function PluginList({ plugins, layout }) {
+interface Props {
+  plugins: Plugin[];
+  layoutMode: LayoutMode;
+}
+
+const PluginList: SFC<Props> = props => {
+  const { plugins, layoutMode } = props;
+
   const listStyle = classNames({
     'card-section': true,
-    'card-list-layout-grid': layout === 'grid',
-    'card-list-layout-list': layout === 'list',
+    'card-list-layout-grid': layoutMode === LayoutModes.Grid,
+    'card-list-layout-list': layoutMode === LayoutModes.List,
   });
 
   return (
@@ -18,4 +27,6 @@ export default function PluginList({ plugins, layout }) {
       </ol>
     </section>
   );
-}
+};
+
+export default PluginList;

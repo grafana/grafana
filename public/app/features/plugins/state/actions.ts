@@ -1,6 +1,7 @@
 import { Plugin, StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '../../../core/services/backend_srv';
+import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
 
 export enum ActionTypes {
   LoadPlugins = 'LOAD_PLUGINS',
@@ -20,10 +21,10 @@ export interface SetPluginsSearchQueryAction {
 
 export interface SetLayoutModeAction {
   type: ActionTypes.SetLayoutMode;
-  payload: string;
+  payload: LayoutMode;
 }
 
-export const setLayoutMode = (mode: string): SetLayoutModeAction => ({
+export const setLayoutMode = (mode: LayoutMode): SetLayoutModeAction => ({
   type: ActionTypes.SetLayoutMode,
   payload: mode,
 });

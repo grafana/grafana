@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import LayoutSelector from '../../core/components/LayoutSelector/LayoutSelector';
+import LayoutSelector, { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
 import { setLayoutMode, setPluginsSearchQuery } from './state/actions';
 import { getPluginsSearchQuery, getLayoutMode } from './state/selectors';
 
 export interface Props {
   searchQuery: string;
-  layoutMode: string;
+  layoutMode: LayoutMode;
   setLayoutMode: typeof setLayoutMode;
   setPluginsSearchQuery: typeof setPluginsSearchQuery;
 }
@@ -32,7 +32,7 @@ export class PluginActionBar extends PureComponent<Props> {
             />
             <i className="gf-form-input-icon fa fa-search" />
           </label>
-          <LayoutSelector mode={layoutMode} onLayoutModeChanged={mode => setLayoutMode(mode)} />
+          <LayoutSelector mode={layoutMode} onLayoutModeChanged={(mode: LayoutMode) => setLayoutMode(mode)} />
         </div>
         <div className="page-action-bar__spacer" />
         <a

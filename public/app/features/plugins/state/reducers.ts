@@ -1,7 +1,8 @@
 import { Action, ActionTypes } from './actions';
 import { Plugin, PluginsState } from 'app/types';
+import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 
-export const initialState: PluginsState = { plugins: [] as Plugin[], searchQuery: '', layoutMode: 'grid' };
+export const initialState: PluginsState = { plugins: [] as Plugin[], searchQuery: '', layoutMode: LayoutModes.Grid };
 
 export const pluginsReducer = (state = initialState, action: Action): PluginsState => {
   switch (action.type) {

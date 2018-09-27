@@ -1,11 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { PluginActionBar, Props } from './PluginActionBar';
+import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
     searchQuery: '',
-    layoutMode: 'grid',
+    layoutMode: LayoutModes.Grid,
     setLayoutMode: jest.fn(),
     setPluginsSearchQuery: jest.fn(),
   };

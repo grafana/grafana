@@ -8,11 +8,12 @@ import { NavModel, Plugin } from '../../types';
 import { loadPlugins } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
 import { getLayoutMode, getPlugins } from './state/selectors';
+import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
 
 export interface Props {
   navModel: NavModel;
   plugins: Plugin[];
-  layoutMode: string;
+  layoutMode: LayoutMode;
   loadPlugins: typeof loadPlugins;
 }
 
@@ -33,7 +34,7 @@ export class PluginListPage extends PureComponent<Props> {
         <PageHeader model={navModel} />
         <div className="page-container page-body">
           <PluginActionBar />
-          {plugins && <PluginList plugins={plugins} layout={layoutMode} />}
+          {plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />}
         </div>
       </div>
     );

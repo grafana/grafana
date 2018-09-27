@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { SFC } from 'react';
+import { Plugin } from 'app/types';
 
-export default function PluginListItem({ plugin }) {
+interface Props {
+  plugin: Plugin;
+}
+
+const PluginListItem: SFC<Props> = props => {
+  const { plugin } = props;
+
   return (
     <li className="card-item-wrapper">
       <a className="card-item" href={`plugins/${plugin.id}/edit`}>
@@ -27,4 +34,6 @@ export default function PluginListItem({ plugin }) {
       </a>
     </li>
   );
-}
+};
+
+export default PluginListItem;
