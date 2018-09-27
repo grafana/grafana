@@ -78,7 +78,13 @@ const template = `
   </div>
 
   <div class="gf-form">
-    <label class="gf-form-label width-11">Month/Day Formatting in Graphs</label>
+    <label class="gf-form-label width-11">
+      Graph Date Format
+      <info-popover mode="right-normal">
+        On long-range graphs the dates on the y-axis show only the month and day instead of the exact time.
+        The setting 'browser' is the default and it uses the browser's language to infer a display format.
+      </info-popover>
+    </label>
     <div class="gf-form-select-wrapper max-width-20">
       <select class="gf-form-input" ng-model="ctrl.prefs.monthDayFormat" ng-options="f.value as f.text for f in ctrl.monthDayFormats"></select>
     </div>

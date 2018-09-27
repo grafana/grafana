@@ -715,7 +715,7 @@ class GraphElement {
       return contextSrv.user.monthDayFormat;
     }
 
-    if (!this.toLocaleDateStringSupportsLocales()) {
+    if (!this.canUseLocaleDateStringLocales()) {
       return '%m/%d';
     }
 
@@ -726,7 +726,7 @@ class GraphElement {
       .replace('20', '%d');
   }
 
-  toLocaleDateStringSupportsLocales() {
+  canUseLocaleDateStringLocales() {
     try {
       new Date().toLocaleDateString('i');
     } catch (e) {

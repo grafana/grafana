@@ -36,7 +36,7 @@ func addPreferencesMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Update preferences table add column", NewAddColumnMigration(preferencesV2, &Column{
-		Name: "month_day_format", Type: DB_NVarchar, Length: 50, Default: "",
+		Name: "month_day_format", Type: DB_NVarchar, Length: 50, Nullable: true,
 	}))
 
 }
