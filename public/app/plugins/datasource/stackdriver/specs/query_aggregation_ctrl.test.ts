@@ -29,34 +29,5 @@ describe('StackdriverAggregationCtrl', () => {
         });
       });
     });
-
-    describe('when a user selects ALIGN_NONE and a reducer is selected', () => {
-      beforeEach(async () => {
-        ctrl = new StackdriverAggregationCtrl({
-          $on: () => {},
-          refresh: () => {},
-          target: { aggregation: { crossSeriesReducer: 'RANDOM_REDUCER' } },
-        });
-        ctrl.onAlignmentChange('ALIGN_NONE');
-      });
-      it('should set REDUCE_NONE as selected aggregation', () => {
-        expect(ctrl.$scope.target.aggregation.crossSeriesReducer).toBe('REDUCE_NONE');
-      });
-    });
-
-    describe('when a user a user select a reducer and no alignment is selected', () => {
-      beforeEach(async () => {
-        ctrl = new StackdriverAggregationCtrl({
-          $on: () => {},
-          refresh: () => {},
-          target: { aggregation: { crossSeriesReducer: 'REDUCE_NONE', perSeriesAligner: 'ALIGN_NONE' } },
-        });
-        ctrl.onAggregationChange('ALIGN_NONE');
-      });
-
-      it('should set an alignment', () => {
-        expect(ctrl.$scope.target.aggregation.perSeriesAligner).not.toBe('ALIGN_NONE');
-      });
-    });
   });
 });

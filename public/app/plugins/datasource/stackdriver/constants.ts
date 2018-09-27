@@ -17,19 +17,6 @@ export enum ValueTypes {
 
 export const alignOptions = [
   {
-    text: 'none',
-    value: 'ALIGN_NONE',
-    valueTypes: [
-      ValueTypes.INT64,
-      ValueTypes.DOUBLE,
-      ValueTypes.MONEY,
-      ValueTypes.DISTRIBUTION,
-      ValueTypes.BOOL,
-      ValueTypes.STRING,
-    ],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE, MetricKind.METRIC_KIND_UNSPECIFIED],
-  },
-  {
     text: 'delta',
     value: 'ALIGN_DELTA',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],

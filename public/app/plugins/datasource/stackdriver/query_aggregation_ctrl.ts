@@ -24,30 +24,8 @@ export class StackdriverAggregationCtrl {
     this.setAggOptions();
     this.setAlignOptions();
     $scope.alignmentPeriods = options.alignmentPeriods;
-    $scope.onAlignmentChange = this.onAlignmentChange.bind(this);
-    $scope.onAggregationChange = this.onAggregationChange.bind(this);
     $scope.formatAlignmentText = this.formatAlignmentText.bind(this);
     $scope.$on('metricTypeChanged', this.setAlignOptions.bind(this));
-  }
-
-  onAlignmentChange(newVal: string) {
-    if (newVal === 'ALIGN_NONE') {
-      this.$scope.target.aggregation.crossSeriesReducer = 'REDUCE_NONE';
-    }
-    this.$scope.refresh();
-  }
-
-  onAggregationChange(newVal: string) {
-    if (newVal !== 'REDUCE_NONE' && this.$scope.target.aggregation.perSeriesAligner === 'ALIGN_NONE') {
-      const newAlignmentOption = options.alignOptions.find(
-        o =>
-          o.value !== 'ALIGN_NONE' &&
-          o.valueTypes.indexOf(this.$scope.target.valueType) !== -1 &&
-          o.metricKinds.indexOf(this.$scope.target.metricKind) !== -1
-      );
-      this.$scope.target.aggregation.perSeriesAligner = newAlignmentOption ? newAlignmentOption.value : '';
-    }
-    this.$scope.refresh();
   }
 
   setAlignOptions() {
@@ -60,8 +38,8 @@ export class StackdriverAggregationCtrl {
           );
         });
     if (!this.$scope.alignOptions.find(o => o.value === this.$scope.target.aggregation.perSeriesAligner)) {
-      const newValue = this.$scope.alignOptions.find(o => o.value !== 'ALIGN_NONE');
-      this.$scope.target.aggregation.perSeriesAligner = newValue ? newValue.value : '';
+      this.$scope.target.aggregation.perSeriesAligner =
+        this.$scope.alignOptions.length > 0 ? this.$scope.alignOptions[0].value : '';
     }
   }
 
