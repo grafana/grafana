@@ -26,10 +26,12 @@ const apiKeysLoaded = (apiKeys: ApiKey[]): LoadApiKeysAction => ({
   payload: apiKeys,
 });
 
-export function addApiKey(apiKey: ApiKey): ThunkResult<void> {
+export function addApiKey(apiKey: ApiKey, openModal: (key: string) => void): ThunkResult<void> {
   return async dispatch => {
-    await getBackendSrv().post('/api/auth/keys', apiKey);
+    const result = await getBackendSrv().post('/api/auth/keys', apiKey);
+    dispatch(setSearchQuery(''));
     dispatch(loadApiKeys());
+    openModal(result.key);
   };
 }
 

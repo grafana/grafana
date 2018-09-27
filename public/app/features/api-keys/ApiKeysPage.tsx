@@ -1,13 +1,16 @@
 ﻿import React, { PureComponent } from 'react';
+import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { NavModel, ApiKey, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
-// import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import SlideDown from 'app/core/components/Animations/SlideDown';
+import ApiKeysAddedModal from './ApiKeysAddedModal';
+import config from 'app/core/config';
+import appEvents from 'app/core/app_events';
 
 export interface Props {
   navModel: NavModel;
@@ -62,7 +65,17 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
   onAddApiKey = async evt => {
     evt.preventDefault();
-    this.props.addApiKey(this.state.newApiKey);
+
+    const openModal = (apiKey: string) => {
+      const rootPath = window.location.origin + config.appSubUrl;
+      const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
+
+      appEvents.emit('show-modal', {
+        templateHtml: modalTemplate,
+      });
+    };
+
+    this.props.addApiKey(this.state.newApiKey, openModal);
     this.setState((prevState: State) => {
       return {
         ...prevState,
