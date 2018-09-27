@@ -139,10 +139,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/org/apikeys', {
-      templateUrl: 'public/app/features/org/partials/orgApiKeys.html',
-      controller: 'OrgApiKeysCtrl',
-    })
-    .when('/org/apikeys2', {
       template: '<react-container />',
       resolve: {
         roles: () => ['Editor', 'Admin'],
