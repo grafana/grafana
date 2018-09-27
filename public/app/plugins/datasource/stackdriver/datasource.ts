@@ -1,3 +1,4 @@
+import { stackdriverUnitMappings } from './constants';
 /** @ngInject */
 export default class StackdriverDatasource {
   id: number;
@@ -85,6 +86,16 @@ export default class StackdriverDatasource {
     return interpolatedGroupBys;
   }
 
+  resolveUnit(targets: any[]) {
+    let unit = 'none';
+    if (targets.length > 0 && targets.every(t => t.unit === targets[0].unit)) {
+      if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit)) {
+        unit = stackdriverUnitMappings[targets[0].unit];
+      }
+    }
+    return unit;
+  }
+
   async query(options) {
     const result = [];
     const data = await this.getTimeSeries(options);
@@ -93,12 +104,15 @@ export default class StackdriverDatasource {
         if (!queryRes.series) {
           return;
         }
+
+        const unit = this.resolveUnit(options.targets);
         queryRes.series.forEach(series => {
           result.push({
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
+            unit,
           });
         });
       });

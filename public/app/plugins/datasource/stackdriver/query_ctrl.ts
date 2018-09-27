@@ -19,6 +19,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       id: string;
       name: string;
     };
+    unit: string;
     metricType: string;
     service: string;
     refId: string;
@@ -47,6 +48,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     metricType: this.defaultDropdownValue,
     service: this.defaultServiceValue,
     metric: '',
+    unit: '',
     aggregation: {
       crossSeriesReducer: 'REDUCE_MEAN',
       alignmentPeriod: 'auto',
@@ -221,7 +223,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
   setMetricType() {
     this.target.metricType = this.metricType;
-    const { valueType, metricKind } = this.metricDescriptors.find(m => m.type === this.target.metricType);
+    const { valueType, metricKind, unit } = this.metricDescriptors.find(m => m.type === this.target.metricType);
+    this.target.unit = unit;
     this.target.valueType = valueType;
     this.target.metricKind = metricKind;
     this.$scope.$broadcast('metricTypeChanged');

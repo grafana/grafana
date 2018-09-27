@@ -253,3 +253,19 @@ export const alignmentPeriods = [
   { text: '1d', value: '+86400s' },
   { text: '1w', value: '+604800s' },
 ];
+
+export const stackdriverUnitMappings = {
+  bit: 'bits',
+  By: 'bytes',
+  s: 's',
+  min: 'm',
+  h: 'h',
+  d: 'd',
+  us: 'µs',
+  ms: 'ms',
+  ns: 'ns',
+  percent: 'percent',
+  MiBy: 'mbytes',
+  'By/s': 'Bps',
+  GBy: 'decgbytes',
+};
