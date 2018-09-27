@@ -27,6 +27,7 @@ export default class StackdriverDatasource {
         }
         return {
           refId: t.refId,
+          intervalMs: options.intervalMs,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(t.metricType, options.scopedVars || {}),
           primaryAggregation: this.templateSrv.replace(t.aggregation.crossSeriesReducer, options.scopedVars || {}),
