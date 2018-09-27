@@ -18,6 +18,7 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -193,9 +194,10 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 
 	if alignmentPeriod == "stackdriver-auto" {
 		alignmentPeriodValue := int(math.Max(float64(durationSeconds), 60.0))
-		if alignmentPeriodValue <= 60*60*5 {
+		logger.Info("alignmentPeriodValue", "alignmentPeriodValue", alignmentPeriodValue)
+		if alignmentPeriodValue < 60*60*23 {
 			alignmentPeriod = "+60s"
-		} else if alignmentPeriodValue <= 60*60*23 {
+		} else if alignmentPeriodValue < 60*60*24*6 {
 			alignmentPeriod = "+300s"
 		} else {
 			alignmentPeriod = "+3600s"

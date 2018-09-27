@@ -94,6 +94,60 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
+			Convey("and alignmentPeriod is set to stackdriver-auto", func() {
+				Convey("and range is two hours", func() {
+					tsdbQuery.TimeRange.From = "1538033322461"
+					tsdbQuery.TimeRange.To = "1538040522461"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "stackdriver-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+				})
+
+				Convey("and range is 22 hours", func() {
+					tsdbQuery.TimeRange.From = "1538034524922"
+					tsdbQuery.TimeRange.To = "1538113724922"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "stackdriver-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+				})
+
+				Convey("and range is 23 hours", func() {
+					tsdbQuery.TimeRange.From = "1538034567985"
+					tsdbQuery.TimeRange.To = "1538117367985"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "stackdriver-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+300s`)
+				})
+
+				Convey("and range is 7 days", func() {
+					tsdbQuery.TimeRange.From = "1538036324073"
+					tsdbQuery.TimeRange.To = "1538641124073"
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "stackdriver-auto",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
+				})
+			})
+
 			Convey("and alignmentPeriod is set in frontend", func() {
 				Convey("and alignment period is too big", func() {
 					tsdbQuery.Queries[0].IntervalMs = 1000
