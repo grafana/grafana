@@ -20,7 +20,6 @@ export class StackdriverAggregation {
 
 export class StackdriverAggregationCtrl {
   alignmentPeriods: any[];
-  alignmentPeriod: string;
   aggOptions: any[];
   alignOptions: any[];
   target: any;
@@ -28,7 +27,6 @@ export class StackdriverAggregationCtrl {
   constructor(private $scope) {
     this.$scope.ctrl = this;
     this.target = $scope.target;
-    this.alignmentPeriod = $scope.alignmentPeriod;
     this.alignmentPeriods = options.alignmentPeriods;
     this.aggOptions = options.aggOptions;
     this.alignOptions = options.alignOptions;
@@ -67,7 +65,7 @@ export class StackdriverAggregationCtrl {
 
   formatAlignmentText() {
     const selectedAlignment = this.alignOptions.find(ap => ap.value === this.target.aggregation.perSeriesAligner);
-    return `${kbn.secondsToHms(this.alignmentPeriod)} interval (${selectedAlignment.text})`;
+    return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${selectedAlignment.text})`;
   }
 }
 
