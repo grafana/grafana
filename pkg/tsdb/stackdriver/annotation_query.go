@@ -2,6 +2,8 @@ package stackdriver
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -42,9 +44,9 @@ func (e *StackdriverExecutor) parseToAnnotations(queryRes *tsdb.QueryResult, dat
 
 			annotation := make(map[string]string)
 			annotation["time"] = point.Interval.EndTime.UTC().Format(time.RFC3339)
-			annotation["title"] = title
+			annotation["title"] = formatAnnotationText(title, point.Value.DoubleValue, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
 			annotation["tags"] = tags
-			annotation["text"] = text
+			annotation["text"] = formatAnnotationText(text, point.Value.DoubleValue, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
 			annotations = append(annotations, annotation)
 		}
 	}
@@ -76,21 +78,40 @@ func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResu
 	slog.Info("anno", "len", len(data))
 }
 
-// func (e *StackdriverExecutor) buildAnnotationQuery(tsdbQuery *tsdb.TsdbQuery) (*StackdriverQuery, error) {
-// 	firstQuery := queryContext.Queries[0]
+func formatAnnotationText(annotationText string, pointValue float64, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {
+	result := legendKeyFormat.ReplaceAllFunc([]byte(annotationText), func(in []byte) []byte {
+		metaPartName := strings.Replace(string(in), "{{", "", 1)
+		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
+		metaPartName = strings.TrimSpace(metaPartName)
 
-// 	metricType := query.Model.Get("metricType").MustString()
-// 	filterParts := query.Model.Get("filters").MustArray()
-// 	filterString := buildFilterString(metricType, filterParts)
-// 	params := url.Values{}
-// 	params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
-// 	params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
-// 	params.Add("filter", buildFilterString(metricType, filterParts))
-// 	params.Add("view", "FULL")
+		if metaPartName == "metric.type" {
+			return []byte(metricType)
+		}
 
-// 	return &StackdriverQuery{
-// 		RefID:  firstQuery.RefID,
-// 		Params: params,
-// 		Target: "",
-// 	}, nil
-// }
+		metricPart := replaceWithMetricPart(metaPartName, metricType)
+
+		if metricPart != nil {
+			return metricPart
+		}
+
+		if metaPartName == "value" {
+			return []byte(fmt.Sprintf("%f", pointValue))
+		}
+
+		metaPartName = strings.Replace(metaPartName, "metric.label.", "", 1)
+
+		if val, exists := metricLabels[metaPartName]; exists {
+			return []byte(val)
+		}
+
+		metaPartName = strings.Replace(metaPartName, "resource.label.", "", 1)
+
+		if val, exists := resourceLabels[metaPartName]; exists {
+			return []byte(val)
+		}
+
+		return in
+	})
+
+	return string(result)
+}
