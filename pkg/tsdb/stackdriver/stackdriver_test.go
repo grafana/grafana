@@ -27,7 +27,6 @@ func TestStackdriver(t *testing.T) {
 				Queries: []*tsdb.Query{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
-							"target":     "target",
 							"metricType": "a/metric/type",
 							"view":       "FULL",
 							"aliasBy":    "testalias",
@@ -44,7 +43,7 @@ func TestStackdriver(t *testing.T) {
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
-				So(queries[0].Target, ShouldEqual, "target")
+				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_NONE&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
 				So(len(queries[0].Params), ShouldEqual, 7)
 				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
 				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
@@ -56,7 +55,6 @@ func TestStackdriver(t *testing.T) {
 
 			Convey("and query has filters", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"target":     "target",
 					"metricType": "a/metric/type",
 					"filters":    []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
 				})
@@ -71,7 +69,6 @@ func TestStackdriver(t *testing.T) {
 				Convey("and IntervalMs is larger than 60", func() {
 					tsdbQuery.Queries[0].IntervalMs = 1000000
 					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-						"target":          "target",
 						"alignmentPeriod": "grafana-auto",
 						"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
 					})
@@ -83,7 +80,6 @@ func TestStackdriver(t *testing.T) {
 				Convey("and IntervalMs is less than 60", func() {
 					tsdbQuery.Queries[0].IntervalMs = 30
 					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-						"target":          "target",
 						"alignmentPeriod": "grafana-auto",
 						"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
 					})
@@ -120,7 +116,6 @@ func TestStackdriver(t *testing.T) {
 
 			Convey("and query has aggregation mean set", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"target":             "target",
 					"metricType":         "a/metric/type",
 					"primaryAggregation": "REDUCE_MEAN",
 					"view":               "FULL",
@@ -131,7 +126,7 @@ func TestStackdriver(t *testing.T) {
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
-				So(queries[0].Target, ShouldEqual, "target")
+				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_MEAN&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
 				So(len(queries[0].Params), ShouldEqual, 7)
 				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
 				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
@@ -144,7 +139,6 @@ func TestStackdriver(t *testing.T) {
 
 			Convey("and query has group bys", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"target":             "target",
 					"metricType":         "a/metric/type",
 					"primaryAggregation": "REDUCE_NONE",
 					"groupBys":           []interface{}{"metric.label.group1", "metric.label.group2"},
@@ -156,7 +150,7 @@ func TestStackdriver(t *testing.T) {
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
-				So(queries[0].Target, ShouldEqual, "target")
+				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_NONE&aggregation.groupByFields=metric.label.group1&aggregation.groupByFields=metric.label.group2&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
 				So(len(queries[0].Params), ShouldEqual, 8)
 				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
 				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
