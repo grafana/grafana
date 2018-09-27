@@ -2,12 +2,13 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { PluginListPage, Props } from './PluginListPage';
 import { NavModel, Plugin } from '../../types';
+import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {} as NavModel,
     plugins: [] as Plugin[],
-    layoutMode: 'grid',
+    layoutMode: LayoutModes.Grid,
     loadPlugins: jest.fn(),
   };
 

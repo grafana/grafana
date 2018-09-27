@@ -12,20 +12,16 @@ export interface PluginInclude {
 }
 
 export interface PluginMetaInfo {
-  logos: {
-    large: string;
-    small: string;
-  };
-}
-
-export interface PluginInfo {
   author: {
     name: string;
     url: string;
   };
   description: string;
   links: string[];
-  logos: { small: string; large: string };
+  logos: {
+    large: string;
+    small: string;
+  };
   screenshots: string;
   updated: string;
   version: string;
@@ -36,7 +32,7 @@ export interface Plugin {
   enabled: boolean;
   hasUpdate: boolean;
   id: string;
-  info: PluginInfo;
+  info: PluginMetaInfo;
   latestVersion: string;
   name: string;
   pinned: boolean;
