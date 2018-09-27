@@ -48,15 +48,6 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 		return false
 	}
 
-	// get last successfully sent notification
-	// lastNotify := time.Time{}
-	// for _, j := range journals {
-	// 	if j.Success {
-	// 		lastNotify = time.Unix(j.SentAt, 0)
-	// 		break
-	// 	}
-	// }
-
 	// Do not notify if interval has not elapsed
 	lastNotify := time.Unix(notificationState.SentAt, 0)
 	if sendReminder && !lastNotify.IsZero() && lastNotify.Add(frequency).After(time.Now()) {
@@ -77,7 +68,7 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 }
 
 // ShouldNotify checks this evaluation should send an alert notification
-func (n *NotifierBase) ShouldNotify(ctx context.Context, c *alerting.EvalContext) bool {
+func (n *NotifierBase) ShouldNotify(ctx context.Context, c *alerting.EvalContext, notiferState *models.AlertNotificationState) bool {
 	cmd := &models.GetNotificationStateQuery{
 		OrgId:      c.Rule.OrgId,
 		AlertId:    c.Rule.Id,

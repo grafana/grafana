@@ -283,7 +283,7 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAl
 			id = ? AND
 			version = ?`
 
-		res, err := sess.Exec(sql, m.AlertNotificationStatePending, cmd.Version+1, cmd.Id, cmd.Version)
+		res, err := sess.Exec(sql, m.AlertNotificationStatePending, cmd.State.Version+1, cmd.State.Id, cmd.State.Version)
 		if err != nil {
 			return err
 		}
@@ -308,11 +308,41 @@ func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQ
 			Where("alert_notification_state.notifier_id = ?", cmd.NotifierId).
 			Get(nj)
 
+		// if exists, return it, otherwise create it with default values
 		if err != nil {
 			return err
 		}
 
 		if !exist {
+			notificationState := &m.AlertNotificationState{
+				OrgId:      cmd.OrgId,
+				AlertId:    cmd.AlertId,
+				NotifierId: cmd.NotifierId,
+				State:      "unknown",
+			}
+
+			_, err := sess.Insert(notificationState)
+
+			if err == nil {
+				return nil
+			}
+
+			uniqenessIndexFailureCodes := []string{
+				"UNIQUE constraint failed",
+				"pq: duplicate key value violates unique constraint",
+				"Error 1062: Duplicate entry ",
+			}
+
+			var alreadyExists bool
+
+			for _, code := range uniqenessIndexFailureCodes {
+				if strings.HasPrefix(err.Error(), code) {
+					alreadyExists = true
+				}
+			}
+
+			return err
+
 			return m.ErrAlertNotificationStateNotFound
 		}
 
