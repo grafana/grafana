@@ -19,51 +19,55 @@ export class StackdriverAggregation {
 }
 
 export class StackdriverAggregationCtrl {
+  alignmentPeriods: any[];
+  alignmentPeriod: string;
+  aggOptions: any[];
+  alignOptions: any[];
+  target: any;
+
   constructor(private $scope) {
-    $scope.aggOptions = options.aggOptions;
+    this.$scope.ctrl = this;
+    this.target = $scope.target;
+    this.alignmentPeriod = $scope.alignmentPeriod;
+    this.alignmentPeriods = options.alignmentPeriods;
+    this.aggOptions = options.aggOptions;
+    this.alignOptions = options.alignOptions;
     this.setAggOptions();
     this.setAlignOptions();
-    $scope.alignmentPeriods = options.alignmentPeriods;
-    $scope.formatAlignmentText = this.formatAlignmentText.bind(this);
     $scope.$on('metricTypeChanged', this.setAlignOptions.bind(this));
   }
 
   setAlignOptions() {
-    this.$scope.alignOptions = !this.$scope.target.valueType
+    this.alignOptions = !this.target.valueType
       ? []
       : options.alignOptions.filter(i => {
           return (
-            i.valueTypes.indexOf(this.$scope.target.valueType) !== -1 &&
-            i.metricKinds.indexOf(this.$scope.target.metricKind) !== -1
+            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
           );
         });
-    if (!this.$scope.alignOptions.find(o => o.value === this.$scope.target.aggregation.perSeriesAligner)) {
-      this.$scope.target.aggregation.perSeriesAligner =
-        this.$scope.alignOptions.length > 0 ? this.$scope.alignOptions[0].value : '';
+    if (!this.alignOptions.find(o => o.value === this.target.aggregation.perSeriesAligner)) {
+      this.target.aggregation.perSeriesAligner = this.alignOptions.length > 0 ? this.alignOptions[0].value : '';
     }
   }
 
   setAggOptions() {
-    this.$scope.aggOptions = !this.$scope.target.metricKind
+    this.aggOptions = !this.target.metricKind
       ? []
       : options.aggOptions.filter(i => {
           return (
-            i.valueTypes.indexOf(this.$scope.target.valueType) !== -1 &&
-            i.metricKinds.indexOf(this.$scope.target.metricKind) !== -1
+            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
           );
         });
 
-    if (!this.$scope.aggOptions.find(o => o.value === this.$scope.target.aggregation.crossSeriesReducer)) {
-      const newValue = this.$scope.aggOptions.find(o => o.value !== 'REDUCE_NONE');
-      this.$scope.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
+    if (!this.aggOptions.find(o => o.value === this.target.aggregation.crossSeriesReducer)) {
+      const newValue = this.aggOptions.find(o => o.value !== 'REDUCE_NONE');
+      this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
     }
   }
 
   formatAlignmentText() {
-    const selectedAlignment = this.$scope.alignOptions.find(
-      ap => ap.value === this.$scope.target.aggregation.perSeriesAligner
-    );
-    return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${selectedAlignment.text})`;
+    const selectedAlignment = this.alignOptions.find(ap => ap.value === this.target.aggregation.perSeriesAligner);
+    return `${kbn.secondsToHms(this.alignmentPeriod)} interval (${selectedAlignment.text})`;
   }
 }
 
