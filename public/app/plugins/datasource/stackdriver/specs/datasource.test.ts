@@ -219,4 +219,56 @@ describe('StackdriverDataSource', () => {
       });
     });
   });
+
+  describe('unit parsing', () => {
+    let ds, res;
+    beforeEach(() => {
+      ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
+    });
+    describe('when theres only one target', () => {
+      describe('and the stackdriver unit doesnt have a corresponding grafana unit', () => {
+        beforeEach(() => {
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }]);
+        });
+        it('should return none', () => {
+          expect(res).toEqual('none');
+        });
+      });
+      describe('and the stackdriver unit has a corresponding grafana unit', () => {
+        beforeEach(() => {
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }]);
+        });
+        it('should return bits', () => {
+          expect(res).toEqual('bits');
+        });
+      });
+    });
+
+    describe('when theres more than one target', () => {
+      describe('and all target units are the same', () => {
+        beforeEach(() => {
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'bit' }]);
+        });
+        it('should return bits', () => {
+          expect(res).toEqual('bits');
+        });
+      });
+      describe('and all target units are the same but doesnt have grafana mappings', () => {
+        beforeEach(() => {
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }, { unit: 'megaseconds' }]);
+        });
+        it('should return the default value - none', () => {
+          expect(res).toEqual('none');
+        });
+      });
+      describe('and all target units are not the same', () => {
+        beforeEach(() => {
+          res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'min' }]);
+        });
+        it('should return the default value - none', () => {
+          expect(res).toEqual('none');
+        });
+      });
+    });
+  });
 });

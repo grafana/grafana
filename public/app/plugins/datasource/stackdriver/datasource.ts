@@ -86,7 +86,7 @@ export default class StackdriverDatasource {
     return interpolatedGroupBys;
   }
 
-  resolveUnit(targets: any[]) {
+  resolvePanelUnitFromTargets(targets: any[]) {
     let unit = 'none';
     if (targets.length > 0 && targets.every(t => t.unit === targets[0].unit)) {
       if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit)) {
@@ -105,7 +105,7 @@ export default class StackdriverDatasource {
           return;
         }
 
-        const unit = this.resolveUnit(options.targets);
+        const unit = this.resolvePanelUnitFromTargets(options.targets);
         queryRes.series.forEach(series => {
           result.push({
             target: series.name,
