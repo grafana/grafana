@@ -2,7 +2,6 @@ package stackdriver
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -99,7 +98,7 @@ func formatAnnotationText(annotationText string, pointValue string, metricType s
 		}
 
 		if metaPartName == "value" {
-			return []byte(fmt.Sprintf("%f", pointValue))
+			return []byte(pointValue)
 		}
 
 		metaPartName = strings.Replace(metaPartName, "metric.label.", "", 1)
