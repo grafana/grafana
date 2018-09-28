@@ -97,7 +97,7 @@ func formatAnnotationText(annotationText string, pointValue string, metricType s
 			return metricPart
 		}
 
-		if metaPartName == "value" {
+		if metaPartName == "metric.value" {
 			return []byte(pointValue)
 		}
 

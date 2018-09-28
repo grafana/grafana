@@ -19,7 +19,7 @@ func TestStackdriverAnnotationQuery(t *testing.T) {
 
 			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
 			query := &StackdriverQuery{}
-			err = executor.parseToAnnotations(res, data, query, "atitle {{metric.label.instance_name}} {{value}}", "atext {{resource.label.zone}}", "atag")
+			err = executor.parseToAnnotations(res, data, query, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
 			So(err, ShouldBeNil)
 
 			Convey("Should return annotations table", func() {
