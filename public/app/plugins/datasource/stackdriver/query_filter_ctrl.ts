@@ -41,7 +41,7 @@ export class StackdriverFilterCtrl {
   datasource: any;
 
   /** @ngInject */
-  constructor(private $scope, private uiSegmentSrv, private templateSrv) {
+  constructor(private $scope, private uiSegmentSrv, private templateSrv, private $rootScope) {
     this.datasource = $scope.datasource;
     this.target = $scope.target;
     this.metricType = $scope.defaultDropdownValue;
@@ -180,7 +180,7 @@ export class StackdriverFilterCtrl {
     this.target.unit = unit;
     this.target.valueType = valueType;
     this.target.metricKind = metricKind;
-    this.$scope.$broadcast('metricTypeChanged');
+    this.$rootScope.$broadcast('metricTypeChanged');
   }
 
   async getGroupBys(segment, index, removeText?: string, removeUsed = true) {

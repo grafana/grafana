@@ -420,7 +420,7 @@ function createCtrlWithFakes(existingFilters?: string[]) {
     refresh: () => {},
   };
 
-  return new StackdriverFilterCtrl(scope, fakeSegmentServer, new TemplateSrvStub());
+  return new StackdriverFilterCtrl(scope, fakeSegmentServer, new TemplateSrvStub(), { $broadcast: param => {} });
 }
 
 function createTarget(existingFilters?: string[]) {

@@ -32,7 +32,11 @@ export class StackdriverAggregationCtrl {
     this.alignOptions = options.alignOptions;
     this.setAggOptions();
     this.setAlignOptions();
-    $scope.$on('metricTypeChanged', this.setAlignOptions.bind(this));
+    const self = this;
+    $scope.$on('metricTypeChanged', () => {
+      self.setAggOptions();
+      self.setAlignOptions();
+    });
   }
 
   setAlignOptions() {
