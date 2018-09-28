@@ -161,6 +161,7 @@ export class StackdriverFilterCtrl {
     this.target.service = this.service;
     this.metrics = this.getMetricsList();
     this.setMetricType();
+    this.getLabels();
     if (!this.metrics.find(m => m.value === this.target.metricType)) {
       this.target.metricType = this.$scope.defaultDropdownValue;
     } else {
