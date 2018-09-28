@@ -48,7 +48,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     unit: '',
     aggregation: {
       crossSeriesReducer: 'REDUCE_MEAN',
-      alignmentPeriod: 'auto',
+      alignmentPeriod: 'stackdriver-auto',
       perSeriesAligner: 'ALIGN_MEAN',
       groupBys: [],
     },
