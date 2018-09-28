@@ -158,7 +158,7 @@ export default class StackdriverDatasource {
         annotation: annotation,
         time: Date.parse(v[0]),
         title: v[1],
-        tags: [v[2]],
+        tags: [],
         text: v[3],
       };
     });
