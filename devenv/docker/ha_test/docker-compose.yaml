@@ -34,6 +34,7 @@ services:
       - GF_DATABASE_PASSWORD=password
       - GF_SESSION_PROVIDER=mysql
       - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(mysql:3306)/grafana?allowNativePasswords=true
+      - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug
     ports:
       - 3000
     depends_on:
