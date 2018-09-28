@@ -83,7 +83,7 @@ export interface ExploreState {
   tableResult: any;
 }
 
-export class Explore extends React.Component<ExploreProps, ExploreState> {
+export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
 
   constructor(props) {

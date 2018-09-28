@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
@@ -9,7 +9,7 @@ import { ExploreUrlState } from 'app/types/explore';
 import Explore, { ExploreState } from './Explore';
 import { DEFAULT_RANGE } from './TimePicker';
 
-function parseUrlState(initial: string | undefined): ExploreUrlState {
+export function parseUrlState(initial: string | undefined): ExploreUrlState {
   if (initial) {
     try {
       return JSON.parse(decodeURI(initial));
@@ -20,7 +20,7 @@ function parseUrlState(initial: string | undefined): ExploreUrlState {
   return { datasource: null, queries: [], range: DEFAULT_RANGE };
 }
 
-function serializeStateToUrlParam(state: ExploreState): string {
+export function serializeStateToUrlParam(state: ExploreState): string {
   const urlState: ExploreUrlState = {
     datasource: state.datasourceName,
     queries: state.queries.map(q => ({ query: q.query })),
@@ -44,7 +44,7 @@ interface WrapperState {
 const STATE_KEY_LEFT = 'state';
 const STATE_KEY_RIGHT = 'stateRight';
 
-export class Wrapper extends PureComponent<WrapperProps, WrapperState> {
+export class Wrapper extends Component<WrapperProps, WrapperState> {
   urlStates: { [key: string]: string };
 
   constructor(props: WrapperProps) {
