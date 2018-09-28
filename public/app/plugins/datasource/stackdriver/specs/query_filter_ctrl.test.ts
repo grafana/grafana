@@ -367,12 +367,6 @@ describe('StackdriverQueryFilterCtrl', () => {
 });
 
 function createCtrlWithFakes(existingFilters?: string[]) {
-  // StackdriverFilterCtrl.prototype.panelCtrl = {
-  //   events: { on: () => {} },
-  //   panel: { scopedVars: [], targets: [] },
-  //   refresh: () => {},
-  // };
-  // StackdriverFilterCtrl.prototype.target =
   StackdriverFilterCtrl.prototype.loadMetricDescriptors = () => {
     return Promise.resolve([]);
   };
