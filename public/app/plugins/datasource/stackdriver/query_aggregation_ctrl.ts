@@ -62,20 +62,23 @@ export class StackdriverAggregationCtrl {
         });
 
     if (!this.aggOptions.find(o => o.value === this.target.aggregation.crossSeriesReducer)) {
-      const newValue = this.aggOptions.find(o => o.value !== 'REDUCE_NONE');
-      this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
+      this.deselectAggregationOption('REDUCE_NONE');
     }
 
     if (this.target.aggregation.groupBys.length > 0) {
       this.aggOptions = this.aggOptions.filter(o => o.value !== 'REDUCE_NONE');
-      const newValue = this.aggOptions.find(o => o.value !== 'REDUCE_NONE');
-      this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
+      this.deselectAggregationOption('REDUCE_NONE');
     }
   }
 
   formatAlignmentText() {
     const selectedAlignment = this.alignOptions.find(ap => ap.value === this.target.aggregation.perSeriesAligner);
     return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${selectedAlignment.text})`;
+  }
+
+  deselectAggregationOption(notValidOptionValue: string) {
+    const newValue = this.aggOptions.find(o => o.value !== notValidOptionValue);
+    this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
   }
 }
 
