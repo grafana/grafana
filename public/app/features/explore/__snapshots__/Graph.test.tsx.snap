@@ -468,8 +468,7 @@ exports[`Render should render component with disclaimer 1`] = `
     <i
       className="fa fa-fw fa-warning disclaimer-icon"
     />
-    Showing only 20 time series.
-     
+    Showing only 20 time series. 
     <span
       className="show-all-time-series"
       onClick={[Function]}

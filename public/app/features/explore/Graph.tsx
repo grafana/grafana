@@ -163,7 +163,7 @@ class Graph extends Component<any, any> {
           !this.state.showAllTimeSeries && (
             <div className="time-series-disclaimer">
               <i className="fa fa-fw fa-warning disclaimer-icon" />
-              Showing only 20 time series.{' '}
+              {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
               <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
                 this.props.data.length
               }`}</span>
