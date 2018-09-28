@@ -51,19 +51,26 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 		return false
 	}
 
-	// Do not notify if interval has not elapsed
-	lastNotify := time.Unix(notificationState.SentAt, 0)
-	if sendReminder && !lastNotify.IsZero() && lastNotify.Add(frequency).After(time.Now()) {
-		return false
-	}
+	if context.PrevAlertState == context.Rule.State && sendReminder {
+		// Do not notify if interval has not elapsed
+		lastNotify := time.Unix(notificationState.SentAt, 0)
+		if !lastNotify.IsZero() && lastNotify.Add(frequency).After(time.Now()) {
+			return false
+		}
 
-	// Do not notify if alert state if OK or pending even on repeated notify
-	if sendReminder && (context.Rule.State == models.AlertStateOK || context.Rule.State == models.AlertStatePending) {
-		return false
+		// Do not notify if alert state is OK or pending even on repeated notify
+		if context.Rule.State == models.AlertStateOK || context.Rule.State == models.AlertStatePending {
+			return false
+		}
 	}
 
 	// Do not notify when we become OK for the first time.
-	if (context.PrevAlertState == models.AlertStatePending) && (context.Rule.State == models.AlertStateOK) {
+	if context.PrevAlertState == models.AlertStatePending && context.Rule.State == models.AlertStateOK {
+		return false
+	}
+
+	// Do not notify when we OK -> Pending
+	if context.PrevAlertState == models.AlertStateOK && context.Rule.State == models.AlertStatePending {
 		return false
 	}
 
