@@ -264,11 +264,12 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
-			version = ?
+			version = ?,
+			sent_at = ?
 		WHERE
 			id = ?`
 
-		_, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, cmd.State.Id)
+		_, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, cmd.State.SentAt, cmd.State.Id)
 
 		if err != nil {
 			return err

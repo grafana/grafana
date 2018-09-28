@@ -68,7 +68,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	if err != nil {
 		n.log.Error("failed to send notification", "id", not.GetNotifierId())
 	} else {
-		notifierState.state.SentAt = time.Now().Unix()
+		notifierState.state.SentAt = time.Now().UTC().Unix()
 	}
 
 	if evalContext.IsTestRun {
