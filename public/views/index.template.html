@@ -275,7 +275,10 @@
     document.head.insertBefore(myCSS, document.head.childNodes[document.head.childNodes.length - 1].nextSibling);
     // switch loader to show all has loaded
     window.onload = function() {
-      document.getElementsByClassName("preloader")[0].className = "preloader preloader--done";
+      var preloader = document.getElementsByClassName("preloader");
+      if (preloader.length) {
+        preloader[0].className = "preloader preloader--done";
+      }
     };
   </script>
 
