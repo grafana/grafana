@@ -302,16 +302,19 @@ func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQ
 	return withDbSession(ctx, func(sess *DBSession) error {
 		nj := &m.AlertNotificationState{}
 
-		exist, err := sess.Desc("alert_notification_state.sent_at").
-			Where("alert_notification_state.org_id = ?", cmd.OrgId).
-			Where("alert_notification_state.alert_id = ?", cmd.AlertId).
-			Where("alert_notification_state.notifier_id = ?", cmd.NotifierId).
-			Get(nj)
+		exist, err := getAlertNotificationState(sess, cmd, nj)
 
 		// if exists, return it, otherwise create it with default values
 		if err != nil {
 			return err
 		}
+
+		if exist {
+			cmd.Result = nj
+			return nil
+		}
+
+		// normally flow ends here
 
 		if !exist {
 			notificationState := &m.AlertNotificationState{
@@ -323,30 +326,38 @@ func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQ
 
 			_, err := sess.Insert(notificationState)
 
-			if err == nil {
-				return nil
-			}
-
 			uniqenessIndexFailureCodes := []string{
 				"UNIQUE constraint failed",
 				"pq: duplicate key value violates unique constraint",
 				"Error 1062: Duplicate entry ",
 			}
 
-			var alreadyExists bool
-
 			for _, code := range uniqenessIndexFailureCodes {
 				if strings.HasPrefix(err.Error(), code) {
-					alreadyExists = true
+					exist, err = getAlertNotificationState(sess, cmd, nj)
+
+					if exist && err == nil {
+						cmd.Result = nj
+						return nil
+					}
 				}
 			}
 
-			return err
-
-			return m.ErrAlertNotificationStateNotFound
+			if err != nil {
+				return err
+			}
 		}
 
 		cmd.Result = nj
 		return nil
 	})
+}
+
+func getAlertNotificationState(sess *DBSession, cmd *m.GetNotificationStateQuery, nj *m.AlertNotificationState) (bool, error) {
+	exist, err := sess.Desc("alert_notification_state.sent_at").
+		Where("alert_notification_state.org_id = ?", cmd.OrgId).
+		Where("alert_notification_state.alert_id = ?", cmd.AlertId).
+		Where("alert_notification_state.notifier_id = ?", cmd.NotifierId).
+		Get(nj)
+	return exist, err
 }
