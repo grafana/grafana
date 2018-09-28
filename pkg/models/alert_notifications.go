@@ -100,9 +100,7 @@ type SetAlertNotificationStateToPendingCommand struct {
 }
 
 type SetAlertNotificationStateToCompleteCommand struct {
-	Id      int64
-	Version int64
-	SentAt  int64
+	State *AlertNotificationState
 }
 
 type GetNotificationStateQuery struct {

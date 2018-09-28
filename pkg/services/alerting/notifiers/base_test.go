@@ -121,32 +121,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 	}
 }
 
-func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
-	Convey("base notifier", t, func() {
-		//bus.ClearBusHandlers()
-		//
-		//notifier := NewNotifierBase(&m.AlertNotification{
-		//	Id:       1,
-		//	Name:     "name",
-		//	Type:     "email",
-		//	Settings: simplejson.New(),
-		//})
-		//evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{})
-		//
-		//Convey("should not notify query returns error", func() {
-		//	bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetNotificationStateQuery) error {
-		//		return errors.New("some kind of error unknown error")
-		//	})
-		//
-		//	if notifier.ShouldNotify(context.Background(), evalContext) {
-		//		t.Errorf("should not send notifications when query returns error")
-		//	}
-		//})
-
-		t.Error("might not need this anymore, at least not like this, control flow has changedd")
-	})
-}
-
 func TestBaseNotifier(t *testing.T) {
 	Convey("default constructor for notifiers", t, func() {
 		bJson := simplejson.New()

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -58,20 +59,32 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 }
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *NotifierState) error {
-	err := notifierState.notifier.Notify(evalContext)
+	not := notifierState.notifier
+	n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+	metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
 
-	cmd := &m.SetAlertNotificationStateToCompleteCommand{
-		Id:      notifierState.state.Id,
-		Version: notifierState.state.Version,
-		SentAt:  time.Now().Unix(),
+	err := not.Notify(evalContext)
+
+	if err != nil {
+		n.log.Error("failed to send notification", "id", not.GetNotifierId())
+	} else {
+		notifierState.state.SentAt = time.Now().Unix()
 	}
 
-	err = bus.DispatchCtx(evalContext.Ctx, cmd)
-	if err == m.ErrAlertNotificationStateVersionConflict {
+	if evalContext.IsTestRun {
 		return nil
 	}
 
-	if err != nil {
+	cmd := &m.SetAlertNotificationStateToCompleteCommand{
+		State: notifierState.state,
+	}
+
+	if err = bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		if err == m.ErrAlertNotificationStateVersionConflict {
+			n.log.Error("notification state out of sync", "id", not.GetNotifierId())
+			return nil
+		}
+
 		return err
 	}
 
@@ -79,19 +92,19 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 }
 
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *NotifierState) error {
-	n.log.Debug("trying to send notification", "id", notifierState.notifier.GetNotifierId())
+	if !evalContext.IsTestRun {
+		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
+			State: notifierState.state,
+		}
 
-	setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
-		State: notifierState.state,
-	}
+		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
+		if err == m.ErrAlertNotificationStateVersionConflict {
+			return nil
+		}
 
-	err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
-	if err == m.ErrAlertNotificationStateVersionConflict {
-		return nil
-	}
-
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return n.sendAndMarkAsComplete(evalContext, notifierState)

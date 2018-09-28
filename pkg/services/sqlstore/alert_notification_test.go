@@ -25,6 +25,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldNotBeNil)
 				So(query.Result.State, ShouldEqual, "unknown")
+				So(query.Result.Version, ShouldEqual, 0)
 
 				Convey("Get existing state should not create a new state", func() {
 					query2 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
@@ -33,49 +34,66 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					So(query2.Result, ShouldNotBeNil)
 					So(query2.Result.Id, ShouldEqual, query.Result.Id)
 				})
+
+				Convey("Update existing state to pending with correct version should update database", func() {
+					s := *query.Result
+					cmd := models.SetAlertNotificationStateToPendingCommand{
+						State: &s,
+					}
+					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
+					So(err, ShouldBeNil)
+					So(cmd.State.Version, ShouldEqual, 1)
+					So(cmd.State.State, ShouldEqual, models.AlertNotificationStatePending)
+
+					query2 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+					err = GetAlertNotificationState(context.Background(), query2)
+					So(err, ShouldBeNil)
+					So(query2.Result.Version, ShouldEqual, 1)
+					So(query2.Result.State, ShouldEqual, models.AlertNotificationStatePending)
+
+					Convey("Update existing state to completed should update database", func() {
+						s := *cmd.State
+						cmd := models.SetAlertNotificationStateToCompleteCommand{
+							State: &s,
+						}
+						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
+						So(err, ShouldBeNil)
+
+						query3 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+						err = GetAlertNotificationState(context.Background(), query3)
+						So(err, ShouldBeNil)
+						So(query3.Result.Version, ShouldEqual, 2)
+						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
+					})
+
+					Convey("Update existing state to completed should update database, but return version mismatch", func() {
+						cmd.State.Version = 1000
+						s := *cmd.State
+						cmd := models.SetAlertNotificationStateToCompleteCommand{
+							State: &s,
+						}
+						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
+						So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
+
+						query3 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+						err = GetAlertNotificationState(context.Background(), query3)
+						So(err, ShouldBeNil)
+						So(query3.Result.Version, ShouldEqual, 1001)
+						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
+					})
+				})
+
+				Convey("Update existing state to pending with incorrect version should return version mismatch error", func() {
+					s := *query.Result
+					s.Version = 1000
+					cmd := models.SetAlertNotificationStateToPendingCommand{
+						State: &s,
+					}
+					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
+					So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
+				})
 			})
 		})
-
-		//Convey("Can insert new state for alert notifier", func() {
-		//	createCmd := &models.InsertAlertNotificationCommand{
-		//		AlertId:    alertId,
-		//		NotifierId: notifierId,
-		//		OrgId:      orgId,
-		//		SentAt:     1,
-		//		State:      models.AlertNotificationStateCompleted,
-		//	}
-		//
-		//	err := InsertAlertNotificationState(context.Background(), createCmd)
-		//	So(err, ShouldBeNil)
-		//
-		//	err = InsertAlertNotificationState(context.Background(), createCmd)
-		//	So(err, ShouldEqual, models.ErrAlertNotificationStateAlreadyExist)
-		//
-		//	Convey("should be able to update alert notifier state", func() {
-		//		updateCmd := &models.SetAlertNotificationStateToPendingCommand{
-		//			State: models.AlertNotificationState{
-		//				Id:         1,
-		//				SentAt:     1,
-		//				Version:    0,
-		//			}
-		//		}
-		//
-		//		err := SetAlertNotificationStateToPendingCommand(context.Background(), updateCmd)
-		//		So(err, ShouldBeNil)
-		//
-		//		Convey("should not be able to set pending on old version", func() {
-		//			err = SetAlertNotificationStateToPendingCommand(context.Background(), updateCmd)
-		//			So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
-		//		})
-		//
-		//		Convey("should be able to set state to completed", func() {
-		//			cmd := &models.SetAlertNotificationStateToCompleteCommand{Id: 1}
-		//			err = SetAlertNotificationStateToCompleteCommand(context.Background(), cmd)
-		//			So(err, ShouldBeNil)
-		//		})
-		//	})
-		//	})
-		//})
 
 		Convey("Alert notifications should be empty", func() {
 			cmd := &models.GetAlertNotificationsQuery{

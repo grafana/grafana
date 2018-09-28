@@ -255,20 +255,26 @@ func InsertAlertNotificationState(ctx context.Context, cmd *m.InsertAlertNotific
 
 func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToCompleteCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
+		version := cmd.State.Version
+		var current m.AlertNotificationState
+		sess.ID(cmd.State.Id).Get(&current)
+
+		cmd.State.State = m.AlertNotificationStateCompleted
+		cmd.State.Version++
+
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
 			version = ?
 		WHERE
 			id = ?`
 
-		res, err := sess.Exec(sql, m.AlertNotificationStateCompleted, cmd.Id, cmd.Version+1)
+		_, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, cmd.State.Id)
+
 		if err != nil {
 			return err
 		}
 
-		affected, _ := res.RowsAffected()
-
-		if affected == 0 {
+		if current.Version != version {
 			return m.ErrAlertNotificationStateVersionConflict
 		}
 
@@ -278,6 +284,10 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 
 func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToPendingCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
+		currentVersion := cmd.State.Version
+		cmd.State.State = m.AlertNotificationStatePending
+		cmd.State.Version++
+
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
 			version = ?
@@ -285,7 +295,8 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAl
 			id = ? AND
 			version = ?`
 
-		res, err := sess.Exec(sql, m.AlertNotificationStatePending, cmd.State.Version+1, cmd.State.Id, cmd.State.Version)
+		res, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, cmd.State.Id, currentVersion)
+
 		if err != nil {
 			return err
 		}
