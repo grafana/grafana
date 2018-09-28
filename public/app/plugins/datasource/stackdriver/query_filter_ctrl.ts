@@ -241,6 +241,7 @@ export class StackdriverFilterCtrl {
 
     this.target.aggregation.groupBys = this.groupBySegments.reduce(reducer, []);
     this.ensurePlusButton(this.groupBySegments);
+    this.$rootScope.$broadcast('metricTypeChanged');
     this.$scope.refresh();
   }
 

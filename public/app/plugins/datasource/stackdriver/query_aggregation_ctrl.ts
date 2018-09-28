@@ -65,6 +65,12 @@ export class StackdriverAggregationCtrl {
       const newValue = this.aggOptions.find(o => o.value !== 'REDUCE_NONE');
       this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
     }
+
+    if (this.target.aggregation.groupBys.length > 0) {
+      this.aggOptions = this.aggOptions.filter(o => o.value !== 'REDUCE_NONE');
+      const newValue = this.aggOptions.find(o => o.value !== 'REDUCE_NONE');
+      this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
+    }
   }
 
   formatAlignmentText() {
