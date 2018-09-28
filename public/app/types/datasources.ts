@@ -21,4 +21,5 @@ export interface DataSourcesState {
   dataSources: DataSource[];
   searchQuery: string;
   layoutMode: LayoutMode;
+  dataSourcesCount: number;
 }

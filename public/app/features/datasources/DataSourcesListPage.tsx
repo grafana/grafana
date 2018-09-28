@@ -5,7 +5,7 @@ import PageHeader from '../../core/components/PageHeader/PageHeader';
 import DataSourcesActionBar from './DataSourcesActionBar';
 import DataSourcesList from './DataSourcesList';
 import { loadDataSources } from './state/actions';
-import { getDataSources, getDataSourcesLayoutMode } from './state/selectors';
+import { getDataSources, getDataSourcesCount, getDataSourcesLayoutMode } from './state/selectors';
 import { getNavModel } from '../../core/selectors/navModel';
 import { DataSource, NavModel } from 'app/types';
 import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
@@ -14,6 +14,7 @@ import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 export interface Props {
   navModel: NavModel;
   dataSources: DataSource[];
+  dataSourcesCount: number;
   layoutMode: LayoutMode;
   loadDataSources: typeof loadDataSources;
 }
@@ -39,18 +40,20 @@ export class DataSourcesListPage extends PureComponent<Props> {
   }
 
   render() {
-    const { navModel, dataSources, layoutMode } = this.props;
-
-    if (dataSources.length === 0) {
-      return <EmptyListCTA model={emptyListModel} />;
-    }
+    const { dataSources, dataSourcesCount, navModel, layoutMode } = this.props;
 
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          <DataSourcesActionBar />
-          <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} />
+          {dataSourcesCount === 0 ? (
+            <EmptyListCTA model={emptyListModel} />
+          ) : (
+            [
+              <DataSourcesActionBar key="action-bar" />,
+              <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
+            ]
+          )}
         </div>
       </div>
     );
@@ -62,6 +65,7 @@ function mapStateToProps(state) {
     navModel: getNavModel(state.navIndex, 'datasources'),
     dataSources: getDataSources(state.dataSources),
     layoutMode: getDataSourcesLayoutMode(state.dataSources),
+    dataSourcesCount: getDataSourcesCount(state.dataSources),
   };
 }
 

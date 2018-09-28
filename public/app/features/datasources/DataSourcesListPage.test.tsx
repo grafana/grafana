@@ -11,6 +11,7 @@ const setup = (propOverrides?: object) => {
     layoutMode: LayoutModes.Grid,
     loadDataSources: jest.fn(),
     navModel: {} as NavModel,
+    dataSourcesCount: 0,
   };
 
   Object.assign(props, propOverrides);
@@ -28,6 +29,7 @@ describe('Render', () => {
   it('should render action bar and datasources', () => {
     const wrapper = setup({
       dataSources: getMockDataSources(5),
+      dataSourcesCount: 5,
     });
 
     expect(wrapper).toMatchSnapshot();

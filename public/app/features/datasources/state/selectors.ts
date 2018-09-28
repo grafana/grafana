@@ -8,3 +8,4 @@ export const getDataSources = state => {
 
 export const getDataSourcesSearchQuery = state => state.searchQuery;
 export const getDataSourcesLayoutMode = state => state.layoutMode;
+export const getDataSourcesCount = state => state.dataSourcesCount;

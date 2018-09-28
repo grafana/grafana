@@ -8,7 +8,9 @@ exports[`Render should render action bar and datasources 1`] = `
   <div
     className="page-container page-body"
   >
-    <Connect(DataSourcesActionBar) />
+    <Connect(DataSourcesActionBar)
+      key="action-bar"
+    />
     <DataSourcesList
       dataSources={
         Array [
@@ -128,6 +130,7 @@ exports[`Render should render action bar and datasources 1`] = `
           },
         ]
       }
+      key="list"
       layoutMode="grid"
     />
   </div>
@@ -135,18 +138,27 @@ exports[`Render should render action bar and datasources 1`] = `
 `;
 
 exports[`Render should render component 1`] = `
-<EmptyListCTA
-  model={
-    Object {
-      "buttonIcon": "gicon gicon-add-datasources",
-      "buttonLink": "datasources/new",
-      "buttonTitle": "Add data source",
-      "proTip": "You can also define data sources through configuration files.",
-      "proTipLink": "http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list",
-      "proTipLinkTitle": "Learn more",
-      "proTipTarget": "_blank",
-      "title": "There are no data sources defined yet",
-    }
-  }
-/>
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <EmptyListCTA
+      model={
+        Object {
+          "buttonIcon": "gicon gicon-add-datasources",
+          "buttonLink": "datasources/new",
+          "buttonTitle": "Add data source",
+          "proTip": "You can also define data sources through configuration files.",
+          "proTipLink": "http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list",
+          "proTipLinkTitle": "Learn more",
+          "proTipTarget": "_blank",
+          "title": "There are no data sources defined yet",
+        }
+      }
+    />
+  </div>
+</div>
 `;
