@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 
@@ -69,19 +68,7 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 
 // ShouldNotify checks this evaluation should send an alert notification
 func (n *NotifierBase) ShouldNotify(ctx context.Context, c *alerting.EvalContext, notiferState *models.AlertNotificationState) bool {
-	cmd := &models.GetNotificationStateQuery{
-		OrgId:      c.Rule.OrgId,
-		AlertId:    c.Rule.Id,
-		NotifierId: n.Id,
-	}
-
-	err := bus.DispatchCtx(ctx, cmd)
-	if err != nil {
-		n.log.Error("Could not determine last time alert notifier fired", "Alert name", c.Rule.Name, "Error", err)
-		return false
-	}
-
-	return defaultShouldNotify(c, n.SendReminder, n.Frequency, cmd.Result)
+	return defaultShouldNotify(c, n.SendReminder, n.Frequency, notiferState)
 }
 
 func (n *NotifierBase) GetType() string {
