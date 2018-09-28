@@ -192,13 +192,13 @@ export const aggOptions = [
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
-    text: 'count',
+    text: 'count true',
     value: 'REDUCE_COUNT_TRUE',
     valueTypes: [ValueTypes.BOOL],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
-    text: 'count',
+    text: 'count false',
     value: 'REDUCE_COUNT_FALSE',
     valueTypes: [ValueTypes.BOOL],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
