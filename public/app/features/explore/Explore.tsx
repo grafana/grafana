@@ -604,16 +604,18 @@ export class Explore extends React.Component<any, ExploreState> {
             </div>
 
             <main className="m-t-2">
-              {supportsGraph && showingGraph ? (
-                <Graph
-                  data={graphResult}
-                  height={graphHeight}
-                  loading={loading}
-                  id={`explore-graph-${position}`}
-                  options={requestOptions}
-                  split={split}
-                />
-              ) : null}
+              {supportsGraph &&
+                showingGraph &&
+                graphResult && (
+                  <Graph
+                    data={graphResult}
+                    height={graphHeight}
+                    loading={loading}
+                    id={`explore-graph-${position}`}
+                    options={requestOptions}
+                    split={split}
+                  />
+                )}
               {supportsTable && showingTable ? (
                 <Table className="m-t-3" data={tableResult} loading={loading} onClickCell={this.onClickTableCell} />
               ) : null}
