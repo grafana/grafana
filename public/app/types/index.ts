@@ -7,6 +7,7 @@ import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { DataSource, DataSourcesState } from './datasources';
 import { PluginMeta, Plugin, PluginsState } from './plugins';
+import { User, UsersState } from './users';
 
 export {
   Team,
@@ -36,6 +37,8 @@ export {
   Plugin,
   PluginsState,
   DataSourcesState,
+  User,
+  UsersState,
 };
 
 export interface StoreState {
@@ -46,4 +49,6 @@ export interface StoreState {
   team: TeamState;
   folder: FolderState;
   dashboard: DashboardState;
+  dataSources: DataSourcesState;
+  users: UsersState;
 }

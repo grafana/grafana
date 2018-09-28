@@ -10,7 +10,7 @@ const setup = (propOverrides?: object) => {
     plugins: [] as Plugin[],
     searchQuery: '',
     setPluginsSearchQuery: jest.fn(),
-    setPluginsLayoutMoode: jest.fn(),
+    setPluginsLayoutMode: jest.fn(),
     layoutMode: LayoutModes.Grid,
     loadPlugins: jest.fn(),
   };

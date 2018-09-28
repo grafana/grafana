@@ -16,7 +16,7 @@ export interface Props {
   layoutMode: LayoutMode;
   searchQuery: string;
   loadPlugins: typeof loadPlugins;
-  setPluginsLayoutMoode: typeof setPluginsLayoutMode;
+  setPluginsLayoutMode: typeof setPluginsLayoutMode;
   setPluginsSearchQuery: typeof setPluginsSearchQuery;
 }
 
@@ -30,7 +30,7 @@ export class PluginListPage extends PureComponent<Props> {
   }
 
   render() {
-    const { navModel, plugins, layoutMode, setPluginsLayoutMoode, setPluginsSearchQuery, searchQuery } = this.props;
+    const { navModel, plugins, layoutMode, setPluginsLayoutMode, setPluginsSearchQuery, searchQuery } = this.props;
 
     const linkButton = {
       href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
@@ -42,8 +42,9 @@ export class PluginListPage extends PureComponent<Props> {
         <div className="page-container page-body">
           <OrgActionBar
             searchQuery={searchQuery}
+            showLayoutMode={true}
             layoutMode={layoutMode}
-            setLayoutMode={mode => setPluginsLayoutMoode(mode)}
+            setLayoutMode={mode => setPluginsLayoutMode(mode)}
             setSearchQuery={query => setPluginsSearchQuery(query)}
             linkButton={linkButton}
           />
