@@ -111,7 +111,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	defer oauthJwtTokenCache.Unlock()
 	if cachedToken, found := oauthJwtTokenCache.cache[provider.getAccessTokenCacheKey()]; found {
 		if cachedToken.Expiry.After(time.Now().Add(time.Second * 10)) {
-			logger.Info("Using token from cache")
+			logger.Debug("Using token from cache")
 			return cachedToken.AccessToken, nil
 		}
 	}
