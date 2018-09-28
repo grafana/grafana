@@ -8,6 +8,7 @@ import TeamList from 'app/features/teams/TeamList';
 import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
+import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -62,9 +63,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/datasources', {
-      templateUrl: 'public/app/features/plugins/partials/ds_list.html',
-      controller: 'DataSourcesCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => DataSourcesListPage,
+      },
     })
     .when('/datasources/edit/:id', {
       templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
