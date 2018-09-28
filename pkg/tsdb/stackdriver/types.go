@@ -35,6 +35,8 @@ type StackdriverResponse struct {
 			Value struct {
 				DoubleValue float64 `json:"doubleValue"`
 				StringValue string  `json:"stringValue"`
+				BoolValue   bool    `json:"boolValue"`
+				IntValue    string  `json:"int64Value"`
 			} `json:"value"`
 		} `json:"points"`
 	} `json:"timeSeries"`

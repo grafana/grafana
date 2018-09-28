@@ -305,7 +305,15 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		// reverse the order to be ascending
 		for i := len(series.Points) - 1; i >= 0; i-- {
 			point := series.Points[i]
-			points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
+			value := point.Value.DoubleValue
+			if series.ValueType == "INT64" {
+				parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
+				if err == nil {
+					value = parsedValue
+				}
+			}
+
+			points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
 		}
 
 		defaultMetricName := series.Metric.Type
