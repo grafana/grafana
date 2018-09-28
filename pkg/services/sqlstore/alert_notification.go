@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -255,11 +256,12 @@ func InsertAlertNotificationState(ctx context.Context, cmd *m.InsertAlertNotific
 func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToCompleteCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
 		sql := `UPDATE alert_notification_state SET
-			state= ?
+			state = ?,
+			version = ?
 		WHERE
 			id = ?`
 
-		res, err := sess.Exec(sql, m.AlertNotificationStateCompleted, cmd.Id)
+		res, err := sess.Exec(sql, m.AlertNotificationStateCompleted, cmd.Id, cmd.Version+1)
 		if err != nil {
 			return err
 		}
@@ -277,7 +279,7 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToPendingCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
 		sql := `UPDATE alert_notification_state SET
-			state= ?,
+			state = ?,
 			version = ?
 		WHERE
 			id = ? AND
@@ -314,41 +316,33 @@ func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQ
 			return nil
 		}
 
-		// normally flow ends here
-
-		if !exist {
-			notificationState := &m.AlertNotificationState{
-				OrgId:      cmd.OrgId,
-				AlertId:    cmd.AlertId,
-				NotifierId: cmd.NotifierId,
-				State:      "unknown",
-			}
-
-			_, err := sess.Insert(notificationState)
-
-			uniqenessIndexFailureCodes := []string{
-				"UNIQUE constraint failed",
-				"pq: duplicate key value violates unique constraint",
-				"Error 1062: Duplicate entry ",
-			}
-
-			for _, code := range uniqenessIndexFailureCodes {
-				if strings.HasPrefix(err.Error(), code) {
-					exist, err = getAlertNotificationState(sess, cmd, nj)
-
-					if exist && err == nil {
-						cmd.Result = nj
-						return nil
-					}
-				}
-			}
-
-			if err != nil {
-				return err
-			}
+		notificationState := &m.AlertNotificationState{
+			OrgId:      cmd.OrgId,
+			AlertId:    cmd.AlertId,
+			NotifierId: cmd.NotifierId,
+			State:      "unknown",
 		}
 
-		cmd.Result = nj
+		if _, err := sess.Insert(notificationState); err != nil {
+			if dialect.IsUniqueConstraintViolation(err) {
+				exist, err = getAlertNotificationState(sess, cmd, nj)
+
+				if err != nil {
+					return err
+				}
+
+				if !exist {
+					return errors.New("Should not happen")
+				}
+
+				cmd.Result = nj
+				return nil
+			}
+
+			return err
+		}
+
+		cmd.Result = notificationState
 		return nil
 	})
 }

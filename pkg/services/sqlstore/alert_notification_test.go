@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -13,16 +14,27 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 	Convey("Testing Alert notification sql access", t, func() {
 		InitTestDB(t)
 
-		//Convey("Alert notification state", func() {
-		//var alertId int64 = 7
-		//var orgId int64 = 5
-		//var notifierId int64 = 10
+		Convey("Alert notification state", func() {
+			var alertID int64 = 7
+			var orgID int64 = 5
+			var notifierID int64 = 10
 
-		//Convey("Getting no existant state returns error", func() {
-		//	query := &models.GetNotificationStateQuery{AlertId: alertId, OrgId: orgId, NotifierId: notifierId}
-		//	err := GetAlertNotificationState(context.Background(), query)
-		//	So(err, ShouldEqual, models.ErrAlertNotificationStateNotFound)
-		//})
+			Convey("Get no existing state should create a new state", func() {
+				query := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+				err := GetAlertNotificationState(context.Background(), query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldNotBeNil)
+				So(query.Result.State, ShouldEqual, "unknown")
+
+				Convey("Get existing state should not create a new state", func() {
+					query2 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+					err := GetAlertNotificationState(context.Background(), query2)
+					So(err, ShouldBeNil)
+					So(query2.Result, ShouldNotBeNil)
+					So(query2.Result.Id, ShouldEqual, query.Result.Id)
+				})
+			})
+		})
 
 		//Convey("Can insert new state for alert notifier", func() {
 		//	createCmd := &models.InsertAlertNotificationCommand{
