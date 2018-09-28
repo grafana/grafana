@@ -3,6 +3,7 @@ package alerting
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -53,17 +54,27 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 		}
 	}
 
-	// get alert notification (version = 1)
-	// phantomjs 15 sek
-	// loopa notifier - ge mig ett lås! where version = 1
-	// send notification
-	// Släpp lås
-	//
-
 	return n.sendNotifications(context, notifierStates)
 }
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *NotifierState) error {
+	err := notifierState.notifier.Notify(evalContext)
+
+	cmd := &m.SetAlertNotificationStateToCompleteCommand{
+		Id:      notifierState.state.Id,
+		Version: notifierState.state.Version,
+		SentAt:  time.Now().Unix(),
+	}
+
+	err = bus.DispatchCtx(evalContext.Ctx, cmd)
+	if err == m.ErrAlertNotificationStateVersionConflict {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
