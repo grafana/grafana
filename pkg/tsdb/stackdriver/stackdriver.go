@@ -29,10 +29,9 @@ import (
 )
 
 var (
-	slog                  log.Logger
-	legendKeyFormat       *regexp.Regexp
-	longMetricNameFormat  *regexp.Regexp
-	shortMetricNameFormat *regexp.Regexp
+	slog             log.Logger
+	legendKeyFormat  *regexp.Regexp
+	metricNameFormat *regexp.Regexp
 )
 
 // StackdriverExecutor executes queries for the Stackdriver datasource
@@ -58,8 +57,7 @@ func init() {
 	slog = log.New("tsdb.stackdriver")
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	longMetricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/([\w\d_]+)/(.+)`)
-	shortMetricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
+	metricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
 }
 
 // Query takes in the frontend queries, parses them into the Stackdriver query format
@@ -410,27 +408,16 @@ func formatLegendKeys(metricType string, defaultMetricName string, metricLabels 
 
 func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	// https://cloud.google.com/monitoring/api/v3/metrics-details#label_names
-	longMatches := longMetricNameFormat.FindStringSubmatch(metricType)
-	shortMatches := shortMetricNameFormat.FindStringSubmatch(metricType)
+	shortMatches := metricNameFormat.FindStringSubmatch(metricType)
 
 	if metaPartName == "metric.name" {
-		if len(longMatches) > 0 {
-			return []byte(longMatches[3])
-		} else if len(shortMatches) > 0 {
+		if len(shortMatches) > 0 {
 			return []byte(shortMatches[2])
 		}
 	}
 
-	if metaPartName == "metric.category" {
-		if len(longMatches) > 0 {
-			return []byte(longMatches[2])
-		}
-	}
-
 	if metaPartName == "metric.service" {
-		if len(longMatches) > 0 {
-			return []byte(longMatches[1])
-		} else if len(shortMatches) > 0 {
+		if len(shortMatches) > 0 {
 			return []byte(shortMatches[1])
 		}
 	}

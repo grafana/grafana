@@ -329,15 +329,15 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("and the alias pattern is for metric name", func() {
 
-					query := &StackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}} category {{metric.category}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					query := &StackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
 
 					Convey("Should use alias by formatting and only show instance name", func() {
 						So(len(res.Series), ShouldEqual, 3)
-						So(res.Series[0].Name, ShouldEqual, "metric cpu/usage_time service compute category instance")
-						So(res.Series[1].Name, ShouldEqual, "metric cpu/usage_time service compute category instance")
-						So(res.Series[2].Name, ShouldEqual, "metric cpu/usage_time service compute category instance")
+						So(res.Series[0].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
+						So(res.Series[1].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
+						So(res.Series[2].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
 					})
 				})
 			})
