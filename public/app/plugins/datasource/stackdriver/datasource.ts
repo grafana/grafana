@@ -166,6 +166,10 @@ export default class StackdriverDatasource {
     return results;
   }
 
+  metricFindQuery(query) {
+    throw new Error('Template variables support is not yet imlemented');
+  }
+
   testDatasource() {
     const path = `v3/projects/${this.projectName}/metricDescriptors`;
     return this.doRequest(`${this.baseUrl}${path}`)
