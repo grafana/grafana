@@ -3,8 +3,8 @@ export function generateQueryKey(index = 0) {
 }
 
 export function ensureQueries(queries?) {
-  if (queries && typeof queries === 'object' && queries.length > 0 && typeof queries[0] === 'string') {
-    return queries.map((query, i) => ({ key: generateQueryKey(i), query }));
+  if (queries && typeof queries === 'object' && queries.length > 0 && typeof queries[0].query === 'string') {
+    return queries.map(({ query }, i) => ({ key: generateQueryKey(i), query }));
   }
   return [{ key: generateQueryKey(), query: '' }];
 }
