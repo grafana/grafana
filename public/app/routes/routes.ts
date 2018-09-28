@@ -6,6 +6,7 @@ import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
 import TeamList from 'app/features/teams/TeamList';
 import ApiKeys from 'app/features/api-keys/ApiKeysPage';
+import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
 
@@ -249,9 +250,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/plugins', {
-      templateUrl: 'public/app/features/plugins/partials/plugin_list.html',
-      controller: 'PluginListCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => PluginListPage,
+      },
     })
     .when('/plugins/:pluginId/edit', {
       templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',

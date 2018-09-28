@@ -6,9 +6,9 @@ import { FolderDTO, FolderState, FolderInfo } from './folders';
 import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { DataSource } from './datasources';
-import { PluginMeta } from './plugins';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { User } from './user';
+import { PluginMeta, Plugin, PluginsState } from './plugins';
 
 export {
   Team,
@@ -39,6 +39,8 @@ export {
   ApiKeysState,
   NewApiKey,
   User,
+  Plugin,
+  PluginsState,
 };
 
 export interface StoreState {

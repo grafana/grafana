@@ -528,10 +528,11 @@ export class Explore extends React.Component<any, ExploreState> {
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
-                className="datasource-picker"
                 clearable={false}
+                className="gf-form-input gf-form-input--form-dropdown datasource-picker"
                 onChange={this.onChangeDatasource}
                 options={datasources}
+                isOpen={true}
                 placeholder="Loading datasources..."
                 value={selectedDatasource}
               />
@@ -586,17 +587,17 @@ export class Explore extends React.Component<any, ExploreState> {
             />
             <div className="result-options">
               {supportsGraph ? (
-                <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.onClickGraphButton}>
+                <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
                   Graph
                 </button>
               ) : null}
               {supportsTable ? (
-                <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.onClickTableButton}>
+                <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
                   Table
                 </button>
               ) : null}
               {supportsLogs ? (
-                <button className={`btn navbar-button ${logsButtonActive}`} onClick={this.onClickLogsButton}>
+                <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
                   Logs
                 </button>
               ) : null}
