@@ -11,6 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
+const (
+	triggMetrString = "Triggered metrics:\n\n"
+)
+
 type NotifierBase struct {
 	Name         string
 	Type         string

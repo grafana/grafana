@@ -155,10 +155,10 @@
 			</div>
 		</div>
 
-		<div ng-if="current.type === 'text'" class="gf-form-group">
+		<div ng-if="current.type === 'textbox'" class="gf-form-group">
 			<h5 class="section-heading">Text options</h5>
 			<div class="gf-form">
-				<span class="gf-form-label">Value</span>
+				<span class="gf-form-label">Default value</span>
 				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="default value, if any"></input>
 			</div>
 		</div>
