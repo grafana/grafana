@@ -3,6 +3,7 @@ package stackdriver
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,12 +42,15 @@ func (e *StackdriverExecutor) parseToAnnotations(queryRes *tsdb.QueryResult, dat
 		// reverse the order to be ascending
 		for i := len(series.Points) - 1; i >= 0; i-- {
 			point := series.Points[i]
-
+			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
+			if series.ValueType == "STRING" {
+				value = point.Value.StringValue
+			}
 			annotation := make(map[string]string)
 			annotation["time"] = point.Interval.EndTime.UTC().Format(time.RFC3339)
-			annotation["title"] = formatAnnotationText(title, point.Value.DoubleValue, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
+			annotation["title"] = formatAnnotationText(title, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
 			annotation["tags"] = tags
-			annotation["text"] = formatAnnotationText(text, point.Value.DoubleValue, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
+			annotation["text"] = formatAnnotationText(text, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
 			annotations = append(annotations, annotation)
 		}
 	}
@@ -78,7 +82,7 @@ func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResu
 	slog.Info("anno", "len", len(data))
 }
 
-func formatAnnotationText(annotationText string, pointValue float64, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {
+func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {
 	result := legendKeyFormat.ReplaceAllFunc([]byte(annotationText), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)

@@ -34,6 +34,7 @@ type StackdriverResponse struct {
 			} `json:"interval"`
 			Value struct {
 				DoubleValue float64 `json:"doubleValue"`
+				StringValue string  `json:"stringValue"`
 			} `json:"value"`
 		} `json:"points"`
 	} `json:"timeSeries"`
