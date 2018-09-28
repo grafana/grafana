@@ -306,10 +306,19 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		for i := len(series.Points) - 1; i >= 0; i-- {
 			point := series.Points[i]
 			value := point.Value.DoubleValue
+
 			if series.ValueType == "INT64" {
 				parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
 				if err == nil {
 					value = parsedValue
+				}
+			}
+
+			if series.ValueType == "BOOL" {
+				if point.Value.BoolValue {
+					value = 1
+				} else {
+					value = 0
 				}
 			}
 
