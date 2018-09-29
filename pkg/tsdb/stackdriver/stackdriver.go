@@ -130,7 +130,7 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 		params.Add("filter", buildFilterString(metricType, filterParts))
-		params.Add("view", query.Model.Get("view").MustString())
+		params.Add("view", query.Model.Get("view").MustString("FULL"))
 		setAggParams(&params, query, durationSeconds)
 
 		target = params.Encode()
