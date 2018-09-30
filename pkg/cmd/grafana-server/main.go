@@ -104,7 +104,7 @@ func listenToSystemSignals(server *GrafanaServerImpl) {
 
 	for {
 		select {
-		case _ = <-sighupChan:
+		case <-sighupChan:
 			log.Reload()
 		case sig := <-signalChan:
 			server.Shutdown(fmt.Sprintf("System signal: %s", sig))
