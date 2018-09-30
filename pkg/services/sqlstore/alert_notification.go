@@ -27,8 +27,15 @@ func init() {
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
-		_, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
-		return err
+		if _, err := sess.Exec(sql, cmd.OrgId, cmd.Id); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_notification_state WHERE alert_notification_state.org_id = ? AND alert_notification_state.notifier_id = ?", cmd.OrgId, cmd.Id); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 
