@@ -118,6 +118,22 @@ func TestShouldSendAlertNotification(t *testing.T) {
 
 			expect: true,
 		},
+		{
+			name:      "OK -> alerting with notifciation state pending and updated 30 seconds ago should not trigger",
+			newState:  m.AlertStateAlerting,
+			prevState: m.AlertStateOK,
+			state:     &m.AlertNotificationState{State: m.AlertNotificationStatePending, UpdatedAt: tnow.Add(-30 * time.Second).Unix()},
+
+			expect: false,
+		},
+		{
+			name:      "OK -> alerting with notifciation state pending and updated 2 minutes ago should trigger",
+			newState:  m.AlertStateAlerting,
+			prevState: m.AlertStateOK,
+			state:     &m.AlertNotificationState{State: m.AlertNotificationStatePending, UpdatedAt: tnow.Add(-2 * time.Minute).Unix()},
+
+			expect: true,
+		},
 	}
 
 	for _, tc := range tcs {

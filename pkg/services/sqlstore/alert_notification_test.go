@@ -18,6 +18,9 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			var alertID int64 = 7
 			var orgID int64 = 5
 			var notifierID int64 = 10
+			oldTimeNow := timeNow
+			now := time.Date(2018, 9, 30, 0, 0, 0, 0, time.UTC)
+			timeNow = func() time.Time { return now }
 
 			Convey("Get no existing state should create a new state", func() {
 				query := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
@@ -26,6 +29,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(query.Result, ShouldNotBeNil)
 				So(query.Result.State, ShouldEqual, "unknown")
 				So(query.Result.Version, ShouldEqual, 0)
+				So(query.Result.UpdatedAt, ShouldEqual, now.Unix())
 
 				Convey("Get existing state should not create a new state", func() {
 					query2 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
@@ -33,6 +37,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(query2.Result, ShouldNotBeNil)
 					So(query2.Result.Id, ShouldEqual, query.Result.Id)
+					So(query2.Result.UpdatedAt, ShouldEqual, now.Unix())
 				})
 
 				Convey("Update existing state to pending with correct version should update database", func() {
@@ -50,6 +55,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(query2.Result.Version, ShouldEqual, 1)
 					So(query2.Result.State, ShouldEqual, models.AlertNotificationStatePending)
+					So(query2.Result.UpdatedAt, ShouldEqual, now.Unix())
 
 					Convey("Update existing state to completed should update database", func() {
 						s := *cmd.State
@@ -64,6 +70,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(query3.Result.Version, ShouldEqual, 2)
 						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
+						So(query3.Result.UpdatedAt, ShouldEqual, now.Unix())
 					})
 
 					Convey("Update existing state to completed should update database, but return version mismatch", func() {
@@ -80,6 +87,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(query3.Result.Version, ShouldEqual, 1001)
 						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
+						So(query3.Result.UpdatedAt, ShouldEqual, now.Unix())
 					})
 				})
 
@@ -92,6 +100,10 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
 					So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
 				})
+			})
+
+			Reset(func() {
+				timeNow = oldTimeNow
 			})
 		})
 

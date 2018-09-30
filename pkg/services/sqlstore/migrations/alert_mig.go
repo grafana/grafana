@@ -120,6 +120,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "sent_at", Type: DB_BigInt, Nullable: false},
 			{Name: "state", Type: DB_NVarchar, Length: 50, Nullable: false},
 			{Name: "version", Type: DB_BigInt, Nullable: false},
+			{Name: "updated_at", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: UniqueIndex},
