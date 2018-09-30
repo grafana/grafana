@@ -111,10 +111,3 @@ type GetNotificationStateQuery struct {
 	Result *AlertNotificationState
 }
 
-type InsertAlertNotificationCommand struct {
-	OrgId      int64
-	AlertId    int64
-	NotifierId int64
-	SentAt     int64
-	State      AlertNotificationStateType
-}

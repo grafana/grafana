@@ -19,7 +19,6 @@ func init() {
 	bus.AddHandler("sql", DeleteAlertNotification)
 	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
-	bus.AddHandlerCtx("sql", InsertAlertNotificationState)
 	bus.AddHandlerCtx("sql", GetAlertNotificationState)
 	bus.AddHandlerCtx("sql", SetAlertNotificationStateToCompleteCommand)
 	bus.AddHandlerCtx("sql", SetAlertNotificationStateToPendingCommand)
@@ -227,28 +226,6 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		}
 
 		cmd.Result = &current
-		return nil
-	})
-}
-
-func InsertAlertNotificationState(ctx context.Context, cmd *m.InsertAlertNotificationCommand) error {
-	return withDbSession(ctx, func(sess *DBSession) error {
-		notificationState := &m.AlertNotificationState{
-			OrgId:      cmd.OrgId,
-			AlertId:    cmd.AlertId,
-			NotifierId: cmd.NotifierId,
-			SentAt:     cmd.SentAt,
-			State:      cmd.State,
-		}
-
-		if _, err := sess.Insert(notificationState); err != nil {
-			if dialect.IsUniqueConstraintViolation(err) {
-				return m.ErrAlertNotificationStateAlreadyExist
-			}
-
-			return err
-		}
-
 		return nil
 	})
 }
