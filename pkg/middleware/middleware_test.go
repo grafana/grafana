@@ -435,11 +435,6 @@ func (sc *scenarioContext) withValidApiKey() *scenarioContext {
 	return sc
 }
 
-func (sc *scenarioContext) withInvalidApiKey() *scenarioContext {
-	sc.apiKey = "nvalidhhhhds"
-	return sc
-}
-
 func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioContext {
 	sc.authHeader = authHeader
 	return sc
