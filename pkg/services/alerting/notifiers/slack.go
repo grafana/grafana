@@ -3,12 +3,14 @@ package notifiers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/components/null"
 	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -112,7 +114,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	for index, evt := range evalContext.EvalMatches {
 		fields = append(fields, map[string]interface{}{
 			"title": evt.Metric,
-			"value": evt.Value,
+			"value": GetLocaleValue(evt.Value),
 			"short": true,
 		})
 		if index > fieldLimitCount {
@@ -231,4 +233,12 @@ func GenerateSlackBody(file string, token string, recipient string) (map[string]
 		"Authorization": "auth_token=\"" + token + "\"",
 	}
 	return headers, b, nil
+}
+
+func GetLocaleValue(value null.Float) string {
+	if value.IsZero() {
+		return "$0"
+	} else {
+		return humanize.Comma(int64(value.Float64))
+	}
 }
