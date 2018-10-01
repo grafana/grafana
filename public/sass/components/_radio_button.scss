@@ -1,10 +1,12 @@
 .radio-group {
   display: flex;
+  margin-bottom: $spacer * 2.5;
 }
 
 .radio-button {
   display: flex;
   cursor: pointer;
+  margin-right: $spacer;
 
   & input {
     display: none;
@@ -13,6 +15,9 @@
   :checked + .radio-input-box {
     &:after {
       transform: scale(1);
+    }
+    &:before {
+      border: 2px solid #ff7941;
     }
   }
 }
@@ -34,28 +39,29 @@
   width: 64px;
   background-color: #fff;
   border: 1px solid #dde4ed;
-  //border-left: none;
+  border-left: none;
   border-radius: 0 3px 3px 0;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
 
-  /*&:before {
-    content: "";
+  &:before {
+    content: '';
     display: block;
     position: absolute;
     width: 20px;
     height: 20px;
-    right: 24px;
+    right: 22px;
     top: 50%;
     margin-top: -10px;
-    border: 2px solid #ff7941;
-    //border-radius: 50%;
+    border: 1px solid #dde4ed;
+    border-radius: 50%;
+    transition: 0.05s ease-in-out;
   }
 
   &:after {
-    content: "";
+    content: '';
     display: block;
     position: absolute;
     width: 10px;
@@ -63,42 +69,10 @@
     transform: scale(0);
     top: 50%;
     margin-top: -5px;
-    right: 26px;
+    right: 27px;
     background: #ff7941;
-    //border-radius: 50%;
-    transition: .15s ease-in-out;
+    border-radius: 50%;
+    transition: 0.15s ease-in-out;
     transform-origin: center;
-  }*/
-
-  & .ring {
-    content: '';
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    //position: absolute;
-    width: 20px;
-    height: 20px;
-    //right: 24px;
-    //top: 50%;
-    //margin-top: -10px;
-    //border: 2px solid #ff7941;
-    //border-radius: 50%;
-    background-color: pink;
-
-    & .sphere {
-      content: '';
-      display: block;
-      //position: absolute;
-      width: 10px;
-      height: 10px;
-      transform: scale(1);
-      //top: 50%;
-      //margin-top: -5px;
-      //right: 26px;
-      background: #ff7941;
-      //border-radius: 50%;
-      transition: 0.15s ease-in-out;
-      transform-origin: center;
-    }
   }
 }

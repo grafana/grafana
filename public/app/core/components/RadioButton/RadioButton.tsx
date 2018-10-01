@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 
 export interface RadioButtonProps {
-  radioName: string;
-  radioLabel: string;
+  name: string;
+  label: string;
   checked?: boolean;
-  radioFunction();
+  value;
 }
 
 export default class RadioButton extends PureComponent<RadioButtonProps> {
@@ -18,22 +18,18 @@ export default class RadioButton extends PureComponent<RadioButtonProps> {
 
   renderInput() {
     if (this.props.checked) {
-      return <input type="radio" name={this.props.radioName} onClick={this.props.radioFunction} defaultChecked />;
+      return <input type="radio" name={this.props.name} onClick={this.props.value} defaultChecked />;
     } else {
-      return <input type="radio" name={this.props.radioName} onClick={this.props.radioFunction} />;
+      return <input type="radio" name={this.props.name} onClick={this.props.value} />;
     }
   }
 
   render() {
     return (
       <label className="radio-button">
-        <span className="radio-label">{this.props.radioLabel}</span>
+        <span className="radio-label">{this.props.label}</span>
         {this.renderInput()}
-        <div className="radio-input-box">
-          <div className="ring">
-            <div className="sphere" />
-          </div>
-        </div>
+        <div className="radio-input-box" />
       </label>
     );
   }

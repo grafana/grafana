@@ -1,165 +1,201 @@
 import React, { PureComponent } from 'react';
-import RadioButton from 'app/core/components/RadioButton/RadioButton';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import { Label } from 'app/core/components/Forms/Forms';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import Select from 'react-select';
 
 export interface Props {
   navModel: NavModel;
 }
 
 export interface State {
-  onNewUser: boolean;
-  onByInvite: boolean;
+  inviteChecked: { id: boolean };
+  user: {
+    role: string;
+    email: string;
+    name: string;
+    userName: string;
+    password: string;
+  };
+  invite: {
+    role: string;
+    email: string;
+    sendEmail: boolean;
+  };
 }
 
 export class AddUserPage extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
-    this.state = { onNewUser: true, onByInvite: true };
+    this.state = {
+      inviteChecked: { id: false },
+      user: {
+        role: 'Editor',
+        email: '',
+        name: '',
+        userName: '',
+        password: '',
+      },
+      invite: {
+        role: 'Editor',
+        email: '',
+        sendEmail: true,
+      },
+    };
+
+    this.changeEmail = this.changeEmail.bind(this);
+    this.changeRole = this.changeRole.bind(this);
+    this.addUser = this.addUser.bind(this);
+    this.changeUserName = this.changeUserName.bind(this);
+    this.changeName = this.changeName.bind(this);
+    this.changePassword = this.changePassword.bind(this);
   }
 
-  onNewUser() {
-    this.setState({ onNewUser: true });
+  changeEmail(event) {
+    const user = Object.assign({}, this.state.user);
+    user.email = event.target.value;
+    this.setState({ user });
   }
 
-  onGetUser() {
-    this.setState({ onNewUser: false });
+  changeRole(event) {
+    const user = Object.assign({}, this.state.user);
+    user.role = event.target.value;
+    this.setState({ user });
   }
 
-  onViaMail() {
-    this.setState({ onByInvite: true });
+  changeUserName(event) {
+    const user = Object.assign({}, this.state.user);
+    user.userName = event.target.value;
+    this.setState({ user });
   }
 
-  onCreate() {
-    this.setState({ onByInvite: false });
+  changeName(event) {
+    const user = Object.assign({}, this.state.user);
+    user.name = event.target.value;
+    this.setState({ user });
   }
 
-  renderGetUser() {
-    return (
-      <div className="gf-form-group">
-        <div className="gf-form max-width-30">
-          <span className="gf-form-label width-10">Email or Username</span>
-          <input
-            type="text"
-            ng-model="ctrl.invite.loginOrEmail"
-            required
-            className="gf-form-input"
-            placeholder="email@test.com"
-          />
-        </div>
-        <div className="gf-form max-width-30">
-          <span className="gf-form-label width-10">Role</span>
-          <select
-            ng-model="ctrl.invite.role"
-            className="gf-form-input"
-            ng-options="f for f in ['Viewer', 'Editor', 'Admin']"
-          />
-        </div>
-      </div>
-    );
+  changePassword(event) {
+    const user = Object.assign({}, this.state.user);
+    user.password = event.target.value;
+    this.setState({ user });
   }
 
-  renderNewUser() {
-    let createManually;
-    if (!this.state.onByInvite) {
-      createManually = this.renderCreateManually();
+  checkInvite(e) {
+    const inviteChecked = this.state.inviteChecked;
+    inviteChecked.id = e.target.checked;
+    this.setState({ inviteChecked: inviteChecked });
+  }
+
+  findExistingUser() {}
+
+  options() {
+    return ['hej', 'va'];
+  }
+
+  sendInvite() {
+    const backendSrv = getBackendSrv();
+
+    return backendSrv.post('/api/org/invites', this.state.invite).then(() => {
+      //this.$location.path('org/users/');
+    });
+  }
+
+  createUser() {
+    const backendSrv = getBackendSrv();
+
+    return backendSrv.post('/api/admin/users', this.state.user).then(() => {
+      //this.$location.path('org/users/');
+    });
+  }
+  addUser() {
+    console.log(this.state.inviteChecked);
+    if (this.state.inviteChecked.id) {
+      this.sendInvite();
+    } else {
+      this.createUser();
     }
-    return (
-      <div>
-        <div className="gf-form-group">
-          <div className="gf-form max-width-30">
-            <span className="gf-form-label width-10">Email</span>
-            <input
-              type="text"
-              ng-model="ctrl.invite.loginOrEmail"
-              required
-              className="gf-form-input"
-              placeholder="email@test.com"
-            />
-          </div>
-          <div className="gf-form max-width-30">
-            <span className="gf-form-label width-10">Role</span>
-            <select
-              ng-model="ctrl.invite.role"
-              className="gf-form-input"
-              ng-options="f for f in ['Viewer', 'Editor', 'Admin']"
-            />
-          </div>
-        </div>
-        <div className="gf-form-group">
-          <RadioButton
-            radioName={'invite-create'}
-            radioLabel={'Via invite'}
-            radioFunction={() => this.onViaMail()}
-            checked={true}
-          />
-          <RadioButton
-            radioName={'invite-create'}
-            radioLabel={'Create manually'}
-            radioFunction={() => this.onCreate()}
-          />
-        </div>
-        {createManually}
-      </div>
-    );
-  }
-
-  renderCreateManually() {
-    return (
-      <div className="gf-form-group">
-        <div className="gf-form max-width-30" ng-if="ctrl.create">
-          <span className="gf-form-label width-10">Username</span>
-          <input
-            type="text"
-            ng-model="ctrl.invite.loginOrEmail"
-            required
-            className="gf-form-input"
-            placeholder="username"
-          />
-        </div>
-        <div className="gf-form max-width-30" ng-if="ctrl.create">
-          <span className="gf-form-label width-10">Name</span>
-          <input type="text" ng-model="ctrl.invite.name" className="gf-form-input" placeholder="name (optional)" />
-        </div>
-        <div className="gf-form max-width-30" ng-if="ctrl.create">
-          <span className="gf-form-label width-10">Password</span>
-          <input type="text" ng-model="ctrl.invite.name" className="gf-form-input" placeholder="" />
-        </div>
-      </div>
-    );
   }
 
   render() {
-    let form;
     const { navModel } = this.props;
-    if (this.state.onNewUser) {
-      form = this.renderNewUser();
-    } else {
-      form = this.renderGetUser();
-    }
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
           <div className="gf-form-group">
-            <RadioButton
-              radioName={'new-get-user'}
-              radioLabel={'New user'}
-              radioFunction={() => this.onNewUser()}
-              checked={true}
-            />
-            <RadioButton
-              radioName={'new-get-user'}
-              radioLabel={'Get user from other org'}
-              radioFunction={() => this.onGetUser()}
-            />
+            <div className="gf-form max-width-30">
+              <Label>Email</Label>
+              <input
+                type="text"
+                required
+                className="gf-form-input"
+                placeholder="email@test.com"
+                value={this.state.user.email}
+                onChange={this.changeEmail}
+              />
+            </div>
+            <div className="gf-form max-width-30">
+              <Label>Email</Label>
+              <Select value={this.state.user.email} onChange={this.changeEmail} loadOptions={this.options} />
+            </div>
+            <div className="gf-form max-width-30">
+              <Label>Role</Label>
+              <div className="gf-form-select-wrapper width-20">
+                <select className="gf-form-input" value={this.state.user.role} onChange={this.changeRole}>
+                  <option value="Viewer">Viewer</option>
+                  <option value="Editor">Editor</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <label className="gf-form">
+              <Label>Add user by invite</Label>
+              <div className="gf-form-switch">
+                <input id="invite" type="checkbox" onChange={e => this.checkInvite(e)} />
+                <label data-on="Yes" data-off="No" />
+              </div>
+            </label>
           </div>
-          {form}
+          <div className="gf-form-group">
+            <div className="gf-form max-width-30" ng-if="ctrl.create">
+              <Label>Username</Label>
+              <input
+                type="text"
+                required
+                className="gf-form-input"
+                placeholder="username"
+                value={this.state.user.userName}
+                onChange={this.changeUserName}
+              />
+            </div>
+            <div className="gf-form max-width-30" ng-if="ctrl.create">
+              <Label>Name</Label>
+              <input
+                type="text"
+                className="gf-form-input"
+                placeholder="name (optional)"
+                value={this.state.user.name}
+                onChange={this.changeName}
+              />
+            </div>
+            <div className="gf-form max-width-30" ng-if="ctrl.create">
+              <Label>Password</Label>
+              <input
+                type="text"
+                className="gf-form-input"
+                placeholder=""
+                value={this.state.user.password}
+                onChange={this.changePassword}
+              />
+            </div>
+          </div>
           <div className="gf-form-button-row">
-            <button type="submit" className="btn btn-success">
+            <button type="submit" className="btn btn-success" onClick={this.addUser}>
               Add
             </button>
             <a className="btn" href="org/users">
