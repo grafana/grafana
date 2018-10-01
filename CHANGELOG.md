@@ -1,8 +1,11 @@
-# 5.4.0 (unreleased)
+# 5.3.0 (unreleased)
+
+# 5.3.0-beta2 (2018-10-01)
 
 ### New Features
 
 * **Annotations**: Enable template variables in tagged annotations queries [#9735](https://github.com/grafana/grafana/issues/9735)
+* **Stackdriver**: Support for Google Stackdriver Datasource [#13289](https://github.com/grafana/grafana/pull/13289)
 
 ### Minor
 
@@ -15,12 +18,9 @@
 * **Singlestat**: Fix gauge display accuracy for percents [#13270](https://github.com/grafana/grafana/issues/13270), thx [@tianon](https://github.com/tianon)
 * **Dashboard**: Prevent auto refresh from starting when loading dashboard with absolute time range [#12030](https://github.com/grafana/grafana/issues/12030)
 * **Templating**: New templating variable type `Text box` that allows free text input [#3173](https://github.com/grafana/grafana/issues/3173)
-
-# 5.3.0 (unreleased)
-
-### Minor
-
 * **Alerting**: Link to view full size image in Microsoft Teams alert notifier [#13121](https://github.com/grafana/grafana/issues/13121), thx [@holiiveira](https://github.com/holiiveira)
+* **Alerting**: Fixes a bug where all alerts would send reminders after upgrade & restart [#13402](https://github.com/grafana/grafana/pull/13402)
+* **Alerting**: Concurrent render limit for graphs used in notifications [#13401](https://github.com/grafana/grafana/pull/13401)
 * **Postgres/MySQL/MSSQL**: Add support for replacing $__interval and  $__interval_ms in alert queries [#11555](https://github.com/grafana/grafana/issues/11555), thx [@svenklemm](https://github.com/svenklemm)
 
 # 5.3.0-beta1 (2018-09-06)
