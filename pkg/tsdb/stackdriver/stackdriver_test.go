@@ -353,8 +353,5 @@ func loadTestFile(path string) (StackdriverResponse, error) {
 		return data, err
 	}
 	err = json.Unmarshal(jsonBody, &data)
-	if err != nil {
-		return data, err
-	}
-	return data, nil
+	return data, err
 }
