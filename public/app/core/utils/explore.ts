@@ -1,4 +1,10 @@
 import { renderUrl } from 'app/core/utils/url';
+import { ExploreState, ExploreUrlState } from 'app/types/explore';
+
+export const DEFAULT_RANGE = {
+  from: 'now-6h',
+  to: 'now',
+};
 
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
@@ -49,4 +55,24 @@ export async function getExploreUrl(
     url = renderUrl('/explore', { state: exploreState });
   }
   return url;
+}
+
+export function parseUrlState(initial: string | undefined): ExploreUrlState {
+  if (initial) {
+    try {
+      return JSON.parse(decodeURI(initial));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return { datasource: null, queries: [], range: DEFAULT_RANGE };
+}
+
+export function serializeStateToUrlParam(state: ExploreState): string {
+  const urlState: ExploreUrlState = {
+    datasource: state.datasourceName,
+    queries: state.queries.map(q => ({ query: q.query })),
+    range: state.range,
+  };
+  return JSON.stringify(urlState);
 }

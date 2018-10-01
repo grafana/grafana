@@ -1,6 +1,5 @@
-import { serializeStateToUrlParam, parseUrlState } from './Wrapper';
-import { DEFAULT_RANGE } from './TimePicker';
-import { ExploreState } from './Explore';
+import { DEFAULT_RANGE, serializeStateToUrlParam, parseUrlState } from './explore';
+import { ExploreState } from 'app/types/explore';
 
 const DEFAULT_EXPLORE_STATE: ExploreState = {
   datasource: null,
@@ -27,7 +26,7 @@ const DEFAULT_EXPLORE_STATE: ExploreState = {
   tableResult: null,
 };
 
-describe('Wrapper state functions', () => {
+describe('state functions', () => {
   describe('parseUrlState', () => {
     it('returns default state on empty string', () => {
       expect(parseUrlState('')).toMatchObject({
@@ -57,7 +56,7 @@ describe('Wrapper state functions', () => {
       };
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"query":"metric{test=\\"a/b\\"}"},' +
-          '{"query":"super{foo=\\"x/z\\"}"}],"range":{"from":"now - 5h","to":"now"}}'
+        '{"query":"super{foo=\\"x/z\\"}"}],"range":{"from":"now - 5h","to":"now"}}'
       );
     });
   });

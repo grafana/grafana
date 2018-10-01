@@ -3,31 +3,11 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 import { updateLocation } from 'app/core/actions';
+import { serializeStateToUrlParam, parseUrlState } from 'app/core/utils/explore';
 import { StoreState } from 'app/types';
-import { ExploreUrlState } from 'app/types/explore';
+import { ExploreState } from 'app/types/explore';
 
-import Explore, { ExploreState } from './Explore';
-import { DEFAULT_RANGE } from './TimePicker';
-
-export function parseUrlState(initial: string | undefined): ExploreUrlState {
-  if (initial) {
-    try {
-      return JSON.parse(decodeURI(initial));
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE };
-}
-
-export function serializeStateToUrlParam(state: ExploreState): string {
-  const urlState: ExploreUrlState = {
-    datasource: state.datasourceName,
-    queries: state.queries.map(q => ({ query: q.query })),
-    range: state.range,
-  };
-  return JSON.stringify(urlState);
-}
+import Explore from './Explore';
 
 interface WrapperProps {
   backendSrv?: any;
