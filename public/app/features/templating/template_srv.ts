@@ -50,19 +50,20 @@ export class TemplateSrv {
   getAdhocFilters(datasourceName) {
     let filters = [];
 
-    for (let i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-      if (variable.type !== 'adhoc') {
-        continue;
-      }
+    if (this.variables) {
+      for (let i = 0; i < this.variables.length; i++) {
+        const variable = this.variables[i];
+        if (variable.type !== 'adhoc') {
+          continue;
+        }
 
-      if (variable.datasource === datasourceName) {
-        filters = filters.concat(variable.filters);
-      }
-
-      if (variable.datasource.indexOf('$') === 0) {
-        if (this.replace(variable.datasource) === datasourceName) {
+        // null is the "default" datasource
+        if (variable.datasource === null || variable.datasource === datasourceName) {
           filters = filters.concat(variable.filters);
+        } else if (variable.datasource.indexOf('$') === 0) {
+          if (this.replace(variable.datasource) === datasourceName) {
+            filters = filters.concat(variable.filters);
+          }
         }
       }
     }

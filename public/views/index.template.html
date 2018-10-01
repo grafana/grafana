@@ -145,6 +145,29 @@
       }
     }
 
+    /* Fail info */
+    .preloader__text--fail {
+      display: none;
+    }
+
+    /* stop logo animation */
+    .preloader--done .preloader__bounce,
+    .preloader--done .preloader__logo {
+      animation-name: none;
+      display: none;
+    }
+
+    .preloader--done .preloader__logo,
+    .preloader--done .preloader__text {
+      display: none;
+      color: #ff5705 !important;
+      font-size: 15px;
+    }
+
+    .preloader--done .preloader__text--fail {
+      display: block;
+    }
+
     [ng\:cloak],
     [ng-cloak],
     .ng-cloak {
@@ -159,6 +182,20 @@
       </div>
     </div>
     <div class="preloader__text">Loading Grafana</div>
+    <div class="preloader__text preloader__text--fail">
+      <p>
+      <strong>If you're seeing this Grafana has failed to load its application files</strong>
+        <br />
+        <br />
+      </p>
+      <p>
+        1. This could be caused by your reverse proxy settings.<br /><br />
+        2. If you host grafana under subpath make sure your grafana.ini root_path setting includes subpath<br /> <br />
+        3. If you have a local dev build make sure you build frontend using: npm run dev, npm run watch, or npm run
+        build<br /> <br />
+        4. Sometimes restarting grafana-server can help<br />
+      </p>
+    </div>
   </div>
 
   <grafana-app class="grafana-app" ng-cloak>
@@ -236,26 +273,35 @@
 
     // insert it at the end of the head in a legacy-friendly manner
     document.head.insertBefore(myCSS, document.head.childNodes[document.head.childNodes.length - 1].nextSibling);
-  </script> [[if .GoogleTagManagerId]]
-  <script>
-    dataLayer = [{
-      'IsSignedIn': '[[.User.IsSignedIn]]',
-      'Email': '[[.User.Email]]',
-      'Name': '[[.User.Name]]',
-      'UserId': '[[.User.Id]]',
-      'OrgId': '[[.User.OrgId]]',
-      'OrgName': '[[.User.OrgName]]',
-    }];
+    // switch loader to show all has loaded
+    window.onload = function() {
+      var preloader = document.getElementsByClassName("preloader");
+      if (preloader.length) {
+        preloader[0].className = "preloader preloader--done";
+      }
+    };
   </script>
-  <!-- Google Tag Manager -->
-  <noscript>
-    <iframe src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]" height="0" width="0" style="display:none;visibility:hidden"></iframe>
-  </noscript>
-  <script>(function (w, d, s, l, i) {
-      w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0],
-        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
-    })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');</script>
-  <!-- End Google Tag Manager -->
+
+	[[if .GoogleTagManagerId]]
+		<!-- Google Tag Manager -->
+		<script>
+			dataLayer = [{
+				'IsSignedIn': '[[.User.IsSignedIn]]',
+				'Email': '[[.User.Email]]',
+				'Name': '[[.User.Name]]',
+				'UserId': '[[.User.Id]]',
+				'OrgId': '[[.User.OrgId]]',
+				'OrgName': '[[.User.OrgName]]',
+			}];
+		</script>
+		<noscript>
+			<iframe src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+		</noscript>
+		<script>(function (w, d, s, l, i) {
+				w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0],
+					j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+			})(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');</script>
+		<!-- End Google Tag Manager -->
   [[end]]
 
 </body>

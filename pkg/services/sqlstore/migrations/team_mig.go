@@ -51,4 +51,7 @@ func addTeamMigrations(mg *Migrator) {
 		Name: "email", Type: DB_NVarchar, Nullable: true, Length: 190,
 	}))
 
+	mg.AddMigration("Add column external to team_member table", NewAddColumnMigration(teamMemberV1, &Column{
+		Name: "external", Type: DB_Bool, Nullable: true,
+	}))
 }

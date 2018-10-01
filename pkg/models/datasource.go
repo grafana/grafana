@@ -22,6 +22,7 @@ const (
 	DS_MSSQL         = "mssql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
+	DS_STACKDRIVER   = "stackdriver"
 )
 
 var (
@@ -70,12 +71,12 @@ var knownDatasourcePlugins = map[string]bool{
 	DS_POSTGRES:                           true,
 	DS_MYSQL:                              true,
 	DS_MSSQL:                              true,
+	DS_STACKDRIVER:                        true,
 	"opennms":                             true,
 	"abhisant-druid-datasource":           true,
 	"dalmatinerdb-datasource":             true,
 	"gnocci":                              true,
 	"zabbix":                              true,
-	"alexanderzobnin-zabbix-datasource":   true,
 	"newrelic-app":                        true,
 	"grafana-datadog-datasource":          true,
 	"grafana-simple-json":                 true,
@@ -88,6 +89,7 @@ var knownDatasourcePlugins = map[string]bool{
 	"ayoungprogrammer-finance-datasource": true,
 	"monasca-datasource":                  true,
 	"vertamedia-clickhouse-datasource":    true,
+	"alexanderzobnin-zabbix-datasource":   true,
 }
 
 func IsKnownDataSourcePlugin(dsType string) bool {

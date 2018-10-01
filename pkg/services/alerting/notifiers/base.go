@@ -11,6 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
+const (
+	triggMetrString = "Triggered metrics:\n\n"
+)
+
 type NotifierBase struct {
 	Name         string
 	Type         string
@@ -42,10 +46,19 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 }
 
-func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, lastNotify time.Time) bool {
+func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, journals []models.AlertNotificationJournal) bool {
 	// Only notify on state change.
 	if context.PrevAlertState == context.Rule.State && !sendReminder {
 		return false
+	}
+
+	// get last successfully sent notification
+	lastNotify := time.Time{}
+	for _, j := range journals {
+		if j.Success {
+			lastNotify = time.Unix(j.SentAt, 0)
+			break
+		}
 	}
 
 	// Do not notify if interval has not elapsed
@@ -75,20 +88,12 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, c *alerting.EvalContext
 	}
 
 	err := bus.DispatchCtx(ctx, cmd)
-	if err == models.ErrJournalingNotFound {
-		return true
-	}
-
 	if err != nil {
 		n.log.Error("Could not determine last time alert notifier fired", "Alert name", c.Rule.Name, "Error", err)
 		return false
 	}
 
-	if !cmd.Result.Success {
-		return true
-	}
-
-	return defaultShouldNotify(c, n.SendReminder, n.Frequency, time.Unix(cmd.Result.SentAt, 0))
+	return defaultShouldNotify(c, n.SendReminder, n.Frequency, cmd.Result)
 }
 
 func (n *NotifierBase) GetType() string {

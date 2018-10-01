@@ -2,6 +2,15 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
+import { UrlQueryMap } from 'app/types';
+
+export function renderUrl(path: string, query: UrlQueryMap | undefined): string {
+  if (query && Object.keys(query).length > 0) {
+    path += '?' + toUrlParams(query);
+  }
+  return path;
+}
+
 export function toUrlParams(a) {
   const s = [];
   const rbracket = /\[\]$/;
@@ -50,7 +59,5 @@ export function toUrlParams(a) {
     return s;
   };
 
-  return buildParams('', a)
-    .join('&')
-    .replace(/%20/g, '+');
+  return buildParams('', a).join('&');
 }

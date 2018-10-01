@@ -34,6 +34,7 @@
       </span>
       <span class="search-item__body" ng-click="ctrl.onItemClick(item)">
         <div class="search-item__body-title">{{::item.title}}</div>
+        <span class="search-item__body-folder-title">{{::item.folderTitle}}</span>
       </span>
       <span class="search-item__tags">
         <span ng-click="ctrl.selectTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag" class="label label-tag">

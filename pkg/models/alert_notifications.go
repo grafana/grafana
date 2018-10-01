@@ -98,7 +98,7 @@ type GetLatestNotificationQuery struct {
 	AlertId    int64
 	NotifierId int64
 
-	Result *AlertNotificationJournal
+	Result []AlertNotificationJournal
 }
 
 type CleanNotificationJournalCommand struct {

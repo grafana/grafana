@@ -6,7 +6,6 @@ exports[`UserPicker renders correctly 1`] = `
 >
   <div
     className="Select gf-form-input gf-form-input--form-dropdown  is-clearable is-loading is-searchable Select--single"
-    style={undefined}
   >
     <div
       className="Select-control"
@@ -15,9 +14,8 @@ exports[`UserPicker renders correctly 1`] = `
       onTouchEnd={[Function]}
       onTouchMove={[Function]}
       onTouchStart={[Function]}
-      style={undefined}
     >
-      <span
+      <div
         className="Select-multi-value-wrapper"
         id="react-select-2--value"
       >
@@ -36,14 +34,9 @@ exports[`UserPicker renders correctly 1`] = `
         >
           <input
             aria-activedescendant="react-select-2--value"
-            aria-describedby={undefined}
             aria-expanded="false"
             aria-haspopup="false"
-            aria-label={undefined}
-            aria-labelledby={undefined}
             aria-owns=""
-            className={undefined}
-            id={undefined}
             onBlur={[Function]}
             onChange={[Function]}
             onFocus={[Function]}
@@ -55,7 +48,6 @@ exports[`UserPicker renders correctly 1`] = `
                 "width": "5px",
               }
             }
-            tabIndex={undefined}
             value=""
           />
           <div
@@ -74,7 +66,7 @@ exports[`UserPicker renders correctly 1`] = `
             
           </div>
         </div>
-      </span>
+      </div>
       <span
         aria-hidden="true"
         className="Select-loading-zone"

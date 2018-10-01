@@ -4,7 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { encodePathComponent } from 'app/core/utils/location_util';
+import { renderUrl } from 'app/core/utils/url';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
@@ -200,8 +200,8 @@ export class KeybindingSrv {
               ...datasource.getExploreState(panel),
               range,
             };
-            const exploreState = encodePathComponent(JSON.stringify(state));
-            this.$location.url(`/explore?state=${exploreState}`);
+            const exploreState = JSON.stringify(state);
+            this.$location.url(renderUrl('/explore', { state: exploreState }));
           }
         }
       });

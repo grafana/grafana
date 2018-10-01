@@ -67,7 +67,7 @@ Making it possible to have users in multiple groups and have detailed access con
 
 ## Upgrade & Breaking changes
 
-If your using https in grafana we now force you to use tls 1.2 and the most secure ciphers.
+If you're using https in grafana we now force you to use tls 1.2 and the most secure ciphers.
 We think its better to be secure by default rather then making it configurable.
 If you want to run https with lower versions of tls we suggest you put a reserve proxy in front of grafana.
 

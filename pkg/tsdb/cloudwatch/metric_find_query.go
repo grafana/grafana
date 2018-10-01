@@ -235,7 +235,7 @@ func parseMultiSelectValue(input string) []string {
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	regions := []string{
 		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "ca-central-1", "cn-north-1", "cn-northwest-1",
-		"eu-central-1", "eu-west-1", "eu-west-2", "eu-west-3", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2",
+		"eu-central-1", "eu-west-1", "eu-west-2", "eu-west-3", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2", "us-isob-east-1", "us-iso-east-1",
 	}
 
 	result := make([]suggestData, 0)
@@ -466,6 +466,9 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 						return nil, errors.New("invalid attribute path")
 					}
 					v = v.FieldByName(key)
+					if !v.IsValid() {
+						return nil, errors.New("invalid attribute path")
+					}
 				}
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
