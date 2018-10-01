@@ -42,7 +42,6 @@ export class PluginListPage extends PureComponent<Props> {
         <div className="page-container page-body">
           <OrgActionBar
             searchQuery={searchQuery}
-            showLayoutMode={true}
             layoutMode={layoutMode}
             setLayoutMode={mode => setPluginsLayoutMode(mode)}
             setSearchQuery={query => setPluginsSearchQuery(query)}

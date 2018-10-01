@@ -11,6 +11,10 @@ export interface Props {
 }
 
 export default class OrgActionBar extends PureComponent<Props> {
+  static defaultProps = {
+    showLayoutMode: true,
+  };
+
   render() {
     const { searchQuery, layoutMode, setLayoutMode, linkButton, setSearchQuery, showLayoutMode } = this.props;
 
