@@ -17,6 +17,16 @@ func GetDataSources(c *m.ReqContext) Response {
 		return Error(500, "Failed to query datasources", err)
 	}
 
+	permissions := map[int64]m.DsPermissionType{}
+	permissionsQuery := m.GetDataSourcePermissionsForUserQuery{User: c.SignedInUser}
+	if err := bus.Dispatch(&permissionsQuery); err != nil {
+		if err != bus.ErrHandlerNotFound {
+			return Error(500, "failed to read datasource permissions", err)
+		}
+	} else {
+		permissions = permissionsQuery.Result
+	}
+
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
 		dsItem := dtos.DataSourceListItemDTO{
@@ -35,6 +45,13 @@ func GetDataSources(c *m.ReqContext) Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
+		if permission, ok := permissions[ds.Id]; ok {
+			c.Logger.Info("Found permission", "permission", permission)
+			if permission == m.DsPermissionNoAccess {
+				continue
+			}
+		}
+
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 		} else {
@@ -49,7 +66,7 @@ func GetDataSources(c *m.ReqContext) Response {
 	return JSON(200, &result)
 }
 
-func hasRequiredDatasourcePermission(dsId int64, permission m.DataSourcePermissionType, user *m.SignedInUser) Response {
+func hasRequiredDatasourcePermission(dsId int64, permission m.DsPermissionType, user *m.SignedInUser) Response {
 	query := m.HasRequiredDataSourcePermissionQuery{
 		Id:                 dsId,
 		User:               user,
