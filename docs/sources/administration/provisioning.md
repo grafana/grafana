@@ -71,6 +71,7 @@ Puppet | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/pupp
 Ansible | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)
 Chef | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
 Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)
+Jsonnet | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)
 
 ## Datasources
 
@@ -199,7 +200,7 @@ providers:
   folder: ''
   type: file
   disableDeletion: false
-  updateIntervalSeconds: 3 #how often Grafana will scan for changed dashboards
+  updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
   options:
     path: /var/lib/grafana/dashboards
 ```

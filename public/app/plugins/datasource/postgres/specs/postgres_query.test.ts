@@ -72,7 +72,9 @@ describe('PostgresQuery', () => {
       { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      '(CASE WHEN v >= lag(v) OVER (ORDER BY time) THEN v - lag(v) OVER (ORDER BY time) ELSE v END) AS "a"'
+      '(CASE WHEN v >= lag(v) OVER (ORDER BY time) ' +
+        'THEN v - lag(v) OVER (ORDER BY time) ' +
+        'WHEN lag(v) OVER (ORDER BY time) IS NULL THEN NULL ELSE v END) AS "a"'
     );
   });
 
@@ -96,7 +98,9 @@ describe('PostgresQuery', () => {
       { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      '(CASE WHEN v >= lag(v) OVER (PARTITION BY host ORDER BY time) THEN v - lag(v) OVER (PARTITION BY host ORDER BY time) ELSE v END) AS "a"'
+      '(CASE WHEN v >= lag(v) OVER (PARTITION BY host ORDER BY time) ' +
+        'THEN v - lag(v) OVER (PARTITION BY host ORDER BY time) ' +
+        'WHEN lag(v) OVER (PARTITION BY host ORDER BY time) IS NULL THEN NULL ELSE v END) AS "a"'
     );
     column = [
       { type: 'column', params: ['v'] },
@@ -106,7 +110,8 @@ describe('PostgresQuery', () => {
     ];
     expect(query.buildValueColumn(column)).toBe(
       '(CASE WHEN max(v) >= lag(max(v)) OVER (PARTITION BY host ORDER BY time) ' +
-        'THEN max(v) - lag(max(v)) OVER (PARTITION BY host ORDER BY time) ELSE max(v) END) AS "a"'
+        'THEN max(v) - lag(max(v)) OVER (PARTITION BY host ORDER BY time) ' +
+        'WHEN lag(max(v)) OVER (PARTITION BY host ORDER BY time) IS NULL THEN NULL ELSE max(v) END) AS "a"'
     );
   });
 
@@ -149,7 +154,7 @@ describe('PostgresQuery', () => {
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = 'm';
-    result = 'SELECT\n  t AS "time",\n  m AS metric,\n  value\nFROM table\nORDER BY 1';
+    result = 'SELECT\n  t AS "time",\n  m AS metric,\n  value\nFROM table\nORDER BY 1,2';
     expect(query.buildQuery()).toBe(result);
   });
 });

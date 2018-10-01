@@ -119,7 +119,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 	}
 
 	results := make([]*m.AlertNotification, 0)
-	if err := sess.Sql(sql.String(), params...).Find(&results); err != nil {
+	if err := sess.SQL(sql.String(), params...).Find(&results); err != nil {
 		return err
 	}
 
@@ -230,7 +230,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 }
 
 func RecordNotificationJournal(ctx context.Context, cmd *m.RecordNotificationJournalCommand) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
+	return withDbSession(ctx, func(sess *DBSession) error {
 		journalEntry := &m.AlertNotificationJournal{
 			OrgId:      cmd.OrgId,
 			AlertId:    cmd.AlertId,
@@ -239,28 +239,23 @@ func RecordNotificationJournal(ctx context.Context, cmd *m.RecordNotificationJou
 			Success:    cmd.Success,
 		}
 
-		if _, err := sess.Insert(journalEntry); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Insert(journalEntry)
+		return err
 	})
 }
 
 func GetLatestNotification(ctx context.Context, cmd *m.GetLatestNotificationQuery) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		nj := &m.AlertNotificationJournal{}
+	return withDbSession(ctx, func(sess *DBSession) error {
+		nj := []m.AlertNotificationJournal{}
 
-		_, err := sess.Desc("alert_notification_journal.sent_at").
-			Limit(1).
-			Where("alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(nj)
+		err := sess.Desc("alert_notification_journal.sent_at").
+			Where("alert_notification_journal.org_id = ?", cmd.OrgId).
+			Where("alert_notification_journal.alert_id = ?", cmd.AlertId).
+			Where("alert_notification_journal.notifier_id = ?", cmd.NotifierId).
+			Find(&nj)
 
 		if err != nil {
 			return err
-		}
-
-		if nj.AlertId == 0 && nj.Id == 0 && nj.NotifierId == 0 && nj.OrgId == 0 {
-			return m.ErrJournalingNotFound
 		}
 
 		cmd.Result = nj

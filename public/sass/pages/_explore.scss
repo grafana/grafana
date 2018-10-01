@@ -55,6 +55,25 @@
     margin-top: 2 * $panel-margin;
   }
 
+  .time-series-disclaimer {
+    width: 300px;
+    margin: $panel-margin auto;
+    padding: 10px 0;
+    border-radius: $border-radius;
+    text-align: center;
+    background-color: $panel-bg;
+
+    .disclaimer-icon {
+      color: $yellow;
+      margin-right: $panel-margin/2;
+    }
+
+    .show-all-time-series {
+      cursor: pointer;
+      color: $external-link-color;
+    }
+  }
+
   .elapsed-time {
     position: absolute;
     left: 0;
@@ -69,7 +88,7 @@
   }
 
   .datasource-picker {
-    min-width: 10rem;
+    min-width: 200px;
   }
 
   .timepicker {
