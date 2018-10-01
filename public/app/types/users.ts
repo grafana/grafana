@@ -1,3 +1,20 @@
+export interface Invitee {
+  code: string;
+  createdOn: string;
+  email: string;
+  emailSent: boolean;
+  emailSentOn: string;
+  id: number;
+  invitedByEmail: string;
+  invitedByLogin: string;
+  invitedByName: string;
+  name: string;
+  orgId: number;
+  role: string;
+  status: string;
+  url: string;
+}
+
 export interface User {
   avatarUrl: string;
   email: string;
@@ -11,5 +28,10 @@ export interface User {
 
 export interface UsersState {
   users: User[];
+  invitees: Invitee[];
   searchQuery: string;
+  canInvite: boolean;
+  externalUserMngLinkUrl: string;
+  externalUserMngLinkName: string;
+  externalUserMngInfo: string;
 }

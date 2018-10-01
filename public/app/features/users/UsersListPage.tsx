@@ -1,32 +1,50 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import UsersActionBar from './UsersActionBar';
 import UsersTable from 'app/features/users/UsersTable';
-import { NavModel, User } from 'app/types';
+import InviteesTable from './InviteesTable';
+import { Invitee, NavModel, User } from 'app/types';
 import appEvents from 'app/core/app_events';
-import { loadUsers, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
+import { loadUsers, loadInvitees, revokeInvite, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
-import { getUsers, getUsersSearchQuery } from './state/selectors';
+import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
 
 export interface Props {
   navModel: NavModel;
+  invitees: Invitee[];
   users: User[];
   searchQuery: string;
+  externalUserMngInfo: string;
   loadUsers: typeof loadUsers;
+  loadInvitees: typeof loadInvitees;
   setUsersSearchQuery: typeof setUsersSearchQuery;
   updateUser: typeof updateUser;
   removeUser: typeof removeUser;
+  revokeInvite: typeof revokeInvite;
 }
 
-export class UsersListPage extends PureComponent<Props> {
+export interface State {
+  showInvites: boolean;
+}
+
+export class UsersListPage extends PureComponent<Props, State> {
+  state = {
+    showInvites: false,
+  };
+
   componentDidMount() {
     this.fetchUsers();
+    this.fetchInvitees();
   }
 
   async fetchUsers() {
     return await this.props.loadUsers();
+  }
+
+  async fetchInvitees() {
+    return await this.props.loadInvitees();
   }
 
   onRoleChange = (role, user) => {
@@ -47,29 +65,38 @@ export class UsersListPage extends PureComponent<Props> {
     });
   };
 
-  render() {
-    const { navModel, searchQuery, setUsersSearchQuery, users } = this.props;
+  onRevokeInvite = code => {
+    this.props.revokeInvite(code);
+  };
 
-    const linkButton = {
-      href: '/org/users/add',
-      title: 'Add user',
-    };
+  showInvites = () => {
+    this.setState(prevState => ({
+      showInvites: !prevState.showInvites,
+    }));
+  };
+
+  render() {
+    const { externalUserMngInfo, invitees, navModel, users } = this.props;
 
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          <OrgActionBar
-            searchQuery={searchQuery}
-            showLayoutMode={false}
-            setSearchQuery={setUsersSearchQuery}
-            linkButton={linkButton}
-          />
-          <UsersTable
-            users={users}
-            onRoleChange={(role, user) => this.onRoleChange(role, user)}
-            onRemoveUser={user => this.onRemoveUser(user)}
-          />
+          <UsersActionBar showInvites={this.showInvites} />
+          {externalUserMngInfo && (
+            <div className="grafana-info-box">
+              <span>{externalUserMngInfo}</span>
+            </div>
+          )}
+          {this.state.showInvites ? (
+            <InviteesTable invitees={invitees} revokeInvite={code => this.onRevokeInvite(code)} />
+          ) : (
+            <UsersTable
+              users={users}
+              onRoleChange={(role, user) => this.onRoleChange(role, user)}
+              onRemoveUser={user => this.onRemoveUser(user)}
+            />
+          )}
         </div>
       </div>
     );
@@ -81,14 +108,18 @@ function mapStateToProps(state) {
     navModel: getNavModel(state.navIndex, 'users'),
     users: getUsers(state.users),
     searchQuery: getUsersSearchQuery(state.users),
+    invitees: getInvitees(state.users),
+    externalUserMngInfo: state.users.externalUserMngInfo,
   };
 }
 
 const mapDispatchToProps = {
   loadUsers,
+  loadInvitees,
   setUsersSearchQuery,
   updateUser,
   removeUser,
+  revokeInvite,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));

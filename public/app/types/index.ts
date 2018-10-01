@@ -7,7 +7,7 @@ import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { DataSource, DataSourcesState } from './datasources';
 import { PluginMeta, Plugin, PluginsState } from './plugins';
-import { User, UsersState } from './users';
+import { Invitee, User, UsersState } from './users';
 
 export {
   Team,
@@ -37,6 +37,7 @@ export {
   Plugin,
   PluginsState,
   DataSourcesState,
+  Invitee,
   User,
   UsersState,
 };
