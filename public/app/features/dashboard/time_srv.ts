@@ -113,7 +113,7 @@ export class TimeSrv {
   }
 
   private timeHasChangedSinceLoad() {
-    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
+    return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
   setAutoRefresh(interval) {
