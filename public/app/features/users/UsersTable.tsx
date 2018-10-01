@@ -3,15 +3,15 @@ import { User } from 'app/types';
 
 export interface Props {
   users: User[];
-  onRoleChange: (value: string) => {};
+  onRoleChange: (role: string, user: User) => void;
+  onRemoveUser: (user: User) => void;
 }
 
 const UsersTable: SFC<Props> = props => {
-  const { users } = props;
+  const { users, onRoleChange, onRemoveUser } = props;
 
   return (
     <div>
-      Le Table
       <table className="filter-table form-inline">
         <thead>
           <tr>
@@ -23,42 +23,44 @@ const UsersTable: SFC<Props> = props => {
             <th style={{ width: '34px' }} />
           </tr>
         </thead>
-        {users.map((user, index) => {
-          return (
-            <tr key={`${user.userId}-${index}`}>
-              <td className="width-4 text-center">
-                <img className="filter-table__avatar" src={user.avatarUrl} />
-              </td>
-              <td>{user.login}</td>
-              <td>
-                <span className="ellipsis">{user.email}</span>
-              </td>
-              <td>{user.lastSeenAtAge}</td>
-              <td>
-                <div className="gf-form-select-wrapper width-12">
-                  <select
-                    value={user.role}
-                    className="gf-form-input"
-                    onChange={event => props.onRoleChange(event.target.value)}
-                  >
-                    {['Viewer', 'Editor', 'Admin'].map((option, index) => {
-                      return (
-                        <option value={option} key={`${option}-${index}`}>
-                          {option}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              </td>
-              <td>
-                <div onClick={() => props.removeUser(user)} className="btn btn-danger btn-mini">
-                  <i className="fa fa-remove" />
-                </div>
-              </td>
-            </tr>
-          );
-        })}
+        <tbody>
+          {users.map((user, index) => {
+            return (
+              <tr key={`${user.userId}-${index}`}>
+                <td className="width-4 text-center">
+                  <img className="filter-table__avatar" src={user.avatarUrl} />
+                </td>
+                <td>{user.login}</td>
+                <td>
+                  <span className="ellipsis">{user.email}</span>
+                </td>
+                <td>{user.lastSeenAtAge}</td>
+                <td>
+                  <div className="gf-form-select-wrapper width-12">
+                    <select
+                      value={user.role}
+                      className="gf-form-input"
+                      onChange={event => onRoleChange(event.target.value, user)}
+                    >
+                      {['Viewer', 'Editor', 'Admin'].map((option, index) => {
+                        return (
+                          <option value={option} key={`${option}-${index}`}>
+                            {option}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </td>
+                <td>
+                  <div onClick={() => onRemoveUser(user)} className="btn btn-danger btn-mini">
+                    <i className="fa fa-remove" />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
     </div>
   );

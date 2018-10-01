@@ -38,3 +38,17 @@ export function loadUsers(): ThunkResult<void> {
     dispatch(usersLoaded(users));
   };
 }
+
+export function updateUser(user: User): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().patch(`/api/org/users/${user.userId}`, user);
+    dispatch(loadUsers());
+  };
+}
+
+export function removeUser(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().delete(`/api/org/users/${userId}`);
+    dispatch(loadUsers());
+  };
+}

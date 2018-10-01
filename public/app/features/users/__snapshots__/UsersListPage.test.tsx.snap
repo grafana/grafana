@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <OrgActionBar
+      linkButton={
+        Object {
+          "href": "/org/users/add",
+          "title": "Add user",
+        }
+      }
+      searchQuery=""
+      setSearchQuery={[MockFunction]}
+      showLayoutMode={false}
+    />
+    <UsersTable
+      onRemoveUser={[Function]}
+      onRoleChange={[Function]}
+      users={Array []}
+    />
+  </div>
+</div>
+`;
