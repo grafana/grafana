@@ -73,6 +73,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasourceLoading: null,
       datasourceMissing: false,
       datasourceName: datasource,
+      exploreDatasources: [],
       graphResult: null,
       history: [],
       latency: 0,
@@ -101,8 +102,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       throw new Error('No datasource service passed as props.');
     }
     const datasources = datasourceSrv.getExploreSources();
+    const exploreDatasources = datasources.map(ds => ({
+      value: ds.name,
+      label: ds.name,
+    }));
+
     if (datasources.length > 0) {
-      this.setState({ datasourceLoading: true });
+      this.setState({ datasourceLoading: true, exploreDatasources });
       // Priority: datasource in url, default datasource, first explore datasource
       let datasource;
       if (datasourceName) {
@@ -461,12 +467,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   render() {
-    const { datasourceSrv, position, split } = this.props;
+    const { position, split } = this.props;
     const {
       datasource,
       datasourceError,
       datasourceLoading,
       datasourceMissing,
+      exploreDatasources,
       graphResult,
       history,
       latency,
@@ -491,10 +498,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const logsButtonActive = showingLogs ? 'active' : '';
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const datasources = datasourceSrv.getExploreSources().map(ds => ({
-      value: ds.name,
-      label: ds.name,
-    }));
     const selectedDatasource = datasource ? datasource.name : undefined;
 
     return (
@@ -508,19 +511,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                Close Split
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                  Close Split
               </button>
-            </div>
-          )}
+              </div>
+            )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
                 clearable={false}
                 className="gf-form-input gf-form-input--form-dropdown datasource-picker"
                 onChange={this.onChangeDatasource}
-                options={datasources}
+                options={exploreDatasources}
                 isOpen={true}
                 placeholder="Loading datasources..."
                 value={selectedDatasource}

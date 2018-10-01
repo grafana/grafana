@@ -1,3 +1,8 @@
+interface ExploreDatasource {
+  value: string;
+  label: string;
+}
+
 export interface Range {
   from: string;
   to: string;
@@ -15,6 +20,7 @@ export interface ExploreState {
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   datasourceName?: string;
+  exploreDatasources: ExploreDatasource[];
   graphResult: any;
   history: any[];
   latency: number;
