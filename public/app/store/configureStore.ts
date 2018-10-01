@@ -4,6 +4,7 @@ import { createLogger } from 'redux-logger';
 import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
+import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import foldersReducers from 'app/features/folders/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
 import pluginReducers from 'app/features/plugins/state/reducers';
@@ -12,6 +13,7 @@ const rootReducer = combineReducers({
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
+  ...apiKeysReducers,
   ...foldersReducers,
   ...dashboardReducers,
   ...pluginReducers,

@@ -6,6 +6,8 @@ import { FolderDTO, FolderState, FolderInfo } from './folders';
 import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { DataSource } from './datasources';
+import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
+import { User } from './user';
 import { PluginMeta, Plugin, PluginsState } from './plugins';
 
 export {
@@ -33,6 +35,10 @@ export {
   PermissionLevel,
   DataSource,
   PluginMeta,
+  ApiKey,
+  ApiKeysState,
+  NewApiKey,
+  User,
   Plugin,
   PluginsState,
 };
