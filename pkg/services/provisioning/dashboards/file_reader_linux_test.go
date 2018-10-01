@@ -30,10 +30,11 @@ func TestProvsionedSymlinkedFolder(t *testing.T) {
 	want, err := filepath.Abs(containingId)
 
 	if err != nil {
-		t.Errorf("expected err to be nill")
+		t.Errorf("expected err to be nil")
 	}
 
-	if reader.Path != want {
-		t.Errorf("got %s want %s", reader.Path, want)
+	resolvedPath := reader.resolvePath(reader.Path)
+	if resolvedPath != want {
+		t.Errorf("got %s want %s", resolvedPath, want)
 	}
 }

@@ -1,0 +1,57 @@
+version: "2.1"
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+
+  grafana:
+    image: grafana/grafana:dev
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      - VIRTUAL_HOST=grafana.loc
+      - GF_SERVER_ROOT_URL=http://grafana.loc
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=mysql:3306
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=password
+      - GF_SESSION_PROVIDER=mysql
+      - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(mysql:3306)/grafana?allowNativePasswords=true
+    ports:
+      - 3000
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.4.2
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+    environment:
+      - VIRTUAL_HOST=prometheus.loc
+    ports:
+      - 9090
+
+  # mysqld-exporter:
+  #   image: prom/mysqld-exporter
+  #   environment:
+  #     - DATA_SOURCE_NAME=grafana:password@(mysql:3306)/
+  #   ports:
+  #     - 9104

@@ -12,7 +12,7 @@
   "devDependencies": {
     "@types/d3": "^4.10.1",
     "@types/enzyme": "^3.1.13",
-    "@types/jest": "^21.1.4",
+    "@types/jest": "^23.3.2",
     "@types/node": "^8.0.31",
     "@types/react": "^16.4.14",
     "@types/react-custom-scrollbars": "^4.0.5",
