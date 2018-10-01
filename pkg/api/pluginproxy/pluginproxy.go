@@ -56,6 +56,13 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		req.Header.Del("X-Forwarded-Host")
 		req.Header.Del("X-Forwarded-Port")
 		req.Header.Del("X-Forwarded-Proto")
+		
+		// clear Cloudfront specific headers
+		req.Header.Del("CF-Connecting-IP")
+		req.Header.Del("CF-IPCountry")
+		req.Header.Del("CF-RAY")
+		req.Header.Del("CF-Visitor")
+		req.Header.Del("True-Client-IP")
 
 		// set X-Forwarded-For header
 		if req.RemoteAddr != "" {
