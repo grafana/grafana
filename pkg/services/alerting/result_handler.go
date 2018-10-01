@@ -67,6 +67,11 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			}
 
 			handler.log.Error("Failed to save state", "error", err)
+		} else {
+
+			// StateChanges is used for de dupping alert notifications
+			// when two servers are raising.
+			evalContext.Rule.StateChanges = cmd.Result.StateChanges
 		}
 
 		// save annotation

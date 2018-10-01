@@ -94,7 +94,8 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *NotifierState) error {
 	if !evalContext.IsTestRun {
 		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
-			State: notifierState.state,
+			State:                        notifierState.state,
+			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
 
 		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
@@ -172,7 +173,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 	for _, notification := range query.Result {
 		not, err := n.createNotifierFor(notification)
 		if err != nil {
-			n.log.Error("Could not create notifier", "notifier", notification.Id)
+			n.log.Error("Could not create notifier", "notifier", notification.Id, "error", err)
 			continue
 		}
 

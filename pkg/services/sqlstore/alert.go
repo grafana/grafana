@@ -279,6 +279,8 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		}
 
 		sess.ID(alert.Id).Update(&alert)
+
+		cmd.Result = alert
 		return nil
 	})
 }
