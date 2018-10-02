@@ -238,7 +238,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 }
 
 func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToCompleteCommand) error {
-	return withDbSession(ctx, func(sess *DBSession) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		version := cmd.Version
 		var current m.AlertNotificationState
 		sess.ID(cmd.Id).Get(&current)

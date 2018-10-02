@@ -74,7 +74,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	}
 
 	cmd := &m.SetAlertNotificationStateToCompleteCommand{
-		Id:      notifier.GetNotifierId(),
+		Id:      notifierState.state.Id,
 		Version: notifierState.state.Version,
 	}
 
@@ -84,7 +84,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
 	if !evalContext.IsTestRun {
 		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
-			Id:                           notifierState.state.NotifierId,
+			Id:                           notifierState.state.Id,
 			Version:                      notifierState.state.Version,
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
@@ -110,7 +110,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 	for _, notifierState := range notifierStates {
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
-			n.log.Error("failed to send notification", "id", notifierState.notifier.GetNotifierId())
+			n.log.Error("failed to send notification", "id", notifierState.notifier.GetNotifierId(), "error", err)
 		}
 	}
 
