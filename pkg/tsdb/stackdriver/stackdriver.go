@@ -169,23 +169,6 @@ func reverse(s string) string {
 	return string(chars)
 }
 
-func escapeDoubleBackslash(target string) string {
-	var re = regexp.MustCompile(`\\`)
-	return re.ReplaceAllString(target, `\\\\`)
-	// return strings.Replace(target, `\`, "", -1)
-}
-
-func escapeIllegalCharacters(target string) string {
-	var re = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
-	return string(re.ReplaceAllFunc([]byte(target), func(in []byte) []byte {
-		return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
-	}))
-}
-
-func replaceSingleAsterixCharacters(target string) string {
-	return strings.Replace(target, "*", ".*", -1)
-}
-
 func interpolateFilterWildcards(value string) string {
 	if strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
 		value = strings.Replace(value, "*", "", 1)
@@ -197,8 +180,11 @@ func interpolateFilterWildcards(value string) string {
 		value = reverse(strings.Replace(reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
 	} else if strings.Contains(value, "*") {
-		value = escapeIllegalCharacters(value)
-		value = replaceSingleAsterixCharacters(value)
+		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
+			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
+		}))
+		value = strings.Replace(value, "*", ".*", -1)
 		value = strings.Replace(value, `"`, `\\"`, -1)
 		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
 	}
