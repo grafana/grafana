@@ -1,7 +1,7 @@
 import { ThunkAction } from 'redux-thunk';
 import { StoreState } from '../../../types';
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { Invitee, User } from 'app/types';
+import { Invitee, OrgUser } from 'app/types';
 
 export enum ActionTypes {
   LoadUsers = 'LOAD_USERS',
@@ -11,7 +11,7 @@ export enum ActionTypes {
 
 export interface LoadUsersAction {
   type: ActionTypes.LoadUsers;
-  payload: User[];
+  payload: OrgUser[];
 }
 
 export interface LoadInviteesAction {
@@ -24,7 +24,7 @@ export interface SetUsersSearchQueryAction {
   payload: string;
 }
 
-const usersLoaded = (users: User[]): LoadUsersAction => ({
+const usersLoaded = (users: OrgUser[]): LoadUsersAction => ({
   type: ActionTypes.LoadUsers,
   payload: users,
 });
@@ -57,7 +57,7 @@ export function loadInvitees(): ThunkResult<void> {
   };
 }
 
-export function updateUser(user: User): ThunkResult<void> {
+export function updateUser(user: OrgUser): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().patch(`/api/org/users/${user.userId}`, user);
     dispatch(loadUsers());

@@ -1,10 +1,10 @@
-import { Invitee, User, UsersState } from 'app/types';
+import { Invitee, OrgUser, UsersState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import config from '../../../core/config';
 
 export const initialState: UsersState = {
   invitees: [] as Invitee[],
-  users: [] as User[],
+  users: [] as OrgUser[],
   searchQuery: '',
   canInvite: !config.disableLoginForm && !config.externalUserMngLinkName,
   externalUserMngInfo: config.externalUserMngInfo,

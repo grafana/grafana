@@ -6,7 +6,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     searchQuery: '',
     setUsersSearchQuery: jest.fn(),
-    showInvites: false,
+    showInvites: jest.fn(),
     pendingInvitesCount: 0,
     canInvite: false,
     externalUserMngLinkUrl: '',

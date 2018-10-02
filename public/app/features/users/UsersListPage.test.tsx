@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { UsersListPage, Props } from './UsersListPage';
-import { Invitee, NavModel, User } from 'app/types';
+import { Invitee, NavModel, OrgUser } from 'app/types';
 import { getMockUser } from './__mocks__/userMocks';
 import appEvents from '../../core/app_events';
 
@@ -12,7 +12,7 @@ jest.mock('../../core/app_events', () => ({
 const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {} as NavModel,
-    users: [] as User[],
+    users: [] as OrgUser[],
     invitees: [] as Invitee[],
     searchQuery: '',
     externalUserMngInfo: '',

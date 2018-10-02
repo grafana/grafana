@@ -1,12 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import UsersTable, { Props } from './UsersTable';
-import { User } from 'app/types';
+import { OrgUser } from 'app/types';
 import { getMockUsers } from './__mocks__/userMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    users: [] as User[],
+    users: [] as OrgUser[],
     onRoleChange: jest.fn(),
     onRemoveUser: jest.fn(),
   };

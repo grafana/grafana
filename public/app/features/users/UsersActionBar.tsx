@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { setUsersSearchQuery } from './state/actions';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 
-interface Props {
+export interface Props {
   searchQuery: string;
   setUsersSearchQuery: typeof setUsersSearchQuery;
   showInvites: () => void;

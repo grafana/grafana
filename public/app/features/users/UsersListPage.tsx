@@ -5,7 +5,7 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from 'app/features/users/UsersTable';
 import InviteesTable from './InviteesTable';
-import { Invitee, NavModel, User } from 'app/types';
+import { Invitee, NavModel, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
 import { loadUsers, loadInvitees, revokeInvite, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -14,7 +14,7 @@ import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
 export interface Props {
   navModel: NavModel;
   invitees: Invitee[];
-  users: User[];
+  users: OrgUser[];
   searchQuery: string;
   externalUserMngInfo: string;
   loadUsers: typeof loadUsers;

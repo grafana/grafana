@@ -1,10 +1,10 @@
 import React, { SFC } from 'react';
-import { User } from 'app/types';
+import { OrgUser } from 'app/types';
 
 export interface Props {
-  users: User[];
-  onRoleChange: (role: string, user: User) => void;
-  onRemoveUser: (user: User) => void;
+  users: OrgUser[];
+  onRoleChange: (role: string, user: OrgUser) => void;
+  onRemoveUser: (user: OrgUser) => void;
 }
 
 const UsersTable: SFC<Props> = props => {
