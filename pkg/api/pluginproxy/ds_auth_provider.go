@@ -12,6 +12,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/oauth2/google"
 )
 
 //ApplyRoute should use the plugin route data to set auth headers and custom headers
@@ -61,6 +62,21 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
+
+	if req.Header.Get("Authorization") == "" && ds.Type == "stackdriver" {
+		tokenSrc, err := google.DefaultTokenSource(ctx, "https://www.googleapis.com/auth/monitoring.read")
+		if err != nil {
+			logger.Error("Failed to get access token", "error", err)
+		} else {
+			token, err := tokenSrc.Token()
+			if err != nil {
+				logger.Error("Failed to get access token", "error", err)
+			} else {
+				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+			}
+		}
+	}
+
 	logger.Info("Requesting", "url", req.URL.String())
 
 }
