@@ -54,7 +54,7 @@ exports[`Render should render pending invites button 1`] = `
     />
     <button
       className="btn btn-inverse"
-      onClick={false}
+      onClick={[MockFunction]}
     >
       Pending Invites (
       5
