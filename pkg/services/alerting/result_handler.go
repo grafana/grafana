@@ -69,8 +69,9 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			handler.log.Error("Failed to save state", "error", err)
 		} else {
 
-			// StateChanges is used for de dupping alert notifications
-			// when two servers are raising.
+			// StateChanges is used for de duping alert notifications
+			// when two servers are raising. This makes sure that the server
+			// with the last state change always sends a notification.
 			evalContext.Rule.StateChanges = cmd.Result.StateChanges
 		}
 
