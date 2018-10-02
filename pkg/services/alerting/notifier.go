@@ -58,7 +58,7 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 	return n.sendNotifications(context, notifierStates)
 }
 
-func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *NotifierState) error {
+func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
 	not := notifierState.notifier
 	n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
 	metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
@@ -92,7 +92,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	return nil
 }
 
-func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *NotifierState) error {
+func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
 	if !evalContext.IsTestRun {
 		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
 			Id:                           notifierState.state.NotifierId,
@@ -117,7 +117,7 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 	return n.sendAndMarkAsComplete(evalContext, notifierState)
 }
 
-func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates NotifierStateSlice) error {
+func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates notifierStateSlice) error {
 	for _, notifierState := range notifierStates {
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
@@ -168,14 +168,14 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, evalContext *EvalContext) (NotifierStateSlice, error) {
+func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, evalContext *EvalContext) (notifierStateSlice, error) {
 	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
 
-	var result NotifierStateSlice
+	var result notifierStateSlice
 	for _, notification := range query.Result {
 		not, err := n.createNotifierFor(notification)
 		if err != nil {
@@ -196,7 +196,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 		}
 
 		if not.ShouldNotify(evalContext.Ctx, evalContext, query.Result) {
-			result = append(result, &NotifierState{
+			result = append(result, &notifierState{
 				notifier: not,
 				state:    query.Result,
 			})

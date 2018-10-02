@@ -30,14 +30,14 @@ type Notifier interface {
 	GetFrequency() time.Duration
 }
 
-type NotifierState struct {
+type notifierState struct {
 	notifier Notifier
 	state    *models.AlertNotificationState
 }
 
-type NotifierStateSlice []*NotifierState
+type notifierStateSlice []*notifierState
 
-func (notifiers NotifierStateSlice) ShouldUploadImage() bool {
+func (notifiers notifierStateSlice) ShouldUploadImage() bool {
 	for _, ns := range notifiers {
 		if ns.notifier.NeedsImage() {
 			return true
