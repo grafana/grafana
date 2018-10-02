@@ -35,6 +35,9 @@ Name | Description
 *Database* | Name of your MySQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
+*Max open* | The maximum number of open connections to the database, default `unlimited`.
+*Max idle* | The maximum number of connections in the idle connection pool, default `2`.
+*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400` (4 hours).
 
 ### Min time interval
 
@@ -316,4 +319,8 @@ datasources:
     database: grafana
     user: grafana
     password: password
+    jsonData:
+      maxOpenConns: 0
+      maxIdleConns: 2
+      connMaxLifetime: 14400
 ```
