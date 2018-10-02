@@ -239,12 +239,11 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 
 func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToCompleteCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
-		version := cmd.State.Version
+		version := cmd.Version
 		var current m.AlertNotificationState
-		sess.ID(cmd.State.Id).Get(&current)
+		sess.ID(cmd.Id).Get(&current)
 
-		cmd.State.State = m.AlertNotificationStateCompleted
-		cmd.State.Version++
+		newVersion := cmd.Version + 1
 
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
@@ -253,7 +252,7 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 		WHERE
 			id = ?`
 
-		_, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, timeNow().Unix(), cmd.State.Id)
+		_, err := sess.Exec(sql, m.AlertNotificationStateCompleted, newVersion, timeNow().Unix(), cmd.Id)
 
 		if err != nil {
 			return err
@@ -269,10 +268,7 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 
 func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToPendingCommand) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
-		currentVersion := cmd.State.Version
-		cmd.State.State = m.AlertNotificationStatePending
-		cmd.State.Version++
-
+		newVersion := cmd.Version + 1
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
 			version = ?,
@@ -283,12 +279,12 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAl
 			(version = ? OR alert_rule_state_updated_version < ?)`
 
 		res, err := sess.Exec(sql,
-			cmd.State.State,
-			cmd.State.Version,
+			m.AlertNotificationStatePending,
+			newVersion,
 			timeNow().Unix(),
 			cmd.AlertRuleStateUpdatedVersion,
-			cmd.State.Id,
-			currentVersion,
+			cmd.Id,
+			cmd.Version,
 			cmd.AlertRuleStateUpdatedVersion)
 
 		if err != nil {
@@ -299,6 +295,8 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAl
 		if affected == 0 {
 			return m.ErrAlertNotificationStateVersionConflict
 		}
+
+		cmd.ResultVersion = newVersion
 
 		return nil
 	})

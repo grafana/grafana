@@ -76,7 +76,8 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	}
 
 	cmd := &m.SetAlertNotificationStateToCompleteCommand{
-		State: notifierState.state,
+		Id:      not.GetNotifierId(),
+		Version: notifierState.state.Version,
 	}
 
 	if err = bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
@@ -94,7 +95,8 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *NotifierState) error {
 	if !evalContext.IsTestRun {
 		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
-			State:                        notifierState.state,
+			Id:                           notifierState.state.NotifierId,
+			Version:                      notifierState.state.Version,
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
 
@@ -106,6 +108,10 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 		if err != nil {
 			return err
 		}
+
+		// We need to update state version to be able to log
+		// unexpected version conflicts when marking notifications as ok
+		notifierState.state.Version = setPendingCmd.ResultVersion
 	}
 
 	return n.sendAndMarkAsComplete(evalContext, notifierState)

@@ -98,12 +98,16 @@ type AlertNotificationState struct {
 }
 
 type SetAlertNotificationStateToPendingCommand struct {
+	Id                           int64
 	AlertRuleStateUpdatedVersion int64
-	State                        *AlertNotificationState
+	Version                      int64
+
+	ResultVersion int64
 }
 
 type SetAlertNotificationStateToCompleteCommand struct {
-	State *AlertNotificationState
+	Id      int64
+	Version int64
 }
 
 type GetOrCreateNotificationStateQuery struct {

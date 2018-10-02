@@ -42,13 +42,16 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 				Convey("Update existing state to pending with correct version should update database", func() {
 					s := *query.Result
+
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						State: &s,
+						Id:                           s.Id,
+						Version:                      s.Version,
+						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
 					}
+
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
 					So(err, ShouldBeNil)
-					So(cmd.State.Version, ShouldEqual, 1)
-					So(cmd.State.State, ShouldEqual, models.AlertNotificationStatePending)
+					So(cmd.ResultVersion, ShouldEqual, 1)
 
 					query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
 					err = GetOrCreateAlertNotificationState(context.Background(), query2)
@@ -58,11 +61,12 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					So(query2.Result.UpdatedAt, ShouldEqual, now.Unix())
 
 					Convey("Update existing state to completed should update database", func() {
-						s := *cmd.State
-						cmd := models.SetAlertNotificationStateToCompleteCommand{
-							State: &s,
+						s := *query.Result
+						setStateCmd := models.SetAlertNotificationStateToCompleteCommand{
+							Id:      s.Id,
+							Version: cmd.ResultVersion,
 						}
-						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
+						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &setStateCmd)
 						So(err, ShouldBeNil)
 
 						query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
@@ -74,10 +78,10 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					})
 
 					Convey("Update existing state to completed should update database, but return version mismatch", func() {
-						cmd.State.Version = 1000
-						s := *cmd.State
+						s := *query.Result
 						cmd := models.SetAlertNotificationStateToCompleteCommand{
-							State: &s,
+							Id:      s.Id,
+							Version: 1000,
 						}
 						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
 						So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
@@ -95,7 +99,9 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					s := *query.Result
 					s.Version = 1000
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						State: &s,
+						Id:                           s.NotifierId,
+						Version:                      s.Version,
+						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
 					}
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
 					So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
@@ -104,21 +110,23 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Convey("Updating existing state to pending with incorrect version since alert rule state update version is higher", func() {
 					s := *query.Result
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						State:                        &s,
+						Id:                           s.Id,
+						Version:                      s.Version,
 						AlertRuleStateUpdatedVersion: 1000,
 					}
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
 					So(err, ShouldBeNil)
 
-					So(cmd.State.Version, ShouldEqual, 1)
-					So(cmd.State.State, ShouldEqual, models.AlertNotificationStatePending)
+					So(cmd.ResultVersion, ShouldEqual, 1)
 				})
 
 				Convey("different version and same alert state change version should return error", func() {
 					s := *query.Result
 					s.Version = 1000
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						State: &s,
+						Id:                           s.Id,
+						Version:                      s.Version,
+						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
 					}
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
 					So(err, ShouldNotBeNil)
