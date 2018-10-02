@@ -10,6 +10,7 @@ import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
+import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -80,9 +81,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/datasources/new', {
-      templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
-      controller: 'DataSourceEditCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => NewDataSourcePage,
+      },
     })
     .when('/dashboards', {
       templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
