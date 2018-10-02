@@ -354,6 +354,50 @@ func TestStackdriver(t *testing.T) {
 					So(value, ShouldNotStartWith, `has_substring`)
 				})
 			})
+
+			Convey("and wildcard is used in the beginning of the word", func() {
+				Convey("and there is not a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*-central1")
+					So(value, ShouldEqual, `ends_with("-central1")`)
+				})
+				Convey("and there is a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*-cent*al1")
+					So(value, ShouldNotStartWith, `ends_with`)
+				})
+			})
+
+			Convey("and wildcard is used at the end of the word", func() {
+				Convey("and there is not a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("us-central*")
+					So(value, ShouldEqual, `starts_with("us-central")`)
+				})
+				Convey("and there is a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*us-central*")
+					So(value, ShouldNotStartWith, `starts_with`)
+				})
+			})
+
+			Convey("and wildcard is used in the middle of the word", func() {
+				Convey("and there is only one wildcard", func() {
+					value := interpolateFilterWildcards("us-ce*tral1-b")
+					So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tral1\\-b$")`)
+				})
+
+				Convey("and there is more than one wildcard", func() {
+					value := interpolateFilterWildcards("us-ce*tra*1-b")
+					So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tra.*1\\-b$")`)
+				})
+			})
+
+			Convey("and wildcard is used in the middle of the word and in the beginning of the word", func() {
+				value := interpolateFilterWildcards("*s-ce*tral1-b")
+				So(value, ShouldEqual, `monitoring.regex.full_match("^.*s\\-ce.*tral1\\-b$")`)
+			})
+
+			Convey("and wildcard is used in the middle of the word and in the ending of the word", func() {
+				value := interpolateFilterWildcards("us-ce*tral1-*")
+				So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tral1\\-.*$")`)
+			})
 		})
 	})
 }

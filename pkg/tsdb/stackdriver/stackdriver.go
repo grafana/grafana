@@ -171,18 +171,18 @@ func reverse(s string) string {
 
 func interpolateFilterWildcards(value string) string {
 	re := regexp.MustCompile("[*]")
-	matches := re.FindAllStringIndex(value, -1)
-	logger.Info("len", "len", len(matches))
-	if len(matches) == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
+	matches := len(re.FindAllStringIndex(value, -1))
+	logger.Info("len", "len", matches)
+	if matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
 		value = strings.Replace(value, "*", "", -1)
 		value = fmt.Sprintf(`has_substring("%s")`, value)
-	} else if strings.HasPrefix(value, "*") {
+	} else if matches == 1 && strings.HasPrefix(value, "*") {
 		value = strings.Replace(value, "*", "", 1)
 		value = fmt.Sprintf(`ends_with("%s")`, value)
-	} else if strings.HasSuffix(value, "*") {
+	} else if matches == 1 && strings.HasSuffix(value, "*") {
 		value = reverse(strings.Replace(reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
-	} else if strings.Contains(value, "*") {
+	} else if matches == 1 {
 		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
 		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
