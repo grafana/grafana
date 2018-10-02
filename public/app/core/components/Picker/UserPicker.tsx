@@ -3,6 +3,7 @@ import Select from 'react-select';
 import PickerOption from './PickerOption';
 import { debounce } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { User } from 'app/types';
 
 export interface Props {
   onSelected: (user: User) => void;
@@ -12,13 +13,6 @@ export interface Props {
 
 export interface State {
   isLoading: boolean;
-}
-
-export interface User {
-  id: number;
-  label: string;
-  avatarUrl: string;
-  login: string;
 }
 
 export class UserPicker extends Component<Props, State> {

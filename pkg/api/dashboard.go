@@ -22,6 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	anonString = "Anonymous"
+)
+
 func isDashboardStarredByUser(c *m.ReqContext, dashID int64) (bool, error) {
 	if !c.IsSignedIn {
 		return false, nil
@@ -64,7 +68,7 @@ func GetDashboard(c *m.ReqContext) Response {
 	}
 
 	// Finding creator and last updater of the dashboard
-	updater, creator := "Anonymous", "Anonymous"
+	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
 		updater = getUserLogin(dash.UpdatedBy)
 	}
@@ -128,7 +132,7 @@ func getUserLogin(userID int64) string {
 	query := m.GetUserByIdQuery{Id: userID}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		return "Anonymous"
+		return anonString
 	}
 	return query.Result.Login
 }
@@ -403,7 +407,7 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 		return Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
-	creator := "Anonymous"
+	creator := anonString
 	if query.Result.CreatedBy > 0 {
 		creator = getUserLogin(query.Result.CreatedBy)
 	}

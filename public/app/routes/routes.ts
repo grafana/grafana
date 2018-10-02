@@ -5,6 +5,7 @@ import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
 import TeamList from 'app/features/teams/TeamList';
+import ApiKeys from 'app/features/api-keys/ApiKeysPage';
 import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
@@ -118,6 +119,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     })
     .when('/explore', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         roles: () => ['Editor', 'Admin'],
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
@@ -143,8 +145,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/org/apikeys', {
-      templateUrl: 'public/app/features/org/partials/orgApiKeys.html',
-      controller: 'OrgApiKeysCtrl',
+      template: '<react-container />',
+      resolve: {
+        roles: () => ['Editor', 'Admin'],
+        component: () => ApiKeys,
+      },
     })
     .when('/org/teams', {
       template: '<react-container />',

@@ -3,7 +3,7 @@ $select-menu-max-height: 300px;
 $select-item-font-size: $font-size-base;
 $select-item-bg: $dropdownBackground;
 $select-item-fg: $input-color;
-$select-option-bg: $dropdownBackground;
+$select-option-bg: $menu-dropdown-bg;
 $select-option-color: $input-color;
 $select-noresults-color: $text-color;
 $select-input-bg: $input-bg;
@@ -82,20 +82,14 @@ $select-option-selected-bg: $dropdownLinkBackgroundActive;
     width: auto;
   }
 
+  .Select-option {
+    border-left: 2px solid transparent;
+  }
+
   .Select-option.is-focused {
     background-color: $dropdownLinkBackgroundHover;
     color: $dropdownLinkColorHover;
-
-    &::before {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      width: 2px;
-      display: block;
-      content: '';
-      background-image: linear-gradient(to bottom, #ffd500 0%, #ff4400 99%, #ff4400 100%);
-    }
+    @include left-brand-border-gradient();
   }
 }
 
