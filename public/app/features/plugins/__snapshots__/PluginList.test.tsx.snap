@@ -1,0 +1,210 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<section
+  className="card-section card-list-layout-grid"
+>
+  <ol
+    className="card-list"
+  >
+    <PluginListItem
+      key="pretty cool plugin-0-0"
+      plugin={
+        Object {
+          "defaultNavUrl": "some/url",
+          "enabled": false,
+          "hasUpdate": false,
+          "id": "0",
+          "info": Object {
+            "author": Object {
+              "name": "Grafana Labs",
+              "url": "url/to/GrafanaLabs",
+            },
+            "description": "pretty decent plugin",
+            "links": Array [
+              "one link",
+            ],
+            "logos": Object {
+              "large": "large/logo",
+              "small": "small/logo",
+            },
+            "screenshots": "screenshot/0",
+            "updated": "2018-09-26",
+            "version": "1",
+          },
+          "latestVersion": "1.0",
+          "name": "pretty cool plugin-0",
+          "pinned": false,
+          "state": "",
+          "type": "",
+        }
+      }
+    />
+    <PluginListItem
+      key="pretty cool plugin-1-1"
+      plugin={
+        Object {
+          "defaultNavUrl": "some/url",
+          "enabled": false,
+          "hasUpdate": false,
+          "id": "1",
+          "info": Object {
+            "author": Object {
+              "name": "Grafana Labs",
+              "url": "url/to/GrafanaLabs",
+            },
+            "description": "pretty decent plugin",
+            "links": Array [
+              "one link",
+            ],
+            "logos": Object {
+              "large": "large/logo",
+              "small": "small/logo",
+            },
+            "screenshots": "screenshot/1",
+            "updated": "2018-09-26",
+            "version": "1",
+          },
+          "latestVersion": "1.1",
+          "name": "pretty cool plugin-1",
+          "pinned": false,
+          "state": "",
+          "type": "",
+        }
+      }
+    />
+    <PluginListItem
+      key="pretty cool plugin-2-2"
+      plugin={
+        Object {
+          "defaultNavUrl": "some/url",
+          "enabled": false,
+          "hasUpdate": false,
+          "id": "2",
+          "info": Object {
+            "author": Object {
+              "name": "Grafana Labs",
+              "url": "url/to/GrafanaLabs",
+            },
+            "description": "pretty decent plugin",
+            "links": Array [
+              "one link",
+            ],
+            "logos": Object {
+              "large": "large/logo",
+              "small": "small/logo",
+            },
+            "screenshots": "screenshot/2",
+            "updated": "2018-09-26",
+            "version": "1",
+          },
+          "latestVersion": "1.2",
+          "name": "pretty cool plugin-2",
+          "pinned": false,
+          "state": "",
+          "type": "",
+        }
+      }
+    />
+    <PluginListItem
+      key="pretty cool plugin-3-3"
+      plugin={
+        Object {
+          "defaultNavUrl": "some/url",
+          "enabled": false,
+          "hasUpdate": false,
+          "id": "3",
+          "info": Object {
+            "author": Object {
+              "name": "Grafana Labs",
+              "url": "url/to/GrafanaLabs",
+            },
+            "description": "pretty decent plugin",
+            "links": Array [
+              "one link",
+            ],
+            "logos": Object {
+              "large": "large/logo",
+              "small": "small/logo",
+            },
+            "screenshots": "screenshot/3",
+            "updated": "2018-09-26",
+            "version": "1",
+          },
+          "latestVersion": "1.3",
+          "name": "pretty cool plugin-3",
+          "pinned": false,
+          "state": "",
+          "type": "",
+        }
+      }
+    />
+    <PluginListItem
+      key="pretty cool plugin-4-4"
+      plugin={
+        Object {
+          "defaultNavUrl": "some/url",
+          "enabled": false,
+          "hasUpdate": false,
+          "id": "4",
+          "info": Object {
+            "author": Object {
+              "name": "Grafana Labs",
+              "url": "url/to/GrafanaLabs",
+            },
+            "description": "pretty decent plugin",
+            "links": Array [
+              "one link",
+            ],
+            "logos": Object {
+              "large": "large/logo",
+              "small": "small/logo",
+            },
+            "screenshots": "screenshot/4",
+            "updated": "2018-09-26",
+            "version": "1",
+          },
+          "latestVersion": "1.4",
+          "name": "pretty cool plugin-4",
+          "pinned": false,
+          "state": "",
+          "type": "",
+        }
+      }
+    />
+    <PluginListItem
+      key="pretty cool plugin-5-5"
+      plugin={
+        Object {
+          "defaultNavUrl": "some/url",
+          "enabled": false,
+          "hasUpdate": false,
+          "id": "5",
+          "info": Object {
+            "author": Object {
+              "name": "Grafana Labs",
+              "url": "url/to/GrafanaLabs",
+            },
+            "description": "pretty decent plugin",
+            "links": Array [
+              "one link",
+            ],
+            "logos": Object {
+              "large": "large/logo",
+              "small": "small/logo",
+            },
+            "screenshots": "screenshot/5",
+            "updated": "2018-09-26",
+            "version": "1",
+          },
+          "latestVersion": "1.5",
+          "name": "pretty cool plugin-5",
+          "pinned": false,
+          "state": "",
+          "type": "",
+        }
+      }
+    />
+  </ol>
+</section>
+`;

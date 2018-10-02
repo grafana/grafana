@@ -5,16 +5,22 @@ import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
 import dashboardsReducers from 'app/features/manage-dashboards/state/reducers';
+import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import foldersReducers from 'app/features/folders/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
+import pluginReducers from 'app/features/plugins/state/reducers';
+import dataSourcesReducers from 'app/features/datasources/state/reducers';
 
 const rootReducer = combineReducers({
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
   ...dashboardsReducers,
+  ...apiKeysReducers,
   ...foldersReducers,
   ...dashboardReducers,
+  ...pluginReducers,
+  ...dataSourcesReducers,
 });
 
 export let store;

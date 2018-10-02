@@ -29,6 +29,7 @@ describe('timeSrv', () => {
   beforeEach(() => {
     timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
     timeSrv.init(_dashboard);
+    _dashboard.refresh = false;
   });
 
   describe('timeRange', () => {
@@ -77,6 +78,23 @@ describe('timeSrv', () => {
       const time = timeSrv.timeRange();
       expect(time.from.valueOf()).toEqual(new Date('2014-04-10T05:20:10Z').getTime());
       expect(time.to.valueOf()).toEqual(new Date('2014-05-20T03:10:22Z').getTime());
+    });
+
+    it('should ignore refresh if time absolute', () => {
+      location = {
+        search: jest.fn(() => ({
+          from: '20140410T052010',
+          to: '20140520T031022',
+        })),
+      };
+
+      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+
+      // dashboard saved with refresh on
+      _dashboard.refresh = true;
+      timeSrv.init(_dashboard);
+
+      expect(timeSrv.refresh).toBe(false);
     });
 
     it('should handle formatted dates without time', () => {

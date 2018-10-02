@@ -15,16 +15,21 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Alert notification journal", func() {
-			var alertId int64 = 5
+			var alertId int64 = 7
 			var orgId int64 = 5
-			var notifierId int64 = 5
+			var notifierId int64 = 10
 
 			Convey("Getting last journal should raise error if no one exists", func() {
 				query := &m.GetLatestNotificationQuery{AlertId: alertId, OrgId: orgId, NotifierId: notifierId}
-				err := GetLatestNotification(context.Background(), query)
-				So(err, ShouldEqual, m.ErrJournalingNotFound)
+				GetLatestNotification(context.Background(), query)
+				So(len(query.Result), ShouldEqual, 0)
 
-				Convey("shoulbe be able to record two journaling events", func() {
+				// recording an journal entry in another org to make sure org filter works as expected.
+				journalInOtherOrg := &m.RecordNotificationJournalCommand{AlertId: alertId, NotifierId: notifierId, OrgId: 10, Success: true, SentAt: 1}
+				err := RecordNotificationJournal(context.Background(), journalInOtherOrg)
+				So(err, ShouldBeNil)
+
+				Convey("should be able to record two journaling events", func() {
 					createCmd := &m.RecordNotificationJournalCommand{AlertId: alertId, NotifierId: notifierId, OrgId: orgId, Success: true, SentAt: 1}
 
 					err := RecordNotificationJournal(context.Background(), createCmd)
@@ -38,17 +43,20 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Convey("get last journaling event", func() {
 						err := GetLatestNotification(context.Background(), query)
 						So(err, ShouldBeNil)
-						So(query.Result.SentAt, ShouldEqual, 1001)
+						So(len(query.Result), ShouldEqual, 2)
+						last := query.Result[0]
+						So(last.SentAt, ShouldEqual, 1001)
 
 						Convey("be able to clear all journaling for an notifier", func() {
 							cmd := &m.CleanNotificationJournalCommand{AlertId: alertId, NotifierId: notifierId, OrgId: orgId}
 							err := CleanNotificationJournal(context.Background(), cmd)
 							So(err, ShouldBeNil)
 
-							Convey("querying for last junaling should raise error", func() {
+							Convey("querying for last journaling should return no journal entries", func() {
 								query := &m.GetLatestNotificationQuery{AlertId: alertId, OrgId: orgId, NotifierId: notifierId}
 								err := GetLatestNotification(context.Background(), query)
-								So(err, ShouldEqual, m.ErrJournalingNotFound)
+								So(err, ShouldBeNil)
+								So(len(query.Result), ShouldEqual, 0)
 							})
 						})
 					})

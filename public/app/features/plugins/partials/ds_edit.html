@@ -31,9 +31,14 @@
       </div>
     </div>
 
-    <div class="alert alert-info gf-form-group" ng-if="ctrl.datasourceMeta.state === 'alpha'">
+    <div class="grafana-info-box" ng-if="ctrl.datasourceMeta.state === 'alpha'">
       This plugin is marked as being in alpha state, which means it is in early development phase and
       updates will include breaking changes.
+    </div>
+
+		<div class="grafana-info-box" ng-if="ctrl.datasourceMeta.state === 'beta'">
+      This plugin is marked as being in a beta development state. This means it is in currently in active development and could be
+      missing important features.
     </div>
 
     <rebuild-on-change property="ctrl.datasourceMeta.id">
