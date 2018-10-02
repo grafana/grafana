@@ -84,7 +84,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    m.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			state:        &m.AlertNotificationState{SentAt: tnow.Add(-time.Minute).Unix()},
+			state:        &m.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
 
 			expect: true,
 		},
@@ -104,7 +104,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    m.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			state:        &m.AlertNotificationState{SentAt: tnow.Add(-time.Minute).Unix()},
+			state:        &m.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
 
 			expect: false,
 		},
@@ -114,7 +114,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    m.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			state:        &m.AlertNotificationState{SentAt: tnow.Add(-11 * time.Minute).Unix()},
+			state:        &m.AlertNotificationState{UpdatedAt: tnow.Add(-11 * time.Minute).Unix()},
 
 			expect: true,
 		},

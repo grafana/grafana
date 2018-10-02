@@ -53,8 +53,8 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 
 	if context.PrevAlertState == context.Rule.State && sendReminder {
 		// Do not notify if interval has not elapsed
-		lastNotify := time.Unix(notificationState.SentAt, 0)
-		if notificationState.SentAt != 0 && lastNotify.Add(frequency).After(time.Now()) {
+		lastNotify := time.Unix(notificationState.UpdatedAt, 0)
+		if notificationState.UpdatedAt != 0 && lastNotify.Add(frequency).After(time.Now()) {
 			return false
 		}
 

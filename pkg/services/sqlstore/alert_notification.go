@@ -249,12 +249,11 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
 			version = ?,
-			sent_at = ?,
 			updated_at = ?
 		WHERE
 			id = ?`
 
-		_, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, cmd.State.SentAt, timeNow().Unix(), cmd.State.Id)
+		_, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, timeNow().Unix(), cmd.State.Id)
 
 		if err != nil {
 			return err
@@ -325,7 +324,7 @@ func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQ
 			OrgId:      cmd.OrgId,
 			AlertId:    cmd.AlertId,
 			NotifierId: cmd.NotifierId,
-			State:      "unknown",
+			State:      m.AlertNotificationStateUnknown,
 			UpdatedAt:  timeNow().Unix(),
 		}
 
@@ -354,10 +353,9 @@ func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQ
 }
 
 func getAlertNotificationState(sess *DBSession, cmd *m.GetNotificationStateQuery, nj *m.AlertNotificationState) (bool, error) {
-	exist, err := sess.
+	return sess.
 		Where("alert_notification_state.org_id = ?", cmd.OrgId).
 		Where("alert_notification_state.alert_id = ?", cmd.AlertId).
 		Where("alert_notification_state.notifier_id = ?", cmd.NotifierId).
 		Get(nj)
-	return exist, err
 }

@@ -117,10 +117,10 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
 			{Name: "notifier_id", Type: DB_BigInt, Nullable: false},
-			{Name: "sent_at", Type: DB_BigInt, Nullable: false},
 			{Name: "state", Type: DB_NVarchar, Length: 50, Nullable: false},
 			{Name: "version", Type: DB_BigInt, Nullable: false},
 			{Name: "updated_at", Type: DB_BigInt, Nullable: false},
+			{Name: "alert_rule_state_updated_version", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: UniqueIndex},
@@ -130,8 +130,4 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("create alert_notification_state table v1", NewAddTableMigration(alert_notification_state))
 	mg.AddMigration("add index alert_notification_state org_id & alert_id & notifier_id",
 		NewAddIndexMigration(alert_notification_state, alert_notification_state.Indices[0]))
-
-	mg.AddMigration("Add alert_rule_state_updated_version to alert_notification_state", NewAddColumnMigration(alert_notification_state, &Column{
-		Name: "alert_rule_state_updated_version", Type: DB_BigInt, Nullable: true,
-	}))
 }

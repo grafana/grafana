@@ -68,7 +68,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	if err != nil {
 		n.log.Error("failed to send notification", "id", not.GetNotifierId())
 	} else {
-		notifierState.state.SentAt = time.Now().UTC().Unix()
+		notifierState.state.UpdatedAt = time.Now().UTC().Unix()
 	}
 
 	if evalContext.IsTestRun {
@@ -185,7 +185,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 
 		err = bus.DispatchCtx(evalContext.Ctx, query)
 		if err != nil {
-			n.log.Error("Could not get notification state.", "notifier", notification.Id)
+			n.log.Error("Could not get notification state.", "notifier", notification.Id, "error", err)
 			continue
 		}
 
