@@ -59,14 +59,14 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 }
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
-	not := notifierState.notifier
-	n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
-	metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
+	notifier := notifierState.notifier
+	n.log.Debug("Sending notification", "type", notifier.GetType(), "id", notifier.GetNotifierId(), "isDefault", notifier.GetIsDefault())
+	metrics.M_Alerting_Notification_Sent.WithLabelValues(notifier.GetType()).Inc()
 
-	err := not.Notify(evalContext)
+	err := notifier.Notify(evalContext)
 
 	if err != nil {
-		n.log.Error("failed to send notification", "id", not.GetNotifierId())
+		n.log.Error("failed to send notification", "id", notifier.GetNotifierId())
 	} else {
 		notifierState.state.UpdatedAt = time.Now().UTC().Unix()
 	}
@@ -76,13 +76,13 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	}
 
 	cmd := &m.SetAlertNotificationStateToCompleteCommand{
-		Id:      not.GetNotifierId(),
+		Id:      notifier.GetNotifierId(),
 		Version: notifierState.state.Version,
 	}
 
 	if err = bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		if err == m.ErrAlertNotificationStateVersionConflict {
-			n.log.Error("notification state out of sync", "id", not.GetNotifierId())
+			n.log.Error("notification state out of sync", "id", notifier.GetNotifierId())
 			return nil
 		}
 
