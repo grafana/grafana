@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { UsersListPage, Props } from './UsersListPage';
-import { NavModel, User } from 'app/types';
+import { Invitee, NavModel, User } from 'app/types';
 import { getMockUser } from './__mocks__/userMocks';
 import appEvents from '../../core/app_events';
 
@@ -13,7 +13,11 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {} as NavModel,
     users: [] as User[],
+    invitees: [] as Invitee[],
     searchQuery: '',
+    externalUserMngInfo: '',
+    revokeInvite: jest.fn(),
+    loadInvitees: jest.fn(),
     loadUsers: jest.fn(),
     updateUser: jest.fn(),
     removeUser: jest.fn(),

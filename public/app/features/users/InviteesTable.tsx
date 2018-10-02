@@ -7,10 +7,10 @@ export interface Props {
 }
 
 export default class InviteesTable extends PureComponent<Props> {
-  private copyRef = createRef<HTMLTextAreaElement>();
+  private copyUrlRef = createRef<HTMLTextAreaElement>();
 
   copyToClipboard = () => {
-    const node = this.copyRef.current;
+    const node = this.copyUrlRef.current;
 
     if (node) {
       node.select();
@@ -39,7 +39,12 @@ export default class InviteesTable extends PureComponent<Props> {
                 <td>{invitee.name}</td>
                 <td className="text-right">
                   <button className="btn btn-inverse btn-mini" onClick={this.copyToClipboard}>
-                    <textarea readOnly={true} value={invitee.url} style={{ display: 'none' }} ref={this.copyRef} />
+                    <textarea
+                      readOnly={true}
+                      value={invitee.url}
+                      style={{ position: 'absolute', right: -1000 }}
+                      ref={this.copyUrlRef}
+                    />
                     <i className="fa fa-clipboard" /> Copy Invite
                   </button>
                   &nbsp;

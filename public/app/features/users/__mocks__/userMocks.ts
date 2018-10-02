@@ -29,3 +29,28 @@ export const getMockUser = () => {
     userId: 2,
   };
 };
+
+export const getMockInvitees = (amount: number) => {
+  const invitees = [];
+
+  for (let i = 0; i <= amount; i++) {
+    invitees.push({
+      code: `asdfasdfsadf-${i}`,
+      createdOn: '2018-10-02',
+      email: `invitee-${i}@test.com`,
+      emailSent: true,
+      emailSentOn: '2018-10-02',
+      id: i,
+      invitedByEmail: 'admin@grafana.com',
+      invitedByLogin: 'admin',
+      invitedByName: 'admin',
+      name: `invitee-${i}`,
+      orgId: 1,
+      role: 'viewer',
+      status: 'not accepted',
+      url: `localhost/invite/$${i}`,
+    });
+  }
+
+  return invitees;
+};

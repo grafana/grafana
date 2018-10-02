@@ -1,17 +1,18 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import OrgActionBar, { Props } from './OrgActionBar';
+import InviteesTable, { Props } from './InviteesTable';
+import { Invitee } from 'app/types';
+import { getMockInvitees } from './__mocks__/userMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    searchQuery: '',
-    setSearchQuery: jest.fn(),
-    linkButton: { href: 'some/url', title: 'test' },
+    invitees: [] as Invitee[],
+    revokeInvite: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
 
-  return shallow(<OrgActionBar {...props} />);
+  return shallow(<InviteesTable {...props} />);
 };
 
 describe('Render', () => {
@@ -21,9 +22,9 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should hide layout mode', () => {
+  it('should render invitees', () => {
     const wrapper = setup({
-      showLayoutMode: false,
+      invitees: getMockInvitees(5),
     });
 
     expect(wrapper).toMatchSnapshot();
