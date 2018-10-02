@@ -19,7 +19,7 @@ export const alignOptions = [
   {
     text: 'delta',
     value: 'ALIGN_DELTA',
-    valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
+    valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.CUMULATIVE, MetricKind.DELTA],
   },
   {
