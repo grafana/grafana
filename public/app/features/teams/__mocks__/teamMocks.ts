@@ -1,4 +1,4 @@
-import { Team, TeamGroup, TeamMember } from '../../../types';
+import { Team, TeamGroup, TeamMember } from 'app/types';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];

@@ -11,6 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	// Themes
+	lightName = "light"
+	darkName  = "dark"
+)
+
 func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
@@ -60,7 +66,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			LightTheme:                 prefs.Theme == "light",
+			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
 			Locale:                     locale,
 			HelpFlags1:                 c.HelpFlags1,
@@ -88,12 +94,12 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	}
 
 	themeURLParam := c.Query("theme")
-	if themeURLParam == "light" {
+	if themeURLParam == lightName {
 		data.User.LightTheme = true
-		data.Theme = "light"
-	} else if themeURLParam == "dark" {
+		data.Theme = lightName
+	} else if themeURLParam == darkName {
 		data.User.LightTheme = false
-		data.Theme = "dark"
+		data.Theme = darkName
 	}
 
 	if hasEditPermissionInFoldersQuery.Result {

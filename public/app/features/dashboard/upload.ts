@@ -1,10 +1,12 @@
 import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
+import angular from 'angular';
 
 const template = `
-<input type="file" id="dashupload" name="dashupload" class="hide"/>
+<input type="file" id="dashupload" name="dashupload" class="hide" onchange="angular.element(this).scope().file_selected"/>
 <label class="btn btn-success" for="dashupload">
   <i class="fa fa-upload"></i>
-  Upload .json File
+  {{btnText}}
 </label>
 `;
 
@@ -15,8 +17,11 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
     template: template,
     scope: {
       onUpload: '&',
+      btnText: '@?',
     },
-    link: scope => {
+    link: (scope, elem) => {
+      scope.btnText = angular.isDefined(scope.btnText) ? scope.btnText : 'Upload .json File';
+
       function file_selected(evt) {
         const files = evt.target.files; // FileList object
         const readerOnload = () => {
@@ -26,7 +31,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
               dash = JSON.parse(e.target.result);
             } catch (err) {
               console.log(err);
-              scope.appEvent('alert-error', ['Import failed', 'JSON -> JS Serialization failed: ' + err.message]);
+              appEvents.emit('alert-error', ['Import failed', 'JSON -> JS Serialization failed: ' + err.message]);
               return;
             }
 
@@ -52,7 +57,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
       // Check for the various File API support.
       if (wnd.File && wnd.FileReader && wnd.FileList && wnd.Blob) {
         // Something
-        document.getElementById('dashupload').addEventListener('change', file_selected, false);
+        elem[0].addEventListener('change', file_selected, false);
       } else {
         alertSrv.set('Oops', 'Sorry, the HTML5 File APIs are not fully supported in this browser.', 'error');
       }

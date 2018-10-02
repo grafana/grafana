@@ -60,6 +60,10 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 		return err
 	}
 
+	if _, err := sess.Exec("DELETE FROM alert_notification_state WHERE alert_id = ?", alertId); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -275,6 +279,8 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		}
 
 		sess.ID(alert.Id).Update(&alert)
+
+		cmd.Result = alert
 		return nil
 	})
 }

@@ -112,7 +112,7 @@ func SelectVersion(plugin m.Plugin, version string) (m.Version, error) {
 		}
 	}
 
-	return m.Version{}, errors.New("Could not find the version your looking for")
+	return m.Version{}, errors.New("Could not find the version you're looking for")
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
