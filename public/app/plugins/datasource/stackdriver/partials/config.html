@@ -1,4 +1,4 @@
-<div class="gf-form-group">
+<div class="gf-form-group" ng-if="!ctrl.current.jsonData.defaultProject">
   <div class="grafana-info-box">
     <h5>GCP Service Account</h5>
     <p>
@@ -24,7 +24,7 @@
   </div>
 </div>
 
-<div class="gf-form-group">
+<div class="gf-form-group" ng-if="!ctrl.current.jsonData.defaultProject">
   <div class="gf-form">
     <h3>Service Account Authentication</h3>
     <info-popover mode="header">Upload your Service Account key file or paste in the contents of the file. The file
@@ -80,6 +80,23 @@
     </info-popover>
   </div>
 </div>
+
+<p class="gf-form-label" ng-hide="ctrl.current.secureJsonFields.privateKey"><i class="fa fa-save"></i> Do not forget to save your changes after uploading a file.</p>
+
+<div class="gf-form-group" ng-if="!ctrl.jsonText">
+  <div class="gf-form">
+    <h3>Local machine</h3>
+    <info-popover mode="header">For development.</info-popover>
+  </div>
+
+  <div class="gf-form-group">
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-10">Default Project ID</span>
+      <input type="text" class="gf-form-input" ng-model='ctrl.current.jsonData.defaultProject' placeholder=""></input>
+    </div>
+  </div>
+</div>
+
 
 <div class="grafana-info-box" ng-hide="ctrl.current.secureJsonFields.privateKey">
 	Do not forget to save your changes after uploading a file.
