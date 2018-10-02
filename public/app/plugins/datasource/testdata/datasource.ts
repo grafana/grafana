@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import TableModel from 'app/core/table_model';
 
 class TestDataDatasource {
   id: any;
@@ -29,16 +30,29 @@ class TestDataDatasource {
     }
 
     return this.backendSrv
-      .post('/api/tsdb/query', {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries: queries,
+      .datasourceRequest({
+        method: 'POST',
+        url: '/api/tsdb/query',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries: queries,
+        },
       })
       .then(res => {
         const data = [];
 
-        if (res.results) {
-          _.forEach(res.results, queryRes => {
+        if (res.data.results) {
+          _.forEach(res.data.results, queryRes => {
+            if (queryRes.tables) {
+              for (const table of queryRes.tables) {
+                const model = new TableModel();
+                model.rows = table.rows;
+                model.columns = table.columns;
+
+                data.push(model);
+              }
+            }
             for (const series of queryRes.series) {
               data.push({
                 target: series.name,
@@ -48,17 +62,35 @@ class TestDataDatasource {
           });
         }
 
+        console.log(res);
         return { data: data };
       });
   }
 
   annotationQuery(options) {
-    return this.backendSrv.get('/api/annotations', {
-      from: options.range.from.valueOf(),
-      to: options.range.to.valueOf(),
-      limit: options.limit,
-      type: options.type,
-    });
+    return this.backendSrv
+      .datasourceRequest({
+        method: 'POST',
+        url: '/api/tsdb/query',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries: [
+            {
+              refId: 'A',
+              scenarioId: 'annotations',
+              intervalMs: 100,
+              maxDataPoints: 100,
+              stringInput: '',
+              datasourceId: this.id,
+            },
+          ],
+        },
+      })
+      .then(resp => {
+        console.log(resp);
+        return [];
+      });
   }
 }
 

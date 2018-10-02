@@ -221,6 +221,33 @@ func init() {
 			return queryRes
 		},
 	})
+
+	registerScenario(&Scenario{
+		Id:   "annotations",
+		Name: "Annotations",
+
+		Handler: func(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
+			timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
+			to := tsdbQuery.TimeRange.GetToAsMsEpoch()
+
+			table := tsdb.Table{
+				Columns: []tsdb.TableColumn{
+					{Text: "time"},
+					{Text: "message"},
+				},
+				Rows: []tsdb.RowValues{},
+			}
+
+			for i := int64(0); i < 10 && timeWalkerMs < to; i++ {
+				table.Rows = append(table.Rows, tsdb.RowValues{float64(timeWalkerMs), "hello"})
+				timeWalkerMs += query.IntervalMs
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Tables = append(queryRes.Tables, &table)
+			return queryRes
+		},
+	})
 }
 
 func registerScenario(scenario *Scenario) {
