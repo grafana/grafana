@@ -170,8 +170,11 @@ func reverse(s string) string {
 }
 
 func interpolateFilterWildcards(value string) string {
-	if strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
-		value = strings.Replace(value, "*", "", 1)
+	re := regexp.MustCompile("[*]")
+	matches := re.FindAllStringIndex(value, -1)
+	logger.Info("len", "len", len(matches))
+	if len(matches) == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
+		value = strings.Replace(value, "*", "", -1)
 		value = fmt.Sprintf(`has_substring("%s")`, value)
 	} else if strings.HasPrefix(value, "*") {
 		value = strings.Replace(value, "*", "", 1)

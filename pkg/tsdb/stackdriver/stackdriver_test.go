@@ -342,6 +342,19 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("when interpolating filter wildcards", func() {
+			Convey("and wildcard is used in the beginning and the end of the word", func() {
+				Convey("and theres no wildcard in the middle of the word", func() {
+					value := interpolateFilterWildcards("*-central1*")
+					So(value, ShouldEqual, `has_substring("-central1")`)
+				})
+				Convey("and there is a wildcard in the middle of the word", func() {
+					value := interpolateFilterWildcards("*-cent*ral1*")
+					So(value, ShouldNotStartWith, `has_substring`)
+				})
+			})
+		})
 	})
 }
 
