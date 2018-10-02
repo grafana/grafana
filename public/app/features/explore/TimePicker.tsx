@@ -5,7 +5,6 @@ import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
-
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
