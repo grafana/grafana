@@ -259,7 +259,10 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 		}
 
 		if current.Version != version {
-			return m.ErrAlertNotificationStateVersionConflict
+			sqlog.Error(
+				`notification state out of sync. the notification 
+				is marked as complete but has been modified between 
+				set as pending and completion.`, "notifierId", current.NotifierId)
 		}
 
 		return nil

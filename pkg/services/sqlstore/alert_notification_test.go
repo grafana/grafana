@@ -77,19 +77,20 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 						So(query3.Result.UpdatedAt, ShouldEqual, now.Unix())
 					})
 
-					Convey("Update existing state to completed should update database, but return version mismatch", func() {
+					Convey("Update existing state to completed should update database. regardless of version", func() {
 						s := *query.Result
+						unknownVersion := int64(1000)
 						cmd := models.SetAlertNotificationStateToCompleteCommand{
 							Id:      s.Id,
-							Version: 1000,
+							Version: unknownVersion,
 						}
 						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
-						So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
+						So(err, ShouldBeNil)
 
 						query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
 						err = GetOrCreateAlertNotificationState(context.Background(), query3)
 						So(err, ShouldBeNil)
-						So(query3.Result.Version, ShouldEqual, 1001)
+						So(query3.Result.Version, ShouldEqual, unknownVersion+1)
 						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
 						So(query3.Result.UpdatedAt, ShouldEqual, now.Unix())
 					})

@@ -3,7 +3,6 @@ package alerting
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -60,15 +59,14 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
 	notifier := notifierState.notifier
+
 	n.log.Debug("Sending notification", "type", notifier.GetType(), "id", notifier.GetNotifierId(), "isDefault", notifier.GetIsDefault())
 	metrics.M_Alerting_Notification_Sent.WithLabelValues(notifier.GetType()).Inc()
 
 	err := notifier.Notify(evalContext)
 
 	if err != nil {
-		n.log.Error("failed to send notification", "id", notifier.GetNotifierId())
-	} else {
-		notifierState.state.UpdatedAt = time.Now().UTC().Unix()
+		n.log.Error("failed to send notification", "id", notifier.GetNotifierId(), "error", err)
 	}
 
 	if evalContext.IsTestRun {
@@ -80,16 +78,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 		Version: notifierState.state.Version,
 	}
 
-	if err = bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		if err == m.ErrAlertNotificationStateVersionConflict {
-			n.log.Error("notification state out of sync", "id", notifier.GetNotifierId())
-			return nil
-		}
-
-		return err
-	}
-
-	return nil
+	return bus.DispatchCtx(evalContext.Ctx, cmd)
 }
 
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
