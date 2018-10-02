@@ -6,14 +6,15 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { Label } from 'app/core/components/Forms/Forms';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import Select from 'react-select';
+import { updateLocation } from 'app/core/actions';
 
 export interface Props {
   navModel: NavModel;
+  updateLocation: typeof updateLocation;
 }
 
 export interface State {
-  inviteChecked: { id: boolean };
+  inviteChecked: boolean;
   user: {
     role: string;
     email: string;
@@ -22,8 +23,9 @@ export interface State {
     password: string;
   };
   invite: {
+    loginOrEmail: string;
+    name: string;
     role: string;
-    email: string;
     sendEmail: boolean;
   };
 }
@@ -32,7 +34,7 @@ export class AddUserPage extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
-      inviteChecked: { id: false },
+      inviteChecked: false,
       user: {
         role: 'Editor',
         email: '',
@@ -41,8 +43,9 @@ export class AddUserPage extends PureComponent<Props, State> {
         password: '',
       },
       invite: {
+        loginOrEmail: '',
+        name: '',
         role: 'Editor',
-        email: '',
         sendEmail: true,
       },
     };
@@ -57,14 +60,20 @@ export class AddUserPage extends PureComponent<Props, State> {
 
   changeEmail(event) {
     const user = Object.assign({}, this.state.user);
+    const invite = Object.assign({}, this.state.invite);
     user.email = event.target.value;
+    invite.loginOrEmail = event.target.value;
     this.setState({ user });
+    this.setState({ invite });
   }
 
   changeRole(event) {
     const user = Object.assign({}, this.state.user);
+    const invite = Object.assign({}, this.state.invite);
     user.role = event.target.value;
+    invite.role = event.target.value;
     this.setState({ user });
+    this.setState({ invite });
   }
 
   changeUserName(event) {
@@ -86,9 +95,7 @@ export class AddUserPage extends PureComponent<Props, State> {
   }
 
   checkInvite(e) {
-    const inviteChecked = this.state.inviteChecked;
-    inviteChecked.id = e.target.checked;
-    this.setState({ inviteChecked: inviteChecked });
+    this.setState(prevState => ({ inviteChecked: !prevState.inviteChecked }));
   }
 
   findExistingUser() {}
@@ -101,7 +108,9 @@ export class AddUserPage extends PureComponent<Props, State> {
     const backendSrv = getBackendSrv();
 
     return backendSrv.post('/api/org/invites', this.state.invite).then(() => {
-      //this.$location.path('org/users/');
+      this.props.updateLocation({
+        path: 'org/users/',
+      });
     });
   }
 
@@ -109,12 +118,13 @@ export class AddUserPage extends PureComponent<Props, State> {
     const backendSrv = getBackendSrv();
 
     return backendSrv.post('/api/admin/users', this.state.user).then(() => {
-      //this.$location.path('org/users/');
+      this.props.updateLocation({
+        path: 'org/users/',
+      });
     });
   }
   addUser() {
-    console.log(this.state.inviteChecked);
-    if (this.state.inviteChecked.id) {
+    if (this.state.inviteChecked) {
       this.sendInvite();
     } else {
       this.createUser();
@@ -140,10 +150,6 @@ export class AddUserPage extends PureComponent<Props, State> {
               />
             </div>
             <div className="gf-form max-width-30">
-              <Label>Email</Label>
-              <Select value={this.state.user.email} onChange={this.changeEmail} loadOptions={this.options} />
-            </div>
-            <div className="gf-form max-width-30">
               <Label>Role</Label>
               <div className="gf-form-select-wrapper width-20">
                 <select className="gf-form-input" value={this.state.user.role} onChange={this.changeRole}>
@@ -157,7 +163,7 @@ export class AddUserPage extends PureComponent<Props, State> {
               <Label>Add user by invite</Label>
               <div className="gf-form-switch">
                 <input id="invite" type="checkbox" onChange={e => this.checkInvite(e)} />
-                <label data-on="Yes" data-off="No" />
+                <label htmlFor="invite" data-on="Yes" data-off="No" />
               </div>
             </label>
           </div>
@@ -171,6 +177,7 @@ export class AddUserPage extends PureComponent<Props, State> {
                 placeholder="username"
                 value={this.state.user.userName}
                 onChange={this.changeUserName}
+                readOnly={this.state.inviteChecked}
               />
             </div>
             <div className="gf-form max-width-30" ng-if="ctrl.create">
@@ -181,16 +188,18 @@ export class AddUserPage extends PureComponent<Props, State> {
                 placeholder="name (optional)"
                 value={this.state.user.name}
                 onChange={this.changeName}
+                readOnly={this.state.inviteChecked}
               />
             </div>
             <div className="gf-form max-width-30" ng-if="ctrl.create">
               <Label>Password</Label>
               <input
-                type="text"
+                type="password"
                 className="gf-form-input"
                 placeholder=""
                 value={this.state.user.password}
                 onChange={this.changePassword}
+                readOnly={this.state.inviteChecked}
               />
             </div>
           </div>
@@ -212,4 +221,8 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'users'),
 });
 
-export default hot(module)(connect(mapStateToProps)(AddUserPage));
+const mapDispatchToProps = {
+  updateLocation,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AddUserPage));
