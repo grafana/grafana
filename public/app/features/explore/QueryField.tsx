@@ -11,10 +11,17 @@ import NewlinePlugin from './slate-plugins/newline';
 import Typeahead from './Typeahead';
 import { makeFragment, makeValue } from './Value';
 
-export const TYPEAHEAD_DEBOUNCE = 300;
+export const TYPEAHEAD_DEBOUNCE = 100;
 
-function flattenSuggestions(s: any[]): any[] {
-  return s ? s.reduce((acc, g) => acc.concat(g.items), []) : [];
+function getSuggestionByIndex(suggestions: SuggestionGroup[], index: number): Suggestion {
+  // Flatten suggestion groups
+  const flattenedSuggestions = suggestions.reduce((acc, g) => acc.concat(g.items), []);
+  const correctedIndex = Math.max(index, 0) % flattenedSuggestions.length;
+  return flattenedSuggestions[correctedIndex];
+}
+
+function hasSuggestions(suggestions: SuggestionGroup[]): boolean {
+  return suggestions && suggestions.length > 0;
 }
 
 export interface Suggestion {
@@ -154,8 +161,14 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
     clearTimeout(this.resetTimer);
   }
 
-  componentDidUpdate() {
-    this.updateMenu();
+  componentDidUpdate(prevProps, prevState) {
+    // Only update menu location when suggestion existence or text/selection changed
+    if (
+      this.state.value !== prevState.value ||
+      hasSuggestions(this.state.suggestions) !== hasSuggestions(prevState.suggestions)
+    ) {
+      this.updateMenu();
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -216,7 +229,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
         wrapperNode,
       });
 
-      const filteredSuggestions = suggestions
+      let filteredSuggestions = suggestions
         .map(group => {
           if (group.items) {
             if (prefix) {
@@ -240,6 +253,11 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
           return group;
         })
         .filter(group => group.items && group.items.length > 0); // Filter out empty groups
+
+      // Keep same object for equality checking later
+      if (_.isEqual(filteredSuggestions, this.state.suggestions)) {
+        filteredSuggestions = this.state.suggestions;
+      }
 
       this.setState(
         {
@@ -326,12 +344,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
             return undefined;
           }
 
-          // Get the currently selected suggestion
-          const flattenedSuggestions = flattenSuggestions(suggestions);
-          const selected = Math.abs(typeaheadIndex);
-          const selectedIndex = selected % flattenedSuggestions.length || 0;
-          const suggestion = flattenedSuggestions[selectedIndex];
-
+          const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
           this.applyTypeahead(change, suggestion);
           return true;
         }
@@ -408,8 +421,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
     }
 
     // No suggestions or blur, remove menu
-    const hasSuggesstions = suggestions && suggestions.length > 0;
-    if (!hasSuggesstions) {
+    if (!hasSuggestions(suggestions)) {
       menu.removeAttribute('style');
       return;
     }
@@ -436,18 +448,12 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
 
   renderMenu = () => {
     const { portalPrefix } = this.props;
-    const { suggestions } = this.state;
-    const hasSuggesstions = suggestions && suggestions.length > 0;
-    if (!hasSuggesstions) {
+    const { suggestions, typeaheadIndex } = this.state;
+    if (!hasSuggestions(suggestions)) {
       return null;
     }
 
-    // Guard selectedIndex to be within the length of the suggestions
-    let selectedIndex = Math.max(this.state.typeaheadIndex, 0);
-    const flattenedSuggestions = flattenSuggestions(suggestions);
-    selectedIndex = selectedIndex % flattenedSuggestions.length || 0;
-    const selectedItem: Suggestion | null =
-      flattenedSuggestions.length > 0 ? flattenedSuggestions[selectedIndex] : null;
+    const selectedItem = getSuggestionByIndex(suggestions, typeaheadIndex);
 
     // Create typeahead in DOM root so we can later position it absolutely
     return (
@@ -482,7 +488,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
   }
 }
 
-class Portal extends React.Component<{ index?: number; prefix: string }, {}> {
+class Portal extends React.PureComponent<{ index?: number; prefix: string }, {}> {
   node: HTMLElement;
 
   constructor(props) {

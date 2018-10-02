@@ -575,6 +575,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
               onWillApplySuggestion={willApplySuggestion}
               onValueChanged={this.onChangeQuery}
               placeholder="Enter a PromQL query"
+              portalPrefix="prometheus"
             />
           </div>
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
