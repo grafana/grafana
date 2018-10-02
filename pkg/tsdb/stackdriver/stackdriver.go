@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -159,6 +161,53 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	return stackdriverQueries, nil
 }
 
+func reverse(s string) string {
+	chars := []rune(s)
+	for i, j := 0, len(chars)-1; i < j; i, j = i+1, j-1 {
+		chars[i], chars[j] = chars[j], chars[i]
+	}
+	return string(chars)
+}
+
+func escapeDoubleBackslash(target string) string {
+	var re = regexp.MustCompile(`\\`)
+	return re.ReplaceAllString(target, `\\\\`)
+	// return strings.Replace(target, `\`, "", -1)
+}
+
+func escapeIllegalCharacters(target string) string {
+	var re = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+	return string(re.ReplaceAllFunc([]byte(target), func(in []byte) []byte {
+		return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
+	}))
+}
+
+func replaceSingleAsterixCharacters(target string) string {
+	return strings.Replace(target, "*", ".*", -1)
+}
+
+func interpolateFilterWildcards(value string) string {
+	if strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
+		value = strings.Replace(value, "*", "", 1)
+		value = fmt.Sprintf(`has_substring("%s")`, value)
+	} else if strings.HasPrefix(value, "*") {
+		value = strings.Replace(value, "*", "", 1)
+		value = fmt.Sprintf(`ends_with("%s")`, value)
+	} else if strings.HasSuffix(value, "*") {
+		value = reverse(strings.Replace(reverse(value), "*", "", 1))
+		value = fmt.Sprintf(`starts_with("%s")`, value)
+	} else if strings.Contains(value, "*") {
+		value = escapeIllegalCharacters(value)
+		value = replaceSingleAsterixCharacters(value)
+		value = strings.Replace(value, `"`, `\\"`, -1)
+		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
+	}
+
+	logger.Info("filter", "filter", value)
+
+	return value
+}
+
 func buildFilterString(metricType string, filterParts []interface{}) string {
 	filterString := ""
 	for i, part := range filterParts {
@@ -166,7 +215,11 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 		if part == "AND" {
 			filterString += " "
 		} else if mod == 2 {
-			filterString += fmt.Sprintf(`"%s"`, part)
+			if strings.Contains(part.(string), "*") {
+				filterString += interpolateFilterWildcards(part.(string))
+			} else {
+				filterString += fmt.Sprintf(`"%s"`, part)
+			}
 		} else {
 			filterString += part.(string)
 		}
@@ -231,6 +284,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
+	logger.Info("req.URL.RawQuery", "req.URL.RawQuery", req.URL.RawQuery)
 	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
