@@ -68,29 +68,22 @@ class TestDataDatasource {
   }
 
   annotationQuery(options) {
-    return this.backendSrv
-      .datasourceRequest({
-        method: 'POST',
-        url: '/api/tsdb/query',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: [
-            {
-              refId: 'A',
-              scenarioId: 'annotations',
-              intervalMs: 100,
-              maxDataPoints: 100,
-              stringInput: '',
-              datasourceId: this.id,
-            },
-          ],
-        },
-      })
-      .then(resp => {
-        console.log(resp);
-        return [];
+    let timeWalker = options.range.from.valueOf();
+    const to = options.range.to.valueOf();
+    const events = [];
+    const eventCount = 10;
+    const step = (to - timeWalker) / eventCount;
+
+    for (let i = 0; i < eventCount; i++) {
+      events.push({
+        annotation: options.annotation,
+        time: timeWalker,
+        text: 'This is the text, <a href="https://grafana.com">Grafana.com</a>',
+        tags: ['text', 'server'],
       });
+      timeWalker += step;
+    }
+    return this.$q.when(events);
   }
 }
 
