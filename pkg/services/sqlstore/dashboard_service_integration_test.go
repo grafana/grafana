@@ -932,29 +932,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 	})
 }
 
-type scenarioContext struct {
-	dashboardGuardianMock *guardian.FakeDashboardGuardian
-}
-
-type scenarioFunc func(c *scenarioContext)
-
-func dashboardGuardianScenario(desc string, mock *guardian.FakeDashboardGuardian, fn scenarioFunc) {
-	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.New
-		guardian.MockDashboardGuardian(mock)
-
-		sc := &scenarioContext{
-			dashboardGuardianMock: mock,
-		}
-
-		defer func() {
-			guardian.New = origNewDashboardGuardian
-		}()
-
-		fn(sc)
-	})
-}
-
 type dashboardPermissionScenarioContext struct {
 	dashboardGuardianMock *guardian.FakeDashboardGuardian
 }

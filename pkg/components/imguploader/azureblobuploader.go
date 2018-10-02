@@ -127,8 +127,6 @@ type xmlError struct {
 const ms_date_layout = "Mon, 02 Jan 2006 15:04:05 GMT"
 const version = "2017-04-17"
 
-var client = &http.Client{}
-
 type StorageClient struct {
 	Auth      *Auth
 	Transport http.RoundTripper

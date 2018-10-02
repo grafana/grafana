@@ -2,19 +2,20 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 
-import { Query, Range, ExploreUrlState } from 'app/types/explore';
+import { ExploreState, ExploreUrlState } from 'app/types/explore';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
 import TimeSeries from 'app/core/time_series2';
 import { parse as parseDate } from 'app/core/utils/datemath';
+import { DEFAULT_RANGE } from 'app/core/utils/explore';
 
 import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
-import TimePicker, { DEFAULT_RANGE } from './TimePicker';
+import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 
 const MAX_HISTORY_ITEMS = 100;
@@ -56,31 +57,6 @@ interface ExploreProps {
   splitState?: ExploreState;
   stateKey: string;
   urlState: ExploreUrlState;
-}
-
-export interface ExploreState {
-  datasource: any;
-  datasourceError: any;
-  datasourceLoading: boolean | null;
-  datasourceMissing: boolean;
-  datasourceName?: string;
-  graphResult: any;
-  history: any[];
-  latency: number;
-  loading: any;
-  logsResult: any;
-  queries: Query[];
-  queryErrors: any[];
-  queryHints: any[];
-  range: Range;
-  requestOptions: any;
-  showingGraph: boolean;
-  showingLogs: boolean;
-  showingTable: boolean;
-  supportsGraph: boolean | null;
-  supportsLogs: boolean | null;
-  supportsTable: boolean | null;
-  tableResult: any;
 }
 
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
