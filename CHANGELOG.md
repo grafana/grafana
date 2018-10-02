@@ -1,5 +1,9 @@
 # 5.3.0 (unreleased)
 
+# 5.3.0-beta3 ()
+
+* **Alerting**: Alert reminders deduping not working as expected when running multiple Grafana instances [#13492](https://github.com/grafana/grafana/issues/13492)
+
 # 5.3.0-beta2 (2018-10-01)
 
 ### New Features
