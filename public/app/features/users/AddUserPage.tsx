@@ -98,12 +98,6 @@ export class AddUserPage extends PureComponent<Props, State> {
     this.setState(prevState => ({ inviteChecked: !prevState.inviteChecked }));
   }
 
-  findExistingUser() {}
-
-  options() {
-    return ['hej', 'va'];
-  }
-
   sendInvite() {
     const backendSrv = getBackendSrv();
 
