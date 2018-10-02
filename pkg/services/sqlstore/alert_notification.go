@@ -259,10 +259,7 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetA
 		}
 
 		if current.Version != version {
-			sqlog.Error(
-				`notification state out of sync. the notification 
-				is marked as complete but has been modified between 
-				set as pending and completion.`, "notifierId", current.NotifierId)
+			sqlog.Error("notification state out of sync. the notification is marked as complete but has been modified between set as pending and completion.", "notifierId", current.NotifierId)
 		}
 
 		return nil
@@ -306,7 +303,7 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAl
 }
 
 func GetOrCreateAlertNotificationState(ctx context.Context, cmd *m.GetOrCreateNotificationStateQuery) error {
-	return withDbSession(ctx, func(sess *DBSession) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		nj := &m.AlertNotificationState{}
 
 		exist, err := getAlertNotificationState(sess, cmd, nj)
