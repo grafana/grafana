@@ -142,7 +142,9 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		})
 
 		evalContext.Rule.State = tc.newState
-		if defaultShouldNotify(evalContext, tc.sendReminder, tc.frequency, tc.state) != tc.expect {
+		nb := &NotifierBase{SendReminder: tc.sendReminder, Frequency: tc.frequency}
+
+		if nb.ShouldNotify(evalContext.Ctx, evalContext, tc.state) != tc.expect {
 			t.Errorf("failed test %s.\n expected \n%+v \nto return: %v", tc.name, tc, tc.expect)
 		}
 	}
