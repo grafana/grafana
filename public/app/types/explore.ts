@@ -10,7 +10,6 @@ export interface Range {
 
 export interface Query {
   query: string;
-  edited?: boolean;
   key?: string;
 }
 
@@ -26,8 +25,19 @@ export interface ExploreState {
   latency: number;
   loading: any;
   logsResult: any;
+  /**
+   * Initial rows of queries to push down the tree.
+   * Modifications do not end up here, but in `this.queryExpressions`.
+   * The only way to reset a query is to change its `key`.
+   */
   queries: Query[];
+  /**
+   * Errors caused by the running the query row.
+   */
   queryErrors: any[];
+  /**
+   * Hints gathered for the query row.
+   */
   queryHints: any[];
   range: Range;
   requestOptions: any;
