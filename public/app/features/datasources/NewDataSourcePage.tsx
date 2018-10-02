@@ -4,22 +4,24 @@ import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavModel } from 'app/types';
+import { addDataSource } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
+  addDataSource: typeof addDataSource;
 }
 
 export interface State {
   name: string;
-  type: string;
+  type: { value: string; label: string };
   dataSourceOptions: Array<{ value: string; label: string }>;
 }
 
 class NewDataSourcePage extends PureComponent<Props, State> {
   state = {
     name: '',
-    type: '',
+    type: null,
     dataSourceOptions: [
       { value: 'prometheus', label: 'Prometheus' },
       { value: 'graphite', label: 'Graphite' },
@@ -49,12 +51,12 @@ class NewDataSourcePage extends PureComponent<Props, State> {
   isFieldsEmpty = () => {
     const { name, type } = this.state;
 
-    if (name === '' && type === '') {
+    if (name === '' && !type) {
       return true;
-    } else if (name !== '' && type === '') {
+    } else if (name !== '' && !type) {
       return true;
     } else {
-      return name === '' && type !== '';
+      return !!(name === '' && type);
     }
   };
 
@@ -89,8 +91,9 @@ class NewDataSourcePage extends PureComponent<Props, State> {
               />
             </div>
             <div className="gf-form-button-row">
-              <button type="submit" className="btn btn-success" disabled={this.isFieldsEmpty()}>
-                Create
+              <button type="submit" className="btn btn-success width-7" disabled={this.isFieldsEmpty()}>
+                <i className="fa fa-save" />
+                {` Create`}
               </button>
               <button className="btn btn-danger">Cancel</button>
             </div>
@@ -107,4 +110,8 @@ function mapStateToProps(state) {
   };
 }
 
-export default hot(module)(connect(mapStateToProps)(NewDataSourcePage));
+const mapDispatchToProps = {
+  addDataSource,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NewDataSourcePage));

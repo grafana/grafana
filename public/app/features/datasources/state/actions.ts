@@ -49,3 +49,9 @@ export function loadDataSources(): ThunkResult<void> {
     dispatch(dataSourcesLoaded(response));
   };
 }
+
+export function addDataSource(name: string, type: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post('/api/datasources', { name, type });
+  };
+}
