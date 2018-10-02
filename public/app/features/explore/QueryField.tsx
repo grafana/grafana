@@ -132,7 +132,7 @@ export interface TypeaheadOutput {
   suggestions: SuggestionGroup[];
 }
 
-class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldState> {
+class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadFieldState> {
   menuEl: HTMLElement | null;
   plugins: any[];
   resetTimer: any;

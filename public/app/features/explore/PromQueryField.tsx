@@ -156,6 +156,7 @@ interface PromQueryFieldState {
   labelValues: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   logLabelOptions: any[];
   metrics: string[];
+  metricsOptions: any[];
   metricsByPrefix: CascaderOption[];
 }
 
@@ -167,7 +168,7 @@ interface PromTypeaheadInput {
   value?: Value;
 }
 
-class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryFieldState> {
+class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
 
   constructor(props: PromQueryFieldProps, context) {
@@ -189,6 +190,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       logLabelOptions: [],
       metrics: props.metrics || [],
       metricsByPrefix: props.metricsByPrefix || [],
+      metricsOptions: [],
     };
   }
 
@@ -258,10 +260,22 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
   };
 
   onReceiveMetrics = () => {
-    if (!this.state.metrics) {
+    const { histogramMetrics, metrics, metricsByPrefix } = this.state;
+    if (!metrics) {
       return;
     }
+
+    // Update global prism config
     setPrismTokens(PRISM_SYNTAX, METRIC_MARK, this.state.metrics);
+
+    // Build metrics tree
+    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
+    const metricsOptions = [
+      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
+      ...metricsByPrefix,
+    ];
+
+    this.setState({ metricsOptions });
   };
 
   onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
@@ -453,7 +467,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       const histogramSeries = this.state.labelValues[HISTOGRAM_SELECTOR];
       if (histogramSeries && histogramSeries['__name__']) {
         const histogramMetrics = histogramSeries['__name__'].slice().sort();
-        this.setState({ histogramMetrics });
+        this.setState({ histogramMetrics }, this.onReceiveMetrics);
       }
     });
   }
@@ -545,12 +559,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
 
   render() {
     const { error, hint, supportsLogs } = this.props;
-    const { histogramMetrics, logLabelOptions, metricsByPrefix } = this.state;
-    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
-    const metricsOptions = [
-      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
-      ...metricsByPrefix,
-    ];
+    const { logLabelOptions, metricsOptions } = this.state;
 
     return (
       <div className="prom-query-field">
