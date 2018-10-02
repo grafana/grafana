@@ -405,6 +405,19 @@ func TestStackdriver(t *testing.T) {
 			})
 		})
 
+		Convey("when building filter string", func() {
+			Convey("and there are wildcards in a filter value", func() {
+				filterParts := []interface{}{"zone", "=", "*-central1*"}
+				value := buildFilterString("somemetrictype", filterParts)
+				So(value, ShouldEqual, `metric.type="somemetrictype" zone=has_substring("-central1")`)
+			})
+
+			Convey("and there are no wildcards in any filter value", func() {
+				filterParts := []interface{}{"zone", "=", "us-central1-a"}
+				value := buildFilterString("somemetrictype", filterParts)
+				So(value, ShouldEqual, `metric.type="somemetrictype" zone="us-central1-a"`)
+			})
+		})
 	})
 }
 
