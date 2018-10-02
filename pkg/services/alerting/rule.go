@@ -23,6 +23,8 @@ type Rule struct {
 	State               m.AlertStateType
 	Conditions          []Condition
 	Notifications       []int64
+
+	StateChanges int64
 }
 
 type ValidationError struct {

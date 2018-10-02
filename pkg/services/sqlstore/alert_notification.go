@@ -277,19 +277,26 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAl
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
 			version = ?,
-			updated_at = ?
+			updated_at = ?,
+			alert_rule_state_updated_version = ?
 		WHERE
 			id = ? AND
-			version = ?`
+			(version = ? OR alert_rule_state_updated_version < ?)`
 
-		res, err := sess.Exec(sql, cmd.State.State, cmd.State.Version, timeNow().Unix(), cmd.State.Id, currentVersion)
+		res, err := sess.Exec(sql,
+			cmd.State.State,
+			cmd.State.Version,
+			timeNow().Unix(),
+			cmd.AlertRuleStateUpdatedVersion,
+			cmd.State.Id,
+			currentVersion,
+			cmd.AlertRuleStateUpdatedVersion)
 
 		if err != nil {
 			return err
 		}
 
 		affected, _ := res.RowsAffected()
-
 		if affected == 0 {
 			return m.ErrAlertNotificationStateVersionConflict
 		}

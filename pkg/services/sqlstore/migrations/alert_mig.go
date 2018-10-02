@@ -130,4 +130,8 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("create alert_notification_state table v1", NewAddTableMigration(alert_notification_state))
 	mg.AddMigration("add index alert_notification_state org_id & alert_id & notifier_id",
 		NewAddIndexMigration(alert_notification_state, alert_notification_state.Indices[0]))
+
+	mg.AddMigration("Add alert_rule_state_updated_version to alert_notification_state", NewAddColumnMigration(alert_notification_state, &Column{
+		Name: "alert_rule_state_updated_version", Type: DB_BigInt, Nullable: true,
+	}))
 }
