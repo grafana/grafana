@@ -15,8 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -172,7 +170,6 @@ func reverse(s string) string {
 func interpolateFilterWildcards(value string) string {
 	re := regexp.MustCompile("[*]")
 	matches := len(re.FindAllStringIndex(value, -1))
-	logger.Info("len", "len", matches)
 	if matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
 		value = strings.Replace(value, "*", "", -1)
 		value = fmt.Sprintf(`has_substring("%s")`, value)
@@ -191,8 +188,6 @@ func interpolateFilterWildcards(value string) string {
 		value = strings.Replace(value, `"`, `\\"`, -1)
 		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
 	}
-
-	logger.Info("filter", "filter", value)
 
 	return value
 }
@@ -273,7 +268,6 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
-	logger.Info("req.URL.RawQuery", "req.URL.RawQuery", req.URL.RawQuery)
 	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
