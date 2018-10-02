@@ -20,12 +20,4 @@ describe('Render', () => {
 
     expect(wrapper).toMatchSnapshot();
   });
-
-  it('should hide layout mode', () => {
-    const wrapper = setup({
-      showLayoutMode: false,
-    });
-
-    expect(wrapper).toMatchSnapshot();
-  });
 });

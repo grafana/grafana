@@ -17,6 +17,7 @@ exports[`Render should render action bar and datasources 1`] = `
           "title": "Add data source",
         }
       }
+      searchQuery=""
       setLayoutMode={[Function]}
       setSearchQuery={[Function]}
     />
