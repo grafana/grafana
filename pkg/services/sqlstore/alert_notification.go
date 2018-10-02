@@ -19,7 +19,7 @@ func init() {
 	bus.AddHandler("sql", DeleteAlertNotification)
 	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
-	bus.AddHandlerCtx("sql", GetAlertNotificationState)
+	bus.AddHandlerCtx("sql", GetOrCreateAlertNotificationState)
 	bus.AddHandlerCtx("sql", SetAlertNotificationStateToCompleteCommand)
 	bus.AddHandlerCtx("sql", SetAlertNotificationStateToPendingCommand)
 }
@@ -304,7 +304,7 @@ func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *m.SetAl
 	})
 }
 
-func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQuery) error {
+func GetOrCreateAlertNotificationState(ctx context.Context, cmd *m.GetOrCreateNotificationStateQuery) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
 		nj := &m.AlertNotificationState{}
 
@@ -352,7 +352,7 @@ func GetAlertNotificationState(ctx context.Context, cmd *m.GetNotificationStateQ
 	})
 }
 
-func getAlertNotificationState(sess *DBSession, cmd *m.GetNotificationStateQuery, nj *m.AlertNotificationState) (bool, error) {
+func getAlertNotificationState(sess *DBSession, cmd *m.GetOrCreateNotificationStateQuery, nj *m.AlertNotificationState) (bool, error) {
 	return sess.
 		Where("alert_notification_state.org_id = ?", cmd.OrgId).
 		Where("alert_notification_state.alert_id = ?", cmd.AlertId).

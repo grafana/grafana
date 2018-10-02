@@ -106,7 +106,7 @@ type SetAlertNotificationStateToCompleteCommand struct {
 	State *AlertNotificationState
 }
 
-type GetNotificationStateQuery struct {
+type GetOrCreateNotificationStateQuery struct {
 	OrgId      int64
 	AlertId    int64
 	NotifierId int64

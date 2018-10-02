@@ -177,7 +177,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 			continue
 		}
 
-		query := &m.GetNotificationStateQuery{
+		query := &m.GetOrCreateNotificationStateQuery{
 			NotifierId: notification.Id,
 			AlertId:    evalContext.Rule.Id,
 			OrgId:      evalContext.Rule.OrgId,

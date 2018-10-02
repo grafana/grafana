@@ -23,8 +23,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			timeNow = func() time.Time { return now }
 
 			Convey("Get no existing state should create a new state", func() {
-				query := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-				err := GetAlertNotificationState(context.Background(), query)
+				query := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+				err := GetOrCreateAlertNotificationState(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldNotBeNil)
 				So(query.Result.State, ShouldEqual, "unknown")
@@ -32,8 +32,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(query.Result.UpdatedAt, ShouldEqual, now.Unix())
 
 				Convey("Get existing state should not create a new state", func() {
-					query2 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-					err := GetAlertNotificationState(context.Background(), query2)
+					query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+					err := GetOrCreateAlertNotificationState(context.Background(), query2)
 					So(err, ShouldBeNil)
 					So(query2.Result, ShouldNotBeNil)
 					So(query2.Result.Id, ShouldEqual, query.Result.Id)
@@ -50,8 +50,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					So(cmd.State.Version, ShouldEqual, 1)
 					So(cmd.State.State, ShouldEqual, models.AlertNotificationStatePending)
 
-					query2 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-					err = GetAlertNotificationState(context.Background(), query2)
+					query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+					err = GetOrCreateAlertNotificationState(context.Background(), query2)
 					So(err, ShouldBeNil)
 					So(query2.Result.Version, ShouldEqual, 1)
 					So(query2.Result.State, ShouldEqual, models.AlertNotificationStatePending)
@@ -65,8 +65,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
 						So(err, ShouldBeNil)
 
-						query3 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-						err = GetAlertNotificationState(context.Background(), query3)
+						query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+						err = GetOrCreateAlertNotificationState(context.Background(), query3)
 						So(err, ShouldBeNil)
 						So(query3.Result.Version, ShouldEqual, 2)
 						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
@@ -82,8 +82,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
 						So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
 
-						query3 := &models.GetNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-						err = GetAlertNotificationState(context.Background(), query3)
+						query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
+						err = GetOrCreateAlertNotificationState(context.Background(), query3)
 						So(err, ShouldBeNil)
 						So(query3.Result.Version, ShouldEqual, 1001)
 						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
