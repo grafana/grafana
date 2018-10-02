@@ -398,7 +398,13 @@ func TestStackdriver(t *testing.T) {
 				value := interpolateFilterWildcards("us-ce*tral1-*")
 				So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tral1\\-.*$")`)
 			})
+
+			Convey("and no wildcard is used", func() {
+				value := interpolateFilterWildcards("us-central1-a}")
+				So(value, ShouldEqual, `us-central1-a}`)
+			})
 		})
+
 	})
 }
 

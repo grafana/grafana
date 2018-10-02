@@ -179,7 +179,7 @@ func interpolateFilterWildcards(value string) string {
 	} else if matches == 1 && strings.HasSuffix(value, "*") {
 		value = reverse(strings.Replace(reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
-	} else if matches == 1 {
+	} else if matches != 0 {
 		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
 		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
