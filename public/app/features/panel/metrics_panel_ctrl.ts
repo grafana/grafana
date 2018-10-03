@@ -6,7 +6,7 @@ import kbn from 'app/core/utils/kbn';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
-import { encodePathComponent } from 'app/core/utils/location_util';
+import { getExploreUrl } from 'app/core/utils/explore';
 
 import { metricsTabDirective } from './metrics_tab';
 
@@ -314,7 +314,12 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   getAdditionalMenuItems() {
     const items = [];
-    if (config.exploreEnabled && this.contextSrv.isEditor && this.datasource && this.datasource.supportsExplore) {
+    if (
+      config.exploreEnabled &&
+      this.contextSrv.isEditor &&
+      this.datasource &&
+      (this.datasource.meta.explore || this.datasource.meta.id === 'mixed')
+    ) {
       items.push({
         text: 'Explore',
         click: 'ctrl.explore();',
@@ -325,14 +330,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     return items;
   }
 
-  explore() {
-    const range = this.timeSrv.timeRangeForUrl();
-    const state = {
-      ...this.datasource.getExploreState(this.panel),
-      range,
-    };
-    const exploreState = encodePathComponent(JSON.stringify(state));
-    this.$location.url(`/explore?state=${exploreState}`);
+  async explore() {
+    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
+    if (url) {
+      this.$timeout(() => this.$location.url(url));
+    }
   }
 
   addQuery(target) {

@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="page-action-bar"
+>
+  <div
+    className="gf-form gf-form--grow"
+  >
+    <label
+      className="gf-form--has-input-icon"
+    >
+      <input
+        className="gf-form-input width-20"
+        onChange={[Function]}
+        placeholder="Filter by name or type"
+        type="text"
+        value=""
+      />
+      <i
+        className="gf-form-input-icon fa fa-search"
+      />
+    </label>
+    <LayoutSelector
+      mode="grid"
+      onLayoutModeChanged={[Function]}
+    />
+  </div>
+  <div
+    className="page-action-bar__spacer"
+  />
+  <a
+    className="btn btn-success"
+    href="https://grafana.com/plugins?utm_source=grafana_plugin_list"
+    target="_blank"
+  >
+    Find more plugins on Grafana.com
+  </a>
+</div>
+`;

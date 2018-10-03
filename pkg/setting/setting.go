@@ -166,6 +166,7 @@ var (
 	// Alerting
 	AlertingEnabled            bool
 	ExecuteAlerts              bool
+	AlertingRenderLimit        int
 	AlertingErrorOrTimeout     string
 	AlertingNoDataOrNullValues string
 
@@ -196,10 +197,13 @@ type Cfg struct {
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir                        string
-	PhantomDir                       string
-	RendererUrl                      string
-	RendererCallbackUrl              string
+	ImagesDir             string
+	PhantomDir            string
+	RendererUrl           string
+	RendererCallbackUrl   string
+	RendererLimit         int
+	RendererLimitAlerting int
+
 	DisableBruteForceLoginProtection bool
 
 	TempDataLifetime time.Duration
@@ -677,6 +681,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
 	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
 

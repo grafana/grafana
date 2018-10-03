@@ -245,6 +245,9 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           return;
         }
 
+        // ensure dropdown menu doesn't impact on z-index
+        body.find('.dropdown-menu-open').removeClass('dropdown-menu-open');
+
         // for stuff that animates, slides out etc, clicking it needs to
         // hide it right away
         const clickAutoHide = target.closest('[data-click-hide]');

@@ -1,6 +1,6 @@
 import { Action } from 'app/core/actions/location';
-import { LocationState, UrlQueryMap } from 'app/types';
-import { toUrlParams } from 'app/core/utils/url';
+import { LocationState } from 'app/types';
+import { renderUrl } from 'app/core/utils/url';
 
 export const initialState: LocationState = {
   url: '',
@@ -8,13 +8,6 @@ export const initialState: LocationState = {
   query: {},
   routeParams: {},
 };
-
-function renderUrl(path: string, query: UrlQueryMap | undefined): string {
-  if (query && Object.keys(query).length > 0) {
-    path += '?' + toUrlParams(query);
-  }
-  return path;
-}
 
 export const locationReducer = (state = initialState, action: Action): LocationState => {
   switch (action.type) {
