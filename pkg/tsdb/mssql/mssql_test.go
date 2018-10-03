@@ -743,9 +743,11 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When doing a metric query using stored procedure should return correct result", func() {
+					tsdb.Interpolate = origInterpolate
 					query := &tsdb.TsdbQuery{
 						Queries: []*tsdb.Query{
 							{
+								DataSource: &models.DataSource{JsonData: simplejson.New()},
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
 											@from int = $__unixEpochFrom(),
@@ -820,9 +822,11 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When doing a metric query using stored procedure should return correct result", func() {
+					tsdb.Interpolate = origInterpolate
 					query := &tsdb.TsdbQuery{
 						Queries: []*tsdb.Query{
 							{
+								DataSource: &models.DataSource{JsonData: simplejson.New()},
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
 											@from int = $__unixEpochFrom(),
