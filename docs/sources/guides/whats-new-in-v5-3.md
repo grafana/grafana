@@ -16,7 +16,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 
 - [TV mode]({{< relref "#tv-and-kiosk-mode" >}}) is improved
 - [Alerting]({{< relref "#notification-reminders" >}}) with notification reminders
-- [Postgres query builder]({{< relref "#postgres-query-builder" >}}) it's finally here!
+- [Postgres]({{< relref "#postgres-query-builder" >}}) gets a new query builder!
 - [OAuth]({{< relref "#improved-oauth-support-for-gitlab" >}}) support for Gitlab is improved
 
 ## TV and kiosk mode
@@ -38,13 +38,13 @@ Do you use Grafana alerting and have some notifications that are more important 
 
 ## Postgres query builder
 
-Grafana 5.3 comes with a new graphical query builder for Postgres. Bringing Postgres integration more in line with some the other datasources and making it easier for both advanced and beginners to work with timeseries in Postgres.
+Grafana 5.3 comes with a new graphical query builder for Postgres. Bringing Postgres integration more in line with some of the other datasources and making it easier for both advanced and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](http://docs.grafana.org/features/datasources/postgres/#query-editor).
 
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 
 ## Improved OAuth support for Gitlab
 
-Grafana 5.3 now supports filtering to specific groups when using Gitlab OAuth. This is makes it possible to use Gitlab OAuth with Grafana in a shared environment without giving access to Grafana to everyone.
+Grafana 5.3 gets native support for Gitlab OAuth with filtering to specific groups. This is makes it possible to use Gitlab OAuth with Grafana in a shared environment without giving everyone access to Grafana. More on usage in the [documentation](http://docs.grafana.org/auth/gitlab/).
 
 ## Changelog
 
