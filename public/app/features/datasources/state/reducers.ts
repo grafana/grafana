@@ -1,4 +1,4 @@
-import { DataSource, DataSourcesState, DataSourceType } from 'app/types';
+import { DataSource, DataSourcesState, Plugin } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 
@@ -7,7 +7,7 @@ const initialState: DataSourcesState = {
   layoutMode: LayoutModes.Grid,
   searchQuery: '',
   dataSourcesCount: 0,
-  dataSourceTypes: [] as DataSourceType[],
+  dataSourceTypes: [] as Plugin[],
 };
 
 export const dataSourcesReducer = (state = initialState, action: Action): DataSourcesState => {

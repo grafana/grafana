@@ -1,5 +1,5 @@
 import { ThunkAction } from 'redux-thunk';
-import { DataSource, DataSourceType, StoreState } from 'app/types';
+import { DataSource, Plugin, StoreState } from 'app/types';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { updateLocation } from '../../../core/actions';
@@ -29,7 +29,7 @@ export interface SetDataSourcesLayoutModeAction {
 
 export interface LoadDataSourceTypesAction {
   type: ActionTypes.LoadDataSourceTypes;
-  payload: DataSourceType[];
+  payload: Plugin[];
 }
 
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
@@ -37,7 +37,7 @@ const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => 
   payload: dataSources,
 });
 
-const dataSourceTypesLoaded = (dataSourceTypes: DataSourceType[]): LoadDataSourceTypesAction => ({
+const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadDataSourceTypesAction => ({
   type: ActionTypes.LoadDataSourceTypes,
   payload: dataSourceTypes,
 });

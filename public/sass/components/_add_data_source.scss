@@ -1,0 +1,35 @@
+.add-data-source-header {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.add-data-source-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-row-gap: 10px;
+  grid-column-gap: 10px;
+}
+
+.add-data-source-grid-item {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: $card-background;
+  box-shadow: $card-shadow;
+  color: $headings-color;
+
+  &:hover {
+    background: $card-background-hover;
+  }
+}
+
+.add-data-source-grid-item-text {
+  font-size: $font-size-h5;
+  margin-left: 10px;
+}
+
+.add-data-source-grid-item-logo {
+  width: 55px;
+  height: 55px;
+}

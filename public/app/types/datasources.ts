@@ -1,4 +1,5 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
+import { Plugin } from './plugins';
 
 export interface DataSource {
   id: number;
@@ -17,15 +18,10 @@ export interface DataSource {
   readOnly: false;
 }
 
-export interface DataSourceType {
-  name: string;
-  type: string;
-}
-
 export interface DataSourcesState {
   dataSources: DataSource[];
   searchQuery: string;
   layoutMode: LayoutMode;
   dataSourcesCount: number;
-  dataSourceTypes: DataSourceType[];
+  dataSourceTypes: Plugin[];
 }
