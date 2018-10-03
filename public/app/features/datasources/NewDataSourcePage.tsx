@@ -3,32 +3,33 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { NavModel } from 'app/types';
-import { addDataSource } from './state/actions';
+import { DataSourceType, NavModel } from 'app/types';
+import { addDataSource, loadDataSourceTypes } from './state/actions';
+import { updateLocation } from '../../core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
+  dataSourceTypes: DataSourceType[];
   addDataSource: typeof addDataSource;
+  loadDataSourceTypes: typeof loadDataSourceTypes;
+  updateLocation: typeof updateLocation;
 }
 
 export interface State {
   name: string;
   type: { value: string; label: string };
-  dataSourceOptions: Array<{ value: string; label: string }>;
 }
 
 class NewDataSourcePage extends PureComponent<Props, State> {
   state = {
     name: '',
     type: null,
-    dataSourceOptions: [
-      { value: 'prometheus', label: 'Prometheus' },
-      { value: 'graphite', label: 'Graphite' },
-      { value: 'mysql', label: 'MySql' },
-      { value: 'influxdb', label: 'InfluxDB' },
-    ],
   };
+
+  componentDidMount() {
+    this.props.loadDataSourceTypes();
+  }
 
   onChangeName = event => {
     this.setState({
@@ -42,10 +43,16 @@ class NewDataSourcePage extends PureComponent<Props, State> {
     });
   };
 
-  submitForm = () => {
+  submitForm = event => {
+    event.preventDefault();
+
     if (!this.isFieldsEmpty()) {
-      // post
+      this.props.addDataSource(this.state.name, this.state.type.value);
     }
+  };
+
+  goBack = () => {
+    this.props.updateLocation({ path: '/datasources' });
   };
 
   isFieldsEmpty = () => {
@@ -61,8 +68,8 @@ class NewDataSourcePage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { navModel } = this.props;
-    const { dataSourceOptions, name, type } = this.state;
+    const { navModel, dataSourceTypes } = this.props;
+    const { name, type } = this.state;
 
     return (
       <div>
@@ -83,7 +90,9 @@ class NewDataSourcePage extends PureComponent<Props, State> {
             <div className="gf-form max-width-30">
               <span className="gf-form-label width-7">Type</span>
               <Select
-                options={dataSourceOptions}
+                valueKey="type"
+                labelKey="name"
+                options={dataSourceTypes}
                 value={type}
                 onChange={this.onTypeChanged}
                 autoSize={true}
@@ -95,7 +104,9 @@ class NewDataSourcePage extends PureComponent<Props, State> {
                 <i className="fa fa-save" />
                 {` Create`}
               </button>
-              <button className="btn btn-danger">Cancel</button>
+              <button className="btn btn-danger" onClick={this.goBack}>
+                Cancel
+              </button>
             </div>
           </form>
         </div>
@@ -107,11 +118,14 @@ class NewDataSourcePage extends PureComponent<Props, State> {
 function mapStateToProps(state) {
   return {
     navModel: getNavModel(state.navIndex, 'datasources'),
+    dataSourceTypes: state.dataSources.dataSourceTypes,
   };
 }
 
 const mapDispatchToProps = {
   addDataSource,
+  loadDataSourceTypes,
+  updateLocation,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NewDataSourcePage));
