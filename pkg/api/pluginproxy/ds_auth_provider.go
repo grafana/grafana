@@ -55,7 +55,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	if route.JwtTokenAuth != nil {
+	if route.JwtTokenAuth != nil && len(ds.SecureJsonData["privateKey"]) != 0 {
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
