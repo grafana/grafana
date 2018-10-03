@@ -11,6 +11,7 @@ const setup = (propOverrides?: object) => {
     canInvite: false,
     externalUserMngLinkUrl: '',
     externalUserMngLinkName: '',
+    showInvites: false,
   };
 
   Object.assign(props, propOverrides);

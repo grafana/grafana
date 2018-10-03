@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import classNames from 'classnames/bind';
 import { setUsersSearchQuery } from './state/actions';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 
@@ -9,6 +10,7 @@ export interface Props {
   onShowInvites: () => void;
   pendingInvitesCount: number;
   canInvite: boolean;
+  showInvites: boolean;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
 }
@@ -23,7 +25,20 @@ export class UsersActionBar extends PureComponent<Props> {
       pendingInvitesCount,
       setUsersSearchQuery,
       onShowInvites,
+      showInvites,
     } = this.props;
+
+    const pendingInvitesButtonStyle = classNames({
+      btn: true,
+      'toggle-btn': true,
+      active: showInvites,
+    });
+
+    const usersButtonStyle = classNames({
+      btn: true,
+      'toggle-btn': true,
+      active: !showInvites,
+    });
 
     return (
       <div className="page-action-bar">
@@ -38,13 +53,17 @@ export class UsersActionBar extends PureComponent<Props> {
             />
             <i className="gf-form-input-icon fa fa-search" />
           </label>
-
-          <div className="page-action-bar__spacer" />
           {pendingInvitesCount > 0 && (
-            <button className="btn btn-inverse" onClick={onShowInvites}>
-              Pending Invites ({pendingInvitesCount})
-            </button>
+            <div style={{ marginLeft: '1rem' }}>
+              <button className={usersButtonStyle} key="users" onClick={onShowInvites}>
+                Users
+              </button>
+              <button className={pendingInvitesButtonStyle} onClick={onShowInvites} key="pending-invites">
+                Pending Invites ({pendingInvitesCount})
+              </button>
+            </div>
           )}
+          <div className="page-action-bar__spacer" />
           {canInvite && (
             <a className="btn btn-success" href="org/users/invite">
               <i className="fa fa-plus" />

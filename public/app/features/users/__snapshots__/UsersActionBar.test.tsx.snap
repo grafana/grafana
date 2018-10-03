@@ -50,16 +50,32 @@ exports[`Render should render pending invites button 1`] = `
       />
     </label>
     <div
+      style={
+        Object {
+          "marginLeft": "1rem",
+        }
+      }
+    >
+      <button
+        className="btn toggle-btn active"
+        key="users"
+        onClick={[MockFunction]}
+      >
+        Users
+      </button>
+      <button
+        className="btn toggle-btn"
+        key="pending-invites"
+        onClick={[MockFunction]}
+      >
+        Pending Invites (
+        5
+        )
+      </button>
+    </div>
+    <div
       className="page-action-bar__spacer"
     />
-    <button
-      className="btn btn-inverse"
-      onClick={[MockFunction]}
-    >
-      Pending Invites (
-      5
-      )
-    </button>
   </div>
 </div>
 `;

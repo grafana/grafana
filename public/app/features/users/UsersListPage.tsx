@@ -82,7 +82,7 @@ export class UsersListPage extends PureComponent<Props, State> {
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          <UsersActionBar onShowInvites={this.onShowInvites} />
+          <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
           {externalUserMngInfo && (
             <div className="grafana-info-box">
               <span>{externalUserMngInfo}</span>

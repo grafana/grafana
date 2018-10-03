@@ -9,7 +9,8 @@ exports[`Render should render component 1`] = `
     className="page-container page-body"
   >
     <Connect(UsersActionBar)
-      showInvites={[Function]}
+      onShowInvites={[Function]}
+      showInvites={false}
     />
     <UsersTable
       onRemoveUser={[Function]}
