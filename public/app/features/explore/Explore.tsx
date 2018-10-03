@@ -2,19 +2,20 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 
+import { ExploreState, ExploreUrlState } from 'app/types/explore';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
 import TimeSeries from 'app/core/time_series2';
-import { decodePathComponent } from 'app/core/utils/location_util';
 import { parse as parseDate } from 'app/core/utils/datemath';
+import { DEFAULT_RANGE } from 'app/core/utils/explore';
 
 import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
-import TimePicker, { DEFAULT_RANGE } from './TimePicker';
+import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 
 const MAX_HISTORY_ITEMS = 100;
@@ -47,61 +48,32 @@ function makeTimeSeriesList(dataList, options) {
   });
 }
 
-function parseUrlState(initial: string | undefined) {
-  if (initial) {
-    try {
-      const parsed = JSON.parse(decodePathComponent(initial));
-      return {
-        datasource: parsed.datasource,
-        queries: parsed.queries.map(q => q.query),
-        range: parsed.range,
-      };
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE };
+interface ExploreProps {
+  datasourceSrv: any;
+  onChangeSplit: (split: boolean, state?: ExploreState) => void;
+  onSaveState: (key: string, state: ExploreState) => void;
+  position: string;
+  split: boolean;
+  splitState?: ExploreState;
+  stateKey: string;
+  urlState: ExploreUrlState;
 }
 
-interface ExploreState {
-  datasource: any;
-  datasourceError: any;
-  datasourceLoading: boolean | null;
-  datasourceMissing: boolean;
-  graphResult: any;
-  history: any[];
-  initialDatasource?: string;
-  latency: number;
-  loading: any;
-  logsResult: any;
-  queries: any[];
-  queryErrors: any[];
-  queryHints: any[];
-  range: any;
-  requestOptions: any;
-  showingGraph: boolean;
-  showingLogs: boolean;
-  showingTable: boolean;
-  supportsGraph: boolean | null;
-  supportsLogs: boolean | null;
-  supportsTable: boolean | null;
-  tableResult: any;
-}
-
-export class Explore extends React.Component<any, ExploreState> {
+export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
 
   constructor(props) {
     super(props);
-    const initialState: ExploreState = props.initialState;
-    const { datasource, queries, range } = parseUrlState(props.routeParams.state);
+    // Split state overrides everything
+    const splitState: ExploreState = props.splitState;
+    const { datasource, queries, range } = props.urlState;
     this.state = {
       datasource: null,
       datasourceError: null,
       datasourceLoading: null,
       datasourceMissing: false,
+      datasourceName: datasource,
       graphResult: null,
-      initialDatasource: datasource,
       history: [],
       latency: 0,
       loading: false,
@@ -118,13 +90,13 @@ export class Explore extends React.Component<any, ExploreState> {
       supportsLogs: null,
       supportsTable: null,
       tableResult: null,
-      ...initialState,
+      ...splitState,
     };
   }
 
   async componentDidMount() {
     const { datasourceSrv } = this.props;
-    const { initialDatasource } = this.state;
+    const { datasourceName } = this.state;
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
@@ -133,15 +105,15 @@ export class Explore extends React.Component<any, ExploreState> {
       this.setState({ datasourceLoading: true });
       // Priority: datasource in url, default datasource, first explore datasource
       let datasource;
-      if (initialDatasource) {
-        datasource = await datasourceSrv.get(initialDatasource);
+      if (datasourceName) {
+        datasource = await datasourceSrv.get(datasourceName);
       } else {
         datasource = await datasourceSrv.get();
       }
       if (!datasource.meta.explore) {
         datasource = await datasourceSrv.get(datasources[0].name);
       }
-      this.setDatasource(datasource);
+      await this.setDatasource(datasource);
     } else {
       this.setState({ datasourceMissing: true });
     }
@@ -188,9 +160,14 @@ export class Explore extends React.Component<any, ExploreState> {
         supportsLogs,
         supportsTable,
         datasourceLoading: false,
+        datasourceName: datasource.name,
         queries: nextQueries,
       },
-      () => datasourceError === null && this.onSubmit()
+      () => {
+        if (datasourceError === null) {
+          this.onSubmit();
+        }
+      }
     );
   }
 
@@ -220,7 +197,8 @@ export class Explore extends React.Component<any, ExploreState> {
       queryHints: [],
       tableResult: null,
     });
-    const datasource = await this.props.datasourceSrv.get(option.value);
+    const datasourceName = option.value;
+    const datasource = await this.props.datasourceSrv.get(datasourceName);
     this.setDatasource(datasource);
   };
 
@@ -259,21 +237,25 @@ export class Explore extends React.Component<any, ExploreState> {
   };
 
   onClickClear = () => {
-    this.setState({
-      graphResult: null,
-      logsResult: null,
-      latency: 0,
-      queries: ensureQueries(),
-      queryErrors: [],
-      queryHints: [],
-      tableResult: null,
-    });
+    this.setState(
+      {
+        graphResult: null,
+        logsResult: null,
+        latency: 0,
+        queries: ensureQueries(),
+        queryErrors: [],
+        queryHints: [],
+        tableResult: null,
+      },
+      this.saveState
+    );
   };
 
   onClickCloseSplit = () => {
     const { onChangeSplit } = this.props;
     if (onChangeSplit) {
       onChangeSplit(false);
+      this.saveState();
     }
   };
 
@@ -291,6 +273,7 @@ export class Explore extends React.Component<any, ExploreState> {
     state.queries = state.queries.map(({ edited, ...rest }) => rest);
     if (onChangeSplit) {
       onChangeSplit(true, state);
+      this.saveState();
     }
   };
 
@@ -349,6 +332,7 @@ export class Explore extends React.Component<any, ExploreState> {
     if (showingLogs && supportsLogs) {
       this.runLogsQuery();
     }
+    this.saveState();
   };
 
   onQuerySuccess(datasourceId: string, queries: any[]): void {
@@ -469,6 +453,11 @@ export class Explore extends React.Component<any, ExploreState> {
   request = url => {
     const { datasource } = this.state;
     return datasource.metadataRequest(url);
+  };
+
+  saveState = () => {
+    const { stateKey, onSaveState } = this.props;
+    onSaveState(stateKey, this.state);
   };
 
   render() {

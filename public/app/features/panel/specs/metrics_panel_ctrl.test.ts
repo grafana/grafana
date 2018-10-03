@@ -38,7 +38,7 @@ describe('MetricsPanelCtrl', () => {
     describe('and has datasource set that supports explore and user has powers', () => {
       beforeEach(() => {
         ctrl.contextSrv = { isEditor: true };
-        ctrl.datasource = { supportsExplore: true };
+        ctrl.datasource = { meta: { explore: true } };
         additionalItems = ctrl.getAdditionalMenuItems();
       });
 

@@ -5,7 +5,9 @@ import { NavModel, NavModelItem, NavIndex } from './navModel';
 import { FolderDTO, FolderState, FolderInfo } from './folders';
 import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
-import { DataSource } from './datasources';
+import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
+import { Invitee, OrgUser, User, UsersState } from './user';
+import { DataSource, DataSourcesState } from './datasources';
 import { PluginMeta, Plugin, PluginsState } from './plugins';
 
 export {
@@ -33,8 +35,16 @@ export {
   PermissionLevel,
   DataSource,
   PluginMeta,
+  ApiKey,
+  ApiKeysState,
+  NewApiKey,
   Plugin,
   PluginsState,
+  DataSourcesState,
+  Invitee,
+  OrgUser,
+  User,
+  UsersState,
 };
 
 export interface StoreState {
@@ -45,4 +55,6 @@ export interface StoreState {
   team: TeamState;
   folder: FolderState;
   dashboard: DashboardState;
+  dataSources: DataSourcesState;
+  users: UsersState;
 }

@@ -22,7 +22,6 @@ exports[`Render should render component 1`] = `
       />
     </label>
     <LayoutSelector
-      mode="grid"
       onLayoutModeChanged={[Function]}
     />
   </div>
@@ -31,10 +30,10 @@ exports[`Render should render component 1`] = `
   />
   <a
     className="btn btn-success"
-    href="https://grafana.com/plugins?utm_source=grafana_plugin_list"
+    href="some/url"
     target="_blank"
   >
-    Find more plugins on Grafana.com
+    test
   </a>
 </div>
 `;

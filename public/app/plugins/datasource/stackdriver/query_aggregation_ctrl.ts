@@ -24,6 +24,7 @@ export class StackdriverAggregationCtrl {
   alignOptions: any[];
   target: any;
 
+  /** @ngInject */
   constructor(private $scope) {
     this.$scope.ctrl = this;
     this.target = $scope.target;

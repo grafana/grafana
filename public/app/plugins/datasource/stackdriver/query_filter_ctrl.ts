@@ -4,6 +4,7 @@ import { FilterSegments, DefaultRemoveFilterValue } from './filter_segments';
 import appEvents from 'app/core/app_events';
 
 export class StackdriverFilter {
+  /** @ngInject */
   constructor() {
     return {
       templateUrl: 'public/app/plugins/datasource/stackdriver/partials/query.filter.html',
