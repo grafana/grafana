@@ -110,7 +110,7 @@ export function updateFolderPermission(itemToUpdate: DashboardAcl, level: Permis
         continue;
       }
 
-      const updated = toUpdateItem(itemToUpdate);
+      const updated = toUpdateItem(item);
 
       // if this is the item we want to update, update it's permisssion
       if (itemToUpdate === item) {
