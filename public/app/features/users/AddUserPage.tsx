@@ -49,54 +49,47 @@ export class AddUserPage extends PureComponent<Props, State> {
         sendEmail: true,
       },
     };
-
-    this.changeEmail = this.changeEmail.bind(this);
-    this.changeRole = this.changeRole.bind(this);
-    this.addUser = this.addUser.bind(this);
-    this.changeUserName = this.changeUserName.bind(this);
-    this.changeName = this.changeName.bind(this);
-    this.changePassword = this.changePassword.bind(this);
   }
 
-  changeEmail(event) {
+  changeEmail = e => {
     const user = Object.assign({}, this.state.user);
     const invite = Object.assign({}, this.state.invite);
-    user.email = event.target.value;
-    invite.loginOrEmail = event.target.value;
+    user.email = e.target.value;
+    invite.loginOrEmail = e.target.value;
     this.setState({ user });
     this.setState({ invite });
-  }
+  };
 
-  changeRole(event) {
+  changeRole = e => {
     const user = Object.assign({}, this.state.user);
     const invite = Object.assign({}, this.state.invite);
-    user.role = event.target.value;
-    invite.role = event.target.value;
+    user.role = e.target.value;
+    invite.role = e.target.value;
     this.setState({ user });
     this.setState({ invite });
-  }
+  };
 
-  changeUserName(event) {
+  changeUserName = e => {
     const user = Object.assign({}, this.state.user);
-    user.userName = event.target.value;
+    user.userName = e.target.value;
     this.setState({ user });
-  }
+  };
 
-  changeName(event) {
+  changeName = e => {
     const user = Object.assign({}, this.state.user);
-    user.name = event.target.value;
+    user.name = e.target.value;
     this.setState({ user });
-  }
+  };
 
-  changePassword(event) {
+  changePassword = e => {
     const user = Object.assign({}, this.state.user);
-    user.password = event.target.value;
+    user.password = e.target.value;
     this.setState({ user });
-  }
+  };
 
-  checkInvite(e) {
+  checkInvite = e => {
     this.setState(prevState => ({ inviteChecked: !prevState.inviteChecked }));
-  }
+  };
 
   sendInvite() {
     const backendSrv = getBackendSrv();
@@ -117,13 +110,14 @@ export class AddUserPage extends PureComponent<Props, State> {
       });
     });
   }
-  addUser() {
+
+  addUser = () => {
     if (this.state.inviteChecked) {
       this.sendInvite();
     } else {
       this.createUser();
     }
-  }
+  };
 
   render() {
     const { navModel } = this.props;
@@ -157,7 +151,7 @@ export class AddUserPage extends PureComponent<Props, State> {
             <label className="gf-form">
               <Label>Add user by invite</Label>
               <div className="gf-form-switch">
-                <input id="invite" type="checkbox" onChange={e => this.checkInvite(e)} />
+                <input id="invite" type="checkbox" onChange={this.checkInvite} />
                 <label htmlFor="invite" data-on="Yes" data-off="No" />
               </div>
             </label>
