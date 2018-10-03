@@ -12,9 +12,6 @@ const setup = (propOverrides?: object) => {
     loadDataSources: jest.fn(),
     navModel: {} as NavModel,
     dataSourcesCount: 0,
-    searchQuery: '',
-    setDataSourcesSearchQuery: jest.fn(),
-    setDataSourcesLayoutMode: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

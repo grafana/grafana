@@ -9,7 +9,6 @@ import foldersReducers from 'app/features/folders/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
 import pluginReducers from 'app/features/plugins/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
-import usersReducers from 'app/features/users/state/reducers';
 
 const rootReducer = combineReducers({
   ...sharedReducers,
@@ -20,7 +19,6 @@ const rootReducer = combineReducers({
   ...dashboardReducers,
   ...pluginReducers,
   ...dataSourcesReducers,
-  ...usersReducers,
 });
 
 export let store;
