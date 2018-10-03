@@ -131,6 +131,7 @@ export class AddUserPage extends PureComponent<Props, State> {
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
+          <h3 className="page-sub-heading">Add User</h3>
           <div className="gf-form-group">
             <div className="gf-form max-width-30">
               <Label>Email</Label>
