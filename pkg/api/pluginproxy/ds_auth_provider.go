@@ -55,15 +55,15 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	if route.JwtTokenAuth != nil && len(ds.SecureJsonData["privateKey"]) != 0 {
-		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
-			logger.Error("Failed to get access token", "error", err)
-		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-	}
+	// if route.JwtTokenAuth != nil && len(ds.SecureJsonData["privateKey"]) != 0 {
+	// 	if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
+	// 		logger.Error("Failed to get access token", "error", err)
+	// 	} else {
+	// 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	// 	}
+	// }
 
-	if req.Header.Get("Authorization") == "" && ds.Type == "stackdriver" {
+	if ds.Type == "stackdriver" {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		projectName := ds.JsonData.Get("defaultProject").MustString()
 		if projectName == "" {
