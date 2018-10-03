@@ -8,8 +8,18 @@ import (
 )
 
 var (
-	ErrNotificationFrequencyNotFound = errors.New("Notification frequency not specified")
-	ErrJournalingNotFound            = errors.New("alert notification journaling not found")
+	ErrNotificationFrequencyNotFound         = errors.New("Notification frequency not specified")
+	ErrAlertNotificationStateNotFound        = errors.New("alert notification state not found")
+	ErrAlertNotificationStateVersionConflict = errors.New("alert notification state update version conflict")
+	ErrAlertNotificationStateAlreadyExist    = errors.New("alert notification state already exists.")
+)
+
+type AlertNotificationStateType string
+
+var (
+	AlertNotificationStatePending   = AlertNotificationStateType("pending")
+	AlertNotificationStateCompleted = AlertNotificationStateType("completed")
+	AlertNotificationStateUnknown   = AlertNotificationStateType("unknown")
 )
 
 type AlertNotification struct {
@@ -76,33 +86,34 @@ type GetAllAlertNotificationsQuery struct {
 	Result []*AlertNotification
 }
 
-type AlertNotificationJournal struct {
-	Id         int64
-	OrgId      int64
-	AlertId    int64
-	NotifierId int64
-	SentAt     int64
-	Success    bool
+type AlertNotificationState struct {
+	Id                           int64
+	OrgId                        int64
+	AlertId                      int64
+	NotifierId                   int64
+	State                        AlertNotificationStateType
+	Version                      int64
+	UpdatedAt                    int64
+	AlertRuleStateUpdatedVersion int64
 }
 
-type RecordNotificationJournalCommand struct {
-	OrgId      int64
-	AlertId    int64
-	NotifierId int64
-	SentAt     int64
-	Success    bool
+type SetAlertNotificationStateToPendingCommand struct {
+	Id                           int64
+	AlertRuleStateUpdatedVersion int64
+	Version                      int64
+
+	ResultVersion int64
 }
 
-type GetLatestNotificationQuery struct {
-	OrgId      int64
-	AlertId    int64
-	NotifierId int64
-
-	Result *AlertNotificationJournal
+type SetAlertNotificationStateToCompleteCommand struct {
+	Id      int64
+	Version int64
 }
 
-type CleanNotificationJournalCommand struct {
+type GetOrCreateNotificationStateQuery struct {
 	OrgId      int64
 	AlertId    int64
 	NotifierId int64
+
+	Result *AlertNotificationState
 }

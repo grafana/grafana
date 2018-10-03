@@ -1,4 +1,4 @@
-import {GrafanaDatasource} from "../datasource";
+import { GrafanaDatasource } from '../datasource';
 import q from 'q';
 import moment from 'moment';
 
@@ -9,23 +9,19 @@ describe('grafana data source', () => {
       get: (url, options) => {
         calledBackendSrvParams = options;
         return q.resolve([]);
-      }
+      },
     };
 
     const templateSrvStub = {
       replace: val => {
-        return val
-        .replace('$var2', 'replaced|replaced2')
-        .replace('$var', 'replaced');
-      }
+        return val.replace('$var2', 'replaced|replaced2').replace('$var', 'replaced');
+      },
     };
 
     const ds = new GrafanaDatasource(backendSrvStub, q, templateSrvStub);
 
     describe('with tags that have template variables', () => {
-      const options = setupAnnotationQueryOptions(
-        {tags: ['tag1:$var']}
-      );
+      const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });
 
       beforeEach(() => {
         return ds.annotationQuery(options);
@@ -37,9 +33,7 @@ describe('grafana data source', () => {
     });
 
     describe('with tags that have multi value template variables', () => {
-      const options = setupAnnotationQueryOptions(
-        {tags: ['$var2']}
-      );
+      const options = setupAnnotationQueryOptions({ tags: ['$var2'] });
 
       beforeEach(() => {
         return ds.annotationQuery(options);
@@ -55,9 +49,9 @@ describe('grafana data source', () => {
       const options = setupAnnotationQueryOptions(
         {
           type: 'dashboard',
-          tags: ['tag1']
+          tags: ['tag1'],
         },
-        {id: 1}
+        { id: 1 }
       );
 
       beforeEach(() => {
@@ -77,8 +71,8 @@ function setupAnnotationQueryOptions(annotation, dashboard?) {
     dashboard: dashboard,
     range: {
       from: moment(1432288354),
-      to: moment(1432288401)
+      to: moment(1432288401),
     },
-    rangeRaw: {from: "now-24h", to: "now"}
+    rangeRaw: { from: 'now-24h', to: 'now' },
   };
 }

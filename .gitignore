@@ -72,3 +72,6 @@ debug.test
 *.orig
 
 /devenv/bulk-dashboards/*.json
+/devenv/bulk_alerting_dashboards/*.json
+
+/scripts/build/release_publisher/release_publisher

@@ -174,6 +174,8 @@ allowed_organizations =
     allowed_organizations =
     ```
 
+> Note: It's important to ensure that the [root_url](/installation/configuration/#root-url) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
+
 ## Set up OAuth2 with Centrify
 
 1.  Create a new Custom OpenID Connect application configuration in the Centrify dashboard.

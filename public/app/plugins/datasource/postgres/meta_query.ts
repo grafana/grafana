@@ -144,6 +144,7 @@ table_schema IN (
     let query = 'SELECT DISTINCT quote_literal(' + column + ')';
     query += ' FROM ' + this.target.table;
     query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
+    query += ' AND ' + column + ' IS NOT NULL';
     query += ' ORDER BY 1 LIMIT 100';
     return query;
   }
