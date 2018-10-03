@@ -10,6 +10,7 @@ import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
+import UsersListPage from 'app/features/users/UsersListPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -133,9 +134,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'NewOrgCtrl',
     })
     .when('/org/users', {
-      templateUrl: 'public/app/features/org/partials/orgUsers.html',
-      controller: 'OrgUsersCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => UsersListPage,
+      },
     })
     .when('/org/users/invite', {
       templateUrl: 'public/app/features/org/partials/invite.html',
