@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -551,6 +553,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 		return nil, errors.New("Unable to find datasource plugin Stackdriver")
 	}
 	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
+	logger.Info("projectName", "projectName", projectName)
 	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	var stackdriverRoute *plugins.AppPluginRoute
