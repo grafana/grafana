@@ -1,6 +1,6 @@
 # 5.3.0 (unreleased)
 
-# 5.3.0-beta3 ()
+# 5.3.0-beta3 (2018-10-03)
 
 * **Stackdriver**: Fix for missing ngInject [#13511](https://github.com/grafana/grafana/pull/13511)
 * **Permissions**: Fix for broken permissions selector [#13507](https://github.com/grafana/grafana/issues/13507)
