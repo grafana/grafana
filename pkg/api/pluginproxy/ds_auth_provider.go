@@ -64,7 +64,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	if req.Header.Get("Authorization") == "" && ds.Type == "stackdriver" {
-		defaultCredentials, err := google.FindDefaultCredentials(ctx)
+		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		projectName := ds.JsonData.Get("defaultProject").MustString()
 		if projectName == "" {
 			ds.JsonData.Set("defaultProject", defaultCredentials.ProjectID)
@@ -75,24 +75,6 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 			token, err := defaultCredentials.TokenSource.Token()
 			if err != nil {
 				logger.Error("Failed to get default access token", "error", err)
-			} else {
-				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
-			}
-		}
-	}
-
-	if req.Header.Get("Authorization") == "" && ds.Type == "stackdriver" {
-		credentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
-		projectName := ds.JsonData.Get("defaultProject").MustString()
-		if projectName == "" {
-			ds.JsonData.Set("defaultProject", credentials.ProjectID)
-		}
-		if err != nil {
-			logger.Error("Failed to get access token", "error", err)
-		} else {
-			token, err := credentials.TokenSource.Token()
-			if err != nil {
-				logger.Error("Failed to get access token", "error", err)
 			} else {
 				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 			}
