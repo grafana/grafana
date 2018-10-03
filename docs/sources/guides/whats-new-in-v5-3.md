@@ -14,37 +14,53 @@ weight = -9
 
 Grafana v5.3 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
-- [TV mode]({{< relref "#tv-and-kiosk-mode" >}}) is improved
+- [Google Stackdriver]({{< relref "#google-stackdriver" >}}) as a core datasource!
+- [TV mode]({{< relref "#tv-and-kiosk-mode" >}}) is improved and more accessible
 - [Alerting]({{< relref "#notification-reminders" >}}) with notification reminders
 - [Postgres]({{< relref "#postgres-query-builder" >}}) gets a new query builder!
 - [OAuth]({{< relref "#improved-oauth-support-for-gitlab" >}}) support for Gitlab is improved
 
+## Google Stackdriver
+
+Grafana v5.3 ships with built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) and enables you to visualize your Stackdriver metrics in Grafana.
+
+The datasource is still in a `beta` phase meaning it's currently in active development and could be missing important features.
+Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
+
+Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/) for more detailed information on how to get started and use it.
+
 ## TV and kiosk mode
 
-We've improved the TV & kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different display modes.
+{{< docs-imagebox img="/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/img/docs/v53/tv_mode.gif" >}}
 
-Clicks:
+We've improved the TV & kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different view modes.
 
-1. (TV mode) Removes the sidebar and most of the buttons in the top bar
-2. (Kiosk mode) Removes the top bar completely so that only the dashboard itself is showing
+1. In the first view mode the sidebar and most of the buttons in the top bar will be hidden
+2. In the second view mode the top bar is completely hidden so that only the dashboard itself is showing
+3. Hit the escape key to go back to the default view mode
 
-Hit the escape key to go back to the default mode.
+When switching view modes the url will be updated to reflect the view mode selected. This allows a dashboard to be opened with a
+certain view mode enabled. Additionally, this also enables [playlists](/reference/playlist) to be started with a certain view mode enabled.
 
-**gif here**
+<div class="clearfix"></div>
 
 ## Notification reminders
 
-Do you use Grafana alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you get alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel. Read more about reminders [here](http://docs.grafana.org/alerting/notifications/#send-reminders)
+Do you use Grafana alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you get alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
+For additional examples of why reminders might be useful for you, see [multiple series](/alerting/rules/#multiple-series).
+
+Learn how to enable and configure reminders [here](/alerting/notifications/#send-reminders).
 
 ## Postgres query builder
 
-Grafana 5.3 comes with a new graphical query builder for Postgres. Bringing Postgres integration more in line with some of the other datasources and making it easier for both advanced and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](http://docs.grafana.org/features/datasources/postgres/#query-editor).
+Grafana 5.3 comes with a new graphical query builder for Postgres. Bringing Postgres integration more in line with some of the other datasources and making it easier for both advanced and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](/features/datasources/postgres/#query-editor).
 
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 
 ## Improved OAuth support for Gitlab
 
-Grafana 5.3 gets native support for Gitlab OAuth with filtering to specific groups. This is makes it possible to use Gitlab OAuth with Grafana in a shared environment without giving everyone access to Grafana. More on usage in the [documentation](http://docs.grafana.org/auth/gitlab/).
+Grafana 5.3 comes with a new OAuth integration for Gitlab that enables configuration to only allow users that are member of certain Gitlab groups to authenticate. This makes it possible to use Gitlab OAuth with Grafana in a shared environment without giving everyone access to Grafana.
+Learn how to enable and configure it in the [documentation](/auth/gitlab/).
 
 ## Changelog
 
