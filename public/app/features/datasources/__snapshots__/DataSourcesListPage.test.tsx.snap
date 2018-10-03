@@ -8,18 +8,8 @@ exports[`Render should render action bar and datasources 1`] = `
   <div
     className="page-container page-body"
   >
-    <OrgActionBar
+    <Connect(DataSourcesActionBar)
       key="action-bar"
-      layoutMode="grid"
-      linkButton={
-        Object {
-          "href": "datasources/new",
-          "title": "Add data source",
-        }
-      }
-      searchQuery=""
-      setLayoutMode={[Function]}
-      setSearchQuery={[Function]}
     />
     <DataSourcesList
       dataSources={

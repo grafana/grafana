@@ -22,6 +22,7 @@ exports[`Render should render component 1`] = `
       />
     </label>
     <LayoutSelector
+      mode="grid"
       onLayoutModeChanged={[Function]}
     />
   </div>
@@ -29,11 +30,13 @@ exports[`Render should render component 1`] = `
     className="page-action-bar__spacer"
   />
   <a
-    className="btn btn-success"
-    href="some/url"
-    target="_blank"
+    className="page-header__cta btn btn-success"
+    href="datasources/new"
   >
-    test
+    <i
+      className="fa fa-plus"
+    />
+    Add data source
   </a>
 </div>
 `;

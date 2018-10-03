@@ -24,7 +24,7 @@ export interface SetLayoutModeAction {
   payload: LayoutMode;
 }
 
-export const setPluginsLayoutMode = (mode: LayoutMode): SetLayoutModeAction => ({
+export const setLayoutMode = (mode: LayoutMode): SetLayoutModeAction => ({
   type: ActionTypes.SetLayoutMode,
   payload: mode,
 });

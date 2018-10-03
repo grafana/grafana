@@ -2,29 +2,21 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import PageHeader from '../../core/components/PageHeader/PageHeader';
-import OrgActionBar from '../../core/components/OrgActionBar/OrgActionBar';
-import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
+import DataSourcesActionBar from './DataSourcesActionBar';
 import DataSourcesList from './DataSourcesList';
+import { loadDataSources } from './state/actions';
+import { getDataSources, getDataSourcesCount, getDataSourcesLayoutMode } from './state/selectors';
+import { getNavModel } from '../../core/selectors/navModel';
 import { DataSource, NavModel } from 'app/types';
 import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
-import { loadDataSources, setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/actions';
-import { getNavModel } from '../../core/selectors/navModel';
-import {
-  getDataSources,
-  getDataSourcesCount,
-  getDataSourcesLayoutMode,
-  getDataSourcesSearchQuery,
-} from './state/selectors';
+import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 
 export interface Props {
   navModel: NavModel;
   dataSources: DataSource[];
   dataSourcesCount: number;
   layoutMode: LayoutMode;
-  searchQuery: string;
   loadDataSources: typeof loadDataSources;
-  setDataSourcesLayoutMode: typeof setDataSourcesLayoutMode;
-  setDataSourcesSearchQuery: typeof setDataSourcesSearchQuery;
 }
 
 const emptyListModel = {
@@ -48,20 +40,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      dataSources,
-      dataSourcesCount,
-      navModel,
-      layoutMode,
-      searchQuery,
-      setDataSourcesSearchQuery,
-      setDataSourcesLayoutMode,
-    } = this.props;
-
-    const linkButton = {
-      href: 'datasources/new',
-      title: 'Add data source',
-    };
+    const { dataSources, dataSourcesCount, navModel, layoutMode } = this.props;
 
     return (
       <div>
@@ -71,14 +50,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
             <EmptyListCTA model={emptyListModel} />
           ) : (
             [
-              <OrgActionBar
-                layoutMode={layoutMode}
-                searchQuery={searchQuery}
-                setLayoutMode={mode => setDataSourcesLayoutMode(mode)}
-                setSearchQuery={query => setDataSourcesSearchQuery(query)}
-                linkButton={linkButton}
-                key="action-bar"
-              />,
+              <DataSourcesActionBar key="action-bar" />,
               <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
             ]
           )}
@@ -94,14 +66,11 @@ function mapStateToProps(state) {
     dataSources: getDataSources(state.dataSources),
     layoutMode: getDataSourcesLayoutMode(state.dataSources),
     dataSourcesCount: getDataSourcesCount(state.dataSources),
-    searchQuery: getDataSourcesSearchQuery(state.dataSources),
   };
 }
 
 const mapDispatchToProps = {
   loadDataSources,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage));
