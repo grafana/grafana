@@ -74,7 +74,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
               <OrgActionBar
                 layoutMode={layoutMode}
                 searchQuery={searchQuery}
-                setLayoutMode={mode => setDataSourcesLayoutMode(mode)}
+                onSetLayoutMode={mode => setDataSourcesLayoutMode(mode)}
                 setSearchQuery={query => setDataSourcesSearchQuery(query)}
                 linkButton={linkButton}
                 key="action-bar"

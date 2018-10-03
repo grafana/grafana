@@ -3,7 +3,7 @@ import { Invitee } from 'app/types';
 
 export interface Props {
   invitees: Invitee[];
-  revokeInvite: (code: string) => void;
+  onRevokeInvite: (code: string) => void;
 }
 
 export default class InviteesTable extends PureComponent<Props> {
@@ -19,7 +19,7 @@ export default class InviteesTable extends PureComponent<Props> {
   };
 
   render() {
-    const { invitees, revokeInvite } = this.props;
+    const { invitees, onRevokeInvite } = this.props;
 
     return (
       <table className="filter-table form-inline">
@@ -50,7 +50,7 @@ export default class InviteesTable extends PureComponent<Props> {
                   &nbsp;
                 </td>
                 <td>
-                  <button className="btn btn-danger btn-mini" onClick={() => revokeInvite(invitee.code)}>
+                  <button className="btn btn-danger btn-mini" onClick={() => onRevokeInvite(invitee.code)}>
                     <i className="fa fa-remove" />
                   </button>
                 </td>

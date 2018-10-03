@@ -43,7 +43,7 @@ export class PluginListPage extends PureComponent<Props> {
           <OrgActionBar
             searchQuery={searchQuery}
             layoutMode={layoutMode}
-            setLayoutMode={mode => setPluginsLayoutMode(mode)}
+            onSetLayoutMode={mode => setPluginsLayoutMode(mode)}
             setSearchQuery={query => setPluginsSearchQuery(query)}
             linkButton={linkButton}
           />

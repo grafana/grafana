@@ -59,7 +59,7 @@ export function loadInvitees(): ThunkResult<void> {
 
 export function updateUser(user: OrgUser): ThunkResult<void> {
   return async dispatch => {
-    await getBackendSrv().patch(`/api/org/users/${user.userId}`, user);
+    await getBackendSrv().patch(`/api/org/users/${user.userId}`, { role: user.role });
     dispatch(loadUsers());
   };
 }

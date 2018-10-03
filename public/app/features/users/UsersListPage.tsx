@@ -69,7 +69,7 @@ export class UsersListPage extends PureComponent<Props, State> {
     this.props.revokeInvite(code);
   };
 
-  showInvites = () => {
+  onShowInvites = () => {
     this.setState(prevState => ({
       showInvites: !prevState.showInvites,
     }));
@@ -82,14 +82,14 @@ export class UsersListPage extends PureComponent<Props, State> {
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          <UsersActionBar showInvites={this.showInvites} />
+          <UsersActionBar onShowInvites={this.onShowInvites} />
           {externalUserMngInfo && (
             <div className="grafana-info-box">
               <span>{externalUserMngInfo}</span>
             </div>
           )}
           {this.state.showInvites ? (
-            <InviteesTable invitees={invitees} revokeInvite={code => this.onRevokeInvite(code)} />
+            <InviteesTable invitees={invitees} onRevokeInvite={code => this.onRevokeInvite(code)} />
           ) : (
             <UsersTable
               users={users}

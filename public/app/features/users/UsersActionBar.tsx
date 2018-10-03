@@ -6,7 +6,7 @@ import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 export interface Props {
   searchQuery: string;
   setUsersSearchQuery: typeof setUsersSearchQuery;
-  showInvites: () => void;
+  onShowInvites: () => void;
   pendingInvitesCount: number;
   canInvite: boolean;
   externalUserMngLinkUrl: string;
@@ -22,7 +22,7 @@ export class UsersActionBar extends PureComponent<Props> {
       searchQuery,
       pendingInvitesCount,
       setUsersSearchQuery,
-      showInvites,
+      onShowInvites,
     } = this.props;
 
     return (
@@ -41,7 +41,7 @@ export class UsersActionBar extends PureComponent<Props> {
 
           <div className="page-action-bar__spacer" />
           {pendingInvitesCount > 0 && (
-            <button className="btn btn-inverse" onClick={showInvites}>
+            <button className="btn btn-inverse" onClick={onShowInvites}>
               Pending Invites ({pendingInvitesCount})
             </button>
           )}

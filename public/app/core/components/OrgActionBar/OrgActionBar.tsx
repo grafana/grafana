@@ -4,14 +4,14 @@ import LayoutSelector, { LayoutMode } from '../LayoutSelector/LayoutSelector';
 export interface Props {
   searchQuery: string;
   layoutMode?: LayoutMode;
-  setLayoutMode?: (mode: LayoutMode) => {};
+  onSetLayoutMode?: (mode: LayoutMode) => {};
   setSearchQuery: (value: string) => {};
   linkButton: { href: string; title: string };
 }
 
 export default class OrgActionBar extends PureComponent<Props> {
   render() {
-    const { searchQuery, layoutMode, setLayoutMode, linkButton, setSearchQuery } = this.props;
+    const { searchQuery, layoutMode, onSetLayoutMode, linkButton, setSearchQuery } = this.props;
 
     return (
       <div className="page-action-bar">
@@ -26,7 +26,7 @@ export default class OrgActionBar extends PureComponent<Props> {
             />
             <i className="gf-form-input-icon fa fa-search" />
           </label>
-          <LayoutSelector mode={layoutMode} onLayoutModeChanged={(mode: LayoutMode) => setLayoutMode(mode)} />
+          <LayoutSelector mode={layoutMode} onLayoutModeChanged={(mode: LayoutMode) => onSetLayoutMode(mode)} />
         </div>
         <div className="page-action-bar__spacer" />
         <a className="btn btn-success" href={linkButton.href} target="_blank">

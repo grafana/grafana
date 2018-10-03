@@ -7,7 +7,7 @@ import { getMockInvitees } from './__mocks__/userMocks';
 const setup = (propOverrides?: object) => {
   const props: Props = {
     invitees: [] as Invitee[],
-    revokeInvite: jest.fn(),
+    onRevokeInvite: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
