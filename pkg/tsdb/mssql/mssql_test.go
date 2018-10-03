@@ -675,6 +675,30 @@ func TestMSSQL(t *testing.T) {
 				So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
 			})
 
+			Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
+				tsdb.Interpolate = origInterpolate
+				query := &tsdb.TsdbQuery{
+					TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
+					Queries: []*tsdb.Query{
+						{
+							DataSource: &models.DataSource{JsonData: simplejson.New()},
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+
+			})
+
 			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
 				sql := `
 						IF object_id('sp_test_epoch') IS NOT NULL
