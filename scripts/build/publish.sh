@@ -1,4 +1,4 @@
-#/bin/bash
+#/bin/sh
 
 # no relation to publish.go
 
@@ -7,7 +7,7 @@
 _releaseNoteUrl="https://community.grafana.com/t/release-notes-v5-3-x/10244"
 _whatsNewUrl="http://docs.grafana.org/guides/whats-new-in-v5-3/"
 
-./release_publisher/release_publisher \
+./scripts/build/release_publisher/release_publisher \
     --wn ${_whatsNewUrl} \
     --rn ${_releaseNoteUrl} \
     --version ${CIRCLE_TAG} \
