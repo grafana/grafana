@@ -21,6 +21,7 @@ export interface DataSource {
 export interface DataSourcesState {
   dataSources: DataSource[];
   searchQuery: string;
+  dataSourceTypeSearchQuery: string;
   layoutMode: LayoutMode;
   dataSourcesCount: number;
   dataSourceTypes: Plugin[];

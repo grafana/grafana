@@ -6,6 +6,14 @@ export const getDataSources = state => {
   });
 };
 
+export const getDataSourceTypes = state => {
+  const regex = new RegExp(state.dataSourceTypeSearchQuery, 'i');
+
+  return state.dataSourceTypes.filter(type => {
+    return regex.test(type.name);
+  });
+};
+
 export const getDataSourcesSearchQuery = state => state.searchQuery;
 export const getDataSourcesLayoutMode = state => state.layoutMode;
 export const getDataSourcesCount = state => state.dataSourcesCount;

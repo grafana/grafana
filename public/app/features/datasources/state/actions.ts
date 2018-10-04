@@ -10,6 +10,7 @@ export enum ActionTypes {
   LoadDataSourceTypes = 'LOAD_DATA_SOURCE_TYPES',
   SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
   SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
+  SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
 }
 
 export interface LoadDataSourcesAction {
@@ -32,6 +33,11 @@ export interface LoadDataSourceTypesAction {
   payload: Plugin[];
 }
 
+export interface SetDataSourceTypeSearchQueryAction {
+  type: ActionTypes.SetDataSourceTypeSearchQuery;
+  payload: string;
+}
+
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
   type: ActionTypes.LoadDataSources,
   payload: dataSources,
@@ -52,12 +58,18 @@ export const setDataSourcesLayoutMode = (layoutMode: LayoutMode): SetDataSources
   payload: layoutMode,
 });
 
+export const setDataSourceTypeSearchQuery = (query: string): SetDataSourceTypeSearchQueryAction => ({
+  type: ActionTypes.SetDataSourceTypeSearchQuery,
+  payload: query,
+});
+
 export type Action =
   | LoadDataSourcesAction
   | SetDataSourcesSearchQueryAction
   | SetDataSourcesLayoutModeAction
   | UpdateLocationAction
-  | LoadDataSourceTypesAction;
+  | LoadDataSourceTypesAction
+  | SetDataSourceTypeSearchQueryAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 

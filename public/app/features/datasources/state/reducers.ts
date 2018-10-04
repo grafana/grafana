@@ -8,6 +8,7 @@ const initialState: DataSourcesState = {
   searchQuery: '',
   dataSourcesCount: 0,
   dataSourceTypes: [] as Plugin[],
+  dataSourceTypeSearchQuery: '',
 };
 
 export const dataSourcesReducer = (state = initialState, action: Action): DataSourcesState => {
@@ -23,6 +24,9 @@ export const dataSourcesReducer = (state = initialState, action: Action): DataSo
 
     case ActionTypes.LoadDataSourceTypes:
       return { ...state, dataSourceTypes: action.payload };
+
+    case ActionTypes.SetDataSourceTypeSearchQuery:
+      return { ...state, dataSourceTypeSearchQuery: action.payload };
   }
 
   return state;
