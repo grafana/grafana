@@ -36,7 +36,11 @@ export class SideMenuCtrl {
 
   toggleSideMenu() {
     this.contextSrv.toggleSideMenu();
-    appEvents.emit('toggle-sidemenu');
+    if (this.contextSrv.isGrafanaAdmin) {
+      appEvents.emit('toggle-sidemenu');
+    } else {
+      appEvents.emit('toggle-sidemenu-hidden');
+    }
 
     this.$timeout(() => {
       this.$rootScope.$broadcast('render');
