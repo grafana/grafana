@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import _ from 'lodash';
 import React, { Component } from 'react';
 import moment from 'moment';
 
@@ -68,7 +69,7 @@ const FLOT_OPTIONS = {
   // },
 };
 
-class Graph extends Component<any, any> {
+class Graph extends Component<any, { showAllTimeSeries: boolean }> {
   state = {
     showAllTimeSeries: false,
   };
@@ -81,6 +82,7 @@ class Graph extends Component<any, any> {
 
   componentDidMount() {
     this.draw();
+    window.addEventListener('resize', this.debouncedDraw);
   }
 
   componentDidUpdate(prevProps) {
@@ -94,6 +96,10 @@ class Graph extends Component<any, any> {
     }
   }
 
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.debouncedDraw);
+  }
+
   onShowAllTimeSeries = () => {
     this.setState(
       {
@@ -102,6 +108,8 @@ class Graph extends Component<any, any> {
       this.draw
     );
   };
+
+  debouncedDraw = _.debounce(() => this.draw(), 100);
 
   draw() {
     const { options: userOptions } = this.props;
