@@ -72,7 +72,8 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   };
 
   render() {
-    const activeTab: string = store.view.query.get('tab') || 'queries';
+    const { location } = store.getState();
+    const activeTab = location.query.tab || 'queries';
 
     return (
       <div className="tabbed-view tabbed-view--new">
