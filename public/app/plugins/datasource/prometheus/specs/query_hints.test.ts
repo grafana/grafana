@@ -15,6 +15,14 @@ describe('getQueryHints()', () => {
     expect(hints).toEqual([null]);
   });
 
+  it('returns no hint for a flat series', () => {
+    const series = [
+      { datapoints: [[null, 1000], [23, 1001], [null, 1002], [23, 1003]], query: 'metric', responseIndex: 0 },
+    ];
+    const hints = getQueryHints(series);
+    expect(hints).toEqual([null]);
+  });
+
   it('returns a rate hint for a monotonously increasing series', () => {
     const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'metric', responseIndex: 0 }];
     const hints = getQueryHints(series);

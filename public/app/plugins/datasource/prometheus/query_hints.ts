@@ -30,13 +30,14 @@ export function getQueryHints(series: any[], datasource?: any): any[] {
     const datapoints: number[][] = s.datapoints;
     if (query.indexOf('rate(') === -1 && datapoints.length > 1) {
       let increasing = false;
-      const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
+      const nonNullData = datapoints.filter(dp => dp[0] !== null);
+      const monotonic = nonNullData.every((dp, index) => {
         if (index === 0) {
           return true;
         }
-        increasing = increasing || dp[0] > datapoints[index - 1][0];
+        increasing = increasing || dp[0] > nonNullData[index - 1][0];
         // monotonic?
-        return dp[0] >= datapoints[index - 1][0];
+        return dp[0] >= nonNullData[index - 1][0];
       });
       if (increasing && monotonic) {
         const simpleMetric = query.trim().match(/^\w+$/);
