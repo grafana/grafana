@@ -179,15 +179,21 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
   }
 
   onChange = ({ value }) => {
-    const changed = value.document !== this.state.value.document;
+    const textChanged = value.document !== this.state.value.document;
+
+    // Control editor loop, then pass text change up to parent
     this.setState({ value }, () => {
-      if (changed) {
+      if (textChanged) {
         this.handleChangeValue();
       }
     });
 
-    if (changed) {
+    // Show suggest menu on text input
+    if (textChanged && value.selection.isCollapsed) {
+      // Need one paint to allow DOM-based typeahead rules to work
       window.requestAnimationFrame(this.handleTypeahead);
+    } else {
+      this.resetTypeahead();
     }
   };
 
