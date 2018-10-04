@@ -5,7 +5,7 @@ export default class CreateTeamCtrl {
   email: string;
   navModel: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, private $location, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
   }

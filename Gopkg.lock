@@ -20,6 +20,12 @@
   revision = "7677a1d7c1137cd3dd5ba7a076d0c898a1ef4520"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/VividCortex/mysqlerr"
+  packages = ["."]
+  revision = "6c6b55f8796f578c870b7e19bafb16103bc40095"
+
+[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -428,12 +434,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/shurcooL/sanitized_anchor_name"
-  packages = ["."]
-  revision = "86672fcb3f950f35f2e675df2240550f2a50762f"
-
-[[projects]]
   name = "github.com/smartystreets/assertions"
   packages = [
     ".",
@@ -679,6 +679,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb8e7fd81f23ec987fc4d5dd9d31ae0f1164bc2f30cbea2fe86e0d97dd945beb"
+  inputs-digest = "6e9458f912a5f0eb3430b968f1b4dbc4e3b7671b282cf4fe1573419a6d9ba0d4"
   solver-name = "gps-cdcl"
   solver-version = 1

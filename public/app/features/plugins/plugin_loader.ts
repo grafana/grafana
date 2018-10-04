@@ -65,7 +65,7 @@ System.config({
 });
 
 function exposeToPlugin(name: string, component: any) {
-  System.registerDynamic(name, [], true, function(require, exports, module) {
+  System.registerDynamic(name, [], true, (require, exports, module) => {
     module.exports = component;
   });
 }
@@ -140,12 +140,12 @@ const flotDeps = [
   'jquery.flot.events',
   'jquery.flot.gauge',
 ];
-for (let flotDep of flotDeps) {
+for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
 export function importPluginModule(path: string): Promise<any> {
-  let builtIn = builtInPlugins[path];
+  const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
   }

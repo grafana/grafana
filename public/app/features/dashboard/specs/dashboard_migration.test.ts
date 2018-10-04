@@ -6,14 +6,14 @@ import { expect } from 'test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
-describe('DashboardModel', function() {
-  describe('when creating dashboard with old schema', function() {
-    var model;
-    var graph;
-    var singlestat;
-    var table;
+describe('DashboardModel', () => {
+  describe('when creating dashboard with old schema', () => {
+    let model;
+    let graph;
+    let singlestat;
+    let table;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({
         services: {
           filter: { time: { from: 'now-1d', to: 'now' }, list: [{}] },
@@ -65,52 +65,52 @@ describe('DashboardModel', function() {
       table = model.panels[2];
     });
 
-    it('should have title', function() {
+    it('should have title', () => {
       expect(model.title).toBe('No Title');
     });
 
-    it('should have panel id', function() {
+    it('should have panel id', () => {
       expect(graph.id).toBe(1);
     });
 
-    it('should move time and filtering list', function() {
+    it('should move time and filtering list', () => {
       expect(model.time.from).toBe('now-1d');
       expect(model.templating.list[0].allFormat).toBe('glob');
     });
 
-    it('graphite panel should change name too graph', function() {
+    it('graphite panel should change name too graph', () => {
       expect(graph.type).toBe('graph');
     });
 
-    it('single stat panel should have two thresholds', function() {
+    it('single stat panel should have two thresholds', () => {
       expect(singlestat.thresholds).toBe('20,30');
     });
 
-    it('queries without refId should get it', function() {
+    it('queries without refId should get it', () => {
       expect(graph.targets[1].refId).toBe('B');
     });
 
-    it('update legend setting', function() {
+    it('update legend setting', () => {
       expect(graph.legend.show).toBe(true);
     });
 
-    it('move aliasYAxis to series override', function() {
+    it('move aliasYAxis to series override', () => {
       expect(graph.seriesOverrides[0].alias).toBe('test');
       expect(graph.seriesOverrides[0].yaxis).toBe(2);
     });
 
-    it('should move pulldowns to new schema', function() {
+    it('should move pulldowns to new schema', () => {
       expect(model.annotations.list[1].name).toBe('old');
     });
 
-    it('table panel should only have two thresholds values', function() {
+    it('table panel should only have two thresholds values', () => {
       expect(table.styles[0].thresholds[0]).toBe('20');
       expect(table.styles[0].thresholds[1]).toBe('30');
       expect(table.styles[1].thresholds[0]).toBe('200');
       expect(table.styles[1].thresholds[1]).toBe('300');
     });
 
-    it('graph grid to yaxes options', function() {
+    it('graph grid to yaxes options', () => {
       expect(graph.yaxes[0].min).toBe(1);
       expect(graph.yaxes[0].max).toBe(10);
       expect(graph.yaxes[0].format).toBe('kbyte');
@@ -126,11 +126,11 @@ describe('DashboardModel', function() {
       expect(graph.y_formats).toBe(undefined);
     });
 
-    it('dashboard schema version should be set to latest', function() {
+    it('dashboard schema version should be set to latest', () => {
       expect(model.schemaVersion).toBe(16);
     });
 
-    it('graph thresholds should be migrated', function() {
+    it('graph thresholds should be migrated', () => {
       expect(graph.thresholds.length).toBe(2);
       expect(graph.thresholds[0].op).toBe('gt');
       expect(graph.thresholds[0].value).toBe(200);
@@ -140,29 +140,29 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('when migrating to the grid layout', function() {
+  describe('when migrating to the grid layout', () => {
     let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = {
         rows: [],
       };
     });
 
-    it('should create proper grid', function() {
+    it('should create proper grid', () => {
       model.rows = [createRow({ collapse: false, height: 8 }, [[6], [6]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [{ x: 0, y: 0, w: 12, h: 8 }, { x: 12, y: 0, w: 12, h: 8 }];
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [{ x: 0, y: 0, w: 12, h: 8 }, { x: 12, y: 0, w: 12, h: 8 }];
 
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should add special "row" panel if row is collapsed', function() {
+    it('should add special "row" panel if row is collapsed', () => {
       model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]]), createRow({ height: 8 }, [[12]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 24, h: 8 }, // row
         { x: 0, y: 1, w: 24, h: 8 }, // row
         { x: 0, y: 2, w: 24, h: 8 },
@@ -171,14 +171,14 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should add special "row" panel if row has visible title', function() {
+    it('should add special "row" panel if row has visible title', () => {
       model.rows = [
         createRow({ showTitle: true, title: 'Row', height: 8 }, [[6], [6]]),
         createRow({ height: 8 }, [[12]]),
       ];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 24, h: 8 }, // row
         { x: 0, y: 1, w: 12, h: 8 },
         { x: 12, y: 1, w: 12, h: 8 },
@@ -189,16 +189,16 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should not add "row" panel if row has not visible title or not collapsed', function() {
+    it('should not add "row" panel if row has not visible title or not collapsed', () => {
       model.rows = [
         createRow({ collapse: true, height: 8 }, [[12]]),
         createRow({ height: 8 }, [[12]]),
         createRow({ height: 8 }, [[12], [6], [6]]),
         createRow({ collapse: true, height: 8 }, [[12]]),
       ];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 24, h: 8 }, // row
         { x: 0, y: 1, w: 24, h: 8 }, // row
         { x: 0, y: 2, w: 24, h: 8 },
@@ -212,11 +212,11 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should add all rows if even one collapsed or titled row is present', function() {
+    it('should add all rows if even one collapsed or titled row is present', () => {
       model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]]), createRow({ height: 8 }, [[12]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 24, h: 8 }, // row
         { x: 0, y: 1, w: 24, h: 8 }, // row
         { x: 0, y: 2, w: 24, h: 8 },
@@ -225,14 +225,14 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should properly place panels with fixed height', function() {
+    it('should properly place panels with fixed height', () => {
       model.rows = [
         createRow({ height: 6 }, [[6], [6, 3], [6, 3]]),
         createRow({ height: 6 }, [[4], [4], [4, 3], [4, 3]]),
       ];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 12, h: 6 },
         { x: 12, y: 0, w: 12, h: 3 },
         { x: 12, y: 3, w: 12, h: 3 },
@@ -245,11 +245,11 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should place panel to the right side of panel having bigger height', function() {
+    it('should place panel to the right side of panel having bigger height', () => {
       model.rows = [createRow({ height: 6 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 8, h: 6 },
         { x: 8, y: 0, w: 4, h: 3 },
         { x: 12, y: 0, w: 8, h: 6 },
@@ -260,11 +260,11 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should fill current row if it possible', function() {
+    it('should fill current row if it possible', () => {
       model.rows = [createRow({ height: 9 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3], [8, 3]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 8, h: 9 },
         { x: 8, y: 0, w: 4, h: 3 },
         { x: 12, y: 0, w: 8, h: 6 },
@@ -276,11 +276,11 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should fill current row if it possible (2)', function() {
+    it('should fill current row if it possible (2)', () => {
       model.rows = [createRow({ height: 8 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3], [8, 3]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 8, h: 8 },
         { x: 8, y: 0, w: 4, h: 3 },
         { x: 12, y: 0, w: 8, h: 6 },
@@ -292,11 +292,11 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should fill current row if panel height more than row height', function() {
+    it('should fill current row if panel height more than row height', () => {
       model.rows = [createRow({ height: 6 }, [[4], [2, 3], [4, 8], [2, 3], [2, 3]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 8, h: 6 },
         { x: 8, y: 0, w: 4, h: 3 },
         { x: 12, y: 0, w: 8, h: 8 },
@@ -307,11 +307,11 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should wrap panels to multiple rows', function() {
+    it('should wrap panels to multiple rows', () => {
       model.rows = [createRow({ height: 6 }, [[6], [6], [12], [6], [3], [3]])];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 12, h: 6 },
         { x: 12, y: 0, w: 12, h: 6 },
         { x: 0, y: 6, w: 24, h: 6 },
@@ -323,14 +323,14 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
-    it('should add repeated row if repeat set', function() {
+    it('should add repeated row if repeat set', () => {
       model.rows = [
         createRow({ showTitle: true, title: 'Row', height: 8, repeat: 'server' }, [[6]]),
         createRow({ height: 8 }, [[12]]),
       ];
-      let dashboard = new DashboardModel(model);
-      let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
+      const dashboard = new DashboardModel(model);
+      const panelGridPos = getGridPositions(dashboard);
+      const expectedGrid = [
         { x: 0, y: 0, w: 24, h: 8 },
         { x: 0, y: 1, w: 12, h: 8 },
         { x: 0, y: 9, w: 24, h: 8 },
@@ -344,7 +344,7 @@ describe('DashboardModel', function() {
       expect(dashboard.panels[3].repeat).toBeUndefined();
     });
 
-    it('should ignore repeated row', function() {
+    it('should ignore repeated row', () => {
       model.rows = [
         createRow({ showTitle: true, title: 'Row1', height: 8, repeat: 'server' }, [[6]]),
         createRow(
@@ -359,24 +359,24 @@ describe('DashboardModel', function() {
         ),
       ];
 
-      let dashboard = new DashboardModel(model);
+      const dashboard = new DashboardModel(model);
       expect(dashboard.panels[0].repeat).toBe('server');
       expect(dashboard.panels.length).toBe(2);
     });
 
-    it('minSpan should be twice', function() {
+    it('minSpan should be twice', () => {
       model.rows = [createRow({ height: 8 }, [[6]])];
       model.rows[0].panels[0] = { minSpan: 12 };
 
-      let dashboard = new DashboardModel(model);
+      const dashboard = new DashboardModel(model);
       expect(dashboard.panels[0].minSpan).toBe(24);
     });
 
-    it('should assign id', function() {
+    it('should assign id', () => {
       model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]])];
       model.rows[0].panels[0] = {};
 
-      let dashboard = new DashboardModel(model);
+      const dashboard = new DashboardModel(model);
       expect(dashboard.panels[0].id).toBe(1);
     });
   });
@@ -384,17 +384,18 @@ describe('DashboardModel', function() {
 
 function createRow(options, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
-  let { collapse, height, showTitle, title, repeat, repeatIteration } = options;
+  const { collapse, showTitle, title, repeat, repeatIteration } = options;
+  let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
-  let panels = [];
+  const panels = [];
   _.each(panelDescriptions, panelDesc => {
-    let panel = { span: panelDesc[0] };
+    const panel = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
       panel['height'] = panelDesc[1] * PANEL_HEIGHT_STEP;
     }
     panels.push(panel);
   });
-  let row = {
+  const row = {
     collapse,
     height,
     showTitle,

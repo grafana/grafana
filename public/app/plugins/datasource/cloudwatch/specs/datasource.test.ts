@@ -3,19 +3,19 @@ import CloudWatchDatasource from '../datasource';
 import * as dateMath from 'app/core/utils/datemath';
 import _ from 'lodash';
 
-describe('CloudWatchDatasource', function() {
-  let instanceSettings = {
+describe('CloudWatchDatasource', () => {
+  const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
 
-  let templateSrv = {
+  const templateSrv = {
     data: {},
     templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
     replace: text => _.template(text, templateSrv.templateSettings)(templateSrv.data),
     variableExists: () => false,
   };
 
-  let timeSrv = {
+  const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
     timeRange: () => {
       return {
@@ -24,20 +24,20 @@ describe('CloudWatchDatasource', function() {
       };
     },
   };
-  let backendSrv = {};
-  let ctx = <any>{
+  const backendSrv = {};
+  const ctx = {
     backendSrv,
     templateSrv,
-  };
+  } as any;
 
   beforeEach(() => {
     ctx.ds = new CloudWatchDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
   });
 
-  describe('When performing CloudWatch query', function() {
-    var requestParams;
+  describe('When performing CloudWatch query', () => {
+    let requestParams;
 
-    var query = {
+    const query = {
       range: { from: 'now-1h', to: 'now' },
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
@@ -54,7 +54,7 @@ describe('CloudWatchDatasource', function() {
       ],
     };
 
-    var response = {
+    const response = {
       timings: [null],
       results: {
         A: {
@@ -80,9 +80,9 @@ describe('CloudWatchDatasource', function() {
       });
     });
 
-    it('should generate the correct query', function(done) {
-      ctx.ds.query(query).then(function() {
-        var params = requestParams.queries[0];
+    it('should generate the correct query', done => {
+      ctx.ds.query(query).then(() => {
+        const params = requestParams.queries[0];
         expect(params.namespace).toBe(query.targets[0].namespace);
         expect(params.metricName).toBe(query.targets[0].metricName);
         expect(params.dimensions['InstanceId']).toBe('i-12345678');
@@ -92,12 +92,12 @@ describe('CloudWatchDatasource', function() {
       });
     });
 
-    it('should generate the correct query with interval variable', function(done) {
+    it('should generate the correct query with interval variable', done => {
       ctx.templateSrv.data = {
         period: '10m',
       };
 
-      var query = {
+      const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
@@ -114,15 +114,15 @@ describe('CloudWatchDatasource', function() {
         ],
       };
 
-      ctx.ds.query(query).then(function() {
-        var params = requestParams.queries[0];
+      ctx.ds.query(query).then(() => {
+        const params = requestParams.queries[0];
         expect(params.period).toBe('600');
         done();
       });
     });
 
-    it('should cancel query for invalid extended statistics', function () {
-      var query = {
+    it('should cancel query for invalid extended statistics', () => {
+      const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
@@ -141,8 +141,8 @@ describe('CloudWatchDatasource', function() {
       expect(ctx.ds.query.bind(ctx.ds, query)).toThrow(/Invalid extended statistics/);
     });
 
-    it('should return series list', function(done) {
-      ctx.ds.query(query).then(function(result) {
+    it('should return series list', done => {
+      ctx.ds.query(query).then(result => {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
@@ -150,29 +150,29 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describe('When query region is "default"', function() {
-    it('should return the datasource region if empty or "default"', function() {
-      var defaultRegion = instanceSettings.jsonData.defaultRegion;
+  describe('When query region is "default"', () => {
+    it('should return the datasource region if empty or "default"', () => {
+      const defaultRegion = instanceSettings.jsonData.defaultRegion;
 
       expect(ctx.ds.getActualRegion()).toBe(defaultRegion);
       expect(ctx.ds.getActualRegion('')).toBe(defaultRegion);
       expect(ctx.ds.getActualRegion('default')).toBe(defaultRegion);
     });
 
-    it('should return the specified region if specified', function() {
+    it('should return the specified region if specified', () => {
       expect(ctx.ds.getActualRegion('some-fake-region-1')).toBe('some-fake-region-1');
     });
 
-    var requestParams;
-    beforeEach(function() {
+    let requestParams;
+    beforeEach(() => {
       ctx.ds.performTimeSeriesQuery = jest.fn(request => {
         requestParams = request;
         return Promise.resolve({ data: {} });
       });
     });
 
-    it('should query for the datasource region if empty or "default"', function(done) {
-      var query = {
+    it('should query for the datasource region if empty or "default"', done => {
+      const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
@@ -189,15 +189,15 @@ describe('CloudWatchDatasource', function() {
         ],
       };
 
-      ctx.ds.query(query).then(function(result) {
+      ctx.ds.query(query).then(result => {
         expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
         done();
       });
     });
   });
 
-  describe('When performing CloudWatch query for extended statistics', function() {
-    var query = {
+  describe('When performing CloudWatch query for extended statistics', () => {
+    const query = {
       range: { from: 'now-1h', to: 'now' },
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
@@ -215,7 +215,7 @@ describe('CloudWatchDatasource', function() {
       ],
     };
 
-    var response = {
+    const response = {
       timings: [null],
       results: {
         A: {
@@ -235,14 +235,14 @@ describe('CloudWatchDatasource', function() {
       },
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.backendSrv.datasourceRequest = jest.fn(params => {
         return Promise.resolve({ data: response });
       });
     });
 
-    it('should return series list', function(done) {
-      ctx.ds.query(query).then(function(result) {
+    it('should return series list', done => {
+      ctx.ds.query(query).then(result => {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
@@ -252,7 +252,7 @@ describe('CloudWatchDatasource', function() {
 
   function describeMetricFindQuery(query, func) {
     describe('metricFindQuery ' + query, () => {
-      let scenario: any = {};
+      const scenario: any = {};
       scenario.setup = setupCallback => {
         beforeEach(() => {
           setupCallback();
@@ -378,11 +378,11 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  it('should caclculate the correct period', function() {
-    var hourSec = 60 * 60;
-    var daySec = hourSec * 24;
-    var start = 1483196400 * 1000;
-    var testData: any[] = [
+  it('should caclculate the correct period', () => {
+    const hourSec = 60 * 60;
+    const daySec = hourSec * 24;
+    const start = 1483196400 * 1000;
+    const testData: any[] = [
       [
         { period: 60, namespace: 'AWS/EC2' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
@@ -461,12 +461,12 @@ describe('CloudWatchDatasource', function() {
         3600,
       ],
     ];
-    for (let t of testData) {
-      let target = t[0];
-      let options = t[1];
-      let now = new Date(options.range.from.valueOf() + t[2] * 1000);
-      let expected = t[3];
-      let actual = ctx.ds.getPeriod(target, options, now);
+    for (const t of testData) {
+      const target = t[0];
+      const options = t[1];
+      const now = new Date(options.range.from.valueOf() + t[2] * 1000);
+      const expected = t[3];
+      const actual = ctx.ds.getPeriod(target, options, now);
       expect(actual).toBe(expected);
     }
   });

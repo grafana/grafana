@@ -2,15 +2,24 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-export function toUrlParams(a) {
-  let s = [];
-  let rbracket = /\[\]$/;
+import { UrlQueryMap } from 'app/types';
 
-  let isArray = function(obj) {
+export function renderUrl(path: string, query: UrlQueryMap | undefined): string {
+  if (query && Object.keys(query).length > 0) {
+    path += '?' + toUrlParams(query);
+  }
+  return path;
+}
+
+export function toUrlParams(a) {
+  const s = [];
+  const rbracket = /\[\]$/;
+
+  const isArray = obj => {
     return Object.prototype.toString.call(obj) === '[object Array]';
   };
 
-  let add = function(k, v) {
+  const add = (k, v) => {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
     if (typeof v !== 'boolean') {
       s[s.length] = encodeURIComponent(k) + '=' + encodeURIComponent(v);
@@ -19,8 +28,8 @@ export function toUrlParams(a) {
     }
   };
 
-  let buildParams = function(prefix, obj) {
-    var i, len, key;
+  const buildParams = (prefix, obj) => {
+    let i, len, key;
 
     if (prefix) {
       if (isArray(obj)) {
@@ -50,7 +59,5 @@ export function toUrlParams(a) {
     return s;
   };
 
-  return buildParams('', a)
-    .join('&')
-    .replace(/%20/g, '+');
+  return buildParams('', a).join('&');
 }

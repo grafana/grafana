@@ -23,6 +23,8 @@ type Rule struct {
 	State               m.AlertStateType
 	Conditions          []Condition
 	Notifications       []int64
+
+	StateChanges int64
 }
 
 type ValidationError struct {
@@ -100,6 +102,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.State = ruleDef.State
 	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
+	model.StateChanges = ruleDef.StateChanges
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)

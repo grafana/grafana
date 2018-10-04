@@ -4,7 +4,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 jest.mock('../datasource');
 jest.mock('app/core/services/backend_srv');
 
-describe('Prometheus editor completer', function() {
+describe('Prometheus editor completer', () => {
   function getSessionStub(data) {
     return {
       getTokenAt: jest.fn(() => data.currentToken),
@@ -13,30 +13,20 @@ describe('Prometheus editor completer', function() {
     };
   }
 
-  let editor = {};
+  const editor = {};
 
-  let backendSrv = <BackendSrv>{};
-  let datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
+  const backendSrv = {} as BackendSrv;
+  const datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
 
-  datasourceStub.performInstantQuery = jest.fn(() =>
-    Promise.resolve({
-      data: {
-        data: {
-          result: [
-            {
-              metric: {
-                job: 'node',
-                instance: 'localhost:9100',
-              },
-            },
-          ],
-        },
-      },
-    })
+  datasourceStub.metadataRequest = jest.fn(() =>
+    Promise.resolve({ data: { data: [{ metric: { job: 'node', instance: 'localhost:9100' } }] } })
   );
+  datasourceStub.getTimeRange = jest.fn(() => {
+    return { start: 1514732400, end: 1514818800 };
+  });
   datasourceStub.performSuggestQuery = jest.fn(() => Promise.resolve(['node_cpu']));
 
-  let templateSrv = {
+  const templateSrv = {
     variables: [
       {
         name: 'var_name',
@@ -44,7 +34,7 @@ describe('Prometheus editor completer', function() {
       },
     ],
   };
-  let completer = new PromCompleter(datasourceStub, templateSrv);
+  const completer = new PromCompleter(datasourceStub, templateSrv);
 
   describe('When inside brackets', () => {
     it('Should return range vectors', () => {

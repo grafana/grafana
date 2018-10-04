@@ -4,12 +4,12 @@ import config from 'app/core/config';
 import { DashboardViewState } from '../view_state_srv';
 
 describe('when updating view state', () => {
-  let location = {
+  const location = {
     replace: jest.fn(),
     search: jest.fn(),
   };
 
-  let $scope = {
+  const $scope = {
     onAppEvent: jest.fn(() => {}),
     dashboard: {
       meta: {},
@@ -17,7 +17,7 @@ describe('when updating view state', () => {
     },
   };
 
-  let $rootScope = {};
+  const $rootScope = {};
   let viewState;
 
   beforeEach(() => {
@@ -37,7 +37,7 @@ describe('when updating view state', () => {
     });
 
     it('should update querystring and view state', () => {
-      var updateState = { fullscreen: true, edit: true, panelId: 1 };
+      const updateState = { fullscreen: true, edit: true, panelId: 1 };
 
       viewState.update(updateState);
 

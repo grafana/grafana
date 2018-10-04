@@ -6,8 +6,8 @@ export default function sortByKeys(input) {
   }
 
   if (_.isPlainObject(input)) {
-    var sortedObject = {};
-    for (let key of _.keys(input).sort()) {
+    const sortedObject = {};
+    for (const key of _.keys(input).sort()) {
       sortedObject[key] = sortByKeys(input[key]);
     }
     return sortedObject;

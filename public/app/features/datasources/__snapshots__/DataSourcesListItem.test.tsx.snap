@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<li
+  className="card-item-wrapper"
+>
+  <a
+    className="card-item"
+    href="datasources/edit/13"
+  >
+    <div
+      className="card-item-header"
+    >
+      <div
+        className="card-item-type"
+      >
+        cloudwatch
+      </div>
+    </div>
+    <div
+      className="card-item-body"
+    >
+      <figure
+        className="card-item-figure"
+      >
+        <img
+          src="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+        />
+      </figure>
+      <div
+        className="card-item-details"
+      >
+        <div
+          className="card-item-name"
+        >
+          gdev-cloudwatch
+        </div>
+        <div
+          className="card-item-sub-name"
+        />
+      </div>
+    </div>
+  </a>
+</li>
+`;

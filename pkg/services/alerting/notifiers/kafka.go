@@ -43,7 +43,7 @@ func NewKafkaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &KafkaNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Endpoint:     endpoint,
 		Topic:        topic,
 		log:          log.New("alerting.notifier.kafka"),
@@ -61,7 +61,7 @@ func (this *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	state := evalContext.Rule.State
 
-	customData := "Triggered metrics:\n\n"
+	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}

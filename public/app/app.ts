@@ -21,7 +21,7 @@ import _ from 'lodash';
 import moment from 'moment';
 
 // add move to lodash for backward compatabiltiy
-_.move = function(array, fromIndex, toIndex) {
+_.move = (array, fromIndex, toIndex) => {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
   return array;
 };
@@ -53,7 +53,7 @@ export class GrafanaApp {
   }
 
   init() {
-    var app = angular.module('grafana', []);
+    const app = angular.module('grafana', []);
 
     moment.locale(config.bootData.user.locale);
 
@@ -76,9 +76,9 @@ export class GrafanaApp {
       $provide.decorator('$http', [
         '$delegate',
         '$templateCache',
-        function($delegate, $templateCache) {
-          var get = $delegate.get;
-          $delegate.get = function(url, config) {
+        ($delegate, $templateCache) => {
+          const get = $delegate.get;
+          $delegate.get = (url, config) => {
             if (url.match(/\.html$/)) {
               // some template's already exist in the cache
               if (!$templateCache.get(url)) {
@@ -105,10 +105,10 @@ export class GrafanaApp {
       'react',
     ];
 
-    var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
+    const moduleTypes = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
-    _.each(module_types, type => {
-      var moduleName = 'grafana.' + type;
+    _.each(moduleTypes, type => {
+      const moduleName = 'grafana.' + type;
       this.useModule(angular.module(moduleName, []));
     });
 
@@ -119,7 +119,7 @@ export class GrafanaApp {
     coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    var preBootRequires = [System.import('app/features/all')];
+    const preBootRequires = [System.import('app/features/all')];
 
     Promise.all(preBootRequires)
       .then(() => {
@@ -135,7 +135,7 @@ export class GrafanaApp {
           this.preBootModules = null;
         });
       })
-      .catch(function(err) {
+      .catch(err => {
         console.log('Application boot failed:', err);
       });
   }

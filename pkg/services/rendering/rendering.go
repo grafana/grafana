@@ -3,6 +3,8 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"os"
 	"path/filepath"
 
 	plugin "github.com/hashicorp/go-plugin"
@@ -22,17 +24,37 @@ func init() {
 }
 
 type RenderingService struct {
-	log          log.Logger
-	pluginClient *plugin.Client
-	grpcPlugin   pluginModel.RendererPlugin
-	pluginInfo   *plugins.RendererPlugin
-	renderAction renderFunc
+	log             log.Logger
+	pluginClient    *plugin.Client
+	grpcPlugin      pluginModel.RendererPlugin
+	pluginInfo      *plugins.RendererPlugin
+	renderAction    renderFunc
+	domain          string
+	inProgressCount int
 
 	Cfg *setting.Cfg `inject:""`
 }
 
 func (rs *RenderingService) Init() error {
 	rs.log = log.New("rendering")
+
+	// ensure ImagesDir exists
+	err := os.MkdirAll(rs.Cfg.ImagesDir, 0700)
+	if err != nil {
+		return err
+	}
+
+	// set value used for domain attribute of renderKey cookie
+	if rs.Cfg.RendererUrl != "" {
+		// RendererCallbackUrl has already been passed, it won't generate an error.
+		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
+		rs.domain = u.Hostname()
+	} else if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
+		rs.domain = setting.HttpAddr
+	} else {
+		rs.domain = "localhost"
+	}
+
 	return nil
 }
 
@@ -69,6 +91,18 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+	if rs.inProgressCount > opts.ConcurrentLimit {
+		return &RenderResult{
+			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
+		}, nil
+	}
+
+	defer func() {
+		rs.inProgressCount -= 1
+	}()
+
+	rs.inProgressCount += 1
+
 	if rs.renderAction != nil {
 		return rs.renderAction(ctx, opts)
 	} else {
@@ -82,16 +116,17 @@ func (rs *RenderingService) getFilePathForNewImage() string {
 }
 
 func (rs *RenderingService) getURL(path string) string {
-	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, rs.getLocalDomain(), setting.HttpPort, path)
-}
+	if rs.Cfg.RendererUrl != "" {
+		// The backend rendering service can potentially be remote.
+		// So we need to use the root_url to ensure the rendering service
+		// can reach this Grafana instance.
 
-func (rs *RenderingService) getLocalDomain() string {
-	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
-		return setting.HttpAddr
+		// &render=1 signals to the legacy redirect layer to
+		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
+
 	}
-
-	return "localhost"
+	// &render=1 signals to the legacy redirect layer to
+	return fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, rs.domain, setting.HttpPort, path)
 }
 
 func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) string {

@@ -1,10 +1,13 @@
 package tsdb
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -13,6 +16,63 @@ func TestSqlEngine(t *testing.T) {
 	Convey("SqlEngine", t, func() {
 		dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 		earlyDt := time.Date(1970, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
+
+		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
+			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
+			to := from.Add(5 * time.Minute)
+			timeRange := NewFakeTimeRange("5m", "now", to)
+			query := &Query{DataSource: &models.DataSource{}, Model: simplejson.New()}
+
+			Convey("interpolate $__interval", func() {
+				sql, err := Interpolate(query, timeRange, "select $__interval ")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select 1m ")
+			})
+
+			Convey("interpolate $__interval in $__timeGroup", func() {
+				sql, err := Interpolate(query, timeRange, "select $__timeGroupAlias(time,$__interval)")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select $__timeGroupAlias(time,1m)")
+			})
+
+			Convey("interpolate $__interval_ms", func() {
+				sql, err := Interpolate(query, timeRange, "select $__interval_ms ")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select 60000 ")
+			})
+
+			Convey("interpolate __timeFrom function", func() {
+				sql, err := Interpolate(query, timeRange, "select $__timeFrom()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
+			})
+
+			Convey("interpolate __timeTo function", func() {
+				sql, err := Interpolate(query, timeRange, "select $__timeTo()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", to.Format(time.RFC3339)))
+			})
+
+			Convey("interpolate __unixEpochFrom function", func() {
+				sql, err := Interpolate(query, timeRange, "select $__unixEpochFrom()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", from.Unix()))
+			})
+
+			Convey("interpolate __unixEpochTo function", func() {
+				sql, err := Interpolate(query, timeRange, "select $__unixEpochTo()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", to.Unix()))
+			})
+
+		})
 
 		Convey("Given row values with time.Time as time columns", func() {
 			var nilPointer *time.Time

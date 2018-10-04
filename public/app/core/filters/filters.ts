@@ -3,22 +3,22 @@ import angular from 'angular';
 import moment from 'moment';
 import coreModule from '../core_module';
 
-coreModule.filter('stringSort', function() {
-  return function(input) {
+coreModule.filter('stringSort', () => {
+  return input => {
     return input.sort();
   };
 });
 
-coreModule.filter('slice', function() {
-  return function(arr, start, end) {
+coreModule.filter('slice', () => {
+  return (arr, start, end) => {
     if (!_.isUndefined(arr)) {
       return arr.slice(start, end);
     }
   };
 });
 
-coreModule.filter('stringify', function() {
-  return function(arr) {
+coreModule.filter('stringify', () => {
+  return arr => {
     if (_.isObject(arr) && !_.isArray(arr)) {
       return angular.toJson(arr);
     } else {
@@ -27,8 +27,8 @@ coreModule.filter('stringify', function() {
   };
 });
 
-coreModule.filter('moment', function() {
-  return function(date, mode) {
+coreModule.filter('moment', () => {
+  return (date, mode) => {
     switch (mode) {
       case 'ago':
         return moment(date).fromNow();
@@ -37,8 +37,8 @@ coreModule.filter('moment', function() {
   };
 });
 
-coreModule.filter('noXml', function() {
-  var noXml = function(text) {
+coreModule.filter('noXml', () => {
+  const noXml = text => {
     return _.isString(text)
       ? text
           .replace(/&/g, '&amp;')
@@ -48,15 +48,15 @@ coreModule.filter('noXml', function() {
           .replace(/"/g, '&quot;')
       : text;
   };
-  return function(text) {
+  return text => {
     return _.isArray(text) ? _.map(text, noXml) : noXml(text);
   };
 });
 
 /** @ngInject */
 function interpolateTemplateVars(templateSrv) {
-  var filterFunc: any = function(text, scope) {
-    var scopedVars;
+  const filterFunc: any = (text, scope) => {
+    let scopedVars;
     if (scope.ctrl) {
       scopedVars = (scope.ctrl.panel || scope.ctrl.row).scopedVars;
     } else {
