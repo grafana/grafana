@@ -148,7 +148,10 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 		"externalUserMngInfo":        setting.ExternalUserMngInfo,
 		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
-		"buildInfo": map[string]interface{}{
+	}
+
+	if c.IsSignedIn {
+		jsonObj["buildInfo"] = map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
 			"buildstamp":    setting.BuildStamp,
@@ -156,7 +159,7 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
 			"isEnterprise":  setting.IsEnterprise,
-		},
+		}
 	}
 
 	return jsonObj, nil

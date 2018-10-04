@@ -241,6 +241,7 @@
                   Community
                 </a>
               </li>
+              [[if .User.IsSignedIn]]
               <li>
                 <a href="https://grafana.com" target="_blank">[[.AppName]]</a>
                 <span>v[[.BuildVersion]] (commit: [[.BuildCommit]])</span>
@@ -251,6 +252,7 @@
                   New version available!
                 </a>
               </li>
+              [[end]]
               [[end]]
             </ul>
           </div>

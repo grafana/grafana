@@ -218,9 +218,9 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler())
+	m.Use(hs.healthHandler)
 	m.Use(middleware.Sessioner(&setting.SessionOptions, setting.SessionConnMaxLifetime))
 	m.Use(middleware.OrgRedirect())
 
@@ -245,16 +245,18 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
-func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
+func (hs *HTTPServer) healthHandler(ctx *macaron.Context, m *models.ReqContext) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
 	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
 	}
-
 	data := simplejson.New()
 	data.Set("database", "ok")
-	data.Set("version", setting.BuildVersion)
-	data.Set("commit", setting.BuildCommit)
+
+	if m.IsSignedIn {
+		data.Set("version", setting.BuildVersion)
+		data.Set("commit", setting.BuildCommit)
+	}
 
 	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")
