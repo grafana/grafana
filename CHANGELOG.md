@@ -1,3 +1,9 @@
+# 5.4.0 (unreleased)
+
+### Minor
+
+* **Datasource Proxy**: Keep trailing slash for datasource proxy requests [#13326](https://github.com/grafana/grafana/pull/13326), thx [@ryantxu](https://github.com/ryantxu)
+
 # 5.3.0 (unreleased)
 
 # 5.3.0-beta3 (2018-10-03)
