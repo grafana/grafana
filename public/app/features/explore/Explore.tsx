@@ -2,7 +2,7 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 
-import { ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreState, ExploreUrlState, Query } from 'app/types/explore';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -61,37 +61,50 @@ interface ExploreProps {
 
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
+  /**
+   * Current query expressions of the rows including their modifications, used for running queries.
+   * Not kept in component state to prevent edit-render roundtrips.
+   */
+  queryExpressions: string[];
 
   constructor(props) {
     super(props);
-    // Split state overrides everything
     const splitState: ExploreState = props.splitState;
-    const { datasource, queries, range } = props.urlState;
-    this.state = {
-      datasource: null,
-      datasourceError: null,
-      datasourceLoading: null,
-      datasourceMissing: false,
-      datasourceName: datasource,
-      graphResult: null,
-      history: [],
-      latency: 0,
-      loading: false,
-      logsResult: null,
-      queries: ensureQueries(queries),
-      queryErrors: [],
-      queryHints: [],
-      range: range || { ...DEFAULT_RANGE },
-      requestOptions: null,
-      showingGraph: true,
-      showingLogs: true,
-      showingTable: true,
-      supportsGraph: null,
-      supportsLogs: null,
-      supportsTable: null,
-      tableResult: null,
-      ...splitState,
-    };
+    let initialQueries: Query[];
+    if (splitState) {
+      // Split state overrides everything
+      this.state = splitState;
+      initialQueries = splitState.queries;
+    } else {
+      const { datasource, queries, range } = props.urlState as ExploreUrlState;
+      initialQueries = ensureQueries(queries);
+      this.state = {
+        datasource: null,
+        datasourceError: null,
+        datasourceLoading: null,
+        datasourceMissing: false,
+        datasourceName: datasource,
+        exploreDatasources: [],
+        graphResult: null,
+        history: [],
+        latency: 0,
+        loading: false,
+        logsResult: null,
+        queries: initialQueries,
+        queryErrors: [],
+        queryHints: [],
+        range: range || { ...DEFAULT_RANGE },
+        requestOptions: null,
+        showingGraph: true,
+        showingLogs: true,
+        showingTable: true,
+        supportsGraph: null,
+        supportsLogs: null,
+        supportsTable: null,
+        tableResult: null,
+      };
+    }
+    this.queryExpressions = initialQueries.map(q => q.query);
   }
 
   async componentDidMount() {
@@ -101,8 +114,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       throw new Error('No datasource service passed as props.');
     }
     const datasources = datasourceSrv.getExploreSources();
+    const exploreDatasources = datasources.map(ds => ({
+      value: ds.name,
+      label: ds.name,
+    }));
+
     if (datasources.length > 0) {
-      this.setState({ datasourceLoading: true });
+      this.setState({ datasourceLoading: true, exploreDatasources });
       // Priority: datasource in url, default datasource, first explore datasource
       let datasource;
       if (datasourceName) {
@@ -146,9 +164,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     // Keep queries but reset edit state
-    const nextQueries = this.state.queries.map(q => ({
+    const nextQueries = this.state.queries.map((q, i) => ({
       ...q,
-      edited: false,
+      key: generateQueryKey(i),
+      query: this.queryExpressions[i],
     }));
 
     this.setState(
@@ -177,6 +196,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   onAddQueryRow = index => {
     const { queries } = this.state;
+    this.queryExpressions[index + 1] = '';
     const nextQueries = [
       ...queries.slice(0, index + 1),
       { query: '', key: generateQueryKey() },
@@ -203,29 +223,28 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onChangeQuery = (value: string, index: number, override?: boolean) => {
-    const { queries } = this.state;
-    let { queryErrors, queryHints } = this.state;
-    const prevQuery = queries[index];
-    const edited = override ? false : prevQuery.query !== value;
-    const nextQuery = {
-      ...queries[index],
-      edited,
-      query: value,
-    };
-    const nextQueries = [...queries];
-    nextQueries[index] = nextQuery;
+    // Keep current value in local cache
+    this.queryExpressions[index] = value;
+
+    // Replace query row on override
     if (override) {
-      queryErrors = [];
-      queryHints = [];
+      const { queries } = this.state;
+      const nextQuery: Query = {
+        key: generateQueryKey(index),
+        query: value,
+      };
+      const nextQueries = [...queries];
+      nextQueries[index] = nextQuery;
+
+      this.setState(
+        {
+          queryErrors: [],
+          queryHints: [],
+          queries: nextQueries,
+        },
+        this.onSubmit
+      );
     }
-    this.setState(
-      {
-        queryErrors,
-        queryHints,
-        queries: nextQueries,
-      },
-      override ? () => this.onSubmit() : undefined
-    );
   };
 
   onChangeTime = nextRange => {
@@ -237,6 +256,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onClickClear = () => {
+    this.queryExpressions = [''];
     this.setState(
       {
         graphResult: null,
@@ -269,9 +289,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   onClickSplit = () => {
     const { onChangeSplit } = this.props;
-    const state = { ...this.state };
-    state.queries = state.queries.map(({ edited, ...rest }) => rest);
     if (onChangeSplit) {
+      const state = this.cloneState();
       onChangeSplit(true, state);
       this.saveState();
     }
@@ -291,23 +310,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       let nextQueries;
       if (index === undefined) {
         // Modify all queries
-        nextQueries = queries.map(q => ({
-          ...q,
-          edited: false,
-          query: datasource.modifyQuery(q.query, action),
+        nextQueries = queries.map((q, i) => ({
+          key: generateQueryKey(i),
+          query: datasource.modifyQuery(this.queryExpressions[i], action),
         }));
       } else {
         // Modify query only at index
         nextQueries = [
           ...queries.slice(0, index),
           {
-            ...queries[index],
-            edited: false,
-            query: datasource.modifyQuery(queries[index].query, action),
+            key: generateQueryKey(index),
+            query: datasource.modifyQuery(this.queryExpressions[index], action),
           },
           ...queries.slice(index + 1),
         ];
       }
+      this.queryExpressions = nextQueries.map(q => q.query);
       this.setState({ queries: nextQueries }, () => this.onSubmit());
     }
   };
@@ -318,6 +336,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       return;
     }
     const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
+    this.queryExpressions = nextQueries.map(q => q.query);
     this.setState({ queries: nextQueries }, () => this.onSubmit());
   };
 
@@ -335,7 +354,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.saveState();
   };
 
-  onQuerySuccess(datasourceId: string, queries: any[]): void {
+  onQuerySuccess(datasourceId: string, queries: string[]): void {
     // save queries to history
     let { history } = this.state;
     const { datasource } = this.state;
@@ -346,8 +365,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     const ts = Date.now();
-    queries.forEach(q => {
-      const { query } = q;
+    queries.forEach(query => {
       history = [{ query, ts }, ...history];
     });
 
@@ -362,16 +380,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   buildQueryOptions(targetOptions: { format: string; hinting?: boolean; instant?: boolean }) {
-    const { datasource, queries, range } = this.state;
+    const { datasource, range } = this.state;
     const resolution = this.el.offsetWidth;
     const absoluteRange = {
       from: parseDate(range.from, false),
       to: parseDate(range.to, true),
     };
     const { interval } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
-    const targets = queries.map(q => ({
+    const targets = this.queryExpressions.map(q => ({
       ...targetOptions,
-      expr: q.query,
+      expr: q,
     }));
     return {
       interval,
@@ -381,7 +399,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   async runGraphQuery() {
-    const { datasource, queries } = this.state;
+    const { datasource } = this.state;
+    const queries = [...this.queryExpressions];
     if (!hasQuery(queries)) {
       return;
     }
@@ -403,7 +422,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   async runTableQuery() {
-    const { datasource, queries } = this.state;
+    const queries = [...this.queryExpressions];
+    const { datasource } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
@@ -427,7 +447,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   async runLogsQuery() {
-    const { datasource, queries } = this.state;
+    const queries = [...this.queryExpressions];
+    const { datasource } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
@@ -455,18 +476,27 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     return datasource.metadataRequest(url);
   };
 
+  cloneState(): ExploreState {
+    // Copy state, but copy queries including modifications
+    return {
+      ...this.state,
+      queries: ensureQueries(this.queryExpressions.map(query => ({ query }))),
+    };
+  }
+
   saveState = () => {
     const { stateKey, onSaveState } = this.props;
-    onSaveState(stateKey, this.state);
+    onSaveState(stateKey, this.cloneState());
   };
 
   render() {
-    const { datasourceSrv, position, split } = this.props;
+    const { position, split } = this.props;
     const {
       datasource,
       datasourceError,
       datasourceLoading,
       datasourceMissing,
+      exploreDatasources,
       graphResult,
       history,
       latency,
@@ -491,10 +521,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const logsButtonActive = showingLogs ? 'active' : '';
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const datasources = datasourceSrv.getExploreSources().map(ds => ({
-      value: ds.name,
-      label: ds.name,
-    }));
     const selectedDatasource = datasource ? datasource.name : undefined;
 
     return (
@@ -508,19 +534,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                Close Split
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                  Close Split
               </button>
-            </div>
-          )}
+              </div>
+            )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
                 clearable={false}
                 className="gf-form-input gf-form-input--form-dropdown datasource-picker"
                 onChange={this.onChangeDatasource}
-                options={datasources}
+                options={exploreDatasources}
                 isOpen={true}
                 placeholder="Loading datasources..."
                 value={selectedDatasource}
