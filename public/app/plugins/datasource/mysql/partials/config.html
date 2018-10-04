@@ -50,7 +50,8 @@
 		<span class="gf-form-label width-7">Max lifetime</span>
 		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
 		<info-popover mode="right-absolute">
-			The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.
+			The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.<br/><br/>
+			This should always be lower than configured <a href="https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout" target="_blank">wait_timeout</a> in MySQL.
 		</info-popover>
 	</div>
 </div>
