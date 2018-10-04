@@ -29,6 +29,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
+	_ "github.com/grafana/grafana/pkg/tsdb/stackdriver"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
 
@@ -103,7 +104,7 @@ func listenToSystemSignals(server *GrafanaServerImpl) {
 
 	for {
 		select {
-		case _ = <-sighupChan:
+		case <-sighupChan:
 			log.Reload()
 		case sig := <-signalChan:
 			server.Shutdown(fmt.Sprintf("System signal: %s", sig))

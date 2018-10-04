@@ -22,6 +22,11 @@ import (
 	"time"
 )
 
+const (
+	windows = "windows"
+	linux   = "linux"
+)
+
 var (
 	//versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
 	goarch  string
@@ -110,16 +115,15 @@ func main() {
 		case "package":
 			grunt(gruntBuildArg("build")...)
 			grunt(gruntBuildArg("package")...)
-			if goos == "linux" {
+			if goos == linux {
 				createLinuxPackages()
 			}
 
 		case "package-only":
 			grunt(gruntBuildArg("package")...)
-			if goos == "linux" {
+			if goos == linux {
 				createLinuxPackages()
 			}
-
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
@@ -379,7 +383,7 @@ func ensureGoPath() {
 }
 
 func grunt(params ...string) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		runPrint(`.\node_modules\.bin\grunt`, params...)
 	} else {
 		runPrint("./node_modules/.bin/grunt", params...)
@@ -417,11 +421,11 @@ func test(pkg string) {
 func build(binaryName, pkg string, tags []string) {
 	binary := fmt.Sprintf("./bin/%s-%s/%s", goos, goarch, binaryName)
 	if isDev {
-		//dont include os and arch in output path in dev environment
+		//don't include os and arch in output path in dev environment
 		binary = fmt.Sprintf("./bin/%s", binaryName)
 	}
 
-	if goos == "windows" {
+	if goos == windows {
 		binary += ".exe"
 	}
 
@@ -485,11 +489,11 @@ func clean() {
 
 func setBuildEnv() {
 	os.Setenv("GOOS", goos)
-	if goos == "windows" {
+	if goos == windows {
 		// require windows >=7
 		os.Setenv("CGO_CFLAGS", "-D_WIN32_WINNT=0x0601")
 	}
-	if goarch != "amd64" || goos != "linux" {
+	if goarch != "amd64" || goos != linux {
 		// needed for all other archs
 		cgo = true
 	}

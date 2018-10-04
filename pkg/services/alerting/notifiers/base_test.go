@@ -2,11 +2,8 @@ package notifiers
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
-
-	"github.com/grafana/grafana/pkg/bus"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -15,98 +12,142 @@ import (
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
+	tnow := time.Now()
+
 	tcs := []struct {
 		name         string
 		prevState    m.AlertStateType
 		newState     m.AlertStateType
-		expected     bool
 		sendReminder bool
+		frequency    time.Duration
+		state        *m.AlertNotificationState
+
+		expect bool
 	}{
 		{
-			name:      "pending -> ok should not trigger an notification",
-			newState:  m.AlertStatePending,
-			prevState: m.AlertStateOK,
-			expected:  false,
+			name:         "pending -> ok should not trigger an notification",
+			newState:     m.AlertStateOK,
+			prevState:    m.AlertStatePending,
+			sendReminder: false,
+			state:        &m.AlertNotificationState{},
+
+			expect: false,
 		},
 		{
-			name:      "ok -> alerting should trigger an notification",
-			newState:  m.AlertStateOK,
-			prevState: m.AlertStateAlerting,
-			expected:  true,
+			name:         "ok -> alerting should trigger an notification",
+			newState:     m.AlertStateAlerting,
+			prevState:    m.AlertStateOK,
+			sendReminder: false,
+			state:        &m.AlertNotificationState{},
+
+			expect: true,
 		},
 		{
-			name:      "ok -> pending should not trigger an notification",
-			newState:  m.AlertStateOK,
-			prevState: m.AlertStatePending,
-			expected:  false,
+			name:         "ok -> pending should not trigger an notification",
+			newState:     m.AlertStatePending,
+			prevState:    m.AlertStateOK,
+			sendReminder: false,
+			state:        &m.AlertNotificationState{},
+
+			expect: false,
 		},
 		{
 			name:         "ok -> ok should not trigger an notification",
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
-			expected:     false,
 			sendReminder: false,
-		},
-		{
-			name:         "ok -> alerting should not trigger an notification",
-			newState:     m.AlertStateOK,
-			prevState:    m.AlertStateAlerting,
-			expected:     true,
-			sendReminder: true,
+			state:        &m.AlertNotificationState{},
+
+			expect: false,
 		},
 		{
 			name:         "ok -> ok with reminder should not trigger an notification",
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
-			expected:     false,
 			sendReminder: true,
+			state:        &m.AlertNotificationState{},
+
+			expect: false,
+		},
+		{
+			name:         "alerting -> ok should trigger an notification",
+			newState:     m.AlertStateOK,
+			prevState:    m.AlertStateAlerting,
+			sendReminder: false,
+			state:        &m.AlertNotificationState{},
+
+			expect: true,
+		},
+		{
+			name:         "alerting -> ok should trigger an notification when reminders enabled",
+			newState:     m.AlertStateOK,
+			prevState:    m.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			state:        &m.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
+
+			expect: true,
+		},
+		{
+			name:         "alerting -> alerting with reminder and no state should trigger",
+			newState:     m.AlertStateAlerting,
+			prevState:    m.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			state:        &m.AlertNotificationState{},
+
+			expect: true,
+		},
+		{
+			name:         "alerting -> alerting with reminder and last notification sent 1 minute ago should not trigger",
+			newState:     m.AlertStateAlerting,
+			prevState:    m.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			state:        &m.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
+
+			expect: false,
+		},
+		{
+			name:         "alerting -> alerting with reminder and last notifciation sent 11 minutes ago should trigger",
+			newState:     m.AlertStateAlerting,
+			prevState:    m.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			state:        &m.AlertNotificationState{UpdatedAt: tnow.Add(-11 * time.Minute).Unix()},
+
+			expect: true,
+		},
+		{
+			name:      "OK -> alerting with notifciation state pending and updated 30 seconds ago should not trigger",
+			newState:  m.AlertStateAlerting,
+			prevState: m.AlertStateOK,
+			state:     &m.AlertNotificationState{State: m.AlertNotificationStatePending, UpdatedAt: tnow.Add(-30 * time.Second).Unix()},
+
+			expect: false,
+		},
+		{
+			name:      "OK -> alerting with notifciation state pending and updated 2 minutes ago should trigger",
+			newState:  m.AlertStateAlerting,
+			prevState: m.AlertStateOK,
+			state:     &m.AlertNotificationState{State: m.AlertNotificationStatePending, UpdatedAt: tnow.Add(-2 * time.Minute).Unix()},
+
+			expect: true,
 		},
 	}
 
 	for _, tc := range tcs {
 		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{
-			State: tc.newState,
+			State: tc.prevState,
 		})
 
-		evalContext.Rule.State = tc.prevState
-		if defaultShouldNotify(evalContext, true, 0, time.Now()) != tc.expected {
-			t.Errorf("failed %s. expected %+v to return %v", tc.name, tc, tc.expected)
+		evalContext.Rule.State = tc.newState
+		nb := &NotifierBase{SendReminder: tc.sendReminder, Frequency: tc.frequency}
+
+		if nb.ShouldNotify(evalContext.Ctx, evalContext, tc.state) != tc.expect {
+			t.Errorf("failed test %s.\n expected \n%+v \nto return: %v", tc.name, tc, tc.expect)
 		}
 	}
-}
-
-func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
-	Convey("base notifier", t, func() {
-		bus.ClearBusHandlers()
-
-		notifier := NewNotifierBase(&m.AlertNotification{
-			Id:       1,
-			Name:     "name",
-			Type:     "email",
-			Settings: simplejson.New(),
-		})
-		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{})
-
-		Convey("should notify if no journaling is found", func() {
-			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
-				return m.ErrJournalingNotFound
-			})
-
-			if !notifier.ShouldNotify(context.Background(), evalContext) {
-				t.Errorf("should send notifications when ErrJournalingNotFound is returned")
-			}
-		})
-
-		Convey("should not notify query returns error", func() {
-			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
-				return errors.New("some kind of error unknown error")
-			})
-
-			if notifier.ShouldNotify(context.Background(), evalContext) {
-				t.Errorf("should not send notifications when query returns error")
-			}
-		})
-	})
 }
 
 func TestBaseNotifier(t *testing.T) {

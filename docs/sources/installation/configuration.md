@@ -127,9 +127,12 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 ### protocol
 
-`http` or `https`
+`http`,`https` or `socket`
 
 > **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+
+### socket
+Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
 
 ### domain
 
@@ -566,3 +569,11 @@ Default setting for new alert rules. Defaults to categorize error and timeouts a
 > Available in 5.3  and above
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
+
+# concurrent_render_limit
+
+> Available in 5.3  and above
+
+Alert notifications can include images, but rendering many images at the same time can overload the server.
+This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
+value is `5`.

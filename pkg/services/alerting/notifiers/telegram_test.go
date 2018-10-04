@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -52,11 +53,12 @@ func TestTelegramNotifier(t *testing.T) {
 			})
 
 			Convey("generateCaption should generate a message with all pertinent details", func() {
-				evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-					Name:    "This is an alarm",
-					Message: "Some kind of message.",
-					State:   m.AlertStateOK,
-				})
+				evalContext := alerting.NewEvalContext(context.Background(),
+					&alerting.Rule{
+						Name:    "This is an alarm",
+						Message: "Some kind of message.",
+						State:   m.AlertStateOK,
+					})
 
 				caption := generateImageCaption(evalContext, "http://grafa.url/abcdef", "")
 				So(len(caption), ShouldBeLessThanOrEqualTo, 200)
@@ -68,11 +70,12 @@ func TestTelegramNotifier(t *testing.T) {
 			Convey("When generating a message", func() {
 
 				Convey("URL should be skipped if it's too long", func() {
-					evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-						Name:    "This is an alarm",
-						Message: "Some kind of message.",
-						State:   m.AlertStateOK,
-					})
+					evalContext := alerting.NewEvalContext(context.Background(),
+						&alerting.Rule{
+							Name:    "This is an alarm",
+							Message: "Some kind of message.",
+							State:   m.AlertStateOK,
+						})
 
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/abcdefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -85,11 +88,12 @@ func TestTelegramNotifier(t *testing.T) {
 				})
 
 				Convey("Message should be trimmed if it's too long", func() {
-					evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-						Name:    "This is an alarm",
-						Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it.",
-						State:   m.AlertStateOK,
-					})
+					evalContext := alerting.NewEvalContext(context.Background(),
+						&alerting.Rule{
+							Name:    "This is an alarm",
+							Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it.",
+							State:   m.AlertStateOK,
+						})
 
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/foo",
@@ -101,11 +105,12 @@ func TestTelegramNotifier(t *testing.T) {
 				})
 
 				Convey("Metrics should be skipped if they don't fit", func() {
-					evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-						Name:    "This is an alarm",
-						Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I ",
-						State:   m.AlertStateOK,
-					})
+					evalContext := alerting.NewEvalContext(context.Background(),
+						&alerting.Rule{
+							Name:    "This is an alarm",
+							Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I ",
+							State:   m.AlertStateOK,
+						})
 
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/foo",

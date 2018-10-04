@@ -84,6 +84,12 @@ export class TimeSrv {
     if (params.to) {
       this.time.to = this.parseUrlParam(params.to) || this.time.to;
     }
+    // if absolute ignore refresh option saved to dashboard
+    if (params.to && params.to.indexOf('now') === -1) {
+      this.refresh = false;
+      this.dashboard.refresh = false;
+    }
+    // but if refresh explicitly set then use that
     if (params.refresh) {
       this.refresh = params.refresh || this.refresh;
     }
@@ -106,7 +112,7 @@ export class TimeSrv {
   }
 
   private timeHasChangedSinceLoad() {
-    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
+    return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
   setAutoRefresh(interval) {

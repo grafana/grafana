@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/VividCortex/mysqlerr"
+	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 )
 
@@ -124,4 +126,14 @@ func (db *Mysql) CleanDB() error {
 	}
 
 	return nil
+}
+
+func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
+	if driverErr, ok := err.(*mysql.MySQLError); ok {
+		if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+			return true
+		}
+	}
+
+	return false
 }

@@ -24,12 +24,13 @@ func init() {
 }
 
 type RenderingService struct {
-	log          log.Logger
-	pluginClient *plugin.Client
-	grpcPlugin   pluginModel.RendererPlugin
-	pluginInfo   *plugins.RendererPlugin
-	renderAction renderFunc
-	domain       string
+	log             log.Logger
+	pluginClient    *plugin.Client
+	grpcPlugin      pluginModel.RendererPlugin
+	pluginInfo      *plugins.RendererPlugin
+	renderAction    renderFunc
+	domain          string
+	inProgressCount int
 
 	Cfg *setting.Cfg `inject:""`
 }
@@ -45,7 +46,7 @@ func (rs *RenderingService) Init() error {
 
 	// set value used for domain attribute of renderKey cookie
 	if rs.Cfg.RendererUrl != "" {
-		// RendererCallbackUrl has already been passed, it wont generate an error.
+		// RendererCallbackUrl has already been passed, it won't generate an error.
 		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
 	} else if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
@@ -90,6 +91,18 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+	if rs.inProgressCount > opts.ConcurrentLimit {
+		return &RenderResult{
+			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
+		}, nil
+	}
+
+	defer func() {
+		rs.inProgressCount -= 1
+	}()
+
+	rs.inProgressCount += 1
+
 	if rs.renderAction != nil {
 		return rs.renderAction(ctx, opts)
 	} else {

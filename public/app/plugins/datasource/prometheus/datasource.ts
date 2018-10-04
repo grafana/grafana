@@ -46,7 +46,7 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
 
     // Check for monotony
     const datapoints: number[][] = s.datapoints;
-    if (datapoints.length > 1) {
+    if (query.indexOf('rate(') === -1 && datapoints.length > 1) {
       let increasing = false;
       const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
         if (index === 0) {
@@ -149,8 +149,6 @@ export class PrometheusDatasource {
   editorSrc: string;
   name: string;
   ruleMappings: { [index: string]: string };
-  supportsExplore: boolean;
-  supportMetrics: boolean;
   url: string;
   directUrl: string;
   basicAuth: any;
@@ -166,8 +164,6 @@ export class PrometheusDatasource {
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.name = instanceSettings.name;
-    this.supportsExplore = true;
-    this.supportMetrics = true;
     this.url = instanceSettings.url;
     this.directUrl = instanceSettings.directUrl;
     this.basicAuth = instanceSettings.basicAuth;
@@ -522,10 +518,10 @@ export class PrometheusDatasource {
     });
   }
 
-  getExploreState(panel) {
+  getExploreState(targets: any[]) {
     let state = {};
-    if (panel.targets) {
-      const queries = panel.targets.map(t => ({
+    if (targets && targets.length > 0) {
+      const queries = targets.map(t => ({
         query: this.templateSrv.replace(t.expr, {}, this.interpolateQueryExpr),
         format: t.format,
       }));
