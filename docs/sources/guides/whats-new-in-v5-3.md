@@ -20,6 +20,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 - [Postgres]({{< relref "#postgres-query-builder" >}}) gets a new query builder!
 - [OAuth]({{< relref "#improved-oauth-support-for-gitlab" >}}) support for Gitlab is improved
 - [Annotations]({{< relref "#annotations" >}}) with template variable filtering
+- [Variables]({{< relref "#variables" >}}) with free text support
 
 ## Google Stackdriver
 
@@ -64,11 +65,16 @@ Grafana 5.3 comes with a new OAuth integration for Gitlab that enables configura
 Learn how to enable and configure it in the [documentation](/auth/gitlab/).
 
 ## Annotations
- it possible to use template vari
+
 Grafana 5.3 brings improved support for [native annotations](/reference/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
 Learn more about it in the [documentation](/reference/annotations/#query-by-tag).
 
 {{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
+
+## Variables
+
+Grafana 5.3 ships with a brand new variable type named `Text box` which makes it easier and more convenient to provide free text input to a variable.
+This new variable type will display as a free text input field with an optional prefilled default value.
 
 ## Changelog
 
