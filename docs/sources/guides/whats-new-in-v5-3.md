@@ -19,6 +19,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 - [Alerting]({{< relref "#notification-reminders" >}}) with notification reminders
 - [Postgres]({{< relref "#postgres-query-builder" >}}) gets a new query builder!
 - [OAuth]({{< relref "#improved-oauth-support-for-gitlab" >}}) support for Gitlab is improved
+- [Annotations]({{< relref "#annotations" >}}) with template variable filtering
 
 ## Google Stackdriver
 
@@ -61,6 +62,13 @@ Grafana 5.3 comes with a new graphical query builder for Postgres. This brings P
 
 Grafana 5.3 comes with a new OAuth integration for Gitlab that enables configuration to only allow users that are a member of certain Gitlab groups to authenticate. This makes it possible to use Gitlab OAuth with Grafana in a shared environment without giving everyone access to Grafana.
 Learn how to enable and configure it in the [documentation](/auth/gitlab/).
+
+## Annotations
+ it possible to use template vari
+Grafana 5.3 brings improved support for [native annotations](/reference/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
+Learn more about it in the [documentation](/reference/annotations/#query-by-tag).
+
+{{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 
 ## Changelog
 
