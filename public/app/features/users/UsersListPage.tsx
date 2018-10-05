@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import Remarkable from 'remarkable';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from 'app/features/users/UsersTable';
@@ -30,9 +31,20 @@ export interface State {
 }
 
 export class UsersListPage extends PureComponent<Props, State> {
-  state = {
-    showInvites: false,
-  };
+  externalUserMngInfoHtml: string;
+
+  constructor(props) {
+    super(props);
+
+    if (this.props.externalUserMngInfo) {
+      const markdownRenderer = new Remarkable();
+      this.externalUserMngInfoHtml = markdownRenderer.render(this.props.externalUserMngInfo);
+    }
+
+    this.state = {
+      showInvites: false,
+    };
+  }
 
   componentDidMount() {
     this.fetchUsers();
@@ -76,17 +88,16 @@ export class UsersListPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { externalUserMngInfo, invitees, navModel, users } = this.props;
+    const { invitees, navModel, users } = this.props;
+    const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
           <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
-          {externalUserMngInfo && (
-            <div className="grafana-info-box">
-              <span>{externalUserMngInfo}</span>
-            </div>
+          {externalUserMngInfoHtml && (
+            <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
           )}
           {this.state.showInvites ? (
             <InviteesTable invitees={invitees} onRevokeInvite={code => this.onRevokeInvite(code)} />
