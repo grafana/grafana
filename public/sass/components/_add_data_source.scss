@@ -1,12 +1,12 @@
 .add-data-source-header {
-  margin-bottom: $panel-margin * 2;
+  margin-bottom: $panel-margin * 4;
   text-align: center;
 }
 
 .add-data-source-search {
   display: flex;
   justify-content: center;
-  margin-bottom: $panel-margin * 6;
+  margin-bottom: $panel-margin * 2;
 }
 
 .add-data-source-grid {
@@ -18,14 +18,10 @@
   @include media-breakpoint-up(md) {
     grid-template-columns: repeat(3, 1fr);
   }
-
-  @include media-breakpoint-up(lg) {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 .add-data-source-grid-item {
-  padding: 10px;
+  padding: 15px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -40,10 +36,9 @@
 
 .add-data-source-grid-item-text {
   font-size: $font-size-h5;
-  margin-left: 10px;
 }
 
 .add-data-source-grid-item-logo {
+  margin: 0 15px;
   width: 55px;
-  height: 55px;
 }

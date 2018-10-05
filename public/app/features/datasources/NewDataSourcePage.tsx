@@ -24,7 +24,7 @@ class NewDataSourcePage extends PureComponent<Props> {
   }
 
   onDataSourceTypeClicked = type => {
-    this.props.addDataSource(type.name, type.value);
+    this.props.addDataSource(type);
   };
 
   onSearchQueryChange = event => {
@@ -38,7 +38,7 @@ class NewDataSourcePage extends PureComponent<Props> {
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          <h3 className="add-data-source-header">Choose data source type</h3>
+          <h2 className="add-data-source-header">Choose data source type</h2>
           <div className="add-data-source-search">
             <label className="gf-form--has-input-icon">
               <input

@@ -52,4 +52,5 @@ export interface StoreState {
   team: TeamState;
   folder: FolderState;
   dashboard: DashboardState;
+  dataSources: DataSourcesState;
 }
