@@ -38,7 +38,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
           text = text + '<br />' + event.text;
         }
       } else if (title) {
-        text = title + '<br />' + (_.isString(text) ? text : '');
+        text = `<span class="graph-annotation__body__title">${title}</span><br />${_.isString(text) ? text : ''}`;
         title = '';
       }
 
