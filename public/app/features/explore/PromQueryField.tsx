@@ -308,10 +308,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     } else if (_.includes(wrapperClasses, 'context-aggregation')) {
       return this.getAggregationTypeahead.apply(this, arguments);
     } else if (
-      // Non-empty but not inside known token
-      (prefix && !tokenRecognized) ||
-      (prefix === '' && !text.match(/^[)\s]+$/)) || // Empty context or after ')'
-      text.match(/[+\-*/^%]/) // After binary operator
+      // Show default suggestions in a couple of scenarios
+      (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
+      (prefix === '' && !text.match(/^[\]})\s]+$/)) || // Empty prefix, but not following a closing brace
+      text.match(/[+\-*/^%]/) // Anything after binary operator
     ) {
       return this.getEmptyTypeahead();
     }
