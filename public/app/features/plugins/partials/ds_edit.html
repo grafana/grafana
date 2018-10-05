@@ -1,12 +1,7 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
-
-  <div ng-if="ctrl.current.readOnly"  class="page-action-bar">
-    <div class="grafana-info-box span8">
-      Disclaimer. This datasource was added by config and cannot be modified using the UI. Please contact your server admin to update this datasource.
-    </div>
-  </div>
+  <h3 class="page-sub-heading">Settings</h3>
 
   <form name="ctrl.editForm" ng-if="ctrl.current">
     <div class="gf-form-group">
@@ -59,17 +54,19 @@
       </div>
     </div>
 
-    <div class="gf-form-button-row">
-      <button type="submit" class="btn btn-success" ng-disabled="ctrl.current.readOnly"  ng-click="ctrl.saveChanges()">Save &amp; Test</button>
-      <button type="submit" class="btn btn-danger" ng-disabled="ctrl.current.readOnly"  ng-show="!ctrl.isNew" ng-click="ctrl.delete()">
-        Delete
-      </button>
-      <a class="btn btn-inverse" href="datasources">Back</a>
-    </div>
+		<div class="grafana-info-box span8" ng-if="ctrl.current.readOnly">
+			This datasource was added by config and cannot be modified using the UI. Please contact your server admin to update this datasource.
+		</div>
 
-    <br />
-    <br />
-    <br />
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-disabled="ctrl.current.readOnly"  ng-click="ctrl.saveChanges()">Save &amp; Test</button>
+			<button type="submit" class="btn btn-danger" ng-disabled="ctrl.current.readOnly"  ng-show="!ctrl.isNew" ng-click="ctrl.delete()">Delete</button>
+			<a class="btn btn-inverse" href="datasources">Back</a>
+		</div>
 
-  </form>
+		<br />
+		<br />
+		<br />
+
+	</form>
 </div>
