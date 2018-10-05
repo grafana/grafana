@@ -1,7 +1,7 @@
 import $ from 'jquery';
-import _ from 'lodash';
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import moment from 'moment';
+import { withSize } from 'react-sizeme';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
@@ -69,7 +69,21 @@ const FLOT_OPTIONS = {
   // },
 };
 
-class Graph extends Component<any, { showAllTimeSeries: boolean }> {
+interface GraphProps {
+  data: any[];
+  height?: string; // e.g., '200px'
+  id?: string;
+  loading?: boolean;
+  options: any;
+  split?: boolean;
+  size?: { width: number; height: number };
+}
+
+interface GraphState {
+  showAllTimeSeries: boolean;
+}
+
+export class Graph extends PureComponent<GraphProps, GraphState> {
   state = {
     showAllTimeSeries: false,
   };
@@ -82,22 +96,18 @@ class Graph extends Component<any, { showAllTimeSeries: boolean }> {
 
   componentDidMount() {
     this.draw();
-    window.addEventListener('resize', this.debouncedDraw);
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: GraphProps) {
     if (
       prevProps.data !== this.props.data ||
       prevProps.options !== this.props.options ||
       prevProps.split !== this.props.split ||
-      prevProps.height !== this.props.height
+      prevProps.height !== this.props.height ||
+      (prevProps.size && prevProps.size.width !== this.props.size.width)
     ) {
       this.draw();
     }
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.debouncedDraw);
   }
 
   onShowAllTimeSeries = () => {
@@ -109,10 +119,8 @@ class Graph extends Component<any, { showAllTimeSeries: boolean }> {
     );
   };
 
-  debouncedDraw = _.debounce(() => this.draw(), 100);
-
   draw() {
-    const { options: userOptions } = this.props;
+    const { options: userOptions, size } = this.props;
     const data = this.getGraphData();
 
     const $el = $(`#${this.props.id}`);
@@ -126,7 +134,7 @@ class Graph extends Component<any, { showAllTimeSeries: boolean }> {
       data: ts.getFlotPairs('null'),
     }));
 
-    const ticks = $el.width() / 100;
+    const ticks = (size.width || 0) / 100;
     let { from, to } = userOptions.range;
     if (!moment.isMoment(from)) {
       from = dateMath.parse(from, false);
@@ -155,7 +163,7 @@ class Graph extends Component<any, { showAllTimeSeries: boolean }> {
   }
 
   render() {
-    const { height, loading } = this.props;
+    const { height = '100px', id = 'graph', loading = false } = this.props;
     const data = this.getGraphData();
 
     if (!loading && data.length === 0) {
@@ -178,7 +186,7 @@ class Graph extends Component<any, { showAllTimeSeries: boolean }> {
             </div>
           )}
         <div className="panel-container">
-          <div id={this.props.id} className="explore-graph" style={{ height }} />
+          <div id={id} className="explore-graph" style={{ height }} />
           <Legend data={data} />
         </div>
       </div>
@@ -186,4 +194,4 @@ class Graph extends Component<any, { showAllTimeSeries: boolean }> {
   }
 }
 
-export default Graph;
+export default withSize()(Graph);
