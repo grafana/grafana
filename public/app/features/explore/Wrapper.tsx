@@ -38,10 +38,17 @@ export class Wrapper extends Component<WrapperProps, WrapperState> {
 
   onChangeSplit = (split: boolean, splitState: ExploreState) => {
     this.setState({ split, splitState });
+    // When closing split, remove URL state for split part
+    if (!split) {
+      delete this.urlStates[STATE_KEY_RIGHT];
+      this.props.updateLocation({
+        query: this.urlStates,
+      });
+    }
   };
 
   onSaveState = (key: string, state: ExploreState) => {
-    const urlState = serializeStateToUrlParam(state);
+    const urlState = serializeStateToUrlParam(state, true);
     this.urlStates[key] = urlState;
     this.props.updateLocation({
       query: this.urlStates,
