@@ -112,6 +112,7 @@ exports[`Render should show external user management button 1`] = `
       <i
         className="fa fa-external-link-square"
       />
+       
     </a>
   </div>
 </div>

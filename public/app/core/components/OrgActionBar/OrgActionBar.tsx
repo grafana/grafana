@@ -7,11 +7,17 @@ export interface Props {
   onSetLayoutMode?: (mode: LayoutMode) => {};
   setSearchQuery: (value: string) => {};
   linkButton: { href: string; title: string };
+  target?: string;
 }
 
 export default class OrgActionBar extends PureComponent<Props> {
   render() {
-    const { searchQuery, layoutMode, onSetLayoutMode, linkButton, setSearchQuery } = this.props;
+    const { searchQuery, layoutMode, onSetLayoutMode, linkButton, setSearchQuery, target } = this.props;
+    const linkProps = { href: linkButton.href, target: undefined };
+
+    if (target) {
+      linkProps.target = target;
+    }
 
     return (
       <div className="page-action-bar">
@@ -29,7 +35,7 @@ export default class OrgActionBar extends PureComponent<Props> {
           <LayoutSelector mode={layoutMode} onLayoutModeChanged={(mode: LayoutMode) => onSetLayoutMode(mode)} />
         </div>
         <div className="page-action-bar__spacer" />
-        <a className="btn btn-success" href={linkButton.href} target="_blank">
+        <a className="btn btn-success" {...linkProps}>
           {linkButton.title}
         </a>
       </div>
