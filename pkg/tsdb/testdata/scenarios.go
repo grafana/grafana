@@ -95,27 +95,20 @@ func init() {
 		Id:   "random_walk",
 		Name: "Random Walk",
 
-		Handler: func(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
-			timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
-			to := tsdbQuery.TimeRange.GetToAsMsEpoch()
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getRandomWalk(query, context)
+		},
+	})
 
-			series := newSeriesForQuery(query)
-
-			points := make(tsdb.TimeSeriesPoints, 0)
-			walker := rand.Float64() * 100
-
-			for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
-				points = append(points, tsdb.NewTimePoint(null.FloatFrom(walker), float64(timeWalkerMs)))
-
-				walker += rand.Float64() - 0.5
-				timeWalkerMs += query.IntervalMs
-			}
-
-			series.Points = points
-
-			queryRes := tsdb.NewQueryResult()
-			queryRes.Series = append(queryRes.Series, series)
-			return queryRes
+	registerScenario(&Scenario{
+		Id:          "slow_query",
+		Name:        "Slow Query",
+		StringInput: "5s",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			stringInput := query.Model.Get("stringInput").MustString()
+			parsedInterval, _ := time.ParseDuration(stringInput)
+			time.Sleep(parsedInterval)
+			return getRandomWalk(query, context)
 		},
 	})
 
@@ -221,6 +214,57 @@ func init() {
 			return queryRes
 		},
 	})
+
+	registerScenario(&Scenario{
+		Id:   "table_static",
+		Name: "Table Static",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
+			to := context.TimeRange.GetToAsMsEpoch()
+
+			table := tsdb.Table{
+				Columns: []tsdb.TableColumn{
+					{Text: "Time"},
+					{Text: "Message"},
+					{Text: "Description"},
+					{Text: "Value"},
+				},
+				Rows: []tsdb.RowValues{},
+			}
+			for i := int64(0); i < 10 && timeWalkerMs < to; i++ {
+				table.Rows = append(table.Rows, tsdb.RowValues{float64(timeWalkerMs), "This is a message", "Description", 23.1})
+				timeWalkerMs += query.IntervalMs
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Tables = append(queryRes.Tables, &table)
+			return queryRes
+		},
+	})
+}
+
+func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
+	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
+	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
+
+	series := newSeriesForQuery(query)
+
+	points := make(tsdb.TimeSeriesPoints, 0)
+	walker := rand.Float64() * 100
+
+	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
+		points = append(points, tsdb.NewTimePoint(null.FloatFrom(walker), float64(timeWalkerMs)))
+
+		walker += rand.Float64() - 0.5
+		timeWalkerMs += query.IntervalMs
+	}
+
+	series.Points = points
+
+	queryRes := tsdb.NewQueryResult()
+	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
 }
 
 func registerScenario(scenario *Scenario) {

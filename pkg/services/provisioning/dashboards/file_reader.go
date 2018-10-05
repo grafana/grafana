@@ -137,7 +137,7 @@ func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs ma
 		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
 		err := bus.Dispatch(cmd)
 		if err != nil {
-			fr.log.Error("failed to delete dashboard", "id", cmd.Id)
+			fr.log.Error("failed to delete dashboard", "id", cmd.Id, "error", err)
 		}
 	}
 }

@@ -8,6 +8,9 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {} as NavModel,
     plugins: [] as Plugin[],
+    searchQuery: '',
+    setPluginsSearchQuery: jest.fn(),
+    setPluginsLayoutMode: jest.fn(),
     layoutMode: LayoutModes.Grid,
     loadPlugins: jest.fn(),
   };

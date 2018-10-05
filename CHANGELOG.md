@@ -1,4 +1,16 @@
+# 5.4.0 (unreleased)
+
+### Minor
+
+* **Datasource Proxy**: Keep trailing slash for datasource proxy requests [#13326](https://github.com/grafana/grafana/pull/13326), thx [@ryantxu](https://github.com/ryantxu)
+
 # 5.3.0 (unreleased)
+
+# 5.3.0-beta3 (2018-10-03)
+
+* **Stackdriver**: Fix for missing ngInject [#13511](https://github.com/grafana/grafana/pull/13511)
+* **Permissions**: Fix for broken permissions selector [#13507](https://github.com/grafana/grafana/issues/13507)
+* **Alerting**: Alert reminders deduping not working as expected when running multiple Grafana instances [#13492](https://github.com/grafana/grafana/issues/13492)
 
 # 5.3.0-beta2 (2018-10-01)
 
