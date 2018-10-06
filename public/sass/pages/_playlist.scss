@@ -84,11 +84,11 @@
     background-color: $list-item-bg;
     margin-bottom: 4px;
     .search-result-icon:before {
-      content: "\f009";
+      content: '\f009';
     }
 
     &.search-item-dash-home .search-result-icon:before {
-      content: "\f015";
+      content: '\f015';
     }
   }
 
@@ -105,7 +105,10 @@
 .playlist-available-list {
   td {
     line-height: 2rem;
+    max-width: 335px;
     white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .add-dashboard {
