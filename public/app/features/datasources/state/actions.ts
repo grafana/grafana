@@ -82,21 +82,22 @@ export function loadDataSources(): ThunkResult<void> {
 
 export function addDataSource(plugin: Plugin): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    let dataSources = getStore().dataSources.dataSources;
+    await dispatch(loadDataSources());
 
-    if (dataSources.length === 0) {
-      dispatch(loadDataSources());
+    const dataSources = getStore().dataSources.dataSources;
 
-      dataSources = getStore().dataSources.dataSources;
+    const newInstance = {
+      name: plugin.name,
+      type: plugin.id,
+      access: 'proxy',
+      isDefault: dataSources.length === 0,
+    };
+
+    if (nameExits(dataSources, newInstance.name)) {
+      newInstance.name = findNewName(dataSources, newInstance.name);
     }
 
-    let name = plugin.name;
-
-    if (nameExits(dataSources, name)) {
-      name = findNewName(dataSources, name);
-    }
-
-    const result = await getBackendSrv().post('/api/datasources', { name: name, type: plugin.id, access: 'proxy' });
+    const result = await getBackendSrv().post('/api/datasources', newInstance);
     dispatch(updateLocation({ path: `/datasources/edit/${result.id}` }));
   };
 }

@@ -28,10 +28,11 @@
   cursor: pointer;
   background: $card-background;
   box-shadow: $card-shadow;
-  color: $headings-color;
+  color: $text-color;
 
   &:hover {
     background: $card-background-hover;
+    color: $text-color-strong;
   }
 }
 
