@@ -59,7 +59,7 @@ Identifier | Description
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommmend you create a specific mysql user with restricted permissions.
+executed. To protect against this we **Highly** recommend you create a specific mysql user with restricted permissions.
 
 Example:
 
