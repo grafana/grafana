@@ -101,4 +101,4 @@ TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT WILL YOU [OR US] 
 <br>
 <br>
 <br>
-This CLA agreement is based on the [Harmony Contributor Aggrement Template (combined)](http://www.harmonyagreements.org/agreements.html), [Creative Commons Attribution 3.0 Unported License](https://creativecommons.org/licenses/by/3.0/)
+This CLA agreement is based on the [Harmony Contributor Agreement Template (combined)](http://www.harmonyagreements.org/agreements.html), [Creative Commons Attribution 3.0 Unported License](https://creativecommons.org/licenses/by/3.0/)

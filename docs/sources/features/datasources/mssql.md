@@ -225,7 +225,7 @@ When above query are used in a graph panel the result will be two series named `
 
 {{< docs-imagebox img="/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
 
-**Example with multiple `value` culumns:**
+**Example with multiple `value` columns:**
 
 ```sql
 SELECT
