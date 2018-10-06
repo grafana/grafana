@@ -20,7 +20,7 @@ export class PluginListCtrl {
   }
 
   onQueryUpdated() {
-    let regex = new RegExp(this.searchQuery, 'ig');
+    let regex = new RegExp(this.searchQuery, 'i');
     this.plugins = _.filter(this.allPlugins, item => {
       return regex.test(item.name) || regex.test(item.type);
     });
