@@ -534,12 +534,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </a>
             </div>
           ) : (
-              <div className="navbar-buttons explore-first-button">
-                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                  Close Split
+            <div className="navbar-buttons explore-first-button">
+              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                Close Split
               </button>
-              </div>
-            )}
+            </div>
+          )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
