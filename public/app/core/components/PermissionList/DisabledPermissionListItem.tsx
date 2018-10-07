@@ -26,7 +26,6 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
             <DescriptionPicker
               optionsWithDesc={dashboardPermissionLevels}
               onSelected={() => {}}
-              value={item.permission}
               disabled={true}
               className={'gf-form-input--form-dropdown-right'}
             />

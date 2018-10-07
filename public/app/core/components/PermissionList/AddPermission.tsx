@@ -17,10 +17,6 @@ export interface Props {
   onCancel: () => void;
 }
 
-export interface TeamSelectedAction {
-  action: string;
-}
-
 class AddPermissions extends Component<Props, NewDashboardAclItem> {
   constructor(props) {
     super(props);
@@ -57,7 +53,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     this.setState({ userId: user && !Array.isArray(user) ? user.id : 0 });
   };
 
-  onTeamSelected = (team: Team, info: TeamSelectedAction) => {
+  onTeamSelected = (team: Team) => {
     this.setState({ teamId: team && !Array.isArray(team) ? team.id : 0 });
   };
 
