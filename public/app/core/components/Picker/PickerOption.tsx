@@ -1,54 +1,25 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { components } from 'react-select';
+import { OptionProps } from 'react-select/lib/components/Option';
 
 export interface Props {
-  onSelect: any;
-  onFocus: any;
-  option: any;
-  isFocused: any;
-  className: any;
+  children: Element;
+  isSelected: boolean;
+  data: any;
+  getStyles: any;
+  className?: string;
 }
 
-class UserPickerOption extends Component<Props, any> {
-  constructor(props) {
-    super(props);
-    this.handleMouseDown = this.handleMouseDown.bind(this);
-    this.handleMouseEnter = this.handleMouseEnter.bind(this);
-    this.handleMouseMove = this.handleMouseMove.bind(this);
-  }
-
-  handleMouseDown(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    this.props.onSelect(this.props.option, event);
-  }
-
-  handleMouseEnter(event) {
-    this.props.onFocus(this.props.option, event);
-  }
-
-  handleMouseMove(event) {
-    if (this.props.isFocused) {
-      return;
-    }
-    this.props.onFocus(this.props.option, event);
-  }
-
-  render() {
-    const { option, children, className } = this.props;
-
-    return (
-      <button
-        onMouseDown={this.handleMouseDown}
-        onMouseEnter={this.handleMouseEnter}
-        onMouseMove={this.handleMouseMove}
-        title={option.title}
-        className={`user-picker-option__button btn btn-link ${className}`}
-      >
-        <img src={option.avatarUrl} alt={option.label} className="user-picker-option__avatar" />
+export const PickerOption = (props: OptionProps<any>) => {
+  const { children, data } = props;
+  return (
+    <components.Option {...props}>
+      <div className={`description-picker-option__button btn btn-link width-19`}>
+        <img src={data.avatarUrl} alt={data.label} className="user-picker-option__avatar" />
         {children}
-      </button>
-    );
-  }
-}
+      </div>
+    </components.Option>
+  );
+};
 
-export default UserPickerOption;
+export default PickerOption;
