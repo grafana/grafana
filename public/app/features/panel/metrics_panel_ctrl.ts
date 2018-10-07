@@ -7,6 +7,7 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { metricsTabDirective } from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -56,7 +57,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    // this.addCommonTab('Time range', 'public/app/features/panel/partials/panelTime.html');
+    this.addEditorTab('Queries', metricsTabDirective, 1, 'fa fa-database');
+    this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
   private onMetricsPanelRefresh() {

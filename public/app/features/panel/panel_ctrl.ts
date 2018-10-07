@@ -6,8 +6,6 @@ import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
-import { metricsTabDirective } from './metrics_tab';
-import { vizTabDirective } from './viz_tab';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -22,7 +20,6 @@ export class PanelCtrl {
   pluginName: string;
   pluginId: string;
   editorTabs: any;
-  optionTabs: any;
   $scope: any;
   $injector: any;
   $location: any;
@@ -97,14 +94,10 @@ export class PanelCtrl {
 
   initEditMode() {
     this.editorTabs = [];
-    this.optionTabs = [];
-    this.addCommonTab('Queries', metricsTabDirective, 0, 'fa fa-database');
-    this.addCommonTab('Visualization', vizTabDirective, 1, 'fa fa-line-chart');
+    this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
 
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
-
-    // this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
 
     const urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
     if (urlTab) {
@@ -123,7 +116,7 @@ export class PanelCtrl {
     route.updateParams();
   }
 
-  addCommonTab(title, directiveFn, index?, icon?) {
+  addEditorTab(title, directiveFn, index?, icon?) {
     const editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
@@ -137,18 +130,6 @@ export class PanelCtrl {
     } else {
       this.editorTabs.push(editorTab);
     }
-  }
-
-  addEditorTab(title, directiveFn, index?, icon?) {
-    const editorTab = { title, directiveFn, icon };
-
-    if (_.isString(directiveFn)) {
-      editorTab.directiveFn = () => {
-        return { templateUrl: directiveFn };
-      };
-    }
-
-    this.optionTabs.push(editorTab);
   }
 
   getMenu() {

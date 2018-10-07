@@ -139,7 +139,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
 
     if (config.alertingEnabled) {
-      this.addCommonTab('Alert', alertTab, 5);
+      this.addEditorTab('Alert', alertTab, 5);
     }
 
     this.subTabIndex = 0;
