@@ -110,13 +110,13 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
 
             {newItem.type === AclTarget.User ? (
               <div className="gf-form">
-                <UserPicker onSelected={this.onUserSelected} value={newItem.userId} className={pickerClassName} />
+                <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
               </div>
             ) : null}
 
             {newItem.type === AclTarget.Team ? (
               <div className="gf-form">
-                <TeamPicker onSelected={this.onTeamSelected} value={newItem.teamId} className={pickerClassName} />
+                <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
               </div>
             ) : null}
 
@@ -124,7 +124,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
               <DescriptionPicker
                 optionsWithDesc={dashboardPermissionLevels}
                 onSelected={this.onPermissionChanged}
-                value={newItem.permission}
                 disabled={false}
                 className={'gf-form-input--form-dropdown-right'}
               />
