@@ -4,6 +4,7 @@ import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelec
 
 const initialState: DataSourcesState = {
   dataSources: [] as DataSource[],
+  dataSource: {} as DataSource,
   layoutMode: LayoutModes.Grid,
   searchQuery: '',
   dataSourcesCount: 0,
@@ -15,6 +16,9 @@ export const dataSourcesReducer = (state = initialState, action: Action): DataSo
   switch (action.type) {
     case ActionTypes.LoadDataSources:
       return { ...state, dataSources: action.payload, dataSourcesCount: action.payload.length };
+
+    case ActionTypes.LoadDataSource:
+      return { ...state, dataSource: action.payload };
 
     case ActionTypes.SetDataSourcesSearchQuery:
       return { ...state, searchQuery: action.payload };
