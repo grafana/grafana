@@ -241,7 +241,17 @@ export default class StackdriverDatasource {
     try {
       const metricsApiPath = `v3/projects/${projectId}/metricDescriptors`;
       const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
-      return data.metricDescriptors;
+
+      const metrics = data.metricDescriptors.map(m => {
+        const [service] = m.type.split('/');
+        const [serviceShortName] = service.split('.');
+        m.service = service;
+        m.serviceShortName = serviceShortName;
+        m.displayName = m.displayName || m.type;
+        return m;
+      });
+
+      return metrics;
     } catch (error) {
       console.log(error);
     }
