@@ -2,15 +2,12 @@ import React from 'react';
 import { components } from 'react-select';
 import { OptionProps } from 'react-select/lib/components/Option';
 
-export interface Props {
-  children: Element;
-  isSelected: boolean;
+// https://github.com/JedWatson/react-select/issues/3038
+interface ExtendedOptionProps extends OptionProps<any> {
   data: any;
-  getStyles: any;
-  className?: string;
 }
 
-export const PickerOption = (props: OptionProps<any>) => {
+export const PickerOption = (props: ExtendedOptionProps) => {
   const { children, data } = props;
   return (
     <components.Option {...props}>

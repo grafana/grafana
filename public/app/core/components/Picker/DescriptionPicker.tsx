@@ -42,7 +42,6 @@ class DescriptionPicker extends Component<Props, any> {
           onChange={onSelected}
           getOptionValue={i => i.value}
           getOptionLabel={i => i.label}
-          // menuIsOpen={true} // debug
         />
       </div>
     );

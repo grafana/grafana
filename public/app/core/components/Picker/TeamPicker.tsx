@@ -80,7 +80,6 @@ export class TeamPicker extends Component<Props, State> {
           noOptionsMessage={() => 'No teams found'}
           getOptionValue={i => i.id}
           getOptionLabel={i => i.label}
-          // menuIsOpen={true}
         />
       </div>
     );

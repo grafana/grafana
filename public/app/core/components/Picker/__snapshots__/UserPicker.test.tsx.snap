@@ -5,85 +5,86 @@ exports[`UserPicker renders correctly 1`] = `
   className="user-picker"
 >
   <div
-    className="Select gf-form-input gf-form-input--form-dropdown  is-clearable is-loading is-searchable Select--single"
+    className="css-0 gf-form-input gf-form-input--form-dropdown"
+    onKeyDown={[Function]}
   >
     <div
-      className="Select-control"
-      onKeyDown={[Function]}
+      className="css-0 gf-form-select2__control"
       onMouseDown={[Function]}
       onTouchEnd={[Function]}
-      onTouchMove={[Function]}
-      onTouchStart={[Function]}
     >
       <div
-        className="Select-multi-value-wrapper"
-        id="react-select-2--value"
+        className="css-0 gf-form-select2__value-container"
       >
         <div
-          className="Select-placeholder"
+          className="css-0 gf-form-select2__placeholder"
         >
-          Loading...
+          Select user
         </div>
         <div
-          className="Select-input"
-          style={
-            Object {
-              "display": "inline-block",
-            }
-          }
+          className="css-0"
         >
-          <input
-            aria-activedescendant="react-select-2--value"
-            aria-expanded="false"
-            aria-haspopup="false"
-            aria-owns=""
-            onBlur={[Function]}
-            onChange={[Function]}
-            onFocus={[Function]}
-            required={false}
-            role="combobox"
-            style={
-              Object {
-                "boxSizing": "content-box",
-                "width": "5px",
-              }
-            }
-            value=""
-          />
           <div
+            className="gf-form-select2__input"
             style={
               Object {
-                "height": 0,
-                "left": 0,
-                "overflow": "scroll",
-                "position": "absolute",
-                "top": 0,
-                "visibility": "hidden",
-                "whiteSpace": "pre",
+                "display": "inline-block",
               }
             }
           >
-            
+            <input
+              aria-autocomplete="list"
+              autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect="off"
+              disabled={false}
+              id="react-select-2-input"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              spellCheck="false"
+              style={
+                Object {
+                  "background": 0,
+                  "border": 0,
+                  "boxSizing": "content-box",
+                  "color": "inherit",
+                  "fontSize": "inherit",
+                  "opacity": 1,
+                  "outline": 0,
+                  "padding": 0,
+                  "width": "1px",
+                }
+              }
+              tabIndex="0"
+              type="text"
+              value=""
+            />
+            <div
+              style={
+                Object {
+                  "height": 0,
+                  "left": 0,
+                  "overflow": "scroll",
+                  "position": "absolute",
+                  "top": 0,
+                  "visibility": "hidden",
+                  "whiteSpace": "pre",
+                }
+              }
+            >
+              
+            </div>
           </div>
         </div>
       </div>
-      <span
-        aria-hidden="true"
-        className="Select-loading-zone"
+      <div
+        className="css-0 gf-form-select2__indicators"
       >
         <span
-          className="Select-loading"
+          className="gf-form-select2__select-arrow "
         />
-      </span>
-      <span
-        className="Select-arrow-zone"
-        onMouseDown={[Function]}
-      >
-        <span
-          className="Select-arrow"
-          onMouseDown={[Function]}
-        />
-      </span>
+      </div>
     </div>
   </div>
 </div>

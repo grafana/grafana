@@ -36,7 +36,7 @@ export class UserPicker extends Component<Props, State> {
     this.setState({ isLoading: true });
 
     return backendSrv
-      .get(`/api/org/users?query=${query}&limit=1`)
+      .get(`/api/org/users?query=${query}&limit=10`)
       .then(result => {
         return result.map(user => ({
           id: user.userId,
@@ -75,7 +75,6 @@ export class UserPicker extends Component<Props, State> {
           noOptionsMessage={() => 'No users found'}
           getOptionValue={i => i.id}
           getOptionLabel={i => i.label}
-          // menuIsOpen={true}
         />
       </div>
     );

@@ -3,10 +3,12 @@ import renderer from 'react-test-renderer';
 import PickerOption from './PickerOption';
 
 const model = {
-  onSelect: () => {},
-  onFocus: () => {},
-  isFocused: () => {},
-  option: {
+  cx: jest.fn(),
+  clearValue: jest.fn(),
+  onSelect: jest.fn(),
+  getStyles: jest.fn(),
+  children: 'Model title',
+  data: {
     title: 'Model title',
     avatarUrl: 'url/to/avatar',
     label: 'User picker label',
