@@ -83,10 +83,8 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 
   render() {
-    const { newTeamMember, isAdding } = this.state;
+    const { isAdding } = this.state;
     const { searchMemberQuery, members, syncEnabled } = this.props;
-    const newTeamMemberValue = newTeamMember && newTeamMember;
-    console.log('newTeamMemberValue', newTeamMemberValue);
     return (
       <div>
         <div className="page-action-bar">
