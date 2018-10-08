@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 
 	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -518,6 +519,23 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	return nil
 }
 
+func getProjectName(ctx context.Context, dsInfo *models.DataSource, route *plugins.AppPluginRoute) (string, error) {
+	var projectName string
+	gceAutoAuthentication := dsInfo.JsonData.Get("gceAutoAuthentication").MustBool()
+	if gceAutoAuthentication {
+		defaultCredentials, err := google.FindDefaultCredentials(ctx, route.JwtTokenAuth.Scopes...)
+		if err != nil {
+			return "", err
+		} else {
+			projectName = defaultCredentials.ProjectID
+		}
+	} else {
+		projectName = dsInfo.JsonData.Get("defaultProject").MustString()
+	}
+	logger.Info("projectName", "projectName", projectName)
+	return projectName, nil
+}
+
 func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	bucketBound := "0"
 	if n == 0 {
@@ -552,9 +570,6 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	if !ok {
 		return nil, errors.New("Unable to find datasource plugin Stackdriver")
 	}
-	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
-	logger.Info("projectName", "projectName", projectName)
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	var stackdriverRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
@@ -563,6 +578,14 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 			break
 		}
 	}
+
+	// projectName := dsInfo.JsonData.Get("defaultProject").MustString()
+	// logger.Info("projectName", "projectName", projectName)
+	projectName, err := getProjectName(ctx, dsInfo, stackdriverRoute)
+	if err != nil {
+		return nil, err
+	}
+	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
