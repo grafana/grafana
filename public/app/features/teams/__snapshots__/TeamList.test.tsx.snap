@@ -62,10 +62,7 @@ exports[`Render should render teams table 1`] = `
         className="btn btn-success"
         href="org/teams/new"
       >
-        <i
-          className="fa fa-plus"
-        />
-         New team
+        New team
       </a>
     </div>
     <div

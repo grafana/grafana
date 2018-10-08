@@ -103,7 +103,7 @@ export class TeamList extends PureComponent<Props, any> {
           <div className="page-action-bar__spacer" />
 
           <a className="btn btn-success" href="org/teams/new">
-            <i className="fa fa-plus" /> New team
+            New team
           </a>
         </div>
 
