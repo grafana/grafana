@@ -97,7 +97,7 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:8.12
     steps:
       - checkout
       - restore_cache:
