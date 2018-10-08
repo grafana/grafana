@@ -175,7 +175,7 @@ datasources:
     access: proxy
     database: "[metrics-]YYYY.MM.DD"
     url: http://localhost:9200
-    jsonData:
+    json_data:
       interval: Daily
       timeField: "@timestamp"
 ```
