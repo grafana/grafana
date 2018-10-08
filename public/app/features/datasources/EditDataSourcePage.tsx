@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import PageHeader from '../../core/components/PageHeader/PageHeader';
+import DataSourcePermissions from './DataSourcePermissions';
 import { DataSource, NavModel } from 'app/types';
 import { loadDataSource } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -45,7 +46,7 @@ export class EditDataSourcePage extends PureComponent<Props> {
   renderPage() {
     switch (this.getCurrentPage()) {
       case PageTypes.Permissions:
-        return <div>Permissions</div>;
+        return <DataSourcePermissions />;
     }
 
     return null;
