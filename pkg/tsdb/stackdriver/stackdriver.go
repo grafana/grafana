@@ -199,7 +199,11 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 		if part == "AND" {
 			filterString += " "
 		} else if mod == 2 {
-			if strings.Contains(part.(string), "*") {
+			operator := filterParts[i-1]
+			if operator == "=~" || operator == "!=~" {
+				filterString = reverse(strings.Replace(reverse(filterString), "~", "", 1))
+				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, part)
+			} else if strings.Contains(part.(string), "*") {
 				filterString += interpolateFilterWildcards(part.(string))
 			} else {
 				filterString += fmt.Sprintf(`"%s"`, part)
