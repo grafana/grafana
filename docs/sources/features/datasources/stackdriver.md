@@ -76,9 +76,15 @@ Choose a metric from the `Metric` dropdown.
 
 ### Filter
 
-To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`
+To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`. You can remove the filter by clicking on the filter name and select `--remove filter--`.
 
-It is also possible to add wildcards to the filter value field. E.g `us-*` to capture all values that starts with "us-", `*central-a` to capture all that ends with "central-a". `*-central-*` captures values that has the substring of -central-. 
+#### Simple wildcards
+
+When the operator is set to `=` or `!=` it is possible to add wildcards to the filter value field. E.g `us-*` will capture all values that starts with "us-" and `*central-a` will capture all values that ends with "central-a". `*-central-*` captures all values that has the substring of -central-. Simple wildcards are less expensive than regular expressions. 
+
+#### Regular expressions
+
+When the operator is set to `=~` or `!=~` it is possible to add regular expressions to the filter value field. E.g `us-central[1-3]-[af]` would match all values that starts with "us-central", is followed by a number in the range of 1 to 3, a dash and then either an "a" or an "f". Leading and trailing slashes are not needed when creating regular expressions.
 
 ### Aggregation
 
