@@ -158,6 +158,7 @@ interface PromQueryFieldState {
   metrics: string[];
   metricsOptions: any[];
   metricsByPrefix: CascaderOption[];
+  syntaxLoaded: boolean;
 }
 
 interface PromTypeaheadInput {
@@ -191,6 +192,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       metrics: props.metrics || [],
       metricsByPrefix: props.metricsByPrefix || [],
       metricsOptions: [],
+      syntaxLoaded: false,
     };
   }
 
@@ -266,7 +268,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
 
     // Update global prism config
-    setPrismTokens(PRISM_SYNTAX, METRIC_MARK, this.state.metrics);
+    setPrismTokens(PRISM_SYNTAX, METRIC_MARK, metrics);
 
     // Build metrics tree
     const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
@@ -275,7 +277,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       ...metricsByPrefix,
     ];
 
-    this.setState({ metricsOptions });
+    this.setState({ metricsOptions, syntaxLoaded: true });
   };
 
   onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
@@ -558,8 +560,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   render() {
-    const { error, hint, supportsLogs } = this.props;
-    const { logLabelOptions, metricsOptions } = this.state;
+    const { error, hint, initialQuery, supportsLogs } = this.props;
+    const { logLabelOptions, metricsOptions, syntaxLoaded } = this.state;
 
     return (
       <div className="prom-query-field">
@@ -579,12 +581,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             <TypeaheadField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialValue={this.props.initialQuery}
+              initialValue={initialQuery}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onValueChanged={this.onChangeQuery}
               placeholder="Enter a PromQL query"
               portalPrefix="prometheus"
+              syntaxLoaded={syntaxLoaded}
             />
           </div>
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}

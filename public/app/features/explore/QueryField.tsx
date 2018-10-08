@@ -106,6 +106,7 @@ interface TypeaheadFieldProps {
   placeholder?: string;
   portalPrefix?: string;
   syntax?: string;
+  syntaxLoaded?: boolean;
 }
 
 export interface TypeaheadFieldState {
@@ -171,10 +172,15 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    // initialValue is null in case the user typed
-    if (nextProps.initialValue !== null && nextProps.initialValue !== this.props.initialValue) {
-      this.setState({ value: makeValue(nextProps.initialValue, nextProps.syntax) });
+  componentWillReceiveProps(nextProps: TypeaheadFieldProps) {
+    if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
+      // Need a bogus edit to re-render the editor after syntax has fully loaded
+      this.onChange(
+        this.state.value
+          .change()
+          .insertText(' ')
+          .deleteBackward()
+      );
     }
   }
 
