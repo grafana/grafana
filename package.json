@@ -158,7 +158,7 @@
     "react-highlight-words": "^0.10.0",
     "react-popper": "^0.7.5",
     "react-redux": "^5.0.7",
-    "react-select": "^2.0.0",
+    "react-select": "2.1.0",
     "react-sizeme": "^2.3.6",
     "react-transition-group": "^2.2.1",
     "redux": "^4.0.0",
