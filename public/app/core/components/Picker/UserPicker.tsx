@@ -71,6 +71,9 @@ export class UserPicker extends Component<Props, State> {
             NoOptionsMessage,
           }}
           placeholder="Select user"
+          filterOption={(option: { label: string }, searchText?: string) => {
+            return option.label.includes(searchText);
+          }}
           loadingMessage={() => 'Loading...'}
           noOptionsMessage={() => 'No users found'}
           getOptionValue={i => i.id}
