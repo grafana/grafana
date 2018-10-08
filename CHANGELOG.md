@@ -6,6 +6,8 @@
 
 # 5.3.0 (unreleased)
 
+* **Stackdriver**: Filter wildcards and regex matching are not yet supported [#13495](https://github.com/grafana/grafana/issues/13495)
+
 # 5.3.0-beta3 (2018-10-03)
 
 * **Stackdriver**: Fix for missing ngInject [#13511](https://github.com/grafana/grafana/pull/13511)
