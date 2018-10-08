@@ -10,6 +10,7 @@ export enum ActionTypes {
   LoadDataSources = 'LOAD_DATA_SOURCES',
   LoadDataSourceTypes = 'LOAD_DATA_SOURCE_TYPES',
   LoadDataSource = 'LOAD_DATA_SOURCE',
+  LoadDataSourceMeta = 'LOAD_DATA_SOURCE_META',
   SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
   SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
   SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
@@ -45,6 +46,11 @@ export interface LoadDataSourceAction {
   payload: DataSource;
 }
 
+export interface LoadDataSourceMetaAction {
+  type: ActionTypes.LoadDataSourceMeta;
+  payload: Plugin;
+}
+
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
   type: ActionTypes.LoadDataSources,
   payload: dataSources,
@@ -53,6 +59,11 @@ const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => 
 const dataSourceLoaded = (dataSource: DataSource): LoadDataSourceAction => ({
   type: ActionTypes.LoadDataSource,
   payload: dataSource,
+});
+
+const dataSourceMetaLoaded = (dataSourceMeta: Plugin): LoadDataSourceMetaAction => ({
+  type: ActionTypes.LoadDataSourceMeta,
+  payload: dataSourceMeta,
 });
 
 const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadDataSourceTypesAction => ({
@@ -83,7 +94,8 @@ export type Action =
   | LoadDataSourceTypesAction
   | SetDataSourceTypeSearchQueryAction
   | LoadDataSourceAction
-  | UpdateNavIndexAction;
+  | UpdateNavIndexAction
+  | LoadDataSourceMetaAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -99,6 +111,7 @@ export function loadDataSource(id: number): ThunkResult<void> {
     const dataSource = await getBackendSrv().get(`/api/datasources/${id}`);
     const pluginInfo = await getBackendSrv().get(`/api/plugins/${dataSource.type}/settings`);
     dispatch(dataSourceLoaded(dataSource));
+    dispatch(dataSourceMetaLoaded(pluginInfo));
     dispatch(updateNavIndex(buildNavModel(dataSource, pluginInfo)));
   };
 }

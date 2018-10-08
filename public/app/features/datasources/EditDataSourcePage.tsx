@@ -39,19 +39,13 @@ export class EditDataSourcePage extends PureComponent<Props> {
   getCurrentPage() {
     const currentPage = this.props.pageName;
 
-    return this.isValidPage(currentPage) ? currentPage : PageTypes.Settings;
+    return this.isValidPage(currentPage) ? currentPage : PageTypes.Permissions;
   }
 
   renderPage() {
     switch (this.getCurrentPage()) {
-      case PageTypes.Settings:
-        return <div>Settings</div>;
-
       case PageTypes.Permissions:
         return <div>Permissions</div>;
-
-      case PageTypes.Dashboards:
-        return <div>Dashboards</div>;
     }
 
     return null;
@@ -63,15 +57,14 @@ export class EditDataSourcePage extends PureComponent<Props> {
     return (
       <div>
         <PageHeader model={navModel} />
-        <div className="page-container page-body" />
-        {this.renderPage()}
+        <div className="page-container page-body">{this.renderPage()}</div>
       </div>
     );
   }
 }
 
 function mapStateToProps(state) {
-  const pageName = getRouteParamsPage(state.location) || 'settings';
+  const pageName = getRouteParamsPage(state.location) || PageTypes.Permissions;
   const dataSourceId = getRouteParamsId(state.location);
   const dataSourceLoadingNav = getDataSourceLoadingNav(pageName);
 

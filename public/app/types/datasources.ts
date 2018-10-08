@@ -12,10 +12,10 @@ export interface DataSource {
   password: string;
   user: string;
   database: string;
-  basicAuth: false;
-  isDefault: false;
+  basicAuth: boolean;
+  isDefault: boolean;
   jsonData: { authType: string; defaultRegion: string };
-  readOnly: false;
+  readOnly: boolean;
 }
 
 export interface DataSourcesState {
@@ -26,4 +26,5 @@ export interface DataSourcesState {
   dataSourcesCount: number;
   dataSourceTypes: Plugin[];
   dataSource: DataSource;
+  dataSourceMeta: Plugin;
 }

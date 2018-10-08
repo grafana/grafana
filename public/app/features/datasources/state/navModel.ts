@@ -1,4 +1,5 @@
 import { DataSource, NavModel, NavModelItem, PluginMeta } from 'app/types';
+import config from 'app/core/config';
 
 export function buildNavModel(dataSource: DataSource, pluginMeta: PluginMeta): NavModelItem {
   const navModel = {
@@ -16,23 +17,26 @@ export function buildNavModel(dataSource: DataSource, pluginMeta: PluginMeta): N
         text: 'Settings',
         url: `datasources/edit/${dataSource.id}/settings`,
       },
-      {
-        active: false,
-        icon: 'fa fa-fw fa-sliders',
-        id: `datasource-permissions-${dataSource.id}`,
-        text: 'Permissions',
-        url: `datasources/edit/${dataSource.id}/permissions`,
-      },
     ],
   };
 
-  if (pluginMeta.includes && pluginMeta.includes.length > 0) {
+  if (pluginMeta.includes && hasDashboards(pluginMeta.includes)) {
     navModel.children.push({
       active: false,
-      icon: 'gicon gicon-dashboard',
+      icon: 'fa fa-fw fa-th-large',
       id: `datasource-dashboards-${dataSource.id}`,
       text: 'Dashboards',
       url: `datasources/edit/${dataSource.id}/dashboards`,
+    });
+  }
+
+  if (config.buildInfo.isEnterprise) {
+    navModel.children.push({
+      active: false,
+      icon: 'fa fa-fw fa-lock',
+      id: `datasource-permissions-${dataSource.id}`,
+      text: 'Permissions',
+      url: `datasources/edit/${dataSource.id}/permissions`,
     });
   }
 
@@ -94,4 +98,12 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
     main: main,
     node: node,
   };
+}
+
+function hasDashboards(includes) {
+  return (
+    includes.filter(include => {
+      return include.type === 'dashboard';
+    }).length > 0
+  );
 }
