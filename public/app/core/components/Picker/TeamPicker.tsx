@@ -33,7 +33,7 @@ export class TeamPicker extends Component<Props, State> {
 
     this.debouncedSearch = debounce(this.search, 300, {
       leading: true,
-      trailing: false,
+      trailing: true,
     });
   }
 
