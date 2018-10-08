@@ -12,7 +12,7 @@ export const PickerOption = (props: ExtendedOptionProps) => {
   return (
     <components.Option {...props}>
       <div className={`description-picker-option__button btn btn-link width-19`}>
-        <img src={data.avatarUrl} alt={data.label} className="user-picker-option__avatar" />
+        {data.avatarUrl && <img src={data.avatarUrl} alt={data.label} className="user-picker-option__avatar" />}
         {children}
       </div>
     </components.Option>
