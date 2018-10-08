@@ -275,7 +275,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { onChangeSplit } = this.props;
     if (onChangeSplit) {
       onChangeSplit(false);
-      this.saveState();
     }
   };
 
@@ -292,7 +291,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     if (onChangeSplit) {
       const state = this.cloneState();
       onChangeSplit(true, state);
-      this.saveState();
     }
   };
 

@@ -36,14 +36,40 @@ describe('state functions', () => {
         range: DEFAULT_RANGE,
       });
     });
+
+    it('returns a valid Explore state from URL parameter', () => {
+      const paramValue =
+        '%7B"datasource":"Local","queries":%5B%7B"query":"metric"%7D%5D,"range":%7B"from":"now-1h","to":"now"%7D%7D';
+      expect(parseUrlState(paramValue)).toMatchObject({
+        datasource: 'Local',
+        queries: [{ query: 'metric' }],
+        range: {
+          from: 'now-1h',
+          to: 'now',
+        },
+      });
+    });
+
+    it('returns a valid Explore state from a compact URL parameter', () => {
+      const paramValue = '%5B"now-1h","now","Local","metric"%5D';
+      expect(parseUrlState(paramValue)).toMatchObject({
+        datasource: 'Local',
+        queries: [{ query: 'metric' }],
+        range: {
+          from: 'now-1h',
+          to: 'now',
+        },
+      });
+    });
   });
+
   describe('serializeStateToUrlParam', () => {
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
         datasourceName: 'foo',
         range: {
-          from: 'now - 5h',
+          from: 'now-5h',
           to: 'now',
         },
         queries: [
@@ -57,10 +83,33 @@ describe('state functions', () => {
       };
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"query":"metric{test=\\"a/b\\"}"},' +
-        '{"query":"super{foo=\\"x/z\\"}"}],"range":{"from":"now - 5h","to":"now"}}'
+          '{"query":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
+      );
+    });
+
+    it('returns url parameter value for a state object', () => {
+      const state = {
+        ...DEFAULT_EXPLORE_STATE,
+        datasourceName: 'foo',
+        range: {
+          from: 'now-5h',
+          to: 'now',
+        },
+        queries: [
+          {
+            query: 'metric{test="a/b"}',
+          },
+          {
+            query: 'super{foo="x/z"}',
+          },
+        ],
+      };
+      expect(serializeStateToUrlParam(state, true)).toBe(
+        '["now-5h","now","foo","metric{test=\\"a/b\\"}","super{foo=\\"x/z\\"}"]'
       );
     });
   });
+
   describe('interplay', () => {
     it('can parse the serialized state into the original state', () => {
       const state = {
