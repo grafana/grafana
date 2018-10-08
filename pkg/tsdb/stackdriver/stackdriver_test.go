@@ -342,6 +342,97 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("when interpolating filter wildcards", func() {
+			Convey("and wildcard is used in the beginning and the end of the word", func() {
+				Convey("and theres no wildcard in the middle of the word", func() {
+					value := interpolateFilterWildcards("*-central1*")
+					So(value, ShouldEqual, `has_substring("-central1")`)
+				})
+				Convey("and there is a wildcard in the middle of the word", func() {
+					value := interpolateFilterWildcards("*-cent*ral1*")
+					So(value, ShouldNotStartWith, `has_substring`)
+				})
+			})
+
+			Convey("and wildcard is used in the beginning of the word", func() {
+				Convey("and there is not a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*-central1")
+					So(value, ShouldEqual, `ends_with("-central1")`)
+				})
+				Convey("and there is a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*-cent*al1")
+					So(value, ShouldNotStartWith, `ends_with`)
+				})
+			})
+
+			Convey("and wildcard is used at the end of the word", func() {
+				Convey("and there is not a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("us-central*")
+					So(value, ShouldEqual, `starts_with("us-central")`)
+				})
+				Convey("and there is a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*us-central*")
+					So(value, ShouldNotStartWith, `starts_with`)
+				})
+			})
+
+			Convey("and wildcard is used in the middle of the word", func() {
+				Convey("and there is only one wildcard", func() {
+					value := interpolateFilterWildcards("us-ce*tral1-b")
+					So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tral1\\-b$")`)
+				})
+
+				Convey("and there is more than one wildcard", func() {
+					value := interpolateFilterWildcards("us-ce*tra*1-b")
+					So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tra.*1\\-b$")`)
+				})
+			})
+
+			Convey("and wildcard is used in the middle of the word and in the beginning of the word", func() {
+				value := interpolateFilterWildcards("*s-ce*tral1-b")
+				So(value, ShouldEqual, `monitoring.regex.full_match("^.*s\\-ce.*tral1\\-b$")`)
+			})
+
+			Convey("and wildcard is used in the middle of the word and in the ending of the word", func() {
+				value := interpolateFilterWildcards("us-ce*tral1-*")
+				So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tral1\\-.*$")`)
+			})
+
+			Convey("and no wildcard is used", func() {
+				value := interpolateFilterWildcards("us-central1-a}")
+				So(value, ShouldEqual, `us-central1-a}`)
+			})
+		})
+
+		Convey("when building filter string", func() {
+			Convey("and theres no regex operator", func() {
+				Convey("and there are wildcards in a filter value", func() {
+					filterParts := []interface{}{"zone", "=", "*-central1*"}
+					value := buildFilterString("somemetrictype", filterParts)
+					So(value, ShouldEqual, `metric.type="somemetrictype" zone=has_substring("-central1")`)
+				})
+
+				Convey("and there are no wildcards in any filter value", func() {
+					filterParts := []interface{}{"zone", "!=", "us-central1-a"}
+					value := buildFilterString("somemetrictype", filterParts)
+					So(value, ShouldEqual, `metric.type="somemetrictype" zone!="us-central1-a"`)
+				})
+			})
+
+			Convey("and there is a regex operator", func() {
+				filterParts := []interface{}{"zone", "=~", "us-central1-a~"}
+				value := buildFilterString("somemetrictype", filterParts)
+				Convey("it should remove the ~ character from the operator that belongs to the value", func() {
+					So(value, ShouldNotContainSubstring, `=~`)
+					So(value, ShouldContainSubstring, `zone=`)
+				})
+
+				Convey("it should insert monitoring.regex.full_match before filter value", func() {
+					So(value, ShouldContainSubstring, `zone=monitoring.regex.full_match("us-central1-a~")`)
+				})
+			})
+		})
 	})
 }
 

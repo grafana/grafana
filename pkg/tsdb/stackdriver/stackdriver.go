@@ -159,6 +159,39 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	return stackdriverQueries, nil
 }
 
+func reverse(s string) string {
+	chars := []rune(s)
+	for i, j := 0, len(chars)-1; i < j; i, j = i+1, j-1 {
+		chars[i], chars[j] = chars[j], chars[i]
+	}
+	return string(chars)
+}
+
+func interpolateFilterWildcards(value string) string {
+	re := regexp.MustCompile("[*]")
+	matches := len(re.FindAllStringIndex(value, -1))
+	if matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
+		value = strings.Replace(value, "*", "", -1)
+		value = fmt.Sprintf(`has_substring("%s")`, value)
+	} else if matches == 1 && strings.HasPrefix(value, "*") {
+		value = strings.Replace(value, "*", "", 1)
+		value = fmt.Sprintf(`ends_with("%s")`, value)
+	} else if matches == 1 && strings.HasSuffix(value, "*") {
+		value = reverse(strings.Replace(reverse(value), "*", "", 1))
+		value = fmt.Sprintf(`starts_with("%s")`, value)
+	} else if matches != 0 {
+		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
+			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
+		}))
+		value = strings.Replace(value, "*", ".*", -1)
+		value = strings.Replace(value, `"`, `\\"`, -1)
+		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
+	}
+
+	return value
+}
+
 func buildFilterString(metricType string, filterParts []interface{}) string {
 	filterString := ""
 	for i, part := range filterParts {
@@ -166,7 +199,15 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 		if part == "AND" {
 			filterString += " "
 		} else if mod == 2 {
-			filterString += fmt.Sprintf(`"%s"`, part)
+			operator := filterParts[i-1]
+			if operator == "=~" || operator == "!=~" {
+				filterString = reverse(strings.Replace(reverse(filterString), "~", "", 1))
+				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, part)
+			} else if strings.Contains(part.(string), "*") {
+				filterString += interpolateFilterWildcards(part.(string))
+			} else {
+				filterString += fmt.Sprintf(`"%s"`, part)
+			}
 		} else {
 			filterString += part.(string)
 		}
