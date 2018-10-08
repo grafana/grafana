@@ -74,7 +74,11 @@ Click on the links above and click the `Enable` button:
 
 Choose a metric from the `Metric` dropdown.
 
+### Filter
+
 To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`
+
+It is also possible to add wildcards to the filter value field. E.g `us-*` to capture all values that starts with "us-", `*central-a` to capture all that ends with "central-a". `*-central-*` captures values that has the substring of -central-. 
 
 ### Aggregation
 
@@ -105,20 +109,20 @@ The Alias By field allows you to control the format of the legend keys. The defa
 
 #### Metric Type Patterns
 
-Alias Pattern | Description | Example Result
------------------ | ---------------------------- | -------------
-`{{metric.type}}` | returns the full Metric Type | `compute.googleapis.com/instance/cpu/utilization`
-`{{metric.name}}` | returns the metric name part | `instance/cpu/utilization`
-`{{metric.service}}` | returns the service part | `compute`
+| Alias Pattern        | Description                  | Example Result                                    |
+| -------------------- | ---------------------------- | ------------------------------------------------- |
+| `{{metric.type}}`    | returns the full Metric Type | `compute.googleapis.com/instance/cpu/utilization` |
+| `{{metric.name}}`    | returns the metric name part | `instance/cpu/utilization`                        |
+| `{{metric.service}}` | returns the service part     | `compute`                                         |
 
 #### Label Patterns
 
 In the Group By dropdown, you can see a list of metric and resource labels for a metric. These can be included in the legend key using alias patterns.
 
-Alias Pattern Format | Description | Alias Pattern Example | Example Result
----------------------- | ---------------------------------- | ---------------------------- | -------------
-`{{metric.label.xxx}}` | returns the metric label value | `{{metric.label.instance_name}}` | `grafana-1-prod`
-`{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}` | `us-east1-b`
+| Alias Pattern Format     | Description                      | Alias Pattern Example            | Example Result   |
+| ------------------------ | -------------------------------- | -------------------------------- | ---------------- |
+| `{{metric.label.xxx}}`   | returns the metric label value   | `{{metric.label.instance_name}}` | `grafana-1-prod` |
+| `{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}`        | `us-east1-b`     |
 
 Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
 
