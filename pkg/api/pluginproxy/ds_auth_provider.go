@@ -64,11 +64,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	// }
 
 	if ds.Type == "stackdriver" {
-		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
-		projectName := ds.JsonData.Get("defaultProject").MustString()
-		if projectName == "" {
-			ds.JsonData.Set("defaultProject", defaultCredentials.ProjectID)
-		}
+		defaultCredentials, err := google.FindDefaultCredentials(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
 			logger.Error("Failed to get default credentials", "error", err)
 		} else {
@@ -76,6 +72,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 			if err != nil {
 				logger.Error("Failed to get default access token", "error", err)
 			} else {
+				ds.JsonData.Set("defaultProject", defaultCredentials.ProjectID)
 				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 			}
 		}
