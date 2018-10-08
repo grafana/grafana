@@ -521,8 +521,9 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 
 func getProjectName(ctx context.Context, dsInfo *models.DataSource, route *plugins.AppPluginRoute) (string, error) {
 	var projectName string
-	gceAutoAuthentication := dsInfo.JsonData.Get("gceAutoAuthentication").MustBool()
-	if gceAutoAuthentication {
+	gceAutomaticAuthentication := dsInfo.JsonData.Get("gceAutomaticAuthentication").MustBool()
+	logger.Info("gceAutomaticAuthentication", "gceAutomaticAuthentication", gceAutomaticAuthentication)
+	if gceAutomaticAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
 			return "", err

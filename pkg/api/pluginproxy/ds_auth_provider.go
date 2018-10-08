@@ -55,24 +55,24 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	// if route.JwtTokenAuth != nil && len(ds.SecureJsonData["privateKey"]) != 0 {
-	// 	if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
-	// 		logger.Error("Failed to get access token", "error", err)
-	// 	} else {
-	// 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-	// 	}
-	// }
+	gceAutoAuthentication := ds.JsonData.Get("gceAutomaticAuthentication").MustBool()
+	if route.JwtTokenAuth != nil && !gceAutoAuthentication {
+		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
+			logger.Error("Failed to get access token", "error", err)
+		} else {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		}
+	}
 
-	if ds.Type == "stackdriver" {
-		defaultCredentials, err := google.FindDefaultCredentials(ctx, route.JwtTokenAuth.Scopes...)
+	if gceAutoAuthentication {
+		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
 			logger.Error("Failed to get default credentials", "error", err)
 		} else {
-			token, err := defaultCredentials.TokenSource.Token()
+			token, err := tokenSrc.Token()
 			if err != nil {
 				logger.Error("Failed to get default access token", "error", err)
 			} else {
-				ds.JsonData.Set("defaultProject", defaultCredentials.ProjectID)
 				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 			}
 		}
