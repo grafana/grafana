@@ -7,36 +7,11 @@ import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
+import { grafanaTimeFormat } from 'app/core/utils/ticks';
 
 import Legend from './Legend';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
-
-// Copied from graph.ts
-function time_format(ticks, min, max) {
-  if (min && max && ticks) {
-    const range = max - min;
-    const secPerTick = range / ticks / 1000;
-    const oneDay = 86400000;
-    const oneYear = 31536000000;
-
-    if (secPerTick <= 45) {
-      return '%H:%M:%S';
-    }
-    if (secPerTick <= 7200 || range <= oneDay) {
-      return '%H:%M';
-    }
-    if (secPerTick <= 80000) {
-      return '%m/%d %H:%M';
-    }
-    if (secPerTick <= 2419200 || range <= oneYear) {
-      return '%m/%d';
-    }
-    return '%Y-%m';
-  }
-
-  return '%H:%M';
-}
 
 const FLOT_OPTIONS = {
   legend: {
@@ -151,7 +126,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timeformat: time_format(ticks, min, max),
+        timeformat: grafanaTimeFormat(ticks, min, max),
       },
     };
     const options = {
@@ -182,7 +157,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
               {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
               <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
                 this.props.data.length
-              }`}</span>
+                }`}</span>
             </div>
           )}
         <div className="panel-container">

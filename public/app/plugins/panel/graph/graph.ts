@@ -20,7 +20,7 @@ import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
+import { grafanaTimeFormat } from 'app/core/utils/ticks';
 
 import { GraphCtrl } from './module';
 
@@ -460,7 +460,7 @@ class GraphElement {
       max: max,
       label: 'Datetime',
       ticks: ticks,
-      timeformat: this.time_format(ticks, min, max),
+      timeformat: grafanaTimeFormat(ticks, min, max),
     };
   }
 
@@ -708,58 +708,6 @@ class GraphElement {
       }
       return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
     };
-  }
-
-  getMonthDayFormat() {
-    if (contextSrv.user.monthDayFormat && contextSrv.user.monthDayFormat !== 'browser') {
-      return contextSrv.user.monthDayFormat;
-    }
-
-    if (!this.canUseLocaleDateStringLocales()) {
-      return '%m/%d';
-    }
-
-    const language = navigator.languages ? navigator.languages[0] : navigator.language || 'en-US';
-    return new Date(Date.UTC(1977, 11, 20, 0, 0, 0))
-      .toLocaleDateString(language, { month: 'numeric', day: 'numeric' })
-      .replace('12', '%m')
-      .replace('20', '%d');
-  }
-
-  canUseLocaleDateStringLocales() {
-    try {
-      new Date().toLocaleDateString('i');
-    } catch (e) {
-      return e.name === 'RangeError';
-    }
-    return false;
-  }
-
-  time_format(ticks, min, max) {
-    if (min && max && ticks) {
-      const range = max - min;
-      const secPerTick = range / ticks / 1000;
-      // Need have 10 milisecond margin on the day range
-      // As sometimes last 24 hour dashboard evaluates to more than 86400000
-      const oneDay = 86400010;
-      const oneYear = 31536000000;
-
-      if (secPerTick <= 45) {
-        return '%H:%M:%S';
-      }
-      if (secPerTick <= 7200 || range <= oneDay) {
-        return '%H:%M';
-      }
-      if (secPerTick <= 80000) {
-        return this.getMonthDayFormat() + ' %H:%M';
-      }
-      if (secPerTick <= 2419200 || range <= oneYear) {
-        return this.getMonthDayFormat();
-      }
-      return '%Y-%m';
-    }
-
-    return '%H:%M';
   }
 }
 
