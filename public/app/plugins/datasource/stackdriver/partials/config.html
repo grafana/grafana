@@ -31,6 +31,9 @@
       contents will be encrypted and saved in the Grafana database.</info-popover>
   </div>
 
+  <gf-form-switch class="gf-form" label="Use GCE default Authentication" checked="ctrl.current.jsonData.gceAutomaticAuthentication"
+    switch-class="max-width-4" label-class="width-16"></gf-form-switch>
+
   <div ng-if="!ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid">
     <div class="gf-form-group" ng-if="!ctrl.inputDataValid">
       <div class="gf-form">
@@ -60,9 +63,9 @@
     <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.defaultProject" />
   </div>
   <div class="gf-form">
-      <span class="gf-form-label width-9">Client Email</span>
-      <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.clientEmail" />
-    </div>
+    <span class="gf-form-label width-9">Client Email</span>
+    <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.clientEmail" />
+  </div>
   <div class="gf-form">
     <span class="gf-form-label width-9">Token URI</span>
     <input class="gf-form-input width-40" disabled type="text" ng-model='ctrl.current.jsonData.tokenUri' />
