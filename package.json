@@ -87,7 +87,7 @@
     "tslint-loader": "^3.5.3",
     "typescript": "^3.0.3",
     "uglifyjs-webpack-plugin": "^1.2.7",
-    "webpack": "^4.8.0",
+    "webpack": "4.19.1",
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-cleanup-plugin": "^0.5.1",
     "webpack-cli": "^2.1.4",
