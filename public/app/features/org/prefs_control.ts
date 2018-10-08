@@ -10,8 +10,16 @@ export class PrefsControlCtrl {
   monthDayFormats: any = [
     { value: '', text: 'Default' },
     { value: 'browser', text: 'Local browser formatting' },
-    { value: 'mm/dd', text: 'mm/dd' },
-    { value: 'dd/mm', text: 'dd/mm' },
+    // US
+    { value: '%m/%d', text: 'mm/dd' },
+    // UK
+    { value: '%d/%m', text: 'dd/mm' },
+    // Europe
+    { value: '%m-%d', text: 'mm-dd' },
+    // Asia
+    { value: '%d-%m', text: 'dd-mm' },
+    // DE
+    { value: '%d.%m.', text: 'dd.mm.' },
   ];
   timezones: any = [
     { value: '', text: 'Default' },
