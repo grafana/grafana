@@ -10,6 +10,7 @@ import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
+import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -22,11 +23,13 @@ export class GrafanaCtrl {
     contextSrv,
     bridgeSrv,
     backendSrv: BackendSrv,
-    datasourceSrv: DatasourceSrv
+    datasourceSrv: DatasourceSrv,
+    angularLoader: AngularLoader
   ) {
     // sets singleston instances for angular services so react components can access them
-    configureStore();
+    setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);
+    configureStore();
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;
@@ -244,6 +247,9 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (target.parents().length === 0) {
           return;
         }
+
+        // ensure dropdown menu doesn't impact on z-index
+        body.find('.dropdown-menu-open').removeClass('dropdown-menu-open');
 
         // for stuff that animates, slides out etc, clicking it needs to
         // hide it right away

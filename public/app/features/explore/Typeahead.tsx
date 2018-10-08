@@ -23,7 +23,9 @@ class TypeaheadItem extends React.PureComponent<TypeaheadItemProps, {}> {
 
   componentDidUpdate(prevProps) {
     if (this.props.isSelected && !prevProps.isSelected) {
-      scrollIntoView(this.el);
+      requestAnimationFrame(() => {
+        scrollIntoView(this.el);
+      });
     }
   }
 

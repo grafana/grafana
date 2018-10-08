@@ -58,7 +58,7 @@ If you change your organization name in the Grafana UI this setting needs to be 
 ### Basic authentication
 
 Basic auth is enabled by default and works with the built in Grafana user password authentication system and LDAP
-authenticaten integration.
+authentication integration.
 
 To disable basic auth:
 

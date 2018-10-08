@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
+import { UserPicker } from 'app/core/components/Picker/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Picker/TeamPicker';
 import DescriptionPicker, { OptionWithDescription } from 'app/core/components/Picker/DescriptionPicker';
+import { User } from 'app/types';
 import {
   dashboardPermissionLevels,
   dashboardAclTargets,

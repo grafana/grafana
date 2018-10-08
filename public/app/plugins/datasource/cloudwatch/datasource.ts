@@ -8,7 +8,6 @@ import * as templatingVariable from 'app/features/templating/variable';
 export default class CloudWatchDatasource {
   type: any;
   name: any;
-  supportMetrics: any;
   proxyUrl: any;
   defaultRegion: any;
   instanceSettings: any;
@@ -17,7 +16,6 @@ export default class CloudWatchDatasource {
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
     this.type = 'cloudwatch';
     this.name = instanceSettings.name;
-    this.supportMetrics = true;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.instanceSettings = instanceSettings;
