@@ -7,6 +7,7 @@
 # 5.3.0 (unreleased)
 
 * **Stackdriver**: Filter wildcards and regex matching are not yet supported [#13495](https://github.com/grafana/grafana/issues/13495)
+* **Stackdriver**: Support the distribution metric type for heatmaps [#13559](https://github.com/grafana/grafana/issues/13559)
 
 # 5.3.0-beta3 (2018-10-03)
 
