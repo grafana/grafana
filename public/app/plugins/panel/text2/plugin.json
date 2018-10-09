@@ -1,7 +1,9 @@
 {
   "type": "panel",
-  "name": "Text2",
+  "name": "Text v2",
   "id": "text2",
+
+  "state": "alpha",
 
   "info": {
     "author": {
@@ -9,8 +11,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-text-panel.svg",
-      "large": "img/icn-text-panel.svg"
+      "small": "img/icn-graph-panel.svg",
+      "large": "img/icn-graph-panel.svg"
     }
   }
 }

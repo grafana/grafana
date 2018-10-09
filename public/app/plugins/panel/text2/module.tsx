@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { PanelProps } from 'app/features/dashboard/dashgrid/DataPanel';
 
-export class ReactTestPanel extends PureComponent<PanelProps> {
+export class Text2 extends PureComponent<PanelProps> {
   constructor(props) {
     super(props);
   }
@@ -14,14 +14,8 @@ export class ReactTestPanel extends PureComponent<PanelProps> {
       value = data[0].value;
     }
 
-    return <h2>Text Panel {value}</h2>;
+    return <h2>Graph Panel! {value}</h2>;
   }
 }
 
-export class TextOptions extends PureComponent<any> {
-  render() {
-    return <p>Text2 Options component</p>;
-  }
-}
-
-export { ReactTestPanel as PanelComponent, TextOptions as PanelOptions };
+export { Text2 as PanelComponent };

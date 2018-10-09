@@ -184,7 +184,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.macaron)
 	// lastly not found route
-	hs.macaron.NotFound(NotFoundHandler)
+	hs.macaron.NotFound(hs.NotFoundHandler)
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
