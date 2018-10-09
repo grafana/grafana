@@ -124,6 +124,16 @@ class GraphElement {
       this.plot.clearSelection();
       return;
     }
+    if (ranges.altKey) {
+      this.scope.$apply(() => {
+        this.panel.yaxes.forEach(axis => {
+          axis.min = ranges.yaxis.from;
+          axis.max = ranges.yaxis.to;
+        });
+      });
+      this.render_panel();
+      return;
+    }
 
     if ((ranges.ctrlKey || ranges.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
       // Add annotation

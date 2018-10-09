@@ -160,7 +160,15 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt) {
-    this.publishAppEvent('zoom-out', 2);
+    if (evt.altKey) {
+      this.panel.yaxes.forEach(axis => {
+        axis.min = null;
+        axis.max = null;
+      });
+      this.render();
+    } else {
+      this.publishAppEvent('zoom-out', 2);
+    }
   }
 
   onDataSnapshotLoad(snapshotData) {

@@ -46,6 +46,12 @@ export class HelpCtrl {
           description: 'Move time range forward',
         },
       ],
+      Crosshair: [
+        { keys: ['click + drag'], description: 'Zoom in x-axis' },
+        { keys: ['mod + click + drag'], description: 'Zoom in y-axis' },
+        { keys: ['doubleclick'], description: 'Zoom out' },
+        { keys: ['mod+doubleclick'], description: 'Reset y-axis zoom' },
+      ],
     };
   }
 

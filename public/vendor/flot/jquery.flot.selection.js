@@ -104,6 +104,11 @@ The plugin allso adds the following methods to the plot object:
         }
 
         function onMouseDown(e) {
+            if (e.altKey) {
+                var o = plot.getOptions();
+                o.selection.mode = "y";
+                o.crosshair.mode = "y";
+            }
             if (e.which != 1)  // only accept left-click
                 return;
 
@@ -156,6 +161,10 @@ The plugin allso adds the following methods to the plot object:
               plot.isSelecting = false;
             }, 10);
 
+            var o = plot.getOptions();
+            o.selection.mode = "x";
+            o.crosshair.mode = "x";
+
             return false;
         }
 
@@ -190,6 +199,7 @@ The plugin allso adds the following methods to the plot object:
             // Add ctrlKey and metaKey to event
             r.ctrlKey = event.ctrlKey;
             r.metaKey = event.metaKey;
+            r.altKey = event.altKey || plot.getOptions().selection.mode === "y";
 
             plot.getPlaceholder().trigger("plotselected", [ r ]);
 
