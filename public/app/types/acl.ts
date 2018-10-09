@@ -61,6 +61,11 @@ export enum PermissionLevel {
   Admin = 4,
 }
 
+export enum DataSourcePermissionLevel {
+  Query = 1,
+  Admin = 2,
+}
+
 export enum AclTarget {
   Team = 'Team',
   User = 'User',

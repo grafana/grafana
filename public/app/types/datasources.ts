@@ -1,6 +1,19 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
 import { Plugin } from './plugins';
 
+export interface DataSourcePermission {
+  id: number;
+  datasourceId: number;
+  userId: number;
+  userLogin: string;
+  userEmail: string;
+  userAvatarUrl: string;
+  permission: number;
+  permissionName: string;
+  created: string;
+  updated: string;
+}
+
 export interface DataSource {
   id: number;
   orgId: number;
@@ -27,4 +40,5 @@ export interface DataSourcesState {
   dataSourceTypes: Plugin[];
   dataSource: DataSource;
   dataSourceMeta: Plugin;
+  dataSourcePermissions: DataSourcePermission[];
 }

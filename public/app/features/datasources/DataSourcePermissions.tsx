@@ -1,10 +1,20 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from '../../core/components/Animations/SlideDown';
-import AddPermissions from '../../core/components/PermissionList/AddPermission';
-import { AclTarget, AclTargetInfo } from 'app/types/acl';
+import AddDataSourcePermissions from './AddDataSourcePermissions';
+import { AclTarget } from 'app/types/acl';
+import { addDataSourcePermission, loadDataSourcePermissions, removeDataSourcePermission } from './state/actions';
+import { DashboardAcl, DataSourcePermission } from 'app/types';
+import { getRouteParamsId } from '../../core/selectors/location';
+import PermissionList from '../../core/components/PermissionList/PermissionList';
 
-export interface Props {}
+export interface Props {
+  dataSourcePermissions: DataSourcePermission[];
+  pageId: number;
+  addDataSourcePermission: typeof addDataSourcePermission;
+  loadDataSourcePermissions: typeof loadDataSourcePermissions;
+  removeDataSourcePermission: typeof removeDataSourcePermission;
+}
 
 interface State {
   isAdding: boolean;
@@ -15,13 +25,42 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
     isAdding: false,
   };
 
+  componentDidMount() {
+    this.fetchDataSourcePermissions();
+  }
+
+  async fetchDataSourcePermissions() {
+    const { pageId, loadDataSourcePermissions } = this.props;
+
+    return await loadDataSourcePermissions(pageId);
+  }
+
   onOpenAddPermissions = () => {
     this.setState({
       isAdding: true,
     });
   };
 
-  onAddPermission = () => {};
+  onAddPermission = state => {
+    const { pageId, addDataSourcePermission } = this.props;
+    const data = {
+      permission: state.permission,
+      userId: 0,
+      teamId: 0,
+    };
+
+    if (state.type === AclTarget.Team) {
+      data.teamId = state.teamId;
+    } else if (state.team === AclTarget.User) {
+      data.userId = state.userId;
+    }
+
+    addDataSourcePermission(pageId, data);
+  };
+
+  onRemovePermission = (item: DashboardAcl) => {
+    this.props.removeDataSourcePermission(1, 1);
+  };
 
   onCancelAddPermission = () => {
     this.setState({
@@ -30,12 +69,8 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
   };
 
   render() {
+    const { dataSourcePermissions } = this.props;
     const { isAdding } = this.state;
-
-    const dashboardAclTargets: AclTargetInfo[] = [
-      { value: AclTarget.Team, text: 'Team' },
-      { value: AclTarget.User, text: 'User' },
-    ];
 
     return (
       <div>
@@ -47,20 +82,33 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
           </button>
         </div>
         <SlideDown in={isAdding}>
-          <AddPermissions
-            dashboardAclTargets={dashboardAclTargets}
-            showPermissionLevels={false}
-            onAddPermission={this.onAddPermission}
+          <AddDataSourcePermissions
+            onAddPermission={state => this.onAddPermission(state)}
             onCancel={this.onCancelAddPermission}
           />
         </SlideDown>
+        <PermissionList
+          items={dataSourcePermissions}
+          onRemoveItem={this.onRemovePermission}
+          onPermissionChanged={() => {}}
+          isFetching={false}
+        />
       </div>
     );
   }
 }
 
 function mapStateToProps(state) {
-  return {};
+  return {
+    pageId: getRouteParamsId(state.location),
+    dataSourcePermissions: state.dataSources.dataSourcePermissions,
+  };
 }
 
-export default connect(mapStateToProps)(DataSourcePermissions);
+const mapDispatchToProps = {
+  addDataSourcePermission,
+  loadDataSourcePermissions,
+  removeDataSourcePermission,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(DataSourcePermissions);
