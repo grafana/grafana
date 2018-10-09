@@ -55,9 +55,9 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	gceAutoAuthentication := ds.JsonData.Get("gceAutomaticAuthentication").MustBool()
-	logger.Info("gceAutoAuthentication", "gceAutoAuthentication", gceAutoAuthentication)
-	if route.JwtTokenAuth != nil && !gceAutoAuthentication {
+	authenticationType := ds.JsonData.Get("authenticationType").MustString()
+	if route.JwtTokenAuth != nil && authenticationType == "jwt" {
+		logger.Info("authenticationType", "authenticationType", "jwt")
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
@@ -65,7 +65,8 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	if gceAutoAuthentication && route.JwtTokenAuth == nil {
+	if authenticationType == "gce" {
+		logger.Info("authenticationType", "authenticationType", "gce")
 		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
 			logger.Error("Failed to get default token from meta data server", "error", err)

@@ -17,8 +17,8 @@ import (
 )
 
 func (e *StackdriverExecutor) executeTestDataSource(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	gceAutomaticAuthentication := e.dsInfo.JsonData.Get("gceAutomaticAuthentication").MustBool()
-	if gceAutomaticAuthentication {
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString()
+	if authenticationType == "gce" {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
 			return nil, err
