@@ -5,13 +5,23 @@ export class StackdriverConfigCtrl {
   jsonText: string;
   validationErrors: string[] = [];
   inputDataValid: boolean;
+  authenticationTypes: any[];
+  defaultAuthenticationType: string;
 
   /** @ngInject */
   constructor(datasourceSrv) {
+    this.defaultAuthenticationType = 'jwt';
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
+    this.current.jsonData.authenticationType = this.current.jsonData.authenticationType
+      ? this.current.jsonData.authenticationType
+      : this.defaultAuthenticationType;
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
+    this.authenticationTypes = [
+      { key: this.defaultAuthenticationType, value: 'Google JWT File' },
+      { key: 'gce', value: 'Use GCE default Authentication' },
+    ];
   }
 
   save(jwt) {
@@ -67,7 +77,7 @@ export class StackdriverConfigCtrl {
     this.inputDataValid = false;
     this.jsonText = '';
 
-    this.current.jsonData = {};
+    this.current.jsonData = Object.assign({}, { authenticationType: this.current.jsonData.authenticationType });
     this.current.secureJsonData = {};
     this.current.secureJsonFields = {};
   }
