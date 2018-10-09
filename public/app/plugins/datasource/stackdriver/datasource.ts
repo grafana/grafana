@@ -222,12 +222,19 @@ export default class StackdriverDatasource {
 
   async getDefaultProject() {
     try {
-      const projects = await this.getProjects();
-      if (projects && projects.length > 0) {
-        const test = projects.filter(p => p.id === this.projectName)[0];
-        return test;
+      if (this.projectName) {
+        return {
+          id: this.projectName,
+          name: this.projectName,
+        };
       } else {
-        throw new Error('No projects found');
+        const projects = await this.getProjects();
+        if (projects && projects.length > 0) {
+          const test = projects.filter(p => p.id === this.projectName)[0];
+          return test;
+        } else {
+          throw new Error('No projects found');
+        }
       }
     } catch (error) {
       let message = 'Projects cannot be fetched: ';
