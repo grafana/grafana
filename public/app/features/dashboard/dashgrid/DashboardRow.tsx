@@ -87,7 +87,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
     const panels = count === 1 ? 'panel' : 'panels';
-    const editModeEnabled = this.dashboard.meta.canEdit === true;
+    const canEdit = this.dashboard.meta.canEdit === true;
 
     return (
       <div className={classes}>
@@ -98,7 +98,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
             ({count} {panels})
           </span>
         </a>
-        {this.dashboard.meta.canEdit === true && (
+        {canEdit && (
           <div className="dashboard-row__actions">
             <a className="pointer" onClick={this.openSettings}>
               <i className="fa fa-cog" />
@@ -113,7 +113,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
             &nbsp;
           </div>
         )}
-        {editModeEnabled && <div className="dashboard-row__drag grid-drag-handle" />}
+        {canEdit && <div className="dashboard-row__drag grid-drag-handle" />}
       </div>
     );
   }
