@@ -7,11 +7,10 @@ import Prism from 'prismjs';
 import { TypeaheadOutput } from 'app/types/explore';
 
 // dom also includes Element polyfills
-import { getNextCharacter, getPreviousCousin } from './utils/dom';
-import BracesPlugin from './slate-plugins/braces';
-import RunnerPlugin from './slate-plugins/runner';
-
-import TypeaheadField, { TypeaheadInput, TypeaheadFieldState } from './QueryField';
+import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
+import BracesPlugin from 'app/features/explore/slate-plugins/braces';
+import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
+import TypeaheadField, { TypeaheadInput, TypeaheadFieldState } from 'app/features/explore/QueryField';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -261,19 +260,17 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           )}
         </div>
         <div className="prom-query-field-wrapper">
-          <div className="slate-query-field-wrapper">
-            <TypeaheadField
-              additionalPlugins={this.plugins}
-              cleanText={cleanText}
-              initialValue={initialQuery}
-              onTypeahead={this.onTypeahead}
-              onWillApplySuggestion={willApplySuggestion}
-              onValueChanged={this.onChangeQuery}
-              placeholder="Enter a PromQL query"
-              portalOrigin="prometheus"
-              syntaxLoaded={syntaxLoaded}
-            />
-          </div>
+          <TypeaheadField
+            additionalPlugins={this.plugins}
+            cleanText={cleanText}
+            initialValue={initialQuery}
+            onTypeahead={this.onTypeahead}
+            onWillApplySuggestion={willApplySuggestion}
+            onValueChanged={this.onChangeQuery}
+            placeholder="Enter a PromQL query"
+            portalOrigin="prometheus"
+            syntaxLoaded={syntaxLoaded}
+          />
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
           {hint ? (
             <div className="prom-query-field-info text-warning">

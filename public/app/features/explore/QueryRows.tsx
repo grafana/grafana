@@ -2,9 +2,8 @@ import React, { PureComponent } from 'react';
 
 import { QueryTransaction, HistoryItem, Query, QueryHint } from 'app/types/explore';
 
-// TODO make this datasource-plugin-dependent
-import QueryField from './PromQueryField';
-import QueryTransactions from './QueryTransactions';
+import DefaultQueryField from './QueryField';
+import QueryTransactionStatus from './QueryTransactionStatus';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
@@ -24,6 +23,7 @@ interface QueryRowEventHandlers {
 
 interface QueryRowCommonProps {
   className?: string;
+  customComponents: any;
   datasource: any;
   history: HistoryItem[];
   // Temporarily
@@ -37,7 +37,7 @@ type QueryRowProps = QueryRowCommonProps &
     query: string;
   };
 
-class QueryRow extends PureComponent<QueryRowProps> {
+class DefaultQueryRow extends PureComponent<QueryRowProps> {
   onChangeQuery = (value, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
@@ -78,14 +78,15 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { datasource, history, query, supportsLogs, transactions } = this.props;
+    const { customComponents, datasource, history, query, supportsLogs, transactions } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
+    const QueryField = customComponents.QueryField || DefaultQueryField;
     return (
       <div className="query-row">
         <div className="query-row-status">
-          <QueryTransactions transactions={transactions} />
+          <QueryTransactionStatus transactions={transactions} />
         </div>
         <div className="query-row-field">
           <QueryField
@@ -123,12 +124,14 @@ type QueryRowsProps = QueryRowCommonProps &
 
 export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', queries, transactions, ...handlers } = this.props;
+    const { className = '', customComponents, queries, transactions, ...handlers } = this.props;
+    const QueryRow = customComponents.QueryRow || DefaultQueryRow;
     return (
       <div className={className}>
         {queries.map((q, index) => (
           <QueryRow
             key={q.key}
+            customComponents={customComponents}
             index={index}
             query={q.query}
             transactions={transactions.filter(t => t.rowIndex === index)}

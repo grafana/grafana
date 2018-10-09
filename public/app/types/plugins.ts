@@ -6,6 +6,7 @@ export interface PluginExports {
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   PanelOptions?: any;
+  ExploreComponents?: any;
 }
 
 export interface PanelPlugin {

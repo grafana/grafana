@@ -72,7 +72,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     this.placeholdersBuffer = new PlaceholdersBuffer(props.initialValue || '');
 
     // Base plugins
-    this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
+    this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins].filter(p => p);
 
     this.state = {
       suggestions: [],
@@ -434,19 +434,21 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
 
   render() {
     return (
-      <div className="slate-query-field">
-        {this.renderMenu()}
-        <Editor
-          autoCorrect={false}
-          onBlur={this.handleBlur}
-          onKeyDown={this.onKeyDown}
-          onChange={this.onChange}
-          onFocus={this.handleFocus}
-          placeholder={this.props.placeholder}
-          plugins={this.plugins}
-          spellCheck={false}
-          value={this.state.value}
-        />
+      <div className="slate-query-field-wrapper">
+        <div className="slate-query-field">
+          {this.renderMenu()}
+          <Editor
+            autoCorrect={false}
+            onBlur={this.handleBlur}
+            onKeyDown={this.onKeyDown}
+            onChange={this.onChange}
+            onFocus={this.handleFocus}
+            placeholder={this.props.placeholder}
+            plugins={this.plugins}
+            spellCheck={false}
+            value={this.state.value}
+          />
+        </div>
       </div>
     );
   }

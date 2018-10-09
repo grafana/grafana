@@ -52,7 +52,7 @@
   }
 
   .result-options {
-    margin-top: 2 * $panel-margin;
+    margin: 2 * $panel-margin 0;
   }
 
   .time-series-disclaimer {
@@ -321,4 +321,20 @@
 }
 .ReactTable .rt-tr .rt-td:last-child {
   text-align: right;
+}
+
+// TODO Experimental
+
+.cheat-sheet-item {
+  margin: 2*$panel-margin 0;
+  width: 50%;
+}
+
+.cheat-sheet-item__title {
+  font-size: $font-size-h3;
+}
+
+.cheat-sheet-item__expression {
+  margin: $panel-margin/2 0;
+  cursor: pointer;
 }

@@ -4,6 +4,7 @@ import Select from 'react-select';
 import _ from 'lodash';
 
 import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, ResultType } from 'app/types/explore';
+import { RawTimeRange } from 'app/types/series';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -16,14 +17,13 @@ import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer'
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
+import DefaultQueryRows from './QueryRows';
+import DefaultGraph from './Graph';
+import DefaultLogs from './Logs';
+import DefaultTable from './Table';
 import ErrorBoundary from './ErrorBoundary';
-import QueryRows from './QueryRows';
-import Graph from './Graph';
-import Logs from './Logs';
-import Table from './Table';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
-import { RawTimeRange } from 'app/types/series';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -96,6 +96,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       initialQueries = ensureQueries(queries);
       const initialRange = range || { ...DEFAULT_RANGE };
       this.state = {
+        customComponents: {},
         datasource: null,
         datasourceError: null,
         datasourceLoading: null,
@@ -176,8 +177,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       query: this.queryExpressions[i],
     }));
 
+    const customComponents = {
+      ...datasource.exploreComponents,
+    };
+
     this.setState(
       {
+        customComponents,
         datasource,
         datasourceError,
         history,
@@ -330,6 +336,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
+  // Use this in help pages to set page to a single query
+  onClickQuery = query => {
+    const nextQueries = [{ query, key: generateQueryKey() }];
+    this.queryExpressions = nextQueries.map(q => q.query);
+    this.setState({ queries: nextQueries }, this.onSubmit);
+  };
+
   onClickSplit = () => {
     const { onChangeSplit } = this.props;
     if (onChangeSplit) {
@@ -385,9 +398,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               q.query = this.queryExpressions[i];
               return i === index
                 ? {
-                    key: generateQueryKey(index),
-                    query: datasource.modifyQuery(q.query, action),
-                  }
+                  key: generateQueryKey(index),
+                  query: datasource.modifyQuery(q.query, action),
+                }
                 : q;
             });
             nextQueryTransactions = queryTransactions
@@ -721,6 +734,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   render() {
     const { position, split } = this.props;
     const {
+      customComponents,
       datasource,
       datasourceError,
       datasourceLoading,
@@ -760,6 +774,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
     );
     const loading = queryTransactions.some(qt => !qt.done);
+    const showStartPages = queryTransactions.length === 0 && customComponents.StartPage;
+
+    // Custom components
+    const Graph = customComponents.Graph || DefaultGraph;
+    const Logs = customComponents.Logs || DefaultLogs;
+    const QueryRows = customComponents.QueryRows || DefaultQueryRows;
+    const StartPage = customComponents.StartPage;
+    const Table = customComponents.Table || DefaultTable;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -772,12 +794,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                Close Split
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                  Close Split
               </button>
-            </div>
-          )}
+              </div>
+            )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
@@ -836,6 +858,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasource && !datasourceError ? (
           <div className="explore-container">
             <QueryRows
+              customComponents={customComponents}
               datasource={datasource}
               history={history}
               queries={queries}
@@ -847,43 +870,48 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               supportsLogs={supportsLogs}
               transactions={queryTransactions}
             />
-            <div className="result-options">
-              {supportsGraph ? (
-                <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
-                  Graph
-                </button>
-              ) : null}
-              {supportsTable ? (
-                <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
-                  Table
-                </button>
-              ) : null}
-              {supportsLogs ? (
-                <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
-                  Logs
-                </button>
-              ) : null}
-            </div>
-
             <main className="m-t-2">
               <ErrorBoundary>
-                {supportsGraph &&
-                  showingGraph && (
-                    <Graph
-                      data={graphResult}
-                      height={graphHeight}
-                      loading={graphLoading}
-                      id={`explore-graph-${position}`}
-                      range={graphRange}
-                      split={split}
-                    />
-                  )}
-                {supportsTable && showingTable ? (
-                  <div className="panel-container m-t-2">
-                    <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
-                  </div>
-                ) : null}
-                {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+                {showStartPages && <StartPage onClickQuery={this.onClickQuery} />}
+                {!showStartPages && (
+                  <>
+                    <div className="result-options">
+                      {supportsGraph ? (
+                        <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
+                          Graph
+                      </button>
+                      ) : null}
+                      {supportsTable ? (
+                        <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
+                          Table
+                      </button>
+                      ) : null}
+                      {supportsLogs ? (
+                        <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
+                          Logs
+                      </button>
+                      ) : null}
+                    </div>
+
+                    {supportsGraph &&
+                      showingGraph && (
+                        <Graph
+                          data={graphResult}
+                          height={graphHeight}
+                          loading={graphLoading}
+                          id={`explore-graph-${position}`}
+                          range={graphRange}
+                          split={split}
+                        />
+                      )}
+                    {supportsTable && showingTable ? (
+                      <div className="panel-container m-t-2">
+                        <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
+                      </div>
+                    ) : null}
+                    {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+                  </>
+                )}
               </ErrorBoundary>
             </main>
           </div>
