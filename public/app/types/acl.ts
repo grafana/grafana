@@ -78,6 +78,10 @@ export interface AclTargetInfo {
   text: string;
 }
 
+export const dataSourceAclLevels = [
+  { value: DataSourcePermissionLevel.Query, label: 'Query', description: 'Can query data source.' },
+];
+
 export const dashboardAclTargets: AclTargetInfo[] = [
   { value: AclTarget.Team, text: 'Team' },
   { value: AclTarget.User, text: 'User' },

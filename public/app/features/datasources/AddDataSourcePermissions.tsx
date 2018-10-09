@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { UserPicker } from 'app/core/components/Picker/UserPicker';
 import { Team, TeamPicker } from 'app/core/components/Picker/TeamPicker';
 import DescriptionPicker, { OptionWithDescription } from 'app/core/components/Picker/DescriptionPicker';
-import { AclTarget, DataSourcePermissionLevel } from 'app/types/acl';
+import { dataSourceAclLevels, AclTarget, DataSourcePermissionLevel } from 'app/types/acl';
 import { User } from 'app/types';
 
 export interface Props {
@@ -68,9 +68,6 @@ export class AddDataSourcePermissions extends PureComponent<Props, State> {
 
     const pickerClassName = 'width-20';
     const aclTargets = [{ value: AclTarget.Team, text: 'Team' }, { value: AclTarget.User, text: 'User' }];
-    const permissionLevels = [
-      { value: DataSourcePermissionLevel.Query, label: 'Query', description: 'Can query data source.' },
-    ];
 
     return (
       <div className="gf-form-inline cta-form">
@@ -106,7 +103,7 @@ export class AddDataSourcePermissions extends PureComponent<Props, State> {
             )}
             <div className="gf-form">
               <DescriptionPicker
-                optionsWithDesc={permissionLevels}
+                optionsWithDesc={dataSourceAclLevels}
                 onSelected={this.onPermissionChanged}
                 value={permission}
                 disabled={false}

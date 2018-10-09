@@ -2,11 +2,11 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from '../../core/components/Animations/SlideDown';
 import AddDataSourcePermissions from './AddDataSourcePermissions';
+import DataSourcePermissionsList from './DataSourcePermissionsList';
 import { AclTarget } from 'app/types/acl';
 import { addDataSourcePermission, loadDataSourcePermissions, removeDataSourcePermission } from './state/actions';
 import { DashboardAcl, DataSourcePermission } from 'app/types';
 import { getRouteParamsId } from '../../core/selectors/location';
-import PermissionList from '../../core/components/PermissionList/PermissionList';
 
 export interface Props {
   dataSourcePermissions: DataSourcePermission[];
@@ -87,12 +87,7 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
             onCancel={this.onCancelAddPermission}
           />
         </SlideDown>
-        <PermissionList
-          items={dataSourcePermissions}
-          onRemoveItem={this.onRemovePermission}
-          onPermissionChanged={() => {}}
-          isFetching={false}
-        />
+        <DataSourcePermissionsList items={dataSourcePermissions} onRemoveItem={item => this.onRemovePermission(item)} />
       </div>
     );
   }
