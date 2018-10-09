@@ -100,16 +100,19 @@ jobs:
       - image: circleci/node:8.12
     steps:
       - checkout
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+    #   - restore_cache:
+    #       key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: node version
+          command: 'node --version'
       - run:
           name: yarn install
           command: 'yarn install --pure-lockfile --no-progress'
           no_output_timeout: 15m
-      - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-          paths:
-            - node_modules
+    #   - save_cache:
+    #       key: dependency-cache-{{ checksum "yarn.lock" }}
+    #       paths:
+    #         - node_modules
       - run:
           name: frontend tests
           command: './scripts/circle-test-frontend.sh'
