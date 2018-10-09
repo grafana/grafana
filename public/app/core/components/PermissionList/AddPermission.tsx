@@ -4,20 +4,17 @@ import { TeamPicker, Team } from 'app/core/components/Picker/TeamPicker';
 import DescriptionPicker, { OptionWithDescription } from 'app/core/components/Picker/DescriptionPicker';
 import { User } from 'app/types';
 import {
+  dashboardPermissionLevels,
+  dashboardAclTargets,
   AclTarget,
   PermissionLevel,
   NewDashboardAclItem,
   OrgRole,
-  DashboardPermissionInfo,
-  AclTargetInfo,
 } from 'app/types/acl';
 
 export interface Props {
   onAddPermission: (item: NewDashboardAclItem) => void;
   onCancel: () => void;
-  showPermissionLevels?: boolean;
-  dashboardPermissionLevels?: DashboardPermissionInfo[];
-  dashboardAclTargets: AclTargetInfo[];
 }
 
 class AddPermissions extends Component<Props, NewDashboardAclItem> {
@@ -85,7 +82,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   }
 
   render() {
-    const { onCancel, showPermissionLevels, dashboardPermissionLevels, dashboardAclTargets } = this.props;
+    const { onCancel } = this.props;
     const newItem = this.state;
     const pickerClassName = 'width-20';
     const isValid = this.isValid();
@@ -132,17 +129,15 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
               </div>
             ) : null}
 
-            {showPermissionLevels && (
-              <div className="gf-form">
-                <DescriptionPicker
-                  optionsWithDesc={dashboardPermissionLevels}
-                  onSelected={this.onPermissionChanged}
-                  value={newItem.permission}
-                  disabled={false}
-                  className={'gf-form-input--form-dropdown-right'}
-                />
-              </div>
-            )}
+            <div className="gf-form">
+              <DescriptionPicker
+                optionsWithDesc={dashboardPermissionLevels}
+                onSelected={this.onPermissionChanged}
+                value={newItem.permission}
+                disabled={false}
+                className={'gf-form-input--form-dropdown-right'}
+              />
+            </div>
 
             <div className="gf-form">
               <button data-save-permission className="btn btn-success" type="submit" disabled={!isValid}>

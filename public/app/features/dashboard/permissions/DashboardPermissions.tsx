@@ -3,13 +3,7 @@ import { connect } from 'react-redux';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { StoreState, FolderInfo } from 'app/types';
-import {
-  dashboardAclTargets,
-  dashboardPermissionLevels,
-  DashboardAcl,
-  PermissionLevel,
-  NewDashboardAclItem,
-} from 'app/types/acl';
+import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
 import {
   getDashboardPermissions,
   addDashboardPermission,
@@ -87,12 +81,7 @@ export class DashboardPermissions extends PureComponent<Props, State> {
           </div>
         </div>
         <SlideDown in={isAdding}>
-          <AddPermission
-            dashboardAclTargets={dashboardAclTargets}
-            dashboardPermissionLevels={dashboardPermissionLevels}
-            onAddPermission={this.onAddPermission}
-            onCancel={this.onCancelAddPermission}
-          />
+          <AddPermission onAddPermission={this.onAddPermission} onCancel={this.onCancelAddPermission} />
         </SlideDown>
         <PermissionList
           items={permissions}
