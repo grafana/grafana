@@ -55,7 +55,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	authenticationType := ds.JsonData.Get("authenticationType").MustString()
+	authenticationType := ds.JsonData.Get("authenticationType").MustString("jwt")
 	if route.JwtTokenAuth != nil && authenticationType == "jwt" {
 		logger.Info("authenticationType", "authenticationType", "jwt")
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
