@@ -58,6 +58,15 @@ $select-input-bg-disabled: $input-bg-disabled;
   background: $select-input-bg-disabled;
   position: absolute;
   z-index: 2;
+  width: 100%;
+}
+
+.tag-filter .gf-form-select2__menu {
+  width: 100%;
+}
+
+.gf-form-select2__multi-value {
+  display: inline;
 }
 
 .gf-form-select2__option {
@@ -105,4 +114,10 @@ $select-input-bg-disabled: $input-bg-disabled;
   padding: 0;
   border: 0;
   overflow: visible;
+}
+
+.gf-form--has-input-icon {
+  .gf-form-select2__value-container {
+    padding-left: 30px;
+  }
 }
