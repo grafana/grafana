@@ -177,5 +177,10 @@ datasources:
       tokenUri: https://oauth2.googleapis.com/token
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com
     secureJsonData:
-      privateKey: "<contents of your Service Account JWT Key file>"
+      privateKey: |
+        -----BEGIN PRIVATE KEY-----
+        POSEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCb1u1Srw8ICYHS
+        ...
+        yA+23427282348234=
+        -----END PRIVATE KEY-----
 ```
