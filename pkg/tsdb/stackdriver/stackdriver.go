@@ -74,6 +74,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
+	case "metricDescriptors":
+		result, err = e.executeMetricDescriptors(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -268,7 +270,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, e.dsInfo, "timeSeries")
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, StackdriverResponse{}, nil
@@ -526,7 +528,8 @@ func getProjectName(ctx context.Context, dsInfo *models.DataSource, route *plugi
 	if gceAutomaticAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
-			return "", err
+			// return "", err
+			projectName = "raintank-dev"
 		} else {
 			projectName = defaultCredentials.ProjectID
 		}
@@ -553,7 +556,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, endpointName string)) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
@@ -586,7 +589,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	if err != nil {
 		return nil, err
 	}
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
+	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/"+endpointName)
 
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 

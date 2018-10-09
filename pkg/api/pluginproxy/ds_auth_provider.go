@@ -12,7 +12,6 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/oauth2/google"
 )
 
 //ApplyRoute should use the plugin route data to set auth headers and custom headers
@@ -56,6 +55,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	gceAutoAuthentication := ds.JsonData.Get("gceAutomaticAuthentication").MustBool()
+	logger.Info("gceAutoAuthentication", "gceAutoAuthentication", gceAutoAuthentication)
 	if route.JwtTokenAuth != nil && !gceAutoAuthentication {
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
@@ -65,21 +65,22 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	if gceAutoAuthentication {
-		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
+		// tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
 			logger.Error("Failed to get default credentials", "error", err)
 		} else {
-			token, err := tokenSrc.Token()
+			// token, err := tokenSrc.Token()
+			token, err := tokenProvider.getJwtAccessToken(ctx, data)
 			if err != nil {
 				logger.Error("Failed to get default access token", "error", err)
 			} else {
-				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+				// req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 			}
 		}
 	}
 
 	logger.Info("Requesting", "url", req.URL.String())
-
 }
 
 func interpolateString(text string, data templateData) (string, error) {
