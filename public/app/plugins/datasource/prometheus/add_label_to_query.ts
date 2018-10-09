@@ -77,6 +77,7 @@ function addLabelToSelector(selector: string, labelKey: string, labelValue: stri
 
   // Sort labels by key and put them together
   return _.chain(parsedLabels)
+    .uniqWith(_.isEqual)
     .compact()
     .sortBy('key')
     .map(({ key, operator, value }) => `${key}${operator}${value}`)
