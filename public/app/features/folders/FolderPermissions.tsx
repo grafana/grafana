@@ -6,7 +6,13 @@ import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, FolderState } from 'app/types';
-import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
+import {
+  dashboardAclTargets,
+  dashboardPermissionLevels,
+  DashboardAcl,
+  PermissionLevel,
+  NewDashboardAclItem,
+} from 'app/types/acl';
 import {
   getFolderByUid,
   getFolderPermissions,
@@ -93,7 +99,12 @@ export class FolderPermissions extends PureComponent<Props, State> {
             </button>
           </div>
           <SlideDown in={isAdding}>
-            <AddPermission onAddPermission={this.onAddPermission} onCancel={this.onCancelAddPermission} />
+            <AddPermission
+              dashboardAclTargets={dashboardAclTargets}
+              dashboardPermissionLevels={dashboardPermissionLevels}
+              onAddPermission={this.onAddPermission}
+              onCancel={this.onCancelAddPermission}
+            />
           </SlideDown>
           <PermissionList
             items={folder.permissions}
