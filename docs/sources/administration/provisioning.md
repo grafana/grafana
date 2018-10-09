@@ -123,7 +123,7 @@ datasources:
   withCredentials:
   # <bool> mark as default datasource. Max one per org
   isDefault:
-  # <map> fields that will be converted to json and stored in json_data
+  # <map> fields that will be converted to json and stored in jsonData
   jsonData:
      graphiteVersion: "1.1"
      tlsAuth: true
@@ -147,7 +147,7 @@ Please refer to each datasource documentation for specific provisioning examples
 
 #### Json Data
 
-Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use.
+Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
 | Name | Type | Datasource | Description |
 | ---- | ---- | ---- | ---- |
