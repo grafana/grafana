@@ -173,38 +173,53 @@ export default class StackdriverDatasource {
     throw new Error('Template variables support is not yet imlemented');
   }
 
-  testDatasource() {
-    const path = `v3/projects/${this.projectName}/metricDescriptors`;
-    return this.doRequest(`${this.baseUrl}${path}`)
-      .then(response => {
-        if (response.status === 200) {
-          return {
-            status: 'success',
-            message: 'Successfully queried the Stackdriver API.',
-            title: 'Success',
-          };
-        }
+  async testDatasource() {
+    const { data } = await this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        queries: [
+          {
+            refId: 'metricDescriptors',
+            datasourceId: this.id,
+            type: 'metricDescriptors',
+          },
+        ],
+      },
+    });
+    console.log(data);
+    return data;
+    // const path = `v3/projects/${this.projectName}/metricDescriptors`;
+    // return this.doRequest(`${this.baseUrl}${path}`)
+    //   .then(response => {
+    //     if (response.status === 200) {
+    //       return {
+    //         status: 'success',
+    //         message: 'Successfully queried the Stackdriver API.',
+    //         title: 'Success',
+    //       };
+    //     }
 
-        return {
-          status: 'error',
-          message: 'Returned http status code ' + response.status,
-        };
-      })
-      .catch(error => {
-        let message = 'Stackdriver: ';
-        message += error.statusText ? error.statusText + ': ' : '';
+    //     return {
+    //       status: 'error',
+    //       message: 'Returned http status code ' + response.status,
+    //     };
+    //   })
+    //   .catch(error => {
+    //     let message = 'Stackdriver: ';
+    //     message += error.statusText ? error.statusText + ': ' : '';
 
-        if (error.data && error.data.error && error.data.error.code) {
-          // 400, 401
-          message += error.data.error.code + '. ' + error.data.error.message;
-        } else {
-          message += 'Cannot connect to Stackdriver API';
-        }
-        return {
-          status: 'error',
-          message: message,
-        };
-      });
+    //     if (error.data && error.data.error && error.data.error.code) {
+    //       // 400, 401
+    //       message += error.data.error.code + '. ' + error.data.error.message;
+    //     } else {
+    //       message += 'Cannot connect to Stackdriver API';
+    //     }
+    //     return {
+    //       status: 'error',
+    //       message: message,
+    //     };
+    //   });
   }
 
   async getProjects() {
