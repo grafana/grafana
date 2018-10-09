@@ -15,10 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-
 	"golang.org/x/net/context/ctxhttp"
-	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -75,7 +72,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
 	case "metricDescriptors":
-		result, err = e.executeMetricDescriptors(ctx, tsdbQuery)
+		result, err = e.executeTestDataSource(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -521,25 +518,6 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	return nil
 }
 
-func getProjectName(ctx context.Context, dsInfo *models.DataSource, route *plugins.AppPluginRoute) (string, error) {
-	var projectName string
-	gceAutomaticAuthentication := dsInfo.JsonData.Get("gceAutomaticAuthentication").MustBool()
-	logger.Info("gceAutomaticAuthentication", "gceAutomaticAuthentication", gceAutomaticAuthentication)
-	if gceAutomaticAuthentication {
-		defaultCredentials, err := google.FindDefaultCredentials(ctx, route.JwtTokenAuth.Scopes...)
-		if err != nil {
-			// return "", err
-			projectName = "raintank-dev"
-		} else {
-			projectName = defaultCredentials.ProjectID
-		}
-	} else {
-		projectName = dsInfo.JsonData.Get("defaultProject").MustString()
-	}
-	logger.Info("projectName", "projectName", projectName)
-	return projectName, nil
-}
-
 func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	bucketBound := "0"
 	if n == 0 {
@@ -583,12 +561,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 		}
 	}
 
-	// projectName := dsInfo.JsonData.Get("defaultProject").MustString()
-	// logger.Info("projectName", "projectName", projectName)
-	projectName, err := getProjectName(ctx, dsInfo, stackdriverRoute)
-	if err != nil {
-		return nil, err
-	}
+	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
 	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/"+endpointName)
 
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)

@@ -174,52 +174,45 @@ export default class StackdriverDatasource {
   }
 
   async testDatasource() {
-    const { data } = await this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        queries: [
-          {
-            refId: 'metricDescriptors',
-            datasourceId: this.id,
-            type: 'metricDescriptors',
-          },
-        ],
-      },
-    });
-    console.log(data);
-    return data;
-    // const path = `v3/projects/${this.projectName}/metricDescriptors`;
-    // return this.doRequest(`${this.baseUrl}${path}`)
-    //   .then(response => {
-    //     if (response.status === 200) {
-    //       return {
-    //         status: 'success',
-    //         message: 'Successfully queried the Stackdriver API.',
-    //         title: 'Success',
-    //       };
-    //     }
+    try {
+      await this.backendSrv.datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          queries: [
+            {
+              refId: 'metricDescriptors',
+              datasourceId: this.id,
+              type: 'metricDescriptors',
+            },
+          ],
+        },
+      });
+      return {
+        status: 'success',
+        message: 'Successfully queried the Stackdriver API.',
+        title: 'Success',
+      };
+    } catch (error) {
+      console.log(error.data.error);
+      let message = 'Stackdriver: ';
+      message += error.statusText ? error.statusText + ': ' : '';
 
-    //     return {
-    //       status: 'error',
-    //       message: 'Returned http status code ' + response.status,
-    //     };
-    //   })
-    //   .catch(error => {
-    //     let message = 'Stackdriver: ';
-    //     message += error.statusText ? error.statusText + ': ' : '';
-
-    //     if (error.data && error.data.error && error.data.error.code) {
-    //       // 400, 401
-    //       message += error.data.error.code + '. ' + error.data.error.message;
-    //     } else {
-    //       message += 'Cannot connect to Stackdriver API';
-    //     }
-    //     return {
-    //       status: 'error',
-    //       message: message,
-    //     };
-    //   });
+      if (error.data && error.data.error && error.data.error) {
+        try {
+          const res = JSON.parse(error.data.error);
+          message += res.error.code + '. ' + res.error.message;
+        } catch (err) {
+          message += error.data.error;
+        }
+      } else {
+        message += 'Cannot connect to Stackdriver API';
+      }
+      return {
+        status: 'error',
+        message: message,
+      };
+    }
   }
 
   async getProjects() {
