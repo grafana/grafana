@@ -220,8 +220,8 @@ export class PanelCtrl {
 
   calculatePanelHeight() {
     if (this.panel.fullscreen) {
-      const docHeight = $(window).height();
-      const editHeight = Math.floor(docHeight * 0.4);
+      const docHeight = $('.react-grid-layout').height();
+      const editHeight = Math.floor(docHeight * 0.35);
       const fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
     } else {

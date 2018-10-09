@@ -7,7 +7,7 @@
                         class="dashboard-settings">
     </dashboard-settings>
 
-    <div class="dashboard-container">
+		<div class="dashboard-container" ng-class="{'dashboard-container--has-submenu': ctrl.dashboard.meta.submenuEnabled}">
       <dashboard-submenu ng-if="ctrl.dashboard.meta.submenuEnabled" dashboard="ctrl.dashboard">
       </dashboard-submenu>
 

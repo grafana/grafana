@@ -57,7 +57,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Queries', metricsTabDirective, 1, 'fa fa-database');
+    this.addEditorTab('Metrics', metricsTabDirective, 1, 'fa fa-database');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 

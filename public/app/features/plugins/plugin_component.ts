@@ -8,7 +8,7 @@ import { importPluginModule } from './plugin_loader';
 import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
 
 /** @ngInject */
-function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
+function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache, $timeout) {
   function getTemplate(component) {
     if (component.template) {
       return $q.when(component.template);
@@ -207,10 +207,14 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
     // let a binding digest cycle complete before adding to dom
     setTimeout(() => {
-      elem.append(child);
       scope.$applyAsync(() => {
-        console.log('post appendAndCompile, broadcast refresh', scope.panel);
-        scope.$broadcast('component-did-mount');
+        elem.append(child);
+        setTimeout(() => {
+          scope.$applyAsync(() => {
+            console.log('post appendAndCompile, broadcast refresh', scope.panel);
+            scope.$broadcast('component-did-mount');
+          });
+        });
       });
     });
   }

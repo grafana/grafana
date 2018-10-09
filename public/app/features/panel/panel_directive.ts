@@ -90,10 +90,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         ctrl.dashboard.setPanelFocus(0);
       }
 
-      function panelHeightUpdated() {
-        // panelContent.css({ height: ctrl.height + 'px' });
-      }
-
       function resizeScrollableContent() {
         if (panelScrollbar) {
           panelScrollbar.update();
@@ -138,7 +134,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       ctrl.events.on('panel-size-changed', () => {
         ctrl.calculatePanelHeight();
-        panelHeightUpdated();
         $timeout(() => {
           console.log('panel directive panel size changed, render');
           resizeScrollableContent();
@@ -148,7 +143,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       // set initial height
       ctrl.calculatePanelHeight();
-      panelHeightUpdated();
 
       ctrl.events.on('render', () => {
         console.log('panel_directive: render', ctrl.panel.id);
