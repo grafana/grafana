@@ -45,7 +45,7 @@ func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 
 // GET /api/org/users
 func GetOrgUsersForCurrentOrg(c *m.ReqContext) Response {
-	return getOrgUsersHelper(c.OrgId, c.Params("query"), c.ParamsInt("limit"))
+	return getOrgUsersHelper(c.OrgId, c.Query("query"), c.QueryInt("limit"))
 }
 
 // GET /api/orgs/:orgId/users
