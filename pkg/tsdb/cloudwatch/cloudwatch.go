@@ -362,6 +362,7 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Meta = simplejson.New()
 		queryResponses = append(queryResponses, queryRes)
 	}
 
@@ -565,6 +566,12 @@ func parseResponse(resp *cloudwatch.GetMetricStatisticsOutput, query *CloudWatch
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Meta = simplejson.New()
+		if len(resp.Datapoints) > 0 && resp.Datapoints[0].Unit != nil {
+			if unit, ok := cloudwatchUnitMappings[*resp.Datapoints[0].Unit]; ok {
+				queryRes.Meta.Set("unit", unit)
+			}
+		}
 	}
 
 	return queryRes, nil
