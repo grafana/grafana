@@ -22,7 +22,7 @@ func (e *StackdriverExecutor) executeMetricDescriptors(ctx context.Context, tsdb
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo, "metricDescriptors")
+	req, err := e.createRequest(ctx, e.dsInfo, "metricDescriptorss")
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
@@ -35,7 +35,11 @@ func (e *StackdriverExecutor) executeMetricDescriptors(ctx context.Context, tsdb
 
 	data, err := e.unmarshalMetricDescriptors(res)
 	if err != nil {
-		return nil, err
+		queryResult.ErrorString = fmt.Sprintf(`Status code: %d`, res.StatusCode)
+		logger.Info("error2", "ErrorString", queryResult.ErrorString)
+		queryResult.Error = err
+		result.Results[tsdbQuery.Queries[0].RefId] = queryResult
+		return result, nil
 	}
 
 	parts := strings.Split(req.URL.Path, "/")
@@ -73,7 +77,7 @@ func (e *StackdriverExecutor) unmarshalMetricDescriptors(res *http.Response) (Me
 
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
-		return MetricDescriptorsResponse{}, fmt.Errorf(string(body))
+		return MetricDescriptorsResponse{}, fmt.Errorf(`Status code: %d - %s`, res.StatusCode, string(body))
 	}
 
 	var data MetricDescriptorsResponse
