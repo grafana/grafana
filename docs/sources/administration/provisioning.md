@@ -123,7 +123,7 @@ datasources:
   withCredentials:
   # <bool> mark as default datasource. Max one per org
   isDefault:
-  # <map> fields that will be converted to json and stored in json_data
+  # <map> fields that will be converted to json and stored in jsonData
   jsonData:
      graphiteVersion: "1.1"
      tlsAuth: true
