@@ -12,6 +12,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/oauth2/google"
 )
 
 //ApplyRoute should use the plugin route data to set auth headers and custom headers
@@ -64,18 +65,16 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	if gceAutoAuthentication {
-		// tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
+	if gceAutoAuthentication && route.JwtTokenAuth == nil {
+		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
-			logger.Error("Failed to get default credentials", "error", err)
+			logger.Error("Failed to get default token from meta data server", "error", err)
 		} else {
-			// token, err := tokenSrc.Token()
-			token, err := tokenProvider.getJwtAccessToken(ctx, data)
+			token, err := tokenSrc.Token()
 			if err != nil {
-				logger.Error("Failed to get default access token", "error", err)
+				logger.Error("Failed to get default access token from meta data server", "error", err)
 			} else {
-				// req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
-				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 			}
 		}
 	}
