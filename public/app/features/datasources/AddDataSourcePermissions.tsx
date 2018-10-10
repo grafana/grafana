@@ -78,17 +78,15 @@ export class AddDataSourcePermissions extends PureComponent<Props, State> {
           <h5>Add Permission For</h5>
           <div className="gf-form-inline">
             <div className="gf-form">
-              <div className="gf-form-select-wrapper">
-                <select className="gf-form-input gf-size-auto" value={type} onChange={this.onTypeChanged}>
-                  {aclTargets.map((option, idx) => {
-                    return (
-                      <option key={idx} value={option.value}>
-                        {option.text}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+              <select className="gf-form-input gf-size-auto" value={type} onChange={this.onTypeChanged}>
+                {aclTargets.map((option, idx) => {
+                  return (
+                    <option key={idx} value={option.value}>
+                      {option.text}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
             {type === AclTarget.User && (
               <div className="gf-form">
