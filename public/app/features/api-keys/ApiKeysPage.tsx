@@ -112,7 +112,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             buttonIcon: 'fa fa-plus',
             buttonLink: 'org/apikeys/new',
             buttonTitle: ' New API Key',
-            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
+            proTip: 'Remember you can provide view-only API access to other applications.',
             proTipLink: '',
             proTipLinkTitle: '',
             proTipTarget: '_blank',
