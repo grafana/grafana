@@ -553,7 +553,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, endpointName string)) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, endpointName string) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
