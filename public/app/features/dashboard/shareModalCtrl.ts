@@ -1,6 +1,9 @@
 import angular from 'angular';
-import config from 'app/core/config';
 import moment from 'moment';
+
+// Context provides access to user preferences for data formatting
+import { contextSrv } from 'app/core/services/context_srv';
+import config from 'app/core/config';
 
 /** @ngInject */
 export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
@@ -48,6 +51,12 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
     params.from = range.from.valueOf();
     params.to = range.to.valueOf();
     params.orgId = config.bootData.user.orgId;
+
+    // Graph date formatting
+    const { monthDayFormat } = contextSrv.user;
+    if (monthDayFormat && monthDayFormat !== 'browser') {
+      params.monthDayFormat = monthDayFormat;
+    }
 
     if ($scope.options.includeTemplateVars) {
       templateSrv.fillVariableValuesForUrl(params);
