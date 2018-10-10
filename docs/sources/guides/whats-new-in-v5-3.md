@@ -24,15 +24,17 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 
 ## Google Stackdriver
 
+{{< docs-imagebox img="/img/docs/v53/stackdriver-with-heatmap.png"  max-width= "600px" class="docs-image--no-shadow docs-image--right" >}}
+
 Grafana v5.3 ships with built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) and enables you to visualize your Stackdriver metrics in Grafana. 
 
-Getting started with the plugin is easy. Simply create a GCE Service account that has access to the Stackdriver api scope, download the JWT file from Google and upload it in the Stackdriver datasource config page in Grafana and you should have a secure server-to-server authentication setup. Like other core plugins, Stackdriver has built in support for alerting. It also comes with support for heatmaps and basic variables. 
+Getting started with the plugin is easy. Simply create a GCE Service account that has access to the Stackdriver API scope, download the Service Account key file from Google and upload it on the Stackdriver datasource config page in Grafana and you should have a secure server-to-server authentication setup. Like other core plugins, Stackdriver has built-in support for alerting. It also comes with support for heatmaps and basic variables.
 
-If you're already accustomed to the Stackdriver Metrics Explorer UI, you'll notice that there are a lot of similarities in the query editor in Grafana. It is possible to add filters using wildcards and regular expressions. You can do Group By, Primary Aggregation and Alignment.
+If you're already accustomed to the Stackdriver Metrics Explorer UI, you'll notice that there are a lot of similarities to the query editor in Grafana. It is possible to add filters using wildcards and regular expressions. You can do Group By, Primary Aggregation and Alignment.
 
-Alias By allows you to format the legend the way you want, and it's a feature that is not yet present in the Metrics Explorer. Two other features that are only supported in the Grafana plugin is the possibility to manually set the Alignment Period in the query editor and to add Annotations queries. 
+Alias By allows you to format the legend the way you want, and it's a feature that is not yet present in the Metrics Explorer. Two other features that are only supported in the Grafana plugin are the abilities to manually set the Alignment Period in the query editor and to add Annotations queries.
 
-The Grafana Stackdriver plugin comes with support for automatic unit detection. I.e Grafana will try to map the Stackdriver unit type to a corresponding unit type in Grafana, and if successful the panel Y-axes will be updated accordingly to display the correct unit of measure. This is the first core plugin to provide support for unit detection, and it is our intetion to provide support for this in other core plugins in the near future.
+The Grafana Stackdriver plugin comes with support for automatic unit detection. Grafana will try to map the Stackdriver unit type to a corresponding unit type in Grafana, and if successful the panel Y-axes will be updated accordingly to display the correct unit of measure. This is the first core plugin to provide support for unit detection, and it is our intention to provide support for this in other core plugins in the near future.
 
 The datasource is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
