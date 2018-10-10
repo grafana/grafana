@@ -7,10 +7,10 @@ export interface Props {
 }
 
 export const PickerOption = (props: OptionProps<any>) => {
-  const { children } = props;
+  const { children, className } = props;
   return (
     <components.Option {...props}>
-      <div className={`description-picker-option__button btn btn-link width-19`}>{children}</div>
+      <div className={`description-picker-option__button btn btn-link ${className}`}>{children}</div>
     </components.Option>
   );
 };

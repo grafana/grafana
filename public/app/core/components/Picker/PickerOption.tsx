@@ -8,10 +8,10 @@ interface ExtendedOptionProps extends OptionProps<any> {
 }
 
 export const PickerOption = (props: ExtendedOptionProps) => {
-  const { children, data } = props;
+  const { children, data, className } = props;
   return (
     <components.Option {...props}>
-      <div className={`description-picker-option__button btn btn-link width-19`}>
+      <div className={`description-picker-option__button btn btn-link ${className}`}>
         {data.avatarUrl && <img src={data.avatarUrl} alt={data.label} className="user-picker-option__avatar" />}
         {children}
       </div>

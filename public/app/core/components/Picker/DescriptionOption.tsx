@@ -8,10 +8,10 @@ interface ExtendedOptionProps extends OptionProps<any> {
 }
 
 export const Option = (props: ExtendedOptionProps) => {
-  const { children, isSelected, data } = props;
+  const { children, isSelected, data, className } = props;
   return (
     <components.Option {...props}>
-      <div className={`description-picker-option__button btn btn-link width-19`}>
+      <div className={`description-picker-option__button btn btn-link ${className}`}>
         {isSelected && <i className="fa fa-check pull-right" aria-hidden="true" />}
         <div className="gf-form">{children}</div>
         <div className="gf-form">
