@@ -131,7 +131,7 @@ export default class CloudWatchDatasource {
       if (res.results) {
         _.forEach(res.results, queryRes => {
           _.forEach(queryRes.series, series => {
-            data.push({ target: series.name, datapoints: series.points });
+            data.push({ target: series.name, datapoints: series.points, unit: queryRes.meta.unit || 'none' });
           });
         });
       }

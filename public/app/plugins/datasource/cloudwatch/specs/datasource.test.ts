@@ -60,6 +60,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -221,6 +222,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'TargetResponseTime_p90.00',
