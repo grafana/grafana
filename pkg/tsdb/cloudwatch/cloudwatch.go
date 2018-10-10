@@ -129,10 +129,12 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 				return err
 			}
-			result.Results[queryRes.RefId] = queryRes
 			if err != nil {
-				result.Results[queryRes.RefId].Error = err
+				result.Results[query.RefId] = &tsdb.QueryResult{
+					Error: err,
+				}
 			}
+			result.Results[queryRes.RefId] = queryRes
 			return nil
 		})
 	}
@@ -269,7 +271,7 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 	for _, query := range queries {
 		// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
-			return nil, errors.New("too long query period")
+			return queryResponses, errors.New("too long query period")
 		}
 
 		mdq := &cloudwatch.MetricDataQuery{
