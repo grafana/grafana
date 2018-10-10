@@ -48,9 +48,9 @@ export class HelpCtrl {
       ],
       Crosshair: [
         { keys: ['click + drag'], description: 'Zoom in x-axis' },
-        { keys: ['mod + click + drag'], description: 'Zoom in y-axis' },
+        { keys: ['alt + click + drag'], description: 'Zoom in y-axis' },
         { keys: ['doubleclick'], description: 'Zoom out' },
-        { keys: ['mod+doubleclick'], description: 'Reset y-axis zoom' },
+        { keys: ['alt + doubleclick'], description: 'Reset y-axis zoom' },
       ],
     };
   }
