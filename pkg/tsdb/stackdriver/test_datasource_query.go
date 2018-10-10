@@ -21,7 +21,7 @@ func (e *StackdriverExecutor) executeTestDataSource(ctx context.Context, tsdbQue
 	}
 
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString("jwt")
-	if authenticationType == "gce" {
+	if authenticationType == gceAuthentication {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
