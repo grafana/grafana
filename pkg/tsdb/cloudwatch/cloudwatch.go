@@ -133,6 +133,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				result.Results[query.RefId] = &tsdb.QueryResult{
 					Error: err,
 				}
+				return nil
 			}
 			result.Results[queryRes.RefId] = queryRes
 			return nil
