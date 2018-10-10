@@ -1,0 +1,56 @@
+<page-header model="ctrl.navModel"></page-header>
+
+<div class="page-container page-body">
+	<table class="filter-table form-inline">
+		<tbody>
+			<tr>
+				<td colspan="2" class="admin-settings-section">License Details</td>
+			</tr>
+			<tr>
+				<td>License ID</td>
+				<td>{{token.lid}} (<a href="{{token.iss}}/licenses/{{token.lid}}" target="_blank" rel="noopener noreferer">View Details</a>)</td>
+			</tr>
+			<tr>
+				<td>Licensed URL</td>
+				<td><a href="{{token.sub}}" target="_blank" rel="noopener noreferer">{{token.sub}}</a></td>
+			</tr>
+			<tr>
+				<td>Company</td>
+				<td>{{token.company}}</td>
+			</tr>
+			<tr>
+				<td>Products</td>
+				<td>
+					<div ng-repeat="product in token.prod">{{product}}</div>
+				</td>
+			</tr>
+			<tr>
+				<td>Max Users</td>
+				<td>{{token.maxUsers}}</td>
+			</tr>
+			<tr>
+				<td>License Issued</td>
+				<td>{{token.nbf*1000 | date:'medium'}}</td>
+			</tr>
+			<tr>
+				<td>License Expires</td>
+				<td>{{token.lexp*1000 | date:'medium'}}</td>
+			</tr>
+			<tr>
+				<td colspan="2" class="admin-settings-section">Token Details</td>
+			</tr>
+			<tr>
+				<td>Token ID</td>
+				<td>{{token.jti}}</td>
+			</tr>
+			<tr>
+				<td>Token Issued</td>
+				<td>{{token.iat*1000 | date:'medium'}}</td>
+			</tr>
+			<tr>
+				<td>Token Expires</td>
+				<td>{{token.exp*1000 | date:'medium'}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
