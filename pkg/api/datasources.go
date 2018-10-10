@@ -22,16 +22,19 @@ func GetDataSources(c *m.ReqContext) Response {
 		Datasources: query.Result,
 	}
 
+	datasources := []*m.DataSource{}
 	if err := bus.Dispatch(&dsFilterQuery); err != nil {
 		if err != bus.ErrHandlerNotFound {
 			return Error(500, "Could not get datasources", err)
 		}
 
-		dsFilterQuery.Result = query.Result
+		datasources = query.Result
+	} else {
+		datasources = dsFilterQuery.Result
 	}
 
 	result := make(dtos.DataSourceList, 0)
-	for _, ds := range dsFilterQuery.Result {
+	for _, ds := range datasources {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
@@ -60,26 +63,6 @@ func GetDataSources(c *m.ReqContext) Response {
 	sort.Sort(result)
 
 	return JSON(200, &result)
-}
-
-func hasRequiredDatasourcePermission(dsId int64, permission m.DsPermissionType, user *m.SignedInUser) Response {
-	query := m.HasRequiredDataSourcePermissionQuery{
-		Id:                 dsId,
-		User:               user,
-		RequiredPermission: permission,
-	}
-
-	if err := bus.Dispatch(&query); err != nil {
-		if err == bus.ErrHandlerNotFound {
-			return nil
-		}
-		if err == m.ErrDataSourceAccessDenied {
-			return Error(403, err.Error(), nil)
-		}
-		return Error(500, "Failed to check data source permissions", err)
-	}
-
-	return nil
 }
 
 func GetDataSourceById(c *m.ReqContext) Response {
