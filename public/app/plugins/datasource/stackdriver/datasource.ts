@@ -6,6 +6,7 @@ export default class StackdriverDatasource {
   url: string;
   baseUrl: string;
   projectName: string;
+  queryPromise: Promise<any>;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
@@ -99,31 +100,34 @@ export default class StackdriverDatasource {
   }
 
   async query(options) {
-    const result = [];
-    const data = await this.getTimeSeries(options);
-    if (data.results) {
-      Object['values'](data.results).forEach(queryRes => {
-        if (!queryRes.series) {
-          return;
-        }
-
-        const unit = this.resolvePanelUnitFromTargets(options.targets);
-        queryRes.series.forEach(series => {
-          let timeSerie: any = {
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          };
-          if (unit) {
-            timeSerie = { ...timeSerie, unit };
+    this.queryPromise = new Promise(async resolve => {
+      const result = [];
+      const data = await this.getTimeSeries(options);
+      if (data.results) {
+        Object['values'](data.results).forEach(queryRes => {
+          if (!queryRes.series) {
+            return;
           }
-          result.push(timeSerie);
+          this.projectName = queryRes.meta.defaultProject;
+          const unit = this.resolvePanelUnitFromTargets(options.targets);
+          queryRes.series.forEach(series => {
+            let timeSerie: any = {
+              target: series.name,
+              datapoints: series.points,
+              refId: queryRes.refId,
+              meta: queryRes.meta,
+            };
+            if (unit) {
+              timeSerie = { ...timeSerie, unit };
+            }
+            result.push(timeSerie);
+          });
         });
-      });
-    }
+      }
 
-    return { data: result };
+      resolve({ data: result });
+    });
+    return this.queryPromise;
   }
 
   async annotationQuery(options) {
@@ -181,9 +185,9 @@ export default class StackdriverDatasource {
         data: {
           queries: [
             {
-              refId: 'metricDescriptors',
+              refId: 'testDatasource',
               datasourceId: this.id,
-              type: 'metricDescriptors',
+              type: 'testDatasource',
             },
           ],
         },
@@ -215,27 +219,10 @@ export default class StackdriverDatasource {
     }
   }
 
-  async getProjects() {
-    const response = await this.doRequest(`/cloudresourcemanager/v1/projects`);
-    return response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
-  }
-
   async getDefaultProject() {
     try {
-      if (this.projectName) {
-        return {
-          id: this.projectName,
-          name: this.projectName,
-        };
-      } else {
-        const projects = await this.getProjects();
-        if (projects && projects.length > 0) {
-          const test = projects.filter(p => p.id === this.projectName)[0];
-          return test;
-        } else {
-          throw new Error('No projects found');
-        }
-      }
+      await this.queryPromise;
+      return this.projectName;
     } catch (error) {
       let message = 'Projects cannot be fetched: ';
       message += error.statusText ? error.statusText + ': ' : '';
@@ -252,12 +239,13 @@ export default class StackdriverDatasource {
         message += 'Cannot connect to Stackdriver API';
       }
       appEvents.emit('ds-request-error', message);
+      return '';
     }
   }
 
-  async getMetricTypes(projectId: string) {
+  async getMetricTypes(projectName: string) {
     try {
-      const metricsApiPath = `v3/projects/${projectId}/metricDescriptors`;
+      const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
       const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
 
       const metrics = data.metricDescriptors.map(m => {

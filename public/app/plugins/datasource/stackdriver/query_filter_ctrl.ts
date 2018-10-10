@@ -79,12 +79,17 @@ export class StackdriverFilterCtrl {
   }
 
   async getCurrentProject() {
-    this.target.project = await this.datasource.getDefaultProject();
+    return new Promise(async resolve => {
+      if (!this.target.defaultProject || this.target.defaultProject === 'loading project...') {
+        this.target.defaultProject = await this.datasource.getDefaultProject();
+      }
+      resolve(this.target.defaultProject);
+    });
   }
 
   async loadMetricDescriptors() {
-    if (this.target.project.id !== 'default') {
-      this.metricDescriptors = await this.datasource.getMetricTypes(this.target.project.id);
+    if (this.target.defaultProject !== 'loading project...') {
+      this.metricDescriptors = await this.datasource.getMetricTypes(this.target.defaultProject);
       this.services = this.getServicesList();
       this.metrics = this.getMetricsList();
       return this.metricDescriptors;
