@@ -1,9 +1,5 @@
 # 5.4.0 (unreleased)
 
-### New Features
-
-* **Cloudwatch**: Automatically set graph yaxis unit [#13575](https://github.com/grafana/grafana/issues/13575), thx [@mtanda](https://github.com/mtanda)
-
 ### Minor
 
 * **Datasource Proxy**: Keep trailing slash for datasource proxy requests [#13326](https://github.com/grafana/grafana/pull/13326), thx [@ryantxu](https://github.com/ryantxu)
@@ -12,6 +8,7 @@
 
 * **Stackdriver**: Filter wildcards and regex matching are not yet supported [#13495](https://github.com/grafana/grafana/issues/13495)
 * **Stackdriver**: Support the distribution metric type for heatmaps [#13559](https://github.com/grafana/grafana/issues/13559)
+* **Cloudwatch**: Automatically set graph yaxis unit [#13575](https://github.com/grafana/grafana/issues/13575), thx [@mtanda](https://github.com/mtanda)
 
 # 5.3.0-beta3 (2018-10-03)
 
