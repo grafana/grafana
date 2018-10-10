@@ -1,5 +1,7 @@
 ﻿import { ApiKeysState } from 'app/types';
 
+export const getApiKeysCount = (state: ApiKeysState) => state.keys.length;
+
 export const getApiKeys = (state: ApiKeysState) => {
   const regex = RegExp(state.searchQuery, 'i');
 
