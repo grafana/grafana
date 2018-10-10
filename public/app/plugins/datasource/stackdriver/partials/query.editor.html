@@ -40,21 +40,33 @@
   <div class="gf-form" ng-show="ctrl.showLastQuery">
     <pre class="gf-form-pre">{{ctrl.lastQueryMeta.rawQueryString}}</pre>
   </div>
-  <div class="gf-form grafana-info-box" style="padding: 0" ng-show="ctrl.showHelp">
-<pre class="gf-form-pre alert alert-info"  style="margin-right: 0"><h5>Alias Patterns</h5>Format the legend keys any way you want by using alias patterns.
+  <div class="grafana-info-box m-t-2 markdown-html" ng-show="ctrl.showHelp">
+    <h5>Alias Patterns</h5>
 
-<label>Example: </label><code ng-non-bindable>{{metric.name}} - {{metric.label.instance_name}}</code>
+    Format the legend keys any way you want by using alias patterns.<br /> <br />
 
-<label>Result: </label><code ng-non-bindable>cpu/usage_time - server1-europe-west-1</code>
+    Example: <code ng-non-bindable>{{metric.name}} - {{metric.label.instance_name}}</code><br />
+    Result: &nbsp;&nbsp;<code ng-non-bindable>cpu/usage_time - server1-europe-west-1</code><br /><br />
 
-<label>Patterns:</label>
-<code ng-non-bindable>{{metric.type}}</code> = metric type e.g. compute.googleapis.com/instance/cpu/usage_time
-<code ng-non-bindable>{{metric.name}}</code> = name part of metric e.g. instance/cpu/usage_time
-<code ng-non-bindable>{{metric.service}}</code> = service part of metric e.g. compute
-
-<code ng-non-bindable>{{metric.label.label_name}}</code> = Metric label metadata e.g. metric.label.instance_name
-<code ng-non-bindable>{{resource.label.label_name}}</code> = Resource label metadata e.g. resource.label.zone
-</pre>
+    <strong>Patterns</strong><br />
+    <ul>
+      <li>
+        <code ng-non-bindable>{{metric.type}}</code> = metric type e.g. compute.googleapis.com/instance/cpu/usage_time
+      </li>
+      <li>
+        <code ng-non-bindable>{{metric.name}}</code> = name part of metric e.g. instance/cpu/usage_time
+      </li>
+      <li>
+        <code ng-non-bindable>{{metric.service}}</code> = service part of metric e.g. compute
+      </li>
+      <li>
+        <code ng-non-bindable>{{metric.label.label_name}}</code> = Metric label metadata e.g.
+        metric.label.instance_name
+      </li>
+      <li>
+        <code ng-non-bindable>{{resource.label.label_name}}</code> = Resource label metadata e.g. resource.label.zone
+      </li>
+    </ul>
   </div>
   <div class="gf-form" ng-show="ctrl.lastQueryError">
     <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
