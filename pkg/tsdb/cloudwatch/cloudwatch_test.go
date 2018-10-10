@@ -38,7 +38,7 @@ func TestCloudWatch(t *testing.T) {
 			modelJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
-			res, err := parseQuery(modelJson)
+			res, err := parseQuery(modelJson, "us-east-1")
 			So(err, ShouldBeNil)
 			So(res.Region, ShouldEqual, "us-east-1")
 			So(res.Namespace, ShouldEqual, "AWS/ApplicationELB")

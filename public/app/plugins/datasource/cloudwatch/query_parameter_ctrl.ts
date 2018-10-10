@@ -11,6 +11,7 @@ export class CloudWatchQueryParameter {
       scope: {
         target: '=',
         datasource: '=',
+        panelCtrl: '=',
         onChange: '&',
       },
     };
@@ -30,7 +31,7 @@ export class CloudWatchQueryParameterCtrl {
       target.region = target.region || 'default';
       target.id = target.id || '';
       target.expression = target.expression || '';
-      target.returnData = target.returnData || false;
+      target.returnData = typeof target.hide === 'undefined' ? true : !target.hide;
       target.highResolution = target.highResolution || false;
 
       $scope.regionSegment = uiSegmentSrv.getSegmentForValue($scope.target.region, 'select region');
@@ -211,6 +212,20 @@ export class CloudWatchQueryParameterCtrl {
       $scope.onChange();
     };
 
+    $scope.idChanged = () => {
+      _.each($scope.panelCtrl.panel.targets, target => {
+        if (target.expression !== '') {
+          this.renderTargetFull(target, $scope.panelCtrl.panel.targets);
+        }
+      });
+      $scope.onChange();
+    };
+
+    $scope.expressionChanged = () => {
+      this.renderTargetFull($scope.target, $scope.panelCtrl.panel.targets);
+      $scope.onChange();
+    };
+
     $scope.transformToSegments = addTemplateVars => {
       return results => {
         const segments = _.map(results, segment => {
@@ -237,6 +252,41 @@ export class CloudWatchQueryParameterCtrl {
     };
 
     $scope.init();
+  }
+
+  renderTargetFull(target, targets) {
+    const targetsByRefId = _.keyBy(_.cloneDeep(targets), 'refId');
+
+    let region = target.region;
+
+    function trackTargetRefs(targetsByRefId, refId, expression) {
+      if (!expression) {
+        return;
+      }
+      _.each(targetsByRefId, (t, id) => {
+        if (id !== refId && !targetsByRefId[t.refId].referenced) {
+          const m = expression.match(/METRICS\("([^"]+)"\)/);
+          const match = (new RegExp(t.id + '([^0-9a-zA-Z_]|$)')).test(expression)
+            || (m && (new RegExp(m[1])).test(t.id));
+          if (match) {
+            region = t.region;
+            targetsByRefId[t.refId].referenced = true;
+            trackTargetRefs(targetsByRefId, t.refId, t.expression);
+          }
+        }
+      });
+    }
+    trackTargetRefs(targetsByRefId, target.refId, target.expression);
+
+    const targetFull = _.filter(targetsByRefId, t => {
+      return target.refId === t.refId || targetsByRefId[t.refId].referenced;
+    }).map(t => {
+      delete t.targetFull;
+      return t;
+    });
+
+    target.region = region;
+    target.targetFull = targetFull;
   }
 }
 
