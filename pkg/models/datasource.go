@@ -217,3 +217,9 @@ type GetDataSourcePermissionsForUserQuery struct {
 	User   *SignedInUser
 	Result map[int64]DsPermissionType
 }
+
+type DatasourcesPermissionFilterQuery struct {
+	User        *SignedInUser
+	Datasources []*DataSource
+	Result      []*DataSource
+}
