@@ -523,6 +523,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const logsButtonActive = showingLogs ? 'active' : '';
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
+    const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -555,8 +556,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 placeholder="Select datasource"
                 loadingMessage={() => 'Loading datasources...'}
                 noOptionsMessage={() => 'No datasources found'}
-                getOptionValue={i => i.value}
-                getOptionLabel={i => i.label}
+                value={selectedDatasource}
                 components={{
                   Option: PickerOption,
                   IndicatorsContainer,
