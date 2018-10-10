@@ -14,6 +14,12 @@ export interface DataSourcePermission {
   updated: string;
 }
 
+export interface DataSourcePermissionDTO {
+  datasourceId: number;
+  enabled: boolean;
+  permissions: DataSourcePermission[];
+}
+
 export interface DataSource {
   id: number;
   orgId: number;
@@ -40,5 +46,5 @@ export interface DataSourcesState {
   dataSourceTypes: Plugin[];
   dataSource: DataSource;
   dataSourceMeta: Plugin;
-  dataSourcePermissions: DataSourcePermission[];
+  dataSourcePermission: DataSourcePermissionDTO;
 }

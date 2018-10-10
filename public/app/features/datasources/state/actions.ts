@@ -1,11 +1,10 @@
 import { ThunkAction } from 'redux-thunk';
-import { DataSource, Plugin, StoreState } from 'app/types';
+import { DataSource, DataSourcePermissionDTO, Plugin, StoreState } from 'app/types';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from '../../../core/actions';
 import { UpdateLocationAction } from '../../../core/actions/location';
 import { buildNavModel } from './navModel';
-import { DataSourcePermission } from '../../../types/datasources';
 
 export enum ActionTypes {
   LoadDataSources = 'LOAD_DATA_SOURCES',
@@ -55,7 +54,7 @@ export interface LoadDataSourceMetaAction {
 
 export interface LoadDataSourcePermissionsAction {
   type: ActionTypes.LoadDataSourcePermissions;
-  payload: DataSourcePermission[];
+  payload: DataSourcePermissionDTO;
 }
 
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
@@ -79,10 +78,10 @@ const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadDataSourceTypesAc
 });
 
 const dataSourcePermissionsLoaded = (
-  dataSourcePermissions: DataSourcePermission[]
+  dataSourcePermission: DataSourcePermissionDTO
 ): LoadDataSourcePermissionsAction => ({
   type: ActionTypes.LoadDataSourcePermissions,
-  payload: dataSourcePermissions,
+  payload: dataSourcePermission,
 });
 
 export const setDataSourcesSearchQuery = (searchQuery: string): SetDataSourcesSearchQueryAction => ({
@@ -163,7 +162,14 @@ export function loadDataSourceTypes(): ThunkResult<void> {
 export function loadDataSourcePermissions(id: number): ThunkResult<void> {
   return async dispatch => {
     const response = await getBackendSrv().get(`/api/datasources/${id}/permissions`);
-    dispatch(dataSourcePermissionsLoaded(response.permissions));
+    dispatch(dataSourcePermissionsLoaded(response));
+  };
+}
+
+export function enableDataSourcePermissions(id: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post(`/api/datasources/${id}/enable-permissions`, {});
+    dispatch(loadDataSourcePermissions(id));
   };
 }
 

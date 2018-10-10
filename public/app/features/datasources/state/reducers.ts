@@ -1,4 +1,4 @@
-import { DataSource, DataSourcePermission, DataSourcesState, Plugin } from 'app/types';
+import { DataSource, DataSourcePermissionDTO, DataSourcesState, Plugin } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 
@@ -11,7 +11,7 @@ const initialState: DataSourcesState = {
   dataSourceTypes: [] as Plugin[],
   dataSourceTypeSearchQuery: '',
   dataSourceMeta: {} as Plugin,
-  dataSourcePermissions: [] as DataSourcePermission[],
+  dataSourcePermission: {} as DataSourcePermissionDTO,
 };
 
 export const dataSourcesReducer = (state = initialState, action: Action): DataSourcesState => {
@@ -38,7 +38,7 @@ export const dataSourcesReducer = (state = initialState, action: Action): DataSo
       return { ...state, dataSourceMeta: action.payload };
 
     case ActionTypes.LoadDataSourcePermissions:
-      return { ...state, dataSourcePermissions: action.payload };
+      return { ...state, dataSourcePermission: action.payload };
   }
 
   return state;

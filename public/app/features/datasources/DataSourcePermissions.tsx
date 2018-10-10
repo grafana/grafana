@@ -4,14 +4,20 @@ import SlideDown from '../../core/components/Animations/SlideDown';
 import AddDataSourcePermissions from './AddDataSourcePermissions';
 import DataSourcePermissionsList from './DataSourcePermissionsList';
 import { AclTarget } from 'app/types/acl';
-import { addDataSourcePermission, loadDataSourcePermissions, removeDataSourcePermission } from './state/actions';
+import {
+  addDataSourcePermission,
+  enableDataSourcePermissions,
+  loadDataSourcePermissions,
+  removeDataSourcePermission,
+} from './state/actions';
 import { DashboardAcl, DataSourcePermission } from 'app/types';
 import { getRouteParamsId } from '../../core/selectors/location';
 
 export interface Props {
-  dataSourcePermissions: DataSourcePermission[];
+  dataSourcePermission: { enabled: boolean; datasouceId: number; permissions: DataSourcePermission[] };
   pageId: number;
   addDataSourcePermission: typeof addDataSourcePermission;
+  enableDataSourcePermissions: typeof enableDataSourcePermissions;
   loadDataSourcePermissions: typeof loadDataSourcePermissions;
   removeDataSourcePermission: typeof removeDataSourcePermission;
 }
@@ -39,6 +45,11 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
     this.setState({
       isAdding: true,
     });
+  };
+
+  onEnablePermissions = () => {
+    const { pageId, enableDataSourcePermissions } = this.props;
+    enableDataSourcePermissions(pageId);
   };
 
   onAddPermission = state => {
@@ -69,25 +80,51 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dataSourcePermissions } = this.props;
+    const { dataSourcePermission } = this.props;
     const { isAdding } = this.state;
+    const isPermissionsEnabled = dataSourcePermission.enabled;
 
     return (
       <div>
         <div className="page-action-bar">
           <h3 className="page-sub-heading">Permissions</h3>
           <div className="page-action-bar__spacer" />
-          <button className="btn btn-success pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
-            <i className="fa fa-plus" /> Add Permission
-          </button>
+          {!isPermissionsEnabled && (
+            <button className="btn btn-success pull-right" onClick={this.onEnablePermissions} disabled={isAdding}>
+              Enable Permissions
+            </button>
+          )}
+          {isPermissionsEnabled && (
+            <button className="btn btn-success pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+              <i className="fa fa-plus" /> Add Permission
+            </button>
+          )}
         </div>
-        <SlideDown in={isAdding}>
-          <AddDataSourcePermissions
-            onAddPermission={state => this.onAddPermission(state)}
-            onCancel={this.onCancelAddPermission}
-          />
-        </SlideDown>
-        <DataSourcePermissionsList items={dataSourcePermissions} onRemoveItem={item => this.onRemovePermission(item)} />
+        {!isPermissionsEnabled ? (
+          <div className="empty-list-cta">
+            <div className="empty-list-cta__title">{'Permissions not enabled for this data source.'}</div>
+            <button onClick={this.onEnablePermissions} className="empty-list-cta__button btn btn-xlarge btn-success">
+              {'Enable'}
+            </button>
+            <div className="empty-list-cta__pro-tip">
+              <i className="fa fa-rocket" /> ProTip:{' '}
+              {'Only admins will be able to query the data source after you enable permissions.'}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <SlideDown in={isAdding}>
+              <AddDataSourcePermissions
+                onAddPermission={state => this.onAddPermission(state)}
+                onCancel={this.onCancelAddPermission}
+              />
+            </SlideDown>
+            <DataSourcePermissionsList
+              items={dataSourcePermission.permissions}
+              onRemoveItem={item => this.onRemovePermission(item)}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -96,12 +133,13 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
 function mapStateToProps(state) {
   return {
     pageId: getRouteParamsId(state.location),
-    dataSourcePermissions: state.dataSources.dataSourcePermissions,
+    dataSourcePermission: state.dataSources.dataSourcePermission,
   };
 }
 
 const mapDispatchToProps = {
   addDataSourcePermission,
+  enableDataSourcePermissions,
   loadDataSourcePermissions,
   removeDataSourcePermission,
 };
