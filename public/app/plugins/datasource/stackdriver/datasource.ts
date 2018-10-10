@@ -198,13 +198,13 @@ export default class StackdriverDatasource {
         title: 'Success',
       };
     } catch (error) {
-      console.log(error.data.error);
       let message = 'Stackdriver: ';
       message += error.statusText ? error.statusText + ': ' : '';
-
-      if (error.data && error.data.error && error.data.error) {
+      if (error.data && error.data.error) {
         try {
+          console.log(error.data.error);
           const res = JSON.parse(error.data.error);
+          console.log(res);
           message += res.error.code + '. ' + res.error.message;
         } catch (err) {
           message += error.data.error;
