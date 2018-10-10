@@ -45,6 +45,10 @@ export class StackdriverConfigCtrl {
       this.validationErrors.push('Client Email field missing in JWT file.');
     }
 
+    if (!jwt.project_id || jwt.project_id.length === 0) {
+      this.validationErrors.push('Project Id field missing in JWT file.');
+    }
+
     if (this.validationErrors.length === 0) {
       this.inputDataValid = true;
       return true;
