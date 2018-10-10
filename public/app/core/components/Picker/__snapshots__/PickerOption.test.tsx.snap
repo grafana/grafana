@@ -3,7 +3,7 @@
 exports[`PickerOption renders correctly 1`] = `
 <div>
   <div
-    className="description-picker-option__button btn btn-link"
+    className="description-picker-option__button btn btn-link class-for-user-picker"
   >
     <img
       alt="User picker label"
