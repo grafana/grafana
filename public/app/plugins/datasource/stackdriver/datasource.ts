@@ -221,8 +221,25 @@ export default class StackdriverDatasource {
 
   async getDefaultProject() {
     try {
-      await this.queryPromise;
-      return this.projectName;
+      if (!this.projectName) {
+        const { data } = await this.backendSrv.datasourceRequest({
+          url: '/api/tsdb/query',
+          method: 'POST',
+          data: {
+            queries: [
+              {
+                refId: 'defaultProject',
+                type: 'defaultProject',
+                datasourceId: this.id,
+              },
+            ],
+          },
+        });
+        this.projectName = data.results.defaultProject.meta.defaultProject;
+        return this.projectName;
+      } else {
+        return this.projectName;
+      }
     } catch (error) {
       let message = 'Projects cannot be fetched: ';
       message += error.statusText ? error.statusText + ': ' : '';

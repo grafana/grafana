@@ -8,27 +8,26 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"golang.org/x/net/context/ctxhttp"
-	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 func (e *StackdriverExecutor) executeTestDataSource(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: tsdbQuery.Queries[0].RefId}
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
+
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString("jwt")
 	if authenticationType == "gce" {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
 		}
-		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
-	}
 
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: tsdbQuery.Queries[0].RefId}
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
 	}
 
 	req, err := e.createRequest(ctx, e.dsInfo, "metricDescriptors")
@@ -55,16 +54,6 @@ func (e *StackdriverExecutor) executeTestDataSource(ctx context.Context, tsdbQue
 	result.Results[tsdbQuery.Queries[0].RefId].Meta.Set("defaultProject", defaultProject)
 
 	return result, nil
-}
-
-func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, error) {
-	defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
-	if err != nil {
-		return "", err
-	} else {
-		logger.Info("projectName", "projectName", defaultCredentials.ProjectID)
-		return defaultCredentials.ProjectID, nil
-	}
 }
 
 func transformMetricDescriptorResponseToTable(data MetricDescriptorsResponse) *tsdb.Table {

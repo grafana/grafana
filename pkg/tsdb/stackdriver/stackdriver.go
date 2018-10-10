@@ -16,8 +16,10 @@ import (
 	"time"
 
 	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -71,8 +73,10 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
-	case "metricDescriptors":
+	case "testDatasource":
 		result, err = e.executeTestDataSource(ctx, tsdbQuery)
+	case "defaultProject":
+		result, err = e.getGceDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -85,6 +89,16 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
+	}
+
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString("jwt")
+	if authenticationType == "gce" {
+		defaultProject, err := e.getDefaultProject(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		}
+
+		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
 	}
 
 	queries, err := e.buildQueries(tsdbQuery)
@@ -567,4 +581,20 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
 	return req, nil
+}
+
+func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, error) {
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString("jwt")
+	if authenticationType == "gce" {
+		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
+		if err != nil {
+			return "raintank-production", nil
+			// return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		} else {
+			logger.Info("projectName", "projectName", defaultCredentials.ProjectID)
+			return defaultCredentials.ProjectID, nil
+		}
+	} else {
+		return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
+	}
 }
