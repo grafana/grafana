@@ -1,7 +1,5 @@
-import _ from 'lodash';
 import React from 'react';
 import AsyncSelect from 'react-select/lib/Async';
-import { TagValue } from './TagValue';
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
@@ -23,7 +21,6 @@ export class TagFilter extends React.Component<Props, any> {
 
     this.searchTags = this.searchTags.bind(this);
     this.onChange = this.onChange.bind(this);
-    this.onTagRemove = this.onTagRemove.bind(this);
   }
 
   searchTags(query) {
@@ -40,14 +37,6 @@ export class TagFilter extends React.Component<Props, any> {
     this.props.onSelect(newTags);
   }
 
-  onTagRemove(tag) {
-    let newTags = _.without(this.props.tags, tag.label);
-    newTags = _.map(newTags, tag => {
-      return { value: tag };
-    });
-    this.props.onSelect(newTags);
-  }
-
   render() {
     const selectOptions = {
       classNamePrefix: 'gf-form-select2',
@@ -61,49 +50,26 @@ export class TagFilter extends React.Component<Props, any> {
       noOptionsMessage: () => 'No tags found',
       getOptionValue: i => i.value,
       getOptionLabel: i => i.label,
+      value: this.props.tags,
       styles: ResetStyles,
       components: {
         Option: TagOption,
         IndicatorsContainer,
         NoOptionsMessage,
-        MultiValueContainer: props => {
-          const { data } = props;
-          return (
-            <components.MultiValueContainer {...props}>
-              <TagBadge label={data.label} removeIcon={true} count={data.count} />
-            </components.MultiValueContainer>
-          );
+        MultiValueLabel: () => {
+          return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
         },
         MultiValueRemove: props => {
-          return <components.MultiValueRemove {...props}>X</components.MultiValueRemove>;
+          const { data } = props;
+
+          return (
+            <components.MultiValueRemove {...props}>
+              <TagBadge key={data.label} label={data.label} removeIcon={true} count={data.count} />
+            </components.MultiValueRemove>
+          );
         },
       },
     };
-
-    // <AsyncSelect
-    // classNamePrefix={`gf-form-select2`}
-    // isMulti={false}
-    // isLoading={isLoading}
-    // defaultOptions={true}
-    // loadOptions={this.debouncedSearch}
-    // onChange={onSelected}
-    // className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
-    // styles={ResetStyles}
-    // components={{
-    //   Option: PickerOption,
-    //   IndicatorsContainer,
-    //   NoOptionsMessage,
-    // }}
-    // placeholder="Select user"
-    // filterOption={(option: { label: string }, searchText?: string) => {
-    //   return option.label.includes(searchText);
-    // }}
-    // loadingMessage={() => 'Loading...'}
-    // noOptionsMessage={() => 'No users found'}
-    // getOptionValue={i => i.id}
-    // getOptionLabel={i => i.label}
-
-    selectOptions['valueComponent'] = TagValue;
 
     return (
       <div className="gf-form gf-form--has-input-icon gf-form--grow">

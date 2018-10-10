@@ -46,19 +46,13 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select2__input {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 8px 10px;
+  padding-left: 5px;
 }
 
 .gf-form-select2__menu {
   background: $select-input-bg-disabled;
   position: absolute;
   z-index: 2;
-  width: 100%;
 }
 
 .tag-filter .gf-form-select2__menu {
@@ -83,9 +77,16 @@ $select-input-bg-disabled: $input-bg-disabled;
   }
 }
 
+.gf-form-select2__control--is-focused .gf-form-select2__placeholder {
+  display: none;
+}
+
 .gf-form-select2__value-container {
   display: table-cell;
   padding: 8px 10px;
+  > div {
+    display: inline-block;
+  }
 }
 
 .gf-form-select2__indicators {

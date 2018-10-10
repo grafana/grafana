@@ -13,7 +13,7 @@ export const TagOption = (props: ExtendedOptionProps) => {
   return (
     <components.Option {...props}>
       <div className={`tag-filter-option btn btn-link ${className || ''}`}>
-        <TagBadge label={label} removeIcon={true} count={data.count} />
+        <TagBadge label={label} removeIcon={false} count={data.count} />
       </div>
     </components.Option>
   );
