@@ -32,7 +32,7 @@ If you're already accustomed to the Stackdriver Metrics Explorer UI, you'll noti
 
 Alias By allows you to format the legend the way you want, and it's a feature that is not yet present in the Metrics Explorer. Two other features that are only supported in the Grafana plugin is the possibility to manually set the Alignment Period in the query editor and to add Annotations queries. 
 
-The Grafana Stackdriver plugin comes with support for automatic unit detection. I.e Grafana will try to map the Stackdriver unit type to a corresponding unit type in Grafana, and if successfull the panel Y-axes will be updated accordingly to display the correct unit of measure. This is the first core plugin to provide support for unit detection, and it is our intetion to provide support for this in other core plugins in the near future.
+The Grafana Stackdriver plugin comes with support for automatic unit detection. I.e Grafana will try to map the Stackdriver unit type to a corresponding unit type in Grafana, and if successful the panel Y-axes will be updated accordingly to display the correct unit of measure. This is the first core plugin to provide support for unit detection, and it is our intetion to provide support for this in other core plugins in the near future.
 
 The datasource is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
