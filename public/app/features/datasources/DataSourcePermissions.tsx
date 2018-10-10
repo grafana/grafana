@@ -11,11 +11,11 @@ import {
   loadDataSourcePermissions,
   removeDataSourcePermission,
 } from './state/actions';
-import { DataSourcePermission } from 'app/types';
+import { DataSourcePermissionDTO } from 'app/types';
 import { getRouteParamsId } from '../../core/selectors/location';
 
 export interface Props {
-  dataSourcePermission: { enabled: boolean; datasouceId: number; permissions: DataSourcePermission[] };
+  dataSourcePermission: DataSourcePermissionDTO;
   pageId: number;
   addDataSourcePermission: typeof addDataSourcePermission;
   enableDataSourcePermissions: typeof enableDataSourcePermissions;
@@ -64,17 +64,13 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
     const { pageId, addDataSourcePermission } = this.props;
     const data = {
       permission: state.permission,
-      userId: 0,
-      teamId: 0,
     };
 
     if (state.type === AclTarget.Team) {
-      data.teamId = state.teamId;
+      addDataSourcePermission(pageId, Object.assign(data, { teamId: state.teamId }));
     } else if (state.type === AclTarget.User) {
-      data.userId = state.userId;
+      addDataSourcePermission(pageId, Object.assign(data, { userId: state.userId }));
     }
-
-    addDataSourcePermission(pageId, data);
   };
 
   onRemovePermission = item => {

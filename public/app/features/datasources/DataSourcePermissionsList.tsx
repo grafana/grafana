@@ -3,7 +3,7 @@ import { DataSourcePermission } from '../../types';
 import { dataSourceAclLevels, DataSourcePermissionLevel } from '../../types/acl';
 import DescriptionPicker from '../../core/components/Picker/DescriptionPicker';
 
-interface Props {
+export interface Props {
   items: DataSourcePermission[];
   onRemoveItem: (item) => void;
 }
