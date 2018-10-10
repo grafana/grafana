@@ -6,6 +6,7 @@ import DataSourcePermissionsList from './DataSourcePermissionsList';
 import { AclTarget } from 'app/types/acl';
 import {
   addDataSourcePermission,
+  disableDataSourcePermissions,
   enableDataSourcePermissions,
   loadDataSourcePermissions,
   removeDataSourcePermission,
@@ -18,6 +19,7 @@ export interface Props {
   pageId: number;
   addDataSourcePermission: typeof addDataSourcePermission;
   enableDataSourcePermissions: typeof enableDataSourcePermissions;
+  disableDataSourcePermissions: typeof disableDataSourcePermissions;
   loadDataSourcePermissions: typeof loadDataSourcePermissions;
   removeDataSourcePermission: typeof removeDataSourcePermission;
 }
@@ -50,6 +52,12 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
   onEnablePermissions = () => {
     const { pageId, enableDataSourcePermissions } = this.props;
     enableDataSourcePermissions(pageId);
+  };
+
+  onDisablePermissions = () => {
+    const { pageId, disableDataSourcePermissions } = this.props;
+
+    disableDataSourcePermissions(pageId);
   };
 
   onAddPermission = state => {
@@ -89,16 +97,19 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
         <div className="page-action-bar">
           <h3 className="page-sub-heading">Permissions</h3>
           <div className="page-action-bar__spacer" />
-          {!isPermissionsEnabled && (
-            <button className="btn btn-success pull-right" onClick={this.onEnablePermissions} disabled={isAdding}>
-              Enable Permissions
-            </button>
-          )}
-          {isPermissionsEnabled && (
-            <button className="btn btn-success pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+          {isPermissionsEnabled && [
+            <button
+              key="add-permission"
+              className="btn btn-success pull-right"
+              onClick={this.onOpenAddPermissions}
+              disabled={isAdding}
+            >
               <i className="fa fa-plus" /> Add Permission
-            </button>
-          )}
+            </button>,
+            <button key="disable-permissions" className="btn btn-danger pull-right" onClick={this.onDisablePermissions}>
+              Disable Permissions
+            </button>,
+          ]}
         </div>
         {!isPermissionsEnabled ? (
           <div className="empty-list-cta">
@@ -140,6 +151,7 @@ function mapStateToProps(state) {
 const mapDispatchToProps = {
   addDataSourcePermission,
   enableDataSourcePermissions,
+  disableDataSourcePermissions,
   loadDataSourcePermissions,
   removeDataSourcePermission,
 };

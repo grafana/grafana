@@ -173,6 +173,13 @@ export function enableDataSourcePermissions(id: number): ThunkResult<void> {
   };
 }
 
+export function disableDataSourcePermissions(id: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post(`/api/datasources/${id}/disable-permissions`, {});
+    dispatch(loadDataSourcePermissions(id));
+  };
+}
+
 export function addDataSourcePermission(id: number, data: object): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().post(`/api/datasources/${id}/permissions`, data);
