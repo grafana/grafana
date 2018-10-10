@@ -72,7 +72,7 @@ $select-input-bg-disabled: $input-bg-disabled;
     color: $dropdownLinkColorHover;
     @include left-brand-border-gradient();
     .fa {
-      color: $white;
+      color: $input-color-select-arrow;
     }
   }
 }
@@ -92,8 +92,9 @@ $select-input-bg-disabled: $input-bg-disabled;
 .gf-form-select-box__indicators {
   display: table-cell;
   vertical-align: middle;
-  padding-right: 5px;
-  width: 25px;
+  text-align: right;
+  padding-right: 10px;
+  width: 20px;
 }
 
 .gf-form-select-box__select-arrow {
