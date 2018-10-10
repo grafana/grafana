@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"golang.org/x/net/context/ctxhttp"
 
@@ -20,6 +21,7 @@ func (e *StackdriverExecutor) executeTestDataSource(ctx context.Context, tsdbQue
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
+	logger.Info("executeTestDataSource-authenticationType", "debug", e.dsInfo.JsonData.Get("authenticationType"))
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultProject, err := e.getDefaultProject(ctx)

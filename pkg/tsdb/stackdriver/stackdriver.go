@@ -96,6 +96,7 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
+	logger.Info("executeTimeSeriesQuery-authenticationType", "debug", e.dsInfo.JsonData.Get("authenticationType"))
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultProject, err := e.getDefaultProject(ctx)
