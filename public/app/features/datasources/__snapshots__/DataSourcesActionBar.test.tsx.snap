@@ -33,9 +33,6 @@ exports[`Render should render component 1`] = `
     className="page-header__cta btn btn-success"
     href="datasources/new"
   >
-    <i
-      className="fa fa-plus"
-    />
     Add data source
   </a>
 </div>

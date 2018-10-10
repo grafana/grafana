@@ -39,7 +39,6 @@ export class DataSourcesActionBar extends PureComponent<Props> {
         </div>
         <div className="page-action-bar__spacer" />
         <a className="page-header__cta btn btn-success" href="datasources/new">
-          <i className="fa fa-plus" />
           Add data source
         </a>
       </div>
