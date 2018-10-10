@@ -5,7 +5,9 @@ export const IndicatorsContainer = props => {
   const isOpen = props.selectProps.menuIsOpen;
   return (
     <components.IndicatorsContainer {...props}>
-      <span className={`gf-form-select2__select-arrow ${isOpen ? `gf-form-select2__select-arrow--reversed` : ''}`} />
+      <span
+        className={`gf-form-select-box__select-arrow ${isOpen ? `gf-form-select-box__select-arrow--reversed` : ''}`}
+      />
     </components.IndicatorsContainer>
   );
 };

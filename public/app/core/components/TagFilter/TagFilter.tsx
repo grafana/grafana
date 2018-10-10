@@ -39,7 +39,7 @@ export class TagFilter extends React.Component<Props, any> {
 
   render() {
     const selectOptions = {
-      classNamePrefix: 'gf-form-select2',
+      classNamePrefix: 'gf-form-select-box',
       isMulti: true,
       defaultOptions: true,
       loadOptions: this.searchTags,

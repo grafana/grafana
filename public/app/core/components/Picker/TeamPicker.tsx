@@ -62,7 +62,7 @@ export class TeamPicker extends Component<Props, State> {
     return (
       <div className="user-picker">
         <AsyncSelect
-          classNamePrefix={`gf-form-select2`}
+          classNamePrefix={`gf-form-select-box`}
           isMulti={false}
           isLoading={isLoading}
           defaultOptions={true}

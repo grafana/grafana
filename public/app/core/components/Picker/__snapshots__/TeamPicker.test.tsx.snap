@@ -9,15 +9,15 @@ exports[`TeamPicker renders correctly 1`] = `
     onKeyDown={[Function]}
   >
     <div
-      className="css-0 gf-form-select2__control"
+      className="css-0 gf-form-select-box__control"
       onMouseDown={[Function]}
       onTouchEnd={[Function]}
     >
       <div
-        className="css-0 gf-form-select2__value-container"
+        className="css-0 gf-form-select-box__value-container"
       >
         <div
-          className="css-0 gf-form-select2__placeholder"
+          className="css-0 gf-form-select-box__placeholder"
         >
           Select a team
         </div>
@@ -25,7 +25,7 @@ exports[`TeamPicker renders correctly 1`] = `
           className="css-0"
         >
           <div
-            className="gf-form-select2__input"
+            className="gf-form-select-box__input"
             style={
               Object {
                 "display": "inline-block",
@@ -108,10 +108,10 @@ exports[`TeamPicker renders correctly 1`] = `
         </div>
       </div>
       <div
-        className="css-0 gf-form-select2__indicators"
+        className="css-0 gf-form-select-box__indicators"
       >
         <span
-          className="gf-form-select2__select-arrow "
+          className="gf-form-select-box__select-arrow "
         />
       </div>
     </div>

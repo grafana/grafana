@@ -27,7 +27,7 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
               optionsWithDesc={dashboardPermissionLevels}
               onSelected={() => {}}
               disabled={true}
-              className={'gf-form-select2__control--menu-right'}
+              className={'gf-form-select-box__control--menu-right'}
             />
           </div>
         </td>

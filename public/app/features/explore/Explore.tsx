@@ -544,7 +544,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
-                classNamePrefix={`gf-form-select2`}
+                classNamePrefix={`gf-form-select-box`}
                 isMulti={false}
                 isLoading={datasourceLoading}
                 isClearable={false}

@@ -15,7 +15,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   @include box-shadow($shadow);
 }
 
-.gf-form-select2__control {
+.gf-form-select-box__control {
   @include select-control();
   border: 1px solid $input-border-color;
   color: $input-color;
@@ -29,45 +29,45 @@ $select-input-bg-disabled: $input-bg-disabled;
   position: relative;
 }
 
-.gf-form-select2__control--is-focused {
+.gf-form-select-box__control--is-focused {
   background-color: $input-bg;
   @include select-control-focus();
 }
 
-.gf-form-select2__control--is-disabled {
+.gf-form-select-box__control--is-disabled {
   background-color: $select-input-bg-disabled;
 }
 
-.gf-form-select2__control--menu-right {
-  .gf-form-select2__menu {
+.gf-form-select-box__control--menu-right {
+  .gf-form-select-box__menu {
     right: 0;
     left: unset;
   }
 }
 
-.gf-form-select2__input {
+.gf-form-select-box__input {
   padding-left: 5px;
 }
 
-.gf-form-select2__menu {
+.gf-form-select-box__menu {
   background: $select-input-bg-disabled;
   position: absolute;
   z-index: 2;
 }
 
-.tag-filter .gf-form-select2__menu {
+.tag-filter .gf-form-select-box__menu {
   width: 100%;
 }
 
-.gf-form-select2__multi-value {
+.gf-form-select-box__multi-value {
   display: inline;
 }
 
-.gf-form-select2__option {
+.gf-form-select-box__option {
   border-left: 2px solid transparent;
 
-  &.gf-form-select2__option--is-focused,
-  &.gf-form-select2__option--is-selected {
+  &.gf-form-select-box__option--is-focused,
+  &.gf-form-select-box__option--is-selected {
     background-color: $dropdownLinkBackgroundHover;
     color: $dropdownLinkColorHover;
     @include left-brand-border-gradient();
@@ -77,11 +77,11 @@ $select-input-bg-disabled: $input-bg-disabled;
   }
 }
 
-.gf-form-select2__control--is-focused .gf-form-select2__placeholder {
+.gf-form-select-box__control--is-focused .gf-form-select-box__placeholder {
   display: none;
 }
 
-.gf-form-select2__value-container {
+.gf-form-select-box__value-container {
   display: table-cell;
   padding: 8px 10px;
   > div {
@@ -89,14 +89,14 @@ $select-input-bg-disabled: $input-bg-disabled;
   }
 }
 
-.gf-form-select2__indicators {
+.gf-form-select-box__indicators {
   display: table-cell;
   vertical-align: middle;
   padding-right: 5px;
   width: 25px;
 }
 
-.gf-form-select2__select-arrow {
+.gf-form-select-box__select-arrow {
   border-color: $input-color-select-arrow transparent transparent;
   border-style: solid;
   border-width: 5px 5px 2.5px;
@@ -105,7 +105,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   width: 0;
   position: relative;
 
-  &.gf-form-select2__select-arrow--reversed {
+  &.gf-form-select-box__select-arrow--reversed {
     border-color: transparent transparent $input-color-select-arrow;
     top: -2px;
     border-width: 0 5px 5px;
@@ -118,7 +118,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form--has-input-icon {
-  .gf-form-select2__value-container {
+  .gf-form-select-box__value-container {
     padding-left: 30px;
   }
 }
