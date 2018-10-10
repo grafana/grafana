@@ -38,6 +38,37 @@
 	</div>
 </div>
 
+<b>Connection limits</b>
+
+<div class="gf-form-group">
+	<div class="gf-form max-width-15">
+		<span class="gf-form-label width-7">Max open</span>
+		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
+		<info-popover mode="right-absolute">
+			The maximum number of open connections to the database. If <i>Max idle connections</i> is greater than 0 and the
+			<i>Max open connections</i> is less than <i>Max idle connections</i>, then <i>Max idle connections</i> will be
+			reduced to match the <i>Max open connections</i> limit. If set to 0, there is no limit on the number of open
+			connections.
+		</info-popover>
+	</div>
+	<div class="gf-form max-width-15">
+		<span class="gf-form-label width-7">Max idle</span>
+		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
+		<info-popover mode="right-absolute">
+			The maximum number of connections in the idle connection pool. If <i>Max open connections</i> is greater than 0 but
+			less than the <i>Max idle connections</i>, then the <i>Max idle connections</i> will be reduced to match the
+			<i>Max open connections</i> limit. If set to 0, no idle connections are retained.
+		</info-popover>
+	</div>
+	<div class="gf-form max-width-15">
+		<span class="gf-form-label width-7">Max lifetime</span>
+		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
+		<info-popover mode="right-absolute">
+			The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.
+		</info-popover>
+	</div>
+</div>
+
 <h3 class="page-heading">PostgreSQL details</h3>
 
 <div class="gf-form-group">
