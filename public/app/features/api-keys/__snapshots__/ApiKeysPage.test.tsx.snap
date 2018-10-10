@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Render should render API keys table 1`] = `
+exports[`Render should render API keys table if there are any keys 1`] = `
 <div>
   <PageHeader
     model={Object {}}
@@ -270,7 +270,7 @@ exports[`Render should render API keys table 1`] = `
 </div>
 `;
 
-exports[`Render should render component 1`] = `
+exports[`Render should render CTA if theres are no API keys 1`] = `
 <div>
   <PageHeader
     model={Object {}}
@@ -278,136 +278,19 @@ exports[`Render should render component 1`] = `
   <div
     className="page-container page-body"
   >
-    <div
-      className="page-action-bar"
-    >
-      <div
-        className="gf-form gf-form--grow"
-      >
-        <label
-          className="gf-form--has-input-icon gf-form--grow"
-        >
-          <input
-            className="gf-form-input"
-            onChange={[Function]}
-            placeholder="Search keys"
-            type="text"
-            value=""
-          />
-          <i
-            className="gf-form-input-icon fa fa-search"
-          />
-        </label>
-      </div>
-      <div
-        className="page-action-bar__spacer"
-      />
-      <button
-        className="btn btn-success pull-right"
-        disabled={false}
-        onClick={[Function]}
-      >
-        <i
-          className="fa fa-plus"
-        />
-         Add API Key
-      </button>
-    </div>
-    <Component
-      in={false}
-    >
-      <div
-        className="cta-form"
-      >
-        <button
-          className="cta-form__close btn btn-transparent"
-          onClick={[Function]}
-        >
-          <i
-            className="fa fa-close"
-          />
-        </button>
-        <h5>
-          Add API Key
-        </h5>
-        <form
-          className="gf-form-group"
-          onSubmit={[Function]}
-        >
-          <div
-            className="gf-form-inline"
-          >
-            <div
-              className="gf-form max-width-21"
-            >
-              <span
-                className="gf-form-label"
-              >
-                Key name
-              </span>
-              <input
-                className="gf-form-input"
-                onChange={[Function]}
-                placeholder="Name"
-                type="text"
-                value=""
-              />
-            </div>
-            <div
-              className="gf-form"
-            >
-              <span
-                className="gf-form-label"
-              >
-                Role
-              </span>
-              <span
-                className="gf-form-select-wrapper"
-              >
-                <select
-                  className="gf-form-input gf-size-auto"
-                  onChange={[Function]}
-                  value="Viewer"
-                >
-                  <option
-                    key="Viewer"
-                    label="Viewer"
-                    value="Viewer"
-                  >
-                    Viewer
-                  </option>
-                  <option
-                    key="Editor"
-                    label="Editor"
-                    value="Editor"
-                  >
-                    Editor
-                  </option>
-                  <option
-                    key="Admin"
-                    label="Admin"
-                    value="Admin"
-                  >
-                    Admin
-                  </option>
-                </select>
-              </span>
-            </div>
-            <div
-              className="gf-form"
-            >
-              <button
-                className="btn gf-form-btn btn-success"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </Component>
-    <PageLoader
-      pageName="Api keys"
+    <EmptyListCTA
+      model={
+        Object {
+          "buttonIcon": "fa fa-plus",
+          "buttonLink": "org/apikeys/new",
+          "buttonTitle": " New API Key",
+          "proTip": "Assign folder and dashboard permissions to teams instead of users to ease administration.",
+          "proTipLink": "",
+          "proTipLinkTitle": "",
+          "proTipTarget": "_blank",
+          "title": "You haven't added any API Keys yet.",
+        }
+      }
     />
   </div>
 </div>
