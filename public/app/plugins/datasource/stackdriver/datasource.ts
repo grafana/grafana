@@ -202,9 +202,7 @@ export default class StackdriverDatasource {
       message += error.statusText ? error.statusText + ': ' : '';
       if (error.data && error.data.error) {
         try {
-          console.log(error.data.error);
           const res = JSON.parse(error.data.error);
-          console.log(res);
           message += res.error.code + '. ' + res.error.message;
         } catch (err) {
           message += error.data.error;
