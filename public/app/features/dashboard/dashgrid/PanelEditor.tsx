@@ -67,6 +67,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     store.dispatch(
       updateLocation({
         query: { tab: tab.id },
+        partial: true,
       })
     );
   };
