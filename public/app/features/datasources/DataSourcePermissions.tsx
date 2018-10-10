@@ -10,7 +10,7 @@ import {
   loadDataSourcePermissions,
   removeDataSourcePermission,
 } from './state/actions';
-import { DashboardAcl, DataSourcePermission } from 'app/types';
+import { DataSourcePermission } from 'app/types';
 import { getRouteParamsId } from '../../core/selectors/location';
 
 export interface Props {
@@ -62,15 +62,15 @@ export class DataSourcePermissions extends PureComponent<Props, State> {
 
     if (state.type === AclTarget.Team) {
       data.teamId = state.teamId;
-    } else if (state.team === AclTarget.User) {
+    } else if (state.type === AclTarget.User) {
       data.userId = state.userId;
     }
 
     addDataSourcePermission(pageId, data);
   };
 
-  onRemovePermission = (item: DashboardAcl) => {
-    this.props.removeDataSourcePermission(1, 1);
+  onRemovePermission = item => {
+    this.props.removeDataSourcePermission(item.datasourceId, item.id);
   };
 
   onCancelAddPermission = () => {

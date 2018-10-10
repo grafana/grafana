@@ -9,6 +9,36 @@ interface Props {
 }
 
 export class DataSourcePermissionsList extends PureComponent<Props> {
+  renderAvatar(item) {
+    if (item.teamId) {
+      return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
+    } else if (item.userId) {
+      return <img className="filter-table__avatar" src={item.userAvatarUrl} />;
+    }
+
+    return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-viewer" />;
+  }
+
+  renderDescription(item) {
+    if (item.userId) {
+      return [
+        <span key="name">{item.userLogin} </span>,
+        <span key="description" className="filter-table__weak-italic">
+          (User)
+        </span>,
+      ];
+    }
+    if (item.teamId) {
+      return [
+        <span key="name">{item.team} </span>,
+        <span key="description" className="filter-table__weak-italic">
+          (Team)
+        </span>,
+      ];
+    }
+    return <span className="filter-table__weak-italic">(Role)</span>;
+  }
+
   render() {
     const { items } = this.props;
     const permissionLevels = dataSourceAclLevels;
@@ -46,14 +76,9 @@ export class DataSourcePermissionsList extends PureComponent<Props> {
           </tr>
           {items.map((item, index) => {
             return (
-              <tr>
-                <td style={{ width: '1%' }}>
-                  <i style={{ width: '25px', height: '25px' }} className="gicon gicon-shield" />
-                </td>
-                <td style={{ width: '90%' }}>
-                  {}
-                  <span className="filter-table__weak-italic"> (Role)</span>
-                </td>
+              <tr key={`${item.id}-${index}`}>
+                <td style={{ width: '1%' }}>{this.renderAvatar(item)}</td>
+                <td style={{ width: '90%' }}>{this.renderDescription(item)}</td>
                 <td />
                 <td className="query-keyword">Can</td>
                 <td>
@@ -61,15 +86,15 @@ export class DataSourcePermissionsList extends PureComponent<Props> {
                     <DescriptionPicker
                       optionsWithDesc={permissionLevels}
                       onSelected={() => {}}
-                      value={2}
+                      value={1}
                       disabled={true}
                       className={'gf-form-input--form-dropdown-right'}
                     />
                   </div>
                 </td>
                 <td>
-                  <button className="btn btn-inverse btn-small">
-                    <i className="fa fa-lock" />
+                  <button className="btn btn-danger btn-small" onClick={() => this.props.onRemoveItem(item)}>
+                    <i className="fa fa-remove" />
                   </button>
                 </td>
               </tr>
