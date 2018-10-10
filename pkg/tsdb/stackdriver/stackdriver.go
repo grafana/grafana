@@ -31,10 +31,14 @@ import (
 )
 
 var (
-	slog              log.Logger
-	legendKeyFormat   *regexp.Regexp
-	metricNameFormat  *regexp.Regexp
-	gceAuthentication string
+	slog             log.Logger
+	legendKeyFormat  *regexp.Regexp
+	metricNameFormat *regexp.Regexp
+)
+
+const (
+	gceAuthentication string = "gce"
+	jwtAuthentication string = "jwt"
 )
 
 // StackdriverExecutor executes queries for the Stackdriver datasource
@@ -61,7 +65,6 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 	metricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
-	gceAuthentication = "gce"
 }
 
 // Query takes in the frontend queries, parses them into the Stackdriver query format
@@ -93,7 +96,7 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString("jwt")
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultProject, err := e.getDefaultProject(ctx)
 		if err != nil {
@@ -586,7 +589,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 }
 
 func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, error) {
-	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString("jwt")
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
