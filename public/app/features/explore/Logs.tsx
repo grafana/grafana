@@ -1,6 +1,8 @@
 import React, { Fragment, PureComponent } from 'react';
+import Highlighter from 'react-highlight-words';
 
-import { LogsModel, LogRow } from 'app/core/logs_model';
+import { LogsModel } from 'app/core/logs_model';
+import { findHighlightChunksInText } from 'app/core/utils/text';
 
 interface LogsProps {
   className?: string;
@@ -10,34 +12,7 @@ interface LogsProps {
 
 const EXAMPLE_QUERY = '{job="default/prometheus"}';
 
-const Entry: React.SFC<LogRow> = props => {
-  const { entry, searchMatches } = props;
-  if (searchMatches && searchMatches.length > 0) {
-    let lastMatchEnd = 0;
-    const spans = searchMatches.reduce((acc, match, i) => {
-      // Insert non-match
-      if (match.start !== lastMatchEnd) {
-        acc.push(<>{entry.slice(lastMatchEnd, match.start)}</>);
-      }
-      // Match
-      acc.push(
-        <span className="logs-row-match-highlight" title={`Matching expression: ${match.text}`}>
-          {entry.substr(match.start, match.length)}
-        </span>
-      );
-      lastMatchEnd = match.start + match.length;
-      // Non-matching end
-      if (i === searchMatches.length - 1) {
-        acc.push(<>{entry.slice(lastMatchEnd)}</>);
-      }
-      return acc;
-    }, []);
-    return <>{spans}</>;
-  }
-  return <>{props.entry}</>;
-};
-
-export default class Logs extends PureComponent<LogsProps, any> {
+export default class Logs extends PureComponent<LogsProps, {}> {
   render() {
     const { className = '', data } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
@@ -50,7 +25,12 @@ export default class Logs extends PureComponent<LogsProps, any> {
                 <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
                 <div title={`${row.timestamp} (${row.timeFromNow})`}>{row.timeLocal}</div>
                 <div>
-                  <Entry {...row} />
+                  <Highlighter
+                    textToHighlight={row.entry}
+                    searchWords={row.searchWords}
+                    findChunks={findHighlightChunksInText}
+                    highlightClassName="logs-row-match-highlight"
+                  />
                 </div>
               </Fragment>
             ))}
