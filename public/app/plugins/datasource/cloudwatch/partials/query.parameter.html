@@ -37,8 +37,7 @@
 			Id
 			<info-popover mode="right-normal ">Id can include numbers, letters, and underscore, and must start with a lowercase letter.</info-popover>
 		</label>
-		<input type="text " class="gf-form-input " ng-model="target.id " spellcheck='false' ng-pattern='/^[a-z][A-Z0-9_]*/' ng-model-onblur
-		 ng-change="onChange() ">
+		<input type="text " class="gf-form-input " ng-model="target.id " spellcheck='false' ng-pattern='/^[a-z][a-zA-Z0-9_]*$/' ng-model-onblur ng-change="onChange() ">
 	</div>
 	<div class="gf-form max-width-30 ">
 		<label class="gf-form-label query-keyword width-7 ">Expression</label>
