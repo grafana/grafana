@@ -15,6 +15,7 @@ const setup = (propOverrides?: object) => {
     searchQuery: '',
     setDataSourcesSearchQuery: jest.fn(),
     setDataSourcesLayoutMode: jest.fn(),
+    hasFetched: false,
   };
 
   Object.assign(props, propOverrides);
@@ -33,6 +34,7 @@ describe('Render', () => {
     const wrapper = setup({
       dataSources: getMockDataSources(5),
       dataSourcesCount: 5,
+      hasFetched: true,
     });
 
     expect(wrapper).toMatchSnapshot();
