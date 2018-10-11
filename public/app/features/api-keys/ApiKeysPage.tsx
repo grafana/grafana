@@ -8,6 +8,7 @@ import { getApiKeys } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import SlideDown from 'app/core/components/Animations/SlideDown';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
@@ -16,6 +17,7 @@ export interface Props {
   navModel: NavModel;
   apiKeys: ApiKey[];
   searchQuery: string;
+  hasFetched: boolean;
   loadApiKeys: typeof loadApiKeys;
   deleteApiKey: typeof deleteApiKey;
   setSearchQuery: typeof setSearchQuery;
@@ -99,9 +101,45 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     });
   };
 
+  renderTable() {
+    const { apiKeys } = this.props;
+
+    return [
+      <h3 key="header" className="page-heading">
+        Existing Keys
+      </h3>,
+      <table key="table" className="filter-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th style={{ width: '34px' }} />
+          </tr>
+        </thead>
+        {apiKeys.length > 0 && (
+          <tbody>
+            {apiKeys.map(key => {
+              return (
+                <tr key={key.id}>
+                  <td>{key.name}</td>
+                  <td>{key.role}</td>
+                  <td>
+                    <a onClick={() => this.onDeleteApiKey(key)} className="btn btn-danger btn-mini">
+                      <i className="fa fa-remove" />
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        )}
+      </table>,
+    ];
+  }
+
   render() {
     const { newApiKey, isAdding } = this.state;
-    const { navModel, apiKeys, searchQuery } = this.props;
+    const { hasFetched, navModel, searchQuery } = this.props;
 
     return (
       <div>
@@ -170,34 +208,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
               </form>
             </div>
           </SlideDown>
-
-          <h3 className="page-heading">Existing Keys</h3>
-          <table className="filter-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Role</th>
-                <th style={{ width: '34px' }} />
-              </tr>
-            </thead>
-            {apiKeys.length > 0 ? (
-              <tbody>
-                {apiKeys.map(key => {
-                  return (
-                    <tr key={key.id}>
-                      <td>{key.name}</td>
-                      <td>{key.role}</td>
-                      <td>
-                        <a onClick={() => this.onDeleteApiKey(key)} className="btn btn-danger btn-mini">
-                          <i className="fa fa-remove" />
-                        </a>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            ) : null}
-          </table>
+          {hasFetched ? this.renderTable() : <PageLoader pageName="Api keys" />}
         </div>
       </div>
     );
@@ -209,6 +220,7 @@ function mapStateToProps(state) {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
+    hasFetched: state.apiKeys.hasFetched,
   };
 }
 

@@ -3,8 +3,9 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Remarkable from 'remarkable';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import UsersActionBar from './UsersActionBar';
-import UsersTable from 'app/features/users/UsersTable';
+import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
 import { Invitee, NavModel, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
@@ -18,6 +19,7 @@ export interface Props {
   users: OrgUser[];
   searchQuery: string;
   externalUserMngInfo: string;
+  hasFetched: boolean;
   loadUsers: typeof loadUsers;
   loadInvitees: typeof loadInvitees;
   setUsersSearchQuery: typeof setUsersSearchQuery;
@@ -87,8 +89,24 @@ export class UsersListPage extends PureComponent<Props, State> {
     }));
   };
 
+  renderTable() {
+    const { invitees, users } = this.props;
+
+    if (this.state.showInvites) {
+      return <InviteesTable invitees={invitees} onRevokeInvite={code => this.onRevokeInvite(code)} />;
+    } else {
+      return (
+        <UsersTable
+          users={users}
+          onRoleChange={(role, user) => this.onRoleChange(role, user)}
+          onRemoveUser={user => this.onRemoveUser(user)}
+        />
+      );
+    }
+  }
+
   render() {
-    const { invitees, navModel, users } = this.props;
+    const { navModel, hasFetched } = this.props;
     const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
@@ -99,15 +117,7 @@ export class UsersListPage extends PureComponent<Props, State> {
           {externalUserMngInfoHtml && (
             <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
           )}
-          {this.state.showInvites ? (
-            <InviteesTable invitees={invitees} onRevokeInvite={code => this.onRevokeInvite(code)} />
-          ) : (
-            <UsersTable
-              users={users}
-              onRoleChange={(role, user) => this.onRoleChange(role, user)}
-              onRemoveUser={user => this.onRemoveUser(user)}
-            />
-          )}
+          {hasFetched ? this.renderTable() : <PageLoader pageName="Users" />}
         </div>
       </div>
     );
@@ -121,6 +131,7 @@ function mapStateToProps(state) {
     searchQuery: getUsersSearchQuery(state.users),
     invitees: getInvitees(state.users),
     externalUserMngInfo: state.users.externalUserMngInfo,
+    hasFetched: state.users.hasFetched,
   };
 }
 
