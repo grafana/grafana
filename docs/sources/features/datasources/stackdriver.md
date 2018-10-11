@@ -48,37 +48,37 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-![Enable GCP APIs](/img/docs/v53/stackdriver_enable_api.png)
+{{< docs-imagebox img="/img/docs/v53/stackdriver_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-   ![Create service account button](/img/docs/v53/stackdriver_create_service_account_button.png)
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-   ![Create service account key](/img/docs/v53/stackdriver_create_service_account_key.png)
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-   ![Choose role](/img/docs/v53/stackdriver_service_account_choose_role.png)
-
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
+  
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
 
-   ![Choose role](/img/docs/v53/stackdriver_grafana_upload_key.png)
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-   ![Choose role](/img/docs/v53/stackdriver_grafana_key_uploaded.png)
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ## Metric Query Editor
 
 {{< docs-imagebox img="/img/docs/v53/stackdriver_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
-The Stackdriver query editor allows you to select metrics and group by multiple labels and use filter the results.
+The Stackdriver query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
 Begin by choosing a `Service` and then a metric from the `Metric` dropdown. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses.
 
