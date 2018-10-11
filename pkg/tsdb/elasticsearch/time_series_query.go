@@ -172,7 +172,7 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 			a.Size = 500
 		}
 		if a.Size == 0 {
-		    a.Size = 500
+			a.Size = 500
 		}
 		
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {
