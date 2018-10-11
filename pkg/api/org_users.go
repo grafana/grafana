@@ -103,8 +103,8 @@ func updateOrgUserHelper(cmd m.UpdateOrgUserCommand) Response {
 // DELETE /api/org/users/:userId
 func RemoveOrgUserForCurrentOrg(c *m.ReqContext) Response {
 	return removeOrgUserHelper(&m.RemoveOrgUserCommand{
-		UserId: c.ParamsInt64(":userId"),
-		OrgId:  c.OrgId,
+		UserId:                   c.ParamsInt64(":userId"),
+		OrgId:                    c.OrgId,
 		ShouldDeleteOrphanedUser: true,
 	})
 }
