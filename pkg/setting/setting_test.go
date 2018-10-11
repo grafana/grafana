@@ -20,6 +20,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			So(AdminUser, ShouldEqual, "admin")
+			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
 		})
 
 		Convey("Should be able to override via environment variables", func() {
@@ -96,7 +97,7 @@ func TestLoadingSettings(t *testing.T) {
 				Args: []string{
 					"cfg:default.server.domain=test2",
 				},
-				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
+				Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 			})
 
 			So(Domain, ShouldEqual, "test2")
@@ -107,7 +108,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override_windows.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
 				})
 
@@ -116,7 +117,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:default.paths.data=/tmp/data"},
 				})
 
@@ -129,7 +130,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override_windows.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:paths.data=c:\tmp\data`},
 				})
 
@@ -138,7 +139,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:paths.data=/tmp/data"},
 				})
 
@@ -176,6 +177,16 @@ func TestLoadingSettings(t *testing.T) {
 
 			hostname, _ := os.Hostname()
 			So(InstanceName, ShouldEqual, hostname)
+		})
+
+		Convey("Reading callback_url should add trailing slash", func() {
+			cfg := NewCfg()
+			cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
+			})
+
+			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
 		})
 
 	})

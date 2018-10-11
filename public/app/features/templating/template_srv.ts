@@ -32,7 +32,7 @@ export class TemplateSrv {
   updateTemplateData() {
     this.index = {};
 
-    for (var i = 0; i < this.variables.length; i++) {
+    for (let i = 0; i < this.variables.length; i++) {
       const variable = this.variables[i];
 
       if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
@@ -48,21 +48,22 @@ export class TemplateSrv {
   }
 
   getAdhocFilters(datasourceName) {
-    var filters = [];
+    let filters = [];
 
-    for (var i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-      if (variable.type !== 'adhoc') {
-        continue;
-      }
+    if (this.variables) {
+      for (let i = 0; i < this.variables.length; i++) {
+        const variable = this.variables[i];
+        if (variable.type !== 'adhoc') {
+          continue;
+        }
 
-      if (variable.datasource === datasourceName) {
-        filters = filters.concat(variable.filters);
-      }
-
-      if (variable.datasource.indexOf('$') === 0) {
-        if (this.replace(variable.datasource) === datasourceName) {
+        // null is the "default" datasource
+        if (variable.datasource === null || variable.datasource === datasourceName) {
           filters = filters.concat(variable.filters);
+        } else if (variable.datasource.indexOf('$') === 0) {
+          if (this.replace(variable.datasource) === datasourceName) {
+            filters = filters.concat(variable.filters);
+          }
         }
       }
     }
@@ -77,7 +78,7 @@ export class TemplateSrv {
     if (value instanceof Array && value.length === 0) {
       return '__empty__';
     }
-    const quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       return '"' + luceneEscape(val) + '"';
     });
     return '(' + quotedValues.join(' OR ') + ')';
@@ -171,7 +172,7 @@ export class TemplateSrv {
       return variable.allValue;
     }
     const values = [];
-    for (var i = 1; i < variable.options.length; i++) {
+    for (let i = 1; i < variable.options.length; i++) {
       values.push(variable.options[i].value);
     }
     return values;
@@ -182,7 +183,7 @@ export class TemplateSrv {
       return target;
     }
 
-    var variable, systemValue, value, fmt;
+    let variable, systemValue, value, fmt;
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
@@ -227,7 +228,7 @@ export class TemplateSrv {
       return target;
     }
 
-    var variable;
+    let variable;
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3) => {
@@ -248,7 +249,7 @@ export class TemplateSrv {
   }
 
   fillVariableValuesForUrl(params, scopedVars) {
-    _.each(this.variables, function(variable) {
+    _.each(this.variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -264,7 +265,7 @@ export class TemplateSrv {
   }
 
   distributeVariable(value, variable) {
-    value = _.map(value, function(val, index) {
+    value = _.map(value, (val, index) => {
       if (index !== 0) {
         return variable + '=' + val;
       } else {

@@ -13,21 +13,21 @@ import (
 )
 
 // POST /api/tsdb/query
-func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
+func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
 		return Error(400, "No queries found in query", nil)
 	}
 
-	dsID, err := reqDto.Queries[0].Get("datasourceId").Int64()
+	datasourceId, err := reqDto.Queries[0].Get("datasourceId").Int64()
 	if err != nil {
 		return Error(400, "Query missing datasourceId", nil)
 	}
 
-	dsQuery := m.GetDataSourceByIdQuery{Id: dsID, OrgId: c.OrgId}
-	if err := bus.Dispatch(&dsQuery); err != nil {
-		return Error(500, "failed to fetch data source", err)
+	ds, err := hs.getDatasourceFromCache(datasourceId, c)
+	if err != nil {
+		return Error(500, "Unable to load datasource meta data", err)
 	}
 
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
@@ -38,11 +38,11 @@ func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
 			Model:         query,
-			DataSource:    dsQuery.Result,
+			DataSource:    ds,
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(context.Background(), dsQuery.Result, request)
+	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
 		return Error(500, "Metric request error", err)
 	}

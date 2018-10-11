@@ -45,8 +45,11 @@ can still show them if you add a new **Annotation Query** and filter by tags. Bu
 ### Query by tag
 
 You can create new annotation queries that fetch annotations from the native annotation store via the `-- Grafana --` data source and by setting *Filter by* to `Tags`. Specify at least
-one tag. For example create an annotation query name `outages` and specify a tag named `outage`. This query will show all annotations you create (from any dashboard or via API) that
-have the `outage` tag.
+one tag. For example create an annotation query name `outages` and specify a tag named `outage`. This query will show all annotations you create (from any dashboard or via API) that have the `outage` tag. By default, if you add multiple tags in the annotation query, Grafana will only show annotations that have all the tags you supplied. You can invert the behavior by enabling `Match any` which means that Grafana will show annotations that contains at least one of the tags you supplied.
+
+In Grafana v5.3+ it's possible to use template variables in the tag query. So if you have a dashboard showing stats for different services and a template variable that dictates which services to show, you can now use the same template variable in your annotation query to only show annotations for those services.
+
+{{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 
 ## Querying other data sources
 

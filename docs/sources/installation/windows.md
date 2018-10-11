@@ -31,12 +31,20 @@ on windows. Edit `custom.ini` and uncomment the `http_port`
 configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar.
 That port should not require extra Windows privileges.
 
+Default login and password `admin`/ `admin`
+
+
 Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the
 command line. If you want to run Grafana as windows service, download
 [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows
 service using that tool.
 
 Read more about the [configuration options]({{< relref "configuration.md" >}}).
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to the port you configured above, e.g. http://localhost:8080/.
+Then follow the instructions [here](/guides/getting_started/).
 
 ## Building on Windows
 

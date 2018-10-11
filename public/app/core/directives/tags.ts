@@ -13,7 +13,7 @@ function setColor(name, element) {
 function tagColorFromName() {
   return {
     scope: { tagColorFromName: '=' },
-    link: function(scope, element) {
+    link: (scope, element) => {
       setColor(scope.tagColorFromName, element);
     },
   };
@@ -29,7 +29,7 @@ function bootstrapTagsinput() {
       return scope.$parent[property];
     }
 
-    return function(item) {
+    return item => {
       return item[property];
     };
   }
@@ -47,7 +47,7 @@ function bootstrapTagsinput() {
         scope.model = [];
       }
 
-      var select = $('select', element);
+      const select = $('select', element);
 
       if (attrs.placeholder) {
         select.attr('placeholder', attrs.placeholder);
@@ -64,29 +64,29 @@ function bootstrapTagsinput() {
         itemText: getItemProperty(scope, attrs.itemtext),
         tagClass: angular.isFunction(scope.$parent[attrs.tagclass])
           ? scope.$parent[attrs.tagclass]
-          : function() {
+          : () => {
               return attrs.tagclass;
             },
       });
 
-      select.on('itemAdded', function(event) {
+      select.on('itemAdded', event => {
         if (scope.model.indexOf(event.item) === -1) {
           scope.model.push(event.item);
           if (scope.onTagsUpdated) {
             scope.onTagsUpdated();
           }
         }
-        var tagElement = select
+        const tagElement = select
           .next()
           .children('span')
-          .filter(function() {
+          .filter(() => {
             return $(this).text() === event.item;
           });
         setColor(event.item, tagElement);
       });
 
-      select.on('itemRemoved', function(event) {
-        var idx = scope.model.indexOf(event.item);
+      select.on('itemRemoved', event => {
+        const idx = scope.model.indexOf(event.item);
         if (idx !== -1) {
           scope.model.splice(idx, 1);
           if (scope.onTagsUpdated) {
@@ -97,14 +97,14 @@ function bootstrapTagsinput() {
 
       scope.$watch(
         'model',
-        function() {
+        () => {
           if (!angular.isArray(scope.model)) {
             scope.model = [];
           }
 
           select.tagsinput('removeAll');
 
-          for (var i = 0; i < scope.model.length; i++) {
+          for (let i = 0; i < scope.model.length; i++) {
             select.tagsinput('add', scope.model[i]);
           }
         },

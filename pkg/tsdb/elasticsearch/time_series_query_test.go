@@ -60,7 +60,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
-					{ "type": "terms", "field": "@host", "id": "2" },
+					{ "type": "terms", "field": "@host", "id": "2", "settings": { "size": "0", "order": "asc" } },
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -69,7 +69,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
 			So(firstLevel.Key, ShouldEqual, "2")
-			So(firstLevel.Aggregation.Aggregation.(*es.TermsAggregation).Field, ShouldEqual, "@host")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			So(termsAgg.Field, ShouldEqual, "@host")
+			So(termsAgg.Size, ShouldEqual, 500)
 			secondLevel := firstLevel.Aggregation.Aggs[0]
 			So(secondLevel.Key, ShouldEqual, "3")
 			So(secondLevel.Aggregation.Aggregation.(*es.DateHistogramAgg).Field, ShouldEqual, "@timestamp")

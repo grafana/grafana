@@ -4,7 +4,7 @@ export default class ResponseParser {
   constructor(private $q) {}
 
   processQueryResult(res) {
-    var data = [];
+    const data = [];
 
     if (!res.data.results) {
       return { data: data };

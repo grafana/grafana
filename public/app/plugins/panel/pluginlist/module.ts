@@ -44,7 +44,7 @@ class PluginListCtrl extends PanelCtrl {
     $event.stopPropagation();
     $event.preventDefault();
 
-    var modalScope = this.$scope.$new(true);
+    const modalScope = this.$scope.$new(true);
     modalScope.plugin = plugin;
 
     this.publishAppEvent('show-modal', {

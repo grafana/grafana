@@ -161,15 +161,15 @@ describe('when transforming time series table', () => {
         },
       ];
 
-      describe('getColumns', function() {
-        it('should return data columns given a single query', function() {
+      describe('getColumns', () => {
+        it('should return data columns given a single query', () => {
           const columns = transformers[transform].getColumns(singleQueryData);
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
           expect(columns[2].text).toBe('Value');
         });
 
-        it('should return the union of data columns given a multiple queries', function() {
+        it('should return the union of data columns given a multiple queries', () => {
           const columns = transformers[transform].getColumns(multipleQueriesDataSameLabels);
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
@@ -178,7 +178,7 @@ describe('when transforming time series table', () => {
           expect(columns[4].text).toBe('Value #B');
         });
 
-        it('should return the union of data columns given a multiple queries with different labels', function() {
+        it('should return the union of data columns given a multiple queries with different labels', () => {
           const columns = transformers[transform].getColumns(multipleQueriesDataDifferentLabels);
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
@@ -189,7 +189,7 @@ describe('when transforming time series table', () => {
         });
       });
 
-      describe('transform', function() {
+      describe('transform', () => {
         it('should throw an error with non-table data', () => {
           expect(() => transformDataToTable(nonTableData, panel)).toThrow();
         });
@@ -286,8 +286,8 @@ describe('when transforming time series table', () => {
         },
       ];
 
-      describe('getColumns', function() {
-        it('should return nested properties', function() {
+      describe('getColumns', () => {
+        it('should return nested properties', () => {
           const columns = transformers['json'].getColumns(rawData);
           expect(columns[0].text).toBe('timestamp');
           expect(columns[1].text).toBe('message');
@@ -295,7 +295,7 @@ describe('when transforming time series table', () => {
         });
       });
 
-      describe('transform', function() {
+      describe('transform', () => {
         beforeEach(() => {
           table = transformDataToTable(rawData, panel);
         });

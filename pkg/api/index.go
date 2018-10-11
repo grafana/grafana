@@ -11,6 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	// Themes
+	lightName = "light"
+	darkName  = "dark"
+)
+
 func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
@@ -60,7 +66,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			LightTheme:                 prefs.Theme == "light",
+			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
 			Locale:                     locale,
 			HelpFlags1:                 c.HelpFlags1,
@@ -88,9 +94,12 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	}
 
 	themeURLParam := c.Query("theme")
-	if themeURLParam == "light" {
+	if themeURLParam == lightName {
 		data.User.LightTheme = true
-		data.Theme = "light"
+		data.Theme = lightName
+	} else if themeURLParam == darkName {
+		data.User.LightTheme = false
+		data.Theme = darkName
 	}
 
 	if hasEditPermissionInFoldersQuery.Result {
@@ -307,6 +316,19 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		}
 
 		if c.IsGrafanaAdmin {
+			children := []*dtos.NavLink{
+				{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
+				{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
+				{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
+				{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
+			}
+
+			if setting.IsEnterprise {
+				children = append(children, &dtos.NavLink{Text: "Licensing", Id: "licensing", Url: setting.AppSubUrl + "/admin/licensing", Icon: "fa fa-fw fa-unlock-alt"})
+			}
+
+			children = append(children, &dtos.NavLink{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"})
+
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
 				Text:         "Server Admin",
 				HideFromTabs: true,
@@ -314,13 +336,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 				Id:           "admin",
 				Icon:         "gicon gicon-shield",
 				Url:          setting.AppSubUrl + "/admin/users",
-				Children: []*dtos.NavLink{
-					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
-					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
-					{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
-					{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
-					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"},
-				},
+				Children:     children,
 			})
 		}
 

@@ -191,6 +191,7 @@
   .card-item-wrapper {
     padding: 0;
     width: 100%;
+    margin-bottom: 3px;
   }
 
   .card-item-wrapper--clickable {
@@ -198,7 +199,6 @@
   }
 
   .card-item {
-    border-bottom: 3px solid $page-bg;
     border-radius: 2px;
   }
 

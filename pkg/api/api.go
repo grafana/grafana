@@ -10,10 +10,10 @@ import (
 )
 
 func (hs *HTTPServer) registerRoutes() {
-	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
-	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
-	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
-	reqOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	reqSignedIn := middleware.ReqSignedIn
+	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
+	reqEditorRole := middleware.ReqEditorRole
+	reqOrgAdmin := middleware.ReqOrgAdmin
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota
@@ -320,7 +320,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/search/", Search)
 
 		// metrics
-		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(QueryMetrics))
+		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetrics))
 		apiRoute.Get("/tsdb/testdata/scenarios", Wrap(GetTestDataScenarios))
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, Wrap(GenerateSQLTestData))
 		apiRoute.Get("/tsdb/testdata/random-walk", Wrap(GetTestDataRandomWalk))

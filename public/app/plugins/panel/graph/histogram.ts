@@ -47,12 +47,12 @@ export function convertValuesToHistogram(values: number[], bucketSize: number, m
     histogram[bound] = histogram[bound] + 1;
   }
 
-  const histogam_series = _.map(histogram, (count, bound) => {
+  const histogamSeries = _.map(histogram, (count, bound) => {
     return [Number(bound), count];
   });
 
   // Sort by Y axis values
-  return _.sortBy(histogam_series, point => point[0]);
+  return _.sortBy(histogamSeries, point => point[0]);
 }
 
 /**

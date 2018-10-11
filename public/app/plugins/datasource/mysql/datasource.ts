@@ -5,12 +5,14 @@ export class MysqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  interval: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
   interpolateVariable(value, variable) {
@@ -26,7 +28,7 @@ export class MysqlDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       if (typeof value === 'number') {
         return value;
       }
@@ -37,7 +39,7 @@ export class MysqlDatasource {
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {
@@ -107,7 +109,7 @@ export class MysqlDatasource {
       format: 'table',
     };
 
-    var data = {
+    const data = {
       queries: [interpolatedQuery],
     };
 

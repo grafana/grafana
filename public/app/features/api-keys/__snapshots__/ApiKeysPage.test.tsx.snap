@@ -1,0 +1,414 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render API keys table 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <label
+          className="gf-form--has-input-icon gf-form--grow"
+        >
+          <input
+            className="gf-form-input"
+            onChange={[Function]}
+            placeholder="Search keys"
+            type="text"
+            value=""
+          />
+          <i
+            className="gf-form-input-icon fa fa-search"
+          />
+        </label>
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <button
+        className="btn btn-success pull-right"
+        disabled={false}
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-plus"
+        />
+         Add API Key
+      </button>
+    </div>
+    <Component
+      in={false}
+    >
+      <div
+        className="cta-form"
+      >
+        <button
+          className="cta-form__close btn btn-transparent"
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-close"
+          />
+        </button>
+        <h5>
+          Add API Key
+        </h5>
+        <form
+          className="gf-form-group"
+          onSubmit={[Function]}
+        >
+          <div
+            className="gf-form-inline"
+          >
+            <div
+              className="gf-form max-width-21"
+            >
+              <span
+                className="gf-form-label"
+              >
+                Key name
+              </span>
+              <input
+                className="gf-form-input"
+                onChange={[Function]}
+                placeholder="Name"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              className="gf-form"
+            >
+              <span
+                className="gf-form-label"
+              >
+                Role
+              </span>
+              <span
+                className="gf-form-select-wrapper"
+              >
+                <select
+                  className="gf-form-input gf-size-auto"
+                  onChange={[Function]}
+                  value="Viewer"
+                >
+                  <option
+                    key="Viewer"
+                    label="Viewer"
+                    value="Viewer"
+                  >
+                    Viewer
+                  </option>
+                  <option
+                    key="Editor"
+                    label="Editor"
+                    value="Editor"
+                  >
+                    Editor
+                  </option>
+                  <option
+                    key="Admin"
+                    label="Admin"
+                    value="Admin"
+                  >
+                    Admin
+                  </option>
+                </select>
+              </span>
+            </div>
+            <div
+              className="gf-form"
+            >
+              <button
+                className="btn gf-form-btn btn-success"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </Component>
+    <h3
+      className="page-heading"
+      key="header"
+    >
+      Existing Keys
+    </h3>
+    <table
+      className="filter-table"
+      key="table"
+    >
+      <thead>
+        <tr>
+          <th>
+            Name
+          </th>
+          <th>
+            Role
+          </th>
+          <th
+            style={
+              Object {
+                "width": "34px",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="1"
+        >
+          <td>
+            test-1
+          </td>
+          <td>
+            Viewer
+          </td>
+          <td>
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+        <tr
+          key="2"
+        >
+          <td>
+            test-2
+          </td>
+          <td>
+            Viewer
+          </td>
+          <td>
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+        <tr
+          key="3"
+        >
+          <td>
+            test-3
+          </td>
+          <td>
+            Viewer
+          </td>
+          <td>
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+        <tr
+          key="4"
+        >
+          <td>
+            test-4
+          </td>
+          <td>
+            Viewer
+          </td>
+          <td>
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+        <tr
+          key="5"
+        >
+          <td>
+            test-5
+          </td>
+          <td>
+            Viewer
+          </td>
+          <td>
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <label
+          className="gf-form--has-input-icon gf-form--grow"
+        >
+          <input
+            className="gf-form-input"
+            onChange={[Function]}
+            placeholder="Search keys"
+            type="text"
+            value=""
+          />
+          <i
+            className="gf-form-input-icon fa fa-search"
+          />
+        </label>
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <button
+        className="btn btn-success pull-right"
+        disabled={false}
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-plus"
+        />
+         Add API Key
+      </button>
+    </div>
+    <Component
+      in={false}
+    >
+      <div
+        className="cta-form"
+      >
+        <button
+          className="cta-form__close btn btn-transparent"
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-close"
+          />
+        </button>
+        <h5>
+          Add API Key
+        </h5>
+        <form
+          className="gf-form-group"
+          onSubmit={[Function]}
+        >
+          <div
+            className="gf-form-inline"
+          >
+            <div
+              className="gf-form max-width-21"
+            >
+              <span
+                className="gf-form-label"
+              >
+                Key name
+              </span>
+              <input
+                className="gf-form-input"
+                onChange={[Function]}
+                placeholder="Name"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              className="gf-form"
+            >
+              <span
+                className="gf-form-label"
+              >
+                Role
+              </span>
+              <span
+                className="gf-form-select-wrapper"
+              >
+                <select
+                  className="gf-form-input gf-size-auto"
+                  onChange={[Function]}
+                  value="Viewer"
+                >
+                  <option
+                    key="Viewer"
+                    label="Viewer"
+                    value="Viewer"
+                  >
+                    Viewer
+                  </option>
+                  <option
+                    key="Editor"
+                    label="Editor"
+                    value="Editor"
+                  >
+                    Editor
+                  </option>
+                  <option
+                    key="Admin"
+                    label="Admin"
+                    value="Admin"
+                  >
+                    Admin
+                  </option>
+                </select>
+              </span>
+            </div>
+            <div
+              className="gf-form"
+            >
+              <button
+                className="btn gf-form-btn btn-success"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </Component>
+    <PageLoader
+      pageName="Api keys"
+    />
+  </div>
+</div>
+`;

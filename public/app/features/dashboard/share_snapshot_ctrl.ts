@@ -2,7 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 
 export class ShareSnapshotCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $rootScope, $location, backendSrv, $timeout, timeSrv) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
@@ -25,8 +25,8 @@ export class ShareSnapshotCtrl {
       { text: 'Public on the web', value: 3 },
     ];
 
-    $scope.init = function() {
-      backendSrv.get('/api/snapshot/shared-options').then(function(options) {
+    $scope.init = () => {
+      backendSrv.get('/api/snapshot/shared-options').then(options => {
         $scope.externalUrl = options['externalSnapshotURL'];
         $scope.sharingButtonText = options['externalSnapshotName'];
         $scope.externalEnabled = options['externalEnabled'];
@@ -35,7 +35,7 @@ export class ShareSnapshotCtrl {
 
     $scope.apiUrl = '/api/snapshots';
 
-    $scope.createSnapshot = function(external) {
+    $scope.createSnapshot = external => {
       $scope.dashboard.snapshot = {
         timestamp: new Date(),
       };
@@ -49,12 +49,12 @@ export class ShareSnapshotCtrl {
 
       $rootScope.$broadcast('refresh');
 
-      $timeout(function() {
+      $timeout(() => {
         $scope.saveSnapshot(external);
       }, $scope.snapshot.timeoutSeconds * 1000);
     };
 
-    $scope.saveSnapshot = function(external) {
+    $scope.saveSnapshot = external => {
       const dash = $scope.dashboard.getSaveModelClone();
       $scope.scrubDashboard(dash);
 
@@ -67,7 +67,7 @@ export class ShareSnapshotCtrl {
       const postUrl = external ? $scope.externalUrl + $scope.apiUrl : $scope.apiUrl;
 
       backendSrv.post(postUrl, cmdData).then(
-        function(results) {
+        results => {
           $scope.loading = false;
 
           if (external) {
@@ -88,17 +88,17 @@ export class ShareSnapshotCtrl {
 
           $scope.step = 2;
         },
-        function() {
+        () => {
           $scope.loading = false;
         }
       );
     };
 
-    $scope.getSnapshotUrl = function() {
+    $scope.getSnapshotUrl = () => {
       return $scope.snapshotUrl;
     };
 
-    $scope.scrubDashboard = function(dash) {
+    $scope.scrubDashboard = dash => {
       // change title
       dash.title = $scope.snapshot.name;
 
@@ -106,7 +106,7 @@ export class ShareSnapshotCtrl {
       dash.time = timeSrv.timeRange();
 
       // remove panel queries & links
-      _.each(dash.panels, function(panel) {
+      _.each(dash.panels, panel => {
         panel.targets = [];
         panel.links = [];
         panel.datasource = null;
@@ -114,10 +114,10 @@ export class ShareSnapshotCtrl {
 
       // remove annotation queries
       dash.annotations.list = _.chain(dash.annotations.list)
-        .filter(function(annotation) {
+        .filter(annotation => {
           return annotation.enable;
         })
-        .map(function(annotation) {
+        .map(annotation => {
           return {
             name: annotation.name,
             enable: annotation.enable,
@@ -131,7 +131,7 @@ export class ShareSnapshotCtrl {
         .value();
 
       // remove template queries
-      _.each(dash.templating.list, function(variable) {
+      _.each(dash.templating.list, variable => {
         variable.query = '';
         variable.options = variable.current;
         variable.refresh = false;
@@ -149,21 +149,21 @@ export class ShareSnapshotCtrl {
 
       // cleanup snapshotData
       delete $scope.dashboard.snapshot;
-      $scope.dashboard.forEachPanel(function(panel) {
+      $scope.dashboard.forEachPanel(panel => {
         delete panel.snapshotData;
       });
-      _.each($scope.dashboard.annotations.list, function(annotation) {
+      _.each($scope.dashboard.annotations.list, annotation => {
         delete annotation.snapshotData;
       });
     };
 
-    $scope.deleteSnapshot = function() {
-      backendSrv.get($scope.deleteUrl).then(function() {
+    $scope.deleteSnapshot = () => {
+      backendSrv.get($scope.deleteUrl).then(() => {
         $scope.step = 3;
       });
     };
 
-    $scope.saveExternalSnapshotRef = function(cmdData, results) {
+    $scope.saveExternalSnapshotRef = (cmdData, results) => {
       // save external in local instance as well
       cmdData.external = true;
       cmdData.key = results.key;

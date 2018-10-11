@@ -144,8 +144,8 @@ export class DashboardModel {
     });
 
     // make clone
-    var copy: any = {};
-    for (var property in this) {
+    let copy: any = {};
+    for (const property in this) {
       if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
       }
@@ -258,7 +258,7 @@ export class DashboardModel {
   }
 
   sortPanelsByGridPos() {
-    this.panels.sort(function(panelA, panelB) {
+    this.panels.sort((panelA, panelB) => {
       if (panelA.gridPos.y === panelB.gridPos.y) {
         return panelA.gridPos.x - panelB.gridPos.x;
       } else {
@@ -542,7 +542,7 @@ export class DashboardModel {
   }
 
   removePanel(panel: PanelModel) {
-    var index = _.indexOf(this.panels, panel);
+    const index = _.indexOf(this.panels, panel);
     this.panels.splice(index, 1);
     this.events.emit('panel-removed', panel);
   }
@@ -559,7 +559,7 @@ export class DashboardModel {
 
   expandRows() {
     for (let i = 0; i < this.panels.length; i++) {
-      var panel = this.panels[i];
+      const panel = this.panels[i];
 
       if (panel.type !== 'row') {
         continue;
@@ -573,7 +573,7 @@ export class DashboardModel {
 
   collapseRows() {
     for (let i = 0; i < this.panels.length; i++) {
-      var panel = this.panels[i];
+      const panel = this.panels[i];
 
       if (panel.type !== 'row') {
         continue;
@@ -595,12 +595,12 @@ export class DashboardModel {
         return true;
       }
 
-      var visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
+      const visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
       if (visibleVars.length > 0) {
         return true;
       }
 
-      var visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
+      const visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
       if (visibleAnnotations.length > 0) {
         return true;
       }
@@ -773,10 +773,10 @@ export class DashboardModel {
   }
 
   getNextQueryLetter(panel) {
-    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    return _.find(letters, function(refId) {
-      return _.every(panel.targets, function(other) {
+    return _.find(letters, refId => {
+      return _.every(panel.targets, other => {
         return other.refId !== refId;
       });
     });
@@ -842,12 +842,20 @@ export class DashboardModel {
       })
     );
 
-    // Consider navbar and submenu controls, padding and margin
-    let visibleHeight = window.innerHeight - 55 - 20;
+    const navbarHeight = 55;
+    const margin = 20;
+    const submenuHeight = 50;
 
-    // Remove submenu if visible
-    if (this.meta.submenuEnabled) {
-      visibleHeight -= 50;
+    let visibleHeight = viewHeight - navbarHeight - margin;
+
+    // Remove submenu height if visible
+    if (this.meta.submenuEnabled && !this.meta.kiosk) {
+      visibleHeight -= submenuHeight;
+    }
+
+    // add back navbar height
+    if (this.meta.kiosk === 'b') {
+      visibleHeight += 55;
     }
 
     const visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));

@@ -25,7 +25,7 @@ func TestClient(t *testing.T) {
 					JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 				}
 
-				_, err := NewClient(nil, ds, nil)
+				_, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -36,11 +36,11 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(nil, ds, nil)
+				_, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("When unspported version set should return error", func() {
+			Convey("When unsupported version set should return error", func() {
 				ds := &models.DataSource{
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
 						"esVersion": 6,
@@ -48,7 +48,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(nil, ds, nil)
+				_, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -60,7 +60,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				c, err := NewClient(nil, ds, nil)
+				c, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldBeNil)
 				So(c.GetVersion(), ShouldEqual, 2)
 			})
@@ -73,7 +73,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				c, err := NewClient(nil, ds, nil)
+				c, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldBeNil)
 				So(c.GetVersion(), ShouldEqual, 5)
 			})
@@ -86,7 +86,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				c, err := NewClient(nil, ds, nil)
+				c, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldBeNil)
 				So(c.GetVersion(), ShouldEqual, 56)
 			})

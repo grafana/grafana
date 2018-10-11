@@ -14,7 +14,7 @@ export class TextPanelCtrl extends PanelCtrl {
     content: '# title',
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private templateSrv, private $sce) {
     super($scope, $injector);
 

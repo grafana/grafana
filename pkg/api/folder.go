@@ -95,7 +95,7 @@ func toFolderDto(g guardian.DashboardGuardian, folder *m.Folder) dtos.Folder {
 	canAdmin, _ := g.CanAdmin()
 
 	// Finding creator and last updater of the folder
-	updater, creator := "Anonymous", "Anonymous"
+	updater, creator := anonString, anonString
 	if folder.CreatedBy > 0 {
 		creator = getUserLogin(folder.CreatedBy)
 	}

@@ -20,7 +20,7 @@ $ docker run -d -p 3000:3000 grafana/grafana
 
 ## Configuration
 
-All options defined in conf/grafana.ini can be overridden using environment
+All options defined in `conf/grafana.ini` can be overridden using environment
 variables by using the syntax `GF_<SectionName>_<KeyName>`.
 For example:
 
@@ -39,6 +39,19 @@ The back-end web server has a number of configuration options. Go to the
 those options.
 
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect you need to restart Grafana by restarting the Docker container.
+
+### Default Paths
+
+The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
+
+Setting               | Default value
+----------------------|---------------------------
+GF_PATHS_CONFIG       | /etc/grafana/grafana.ini
+GF_PATHS_DATA         | /var/lib/grafana
+GF_PATHS_HOME         | /usr/share/grafana
+GF_PATHS_LOGS         | /var/log/grafana
+GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
+GF_PATHS_PROVISIONING | /etc/grafana/provisioning
 
 ## Running a Specific Version of Grafana
 
@@ -217,3 +230,8 @@ chown -R root:root /etc/grafana && \
   chown -R grafana:grafana /var/lib/grafana && \
   chown -R grafana:grafana /usr/share/grafana
 ```
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+Then follow the instructions [here](/guides/getting_started/).
