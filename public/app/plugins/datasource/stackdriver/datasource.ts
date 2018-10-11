@@ -50,16 +50,20 @@ export default class StackdriverDatasource {
         };
       });
 
-    const { data } = await this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
-      },
-    });
-    return data;
+    if (queries.length > 0) {
+      const { data } = await this.backendSrv.datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries,
+        },
+      });
+      return data;
+    } else {
+      return { results: [] };
+    }
   }
 
   async getLabels(metricType, refId) {
