@@ -46,12 +46,12 @@ export default class CloudWatchDatasource {
       const hasInvalidStatistics = item.statistics.some(s => {
         if (s.indexOf('p') === 0) {
           const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
-
           return !matches || matches[0] !== s;
         }
 
         return false;
       });
+
       if (hasInvalidStatistics) {
         throw { message: 'Invalid extended statistics' };
       }
