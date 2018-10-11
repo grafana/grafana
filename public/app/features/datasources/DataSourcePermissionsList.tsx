@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { DataSourcePermission } from '../../types';
-import { dataSourceAclLevels, DataSourcePermissionLevel } from '../../types/acl';
+import { DataSourcePermission } from 'app/types';
+import { dataSourceAclLevels, DataSourcePermissionLevel } from 'app/types/acl';
 import DescriptionPicker from '../../core/components/Picker/DescriptionPicker';
 
 export interface Props {
@@ -41,7 +41,7 @@ export class DataSourcePermissionsList extends PureComponent<Props> {
 
   render() {
     const { items } = this.props;
-    const permissionLevels = dataSourceAclLevels;
+    const permissionLevels = [...dataSourceAclLevels];
     permissionLevels.push({ value: DataSourcePermissionLevel.Admin, label: 'Admin', description: '' });
 
     return (

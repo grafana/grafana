@@ -17,11 +17,6 @@ export interface OptionWithDescription {
 }
 
 class DescriptionPicker extends Component<Props, any> {
-  constructor(props) {
-    super(props);
-    this.state = {};
-  }
-
   render() {
     const { optionsWithDesc, onSelected, value, disabled, className } = this.props;
 
