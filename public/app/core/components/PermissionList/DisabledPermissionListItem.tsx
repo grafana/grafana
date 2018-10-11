@@ -28,6 +28,7 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
               onSelected={() => {}}
               disabled={true}
               className={'gf-form-select-box__control--menu-right'}
+              value={item.permission}
             />
           </div>
         </td>

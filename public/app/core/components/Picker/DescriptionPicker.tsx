@@ -16,7 +16,10 @@ export interface Props {
   onSelected: (permission) => void;
   disabled: boolean;
   className?: string;
+  value?: any;
 }
+
+const getSelectedOption = (optionsWithDesc, value) => optionsWithDesc.find(option => option.value === value);
 
 class DescriptionPicker extends Component<Props, any> {
   constructor(props) {
@@ -24,7 +27,8 @@ class DescriptionPicker extends Component<Props, any> {
   }
 
   render() {
-    const { optionsWithDesc, onSelected, disabled, className } = this.props;
+    const { optionsWithDesc, onSelected, disabled, className, value } = this.props;
+    const selectedOption = getSelectedOption(optionsWithDesc, value);
     return (
       <div className="permissions-picker">
         <Select
@@ -42,6 +46,7 @@ class DescriptionPicker extends Component<Props, any> {
           onChange={onSelected}
           getOptionValue={i => i.value}
           getOptionLabel={i => i.label}
+          value={selectedOption}
         />
       </div>
     );

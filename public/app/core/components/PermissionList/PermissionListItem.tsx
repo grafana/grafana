@@ -79,6 +79,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
               onSelected={this.onPermissionChanged}
               disabled={item.inherited}
               className={'gf-form-select-box__control--menu-right'}
+              value={item.permission}
             />
           </div>
         </td>
