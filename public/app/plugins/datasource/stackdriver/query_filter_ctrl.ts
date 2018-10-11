@@ -79,11 +79,16 @@ export class StackdriverFilterCtrl {
   }
 
   async getCurrentProject() {
-    return new Promise(async resolve => {
-      if (!this.target.defaultProject || this.target.defaultProject === 'loading project...') {
-        this.target.defaultProject = await this.datasource.getDefaultProject();
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!this.target.defaultProject || this.target.defaultProject === 'loading project...') {
+          this.target.defaultProject = await this.datasource.getDefaultProject();
+        }
+        resolve(this.target.defaultProject);
+      } catch (error) {
+        appEvents.emit('ds-request-error', error);
+        reject();
       }
-      resolve(this.target.defaultProject);
     });
   }
 

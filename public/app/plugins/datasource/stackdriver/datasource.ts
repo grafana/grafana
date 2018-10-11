@@ -1,11 +1,13 @@
 import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
+import _ from 'lodash';
 
 export default class StackdriverDatasource {
   id: number;
   url: string;
   baseUrl: string;
   projectName: string;
+  authenticationType: string;
   queryPromise: Promise<any>;
 
   /** @ngInject */
@@ -15,6 +17,7 @@ export default class StackdriverDatasource {
     this.doRequest = this.doRequest;
     this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
+    this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
   }
 
   async getTimeSeries(options) {
@@ -178,29 +181,36 @@ export default class StackdriverDatasource {
   }
 
   async testDatasource() {
+    let status, message;
+    const defaultErrorMessage = 'Cannot connect to Stackdriver API';
     try {
-      await this.backendSrv.datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          queries: [
-            {
-              refId: 'testDatasource',
-              datasourceId: this.id,
-              type: 'testDatasource',
-            },
-          ],
-        },
-      });
-      return {
-        status: 'success',
-        message: 'Successfully queried the Stackdriver API.',
-        title: 'Success',
-      };
+      const projectName = await this.getDefaultProject();
+      const path = `v3/projects/${projectName}/metricDescriptors`;
+      const response = await this.doRequest(`${this.baseUrl}${path}`);
+      if (response.status === 200) {
+        status = 'success';
+        message = 'Successfully queried the Stackdriver API.';
+      } else {
+        status = 'error';
+        message = response.statusText ? response.statusText : defaultErrorMessage;
+      }
     } catch (error) {
+      status = 'error';
+      if (_.isString(error)) {
+        message = error;
+      } else {
+        message = 'Stackdriver: ';
+        message += error.statusText ? error.statusText + ': ' : '';
+        if (error.data && error.data.error && error.data.error.code) {
+          message += error.data.error.code + '. ' + error.data.error.message;
+        } else {
+          message = defaultErrorMessage;
+        }
+      }
+    } finally {
       return {
-        status: 'error',
-        message: this.formatStackdriverError(error),
+        status,
+        message,
       };
     }
   }
@@ -223,28 +233,27 @@ export default class StackdriverDatasource {
 
   async getDefaultProject() {
     try {
-      if (!this.projectName) {
+      if (this.authenticationType === 'gce' || !this.projectName) {
         const { data } = await this.backendSrv.datasourceRequest({
           url: '/api/tsdb/query',
           method: 'POST',
           data: {
             queries: [
               {
-                refId: 'defaultProject',
-                type: 'defaultProject',
+                refId: 'ensureDefaultProjectQuery',
+                type: 'ensureDefaultProjectQuery',
                 datasourceId: this.id,
               },
             ],
           },
         });
-        this.projectName = data.results.defaultProject.meta.defaultProject;
+        this.projectName = data.results.ensureDefaultProjectQuery.meta.defaultProject;
         return this.projectName;
       } else {
         return this.projectName;
       }
     } catch (error) {
-      appEvents.emit('ds-request-error', this.formatStackdriverError(error));
-      return '';
+      throw this.formatStackdriverError(error);
     }
   }
 
