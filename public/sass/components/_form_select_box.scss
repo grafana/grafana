@@ -50,7 +50,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select-box__menu {
-  background: $select-input-bg-disabled;
+  background: $dropdownBackground;
   position: absolute;
   z-index: 2;
 }
@@ -66,11 +66,13 @@ $select-input-bg-disabled: $input-bg-disabled;
 .gf-form-select-box__option {
   border-left: 2px solid transparent;
 
-  &.gf-form-select-box__option--is-focused,
-  &.gf-form-select-box__option--is-selected {
-    background-color: $dropdownLinkBackgroundHover;
+  &.gf-form-select-box__option--is-focused {
     color: $dropdownLinkColorHover;
+    background-color: $dropdownLinkBackgroundHover;
     @include left-brand-border-gradient();
+  }
+
+  &.gf-form-select-box__option--is-selected {
     .fa {
       color: $input-color-select-arrow;
     }
