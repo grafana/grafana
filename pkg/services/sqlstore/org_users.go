@@ -195,7 +195,7 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 				return err
 			}
 
-			cmd.UserWasRemoved = true
+			cmd.UserWasDeleted = true
 		}
 
 		return nil

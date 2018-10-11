@@ -191,6 +191,7 @@ func TestAccountDataAccess(t *testing.T) {
 					remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, ShouldDeleteOrphanedUser: true}
 					err = RemoveOrgUser(&remCmd)
 					So(err, ShouldBeNil)
+					So(remCmd.UserWasDeleted, ShouldBeTrue)
 
 					err = GetSignedInUser(&m.GetSignedInUserQuery{UserId: ac2.Id})
 					So(err, ShouldEqual, m.ErrUserNotFound)
