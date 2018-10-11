@@ -174,14 +174,9 @@ exports[`Render should render API keys table if there are any keys 1`] = `
             Viewer
           </td>
           <td>
-            <a
-              className="btn btn-danger btn-mini"
-              onClick={[Function]}
-            >
-              <i
-                className="fa fa-remove"
-              />
-            </a>
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
           </td>
         </tr>
         <tr
@@ -194,14 +189,9 @@ exports[`Render should render API keys table if there are any keys 1`] = `
             Viewer
           </td>
           <td>
-            <a
-              className="btn btn-danger btn-mini"
-              onClick={[Function]}
-            >
-              <i
-                className="fa fa-remove"
-              />
-            </a>
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
           </td>
         </tr>
         <tr
@@ -214,14 +204,9 @@ exports[`Render should render API keys table if there are any keys 1`] = `
             Viewer
           </td>
           <td>
-            <a
-              className="btn btn-danger btn-mini"
-              onClick={[Function]}
-            >
-              <i
-                className="fa fa-remove"
-              />
-            </a>
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
           </td>
         </tr>
         <tr
@@ -234,14 +219,9 @@ exports[`Render should render API keys table if there are any keys 1`] = `
             Viewer
           </td>
           <td>
-            <a
-              className="btn btn-danger btn-mini"
-              onClick={[Function]}
-            >
-              <i
-                className="fa fa-remove"
-              />
-            </a>
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
           </td>
         </tr>
         <tr
@@ -254,14 +234,9 @@ exports[`Render should render API keys table if there are any keys 1`] = `
             Viewer
           </td>
           <td>
-            <a
-              className="btn btn-danger btn-mini"
-              onClick={[Function]}
-            >
-              <i
-                className="fa fa-remove"
-              />
-            </a>
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
           </td>
         </tr>
       </tbody>

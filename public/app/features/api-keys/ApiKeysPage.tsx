@@ -13,6 +13,7 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 
 export interface Props {
   navModel: NavModel;
@@ -219,9 +220,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                     <td>{key.name}</td>
                     <td>{key.role}</td>
                     <td>
-                      <a onClick={() => this.onDeleteApiKey(key)} className="btn btn-danger btn-mini">
-                        <i className="fa fa-remove" />
-                      </a>
+                      <DeleteButton onConfirmDelete={() => this.onDeleteApiKey(key)} />
                     </td>
                   </tr>
                 );
