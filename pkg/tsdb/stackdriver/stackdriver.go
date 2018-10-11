@@ -19,7 +19,6 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -96,7 +95,6 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	logger.Info("executeTimeSeriesQuery-authenticationType", "debug", e.dsInfo.JsonData.Get("authenticationType"))
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultProject, err := e.getDefaultProject(ctx)
@@ -596,7 +594,6 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 		if err != nil {
 			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
 		} else {
-			logger.Info("projectName", "projectName", defaultCredentials.ProjectID)
 			return defaultCredentials.ProjectID, nil
 		}
 	} else {

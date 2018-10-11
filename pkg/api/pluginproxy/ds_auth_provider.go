@@ -55,10 +55,8 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	logger.Info("ds-auth-provider-authenticationType", "debug", ds.JsonData.Get("authenticationType"))
 	authenticationType := ds.JsonData.Get("authenticationType").MustString("jwt")
 	if route.JwtTokenAuth != nil && authenticationType == "jwt" {
-		logger.Info("authenticationType", "authenticationType", "jwt")
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
@@ -67,7 +65,6 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	if authenticationType == "gce" {
-		logger.Info("authenticationType", "authenticationType", "gce")
 		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
 		if err != nil {
 			logger.Error("Failed to get default token from meta data server", "error", err)
