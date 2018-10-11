@@ -226,6 +226,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => ServerStats,
       },
     })
+    .when('/admin/licensing', {
+      templateUrl: 'public/app/features/admin/partials/licensing.html',
+      controller: 'AdminLicensingCtrl',
+      controllerAs: 'ctrl',
+    })
     // LOGIN / SIGNUP
     .when('/login', {
       templateUrl: 'public/app/partials/login.html',
