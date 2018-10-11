@@ -88,9 +88,13 @@ aliases = ["v1.1", "guides/reference/admin"]
       <img src="/img/docs/logos/icon_prometheus.svg" >
       <h5>Prometheus</h5>
     </a>
-    <a href="{{< relref "features/datasources/opentsdb.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_opentsdb.png" >
-      <h5>OpenTSDB</h5>
+    <a href="{{< relref "features/datasources/stackdriver.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/stackdriver_logo.png">
+      <h5>Google Stackdriver</h5>
+    </a>
+    <a href="{{< relref "features/datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/icon_cloudwatch.svg">
+      <h5>Cloudwatch</h5>
     </a>
     <a href="{{< relref "features/datasources/mysql.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_mysql.png" >
@@ -100,8 +104,12 @@ aliases = ["v1.1", "guides/reference/admin"]
       <img src="/img/docs/logos/icon_postgres.svg" >
       <h5>Postgres</h5>
     </a>
-    <a href="{{< relref "features/datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_cloudwatch.svg">
-      <h5>Cloudwatch</h5>
+    <a href="{{< relref "features/datasources/mssql.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/sql_server_logo.svg">
+      <h5>Microsoft SQL Server</h5>
+    </a>
+    <a href="{{< relref "features/datasources/opentsdb.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/icon_opentsdb.png" >
+      <h5>OpenTSDB</h5>
     </a>
 </div>
