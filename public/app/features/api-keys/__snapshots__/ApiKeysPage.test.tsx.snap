@@ -45,6 +45,12 @@ exports[`Render should render API keys table if there are any keys 1`] = `
     </div>
     <Component
       in={false}
+      style={
+        Object {
+          "overflow": "hidden",
+          "transition": "unset",
+        }
+      }
     >
       <div
         className="cta-form"
@@ -245,7 +251,7 @@ exports[`Render should render API keys table if there are any keys 1`] = `
 </div>
 `;
 
-exports[`Render should render CTA if theres are no API keys 1`] = `
+exports[`Render should render CTA if there are no API keys 1`] = `
 <div>
   <PageHeader
     model={Object {}}
@@ -270,6 +276,12 @@ exports[`Render should render CTA if theres are no API keys 1`] = `
     />
     <Component
       in={false}
+      style={
+        Object {
+          "overflow": "hidden",
+          "transition": "unset",
+        }
+      }
     >
       <div
         className="cta-form"

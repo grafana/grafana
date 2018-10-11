@@ -38,7 +38,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render CTA if theres are no API keys', () => {
+  it('should render CTA if there are no API keys', () => {
     const { wrapper } = setup({
       apiKeys: getMultipleMockKeys(0),
       apiKeysCount: 0,
