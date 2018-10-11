@@ -198,23 +198,27 @@ export default class StackdriverDatasource {
         title: 'Success',
       };
     } catch (error) {
-      let message = 'Stackdriver: ';
-      message += error.statusText ? error.statusText + ': ' : '';
-      if (error.data && error.data.error) {
-        try {
-          const res = JSON.parse(error.data.error);
-          message += res.error.code + '. ' + res.error.message;
-        } catch (err) {
-          message += error.data.error;
-        }
-      } else {
-        message += 'Cannot connect to Stackdriver API';
-      }
       return {
         status: 'error',
-        message: message,
+        message: this.formatStackdriverError(error),
       };
     }
+  }
+
+  formatStackdriverError(error) {
+    let message = 'Stackdriver: ';
+    message += error.statusText ? error.statusText + ': ' : '';
+    if (error.data && error.data.error) {
+      try {
+        const res = JSON.parse(error.data.error);
+        message += res.error.code + '. ' + res.error.message;
+      } catch (err) {
+        message += error.data.error;
+      }
+    } else {
+      message += 'Cannot connect to Stackdriver API';
+    }
+    return message;
   }
 
   async getDefaultProject() {
@@ -239,21 +243,7 @@ export default class StackdriverDatasource {
         return this.projectName;
       }
     } catch (error) {
-      let message = 'Projects cannot be fetched: ';
-      message += error.statusText ? error.statusText + ': ' : '';
-      if (error && error.data && error.data.error && error.data.error.message) {
-        if (error.data.error.code === 403) {
-          message += `
-            A list of projects could not be fetched from the Google Cloud Resource Manager API.
-            You might need to enable it first:
-            https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com`;
-        } else {
-          message += error.data.error.code + '. ' + error.data.error.message;
-        }
-      } else {
-        message += 'Cannot connect to Stackdriver API';
-      }
-      appEvents.emit('ds-request-error', message);
+      appEvents.emit('ds-request-error', this.formatStackdriverError(error));
       return '';
     }
   }
@@ -274,7 +264,8 @@ export default class StackdriverDatasource {
 
       return metrics;
     } catch (error) {
-      console.log(error);
+      appEvents.emit('ds-request-error', this.formatStackdriverError(error));
+      return [];
     }
   }
 
