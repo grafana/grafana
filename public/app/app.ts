@@ -35,8 +35,6 @@ enterpriseIndex.keys().forEach(key => {
   enterpriseIndex(key);
 });
 
-declare var System: any;
-
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
@@ -125,7 +123,7 @@ export class GrafanaApp {
     coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    const preBootRequires = [System.import('app/features/all')];
+    const preBootRequires = [import('app/features/all')];
 
     Promise.all(preBootRequires)
       .then(() => {
