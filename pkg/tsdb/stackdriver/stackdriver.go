@@ -77,10 +77,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
-	case "testDatasource":
-		result, err = e.executeTestDataSource(ctx, tsdbQuery)
-	case "defaultProject":
-		result, err = e.getGceDefaultProject(ctx, tsdbQuery)
+	case "ensureDefaultProjectQuery":
+		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
