@@ -110,7 +110,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           model={{
             title: "You haven't added any API Keys yet.",
             buttonIcon: 'fa fa-plus',
-            buttonLink: 'org/apikeys/new',
+            buttonLink: '#',
+            onClick: this.onToggleAdding,
             buttonTitle: ' New API Key',
             proTip: 'Remember you can provide view-only API access to other applications.',
             proTipLink: '',
@@ -118,12 +119,63 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             proTipTarget: '_blank',
           }}
         />
+        {this.renderAddApiKeyForm()}
       </div>
     );
   }
 
-  renderApiKeyList() {
+  renderAddApiKeyForm() {
     const { newApiKey, isAdding } = this.state;
+
+    return (
+      <SlideDown in={isAdding}>
+        <div className="cta-form">
+          <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
+            <i className="fa fa-close" />
+          </button>
+          <h5>Add API Key</h5>
+          <form className="gf-form-group" onSubmit={this.onAddApiKey}>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-21">
+                <span className="gf-form-label">Key name</span>
+                <input
+                  type="text"
+                  className="gf-form-input"
+                  value={newApiKey.name}
+                  placeholder="Name"
+                  onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Name)}
+                />
+              </div>
+              <div className="gf-form">
+                <span className="gf-form-label">Role</span>
+                <span className="gf-form-select-wrapper">
+                  <select
+                    className="gf-form-input gf-size-auto"
+                    value={newApiKey.role}
+                    onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Role)}
+                  >
+                    {Object.keys(OrgRole).map(role => {
+                      return (
+                        <option key={role} label={role} value={role}>
+                          {role}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </span>
+              </div>
+              <div className="gf-form">
+                <button className="btn gf-form-btn btn-success">Add</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </SlideDown>
+    );
+  }
+
+  renderApiKeyList() {
+    const { isAdding } = this.state;
     const { apiKeys, searchQuery } = this.props;
 
     return (
@@ -148,49 +200,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           </button>
         </div>
 
-        <SlideDown in={isAdding}>
-          <div className="cta-form">
-            <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <i className="fa fa-close" />
-            </button>
-            <h5>Add API Key</h5>
-            <form className="gf-form-group" onSubmit={this.onAddApiKey}>
-              <div className="gf-form-inline">
-                <div className="gf-form max-width-21">
-                  <span className="gf-form-label">Key name</span>
-                  <input
-                    type="text"
-                    className="gf-form-input"
-                    value={newApiKey.name}
-                    placeholder="Name"
-                    onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Name)}
-                  />
-                </div>
-                <div className="gf-form">
-                  <span className="gf-form-label">Role</span>
-                  <span className="gf-form-select-wrapper">
-                    <select
-                      className="gf-form-input gf-size-auto"
-                      value={newApiKey.role}
-                      onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Role)}
-                    >
-                      {Object.keys(OrgRole).map(role => {
-                        return (
-                          <option key={role} label={role} value={role}>
-                            {role}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </span>
-                </div>
-                <div className="gf-form">
-                  <button className="btn gf-form-btn btn-success">Add</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </SlideDown>
+        {this.renderAddApiKeyForm()}
 
         <h3 className="page-heading">Existing Keys</h3>
         <table className="filter-table">
