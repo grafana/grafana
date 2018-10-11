@@ -72,8 +72,9 @@ type OrgUser struct {
 // COMMANDS
 
 type RemoveOrgUserCommand struct {
-	UserId int64
-	OrgId  int64
+	UserId                   int64
+	OrgId                    int64
+	ShouldDeleteOrphanedUser bool
 }
 
 type AddOrgUserCommand struct {
