@@ -1,5 +1,6 @@
 import './dashboard_loaders';
 import './ReactContainer';
+import '../extensions';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
