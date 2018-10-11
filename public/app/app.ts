@@ -29,6 +29,12 @@ _.move = (array, fromIndex, toIndex) => {
 import { coreModule, registerAngularDirectives } from './core/core';
 import { setupAngularRoutes } from './routes/routes';
 
+// import enterprise frontend
+const enterpriseIndex = (require as any).context('.', true, /enterprise\/index.ts/);
+enterpriseIndex.keys().forEach(key => {
+  enterpriseIndex(key);
+});
+
 declare var System: any;
 
 export class GrafanaApp {
