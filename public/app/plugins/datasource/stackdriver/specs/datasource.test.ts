@@ -6,7 +6,7 @@ import { TemplateSrvStub } from 'test/specs/helpers';
 describe('StackdriverDataSource', () => {
   const instanceSettings = {
     jsonData: {
-      projectName: 'testproject',
+      defaultProject: 'testproject',
     },
   };
   const templateSrv = new TemplateSrvStub();
@@ -54,7 +54,7 @@ describe('StackdriverDataSource', () => {
             Promise.reject({
               statusText: 'Bad Request',
               data: {
-                error: JSON.stringify({ error: { code: 400, message: 'Field interval.endTime had an invalid value' } }),
+                error: { code: 400, message: 'Field interval.endTime had an invalid value' },
               },
             }),
         };

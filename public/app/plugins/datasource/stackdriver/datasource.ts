@@ -200,11 +200,9 @@ export default class StackdriverDatasource {
         message = error;
       } else {
         message = 'Stackdriver: ';
-        message += error.statusText ? error.statusText + ': ' : '';
+        message += error.statusText ? error.statusText : defaultErrorMessage;
         if (error.data && error.data.error && error.data.error.code) {
-          message += error.data.error.code + '. ' + error.data.error.message;
-        } else {
-          message = defaultErrorMessage;
+          message += ': ' + error.data.error.code + '. ' + error.data.error.message;
         }
       }
     } finally {
