@@ -194,6 +194,8 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 			if err := deleteUserInTransaction(sess, &m.DeleteUserCommand{UserId: user.Id}); err != nil {
 				return err
 			}
+
+			cmd.UserWasRemoved = true
 		}
 
 		return nil

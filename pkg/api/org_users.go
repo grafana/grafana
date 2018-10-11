@@ -125,5 +125,9 @@ func removeOrgUserHelper(cmd *m.RemoveOrgUserCommand) Response {
 		return Error(500, "Failed to remove user from organization", err)
 	}
 
+	if cmd.UserWasRemoved {
+		return Success("User deleted")
+	}
+
 	return Success("User removed from organization")
 }
