@@ -42,7 +42,7 @@ describe('Render', () => {
     const { wrapper } = setup({
       apiKeys: getMultipleMockKeys(0),
       apiKeysCount: 0,
-	  hasFetched: true,
+      hasFetched: true,
     });
 
     expect(wrapper).toMatchSnapshot();
