@@ -1,6 +1,6 @@
 import './dashboard_loaders';
 import './ReactContainer';
-import '../extensions';
+import { applyRouteRegistrationHandlers } from './registry';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
@@ -226,11 +226,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => ServerStats,
       },
     })
-    .when('/admin/licensing', {
-      templateUrl: 'public/app/features/admin/partials/licensing.html',
-      controller: 'AdminLicensingCtrl',
-      controllerAs: 'ctrl',
-    })
     // LOGIN / SIGNUP
     .when('/login', {
       templateUrl: 'public/app/partials/login.html',
@@ -312,4 +307,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
     });
+
+  applyRouteRegistrationHandlers($routeProvider);
 }
