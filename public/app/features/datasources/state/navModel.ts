@@ -15,7 +15,7 @@ export function buildNavModel(dataSource: DataSource, pluginMeta: PluginMeta): N
         icon: 'fa fa-fw fa-sliders',
         id: `datasource-settings-${dataSource.id}`,
         text: 'Settings',
-        url: `datasources/edit/${dataSource.id}/settings`,
+        url: `datasources/edit/${dataSource.id}`,
       },
     ],
   };
