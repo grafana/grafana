@@ -102,7 +102,7 @@
     "build": "grunt build",
     "test": "grunt test",
     "lint": "tslint -c tslint.json --project tsconfig.json",
-    "jest": "jest --notify --watch",
+    "jest": "jest --config jest.config.json --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "precommit": "lint-staged && grunt precommit"
   },

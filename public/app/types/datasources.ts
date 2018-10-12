@@ -1,6 +1,28 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
 import { Plugin } from './plugins';
 
+export interface DataSourcePermission {
+  id: number;
+  datasourceId: number;
+  permission: number;
+  permissionName: string;
+  created: string;
+  updated: string;
+  userId?: number;
+  userLogin?: string;
+  userEmail?: string;
+  userAvatarUrl?: string;
+  teamId?: number;
+  teamAvatarUrl?: string;
+  team?: string;
+}
+
+export interface DataSourcePermissionDTO {
+  datasourceId: number;
+  enabled: boolean;
+  permissions: DataSourcePermission[];
+}
+
 export interface DataSource {
   id: number;
   orgId: number;
@@ -12,10 +34,10 @@ export interface DataSource {
   password: string;
   user: string;
   database: string;
-  basicAuth: false;
-  isDefault: false;
+  basicAuth: boolean;
+  isDefault: boolean;
   jsonData: { authType: string; defaultRegion: string };
-  readOnly: false;
+  readOnly: boolean;
 }
 
 export interface DataSourcesState {
@@ -26,4 +48,7 @@ export interface DataSourcesState {
   dataSourcesCount: number;
   dataSourceTypes: Plugin[];
   hasFetched: boolean;
+  dataSource: DataSource;
+  dataSourceMeta: Plugin;
+  dataSourcePermission: DataSourcePermissionDTO;
 }

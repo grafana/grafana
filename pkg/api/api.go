@@ -234,13 +234,13 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/", Wrap(GetDataSources))
 			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(m.UpdateDataSourceCommand{}), Wrap(UpdateDataSource))
-			datasourceRoute.Delete("/:id", Wrap(DeleteDataSourceByID))
+			datasourceRoute.Delete("/:id", Wrap(DeleteDataSourceById))
 			datasourceRoute.Delete("/name/:name", Wrap(DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", Wrap(GetDataSourceByID))
+			datasourceRoute.Get("/:id", Wrap(GetDataSourceById))
 			datasourceRoute.Get("/name/:name", Wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
 
-		apiRoute.Get("/datasources/id/:name", Wrap(GetDataSourceIDByName), reqSignedIn)
+		apiRoute.Get("/datasources/id/:name", Wrap(GetDataSourceIdByName), reqSignedIn)
 
 		apiRoute.Get("/plugins", Wrap(GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
