@@ -147,6 +147,7 @@ module.directive('graphLegend', (popoverSrv, $timeout) => {
             header += getTableHeaderHtml('max');
             header += getTableHeaderHtml('avg');
             header += getTableHeaderHtml('current');
+            header += getTableHeaderHtml('currentwTime');
             header += getTableHeaderHtml('total');
           }
           header += '</tr>';
@@ -207,6 +208,12 @@ module.directive('graphLegend', (popoverSrv, $timeout) => {
             const max = series.formatValue(series.stats.max);
             const total = series.formatValue(series.stats.total);
 
+            const TimeFormat = 'YYYY-MM-DD HH:mm:ss';
+            const time = scope.ctrl.dashboard.formatDate(
+              series.datapoints[series.datapoints.length - 1][1],
+              TimeFormat
+            );
+
             if (panel.legend.min) {
               html += '<div class="graph-legend-value min">' + min + '</div>';
             }
@@ -218,6 +225,9 @@ module.directive('graphLegend', (popoverSrv, $timeout) => {
             }
             if (panel.legend.current) {
               html += '<div class="graph-legend-value current">' + current + '</div>';
+            }
+            if (panel.legend.currentwTime) {
+              html += '<div class="graph-legend-value currentwTime">' + current + ' (' + time + ')</div>';
             }
             if (panel.legend.total) {
               html += '<div class="graph-legend-value total">' + total + '</div>';
