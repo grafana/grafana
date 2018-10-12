@@ -59,7 +59,6 @@ var (
 	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
-	LogModes   []string
 	LogConfigs []util.DynMap
 
 	// Http server options
