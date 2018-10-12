@@ -57,6 +57,11 @@
 				<input type="number" class="gf-form-input width-5" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right" ng-model="ctrl.panel.decimals" ng-change="ctrl.render()" ng-model-onblur>
 			</div>
 		</div>
+                    <div class="gf-form-inline">
+                            <gf-form-switch class="gf-form" label="Current with Time" label-class="width-9"
+                                    checked="ctrl.panel.legend.currentwTime" on-change="ctrl.legendValuesOptionChanged()">
+                            </gf-form-switch>
+                    </div>
 	</div>
 
 	<div class="section gf-form-group">
