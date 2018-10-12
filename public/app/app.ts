@@ -29,10 +29,10 @@ _.move = (array, fromIndex, toIndex) => {
 import { coreModule, registerAngularDirectives } from './core/core';
 import { setupAngularRoutes } from './routes/routes';
 
-// import enterprise frontend
-const enterpriseIndex = (require as any).context('.', true, /enterprise\/index.ts/);
-enterpriseIndex.keys().forEach(key => {
-  enterpriseIndex(key);
+// import symlinked extensions
+const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
+extensionsIndex.keys().forEach(key => {
+  extensionsIndex(key);
 });
 
 export class GrafanaApp {
