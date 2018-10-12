@@ -13,22 +13,25 @@ const setup = (propOverrides?: object) => {
     setPluginsLayoutMode: jest.fn(),
     layoutMode: LayoutModes.Grid,
     loadPlugins: jest.fn(),
+    hasFetched: false,
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<PluginListPage {...props} />);
-  const instance = wrapper.instance() as PluginListPage;
-
-  return {
-    wrapper,
-    instance,
-  };
+  return shallow(<PluginListPage {...props} />);
 };
 
 describe('Render', () => {
   it('should render component', () => {
-    const { wrapper } = setup();
+    const wrapper = setup();
+
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should render list', () => {
+    const wrapper = setup({
+      hasFetched: true,
+    });
 
     expect(wrapper).toMatchSnapshot();
   });

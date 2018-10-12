@@ -2,6 +2,7 @@
 import 'app/features/dashboard/view_state_srv';
 import config from 'app/core/config';
 import { DashboardViewState } from '../view_state_srv';
+import { DashboardModel } from '../dashboard_model';
 
 describe('when updating view state', () => {
   const location = {
@@ -11,10 +12,9 @@ describe('when updating view state', () => {
 
   const $scope = {
     onAppEvent: jest.fn(() => {}),
-    dashboard: {
-      meta: {},
-      panels: [],
-    },
+    dashboard: new DashboardModel({
+      panels: [{ id: 1 }],
+    }),
   };
 
   let viewState;

@@ -241,7 +241,6 @@ export class PanelCtrl {
   }
 
   render(payload?) {
-    console.log('panel_ctrl:render');
     this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }

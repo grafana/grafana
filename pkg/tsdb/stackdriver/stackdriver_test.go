@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
+	"strconv"
 	"testing"
 	"time"
 
@@ -339,6 +341,137 @@ func TestStackdriver(t *testing.T) {
 						So(res.Series[1].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
 						So(res.Series[2].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
 					})
+				})
+			})
+
+			Convey("when data from query is distribution", func() {
+				data, err := loadTestFile("./test-data/3-series-response-distribution.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				So(len(res.Series), ShouldEqual, 11)
+				for i := 0; i < 11; i++ {
+					if i == 0 {
+						So(res.Series[i].Name, ShouldEqual, "0")
+					} else {
+						So(res.Series[i].Name, ShouldEqual, strconv.FormatInt(int64(math.Pow(float64(2), float64(i-1))), 10))
+					}
+					So(len(res.Series[i].Points), ShouldEqual, 3)
+				}
+
+				Convey("timestamps should be in ascending order", func() {
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1536668940000)
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1536669000000)
+					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536669060000)
+				})
+
+				Convey("value should be correct", func() {
+					So(res.Series[8].Points[0][0].Float64, ShouldEqual, 1)
+					So(res.Series[9].Points[0][0].Float64, ShouldEqual, 1)
+					So(res.Series[10].Points[0][0].Float64, ShouldEqual, 1)
+					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 0)
+					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 0)
+					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 1)
+					So(res.Series[8].Points[2][0].Float64, ShouldEqual, 0)
+					So(res.Series[9].Points[2][0].Float64, ShouldEqual, 1)
+					So(res.Series[10].Points[2][0].Float64, ShouldEqual, 0)
+				})
+			})
+
+		})
+
+		Convey("when interpolating filter wildcards", func() {
+			Convey("and wildcard is used in the beginning and the end of the word", func() {
+				Convey("and theres no wildcard in the middle of the word", func() {
+					value := interpolateFilterWildcards("*-central1*")
+					So(value, ShouldEqual, `has_substring("-central1")`)
+				})
+				Convey("and there is a wildcard in the middle of the word", func() {
+					value := interpolateFilterWildcards("*-cent*ral1*")
+					So(value, ShouldNotStartWith, `has_substring`)
+				})
+			})
+
+			Convey("and wildcard is used in the beginning of the word", func() {
+				Convey("and there is not a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*-central1")
+					So(value, ShouldEqual, `ends_with("-central1")`)
+				})
+				Convey("and there is a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*-cent*al1")
+					So(value, ShouldNotStartWith, `ends_with`)
+				})
+			})
+
+			Convey("and wildcard is used at the end of the word", func() {
+				Convey("and there is not a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("us-central*")
+					So(value, ShouldEqual, `starts_with("us-central")`)
+				})
+				Convey("and there is a wildcard elsewhere in the word", func() {
+					value := interpolateFilterWildcards("*us-central*")
+					So(value, ShouldNotStartWith, `starts_with`)
+				})
+			})
+
+			Convey("and wildcard is used in the middle of the word", func() {
+				Convey("and there is only one wildcard", func() {
+					value := interpolateFilterWildcards("us-ce*tral1-b")
+					So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tral1\\-b$")`)
+				})
+
+				Convey("and there is more than one wildcard", func() {
+					value := interpolateFilterWildcards("us-ce*tra*1-b")
+					So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tra.*1\\-b$")`)
+				})
+			})
+
+			Convey("and wildcard is used in the middle of the word and in the beginning of the word", func() {
+				value := interpolateFilterWildcards("*s-ce*tral1-b")
+				So(value, ShouldEqual, `monitoring.regex.full_match("^.*s\\-ce.*tral1\\-b$")`)
+			})
+
+			Convey("and wildcard is used in the middle of the word and in the ending of the word", func() {
+				value := interpolateFilterWildcards("us-ce*tral1-*")
+				So(value, ShouldEqual, `monitoring.regex.full_match("^us\\-ce.*tral1\\-.*$")`)
+			})
+
+			Convey("and no wildcard is used", func() {
+				value := interpolateFilterWildcards("us-central1-a}")
+				So(value, ShouldEqual, `us-central1-a}`)
+			})
+		})
+
+		Convey("when building filter string", func() {
+			Convey("and theres no regex operator", func() {
+				Convey("and there are wildcards in a filter value", func() {
+					filterParts := []interface{}{"zone", "=", "*-central1*"}
+					value := buildFilterString("somemetrictype", filterParts)
+					So(value, ShouldEqual, `metric.type="somemetrictype" zone=has_substring("-central1")`)
+				})
+
+				Convey("and there are no wildcards in any filter value", func() {
+					filterParts := []interface{}{"zone", "!=", "us-central1-a"}
+					value := buildFilterString("somemetrictype", filterParts)
+					So(value, ShouldEqual, `metric.type="somemetrictype" zone!="us-central1-a"`)
+				})
+			})
+
+			Convey("and there is a regex operator", func() {
+				filterParts := []interface{}{"zone", "=~", "us-central1-a~"}
+				value := buildFilterString("somemetrictype", filterParts)
+				Convey("it should remove the ~ character from the operator that belongs to the value", func() {
+					So(value, ShouldNotContainSubstring, `=~`)
+					So(value, ShouldContainSubstring, `zone=`)
+				})
+
+				Convey("it should insert monitoring.regex.full_match before filter value", func() {
+					So(value, ShouldContainSubstring, `zone=monitoring.regex.full_match("us-central1-a~")`)
 				})
 			})
 		})

@@ -6,12 +6,13 @@ export const initialState: PluginsState = {
   plugins: [] as Plugin[],
   searchQuery: '',
   layoutMode: LayoutModes.Grid,
+  hasFetched: false,
 };
 
 export const pluginsReducer = (state = initialState, action: Action): PluginsState => {
   switch (action.type) {
     case ActionTypes.LoadPlugins:
-      return { ...state, plugins: action.payload };
+      return { ...state, hasFetched: true, plugins: action.payload };
 
     case ActionTypes.SetPluginsSearchQuery:
       return { ...state, searchQuery: action.payload };

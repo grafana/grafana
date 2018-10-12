@@ -145,7 +145,7 @@ interface PromQueryFieldProps {
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
   onQueryChange?: (value: string, override?: boolean) => void;
-  portalPrefix?: string;
+  portalOrigin?: string;
   request?: (url: string) => any;
   supportsLogs?: boolean; // To be removed after Logging gets its own query field
 }
@@ -156,7 +156,9 @@ interface PromQueryFieldState {
   labelValues: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   logLabelOptions: any[];
   metrics: string[];
+  metricsOptions: any[];
   metricsByPrefix: CascaderOption[];
+  syntaxLoaded: boolean;
 }
 
 interface PromTypeaheadInput {
@@ -167,7 +169,7 @@ interface PromTypeaheadInput {
   value?: Value;
 }
 
-class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryFieldState> {
+class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
 
   constructor(props: PromQueryFieldProps, context) {
@@ -189,6 +191,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       logLabelOptions: [],
       metrics: props.metrics || [],
       metricsByPrefix: props.metricsByPrefix || [],
+      metricsOptions: [],
+      syntaxLoaded: false,
     };
   }
 
@@ -258,10 +262,22 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
   };
 
   onReceiveMetrics = () => {
-    if (!this.state.metrics) {
+    const { histogramMetrics, metrics, metricsByPrefix } = this.state;
+    if (!metrics) {
       return;
     }
-    setPrismTokens(PRISM_SYNTAX, METRIC_MARK, this.state.metrics);
+
+    // Update global prism config
+    setPrismTokens(PRISM_SYNTAX, METRIC_MARK, metrics);
+
+    // Build metrics tree
+    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
+    const metricsOptions = [
+      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
+      ...metricsByPrefix,
+    ];
+
+    this.setState({ metricsOptions, syntaxLoaded: true });
   };
 
   onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
@@ -294,10 +310,10 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     } else if (_.includes(wrapperClasses, 'context-aggregation')) {
       return this.getAggregationTypeahead.apply(this, arguments);
     } else if (
-      // Non-empty but not inside known token
-      (prefix && !tokenRecognized) ||
-      (prefix === '' && !text.match(/^[)\s]+$/)) || // Empty context or after ')'
-      text.match(/[+\-*/^%]/) // After binary operator
+      // Show default suggestions in a couple of scenarios
+      (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
+      (prefix === '' && !text.match(/^[\]})\s]+$/)) || // Empty prefix, but not following a closing brace
+      text.match(/[+\-*/^%]/) // Anything after binary operator
     ) {
       return this.getEmptyTypeahead();
     }
@@ -453,7 +469,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       const histogramSeries = this.state.labelValues[HISTOGRAM_SELECTOR];
       if (histogramSeries && histogramSeries['__name__']) {
         const histogramMetrics = histogramSeries['__name__'].slice().sort();
-        this.setState({ histogramMetrics });
+        this.setState({ histogramMetrics }, this.onReceiveMetrics);
       }
     });
   }
@@ -544,13 +560,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
   }
 
   render() {
-    const { error, hint, supportsLogs } = this.props;
-    const { histogramMetrics, logLabelOptions, metricsByPrefix } = this.state;
-    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
-    const metricsOptions = [
-      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
-      ...metricsByPrefix,
-    ];
+    const { error, hint, initialQuery, supportsLogs } = this.props;
+    const { logLabelOptions, metricsOptions, syntaxLoaded } = this.state;
 
     return (
       <div className="prom-query-field">
@@ -570,11 +581,13 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
             <TypeaheadField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialValue={this.props.initialQuery}
+              initialValue={initialQuery}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onValueChanged={this.onChangeQuery}
               placeholder="Enter a PromQL query"
+              portalOrigin="prometheus"
+              syntaxLoaded={syntaxLoaded}
             />
           </div>
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}

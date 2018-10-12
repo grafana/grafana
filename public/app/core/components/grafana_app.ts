@@ -23,8 +23,8 @@ export class GrafanaCtrl {
     contextSrv,
     bridgeSrv,
     backendSrv: BackendSrv,
-    angularLoader: AngularLoader,
-    datasourceSrv: DatasourceSrv
+    datasourceSrv: DatasourceSrv,
+    angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);

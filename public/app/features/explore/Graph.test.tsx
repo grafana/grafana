@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import Graph from './Graph';
+import { Graph } from './Graph';
 import { mockData } from './__mocks__/mockData';
 
 const setup = (propOverrides?: object) => {

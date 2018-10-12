@@ -1,5 +1,6 @@
 import './dashboard_loaders';
 import './ReactContainer';
+import { applyRouteRegistrationHandlers } from './registry';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
@@ -10,6 +11,7 @@ import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
+import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 
 /** @ngInject */
@@ -81,9 +83,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/datasources/new', {
-      templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
-      controller: 'DataSourceEditCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => NewDataSourcePage,
+      },
     })
     .when('/dashboards', {
       templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
@@ -279,11 +282,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       redirectTo: '/alerting/list',
     })
     .when('/alerting/list', {
-      templateUrl: 'public/app/features/alerting/partials/alert_list.html',
-      controller: 'AlertListCtrl',
-      controllerAs: 'ctrl',
-    })
-    .when('/alerting/list', {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
@@ -309,4 +307,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
     });
+
+  applyRouteRegistrationHandlers($routeProvider);
 }

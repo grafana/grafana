@@ -50,11 +50,11 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   };
 
   onUserSelected = (user: User) => {
-    this.setState({ userId: user ? user.id : 0 });
+    this.setState({ userId: user && !Array.isArray(user) ? user.id : 0 });
   };
 
   onTeamSelected = (team: Team) => {
-    this.setState({ teamId: team ? team.id : 0 });
+    this.setState({ teamId: team && !Array.isArray(team) ? team.id : 0 });
   };
 
   onPermissionChanged = (permission: OptionWithDescription) => {
@@ -82,7 +82,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     const newItem = this.state;
     const pickerClassName = 'width-20';
     const isValid = this.isValid();
-
     return (
       <div className="gf-form-inline cta-form">
         <button className="cta-form__close btn btn-transparent" onClick={onCancel}>
@@ -107,21 +106,13 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
 
             {newItem.type === AclTarget.User ? (
               <div className="gf-form">
-                <UserPicker
-                  onSelected={this.onUserSelected}
-                  value={newItem.userId.toString()}
-                  className={pickerClassName}
-                />
+                <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
               </div>
             ) : null}
 
             {newItem.type === AclTarget.Team ? (
               <div className="gf-form">
-                <TeamPicker
-                  onSelected={this.onTeamSelected}
-                  value={newItem.teamId.toString()}
-                  className={pickerClassName}
-                />
+                <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
               </div>
             ) : null}
 
@@ -129,9 +120,8 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
               <DescriptionPicker
                 optionsWithDesc={dashboardPermissionLevels}
                 onSelected={this.onPermissionChanged}
-                value={newItem.permission}
                 disabled={false}
-                className={'gf-form-input--form-dropdown-right'}
+                className={'gf-form-select-box__control--menu-right'}
               />
             </div>
 

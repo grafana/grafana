@@ -10,10 +10,10 @@ import (
 )
 
 func (hs *HTTPServer) registerRoutes() {
-	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
-	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
-	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
-	reqOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	reqSignedIn := middleware.ReqSignedIn
+	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
+	reqEditorRole := middleware.ReqEditorRole
+	reqOrgAdmin := middleware.ReqOrgAdmin
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota

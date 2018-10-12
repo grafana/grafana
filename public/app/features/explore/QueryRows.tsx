@@ -44,16 +44,15 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { edited, history, query, queryError, queryHint, request, supportsLogs } = this.props;
+    const { history, query, queryError, queryHint, request, supportsLogs } = this.props;
     return (
       <div className="query-row">
         <div className="query-row-field">
           <QueryField
             error={queryError}
             hint={queryHint}
-            initialQuery={edited ? null : query}
+            initialQuery={query}
             history={history}
-            portalPrefix="explore"
             onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}
@@ -79,7 +78,7 @@ class QueryRow extends PureComponent<any, {}> {
 
 export default class QueryRows extends PureComponent<any, {}> {
   render() {
-    const { className = '', queries, queryErrors = [], queryHints = [], ...handlers } = this.props;
+    const { className = '', queries, queryErrors, queryHints, ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (
@@ -89,7 +88,6 @@ export default class QueryRows extends PureComponent<any, {}> {
             query={q.query}
             queryError={queryErrors[index]}
             queryHint={queryHints[index]}
-            edited={q.edited}
             {...handlers}
           />
         ))}

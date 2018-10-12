@@ -7,9 +7,10 @@ exports[`Render should render component 1`] = `
   >
     <div
       className="explore-graph"
+      id="graph"
       style={
         Object {
-          "height": undefined,
+          "height": "100px",
         }
       }
     />
@@ -481,9 +482,10 @@ exports[`Render should render component with disclaimer 1`] = `
   >
     <div
       className="explore-graph"
+      id="graph"
       style={
         Object {
-          "height": undefined,
+          "height": "100px",
         }
       }
     />

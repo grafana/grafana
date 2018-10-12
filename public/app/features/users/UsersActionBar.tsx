@@ -71,8 +71,7 @@ export class UsersActionBar extends PureComponent<Props> {
           )}
           {externalUserMngLinkUrl && (
             <a className="btn btn-success" href={externalUserMngLinkUrl} target="_blank">
-              <i className="fa fa-external-link-square" />
-              {externalUserMngLinkName}
+              <i className="fa fa-external-link-square" /> {externalUserMngLinkName}
             </a>
           )}
         </div>

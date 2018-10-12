@@ -31,6 +31,9 @@ Name | Description
 *User* | Database user's login/username
 *Password* | Database user's password
 *SSL Mode* | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+*Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+*Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
 *Version* | This option determines which functions are available in the query builder (only available in Grafana 5.3+).
 *TimescaleDB* | TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use `time_bucket` in the `$__timeGroup` macro and display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
 
@@ -374,6 +377,9 @@ datasources:
       password: "Password!"
     jsonData:
       sslmode: "disable" # disable/require/verify-ca/verify-full
+      maxOpenConns: 0         # Grafana v5.4+
+      maxIdleConns: 2         # Grafana v5.4+
+      connMaxLifetime: 14400  # Grafana v5.4+
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
 ```

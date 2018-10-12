@@ -96,11 +96,9 @@ export class StackdriverFilterCtrl {
   getServicesList() {
     const defaultValue = { value: this.$scope.defaultServiceValue, text: this.$scope.defaultServiceValue };
     const services = this.metricDescriptors.map(m => {
-      const [service] = m.type.split('/');
-      const [serviceShortName] = service.split('.');
       return {
-        value: service,
-        text: serviceShortName,
+        value: m.service,
+        text: m.serviceShortName,
       };
     });
 
@@ -113,12 +111,10 @@ export class StackdriverFilterCtrl {
 
   getMetricsList() {
     const metrics = this.metricDescriptors.map(m => {
-      const [service] = m.type.split('/');
-      const [serviceShortName] = service.split('.');
       return {
-        service,
+        service: m.service,
         value: m.type,
-        serviceShortName,
+        serviceShortName: m.serviceShortName,
         text: m.displayName,
         title: m.description,
       };
