@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DataSource, Plugin } from 'app/types';
+import DataSourceHttpSettings from './DataSourceHttpSettings';
 
 export interface Props {
   dataSource: DataSource;
@@ -8,6 +9,7 @@ export interface Props {
 }
 interface State {
   name: string;
+  showNamePopover: boolean;
 }
 
 enum DataSourceStates {
@@ -16,13 +18,10 @@ enum DataSourceStates {
 }
 
 export class DataSourceSettings extends PureComponent<Props, State> {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      name: props.dataSource.name,
-    };
-  }
+  state = {
+    name: this.props.dataSource.name,
+    showNamePopover: false,
+  };
 
   onNameChange = event => {
     this.setState({
@@ -37,6 +36,12 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
   onDelete = event => {
     console.log(event);
+  };
+
+  onTogglePopover = () => {
+    this.setState(prevState => ({
+      showNamePopover: !prevState.showNamePopover,
+    }));
   };
 
   isReadyOnly() {
@@ -70,11 +75,22 @@ export class DataSourceSettings extends PureComponent<Props, State> {
   }
 
   render() {
-    const { name } = this.state;
+    const { name, showNamePopover } = this.state;
+
+    const props = {
+      access: {},
+      basicAuth: {},
+      showAccessOption: {},
+      tlsAuth: {},
+      tlsAuthWithCACert: {},
+      tlsCACert: {},
+      tlsClientCert: {},
+      tlsClientKey: {},
+      url: {},
+    };
 
     return (
       <div>
-        <h3 className="page-sub-heading">Settings</h3>
         <form onSubmit={this.onSubmit}>
           <div className="gf-form-group">
             <div className="gf-form-inline">
@@ -84,10 +100,31 @@ export class DataSourceSettings extends PureComponent<Props, State> {
                   className="gf-form-input max-width-23"
                   type="text"
                   value={name}
-                  placeholder="name"
+                  placeholder="Name"
                   onChange={this.onNameChange}
                   required
                 />
+                <div onClick={this.onTogglePopover}>
+                  <i className="fa fa-info-circle" />
+                </div>
+                {showNamePopover && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '450px',
+                      top: '-20px',
+                      padding: '10px',
+                      backgroundColor: 'black',
+                      zIndex: 2,
+                      width: '300px',
+                      border: '1px solid gray',
+                      borderRadius: '3px',
+                    }}
+                  >
+                    The name is used when you select the data source in panels. The <em>Default</em> data source is
+                    preselected in new panels.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -110,6 +147,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
             </a>
           </div>
         </form>
+        <DataSourceHttpSettings {...props} />
       </div>
     );
   }

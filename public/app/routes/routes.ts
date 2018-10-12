@@ -73,11 +73,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => DataSourcesListPage,
       },
     })
-    .when('/datasources/edit/:id', {
-      templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
-      controller: 'DataSourceEditCtrl',
-      controllerAs: 'ctrl',
-    })
     .when('/datasources/edit/:id/dashboards', {
       templateUrl: 'public/app/features/plugins/partials/ds_dashboards.html',
       controller: 'DataSourceDashboardsCtrl',

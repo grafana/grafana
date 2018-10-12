@@ -3,6 +3,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import PageHeader from '../../core/components/PageHeader/PageHeader';
 import DataSourcePermissions from './DataSourcePermissions';
+import DataSourceSettings from './DataSourceSettings';
 import { DataSource, NavModel } from 'app/types';
 import { loadDataSource } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -24,6 +25,8 @@ enum PageTypes {
   Dashboards = 'dashboards',
 }
 
+const fallBackPage = PageTypes.Settings;
+
 export class EditDataSourcePage extends PureComponent<Props> {
   componentDidMount() {
     this.fetchDataSource();
@@ -39,12 +42,13 @@ export class EditDataSourcePage extends PureComponent<Props> {
 
   getCurrentPage() {
     const currentPage = this.props.pageName;
-
-    return this.isValidPage(currentPage) ? currentPage : PageTypes.Permissions;
+    return this.isValidPage(currentPage) ? currentPage : fallBackPage;
   }
 
   renderPage() {
     switch (this.getCurrentPage()) {
+      case PageTypes.Settings:
+        return <DataSourceSettings />;
       case PageTypes.Permissions:
         return <DataSourcePermissions />;
     }
@@ -65,7 +69,7 @@ export class EditDataSourcePage extends PureComponent<Props> {
 }
 
 function mapStateToProps(state) {
-  const pageName = getRouteParamsPage(state.location) || PageTypes.Permissions;
+  const pageName = getRouteParamsPage(state.location) || fallBackPage;
   const dataSourceId = getRouteParamsId(state.location);
   const dataSourceLoadingNav = getDataSourceLoadingNav(pageName);
 
