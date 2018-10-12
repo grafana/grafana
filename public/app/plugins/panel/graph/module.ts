@@ -313,7 +313,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   legendValuesOptionChanged() {
     const legend = this.panel.legend;
-    legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
+    legend.values = legend.min || legend.max || legend.avg || legend.current || legend.currentwTime || legend.total;
     this.render();
   }
 
