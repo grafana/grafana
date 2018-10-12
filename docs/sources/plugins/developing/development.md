@@ -33,7 +33,7 @@ There are two blog posts about authoring a plugin that might also be of interest
 ## What languages?
 
 Since everything turns into javascript it's up to you to choose which language you want. That said it's probably a good idea to choose es6 or typescript since
-we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo is you choose one of those languages.
+we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo if you choose one of those languages.
 
 ## Buildscript
 
