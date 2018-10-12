@@ -10,7 +10,7 @@ weight = 1
 
 # Developer Guide
 
-You can extend Grafana by writing your own plugins and then share then with other users in [our plugin repository](https://grafana.com/plugins).
+You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
 ## Short version
 
