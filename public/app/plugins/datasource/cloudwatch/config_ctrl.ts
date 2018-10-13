@@ -76,6 +76,8 @@ export class CloudWatchConfigCtrl {
       })
       .then(regions => {
         this.regions = _.uniq(this.regions.concat(_.map(regions, 'value')));
+      }, err => {
+        console.error('failed to call ec2:DescribeRegions, please check iam setting');
       });
   }
 }
