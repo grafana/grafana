@@ -100,7 +100,7 @@ func listenToSystemSignals(server *GrafanaServerImpl) {
 	sighupChan := make(chan os.Signal, 1)
 
 	signal.Notify(sighupChan, syscall.SIGHUP)
-	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
 	for {
 		select {
