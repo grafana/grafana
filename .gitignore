@@ -69,7 +69,6 @@ debug.test
 /vendor/**/*.yml
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
-/vendor/**/appengine*
 *.orig
 
 /devenv/bulk-dashboards/*.json
