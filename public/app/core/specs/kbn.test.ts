@@ -399,6 +399,77 @@ describe('duration', () => {
   });
 });
 
+describe('clock', () => {
+  it('null', () => {
+    const str = kbn.toClock(null, 0);
+    expect(str).toBe('');
+  });
+  it('size less than 1 second', () => {
+    const str = kbn.toClock(999, 0);
+    expect(str).toBe('999ms');
+  });
+  describe('size less than 1 minute', () => {
+    it('default', () => {
+      const str = kbn.toClock(59999);
+      expect(str).toBe('59s:999ms');
+    });
+    it('decimals equals 0', () => {
+      const str = kbn.toClock(59999, 0);
+      expect(str).toBe('59s');
+    });
+  });
+  describe('size less than 1 hour', () => {
+    it('default', () => {
+      const str = kbn.toClock(3599999);
+      expect(str).toBe('59m:59s:999ms');
+    });
+    it('decimals equals 0', () => {
+      const str = kbn.toClock(3599999, 0);
+      expect(str).toBe('59m');
+    });
+    it('decimals equals 1', () => {
+      const str = kbn.toClock(3599999, 1);
+      expect(str).toBe('59m:59s');
+    });
+  });
+  describe('size greater than or equal 1 hour', () => {
+    it('default', () => {
+      const str = kbn.toClock(7199999);
+      expect(str).toBe('01h:59m:59s:999ms');
+    });
+    it('decimals equals 0', () => {
+      const str = kbn.toClock(7199999, 0);
+      expect(str).toBe('01h');
+    });
+    it('decimals equals 1', () => {
+      const str = kbn.toClock(7199999, 1);
+      expect(str).toBe('01h:59m');
+    });
+    it('decimals equals 2', () => {
+      const str = kbn.toClock(7199999, 2);
+      expect(str).toBe('01h:59m:59s');
+    });
+  });
+  describe('size greater than or equal 1 day', () => {
+    it('default', () => {
+      const str = kbn.toClock(89999999);
+      expect(str).toBe('24h:59m:59s:999ms');
+    });
+    it('decimals equals 0', () => {
+      const str = kbn.toClock(89999999, 0);
+      expect(str).toBe('24h');
+    });
+    it('decimals equals 1', () => {
+      const str = kbn.toClock(89999999, 1);
+      expect(str).toBe('24h:59m');
+    });
+    it('decimals equals 2', () => {
+      const str = kbn.toClock(89999999, 2);
+      expect(str).toBe('24h:59m:59s');
+    });
+  });
+});
+
 describe('volume', () => {
   it('1000m3', () => {
     const str = kbn.valueFormats['m3'](1000, 1, null);

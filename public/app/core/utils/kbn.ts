@@ -809,7 +809,9 @@ kbn.toDuration = (size, decimals, timeScale) => {
 };
 
 kbn.toClock = (size, decimals) => {
-  console.log(`size ${JSON.stringify(size, null, 2)}`);
+  if (size === null) {
+    return '';
+  }
 
   // < 1 second
   if (size < 1000) {
@@ -838,7 +840,7 @@ kbn.toClock = (size, decimals) => {
 
   let format = 'mm\\m:ss\\s:SSS\\m\\s';
 
-  const hours = ('0' + Math.floor(moment.duration(size, 'milliseconds').asHours())).slice(-2);
+  const hours = `${('0' + Math.floor(moment.duration(size, 'milliseconds').asHours())).slice(-2)}h`;
 
   if (decimals === 0) {
     format = '';
