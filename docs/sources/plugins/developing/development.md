@@ -60,7 +60,6 @@ and [apps]({{< relref "apps.md" >}}) plugins in the documentation.
 The Grafana SDK is quite small so far and can be found here:
 
 - [SDK file in Grafana](https://github.com/grafana/grafana/blob/master/public/app/plugins/sdk.ts)
-- [SDK Readme](https://github.com/grafana/grafana/blob/master/public/app/plugins/plugin_api.md)
 
 The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "datasources.md" >}}).
 
