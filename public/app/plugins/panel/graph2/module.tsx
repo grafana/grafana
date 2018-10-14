@@ -1,4 +1,8 @@
+// Libraries
+import _ from 'lodash';
 import React, { PureComponent } from 'react';
+
+// Types
 import { PanelProps } from 'app/types';
 
 interface Options {
@@ -15,16 +19,24 @@ export class Graph2 extends PureComponent<Props> {
   }
 
   render() {
-    const { data } = this.props;
-    let value = 0;
+    const { timeSeries } = this.props;
+    let index = 0;
 
-    if (data.length) {
-      value = data[0].value;
-    }
-
-    console.log('graph2 render');
-
-    return <h2>Text Panel {value}</h2>;
+    return (
+      <table className="filter-table">
+        <tbody>
+          {timeSeries.map(series => {
+            return (
+              <tr key={index++}>
+                <td>{series.target}</td>
+                <td>{series.datapoints[0][0]}</td>
+                <td>{series.datapoints[0][1]}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
   }
 }
 

@@ -5,11 +5,11 @@ import React, { Component } from 'react';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 // Types
-import { TimeRange, LoadingState } from 'app/types';
+import { TimeRange, LoadingState, DataQueryResponse, TimeSeries } from 'app/types';
 
 interface RenderProps {
   loading: LoadingState;
-  data: any;
+  timeSeries: TimeSeries[];
 }
 
 export interface Props {
@@ -26,7 +26,7 @@ export interface Props {
 export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
-  data: any;
+  response: DataQueryResponse;
 }
 
 export class DataPanel extends Component<Props, State> {
@@ -41,7 +41,9 @@ export class DataPanel extends Component<Props, State> {
 
     this.state = {
       loading: LoadingState.NotStarted,
-      data: [],
+      response: {
+        data: [],
+      },
       isFirstLoad: true,
     };
   }
@@ -70,7 +72,7 @@ export class DataPanel extends Component<Props, State> {
     }
 
     if (!queries.length) {
-      this.setState({ data: [], loading: LoadingState.Done });
+      this.setState({ loading: LoadingState.Done });
       return;
     }
 
@@ -94,9 +96,14 @@ export class DataPanel extends Component<Props, State> {
         cacheTimeout: null,
       };
 
-      console.log('issueing react query', queryOptions);
+      console.log('Issuing DataPanel query', queryOptions);
       const resp = await ds.query(queryOptions);
-      console.log(resp);
+      console.log('Issuing DataPanel query Resp', resp);
+
+      this.setState({
+        loading: LoadingState.Done,
+        response: resp,
+      });
     } catch (err) {
       console.log('Loading error', err);
       this.setState({ loading: LoadingState.Error });
@@ -104,8 +111,9 @@ export class DataPanel extends Component<Props, State> {
   };
 
   render() {
-    const { data, loading, isFirstLoad } = this.state;
+    const { response, loading, isFirstLoad } = this.state;
     console.log('data panel render');
+    const timeSeries = response.data;
 
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
       return (
@@ -119,7 +127,7 @@ export class DataPanel extends Component<Props, State> {
       <>
         {this.loadingSpinner}
         {this.props.children({
-          data,
+          timeSeries,
           loading,
         })}
       </>

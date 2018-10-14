@@ -1,6 +1,5 @@
 import angular from 'angular';
 
-console.log('core module code');
 const coreModule = angular.module('grafana.core', ['ngRoute']);
 
 // legacy modules

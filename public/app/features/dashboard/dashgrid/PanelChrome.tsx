@@ -73,8 +73,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             isVisible={this.isVisible}
             refreshCounter={refreshCounter}
           >
-            {({ loading, data }) => {
-              return <PanelComponent loading={loading} data={data} />;
+            {({ loading, timeSeries }) => {
+              return <PanelComponent loading={loading} timeSeries={timeSeries} />;
             }}
           </DataPanel>
         </div>

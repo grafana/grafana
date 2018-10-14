@@ -7,14 +7,7 @@ export class Text2 extends PureComponent<PanelProps> {
   }
 
   render() {
-    const { data } = this.props;
-    let value = 0;
-
-    if (data.length) {
-      value = data[0].value;
-    }
-
-    return <h2>Text Panel! {value}</h2>;
+    return <h2>Text Panel!</h2>;
   }
 }
 
