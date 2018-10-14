@@ -111,7 +111,7 @@ export function willApplySuggestion(
 
     case 'context-label-values': {
       // Always add quotes and remove existing ones instead
-      if (!(typeaheadText.startsWith('="') || typeaheadText.startsWith('"'))) {
+      if (!typeaheadText.match(/^(!?=~?"|")/)) {
         suggestion = `"${suggestion}`;
       }
       if (getNextCharacter() !== '"') {
@@ -421,7 +421,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const containsMetric = selector.indexOf('__name__=') > -1;
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
-    if ((text && text.startsWith('=')) || _.includes(wrapperClasses, 'attr-value')) {
+    if ((text && text.match(/^!?=~?/)) || _.includes(wrapperClasses, 'attr-value')) {
       // Label values
       if (labelKey && this.state.labelValues[selector] && this.state.labelValues[selector][labelKey]) {
         const labelValues = this.state.labelValues[selector][labelKey];
@@ -571,10 +571,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               <button className="btn navbar-button navbar-button--tight">Log labels</button>
             </Cascader>
           ) : (
-              <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-                <button className="btn navbar-button navbar-button--tight">Metrics</button>
-              </Cascader>
-            )}
+            <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
+              <button className="btn navbar-button navbar-button--tight">Metrics</button>
+            </Cascader>
+          )}
         </div>
         <div className="prom-query-field-wrapper">
           <div className="slate-query-field-wrapper">
