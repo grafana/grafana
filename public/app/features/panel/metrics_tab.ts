@@ -25,6 +25,9 @@ export class MetricsTabCtrl {
     $scope.ctrl = this;
 
     this.panel = this.panelCtrl.panel;
+    this.panel.datasource = this.panel.datasource || null;
+    this.panel.targets = this.panel.targets || [{}];
+
     this.dashboard = this.panelCtrl.dashboard;
     this.datasources = datasourceSrv.getMetricSources();
     this.panelDsValue = this.panelCtrl.panel.datasource;

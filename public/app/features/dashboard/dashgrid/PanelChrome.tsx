@@ -34,8 +34,8 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.dashboard.panelInitialized(this.props.panel);
     this.props.panel.events.on('refresh', this.onRefresh);
+    this.props.dashboard.panelInitialized(this.props.panel);
   }
 
   componentWillUnmount() {
@@ -53,13 +53,13 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   get isVisible() {
-    return this.props.dashboard.otherPanelInFullscreen(this.props.panel);
+    return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
   render() {
     const { panel, dashboard } = this.props;
     const { datasource, targets } = panel;
-    const { refreshCounter } = this.state;
+    const { refreshCounter, timeRange } = this.state;
     const PanelComponent = this.props.component;
 
     return (
@@ -69,6 +69,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           <DataPanel
             datasource={datasource}
             queries={targets}
+            timeRange={timeRange}
             isVisible={this.isVisible}
             refreshCounter={refreshCounter}
           >

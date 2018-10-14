@@ -19,7 +19,6 @@ import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';
 
-import { grafanaAppDirective } from './components/grafana_app';
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
 import { navbarDirective } from './components/navbar/navbar';
@@ -60,7 +59,6 @@ export {
   registerAngularDirectives,
   arrayJoin,
   coreModule,
-  grafanaAppDirective,
   navbarDirective,
   searchDirective,
   liveSrv,

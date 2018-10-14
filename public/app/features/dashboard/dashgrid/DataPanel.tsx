@@ -1,5 +1,5 @@
 // Library
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -29,7 +29,7 @@ export interface State {
   data: any;
 }
 
-export class DataPanel extends PureComponent<Props, State> {
+export class DataPanel extends Component<Props, State> {
   static defaultProps = {
     isVisible: true,
     panelId: 1,
@@ -48,7 +48,18 @@ export class DataPanel extends PureComponent<Props, State> {
 
   componentDidMount() {
     console.log('DataPanel mount');
+  }
+
+  async componentDidUpdate(prevProps: Props) {
+    if (!this.hasPropsChanged(prevProps)) {
+      return;
+    }
+
     this.issueQueries();
+  }
+
+  hasPropsChanged(prevProps: Props) {
+    return this.props.refreshCounter !== prevProps.refreshCounter || this.props.isVisible !== prevProps.isVisible;
   }
 
   issueQueries = async () => {
@@ -83,6 +94,7 @@ export class DataPanel extends PureComponent<Props, State> {
         cacheTimeout: null,
       };
 
+      console.log('issueing react query', queryOptions);
       const resp = await ds.query(queryOptions);
       console.log(resp);
     } catch (err) {
