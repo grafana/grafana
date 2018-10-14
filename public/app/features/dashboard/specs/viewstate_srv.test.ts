@@ -11,6 +11,7 @@ describe('when updating view state', () => {
   };
 
   const $scope = {
+    appEvent: jest.fn(),
     onAppEvent: jest.fn(() => {}),
     dashboard: new DashboardModel({
       panels: [{ id: 1 }],

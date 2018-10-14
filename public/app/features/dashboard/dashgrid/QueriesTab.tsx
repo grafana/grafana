@@ -21,15 +21,21 @@ export class QueriesTab extends React.Component<Props, any> {
       return;
     }
 
+    const { panel, dashboard } = this.props;
+
+    // make sure the panel has datasource & queries properties
+    panel.datasource = panel.datasource || null;
+    panel.targets = panel.targets || [{}];
+
     const loader = getAngularLoader();
     const template = '<metrics-tab />';
     const scopeProps = {
       ctrl: {
-        panel: this.props.panel,
-        dashboard: this.props.dashboard,
+        panel: panel,
+        dashboard: dashboard,
         panelCtrl: {
-          panel: this.props.panel,
-          dashboard: this.props.dashboard,
+          panel: panel,
+          dashboard: dashboard,
         },
       },
     };
