@@ -1,8 +1,17 @@
-import React, { ComponentClass } from 'react';
+// Libraries
+import React, { ComponentClass, PureComponent } from 'react';
+
+// Services
+import { getTimeSrv } from '../time_srv';
+
+// Components
+import { PanelHeader } from './PanelHeader';
+import { DataPanel } from './DataPanel';
+
+// Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { PanelHeader } from './PanelHeader';
-import { DataPanel, PanelProps } from './DataPanel';
+import { TimeRange, PanelProps } from 'app/types';
 
 export interface Props {
   panel: PanelModel;
@@ -10,30 +19,59 @@ export interface Props {
   component: ComponentClass<PanelProps>;
 }
 
-interface State {}
+export interface State {
+  refreshCounter: number;
+  timeRange?: TimeRange;
+}
 
-export class PanelChrome extends React.Component<Props, State> {
-  panelComponent: DataPanel;
-
+export class PanelChrome extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
+
+    this.state = {
+      refreshCounter: 0,
+    };
+  }
+
+  componentDidMount() {
+    this.props.dashboard.panelInitialized(this.props.panel);
+    this.props.panel.events.on('refresh', this.onRefresh);
+  }
+
+  componentWillUnmount() {
+    this.props.panel.events.off('refresh', this.onRefresh);
+  }
+
+  onRefresh = () => {
+    const timeSrv = getTimeSrv();
+    const timeRange = timeSrv.timeRange();
+
+    this.setState({
+      refreshCounter: this.state.refreshCounter + 1,
+      timeRange: timeRange,
+    });
+  };
+
+  get isVisible() {
+    return this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
   render() {
-    const { datasource, targets } = this.props.panel;
+    const { panel, dashboard } = this.props;
+    const { datasource, targets } = panel;
+    const { refreshCounter } = this.state;
     const PanelComponent = this.props.component;
-
-    // if (!PanelComponent) {
-    //   PanelComponent = dataPanels[type] = DataPanelWrapper(this.props.component);
-    // }
-
-    console.log('PanelChrome render', PanelComponent);
 
     return (
       <div className="panel-container">
-        <PanelHeader panel={this.props.panel} dashboard={this.props.dashboard} />
+        <PanelHeader panel={panel} dashboard={dashboard} />
         <div className="panel-content">
-          <DataPanel datasource={datasource} queries={targets}>
+          <DataPanel
+            datasource={datasource}
+            queries={targets}
+            isVisible={this.isVisible}
+            refreshCounter={refreshCounter}
+          >
             {({ loading, data }) => {
               return <PanelComponent loading={loading} data={data} />;
             }}

@@ -1,4 +1,4 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 
@@ -203,6 +203,5 @@ export class ElasticMetricAggCtrl {
   }
 }
 
-const module = angular.module('grafana.directives');
-module.directive('elasticMetricAgg', elasticMetricAgg);
-module.controller('ElasticMetricAggCtrl', ElasticMetricAggCtrl);
+coreModule.directive('elasticMetricAgg', elasticMetricAgg);
+coreModule.controller('ElasticMetricAggCtrl', ElasticMetricAggCtrl);

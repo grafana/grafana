@@ -80,7 +80,6 @@ class GraphElement {
     this.annotations = this.ctrl.annotations || [];
     this.buildFlotPairs(this.data);
     const graphHeight = this.elem.height();
-    console.log('graphHeight', graphHeight);
     updateLegendValues(this.data, this.panel, graphHeight);
 
     this.ctrl.events.emit('render-legend');

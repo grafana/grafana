@@ -1,7 +1,7 @@
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import rst2html from 'rst2html';
+import coreModule from 'app/core/core_module';
 
 /** @ngInject */
 export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
@@ -315,4 +315,4 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
   };
 }
 
-angular.module('grafana.directives').directive('graphiteFuncEditor', graphiteFuncEditor);
+coreModule.directive('graphiteFuncEditor', graphiteFuncEditor);

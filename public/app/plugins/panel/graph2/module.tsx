@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { PanelProps } from 'app/features/dashboard/dashgrid/DataPanel';
+import { PanelProps } from 'app/types';
 
 interface Options {
   showBars: boolean;
@@ -21,6 +21,8 @@ export class Graph2 extends PureComponent<Props> {
     if (data.length) {
       value = data[0].value;
     }
+
+    console.log('graph2 render');
 
     return <h2>Text Panel {value}</h2>;
   }

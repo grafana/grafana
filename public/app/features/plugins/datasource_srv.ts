@@ -162,5 +162,15 @@ export class DatasourceSrv {
   }
 }
 
+let singleton: DatasourceSrv;
+
+export function setDatasourceSrv(srv: DatasourceSrv) {
+  singleton = srv;
+}
+
+export function getDatasourceSrv(): DatasourceSrv {
+  return singleton;
+}
+
 coreModule.service('datasourceSrv', DatasourceSrv);
 export default DatasourceSrv;

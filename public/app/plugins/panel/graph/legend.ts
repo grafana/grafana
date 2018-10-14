@@ -1,11 +1,9 @@
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import baron from 'baron';
+import coreModule from 'app/core/core_module';
 
-const module = angular.module('grafana.directives');
-
-module.directive('graphLegend', (popoverSrv, $timeout) => {
+coreModule.directive('graphLegend', (popoverSrv, $timeout) => {
   return {
     link: (scope, elem) => {
       let firstRender = true;

@@ -1,5 +1,11 @@
 // Library
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
+
+// Services
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
+// Types
+import { TimeRange, LoadingState } from 'app/types';
 
 interface RenderProps {
   loading: LoadingState;
@@ -9,6 +15,11 @@ interface RenderProps {
 export interface Props {
   datasource: string | null;
   queries: any[];
+  panelId?: number;
+  dashboardId?: number;
+  isVisible?: boolean;
+  timeRange?: TimeRange;
+  refreshCounter: number;
   children: (r: RenderProps) => JSX.Element;
 }
 
@@ -18,16 +29,13 @@ export interface State {
   data: any;
 }
 
-export enum LoadingState {
-  NotStarted = 'NotStarted',
-  Loading = 'Loading',
-  Done = 'Done',
-  Error = 'Error',
-}
+export class DataPanel extends PureComponent<Props, State> {
+  static defaultProps = {
+    isVisible: true,
+    panelId: 1,
+    dashboardId: 1,
+  };
 
-export interface PanelProps extends RenderProps {}
-
-export class DataPanel extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -44,20 +52,50 @@ export class DataPanel extends Component<Props, State> {
   }
 
   issueQueries = async () => {
+    const { isVisible, queries, datasource, panelId, dashboardId, timeRange } = this.props;
+
+    if (!isVisible) {
+      return;
+    }
+
+    if (!queries.length) {
+      this.setState({ data: [], loading: LoadingState.Done });
+      return;
+    }
+
     this.setState({ loading: LoadingState.Loading });
 
-    await new Promise(resolve => {
-      setTimeout(() => {
-        this.setState({ loading: LoadingState.Done, data: [{ value: 10 }], isFirstLoad: false });
-      }, 500);
-    });
+    try {
+      const dataSourceSrv = getDatasourceSrv();
+      const ds = await dataSourceSrv.get(datasource);
+
+      const queryOptions = {
+        timezone: 'browser',
+        panelId: panelId,
+        dashboardId: dashboardId,
+        range: timeRange,
+        rangeRaw: timeRange.raw,
+        interval: '1s',
+        intervalMs: 1000,
+        targets: queries,
+        maxDataPoints: 500,
+        scopedVars: {},
+        cacheTimeout: null,
+      };
+
+      const resp = await ds.query(queryOptions);
+      console.log(resp);
+    } catch (err) {
+      console.log('Loading error', err);
+      this.setState({ loading: LoadingState.Error });
+    }
   };
 
   render() {
     const { data, loading, isFirstLoad } = this.state;
     console.log('data panel render');
 
-    if (isFirstLoad && loading === LoadingState.Loading) {
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
       return (
         <div className="loading">
           <p>Loading</p>
