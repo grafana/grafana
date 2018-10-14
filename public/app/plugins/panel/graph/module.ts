@@ -179,7 +179,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
-    console.log(dataList);
     this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({
       dataList: dataList,

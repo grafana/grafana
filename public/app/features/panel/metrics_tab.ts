@@ -1,6 +1,13 @@
-import { DashboardModel } from '../dashboard/dashboard_model';
+// Libraries
+import _ from 'lodash';
 import Remarkable from 'remarkable';
+
+// Services & utils
 import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
+
+// Types
+import { DashboardModel } from '../dashboard/dashboard_model';
 
 export class MetricsTabCtrl {
   dsName: string;
@@ -70,8 +77,27 @@ export class MetricsTabCtrl {
     }
 
     this.datasourceInstance = option.datasource;
-    this.panelCtrl.setDatasource(option.datasource);
+    this.setDatasource(option.datasource);
     this.updateDatasourceOptions();
+  }
+
+  setDatasource(datasource) {
+    // switching to mixed
+    if (datasource.meta.mixed) {
+      _.each(this.panel.targets, target => {
+        target.datasource = this.panel.datasource;
+        if (!target.datasource) {
+          target.datasource = config.defaultDatasource;
+        }
+      });
+    } else if (this.datasourceInstance && this.datasourceInstance.meta.mixed) {
+      _.each(this.panel.targets, target => {
+        delete target.datasource;
+      });
+    }
+
+    this.panel.datasource = datasource.value;
+    this.panel.refresh();
   }
 
   addMixedQuery(option) {

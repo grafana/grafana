@@ -16,6 +16,12 @@ const notPersistedProperties: { [str: string]: boolean } = {
   hasRefreshed: true,
 };
 
+const defaults: any = {
+  gridPos: { x: 0, y: 0, h: 3, w: 6 },
+  datasource: null,
+  targets: [{}],
+};
+
 export class PanelModel {
   id: number;
   gridPos: GridPos;
@@ -51,13 +57,17 @@ export class PanelModel {
     }
 
     // defaults
-    this.gridPos = this.gridPos || { x: 0, y: 0, h: 3, w: 6 };
+    _.defaultsDeep(this, _.cloneDeep(defaults));
   }
 
   getSaveModel() {
     const model: any = {};
     for (const property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
+        continue;
+      }
+
+      if (_.isEqual(this[property], defaults[property])) {
         continue;
       }
 

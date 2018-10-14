@@ -12,7 +12,6 @@ import { metricsTabDirective } from './metrics_tab';
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: any;
-  datasourceName: any;
   $q: any;
   $timeout: any;
   contextSrv: any;
@@ -285,27 +284,6 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.dataStream = null;
       },
     });
-  }
-
-  setDatasource(datasource) {
-    // switching to mixed
-    if (datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        target.datasource = this.panel.datasource;
-        if (!target.datasource) {
-          target.datasource = config.defaultDatasource;
-        }
-      });
-    } else if (this.datasource && this.datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        delete target.datasource;
-      });
-    }
-
-    this.panel.datasource = datasource.value;
-    this.datasourceName = datasource.name;
-    this.datasource = null;
-    this.refresh();
   }
 
   getAdditionalMenuItems() {

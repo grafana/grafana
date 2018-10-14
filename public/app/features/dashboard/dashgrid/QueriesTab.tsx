@@ -1,14 +1,19 @@
-import React from 'react';
+// Libraries
+import React, { PureComponent } from 'react';
+
+// Services & utils
+import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+
+// Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
 }
 
-export class QueriesTab extends React.Component<Props, any> {
+export class QueriesTab extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
 
@@ -29,10 +34,7 @@ export class QueriesTab extends React.Component<Props, any> {
       ctrl: {
         panel: panel,
         dashboard: dashboard,
-        panelCtrl: {
-          panel: panel,
-          dashboard: dashboard,
-        },
+        refresh: () => panel.refresh(),
       },
     };
 
