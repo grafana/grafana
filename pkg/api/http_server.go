@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -52,6 +53,7 @@ type HTTPServer struct {
 	Bus           bus.Bus               `inject:""`
 	RenderService rendering.Service     `inject:""`
 	Cfg           *setting.Cfg          `inject:""`
+	HooksService  *hooks.HooksService   `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
