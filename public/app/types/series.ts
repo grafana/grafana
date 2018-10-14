@@ -25,6 +25,13 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 export interface TimeSeries {
   target: string;
   datapoints: TimeSeriesPoints;
+  unit?: string;
+}
+
+export interface TimeSeriesViewModel {
+  label: string;
+  color: string;
+  data: number[][];
 }
 
 export interface DataQueryResponse {

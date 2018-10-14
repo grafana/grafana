@@ -2,6 +2,9 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
+// Components
+import { Graph } from 'app/viz/Graph';
+
 // Types
 import { PanelProps } from 'app/types';
 
@@ -22,21 +25,7 @@ export class Graph2 extends PureComponent<Props> {
     const { timeSeries } = this.props;
     let index = 0;
 
-    return (
-      <table className="filter-table">
-        <tbody>
-          {timeSeries.map(series => {
-            return (
-              <tr key={index++}>
-                <td>{series.target}</td>
-                <td>{series.datapoints[0][0]}</td>
-                <td>{series.datapoints[0][1]}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    );
+    return <Graph timeSeries={timeSeries} />;
   }
 }
 

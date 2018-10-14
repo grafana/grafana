@@ -1,6 +1,7 @@
-import { LoadingState, TimeSeries } from './series';
+import { LoadingState, TimeSeries, TimeRange } from './series';
 
 export interface PanelProps {
   timeSeries: TimeSeries[];
+  timeRange: TimeRange;
   loading: LoadingState;
 }

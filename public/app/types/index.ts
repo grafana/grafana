@@ -9,7 +9,15 @@ import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
 import { PluginMeta, Plugin, PluginsState } from './plugins';
-import { TimeRange, LoadingState, TimeSeries, DataQuery, DataQueryResponse, DataQueryOptions } from './series';
+import {
+  TimeRange,
+  LoadingState,
+  TimeSeries,
+  DataQuery,
+  DataQueryResponse,
+  DataQueryOptions,
+  TimeSeriesViewModel,
+} from './series';
 import { PanelProps } from './panel';
 
 export {
@@ -51,6 +59,7 @@ export {
   LoadingState,
   PanelProps,
   TimeSeries,
+  TimeSeriesViewModel,
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,
