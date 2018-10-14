@@ -9,7 +9,7 @@ import Drop from 'tether-drop';
 import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularLoader, setAngularLoader } from 'app/core/services/angular_loader';
+import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
 export class GrafanaCtrl {

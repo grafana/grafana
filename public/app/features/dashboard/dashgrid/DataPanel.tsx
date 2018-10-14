@@ -1,81 +1,92 @@
-import React, { Component, ComponentClass } from 'react';
+// Library
+import React, { Component } from 'react';
 
-export interface OuterProps {
-  type: string;
+interface RenderProps {
+  loading: LoadingState;
+  data: any;
+}
+
+export interface Props {
+  datasource: string | null;
   queries: any[];
-  isVisible: boolean;
+  children: (r: RenderProps) => JSX.Element;
 }
 
-export interface PanelProps extends OuterProps {
-  data: any[];
+export interface State {
+  isFirstLoad: boolean;
+  loading: LoadingState;
+  data: any;
 }
 
-export interface DataPanel extends ComponentClass<OuterProps> {}
-
-interface State {
-  isLoading: boolean;
-  data: any[];
+export enum LoadingState {
+  NotStarted = 'NotStarted',
+  Loading = 'Loading',
+  Done = 'Done',
+  Error = 'Error',
 }
 
-export const DataPanelWrapper = (ComposedComponent: ComponentClass<PanelProps>) => {
-  class Wrapper extends Component<OuterProps, State> {
-    static defaultProps = {
-      isVisible: true,
+export interface PanelProps extends RenderProps {}
+
+export class DataPanel extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      loading: LoadingState.NotStarted,
+      data: [],
+      isFirstLoad: true,
     };
-
-    constructor(props: OuterProps) {
-      super(props);
-
-      this.state = {
-        isLoading: false,
-        data: [],
-      };
-    }
-
-    componentDidMount() {
-      console.log('data panel mount');
-      this.issueQueries();
-    }
-
-    issueQueries = async () => {
-      const { isVisible } = this.props;
-
-      if (!isVisible) {
-        return;
-      }
-
-      this.setState({ isLoading: true });
-
-      await new Promise(resolve => {
-        setTimeout(() => {
-          this.setState({ isLoading: false, data: [{ value: 10 }] });
-        }, 500);
-      });
-    };
-
-    render() {
-      const { data, isLoading } = this.state;
-      console.log('data panel render');
-
-      if (!data.length) {
-        return (
-          <div className="no-data">
-            <p>No Data</p>
-          </div>
-        );
-      }
-
-      if (isLoading) {
-        return (
-          <div className="loading">
-            <p>Loading</p>
-          </div>
-        );
-      }
-
-      return <ComposedComponent {...this.props} data={data} />;
-    }
   }
 
-  return Wrapper;
-};
+  componentDidMount() {
+    console.log('DataPanel mount');
+    this.issueQueries();
+  }
+
+  issueQueries = async () => {
+    this.setState({ loading: LoadingState.Loading });
+
+    await new Promise(resolve => {
+      setTimeout(() => {
+        this.setState({ loading: LoadingState.Done, data: [{ value: 10 }], isFirstLoad: false });
+      }, 500);
+    });
+  };
+
+  render() {
+    const { data, loading, isFirstLoad } = this.state;
+    console.log('data panel render');
+
+    if (isFirstLoad && loading === LoadingState.Loading) {
+      return (
+        <div className="loading">
+          <p>Loading</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {this.loadingSpinner}
+        {this.props.children({
+          data,
+          loading,
+        })}
+      </>
+    );
+  }
+
+  private get loadingSpinner(): JSX.Element {
+    const { loading } = this.state;
+
+    if (loading === LoadingState.Loading) {
+      return (
+        <div className="panel__loading">
+          <i className="fa fa-spinner fa-spin" />
+        </div>
+      );
+    }
+
+    return null;
+  }
+}

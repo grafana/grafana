@@ -1,7 +1,7 @@
 import React from 'react';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { getAngularLoader, AngularComponent } from 'app/core/services/angular_loader';
+import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
 interface Props {
   panel: PanelModel;

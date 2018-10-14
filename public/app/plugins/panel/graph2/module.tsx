@@ -1,7 +1,15 @@
 import React, { PureComponent } from 'react';
 import { PanelProps } from 'app/features/dashboard/dashgrid/DataPanel';
 
-export class Graph2 extends PureComponent<PanelProps> {
+interface Options {
+  showBars: boolean;
+}
+
+interface Props extends PanelProps {
+  options: Options;
+}
+
+export class Graph2 extends PureComponent<Props> {
   constructor(props) {
     super(props);
   }

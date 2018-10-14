@@ -2,7 +2,7 @@ import React from 'react';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { getAngularLoader, AngularComponent } from 'app/core/services/angular_loader';
+import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
