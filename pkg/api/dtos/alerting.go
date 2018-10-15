@@ -49,28 +49,30 @@ func formatShort(interval time.Duration) string {
 
 func NewAlertNotification(notification *models.AlertNotification) *AlertNotification {
 	return &AlertNotification{
-		Id:           notification.Id,
-		Name:         notification.Name,
-		Type:         notification.Type,
-		IsDefault:    notification.IsDefault,
-		Created:      notification.Created,
-		Updated:      notification.Updated,
-		Frequency:    formatShort(notification.Frequency),
-		SendReminder: notification.SendReminder,
-		Settings:     notification.Settings,
+		Id:           			   notification.Id,
+		Name:         			   notification.Name,
+		Type:         			   notification.Type,
+		IsDefault:    			   notification.IsDefault,
+		Created:      			   notification.Created,
+		Updated:      			   notification.Updated,
+		Frequency:    			   formatShort(notification.Frequency),
+		SendReminder: 			   notification.SendReminder,
+		DisableResolvedMessage:    notification.DisableResolvedMessage,
+		Settings:     			   notification.Settings,
 	}
 }
 
 type AlertNotification struct {
-	Id           int64            `json:"id"`
-	Name         string           `json:"name"`
-	Type         string           `json:"type"`
-	IsDefault    bool             `json:"isDefault"`
-	SendReminder bool             `json:"sendReminder"`
-	Frequency    string           `json:"frequency"`
-	Created      time.Time        `json:"created"`
-	Updated      time.Time        `json:"updated"`
-	Settings     *simplejson.Json `json:"settings"`
+	Id           			int64            `json:"id"`
+	Name         			string           `json:"name"`
+	Type         			string           `json:"type"`
+	IsDefault    			bool             `json:"isDefault"`
+	SendReminder 			bool             `json:"sendReminder"`
+	DisableResolvedMessage  bool             `json:"disableResolvedMessage"`
+	Frequency    			string           `json:"frequency"`
+	Created      			time.Time        `json:"created"`
+	Updated      			time.Time        `json:"updated"`
+	Settings     			*simplejson.Json `json:"settings"`
 }
 
 type AlertTestCommand struct {
@@ -100,11 +102,12 @@ type EvalMatch struct {
 }
 
 type NotificationTestCommand struct {
-	Name         string           `json:"name"`
-	Type         string           `json:"type"`
-	SendReminder bool             `json:"sendReminder"`
-	Frequency    string           `json:"frequency"`
-	Settings     *simplejson.Json `json:"settings"`
+	Name         			string           `json:"name"`
+	Type         			string           `json:"type"`
+	SendReminder 			bool             `json:"sendReminder"`
+	DisableResolvedMessage  bool             `json:"disableResolvedMessage"`
+	Frequency    			string           `json:"frequency"`
+	Settings     			*simplejson.Json `json:"settings"`
 }
 
 type PauseAlertCommand struct {

@@ -66,6 +66,7 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 										alert_notification.updated,
 										alert_notification.settings,
 										alert_notification.is_default,
+										alert_notification.disable_resolved_message,
 										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
@@ -106,6 +107,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 										alert_notification.updated,
 										alert_notification.settings,
 										alert_notification.is_default,
+										alert_notification.disable_resolved_message,
 										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
@@ -166,15 +168,16 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
-			OrgId:        cmd.OrgId,
-			Name:         cmd.Name,
-			Type:         cmd.Type,
-			Settings:     cmd.Settings,
-			SendReminder: cmd.SendReminder,
-			Frequency:    frequency,
-			Created:      time.Now(),
-			Updated:      time.Now(),
-			IsDefault:    cmd.IsDefault,
+			OrgId:        			cmd.OrgId,
+			Name:         			cmd.Name,
+			Type:         			cmd.Type,
+			Settings:     			cmd.Settings,
+			SendReminder: 			cmd.SendReminder,
+			DisableResolvedMessage: cmd.DisableResolvedMessage,
+			Frequency:    			frequency,
+			Created:      			time.Now(),
+			Updated:      			time.Now(),
+			IsDefault:    			cmd.IsDefault,
 		}
 
 		if _, err = sess.MustCols("send_reminder").Insert(alertNotification); err != nil {
@@ -210,6 +213,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
 		current.SendReminder = cmd.SendReminder
+		current.DisableResolvedMessage = cmd.DisableResolvedMessage
 
 		if current.SendReminder {
 			if cmd.Frequency == "" {
