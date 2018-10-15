@@ -48,6 +48,9 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
     {
       access: '',
       basicAuth: false,
+      basicAuthUser: '',
+      basicAuthPassword: '',
+      withCredentials: false,
       database: '',
       id: 1,
       isDefault: false,

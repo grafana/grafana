@@ -29,6 +29,9 @@ export const getMockDataSource = (): DataSource => {
   return {
     access: '',
     basicAuth: false,
+    basicAuthUser: '',
+    basicAuthPassword: '',
+    withCredentials: false,
     database: '',
     id: 13,
     isDefault: false,

@@ -86,7 +86,6 @@ export class DataSourceSettings extends PureComponent<Props, State> {
       tlsCACert: {},
       tlsClientCert: {},
       tlsClientKey: {},
-      url: {},
     };
 
     return (
@@ -135,6 +134,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
               to update this datasource.
             </div>
           )}
+          <DataSourceHttpSettings {...props} />
           <div className="gf-form-button-row">
             <button type="submit" className="btn btn-success" disabled={this.isReadyOnly()} onClick={this.onSubmit}>
               Save &amp; Test
@@ -147,7 +147,6 @@ export class DataSourceSettings extends PureComponent<Props, State> {
             </a>
           </div>
         </form>
-        <DataSourceHttpSettings {...props} />
       </div>
     );
   }
