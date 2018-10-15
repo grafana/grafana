@@ -52,12 +52,14 @@ func generateConnectionString(datasource *models.DataSource) string {
 	}
 
 	server, port := hostParts[0], hostParts[1]
-	return fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+	encrypt := datasource.JsonData.Get("sslmode").MustString("false")
+	return fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;encrypt=%s;",
 		server,
 		port,
 		datasource.Database,
 		datasource.User,
 		password,
+		encrypt,
 	)
 }
 

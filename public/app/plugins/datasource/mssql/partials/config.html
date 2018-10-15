@@ -27,6 +27,22 @@
 			<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.password = false">reset</a>
 		</div>
 	</div>
+
+	<div class="gf-form">
+		<label class="gf-form-label width-7">Encrypt</label>
+		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
+			<select class="gf-form-input" ng-model="ctrl.current.jsondata.sslmode" ng-options="mode for mode in ['disable', 'false', 'true']" ng-init="ctrl.current.jsondata.sslmode"></select>
+			<info-popover mode="right-absolute">
+				Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
+				<ul>
+					<li><i>disable</i> - Data sent between client and server is not encrypted.</li>
+					<li><i>false</i> - Data sent between client and server is not encrypted beyond the login packet. (default)</li>
+					<li><i>true</i> - Data sent between client and server is encrypted.</li>
+				</ul>
+				If you're using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable encryption to be able to connect.
+			</info-popover>
+		</div>
+	</div>
 </div>
 
 <b>Connection limits</b>

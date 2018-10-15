@@ -32,6 +32,7 @@ Name | Description
 *Database* | Name of your MSSQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
+*Encrypt* | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false` (Grafana v5.4+).
 *Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
 *Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
 *Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
@@ -69,11 +70,6 @@ Example:
 ```
 
 Make sure the user does not get any unwanted privileges from the public role.
-
-### Known Issues
-
-MSSQL 2008 and 2008 R2 engine cannot handle login records when SSL encryption is not disabled. Due to this you may receive an `Login error: EOF` error when trying to create your datasource.
-To fix MSSQL 2008 R2 issue, install MSSQL 2008 R2 Service Pack 2. To fix MSSQL 2008 issue, install Microsoft MSSQL 2008 Service Pack 3 and Cumulative update package 3 for MSSQL 2008 SP3.
 
 ## Query Editor
 
