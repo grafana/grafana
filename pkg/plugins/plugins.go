@@ -121,7 +121,6 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 			pm.checkForUpdates()
 		case <-ctx.Done():
 			run = false
-			break
 		}
 	}
 
