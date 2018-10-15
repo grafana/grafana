@@ -170,6 +170,7 @@ jobs:
             - scripts/*.sh
             - scripts/publish
             - scripts/build/release_publisher/release_publisher
+            - scripts/build/publish.sh
 
   build:
     docker:
