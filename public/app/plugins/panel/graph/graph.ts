@@ -339,6 +339,7 @@ class GraphElement {
 
   callPlot(options, incrementRenderCounter) {
     try {
+      console.log('plot', this.sortedSeries);
       this.plot = $.plot(this.elem, this.sortedSeries, options);
       if (this.ctrl.renderError) {
         delete this.ctrl.error;

@@ -5,7 +5,7 @@ import React, { Component } from 'react';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 // Types
-import { TimeRange, LoadingState, DataQueryResponse, TimeSeries } from 'app/types';
+import { TimeRange, LoadingState, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
 
 interface RenderProps {
   loading: LoadingState;
@@ -82,14 +82,14 @@ export class DataPanel extends Component<Props, State> {
       const dataSourceSrv = getDatasourceSrv();
       const ds = await dataSourceSrv.get(datasource);
 
-      const queryOptions = {
+      const queryOptions: DataQueryOptions = {
         timezone: 'browser',
         panelId: panelId,
         dashboardId: dashboardId,
         range: timeRange,
         rangeRaw: timeRange.raw,
         interval: '1s',
-        intervalMs: 1000,
+        intervalMs: 60000,
         targets: queries,
         maxDataPoints: 500,
         scopedVars: {},

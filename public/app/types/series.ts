@@ -33,6 +33,30 @@ export interface TimeSeriesVM {
   label: string;
   color: string;
   data: TimeSeriesValue[][];
+  stats: TimeSeriesStats;
+}
+
+export interface TimeSeriesStats {
+  total: number;
+  max: number;
+  min: number;
+  logmin: number;
+  avg: number | null;
+  current: number | null;
+  first: number | null;
+  delta: number;
+  diff: number | null;
+  range: number | null;
+  timeStep: number;
+  count: number;
+  allIsNull: boolean;
+  allIsZero: boolean;
+}
+
+export enum NullValueMode {
+  Null = 'null',
+  Ignore = 'connected',
+  AsZero = 'null as zero',
 }
 
 /** View model projection of many time series */
@@ -56,6 +80,10 @@ export interface DataQueryOptions {
   panelId: number;
   dashboardId: number;
   cacheTimeout?: string;
+  interval: string;
+  intervalMs: number;
+  maxDataPoints: number;
+  scopedVars: object;
 }
 
 export interface DataSourceApi {

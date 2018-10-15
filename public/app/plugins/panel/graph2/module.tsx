@@ -4,12 +4,10 @@ import React, { PureComponent } from 'react';
 
 // Components
 import Graph from 'app/viz/Graph';
-
-// Utils
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 
 // Types
-import { PanelProps } from 'app/types';
+import { PanelProps, NullValueMode } from 'app/types';
 
 interface Options {
   showBars: boolean;
@@ -26,10 +24,13 @@ export class Graph2 extends PureComponent<Props> {
 
   render() {
     const { timeSeries, timeRange } = this.props;
-    const viewModels = getTimeSeriesVMs({ timeSeries });
-    console.log(viewModels);
 
-    return <Graph timeSeries={viewModels} timeRange={timeRange} />;
+    const vmSeries = getTimeSeriesVMs({
+      timeSeries: timeSeries,
+      nullValueMode: NullValueMode.Ignore,
+    });
+
+    return <Graph timeSeries={vmSeries} timeRange={timeRange} />;
   }
 }
 
