@@ -1,26 +1,34 @@
 <div class="gf-form-group">
   <div class="grafana-info-box">
-    <h5>GCP Service Account</h5>
+    <h4>Stackdriver Authentication</h4>
+    <p>There are two ways to authenticate the Stackdriver plugin - either by uploading a Google JWT file, or by
+      automatically retrieving credentials from Google metadata server. The latter option is only available
+      when running Grafana on GCE virtual machine.</p>
+
+    <h5>Uploading a JWT file</h5>
     <p>
-      To authenticate with the Stackdriver API, you need to create a Google Cloud Platform (GCP) Service Account for
+      First you need to create a Google Cloud Platform (GCP) Service Account for
       the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to
       visualize data from multiple GCP Projects then you need to create one datasource per GCP Project.
     </p>
     <p>
-      The <strong>Monitoring Viewer</strong> role provides all the permissions that Grafana needs.
+      The <strong>Monitoring Viewer</strong> role provides all the permissions that Grafana needs. The following API
+      needs to be enabled on GCP for the datasource to work: <a class="external-link" target="_blank" href="https://console.cloud.google.com/apis/library/monitoring.googleapis.com">Monitoring
+        API</a>
     </p>
+
+    <h5>GCE Default Service Account</h5>
     <p>
-      The following APIs need to be enabled on GCP for the datasource to work:
-      <ul>
-        <li><a class="external-link" target="_blank" href="https://console.cloud.google.com/apis/library/monitoring.googleapis.com">Monitoring
-            API</a></li>
-        <li><a class="external-link" target="_blank" href="https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com">Resource
-            Manager API</a></li>
-      </ul>
+      If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to
+      automatically retrieve default project id and authentication token from the metadata server. In order for this to
+      work, you need to make sure that you have a service account that is setup as default account for the virtual
+      machine and that the service account has been given read access to the Stackdriver Monitoring API.
     </p>
+
     <p>Detailed instructions on how to create a Service Account can be found <a class="external-link" target="_blank"
         href="http://docs.grafana.org/datasources/stackdriver/">in
-        the documentation.</a></p>
+        the documentation.</a>
+    </p>
   </div>
 </div>
 
