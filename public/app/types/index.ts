@@ -13,10 +13,11 @@ import {
   TimeRange,
   LoadingState,
   TimeSeries,
+  TimeSeriesVM,
+  TimeSeriesVMs,
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,
-  TimeSeriesViewModel,
 } from './series';
 import { PanelProps } from './panel';
 
@@ -59,7 +60,8 @@ export {
   LoadingState,
   PanelProps,
   TimeSeries,
-  TimeSeriesViewModel,
+  TimeSeriesVM,
+  TimeSeriesVMs,
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,

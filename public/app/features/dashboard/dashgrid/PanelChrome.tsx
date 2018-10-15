@@ -74,7 +74,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             refreshCounter={refreshCounter}
           >
             {({ loading, timeSeries }) => {
-              return <PanelComponent loading={loading} timeSeries={timeSeries} />;
+              return <PanelComponent loading={loading} timeSeries={timeSeries} timeRange={timeRange} />;
             }}
           </DataPanel>
         </div>

@@ -28,10 +28,16 @@ export interface TimeSeries {
   unit?: string;
 }
 
-export interface TimeSeriesViewModel {
+/** View model projection of a time series */
+export interface TimeSeriesVM {
   label: string;
   color: string;
-  data: number[][];
+  data: TimeSeriesValue[][];
+}
+
+/** View model projection of many time series */
+export interface TimeSeriesVMs {
+  [index: number]: TimeSeriesVM;
 }
 
 export interface DataQueryResponse {

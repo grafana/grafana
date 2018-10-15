@@ -6,8 +6,7 @@ import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 
 // Types
-import TimeSeries from 'app/core/time_series2';
-import { TimeRange } from 'app/types';
+import { TimeRange, TimeSeriesVMs } from 'app/types';
 
 // Copied from graph.ts
 function time_format(ticks, min, max) {
@@ -60,7 +59,7 @@ const FLOT_OPTIONS = {
 };
 
 interface GraphProps {
-  timeSeries: TimeSeries[];
+  timeSeries: TimeSeriesVMs;
   timeRange: TimeRange;
   size?: { width: number; height: number };
 }
@@ -85,11 +84,9 @@ export class Graph extends PureComponent<GraphProps> {
   draw() {
     const { size, timeSeries, timeRange } = this.props;
 
-    const data = timeSeries.map((ts: TimeSeries) => ({
-      color: ts.color,
-      label: ts.label,
-      data: ts.getFlotPairs('null'),
-    }));
+    if (!size) {
+      return;
+    }
 
     const ticks = (size.width || 0) / 100;
     const min = timeRange.from.valueOf();
@@ -111,7 +108,7 @@ export class Graph extends PureComponent<GraphProps> {
       ...dynamicOptions,
     };
 
-    $.plot(this.element, data, options);
+    $.plot(this.element, timeSeries, options);
   }
 
   render() {

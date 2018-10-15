@@ -3,7 +3,10 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Components
-import { Graph } from 'app/viz/Graph';
+import Graph from 'app/viz/Graph';
+
+// Utils
+import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 
 // Types
 import { PanelProps } from 'app/types';
@@ -22,10 +25,11 @@ export class Graph2 extends PureComponent<Props> {
   }
 
   render() {
-    const { timeSeries } = this.props;
-    let index = 0;
+    const { timeSeries, timeRange } = this.props;
+    const viewModels = getTimeSeriesVMs({ timeSeries });
+    console.log(viewModels);
 
-    return <Graph timeSeries={timeSeries} />;
+    return <Graph timeSeries={viewModels} timeRange={timeRange} />;
   }
 }
 
