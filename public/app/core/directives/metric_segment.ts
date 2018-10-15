@@ -56,7 +56,7 @@ export function metricSegment($compile, $sce) {
             }
           } else if (segment.custom !== 'false') {
             segment.value = value;
-            segment.html = $sce.trustAsHtml(value);
+            segment.html = _.escape(value);
             segment.expandable = true;
             segment.fake = false;
           }
@@ -95,7 +95,7 @@ export function metricSegment($compile, $sce) {
             // add custom values
             if (segment.custom !== 'false') {
               if (!segment.fake && _.indexOf(options, segment.value) === -1) {
-                options.unshift(segment.value);
+                options.unshift(_.escape(segment.value));
               }
             }
 
@@ -105,6 +105,7 @@ export function metricSegment($compile, $sce) {
       };
 
       $scope.updater = value => {
+        value = _.unescape(value);
         if (value === segment.value) {
           clearTimeout(cancelBlur);
           $input.focus();
@@ -219,7 +220,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
             cachedOptions = $scope.options;
             return $q.when(
               _.map($scope.options, option => {
-                return { value: option.text };
+                return { value: _.escape(option.text) };
               })
             );
           } else {
@@ -229,7 +230,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
                 if (option.html) {
                   return option;
                 }
-                return { value: option.text };
+                return { value: _.escape(option.text) };
               });
             });
           }

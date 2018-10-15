@@ -109,12 +109,12 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           $scope.$apply(() => {
             $scope.handleEvent({ $event: { name: 'get-param-options', param: param } }).then(result => {
               const dynamicOptions = _.map(result, op => {
-                return op.value;
+                return _.escape(op.value);
               });
 
               // add current value to dropdown if it's not in dynamicOptions
               if (_.indexOf(dynamicOptions, part.params[paramIndex]) === -1) {
-                dynamicOptions.unshift(part.params[paramIndex]);
+                dynamicOptions.unshift(_.escape(part.params[paramIndex]));
               }
 
               callback(dynamicOptions);
@@ -129,6 +129,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           minLength: 0,
           items: 1000,
           updater: value => {
+            value = _.unescape(value);
             if (value === part.params[paramIndex]) {
               clearTimeout(cancelBlur);
               $input.focus();
