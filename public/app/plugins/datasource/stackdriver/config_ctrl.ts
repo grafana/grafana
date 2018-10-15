@@ -20,7 +20,7 @@ export class StackdriverConfigCtrl {
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.authenticationTypes = [
       { key: this.defaultAuthenticationType, value: 'Google JWT File' },
-      { key: 'gce', value: 'Use GCE default Authentication' },
+      { key: 'gce', value: 'GCE Default Service Account' },
     ];
   }
 
