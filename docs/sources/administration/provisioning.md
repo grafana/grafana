@@ -166,6 +166,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| encrypt | string | MSSQL | Connection SSL encryption handling. 'disable', 'false' or 'true' |
 | postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
 | timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
 | maxOpenConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of open connections to the database (Grafana v5.4+) |
