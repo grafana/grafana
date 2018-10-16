@@ -37,7 +37,7 @@ Grafana ships with built-in support for Google Stackdriver. Just add it as a dat
 
 There are two ways to authenticate the Stackdriver plugin - either by uploading a Google JWT file, or by automatically retrieving credentials from Google metadata server. The latter option is only available when running Grafana on GCE virtual machine.
 
-### Using a Google JWT File
+### Using a Google Service Account Key File
 
 To authenticate with the Stackdriver API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one datasource per GCP Project.
 
@@ -78,7 +78,7 @@ Click on the links above and click the `Enable` button:
 
 ### Using GCE Default Service Account
 
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to automatically retrieve default credentials from the metadata server. This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. However for this to work, there are a few preconditions that needs to be met.
+If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to automatically retrieve default credentials from the metadata server. This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. However for this to work, there are a few preconditions that need to be met.
 
 1. First of all, you need to create a Service Account that can be used by the GCE virtual machine. See detailed instructions on how to do that [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
 2. Make sure the GCE virtual machine instance is being run as the service account that you just created. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
@@ -206,7 +206,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 
 It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here is a provisioning example using JWT authentication type.
+Here is a provisioning example using the JWT (Service Account key file) authentication type.
 
 ```yaml
 apiVersion: 1

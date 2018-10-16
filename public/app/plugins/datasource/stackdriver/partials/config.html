@@ -1,11 +1,11 @@
 <div class="gf-form-group">
   <div class="grafana-info-box">
     <h4>Stackdriver Authentication</h4>
-    <p>There are two ways to authenticate the Stackdriver plugin - either by uploading a Google JWT file, or by
-      automatically retrieving credentials from Google metadata server. The latter option is only available
-      when running Grafana on GCE virtual machine.</p>
+    <p>There are two ways to authenticate the Stackdriver plugin - either by uploading a Service Account key file, or by
+      automatically retrieving credentials from the Google metadata server. The latter option is only available
+      when running Grafana on a GCE virtual machine.</p>
 
-    <h5>Uploading a JWT file</h5>
+    <h5>Uploading a Service Account Key File</h5>
     <p>
       First you need to create a Google Cloud Platform (GCP) Service Account for
       the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to
@@ -20,8 +20,8 @@
     <h5>GCE Default Service Account</h5>
     <p>
       If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to
-      automatically retrieve default project id and authentication token from the metadata server. In order for this to
-      work, you need to make sure that you have a service account that is setup as default account for the virtual
+      automatically retrieve the default project id and authentication token from the metadata server. In order for this to
+      work, you need to make sure that you have a service account that is setup as the default account for the virtual
       machine and that the service account has been given read access to the Stackdriver Monitoring API.
     </p>
 
