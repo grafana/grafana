@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -15,14 +14,14 @@ const (
 )
 
 type NotifierBase struct {
-	Name         string
-	Type         string
-	Id           int64
-	IsDeault     bool
-	UploadImage  bool
-	SendReminder bool
-	DisableResolvedMessage    bool
-	Frequency    time.Duration
+	Name                   string
+	Type                   string
+	Id                     int64
+	IsDeault               bool
+	UploadImage            bool
+	SendReminder           bool
+	DisableResolvedMessage bool
+	Frequency              time.Duration
 
 	log log.Logger
 }
@@ -35,15 +34,15 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 
 	return NotifierBase{
-		Id:           			model.Id,
-		Name:         			model.Name,
-		IsDeault:     			model.IsDefault,
-		Type:         			model.Type,
-		UploadImage:  			uploadImage,
-		SendReminder: 			model.SendReminder,
+		Id:                     model.Id,
+		Name:                   model.Name,
+		IsDeault:               model.IsDefault,
+		Type:                   model.Type,
+		UploadImage:            uploadImage,
+		SendReminder:           model.SendReminder,
 		DisableResolvedMessage: model.DisableResolvedMessage,
-		Frequency:    			model.Frequency,
-		log:          			log.New("alerting.notifier." + model.Name),
+		Frequency:              model.Frequency,
+		log:                    log.New("alerting.notifier." + model.Name),
 	}
 }
 

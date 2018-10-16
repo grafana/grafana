@@ -168,16 +168,16 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
-			OrgId:        			cmd.OrgId,
-			Name:         			cmd.Name,
-			Type:         			cmd.Type,
-			Settings:     			cmd.Settings,
-			SendReminder: 			cmd.SendReminder,
+			OrgId:                  cmd.OrgId,
+			Name:                   cmd.Name,
+			Type:                   cmd.Type,
+			Settings:               cmd.Settings,
+			SendReminder:           cmd.SendReminder,
 			DisableResolvedMessage: cmd.DisableResolvedMessage,
-			Frequency:    			frequency,
-			Created:      			time.Now(),
-			Updated:      			time.Now(),
-			IsDefault:    			cmd.IsDefault,
+			Frequency:              frequency,
+			Created:                time.Now(),
+			Updated:                time.Now(),
+			IsDefault:              cmd.IsDefault,
 		}
 
 		if _, err = sess.MustCols("send_reminder").Insert(alertNotification); err != nil {
