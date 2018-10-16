@@ -71,6 +71,11 @@ Example:
 
 Make sure the user does not get any unwanted privileges from the public role.
 
+### Known Issues
+
+If you're using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable encryption to be able to connect.
+If possible, we recommend you to use the latest service pack available for optimal compatibility.
+
 ## Query Editor
 
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
