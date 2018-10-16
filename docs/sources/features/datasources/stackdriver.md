@@ -206,7 +206,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 
 It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here is a provisioning example for this datasource.
+Here is a provisioning example using JWT authentication type.
 
 ```yaml
 apiVersion: 1
@@ -218,6 +218,7 @@ datasources:
     jsonData:
       tokenUri: https://oauth2.googleapis.com/token
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com
+      authenticationType: jwt
       defaultProject: my-project-name
     secureJsonData:
       privateKey: |
@@ -226,4 +227,17 @@ datasources:
         ...
         yA+23427282348234=
         -----END PRIVATE KEY-----
+```
+
+Here is a provisioning example using GCE Default Service Account authentication.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Stackdriver
+    type: stackdriver
+    access: proxy
+    jsonData:
+      authenticationType: gce
 ```
