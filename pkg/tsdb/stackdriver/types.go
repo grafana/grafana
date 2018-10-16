@@ -73,24 +73,3 @@ type StackdriverResponse struct {
 		} `json:"points"`
 	} `json:"timeSeries"`
 }
-
-type MetricDescriptorsResponse struct {
-	MetricDescriptors []struct {
-		Name   string `json:"name"`
-		Labels []struct {
-			Key         string `json:"key"`
-			Description string `json:"description"`
-		} `json:"labels,omitempty"`
-		MetricKind  string `json:"metricKind"`
-		ValueType   string `json:"valueType"`
-		Unit        string `json:"unit,omitempty"`
-		Description string `json:"description"`
-		DisplayName string `json:"displayName"`
-		Type        string `json:"type"`
-		Metadata    struct {
-			LaunchStage  string `json:"launchStage"`
-			SamplePeriod string `json:"samplePeriod"`
-			IngestDelay  string `json:"ingestDelay"`
-		} `json:"metadata"`
-	} `json:"metricDescriptors"`
-}
