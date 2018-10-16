@@ -227,18 +227,20 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			Convey("Can update alert notification", func() {
 				newCmd := &models.UpdateAlertNotificationCommand{
-					Name:         "NewName",
-					Type:         "webhook",
-					OrgId:        cmd.Result.OrgId,
-					SendReminder: true,
-					Frequency:    "60s",
-					Settings:     simplejson.New(),
-					Id:           cmd.Result.Id,
+					Name:         			"NewName",
+					Type:         			"webhook",
+					OrgId:        			cmd.Result.OrgId,
+					SendReminder: 			true,
+					DisableResolvedMessage: true,
+					Frequency:    			"60s",
+					Settings:     			simplejson.New(),
+					Id:           			cmd.Result.Id,
 				}
 				err := UpdateAlertNotification(newCmd)
 				So(err, ShouldBeNil)
 				So(newCmd.Result.Name, ShouldEqual, "NewName")
 				So(newCmd.Result.Frequency, ShouldEqual, 60*time.Second)
+				So(newCmd.Result.DisableResolvedMessage, ShouldBeTrue)
 			})
 
 			Convey("Can update alert notification to disable sending of reminders", func() {
@@ -257,12 +259,12 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		})
 
 		Convey("Can search using an array of ids", func() {
-			cmd1 := models.CreateAlertNotificationCommand{Name: "nagios", Type: "webhook", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
-			cmd2 := models.CreateAlertNotificationCommand{Name: "slack", Type: "webhook", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
-			cmd3 := models.CreateAlertNotificationCommand{Name: "ops2", Type: "email", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
-			cmd4 := models.CreateAlertNotificationCommand{IsDefault: true, Name: "default", Type: "email", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
+			cmd1 := models.CreateAlertNotificationCommand{Name: "nagios", Type: "webhook", OrgId: 1, SendReminder: true, DisableResolvedMessage: false, Frequency: "10s", Settings: simplejson.New()}
+			cmd2 := models.CreateAlertNotificationCommand{Name: "slack", Type: "webhook", OrgId: 1, SendReminder: true, DisableResolvedMessage: false, Frequency: "10s", Settings: simplejson.New()}
+			cmd3 := models.CreateAlertNotificationCommand{Name: "ops2", Type: "email", OrgId: 1, SendReminder: true, DisableResolvedMessage: false, Frequency: "10s", Settings: simplejson.New()}
+			cmd4 := models.CreateAlertNotificationCommand{IsDefault: true, Name: "default", Type: "email", OrgId: 1, SendReminder: true, DisableResolvedMessage: false, Frequency: "10s", Settings: simplejson.New()}
 
-			otherOrg := models.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
+			otherOrg := models.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, DisableResolvedMessage: false, Frequency: "10s", Settings: simplejson.New()}
 
 			So(CreateAlertNotificationCommand(&cmd1), ShouldBeNil)
 			So(CreateAlertNotificationCommand(&cmd2), ShouldBeNil)
