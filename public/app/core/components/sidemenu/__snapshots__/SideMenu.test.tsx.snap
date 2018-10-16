@@ -8,7 +8,7 @@ Array [
     onClick={[Function]}
   >
     <img
-      alt="graphana_logo"
+      alt="Grafana"
       src="public/img/grafana_icon.svg"
     />
   </div>,
