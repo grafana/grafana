@@ -1,7 +1,10 @@
 import _ from 'lodash';
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { TimeSeries } from 'app/core/core';
 import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
+import Drop from 'tether-drop';
+import { ColorPickerPopover } from 'app/core/components/colorpicker/ColorPickerPopover';
 
 const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -10,6 +13,7 @@ interface LegendProps {
   optionalClass?: string;
   onToggleSeries?: (series: TimeSeries, event: Event) => void;
   onToggleSort?: (sortBy, sortDesc) => void;
+  onColorChange?: (series: TimeSeries, color: string) => void;
 }
 
 interface LegendDisplayProps {
@@ -102,6 +106,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
       hiddenSeries: hiddenSeries,
       onToggleSeries: (s, e) => this.onToggleSeries(s, e),
       onToggleSort: (sortBy, sortDesc) => this.props.onToggleSort(sortBy, sortDesc),
+      onColorChange: (series, color) => this.props.onColorChange(series, color),
       ...seriesValuesProps,
       ...sortProps,
     };
@@ -126,6 +131,7 @@ class LegendSeriesList extends React.PureComponent<GraphLegendProps> {
         hiddenSeries={hiddenSeries}
         {...seriesValuesProps}
         onLabelClick={e => this.props.onToggleSeries(series, e)}
+        onColorChange={color => this.props.onColorChange(series, color)}
       />
     ));
   }
@@ -135,6 +141,7 @@ interface LegendSeriesProps {
   series: TimeSeries;
   index: number;
   onLabelClick?: (event) => void;
+  onColorChange?: (color: string) => void;
 }
 
 type LegendSeriesItemProps = LegendSeriesProps & LegendDisplayProps & LegendValuesProps;
@@ -150,6 +157,7 @@ class LegendSeriesItem extends React.PureComponent<LegendSeriesItemProps> {
           label={series.aliasEscaped}
           color={series.color}
           onLabelClick={e => this.props.onLabelClick(e)}
+          onColorChange={e => this.props.onColorChange(e)}
         />
         {valueItems}
       </div>
@@ -161,14 +169,63 @@ interface LegendSeriesLabelProps {
   label: string;
   color: string;
   onLabelClick?: (event) => void;
-  onIconClick?: (event) => void;
+  onColorChange?: (color: string) => void;
 }
 
 class LegendSeriesLabel extends React.PureComponent<LegendSeriesLabelProps> {
+  pickerElem: any;
+  colorPickerDrop: any;
+
+  openColorPicker() {
+    if (this.colorPickerDrop) {
+      this.destroyDrop();
+    }
+
+    const dropContent = <ColorPickerPopover color={this.props.color} onColorSelect={this.props.onColorChange} />;
+    const dropContentElem = document.createElement('div');
+    ReactDOM.render(dropContent, dropContentElem);
+
+    const drop = new Drop({
+      target: this.pickerElem,
+      content: dropContentElem,
+      position: 'top center',
+      classes: 'drop-popover',
+      openOn: 'hover',
+      hoverCloseDelay: 200,
+      remove: true,
+      tetherOptions: {
+        constraints: [{ to: 'scrollParent', attachment: 'none both' }],
+      },
+    });
+
+    drop.on('close', this.closeColorPicker.bind(this));
+
+    this.colorPickerDrop = drop;
+    this.colorPickerDrop.open();
+  }
+
+  closeColorPicker() {
+    setTimeout(() => {
+      this.destroyDrop();
+    }, 100);
+  }
+
+  destroyDrop() {
+    if (this.colorPickerDrop && this.colorPickerDrop.tether) {
+      this.colorPickerDrop.destroy();
+      this.colorPickerDrop = null;
+    }
+  }
+
   render() {
     const { label, color } = this.props;
     return [
-      <div className="graph-legend-icon" key="icon" onClick={e => this.props.onIconClick(e)}>
+      <div
+        key="icon"
+        className="graph-legend-icon"
+        ref={e => (this.pickerElem = e)}
+        onClick={() => this.openColorPicker()}
+      >
         <i className="fa fa-minus pointer" style={{ color: color }} />
       </div>,
       <a className="graph-legend-alias pointer" title={label} key="label" onClick={e => this.props.onLabelClick(e)}>
@@ -255,6 +312,7 @@ class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
               hiddenSeries={this.props.hiddenSeries}
               {...seriesValuesProps}
               onLabelClick={e => this.props.onToggleSeries(series, e)}
+              onColorChange={color => this.props.onColorChange(series, color)}
             />
           ))}
         </tbody>
@@ -290,6 +348,7 @@ class LegendSeriesItemAsTable extends React.PureComponent<LegendSeriesItemProps>
             label={series.aliasEscaped}
             color={series.color}
             onLabelClick={e => this.props.onLabelClick(e)}
+            onColorChange={e => this.props.onColorChange(e)}
           />
         </td>
         {valueItems}

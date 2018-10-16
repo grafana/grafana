@@ -97,6 +97,7 @@ class GraphElement {
       ...valueOptions,
       onToggleSeries: this.ctrl.toggleSeries.bind(this.ctrl),
       onToggleSort: this.ctrl.toggleSort.bind(this.ctrl),
+      onColorChange: this.ctrl.changeSeriesColor.bind(this.ctrl),
     };
     const legendReactElem = React.createElement(Legend, legendProps);
     const legendElem = this.elem.parent().find('.graph-legend');
