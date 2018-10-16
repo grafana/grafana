@@ -123,7 +123,7 @@ datasources:
   withCredentials:
   # <bool> mark as default datasource. Max one per org
   isDefault:
-  # <map> fields that will be converted to json and stored in json_data
+  # <map> fields that will be converted to json and stored in jsonData
   jsonData:
      graphiteVersion: "1.1"
      tlsAuth: true
@@ -147,7 +147,7 @@ Please refer to each datasource documentation for specific provisioning examples
 
 #### Json Data
 
-Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use.
+Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
 | Name | Type | Datasource | Description |
 | ---- | ---- | ---- | ---- |
@@ -156,9 +156,9 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
-| esVersion | number | Elastic | Elasticsearch version as a number (2/5/56) |
-| timeField | string | Elastic | Which field that should be used as timestamp |
-| interval | string | Elastic | Index date time format |
+| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56) |
+| timeField | string | Elasticsearch | Which field that should be used as timestamp |
+| interval | string | Elasticsearch | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
@@ -168,6 +168,9 @@ Since not all datasources have the same configuration settings we only have the 
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
 | postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
 | timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
+| maxOpenConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of open connections to the database (Grafana v5.4+) |
+| maxIdleConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of connections in the idle connection pool (Grafana v5.4+) |
+| connMaxLifetime | number | MySQL, PostgreSQL & MSSQL | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+) |
 
 #### Secure Json Data
 

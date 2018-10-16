@@ -1,5 +1,6 @@
 import './dashboard_loaders';
 import './ReactContainer';
+import { applyRouteRegistrationHandlers } from './registry';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
@@ -12,7 +13,6 @@ import FolderPermissions from 'app/features/folders/FolderPermissions';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
-import EditDataSourcePage from 'app/features/datasources/EditDataSourcePage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -81,12 +81,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/features/plugins/partials/ds_dashboards.html',
       controller: 'DataSourceDashboardsCtrl',
       controllerAs: 'ctrl',
-    })
-    .when('/datasources/edit/:id/:page?', {
-      template: '<react-container />',
-      resolve: {
-        component: () => EditDataSourcePage,
-      },
     })
     .when('/datasources/new', {
       template: '<react-container />',
@@ -313,4 +307,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
     });
+
+  applyRouteRegistrationHandlers($routeProvider);
 }

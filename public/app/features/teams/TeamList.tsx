@@ -4,6 +4,7 @@ import { hot } from 'react-hot-loader';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { NavModel, Team } from '../../types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
@@ -14,6 +15,7 @@ export interface Props {
   teams: Team[];
   searchQuery: string;
   teamsCount: number;
+  hasFetched: boolean;
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
   setSearchQuery: typeof setSearchQuery;
@@ -103,7 +105,7 @@ export class TeamList extends PureComponent<Props, any> {
           <div className="page-action-bar__spacer" />
 
           <a className="btn btn-success" href="org/teams/new">
-            <i className="fa fa-plus" /> New team
+            New team
           </a>
         </div>
 
@@ -125,13 +127,23 @@ export class TeamList extends PureComponent<Props, any> {
     );
   }
 
+  renderList() {
+    const { teamsCount } = this.props;
+
+    if (teamsCount > 0) {
+      return this.renderTeamList();
+    } else {
+      return this.renderEmptyList();
+    }
+  }
+
   render() {
-    const { navModel, teamsCount } = this.props;
+    const { hasFetched, navModel } = this.props;
 
     return (
       <div>
         <PageHeader model={navModel} />
-        {teamsCount > 0 ? this.renderTeamList() : this.renderEmptyList()}
+        {hasFetched ? this.renderList() : <PageLoader pageName="Teams" />}
       </div>
     );
   }
@@ -143,6 +155,7 @@ function mapStateToProps(state) {
     teams: getTeams(state.teams),
     searchQuery: getSearchQuery(state.teams),
     teamsCount: getTeamsCount(state.teams),
+    hasFetched: state.teams.hasFetched,
   };
 }
 

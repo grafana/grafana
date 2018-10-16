@@ -95,7 +95,8 @@
 @import 'components/user-picker';
 @import 'components/description-picker';
 @import 'components/delete_button';
-@import 'components/_add_data_source.scss';
+@import 'components/add_data_source.scss';
+@import 'components/page_loader';
 
 // PAGES
 @import 'pages/login';

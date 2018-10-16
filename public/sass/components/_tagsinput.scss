@@ -19,7 +19,7 @@
 
   .tag {
     margin-right: 2px;
-    color: white;
+    color: $white;
 
     [data-role='remove'] {
       margin-left: 8px;
@@ -62,13 +62,6 @@
 
   .tag-count-label {
     margin-left: 3px;
-  }
-
-  .gf-form-input--form-dropdown {
-    .Select-menu-outer {
-      border: 0;
-      width: 100%;
-    }
   }
 }
 

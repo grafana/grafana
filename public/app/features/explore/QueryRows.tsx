@@ -53,7 +53,6 @@ class QueryRow extends PureComponent<any, {}> {
             hint={queryHint}
             initialQuery={query}
             history={history}
-            portalPrefix="explore"
             onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}

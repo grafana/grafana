@@ -40,4 +40,19 @@ describe('addLabelToQuery()', () => {
       'foo{bar="baz",x="yy"} * metric{a="bb",bar="baz",y="zz"} * metric2{bar="baz"}'
     );
   });
+
+  it('should not add duplicate labels to aquery', () => {
+    expect(addLabelToQuery(addLabelToQuery('foo{x="yy"}', 'bar', 'baz', '!='), 'bar', 'baz', '!=')).toBe(
+      'foo{bar!="baz",x="yy"}'
+    );
+    expect(addLabelToQuery(addLabelToQuery('rate(metric[1m])', 'foo', 'bar'), 'foo', 'bar')).toBe(
+      'rate(metric{foo="bar"}[1m])'
+    );
+    expect(addLabelToQuery(addLabelToQuery('foo{list="a,b,c"}', 'bar', 'baz'), 'bar', 'baz')).toBe(
+      'foo{bar="baz",list="a,b,c"}'
+    );
+    expect(addLabelToQuery(addLabelToQuery('avg(foo) + sum(xx_yy)', 'bar', 'baz'), 'bar', 'baz')).toBe(
+      'avg(foo{bar="baz"}) + sum(xx_yy{bar="baz"})'
+    );
+  });
 });

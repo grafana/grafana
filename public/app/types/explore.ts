@@ -13,6 +13,13 @@ export interface Query {
   key?: string;
 }
 
+export interface TextMatch {
+  text: string;
+  start: number;
+  length: number;
+  end: number;
+}
+
 export interface ExploreState {
   datasource: any;
   datasourceError: any;

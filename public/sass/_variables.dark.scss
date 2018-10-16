@@ -115,8 +115,8 @@ $tight-form-func-bg: #333334;
 $tight-form-func-highlight-bg: #444445;
 
 $modal-backdrop-bg: #353c42;
-$code-tag-bg: $gray-1;
-$code-tag-border: lighten($code-tag-bg, 2%);
+$code-tag-bg: $dark-1;
+$code-tag-border: $dark-4;
 
 // cards
 $card-background: linear-gradient(135deg, #2f2f32, #262628);
@@ -194,6 +194,7 @@ $input-box-shadow-focus: rgba(102, 175, 233, 0.6);
 $input-color-placeholder: $gray-1 !default;
 $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-3;
+$input-color-select-arrow: $white;
 
 // Search
 $search-shadow: 0 0 30px 0 $black;

@@ -12,12 +12,13 @@ const initialState: DataSourcesState = {
   dataSourceTypeSearchQuery: '',
   dataSourceMeta: {} as Plugin,
   dataSourcePermission: {} as DataSourcePermissionDTO,
+  hasFetched: false,
 };
 
 export const dataSourcesReducer = (state = initialState, action: Action): DataSourcesState => {
   switch (action.type) {
     case ActionTypes.LoadDataSources:
-      return { ...state, dataSources: action.payload, dataSourcesCount: action.payload.length };
+      return { ...state, hasFetched: true, dataSources: action.payload, dataSourcesCount: action.payload.length };
 
     case ActionTypes.LoadDataSource:
       return { ...state, dataSource: action.payload };
