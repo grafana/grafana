@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,133 +14,50 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 	Convey("Testing Alert notification sql access", t, func() {
 		InitTestDB(t)
 
-		Convey("Alert notification state", func() {
-			var alertID int64 = 7
-			var orgID int64 = 5
-			var notifierID int64 = 10
-			oldTimeNow := timeNow
-			now := time.Date(2018, 9, 30, 0, 0, 0, 0, time.UTC)
-			timeNow = func() time.Time { return now }
+		Convey("Alert notification journal", func() {
+			var alertId int64 = 5
+			var orgId int64 = 5
+			var notifierId int64 = 5
 
-			Convey("Get no existing state should create a new state", func() {
-				query := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-				err := GetOrCreateAlertNotificationState(context.Background(), query)
-				So(err, ShouldBeNil)
-				So(query.Result, ShouldNotBeNil)
-				So(query.Result.State, ShouldEqual, "unknown")
-				So(query.Result.Version, ShouldEqual, 0)
-				So(query.Result.UpdatedAt, ShouldEqual, now.Unix())
+			Convey("Getting last journal should raise error if no one exists", func() {
+				query := &m.GetLatestNotificationQuery{AlertId: alertId, OrgId: orgId, NotifierId: notifierId}
+				err := GetLatestNotification(context.Background(), query)
+				So(err, ShouldEqual, m.ErrJournalingNotFound)
 
-				Convey("Get existing state should not create a new state", func() {
-					query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-					err := GetOrCreateAlertNotificationState(context.Background(), query2)
+				Convey("shoulbe be able to record two journaling events", func() {
+					createCmd := &m.RecordNotificationJournalCommand{AlertId: alertId, NotifierId: notifierId, OrgId: orgId, Success: true, SentAt: 1}
+
+					err := RecordNotificationJournal(context.Background(), createCmd)
 					So(err, ShouldBeNil)
-					So(query2.Result, ShouldNotBeNil)
-					So(query2.Result.Id, ShouldEqual, query.Result.Id)
-					So(query2.Result.UpdatedAt, ShouldEqual, now.Unix())
-				})
 
-				Convey("Update existing state to pending with correct version should update database", func() {
-					s := *query.Result
+					createCmd.SentAt += 1000 //increase epoch
 
-					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:                           s.Id,
-						Version:                      s.Version,
-						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
-					}
-
-					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
+					err = RecordNotificationJournal(context.Background(), createCmd)
 					So(err, ShouldBeNil)
-					So(cmd.ResultVersion, ShouldEqual, 1)
 
-					query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-					err = GetOrCreateAlertNotificationState(context.Background(), query2)
-					So(err, ShouldBeNil)
-					So(query2.Result.Version, ShouldEqual, 1)
-					So(query2.Result.State, ShouldEqual, models.AlertNotificationStatePending)
-					So(query2.Result.UpdatedAt, ShouldEqual, now.Unix())
-
-					Convey("Update existing state to completed should update database", func() {
-						s := *query.Result
-						setStateCmd := models.SetAlertNotificationStateToCompleteCommand{
-							Id:      s.Id,
-							Version: cmd.ResultVersion,
-						}
-						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &setStateCmd)
+					Convey("get last journaling event", func() {
+						err := GetLatestNotification(context.Background(), query)
 						So(err, ShouldBeNil)
+						So(query.Result.SentAt, ShouldEqual, 1001)
 
-						query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-						err = GetOrCreateAlertNotificationState(context.Background(), query3)
-						So(err, ShouldBeNil)
-						So(query3.Result.Version, ShouldEqual, 2)
-						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
-						So(query3.Result.UpdatedAt, ShouldEqual, now.Unix())
-					})
+						Convey("be able to clear all journaling for an notifier", func() {
+							cmd := &m.CleanNotificationJournalCommand{AlertId: alertId, NotifierId: notifierId, OrgId: orgId}
+							err := CleanNotificationJournal(context.Background(), cmd)
+							So(err, ShouldBeNil)
 
-					Convey("Update existing state to completed should update database. regardless of version", func() {
-						s := *query.Result
-						unknownVersion := int64(1000)
-						cmd := models.SetAlertNotificationStateToCompleteCommand{
-							Id:      s.Id,
-							Version: unknownVersion,
-						}
-						err := SetAlertNotificationStateToCompleteCommand(context.Background(), &cmd)
-						So(err, ShouldBeNil)
-
-						query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-						err = GetOrCreateAlertNotificationState(context.Background(), query3)
-						So(err, ShouldBeNil)
-						So(query3.Result.Version, ShouldEqual, unknownVersion+1)
-						So(query3.Result.State, ShouldEqual, models.AlertNotificationStateCompleted)
-						So(query3.Result.UpdatedAt, ShouldEqual, now.Unix())
+							Convey("querying for last junaling should raise error", func() {
+								query := &m.GetLatestNotificationQuery{AlertId: alertId, OrgId: orgId, NotifierId: notifierId}
+								err := GetLatestNotification(context.Background(), query)
+								So(err, ShouldEqual, m.ErrJournalingNotFound)
+							})
+						})
 					})
 				})
-
-				Convey("Update existing state to pending with incorrect version should return version mismatch error", func() {
-					s := *query.Result
-					s.Version = 1000
-					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:                           s.NotifierId,
-						Version:                      s.Version,
-						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
-					}
-					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
-					So(err, ShouldEqual, models.ErrAlertNotificationStateVersionConflict)
-				})
-
-				Convey("Updating existing state to pending with incorrect version since alert rule state update version is higher", func() {
-					s := *query.Result
-					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:                           s.Id,
-						Version:                      s.Version,
-						AlertRuleStateUpdatedVersion: 1000,
-					}
-					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
-					So(err, ShouldBeNil)
-
-					So(cmd.ResultVersion, ShouldEqual, 1)
-				})
-
-				Convey("different version and same alert state change version should return error", func() {
-					s := *query.Result
-					s.Version = 1000
-					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:                           s.Id,
-						Version:                      s.Version,
-						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
-					}
-					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
-					So(err, ShouldNotBeNil)
-				})
-			})
-
-			Reset(func() {
-				timeNow = oldTimeNow
 			})
 		})
 
 		Convey("Alert notifications should be empty", func() {
-			cmd := &models.GetAlertNotificationsQuery{
+			cmd := &m.GetAlertNotificationsQuery{
 				OrgId: 2,
 				Name:  "email",
 			}
@@ -151,7 +68,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		})
 
 		Convey("Cannot save alert notifier with send reminder = true", func() {
-			cmd := &models.CreateAlertNotificationCommand{
+			cmd := &m.CreateAlertNotificationCommand{
 				Name:         "ops",
 				Type:         "email",
 				OrgId:        1,
@@ -161,7 +78,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			Convey("and missing frequency", func() {
 				err := CreateAlertNotificationCommand(cmd)
-				So(err, ShouldEqual, models.ErrNotificationFrequencyNotFound)
+				So(err, ShouldEqual, m.ErrNotificationFrequencyNotFound)
 			})
 
 			Convey("invalid frequency", func() {
@@ -173,7 +90,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		})
 
 		Convey("Cannot update alert notifier with send reminder = false", func() {
-			cmd := &models.CreateAlertNotificationCommand{
+			cmd := &m.CreateAlertNotificationCommand{
 				Name:         "ops update",
 				Type:         "email",
 				OrgId:        1,
@@ -184,14 +101,14 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			err := CreateAlertNotificationCommand(cmd)
 			So(err, ShouldBeNil)
 
-			updateCmd := &models.UpdateAlertNotificationCommand{
+			updateCmd := &m.UpdateAlertNotificationCommand{
 				Id:           cmd.Result.Id,
 				SendReminder: true,
 			}
 
 			Convey("and missing frequency", func() {
 				err := UpdateAlertNotification(updateCmd)
-				So(err, ShouldEqual, models.ErrNotificationFrequencyNotFound)
+				So(err, ShouldEqual, m.ErrNotificationFrequencyNotFound)
 			})
 
 			Convey("invalid frequency", func() {
@@ -204,7 +121,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		})
 
 		Convey("Can save Alert Notification", func() {
-			cmd := &models.CreateAlertNotificationCommand{
+			cmd := &m.CreateAlertNotificationCommand{
 				Name:         "ops",
 				Type:         "email",
 				OrgId:        1,
@@ -226,25 +143,23 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			})
 
 			Convey("Can update alert notification", func() {
-				newCmd := &models.UpdateAlertNotificationCommand{
-					Name:                   "NewName",
-					Type:                   "webhook",
-					OrgId:                  cmd.Result.OrgId,
-					SendReminder:           true,
-					DisableResolvedMessage: true,
-					Frequency:              "60s",
-					Settings:               simplejson.New(),
-					Id:                     cmd.Result.Id,
+				newCmd := &m.UpdateAlertNotificationCommand{
+					Name:         "NewName",
+					Type:         "webhook",
+					OrgId:        cmd.Result.OrgId,
+					SendReminder: true,
+					Frequency:    "60s",
+					Settings:     simplejson.New(),
+					Id:           cmd.Result.Id,
 				}
 				err := UpdateAlertNotification(newCmd)
 				So(err, ShouldBeNil)
 				So(newCmd.Result.Name, ShouldEqual, "NewName")
 				So(newCmd.Result.Frequency, ShouldEqual, 60*time.Second)
-				So(newCmd.Result.DisableResolvedMessage, ShouldBeTrue)
 			})
 
 			Convey("Can update alert notification to disable sending of reminders", func() {
-				newCmd := &models.UpdateAlertNotificationCommand{
+				newCmd := &m.UpdateAlertNotificationCommand{
 					Name:         "NewName",
 					Type:         "webhook",
 					OrgId:        cmd.Result.OrgId,
@@ -264,7 +179,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			cmd3 := m.CreateAlertNotificationCommand{Name: "ops2", Type: "email", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 			cmd4 := m.CreateAlertNotificationCommand{IsDefault: true, Name: "default", Type: "email", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
-			otherOrg := models.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, DisableResolvedMessage: false, Frequency: "10s", Settings: simplejson.New()}
+			otherOrg := m.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
 			So(CreateAlertNotificationCommand(&cmd1), ShouldBeNil)
 			So(CreateAlertNotificationCommand(&cmd2), ShouldBeNil)
@@ -273,7 +188,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(CreateAlertNotificationCommand(&otherOrg), ShouldBeNil)
 
 			Convey("search", func() {
-				query := &models.GetAlertNotificationsToSendQuery{
+				query := &m.GetAlertNotificationsToSendQuery{
 					Ids:   []int64{cmd1.Result.Id, cmd2.Result.Id, 112341231},
 					OrgId: 1,
 				}
@@ -284,7 +199,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			})
 
 			Convey("all", func() {
-				query := &models.GetAllAlertNotificationsQuery{
+				query := &m.GetAllAlertNotificationsQuery{
 					OrgId: 1,
 				}
 
