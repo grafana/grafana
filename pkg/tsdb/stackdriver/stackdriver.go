@@ -283,7 +283,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
 
-	req, err := e.createRequest(ctx, e.dsInfo, "timeSeries")
+	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, StackdriverResponse{}, nil
@@ -550,7 +550,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, endpointName string) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
@@ -578,7 +578,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	}
 
 	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/"+endpointName)
+	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
@@ -591,10 +591,8 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
 			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
-		} else {
-			return defaultCredentials.ProjectID, nil
 		}
-	} else {
-		return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
+		return defaultCredentials.ProjectID, nil
 	}
+	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
 }
