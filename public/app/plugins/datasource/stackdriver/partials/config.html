@@ -1,0 +1,86 @@
+<div class="gf-form-group">
+  <div class="grafana-info-box">
+    <h5>GCP Service Account</h5>
+    <p>
+      To authenticate with the Stackdriver API, you need to create a Google Cloud Platform (GCP) Service Account for
+      the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to
+      visualize data from multiple GCP Projects then you need to create one datasource per GCP Project.
+    </p>
+    <p>
+      The <strong>Monitoring Viewer</strong> role provides all the permissions that Grafana needs.
+    </p>
+    <p>
+      The following APIs need to be enabled on GCP for the datasource to work:
+      <ul>
+        <li><a class="external-link" target="_blank" href="https://console.cloud.google.com/apis/library/monitoring.googleapis.com">Monitoring
+            API</a></li>
+        <li><a class="external-link" target="_blank" href="https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com">Resource
+            Manager API</a></li>
+      </ul>
+    </p>
+    <p>Detailed instructions on how to create a Service Account can be found <a class="external-link" target="_blank"
+        href="http://docs.grafana.org/datasources/stackdriver/">in
+        the documentation.</a></p>
+  </div>
+</div>
+
+<div class="gf-form-group">
+  <div class="gf-form">
+    <h3>Service Account Authentication</h3>
+    <info-popover mode="header">Upload your Service Account key file or paste in the contents of the file. The file
+      contents will be encrypted and saved in the Grafana database.</info-popover>
+  </div>
+
+  <div ng-if="!ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid">
+    <div class="gf-form-group" ng-if="!ctrl.inputDataValid">
+      <div class="gf-form">
+        <form>
+          <dash-upload on-upload="ctrl.onUpload(dash)" btn-text="Upload Service Account key file"></dash-upload>
+        </form>
+      </div>
+    </div>
+    <div class="gf-form-group">
+      <h5 class="section-heading" ng-if="!ctrl.inputDataValid">Or paste Service Account key JSON</h5>
+      <div class="gf-form" ng-if="!ctrl.inputDataValid">
+        <textarea rows="10" data-share-panel-url="" class="gf-form-input" ng-model="ctrl.jsonText" ng-paste="ctrl.onPasteJwt($event)"></textarea>
+      </div>
+      <div ng-repeat="valError in ctrl.validationErrors" class="text-error p-l-1">
+        <i class="fa fa-warning"></i>
+        {{valError}}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="gf-form-group" ng-if="ctrl.inputDataValid || ctrl.current.jsonData.clientEmail">
+  <h6>Uploaded Key Details</h6>
+
+  <div class="gf-form">
+    <span class="gf-form-label width-9">Project</span>
+    <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.defaultProject" />
+  </div>
+  <div class="gf-form">
+      <span class="gf-form-label width-9">Client Email</span>
+      <input class="gf-form-input width-40" disabled type="text" ng-model="ctrl.current.jsonData.clientEmail" />
+    </div>
+  <div class="gf-form">
+    <span class="gf-form-label width-9">Token URI</span>
+    <input class="gf-form-input width-40" disabled type="text" ng-model='ctrl.current.jsonData.tokenUri' />
+  </div>
+  <div class="gf-form" ng-if="ctrl.current.secureJsonFields.privateKey">
+    <span class="gf-form-label width-9">Private Key</span>
+    <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+  </div>
+
+  <div class="gf-form width-18">
+    <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()">Reset Service
+      Account Key </a>
+    <info-popover mode="right-normal">
+      Reset to clear the uploaded key and upload a new file.
+    </info-popover>
+  </div>
+</div>
+
+<div class="grafana-info-box" ng-hide="ctrl.current.secureJsonFields.privateKey">
+	Do not forget to save your changes after uploading a file.
+</div>

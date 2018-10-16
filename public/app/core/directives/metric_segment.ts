@@ -118,6 +118,9 @@ export function metricSegment($compile, $sce) {
       };
 
       $scope.matcher = function(item) {
+        if (linkMode) {
+          return false;
+        }
         let str = this.query;
         if (str[0] === '/') {
           str = str.substring(1);

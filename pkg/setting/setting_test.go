@@ -30,8 +30,8 @@ func TestLoadingSettings(t *testing.T) {
 			cfg.Load(&CommandLineArgs{HomePath: "../../"})
 
 			So(AdminUser, ShouldEqual, "superduper")
-			So(DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
-			So(LogsPath, ShouldEqual, filepath.Join(DataPath, "log"))
+			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
+			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
 		})
 
 		Convey("Should replace password when defined in environment", func() {
@@ -76,8 +76,8 @@ func TestLoadingSettings(t *testing.T) {
 					HomePath: "../../",
 					Args:     []string{`cfg:paths.data=c:\tmp\data`, `cfg:paths.logs=c:\tmp\logs`},
 				})
-				So(DataPath, ShouldEqual, `c:\tmp\data`)
-				So(LogsPath, ShouldEqual, `c:\tmp\logs`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
+				So(cfg.LogsPath, ShouldEqual, `c:\tmp\logs`)
 			} else {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
@@ -85,8 +85,8 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/data")
-				So(LogsPath, ShouldEqual, "/tmp/logs")
+				So(cfg.DataPath, ShouldEqual, "/tmp/data")
+				So(cfg.LogsPath, ShouldEqual, "/tmp/logs")
 			}
 		})
 
@@ -97,7 +97,7 @@ func TestLoadingSettings(t *testing.T) {
 				Args: []string{
 					"cfg:default.server.domain=test2",
 				},
-				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
+				Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 			})
 
 			So(Domain, ShouldEqual, "test2")
@@ -108,20 +108,20 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override_windows.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
 				})
 
-				So(DataPath, ShouldEqual, `c:\tmp\override`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\override`)
 			} else {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:default.paths.data=/tmp/data"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/override")
+				So(cfg.DataPath, ShouldEqual, "/tmp/override")
 			}
 		})
 
@@ -130,20 +130,20 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override_windows.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:paths.data=c:\tmp\data`},
 				})
 
-				So(DataPath, ShouldEqual, `c:\tmp\data`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
 			} else {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:paths.data=/tmp/data"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/data")
+				So(cfg.DataPath, ShouldEqual, "/tmp/data")
 			}
 		})
 
@@ -156,7 +156,7 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
 
-				So(DataPath, ShouldEqual, `c:\tmp\env_override`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\env_override`)
 			} else {
 				os.Setenv("GF_DATA_PATH", "/tmp/env_override")
 				cfg := NewCfg()
@@ -165,7 +165,7 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/env_override")
+				So(cfg.DataPath, ShouldEqual, "/tmp/env_override")
 			}
 		})
 

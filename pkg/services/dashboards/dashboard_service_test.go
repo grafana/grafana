@@ -117,12 +117,12 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return errors.New("error")
+					return errors.New("Alert validation error")
 				})
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				_, err := service.SaveDashboard(dto)
-				So(err, ShouldEqual, models.ErrDashboardContainsInvalidAlertData)
+				So(err.Error(), ShouldEqual, "Alert validation error")
 			})
 		})
 

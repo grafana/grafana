@@ -40,8 +40,8 @@ public/css/*.min.css
 
 conf/custom.ini
 fig.yml
-docker-compose.yml
-docker-compose.yaml
+devenv/docker-compose.yml
+devenv/docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
@@ -54,6 +54,7 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions
+/public/app/extensions
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -68,7 +69,9 @@ debug.test
 /vendor/**/*.yml
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
-/vendor/**/appengine*
 *.orig
 
 /devenv/bulk-dashboards/*.json
+/devenv/bulk_alerting_dashboards/*.json
+
+/scripts/build/release_publisher/release_publisher

@@ -212,11 +212,20 @@
   color: $list-item-link-color;
 }
 
+.search-item__body-folder-title {
+  color: $text-color-weak;
+  font-size: $font-size-xs;
+  line-height: 11px;
+  position: relative;
+  top: -1px;
+}
+
 .search-item__icon {
-  padding: 5px;
+  display: flex;
+  align-items: center;
   flex: 0 0 auto;
   font-size: 19px;
-  padding: 5px 2px 5px 10px;
+  padding: 0 2px 0 10px;
 }
 
 .search-item__tags {

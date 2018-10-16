@@ -240,7 +240,7 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
+		if _, err := sess.ID(cmd.UserId).Update(&user); err != nil {
 			return err
 		}
 
@@ -264,22 +264,19 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 			Updated:  time.Now(),
 		}
 
-		_, err := sess.Id(cmd.UserId).Update(&user)
+		_, err := sess.ID(cmd.UserId).Update(&user)
 		return err
 	})
 }
 
 func UpdateUserLastSeenAt(cmd *m.UpdateUserLastSeenAtCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if cmd.UserId <= 0 {
-		}
-
 		user := m.User{
 			Id:         cmd.UserId,
 			LastSeenAt: time.Now(),
 		}
 
-		_, err := sess.Id(cmd.UserId).Update(&user)
+		_, err := sess.ID(cmd.UserId).Update(&user)
 		return err
 	})
 }
@@ -310,7 +307,7 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 		OrgId: orgID,
 	}
 
-	_, err := sess.Id(userID).Update(&user)
+	_, err := sess.ID(userID).Update(&user)
 	return err
 }
 
@@ -372,11 +369,11 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 
 	sess := x.Table("user")
 	if query.UserId > 0 {
-		sess.Sql(rawSql+"WHERE u.id=?", query.UserId)
+		sess.SQL(rawSql+"WHERE u.id=?", query.UserId)
 	} else if query.Login != "" {
-		sess.Sql(rawSql+"WHERE u.login=?", query.Login)
+		sess.SQL(rawSql+"WHERE u.login=?", query.Login)
 	} else if query.Email != "" {
-		sess.Sql(rawSql+"WHERE u.email=?", query.Email)
+		sess.SQL(rawSql+"WHERE u.email=?", query.Email)
 	}
 
 	var user m.SignedInUser
@@ -448,35 +445,39 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		deletes := []string{
-			"DELETE FROM star WHERE user_id = ?",
-			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
-			"DELETE FROM org_user WHERE user_id = ?",
-			"DELETE FROM dashboard_acl WHERE user_id = ?",
-			"DELETE FROM preferences WHERE user_id = ?",
-			"DELETE FROM team_member WHERE user_id = ?",
-			"DELETE FROM user_auth WHERE user_id = ?",
-		}
-
-		for _, sql := range deletes {
-			_, err := sess.Exec(sql, cmd.UserId)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return deleteUserInTransaction(sess, cmd)
 	})
+}
+
+func deleteUserInTransaction(sess *DBSession, cmd *m.DeleteUserCommand) error {
+	deletes := []string{
+		"DELETE FROM star WHERE user_id = ?",
+		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
+		"DELETE FROM org_user WHERE user_id = ?",
+		"DELETE FROM dashboard_acl WHERE user_id = ?",
+		"DELETE FROM preferences WHERE user_id = ?",
+		"DELETE FROM team_member WHERE user_id = ?",
+		"DELETE FROM user_auth WHERE user_id = ?",
+	}
+
+	for _, sql := range deletes {
+		_, err := sess.Exec(sql, cmd.UserId)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
-		sess.Id(cmd.UserId).Get(&user)
+		sess.ID(cmd.UserId).Get(&user)
 
 		user.IsAdmin = cmd.IsGrafanaAdmin
 		sess.UseBool("is_admin")
-		_, err := sess.Id(user.Id).Update(&user)
+		_, err := sess.ID(user.Id).Update(&user)
 		return err
 	})
 }
@@ -490,7 +491,7 @@ func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
 			Updated:    time.Now(),
 		}
 
-		_, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user)
+		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
 		return err
 	})
 }

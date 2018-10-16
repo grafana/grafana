@@ -54,14 +54,11 @@ var (
 	ApplicationName string
 
 	// Paths
-	LogsPath       string
 	HomePath       string
-	DataPath       string
 	PluginsPath    string
 	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
-	LogModes   []string
 	LogConfigs []util.DynMap
 
 	// Http server options
@@ -166,6 +163,7 @@ var (
 	// Alerting
 	AlertingEnabled            bool
 	ExecuteAlerts              bool
+	AlertingRenderLimit        int
 	AlertingErrorOrTimeout     string
 	AlertingNoDataOrNullValues string
 
@@ -186,23 +184,35 @@ var (
 	ImageUploadProvider string
 )
 
+// TODO move all global vars to this struct
 type Cfg struct {
 	Raw *ini.File
 
+	// HTTP Server Settings
+	AppUrl    string
+	AppSubUrl string
+
 	// Paths
 	ProvisioningPath string
+	DataPath         string
+	LogsPath         string
 
 	// SMTP email settings
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir                        string
-	PhantomDir                       string
-	RendererUrl                      string
-	RendererCallbackUrl              string
+	ImagesDir             string
+	PhantomDir            string
+	RendererUrl           string
+	RendererCallbackUrl   string
+	RendererLimit         int
+	RendererLimitAlerting int
+
 	DisableBruteForceLoginProtection bool
 
 	TempDataLifetime time.Duration
+
+	MetricsEndpointEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -405,7 +415,7 @@ func loadSpecifedConfigFile(configFile string, masterFile *ini.File) error {
 	return nil
 }
 
-func loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
+func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	var err error
 
 	// load config defaults
@@ -436,7 +446,7 @@ func loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load specified config file
 	err = loadSpecifedConfigFile(args.Config, parsedFile)
 	if err != nil {
-		initLogging(parsedFile)
+		cfg.initLogging(parsedFile)
 		log.Fatal(3, err.Error())
 	}
 
@@ -453,8 +463,8 @@ func loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	evalConfigValues(parsedFile)
 
 	// update data path and logging config
-	DataPath = makeAbsolute(parsedFile.Section("paths").Key("data").String(), HomePath)
-	initLogging(parsedFile)
+	cfg.DataPath = makeAbsolute(parsedFile.Section("paths").Key("data").String(), HomePath)
+	cfg.initLogging(parsedFile)
 
 	return parsedFile, err
 }
@@ -511,7 +521,7 @@ func NewCfg() *Cfg {
 func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	setHomePath(args)
 
-	iniFile, err := loadConfiguration(args)
+	iniFile, err := cfg.loadConfiguration(args)
 	if err != nil {
 		return err
 	}
@@ -532,6 +542,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
+	cfg.AppUrl = AppUrl
+	cfg.AppSubUrl = AppSubUrl
 
 	Protocol = HTTP
 	if server.Key("protocol").MustString("http") == "https" {
@@ -656,9 +668,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
 		}
 	}
-	cfg.ImagesDir = filepath.Join(DataPath, "png")
+	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
+	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -674,6 +687,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
 	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
 
@@ -712,7 +726,7 @@ func (cfg *Cfg) readSessionConfig() {
 	SessionOptions.IDLength = 16
 
 	if SessionOptions.Provider == "file" {
-		SessionOptions.ProviderConfig = makeAbsolute(SessionOptions.ProviderConfig, DataPath)
+		SessionOptions.ProviderConfig = makeAbsolute(SessionOptions.ProviderConfig, cfg.DataPath)
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
 	}
 
@@ -723,15 +737,15 @@ func (cfg *Cfg) readSessionConfig() {
 	SessionConnMaxLifetime = cfg.Raw.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
-func initLogging(file *ini.File) {
+func (cfg *Cfg) initLogging(file *ini.File) {
 	// split on comma
-	LogModes = strings.Split(file.Section("log").Key("mode").MustString("console"), ",")
+	logModes := strings.Split(file.Section("log").Key("mode").MustString("console"), ",")
 	// also try space
-	if len(LogModes) == 1 {
-		LogModes = strings.Split(file.Section("log").Key("mode").MustString("console"), " ")
+	if len(logModes) == 1 {
+		logModes = strings.Split(file.Section("log").Key("mode").MustString("console"), " ")
 	}
-	LogsPath = makeAbsolute(file.Section("paths").Key("logs").String(), HomePath)
-	log.ReadLoggingConfig(LogModes, LogsPath, file)
+	cfg.LogsPath = makeAbsolute(file.Section("paths").Key("logs").String(), HomePath)
+	log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
 func (cfg *Cfg) LogConfigSources() {
@@ -755,8 +769,8 @@ func (cfg *Cfg) LogConfigSources() {
 	}
 
 	logger.Info("Path Home", "path", HomePath)
-	logger.Info("Path Data", "path", DataPath)
-	logger.Info("Path Logs", "path", LogsPath)
+	logger.Info("Path Data", "path", cfg.DataPath)
+	logger.Info("Path Logs", "path", cfg.LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
 	logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	logger.Info("App mode " + Env)

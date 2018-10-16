@@ -105,7 +105,7 @@ func addAnnotationMig(mg *Migrator) {
 	}))
 
 	//
-	// Convert epoch saved as seconds to miliseconds
+	// Convert epoch saved as seconds to milliseconds
 	//
 	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
 	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))

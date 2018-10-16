@@ -17,10 +17,6 @@
         padding-left: 0px;
       }
 
-      .graph-legend-table {
-        width: auto;
-      }
-
       .graph-legend-table .graph-legend-series {
         display: table-row;
       }
@@ -35,7 +31,6 @@
 }
 
 .datapoints-warning {
-  pointer: none;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -137,6 +132,7 @@
 
     .graph-legend-table {
       display: table;
+      width: auto;
 
       .graph-legend-scroll {
         display: table;

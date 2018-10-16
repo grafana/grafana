@@ -17,6 +17,9 @@ can find examples using Okta, BitBucket, OneLogin and Azure.
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
+You may have to set the `root_url` option of `[server]` for the callback URL to be 
+correct. For example in case you are serving Grafana behind a proxy.
+
 Example config:
 
 ```bash
@@ -32,7 +35,14 @@ allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
 ```
 
-Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+
+Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
+
+1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
+2. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
+3. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
+4. If no e-mail address is found in steps (1-3), then the e-mail address of the user is set to the empty string.
 
 ## Set up OAuth2 with Okta
 
@@ -165,6 +175,38 @@ allowed_organizations =
     api_url =
     team_ids =
     allowed_organizations =
+    ```
+
+> Note: It's important to ensure that the [root_url](/installation/configuration/#root-url) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
+
+## Set up OAuth2 with Centrify
+
+1.  Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
+
+2.  Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
+
+3.  Put in other basic configuration (name, description, logo, category)
+
+4.  On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
+
+5.  Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
+
+6.  Add an authorized Redirect URI like https://your-grafana-server/login/generic_oauth
+
+7.  Set up permissions, policies, etc. just like any other Centrify app
+
+8.  Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = Centrify
+    enabled = true
+    allow_sign_up = true
+    client_id = <OpenID Connect Client ID from Centrify>
+    client_secret = <your generated OpenID Connect Client Sercret"
+    scopes = openid email name
+    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
+    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
     ```
 
 <hr>

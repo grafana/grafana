@@ -66,13 +66,20 @@
 
   .typeahead-item__selected {
     background-color: $typeahead-selected-bg;
-    color: $typeahead-selected-color;
 
     .typeahead-item-hint {
       font-size: $font-size-xs;
       color: $text-color;
       white-space: normal;
     }
+  }
+
+  .typeahead-match {
+    color: $typeahead-selected-color;
+    border-bottom: 1px solid $typeahead-selected-color;
+    // Undoing mark styling
+    padding: inherit;
+    background: inherit;
   }
 }
 

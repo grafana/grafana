@@ -32,11 +32,11 @@ permissions and org memberships.
 
 ## Grafana Auth
 
-Grafana of course has a built in user authentication system with password authenticaten enabled by default. You can
+Grafana of course has a built in user authentication system with password authentication enabled by default. You can
 disable authentication by enabling anonymous access. You can also hide login form and only allow login through an auth
 provider (listed above). There is also options for allowing self sign up.
 
-### Anonymous authenticaten
+### Anonymous authentication
 
 You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
 
@@ -58,7 +58,7 @@ If you change your organization name in the Grafana UI this setting needs to be 
 ### Basic authentication
 
 Basic auth is enabled by default and works with the built in Grafana user password authentication system and LDAP
-authenticaten integration.
+authentication integration.
 
 To disable basic auth:
 
@@ -84,4 +84,3 @@ Set to the option detailed below to true to hide sign-out menu link. Useful if y
 [auth]
 disable_signout_menu = true
 ```
-

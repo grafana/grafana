@@ -5,7 +5,6 @@ import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { SearchResult } from './components/search/SearchResult';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
-import DashboardPermissions from './components/Permissions/DashboardPermissions';
 import { GraphLegend } from 'app/plugins/panel/graph/Legend';
 
 export function registerAngularDirectives() {
@@ -19,6 +18,5 @@ export function registerAngularDirectives() {
     ['onSelect', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('dashboardPermissions', DashboardPermissions, ['backendSrv', 'dashboardId', 'folder']);
   react2AngularDirective('graphLegendReact', GraphLegend, ['seriesList', 'className']);
 }

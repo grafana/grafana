@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
@@ -25,7 +26,9 @@ type DashboardProvisioningService interface {
 
 // NewService factory for creating a new dashboard service
 var NewService = func() DashboardService {
-	return &dashboardServiceImpl{}
+	return &dashboardServiceImpl{
+		log: log.New("dashboard-service"),
+	}
 }
 
 // NewProvisioningService factory for creating a new dashboard provisioning service
@@ -45,6 +48,7 @@ type SaveDashboardDTO struct {
 type dashboardServiceImpl struct {
 	orgId int64
 	user  *models.SignedInUser
+	log   log.Logger
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -89,7 +93,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 
 		if err := bus.Dispatch(&validateAlertsCmd); err != nil {
-			return nil, models.ErrDashboardContainsInvalidAlertData
+			return nil, err
 		}
 	}
 

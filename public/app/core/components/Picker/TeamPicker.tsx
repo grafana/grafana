@@ -1,24 +1,26 @@
 import React, { Component } from 'react';
-import Select from 'react-select';
+import AsyncSelect from 'react-select/lib/Async';
 import PickerOption from './PickerOption';
 import { debounce } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-
-export interface Props {
-  onSelected: (team: Team) => void;
-  value?: string;
-  className?: string;
-}
-
-export interface State {
-  isLoading;
-}
+import ResetStyles from './ResetStyles';
+import IndicatorsContainer from './IndicatorsContainer';
+import NoOptionsMessage from './NoOptionsMessage';
 
 export interface Team {
   id: number;
   label: string;
   name: string;
   avatarUrl: string;
+}
+
+export interface Props {
+  onSelected: (team: Team) => void;
+  className?: string;
+}
+
+export interface State {
+  isLoading: boolean;
 }
 
 export class TeamPicker extends Component<Props, State> {
@@ -31,7 +33,7 @@ export class TeamPicker extends Component<Props, State> {
 
     this.debouncedSearch = debounce(this.search, 300, {
       leading: true,
-      trailing: false,
+      trailing: true,
     });
   }
 
@@ -50,31 +52,34 @@ export class TeamPicker extends Component<Props, State> {
       });
 
       this.setState({ isLoading: false });
-      return { options: teams };
+      return teams;
     });
   }
 
   render() {
-    const { onSelected, value, className } = this.props;
+    const { onSelected, className } = this.props;
     const { isLoading } = this.state;
-
     return (
       <div className="user-picker">
-        <Select.Async
-          valueKey="id"
-          multi={false}
-          labelKey="label"
-          cache={false}
+        <AsyncSelect
+          classNamePrefix={`gf-form-select-box`}
+          isMulti={false}
           isLoading={isLoading}
+          defaultOptions={true}
           loadOptions={this.debouncedSearch}
-          loadingPlaceholder="Loading..."
-          noResultsText="No teams found"
           onChange={onSelected}
           className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
-          optionComponent={PickerOption}
+          styles={ResetStyles}
+          components={{
+            Option: PickerOption,
+            IndicatorsContainer,
+            NoOptionsMessage,
+          }}
           placeholder="Select a team"
-          value={value}
-          autosize={true}
+          loadingMessage={() => 'Loading...'}
+          noOptionsMessage={() => 'No teams found'}
+          getOptionValue={i => i.id}
+          getOptionLabel={i => i.label}
         />
       </div>
     );

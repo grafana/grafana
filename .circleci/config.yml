@@ -32,7 +32,7 @@ jobs:
         - run: sudo apt update
         - run: sudo apt install -y mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
-        - run: cat docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
+        - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
             name: mysql integration tests
             command: 'GRAFANA_TEST_DB=mysql go test ./pkg/services/sqlstore/... ./pkg/tsdb/mysql/... '
@@ -51,7 +51,7 @@ jobs:
         - run: sudo apt update
         - run: sudo apt install -y postgresql-client
         - run: dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
-        - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f docker/blocks/postgres_tests/setup.sql'
+        - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql'
         - run:
             name: postgres integration tests
             command: 'GRAFANA_TEST_DB=postgres go test ./pkg/services/sqlstore/... ./pkg/tsdb/postgres/...'
@@ -81,15 +81,16 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
-      - run: 'go get -u gopkg.in/alecthomas/gometalinter.v2'
+      - run: 'go get -u github.com/alecthomas/gometalinter'
       - run: 'go get -u github.com/tsenart/deadcode'
+      - run: 'go get -u github.com/jgautheron/goconst/cmd/goconst'
       - run: 'go get -u github.com/gordonklaus/ineffassign'
       - run: 'go get -u github.com/opennota/check/cmd/structcheck'
       - run: 'go get -u github.com/mdempsky/unconvert'
       - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
           name: run linters
-          command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=goconst --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
       - run:
           name: run go vet
           command: 'go vet ./pkg/...'
@@ -125,7 +126,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.1.0
+     - image: grafana/build-container:1.2.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -157,18 +158,23 @@ jobs:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
       - run:
-          name: Build Grafana.com publisher
+          name: Build Grafana.com master publisher
           command: 'go build -o scripts/publish scripts/build/publish.go'
+      - run:
+          name: Build Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go build -o release_publisher .'
       - persist_to_workspace:
           root: .
           paths:
             - dist/grafana*
             - scripts/*.sh
             - scripts/publish
+            - scripts/build/release_publisher/release_publisher
+            - scripts/build/publish.sh
 
   build:
     docker:
-     - image: grafana/build-container:1.1.0
+     - image: grafana/build-container:1.2.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -227,7 +233,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:v0.1
+     - image: grafana/build-container:1.2.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -298,8 +304,8 @@ jobs:
           name: deploy to s3
           command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
       - run:
-          name: Trigger Windows build
-          command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} release'
+          name: Deploy to Grafana.com
+          command: './scripts/build/publish.sh'
 
 workflows:
   version: 2
