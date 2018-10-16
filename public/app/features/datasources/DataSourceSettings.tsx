@@ -1,7 +1,6 @@
-import React, { PureComponent } from 'react';
+import React, { createRef, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DataSource, Plugin } from 'app/types';
-import DataSourceHttpSettings from './DataSourceHttpSettings';
 
 export interface Props {
   dataSource: DataSource;
@@ -18,10 +17,18 @@ enum DataSourceStates {
 }
 
 export class DataSourceSettings extends PureComponent<Props, State> {
+  settingsElement = createRef<HTMLDivElement>();
+
   state = {
     name: this.props.dataSource.name,
     showNamePopover: false,
   };
+
+  componentDidMount() {
+    // importPluginModule(this.props.dataSourceMeta.module).then(pluginExports => {
+    //   console.log(pluginExports);
+    // });
+  }
 
   onNameChange = event => {
     this.setState({
@@ -77,17 +84,6 @@ export class DataSourceSettings extends PureComponent<Props, State> {
   render() {
     const { name, showNamePopover } = this.state;
 
-    const props = {
-      access: {},
-      basicAuth: {},
-      showAccessOption: {},
-      tlsAuth: {},
-      tlsAuthWithCACert: {},
-      tlsCACert: {},
-      tlsClientCert: {},
-      tlsClientKey: {},
-    };
-
     return (
       <div>
         <form onSubmit={this.onSubmit}>
@@ -134,7 +130,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
               to update this datasource.
             </div>
           )}
-          <DataSourceHttpSettings {...props} />
+          <div ref={this.settingsElement} />
           <div className="gf-form-button-row">
             <button type="submit" className="btn btn-success" disabled={this.isReadyOnly()} onClick={this.onSubmit}>
               Save &amp; Test
