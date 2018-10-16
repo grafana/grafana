@@ -50,4 +50,5 @@ export interface DataSourcesState {
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   dataSourcePermission: DataSourcePermissionDTO;
+  hasFetched: boolean;
 }

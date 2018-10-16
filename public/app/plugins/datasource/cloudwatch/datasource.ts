@@ -44,8 +44,14 @@ export default class CloudWatchDatasource {
 
       // valid ExtendedStatistics is like p90.00, check the pattern
       const hasInvalidStatistics = item.statistics.some(s => {
-        return s.indexOf('p') === 0 && !/p\d{2}\.\d{2}/.test(s);
+        if (s.indexOf('p') === 0) {
+          const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
+          return !matches || matches[0] !== s;
+        }
+
+        return false;
       });
+
       if (hasInvalidStatistics) {
         throw { message: 'Invalid extended statistics' };
       }
@@ -131,7 +137,7 @@ export default class CloudWatchDatasource {
       if (res.results) {
         _.forEach(res.results, queryRes => {
           _.forEach(queryRes.series, series => {
-            data.push({ target: series.name, datapoints: series.points });
+            data.push({ target: series.name, datapoints: series.points, unit: queryRes.meta.unit || 'none' });
           });
         });
       }

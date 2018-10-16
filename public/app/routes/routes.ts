@@ -1,5 +1,6 @@
 import './dashboard_loaders';
 import './ReactContainer';
+import { applyRouteRegistrationHandlers } from './registry';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
@@ -313,4 +314,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
     });
+
+  applyRouteRegistrationHandlers($routeProvider);
 }

@@ -46,6 +46,9 @@ team_ids =
 allowed_organizations =
 ```
 
+You may have to set the `root_url` option of `[server]` for the callback URL to be 
+correct. For example in case you are serving Grafana behind a proxy.
+
 Restart the Grafana back-end. You should now see a GitHub login button
 on the login page. You can now login or sign up with your GitHub
 accounts.

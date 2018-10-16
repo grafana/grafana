@@ -39,6 +39,12 @@ describe('DashboardRow', () => {
     expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(2);
   });
 
+  it('should not show row drag handle when cannot edit', () => {
+    dashboardMock.meta.canEdit = false;
+    wrapper = shallow(<DashboardRow panel={panel} getPanelContainer={getPanelContainer} />);
+    expect(wrapper.find('.dashboard-row__drag')).toHaveLength(0);
+  });
+
   it('should have zero actions when cannot edit', () => {
     dashboardMock.meta.canEdit = false;
     panel = new PanelModel({ collapsed: false });

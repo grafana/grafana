@@ -5,24 +5,9 @@ exports[`Render should render component 1`] = `
   <PageHeader
     model={Object {}}
   />
-  <div
-    className="page-container page-body"
-  >
-    <EmptyListCTA
-      model={
-        Object {
-          "buttonIcon": "fa fa-plus",
-          "buttonLink": "org/teams/new",
-          "buttonTitle": " New team",
-          "proTip": "Assign folder and dashboard permissions to teams instead of users to ease administration.",
-          "proTipLink": "",
-          "proTipLinkTitle": "",
-          "proTipTarget": "_blank",
-          "title": "You haven't created any teams yet.",
-        }
-      }
-    />
-  </div>
+  <PageLoader
+    pageName="Teams"
+  />
 </div>
 `;
 
@@ -62,10 +47,7 @@ exports[`Render should render teams table 1`] = `
         className="btn btn-success"
         href="org/teams/new"
       >
-        <i
-          className="fa fa-plus"
-        />
-         New team
+        New team
       </a>
     </div>
     <div

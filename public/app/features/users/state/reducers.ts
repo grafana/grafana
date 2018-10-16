@@ -1,6 +1,6 @@
 import { Invitee, OrgUser, UsersState } from 'app/types';
 import { Action, ActionTypes } from './actions';
-import config from '../../../core/config';
+import config from 'app/core/config';
 
 export const initialState: UsersState = {
   invitees: [] as Invitee[],
@@ -10,15 +10,16 @@ export const initialState: UsersState = {
   externalUserMngInfo: config.externalUserMngInfo,
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,
+  hasFetched: false,
 };
 
 export const usersReducer = (state = initialState, action: Action): UsersState => {
   switch (action.type) {
     case ActionTypes.LoadUsers:
-      return { ...state, users: action.payload };
+      return { ...state, hasFetched: true, users: action.payload };
 
     case ActionTypes.LoadInvitees:
-      return { ...state, invitees: action.payload };
+      return { ...state, hasFetched: true, invitees: action.payload };
 
     case ActionTypes.SetUsersSearchQuery:
       return { ...state, searchQuery: action.payload };

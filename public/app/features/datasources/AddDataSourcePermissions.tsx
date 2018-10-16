@@ -64,7 +64,7 @@ export class AddDataSourcePermissions extends PureComponent<Props, State> {
 
   render() {
     const { onCancel } = this.props;
-    const { type, teamId, userId, permission } = this.state;
+    const { type } = this.state;
 
     const pickerClassName = 'width-20';
     const aclTargets = [{ value: AclTarget.Team, text: 'Team' }, { value: AclTarget.User, text: 'User' }];
@@ -90,20 +90,19 @@ export class AddDataSourcePermissions extends PureComponent<Props, State> {
             </div>
             {type === AclTarget.User && (
               <div className="gf-form">
-                <UserPicker onSelected={this.onUserSelected} value={userId.toString()} className={pickerClassName} />
+                <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
               </div>
             )}
 
             {type === AclTarget.Team && (
               <div className="gf-form">
-                <TeamPicker onSelected={this.onTeamSelected} value={teamId.toString()} className={pickerClassName} />
+                <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
               </div>
             )}
             <div className="gf-form">
               <DescriptionPicker
                 optionsWithDesc={dataSourceAclLevels}
                 onSelected={this.onPermissionChanged}
-                value={permission}
                 disabled={false}
                 className={'gf-form-input--form-dropdown-right'}
               />

@@ -150,11 +150,6 @@ exports[`Render should render items 1`] = `
                   "label": "Admin",
                   "value": 2,
                 },
-                Object {
-                  "description": "",
-                  "label": "Admin",
-                  "value": 2,
-                },
               ]
             }
             value={2}
@@ -226,11 +221,6 @@ exports[`Render should render items 1`] = `
                   "description": "Can query data source.",
                   "label": "Query",
                   "value": 1,
-                },
-                Object {
-                  "description": "",
-                  "label": "Admin",
-                  "value": 2,
                 },
                 Object {
                   "description": "",
@@ -309,11 +299,6 @@ exports[`Render should render items 1`] = `
                   "description": "Can query data source.",
                   "label": "Query",
                   "value": 1,
-                },
-                Object {
-                  "description": "",
-                  "label": "Admin",
-                  "value": 2,
                 },
                 Object {
                   "description": "",

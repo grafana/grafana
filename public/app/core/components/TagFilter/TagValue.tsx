@@ -21,6 +21,6 @@ export class TagValue extends React.Component<Props, any> {
   render() {
     const { value } = this.props;
 
-    return <TagBadge label={value.label} removeIcon={true} count={0} onClick={this.onClick} />;
+    return <TagBadge label={value.label} removeIcon={false} count={0} onClick={this.onClick} />;
   }
 }

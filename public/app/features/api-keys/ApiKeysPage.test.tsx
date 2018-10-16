@@ -9,6 +9,7 @@ const setup = (propOverrides?: object) => {
     navModel: {} as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
+    hasFetched: false,
     loadApiKeys: jest.fn(),
     deleteApiKey: jest.fn(),
     setSearchQuery: jest.fn(),
@@ -35,6 +36,7 @@ describe('Render', () => {
   it('should render API keys table', () => {
     const { wrapper } = setup({
       apiKeys: getMultipleMockKeys(5),
+      hasFetched: true,
     });
 
     expect(wrapper).toMatchSnapshot();

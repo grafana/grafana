@@ -45,6 +45,9 @@ allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
 ```
 
+You may have to set the `root_url` option of `[server]` for the callback URL to be 
+correct. For example in case you are serving Grafana behind a proxy.
+
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
 accounts. The `allowed_domains` option is optional, and domains were separated by space.

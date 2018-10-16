@@ -73,7 +73,7 @@ func (srv *CleanUpService) cleanUpTmpFiles() {
 		}
 	}
 
-	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "keept", len(files))
+	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "kept", len(files))
 }
 
 func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.Time) bool {

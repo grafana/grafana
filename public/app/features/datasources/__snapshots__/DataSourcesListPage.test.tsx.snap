@@ -155,19 +155,8 @@ exports[`Render should render component 1`] = `
   <div
     className="page-container page-body"
   >
-    <EmptyListCTA
-      model={
-        Object {
-          "buttonIcon": "gicon gicon-add-datasources",
-          "buttonLink": "datasources/new",
-          "buttonTitle": "Add data source",
-          "proTip": "You can also define data sources through configuration files.",
-          "proTipLink": "http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list",
-          "proTipLinkTitle": "Learn more",
-          "proTipTarget": "_blank",
-          "title": "There are no data sources defined yet",
-        }
-      }
+    <PageLoader
+      pageName="Data sources"
     />
   </div>
 </div>

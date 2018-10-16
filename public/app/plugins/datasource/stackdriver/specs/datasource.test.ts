@@ -164,11 +164,11 @@ describe('StackdriverDataSource', () => {
               metricDescriptors: [
                 {
                   displayName: 'test metric name 1',
-                  type: 'test metric type 1',
+                  type: 'compute.googleapis.com/instance/cpu/test-metric-type-1',
+                  description: 'A description',
                 },
                 {
-                  displayName: 'test metric name 2',
-                  type: 'test metric type 2',
+                  type: 'logging.googleapis.com/user/logbased-metric-with-no-display-name',
                 },
               ],
             },
@@ -180,8 +180,13 @@ describe('StackdriverDataSource', () => {
     });
     it('should return successfully', () => {
       expect(result.length).toBe(2);
-      expect(result[0].type).toBe('test metric type 1');
+      expect(result[0].service).toBe('compute.googleapis.com');
+      expect(result[0].serviceShortName).toBe('compute');
+      expect(result[0].type).toBe('compute.googleapis.com/instance/cpu/test-metric-type-1');
       expect(result[0].displayName).toBe('test metric name 1');
+      expect(result[0].description).toBe('A description');
+      expect(result[1].type).toBe('logging.googleapis.com/user/logbased-metric-with-no-display-name');
+      expect(result[1].displayName).toBe('logging.googleapis.com/user/logbased-metric-with-no-display-name');
     });
   });
 

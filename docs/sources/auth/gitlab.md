@@ -58,6 +58,9 @@ api_url = https://gitlab.com/api/v4
 allowed_groups =
 ```
 
+You may have to set the `root_url` option of `[server]` for the callback URL to be 
+correct. For example in case you are serving Grafana behind a proxy.
+
 Restart the Grafana backend for your changes to take effect.
 
 If you use your own instance of GitLab instead of `gitlab.com`, adjust

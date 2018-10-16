@@ -50,7 +50,6 @@ exports[`Render should render component 1`] = `
         <TeamPicker
           className="width-20"
           onSelected={[Function]}
-          value="0"
         />
       </div>
       <div
@@ -69,7 +68,6 @@ exports[`Render should render component 1`] = `
               },
             ]
           }
-          value={1}
         />
       </div>
       <div
@@ -139,7 +137,6 @@ exports[`Render should render user picker 1`] = `
         <UserPicker
           className="width-20"
           onSelected={[Function]}
-          value="0"
         />
       </div>
       <div
@@ -158,7 +155,6 @@ exports[`Render should render user picker 1`] = `
               },
             ]
           }
-          value={1}
         />
       </div>
       <div
