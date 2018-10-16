@@ -13,14 +13,14 @@
 
 * Postgres/MySQL/MSSQL datasources now per default uses `max open connections` = `unlimited` (earlier 10), `max idle connections` = `2` (earlier 10) and `connection max lifetime` = `4` hours (earlier unlimited)
 
-# 5.3.1 (unreleased)
+# 5.3.1 (2018-10-16)
 
 * **Render**: Fix PhantomJS render of graph panel when legend displayed as table to the right [#13616](https://github.com/grafana/grafana/issues/13616)
 * **Stackdriver**: Filter option disappears after removing initial filter [#13607](https://github.com/grafana/grafana/issues/13607)
 * **Elasticsearch**: Fix no limit size in terms aggregation for alerting queries [#13172](https://github.com/grafana/grafana/issues/13172), thx [@Yukinoshita-Yukino](https://github.com/Yukinoshita-Yukino)
 * **InfluxDB**: Fix for annotation issue that caused text to be shown twice [#13553](https://github.com/grafana/grafana/issues/13553)
 * **Variables**: Fix nesting variables leads to exception and missing refresh [#13628](https://github.com/grafana/grafana/issues/13628)
-* **Variables**: Prometheus: Single letter labels are not supported [#13641](https://github.com/grafana/grafana/issues/13641)
+* **Variables**: Prometheus: Single letter labels are not supported [#13641](https://github.com/grafana/grafana/issues/13641), thx [@olshansky](https://github.com/olshansky)
 * **Graph**: Fix graph time formatting for Last 24h ranges [#13650](https://github.com/grafana/grafana/issues/13650)
 * **Playlist**: Fix cannot add dashboards with long names to playlist [#13464](https://github.com/grafana/grafana/issues/13464), thx [@neufeldtech](https://github.com/neufeldtech)
 * **HTTP API**: Fix /api/org/users so that query and limit querystrings works
