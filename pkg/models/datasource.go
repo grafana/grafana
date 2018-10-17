@@ -30,6 +30,7 @@ var (
 	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
 	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
 	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration.")
+	ErrDataSourceAccessDenied       = errors.New("Data source access denied")
 )
 
 type DsAccess string
@@ -167,6 +168,7 @@ type DeleteDataSourceByNameCommand struct {
 
 type GetDataSourcesQuery struct {
 	OrgId  int64
+	User   *SignedInUser
 	Result []*DataSource
 }
 
@@ -187,6 +189,37 @@ type GetDataSourceByNameQuery struct {
 }
 
 // ---------------------
-// EVENTS
-type DataSourceCreatedEvent struct {
+//  Permissions
+// ---------------------
+
+type DsPermissionType int
+
+const (
+	DsPermissionQuery DsPermissionType = 1 << iota
+	DsPermissionNoAccess
+)
+
+func (p DsPermissionType) String() string {
+	names := map[int]string{
+		int(DsPermissionQuery):    "Query",
+		int(DsPermissionNoAccess): "No Access",
+	}
+	return names[int(p)]
+}
+
+type HasRequiredDataSourcePermissionQuery struct {
+	Id                 int64
+	User               *SignedInUser
+	RequiredPermission DsPermissionType
+}
+
+type GetDataSourcePermissionsForUserQuery struct {
+	User   *SignedInUser
+	Result map[int64]DsPermissionType
+}
+
+type DatasourcesPermissionFilterQuery struct {
+	User        *SignedInUser
+	Datasources []*DataSource
+	Result      []*DataSource
 }

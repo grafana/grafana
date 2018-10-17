@@ -22,10 +22,6 @@ export interface Props {
 const getSelectedOption = (optionsWithDesc, value) => optionsWithDesc.find(option => option.value === value);
 
 class DescriptionPicker extends Component<Props, any> {
-  constructor(props) {
-    super(props);
-  }
-
   render() {
     const { optionsWithDesc, onSelected, disabled, className, value } = this.props;
     const selectedOption = getSelectedOption(optionsWithDesc, value);

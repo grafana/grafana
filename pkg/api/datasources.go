@@ -17,11 +17,27 @@ func GetDataSources(c *m.ReqContext) Response {
 		return Error(500, "Failed to query datasources", err)
 	}
 
+	dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+		User:        c.SignedInUser,
+		Datasources: query.Result,
+	}
+
+	var datasources []*m.DataSource
+	if err := bus.Dispatch(&dsFilterQuery); err != nil {
+		if err != bus.ErrHandlerNotFound {
+			return Error(500, "Could not get datasources", err)
+		}
+
+		datasources = query.Result
+	} else {
+		datasources = dsFilterQuery.Result
+	}
+
 	result := make(dtos.DataSourceList, 0)
-	for _, ds := range query.Result {
+	for _, ds := range datasources {
 		dsItem := dtos.DataSourceListItemDTO{
-			Id:        ds.Id,
 			OrgId:     ds.OrgId,
+			Id:        ds.Id,
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
@@ -49,7 +65,7 @@ func GetDataSources(c *m.ReqContext) Response {
 	return JSON(200, &result)
 }
 
-func GetDataSourceByID(c *m.ReqContext) Response {
+func GetDataSourceById(c *m.ReqContext) Response {
 	query := m.GetDataSourceByIdQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
@@ -68,14 +84,14 @@ func GetDataSourceByID(c *m.ReqContext) Response {
 	return JSON(200, &dtos)
 }
 
-func DeleteDataSourceByID(c *m.ReqContext) Response {
+func DeleteDataSourceById(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
 		return Error(400, "Missing valid datasource id", nil)
 	}
 
-	ds, err := getRawDataSourceByID(id, c.OrgId)
+	ds, err := getRawDataSourceById(id, c.OrgId)
 	if err != nil {
 		return Error(400, "Failed to delete datasource", nil)
 	}
@@ -186,7 +202,7 @@ func fillWithSecureJSONData(cmd *m.UpdateDataSourceCommand) error {
 		return nil
 	}
 
-	ds, err := getRawDataSourceByID(cmd.Id, cmd.OrgId)
+	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
 	if err != nil {
 		return err
 	}
@@ -206,7 +222,7 @@ func fillWithSecureJSONData(cmd *m.UpdateDataSourceCommand) error {
 	return nil
 }
 
-func getRawDataSourceByID(id int64, orgID int64) (*m.DataSource, error) {
+func getRawDataSourceById(id int64, orgID int64) (*m.DataSource, error) {
 	query := m.GetDataSourceByIdQuery{
 		Id:    id,
 		OrgId: orgID,
@@ -236,7 +252,7 @@ func GetDataSourceByName(c *m.ReqContext) Response {
 }
 
 // Get /api/datasources/id/:name
-func GetDataSourceIDByName(c *m.ReqContext) Response {
+func GetDataSourceIdByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {

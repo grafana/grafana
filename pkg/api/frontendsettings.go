@@ -22,7 +22,20 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 			return nil, err
 		}
 
-		orgDataSources = query.Result
+		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+			User:        c.SignedInUser,
+			Datasources: query.Result,
+		}
+
+		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err != bus.ErrHandlerNotFound {
+				return nil, err
+			}
+
+			orgDataSources = query.Result
+		} else {
+			orgDataSources = dsFilterQuery.Result
+		}
 	}
 
 	datasources := make(map[string]interface{})
