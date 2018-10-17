@@ -1,4 +1,7 @@
+import _ from 'lodash';
 import React, { PureComponent } from 'react';
+import ReactTable from 'react-table';
+
 import TableModel from 'app/core/table_model';
 
 const EMPTY_TABLE = new TableModel();
@@ -10,75 +13,42 @@ interface TableProps {
   onClickCell?: (columnKey: string, rowValue: string) => void;
 }
 
-interface SFCCellProps {
-  columnIndex: number;
-  onClickCell?: (columnKey: string, rowValue: string, columnIndex: number, rowIndex: number, table: TableModel) => void;
-  rowIndex: number;
-  table: TableModel;
-  value: string;
-}
-
-function Cell(props: SFCCellProps) {
-  const { columnIndex, rowIndex, table, value, onClickCell } = props;
-  const column = table.columns[columnIndex];
-  if (column && column.filterable && onClickCell) {
-    const onClick = event => {
-      event.preventDefault();
-      onClickCell(column.text, value, columnIndex, rowIndex, table);
-    };
-    return (
-      <td>
-        <a className="link" onClick={onClick}>
-          {value}
-        </a>
-      </td>
-    );
-  }
-  return <td>{value}</td>;
+function prepareRows(rows, columnNames) {
+  return rows.map(cells => _.zipObject(columnNames, cells));
 }
 
 export default class Table extends PureComponent<TableProps, {}> {
+  getCellProps = (state, rowInfo, column) => {
+    return {
+      onClick: () => {
+        const columnKey = column.Header;
+        const rowValue = rowInfo.row[columnKey];
+        this.props.onClickCell(columnKey, rowValue);
+      },
+    };
+  };
+
   render() {
-    const { className = '', data, loading, onClickCell } = this.props;
+    const { data, loading } = this.props;
     const tableModel = data || EMPTY_TABLE;
-    if (!loading && data && data.rows.length === 0) {
-      return (
-        <table className={`${className} filter-table`}>
-          <thead>
-            <tr>
-              <th>Table</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="muted">The queries returned no data for a table.</td>
-            </tr>
-          </tbody>
-        </table>
-      );
-    }
+    const columnNames = tableModel.columns.map(({ text }) => text);
+    const columns = tableModel.columns.map(({ filterable, text }) => ({
+      Header: text,
+      accessor: text,
+      show: text !== 'Time',
+      Cell: row => <span className={filterable ? 'link' : ''}>{row.value}</span>,
+    }));
+
     return (
-      <table className={`${className} filter-table`}>
-        <thead>
-          <tr>{tableModel.columns.map(col => <th key={col.text}>{col.text}</th>)}</tr>
-        </thead>
-        <tbody>
-          {tableModel.rows.map((row, i) => (
-            <tr key={i}>
-              {row.map((value, j) => (
-                <Cell
-                  key={j}
-                  columnIndex={j}
-                  rowIndex={i}
-                  value={String(value)}
-                  table={data}
-                  onClickCell={onClickCell}
-                />
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ReactTable
+        columns={columns}
+        data={tableModel.rows}
+        getTdProps={this.getCellProps}
+        loading={loading}
+        minRows={0}
+        noDataText="No data returned from query."
+        resolveData={data => prepareRows(data, columnNames)}
+      />
     );
   }
 }
