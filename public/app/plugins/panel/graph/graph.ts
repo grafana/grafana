@@ -22,7 +22,7 @@ import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Legend, GraphLegendProps } from './Legend';
+import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
 
@@ -98,6 +98,7 @@ class GraphElement {
       onToggleSeries: this.ctrl.toggleSeries.bind(this.ctrl),
       onToggleSort: this.ctrl.toggleSort.bind(this.ctrl),
       onColorChange: this.ctrl.changeSeriesColor.bind(this.ctrl),
+      onToggleAxis: this.ctrl.toggleAxis.bind(this.ctrl),
     };
     const legendReactElem = React.createElement(Legend, legendProps);
     const legendElem = this.elem.parent().find('.graph-legend');

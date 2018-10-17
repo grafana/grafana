@@ -2,30 +2,53 @@ import React from 'react';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 
-export interface Props {
-  series: any;
+export interface SeriesColorPickerProps {
+  // series: any;
+  color: string;
+  yaxis?: number;
   onColorChange: (color: string) => void;
+  onToggleAxis?: () => void;
+}
+
+export class SeriesColorPicker extends React.PureComponent<SeriesColorPickerProps, any> {
+  render() {
+    return (
+      <div className="graph-legend-popover">
+        {this.props.yaxis && <AxisSelector yaxis={this.props.yaxis} onToggleAxis={this.props.onToggleAxis} />}
+        <ColorPickerPopover color={this.props.color} onColorSelect={this.props.onColorChange} />
+      </div>
+    );
+  }
+}
+
+interface AxisSelectorProps {
+  yaxis: number;
   onToggleAxis: () => void;
 }
 
-export class SeriesColorPicker extends React.Component<Props, any> {
+interface AxisSelectorState {
+  yaxis: number;
+}
+
+export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSelectorState> {
   constructor(props) {
     super(props);
-    this.onColorChange = this.onColorChange.bind(this);
+    this.state = {
+      yaxis: this.props.yaxis,
+    };
     this.onToggleAxis = this.onToggleAxis.bind(this);
   }
 
-  onColorChange(color) {
-    this.props.onColorChange(color);
-  }
-
   onToggleAxis() {
+    this.setState({
+      yaxis: this.state.yaxis === 2 ? 1 : 2,
+    });
     this.props.onToggleAxis();
   }
 
-  renderAxisSelection() {
-    const leftButtonClass = this.props.series.yaxis === 1 ? 'btn-success' : 'btn-inverse';
-    const rightButtonClass = this.props.series.yaxis === 2 ? 'btn-success' : 'btn-inverse';
+  render() {
+    const leftButtonClass = this.state.yaxis === 1 ? 'btn-success' : 'btn-inverse';
+    const rightButtonClass = this.state.yaxis === 2 ? 'btn-success' : 'btn-inverse';
 
     return (
       <div className="p-b-1">
@@ -36,15 +59,6 @@ export class SeriesColorPicker extends React.Component<Props, any> {
         <button onClick={this.onToggleAxis} className={'btn btn-small ' + rightButtonClass}>
           Right
         </button>
-      </div>
-    );
-  }
-
-  render() {
-    return (
-      <div className="graph-legend-popover">
-        {this.props.series.yaxis && this.renderAxisSelection()}
-        <ColorPickerPopover color={this.props.series.color} onColorSelect={this.onColorChange} />
       </div>
     );
   }

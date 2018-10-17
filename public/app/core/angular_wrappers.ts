@@ -5,7 +5,6 @@ import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { SearchResult } from './components/search/SearchResult';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
-import { GraphLegend } from 'app/plugins/panel/graph/Legend';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -18,5 +17,4 @@ export function registerAngularDirectives() {
     ['onSelect', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('graphLegendReact', GraphLegend, ['seriesList', 'className']);
 }
