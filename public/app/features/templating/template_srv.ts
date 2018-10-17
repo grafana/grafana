@@ -2,7 +2,9 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 
 function luceneEscape(value) {
-  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
+  // this seems unnessary and breaks functionality of being able to use this in a template variable
+  // return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
+  return value;
 }
 
 export class TemplateSrv {
