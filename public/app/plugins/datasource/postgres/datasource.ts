@@ -50,7 +50,7 @@ export class PostgresDatasource {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: queryModel.render(this.interpolateVariable),
+        rawSql: queryModel.render((value, variable) => this.interpolateVariable(value, variable)),
         format: target.format,
       };
     });
@@ -82,7 +82,9 @@ export class PostgresDatasource {
     const query = {
       refId: options.annotation.name,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
+      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, (value, variable) =>
+        this.interpolateVariable(value, variable)
+      ),
       format: 'table',
     };
 
@@ -108,7 +110,7 @@ export class PostgresDatasource {
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql: this.templateSrv.replace(query, {}, (value, variable) => this.interpolateVariable(value, variable)),
       format: 'table',
     };
 
