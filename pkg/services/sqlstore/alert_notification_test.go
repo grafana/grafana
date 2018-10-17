@@ -219,6 +219,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result.OrgId, ShouldNotEqual, 0)
 			So(cmd.Result.Type, ShouldEqual, "email")
 			So(cmd.Result.Frequency, ShouldEqual, 10*time.Second)
+			So(cmd.Result.DisableResolvedMessage, ShouldBeFalse)
 
 			Convey("Cannot save Alert Notification with the same name", func() {
 				err = CreateAlertNotificationCommand(cmd)
