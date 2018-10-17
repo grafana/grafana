@@ -210,26 +210,6 @@ describe('templateSrv', () => {
     });
   });
 
-  describe('lucene format', () => {
-    it('should properly escape $test with lucene escape sequences', () => {
-      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
-      const target = _templateSrv.replace('this:$test', {}, 'lucene');
-      expect(target).toBe('this:value\\/4');
-    });
-
-    it('should properly escape ${test} with lucene escape sequences', () => {
-      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
-      const target = _templateSrv.replace('this:${test}', {}, 'lucene');
-      expect(target).toBe('this:value\\/4');
-    });
-
-    it('should properly escape ${test:lucene} with lucene escape sequences', () => {
-      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
-      const target = _templateSrv.replace('this:${test:lucene}', {});
-      expect(target).toBe('this:value\\/4');
-    });
-  });
-
   describe('format variable to string values', () => {
     it('single value should return value', () => {
       const result = _templateSrv.formatValue('test');
