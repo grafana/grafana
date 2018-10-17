@@ -54,6 +54,7 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions
+/public/app/extensions
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -68,7 +69,6 @@ debug.test
 /vendor/**/*.yml
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
-/vendor/**/appengine*
 *.orig
 
 /devenv/bulk-dashboards/*.json

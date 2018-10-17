@@ -44,4 +44,5 @@ export interface PluginsState {
   plugins: Plugin[];
   searchQuery: string;
   layoutMode: string;
+  hasFetched: boolean;
 }

@@ -11,7 +11,7 @@ export enum LogLevel {
 export interface LogSearchMatch {
   start: number;
   length: number;
-  text?: string;
+  text: string;
 }
 
 export interface LogRow {
@@ -21,7 +21,7 @@ export interface LogRow {
   timestamp: string;
   timeFromNow: string;
   timeLocal: string;
-  searchMatches?: LogSearchMatch[];
+  searchWords?: string[];
 }
 
 export interface LogsModel {

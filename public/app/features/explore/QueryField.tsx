@@ -104,7 +104,7 @@ interface TypeaheadFieldProps {
   onValueChanged?: (value: Value) => void;
   onWillApplySuggestion?: (suggestion: string, state: TypeaheadFieldState) => string;
   placeholder?: string;
-  portalPrefix?: string;
+  portalOrigin?: string;
   syntax?: string;
   syntaxLoaded?: boolean;
 }
@@ -459,8 +459,8 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
   };
 
   renderMenu = () => {
-    const { portalPrefix } = this.props;
-    const { suggestions, typeaheadIndex } = this.state;
+    const { portalOrigin } = this.props;
+    const { suggestions, typeaheadIndex, typeaheadPrefix } = this.state;
     if (!hasSuggestions(suggestions)) {
       return null;
     }
@@ -469,11 +469,12 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
 
     // Create typeahead in DOM root so we can later position it absolutely
     return (
-      <Portal prefix={portalPrefix}>
+      <Portal origin={portalOrigin}>
         <Typeahead
           menuRef={this.menuRef}
           selectedItem={selectedItem}
           onClickItem={this.onClickMenu}
+          prefix={typeaheadPrefix}
           groupedItems={suggestions}
         />
       </Portal>
@@ -500,14 +501,14 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
   }
 }
 
-class Portal extends React.PureComponent<{ index?: number; prefix: string }, {}> {
+class Portal extends React.PureComponent<{ index?: number; origin: string }, {}> {
   node: HTMLElement;
 
   constructor(props) {
     super(props);
-    const { index = 0, prefix = 'query' } = props;
+    const { index = 0, origin = 'query' } = props;
     this.node = document.createElement('div');
-    this.node.classList.add(`slate-typeahead`, `slate-typeahead-${prefix}-${index}`);
+    this.node.classList.add(`slate-typeahead`, `slate-typeahead-${origin}-${index}`);
     document.body.appendChild(this.node);
   }
 

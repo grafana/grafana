@@ -138,11 +138,13 @@ exports[`Render should render API keys table 1`] = `
     </Component>
     <h3
       className="page-heading"
+      key="header"
     >
       Existing Keys
     </h3>
     <table
       className="filter-table"
+      key="table"
     >
       <thead>
         <tr>
@@ -404,32 +406,9 @@ exports[`Render should render component 1`] = `
         </form>
       </div>
     </Component>
-    <h3
-      className="page-heading"
-    >
-      Existing Keys
-    </h3>
-    <table
-      className="filter-table"
-    >
-      <thead>
-        <tr>
-          <th>
-            Name
-          </th>
-          <th>
-            Role
-          </th>
-          <th
-            style={
-              Object {
-                "width": "34px",
-              }
-            }
-          />
-        </tr>
-      </thead>
-    </table>
+    <PageLoader
+      pageName="Api keys"
+    />
   </div>
 </div>
 `;

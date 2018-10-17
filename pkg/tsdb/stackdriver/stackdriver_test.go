@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
+	"strconv"
 	"testing"
 	"time"
 
@@ -341,6 +343,46 @@ func TestStackdriver(t *testing.T) {
 					})
 				})
 			})
+
+			Convey("when data from query is distribution", func() {
+				data, err := loadTestFile("./test-data/3-series-response-distribution.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				So(len(res.Series), ShouldEqual, 11)
+				for i := 0; i < 11; i++ {
+					if i == 0 {
+						So(res.Series[i].Name, ShouldEqual, "0")
+					} else {
+						So(res.Series[i].Name, ShouldEqual, strconv.FormatInt(int64(math.Pow(float64(2), float64(i-1))), 10))
+					}
+					So(len(res.Series[i].Points), ShouldEqual, 3)
+				}
+
+				Convey("timestamps should be in ascending order", func() {
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1536668940000)
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1536669000000)
+					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536669060000)
+				})
+
+				Convey("value should be correct", func() {
+					So(res.Series[8].Points[0][0].Float64, ShouldEqual, 1)
+					So(res.Series[9].Points[0][0].Float64, ShouldEqual, 1)
+					So(res.Series[10].Points[0][0].Float64, ShouldEqual, 1)
+					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 0)
+					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 0)
+					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 1)
+					So(res.Series[8].Points[2][0].Float64, ShouldEqual, 0)
+					So(res.Series[9].Points[2][0].Float64, ShouldEqual, 1)
+					So(res.Series[10].Points[2][0].Float64, ShouldEqual, 0)
+				})
+			})
+
 		})
 
 		Convey("when interpolating filter wildcards", func() {

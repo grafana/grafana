@@ -22,6 +22,7 @@ const setup = (propOverrides?: object) => {
     updateUser: jest.fn(),
     removeUser: jest.fn(),
     setUsersSearchQuery: jest.fn(),
+    hasFetched: false,
   };
 
   Object.assign(props, propOverrides);
@@ -38,6 +39,14 @@ const setup = (propOverrides?: object) => {
 describe('Render', () => {
   it('should render component', () => {
     const { wrapper } = setup();
+
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should render List page', () => {
+    const { wrapper } = setup({
+      hasFetched: true,
+    });
 
     expect(wrapper).toMatchSnapshot();
   });
