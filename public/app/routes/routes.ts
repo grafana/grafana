@@ -13,6 +13,7 @@ import FolderPermissions from 'app/features/folders/FolderPermissions';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
+import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -78,9 +79,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/datasources/edit/:id/dashboards', {
-      templateUrl: 'public/app/features/plugins/partials/ds_dashboards.html',
-      controller: 'DataSourceDashboardsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => DataSourceDashboards,
+      },
     })
     .when('/datasources/new', {
       template: '<react-container />',

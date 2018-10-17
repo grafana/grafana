@@ -8,7 +8,7 @@ import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
-import { PluginMeta, Plugin, PluginsState } from './plugins';
+import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
 
 export {
   Team,
@@ -45,6 +45,7 @@ export {
   OrgUser,
   User,
   UsersState,
+  PluginDashboard,
 };
 
 export interface StoreState {
