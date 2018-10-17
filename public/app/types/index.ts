@@ -7,7 +7,7 @@ import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState } from './user';
-import { DataSource, DataSourcePermissionDTO, DataSourcePermission, DataSourcesState } from './datasources';
+import { DataSource, DataSourcesState } from './datasources';
 import { PluginMeta, Plugin, PluginsState } from './plugins';
 
 export {
@@ -41,8 +41,6 @@ export {
   Plugin,
   PluginsState,
   DataSourcesState,
-  DataSourcePermissionDTO,
-  DataSourcePermission,
   Invitee,
   OrgUser,
   User,
