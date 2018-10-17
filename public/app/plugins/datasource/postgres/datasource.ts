@@ -20,7 +20,7 @@ export class PostgresDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
-  interpolateVariable(value, variable) {
+  interpolateVariable = (value, variable) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return this.queryModel.quoteLiteral(value);
@@ -37,7 +37,7 @@ export class PostgresDatasource {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
-  }
+  };
 
   query(options) {
     const queries = _.filter(options.targets, target => {
@@ -50,7 +50,7 @@ export class PostgresDatasource {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: queryModel.render((value, variable) => this.interpolateVariable(value, variable)),
+        rawSql: queryModel.render(this.interpolateVariable),
         format: target.format,
       };
     });
@@ -82,9 +82,7 @@ export class PostgresDatasource {
     const query = {
       refId: options.annotation.name,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, (value, variable) =>
-        this.interpolateVariable(value, variable)
-      ),
+      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
 
@@ -110,7 +108,7 @@ export class PostgresDatasource {
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, (value, variable) => this.interpolateVariable(value, variable)),
+      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
       format: 'table',
     };
 
