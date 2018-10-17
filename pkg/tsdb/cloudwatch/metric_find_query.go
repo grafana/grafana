@@ -249,7 +249,18 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		plog.Error("Failed to get regions", "error", err)
 	} else {
 		for _, region := range r.Regions {
-			regions = append(regions, *region.RegionName)
+			exists := false
+
+			for _, existingRegion := range regions {
+				if existingRegion == *region.RegionName {
+					exists = true
+					break
+				}
+			}
+
+			if !exists {
+				regions = append(regions, *region.RegionName)
+			}
 		}
 	}
 	sort.Strings(regions)
