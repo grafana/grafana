@@ -13,7 +13,7 @@ type TestDataExecutor struct {
 	log log.Logger
 }
 
-func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	return &TestDataExecutor{
 		DataSource: dsInfo,
 		log:        log.New("tsdb.testdata"),
@@ -21,7 +21,7 @@ func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, err
 }
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("testdata", NewTestDataExecutor)
+	tsdb.RegisterTsdbEndpoint("testdata", NewTestDataExecutor)
 }
 
 func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -39,4 +39,8 @@ func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	return result, nil
+}
+
+func (e *TestDataExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
 }

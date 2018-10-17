@@ -12,10 +12,10 @@ import (
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
+	tsdb.RegisterTsdbEndpoint("postgres", newPostgresQueryEndpoint)
 }
 
-func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	logger := log.New("tsdb.postgres")
 
 	cnnstr := generateConnectionString(datasource)
@@ -34,7 +34,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
+	return tsdb.NewSqlEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {

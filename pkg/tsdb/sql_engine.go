@@ -12,13 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
-
-	"github.com/grafana/grafana/pkg/components/null"
-
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -67,7 +65,7 @@ type SqlQueryEndpointConfiguration struct {
 	MetricColumnTypes []string
 }
 
-var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, rowTransformer SqlTableRowTransformer, macroEngine SqlMacroEngine, log log.Logger) (TsdbQueryEndpoint, error) {
+var NewSqlEndpoint = func(config *SqlQueryEndpointConfiguration, rowTransformer SqlTableRowTransformer, macroEngine SqlMacroEngine, log log.Logger) (TsdbEndpoint, error) {
 	queryEndpoint := sqlQueryEndpoint{
 		rowTransformer:  rowTransformer,
 		macroEngine:     macroEngine,
@@ -172,6 +170,11 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	return result, nil
+}
+
+func (e *sqlQueryEndpoint) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	// TODO implement validation of request
+	return nil
 }
 
 // global macros/substitutions for all sql datasources

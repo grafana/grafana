@@ -114,6 +114,11 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 
 	return res, nil
 }
+
+func (e *DatasourcePluginWrapper) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
+}
+
 func (tw *DatasourcePluginWrapper) mapTables(r *datasource.QueryResult) ([]*tsdb.Table, error) {
 	var tables []*tsdb.Table
 	for _, t := range r.GetTables() {

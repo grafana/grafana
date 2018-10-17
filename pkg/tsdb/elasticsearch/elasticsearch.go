@@ -19,14 +19,14 @@ var (
 )
 
 // NewElasticsearchExecutor creates a new elasticsearch executor
-func NewElasticsearchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewElasticsearchExecutor(dsInfo *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	return &ElasticsearchExecutor{}, nil
 }
 
 func init() {
 	glog = log.New("tsdb.elasticsearch")
 	intervalCalculator = tsdb.NewIntervalCalculator(nil)
-	tsdb.RegisterTsdbQueryEndpoint("elasticsearch", NewElasticsearchExecutor)
+	tsdb.RegisterTsdbEndpoint("elasticsearch", NewElasticsearchExecutor)
 }
 
 // Query handles an elasticsearch datasource request
@@ -42,4 +42,8 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 
 	query := newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)
 	return query.execute()
+}
+
+func (e *ElasticsearchExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
 }

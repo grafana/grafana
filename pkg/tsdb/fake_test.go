@@ -34,6 +34,10 @@ func (e *FakeExecutor) Query(ctx context.Context, dsInfo *models.DataSource, con
 	return result, nil
 }
 
+func (e *FakeExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
+}
+
 func (e *FakeExecutor) Return(refId string, series TimeSeriesSlice) {
 	e.results[refId] = &QueryResult{
 		RefId: refId, Series: series,

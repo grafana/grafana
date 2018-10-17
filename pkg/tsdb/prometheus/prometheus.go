@@ -3,18 +3,16 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/opentracing/opentracing-go"
-
-	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/opentracing/opentracing-go"
 	api "github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -36,7 +34,7 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return bat.Transport.RoundTrip(req)
 }
 
-func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
 		return nil, err
@@ -55,7 +53,7 @@ var (
 
 func init() {
 	plog = log.New("tsdb.prometheus")
-	tsdb.RegisterTsdbQueryEndpoint("prometheus", NewPrometheusExecutor)
+	tsdb.RegisterTsdbEndpoint("prometheus", NewPrometheusExecutor)
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 	intervalCalculator = tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: time.Second * 1})
 }
@@ -83,6 +81,7 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 }
 
 func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	fmt.Println("Prometheus.go Query")
 	result := &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{},
 	}
@@ -126,6 +125,18 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	}
 
 	return result, nil
+}
+
+func (e *PrometheusExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	if proxyPath == "api/v1/query_range" || proxyPath == "api/v1/query" {
+		prometheusQuery := ctx.Query("query")
+		validator, err := NewQueryValidator(prometheusQuery)
+		if err != nil {
+			return err
+		}
+		return validator.Validate()
+	}
+	return nil
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {

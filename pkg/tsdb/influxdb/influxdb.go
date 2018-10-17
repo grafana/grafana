@@ -8,12 +8,11 @@ import (
 	"net/url"
 	"path"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 type InfluxDBExecutor struct {
@@ -23,7 +22,7 @@ type InfluxDBExecutor struct {
 	//HttpClient     *http.Client
 }
 
-func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	return &InfluxDBExecutor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
@@ -36,7 +35,7 @@ var (
 
 func init() {
 	glog = log.New("tsdb.influxdb")
-	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
+	tsdb.RegisterTsdbEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
 func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -93,6 +92,10 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	result.Results["A"] = e.ResponseParser.Parse(&response, query)
 
 	return result, nil
+}
+
+func (e *InfluxDBExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
 }
 
 func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {

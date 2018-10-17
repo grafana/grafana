@@ -101,7 +101,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 
 	plugin := raw.(datasource.DatasourcePlugin)
 
-	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	tsdb.RegisterTsdbEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbEndpoint, error) {
 		return wrapper.NewDatasourcePluginWrapper(p.log, plugin), nil
 	})
 

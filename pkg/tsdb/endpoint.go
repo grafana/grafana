@@ -7,19 +7,20 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type TsdbQueryEndpoint interface {
+type TsdbEndpoint interface {
 	Query(ctx context.Context, ds *models.DataSource, query *TsdbQuery) (*Response, error)
+	Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error
 }
 
-var registry map[string]GetTsdbQueryEndpointFn
+var registry map[string]GetTsdbEndpointFn
 
-type GetTsdbQueryEndpointFn func(dsInfo *models.DataSource) (TsdbQueryEndpoint, error)
+type GetTsdbEndpointFn func(dsInfo *models.DataSource) (TsdbEndpoint, error)
 
 func init() {
-	registry = make(map[string]GetTsdbQueryEndpointFn)
+	registry = make(map[string]GetTsdbEndpointFn)
 }
 
-func getTsdbQueryEndpointFor(dsInfo *models.DataSource) (TsdbQueryEndpoint, error) {
+func getTsdbEndpointFor(dsInfo *models.DataSource) (TsdbEndpoint, error) {
 	if fn, exists := registry[dsInfo.Type]; exists {
 		executor, err := fn(dsInfo)
 		if err != nil {
@@ -31,6 +32,6 @@ func getTsdbQueryEndpointFor(dsInfo *models.DataSource) (TsdbQueryEndpoint, erro
 	return nil, fmt.Errorf("Could not find executor for data source type: %s", dsInfo.Type)
 }
 
-func RegisterTsdbQueryEndpoint(pluginId string, fn GetTsdbQueryEndpointFn) {
+func RegisterTsdbEndpoint(pluginId string, fn GetTsdbEndpointFn) {
 	registry[pluginId] = fn
 }

@@ -41,7 +41,7 @@ func TestMSSQL(t *testing.T) {
 			return sql, nil
 		}
 
-		endpoint, err := newMssqlQueryEndpoint(&models.DataSource{
+		endpoint, err := newMssqlEndpoint(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
 		})

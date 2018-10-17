@@ -14,10 +14,10 @@ import (
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mssql", newMssqlQueryEndpoint)
+	tsdb.RegisterTsdbEndpoint("mssql", newMssqlEndpoint)
 }
 
-func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newMssqlEndpoint(datasource *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	logger := log.New("tsdb.mssql")
 
 	cnnstr := generateConnectionString(datasource)
@@ -34,7 +34,7 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		log: logger,
 	}
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
+	return tsdb.NewSqlEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {

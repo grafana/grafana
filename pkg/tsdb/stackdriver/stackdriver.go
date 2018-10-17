@@ -15,8 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -26,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 var (
@@ -41,7 +40,7 @@ type StackdriverExecutor struct {
 }
 
 // NewStackdriverExecutor initializes a http client
-func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -55,7 +54,7 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 
 func init() {
 	slog = log.New("tsdb.stackdriver")
-	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
+	tsdb.RegisterTsdbEndpoint("stackdriver", NewStackdriverExecutor)
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 	metricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
 }
@@ -78,6 +77,10 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	}
 
 	return result, err
+}
+
+func (e *StackdriverExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
 }
 
 func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {

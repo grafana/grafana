@@ -2,29 +2,27 @@ package opentsdb
 
 import (
 	"context"
-	"fmt"
-	"path"
-	"strconv"
-	"strings"
-
-	"golang.org/x/net/context/ctxhttp"
-
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 type OpenTsdbExecutor struct {
 }
 
-func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	return &OpenTsdbExecutor{}, nil
 }
 
@@ -34,7 +32,7 @@ var (
 
 func init() {
 	plog = log.New("tsdb.opentsdb")
-	tsdb.RegisterTsdbQueryEndpoint("opentsdb", NewOpenTsdbExecutor)
+	tsdb.RegisterTsdbEndpoint("opentsdb", NewOpenTsdbExecutor)
 }
 
 func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -76,6 +74,10 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	result.Results = queryResult
 	return result, nil
+}
+
+func (e *OpenTsdbExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
 }
 
 func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {

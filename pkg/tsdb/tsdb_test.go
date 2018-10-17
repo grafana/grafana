@@ -63,7 +63,7 @@ func TestMetricQuery(t *testing.T) {
 
 func registerFakeExecutor() *FakeExecutor {
 	executor, _ := NewFakeExecutor(nil)
-	RegisterTsdbQueryEndpoint("test", func(dsInfo *models.DataSource) (TsdbQueryEndpoint, error) {
+	RegisterTsdbEndpoint("test", func(dsInfo *models.DataSource) (TsdbEndpoint, error) {
 		return executor, nil
 	})
 

@@ -13,13 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/opentracing/opentracing-go"
 )
 
 var (
@@ -217,6 +217,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 func (proxy *DataSourceProxy) validateRequest() error {
 	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
 		return errors.New("Target url is not a valid target")
+	}
+
+	err := tsdb.ValidateRequest(proxy.proxyPath, proxy.ctx, proxy.ds)
+	if err != nil {
+		// request validation failed
+		return err
 	}
 
 	if proxy.ds.Type == m.DS_PROMETHEUS {

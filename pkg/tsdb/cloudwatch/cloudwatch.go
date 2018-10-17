@@ -10,12 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -23,7 +17,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"golang.org/x/sync/errgroup"
 )
 
 type CloudWatchExecutor struct {
@@ -42,7 +41,7 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
-func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	return &CloudWatchExecutor{}, nil
 }
 
@@ -54,7 +53,7 @@ var (
 
 func init() {
 	plog = log.New("tsdb.cloudwatch")
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
+	tsdb.RegisterTsdbEndpoint("cloudwatch", NewCloudWatchExecutor)
 	standardStatistics = map[string]bool{
 		"Average":     true,
 		"Maximum":     true,
@@ -83,6 +82,10 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	}
 
 	return result, err
+}
+
+func (e *CloudWatchExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
 }
 
 func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {

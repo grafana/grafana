@@ -14,10 +14,10 @@ import (
 )
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mysql", newMysqlQueryEndpoint)
+	tsdb.RegisterTsdbEndpoint("mysql", newMysqlEndpoint)
 }
 
-func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newMysqlEndpoint(datasource *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	logger := log.New("tsdb.mysql")
 
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
@@ -41,7 +41,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		log: logger,
 	}
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newMysqlMacroEngine(), logger)
+	return tsdb.NewSqlEndpoint(&config, &rowTransformer, newMysqlMacroEngine(), logger)
 }
 
 type mysqlRowTransformer struct {

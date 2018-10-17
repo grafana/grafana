@@ -11,27 +11,26 @@ import (
 	"regexp"
 	"strings"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbEndpoint, error) {
 	return &GraphiteExecutor{}, nil
 }
 
 var glog = log.New("tsdb.graphite")
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
+	tsdb.RegisterTsdbEndpoint("graphite", NewGraphiteExecutor)
 }
 
 func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -113,6 +112,10 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	result.Results["A"] = queryRes
 	return result, nil
+}
+
+func (e *GraphiteExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
+	return nil
 }
 
 func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
