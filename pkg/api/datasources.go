@@ -22,7 +22,7 @@ func GetDataSources(c *m.ReqContext) Response {
 		Datasources: query.Result,
 	}
 
-	datasources := []*m.DataSource{}
+	var datasources []*m.DataSource
 	if err := bus.Dispatch(&dsFilterQuery); err != nil {
 		if err != bus.ErrHandlerNotFound {
 			return Error(500, "Could not get datasources", err)
