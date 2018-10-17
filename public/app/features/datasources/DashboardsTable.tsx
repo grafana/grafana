@@ -1,7 +1,7 @@
 import React, { SFC } from 'react';
 import { PluginDashboard } from '../../types';
 
-interface Props {
+export interface Props {
   dashboards: PluginDashboard[];
   onImport: (dashboard, overwrite) => void;
   onRemove: (dashboard) => void;
