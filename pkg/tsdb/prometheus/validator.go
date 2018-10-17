@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql"
 )
 
@@ -54,10 +55,24 @@ func (visitor *QueryValidator) Visit(node promql.Node, path []promql.Node) (prom
 	isFilterValid := false
 
 	switch node.(type) {
-	case *promql.VectorSelector:
-		selector := node.(*promql.VectorSelector)
-		for i := range selector.LabelMatchers {
-			matcher := selector.LabelMatchers[i]
+	case *promql.VectorSelector, *promql.MatrixSelector:
+
+		var labelMatchers []*labels.Matcher
+
+		switch node.(type) {
+		case *promql.VectorSelector:
+			selector := node.(*promql.VectorSelector)
+			labelMatchers = selector.LabelMatchers
+		case *promql.MatrixSelector:
+			selector := node.(*promql.MatrixSelector)
+			labelMatchers = selector.LabelMatchers
+		}
+
+		for i := range labelMatchers {
+			matcher := labelMatchers[i]
+			if matcher.Name != visitor.permissionLabel {
+				continue
+			}
 			switch visitor.permissionLabelValue {
 			case "teamID", "teamName":
 				foundAnyTeam := false
@@ -68,22 +83,22 @@ func (visitor *QueryValidator) Visit(node promql.Node, path []promql.Node) (prom
 					} else {
 						value = team.Name
 					}
-					if matcher.Name == visitor.permissionLabel && matcher.Value == value {
+					if matcher.Value == value {
 						foundAnyTeam = true
 						break
 					}
 				}
-				if matcher.Name == visitor.permissionLabel && foundAnyTeam {
+				if foundAnyTeam {
 					isFilterValid = true
 				}
 			case "userID":
 				userID := fmt.Sprintf("%d", visitor.userID)
-				if matcher.Name == visitor.permissionLabel && matcher.Value == userID {
+				if matcher.Value == userID {
 					isFilterValid = true
 				}
 			case "orgID":
 				ordID := fmt.Sprintf("%d", visitor.orgID)
-				if matcher.Name == visitor.permissionLabel && matcher.Value == ordID {
+				if matcher.Value == ordID {
 					isFilterValid = true
 				}
 			default:
