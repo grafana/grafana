@@ -9,6 +9,8 @@ import {
   DashboardAclUpdateDTO,
   NewDashboardAclItem,
 } from 'app/types/acl';
+import appEvents from '../../../core/app_events';
+import { loadPluginDashboards } from '../../plugins/state/actions';
 
 export enum ActionTypes {
   LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
@@ -111,5 +113,20 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
 
     await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
     await dispatch(getDashboardPermissions(dashboardId));
+  };
+}
+
+export function importDashboard(data, dashboardTitle: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post('/api/dashboards/import', data);
+    appEvents.emit('alert-success', ['Dashboard Imported', dashboardTitle]);
+    dispatch(loadPluginDashboards());
+  };
+}
+
+export function removeDashboard(uri: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().delete(`/api/dashboards/${uri}`);
+    dispatch(loadPluginDashboards());
   };
 }
