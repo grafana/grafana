@@ -21,11 +21,9 @@ func init() {
 func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mysql")
 
-	var protocol string
+	protocol := "tcp"
 	if strings.HasPrefix(datasource.Url, "/") {
 		protocol = "unix"
-	} else {
-		protocol = "tcp"
 	}
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
 		datasource.User,
