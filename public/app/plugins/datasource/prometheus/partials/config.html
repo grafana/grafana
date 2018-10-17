@@ -1,6 +1,8 @@
 <datasource-http-settings current="ctrl.current" suggest-url="http://localhost:9090">
 </datasource-http-settings>
 
+<h3>Prometheus Settings</h3>
+
 <div class="gf-form-group">
   <div class="gf-form-inline">
     <div class="gf-form">
@@ -34,3 +36,26 @@
   </div>
 </div>
 
+<h3>Prometheus Security Permissions</h3>
+
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Permission Label</span>
+      <input type="text" class="gf-form-input width-10" ng-model="ctrl.current.jsonData.permissionLabel" spellcheck='false' placeholder="cid"></input>
+      <info-popover mode="right-absolute">
+        Provide a label name which must be equal to the Permission Value field to allow querys through the Server access mode, otherwise the Grafana proxy will reject requests to the data source.
+      </info-popover>
+    </div>
+  </div>
+  
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Permission Label Value</span>
+      <input type="text" class="gf-form-input width-10" ng-model="ctrl.current.jsonData.permissionLabelValue" spellcheck='false' placeholder="teamID"></input>
+      <info-popover mode="right-absolute">
+        The value of this source must be contained in any query as a label, specified in Permission Label, otherwise the Grafana proxy will reject requests to the data source.
+      </info-popover>
+    </div>
+  </div>  
+</div>

@@ -61,6 +61,8 @@ export class PrometheusDatasource {
   queryTimeout: string;
   httpMethod: string;
   resultTransformer: ResultTransformer;
+  permissionLabel: string;
+  permissionLabelValue: string;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv: BackendSrv, private templateSrv, private timeSrv) {
@@ -75,6 +77,8 @@ export class PrometheusDatasource {
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
+    this.permissionLabel = instanceSettings.jsonData.permissionLabel;
+    this.permissionLabelValue = instanceSettings.jsonData.permissionLabelValue;
     this.ruleMappings = {};
   }
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -130,7 +131,16 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 func (e *PrometheusExecutor) Validate(proxyPath string, ctx *models.ReqContext, dsInfo *models.DataSource) error {
 	if proxyPath == "api/v1/query_range" || proxyPath == "api/v1/query" {
 		prometheusQuery := ctx.Query("query")
-		validator, err := NewQueryValidator(prometheusQuery)
+
+		query := models.GetTeamsByUserQuery{OrgId: ctx.OrgId, UserId: ctx.SignedInUser.UserId}
+		err := bus.Dispatch(&query)
+		if err != nil {
+			return err
+		}
+		teams := query.Result
+		isAdmin := ctx.SignedInUser.IsGrafanaAdmin
+
+		validator, err := NewQueryValidator(prometheusQuery, dsInfo, ctx.OrgId, ctx.SignedInUser.UserId, teams, isAdmin)
 		if err != nil {
 			return err
 		}
