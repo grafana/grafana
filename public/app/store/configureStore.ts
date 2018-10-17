@@ -11,7 +11,7 @@ import pluginReducers from 'app/features/plugins/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 
-const rootReducer = combineReducers({
+const rootReducers = {
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
@@ -21,12 +21,18 @@ const rootReducer = combineReducers({
   ...pluginReducers,
   ...dataSourcesReducers,
   ...usersReducers,
-});
+};
 
 export let store;
 
+export function addRootReducer(reducers) {
+  Object.assign(rootReducers, ...reducers);
+}
+
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
+  const rootReducer = combineReducers(rootReducers);
 
   if (process.env.NODE_ENV !== 'production') {
     // DEV builds we had the logger middleware

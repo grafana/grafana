@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -14,6 +15,20 @@ import (
 const HeaderNameNoBackendCache = "X-Grafana-NoCache"
 
 func (hs *HTTPServer) getDatasourceFromCache(id int64, c *m.ReqContext) (*m.DataSource, error) {
+	userPermissionsQuery := m.GetDataSourcePermissionsForUserQuery{
+		User: c.SignedInUser,
+	}
+	if err := bus.Dispatch(&userPermissionsQuery); err != nil {
+		if err != bus.ErrHandlerNotFound {
+			return nil, err
+		}
+	} else {
+		permissionType, exists := userPermissionsQuery.Result[id]
+		if exists && permissionType != m.DsPermissionQuery {
+			return nil, errors.New("User not allowed to access datasource")
+		}
+	}
+
 	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"
 	cacheKey := fmt.Sprintf("ds-%d", id)
 
@@ -38,7 +53,9 @@ func (hs *HTTPServer) getDatasourceFromCache(id int64, c *m.ReqContext) (*m.Data
 func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
-	ds, err := hs.getDatasourceFromCache(c.ParamsInt64(":id"), c)
+	dsId := c.ParamsInt64(":id")
+	ds, err := hs.getDatasourceFromCache(dsId, c)
+
 	if err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
 		return
