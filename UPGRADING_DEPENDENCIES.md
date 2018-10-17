@@ -11,7 +11,6 @@ Upgrading Go or Node.js requires making changes in many different files. See bel
 
 ## Node.js
 
-- `package.json`
 - CircleCI
 - `grafana/build-container`
 - Appveyor
@@ -31,19 +30,6 @@ Updated using `yarn`.
 - `package.json`
 
 ## Where to make changes
-
-### package.json
-
-The node package file also references the node version.
-
-#### Files
-
-- `package.json`
-
-#### Dependencies
-
-- nodejs
-- nodejs dependencies
 
 ### CircleCI
 
