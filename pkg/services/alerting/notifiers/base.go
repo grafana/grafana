@@ -14,14 +14,14 @@ const (
 )
 
 type NotifierBase struct {
-	Name                   string
-	Type                   string
-	Id                     int64
-	IsDeault               bool
-	UploadImage            bool
-	SendReminder           bool
-	DisableResolvedMessage bool
-	Frequency              time.Duration
+	Name                  string
+	Type                  string
+	Id                    int64
+	IsDeault              bool
+	UploadImage           bool
+	SendReminder          bool
+	DisableResolveMessage bool
+	Frequency             time.Duration
 
 	log log.Logger
 }
@@ -34,15 +34,15 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 
 	return NotifierBase{
-		Id:                     model.Id,
-		Name:                   model.Name,
-		IsDeault:               model.IsDefault,
-		Type:                   model.Type,
-		UploadImage:            uploadImage,
-		SendReminder:           model.SendReminder,
-		DisableResolvedMessage: model.DisableResolvedMessage,
-		Frequency:              model.Frequency,
-		log:                    log.New("alerting.notifier." + model.Name),
+		Id:                    model.Id,
+		Name:                  model.Name,
+		IsDeault:              model.IsDefault,
+		Type:                  model.Type,
+		UploadImage:           uploadImage,
+		SendReminder:          model.SendReminder,
+		DisableResolveMessage: model.DisableResolveMessage,
+		Frequency:             model.Frequency,
+		log:                   log.New("alerting.notifier." + model.Name),
 	}
 }
 
@@ -84,8 +84,8 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 		}
 	}
 
-	// Do not notify when state is OK if DisableResolvedMessage is set to true
-	if context.Rule.State == models.AlertStateOK && n.DisableResolvedMessage {
+	// Do not notify when state is OK if DisableResolveMessage is set to true
+	if context.Rule.State == models.AlertStateOK && n.DisableResolveMessage {
 		return false
 	}
 
@@ -112,8 +112,8 @@ func (n *NotifierBase) GetSendReminder() bool {
 	return n.SendReminder
 }
 
-func (n *NotifierBase) GetDisableResolvedMessage() bool {
-	return n.DisableResolvedMessage
+func (n *NotifierBase) GetDisableResolveMessage() bool {
+	return n.DisableResolveMessage
 }
 
 func (n *NotifierBase) GetFrequency() time.Duration {

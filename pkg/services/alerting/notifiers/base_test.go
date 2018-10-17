@@ -182,7 +182,7 @@ func TestBaseNotifier(t *testing.T) {
 
 		Convey("default value should be false for backwards compatibility", func() {
 			base := NewNotifierBase(model)
-			So(base.DisableResolvedMessage, ShouldBeFalse)
+			So(base.DisableResolveMessage, ShouldBeFalse)
 		})
 	})
 }

@@ -12,7 +12,7 @@ export class AlertNotificationEditCtrl {
   defaults: any = {
     type: 'email',
     sendReminder: false,
-    disableResolvedMessage: false,
+    disableResolveMessage: false,
     frequency: '15m',
     settings: {
       httpMethod: 'POST',
