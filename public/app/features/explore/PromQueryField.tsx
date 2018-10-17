@@ -571,10 +571,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               <button className="btn navbar-button navbar-button--tight">Log labels</button>
             </Cascader>
           ) : (
-              <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-                <button className="btn navbar-button navbar-button--tight">Metrics</button>
-              </Cascader>
-            )}
+            <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
+              <button className="btn navbar-button navbar-button--tight">Metrics</button>
+            </Cascader>
+          )}
         </div>
         <div className="prom-query-field-wrapper">
           <div className="slate-query-field-wrapper">
