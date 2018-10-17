@@ -14,6 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	ReqGrafanaAdmin = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
+	ReqSignedIn     = Auth(&AuthOptions{ReqSignedIn: true})
+	ReqEditorRole   = RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
+)
+
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{

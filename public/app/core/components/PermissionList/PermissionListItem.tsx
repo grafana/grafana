@@ -77,9 +77,9 @@ export default class PermissionsListItem extends PureComponent<Props> {
             <DescriptionPicker
               optionsWithDesc={dashboardPermissionLevels}
               onSelected={this.onPermissionChanged}
-              value={item.permission}
               disabled={item.inherited}
-              className={'gf-form-input--form-dropdown-right'}
+              className={'gf-form-select-box__control--menu-right'}
+              value={item.permission}
             />
           </div>
         </td>

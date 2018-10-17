@@ -29,7 +29,11 @@ _.move = (array, fromIndex, toIndex) => {
 import { coreModule, registerAngularDirectives } from './core/core';
 import { setupAngularRoutes } from './routes/routes';
 
-declare var System: any;
+// import symlinked extensions
+const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
+extensionsIndex.keys().forEach(key => {
+  extensionsIndex(key);
+});
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -119,7 +123,7 @@ export class GrafanaApp {
     coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    const preBootRequires = [System.import('app/features/all')];
+    const preBootRequires = [import('app/features/all')];
 
     Promise.all(preBootRequires)
       .then(() => {

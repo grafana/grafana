@@ -138,5 +138,5 @@ plugin development.
 
 ## License
 
-Grafana is distributed under Apache 2.0 License.
+Grafana is distributed under [Apache 2.0 License](https://github.com/grafana/grafana/blob/master/LICENSE.md).
 

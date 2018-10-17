@@ -9,6 +9,10 @@ import store from 'app/core/store';
 import TimeSeries from 'app/core/time_series2';
 import { parse as parseDate } from 'app/core/utils/datemath';
 import { DEFAULT_RANGE } from 'app/core/utils/explore';
+import ResetStyles from 'app/core/components/Picker/ResetStyles';
+import PickerOption from 'app/core/components/Picker/PickerOption';
+import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
+import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 
 import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
@@ -519,7 +523,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const logsButtonActive = showingLogs ? 'active' : '';
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const selectedDatasource = datasource ? datasource.name : undefined;
+    const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -541,13 +545,23 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
-                clearable={false}
+                classNamePrefix={`gf-form-select-box`}
+                isMulti={false}
+                isLoading={datasourceLoading}
+                isClearable={false}
                 className="gf-form-input gf-form-input--form-dropdown datasource-picker"
                 onChange={this.onChangeDatasource}
                 options={exploreDatasources}
-                isOpen={true}
-                placeholder="Loading datasources..."
+                styles={ResetStyles}
+                placeholder="Select datasource"
+                loadingMessage={() => 'Loading datasources...'}
+                noOptionsMessage={() => 'No datasources found'}
                 value={selectedDatasource}
+                components={{
+                  Option: PickerOption,
+                  IndicatorsContainer,
+                  NoOptionsMessage,
+                }}
               />
             </div>
           ) : null}

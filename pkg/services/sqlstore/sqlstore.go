@@ -233,7 +233,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 	case migrator.SQLITE:
 		// special case for tests
 		if !filepath.IsAbs(ss.dbCfg.Path) {
-			ss.dbCfg.Path = filepath.Join(setting.DataPath, ss.dbCfg.Path)
+			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + ss.dbCfg.Path + "?cache=shared&mode=rwc"

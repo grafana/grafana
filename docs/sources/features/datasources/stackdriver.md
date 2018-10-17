@@ -22,7 +22,7 @@ Grafana ships with built-in support for Google Stackdriver. Just add it as a dat
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
-4. Select `Stackdriver` from the *Type* dropdown.
+4. Select `Stackdriver` from the _Type_ dropdown.
 5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
@@ -43,36 +43,46 @@ To authenticate with the Stackdriver API, you need to create a Google Cloud Plat
 
 The following APIs need to be enabled first:
 
-- [Monitoring API](https://console.cloud.google.com/apis/library/monitoring.googleapis.com)
-- [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
+* [Monitoring API](https://console.cloud.google.com/apis/library/monitoring.googleapis.com)
+* [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
 
 Click on the links above and click the `Enable` button:
 
-![Enable GCP APIs](/img/docs/v54/stackdriver_enable_api.png)
+{{< docs-imagebox img="/img/docs/v53/stackdriver_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-    ![Create service account button](/img/docs/v54/stackdriver_create_service_account_button.png)
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
+
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-    ![Create service account key](/img/docs/v54/stackdriver_create_service_account_key.png)
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
+
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-    ![Choose role](/img/docs/v54/stackdriver_service_account_choose_role.png)
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
+  
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
-    
-    ![Choose role](/img/docs/v54/stackdriver_grafana_upload_key.png)
+
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
-    
-    ![Choose role](/img/docs/v54/stackdriver_grafana_key_uploaded.png)
+
+    {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ## Metric Query Editor
 
-Choose a metric from the `Metric` dropdown.
+{{< docs-imagebox img="/img/docs/v53/stackdriver_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+
+The Stackdriver query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
+
+Begin by choosing a `Service` and then a metric from the `Metric` dropdown. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses.
+
+Stackdriver metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
 
 ### Filter
 
@@ -80,7 +90,7 @@ To add a filter, click the plus icon and choose a field to filter by and enter a
 
 #### Simple wildcards
 
-When the operator is set to `=` or `!=` it is possible to add wildcards to the filter value field. E.g `us-*` will capture all values that starts with "us-" and `*central-a` will capture all values that ends with "central-a". `*-central-*` captures all values that has the substring of -central-. Simple wildcards are less expensive than regular expressions. 
+When the operator is set to `=` or `!=` it is possible to add wildcards to the filter value field. E.g `us-*` will capture all values that starts with "us-" and `*central-a` will capture all values that ends with "central-a". `*-central-*` captures all values that has the substring of -central-. Simple wildcards are less expensive than regular expressions.
 
 #### Regular expressions
 
@@ -97,9 +107,9 @@ The `Aligner` field allows you to align multiple time series after the same grou
 The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Stackdriver default groupings (which allows you to compare graphs in Grafana with graphs in the Stackdriver UI).
 The option is called `Stackdriver auto` and the defaults are:
 
-- 1m for time ranges < 23 hours
-- 5m for time ranges >= 23 hours and < 6 days
-- 1h for time ranges >= 6 days
+* 1m for time ranges < 23 hours
+* 5m for time ranges >= 23 hours and < 6 days
+* 1h for time ranges >= 6 days
 
 The other automatic option is `Grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/reference/templating/#the-interval-variable).
 
@@ -151,15 +161,34 @@ Writing variable queries is not supported yet.
 
 There are two syntaxes:
 
-- `$<varname>`  Example: rate(http_requests_total{job=~"$job"}[5m])
-- `[[varname]]` Example: rate(http_requests_total{job=~"[[job]]"}[5m])
+* `$<varname>` Example: `metric.label.$metric_label`
+* `[[varname]]` Example: `metric.label.[[metric_label]]`
 
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value* options are enabled, Grafana converts the labels from plain text to a regex compatible string, which means you have to use `=~` instead of `=`.
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a regex compatible string, which means you have to use `=~` instead of `=`.
 
 ## Annotations
 
+{{< docs-imagebox img="/img/docs/v53/stackdriver_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+
 [Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
-queries via the Dashboard menu / Annotations view.
+queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Stackdriver annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Stackdriver.
+
+With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:
+
+`{{metric.type}} has value: {{metric.value}}`
+
+Example Result: `monitoring.googleapis.com/uptime_check/http_status has this value: 502`
+
+### Patterns for the Annotation Query Editor
+
+| Alias Pattern Format     | Description                      | Alias Pattern Example            | Example Result                                    |
+| ------------------------ | -------------------------------- | -------------------------------- | ------------------------------------------------- |
+| `{{metric.value}}`       | value of the metric/point        | `{{metric.value}}`               | `555`                                             |
+| `{{metric.type}}`        | returns the full Metric Type     | `{{metric.type}}`                | `compute.googleapis.com/instance/cpu/utilization` |
+| `{{metric.name}}`        | returns the metric name part     | `{{metric.name}}`                | `instance/cpu/utilization`                        |
+| `{{metric.service}}`     | returns the service part         | `{{metric.service}}`             | `compute`                                         |
+| `{{metric.label.xxx}}`   | returns the metric label value   | `{{metric.label.instance_name}}` | `grafana-1-prod`                                  |
+| `{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}`        | `us-east1-b`                                      |
 
 ## Configure the Datasource with Provisioning
 
@@ -173,6 +202,7 @@ apiVersion: 1
 datasources:
   - name: Stackdriver
     type: stackdriver
+    access: proxy
     jsonData:
       tokenUri: https://oauth2.googleapis.com/token
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com

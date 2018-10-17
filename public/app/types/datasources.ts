@@ -25,4 +25,5 @@ export interface DataSourcesState {
   layoutMode: LayoutMode;
   dataSourcesCount: number;
   dataSourceTypes: Plugin[];
+  hasFetched: boolean;
 }
