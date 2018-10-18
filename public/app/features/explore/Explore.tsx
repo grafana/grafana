@@ -645,7 +645,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 )}
               {supportsTable && showingTable ? (
                 <div className="panel-container">
-                  <Table className="m-t-3" data={tableResult} loading={loading} onClickCell={this.onClickTableCell} />
+                  <Table data={tableResult} loading={loading} onClickCell={this.onClickTableCell} />
                 </div>
               ) : null}
               {supportsLogs && showingLogs ? <Logs data={logsResult} loading={loading} /> : null}

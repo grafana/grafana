@@ -111,15 +111,6 @@
   .link {
     text-decoration: underline;
   }
-
-  // React table
-  .explore-table-wrapper {
-    margin-top: 2 * $panel-margin;
-  }
-
-  .rt-tr .rt-td:last-child {
-    text-align: right;
-  }
 }
 
 .explore + .explore {
@@ -201,6 +192,8 @@
 
 .ReactTable {
   border: none;
+  // Allow some space for the no-data text
+  min-height: 120px;
 }
 
 .ReactTable .rt-thead.-header {
@@ -246,4 +239,7 @@
 }
 .ReactTable .-loading > div {
   color: $input-color;
+}
+.ReactTable .rt-tr .rt-td:last-child {
+  text-align: right;
 }

@@ -7,7 +7,6 @@ import TableModel from 'app/core/table_model';
 const EMPTY_TABLE = new TableModel();
 
 interface TableProps {
-  className?: string;
   data: TableModel;
   loading: boolean;
   onClickCell?: (columnKey: string, rowValue: string) => void;
@@ -17,7 +16,7 @@ function prepareRows(rows, columnNames) {
   return rows.map(cells => _.zipObject(columnNames, cells));
 }
 
-export default class Table extends PureComponent<TableProps, {}> {
+export default class Table extends PureComponent<TableProps> {
   getCellProps = (state, rowInfo, column) => {
     return {
       onClick: () => {
@@ -38,6 +37,7 @@ export default class Table extends PureComponent<TableProps, {}> {
       show: text !== 'Time',
       Cell: row => <span className={filterable ? 'link' : ''}>{row.value}</span>,
     }));
+    const noDataText = data ? 'The queries returned no data for a table.' : '';
 
     return (
       <ReactTable
@@ -46,8 +46,9 @@ export default class Table extends PureComponent<TableProps, {}> {
         getTdProps={this.getCellProps}
         loading={loading}
         minRows={0}
-        noDataText="No data returned from query."
+        noDataText={noDataText}
         resolveData={data => prepareRows(data, columnNames)}
+        showPagination={data}
       />
     );
   }

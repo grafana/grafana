@@ -1,8 +1,10 @@
-// vendor
+// DEPENDENCIES
+@import '../../node_modules/react-table/react-table.css';
+
+// VENDOR
 @import '../vendor/css/timepicker.css';
 @import '../vendor/css/spectrum.css';
 @import '../vendor/css/rc-cascader.scss';
-@import '../vendor/css/react-table.css';
 
 // MIXINS
 @import 'mixins/mixins';
