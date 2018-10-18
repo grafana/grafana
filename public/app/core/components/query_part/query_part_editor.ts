@@ -103,7 +103,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
           $scope.$apply(() => {
             $scope.handleEvent({ $event: { name: 'get-param-options' } }).then(result => {
               const dynamicOptions = _.map(result, op => {
-                return op.value;
+                return _.escape(op.value);
               });
               callback(dynamicOptions);
             });
@@ -117,6 +117,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
           minLength: 0,
           items: 1000,
           updater: value => {
+            value = _.unescape(value);
             setTimeout(() => {
               inputBlur.call($input[0], paramIndex);
             }, 0);
