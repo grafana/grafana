@@ -1,7 +1,8 @@
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-
+import appEvents from 'app/core/app_events';
+import { loadPluginDashboards } from '../../plugins/state/actions';
 import {
   DashboardAcl,
   DashboardAclDTO,
@@ -9,8 +10,6 @@ import {
   DashboardAclUpdateDTO,
   NewDashboardAclItem,
 } from 'app/types/acl';
-import appEvents from '../../../core/app_events';
-import { loadPluginDashboards } from '../../plugins/state/actions';
 
 export enum ActionTypes {
   LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
