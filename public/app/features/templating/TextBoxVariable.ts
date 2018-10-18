@@ -12,6 +12,8 @@ export class TextBoxVariable implements Variable {
     hide: 2,
     label: '',
     query: '',
+    onempty: '',
+    viewonempty: false,
     current: {},
     options: [],
     skipUrlSync: false,
@@ -34,6 +36,16 @@ export class TextBoxVariable implements Variable {
   updateOptions() {
     this.options = [{ text: this.query.trim(), value: this.query.trim() }];
     this.current = this.options[0];
+    if (this.current.value === '' && this.onempty !== '') {
+      this.options = [{ text: this.onempty.trim(), value: this.onempty.trim() }];
+      this.current = this.options[0];
+      if (this.viewonempty) {
+        this.query = this.onempty;
+      }
+    } else {
+      this.options = [{ text: this.query.trim(), value: this.query.trim() }];
+      this.current = this.options[0];
+    }
     return Promise.resolve();
   }
 
@@ -42,8 +54,13 @@ export class TextBoxVariable implements Variable {
   }
 
   setValueFromUrl(urlValue) {
-    this.query = urlValue;
-    return this.variableSrv.setOptionFromUrl(this, urlValue);
+    if (urlValue === '' && this.onempty !== '') {
+      this.query = this.onempty;
+      return this.variableSrv.setOptionFromUrl(this, this.onempty);
+    } else {
+      this.query = urlValue;
+      return this.variableSrv.setOptionFromUrl(this, urlValue);
+    }
   }
 
   getValueForUrl() {

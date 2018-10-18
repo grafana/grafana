@@ -9,6 +9,8 @@ function getNoneOption() {
 export class QueryVariable implements Variable {
   datasource: any;
   query: any;
+  onempty: any;
+  viewonempty: boolean;
   regex: any;
   sort: any;
   options: any;
@@ -28,6 +30,8 @@ export class QueryVariable implements Variable {
     type: 'query',
     label: null,
     query: '',
+    onempty: '',
+    viewonempty: false,
     regex: '',
     sort: 0,
     datasource: null,

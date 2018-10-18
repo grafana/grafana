@@ -159,7 +159,22 @@
 			<h5 class="section-heading">Text options</h5>
 			<div class="gf-form">
 				<span class="gf-form-label">Default value</span>
-				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="default value, if any"></input>
+				<input type="text" class="gf-form-input" ng-model="current.query" ng-blur="runQuery()" placeholder="default value, if any"></input>
+			</div>
+			<div class="gf-form-inline">
+				<div class="gf-form max-width-19">
+					<span class="gf-form-label">
+						Empty value
+						<info-popover mode="right-normal">
+							Optional - Supply a value to be used if the Text Box is cleared (empty).  Useful for Lucene searches using this variable to provide a base search.  The empty value will be hidden by default.  Check View Empty Value to display the value in the TextBox.
+						</info-popover>
+					</span>
+					<input type="text" class="gf-form-input" ng-model="current.onempty" ng-blur="runQuery()" placeholder="optional, on empty value"></input>
+				</div>
+				<div class="gf-form max-width-19">
+					<gf-form-switch class="gf-form" label="View Empty Value" label-class="width-10" checked="current.viewonempty" on-change="runQuery()">
+					</gf-form-switch>
+				</div>
 			</div>
 		</div>
 
