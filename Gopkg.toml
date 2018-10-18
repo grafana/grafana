@@ -152,6 +152,10 @@ ignored = [
   name = "github.com/prometheus/common"
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/prometheus/prometheus"
+
+[[constraint]]
   name = "github.com/smartystreets/goconvey"
   version = "1.6.3"
 
