@@ -9,7 +9,7 @@ export class MysqlDatasource {
   queryModel: MysqlQuery;
   interval: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -41,7 +41,7 @@ export class MysqlDatasource {
     const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
-      let queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
+      const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
 
       return {
         refId: target.refId,

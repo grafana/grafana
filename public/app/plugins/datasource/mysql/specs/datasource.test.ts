@@ -13,7 +13,7 @@ describe('MySQLDatasource', () => {
     from: moment.utc('2018-04-25 10:00'),
     to: moment.utc('2018-04-25 11:00'),
   };
-  const ctx = <any>{
+  const ctx = {
     backendSrv,
     timeSrvMock: {
       timeRange: () => ({
@@ -22,7 +22,7 @@ describe('MySQLDatasource', () => {
         raw: raw,
       }),
     },
-  };
+  } as any;
 
   beforeEach(() => {
     ctx.ds = new MysqlDatasource(instanceSettings, backendSrv, {}, templateSrv, ctx.timeSrvMock);

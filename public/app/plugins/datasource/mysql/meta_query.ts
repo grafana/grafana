@@ -25,7 +25,7 @@ export class MysqlMetaQuery {
 
   findMetricTable() {
     // query that returns first table found that has a timestamp(tz) column and a float column
-    let query = `
+    const query = `
   SELECT
     table_name as table_name,
     ( SELECT
@@ -74,7 +74,7 @@ export class MysqlMetaQuery {
 
     // check for schema qualified table
     if (table.includes('.')) {
-      let parts = table.split('.');
+      const parts = table.split('.');
       query = 'table_schema = ' + this.quoteIdentAsLiteral(parts[0]);
       query += ' AND table_name = ' + this.quoteIdentAsLiteral(parts[1]);
       return query;

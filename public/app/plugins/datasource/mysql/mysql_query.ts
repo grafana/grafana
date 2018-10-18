@@ -73,12 +73,12 @@ export default class MysqlQuery {
       return this.quoteLiteral(value);
     }
 
-    let escapedValues = _.map(value, this.quoteLiteral);
+    const escapedValues = _.map(value, this.quoteLiteral);
     return escapedValues.join(',');
   }
 
   render(interpolate?) {
-    let target = this.target;
+    const target = this.target;
 
     // new query with no table set yet
     if (!this.target.rawQuery && !('table' in this.target)) {
@@ -101,7 +101,7 @@ export default class MysqlQuery {
   }
 
   buildTimeColumn(alias = true) {
-    let timeGroup = this.hasTimeGroup();
+    const timeGroup = this.hasTimeGroup();
     let query;
     let macro = '$__timeGroup';
 
@@ -139,7 +139,7 @@ export default class MysqlQuery {
 
   buildValueColumns() {
     let query = '';
-    for (let column of this.target.select) {
+    for (const column of this.target.select) {
       query += ',\n  ' + this.buildValueColumn(column);
     }
 
@@ -149,14 +149,14 @@ export default class MysqlQuery {
   buildValueColumn(column) {
     let query = '';
 
-    let columnName = _.find(column, (g: any) => g.type === 'column');
+    const columnName = _.find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    let aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    let windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+    const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+    const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
 
     if (aggregate) {
-      let func = aggregate.params[0];
+      const func = aggregate.params[0];
       switch (aggregate.type) {
         case 'aggregate':
           if (func === 'first' || func === 'last') {
@@ -172,13 +172,13 @@ export default class MysqlQuery {
     }
 
     if (windows) {
-      let overParts = [];
+      const overParts = [];
       if (this.hasMetricColumn()) {
         overParts.push('PARTITION BY ' + this.target.metricColumn);
       }
       overParts.push('ORDER BY ' + this.buildTimeColumn(false));
 
-      let over = overParts.join(' ');
+      const over = overParts.join(' ');
       let curr: string;
       let prev: string;
       switch (windows.type) {
@@ -211,7 +211,7 @@ export default class MysqlQuery {
       }
     }
 
-    let alias = _.find(column, (g: any) => g.type === 'alias');
+    const alias = _.find(column, (g: any) => g.type === 'alias');
     if (alias) {
       query += ' AS ' + this.quoteIdentifier(alias.params[0]);
     }
@@ -221,7 +221,7 @@ export default class MysqlQuery {
 
   buildWhereClause() {
     let query = '';
-    let conditions = _.map(this.target.where, (tag, index) => {
+    const conditions = _.map(this.target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
           return tag.name + '(' + this.target.timeColumn + ')';
@@ -244,7 +244,7 @@ export default class MysqlQuery {
     let groupSection = '';
 
     for (let i = 0; i < this.target.group.length; i++) {
-      let part = this.target.group[i];
+      const part = this.target.group[i];
       if (i > 0) {
         groupSection += ', ';
       }

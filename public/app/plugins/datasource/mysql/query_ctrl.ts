@@ -40,7 +40,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   whereParts: SqlPart[];
   groupAdd: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
 
@@ -98,7 +98,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   }
 
   updateProjection() {
-    this.selectParts = _.map(this.target.select, function(parts: any) {
+    this.selectParts = _.map(this.target.select, (parts: any) => {
       return _.map(parts, sqlPart.create).filter(n => n);
     });
     this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
@@ -106,22 +106,22 @@ export class MysqlQueryCtrl extends QueryCtrl {
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectParts, function(selectParts) {
-      return _.map(selectParts, function(part: any) {
+    this.target.select = _.map(this.selectParts, selectParts => {
+      return _.map(selectParts, (part: any) => {
         return { type: part.def.type, datatype: part.datatype, params: part.params };
       });
     });
-    this.target.where = _.map(this.whereParts, function(part: any) {
+    this.target.where = _.map(this.whereParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, name: part.name, params: part.params };
     });
-    this.target.group = _.map(this.groupParts, function(part: any) {
+    this.target.group = _.map(this.groupParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, params: part.params };
     });
   }
 
   buildSelectMenu() {
     this.selectMenu = [];
-    let aggregates = {
+    const aggregates = {
       text: 'Aggregate Functions',
       value: 'aggregate',
       submenu: [
@@ -157,7 +157,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   }
 
   resetPlusButton(button) {
-    let plusButton = this.uiSegmentSrv.newPlusButton();
+    const plusButton = this.uiSegmentSrv.newPlusButton();
     button.html = plusButton.html;
     button.value = plusButton.value;
   }
@@ -175,21 +175,21 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.target.group = [];
     this.updateProjection();
 
-    let segment = this.uiSegmentSrv.newSegment('none');
+    const segment = this.uiSegmentSrv.newSegment('none');
     this.metricColumnSegment.html = segment.html;
     this.metricColumnSegment.value = segment.value;
     this.target.metricColumn = 'none';
 
-    let task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
+    const task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
       // check if time column is still valid
       if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
-        let segment = this.uiSegmentSrv.newSegment(result[0].text);
+        const segment = this.uiSegmentSrv.newSegment(result[0].text);
         this.timeColumnSegment.html = segment.html;
         this.timeColumnSegment.value = segment.value;
       }
       return this.timeColumnChanged(false);
     });
-    let task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then(result => {
+    const task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then(result => {
       if (result.length > 0) {
         this.target.select = [[{ type: 'column', params: [result[0].text] }]];
         this.updateProjection();
@@ -271,7 +271,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   transformToSegments(config) {
     return results => {
-      let segments = _.map(results, segment => {
+      const segments = _.map(results, segment => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,
@@ -279,7 +279,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
       });
 
       if (config.addTemplateVars) {
-        for (let variable of this.templateSrv.variables) {
+        for (const variable of this.templateSrv.variables) {
           let value;
           value = '$' + variable.name;
           if (config.templateQuoter && variable.multi === false) {
@@ -325,7 +325,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
     switch (partType) {
       case 'column':
-        let parts = _.map(selectParts, function(part: any) {
+        const parts = _.map(selectParts, (part: any) => {
           return sqlPart.create({ type: part.def.type, params: _.clone(part.params) });
         });
         this.selectParts.push(parts);
@@ -336,7 +336,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
         if (this.target.group.length === 0) {
           this.addGroup('time', '$__interval');
         }
-        let aggIndex = this.findAggregateIndex(selectParts);
+        const aggIndex = this.findAggregateIndex(selectParts);
         if (aggIndex !== -1) {
           // replace current aggregation
           selectParts[aggIndex] = partModel;
@@ -349,12 +349,12 @@ export class MysqlQueryCtrl extends QueryCtrl {
         break;
       case 'moving_window':
       case 'window':
-        let windowIndex = this.findWindowIndex(selectParts);
+        const windowIndex = this.findWindowIndex(selectParts);
         if (windowIndex !== -1) {
           // replace current window function
           selectParts[windowIndex] = partModel;
         } else {
-          let aggIndex = this.findAggregateIndex(selectParts);
+          const aggIndex = this.findAggregateIndex(selectParts);
           if (aggIndex !== -1) {
             selectParts.splice(aggIndex + 1, 0, partModel);
           } else {
@@ -388,11 +388,11 @@ export class MysqlQueryCtrl extends QueryCtrl {
     if (part.def.type === 'column') {
       // remove all parts of column unless its last column
       if (this.selectParts.length > 1) {
-        let modelsIndex = _.indexOf(this.selectParts, selectParts);
+        const modelsIndex = _.indexOf(this.selectParts, selectParts);
         this.selectParts.splice(modelsIndex, 1);
       }
     } else {
-      let partIndex = _.indexOf(selectParts, part);
+      const partIndex = _.indexOf(selectParts, part);
       selectParts.splice(partIndex, 1);
     }
 
@@ -460,7 +460,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     if (partType === 'time') {
       params = ['$__interval', 'none'];
     }
-    let partModel = sqlPart.create({ type: partType, params: params });
+    const partModel = sqlPart.create({ type: partType, params: params });
 
     if (partType === 'time') {
       // put timeGroup at start
@@ -470,12 +470,12 @@ export class MysqlQueryCtrl extends QueryCtrl {
     }
 
     // add aggregates when adding group by
-    for (let selectParts of this.selectParts) {
+    for (const selectParts of this.selectParts) {
       if (!selectParts.some(part => part.def.type === 'aggregate')) {
-        let aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
+        const aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
         selectParts.splice(1, 0, aggregate);
         if (!selectParts.some(part => part.def.type === 'alias')) {
-          let alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
+          const alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
           selectParts.push(alias);
         }
       }
@@ -557,7 +557,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   }
 
   getWhereOptions() {
-    var options = [];
+    const options = [];
     if (this.queryModel.hasUnixEpochTimecolumn()) {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__unixEpochFilter' }));
     } else {
@@ -570,7 +570,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   addWhereAction(part, index) {
     switch (this.whereAdd.type) {
       case 'macro': {
-        let partModel = sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] });
+        const partModel = sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] });
         if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
           // replace current macro
           this.whereParts[0] = partModel;
@@ -593,11 +593,11 @@ export class MysqlQueryCtrl extends QueryCtrl {
     return this.datasource
       .metricFindQuery(this.metaBuilder.buildColumnQuery('group'))
       .then(tags => {
-        var options = [];
+        const options = [];
         if (!this.queryModel.hasTimeGroup()) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time($__interval,none)' }));
         }
-        for (let tag of tags) {
+        for (const tag of tags) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'column', value: tag.text }));
         }
         return options;
