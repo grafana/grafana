@@ -48,7 +48,7 @@ func TestMySQL(t *testing.T) {
 			return sql, nil
 		}
 
-		endpoint, err := newMysqlQueryEndpoint(&models.DataSource{
+		endpoint, err := newMysqlEndpoint(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
 		})
