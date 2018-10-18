@@ -32,7 +32,7 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}
 
 	return &DingDingNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		log:          log.New("alerting.notifier.dingding"),
 	}, nil

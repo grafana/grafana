@@ -21,7 +21,7 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
 		var user m.User
-		if exists, err := sess.Id(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return m.ErrUserNotFound
@@ -85,7 +85,7 @@ func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
 
 		orgUser.Role = cmd.Role
 		orgUser.Updated = time.Now()
-		_, err = sess.Id(orgUser.Id).Update(&orgUser)
+		_, err = sess.ID(orgUser.Id).Update(&orgUser)
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
 		var user m.User
-		if exists, err := sess.Id(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return m.ErrUserNotFound
@@ -157,6 +157,12 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 			}
 		}
 
+		// validate that after delete there is at least one user with admin role in org
+		if err := validateOneAdminLeftInOrg(cmd.OrgId, sess); err != nil {
+			return err
+		}
+
+		// check user other orgs and update user current org
 		var userOrgs []*m.UserOrgDTO
 		sess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
@@ -168,22 +174,31 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 			return err
 		}
 
-		hasCurrentOrgSet := false
-		for _, userOrg := range userOrgs {
-			if user.OrgId == userOrg.OrgId {
-				hasCurrentOrgSet = true
-				break
+		if len(userOrgs) > 0 {
+			hasCurrentOrgSet := false
+			for _, userOrg := range userOrgs {
+				if user.OrgId == userOrg.OrgId {
+					hasCurrentOrgSet = true
+					break
+				}
 			}
-		}
 
-		if !hasCurrentOrgSet && len(userOrgs) > 0 {
-			err = setUsingOrgInTransaction(sess, user.Id, userOrgs[0].OrgId)
-			if err != nil {
+			if !hasCurrentOrgSet {
+				err = setUsingOrgInTransaction(sess, user.Id, userOrgs[0].OrgId)
+				if err != nil {
+					return err
+				}
+			}
+		} else if cmd.ShouldDeleteOrphanedUser {
+			// no other orgs, delete the full user
+			if err := deleteUserInTransaction(sess, &m.DeleteUserCommand{UserId: user.Id}); err != nil {
 				return err
 			}
+
+			cmd.UserWasDeleted = true
 		}
 
-		return validateOneAdminLeftInOrg(cmd.OrgId, sess)
+		return nil
 	})
 }
 

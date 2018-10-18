@@ -4,7 +4,7 @@ import appEvents from 'app/core/app_events';
 export function pageScrollbar() {
   return {
     restrict: 'A',
-    link: function(scope, elem, attrs) {
+    link: (scope, elem, attrs) => {
       let lastPos = 0;
 
       appEvents.on(

@@ -5,13 +5,13 @@ const kbn: any = {};
 
 kbn.valueFormats = {};
 
-kbn.regexEscape = function(value) {
+kbn.regexEscape = value => {
   return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
 };
 
 ///// HELPER FUNCTIONS /////
 
-kbn.round_interval = function(interval) {
+kbn.round_interval = interval => {
   switch (true) {
     // 0.015s
     case interval < 15:
@@ -102,7 +102,7 @@ kbn.round_interval = function(interval) {
   }
 };
 
-kbn.secondsToHms = function(seconds) {
+kbn.secondsToHms = seconds => {
   const numyears = Math.floor(seconds / 31536000);
   if (numyears) {
     return numyears + 'y';
@@ -131,7 +131,7 @@ kbn.secondsToHms = function(seconds) {
   return 'less than a millisecond'; //'just now' //or other string you like;
 };
 
-kbn.secondsToHhmmss = function(seconds) {
+kbn.secondsToHhmmss = seconds => {
   const strings = [];
   const numhours = Math.floor(seconds / 3600);
   const numminutes = Math.floor((seconds % 3600) / 60);
@@ -142,11 +142,11 @@ kbn.secondsToHhmmss = function(seconds) {
   return strings.join(':');
 };
 
-kbn.to_percent = function(nr, outof) {
+kbn.to_percent = (nr, outof) => {
   return Math.floor(nr / outof * 10000) / 100 + '%';
 };
 
-kbn.addslashes = function(str) {
+kbn.addslashes = str => {
   str = str.replace(/\\/g, '\\\\');
   str = str.replace(/\'/g, "\\'");
   str = str.replace(/\"/g, '\\"');
@@ -168,9 +168,9 @@ kbn.intervals_in_seconds = {
   ms: 0.001,
 };
 
-kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
-  var lowLimitMs = 1; // 1 millisecond default low limit
-  var intervalMs;
+kbn.calculateInterval = (range, resolution, lowLimitInterval) => {
+  let lowLimitMs = 1; // 1 millisecond default low limit
+  let intervalMs;
 
   if (lowLimitInterval) {
     if (lowLimitInterval[0] === '>') {
@@ -190,7 +190,7 @@ kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
   };
 };
 
-kbn.describe_interval = function(str) {
+kbn.describe_interval = str => {
   const matches = str.match(kbn.interval_regex);
   if (!matches || !_.has(kbn.intervals_in_seconds, matches[2])) {
     throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
@@ -203,17 +203,17 @@ kbn.describe_interval = function(str) {
   }
 };
 
-kbn.interval_to_ms = function(str) {
+kbn.interval_to_ms = str => {
   const info = kbn.describe_interval(str);
   return info.sec * 1000 * info.count;
 };
 
-kbn.interval_to_seconds = function(str) {
+kbn.interval_to_seconds = str => {
   const info = kbn.describe_interval(str);
   return info.sec * info.count;
 };
 
-kbn.query_color_dot = function(color, diameter) {
+kbn.query_color_dot = (color, diameter) => {
   return (
     '<div class="icon-circle" style="' +
     ['display:inline-block', 'color:' + color, 'font-size:' + diameter + 'px'].join(';') +
@@ -221,14 +221,14 @@ kbn.query_color_dot = function(color, diameter) {
   );
 };
 
-kbn.slugifyForUrl = function(str) {
+kbn.slugifyForUrl = str => {
   return str
     .toLowerCase()
     .replace(/[^\w ]+/g, '')
     .replace(/ +/g, '-');
 };
 
-kbn.stringToJsRegex = function(str) {
+kbn.stringToJsRegex = str => {
   if (str[0] !== '/') {
     return new RegExp('^' + str + '$');
   }
@@ -237,7 +237,7 @@ kbn.stringToJsRegex = function(str) {
   return new RegExp(match[1], match[2]);
 };
 
-kbn.toFixed = function(value, decimals) {
+kbn.toFixed = (value, decimals) => {
   if (value === null) {
     return '';
   }
@@ -263,7 +263,7 @@ kbn.toFixed = function(value, decimals) {
   return formatted;
 };
 
-kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
+kbn.toFixedScaled = (value, decimals, scaledDecimals, additionalDecimals, ext) => {
   if (scaledDecimals === null) {
     return kbn.toFixed(value, decimals) + ext;
   } else {
@@ -271,7 +271,7 @@ kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals
   }
 };
 
-kbn.roundValue = function(num, decimals) {
+kbn.roundValue = (num, decimals) => {
   if (num === null) {
     return null;
   }
@@ -286,8 +286,8 @@ kbn.formatBuilders = {};
 
 // Formatter which always appends a fixed unit string to the value. No
 // scaling of the value is performed.
-kbn.formatBuilders.fixedUnit = function(unit) {
-  return function(size, decimals) {
+kbn.formatBuilders.fixedUnit = unit => {
+  return (size, decimals) => {
     if (size === null) {
       return '';
     }
@@ -298,13 +298,13 @@ kbn.formatBuilders.fixedUnit = function(unit) {
 // Formatter which scales the unit string geometrically according to the given
 // numeric factor. Repeatedly scales the value down by the factor until it is
 // less than the factor in magnitude, or the end of the array is reached.
-kbn.formatBuilders.scaledUnits = function(factor, extArray) {
-  return function(size, decimals, scaledDecimals) {
+kbn.formatBuilders.scaledUnits = (factor, extArray) => {
+  return (size, decimals, scaledDecimals) => {
     if (size === null) {
       return '';
     }
 
-    var steps = 0;
+    let steps = 0;
     const limit = extArray.length;
 
     while (Math.abs(size) >= factor) {
@@ -327,10 +327,10 @@ kbn.formatBuilders.scaledUnits = function(factor, extArray) {
 // Extension of the scaledUnits builder which uses SI decimal prefixes. If an
 // offset is given, it adjusts the starting units at the given prefix; a value
 // of 0 starts at no scale; -3 drops to nano, +2 starts at mega, etc.
-kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
-  var prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+kbn.formatBuilders.decimalSIPrefix = (unit, offset) => {
+  let prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   prefixes = prefixes.slice(3 + (offset || 0));
-  const units = prefixes.map(function(p) {
+  const units = prefixes.map(p => {
     return ' ' + p + unit;
   });
   return kbn.formatBuilders.scaledUnits(1000, units);
@@ -339,9 +339,9 @@ kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
 // Extension of the scaledUnits builder which uses SI binary prefixes. If
 // offset is given, it starts the units at the given prefix; otherwise, the
 // offset defaults to zero and the initial unit is not prefixed.
-kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
+kbn.formatBuilders.binarySIPrefix = (unit, offset) => {
   const prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
-  const units = prefixes.map(function(p) {
+  const units = prefixes.map(p => {
     return ' ' + p + unit;
   });
   return kbn.formatBuilders.scaledUnits(1024, units);
@@ -349,10 +349,10 @@ kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
 
 // Currency formatter for prefixing a symbol onto a number. Supports scaling
 // up to the trillions.
-kbn.formatBuilders.currency = function(symbol) {
+kbn.formatBuilders.currency = symbol => {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = kbn.formatBuilders.scaledUnits(1000, units);
-  return function(size, decimals, scaledDecimals) {
+  return (size, decimals, scaledDecimals) => {
     if (size === null) {
       return '';
     }
@@ -361,10 +361,10 @@ kbn.formatBuilders.currency = function(symbol) {
   };
 };
 
-kbn.formatBuilders.simpleCountUnit = function(symbol) {
+kbn.formatBuilders.simpleCountUnit = symbol => {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = kbn.formatBuilders.scaledUnits(1000, units);
-  return function(size, decimals, scaledDecimals) {
+  return (size, decimals, scaledDecimals) => {
     if (size === null) {
       return '';
     }
@@ -390,14 +390,14 @@ kbn.valueFormats.short = kbn.formatBuilders.scaledUnits(1000, [
 ]);
 kbn.valueFormats.dB = kbn.formatBuilders.fixedUnit('dB');
 
-kbn.valueFormats.percent = function(size, decimals) {
+kbn.valueFormats.percent = (size, decimals) => {
   if (size === null) {
     return '';
   }
   return kbn.toFixed(size, decimals) + '%';
 };
 
-kbn.valueFormats.percentunit = function(size, decimals) {
+kbn.valueFormats.percentunit = (size, decimals) => {
   if (size === null) {
     return '';
   }
@@ -407,7 +407,7 @@ kbn.valueFormats.percentunit = function(size, decimals) {
 /* Formats the value to hex. Uses float if specified decimals are not 0.
  * There are two options, one with 0x, and one without */
 
-kbn.valueFormats.hex = function(value, decimals) {
+kbn.valueFormats.hex = (value, decimals) => {
   if (value == null) {
     return '';
   }
@@ -416,7 +416,7 @@ kbn.valueFormats.hex = function(value, decimals) {
     .toUpperCase();
 };
 
-kbn.valueFormats.hex0x = function(value, decimals) {
+kbn.valueFormats.hex0x = (value, decimals) => {
   if (value == null) {
     return '';
   }
@@ -427,11 +427,11 @@ kbn.valueFormats.hex0x = function(value, decimals) {
   return '0x' + hexString;
 };
 
-kbn.valueFormats.sci = function(value, decimals) {
+kbn.valueFormats.sci = (value, decimals) => {
   return value.toExponential(decimals);
 };
 
-kbn.valueFormats.locale = function(value, decimals) {
+kbn.valueFormats.locale = (value, decimals) => {
   return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
 };
 
@@ -450,6 +450,7 @@ kbn.valueFormats.currencySEK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyCZK = kbn.formatBuilders.currency('czk');
 kbn.valueFormats.currencyCHF = kbn.formatBuilders.currency('CHF');
 kbn.valueFormats.currencyPLN = kbn.formatBuilders.currency('zł');
+kbn.valueFormats.currencyBTC = kbn.formatBuilders.currency('฿');
 
 // Data (Binary)
 kbn.valueFormats.bits = kbn.formatBuilders.binarySIPrefix('b');
@@ -617,7 +618,7 @@ kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm³');
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
 
-kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.ms = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -641,7 +642,7 @@ kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
   return kbn.toFixedScaled(size / 31536000000, decimals, scaledDecimals, 10, ' year');
 };
 
-kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.s = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -678,7 +679,7 @@ kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
   return kbn.toFixedScaled(size / 3.15569e7, decimals, scaledDecimals, 7, ' year');
 };
 
-kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
+kbn.valueFormats['µs'] = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -692,7 +693,7 @@ kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.ns = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.ns = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -710,7 +711,7 @@ kbn.valueFormats.ns = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.m = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.m = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -728,7 +729,7 @@ kbn.valueFormats.m = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.h = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.h = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -744,7 +745,7 @@ kbn.valueFormats.h = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.d = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.d = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -758,7 +759,7 @@ kbn.valueFormats.d = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.toDuration = function(size, decimals, timeScale) {
+kbn.toDuration = (size, decimals, timeScale) => {
   if (size === null) {
     return '';
   }
@@ -783,15 +784,15 @@ kbn.toDuration = function(size, decimals, timeScale) {
   // intervals_in_seconds uses seconds (duh), convert them to milliseconds here to minimize floating point errors
   size *=
     kbn.intervals_in_seconds[
-      units.find(function(e) {
+      units.find(e => {
         return e.long === timeScale;
       }).short
     ] * 1000;
 
   const strings = [];
   // after first value >= 1 print only $decimals more
-  var decrementDecimals = false;
-  for (var i = 0; i < units.length && decimals >= 0; i++) {
+  let decrementDecimals = false;
+  for (let i = 0; i < units.length && decimals >= 0; i++) {
     const interval = kbn.intervals_in_seconds[units[i].short] * 1000;
     const value = size / interval;
     if (value >= 1 || decrementDecimals) {
@@ -807,23 +808,76 @@ kbn.toDuration = function(size, decimals, timeScale) {
   return strings.join(', ');
 };
 
-kbn.valueFormats.dtdurationms = function(size, decimals) {
+kbn.toClock = (size, decimals) => {
+  if (size === null) {
+    return '';
+  }
+
+  // < 1 second
+  if (size < 1000) {
+    return moment.utc(size).format('SSS\\m\\s');
+  }
+
+  // < 1 minute
+  if (size < 60000) {
+    let format = 'ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  // < 1 hour
+  if (size < 3600000) {
+    let format = 'mm\\m:ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'mm\\m';
+    } else if (decimals === 1) {
+      format = 'mm\\m:ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  let format = 'mm\\m:ss\\s:SSS\\m\\s';
+
+  const hours = `${('0' + Math.floor(moment.duration(size, 'milliseconds').asHours())).slice(-2)}h`;
+
+  if (decimals === 0) {
+    format = '';
+  } else if (decimals === 1) {
+    format = 'mm\\m';
+  } else if (decimals === 2) {
+    format = 'mm\\m:ss\\s';
+  }
+
+  return format ? `${hours}:${moment.utc(size).format(format)}` : hours;
+};
+
+kbn.valueFormats.dtdurationms = (size, decimals) => {
   return kbn.toDuration(size, decimals, 'millisecond');
 };
 
-kbn.valueFormats.dtdurations = function(size, decimals) {
+kbn.valueFormats.dtdurations = (size, decimals) => {
   return kbn.toDuration(size, decimals, 'second');
 };
 
-kbn.valueFormats.dthms = function(size, decimals) {
+kbn.valueFormats.dthms = (size, decimals) => {
   return kbn.secondsToHhmmss(size);
 };
 
-kbn.valueFormats.timeticks = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.timeticks = (size, decimals, scaledDecimals) => {
   return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
 };
 
-kbn.valueFormats.dateTimeAsIso = function(epoch, isUtc) {
+kbn.valueFormats.clockms = (size, decimals) => {
+  return kbn.toClock(size, decimals);
+};
+
+kbn.valueFormats.clocks = (size, decimals) => {
+  return kbn.toClock(size * 1000, decimals);
+};
+
+kbn.valueFormats.dateTimeAsIso = (epoch, isUtc) => {
   const time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
@@ -832,7 +886,7 @@ kbn.valueFormats.dateTimeAsIso = function(epoch, isUtc) {
   return time.format('YYYY-MM-DD HH:mm:ss');
 };
 
-kbn.valueFormats.dateTimeAsUS = function(epoch, isUtc) {
+kbn.valueFormats.dateTimeAsUS = (epoch, isUtc) => {
   const time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
@@ -841,14 +895,14 @@ kbn.valueFormats.dateTimeAsUS = function(epoch, isUtc) {
   return time.format('MM/DD/YYYY h:mm:ss a');
 };
 
-kbn.valueFormats.dateTimeFromNow = function(epoch, isUtc) {
+kbn.valueFormats.dateTimeFromNow = (epoch, isUtc) => {
   const time = isUtc ? moment.utc(epoch) : moment(epoch);
   return time.fromNow();
 };
 
 ///// FORMAT MENU /////
 
-kbn.getUnitFormats = function() {
+kbn.getUnitFormats = () => {
   return [
     {
       text: 'none',
@@ -882,6 +936,7 @@ kbn.getUnitFormats = function() {
         { text: 'Czech koruna (czk)', value: 'currencyCZK' },
         { text: 'Swiss franc (CHF)', value: 'currencyCHF' },
         { text: 'Polish Złoty (PLN)', value: 'currencyPLN' },
+        { text: 'Bitcoin (฿)', value: 'currencyBTC' },
       ],
     },
     {
@@ -899,6 +954,8 @@ kbn.getUnitFormats = function() {
         { text: 'duration (s)', value: 'dtdurations' },
         { text: 'duration (hh:mm:ss)', value: 'dthms' },
         { text: 'Timeticks (s/100)', value: 'timeticks' },
+        { text: 'clock (ms)', value: 'clockms' },
+        { text: 'clock (s)', value: 'clocks' },
       ],
     },
     {

@@ -12,11 +12,11 @@ export function createAnnotationToolip(element, event, plot) {
   injector.invoke([
     '$compile',
     '$rootScope',
-    function($compile, $rootScope) {
+    ($compile, $rootScope) => {
       const eventManager = plot.getOptions().events.manager;
       const tmpScope = $rootScope.$new(true);
       tmpScope.event = event;
-      tmpScope.onEdit = function() {
+      tmpScope.onEdit = () => {
         eventManager.editEvent(event);
       };
 
@@ -38,8 +38,8 @@ export function createAnnotationToolip(element, event, plot) {
 
       drop.open();
 
-      drop.on('close', function() {
-        setTimeout(function() {
+      drop.on('close', () => {
+        setTimeout(() => {
           drop.destroy();
         });
       });
@@ -65,7 +65,7 @@ export function createEditPopover(element, event, plot) {
   markerElementToAttachTo = element;
 
   // wait for element to be attached and positioned
-  setTimeout(function() {
+  setTimeout(() => {
     const injector = angular.element(document).injector();
     const content = document.createElement('div');
     content.innerHTML = '<event-editor panel-ctrl="panelCtrl" event="event" close="close()"></event-editor>';
@@ -73,13 +73,13 @@ export function createEditPopover(element, event, plot) {
     injector.invoke([
       '$compile',
       '$rootScope',
-      function($compile, $rootScope) {
+      ($compile, $rootScope) => {
         const scope = $rootScope.$new(true);
         let drop;
 
         scope.event = event;
         scope.panelCtrl = eventManager.panelCtrl;
-        scope.close = function() {
+        scope.close = () => {
           drop.close();
         };
 
@@ -100,9 +100,9 @@ export function createEditPopover(element, event, plot) {
         drop.open();
         eventManager.editorOpened();
 
-        drop.on('close', function() {
+        drop.on('close', () => {
           // need timeout here in order call drop.destroy
-          setTimeout(function() {
+          setTimeout(() => {
             eventManager.editorClosed();
             scope.$destroy();
             drop.destroy();
@@ -420,7 +420,7 @@ export class EventMarkers {
         event: event,
       });
 
-      const mouseenter = function() {
+      const mouseenter = function(this: any) {
         createAnnotationToolip(marker, $(this).data('event'), that._plot);
       };
 
@@ -428,7 +428,7 @@ export class EventMarkers {
         createEditPopover(marker, event.editModel, that._plot);
       }
 
-      const mouseleave = function() {
+      const mouseleave = () => {
         that._plot.clearSelection();
       };
 
@@ -443,10 +443,10 @@ export class EventMarkers {
       function drawFunc(obj) {
         obj.show();
       },
-      function(obj) {
+      obj => {
         obj.remove();
       },
-      function(obj, position) {
+      (obj, position) => {
         obj.css({
           top: position.top,
           left: position.left,
@@ -541,7 +541,7 @@ export class EventMarkers {
       event: event,
     });
 
-    const mouseenter = function() {
+    const mouseenter = function(this: any) {
       createAnnotationToolip(region, $(this).data('event'), that._plot);
     };
 
@@ -549,7 +549,7 @@ export class EventMarkers {
       createEditPopover(region, event.editModel, that._plot);
     }
 
-    const mouseleave = function() {
+    const mouseleave = () => {
       that._plot.clearSelection();
     };
 
@@ -563,10 +563,10 @@ export class EventMarkers {
       function drawFunc(obj) {
         obj.show();
       },
-      function(obj) {
+      obj => {
         obj.remove();
       },
-      function(obj, position) {
+      (obj, position) => {
         obj.css({
           top: position.top,
           left: position.left,
@@ -596,16 +596,16 @@ export class EventMarkers {
  */
 
 /** @ngInject */
-export function init(plot) {
+export function init(this: any, plot) {
   /*jshint validthis:true */
   const that = this;
   const eventMarkers = new EventMarkers(plot);
 
-  plot.getEvents = function() {
+  plot.getEvents = () => {
     return eventMarkers._events;
   };
 
-  plot.hideEvents = function() {
+  plot.hideEvents = () => {
     $.each(eventMarkers._events, (index, event) => {
       event
         .visual()
@@ -614,7 +614,7 @@ export function init(plot) {
     });
   };
 
-  plot.showEvents = function() {
+  plot.showEvents = () => {
     plot.hideEvents();
     $.each(eventMarkers._events, (index, event) => {
       event.hide();
@@ -624,20 +624,20 @@ export function init(plot) {
   };
 
   // change events on an existing plot
-  plot.setEvents = function(events) {
+  plot.setEvents = events => {
     if (eventMarkers.eventsEnabled) {
       eventMarkers.setupEvents(events);
     }
   };
 
-  plot.hooks.processOptions.push(function(plot, options) {
+  plot.hooks.processOptions.push((plot, options) => {
     // enable the plugin
     if (options.events.data != null) {
       eventMarkers.eventsEnabled = true;
     }
   });
 
-  plot.hooks.draw.push(function(plot) {
+  plot.hooks.draw.push(plot => {
     const options = plot.getOptions();
 
     if (eventMarkers.eventsEnabled) {

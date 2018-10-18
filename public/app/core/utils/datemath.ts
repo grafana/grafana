@@ -14,10 +14,10 @@ export function parse(text, roundUp?, timezone?) {
     return moment(text);
   }
 
-  var time;
-  var mathString = '';
-  var index;
-  var parseString;
+  let time;
+  let mathString = '';
+  let index;
+  let parseString;
 
   if (text.substring(0, 3) === 'now') {
     if (timezone === 'utc') {
@@ -61,14 +61,14 @@ export function isValid(text) {
 
 export function parseDateMath(mathString, time, roundUp?) {
   const dateTime = time;
-  var i = 0;
+  let i = 0;
   const len = mathString.length;
 
   while (i < len) {
     const c = mathString.charAt(i++);
-    var type;
-    var num;
-    var unit;
+    let type;
+    let num;
+    let unit;
 
     if (c === '/') {
       type = 0;

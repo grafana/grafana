@@ -11,7 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
+const (
+	// Themes
+	lightName = "light"
+	darkName  = "dark"
+)
+
+func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
@@ -60,7 +66,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			LightTheme:                 prefs.Theme == "light",
+			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
 			Locale:                     locale,
 			HelpFlags1:                 c.HelpFlags1,
@@ -88,9 +94,12 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	}
 
 	themeURLParam := c.Query("theme")
-	if themeURLParam == "light" {
+	if themeURLParam == lightName {
 		data.User.LightTheme = true
-		data.Theme = "light"
+		data.Theme = lightName
+	} else if themeURLParam == darkName {
+		data.User.LightTheme = false
+		data.Theme = darkName
 	}
 
 	if hasEditPermissionInFoldersQuery.Result {
@@ -341,11 +350,12 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		},
 	})
 
+	hs.HooksService.RunIndexDataHooks(&data)
 	return &data, nil
 }
 
-func Index(c *m.ReqContext) {
-	data, err := setIndexViewData(c)
+func (hs *HTTPServer) Index(c *m.ReqContext) {
+	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
@@ -353,13 +363,13 @@ func Index(c *m.ReqContext) {
 	c.HTML(200, "index", data)
 }
 
-func NotFoundHandler(c *m.ReqContext) {
+func (hs *HTTPServer) NotFoundHandler(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return
 	}
 
-	data, err := setIndexViewData(c)
+	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return

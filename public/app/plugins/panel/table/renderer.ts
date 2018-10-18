@@ -47,7 +47,7 @@ export class TableRenderer {
     if (!style.thresholds) {
       return null;
     }
-    for (var i = style.thresholds.length; i > 0; i--) {
+    for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
         return style.colors[i];
       }
@@ -91,7 +91,7 @@ export class TableRenderer {
         if (_.isArray(v)) {
           v = v[0];
         }
-        var date = moment(v);
+        let date = moment(v);
         if (this.isUtc) {
           date = date.utc();
         }
@@ -185,7 +185,7 @@ export class TableRenderer {
     }
 
     const numericValue = Number(value);
-    if (numericValue === NaN) {
+    if (isNaN(numericValue)) {
       return;
     }
 
@@ -194,11 +194,11 @@ export class TableRenderer {
 
   renderRowVariables(rowIndex) {
     const scopedVars = {};
-    let cell_variable;
+    let cellVariable;
     const row = this.table.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
-      cell_variable = `__cell_${i}`;
-      scopedVars[cell_variable] = { value: row[i] };
+      cellVariable = `__cell_${i}`;
+      scopedVars[cellVariable] = { value: row[i] };
     }
     return scopedVars;
   }
@@ -211,9 +211,9 @@ export class TableRenderer {
     value = this.formatColumnValue(columnIndex, value);
 
     const column = this.table.columns[columnIndex];
-    var style = '';
+    let style = '';
     const cellClasses = [];
-    var cellClass = '';
+    let cellClass = '';
 
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + '"';
@@ -226,7 +226,7 @@ export class TableRenderer {
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
     // this hack adds header content to cell (not visible)
-    var columnHtml = '';
+    let columnHtml = '';
     if (addWidthHack) {
       columnHtml = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
     }
@@ -291,15 +291,15 @@ export class TableRenderer {
     const pageSize = this.panel.pageSize || 100;
     const startPos = page * pageSize;
     const endPos = Math.min(startPos + pageSize, this.table.rows.length);
-    var html = '';
+    let html = '';
     const rowClasses = [];
     let rowClass = '';
 
-    for (var y = startPos; y < endPos; y++) {
+    for (let y = startPos; y < endPos; y++) {
       const row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
-      for (var i = 0; i < this.table.columns.length; i++) {
+      for (let i = 0; i < this.table.columns.length; i++) {
         cellHtml += this.renderCell(i, y, row[i], y === startPos);
       }
 
@@ -322,13 +322,13 @@ export class TableRenderer {
   render_values() {
     const rows = [];
 
-    for (var y = 0; y < this.table.rows.length; y++) {
+    for (let y = 0; y < this.table.rows.length; y++) {
       const row = this.table.rows[y];
-      const new_row = [];
-      for (var i = 0; i < this.table.columns.length; i++) {
-        new_row.push(this.formatColumnValue(i, row[i]));
+      const newRow = [];
+      for (let i = 0; i < this.table.columns.length; i++) {
+        newRow.push(this.formatColumnValue(i, row[i]));
       }
-      rows.push(new_row);
+      rows.push(newRow);
     }
     return {
       columns: this.table.columns,

@@ -29,6 +29,6 @@ export class SemVersion {
 }
 
 export function isVersionGtOrEq(a: string, b: string): boolean {
-  const a_semver = new SemVersion(a);
-  return a_semver.isGtOrEq(b);
+  const aSemver = new SemVersion(a);
+  return aSemver.isGtOrEq(b);
 }

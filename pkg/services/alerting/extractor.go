@@ -82,12 +82,12 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		if collapsed && collapsedJSON.MustBool() {
 
 			// extract alerts from sub panels for collapsed panels
-			als, err := e.getAlertFromPanels(panel, validateAlertFunc)
+			alertSlice, err := e.getAlertFromPanels(panel, validateAlertFunc)
 			if err != nil {
 				return nil, err
 			}
 
-			alerts = append(alerts, als...)
+			alerts = append(alerts, alertSlice...)
 			continue
 		}
 
@@ -99,7 +99,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 
 		panelID, err := panel.Get("id").Int64()
 		if err != nil {
-			return nil, fmt.Errorf("panel id is required. err %v", err)
+			return nil, ValidationError{Reason: "A numeric panel id property is missing"}
 		}
 
 		// backward compatibility check, can be removed later
@@ -145,7 +145,8 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 
 			datasource, err := e.lookupDatasourceID(dsName)
 			if err != nil {
-				return nil, err
+				e.log.Debug("Error looking up datasource", "error", err)
+				return nil, ValidationError{Reason: fmt.Sprintf("Data source used by alert rule not found, alertName=%v, datasource=%s", alert.Name, dsName)}
 			}
 
 			jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
@@ -166,8 +167,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		}
 
 		if !validateAlertFunc(alert) {
-			e.log.Debug("Invalid Alert Data. Dashboard, Org or Panel ID is not correct", "alertName", alert.Name, "panelId", alert.PanelId)
-			return nil, m.ErrDashboardContainsInvalidAlertData
+			return nil, ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
 		}
 
 		alerts = append(alerts, alert)

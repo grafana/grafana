@@ -8,7 +8,6 @@ import * as templatingVariable from 'app/features/templating/variable';
 export default class CloudWatchDatasource {
   type: any;
   name: any;
-  supportMetrics: any;
   proxyUrl: any;
   defaultRegion: any;
   instanceSettings: any;
@@ -17,7 +16,6 @@ export default class CloudWatchDatasource {
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
     this.type = 'cloudwatch';
     this.name = instanceSettings.name;
-    this.supportMetrics = true;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.instanceSettings = instanceSettings;
@@ -46,8 +44,14 @@ export default class CloudWatchDatasource {
 
       // valid ExtendedStatistics is like p90.00, check the pattern
       const hasInvalidStatistics = item.statistics.some(s => {
-        return s.indexOf('p') === 0 && !/p\d{2}\.\d{2}/.test(s);
+        if (s.indexOf('p') === 0) {
+          const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
+          return !matches || matches[0] !== s;
+        }
+
+        return false;
       });
+
       if (hasInvalidStatistics) {
         throw { message: 'Invalid extended statistics' };
       }
@@ -85,12 +89,12 @@ export default class CloudWatchDatasource {
     const end = this.convertToCloudWatchTime(options.range.to, true);
     now = Math.round((now || Date.now()) / 1000);
 
-    var period;
+    let period;
     const range = end - start;
 
     const hourSec = 60 * 60;
     const daySec = hourSec * 24;
-    var periodUnit = 60;
+    let periodUnit = 60;
     if (!target.period) {
       if (now - start <= daySec * 15) {
         // until 15 days ago
@@ -133,7 +137,7 @@ export default class CloudWatchDatasource {
       if (res.results) {
         _.forEach(res.results, queryRes => {
           _.forEach(queryRes.series, series => {
-            data.push({ target: series.name, datapoints: series.points });
+            data.push({ target: series.name, datapoints: series.points, unit: queryRes.meta.unit || 'none' });
           });
         });
       }
@@ -222,10 +226,10 @@ export default class CloudWatchDatasource {
   }
 
   metricFindQuery(query) {
-    var region;
-    var namespace;
-    var metricName;
-    var filterJson;
+    let region;
+    let namespace;
+    let metricName;
+    let filterJson;
 
     const regionQuery = query.match(/^regions\(\)/);
     if (regionQuery) {
@@ -291,7 +295,7 @@ export default class CloudWatchDatasource {
       return this.templateSrv.replace(s);
     });
     const defaultPeriod = annotation.prefixMatching ? '' : '300';
-    var period = annotation.period || defaultPeriod;
+    let period = annotation.period || defaultPeriod;
     period = parseInt(period, 10);
     const parameters = {
       prefixMatching: annotation.prefixMatching,

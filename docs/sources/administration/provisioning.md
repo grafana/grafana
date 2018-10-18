@@ -71,6 +71,7 @@ Puppet | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/pupp
 Ansible | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)
 Chef | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
 Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)
+Jsonnet | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)
 
 ## Datasources
 
@@ -122,7 +123,7 @@ datasources:
   withCredentials:
   # <bool> mark as default datasource. Max one per org
   isDefault:
-  # <map> fields that will be converted to json and stored in json_data
+  # <map> fields that will be converted to json and stored in jsonData
   jsonData:
      graphiteVersion: "1.1"
      tlsAuth: true
@@ -146,7 +147,7 @@ Please refer to each datasource documentation for specific provisioning examples
 
 #### Json Data
 
-Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use.
+Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
 | Name | Type | Datasource | Description |
 | ---- | ---- | ---- | ---- |
@@ -154,10 +155,10 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
-| timeInterval | string | Elastic, InfluxDB & Prometheus | Lowest interval/step value that should be used for this data source |
-| esVersion | number | Elastic | Elasticsearch version as an number (2/5/56) |
-| timeField | string | Elastic | Which field that should be used as timestamp |
-| interval | string | Elastic | Index date time format |
+| timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
+| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56) |
+| timeField | string | Elasticsearch | Which field that should be used as timestamp |
+| interval | string | Elasticsearch | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
@@ -165,6 +166,12 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| encrypt | string | MSSQL | Connection SSL encryption handling. 'disable', 'false' or 'true' |
+| postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
+| timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
+| maxOpenConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of open connections to the database (Grafana v5.4+) |
+| maxIdleConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of connections in the idle connection pool (Grafana v5.4+) |
+| connMaxLifetime | number | MySQL, PostgreSQL & MSSQL | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+) |
 
 #### Secure Json Data
 
@@ -197,7 +204,7 @@ providers:
   folder: ''
   type: file
   disableDeletion: false
-  updateIntervalSeconds: 3 #how often Grafana will scan for changed dashboards
+  updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
   options:
     path: /var/lib/grafana/dashboards
 ```
@@ -214,7 +221,7 @@ Note: The JSON shown in input field and when using `Copy JSON to Clipboard` and/
 
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Reuseable Dashboard Urls
+### Reusable Dashboard Urls
 
 If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifier.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.

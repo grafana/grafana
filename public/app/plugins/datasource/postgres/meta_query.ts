@@ -47,11 +47,9 @@ SELECT
     ORDER BY ordinal_position LIMIT 1
   ) AS value_column
 FROM information_schema.tables t
-WHERE
-  table_schema IN (
-		SELECT CASE WHEN trim(unnest) = '"$user"' THEN user ELSE trim(unnest) END
-    FROM unnest(string_to_array(current_setting('search_path'),','))
-  ) AND
+WHERE `;
+    query += this.buildSchemaConstraint();
+    query += ` AND
   EXISTS
   ( SELECT 1
     FROM information_schema.columns c
@@ -74,10 +72,16 @@ LIMIT 1
   }
 
   buildSchemaConstraint() {
-    let query = `
+    const query = `
 table_schema IN (
-	SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
-  FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+  SELECT
+    CASE WHEN trim(s[i]) = '"$user"' THEN user ELSE trim(s[i]) END
+  FROM
+    generate_series(
+      array_lower(string_to_array(current_setting('search_path'),','),1),
+      array_upper(string_to_array(current_setting('search_path'),','),1)
+    ) as i,
+    string_to_array(current_setting('search_path'),',') s
 )`;
     return query;
   }
@@ -87,16 +91,12 @@ table_schema IN (
 
     // check for schema qualified table
     if (table.includes('.')) {
-      let parts = table.split('.');
+      const parts = table.split('.');
       query = 'table_schema = ' + this.quoteIdentAsLiteral(parts[0]);
       query += ' AND table_name = ' + this.quoteIdentAsLiteral(parts[1]);
       return query;
     } else {
-      query = `
-table_schema IN (
-	SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
-  FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
-)`;
+      query = this.buildSchemaConstraint();
       query += ' AND table_name = ' + this.quoteIdentAsLiteral(table);
 
       return query;
@@ -144,23 +144,14 @@ table_schema IN (
     let query = 'SELECT DISTINCT quote_literal(' + column + ')';
     query += ' FROM ' + this.target.table;
     query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
+    query += ' AND ' + column + ' IS NOT NULL';
     query += ' ORDER BY 1 LIMIT 100';
     return query;
   }
 
   buildDatatypeQuery(column: string) {
-    let query = `
-SELECT udt_name
-FROM information_schema.columns
-WHERE
-  table_schema IN (
-  SELECT schema FROM (
-		  SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END as schema
-      FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
-    ) s
-    WHERE EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = s.schema)
-  )
-`;
+    let query = 'SELECT udt_name FROM information_schema.columns WHERE ';
+    query += this.buildSchemaConstraint();
     query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
     return query;

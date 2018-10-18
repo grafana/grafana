@@ -11,7 +11,7 @@ export class DataProcessor {
     }
 
     // auto detect xaxis mode
-    var firstItem;
+    let firstItem;
     if (options.dataList && options.dataList.length > 0) {
       firstItem = options.dataList[0];
       const autoDetectMode = this.getAutoDetectXAxisMode(firstItem);

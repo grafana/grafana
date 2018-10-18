@@ -8,6 +8,7 @@ import { makeRegions, dedupAnnotations } from './events_processing';
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
   alertStatesPromise: any;
+  datasourcePromises: any;
 
   /** @ngInject */
   constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {
@@ -18,6 +19,7 @@ export class AnnotationsSrv {
   clearCache() {
     this.globalAnnotationsPromise = null;
     this.alertStatesPromise = null;
+    this.datasourcePromises = null;
   }
 
   getAnnotations(options) {
@@ -25,7 +27,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        var annotations = _.flattenDeep(results[0]);
+        let annotations = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -90,6 +92,7 @@ export class AnnotationsSrv {
 
     const range = this.timeSrv.timeRange();
     const promises = [];
+    const dsPromises = [];
 
     for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
@@ -99,10 +102,10 @@ export class AnnotationsSrv {
       if (annotation.snapshotData) {
         return this.translateQueryResult(annotation, annotation.snapshotData);
       }
-
+      const datasourcePromise = this.datasourceSrv.get(annotation.datasource);
+      dsPromises.push(datasourcePromise);
       promises.push(
-        this.datasourceSrv
-          .get(annotation.datasource)
+        datasourcePromise
           .then(datasource => {
             // issue query against data source
             return datasource.annotationQuery({
@@ -122,7 +125,7 @@ export class AnnotationsSrv {
           })
       );
     }
-
+    this.datasourcePromises = this.$q.all(dsPromises);
     this.globalAnnotationsPromise = this.$q.all(promises);
     return this.globalAnnotationsPromise;
   }

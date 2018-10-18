@@ -43,7 +43,7 @@ export class BackendSrv {
       return;
     }
 
-    var data = err.data || { message: 'Unexpected error' };
+    let data = err.data || { message: 'Unexpected error' };
     if (_.isString(data)) {
       data = { message: data };
     }
@@ -250,16 +250,6 @@ export class BackendSrv {
 
   createFolder(payload: any) {
     return this.post('/api/folders', payload);
-  }
-
-  updateFolder(folder, options) {
-    options = options || {};
-
-    return this.put(`/api/folders/${folder.uid}`, {
-      title: folder.title,
-      version: folder.version,
-      overwrite: options.overwrite === true,
-    });
   }
 
   deleteFolder(uid: string, showSuccessAlert) {

@@ -21,7 +21,7 @@ import _ from 'lodash';
 import moment from 'moment';
 
 // add move to lodash for backward compatabiltiy
-_.move = function(array, fromIndex, toIndex) {
+_.move = (array, fromIndex, toIndex) => {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
   return array;
 };
@@ -29,7 +29,11 @@ _.move = function(array, fromIndex, toIndex) {
 import { coreModule, registerAngularDirectives } from './core/core';
 import { setupAngularRoutes } from './routes/routes';
 
-declare var System: any;
+// import symlinked extensions
+const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
+extensionsIndex.keys().forEach(key => {
+  extensionsIndex(key);
+});
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -76,9 +80,9 @@ export class GrafanaApp {
       $provide.decorator('$http', [
         '$delegate',
         '$templateCache',
-        function($delegate, $templateCache) {
+        ($delegate, $templateCache) => {
           const get = $delegate.get;
-          $delegate.get = function(url, config) {
+          $delegate.get = (url, config) => {
             if (url.match(/\.html$/)) {
               // some template's already exist in the cache
               if (!$templateCache.get(url)) {
@@ -105,9 +109,9 @@ export class GrafanaApp {
       'react',
     ];
 
-    const module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
+    const moduleTypes = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
-    _.each(module_types, type => {
+    _.each(moduleTypes, type => {
       const moduleName = 'grafana.' + type;
       this.useModule(angular.module(moduleName, []));
     });
@@ -119,7 +123,7 @@ export class GrafanaApp {
     coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    const preBootRequires = [System.import('app/features/all')];
+    const preBootRequires = [import('app/features/all')];
 
     Promise.all(preBootRequires)
       .then(() => {
@@ -135,7 +139,7 @@ export class GrafanaApp {
           this.preBootModules = null;
         });
       })
-      .catch(function(err) {
+      .catch(err => {
         console.log('Application boot failed:', err);
       });
   }

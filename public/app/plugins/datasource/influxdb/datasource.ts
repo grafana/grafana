@@ -16,14 +16,12 @@ export default class InfluxDatasource {
   basicAuth: any;
   withCredentials: any;
   interval: any;
-  supportAnnotations: boolean;
-  supportMetrics: boolean;
   responseParser: any;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
     this.type = 'influxdb';
-    this.urls = _.map(instanceSettings.url.split(','), function(url) {
+    this.urls = _.map(instanceSettings.url.split(','), url => {
       return url.trim();
     });
 
@@ -34,20 +32,18 @@ export default class InfluxDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
-    this.supportAnnotations = true;
-    this.supportMetrics = true;
     this.responseParser = new ResponseParser();
   }
 
   query(options) {
-    var timeFilter = this.getTimeFilter(options);
+    let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
     const targets = _.cloneDeep(options.targets);
     const queryTargets = [];
-    var queryModel;
-    var i, y;
+    let queryModel;
+    let i, y;
 
-    var allQueries = _.map(targets, target => {
+    let allQueries = _.map(targets, target => {
       if (target.hide) {
         return '';
       }
@@ -95,7 +91,7 @@ export default class InfluxDatasource {
         }
 
         const target = queryTargets[i];
-        var alias = target.alias;
+        let alias = target.alias;
         if (alias) {
           alias = this.templateSrv.replace(target.alias, options.scopedVars);
         }
@@ -132,7 +128,7 @@ export default class InfluxDatasource {
     }
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw });
-    var query = options.annotation.query.replace('$timeFilter', timeFilter);
+    let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
     return this._seriesQuery(query, options).then(data => {
@@ -274,7 +270,7 @@ export default class InfluxDatasource {
       result => {
         return result.data;
       },
-      function(err) {
+      err => {
         if (err.status !== 0 || err.status >= 300) {
           if (err.data && err.data.error) {
             throw {
@@ -314,7 +310,7 @@ export default class InfluxDatasource {
 
       const parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
       if (parts) {
-        const amount = parseInt(parts[1]);
+        const amount = parseInt(parts[1], 10);
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }

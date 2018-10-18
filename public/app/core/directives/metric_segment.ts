@@ -3,7 +3,7 @@ import $ from 'jquery';
 import coreModule from '../core_module';
 
 /** @ngInject */
-export function metricSegment($compile, $sce) {
+export function metricSegment($compile, $sce, templateSrv) {
   const inputTemplate =
     '<input type="text" data-provide="typeahead" ' +
     ' class="gf-form-input input-medium"' +
@@ -24,7 +24,7 @@ export function metricSegment($compile, $sce) {
       onChange: '&',
       debounce: '@',
     },
-    link: function($scope, elem) {
+    link: ($scope, elem) => {
       const $input = $(inputTemplate);
       const segment = $scope.segment;
       const $button = $(segment.selectMode ? selectTemplate : linkTemplate);
@@ -36,18 +36,16 @@ export function metricSegment($compile, $sce) {
       $input.appendTo(elem);
       $button.appendTo(elem);
 
-      $scope.updateVariableValue = function(value) {
+      $scope.updateVariableValue = value => {
         if (value === '' || segment.value === value) {
           return;
         }
 
-        value = _.unescape(value);
-
-        $scope.$apply(function() {
+        $scope.$apply(() => {
           const selected = _.find($scope.altSegments, { value: value });
           if (selected) {
             segment.value = selected.value;
-            segment.html = selected.html || selected.value;
+            segment.html = selected.html || $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(selected.value));
             segment.fake = false;
             segment.expandable = selected.expandable;
 
@@ -56,7 +54,7 @@ export function metricSegment($compile, $sce) {
             }
           } else if (segment.custom !== 'false') {
             segment.value = value;
-            segment.html = $sce.trustAsHtml(value);
+            segment.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(value));
             segment.expandable = true;
             segment.fake = false;
           }
@@ -65,7 +63,7 @@ export function metricSegment($compile, $sce) {
         });
       };
 
-      $scope.switchToLink = function(fromClick) {
+      $scope.switchToLink = fromClick => {
         if (linkMode && !fromClick) {
           return;
         }
@@ -78,24 +76,24 @@ export function metricSegment($compile, $sce) {
         $scope.updateVariableValue($input.val());
       };
 
-      $scope.inputBlur = function() {
+      $scope.inputBlur = () => {
         // happens long before the click event on the typeahead options
         // need to have long delay because the blur
         cancelBlur = setTimeout($scope.switchToLink, 200);
       };
 
-      $scope.source = function(query, callback) {
-        $scope.$apply(function() {
-          $scope.getOptions({ $query: query }).then(function(altSegments) {
+      $scope.source = (query, callback) => {
+        $scope.$apply(() => {
+          $scope.getOptions({ $query: query }).then(altSegments => {
             $scope.altSegments = altSegments;
-            options = _.map($scope.altSegments, function(alt) {
+            options = _.map($scope.altSegments, alt => {
               return _.escape(alt.value);
             });
 
             // add custom values
             if (segment.custom !== 'false') {
               if (!segment.fake && _.indexOf(options, segment.value) === -1) {
-                options.unshift(segment.value);
+                options.unshift(_.escape(segment.value));
               }
             }
 
@@ -104,7 +102,8 @@ export function metricSegment($compile, $sce) {
         });
       };
 
-      $scope.updater = function(value) {
+      $scope.updater = value => {
+        value = _.unescape(value);
         if (value === segment.value) {
           clearTimeout(cancelBlur);
           $input.focus();
@@ -118,6 +117,9 @@ export function metricSegment($compile, $sce) {
       };
 
       $scope.matcher = function(item) {
+        if (linkMode) {
+          return false;
+        }
         let str = this.query;
         if (str[0] === '/') {
           str = str.substring(1);
@@ -152,14 +154,14 @@ export function metricSegment($compile, $sce) {
         typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
       }
 
-      $button.keydown(function(evt) {
+      $button.keydown(evt => {
         // trigger typeahead on down arrow or enter key
         if (evt.keyCode === 40 || evt.keyCode === 13) {
           $button.click();
         }
       });
 
-      $button.click(function() {
+      $button.click(() => {
         options = null;
         $input.css('width', Math.max($button.width(), 80) + 16 + 'px');
 
@@ -199,7 +201,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
       pre: function postLink($scope, elem, attrs) {
         let cachedOptions;
 
-        $scope.valueToSegment = function(value) {
+        $scope.valueToSegment = value => {
           const option = _.find($scope.options, { value: value });
           const segment = {
             cssClass: attrs.cssClass,
@@ -211,18 +213,18 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
           return uiSegmentSrv.newSegment(segment);
         };
 
-        $scope.getOptionsInternal = function() {
+        $scope.getOptionsInternal = () => {
           if ($scope.options) {
             cachedOptions = $scope.options;
             return $q.when(
-              _.map($scope.options, function(option) {
+              _.map($scope.options, option => {
                 return { value: option.text };
               })
             );
           } else {
-            return $scope.getOptions().then(function(options) {
+            return $scope.getOptions().then(options => {
               cachedOptions = options;
-              return _.map(options, function(option) {
+              return _.map(options, option => {
                 if (option.html) {
                   return option;
                 }
@@ -232,7 +234,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
           }
         };
 
-        $scope.onSegmentChange = function() {
+        $scope.onSegmentChange = () => {
           if (cachedOptions) {
             const option = _.find(cachedOptions, { text: $scope.segment.value });
             if (option && option.value !== $scope.property) {
@@ -246,8 +248,8 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
 
           // needs to call this after digest so
           // property is synced with outerscope
-          $scope.$$postDigest(function() {
-            $scope.$apply(function() {
+          $scope.$$postDigest(() => {
+            $scope.$apply(() => {
               $scope.onChange();
             });
           });

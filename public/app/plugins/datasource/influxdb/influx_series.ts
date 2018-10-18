@@ -14,7 +14,7 @@ export default class InfluxSeries {
 
   getTimeSeries() {
     const output = [];
-    var i, j;
+    let i, j;
 
     if (this.series.length === 0) {
       return output;
@@ -22,12 +22,12 @@ export default class InfluxSeries {
 
     _.each(this.series, series => {
       const columns = series.columns.length;
-      const tags = _.map(series.tags, function(value, key) {
+      const tags = _.map(series.tags, (value, key) => {
         return key + ': ' + value;
       });
 
       for (j = 1; j < columns; j++) {
-        var seriesName = series.name;
+        let seriesName = series.name;
         const columnName = series.columns[j];
         if (columnName !== 'value') {
           seriesName = seriesName + '.' + columnName;
@@ -57,7 +57,7 @@ export default class InfluxSeries {
     const regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
     const segments = series.name.split('.');
 
-    return this.alias.replace(regex, function(match, g1, g2) {
+    return this.alias.replace(regex, (match, g1, g2) => {
       const group = g1 || g2;
       const segIndex = parseInt(group, 10);
 
@@ -86,10 +86,10 @@ export default class InfluxSeries {
     const list = [];
 
     _.each(this.series, series => {
-      var titleCol = null;
-      var timeCol = null;
+      let titleCol = null;
+      let timeCol = null;
       const tagsCol = [];
-      var textCol = null;
+      let textCol = null;
 
       _.each(series.columns, (column, index) => {
         if (column === 'time') {
@@ -98,9 +98,6 @@ export default class InfluxSeries {
         }
         if (column === 'sequence_number') {
           return;
-        }
-        if (!titleCol) {
-          titleCol = index;
         }
         if (column === this.annotation.titleColumn) {
           titleCol = index;
@@ -114,6 +111,10 @@ export default class InfluxSeries {
           textCol = index;
           return;
         }
+        // legacy case
+        if (!titleCol && textCol !== index) {
+          titleCol = index;
+        }
       });
 
       _.each(series.values, value => {
@@ -124,10 +125,10 @@ export default class InfluxSeries {
           // Remove empty values, then split in different tags for comma separated values
           tags: _.flatten(
             tagsCol
-              .filter(function(t) {
+              .filter(t => {
                 return value[t];
               })
-              .map(function(t) {
+              .map(t => {
                 return value[t].split(',');
               })
           ),
@@ -143,7 +144,7 @@ export default class InfluxSeries {
 
   getTable() {
     const table = new TableModel();
-    var i, j;
+    let i, j;
 
     if (this.series.length === 0) {
       return table;
@@ -158,7 +159,7 @@ export default class InfluxSeries {
           table.columns.push({ text: 'Time', type: 'time' });
           j++;
         }
-        _.each(_.keys(series.tags), function(key) {
+        _.each(_.keys(series.tags), key => {
           table.columns.push({ text: key });
         });
         for (; j < series.columns.length; j++) {

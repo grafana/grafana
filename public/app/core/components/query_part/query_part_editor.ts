@@ -33,7 +33,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
 
       $scope.partActions = [];
 
-      function clickFuncParam(paramIndex) {
+      function clickFuncParam(this: any, paramIndex) {
         /*jshint validthis:true */
         const $link = $(this);
         const $input = $link.next();
@@ -53,7 +53,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      function inputBlur(paramIndex) {
+      function inputBlur(this: any, paramIndex) {
         /*jshint validthis:true */
         const $input = $(this);
         const $link = $input.prev();
@@ -72,14 +72,14 @@ export function queryPartEditorDirective($compile, templateSrv) {
         $link.show();
       }
 
-      function inputKeyPress(paramIndex, e) {
+      function inputKeyPress(this: any, paramIndex, e) {
         /*jshint validthis:true */
         if (e.which === 13) {
           inputBlur.call(this, paramIndex);
         }
       }
 
-      function inputKeyDown() {
+      function inputKeyDown(this: any) {
         /*jshint validthis:true */
         this.style.width = (3 + this.value.length) * 8 + 'px';
       }
@@ -89,21 +89,21 @@ export function queryPartEditorDirective($compile, templateSrv) {
           return;
         }
 
-        const typeaheadSource = function(query, callback) {
+        const typeaheadSource = (query, callback) => {
           if (param.options) {
-            var options = param.options;
+            let options = param.options;
             if (param.type === 'int') {
-              options = _.map(options, function(val) {
+              options = _.map(options, val => {
                 return val.toString();
               });
             }
             return options;
           }
 
-          $scope.$apply(function() {
-            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then(function(result) {
-              const dynamicOptions = _.map(result, function(op) {
-                return op.value;
+          $scope.$apply(() => {
+            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then(result => {
+              const dynamicOptions = _.map(result, op => {
+                return _.escape(op.value);
               });
               callback(dynamicOptions);
             });
@@ -116,8 +116,9 @@ export function queryPartEditorDirective($compile, templateSrv) {
           source: typeaheadSource,
           minLength: 0,
           items: 1000,
-          updater: function(value) {
-            setTimeout(function() {
+          updater: value => {
+            value = _.unescape(value);
+            setTimeout(() => {
               inputBlur.call($input[0], paramIndex);
             }, 0);
             return value;
@@ -136,18 +137,18 @@ export function queryPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      $scope.showActionsMenu = function() {
+      $scope.showActionsMenu = () => {
         $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then(res => {
           $scope.partActions = res;
         });
       };
 
-      $scope.triggerPartAction = function(action) {
+      $scope.triggerPartAction = action => {
         $scope.handleEvent({ $event: { name: 'action', action: action } });
       };
 
       function addElementsAndCompile() {
-        _.each(partDef.params, function(param, index) {
+        _.each(partDef.params, (param, index) => {
           if (param.optional && part.params.length <= index) {
             return;
           }

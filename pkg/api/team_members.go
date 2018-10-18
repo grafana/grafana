@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -17,6 +18,11 @@ func GetTeamMembers(c *m.ReqContext) Response {
 
 	for _, member := range query.Result {
 		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
+		member.Labels = []string{}
+
+		if setting.IsEnterprise && setting.LdapEnabled && member.External {
+			member.Labels = append(member.Labels, "LDAP")
+		}
 	}
 
 	return JSON(200, query.Result)

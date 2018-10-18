@@ -34,7 +34,7 @@ Organizations via a role. That role can be:
 
 There are currently no permissions on individual dashboards.
 
-Read more about Grafanas new user model on the [Admin section](../reference/admin/)
+Read more about Grafana's new user model on the [Admin section](../reference/admin/)
 
 ## Dashboard Snapshot sharing
 

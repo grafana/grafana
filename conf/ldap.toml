@@ -31,37 +31,11 @@ search_filter = "(cn=%s)"
 # An array of base dns to search through
 search_base_dns = ["dc=grafana,dc=org"]
 
-# In POSIX LDAP schemas, without memberOf attribute a secondary query must be made for groups.
-# This is done by enabling group_search_filter below. You must also set member_of= "cn"
-# in [servers.attributes] below.
-
-# Users with nested/recursive group membership and an LDAP server that supports LDAP_MATCHING_RULE_IN_CHAIN
-# can set group_search_filter, group_search_filter_user_attribute, group_search_base_dns and member_of
-# below in such a way that the user's recursive group membership is considered.
-#
-# Nested Groups + Active Directory (AD) Example:
-#
-#   AD groups store the Distinguished Names (DNs) of members, so your filter must
-#   recursively search your groups for the authenticating user's DN. For example:
-#
-#     group_search_filter = "(member:1.2.840.113556.1.4.1941:=%s)"
-#     group_search_filter_user_attribute = "distinguishedName"
-#     group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
-#
-#     [servers.attributes]
-#     ...
-#     member_of = "distinguishedName"
-
-## Group search filter, to retrieve the groups of which the user is a member (only set if memberOf attribute is not available)
+## For Posix or LDAP setups that does not support member_of attribute you can define the below settings
+## Please check grafana LDAP docs for examples
 # group_search_filter = "(&(objectClass=posixGroup)(memberUid=%s))"
-## Group search filter user attribute defines what user attribute gets substituted for %s in group_search_filter.
-## Defaults to the value of username in [server.attributes]
-## Valid options are any of your values in [servers.attributes]
-## If you are using nested groups you probably want to set this and member_of in
-## [servers.attributes] to "distinguishedName"
-# group_search_filter_user_attribute = "distinguishedName"
-## An array of the base DNs to search through for groups. Typically uses ou=groups
 # group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
+# group_search_filter_user_attribute = "uid"
 
 # Specify names of the ldap attributes your ldap uses
 [servers.attributes]

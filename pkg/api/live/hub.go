@@ -37,9 +37,6 @@ func newHub() *hub {
 	}
 }
 
-func (h *hub) removeConnection() {
-}
-
 func (h *hub) run(ctx context.Context) {
 	for {
 		select {

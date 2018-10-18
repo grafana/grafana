@@ -8,7 +8,7 @@ export class PlaylistSearchCtrl {
 
   /** @ngInject */
   constructor($timeout, private backendSrv) {
-    this.query = { query: '', tag: [], starred: false, limit: 30 };
+    this.query = { query: '', tag: [], starred: false, limit: 20 };
 
     $timeout(() => {
       this.query.query = '';

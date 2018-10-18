@@ -182,6 +182,21 @@ func TestAccountDataAccess(t *testing.T) {
 					})
 				})
 
+				Convey("Removing user from org should delete user completely if in no other org", func() {
+					// make sure ac2 has no org
+					err := DeleteOrg(&m.DeleteOrgCommand{Id: ac2.OrgId})
+					So(err, ShouldBeNil)
+
+					// remove frome ac2 from ac1 org
+					remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, ShouldDeleteOrphanedUser: true}
+					err = RemoveOrgUser(&remCmd)
+					So(err, ShouldBeNil)
+					So(remCmd.UserWasDeleted, ShouldBeTrue)
+
+					err = GetSignedInUser(&m.GetSignedInUserQuery{UserId: ac2.Id})
+					So(err, ShouldEqual, m.ErrUserNotFound)
+				})
+
 				Convey("Cannot delete last admin org user", func() {
 					cmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id}
 					err := RemoveOrgUser(&cmd)

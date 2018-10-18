@@ -14,7 +14,7 @@ class Query {
 }
 
 export class ManageDashboardsCtrl {
-  public sections: any[];
+  sections: any[];
 
   query: Query;
   navModel: any;
@@ -207,7 +207,7 @@ export class ManageDashboardsCtrl {
     const template =
       '<move-to-folder-modal dismiss="dismiss()" ' +
       'dashboards="model.dashboards" after-save="model.afterSave()">' +
-      '</move-to-folder-modal>`';
+      '</move-to-folder-modal>';
     appEvents.emit('show-modal', {
       templateHtml: template,
       modalClass: 'modal--narrow',

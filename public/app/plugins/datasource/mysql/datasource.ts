@@ -7,6 +7,7 @@ export class MysqlDatasource {
   name: any;
   responseParser: ResponseParser;
   queryModel: MysqlQuery;
+  interval: string;
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
@@ -14,6 +15,7 @@ export class MysqlDatasource {
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
     this.queryModel = new MysqlQuery({});
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
   interpolateVariable(value, variable) {

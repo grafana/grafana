@@ -5,9 +5,9 @@ os: Windows Server 2012 R2
 clone_folder: c:\gopath\src\github.com\grafana\grafana
 
 environment:
-  nodejs_version: "6"
+  nodejs_version: "8"
   GOPATH: C:\gopath
-  GOVERSION: 1.10
+  GOVERSION: 1.11
 
 install:
   - rmdir c:\go /s /q

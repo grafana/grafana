@@ -144,7 +144,7 @@ export class DashboardModel {
     });
 
     // make clone
-    var copy: any = {};
+    let copy: any = {};
     for (const property in this) {
       if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
@@ -258,7 +258,7 @@ export class DashboardModel {
   }
 
   sortPanelsByGridPos() {
-    this.panels.sort(function(panelA, panelB) {
+    this.panels.sort((panelA, panelB) => {
       if (panelA.gridPos.y === panelB.gridPos.y) {
         return panelA.gridPos.x - panelB.gridPos.x;
       } else {
@@ -775,8 +775,8 @@ export class DashboardModel {
   getNextQueryLetter(panel) {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    return _.find(letters, function(refId) {
-      return _.every(panel.targets, function(other) {
+    return _.find(letters, refId => {
+      return _.every(panel.targets, other => {
         return other.refId !== refId;
       });
     });
@@ -842,12 +842,20 @@ export class DashboardModel {
       })
     );
 
-    // Consider navbar and submenu controls, padding and margin
-    let visibleHeight = window.innerHeight - 55 - 20;
+    const navbarHeight = 55;
+    const margin = 20;
+    const submenuHeight = 50;
 
-    // Remove submenu if visible
-    if (this.meta.submenuEnabled) {
-      visibleHeight -= 50;
+    let visibleHeight = viewHeight - navbarHeight - margin;
+
+    // Remove submenu height if visible
+    if (this.meta.submenuEnabled && !this.meta.kiosk) {
+      visibleHeight -= submenuHeight;
+    }
+
+    // add back navbar height
+    if (this.meta.kiosk === 'b') {
+      visibleHeight += 55;
     }
 
     const visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));

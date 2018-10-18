@@ -3,7 +3,7 @@ import CloudWatchDatasource from '../datasource';
 import * as dateMath from 'app/core/utils/datemath';
 import _ from 'lodash';
 
-describe('CloudWatchDatasource', function() {
+describe('CloudWatchDatasource', () => {
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
@@ -25,16 +25,16 @@ describe('CloudWatchDatasource', function() {
     },
   };
   const backendSrv = {};
-  const ctx = <any>{
+  const ctx = {
     backendSrv,
     templateSrv,
-  };
+  } as any;
 
   beforeEach(() => {
     ctx.ds = new CloudWatchDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
   });
 
-  describe('When performing CloudWatch query', function() {
+  describe('When performing CloudWatch query', () => {
     let requestParams;
 
     const query = {
@@ -60,6 +60,7 @@ describe('CloudWatchDatasource', function() {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -80,8 +81,8 @@ describe('CloudWatchDatasource', function() {
       });
     });
 
-    it('should generate the correct query', function(done) {
-      ctx.ds.query(query).then(function() {
+    it('should generate the correct query', done => {
+      ctx.ds.query(query).then(() => {
         const params = requestParams.queries[0];
         expect(params.namespace).toBe(query.targets[0].namespace);
         expect(params.metricName).toBe(query.targets[0].metricName);
@@ -92,7 +93,7 @@ describe('CloudWatchDatasource', function() {
       });
     });
 
-    it('should generate the correct query with interval variable', function(done) {
+    it('should generate the correct query with interval variable', done => {
       ctx.templateSrv.data = {
         period: '10m',
       };
@@ -114,14 +115,14 @@ describe('CloudWatchDatasource', function() {
         ],
       };
 
-      ctx.ds.query(query).then(function() {
+      ctx.ds.query(query).then(() => {
         const params = requestParams.queries[0];
         expect(params.period).toBe('600');
         done();
       });
     });
 
-    it('should cancel query for invalid extended statistics', function() {
+    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
       const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -133,7 +134,7 @@ describe('CloudWatchDatasource', function() {
             dimensions: {
               InstanceId: 'i-12345678',
             },
-            statistics: ['pNN.NN'],
+            statistics: [stat],
             period: '60s',
           },
         ],
@@ -141,8 +142,8 @@ describe('CloudWatchDatasource', function() {
       expect(ctx.ds.query.bind(ctx.ds, query)).toThrow(/Invalid extended statistics/);
     });
 
-    it('should return series list', function(done) {
-      ctx.ds.query(query).then(function(result) {
+    it('should return series list', done => {
+      ctx.ds.query(query).then(result => {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
@@ -150,8 +151,8 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describe('When query region is "default"', function() {
-    it('should return the datasource region if empty or "default"', function() {
+  describe('When query region is "default"', () => {
+    it('should return the datasource region if empty or "default"', () => {
       const defaultRegion = instanceSettings.jsonData.defaultRegion;
 
       expect(ctx.ds.getActualRegion()).toBe(defaultRegion);
@@ -159,19 +160,19 @@ describe('CloudWatchDatasource', function() {
       expect(ctx.ds.getActualRegion('default')).toBe(defaultRegion);
     });
 
-    it('should return the specified region if specified', function() {
+    it('should return the specified region if specified', () => {
       expect(ctx.ds.getActualRegion('some-fake-region-1')).toBe('some-fake-region-1');
     });
 
     let requestParams;
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.ds.performTimeSeriesQuery = jest.fn(request => {
         requestParams = request;
         return Promise.resolve({ data: {} });
       });
     });
 
-    it('should query for the datasource region if empty or "default"', function(done) {
+    it('should query for the datasource region if empty or "default"', done => {
       const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -189,14 +190,14 @@ describe('CloudWatchDatasource', function() {
         ],
       };
 
-      ctx.ds.query(query).then(function(result) {
+      ctx.ds.query(query).then(result => {
         expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
         done();
       });
     });
   });
 
-  describe('When performing CloudWatch query for extended statistics', function() {
+  describe('When performing CloudWatch query for extended statistics', () => {
     const query = {
       range: { from: 'now-1h', to: 'now' },
       rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -221,6 +222,7 @@ describe('CloudWatchDatasource', function() {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'TargetResponseTime_p90.00',
@@ -235,14 +237,14 @@ describe('CloudWatchDatasource', function() {
       },
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.backendSrv.datasourceRequest = jest.fn(params => {
         return Promise.resolve({ data: response });
       });
     });
 
-    it('should return series list', function(done) {
-      ctx.ds.query(query).then(function(result) {
+    it('should return series list', done => {
+      ctx.ds.query(query).then(result => {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
@@ -378,7 +380,7 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  it('should caclculate the correct period', function() {
+  it('should caclculate the correct period', () => {
     const hourSec = 60 * 60;
     const daySec = hourSec * 24;
     const start = 1483196400 * 1000;

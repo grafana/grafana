@@ -21,7 +21,7 @@ The export feature is now accessed from the share menu.
 Dashboards exported from Grafana 3.1 are now more portable and easier for others to import than before.
 The export process extracts information data source types used by panels and adds these to a new `inputs`
 section in the dashboard json. So when you or another person tries to import the dashboard they will be asked to
-select data source and optional metrix prefix options.
+select data source and optional metric prefix options.
 
 <img src="/img/docs/v31/import_step1.png">
 
@@ -53,7 +53,7 @@ Grafana url to share with a colleague without having to use the Share modal.
 
 ## Internal metrics
 
-Do you want metrics about viewing metrics? Ofc you do! In this release we added support for sending metrics about Grafana to graphite.
+Do you want metrics about viewing metrics? Of course you do! In this release we added support for sending metrics about Grafana to graphite.
 You can configure interval and server in the config file.
 
 ## Logging

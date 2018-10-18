@@ -16,11 +16,10 @@ weight = 2
 
 When an alert changes state, it sends out notifications. Each alert rule can have
 multiple notifications. In order to add a notification to an alert rule you first need
-to add and configure a `notification` channel (can be email, PagerDuty or other integration). This is done from the Notification Channels page.
+to add and configure a `notification` channel (can be email, PagerDuty or other integration).
+This is done from the Notification Channels page.
 
 ## Notification Channel Setup
-
-{{< imgbox max-width="30%" img="/img/docs/v50/alerts_notifications_menu.png" caption="Alerting Notification Channels" >}}
 
 On the Notification Channels page hit the `New Channel` button to go the page where you
 can configure and setup a new Notification Channel.
@@ -30,7 +29,31 @@ sure it's setup correctly.
 
 ### Send on all alerts
 
-When checked, this option will nofity for all alert rules - existing and new.
+When checked, this option will notify for all alert rules - existing and new.
+
+### Send reminders
+
+> Only available in Grafana v5.3 and above.
+
+{{< docs-imagebox max-width="600px" img="/img/docs/v53/alerting_notification_reminders.png" class="docs-image--right" caption="Alerting notification reminders setup" >}}
+
+When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
+should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
+
+**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval](/alerting/rules/#name-evaluation-interval).
+
+These examples show how often and when reminders are sent for a triggered alert.
+
+Alert rule evaluation interval | Send reminders every | Reminder sent every (after last alert notification)
+---------- | ----------- | -----------
+`30s` | `15s` | ~30 seconds
+`1m` | `5m` | ~5 minutes
+`5m` | `15m` | ~15 minutes
+`6m` | `20m` | ~24 minutes
+`1h` | `15m` | ~1 hour
+`1h` | `2h` | ~2 hours
+
+<div class="clearfix"></div>
 
 ## Supported Notification Types
 
@@ -105,7 +128,7 @@ Example json body:
 
 In DingTalk PC Client:
 
-1. Click "more" icon on left bottom of the panel.
+1. Click "more" icon on upper right of the panel.
 
 2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
@@ -132,23 +155,23 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 ### All supported notifiers
 
-Name | Type |Support images
------|------------ | ------
-Slack | `slack` | yes
-Pagerduty | `pagerduty` | yes
-Email | `email` | yes
-Webhook | `webhook` | link
-Kafka | `kafka` | no
-Hipchat | `hipchat` | yes
-VictorOps | `victorops` | yes
-Sensu | `sensu` | yes
-OpsGenie | `opsgenie` | yes
-Threema | `threema` | yes
-Pushover | `pushover` | no
-Telegram | `telegram` | no
-Line | `line` | no
-Prometheus Alertmanager | `prometheus-alertmanager` | no
-Microsoft Teams | `teams` | yes
+Name | Type |Support images | Support reminders
+-----|------------ | ------ | ------ |
+Slack | `slack` | yes | yes
+Pagerduty | `pagerduty` | yes | yes
+Email | `email` | yes | yes
+Webhook | `webhook` | link | yes
+Kafka | `kafka` | no | yes
+Hipchat | `hipchat` | yes | yes
+VictorOps | `victorops` | yes | yes
+Sensu | `sensu` | yes | yes
+OpsGenie | `opsgenie` | yes | yes
+Threema | `threema` | yes | yes
+Pushover | `pushover` | no | yes
+Telegram | `telegram` | no | yes
+Line | `line` | no | yes
+Microsoft Teams | `teams` | yes | yes
+Prometheus Alertmanager | `prometheus-alertmanager` | no | no
 
 
 

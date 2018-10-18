@@ -13,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.10](https://golang.org/dl/)
+- [Go (Latest Stable)](https://golang.org/dl/)
 - [Git](https://git-scm.com/downloads)
 - [NodeJS LTS](https://nodejs.org/download/)
 - node-gyp is the Node.js native addon build tool and it requires extra dependencies: python 2.7, make and GCC. These are already installed for most Linux distros and MacOS. See the Building On Windows section or the [node-gyp installation instructions](https://github.com/nodejs/node-gyp#installation) for more details.

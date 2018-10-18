@@ -75,15 +75,15 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		// iterate backwards to create aggregations bottom-down
 		for _, bucketAgg := range q.BucketAggs {
 			switch bucketAgg.Type {
-			case "date_histogram":
+			case dateHistType:
 				aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
-			case "histogram":
+			case histogramType:
 				aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
-			case "filters":
+			case filtersType:
 				aggBuilder = addFiltersAgg(aggBuilder, bucketAgg)
-			case "terms":
+			case termsType:
 				aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
-			case "geohash_grid":
+			case geohashGridType:
 				aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
 			}
 		}
@@ -171,6 +171,10 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 		} else {
 			a.Size = 500
 		}
+		if a.Size == 0 {
+			a.Size = 500
+		}
+
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {
 			a.MinDocCount = &minDocCount
 		}

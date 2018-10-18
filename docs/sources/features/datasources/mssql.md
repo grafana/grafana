@@ -6,7 +6,7 @@ type = "docs"
 [menu.docs]
 name = "Microsoft SQL Server"
 parent = "datasources"
-weight = 7
+weight = 8
 +++
 
 # Using Microsoft SQL Server in Grafana
@@ -32,6 +32,28 @@ Name | Description
 *Database* | Name of your MSSQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
+*Encrypt* | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false` (Grafana v5.4+).
+*Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+*Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
+
+### Min time interval
+
+A lower limit for the [$__interval](/reference/templating/#the-interval-variable) and [$__interval_ms](/reference/templating/#the-interval-ms-variable) variables.
+Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
 
 ### Database User Permissions (Important!)
 
@@ -51,8 +73,8 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 ### Known Issues
 
-MSSQL 2008 and 2008 R2 engine cannot handle login records when SSL encryption is not disabled. Due to this you may receive an `Login error: EOF` error when trying to create your datasource.
-To fix MSSQL 2008 R2 issue, install MSSQL 2008 R2 Service Pack 2. To fix MSSQL 2008 issue, install Microsoft MSSQL 2008 Service Pack 3 and Cumulative update package 3 for MSSQL 2008 SP3.
+If you're using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable encryption to be able to connect.
+If possible, we recommend you to use the latest service pack available for optimal compatibility.
 
 ## Query Editor
 
@@ -156,6 +178,8 @@ The resulting table panel:
 If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must must have a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you omit the `metric` column, the name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
 
+Resultsets of time series queries need to be sorted by time.
+
 **Example database table:**
 
 ```sql
@@ -205,7 +229,7 @@ When above query are used in a graph panel the result will be two series named `
 
 {{< docs-imagebox img="/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
 
-**Example with multiple `value` culumns:**
+**Example with multiple `value` columns:**
 
 ```sql
 SELECT
@@ -565,6 +589,10 @@ datasources:
     url: localhost:1433
     database: grafana
     user: grafana
+    jsonData:
+      maxOpenConns: 0         # Grafana v5.4+
+      maxIdleConns: 2         # Grafana v5.4+
+      connMaxLifetime: 14400  # Grafana v5.4+
     secureJsonData:
       password: "Password!"
 

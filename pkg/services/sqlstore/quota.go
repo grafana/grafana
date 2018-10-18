@@ -38,7 +38,7 @@ func GetOrgQuotaByTarget(query *m.GetOrgQuotaByTargetQuery) error {
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.Sql(rawSql, query.OrgId).Find(&resp); err != nil {
+	if err := x.SQL(rawSql, query.OrgId).Find(&resp); err != nil {
 		return err
 	}
 
@@ -81,7 +81,7 @@ func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
 		//get quota used.
 		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 		resp := make([]*targetCount, 0)
-		if err := x.Sql(rawSql, q.OrgId).Find(&resp); err != nil {
+		if err := x.SQL(rawSql, q.OrgId).Find(&resp); err != nil {
 			return err
 		}
 		result[i] = &m.OrgQuotaDTO{
@@ -116,7 +116,7 @@ func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 			}
 		} else {
 			//update existing quota entry in the DB.
-			if _, err := sess.Id(quota.Id).Update(&quota); err != nil {
+			if _, err := sess.ID(quota.Id).Update(&quota); err != nil {
 				return err
 			}
 		}
@@ -140,7 +140,7 @@ func GetUserQuotaByTarget(query *m.GetUserQuotaByTargetQuery) error {
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.Sql(rawSql, query.UserId).Find(&resp); err != nil {
+	if err := x.SQL(rawSql, query.UserId).Find(&resp); err != nil {
 		return err
 	}
 
@@ -183,7 +183,7 @@ func GetUserQuotas(query *m.GetUserQuotasQuery) error {
 		//get quota used.
 		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 		resp := make([]*targetCount, 0)
-		if err := x.Sql(rawSql, q.UserId).Find(&resp); err != nil {
+		if err := x.SQL(rawSql, q.UserId).Find(&resp); err != nil {
 			return err
 		}
 		result[i] = &m.UserQuotaDTO{
@@ -218,7 +218,7 @@ func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
 			}
 		} else {
 			//update existing quota entry in the DB.
-			if _, err := sess.Id(quota.Id).Update(&quota); err != nil {
+			if _, err := sess.ID(quota.Id).Update(&quota); err != nil {
 				return err
 			}
 		}
@@ -231,7 +231,7 @@ func GetGlobalQuotaByTarget(query *m.GetGlobalQuotaByTargetQuery) error {
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.Sql(rawSql).Find(&resp); err != nil {
+	if err := x.SQL(rawSql).Find(&resp); err != nil {
 		return err
 	}
 

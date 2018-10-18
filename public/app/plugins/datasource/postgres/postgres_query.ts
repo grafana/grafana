@@ -44,15 +44,15 @@ export default class PostgresQuery {
   }
 
   quoteIdentifier(value) {
-    return '"' + value.replace(/"/g, '""') + '"';
+    return '"' + String(value).replace(/"/g, '""') + '"';
   }
 
   quoteLiteral(value) {
-    return "'" + value.replace(/'/g, "''") + "'";
+    return "'" + String(value).replace(/'/g, "''") + "'";
   }
 
   escapeLiteral(value) {
-    return value.replace(/'/g, "''");
+    return String(value).replace(/'/g, "''");
   }
 
   hasTimeGroup() {
@@ -73,12 +73,12 @@ export default class PostgresQuery {
       return this.quoteLiteral(value);
     }
 
-    let escapedValues = _.map(value, this.quoteLiteral);
+    const escapedValues = _.map(value, this.quoteLiteral);
     return escapedValues.join(',');
   }
 
   render(interpolate?) {
-    let target = this.target;
+    const target = this.target;
 
     // new query with no table set yet
     if (!this.target.rawQuery && !('table' in this.target)) {
@@ -101,7 +101,7 @@ export default class PostgresQuery {
   }
 
   buildTimeColumn(alias = true) {
-    let timeGroup = this.hasTimeGroup();
+    const timeGroup = this.hasTimeGroup();
     let query;
     let macro = '$__timeGroup';
 
@@ -139,7 +139,7 @@ export default class PostgresQuery {
 
   buildValueColumns() {
     let query = '';
-    for (let column of this.target.select) {
+    for (const column of this.target.select) {
       query += ',\n  ' + this.buildValueColumn(column);
     }
 
@@ -149,14 +149,14 @@ export default class PostgresQuery {
   buildValueColumn(column) {
     let query = '';
 
-    let columnName = _.find(column, (g: any) => g.type === 'column');
+    const columnName = _.find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    let aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    let windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+    const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+    const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
 
     if (aggregate) {
-      let func = aggregate.params[0];
+      const func = aggregate.params[0];
       switch (aggregate.type) {
         case 'aggregate':
           if (func === 'first' || func === 'last') {
@@ -172,13 +172,13 @@ export default class PostgresQuery {
     }
 
     if (windows) {
-      let overParts = [];
+      const overParts = [];
       if (this.hasMetricColumn()) {
         overParts.push('PARTITION BY ' + this.target.metricColumn);
       }
       overParts.push('ORDER BY ' + this.buildTimeColumn(false));
 
-      let over = overParts.join(' ');
+      const over = overParts.join(' ');
       let curr: string;
       let prev: string;
       switch (windows.type) {
@@ -187,7 +187,8 @@ export default class PostgresQuery {
             case 'increase':
               curr = query;
               prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
+              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
               break;
             case 'rate':
               let timeColumn = this.target.timeColumn;
@@ -197,7 +198,8 @@ export default class PostgresQuery {
 
               curr = query;
               prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
+              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
               query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
               break;
             default:
@@ -211,7 +213,7 @@ export default class PostgresQuery {
       }
     }
 
-    let alias = _.find(column, (g: any) => g.type === 'alias');
+    const alias = _.find(column, (g: any) => g.type === 'alias');
     if (alias) {
       query += ' AS ' + this.quoteIdentifier(alias.params[0]);
     }
@@ -221,7 +223,7 @@ export default class PostgresQuery {
 
   buildWhereClause() {
     let query = '';
-    let conditions = _.map(this.target.where, (tag, index) => {
+    const conditions = _.map(this.target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
           return tag.name + '(' + this.target.timeColumn + ')';
@@ -244,7 +246,7 @@ export default class PostgresQuery {
     let groupSection = '';
 
     for (let i = 0; i < this.target.group.length; i++) {
-      let part = this.target.group[i];
+      const part = this.target.group[i];
       if (i > 0) {
         groupSection += ', ';
       }
@@ -279,6 +281,9 @@ export default class PostgresQuery {
     query += this.buildGroupClause();
 
     query += '\nORDER BY 1';
+    if (this.hasMetricColumn()) {
+      query += ',2';
+    }
 
     return query;
   }

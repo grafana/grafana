@@ -9,7 +9,7 @@ export class AxesEditorCtrl {
   xAxisStatOptions: any;
   xNameSegment: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private $scope, private $q) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
@@ -76,7 +76,7 @@ export class AxesEditorCtrl {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 export function axesEditorComponent() {
   'use strict';
   return {

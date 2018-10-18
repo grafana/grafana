@@ -1,6 +1,6 @@
 import { Lexer } from './lexer';
 
-export function Parser(expression) {
+export function Parser(this: any, expression) {
   this.expression = expression;
   this.lexer = new Lexer(expression);
   this.tokens = this.lexer.tokenize();
@@ -26,7 +26,7 @@ Parser.prototype = {
 
   curlyBraceSegment: function() {
     if (this.match('identifier', '{') || this.match('{')) {
-      var curlySegment = '';
+      let curlySegment = '';
 
       while (!this.match('') && !this.match('}')) {
         curlySegment += this.consumeToken().value;

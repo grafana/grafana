@@ -29,6 +29,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
+	_ "github.com/grafana/grafana/pkg/tsdb/stackdriver"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
 
@@ -96,13 +97,17 @@ func main() {
 
 func listenToSystemSignals(server *GrafanaServerImpl) {
 	signalChan := make(chan os.Signal, 1)
-	ignoreChan := make(chan os.Signal, 1)
+	sighupChan := make(chan os.Signal, 1)
 
-	signal.Notify(ignoreChan, syscall.SIGHUP)
-	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
+	signal.Notify(sighupChan, syscall.SIGHUP)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
-	select {
-	case sig := <-signalChan:
-		server.Shutdown(fmt.Sprintf("System signal: %s", sig))
+	for {
+		select {
+		case <-sighupChan:
+			log.Reload()
+		case sig := <-signalChan:
+			server.Shutdown(fmt.Sprintf("System signal: %s", sig))
+		}
 	}
 }

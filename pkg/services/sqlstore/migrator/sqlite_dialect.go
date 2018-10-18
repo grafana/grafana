@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-xorm/xorm"
+	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
 type Sqlite3 struct {
@@ -81,4 +82,14 @@ func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
 
 func (db *Sqlite3) CleanDB() error {
 	return nil
+}
+
+func (db *Sqlite3) IsUniqueConstraintViolation(err error) bool {
+	if driverErr, ok := err.(sqlite3.Error); ok {
+		if driverErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+			return true
+		}
+	}
+
+	return false
 }

@@ -122,12 +122,13 @@ export class VariableSrv {
     }
 
     const g = this.createGraph();
-    const promises = g
-      .getNode(variable.name)
-      .getOptimizedInputEdges()
-      .map(e => {
+    const node = g.getNode(variable.name);
+    let promises = [];
+    if (node) {
+      promises = node.getOptimizedInputEdges().map(e => {
         return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
       });
+    }
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
@@ -138,7 +139,7 @@ export class VariableSrv {
   }
 
   selectOptionsForCurrentValue(variable) {
-    var i, y, value, option;
+    let i, y, value, option;
     const selected: any = [];
 
     for (i = 0; i < variable.options.length; i++) {
@@ -167,17 +168,17 @@ export class VariableSrv {
     }
 
     if (_.isArray(variable.current.value)) {
-      var selected = this.selectOptionsForCurrentValue(variable);
+      let selected = this.selectOptionsForCurrentValue(variable);
 
       // if none pick first
       if (selected.length === 0) {
         selected = variable.options[0];
       } else {
         selected = {
-          value: _.map(selected, function(val) {
+          value: _.map(selected, val => {
             return val.value;
           }),
-          text: _.map(selected, function(val) {
+          text: _.map(selected, val => {
             return val.text;
           }).join(' + '),
         };
@@ -200,14 +201,14 @@ export class VariableSrv {
   }
 
   setOptionFromUrl(variable, urlValue) {
-    var promise = this.$q.when();
+    let promise = this.$q.when();
 
     if (variable.refresh) {
       promise = variable.updateOptions();
     }
 
     return promise.then(() => {
-      var option = _.find(variable.options, op => {
+      let option = _.find(variable.options, op => {
         return op.text === urlValue || op.value === urlValue;
       });
 
@@ -249,7 +250,7 @@ export class VariableSrv {
     const params = this.$location.search();
 
     // remove variable params
-    _.each(params, function(value, key) {
+    _.each(params, (value, key) => {
       if (key.indexOf('var-') === 0) {
         delete params[key];
       }
@@ -262,7 +263,7 @@ export class VariableSrv {
   }
 
   setAdhocFilter(options) {
-    var variable = _.find(this.variables, {
+    let variable = _.find(this.variables, {
       type: 'adhoc',
       datasource: options.datasource,
     });
@@ -290,9 +291,11 @@ export class VariableSrv {
   createGraph() {
     const g = new Graph();
 
-    this.variables.forEach(v1 => {
-      g.createNode(v1.name);
+    this.variables.forEach(v => {
+      g.createNode(v.name);
+    });
 
+    this.variables.forEach(v1 => {
       this.variables.forEach(v2 => {
         if (v1 === v2) {
           return;

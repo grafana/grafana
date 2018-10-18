@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { VariableSrv } from '../variable_srv';
 import $q from 'q';
 
-describe('VariableSrv init', function() {
+describe('VariableSrv init', function(this: any) {
   const templateSrv = {
     init: vars => {
       this.variables = vars;
@@ -17,12 +17,12 @@ describe('VariableSrv init', function() {
       }),
   };
 
-  const $injector = <any>{};
+  const $injector = {} as any;
   const $rootscope = {
     $on: () => {},
   };
 
-  let ctx = <any>{};
+  let ctx = {} as any;
 
   function describeInitScenario(desc, fn) {
     describe(desc, () => {

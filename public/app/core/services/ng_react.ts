@@ -27,14 +27,14 @@ function getReactComponent(name, $injector) {
   }
 
   // ensure the specified React component is accessible, and fail fast if it's not
-  var reactComponent;
+  let reactComponent;
   try {
     reactComponent = $injector.get(name);
   } catch (e) {}
 
   if (!reactComponent) {
     try {
-      reactComponent = name.split('.').reduce(function(current, namePart) {
+      reactComponent = name.split('.').reduce((current, namePart) => {
         return current[namePart];
       }, window);
     } catch (e) {}
@@ -52,13 +52,14 @@ function applied(fn, scope) {
   if (fn.wrappedInApply) {
     return fn;
   }
+  //tslint:disable-next-line:only-arrow-functions
   const wrapped: any = function() {
     const args = arguments;
     const phase = scope.$root.$$phase;
     if (phase === '$apply' || phase === '$digest') {
       return fn.apply(null, args);
     } else {
-      return scope.$apply(function() {
+      return scope.$apply(() => {
         return fn.apply(null, args);
       });
     }
@@ -80,7 +81,7 @@ function applied(fn, scope) {
  * @returns {Object} props with the functions wrapped in scope.$apply
  */
 function applyFunctions(obj, scope, propsConfig?) {
-  return Object.keys(obj || {}).reduce(function(prev, key) {
+  return Object.keys(obj || {}).reduce((prev, key) => {
     const value = obj[key];
     const config = (propsConfig || {})[key] || {};
     /**
@@ -108,7 +109,7 @@ function watchProps(watchDepth, scope, watchExpressions, listener) {
 
   const watchGroupExpressions = [];
 
-  watchExpressions.forEach(function(expr) {
+  watchExpressions.forEach(expr => {
     const actualExpr = getPropExpression(expr);
     const exprWatchDepth = getPropWatchDepth(watchDepth, expr);
 
@@ -134,7 +135,7 @@ function watchProps(watchDepth, scope, watchExpressions, listener) {
 
 // render React component, with scope[attrs.props] being passed in as the component props
 function renderComponent(component, props, scope, elem) {
-  scope.$evalAsync(function() {
+  scope.$evalAsync(() => {
     ReactDOM.render(React.createElement(component, props), elem[0]);
   });
 }
@@ -156,7 +157,7 @@ function getPropExpression(prop) {
 
 // find the normalized attribute knowing that React props accept any type of capitalization
 function findAttribute(attrs, propName) {
-  const index = Object.keys(attrs).filter(function(attr) {
+  const index = Object.keys(attrs).filter(attr => {
     return attr.toLowerCase() === propName.toLowerCase();
   })[0];
   return attrs[index];
@@ -186,14 +187,14 @@ function getPropWatchDepth(defaultWatch, prop) {
 //         }
 //     }));
 //
-const reactComponent = function($injector) {
+const reactComponent = $injector => {
   return {
     restrict: 'E',
     replace: true,
     link: function(scope, elem, attrs) {
       const reactComponent = getReactComponent(attrs.name, $injector);
 
-      const renderMyComponent = function() {
+      const renderMyComponent = () => {
         const scopeProps = scope.$eval(attrs.props);
         const props = applyFunctions(scopeProps, scope);
 
@@ -204,7 +205,7 @@ const reactComponent = function($injector) {
       attrs.props ? watchProps(attrs.watchDepth, scope, [attrs.props], renderMyComponent) : renderMyComponent();
 
       // cleanup when scope is destroyed
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         if (!attrs.onScopeDestroy) {
           ReactDOM.unmountComponentAtNode(elem[0]);
         } else {
@@ -243,8 +244,8 @@ const reactComponent = function($injector) {
 //
 //     <hello name="name"/>
 //
-const reactDirective = function($injector) {
-  return function(reactComponentName, props, conf, injectableProps) {
+const reactDirective = $injector => {
+  return (reactComponentName, props, conf, injectableProps) => {
     const directive = {
       restrict: 'E',
       replace: true,
@@ -255,11 +256,11 @@ const reactDirective = function($injector) {
         props = props || Object.keys(reactComponent.propTypes || {});
 
         // for each of the properties, get their scope value and set it to scope.props
-        const renderMyComponent = function() {
-          var scopeProps = {};
+        const renderMyComponent = () => {
+          let scopeProps = {};
           const config = {};
 
-          props.forEach(function(prop) {
+          props.forEach(prop => {
             const propName = getPropName(prop);
             scopeProps[propName] = scope.$eval(findAttribute(attrs, propName));
             config[propName] = getPropConfig(prop);
@@ -272,7 +273,7 @@ const reactDirective = function($injector) {
 
         // watch each property name and trigger an update whenever something changes,
         // to update scope.props with new values
-        const propExpressions = props.map(function(prop) {
+        const propExpressions = props.map(prop => {
           return Array.isArray(prop) ? [attrs[getPropName(prop)], getPropConfig(prop)] : attrs[prop];
         });
 
@@ -280,7 +281,7 @@ const reactDirective = function($injector) {
         props.length ? watchProps(attrs.watchDepth, scope, propExpressions, renderMyComponent) : renderMyComponent();
 
         // cleanup when scope is destroyed
-        scope.$on('$destroy', function() {
+        scope.$on('$destroy', () => {
           if (!attrs.onScopeDestroy) {
             ReactDOM.unmountComponentAtNode(elem[0]);
           } else {

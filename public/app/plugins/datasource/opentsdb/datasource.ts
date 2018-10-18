@@ -10,7 +10,6 @@ export default class OpenTsDatasource {
   basicAuth: any;
   tsdbVersion: any;
   tsdbResolution: any;
-  supportMetrics: any;
   tagKeys: any;
 
   aggregatorsPromise: any;
@@ -26,7 +25,6 @@ export default class OpenTsDatasource {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
     this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.tsdbResolution = instanceSettings.jsonData.tsdbResolution || 1;
-    this.supportMetrics = true;
     this.tagKeys = {};
 
     this.aggregatorsPromise = null;
@@ -39,15 +37,12 @@ export default class OpenTsDatasource {
     const end = this.convertToTSDBTime(options.rangeRaw.to, true);
     const qs = [];
 
-    _.each(
-      options.targets,
-      function(target) {
-        if (!target.metric) {
-          return;
-        }
-        qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
-      }.bind(this)
-    );
+    _.each(options.targets, target => {
+      if (!target.metric) {
+        return;
+      }
+      qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
+    });
 
     const queries = _.compact(qs);
 
@@ -59,46 +54,35 @@ export default class OpenTsDatasource {
     }
 
     const groupByTags = {};
-    _.each(queries, function(query) {
+    _.each(queries, query => {
       if (query.filters && query.filters.length > 0) {
-        _.each(query.filters, function(val) {
+        _.each(query.filters, val => {
           groupByTags[val.tagk] = true;
         });
       } else {
-        _.each(query.tags, function(val, key) {
+        _.each(query.tags, (val, key) => {
           groupByTags[key] = true;
         });
       }
     });
 
-    options.targets = _.filter(options.targets, function(query) {
+    options.targets = _.filter(options.targets, query => {
       return query.hide !== true;
     });
 
-    return this.performTimeSeriesQuery(queries, start, end).then(
-      function(response) {
-        const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
-        const result = _.map(
-          response.data,
-          function(metricData, index) {
-            index = metricToTargetMapping[index];
-            if (index === -1) {
-              index = 0;
-            }
-            this._saveTagKeys(metricData);
+    return this.performTimeSeriesQuery(queries, start, end).then(response => {
+      const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
+      const result = _.map(response.data, (metricData, index) => {
+        index = metricToTargetMapping[index];
+        if (index === -1) {
+          index = 0;
+        }
+        this._saveTagKeys(metricData);
 
-            return this.transformMetricData(
-              metricData,
-              groupByTags,
-              options.targets[index],
-              options,
-              this.tsdbResolution
-            );
-          }.bind(this)
-        );
-        return { data: result };
-      }.bind(this)
-    );
+        return this.transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+      });
+      return { data: result };
+    });
   }
 
   annotationQuery(options) {
@@ -111,33 +95,31 @@ export default class OpenTsDatasource {
 
     const queries = _.compact(qs);
 
-    return this.performTimeSeriesQuery(queries, start, end).then(
-      function(results) {
-        if (results.data[0]) {
-          var annotationObject = results.data[0].annotations;
-          if (options.annotation.isGlobal) {
-            annotationObject = results.data[0].globalAnnotations;
-          }
-          if (annotationObject) {
-            _.each(annotationObject, function(annotation) {
-              const event = {
-                text: annotation.description,
-                time: Math.floor(annotation.startTime) * 1000,
-                annotation: options.annotation,
-              };
-
-              eventList.push(event);
-            });
-          }
+    return this.performTimeSeriesQuery(queries, start, end).then(results => {
+      if (results.data[0]) {
+        let annotationObject = results.data[0].annotations;
+        if (options.annotation.isGlobal) {
+          annotationObject = results.data[0].globalAnnotations;
         }
-        return eventList;
-      }.bind(this)
-    );
+        if (annotationObject) {
+          _.each(annotationObject, annotation => {
+            const event = {
+              text: annotation.description,
+              time: Math.floor(annotation.startTime) * 1000,
+              annotation: options.annotation,
+            };
+
+            eventList.push(event);
+          });
+        }
+      }
+      return eventList;
+    });
   }
 
   targetContainsTemplate(target) {
     if (target.filters && target.filters.length > 0) {
-      for (var i = 0; i < target.filters.length; i++) {
+      for (let i = 0; i < target.filters.length; i++) {
         if (this.templateSrv.variableExists(target.filters[i].filter)) {
           return true;
         }
@@ -156,7 +138,7 @@ export default class OpenTsDatasource {
   }
 
   performTimeSeriesQuery(queries, start, end) {
-    var msResolution = false;
+    let msResolution = false;
     if (this.tsdbResolution === 2) {
       msResolution = true;
     }
@@ -191,7 +173,7 @@ export default class OpenTsDatasource {
 
   _saveTagKeys(metricData) {
     const tagKeys = Object.keys(metricData.tags);
-    _.each(metricData.aggregateTags, function(tag) {
+    _.each(metricData.aggregateTags, tag => {
       tagKeys.push(tag);
     });
 
@@ -199,7 +181,7 @@ export default class OpenTsDatasource {
   }
 
   _performSuggestQuery(query, type) {
-    return this._get('/api/suggest', { type: type, q: query, max: 1000 }).then(function(result) {
+    return this._get('/api/suggest', { type: type, q: query, max: 1000 }).then(result => {
       return result.data;
     });
   }
@@ -209,11 +191,11 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    const keysArray = keys.split(',').map(function(key) {
+    const keysArray = keys.split(',').map(key => {
       return key.trim();
     });
     const key = keysArray[0];
-    var keysQuery = key + '=*';
+    let keysQuery = key + '=*';
 
     if (keysArray.length > 1) {
       keysQuery += ',' + keysArray.splice(1).join(',');
@@ -221,10 +203,10 @@ export default class OpenTsDatasource {
 
     const m = metric + '{' + keysQuery + '}';
 
-    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then(function(result) {
+    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then(result => {
       result = result.data.results;
       const tagvs = [];
-      _.each(result, function(r) {
+      _.each(result, r => {
         if (tagvs.indexOf(r.tags[key]) === -1) {
           tagvs.push(r.tags[key]);
         }
@@ -238,11 +220,11 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    return this._get('/api/search/lookup', { m: metric, limit: 1000 }).then(function(result) {
+    return this._get('/api/search/lookup', { m: metric, limit: 1000 }).then(result => {
       result = result.data.results;
       const tagks = [];
-      _.each(result, function(r) {
-        _.each(r.tags, function(tagv, tagk) {
+      _.each(result, r => {
+        _.each(r.tags, (tagv, tagk) => {
           if (tagks.indexOf(tagk) === -1) {
             tagks.push(tagk);
           }
@@ -278,55 +260,55 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    var interpolated;
+    let interpolated;
     try {
       interpolated = this.templateSrv.replace(query, {}, 'distributed');
     } catch (err) {
       return this.$q.reject(err);
     }
 
-    const responseTransform = function(result) {
-      return _.map(result, function(value) {
+    const responseTransform = result => {
+      return _.map(result, value => {
         return { text: value };
       });
     };
 
-    const metrics_regex = /metrics\((.*)\)/;
-    const tag_names_regex = /tag_names\((.*)\)/;
-    const tag_values_regex = /tag_values\((.*?),\s?(.*)\)/;
-    const tag_names_suggest_regex = /suggest_tagk\((.*)\)/;
-    const tag_values_suggest_regex = /suggest_tagv\((.*)\)/;
+    const metricsRegex = /metrics\((.*)\)/;
+    const tagNamesRegex = /tag_names\((.*)\)/;
+    const tagValuesRegex = /tag_values\((.*?),\s?(.*)\)/;
+    const tagNamesSuggestRegex = /suggest_tagk\((.*)\)/;
+    const tagValuesSuggestRegex = /suggest_tagv\((.*)\)/;
 
-    const metrics_query = interpolated.match(metrics_regex);
-    if (metrics_query) {
-      return this._performSuggestQuery(metrics_query[1], 'metrics').then(responseTransform);
+    const metricsQuery = interpolated.match(metricsRegex);
+    if (metricsQuery) {
+      return this._performSuggestQuery(metricsQuery[1], 'metrics').then(responseTransform);
     }
 
-    const tag_names_query = interpolated.match(tag_names_regex);
-    if (tag_names_query) {
-      return this._performMetricKeyLookup(tag_names_query[1]).then(responseTransform);
+    const tagNamesQuery = interpolated.match(tagNamesRegex);
+    if (tagNamesQuery) {
+      return this._performMetricKeyLookup(tagNamesQuery[1]).then(responseTransform);
     }
 
-    const tag_values_query = interpolated.match(tag_values_regex);
-    if (tag_values_query) {
-      return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
+    const tagValuesQuery = interpolated.match(tagValuesRegex);
+    if (tagValuesQuery) {
+      return this._performMetricKeyValueLookup(tagValuesQuery[1], tagValuesQuery[2]).then(responseTransform);
     }
 
-    const tag_names_suggest_query = interpolated.match(tag_names_suggest_regex);
-    if (tag_names_suggest_query) {
-      return this._performSuggestQuery(tag_names_suggest_query[1], 'tagk').then(responseTransform);
+    const tagNamesSuggestQuery = interpolated.match(tagNamesSuggestRegex);
+    if (tagNamesSuggestQuery) {
+      return this._performSuggestQuery(tagNamesSuggestQuery[1], 'tagk').then(responseTransform);
     }
 
-    const tag_values_suggest_query = interpolated.match(tag_values_suggest_regex);
-    if (tag_values_suggest_query) {
-      return this._performSuggestQuery(tag_values_suggest_query[1], 'tagv').then(responseTransform);
+    const tagValuesSuggestQuery = interpolated.match(tagValuesSuggestRegex);
+    if (tagValuesSuggestQuery) {
+      return this._performSuggestQuery(tagValuesSuggestQuery[1], 'tagv').then(responseTransform);
     }
 
     return this.$q.when([]);
   }
 
   testDatasource() {
-    return this._performSuggestQuery('cpu', 'metrics').then(function() {
+    return this._performSuggestQuery('cpu', 'metrics').then(() => {
       return { status: 'success', message: 'Data source is working' };
     });
   }
@@ -336,7 +318,7 @@ export default class OpenTsDatasource {
       return this.aggregatorsPromise;
     }
 
-    this.aggregatorsPromise = this._get('/api/aggregators').then(function(result) {
+    this.aggregatorsPromise = this._get('/api/aggregators').then(result => {
       if (result.data && _.isArray(result.data)) {
         return result.data.sort();
       }
@@ -350,7 +332,7 @@ export default class OpenTsDatasource {
       return this.filterTypesPromise;
     }
 
-    this.filterTypesPromise = this._get('/api/config/filters').then(function(result) {
+    this.filterTypesPromise = this._get('/api/config/filters').then(result => {
       if (result.data) {
         return Object.keys(result.data).sort();
       }
@@ -365,7 +347,7 @@ export default class OpenTsDatasource {
 
     // TSDB returns datapoints has a hash of ts => value.
     // Can't use _.pairs(invert()) because it stringifies keys/values
-    _.each(md.dps, function(v, k) {
+    _.each(md.dps, (v, k) => {
       if (tsdbResolution === 2) {
         dps.push([v, k * 1]);
       } else {
@@ -379,17 +361,17 @@ export default class OpenTsDatasource {
   createMetricLabel(md, target, groupByTags, options) {
     if (target.alias) {
       const scopedVars = _.clone(options.scopedVars || {});
-      _.each(md.tags, function(value, key) {
+      _.each(md.tags, (value, key) => {
         scopedVars['tag_' + key] = { value: value };
       });
       return this.templateSrv.replace(target.alias, scopedVars);
     }
 
-    var label = md.metric;
+    let label = md.metric;
     const tagData = [];
 
     if (!_.isEmpty(md.tags)) {
-      _.each(_.toPairs(md.tags), function(tag) {
+      _.each(_.toPairs(md.tags), tag => {
         if (_.has(groupByTags, tag[0])) {
           tagData.push(tag[0] + '=' + tag[1]);
         }
@@ -424,11 +406,11 @@ export default class OpenTsDatasource {
       };
 
       if (target.counterMax && target.counterMax.length) {
-        query.rateOptions.counterMax = parseInt(target.counterMax);
+        query.rateOptions.counterMax = parseInt(target.counterMax, 10);
       }
 
       if (target.counterResetValue && target.counterResetValue.length) {
-        query.rateOptions.resetValue = parseInt(target.counterResetValue);
+        query.rateOptions.resetValue = parseInt(target.counterResetValue, 10);
       }
 
       if (tsdbVersion >= 2) {
@@ -438,7 +420,7 @@ export default class OpenTsDatasource {
     }
 
     if (!target.disableDownsampling) {
-      var interval = this.templateSrv.replace(target.downsampleInterval || options.interval);
+      let interval = this.templateSrv.replace(target.downsampleInterval || options.interval);
 
       if (interval.match(/\.[0-9]+s/)) {
         interval = parseFloat(interval) * 1000 + 'ms';
@@ -454,9 +436,9 @@ export default class OpenTsDatasource {
     if (target.filters && target.filters.length > 0) {
       query.filters = angular.copy(target.filters);
       if (query.filters) {
-        for (const filter_key in query.filters) {
-          query.filters[filter_key].filter = this.templateSrv.replace(
-            query.filters[filter_key].filter,
+        for (const filterKey in query.filters) {
+          query.filters[filterKey].filter = this.templateSrv.replace(
+            query.filters[filterKey].filter,
             options.scopedVars,
             'pipe'
           );
@@ -465,8 +447,8 @@ export default class OpenTsDatasource {
     } else {
       query.tags = angular.copy(target.tags);
       if (query.tags) {
-        for (const tag_key in query.tags) {
-          query.tags[tag_key] = this.templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
+        for (const tagKey in query.tags) {
+          query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], options.scopedVars, 'pipe');
         }
       }
     }
@@ -479,7 +461,7 @@ export default class OpenTsDatasource {
   }
 
   mapMetricsToTargets(metrics, options, tsdbVersion) {
-    var interpolatedTagValue, arrTagV;
+    let interpolatedTagValue, arrTagV;
     return _.map(metrics, metricData => {
       if (tsdbVersion === 3) {
         return metricData.query.index;

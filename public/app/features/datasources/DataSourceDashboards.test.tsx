@@ -1,0 +1,29 @@
+import React from 'react';
+import { shallow } from 'enzyme';
+import { DataSourceDashboards, Props } from './DataSourceDashboards';
+import { DataSource, NavModel, PluginDashboard } from 'app/types';
+
+const setup = (propOverrides?: object) => {
+  const props: Props = {
+    navModel: {} as NavModel,
+    dashboards: [] as PluginDashboard[],
+    dataSource: {} as DataSource,
+    pageId: 1,
+    importDashboard: jest.fn(),
+    loadDataSource: jest.fn(),
+    loadPluginDashboards: jest.fn(),
+    removeDashboard: jest.fn(),
+  };
+
+  Object.assign(props, propOverrides);
+
+  return shallow(<DataSourceDashboards {...props} />);
+};
+
+describe('Render', () => {
+  it('should render component', () => {
+    const wrapper = setup();
+
+    expect(wrapper).toMatchSnapshot();
+  });
+});

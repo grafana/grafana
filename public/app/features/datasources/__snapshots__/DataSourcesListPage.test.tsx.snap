@@ -1,0 +1,163 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render action bar and datasources 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <OrgActionBar
+      key="action-bar"
+      layoutMode="grid"
+      linkButton={
+        Object {
+          "href": "datasources/new",
+          "title": "Add data source",
+        }
+      }
+      onSetLayoutMode={[Function]}
+      searchQuery=""
+      setSearchQuery={[Function]}
+    />
+    <DataSourcesList
+      dataSources={
+        Array [
+          Object {
+            "access": "",
+            "basicAuth": false,
+            "database": "database-0",
+            "id": 0,
+            "isDefault": false,
+            "jsonData": Object {
+              "authType": "credentials",
+              "defaultRegion": "eu-west-2",
+            },
+            "name": "dataSource-0",
+            "orgId": 1,
+            "password": "",
+            "readOnly": false,
+            "type": "cloudwatch",
+            "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+            "url": "",
+            "user": "",
+          },
+          Object {
+            "access": "",
+            "basicAuth": false,
+            "database": "database-1",
+            "id": 1,
+            "isDefault": false,
+            "jsonData": Object {
+              "authType": "credentials",
+              "defaultRegion": "eu-west-2",
+            },
+            "name": "dataSource-1",
+            "orgId": 1,
+            "password": "",
+            "readOnly": false,
+            "type": "cloudwatch",
+            "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+            "url": "",
+            "user": "",
+          },
+          Object {
+            "access": "",
+            "basicAuth": false,
+            "database": "database-2",
+            "id": 2,
+            "isDefault": false,
+            "jsonData": Object {
+              "authType": "credentials",
+              "defaultRegion": "eu-west-2",
+            },
+            "name": "dataSource-2",
+            "orgId": 1,
+            "password": "",
+            "readOnly": false,
+            "type": "cloudwatch",
+            "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+            "url": "",
+            "user": "",
+          },
+          Object {
+            "access": "",
+            "basicAuth": false,
+            "database": "database-3",
+            "id": 3,
+            "isDefault": false,
+            "jsonData": Object {
+              "authType": "credentials",
+              "defaultRegion": "eu-west-2",
+            },
+            "name": "dataSource-3",
+            "orgId": 1,
+            "password": "",
+            "readOnly": false,
+            "type": "cloudwatch",
+            "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+            "url": "",
+            "user": "",
+          },
+          Object {
+            "access": "",
+            "basicAuth": false,
+            "database": "database-4",
+            "id": 4,
+            "isDefault": false,
+            "jsonData": Object {
+              "authType": "credentials",
+              "defaultRegion": "eu-west-2",
+            },
+            "name": "dataSource-4",
+            "orgId": 1,
+            "password": "",
+            "readOnly": false,
+            "type": "cloudwatch",
+            "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+            "url": "",
+            "user": "",
+          },
+          Object {
+            "access": "",
+            "basicAuth": false,
+            "database": "database-5",
+            "id": 5,
+            "isDefault": false,
+            "jsonData": Object {
+              "authType": "credentials",
+              "defaultRegion": "eu-west-2",
+            },
+            "name": "dataSource-5",
+            "orgId": 1,
+            "password": "",
+            "readOnly": false,
+            "type": "cloudwatch",
+            "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+            "url": "",
+            "user": "",
+          },
+        ]
+      }
+      key="list"
+      layoutMode="grid"
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <PageLoader
+      pageName="Data sources"
+    />
+  </div>
+</div>
+`;

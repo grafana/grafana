@@ -1,22 +1,13 @@
 import React from 'react';
 import classNames from 'classnames';
-import { observer } from 'mobx-react';
-import { store } from 'app/stores/store';
 
-export interface SearchResultProps {
-  search: any;
-}
-
-@observer
-export class SearchResult extends React.Component<SearchResultProps, any> {
+export class SearchResult extends React.Component<any, any> {
   constructor(props) {
     super(props);
 
     this.state = {
-      search: store.search,
+      search: '',
     };
-
-    store.search.query();
   }
 
   render() {
@@ -30,7 +21,6 @@ export interface SectionProps {
   section: any;
 }
 
-@observer
 export class SearchResultSection extends React.Component<SectionProps, any> {
   constructor(props) {
     super(props);

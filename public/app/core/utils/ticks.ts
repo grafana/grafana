@@ -26,8 +26,8 @@ export function tickStep(start: number, stop: number, count: number): number {
   return stop < start ? -step1 : step1;
 }
 
-export function getScaledDecimals(decimals, tick_size) {
-  return decimals - Math.floor(Math.log(tick_size) / Math.LN10);
+export function getScaledDecimals(decimals, tickSize) {
+  return decimals - Math.floor(Math.log(tickSize) / Math.LN10);
 }
 
 /**
@@ -201,10 +201,10 @@ export function getPrecision(num: number): number {
  * Get decimal precision of number stored as a string ("3.14" => 2)
  */
 export function getStringPrecision(num: string): number {
-  const dot_index = num.indexOf('.');
-  if (dot_index === -1) {
+  const dotIndex = num.indexOf('.');
+  if (dotIndex === -1) {
     return 0;
   } else {
-    return num.length - dot_index - 1;
+    return num.length - dotIndex - 1;
   }
 }

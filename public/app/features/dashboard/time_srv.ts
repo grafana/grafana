@@ -13,7 +13,7 @@ export class TimeSrv {
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
     // default time
     this.time = { from: '6h', to: 'now' };
@@ -70,7 +70,7 @@ export class TimeSrv {
     }
 
     if (!isNaN(value)) {
-      const epoch = parseInt(value);
+      const epoch = parseInt(value, 10);
       return moment.utc(epoch);
     }
 
@@ -85,6 +85,12 @@ export class TimeSrv {
     if (params.to) {
       this.time.to = this.parseUrlParam(params.to) || this.time.to;
     }
+    // if absolute ignore refresh option saved to dashboard
+    if (params.to && params.to.indexOf('now') === -1) {
+      this.refresh = false;
+      this.dashboard.refresh = false;
+    }
+    // but if refresh explicitly set then use that
     if (params.refresh) {
       this.refresh = params.refresh || this.refresh;
     }
@@ -107,7 +113,7 @@ export class TimeSrv {
   }
 
   private timeHasChangedSinceLoad() {
-    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
+    return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
   setAutoRefresh(interval) {

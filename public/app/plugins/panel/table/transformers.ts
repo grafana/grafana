@@ -7,15 +7,15 @@ const transformers = {};
 
 transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
-  getColumns: function() {
+  getColumns: () => {
     return [];
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     model.columns = [{ text: 'Time', type: 'date' }, { text: 'Metric' }, { text: 'Value' }];
 
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
       const series = data[i];
-      for (var y = 0; y < series.datapoints.length; y++) {
+      for (let y = 0; y < series.datapoints.length; y++) {
         const dp = series.datapoints[y];
         model.rows.push([dp[1], series.target, dp[0]]);
       }
@@ -25,10 +25,10 @@ transformers['timeseries_to_rows'] = {
 
 transformers['timeseries_to_columns'] = {
   description: 'Time series to columns',
-  getColumns: function() {
+  getColumns: () => {
     return [];
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     model.columns.push({ text: 'Time', type: 'date' });
 
     // group by time
@@ -38,7 +38,7 @@ transformers['timeseries_to_columns'] = {
       const series = data[i];
       model.columns.push({ text: series.target });
 
-      for (var y = 0; y < series.datapoints.length; y++) {
+      for (let y = 0; y < series.datapoints.length; y++) {
         const dp = series.datapoints[y];
         const timeKey = dp[1].toString();
 
@@ -67,7 +67,7 @@ transformers['timeseries_to_columns'] = {
 
 transformers['timeseries_aggregations'] = {
   description: 'Time series aggregations',
-  getColumns: function() {
+  getColumns: () => {
     return [
       { text: 'Avg', value: 'avg' },
       { text: 'Min', value: 'min' },
@@ -77,8 +77,8 @@ transformers['timeseries_aggregations'] = {
       { text: 'Count', value: 'count' },
     ];
   },
-  transform: function(data, panel, model) {
-    var i, y;
+  transform: (data, panel, model) => {
+    let i, y;
     model.columns.push({ text: 'Metric' });
 
     for (i = 0; i < panel.columns.length; i++) {
@@ -105,10 +105,10 @@ transformers['timeseries_aggregations'] = {
 
 transformers['annotations'] = {
   description: 'Annotations',
-  getColumns: function() {
+  getColumns: () => {
     return [];
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     model.columns.push({ text: 'Time', type: 'date' });
     model.columns.push({ text: 'Title' });
     model.columns.push({ text: 'Text' });
@@ -118,7 +118,7 @@ transformers['annotations'] = {
       return;
     }
 
-    for (var i = 0; i < data.annotations.length; i++) {
+    for (let i = 0; i < data.annotations.length; i++) {
       const evt = data.annotations[i];
       model.rows.push([evt.time, evt.title, evt.text, evt.tags]);
     }
@@ -127,7 +127,7 @@ transformers['annotations'] = {
 
 transformers['table'] = {
   description: 'Table',
-  getColumns: function(data) {
+  getColumns: data => {
     if (!data || data.length === 0) {
       return [];
     }
@@ -154,7 +154,7 @@ transformers['table'] = {
 
     return columns;
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     if (!data || data.length === 0) {
       return;
     }
@@ -264,13 +264,13 @@ transformers['table'] = {
 
 transformers['json'] = {
   description: 'JSON Data',
-  getColumns: function(data) {
+  getColumns: data => {
     if (!data || data.length === 0) {
       return [];
     }
 
     const names: any = {};
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
       const series = data[i];
       if (series.type !== 'docs') {
         continue;
@@ -278,7 +278,7 @@ transformers['json'] = {
 
       // only look at 100 docs
       const maxDocs = Math.min(series.datapoints.length, 100);
-      for (var y = 0; y < maxDocs; y++) {
+      for (let y = 0; y < maxDocs; y++) {
         const doc = series.datapoints[y];
         const flattened = flatten(doc, null);
         for (const propName in flattened) {
@@ -287,12 +287,12 @@ transformers['json'] = {
       }
     }
 
-    return _.map(names, function(value, key) {
+    return _.map(names, (value, key) => {
       return { text: key, value: key };
     });
   },
-  transform: function(data, panel, model) {
-    var i, y, z;
+  transform: (data, panel, model) => {
+    let i, y, z;
 
     for (const column of panel.columns) {
       const tableCol: any = { text: column.text };

@@ -22,7 +22,20 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 			return nil, err
 		}
 
-		orgDataSources = query.Result
+		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+			User:        c.SignedInUser,
+			Datasources: query.Result,
+		}
+
+		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err != bus.ErrHandlerNotFound {
+				return nil, err
+			}
+
+			orgDataSources = query.Result
+		} else {
+			orgDataSources = dsFilterQuery.Result
+		}
 	}
 
 	datasources := make(map[string]interface{})
@@ -132,20 +145,22 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":       defaultDatasource,
-		"datasources":             datasources,
-		"panels":                  panels,
-		"appSubUrl":               setting.AppSubUrl,
-		"allowOrgCreate":          (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":        setting.AuthProxyEnabled,
-		"ldapEnabled":             setting.LdapEnabled,
-		"alertingEnabled":         setting.AlertingEnabled,
-		"exploreEnabled":          setting.ExploreEnabled,
-		"googleAnalyticsId":       setting.GoogleAnalyticsId,
-		"disableLoginForm":        setting.DisableLoginForm,
-		"externalUserMngInfo":     setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName": setting.ExternalUserMngLinkName,
+		"defaultDatasource":          defaultDatasource,
+		"datasources":                datasources,
+		"panels":                     panels,
+		"appSubUrl":                  setting.AppSubUrl,
+		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":           setting.AuthProxyEnabled,
+		"ldapEnabled":                setting.LdapEnabled,
+		"alertingEnabled":            setting.AlertingEnabled,
+		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
+		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"exploreEnabled":             setting.ExploreEnabled,
+		"googleAnalyticsId":          setting.GoogleAnalyticsId,
+		"disableLoginForm":           setting.DisableLoginForm,
+		"externalUserMngInfo":        setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
