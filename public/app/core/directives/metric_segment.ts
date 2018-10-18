@@ -3,7 +3,7 @@ import $ from 'jquery';
 import coreModule from '../core_module';
 
 /** @ngInject */
-export function metricSegment($compile, $sce) {
+export function metricSegment($compile, $sce, templateSrv) {
   const inputTemplate =
     '<input type="text" data-provide="typeahead" ' +
     ' class="gf-form-input input-medium"' +
@@ -41,13 +41,11 @@ export function metricSegment($compile, $sce) {
           return;
         }
 
-        value = _.unescape(value);
-
         $scope.$apply(() => {
           const selected = _.find($scope.altSegments, { value: value });
           if (selected) {
             segment.value = selected.value;
-            segment.html = selected.html || selected.value;
+            segment.html = selected.html || $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(selected.value));
             segment.fake = false;
             segment.expandable = selected.expandable;
 
@@ -56,7 +54,7 @@ export function metricSegment($compile, $sce) {
             }
           } else if (segment.custom !== 'false') {
             segment.value = value;
-            segment.html = _.escape(value);
+            segment.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(value));
             segment.expandable = true;
             segment.fake = false;
           }
@@ -220,7 +218,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
             cachedOptions = $scope.options;
             return $q.when(
               _.map($scope.options, option => {
-                return { value: _.escape(option.text) };
+                return { value: option.text };
               })
             );
           } else {
@@ -230,7 +228,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
                 if (option.html) {
                   return option;
                 }
-                return { value: _.escape(option.text) };
+                return { value: option.text };
               });
             });
           }
