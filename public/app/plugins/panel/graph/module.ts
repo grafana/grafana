@@ -238,7 +238,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
-      if (this.panel.yaxes[series.yaxis - 1].format === 'none' && series.unit) {
+      if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
     }
