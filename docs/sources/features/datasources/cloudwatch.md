@@ -46,7 +46,7 @@ Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGu
 ## IAM Policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
-and EC2 tags/instances. You can attach these permissions to IAM roles and
+and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
 utilize Grafana's built-in support for assuming roles.
 
 Here is a minimal policy example:
@@ -65,11 +65,12 @@ Here is a minimal policy example:
             "Resource": "*"
         },
         {
-            "Sid": "AllowReadingTagsFromEC2",
+            "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
             "Effect": "Allow",
             "Action": [
                 "ec2:DescribeTags",
-                "ec2:DescribeInstances"
+                "ec2:DescribeInstances",
+                "ec2:DescribeRegions"
             ],
             "Resource": "*"
         }

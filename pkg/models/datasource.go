@@ -195,8 +195,8 @@ type GetDataSourceByNameQuery struct {
 type DsPermissionType int
 
 const (
-	DsPermissionQuery DsPermissionType = 1 << iota
-	DsPermissionNoAccess
+	DsPermissionNoAccess DsPermissionType = iota
+	DsPermissionQuery
 )
 
 func (p DsPermissionType) String() string {
@@ -205,12 +205,6 @@ func (p DsPermissionType) String() string {
 		int(DsPermissionNoAccess): "No Access",
 	}
 	return names[int(p)]
-}
-
-type HasRequiredDataSourcePermissionQuery struct {
-	Id                 int64
-	User               *SignedInUser
-	RequiredPermission DsPermissionType
 }
 
 type GetDataSourcePermissionsForUserQuery struct {
