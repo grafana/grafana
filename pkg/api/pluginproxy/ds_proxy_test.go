@@ -9,15 +9,16 @@ import (
 	"testing"
 	"time"
 
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/testdata"
 	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func TestDSRouteRule(t *testing.T) {
@@ -63,6 +64,7 @@ func TestDSRouteRule(t *testing.T) {
 			key, _ := util.Encrypt([]byte("123"), "password")
 
 			ds := &m.DataSource{
+				Type: "test",
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"clientId":   "asd",
 					"dynamicUrl": "https://dynamic.grafana.com",
@@ -71,6 +73,11 @@ func TestDSRouteRule(t *testing.T) {
 					"key": key,
 				},
 			}
+
+			executor, _ := testdata.NewTestDataExecutor(ds)
+			tsdb.RegisterTsdbEndpoint("test", func(dsInfo *m.DataSource) (tsdb.TsdbEndpoint, error) {
+				return executor, nil
+			})
 
 			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
 			ctx := &m.ReqContext{
