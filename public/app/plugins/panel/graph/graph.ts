@@ -85,7 +85,6 @@ class GraphElement {
     const graphHeight = this.elem.height();
     updateLegendValues(this.data, this.panel, graphHeight);
 
-    // this.ctrl.events.emit('render-legend');
     const { values, min, max, avg, current, total } = this.panel.legend;
     const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
     const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
@@ -104,6 +103,10 @@ class GraphElement {
     const legendElem = this.elem.parent().find('.graph-legend');
     ReactDOM.render(legendReactElem, legendElem[0]);
     this.onLegendRenderingComplete();
+  }
+
+  onLegendRenderingComplete() {
+    this.render_panel();
   }
 
   onGraphHover(evt) {
@@ -127,10 +130,6 @@ class GraphElement {
       this.plot.destroy();
       this.plot = null;
     }
-  }
-
-  onLegendRenderingComplete() {
-    this.render_panel();
   }
 
   onGraphHoverClear(event, info) {
