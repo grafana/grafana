@@ -4,6 +4,8 @@ export class TextBoxVariable implements Variable {
   query: string;
   current: any;
   options: any[];
+  onempty: string;
+  viewonempty: boolean;
   skipUrlSync: boolean;
 
   defaults = {
