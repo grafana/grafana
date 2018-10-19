@@ -18,7 +18,7 @@ export class MysqlDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
-  interpolateVariable(value, variable) {
+  interpolateVariable = (value, variable) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return this.queryModel.quoteLiteral(value);
@@ -35,7 +35,7 @@ export class MysqlDatasource {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
-  }
+  };
 
   query(options) {
     const queries = _.filter(options.targets, target => {
