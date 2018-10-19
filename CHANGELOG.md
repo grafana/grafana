@@ -19,6 +19,7 @@
 
 # 5.3.2 (unreleased)
 
+* **InfluxDB/Graphite/Postgres**: Prevent cross site scripting (XSS) in query editor [#13667](https://github.com/grafana/grafana/issues/13667), thx [@svenklemm](https://github.com/svenklemm)
 * **Postgres**: Fix template variables error [#13692](https://github.com/grafana/grafana/issues/13692), thx [@svenklemm](https://github.com/svenklemm)
 * **Cloudwatch**: Fix service panic because of race conditions [#13674](https://github.com/grafana/grafana/issues/13674), thx [@mtanda](https://github.com/mtanda)
 * **Stackdriver/Cloudwatch**: Allow user to change unit in graph panel if cloudwatch/stackdriver datasource response doesn't include unit [#13718](https://github.com/grafana/grafana/issues/13718), thx [@mtanda](https://github.com/mtanda)
