@@ -57,6 +57,9 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 	message := evalContext.Rule.Message
 	picUrl := evalContext.ImagePublicUrl
 	title := evalContext.GetNotificationTitle()
+	if message == "" {
+		message = title
+	}
 
 	bodyJSON, err := simplejson.NewJson([]byte(`{
 		"msgtype": "link",
