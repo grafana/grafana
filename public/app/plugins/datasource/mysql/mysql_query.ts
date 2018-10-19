@@ -97,7 +97,7 @@ export default class MysqlQuery {
   }
 
   hasUnixEpochTimecolumn() {
-    return ['int4', 'int8', 'float4', 'float8', 'numeric'].indexOf(this.target.timeColumnType) > -1;
+    return ['int', 'bigint', 'double'].indexOf(this.target.timeColumnType) > -1;
   }
 
   buildTimeColumn(alias = true) {

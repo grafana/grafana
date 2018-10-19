@@ -511,7 +511,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
               .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
           case 'right':
-            if (['int4', 'int8', 'float4', 'float8', 'timestamp', 'timestamptz'].indexOf(part.datatype) > -1) {
+            if (['int', 'bigint', 'double', 'datetime'].indexOf(part.datatype) > -1) {
               // don't do value lookups for numerical fields
               return this.$q.when([]);
             } else {
