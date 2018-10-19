@@ -206,6 +206,7 @@ datasources:
     jsonData:
       tokenUri: https://oauth2.googleapis.com/token
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com
+      defaultProject: my-project-name
     secureJsonData:
       privateKey: |
         -----BEGIN PRIVATE KEY-----
