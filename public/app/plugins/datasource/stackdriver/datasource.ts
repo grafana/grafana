@@ -89,7 +89,7 @@ export default class StackdriverDatasource {
   }
 
   resolvePanelUnitFromTargets(targets: any[]) {
-    let unit = 'none';
+    let unit;
     if (targets.length > 0 && targets.every(t => t.unit === targets[0].unit)) {
       if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit)) {
         unit = stackdriverUnitMappings[targets[0].unit];
@@ -109,13 +109,16 @@ export default class StackdriverDatasource {
 
         const unit = this.resolvePanelUnitFromTargets(options.targets);
         queryRes.series.forEach(series => {
-          result.push({
+          let timeSerie: any = {
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
-            unit,
-          });
+          };
+          if (unit) {
+            timeSerie = { ...timeSerie, unit };
+          }
+          result.push(timeSerie);
         });
       });
     }
