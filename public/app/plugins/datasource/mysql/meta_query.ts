@@ -79,14 +79,14 @@ export class MysqlMetaQuery {
       query += ' AND table_name = ' + this.quoteIdentAsLiteral(parts[1]);
       return query;
     } else {
-      query = ' table_name = ' + this.quoteIdentAsLiteral(table);
+      query = 'table_schema = database() AND table_name = ' + this.quoteIdentAsLiteral(table);
 
       return query;
     }
   }
 
   buildTableQuery() {
-    return "SELECT table_name FROM information_schema.tables WHERE table_schema <> 'information_schema' ORDER BY table_name";
+    return 'SELECT table_name FROM information_schema.tables WHERE table_schema = database() ORDER BY table_name';
   }
 
   buildColumnQuery(type?: string) {
@@ -95,7 +95,7 @@ export class MysqlMetaQuery {
 
     switch (type) {
       case 'time': {
-        query += " AND data_type IN ('timestamp','datetime','bigint','int','float')";
+        query += " AND data_type IN ('timestamp','datetime','bigint','int','double','float')";
         break;
       }
       case 'metric': {
@@ -103,8 +103,7 @@ export class MysqlMetaQuery {
         break;
       }
       case 'value': {
-        query +=
-          " AND data_type IN ('bigint','int','float','smallint', 'mediumint', 'tinyint', 'double', 'decimal', 'float')";
+        query += " AND data_type IN ('bigint','int','smallint','mediumint','tinyint','double','decimal','float')";
         query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
         break;
       }
