@@ -166,13 +166,13 @@
 					<span class="gf-form-label width-9">
 						Empty value
 						<info-popover mode="right-normal">
-							Optional - Supply a value to be used if the Text Box is cleared (empty).  Useful for Lucene searches using this variable to provide a base search.  The empty value will be hidden by default.  Check View Empty Value to display the value in the TextBox.
+							Optional - Supply a value to be used if the Text Box is cleared (empty).  Useful for Lucene searches using this variable to provide a base search.  <br>The empty value will be hidden by default.  Select Show Value to display the value in the TextBox when set.
 						</info-popover>
 					</span>
 					<input type="text" class="gf-form-input" ng-model="current.onempty" ng-blur="runQuery()" placeholder="optional, on empty value"></input>
 				</div>
 				<div class="gf-form max-width-19">
-					<gf-form-switch class="gf-form width-9" label="View Empty Value" label-class="width-10" checked="current.viewonempty" on-change="runQuery()">
+					<gf-form-switch class="gf-form width-9" label="Show value" label-class="width-10" checked="current.viewonempty" on-change="runQuery()">
 					</gf-form-switch>
 				</div>
 			</div>
