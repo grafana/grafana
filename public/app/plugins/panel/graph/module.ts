@@ -147,7 +147,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onInitPanelActions(actions) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
-    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()' });
+    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
   issueQueries(datasource) {
