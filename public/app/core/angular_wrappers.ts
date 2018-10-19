@@ -5,10 +5,12 @@ import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { SearchResult } from './components/search/SearchResult';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
+import { AlertList } from './components/Alerts/AlertList';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
   react2AngularDirective('sidemenu', SideMenu, []);
+  react2AngularDirective('pageAlertList', AlertList, []);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, ['model']);
   react2AngularDirective('searchResult', SearchResult, []);
