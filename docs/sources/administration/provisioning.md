@@ -156,9 +156,9 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
-| esVersion | number | Elastic | Elasticsearch version as a number (2/5/56) |
-| timeField | string | Elastic | Which field that should be used as timestamp |
-| interval | string | Elastic | Index date time format |
+| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56) |
+| timeField | string | Elasticsearch | Which field that should be used as timestamp |
+| interval | string | Elasticsearch | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
@@ -166,6 +166,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| encrypt | string | MSSQL | Connection SSL encryption handling. 'disable', 'false' or 'true' |
 | postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
 | timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
 | maxOpenConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of open connections to the database (Grafana v5.4+) |

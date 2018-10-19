@@ -1,5 +1,8 @@
+// Libaries
 import angular from 'angular';
 import _ from 'lodash';
+
+// Utils & Services
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
@@ -291,9 +294,11 @@ export class VariableSrv {
   createGraph() {
     const g = new Graph();
 
-    this.variables.forEach(v1 => {
-      g.createNode(v1.name);
+    this.variables.forEach(v => {
+      g.createNode(v.name);
+    });
 
+    this.variables.forEach(v1 => {
       this.variables.forEach(v2 => {
         if (v1 === v2) {
           return;

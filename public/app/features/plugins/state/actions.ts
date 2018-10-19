@@ -2,9 +2,11 @@ import { Plugin, StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
+import { PluginDashboard } from '../../../types/plugins';
 
 export enum ActionTypes {
   LoadPlugins = 'LOAD_PLUGINS',
+  LoadPluginDashboards = 'LOAD_PLUGIN_DASHBOARDS',
   SetPluginsSearchQuery = 'SET_PLUGIN_SEARCH_QUERY',
   SetLayoutMode = 'SET_LAYOUT_MODE',
 }
@@ -12,6 +14,11 @@ export enum ActionTypes {
 export interface LoadPluginsAction {
   type: ActionTypes.LoadPlugins;
   payload: Plugin[];
+}
+
+export interface LoadPluginDashboardsAction {
+  type: ActionTypes.LoadPluginDashboards;
+  payload: PluginDashboard[];
 }
 
 export interface SetPluginsSearchQueryAction {
@@ -39,7 +46,12 @@ const pluginsLoaded = (plugins: Plugin[]): LoadPluginsAction => ({
   payload: plugins,
 });
 
-export type Action = LoadPluginsAction | SetPluginsSearchQueryAction | SetLayoutModeAction;
+const pluginDashboardsLoaded = (dashboards: PluginDashboard[]): LoadPluginDashboardsAction => ({
+  type: ActionTypes.LoadPluginDashboards,
+  payload: dashboards,
+});
+
+export type Action = LoadPluginsAction | LoadPluginDashboardsAction | SetPluginsSearchQueryAction | SetLayoutModeAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -47,5 +59,14 @@ export function loadPlugins(): ThunkResult<void> {
   return async dispatch => {
     const result = await getBackendSrv().get('api/plugins', { embedded: 0 });
     dispatch(pluginsLoaded(result));
+  };
+}
+
+export function loadPluginDashboards(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const dataSourceType = getStore().dataSources.dataSource.type;
+
+    const response = await getBackendSrv().get(`api/plugins/${dataSourceType}/dashboards`);
+    dispatch(pluginDashboardsLoaded(response));
   };
 }

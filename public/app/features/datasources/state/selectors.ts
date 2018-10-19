@@ -1,3 +1,5 @@
+import { DataSource } from '../../../types';
+
 export const getDataSources = state => {
   const regex = new RegExp(state.searchQuery, 'i');
 
@@ -12,6 +14,13 @@ export const getDataSourceTypes = state => {
   return state.dataSourceTypes.filter(type => {
     return regex.test(type.name);
   });
+};
+
+export const getDataSource = (state, dataSourceId): DataSource | null => {
+  if (state.dataSource.id === parseInt(dataSourceId, 10)) {
+    return state.dataSource;
+  }
+  return null;
 };
 
 export const getDataSourcesSearchQuery = state => state.searchQuery;

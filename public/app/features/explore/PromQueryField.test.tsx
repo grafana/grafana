@@ -96,11 +96,14 @@ describe('PromQueryField typeahead handling', () => {
 
     it('returns label suggestions on label context but leaves out labels that already exist', () => {
       const instance = shallow(
-        <PromQueryField {...defaultProps} labelKeys={{ '{job="foo"}': ['bar', 'job'] }} />
+        <PromQueryField
+          {...defaultProps}
+          labelKeys={{ '{job1="foo",job2!="foo",job3=~"foo"}': ['bar', 'job1', 'job2', 'job3'] }}
+        />
       ).instance() as PromQueryField;
-      const value = Plain.deserialize('{job="foo",}');
+      const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",}');
       const range = value.selection.merge({
-        anchorOffset: 11,
+        anchorOffset: 36,
       });
       const valueWithSelection = value.change().select(range).value;
       const result = instance.getTypeahead({
@@ -111,6 +114,33 @@ describe('PromQueryField typeahead handling', () => {
       });
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+    });
+
+    it('returns label value suggestions inside a label value context after a negated matching operator', () => {
+      const instance = shallow(
+        <PromQueryField
+          {...defaultProps}
+          labelKeys={{ '{}': ['label'] }}
+          labelValues={{ '{}': { label: ['a', 'b', 'c'] } }}
+        />
+      ).instance() as PromQueryField;
+      const value = Plain.deserialize('{label!=}');
+      const range = value.selection.merge({ anchorOffset: 8 });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.getTypeahead({
+        text: '!=',
+        prefix: '',
+        wrapperClasses: ['context-labels'],
+        labelKey: 'label',
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-label-values');
+      expect(result.suggestions).toEqual([
+        {
+          items: [{ label: 'a' }, { label: 'b' }, { label: 'c' }],
+          label: 'Label values for "label"',
+        },
+      ]);
     });
 
     it('returns a refresher on label context and unavailable metric', () => {

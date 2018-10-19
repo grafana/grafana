@@ -8,7 +8,6 @@ import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
-import { PluginMeta, Plugin, PluginsState } from './plugins';
 import {
   TimeRange,
   LoadingState,
@@ -22,6 +21,7 @@ import {
   DataQueryOptions,
 } from './series';
 import { PanelProps } from './panel';
+import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
 
 export {
   Team,
@@ -69,6 +69,7 @@ export {
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,
+  PluginDashboard,
 };
 
 export interface StoreState {

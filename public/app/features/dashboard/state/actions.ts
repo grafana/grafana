@@ -1,7 +1,8 @@
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-
+import appEvents from 'app/core/app_events';
+import { loadPluginDashboards } from '../../plugins/state/actions';
 import {
   DashboardAcl,
   DashboardAclDTO,
@@ -111,5 +112,20 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
 
     await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
     await dispatch(getDashboardPermissions(dashboardId));
+  };
+}
+
+export function importDashboard(data, dashboardTitle: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post('/api/dashboards/import', data);
+    appEvents.emit('alert-success', ['Dashboard Imported', dashboardTitle]);
+    dispatch(loadPluginDashboards());
+  };
+}
+
+export function removeDashboard(uri: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().delete(`/api/dashboards/${uri}`);
+    dispatch(loadPluginDashboards());
   };
 }

@@ -1,0 +1,88 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<table
+  className="filter-table"
+>
+  <tbody />
+</table>
+`;
+
+exports[`Render should render table 1`] = `
+<table
+  className="filter-table"
+>
+  <tbody>
+    <tr
+      key="0-0"
+    >
+      <td
+        className="width-1"
+      >
+        <i
+          className="icon-gf icon-gf-dashboard"
+        />
+      </td>
+      <td>
+        <span>
+          Graphite Carbon Metrics
+        </span>
+      </td>
+      <td
+        style={
+          Object {
+            "textAlign": "right",
+          }
+        }
+      >
+        <button
+          className="btn btn-secondary btn-small"
+          onClick={[Function]}
+        >
+          Import
+        </button>
+      </td>
+    </tr>
+    <tr
+      key="0-1"
+    >
+      <td
+        className="width-1"
+      >
+        <i
+          className="icon-gf icon-gf-dashboard"
+        />
+      </td>
+      <td>
+        <a
+          href=""
+        >
+          Graphite Carbon Metrics
+        </a>
+      </td>
+      <td
+        style={
+          Object {
+            "textAlign": "right",
+          }
+        }
+      >
+        <button
+          className="btn btn-secondary btn-small"
+          onClick={[Function]}
+        >
+          Update
+        </button>
+        <button
+          className="btn btn-danger btn-small"
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-trash"
+          />
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+`;
