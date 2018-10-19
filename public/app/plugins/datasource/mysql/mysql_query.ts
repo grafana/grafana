@@ -152,63 +152,11 @@ export default class MysqlQuery {
     const columnName = _.find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+    const aggregate = _.find(column, (g: any) => g.type === 'aggregate');
 
     if (aggregate) {
       const func = aggregate.params[0];
-      switch (aggregate.type) {
-        case 'aggregate':
-          if (func === 'first' || func === 'last') {
-            query = func + '(' + query + ',' + this.target.timeColumn + ')';
-          } else {
-            query = func + '(' + query + ')';
-          }
-          break;
-        case 'percentile':
-          query = func + '(' + aggregate.params[1] + ') WITHIN GROUP (ORDER BY ' + query + ')';
-          break;
-      }
-    }
-
-    if (windows) {
-      const overParts = [];
-      if (this.hasMetricColumn()) {
-        overParts.push('PARTITION BY ' + this.target.metricColumn);
-      }
-      overParts.push('ORDER BY ' + this.buildTimeColumn(false));
-
-      const over = overParts.join(' ');
-      let curr: string;
-      let prev: string;
-      switch (windows.type) {
-        case 'window':
-          switch (windows.params[0]) {
-            case 'increase':
-              curr = query;
-              prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
-              break;
-            case 'rate':
-              let timeColumn = this.target.timeColumn;
-              if (aggregate) {
-                timeColumn = 'min(' + timeColumn + ')';
-              }
-
-              curr = query;
-              prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
-              query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
-              break;
-            default:
-              query = windows.params[0] + '(' + query + ') OVER (' + over + ')';
-              break;
-          }
-          break;
-        case 'moving_window':
-          query = windows.params[0] + '(' + query + ') OVER (' + over + ' ROWS ' + windows.params[1] + ' PRECEDING)';
-          break;
-      }
+      query = func + '(' + query + ')';
     }
 
     const alias = _.find(column, (g: any) => g.type === 'alias');
@@ -278,7 +226,7 @@ export default class MysqlQuery {
     query += this.buildWhereClause();
     query += this.buildGroupClause();
 
-    query += '\nORDER BY 1';
+    query += '\nORDER BY ' + this.buildTimeColumn(false);
 
     return query;
   }
