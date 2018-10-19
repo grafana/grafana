@@ -4,6 +4,8 @@
 #   This script is executed from within the container.
 #
 
+EXTRA_OPTS="$@"
+
 CCX64=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
 
 GOPATH=/go
@@ -14,11 +16,13 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
-  OPT="-includeBuildNumber=false"
+  OPT="-includeBuildNumber=false ${EXTRA_OPTS}"
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  OPT="-buildNumber=${CIRCLE_BUILD_NUM}"
+  OPT="-buildNumber=${CIRCLE_BUILD_NUM} ${EXTRA_OPTS}"
 fi
+
+echo "Build arguments: $OPT"
 
 CC=${CCX64} go run build.go ${OPT} build
 

@@ -238,8 +238,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, test and package grafana enterprise
-          command: './scripts/build/build_enterprise.sh'
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: checkout enterprise
+          command: './scripts/build/prepare_enterprise.sh'
+      - run:
+          name: test enterprise
+          command: 'go test ./pkg/extensions/...'
+      - run:
+          name: build and package enterprise
+          command: './scripts/build/build.sh -enterprise'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
