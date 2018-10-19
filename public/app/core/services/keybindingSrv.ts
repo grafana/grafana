@@ -148,7 +148,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('mod+s', e => {
@@ -257,7 +257,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('d s', () => {

@@ -117,10 +117,6 @@ export class DashboardCtrl {
     return this.dashboard;
   }
 
-  timezoneChanged() {
-    this.$rootScope.$broadcast('refresh');
-  }
-
   getPanelContainer() {
     return this;
   }
