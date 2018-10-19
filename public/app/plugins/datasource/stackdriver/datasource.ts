@@ -109,12 +109,11 @@ export default class StackdriverDatasource {
 
         const unit = this.resolvePanelUnitFromTargets(options.targets);
         queryRes.series.forEach(series => {
-          let timeSerie = {
+          let timeSerie: any = {
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
-            unit,
           };
           if (unit) {
             timeSerie = { ...timeSerie, unit };
