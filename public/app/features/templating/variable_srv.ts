@@ -18,7 +18,7 @@ export class VariableSrv {
 
   init(dashboard) {
     this.dashboard = dashboard;
-    this.dashboard.on('time-range-updated', this.onTimeRangeUpdated.bind(this));
+    this.dashboard.events.on('time-range-updated', this.onTimeRangeUpdated.bind(this));
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
