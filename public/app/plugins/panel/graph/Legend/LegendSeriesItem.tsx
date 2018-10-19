@@ -5,13 +5,12 @@ import withColorPicker from 'app/core/components/colorpicker/withColorPicker';
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
 export interface LegendLabelProps {
-  index: number;
   series: TimeSeries;
   asTable?: boolean;
-  hiddenSeries?: any;
-  onLabelClick?: (event) => void;
-  onColorChange?: (color: string) => void;
-  onToggleAxis?: () => void;
+  hidden?: boolean;
+  onLabelClick?: (series, event) => void;
+  onColorChange?: (series, color: string) => void;
+  onToggleAxis?: (series) => void;
 }
 
 export interface LegendValuesProps {
@@ -28,25 +27,35 @@ type LegendItemProps = LegendLabelProps & LegendValuesProps;
 export class LegendItem extends React.PureComponent<LegendItemProps> {
   static defaultProps = {
     asTable: false,
-    hiddenSeries: undefined,
+    hidden: false,
     onLabelClick: () => {},
     onColorChange: () => {},
     onToggleAxis: () => {},
   };
 
+  onLabelClick = e => this.props.onLabelClick(this.props.series, e);
+  onToggleAxis = () => {
+    this.props.onToggleAxis(this.props.series);
+    this.forceUpdate();
+  };
+  onColorChange = color => {
+    this.props.onColorChange(this.props.series, color);
+    // this.forceUpdate();
+  };
+
   render() {
-    const { series, hiddenSeries, asTable } = this.props;
+    const { series, hidden, asTable } = this.props;
     const { aliasEscaped, color, yaxis } = this.props.series;
-    const seriesOptionClasses = getOptionSeriesCSSClasses(series, hiddenSeries);
+    const seriesOptionClasses = getOptionSeriesCSSClasses(series, hidden);
     const valueItems = this.props.values ? renderLegendValues(this.props, series, asTable) : [];
     const seriesLabel = (
       <LegendSeriesLabel
         label={aliasEscaped}
         color={color}
         yaxis={yaxis}
-        onLabelClick={this.props.onLabelClick}
-        onColorChange={this.props.onColorChange}
-        onToggleAxis={this.props.onToggleAxis}
+        onLabelClick={this.onLabelClick}
+        onColorChange={this.onColorChange}
+        onToggleAxis={this.onToggleAxis}
       />
     );
 
@@ -161,12 +170,12 @@ function renderLegendValues(props: LegendItemProps, series, asTable = false) {
   return legendValueItems;
 }
 
-function getOptionSeriesCSSClasses(series, hiddenSeries) {
+function getOptionSeriesCSSClasses(series, hidden) {
   const classes = [];
   if (series.yaxis === 2) {
     classes.push('graph-legend-series--right-y');
   }
-  if (hiddenSeries[series.alias] && hiddenSeries[series.alias] === true) {
+  if (hidden) {
     classes.push('graph-legend-series-hidden');
   }
   return classes.join(' ');

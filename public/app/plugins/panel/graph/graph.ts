@@ -66,13 +66,16 @@ class GraphElement {
 
     // global events
     appEvents.on('graph-hover', this.onGraphHover.bind(this), scope);
-
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
-
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
-
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
     scope.$on('$destroy', this.onScopeDestroy.bind(this));
+
+    // Bind legend event handlers once in constructor to avoid unnecessary re-rendering
+    this.ctrl.toggleSeries = this.ctrl.toggleSeries.bind(this.ctrl);
+    this.ctrl.toggleSort = this.ctrl.toggleSort.bind(this.ctrl);
+    this.ctrl.changeSeriesColor = this.ctrl.changeSeriesColor.bind(this.ctrl);
+    this.ctrl.toggleAxis = this.ctrl.toggleAxis.bind(this.ctrl);
   }
 
   onRender(renderData) {
@@ -94,10 +97,10 @@ class GraphElement {
       hiddenSeries: this.ctrl.hiddenSeries,
       ...legendOptions,
       ...valueOptions,
-      onToggleSeries: this.ctrl.toggleSeries.bind(this.ctrl),
-      onToggleSort: this.ctrl.toggleSort.bind(this.ctrl),
-      onColorChange: this.ctrl.changeSeriesColor.bind(this.ctrl),
-      onToggleAxis: this.ctrl.toggleAxis.bind(this.ctrl),
+      onToggleSeries: this.ctrl.toggleSeries,
+      onToggleSort: this.ctrl.toggleSort,
+      onColorChange: this.ctrl.changeSeriesColor,
+      onToggleAxis: this.ctrl.toggleAxis,
     };
     const legendReactElem = React.createElement(Legend, legendProps);
     const legendElem = this.elem.parent().find('.graph-legend');

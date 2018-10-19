@@ -57,6 +57,21 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
     onColorChange: () => {},
   };
 
+  onToggleSeries = (series, event) => {
+    this.props.onToggleSeries(series, event);
+    this.forceUpdate();
+  };
+
+  onToggleAxis = series => {
+    this.props.onToggleAxis(series);
+    this.forceUpdate();
+  };
+
+  onColorChange = (series, color) => {
+    this.props.onColorChange(series, color);
+    this.forceUpdate();
+  };
+
   sortLegend() {
     let seriesList = this.props.seriesList || [];
     if (this.props.sort) {
@@ -72,12 +87,6 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
       }
     }
     return seriesList;
-  }
-
-  onToggleSeries(series: TimeSeries, event: Event) {
-    // const scrollPosition = legendScrollbar.scroller.scrollTop;
-    this.props.onToggleSeries(series, event);
-    // legendScrollbar.scroller.scrollTop = scrollPosition;
   }
 
   render() {
@@ -101,10 +110,10 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
     const legendProps: GraphLegendProps = {
       seriesList: seriesList,
       hiddenSeries: hiddenSeries,
-      onToggleSeries: (s, e) => this.onToggleSeries(s, e),
-      onToggleSort: (sortBy, sortDesc) => this.props.onToggleSort(sortBy, sortDesc),
-      onColorChange: (series, color) => this.props.onColorChange(series, color),
-      onToggleAxis: series => this.props.onToggleAxis(series),
+      onToggleSeries: this.onToggleSeries,
+      onToggleAxis: this.onToggleAxis,
+      onToggleSort: this.props.onToggleSort,
+      onColorChange: this.onColorChange,
       ...seriesValuesProps,
       ...sortProps,
     };
@@ -121,23 +130,22 @@ class LegendSeriesList extends React.PureComponent<GraphLegendProps> {
   render() {
     const { seriesList, hiddenSeries, values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
-    return seriesList.map((series, i) => (
+    return seriesList.map(series => (
       <LegendItem
         key={series.id}
         series={series}
-        index={i}
-        hiddenSeries={hiddenSeries}
+        hidden={hiddenSeries[series.alias]}
         {...seriesValuesProps}
-        onLabelClick={e => this.props.onToggleSeries(series, e)}
-        onColorChange={color => this.props.onColorChange(series, color)}
-        onToggleAxis={() => this.props.onToggleAxis(series)}
+        onLabelClick={this.props.onToggleSeries}
+        onColorChange={this.props.onColorChange}
+        onToggleAxis={this.props.onToggleAxis}
       />
     ));
   }
 }
 
 class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
-  onToggleSort(stat) {
+  onToggleSort = stat => {
     let sortDesc = this.props.sortDesc;
     let sortBy = this.props.sort;
     if (stat !== sortBy) {
@@ -153,11 +161,11 @@ class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
       sortBy = stat;
     }
     this.props.onToggleSort(sortBy, sortDesc);
-  }
+  };
 
   render() {
     const seriesList = this.props.seriesList;
-    const { values, min, max, avg, current, total, sort, sortDesc } = this.props;
+    const { values, min, max, avg, current, total, sort, sortDesc, hiddenSeries } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     return (
       <table>
@@ -172,21 +180,20 @@ class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
                     statName={statName}
                     sort={sort}
                     sortDesc={sortDesc}
-                    onClick={e => this.onToggleSort(statName)}
+                    onClick={this.onToggleSort}
                   />
                 )
             )}
           </tr>
-          {seriesList.map((series, i) => (
+          {seriesList.map(series => (
             <LegendItem
               key={series.id}
               asTable={true}
               series={series}
-              index={i}
-              hiddenSeries={this.props.hiddenSeries}
-              onLabelClick={e => this.props.onToggleSeries(series, e)}
-              onColorChange={color => this.props.onColorChange(series, color)}
-              onToggleAxis={() => this.props.onToggleAxis(series)}
+              hidden={hiddenSeries[series.alias]}
+              onLabelClick={this.props.onToggleSeries}
+              onColorChange={this.props.onColorChange}
+              onToggleAxis={this.props.onToggleAxis}
               {...seriesValuesProps}
             />
           ))}
@@ -198,20 +205,24 @@ class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
 
 interface LegendTableHeaderProps {
   statName: string;
-  onClick?: (event) => void;
+  onClick?: (statName: string) => void;
 }
 
-function LegendTableHeaderItem(props: LegendTableHeaderProps & LegendSortProps) {
-  const { statName, sort, sortDesc } = props;
-  return (
-    <th className="pointer" onClick={e => props.onClick(e)}>
-      {statName}
-      {sort === statName && <span className={sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up'} />}
-    </th>
-  );
+class LegendTableHeaderItem extends React.PureComponent<LegendTableHeaderProps & LegendSortProps> {
+  onClick = () => this.props.onClick(this.props.statName);
+
+  render() {
+    const { statName, sort, sortDesc } = this.props;
+    return (
+      <th className="pointer" onClick={this.onClick}>
+        {statName}
+        {sort === statName && <span className={sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up'} />}
+      </th>
+    );
+  }
 }
 
-export class Legend extends React.Component<GraphLegendProps> {
+export class Legend extends React.PureComponent<GraphLegendProps> {
   render() {
     return (
       <CustomScrollbar>
