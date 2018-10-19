@@ -44,8 +44,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					s := *query.Result
 
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:      s.Id,
-						Version: s.Version,
+						Id:                           s.Id,
+						Version:                      s.Version,
 						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
 					}
 
@@ -100,8 +100,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					s := *query.Result
 					s.Version = 1000
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:      s.NotifierId,
-						Version: s.Version,
+						Id:                           s.NotifierId,
+						Version:                      s.Version,
 						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
 					}
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
@@ -111,8 +111,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Convey("Updating existing state to pending with incorrect version since alert rule state update version is higher", func() {
 					s := *query.Result
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:      s.Id,
-						Version: s.Version,
+						Id:                           s.Id,
+						Version:                      s.Version,
 						AlertRuleStateUpdatedVersion: 1000,
 					}
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
@@ -125,8 +125,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					s := *query.Result
 					s.Version = 1000
 					cmd := models.SetAlertNotificationStateToPendingCommand{
-						Id:      s.Id,
-						Version: s.Version,
+						Id:                           s.Id,
+						Version:                      s.Version,
 						AlertRuleStateUpdatedVersion: s.AlertRuleStateUpdatedVersion,
 					}
 					err := SetAlertNotificationStateToPendingCommand(context.Background(), &cmd)
