@@ -75,7 +75,7 @@ class GraphElement {
     this.ctrl.toggleSeries = this.ctrl.toggleSeries.bind(this.ctrl);
     this.ctrl.toggleSort = this.ctrl.toggleSort.bind(this.ctrl);
     this.ctrl.changeSeriesColor = this.ctrl.changeSeriesColor.bind(this.ctrl);
-    this.ctrl.toggleAxis = this.ctrl.toggleAxis.bind(this.ctrl);
+    this.ctrl.setSeriesAxis = this.ctrl.setSeriesAxis.bind(this.ctrl);
   }
 
   onRender(renderData) {
@@ -100,7 +100,7 @@ class GraphElement {
       onToggleSeries: this.ctrl.toggleSeries,
       onToggleSort: this.ctrl.toggleSort,
       onColorChange: this.ctrl.changeSeriesColor,
-      onToggleAxis: this.ctrl.toggleAxis,
+      onToggleAxis: this.ctrl.setSeriesAxis,
     };
     const legendReactElem = React.createElement(Legend, legendProps);
     const legendElem = this.elem.parent().find('.graph-legend');

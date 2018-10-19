@@ -24,7 +24,11 @@ export interface LegendValuesProps {
 
 type LegendItemProps = LegendLabelProps & LegendValuesProps;
 
-export class LegendItem extends React.PureComponent<LegendItemProps> {
+interface LegendItemState {
+  yaxis: number;
+}
+
+export class LegendItem extends React.PureComponent<LegendItemProps, LegendItemState> {
   static defaultProps = {
     asTable: false,
     hidden: false,
@@ -33,26 +37,35 @@ export class LegendItem extends React.PureComponent<LegendItemProps> {
     onToggleAxis: () => {},
   };
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      yaxis: this.props.series.yaxis,
+    };
+  }
+
   onLabelClick = e => this.props.onLabelClick(this.props.series, e);
+
   onToggleAxis = () => {
-    this.props.onToggleAxis(this.props.series);
-    this.forceUpdate();
+    const yaxis = this.state.yaxis === 2 ? 1 : 2;
+    const info = { alias: this.props.series.alias, yaxis: yaxis };
+    this.setState({ yaxis: yaxis });
+    this.props.onToggleAxis(info);
   };
+
   onColorChange = color => {
     this.props.onColorChange(this.props.series, color);
-    // this.forceUpdate();
   };
 
   render() {
     const { series, hidden, asTable } = this.props;
-    const { aliasEscaped, color, yaxis } = this.props.series;
     const seriesOptionClasses = getOptionSeriesCSSClasses(series, hidden);
     const valueItems = this.props.values ? renderLegendValues(this.props, series, asTable) : [];
     const seriesLabel = (
       <LegendSeriesLabel
-        label={aliasEscaped}
-        color={color}
-        yaxis={yaxis}
+        label={series.aliasEscaped}
+        color={series.color}
+        yaxis={this.state.yaxis}
         onLabelClick={this.onLabelClick}
         onColorChange={this.onColorChange}
         onToggleAxis={this.onToggleAxis}
@@ -115,27 +128,43 @@ interface LegendSeriesIconProps {
   onToggleAxis?: () => void;
 }
 
+interface LegendSeriesIconState {
+  color: string;
+}
+
 function SeriesIcon(props) {
   return <i className="fa fa-minus pointer" style={{ color: props.color }} />;
 }
 
-class LegendSeriesIcon extends React.PureComponent<LegendSeriesIconProps> {
+class LegendSeriesIcon extends React.PureComponent<LegendSeriesIconProps, LegendSeriesIconState> {
   static defaultProps = {
     yaxis: undefined,
     onColorChange: () => {},
     onToggleAxis: () => {},
   };
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      color: this.props.color,
+    };
+  }
+
+  onColorChange = color => {
+    this.setState({ color: color });
+    this.props.onColorChange(color);
+  };
+
   render() {
-    const { color, yaxis } = this.props;
+    const { yaxis } = this.props;
     const IconWithColorPicker = withColorPicker(SeriesIcon);
 
     return (
       <IconWithColorPicker
         optionalClass="graph-legend-icon"
-        color={color}
         yaxis={yaxis}
-        onColorChange={this.props.onColorChange}
+        color={this.state.color}
+        onColorChange={this.onColorChange}
         onToggleAxis={this.props.onToggleAxis}
       />
     );

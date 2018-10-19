@@ -7,7 +7,17 @@ import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 interface LegendProps {
   seriesList: TimeSeries[];
   optionalClass?: string;
-  onToggleSeries?: (series: TimeSeries, event: Event) => void;
+}
+
+interface LegendEventHandlers {
+  onToggleSeries?: (hiddenSeries) => void;
+  onToggleSort?: (sortBy, sortDesc) => void;
+  onToggleAxis?: (series: TimeSeries) => void;
+  onColorChange?: (series: TimeSeries, color: string) => void;
+}
+
+interface LegendComponentEventHandlers {
+  onToggleSeries?: (series, event) => void;
   onToggleSort?: (sortBy, sortDesc) => void;
   onToggleAxis?: (series: TimeSeries) => void;
   onColorChange?: (series: TimeSeries, color: string) => void;
@@ -36,9 +46,22 @@ interface LegendSortProps {
   sortDesc?: boolean;
 }
 
-export type GraphLegendProps = LegendProps & LegendDisplayProps & LegendValuesProps & LegendSortProps;
+export type GraphLegendProps = LegendProps &
+  LegendDisplayProps &
+  LegendValuesProps &
+  LegendSortProps &
+  LegendEventHandlers;
+export type LegendComponentProps = LegendProps &
+  LegendDisplayProps &
+  LegendValuesProps &
+  LegendSortProps &
+  LegendComponentEventHandlers;
 
-export class GraphLegend extends React.PureComponent<GraphLegendProps> {
+interface LegendState {
+  hiddenSeries: any;
+}
+
+export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendState> {
   static defaultProps: Partial<GraphLegendProps> = {
     values: false,
     min: false,
@@ -57,10 +80,12 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
     onColorChange: () => {},
   };
 
-  onToggleSeries = (series, event) => {
-    this.props.onToggleSeries(series, event);
-    this.forceUpdate();
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      hiddenSeries: this.props.hiddenSeries,
+    };
+  }
 
   onToggleAxis = series => {
     this.props.onToggleAxis(series);
@@ -73,7 +98,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
   };
 
   sortLegend() {
-    let seriesList = this.props.seriesList || [];
+    let seriesList = [...this.props.seriesList] || [];
     if (this.props.sort) {
       seriesList = _.sortBy(seriesList, series => {
         let sort = series.stats[this.props.sort];
@@ -89,10 +114,61 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
     return seriesList;
   }
 
+  onToggleSeries = (series, event) => {
+    let hiddenSeries = { ...this.state.hiddenSeries };
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      if (hiddenSeries[series.alias]) {
+        delete hiddenSeries[series.alias];
+      } else {
+        hiddenSeries[series.alias] = true;
+      }
+    } else {
+      hiddenSeries = this.toggleSeriesExclusiveMode(series);
+    }
+    this.setState({ hiddenSeries: hiddenSeries });
+    this.props.onToggleSeries(hiddenSeries);
+  };
+
+  toggleSeriesExclusiveMode(series) {
+    const hiddenSeries = { ...this.state.hiddenSeries };
+
+    if (hiddenSeries[series.alias]) {
+      delete hiddenSeries[series.alias];
+    }
+
+    // check if every other series is hidden
+    const alreadyExclusive = _.every(this.props.seriesList, value => {
+      if (value.alias === series.alias) {
+        return true;
+      }
+
+      return hiddenSeries[value.alias];
+    });
+
+    if (alreadyExclusive) {
+      // remove all hidden series
+      _.each(this.props.seriesList, value => {
+        delete hiddenSeries[value.alias];
+      });
+    } else {
+      // hide all but this serie
+      _.each(this.props.seriesList, value => {
+        if (value.alias === series.alias) {
+          return;
+        }
+
+        hiddenSeries[value.alias] = true;
+      });
+    }
+
+    return hiddenSeries;
+  }
+
   render() {
-    const { optionalClass, hiddenSeries, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.props;
+    const { optionalClass, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.props;
     const { values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
+    const hiddenSeries = this.state.hiddenSeries;
     const seriesHideProps = { hideEmpty, hideZero };
     const sortProps = { sort, sortDesc };
     const seriesList = _.filter(this.sortLegend(), series => !series.hideFromLegend(seriesHideProps));
@@ -107,7 +183,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
       width: ieWidth,
     };
 
-    const legendProps: GraphLegendProps = {
+    const legendProps: LegendComponentProps = {
       seriesList: seriesList,
       hiddenSeries: hiddenSeries,
       onToggleSeries: this.onToggleSeries,
@@ -126,7 +202,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps> {
   }
 }
 
-class LegendSeriesList extends React.PureComponent<GraphLegendProps> {
+class LegendSeriesList extends React.PureComponent<LegendComponentProps> {
   render() {
     const { seriesList, hiddenSeries, values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
@@ -144,7 +220,7 @@ class LegendSeriesList extends React.PureComponent<GraphLegendProps> {
   }
 }
 
-class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
+class LegendTable extends React.PureComponent<Partial<LegendComponentProps>> {
   onToggleSort = stat => {
     let sortDesc = this.props.sortDesc;
     let sortBy = this.props.sort;

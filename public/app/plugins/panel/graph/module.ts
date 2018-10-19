@@ -249,50 +249,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  toggleSeries(serie, event) {
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      if (this.hiddenSeries[serie.alias]) {
-        delete this.hiddenSeries[serie.alias];
-      } else {
-        this.hiddenSeries[serie.alias] = true;
-      }
-    } else {
-      this.toggleSeriesExclusiveMode(serie);
-    }
+  toggleSeries(hiddenSeries) {
+    this.hiddenSeries = hiddenSeries;
     this.render();
-  }
-
-  toggleSeriesExclusiveMode(serie) {
-    const hidden = this.hiddenSeries;
-
-    if (hidden[serie.alias]) {
-      delete hidden[serie.alias];
-    }
-
-    // check if every other series is hidden
-    const alreadyExclusive = _.every(this.seriesList, value => {
-      if (value.alias === serie.alias) {
-        return true;
-      }
-
-      return hidden[value.alias];
-    });
-
-    if (alreadyExclusive) {
-      // remove all hidden series
-      _.each(this.seriesList, value => {
-        delete this.hiddenSeries[value.alias];
-      });
-    } else {
-      // hide all but this serie
-      _.each(this.seriesList, value => {
-        if (value.alias === serie.alias) {
-          return;
-        }
-
-        this.hiddenSeries[value.alias] = true;
-      });
-    }
   }
 
   toggleSort(sortBy, sortDesc) {
@@ -301,13 +260,13 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  toggleAxis(info) {
+  setSeriesAxis(info) {
     let override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
     }
-    info.yaxis = override.yaxis = info.yaxis === 2 ? 1 : 2;
+    override.yaxis = info.yaxis;
     this.render();
   }
 
