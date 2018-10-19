@@ -200,6 +200,10 @@ export class DashboardModel {
     this.events.emit('view-mode-changed', panel);
   }
 
+  timeRangeUpdated() {
+    this.events.emit('time-range-updated');
+  }
+
   startRefresh() {
     this.events.emit('refresh');
 

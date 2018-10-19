@@ -162,10 +162,17 @@ export class DashboardCtrl {
     this.dashboard.removePanel(panel);
   }
 
+  onDestroy() {
+    if (this.dashboard) {
+      this.dashboard.destroy();
+    }
+  }
+
   init(dashboard) {
     this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
     this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
     this.$scope.onAppEvent('panel-remove', this.onRemovingPanel.bind(this));
+    this.$scope.$on('$destroy', this.onDestroy.bind(this));
     this.setupDashboard(dashboard);
   }
 }

@@ -62,7 +62,6 @@ class TestDataDatasource {
           });
         }
 
-        console.log(res);
         return { data: data };
       });
   }

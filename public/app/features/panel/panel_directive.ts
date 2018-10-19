@@ -135,7 +135,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       ctrl.events.on('panel-size-changed', () => {
         ctrl.calculatePanelHeight();
         $timeout(() => {
-          console.log('panel directive panel size changed, render');
           resizeScrollableContent();
           ctrl.render();
         });
