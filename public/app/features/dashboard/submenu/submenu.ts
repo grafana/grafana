@@ -7,13 +7,13 @@ export class SubmenuCtrl {
   dashboard: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private variableSrv, private $location) {
+  constructor(private variableSrv, private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
   }
 
   annotationStateChanged() {
-    this.$rootScope.$broadcast('refresh');
+    this.dashboard.startRefresh();
   }
 
   variableUpdated(variable) {

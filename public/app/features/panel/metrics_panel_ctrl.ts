@@ -7,13 +7,11 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 import { getExploreUrl } from 'app/core/utils/explore';
-
 import { metricsTabDirective } from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: any;
-  datasourceName: any;
   $q: any;
   $timeout: any;
   contextSrv: any;
@@ -45,10 +43,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
-    if (!this.panel.targets) {
-      this.panel.targets = [{}];
-    }
-
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
@@ -62,7 +56,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', metricsTabDirective);
+    this.addEditorTab('Metrics', metricsTabDirective, 1, 'fa fa-database');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
@@ -289,27 +283,6 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.dataStream = null;
       },
     });
-  }
-
-  setDatasource(datasource) {
-    // switching to mixed
-    if (datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        target.datasource = this.panel.datasource;
-        if (!target.datasource) {
-          target.datasource = config.defaultDatasource;
-        }
-      });
-    } else if (this.datasource && this.datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        delete target.datasource;
-      });
-    }
-
-    this.panel.datasource = datasource.value;
-    this.datasourceName = datasource.name;
-    this.datasource = null;
-    this.refresh();
   }
 
   getAdditionalMenuItems() {

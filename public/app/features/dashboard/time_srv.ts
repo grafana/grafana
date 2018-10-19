@@ -1,8 +1,14 @@
+// Libraries
 import moment from 'moment';
 import _ from 'lodash';
-import coreModule from 'app/core/core_module';
+
+// Utils
 import kbn from 'app/core/utils/kbn';
+import coreModule from 'app/core/core_module';
 import * as dateMath from 'app/core/utils/datemath';
+// Types
+
+import { TimeRange } from 'app/types';
 
 export class TimeSrv {
   time: any;
@@ -24,7 +30,6 @@ export class TimeSrv {
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
         this.autoRefreshBlocked = false;
-
         this.refreshDashboard();
       }
     });
@@ -142,7 +147,7 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.$rootScope.$broadcast('refresh');
+    this.dashboard.timeRangeUpdated();
   }
 
   private startNextRefreshTimer(afterMs) {
@@ -201,7 +206,7 @@ export class TimeSrv {
     return range;
   }
 
-  timeRange() {
+  timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
     const raw = {
       from: moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from,
@@ -223,17 +228,21 @@ export class TimeSrv {
     const timespan = range.to.valueOf() - range.from.valueOf();
     const center = range.to.valueOf() - timespan / 2;
 
-    let to = center + timespan * factor / 2;
-    let from = center - timespan * factor / 2;
-
-    if (to > Date.now() && range.to <= Date.now()) {
-      const offset = to - Date.now();
-      from = from - offset;
-      to = Date.now();
-    }
+    const to = center + timespan * factor / 2;
+    const from = center - timespan * factor / 2;
 
     this.setTime({ from: moment.utc(from), to: moment.utc(to) });
   }
+}
+
+let singleton;
+
+export function setTimeSrv(srv: TimeSrv) {
+  singleton = srv;
+}
+
+export function getTimeSrv(): TimeSrv {
+  return singleton;
 }
 
 coreModule.service('timeSrv', TimeSrv);

@@ -1,7 +1,13 @@
+// Libraries
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
+
+// Utils
 import config from 'app/core/config';
 import { importPluginModule } from './plugin_loader';
+
+// Types
+import { DataSourceApi } from 'app/types/series';
 
 export class DatasourceSrv {
   datasources: any;
@@ -15,7 +21,7 @@ export class DatasourceSrv {
     this.datasources = {};
   }
 
-  get(name?) {
+  get(name?): Promise<DataSourceApi> {
     if (!name) {
       return this.get(config.defaultDatasource);
     }
@@ -160,6 +166,16 @@ export class DatasourceSrv {
       }
     }
   }
+}
+
+let singleton: DatasourceSrv;
+
+export function setDatasourceSrv(srv: DatasourceSrv) {
+  singleton = srv;
+}
+
+export function getDatasourceSrv(): DatasourceSrv {
+  return singleton;
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);

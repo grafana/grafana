@@ -2,16 +2,21 @@ import _ from 'lodash';
 import coreModule from '../core_module';
 
 /** @ngInject */
-export function dashClass() {
+function dashClass($timeout) {
   return {
     link: ($scope, elem) => {
-      $scope.onAppEvent('panel-fullscreen-enter', () => {
-        elem.toggleClass('panel-in-fullscreen', true);
+      $scope.ctrl.dashboard.events.on('view-mode-changed', panel => {
+        console.log('view-mode-changed', panel.fullscreen);
+        if (panel.fullscreen) {
+          elem.addClass('panel-in-fullscreen');
+        } else {
+          $timeout(() => {
+            elem.removeClass('panel-in-fullscreen');
+          });
+        }
       });
 
-      $scope.onAppEvent('panel-fullscreen-exit', () => {
-        elem.toggleClass('panel-in-fullscreen', false);
-      });
+      elem.toggleClass('panel-in-fullscreen', $scope.ctrl.dashboard.meta.fullscreen === true);
 
       $scope.$watch('ctrl.dashboardViewState.state.editview', newValue => {
         if (newValue) {

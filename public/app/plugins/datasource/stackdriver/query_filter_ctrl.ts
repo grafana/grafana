@@ -1,4 +1,4 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import { FilterSegments, DefaultRemoveFilterValue } from './filter_segments';
 import appEvents from 'app/core/app_events';
@@ -281,5 +281,5 @@ export class StackdriverFilterCtrl {
   }
 }
 
-angular.module('grafana.controllers').directive('stackdriverFilter', StackdriverFilter);
-angular.module('grafana.controllers').controller('StackdriverFilterCtrl', StackdriverFilterCtrl);
+coreModule.directive('stackdriverFilter', StackdriverFilter);
+coreModule.controller('StackdriverFilterCtrl', StackdriverFilterCtrl);
