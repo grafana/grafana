@@ -263,6 +263,60 @@ jobs:
           paths:
             - enterprise-dist/grafana-enterprise*
 
+  build-all-enterprise:
+    docker:
+    - image: grafana/build-container:1.2.0
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+    - checkout
+    - run:
+        name: prepare build tools
+        command: '/tmp/bootstrap.sh'
+    - run:
+        name: checkout enterprise
+        command: './scripts/build/prepare_enterprise.sh'
+    - restore_cache:
+        key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+    - run:
+        name: download phantomjs binaries
+        command: './scripts/build/download-phantomjs.sh'
+    - save_cache:
+        key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+        paths:
+        - /tmp/phantomjs
+    - run:
+        name: test enterprise
+        command: 'go test ./pkg/extensions/...'
+    - run:
+        name: build and package grafana
+        command: './scripts/build/build-all.sh -enterprise'
+    - run:
+        name: sign packages
+        command: './scripts/build/sign_packages.sh'
+    - run:
+        name: verify signed packages
+        command: |
+          mkdir -p ~/.rpmdb/pubkeys
+          curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+          ./scripts/build/verify_signed_packages.sh dist/*.rpm
+    - run:
+        name: sha-sum packages
+        command: 'go run build.go sha-dist'
+    - run:
+        name: Build Grafana.com master publisher
+        command: 'go build -o scripts/publish scripts/build/publish.go'
+    - run:
+        name: Build Grafana.com release publisher
+        command: 'cd scripts/build/release_publisher && go build -o release_publisher .'
+    - persist_to_workspace:
+        root: .
+        paths:
+        - dist/grafana*
+        - scripts/*.sh
+        - scripts/publish
+        - scripts/build/release_publisher/release_publisher
+        - scripts/build/publish.sh
+
   deploy-enterprise-master:
     docker:
       - image: circleci/python:2.7-stretch

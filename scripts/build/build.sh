@@ -4,6 +4,8 @@
 #   This script is executed from within the container.
 #
 
+set -e
+
 EXTRA_OPTS="$@"
 
 CCX64=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
