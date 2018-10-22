@@ -20,8 +20,6 @@ export class AlertSrv {
       this.$rootScope
     );
 
-    this.list.push({ severity: 'success', icon: 'warning', title: 'test', text: 'test text' });
-
     this.$rootScope.onAppEvent(
       'alert-warning',
       (e, alert) => {

@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 
 export interface Props {
   alerts: any[];
@@ -10,7 +11,7 @@ export class AlertList extends PureComponent<Props> {
   };
 
   render() {
-    const alerts = [{ severity: 'success', icon: 'warning', title: 'test', text: 'test text' }];
+    const { alerts } = this.props;
 
     return (
       <div>
@@ -34,3 +35,11 @@ export class AlertList extends PureComponent<Props> {
     );
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    alerts: state.alerts.alerts,
+  };
+}
+
+export default connect(mapStateToProps)(AlertList);
