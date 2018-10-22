@@ -73,7 +73,7 @@ export class StackdriverFilterCtrl {
     this.filterSegments = new FilterSegments(
       this.uiSegmentSrv,
       this.target,
-      this.getGroupBys.bind(this, null, null, DefaultRemoveFilterValue, false),
+      this.getGroupBys.bind(this, null, DefaultRemoveFilterValue, false),
       this.getFilterValues.bind(this)
     );
     this.filterSegments.buildSegmentModel();
@@ -193,7 +193,7 @@ export class StackdriverFilterCtrl {
     this.$rootScope.$broadcast('metricTypeChanged');
   }
 
-  async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
+  async getGroupBys(segment, removeText?: string, removeUsed = true) {
     await this.loadLabelsPromise;
 
     let elements = Object.keys(this.metricLabels || {})
