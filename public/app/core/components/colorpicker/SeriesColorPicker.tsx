@@ -1,67 +1,81 @@
 import React from 'react';
-import { ColorPickerPopover } from './ColorPickerPopover';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
+import ReactDOM from 'react-dom';
+import Drop from 'tether-drop';
+import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 export interface SeriesColorPickerProps {
-  // series: any;
   color: string;
   yaxis?: number;
-  onColorChange: (color: string) => void;
+  optionalClass?: string;
+  onColorChange: (newColor: string) => void;
   onToggleAxis?: () => void;
 }
 
-export class SeriesColorPicker extends React.PureComponent<SeriesColorPickerProps, any> {
-  render() {
-    return (
-      <div className="graph-legend-popover">
-        {this.props.yaxis && <AxisSelector yaxis={this.props.yaxis} onToggleAxis={this.props.onToggleAxis} />}
-        <ColorPickerPopover color={this.props.color} onColorSelect={this.props.onColorChange} />
-      </div>
-    );
-  }
-}
+export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
+  pickerElem: any;
+  colorPickerDrop: any;
 
-interface AxisSelectorProps {
-  yaxis: number;
-  onToggleAxis: () => void;
-}
+  static defaultProps = {
+    optionalClass: '',
+    yaxis: undefined,
+    onToggleAxis: () => {},
+  };
 
-interface AxisSelectorState {
-  yaxis: number;
-}
-
-export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSelectorState> {
   constructor(props) {
     super(props);
-    this.state = {
-      yaxis: this.props.yaxis,
-    };
-    this.onToggleAxis = this.onToggleAxis.bind(this);
+    this.openColorPicker = this.openColorPicker.bind(this);
   }
 
-  onToggleAxis() {
-    this.setState({
-      yaxis: this.state.yaxis === 2 ? 1 : 2,
+  openColorPicker() {
+    if (this.colorPickerDrop) {
+      this.destroyDrop();
+    }
+
+    const { color, yaxis, onColorChange, onToggleAxis } = this.props;
+    const dropContent = (
+      <SeriesColorPickerPopover color={color} yaxis={yaxis} onColorChange={onColorChange} onToggleAxis={onToggleAxis} />
+    );
+    const dropContentElem = document.createElement('div');
+    ReactDOM.render(dropContent, dropContentElem);
+
+    const drop = new Drop({
+      target: this.pickerElem,
+      content: dropContentElem,
+      position: 'top center',
+      classes: 'drop-popover',
+      openOn: 'hover',
+      hoverCloseDelay: 200,
+      remove: true,
+      tetherOptions: {
+        constraints: [{ to: 'scrollParent', attachment: 'none both' }],
+      },
     });
-    this.props.onToggleAxis();
+
+    drop.on('close', this.closeColorPicker.bind(this));
+
+    this.colorPickerDrop = drop;
+    this.colorPickerDrop.open();
+  }
+
+  closeColorPicker() {
+    setTimeout(() => {
+      this.destroyDrop();
+    }, 100);
+  }
+
+  destroyDrop() {
+    if (this.colorPickerDrop && this.colorPickerDrop.tether) {
+      this.colorPickerDrop.destroy();
+      this.colorPickerDrop = null;
+    }
   }
 
   render() {
-    const leftButtonClass = this.state.yaxis === 1 ? 'btn-success' : 'btn-inverse';
-    const rightButtonClass = this.state.yaxis === 2 ? 'btn-success' : 'btn-inverse';
-
+    const { optionalClass, children } = this.props;
     return (
-      <div className="p-b-1">
-        <label className="small p-r-1">Y Axis:</label>
-        <button onClick={this.onToggleAxis} className={'btn btn-small ' + leftButtonClass}>
-          Left
-        </button>
-        <button onClick={this.onToggleAxis} className={'btn btn-small ' + rightButtonClass}>
-          Right
-        </button>
+      <div className={optionalClass} ref={e => (this.pickerElem = e)} onClick={this.openColorPicker}>
+        {children}
       </div>
     );
   }
 }
-
-react2AngularDirective('seriesColorPicker', SeriesColorPicker, ['series', 'onColorChange', 'onToggleAxis']);

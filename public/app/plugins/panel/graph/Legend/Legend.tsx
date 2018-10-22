@@ -87,16 +87,6 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendSta
     };
   }
 
-  onToggleAxis = series => {
-    this.props.onToggleAxis(series);
-    this.forceUpdate();
-  };
-
-  onColorChange = (series, color) => {
-    this.props.onColorChange(series, color);
-    this.forceUpdate();
-  };
-
   sortLegend() {
     let seriesList = [...this.props.seriesList] || [];
     if (this.props.sort) {
@@ -187,9 +177,9 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendSta
       seriesList: seriesList,
       hiddenSeries: hiddenSeries,
       onToggleSeries: this.onToggleSeries,
-      onToggleAxis: this.onToggleAxis,
+      onToggleAxis: this.props.onToggleAxis,
       onToggleSort: this.props.onToggleSort,
-      onColorChange: this.onColorChange,
+      onColorChange: this.props.onColorChange,
       ...seriesValuesProps,
       ...sortProps,
     };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TimeSeries } from 'app/core/core';
-import withColorPicker from 'app/core/components/colorpicker/withColorPicker';
+import { SeriesColorPicker } from 'app/core/components/colorpicker/SeriesColorPicker';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -55,6 +55,10 @@ export class LegendItem extends React.PureComponent<LegendItemProps, LegendItemS
 
   onColorChange = color => {
     this.props.onColorChange(this.props.series, color);
+    // Because of PureComponent nature it makes only shallow props comparison and changing of series.color doesn't run
+    // component re-render. In this case we can't rely on color, selected by user, because it may be overwritten
+    // by series overrides. So we need to use forceUpdate() to make sure we have proper series color.
+    this.forceUpdate();
   };
 
   render() {
@@ -156,17 +160,16 @@ class LegendSeriesIcon extends React.PureComponent<LegendSeriesIconProps, Legend
   };
 
   render() {
-    const { yaxis } = this.props;
-    const IconWithColorPicker = withColorPicker(SeriesIcon);
-
     return (
-      <IconWithColorPicker
+      <SeriesColorPicker
         optionalClass="graph-legend-icon"
-        yaxis={yaxis}
+        yaxis={this.props.yaxis}
         color={this.state.color}
         onColorChange={this.onColorChange}
         onToggleAxis={this.props.onToggleAxis}
-      />
+      >
+        <SeriesIcon color={this.props.color} />
+      </SeriesColorPicker>
     );
   }
 }
