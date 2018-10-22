@@ -19,7 +19,6 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -381,7 +380,6 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			}
 		}
 
-		logger.Info("resourceTypes", "resourceTypes", series.Resource.Type)
 		if !containsLabel(resourceTypes, series.Resource.Type) {
 			resourceTypes = append(resourceTypes, series.Resource.Type)
 		}
