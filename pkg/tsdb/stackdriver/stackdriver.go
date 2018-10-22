@@ -19,6 +19,7 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -355,6 +356,7 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
 	metricLabels := make(map[string][]string)
 	resourceLabels := make(map[string][]string)
+	var resourceTypes []string
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
@@ -377,6 +379,11 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			if containsLabel(query.GroupBys, "resource.label."+key) {
 				defaultMetricName += " " + value
 			}
+		}
+
+		logger.Info("resourceTypes", "resourceTypes", series.Resource.Type)
+		if !containsLabel(resourceTypes, series.Resource.Type) {
+			resourceTypes = append(resourceTypes, series.Resource.Type)
 		}
 
 		// reverse the order to be ascending
@@ -460,6 +467,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 	queryRes.Meta.Set("resourceLabels", resourceLabels)
 	queryRes.Meta.Set("metricLabels", metricLabels)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
+	queryRes.Meta.Set("resourceTypes", resourceTypes)
 
 	return nil
 }

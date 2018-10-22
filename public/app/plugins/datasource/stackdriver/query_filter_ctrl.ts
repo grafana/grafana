@@ -26,6 +26,7 @@ export class StackdriverFilter {
 export class StackdriverFilterCtrl {
   metricLabels: { [key: string]: string[] };
   resourceLabels: { [key: string]: string[] };
+  resourceTypes: string[];
 
   defaultRemoveGroupByValue = '-- remove group by --';
   loadLabelsPromise: Promise<any>;
@@ -151,6 +152,7 @@ export class StackdriverFilterCtrl {
         const data = await this.datasource.getLabels(this.target.metricType, this.target.refId);
         this.metricLabels = data.results[this.target.refId].meta.metricLabels;
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
+        this.resourceTypes = data.results[this.target.refId].meta.resourceTypes;
         resolve();
       } catch (error) {
         if (error.data && error.data.message) {
@@ -194,7 +196,7 @@ export class StackdriverFilterCtrl {
   async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
     await this.loadLabelsPromise;
 
-    const metricLabels = Object.keys(this.metricLabels || {})
+    let elements = Object.keys(this.metricLabels || {})
       .filter(ml => {
         if (!removeUsed) {
           return true;
@@ -208,28 +210,46 @@ export class StackdriverFilterCtrl {
         });
       });
 
-    const resourceLabels = Object.keys(this.resourceLabels || {})
-      .filter(ml => {
-        if (!removeUsed) {
-          return true;
-        }
+    elements = [
+      ...elements,
+      ...Object.keys(this.resourceLabels || {})
+        .filter(ml => {
+          if (!removeUsed) {
+            return true;
+          }
 
-        return this.target.aggregation.groupBys.indexOf('resource.label.' + ml) === -1;
-      })
-      .map(l => {
-        return this.uiSegmentSrv.newSegment({
-          value: `resource.label.${l}`,
+          return this.target.aggregation.groupBys.indexOf('resource.label.' + ml) === -1;
+        })
+        .map(l => {
+          return this.uiSegmentSrv.newSegment({
+            value: `resource.label.${l}`,
+            expandable: false,
+          });
+        }),
+    ];
+
+    if (
+      this.resourceTypes &&
+      this.resourceTypes.length > 0 &&
+      this.target.aggregation.groupBys.indexOf('resource.type') === -1
+    ) {
+      elements = [
+        ...elements,
+        this.uiSegmentSrv.newSegment({
+          value: `resource.type`,
           expandable: false,
-        });
-      });
+        }),
+      ];
+    }
 
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
-    if (noValueOrPlusButton && metricLabels.length === 0 && resourceLabels.length === 0) {
+    if (noValueOrPlusButton && elements.length === 0) {
       return Promise.resolve([]);
     }
 
     this.removeSegment.value = removeText || this.defaultRemoveGroupByValue;
-    return Promise.resolve([...metricLabels, ...resourceLabels, this.removeSegment]);
+    elements = [...elements, this.removeSegment];
+    return Promise.resolve(elements);
   }
 
   groupByChanged(segment, index) {
@@ -271,6 +291,10 @@ export class StackdriverFilterCtrl {
 
     if (filterKey.startsWith('resource.label.') && this.resourceLabels.hasOwnProperty(shortKey)) {
       return this.resourceLabels[shortKey];
+    }
+
+    if (filterKey === 'resource.type') {
+      return this.resourceTypes;
     }
 
     return [];
