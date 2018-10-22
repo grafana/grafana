@@ -93,7 +93,7 @@ export class LegendItem extends React.PureComponent<LegendItemProps, LegendItemS
     const valueItems = values ? this.renderLegendValues() : [];
     const seriesLabel = (
       <LegendSeriesLabel
-        label={series.aliasEscaped}
+        label={series.alias}
         color={series.color}
         yaxis={this.state.yaxis}
         onLabelClick={this.onLabelClick}
