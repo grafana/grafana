@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -32,6 +33,11 @@ var (
 	slog             log.Logger
 	legendKeyFormat  *regexp.Regexp
 	metricNameFormat *regexp.Regexp
+)
+
+const (
+	gceAuthentication string = "gce"
+	jwtAuthentication string = "jwt"
 )
 
 // StackdriverExecutor executes queries for the Stackdriver datasource
@@ -71,6 +77,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
+	case "ensureDefaultProjectQuery":
+		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -83,6 +91,16 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
+	}
+
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
+	if authenticationType == gceAuthentication {
+		defaultProject, err := e.getDefaultProject(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		}
+
+		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
 	}
 
 	queries, err := e.buildQueries(tsdbQuery)
@@ -550,8 +568,6 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	if !ok {
 		return nil, errors.New("Unable to find datasource plugin Stackdriver")
 	}
-	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	var stackdriverRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
@@ -561,7 +577,22 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 		}
 	}
 
+	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
+	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
+
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
 	return req, nil
+}
+
+func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, error) {
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
+	if authenticationType == gceAuthentication {
+		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
+		if err != nil {
+			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		}
+		return defaultCredentials.ProjectID, nil
+	}
+	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
 }

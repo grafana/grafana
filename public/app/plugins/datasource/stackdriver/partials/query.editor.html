@@ -15,8 +15,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Project</span>
-      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.project.name' get-options="ctrl.getProjects()"
-        css-class="min-width-12" />
+      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.defaultProject' css-class="min-width-12" />
     </div>
     <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
@@ -40,8 +39,8 @@
   <div class="gf-form" ng-show="ctrl.showLastQuery">
     <pre class="gf-form-pre">{{ctrl.lastQueryMeta.rawQueryString}}</pre>
   </div>
-  <div class="grafana-info-box m-t-2 markdown-html" ng-show="ctrl.showHelp">
-    <h5>Alias Patterns</h5>
+  <div class="gf-form grafana-info-box" style="padding: 0" ng-show="ctrl.showHelp">
+    <pre class="gf-form-pre alert alert-info" style="margin-right: 0"><h5>Alias Patterns</h5>Format the legend keys any way you want by using alias patterns.
 
     Format the legend keys any way you want by using alias patterns.<br /> <br />
 
