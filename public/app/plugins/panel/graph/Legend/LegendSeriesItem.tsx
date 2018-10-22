@@ -61,10 +61,36 @@ export class LegendItem extends React.PureComponent<LegendItemProps, LegendItemS
     this.forceUpdate();
   };
 
+  getOptionSeriesCSSClasses() {
+    const { series, hidden } = this.props;
+    const classes = [];
+    if (series.yaxis === 2) {
+      classes.push('graph-legend-series--right-y');
+    }
+    if (hidden) {
+      classes.push('graph-legend-series-hidden');
+    }
+    return classes.join(' ');
+  }
+
+  renderLegendValues() {
+    const { series, asTable } = this.props;
+    const legendValueItems = [];
+    for (const valueName of LEGEND_STATS) {
+      if (this.props[valueName]) {
+        const valueFormatted = series.formatValue(series.stats[valueName]);
+        legendValueItems.push(
+          <LegendValue key={valueName} valueName={valueName} value={valueFormatted} asTable={asTable} />
+        );
+      }
+    }
+    return legendValueItems;
+  }
+
   render() {
-    const { series, hidden, asTable } = this.props;
-    const seriesOptionClasses = getOptionSeriesCSSClasses(series, hidden);
-    const valueItems = this.props.values ? renderLegendValues(this.props, series, asTable) : [];
+    const { series, values, asTable } = this.props;
+    const seriesOptionClasses = this.getOptionSeriesCSSClasses();
+    const valueItems = values ? this.renderLegendValues() : [];
     const seriesLabel = (
       <LegendSeriesLabel
         label={series.aliasEscaped}
@@ -187,28 +213,4 @@ function LegendValue(props: LegendValueProps) {
     return <td className={`graph-legend-value ${valueName}`}>{value}</td>;
   }
   return <div className={`graph-legend-value ${valueName}`}>{value}</div>;
-}
-
-function renderLegendValues(props: LegendItemProps, series, asTable = false) {
-  const legendValueItems = [];
-  for (const valueName of LEGEND_STATS) {
-    if (props[valueName]) {
-      const valueFormatted = series.formatValue(series.stats[valueName]);
-      legendValueItems.push(
-        <LegendValue key={valueName} valueName={valueName} value={valueFormatted} asTable={asTable} />
-      );
-    }
-  }
-  return legendValueItems;
-}
-
-function getOptionSeriesCSSClasses(series, hidden) {
-  const classes = [];
-  if (series.yaxis === 2) {
-    classes.push('graph-legend-series--right-y');
-  }
-  if (hidden) {
-    classes.push('graph-legend-series-hidden');
-  }
-  return classes.join(' ');
 }

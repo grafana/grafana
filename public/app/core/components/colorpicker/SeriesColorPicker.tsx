@@ -26,6 +26,10 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
     this.openColorPicker = this.openColorPicker.bind(this);
   }
 
+  componentWillUnmount() {
+    this.destroyDrop();
+  }
+
   openColorPicker() {
     if (this.colorPickerDrop) {
       this.destroyDrop();
