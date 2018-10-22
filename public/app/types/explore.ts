@@ -3,6 +3,11 @@ interface ExploreDatasource {
   label: string;
 }
 
+export interface HistoryItem {
+  ts: number;
+  query: string;
+}
+
 export interface Range {
   from: string;
   to: string;
@@ -11,6 +16,18 @@ export interface Range {
 export interface Query {
   query: string;
   key?: string;
+}
+
+export interface QueryTransaction {
+  id: string;
+  done: boolean;
+  error?: string;
+  latency: number;
+  options: any;
+  query: string;
+  result?: any; // Table / Timeseries / Logs
+  resultType: string;
+  rowIndex: number;
 }
 
 export interface TextMatch {
@@ -27,11 +44,8 @@ export interface ExploreState {
   datasourceMissing: boolean;
   datasourceName?: string;
   exploreDatasources: ExploreDatasource[];
-  graphResult: any;
-  history: any[];
-  latency: number;
-  loading: any;
-  logsResult: any;
+  graphRange: Range;
+  history: HistoryItem[];
   /**
    * Initial rows of queries to push down the tree.
    * Modifications do not end up here, but in `this.queryExpressions`.
@@ -39,22 +53,17 @@ export interface ExploreState {
    */
   queries: Query[];
   /**
-   * Errors caused by the running the query row.
-   */
-  queryErrors: any[];
-  /**
    * Hints gathered for the query row.
    */
   queryHints: any[];
+  queryTransactions: QueryTransaction[];
   range: Range;
-  requestOptions: any;
   showingGraph: boolean;
   showingLogs: boolean;
   showingTable: boolean;
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
-  tableResult: any;
 }
 
 export interface ExploreUrlState {

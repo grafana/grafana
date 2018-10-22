@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 
 // TODO make this datasource-plugin-dependent
 import QueryField from './PromQueryField';
+import QueryTransactions from './QueryTransactions';
 
 class QueryRow extends PureComponent<any, {}> {
   onChangeQuery = (value, override?: boolean) => {
@@ -44,9 +45,14 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { history, query, queryError, queryHint, request, supportsLogs } = this.props;
+    const { history, query, queryHint, request, supportsLogs, transactions } = this.props;
+    const transactionWithError = transactions.find(t => t.error);
+    const queryError = transactionWithError ? transactionWithError.error : null;
     return (
       <div className="query-row">
+        <div className="query-row-status">
+          <QueryTransactions transactions={transactions} />
+        </div>
         <div className="query-row-field">
           <QueryField
             error={queryError}
@@ -78,7 +84,7 @@ class QueryRow extends PureComponent<any, {}> {
 
 export default class QueryRows extends PureComponent<any, {}> {
   render() {
-    const { className = '', queries, queryErrors, queryHints, ...handlers } = this.props;
+    const { className = '', queries, queryHints, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (
@@ -86,7 +92,7 @@ export default class QueryRows extends PureComponent<any, {}> {
             key={q.key}
             index={index}
             query={q.query}
-            queryError={queryErrors[index]}
+            transactions={transactions.filter(t => t.rowIndex === index)}
             queryHint={queryHints[index]}
             {...handlers}
           />

@@ -1,8 +1,9 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import Select from 'react-select';
+import _ from 'lodash';
 
-import { ExploreState, ExploreUrlState, Query } from 'app/types/explore';
+import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, Range } from 'app/types/explore';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -15,7 +16,6 @@ import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer'
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
-import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Logs from './Logs';
@@ -53,6 +53,25 @@ function makeTimeSeriesList(dataList, options) {
   });
 }
 
+/**
+ * Update the query history. Side-effect: store history in local storage
+ */
+function updateHistory(history: HistoryItem[], datasourceId: string, queries: string[]): HistoryItem[] {
+  const ts = Date.now();
+  queries.forEach(query => {
+    history = [{ query, ts }, ...history];
+  });
+
+  if (history.length > MAX_HISTORY_ITEMS) {
+    history = history.slice(0, MAX_HISTORY_ITEMS);
+  }
+
+  // Combine all queries of a datasource type into one history
+  const historyKey = `grafana.explore.history.${datasourceId}`;
+  store.setObject(historyKey, history);
+  return history;
+}
+
 interface ExploreProps {
   datasourceSrv: any;
   onChangeSplit: (split: boolean, state?: ExploreState) => void;
@@ -83,6 +102,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } else {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
       initialQueries = ensureQueries(queries);
+      const initialRange = range || { ...DEFAULT_RANGE };
       this.state = {
         datasource: null,
         datasourceError: null,
@@ -90,23 +110,18 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceMissing: false,
         datasourceName: datasource,
         exploreDatasources: [],
-        graphResult: null,
+        graphRange: initialRange,
         history: [],
-        latency: 0,
-        loading: false,
-        logsResult: null,
         queries: initialQueries,
-        queryErrors: [],
         queryHints: [],
-        range: range || { ...DEFAULT_RANGE },
-        requestOptions: null,
+        queryTransactions: [],
+        range: initialRange,
         showingGraph: true,
         showingLogs: true,
         showingTable: true,
         supportsGraph: null,
         supportsLogs: null,
         supportsTable: null,
-        tableResult: null,
       };
     }
     this.queryExpressions = initialQueries.map(q => q.query);
@@ -200,14 +215,30 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onAddQueryRow = index => {
-    const { queries } = this.state;
+    const { queries, queryTransactions } = this.state;
+
+    // Local cache
     this.queryExpressions[index + 1] = '';
+
+    // Add row by generating new react key
     const nextQueries = [
       ...queries.slice(0, index + 1),
       { query: '', key: generateQueryKey() },
       ...queries.slice(index + 1),
     ];
-    this.setState({ queries: nextQueries });
+
+    // Ongoing transactions need to update their row indices
+    const nextQueryTransactions = queryTransactions.map(qt => {
+      if (qt.rowIndex > index) {
+        return {
+          ...qt,
+          rowIndex: qt.rowIndex + 1,
+        };
+      }
+      return qt;
+    });
+
+    this.setState({ queries: nextQueries, queryTransactions: nextQueryTransactions });
   };
 
   onChangeDatasource = async option => {
@@ -215,12 +246,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasource: null,
       datasourceError: null,
       datasourceLoading: true,
-      graphResult: null,
-      latency: 0,
-      logsResult: null,
-      queryErrors: [],
       queryHints: [],
-      tableResult: null,
+      queryTransactions: [],
     });
     const datasourceName = option.value;
     const datasource = await this.props.datasourceSrv.get(datasourceName);
@@ -231,9 +258,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // Keep current value in local cache
     this.queryExpressions[index] = value;
 
-    // Replace query row on override
     if (override) {
-      const { queries } = this.state;
+      // Replace query row
+      const { queries, queryTransactions } = this.state;
       const nextQuery: Query = {
         key: generateQueryKey(index),
         query: value,
@@ -241,11 +268,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const nextQueries = [...queries];
       nextQueries[index] = nextQuery;
 
+      // Discard ongoing transaction related to row query
+      const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+
       this.setState(
         {
-          queryErrors: [],
-          queryHints: [],
           queries: nextQueries,
+          queryHints: [],
+          queryTransactions: nextQueryTransactions,
         },
         this.onSubmit
       );
@@ -264,13 +294,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.queryExpressions = [''];
     this.setState(
       {
-        graphResult: null,
-        logsResult: null,
-        latency: 0,
         queries: ensureQueries(),
-        queryErrors: [],
         queryHints: [],
-        tableResult: null,
+        queryTransactions: [],
       },
       this.saveState
     );
@@ -308,15 +334,18 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onModifyQueries = (action: object, index?: number) => {
-    const { datasource, queries } = this.state;
+    const { datasource, queries, queryTransactions } = this.state;
     if (datasource && datasource.modifyQuery) {
       let nextQueries;
+      let nextQueryTransactions;
       if (index === undefined) {
         // Modify all queries
         nextQueries = queries.map((q, i) => ({
           key: generateQueryKey(i),
           query: datasource.modifyQuery(this.queryExpressions[i], action),
         }));
+        // Discard all ongoing transactions
+        nextQueryTransactions = [];
       } else {
         // Modify query only at index
         nextQueries = [
@@ -327,20 +356,41 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           },
           ...queries.slice(index + 1),
         ];
+        // Discard transactions related to row query
+        nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
       }
       this.queryExpressions = nextQueries.map(q => q.query);
-      this.setState({ queries: nextQueries }, () => this.onSubmit());
+      this.setState(
+        {
+          queries: nextQueries,
+          queryTransactions: nextQueryTransactions,
+        },
+        () => this.onSubmit()
+      );
     }
   };
 
   onRemoveQueryRow = index => {
-    const { queries } = this.state;
+    const { queries, queryTransactions } = this.state;
     if (queries.length <= 1) {
       return;
     }
+    // Remove from local cache
+    this.queryExpressions = [...this.queryExpressions.slice(0, index), ...this.queryExpressions.slice(index + 1)];
+
+    // Remove row from react state
     const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
-    this.queryExpressions = nextQueries.map(q => q.query);
-    this.setState({ queries: nextQueries }, () => this.onSubmit());
+
+    // Discard transactions related to row query
+    const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+
+    this.setState(
+      {
+        queries: nextQueries,
+        queryTransactions: nextQueryTransactions,
+      },
+      () => this.onSubmit()
+    );
   };
 
   onSubmit = () => {
@@ -349,7 +399,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       this.runTableQuery();
     }
     if (showingGraph && supportsGraph) {
-      this.runGraphQuery();
+      this.runGraphQueries();
     }
     if (showingLogs && supportsLogs) {
       this.runLogsQuery();
@@ -357,32 +407,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.saveState();
   };
 
-  onQuerySuccess(datasourceId: string, queries: string[]): void {
-    // save queries to history
-    let { history } = this.state;
-    const { datasource } = this.state;
-
-    if (datasource.meta.id !== datasourceId) {
-      // Navigated away, queries did not matter
-      return;
-    }
-
-    const ts = Date.now();
-    queries.forEach(query => {
-      history = [{ query, ts }, ...history];
-    });
-
-    if (history.length > MAX_HISTORY_ITEMS) {
-      history = history.slice(0, MAX_HISTORY_ITEMS);
-    }
-
-    // Combine all queries of a datasource type into one history
-    const historyKey = `grafana.explore.history.${datasourceId}`;
-    store.setObject(historyKey, history);
-    this.setState({ history });
-  }
-
-  buildQueryOptions(targetOptions: { format: string; hinting?: boolean; instant?: boolean }) {
+  buildQueryOptions(query: string, rowIndex: number, targetOptions: { format: string; hinting?: boolean; instant?: boolean }) {
     const { datasource, range } = this.state;
     const resolution = this.el.offsetWidth;
     const absoluteRange = {
@@ -390,90 +415,215 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       to: parseDate(range.to, true),
     };
     const { interval } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
-    const targets = this.queryExpressions.map((q, i) => ({
-      ...targetOptions,
-      // Target identifier is needed for table transformations
-      refId: i + 1,
-      expr: q,
-    }));
+    const targets = [
+      {
+        ...targetOptions,
+        // Target identifier is needed for table transformations
+        refId: rowIndex + 1,
+        expr: query,
+      },
+    ];
+
+    // Clone range for query request
+    const queryRange: Range = { ...range };
+
     return {
       interval,
-      range,
       targets,
+      range: queryRange,
     };
   }
 
-  async runGraphQuery() {
+  startQueryTransaction(query: string, rowIndex: number, resultType: string, options: any): QueryTransaction {
+    const queryOptions = this.buildQueryOptions(query, rowIndex, options);
+    const transaction: QueryTransaction = {
+      query,
+      resultType,
+      rowIndex,
+      id: generateQueryKey(),
+      done: false,
+      latency: 0,
+      options: queryOptions,
+    };
+
+    // Using updater style because we might be modifying queryTransactions in quick succession
+    this.setState(state => {
+      const { queryTransactions } = state;
+      // Discarding existing transactions of same type
+      const remainingTransactions = queryTransactions.filter(
+        qt => !(qt.resultType === resultType && qt.rowIndex === rowIndex)
+      );
+
+      // Append new transaction
+      const nextQueryTransactions = [...remainingTransactions, transaction];
+
+      return {
+        queryHints: [],
+        queryTransactions: nextQueryTransactions,
+      };
+    });
+
+    return transaction;
+  }
+
+  completeQueryTransaction(
+    transactionId: string,
+    result: any,
+    latency: number,
+    hints: any[],
+    queries: string[],
+    datasourceId: string
+  ) {
     const { datasource } = this.state;
+    if (datasource.meta.id !== datasourceId) {
+      // Navigated away, queries did not matter
+      return;
+    }
+
+    this.setState(state => {
+      const { history, queryTransactions } = state;
+
+      // Transaction might have been discarded
+      if (!queryTransactions.find(qt => qt.id === transactionId)) {
+        return null;
+      }
+
+      // Mark transactions as complete
+      const nextQueryTransactions = queryTransactions.map(qt => {
+        if (qt.id === transactionId) {
+          return {
+            ...qt,
+            latency,
+            result,
+            done: true,
+          };
+        }
+        return qt;
+      });
+
+      const nextHistory = updateHistory(history, datasourceId, queries);
+
+      return {
+        history: nextHistory,
+        queryHints: hints,
+        queryTransactions: nextQueryTransactions,
+      };
+    });
+  }
+
+  failQueryTransaction(transactionId: string, error: string, datasourceId: string) {
+    const { datasource } = this.state;
+    if (datasource.meta.id !== datasourceId) {
+      // Navigated away, queries did not matter
+      return;
+    }
+
+    this.setState(state => {
+      // Transaction might have been discarded
+      if (!state.queryTransactions.find(qt => qt.id === transactionId)) {
+        return null;
+      }
+
+      // Mark transactions as complete
+      const nextQueryTransactions = state.queryTransactions.map(qt => {
+        if (qt.id === transactionId) {
+          return {
+            ...qt,
+            error,
+            done: true,
+          };
+        }
+        return qt;
+      });
+
+      return {
+        queryTransactions: nextQueryTransactions,
+      };
+    });
+  }
+
+  async runGraphQueries() {
     const queries = [...this.queryExpressions];
     if (!hasQuery(queries)) {
       return;
     }
-    this.setState({ latency: 0, loading: true, graphResult: null, queryErrors: [], queryHints: [] });
-    const now = Date.now();
-    const options = this.buildQueryOptions({ format: 'time_series', instant: false, hinting: true });
-    try {
-      const res = await datasource.query(options);
-      const result = makeTimeSeriesList(res.data, options);
-      const queryHints = res.hints ? makeHints(res.hints) : [];
-      const latency = Date.now() - now;
-      this.setState({ latency, loading: false, graphResult: result, queryHints, requestOptions: options });
-      this.onQuerySuccess(datasource.meta.id, queries);
-    } catch (response) {
-      console.error(response);
-      const queryError = response.data ? response.data.error : response;
-      this.setState({ loading: false, queryErrors: [queryError] });
-    }
+    const { datasource } = this.state;
+    const datasourceId = datasource.meta.id;
+    // Run all queries concurrently
+    queries.forEach(async (query, rowIndex) => {
+      if (query) {
+        const transaction = this.startQueryTransaction(query, rowIndex, 'Graph', {
+          format: 'time_series',
+          instant: false,
+          hinting: true,
+        });
+        try {
+          const now = Date.now();
+          const res = await datasource.query(transaction.options);
+          const latency = Date.now() - now;
+          const results = makeTimeSeriesList(res.data, transaction.options);
+          const queryHints = res.hints ? makeHints(res.hints) : [];
+          this.completeQueryTransaction(transaction.id, results, latency, queryHints, queries, datasourceId);
+          this.setState({ graphRange: transaction.options.range });
+        } catch (response) {
+          console.error(response);
+          const queryError = response.data ? response.data.error : response;
+          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+        }
+      }
+    });
   }
 
   async runTableQuery() {
     const queries = [...this.queryExpressions];
-    const { datasource } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
-    this.setState({ latency: 0, loading: true, queryErrors: [], queryHints: [], tableResult: null });
-    const now = Date.now();
-    const options = this.buildQueryOptions({
-      format: 'table',
-      instant: true,
+    const { datasource } = this.state;
+    const datasourceId = datasource.meta.id;
+    // Run all queries concurrently
+    queries.forEach(async (query, rowIndex) => {
+      if (query) {
+        const transaction = this.startQueryTransaction(query, rowIndex, 'Table', { format: 'table', instant: true });
+        try {
+          const now = Date.now();
+          const res = await datasource.query(transaction.options);
+          const latency = Date.now() - now;
+          const results = mergeTablesIntoModel(new TableModel(), ...res.data);
+          this.completeQueryTransaction(transaction.id, results, latency, [], queries, datasourceId);
+        } catch (response) {
+          console.error(response);
+          const queryError = response.data ? response.data.error : response;
+          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+        }
+      }
     });
-    try {
-      const res = await datasource.query(options);
-      const tableModel = mergeTablesIntoModel(new TableModel(), ...res.data);
-      const latency = Date.now() - now;
-      this.setState({ latency, loading: false, tableResult: tableModel, requestOptions: options });
-      this.onQuerySuccess(datasource.meta.id, queries);
-    } catch (response) {
-      console.error(response);
-      const queryError = response.data ? response.data.error : response;
-      this.setState({ loading: false, queryErrors: [queryError] });
-    }
   }
 
   async runLogsQuery() {
     const queries = [...this.queryExpressions];
-    const { datasource } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
-    this.setState({ latency: 0, loading: true, queryErrors: [], queryHints: [], logsResult: null });
-    const now = Date.now();
-    const options = this.buildQueryOptions({
-      format: 'logs',
+    const { datasource } = this.state;
+    const datasourceId = datasource.meta.id;
+    // Run all queries concurrently
+    queries.forEach(async (query, rowIndex) => {
+      if (query) {
+        const transaction = this.startQueryTransaction(query, rowIndex, 'Logs', { format: 'logs' });
+        try {
+          const now = Date.now();
+          const res = await datasource.query(transaction.options);
+          const latency = Date.now() - now;
+          const results = res.data;
+          this.completeQueryTransaction(transaction.id, results, latency, [], queries, datasourceId);
+        } catch (response) {
+          console.error(response);
+          const queryError = response.data ? response.data.error : response;
+          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+        }
+      }
     });
-
-    try {
-      const res = await datasource.query(options);
-      const logsData = res.data;
-      const latency = Date.now() - now;
-      this.setState({ latency, loading: false, logsResult: logsData, requestOptions: options });
-      this.onQuerySuccess(datasource.meta.id, queries);
-    } catch (response) {
-      console.error(response);
-      const queryError = response.data ? response.data.error : response;
-      this.setState({ loading: false, queryErrors: [queryError] });
-    }
   }
 
   request = url => {
@@ -502,23 +652,18 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasourceLoading,
       datasourceMissing,
       exploreDatasources,
-      graphResult,
+      graphRange,
       history,
-      latency,
-      loading,
-      logsResult,
       queries,
-      queryErrors,
       queryHints,
+      queryTransactions,
       range,
-      requestOptions,
       showingGraph,
       showingLogs,
       showingTable,
       supportsGraph,
       supportsLogs,
       supportsTable,
-      tableResult,
     } = this.state;
     const showingBoth = showingGraph && showingTable;
     const graphHeight = showingBoth ? '200px' : '400px';
@@ -527,6 +672,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
+    const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
+    const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
+    const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
+    const graphResult = _.flatten(
+      queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
+    );
+    const tableResult = queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done).map(qt => qt.result)[0];
+    const logsResult = _.flatten(
+      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done).map(qt => qt.result)
+    );
+    const loading = queryTransactions.some(qt => !qt.done);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -539,12 +695,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                Close Split
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                  Close Split
               </button>
-            </div>
-          )}
+              </div>
+            )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
@@ -584,9 +740,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           </div>
           <div className="navbar-buttons relative">
             <button className="btn navbar-button--primary" onClick={this.onSubmit}>
-              Run Query <i className="fa fa-level-down run-icon" />
+              Run Query{' '}
+              {loading ? <i className="fa fa-spinner fa-spin run-icon" /> : <i className="fa fa-level-down run-icon" />}
             </button>
-            {loading || latency ? <ElapsedTime time={latency} className="text-info" /> : null}
           </div>
         </div>
 
@@ -605,7 +761,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             <QueryRows
               history={history}
               queries={queries}
-              queryErrors={queryErrors}
               queryHints={queryHints}
               request={this.request}
               onAddQueryRow={this.onAddQueryRow}
@@ -614,6 +769,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               onExecuteQuery={this.onSubmit}
               onRemoveQueryRow={this.onRemoveQueryRow}
               supportsLogs={supportsLogs}
+              transactions={queryTransactions}
             />
             <div className="result-options">
               {supportsGraph ? (
@@ -635,23 +791,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
             <main className="m-t-2">
               {supportsGraph &&
-                showingGraph &&
-                graphResult && (
+                showingGraph && (
                   <Graph
                     data={graphResult}
                     height={graphHeight}
-                    loading={loading}
+                    loading={graphLoading}
                     id={`explore-graph-${position}`}
-                    options={requestOptions}
+                    range={graphRange}
                     split={split}
                   />
                 )}
               {supportsTable && showingTable ? (
-                <div className="panel-container">
-                  <Table data={tableResult} loading={loading} onClickCell={this.onClickTableCell} />
+                <div className="panel-container m-t-2">
+                  <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
                 </div>
               ) : null}
-              {supportsLogs && showingLogs ? <Logs data={logsResult} loading={loading} /> : null}
+              {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
             </main>
           </div>
         ) : null}

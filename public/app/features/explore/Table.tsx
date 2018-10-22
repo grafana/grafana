@@ -51,7 +51,7 @@ export default class Table extends PureComponent<TableProps> {
         minRows={0}
         noDataText={noDataText}
         resolveData={data => prepareRows(data, columnNames)}
-        showPagination={data}
+        showPagination={Boolean(data)}
       />
     );
   }
