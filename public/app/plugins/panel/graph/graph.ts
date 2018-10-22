@@ -104,8 +104,7 @@ class GraphElement {
     };
     const legendReactElem = React.createElement(Legend, legendProps);
     const legendElem = this.elem.parent().find('.graph-legend');
-    ReactDOM.render(legendReactElem, legendElem[0]);
-    this.onLegendRenderingComplete();
+    ReactDOM.render(legendReactElem, legendElem[0], () => this.onLegendRenderingComplete());
   }
 
   onLegendRenderingComplete() {
