@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
-import { FilterSegments, DefaultRemoveFilterValue } from './filter_segments';
+import { FilterSegments } from './filter_segments';
 import appEvents from 'app/core/app_events';
 
 export class StackdriverFilter {
@@ -29,6 +29,7 @@ export class StackdriverFilterCtrl {
   resourceTypes: string[];
 
   defaultRemoveGroupByValue = '-- remove group by --';
+  resourceTypeValue = 'resource.type';
   loadLabelsPromise: Promise<any>;
 
   service: string;
@@ -73,7 +74,7 @@ export class StackdriverFilterCtrl {
     this.filterSegments = new FilterSegments(
       this.uiSegmentSrv,
       this.target,
-      this.getGroupBys.bind(this, null, DefaultRemoveFilterValue, false),
+      this.getFilterKeys.bind(this),
       this.getFilterValues.bind(this)
     );
     this.filterSegments.buildSegmentModel();
@@ -193,50 +194,41 @@ export class StackdriverFilterCtrl {
     this.$rootScope.$broadcast('metricTypeChanged');
   }
 
-  async getGroupBys(segment, removeText?: string, removeUsed = true) {
+  async createLabelKeyElements(segment) {
     await this.loadLabelsPromise;
 
-    let elements = Object.keys(this.metricLabels || {})
-      .filter(ml => {
-        if (!removeUsed) {
-          return true;
-        }
-        return this.target.aggregation.groupBys.indexOf('metric.label.' + ml) === -1;
-      })
-      .map(l => {
-        return this.uiSegmentSrv.newSegment({
-          value: `metric.label.${l}`,
-          expandable: false,
-        });
+    let elements = Object.keys(this.metricLabels || {}).map(l => {
+      return this.uiSegmentSrv.newSegment({
+        value: `metric.label.${l}`,
+        expandable: false,
       });
+    });
 
     elements = [
       ...elements,
-      ...Object.keys(this.resourceLabels || {})
-        .filter(ml => {
-          if (!removeUsed) {
-            return true;
-          }
-
-          return this.target.aggregation.groupBys.indexOf('resource.label.' + ml) === -1;
-        })
-        .map(l => {
-          return this.uiSegmentSrv.newSegment({
-            value: `resource.label.${l}`,
-            expandable: false,
-          });
-        }),
+      ...Object.keys(this.resourceLabels || {}).map(l => {
+        return this.uiSegmentSrv.newSegment({
+          value: `resource.label.${l}`,
+          expandable: false,
+        });
+      }),
     ];
+
+    return elements;
+  }
+
+  async getFilterKeys(segment, removeText?: string) {
+    let elements = await this.createLabelKeyElements(segment);
 
     if (
       this.resourceTypes &&
       this.resourceTypes.length > 0 &&
-      this.target.aggregation.groupBys.indexOf('resource.type') === -1
+      this.target.filters.indexOf(this.resourceTypeValue) === -1
     ) {
       elements = [
         ...elements,
         this.uiSegmentSrv.newSegment({
-          value: `resource.type`,
+          value: this.resourceTypeValue,
           expandable: false,
         }),
       ];
@@ -244,12 +236,34 @@ export class StackdriverFilterCtrl {
 
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
     if (noValueOrPlusButton && elements.length === 0) {
-      return Promise.resolve([]);
+      return [];
     }
 
-    this.removeSegment.value = removeText || this.defaultRemoveGroupByValue;
-    elements = [...elements, this.removeSegment];
-    return Promise.resolve(elements);
+    this.removeSegment.value = removeText;
+    return [...elements, this.removeSegment];
+  }
+
+  async getGroupBys(segment) {
+    let elements = await this.createLabelKeyElements(segment);
+
+    if (this.resourceTypes && this.resourceTypes.length > 0) {
+      elements = [
+        ...elements,
+        this.uiSegmentSrv.newSegment({
+          value: this.resourceTypeValue,
+          expandable: false,
+        }),
+      ];
+    }
+
+    elements = elements.filter(e => this.target.aggregation.groupBys.indexOf(e.value) === -1);
+    const noValueOrPlusButton = !segment || segment.type === 'plus-button';
+    if (noValueOrPlusButton && elements.length === 0) {
+      return [];
+    }
+
+    this.removeSegment.value = this.defaultRemoveGroupByValue;
+    return [...elements, this.removeSegment];
   }
 
   groupByChanged(segment, index) {
@@ -293,7 +307,7 @@ export class StackdriverFilterCtrl {
       return this.resourceLabels[shortKey];
     }
 
-    if (filterKey === 'resource.type') {
+    if (filterKey === this.resourceTypeValue) {
       return this.resourceTypes;
     }
 
