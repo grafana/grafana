@@ -17,8 +17,8 @@ const (
 	darkName  = "dark"
 )
 
-func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
-	settings, err := getFrontendSettingsMap(c)
+func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
+	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
 	}
@@ -316,19 +316,6 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		}
 
 		if c.IsGrafanaAdmin {
-			children := []*dtos.NavLink{
-				{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
-				{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
-				{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
-				{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
-			}
-
-			if setting.IsEnterprise {
-				children = append(children, &dtos.NavLink{Text: "Licensing", Id: "licensing", Url: setting.AppSubUrl + "/admin/licensing", Icon: "fa fa-fw fa-unlock-alt"})
-			}
-
-			children = append(children, &dtos.NavLink{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"})
-
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
 				Text:         "Server Admin",
 				HideFromTabs: true,
@@ -336,7 +323,13 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 				Id:           "admin",
 				Icon:         "gicon gicon-shield",
 				Url:          setting.AppSubUrl + "/admin/users",
-				Children:     children,
+				Children: []*dtos.NavLink{
+					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
+					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
+					{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
+					{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
+					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"},
+				},
 			})
 		}
 
@@ -357,11 +350,12 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		},
 	})
 
+	hs.HooksService.RunIndexDataHooks(&data)
 	return &data, nil
 }
 
-func Index(c *m.ReqContext) {
-	data, err := setIndexViewData(c)
+func (hs *HTTPServer) Index(c *m.ReqContext) {
+	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
@@ -369,13 +363,13 @@ func Index(c *m.ReqContext) {
 	c.HTML(200, "index", data)
 }
 
-func NotFoundHandler(c *m.ReqContext) {
+func (hs *HTTPServer) NotFoundHandler(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return
 	}
 
-	data, err := setIndexViewData(c)
+	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return

@@ -1,6 +1,7 @@
 import angular from 'angular';
 
 const directiveModule = angular.module('grafana.directives');
+const directiveCache = {};
 
 /** @ngInject */
 function panelEditorTab(dynamicDirectiveSrv) {
@@ -12,17 +13,24 @@ function panelEditorTab(dynamicDirectiveSrv) {
     },
     directive: scope => {
       const pluginId = scope.ctrl.pluginId;
-      const tabIndex = scope.index;
-      // create a wrapper for directiveFn
-      // required for metrics tab directive
-      // that is the same for many panels but
-      // given different names in this function
-      const fn = () => scope.editorTab.directiveFn();
+      const tabName = scope.editorTab.title.toLowerCase().replace(' ', '-');
 
-      return Promise.resolve({
-        name: `panel-editor-tab-${pluginId}${tabIndex}`,
-        fn: fn,
-      });
+      if (directiveCache[pluginId]) {
+        if (directiveCache[pluginId][tabName]) {
+          return directiveCache[pluginId][tabName];
+        }
+      } else {
+        directiveCache[pluginId] = [];
+      }
+
+      const result = {
+        fn: () => scope.editorTab.directiveFn(),
+        name: `panel-editor-tab-${pluginId}${tabName}`,
+      };
+
+      directiveCache[pluginId][tabName] = result;
+
+      return result;
     },
   });
 }

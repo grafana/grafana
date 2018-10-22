@@ -8,3 +8,6 @@ export const DEFAULT_ROW_HEIGHT = 250;
 export const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 3;
 
 export const LS_PANEL_COPY_KEY = 'panel-copy';
+
+export const DASHBOARD_TOOLBAR_HEIGHT = 55;
+export const DASHBOARD_TOP_PADDING = 20;

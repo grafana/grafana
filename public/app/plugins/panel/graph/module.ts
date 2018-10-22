@@ -134,9 +134,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
     this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
       this.addEditorTab('Alert', alertTab, 5);
@@ -156,7 +156,16 @@ class GraphCtrl extends MetricsPanelCtrl {
       panel: this.panel,
       range: this.range,
     });
-    return super.issueQueries(datasource);
+
+    /* Wait for annotationSrv requests to get datasources to
+     * resolve before issuing queries. This allows the annotations
+     * service to fire annotations queries before graph queries
+     * (but not wait for completion). This resolves
+     * issue 11806.
+     */
+    return this.annotationsSrv.datasourcePromises.then(r => {
+      return super.issueQueries(datasource);
+    });
   }
 
   zoomOut(evt) {

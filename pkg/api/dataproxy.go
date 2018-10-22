@@ -55,7 +55,6 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 
 	dsId := c.ParamsInt64(":id")
 	ds, err := hs.getDatasourceFromCache(dsId, c)
-	hs.log.Debug("We are in the ds proxy", "dsId", dsId)
 
 	if err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)

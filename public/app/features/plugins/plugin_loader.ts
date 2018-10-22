@@ -18,6 +18,7 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
+import { PluginExports } from 'app/types/plugins';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
@@ -140,11 +141,12 @@ const flotDeps = [
   'jquery.flot.events',
   'jquery.flot.gauge',
 ];
+
 for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
+export function importPluginModule(path: string): Promise<PluginExports> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);

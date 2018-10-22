@@ -170,6 +170,7 @@ jobs:
             - scripts/*.sh
             - scripts/publish
             - scripts/build/release_publisher/release_publisher
+            - scripts/build/publish.sh
 
   build:
     docker:
@@ -237,8 +238,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, test and package grafana enterprise
-          command: './scripts/build/build_enterprise.sh'
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: checkout enterprise
+          command: './scripts/build/prepare_enterprise.sh'
+      - run:
+          name: test enterprise
+          command: 'go test ./pkg/extensions/...'
+      - run:
+          name: build and package enterprise
+          command: './scripts/build/build.sh -enterprise'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -253,6 +263,53 @@ jobs:
           paths:
             - enterprise-dist/grafana-enterprise*
 
+  build-all-enterprise:
+    docker:
+    - image: grafana/build-container:1.2.0
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+    - checkout
+    - run:
+        name: prepare build tools
+        command: '/tmp/bootstrap.sh'
+    - run:
+        name: checkout enterprise
+        command: './scripts/build/prepare_enterprise.sh'
+    - restore_cache:
+        key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+    - run:
+        name: download phantomjs binaries
+        command: './scripts/build/download-phantomjs.sh'
+    - save_cache:
+        key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+        paths:
+        - /tmp/phantomjs
+    - run:
+        name: test enterprise
+        command: 'go test ./pkg/extensions/...'
+    - run:
+        name: build and package grafana
+        command: './scripts/build/build-all.sh -enterprise'
+    - run:
+        name: sign packages
+        command: './scripts/build/sign_packages.sh'
+    - run:
+        name: verify signed packages
+        command: |
+          mkdir -p ~/.rpmdb/pubkeys
+          curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+          ./scripts/build/verify_signed_packages.sh dist/*.rpm
+    - run:
+        name: sha-sum packages
+        command: 'go run build.go sha-dist'
+    - run:
+        name: move enterprise packages into their own folder
+        command: 'mv dist enterprise-dist'
+    - persist_to_workspace:
+        root: .
+        paths:
+        - enterprise-dist/grafana-enterprise*
+
   deploy-enterprise-master:
     docker:
       - image: circleci/python:2.7-stretch
@@ -265,6 +322,19 @@ jobs:
       - run:
           name: deploy to s3
           command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
+
+deploy-enterprise-release:
+  docker:
+  - image: circleci/python:2.7-stretch
+  steps:
+  - attach_workspace:
+      at: .
+  - run:
+      name: install awscli
+      command: 'sudo pip install awscli'
+  - run:
+      name: deploy to s3
+      command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
 
   deploy-master:
     docker:
@@ -312,7 +382,7 @@ workflows:
     jobs:
       - build-all:
           filters: *filter-only-master
-      - build-enterprise:
+      - build-all-enterprise:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
@@ -355,12 +425,14 @@ workflows:
             - gometalinter
             - mysql-integration-test
             - postgres-integration-test
-            - build-enterprise
+            - build-all-enterprise
           filters: *filter-only-master
 
   release:
     jobs:
       - build-all:
+          filters: *filter-only-release
+      - build-all-enterprise:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
@@ -377,6 +449,17 @@ workflows:
       - deploy-release:
           requires:
             - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+      - deploy-enterprise-release:
+          requires:
+            - build-all
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell

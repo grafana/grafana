@@ -3,7 +3,7 @@ import _ from 'lodash';
 import classNames from 'classnames';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
-import { PanelContainer } from './PanelContainer';
+import { DashboardModel } from '../dashboard_model';
 import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -11,7 +11,7 @@ import Highlighter from 'react-highlight-words';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
-  getPanelContainer: () => PanelContainer;
+  dashboard: DashboardModel;
 }
 
 export interface AddPanelPanelState {
@@ -93,8 +93,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   onAddPanel = panelPluginInfo => {
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
+    const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
     const newPanel: any = {
@@ -123,9 +122,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
 
   handleCloseAddPanel(evt) {
     evt.preventDefault();
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
-    dashboard.removePanel(dashboard.panels[0]);
+    this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
   }
 
   renderText(text: string) {

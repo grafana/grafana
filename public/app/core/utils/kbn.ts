@@ -808,6 +808,51 @@ kbn.toDuration = (size, decimals, timeScale) => {
   return strings.join(', ');
 };
 
+kbn.toClock = (size, decimals) => {
+  if (size === null) {
+    return '';
+  }
+
+  // < 1 second
+  if (size < 1000) {
+    return moment.utc(size).format('SSS\\m\\s');
+  }
+
+  // < 1 minute
+  if (size < 60000) {
+    let format = 'ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  // < 1 hour
+  if (size < 3600000) {
+    let format = 'mm\\m:ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'mm\\m';
+    } else if (decimals === 1) {
+      format = 'mm\\m:ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  let format = 'mm\\m:ss\\s:SSS\\m\\s';
+
+  const hours = `${('0' + Math.floor(moment.duration(size, 'milliseconds').asHours())).slice(-2)}h`;
+
+  if (decimals === 0) {
+    format = '';
+  } else if (decimals === 1) {
+    format = 'mm\\m';
+  } else if (decimals === 2) {
+    format = 'mm\\m:ss\\s';
+  }
+
+  return format ? `${hours}:${moment.utc(size).format(format)}` : hours;
+};
+
 kbn.valueFormats.dtdurationms = (size, decimals) => {
   return kbn.toDuration(size, decimals, 'millisecond');
 };
@@ -822,6 +867,14 @@ kbn.valueFormats.dthms = (size, decimals) => {
 
 kbn.valueFormats.timeticks = (size, decimals, scaledDecimals) => {
   return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
+};
+
+kbn.valueFormats.clockms = (size, decimals) => {
+  return kbn.toClock(size, decimals);
+};
+
+kbn.valueFormats.clocks = (size, decimals) => {
+  return kbn.toClock(size * 1000, decimals);
 };
 
 kbn.valueFormats.dateTimeAsIso = (epoch, isUtc) => {
@@ -901,6 +954,8 @@ kbn.getUnitFormats = () => {
         { text: 'duration (s)', value: 'dtdurations' },
         { text: 'duration (hh:mm:ss)', value: 'dthms' },
         { text: 'Timeticks (s/100)', value: 'timeticks' },
+        { text: 'clock (ms)', value: 'clockms' },
+        { text: 'clock (s)', value: 'clocks' },
       ],
     },
     {

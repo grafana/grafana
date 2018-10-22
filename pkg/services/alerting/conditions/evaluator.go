@@ -2,6 +2,7 @@ package conditions
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -31,12 +32,12 @@ type ThresholdEvaluator struct {
 func newThresholdEvaluator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
 	params := model.Get("params").MustArray()
 	if len(params) == 0 {
-		return nil, alerting.ValidationError{Reason: "Evaluator missing threshold parameter"}
+		return nil, fmt.Errorf("Evaluator missing threshold parameter")
 	}
 
 	firstParam, ok := params[0].(json.Number)
 	if !ok {
-		return nil, alerting.ValidationError{Reason: "Evaluator has invalid parameter"}
+		return nil, fmt.Errorf("Evaluator has invalid parameter")
 	}
 
 	defaultEval := &ThresholdEvaluator{Type: typ}
@@ -107,7 +108,7 @@ func (e *RangedEvaluator) Eval(reducedValue null.Float) bool {
 func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 	typ := model.Get("type").MustString()
 	if typ == "" {
-		return nil, alerting.ValidationError{Reason: "Evaluator missing type property"}
+		return nil, fmt.Errorf("Evaluator missing type property")
 	}
 
 	if inSlice(typ, defaultTypes) {
@@ -122,7 +123,7 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 		return &NoValueEvaluator{}, nil
 	}
 
-	return nil, alerting.ValidationError{Reason: "Evaluator invalid evaluator type: " + typ}
+	return nil, fmt.Errorf("Evaluator invalid evaluator type: %s", typ)
 }
 
 func inSlice(a string, list []string) bool {

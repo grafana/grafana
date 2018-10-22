@@ -200,6 +200,43 @@ export class DashboardModel {
     this.events.emit('view-mode-changed', panel);
   }
 
+  timeRangeUpdated() {
+    this.events.emit('time-range-updated');
+  }
+
+  startRefresh() {
+    this.events.emit('refresh');
+
+    for (const panel of this.panels) {
+      if (!this.otherPanelInFullscreen(panel)) {
+        panel.refresh();
+      }
+    }
+  }
+
+  render() {
+    this.events.emit('render');
+
+    for (const panel of this.panels) {
+      panel.render();
+    }
+  }
+
+  panelInitialized(panel: PanelModel) {
+    if (!this.otherPanelInFullscreen(panel)) {
+      panel.refresh();
+    }
+  }
+
+  otherPanelInFullscreen(panel: PanelModel) {
+    return this.meta.fullscreen && !panel.fullscreen;
+  }
+
+  changePanelType(panel: PanelModel, pluginId: string) {
+    panel.changeType(pluginId);
+    this.events.emit('panel-type-changed', panel);
+  }
+
   private ensureListExist(data) {
     if (!data) {
       data = {};

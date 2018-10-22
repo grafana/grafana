@@ -1,4 +1,4 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 
@@ -226,6 +226,5 @@ export class ElasticBucketAggCtrl {
   }
 }
 
-const module = angular.module('grafana.directives');
-module.directive('elasticBucketAgg', elasticBucketAgg);
-module.controller('ElasticBucketAggCtrl', ElasticBucketAggCtrl);
+coreModule.directive('elasticBucketAgg', elasticBucketAgg);
+coreModule.controller('ElasticBucketAggCtrl', ElasticBucketAggCtrl);

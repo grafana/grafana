@@ -701,7 +701,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)

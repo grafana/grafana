@@ -17,24 +17,8 @@ func GetDataSources(c *m.ReqContext) Response {
 		return Error(500, "Failed to query datasources", err)
 	}
 
-	dsFilterQuery := m.DatasourcesPermissionFilterQuery{
-		User:        c.SignedInUser,
-		Datasources: query.Result,
-	}
-
-	datasources := []*m.DataSource{}
-	if err := bus.Dispatch(&dsFilterQuery); err != nil {
-		if err != bus.ErrHandlerNotFound {
-			return Error(500, "Could not get datasources", err)
-		}
-
-		datasources = query.Result
-	} else {
-		datasources = dsFilterQuery.Result
-	}
-
 	result := make(dtos.DataSourceList, 0)
-	for _, ds := range datasources {
+	for _, ds := range query.Result {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
