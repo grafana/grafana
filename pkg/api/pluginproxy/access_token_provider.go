@@ -152,7 +152,6 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	oauthJwtTokenCache.cache[provider.getAccessTokenCacheKey()] = token
 
 	logger.Info("Got new access token", "ExpiresOn", token.Expiry)
-	logger.Info("token.AccessToken", "token.AccessToken", token.AccessToken)
 
 	return token.AccessToken, nil
 }
