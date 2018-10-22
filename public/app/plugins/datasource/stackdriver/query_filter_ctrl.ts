@@ -194,7 +194,7 @@ export class StackdriverFilterCtrl {
     this.$rootScope.$broadcast('metricTypeChanged');
   }
 
-  async createLabelKeyElements(segment) {
+  async createLabelKeyElements() {
     await this.loadLabelsPromise;
 
     let elements = Object.keys(this.metricLabels || {}).map(l => {
@@ -214,17 +214,7 @@ export class StackdriverFilterCtrl {
       }),
     ];
 
-    return elements;
-  }
-
-  async getFilterKeys(segment, removeText?: string) {
-    let elements = await this.createLabelKeyElements(segment);
-
-    if (
-      this.resourceTypes &&
-      this.resourceTypes.length > 0 &&
-      this.target.filters.indexOf(this.resourceTypeValue) === -1
-    ) {
+    if (this.resourceTypes && this.resourceTypes.length > 0) {
       elements = [
         ...elements,
         this.uiSegmentSrv.newSegment({
@@ -232,6 +222,16 @@ export class StackdriverFilterCtrl {
           expandable: false,
         }),
       ];
+    }
+
+    return elements;
+  }
+
+  async getFilterKeys(segment, removeText?: string) {
+    let elements = await this.createLabelKeyElements();
+
+    if (this.target.filters.indexOf(this.resourceTypeValue) !== -1) {
+      elements = elements.filter(e => e.value !== this.resourceTypeValue);
     }
 
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
@@ -244,17 +244,7 @@ export class StackdriverFilterCtrl {
   }
 
   async getGroupBys(segment) {
-    let elements = await this.createLabelKeyElements(segment);
-
-    if (this.resourceTypes && this.resourceTypes.length > 0) {
-      elements = [
-        ...elements,
-        this.uiSegmentSrv.newSegment({
-          value: this.resourceTypeValue,
-          expandable: false,
-        }),
-      ];
-    }
+    let elements = await this.createLabelKeyElements();
 
     elements = elements.filter(e => this.target.aggregation.groupBys.indexOf(e.value) === -1);
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
