@@ -103,10 +103,11 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Done,
         response: resp,
+        isFirstLoad: false,
       });
     } catch (err) {
       console.log('Loading error', err);
-      this.setState({ loading: LoadingState.Error });
+      this.setState({ loading: LoadingState.Error, isFirstLoad: false });
     }
   };
 
