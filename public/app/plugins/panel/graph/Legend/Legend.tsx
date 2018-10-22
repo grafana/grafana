@@ -196,9 +196,9 @@ class LegendSeriesList extends React.PureComponent<LegendComponentProps> {
   render() {
     const { seriesList, hiddenSeries, values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
-    return seriesList.map(series => (
+    return seriesList.map((series, i) => (
       <LegendItem
-        key={series.id}
+        key={i}
         series={series}
         hidden={hiddenSeries[series.alias]}
         {...seriesValuesProps}
@@ -251,9 +251,9 @@ class LegendTable extends React.PureComponent<Partial<LegendComponentProps>> {
                 )
             )}
           </tr>
-          {seriesList.map(series => (
+          {seriesList.map((series, i) => (
             <LegendItem
-              key={series.id}
+              key={i}
               asTable={true}
               series={series}
               hidden={hiddenSeries[series.alias]}
