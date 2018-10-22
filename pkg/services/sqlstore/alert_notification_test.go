@@ -219,6 +219,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result.OrgId, ShouldNotEqual, 0)
 			So(cmd.Result.Type, ShouldEqual, "email")
 			So(cmd.Result.Frequency, ShouldEqual, 10*time.Second)
+			So(cmd.Result.DisableResolveMessage, ShouldBeFalse)
 
 			Convey("Cannot save Alert Notification with the same name", func() {
 				err = CreateAlertNotificationCommand(cmd)
@@ -227,18 +228,20 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			Convey("Can update alert notification", func() {
 				newCmd := &models.UpdateAlertNotificationCommand{
-					Name:         "NewName",
-					Type:         "webhook",
-					OrgId:        cmd.Result.OrgId,
-					SendReminder: true,
-					Frequency:    "60s",
-					Settings:     simplejson.New(),
-					Id:           cmd.Result.Id,
+					Name:                  "NewName",
+					Type:                  "webhook",
+					OrgId:                 cmd.Result.OrgId,
+					SendReminder:          true,
+					DisableResolveMessage: true,
+					Frequency:             "60s",
+					Settings:              simplejson.New(),
+					Id:                    cmd.Result.Id,
 				}
 				err := UpdateAlertNotification(newCmd)
 				So(err, ShouldBeNil)
 				So(newCmd.Result.Name, ShouldEqual, "NewName")
 				So(newCmd.Result.Frequency, ShouldEqual, 60*time.Second)
+				So(newCmd.Result.DisableResolveMessage, ShouldBeTrue)
 			})
 
 			Convey("Can update alert notification to disable sending of reminders", func() {

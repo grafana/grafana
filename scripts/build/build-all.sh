@@ -4,6 +4,10 @@
 #   This script is executed from within the container.
 #
 
+set -e
+
+EXTRA_OPTS="$@"
+
 CCARMV7=arm-linux-gnueabihf-gcc
 CCARM64=aarch64-linux-gnu-gcc
 CCOSX64=/tmp/osxcross/target/bin/o64-clang
@@ -18,15 +22,20 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
-  OPT="-includeBuildNumber=false"
+  OPT="-includeBuildNumber=false ${EXTRA_OPTS}"
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  OPT="-buildNumber=${CIRCLE_BUILD_NUM}"
+  OPT="-buildNumber=${CIRCLE_BUILD_NUM} ${EXTRA_OPTS}"
 fi
+
+echo "Build arguments: $OPT"
 
 go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
 go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
-go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
+
+# MacOS build is broken atm. See Issue #13763
+#go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
+
 go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
 CC=${CCX64} go run build.go ${OPT} build
 

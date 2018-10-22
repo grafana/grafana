@@ -8,7 +8,20 @@ import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
-import { PluginMeta, Plugin, PluginsState } from './plugins';
+import {
+  TimeRange,
+  LoadingState,
+  TimeSeries,
+  TimeSeriesVM,
+  TimeSeriesVMs,
+  TimeSeriesStats,
+  NullValueMode,
+  DataQuery,
+  DataQueryResponse,
+  DataQueryOptions,
+} from './series';
+import { PanelProps } from './panel';
+import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
 
 export {
   Team,
@@ -45,6 +58,18 @@ export {
   OrgUser,
   User,
   UsersState,
+  TimeRange,
+  LoadingState,
+  PanelProps,
+  TimeSeries,
+  TimeSeriesVM,
+  TimeSeriesVMs,
+  NullValueMode,
+  TimeSeriesStats,
+  DataQuery,
+  DataQueryResponse,
+  DataQueryOptions,
+  PluginDashboard,
 };
 
 export interface StoreState {

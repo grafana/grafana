@@ -4,7 +4,6 @@ import { hot } from 'react-hot-loader';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavModel, Plugin } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
-import { updateLocation } from '../../core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
 
@@ -13,7 +12,6 @@ export interface Props {
   dataSourceTypes: Plugin[];
   addDataSource: typeof addDataSource;
   loadDataSourceTypes: typeof loadDataSourceTypes;
-  updateLocation: typeof updateLocation;
   dataSourceTypeSearchQuery: string;
   setDataSourceTypeSearchQuery: typeof setDataSourceTypeSearchQuery;
 }
@@ -81,7 +79,6 @@ function mapStateToProps(state) {
 const mapDispatchToProps = {
   addDataSource,
   loadDataSourceTypes,
-  updateLocation,
   setDataSourceTypeSearchQuery,
 };
 

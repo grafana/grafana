@@ -53,6 +53,7 @@ type SqlStore struct {
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
 	log             log.Logger
+	Dialect         migrator.Dialect
 	skipEnsureAdmin bool
 }
 
@@ -125,10 +126,12 @@ func (ss *SqlStore) Init() error {
 	}
 
 	ss.engine = engine
+	ss.Dialect = migrator.NewDialect(ss.engine)
 
 	// temporarily still set global var
 	x = engine
-	dialect = migrator.NewDialect(x)
+	dialect = ss.Dialect
+
 	migrator := migrator.NewMigrator(x)
 	migrations.AddMigrations(migrator)
 
@@ -347,7 +350,11 @@ func InitTestDB(t *testing.T) *SqlStore {
 		t.Fatalf("Failed to init test database: %v", err)
 	}
 
-	dialect = migrator.NewDialect(engine)
+	sqlstore.Dialect = migrator.NewDialect(engine)
+
+	// temp global var until we get rid of global vars
+	dialect = sqlstore.Dialect
+
 	if err := dialect.CleanDB(); err != nil {
 		t.Fatalf("Failed to clean test db %v", err)
 	}

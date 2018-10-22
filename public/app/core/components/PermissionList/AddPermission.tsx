@@ -18,6 +18,10 @@ export interface Props {
 }
 
 class AddPermissions extends Component<Props, NewDashboardAclItem> {
+  static defaultProps = {
+    showPermissionLevels: true,
+  };
+
   constructor(props) {
     super(props);
     this.state = this.getCleanState();

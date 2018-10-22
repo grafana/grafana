@@ -128,7 +128,7 @@ Example json body:
 
 In DingTalk PC Client:
 
-1. Click "more" icon on left bottom of the panel.
+1. Click "more" icon on upper right of the panel.
 
 2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 

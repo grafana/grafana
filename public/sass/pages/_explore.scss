@@ -126,7 +126,7 @@
 }
 
 .query-row-tools {
-  width: 6rem;
+  white-space: nowrap;
 }
 
 .query-row-field {
@@ -185,4 +185,61 @@
   .prom-query-field-info {
     margin: 0.25em 0.5em 0.5em;
   }
+}
+
+// ReactTable basic overrides (does not include pivot/groups/filters)
+// When integrating ReactTable as new panel plugin, move to _panel_table.scss
+
+.ReactTable {
+  border: none;
+  // Allow some space for the no-data text
+  min-height: 120px;
+}
+
+.ReactTable .rt-thead.-header {
+  box-shadow: none;
+  background: $list-item-bg;
+  border-top: 2px solid $body-bg;
+  border-bottom: 2px solid $body-bg;
+  height: 2em;
+}
+.ReactTable .rt-thead.-header .rt-th {
+  text-align: left;
+  color: $blue;
+  font-weight: 500;
+}
+.ReactTable .rt-thead .rt-td,
+.ReactTable .rt-thead .rt-th {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-right: none;
+  box-shadow: none;
+}
+.ReactTable .rt-tbody .rt-td {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-bottom: 2px solid $body-bg;
+  border-right: 2px solid $body-bg;
+}
+.ReactTable .rt-tbody .rt-td:last-child {
+  border-right: none;
+}
+.ReactTable .-pagination .-btn {
+  color: $blue;
+  background: $list-item-bg;
+}
+.ReactTable .-pagination input,
+.ReactTable .-pagination select {
+  color: $input-color;
+  background-color: $input-bg;
+}
+.ReactTable .-loading {
+  background: $input-bg;
+}
+.ReactTable .-loading.-active {
+  opacity: 0.8;
+}
+.ReactTable .-loading > div {
+  color: $input-color;
+}
+.ReactTable .rt-tr .rt-td:last-child {
+  text-align: right;
 }

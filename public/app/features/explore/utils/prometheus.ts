@@ -28,7 +28,7 @@ export const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
 const selectorRegexp = /\{[^}]*?\}/;
-const labelRegexp = /\b\w+="[^"\n]*?"/g;
+const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
@@ -66,11 +66,8 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
   // Extract clean labels to form clean selector, incomplete labels are dropped
   const selector = query.slice(prefixOpen, suffixClose);
   const labels = {};
-  selector.replace(labelRegexp, match => {
-    const delimiterIndex = match.indexOf('=');
-    const key = match.slice(0, delimiterIndex);
-    const value = match.slice(delimiterIndex + 1, match.length);
-    labels[key] = value;
+  selector.replace(labelRegexp, (_, key, operator, value) => {
+    labels[key] = { value, operator };
     return '';
   });
 
@@ -78,12 +75,12 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
   const metricPrefix = query.slice(0, prefixOpen);
   const metricMatch = metricPrefix.match(/[A-Za-z:][\w:]*$/);
   if (metricMatch) {
-    labels['__name__'] = `"${metricMatch[0]}"`;
+    labels['__name__'] = { value: `"${metricMatch[0]}"`, operator: '=' };
   }
 
   // Build sorted selector
   const labelKeys = Object.keys(labels).sort();
-  const cleanSelector = labelKeys.map(key => `${key}=${labels[key]}`).join(',');
+  const cleanSelector = labelKeys.map(key => `${key}${labels[key].operator}${labels[key].value}`).join(',');
 
   const selectorString = ['{', cleanSelector, '}'].join('');
 

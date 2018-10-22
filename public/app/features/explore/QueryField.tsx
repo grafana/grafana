@@ -228,7 +228,13 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
       const offset = range.startOffset;
       const text = selection.anchorNode.textContent;
       let prefix = text.substr(0, offset);
-      if (cleanText) {
+
+      // Label values could have valid characters erased if `cleanText()` is
+      // blindly applied, which would undesirably interfere with suggestions
+      const labelValueMatch = prefix.match(/(?:!?=~?"?|")(.*)/);
+      if (labelValueMatch) {
+        prefix = labelValueMatch[1];
+      } else if (cleanText) {
         prefix = cleanText(prefix);
       }
 

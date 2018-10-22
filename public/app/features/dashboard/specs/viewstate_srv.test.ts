@@ -2,6 +2,7 @@
 import 'app/features/dashboard/view_state_srv';
 import config from 'app/core/config';
 import { DashboardViewState } from '../view_state_srv';
+import { DashboardModel } from '../dashboard_model';
 
 describe('when updating view state', () => {
   const location = {
@@ -10,14 +11,13 @@ describe('when updating view state', () => {
   };
 
   const $scope = {
+    appEvent: jest.fn(),
     onAppEvent: jest.fn(() => {}),
-    dashboard: {
-      meta: {},
-      panels: [],
-    },
+    dashboard: new DashboardModel({
+      panels: [{ id: 1 }],
+    }),
   };
 
-  const $rootScope = {};
   let viewState;
 
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('when updating view state', () => {
       location.search = jest.fn(() => {
         return { fullscreen: true, edit: true, panelId: 1 };
       });
-      viewState = new DashboardViewState($scope, location, {}, $rootScope);
+      viewState = new DashboardViewState($scope, location, {});
     });
 
     it('should update querystring and view state', () => {
@@ -55,7 +55,7 @@ describe('when updating view state', () => {
 
   describe('to fullscreen false', () => {
     beforeEach(() => {
-      viewState = new DashboardViewState($scope, location, {}, $rootScope);
+      viewState = new DashboardViewState($scope, location, {});
     });
     it('should remove params from query string', () => {
       viewState.update({ fullscreen: true, panelId: 1, edit: true });

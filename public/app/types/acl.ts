@@ -61,6 +61,11 @@ export enum PermissionLevel {
   Admin = 4,
 }
 
+export enum DataSourcePermissionLevel {
+  Query = 1,
+  Admin = 2,
+}
+
 export enum AclTarget {
   Team = 'Team',
   User = 'User',
@@ -72,6 +77,10 @@ export interface AclTargetInfo {
   value: AclTarget;
   text: string;
 }
+
+export const dataSourceAclLevels = [
+  { value: DataSourcePermissionLevel.Query, label: 'Query', description: 'Can query data source.' },
+];
 
 export const dashboardAclTargets: AclTargetInfo[] = [
   { value: AclTarget.Team, text: 'Team' },
