@@ -30,17 +30,14 @@ export class TemplateSrv {
   }
 
   updateTemplateData() {
-    this.index = {};
+    const existsOrEmpty = value => value || value === '';
 
-    for (let i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-
-      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
-        continue;
+    this.index = this.variables.reduce((acc, currentValue) => {
+      if (currentValue.current && !currentValue.current.isNone && existsOrEmpty(currentValue.current.value)) {
+        acc[currentValue.name] = currentValue;
       }
-
-      this.index[variable.name] = variable;
-    }
+      return acc;
+    }, {});
   }
 
   variableInitialized(variable) {
