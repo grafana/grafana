@@ -22,7 +22,6 @@ import './export_data/export_data_modal';
 import './ad_hoc_filters';
 import './repeat_option/repeat_option';
 import './dashgrid/DashboardGridDirective';
-import './dashgrid/PanelLoader';
 import './dashgrid/RowOptions';
 import './folder_picker/folder_picker';
 import './move_to_folder_modal/move_to_folder';

@@ -213,6 +213,8 @@ type Cfg struct {
 	TempDataLifetime time.Duration
 
 	MetricsEndpointEnabled bool
+
+	EnableAlphaPanels bool
 }
 
 type CommandLineArgs struct {
@@ -693,6 +695,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(false)
+
+	panels := iniFile.Section("panels")
+	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()

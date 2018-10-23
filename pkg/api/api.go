@@ -251,7 +251,7 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
 
-		apiRoute.Get("/frontend/settings/", GetFrontendSettings)
+		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 

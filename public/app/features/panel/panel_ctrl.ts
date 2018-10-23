@@ -24,10 +24,8 @@ export class PanelCtrl {
   $injector: any;
   $location: any;
   $timeout: any;
-  fullscreen: boolean;
   inspector: any;
   editModeInitiated: boolean;
-  editMode: any;
   height: any;
   containerHeight: any;
   events: Emitter;
@@ -49,7 +47,6 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on('refresh', () => this.refresh());
     $scope.$on('component-did-mount', () => this.panelDidMount());
 
     $scope.$on('$destroy', () => {
@@ -58,13 +55,9 @@ export class PanelCtrl {
     });
   }
 
-  init() {
-    this.events.emit('panel-initialized');
-    this.publishAppEvent('panel-initialized', { scope: this.$scope });
-  }
-
   panelDidMount() {
     this.events.emit('component-did-mount');
+    this.dashboard.panelInitialized(this.panel);
   }
 
   renderingCompleted() {
@@ -72,7 +65,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.events.emit('refresh', null);
+    this.panel.refresh();
   }
 
   publishAppEvent(evtName, evt) {
@@ -102,6 +95,7 @@ export class PanelCtrl {
   initEditMode() {
     this.editorTabs = [];
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
+
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
@@ -122,14 +116,15 @@ export class PanelCtrl {
     route.updateParams();
   }
 
-  addEditorTab(title, directiveFn, index?) {
-    const editorTab = { title, directiveFn };
+  addEditorTab(title, directiveFn, index?, icon?) {
+    const editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
       editorTab.directiveFn = () => {
         return { templateUrl: directiveFn };
       };
     }
+
     if (index) {
       this.editorTabs.splice(index, 0, editorTab);
     } else {
@@ -190,7 +185,7 @@ export class PanelCtrl {
 
   getExtendedMenu() {
     const menu = [];
-    if (!this.fullscreen && this.dashboard.meta.canEdit) {
+    if (!this.panel.fullscreen && this.dashboard.meta.canEdit) {
       menu.push({
         text: 'Duplicate',
         click: 'ctrl.duplicate()',
@@ -220,21 +215,26 @@ export class PanelCtrl {
   }
 
   otherPanelInFullscreenMode() {
-    return this.dashboard.meta.fullscreen && !this.fullscreen;
+    return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
   calculatePanelHeight() {
-    if (this.fullscreen) {
-      const docHeight = $(window).height();
-      const editHeight = Math.floor(docHeight * 0.4);
+    if (this.panel.fullscreen) {
+      const docHeight = $('.react-grid-layout').height();
+      const editHeight = Math.floor(docHeight * 0.35);
       const fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+      this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
     if (this.panel.soloMode) {
       this.containerHeight = $(window).height();
+    }
+
+    // hacky solution
+    if (this.panel.isEditing && !this.editModeInitiated) {
+      this.initEditMode();
     }
 
     this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
@@ -247,9 +247,6 @@ export class PanelCtrl {
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel);
-    this.$timeout(() => {
-      this.$scope.$root.$broadcast('render');
-    });
   }
 
   removePanel() {

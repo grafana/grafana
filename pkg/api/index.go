@@ -18,7 +18,7 @@ const (
 )
 
 func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
-	settings, err := getFrontendSettingsMap(c)
+	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
 	}

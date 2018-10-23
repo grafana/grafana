@@ -1,11 +1,10 @@
 import config from 'app/core/config';
 
 import coreModule from 'app/core/core_module';
-import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
 
-export class DashboardCtrl implements PanelContainer {
+export class DashboardCtrl {
   dashboard: DashboardModel;
   dashboardViewState: any;
   loadedFallbackDashboard: boolean;
@@ -22,8 +21,7 @@ export class DashboardCtrl implements PanelContainer {
     private dashboardSrv,
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
-    public playlistSrv,
-    private panelLoader
+    public playlistSrv
   ) {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
@@ -119,14 +117,6 @@ export class DashboardCtrl implements PanelContainer {
     return this.dashboard;
   }
 
-  getPanelLoader() {
-    return this.panelLoader;
-  }
-
-  timezoneChanged() {
-    this.$rootScope.$broadcast('refresh');
-  }
-
   getPanelContainer() {
     return this;
   }
@@ -168,10 +158,17 @@ export class DashboardCtrl implements PanelContainer {
     this.dashboard.removePanel(panel);
   }
 
+  onDestroy() {
+    if (this.dashboard) {
+      this.dashboard.destroy();
+    }
+  }
+
   init(dashboard) {
     this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
     this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
     this.$scope.onAppEvent('panel-remove', this.onRemovingPanel.bind(this));
+    this.$scope.$on('$destroy', this.onDestroy.bind(this));
     this.setupDashboard(dashboard);
   }
 }
