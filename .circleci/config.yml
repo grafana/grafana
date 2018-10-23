@@ -323,18 +323,18 @@ jobs:
           name: deploy to s3
           command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
 
-deploy-enterprise-release:
-  docker:
-  - image: circleci/python:2.7-stretch
-  steps:
-  - attach_workspace:
-      at: .
-  - run:
-      name: install awscli
-      command: 'sudo pip install awscli'
-  - run:
-      name: deploy to s3
-      command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
+  deploy-enterprise-release:
+    docker:
+    - image: circleci/python:2.7-stretch
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: install awscli
+        command: 'sudo pip install awscli'
+    - run:
+        name: deploy to s3
+        command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
 
   deploy-master:
     docker:
