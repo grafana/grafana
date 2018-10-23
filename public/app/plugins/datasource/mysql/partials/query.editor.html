@@ -100,36 +100,42 @@
 
   <div class="gf-form-inline">
     <div class="gf-form">
-			<label class="gf-form-label query-keyword">Format as</label>
-			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
-			</div>
-		</div>
-		<div class="gf-form">
-      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+      <label class="gf-form-label query-keyword">Format as</label>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+      </div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.toggleEditorMode()" ng-show="ctrl.panelCtrl.panel.type !== 'table'">
+        <span ng-show="ctrl.target.rawQuery">Query Builder</span>
+        <span ng-hide="ctrl.target.rawQuery">Edit SQL</span>
+      </label>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
         <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
         <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
       </label>
-		</div>
-		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
-      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+    </div>
+    <div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
         Generated SQL
         <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
         <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
       </label>
-		</div>
-		<div class="gf-form gf-form--grow">
-			<div class="gf-form-label gf-form-label--grow"></div>
-		</div>
-	</div>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
 
-	<div class="gf-form" ng-show="ctrl.showLastQuerySQL">
-		<pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
-	</div>
+  <div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+    <pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
+  </div>
 
-	<div class="gf-form"  ng-show="ctrl.showHelp">
-		<pre class="gf-form-pre alert alert-info">Time series:
+  <div class="gf-form"  ng-show="ctrl.showHelp">
+    <pre class="gf-form-pre alert alert-info">Time series:
 - return column named time or time_sec (in UTC), as a unix time stamp or any sql native date data type. You can use the macros below.
 - return column(s) with numeric datatype as values
 Optional:
@@ -156,7 +162,7 @@ Macros:
 
 Example of group by and order by with $__timeGroup:
 SELECT
-  $__timeGroup(timestamp_col, '1h') AS time,
+  $__timeGroupAlias(timestamp_col, '1h'),
   sum(value_double) as value
 FROM yourtable
 GROUP BY 1
@@ -167,13 +173,13 @@ Or build your own conditionals using these macros which just return the values:
 - $__timeTo() -&gt;  '2017-04-21T05:01:17Z'
 - $__unixEpochFrom() -&gt;  1492750877
 - $__unixEpochTo() -&gt;  1492750877
-		</pre>
-	</div>
+    </pre>
+  </div>
 
-	</div>
+  </div>
 
-	<div class="gf-form" ng-show="ctrl.lastQueryError">
-		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
-	</div>
+  <div class="gf-form" ng-show="ctrl.lastQueryError">
+    <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+  </div>
 
 </query-editor-row>
