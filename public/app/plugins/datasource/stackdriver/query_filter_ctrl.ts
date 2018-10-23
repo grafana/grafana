@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
-import { FilterSegments } from './filter_segments';
+import { FilterSegments, DefaultFilterValue } from './filter_segments';
 import appEvents from 'app/core/app_events';
 
 export class StackdriverFilter {
@@ -306,7 +306,9 @@ export class StackdriverFilterCtrl {
 
   filterSegmentUpdated(segment, index) {
     this.target.filters = this.filterSegments.filterSegmentUpdated(segment, index);
-    this.$scope.refresh();
+    if (this.target.filters.length && this.target.filters[this.target.filters.length - 1] !== DefaultFilterValue) {
+      this.$scope.refresh();
+    }
   }
 
   ensurePlusButton(segments) {
