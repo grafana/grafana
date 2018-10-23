@@ -1,23 +1,23 @@
-import { AppNotification, AlertsState } from 'app/types';
+import { AppNotification, AppNotificationsState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
-export const initialState: AlertsState = {
-  alerts: [] as AppNotification[],
+export const initialState: AppNotificationsState = {
+  appNotifications: [] as AppNotification[],
 };
 
-export const alertsReducer = (state = initialState, action: Action): AlertsState => {
+export const appNotificationsReducer = (state = initialState, action: Action): AppNotificationsState => {
   switch (action.type) {
     case ActionTypes.AddAppNotification:
-      return { ...state, alerts: state.alerts.concat([action.payload]) };
+      return { ...state, appNotifications: state.appNotifications.concat([action.payload]) };
     case ActionTypes.ClearAppNotification:
       return {
         ...state,
-        alerts: state.alerts.filter(alert => alert !== action.payload),
+        appNotifications: state.appNotifications.filter(appNotification => appNotification.id !== action.payload),
       };
   }
   return state;
 };
 
 export default {
-  alerts: alertsReducer,
+  appNotifications: appNotificationsReducer,
 };

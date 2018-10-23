@@ -12,14 +12,14 @@ interface AddAppNotificationAction {
 
 interface ClearAppNotificationAction {
   type: ActionTypes.ClearAppNotification;
-  payload: AppNotification;
+  payload: number;
 }
 
 export type Action = AddAppNotificationAction | ClearAppNotificationAction;
 
-export const clearAppNotification = (alert: AppNotification) => ({
+export const clearAppNotification = (appNotificationId: number) => ({
   type: ActionTypes.ClearAppNotification,
-  payload: alert,
+  payload: appNotificationId,
 });
 
 export const addAppNotification = (alert: AppNotification) => ({

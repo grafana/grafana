@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
 import appEvents from 'app/core/app_events';
 import { addAppNotification, clearAppNotification } from './state/actions';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { AppNotification, StoreState } from '../../../types';
 
 export interface Props {
-  alerts: any[];
+  appNotifications: AppNotification[];
   addAppNotification: typeof addAppNotification;
   clearAppNotification: typeof clearAppNotification;
 }
@@ -24,12 +25,14 @@ export class AppNotificationList extends PureComponent<Props> {
   }
 
   addAppNotification(title, text, severity, timeout) {
+    const id = Date.now();
     const newAlert = {
+      id: id,
       title: title || '',
       text: text || '',
       severity: severity || AppNotificationSeverity.Info,
       icon: this.getIconForSeverity(severity),
-      remove: this.clearAutomatically(this, timeout),
+      remove: this.clearAutomatically(id, timeout),
     };
 
     this.props.addAppNotification(newAlert);
@@ -46,32 +49,36 @@ export class AppNotificationList extends PureComponent<Props> {
     }
   }
 
-  clearAutomatically = (alert, timeout) => {
+  clearAutomatically = (id, timeout) => {
     setTimeout(() => {
-      this.props.clearAppNotification(alert);
+      this.props.clearAppNotification(id);
     }, timeout);
   };
 
-  onClearAppNotification = alert => {
-    this.props.clearAppNotification(alert);
+  onClearAppNotification = id => {
+    this.props.clearAppNotification(id);
   };
 
   render() {
-    const { alerts } = this.props;
+    const { appNotifications } = this.props;
 
     return (
       <div>
-        {alerts.map((alert, index) => {
+        {appNotifications.map((appNotification, index) => {
           return (
-            <div key={index} className={`alert-${alert.severity} alert`}>
+            <div key={index} className={`alert-${appNotification.severity} alert`}>
               <div className="alert-icon">
-                <i className={alert.icon} />
+                <i className={appNotification.icon} />
               </div>
               <div className="alert-body">
-                <div className="alert-title">{alert.title}</div>
-                <div className="alert-text">{alert.text}</div>
+                <div className="alert-title">{appNotification.title}</div>
+                <div className="alert-text">{appNotification.text}</div>
               </div>
-              <button type="button" className="alert-close" onClick={() => this.onClearAppNotification(alert)}>
+              <button
+                type="button"
+                className="alert-close"
+                onClick={() => this.onClearAppNotification(appNotification.id)}
+              >
                 <i className="fa fa fa-remove" />
               </button>
             </div>
@@ -82,15 +89,13 @@ export class AppNotificationList extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state) {
-  return {
-    alerts: state.alerts.alerts,
-  };
-}
+const mapStateToProps = (state: StoreState) => ({
+  appNotifications: state.appNotifications.appNotifications,
+});
 
 const mapDispatchToProps = {
   addAppNotification,
   clearAppNotification,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppNotificationList);
+export default connectWithStore(AppNotificationList, mapStateToProps, mapDispatchToProps);

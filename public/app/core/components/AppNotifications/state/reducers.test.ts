@@ -1,17 +1,22 @@
-import { alertsReducer } from './reducers';
+import { appNotificationsReducer } from './reducers';
 import { ActionTypes } from './actions';
 
 describe('clear alert', () => {
   it('should filter alert', () => {
+    const id1 = 1540301236048;
+    const id2 = 1540301248293;
+
     const initialState = {
-      alerts: [
+      appNotifications: [
         {
+          id: id1,
           severity: 'success',
           icon: 'success',
           title: 'test',
           text: 'test alert',
         },
         {
+          id: id2,
           severity: 'fail',
           icon: 'warning',
           title: 'test2',
@@ -20,14 +25,15 @@ describe('clear alert', () => {
       ],
     };
 
-    const result = alertsReducer(initialState, {
+    const result = appNotificationsReducer(initialState, {
       type: ActionTypes.ClearAppNotification,
-      payload: initialState.alerts[1],
+      payload: id2,
     });
 
     const expectedResult = {
-      alerts: [
+      appNotifications: [
         {
+          id: id1,
           severity: 'success',
           icon: 'success',
           title: 'test',
