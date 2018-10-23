@@ -88,7 +88,7 @@ function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
       break;
     }
     // 1 & true for legacy states
-    case 1:
+    case '1':
     case true: {
       body.removeClass('sidemenu-open');
       body.addClass('view-mode--kiosk');
@@ -181,11 +181,11 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
         switch (search.kiosk) {
           case 'tv': {
-            search.kiosk = 1;
+            search.kiosk = true;
             appEvents.emit('alert-success', ['Press ESC to exit Kiosk mode']);
             break;
           }
-          case 1:
+          case '1':
           case true: {
             delete search.kiosk;
             break;
