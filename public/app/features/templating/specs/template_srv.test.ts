@@ -429,6 +429,11 @@ describe('templateSrv', () => {
           name: 'period',
           current: { value: '$__auto_interval_interval', text: 'auto' },
         },
+        {
+          type: 'textbox',
+          name: 'empty_on_init',
+          current: { value: '', text: '' },
+        },
       ]);
       _templateSrv.setGrafanaVariable('$__auto_interval_interval', '13m');
       _templateSrv.updateTemplateData();
@@ -437,6 +442,11 @@ describe('templateSrv', () => {
     it('should replace with text except for grafanaVariables', () => {
       const target = _templateSrv.replaceWithText('Server: $server, period: $period');
       expect(target).toBe('Server: All, period: 13m');
+    });
+
+    it('should replace empty string-values with an empty string', () => {
+      const target = _templateSrv.replaceWithText('Hello $empty_on_init');
+      expect(target).toBe('Hello ');
     });
   });
 
