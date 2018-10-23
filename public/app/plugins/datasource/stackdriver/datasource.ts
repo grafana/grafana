@@ -1,11 +1,14 @@
 import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
+import _ from 'lodash';
 
 export default class StackdriverDatasource {
   id: number;
   url: string;
   baseUrl: string;
   projectName: string;
+  authenticationType: string;
+  queryPromise: Promise<any>;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
@@ -14,6 +17,7 @@ export default class StackdriverDatasource {
     this.doRequest = this.doRequest;
     this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
+    this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
   }
 
   async getTimeSeries(options) {
@@ -46,16 +50,20 @@ export default class StackdriverDatasource {
         };
       });
 
-    const { data } = await this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
-      },
-    });
-    return data;
+    if (queries.length > 0) {
+      const { data } = await this.backendSrv.datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries,
+        },
+      });
+      return data;
+    } else {
+      return { results: [] };
+    }
   }
 
   async getLabels(metricType, refId) {
@@ -99,31 +107,34 @@ export default class StackdriverDatasource {
   }
 
   async query(options) {
-    const result = [];
-    const data = await this.getTimeSeries(options);
-    if (data.results) {
-      Object['values'](data.results).forEach(queryRes => {
-        if (!queryRes.series) {
-          return;
-        }
-
-        const unit = this.resolvePanelUnitFromTargets(options.targets);
-        queryRes.series.forEach(series => {
-          let timeSerie: any = {
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          };
-          if (unit) {
-            timeSerie = { ...timeSerie, unit };
+    this.queryPromise = new Promise(async resolve => {
+      const result = [];
+      const data = await this.getTimeSeries(options);
+      if (data.results) {
+        Object['values'](data.results).forEach(queryRes => {
+          if (!queryRes.series) {
+            return;
           }
-          result.push(timeSerie);
+          this.projectName = queryRes.meta.defaultProject;
+          const unit = this.resolvePanelUnitFromTargets(options.targets);
+          queryRes.series.forEach(series => {
+            let timeSerie: any = {
+              target: series.name,
+              datapoints: series.points,
+              refId: queryRes.refId,
+              meta: queryRes.meta,
+            };
+            if (unit) {
+              timeSerie = { ...timeSerie, unit };
+            }
+            result.push(timeSerie);
+          });
         });
-      });
-    }
+      }
 
-    return { data: result };
+      resolve({ data: result });
+    });
+    return this.queryPromise;
   }
 
   async annotationQuery(options) {
@@ -173,76 +184,84 @@ export default class StackdriverDatasource {
     throw new Error('Template variables support is not yet imlemented');
   }
 
-  testDatasource() {
-    const path = `v3/projects/${this.projectName}/metricDescriptors`;
-    return this.doRequest(`${this.baseUrl}${path}`)
-      .then(response => {
-        if (response.status === 200) {
-          return {
-            status: 'success',
-            message: 'Successfully queried the Stackdriver API.',
-            title: 'Success',
-          };
-        }
-
-        return {
-          status: 'error',
-          message: 'Returned http status code ' + response.status,
-        };
-      })
-      .catch(error => {
-        let message = 'Stackdriver: ';
-        message += error.statusText ? error.statusText + ': ' : '';
-
+  async testDatasource() {
+    let status, message;
+    const defaultErrorMessage = 'Cannot connect to Stackdriver API';
+    try {
+      const projectName = await this.getDefaultProject();
+      const path = `v3/projects/${projectName}/metricDescriptors`;
+      const response = await this.doRequest(`${this.baseUrl}${path}`);
+      if (response.status === 200) {
+        status = 'success';
+        message = 'Successfully queried the Stackdriver API.';
+      } else {
+        status = 'error';
+        message = response.statusText ? response.statusText : defaultErrorMessage;
+      }
+    } catch (error) {
+      status = 'error';
+      if (_.isString(error)) {
+        message = error;
+      } else {
+        message = 'Stackdriver: ';
+        message += error.statusText ? error.statusText : defaultErrorMessage;
         if (error.data && error.data.error && error.data.error.code) {
-          // 400, 401
-          message += error.data.error.code + '. ' + error.data.error.message;
-        } else {
-          message += 'Cannot connect to Stackdriver API';
+          message += ': ' + error.data.error.code + '. ' + error.data.error.message;
         }
-        return {
-          status: 'error',
-          message: message,
-        };
-      });
+      }
+    } finally {
+      return {
+        status,
+        message,
+      };
+    }
   }
 
-  async getProjects() {
-    const response = await this.doRequest(`/cloudresourcemanager/v1/projects`);
-    return response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
+  formatStackdriverError(error) {
+    let message = 'Stackdriver: ';
+    message += error.statusText ? error.statusText + ': ' : '';
+    if (error.data && error.data.error) {
+      try {
+        const res = JSON.parse(error.data.error);
+        message += res.error.code + '. ' + res.error.message;
+      } catch (err) {
+        message += error.data.error;
+      }
+    } else {
+      message += 'Cannot connect to Stackdriver API';
+    }
+    return message;
   }
 
   async getDefaultProject() {
     try {
-      const projects = await this.getProjects();
-      if (projects && projects.length > 0) {
-        const test = projects.filter(p => p.id === this.projectName)[0];
-        return test;
+      if (this.authenticationType === 'gce' || !this.projectName) {
+        const { data } = await this.backendSrv.datasourceRequest({
+          url: '/api/tsdb/query',
+          method: 'POST',
+          data: {
+            queries: [
+              {
+                refId: 'ensureDefaultProjectQuery',
+                type: 'ensureDefaultProjectQuery',
+                datasourceId: this.id,
+              },
+            ],
+          },
+        });
+        this.projectName = data.results.ensureDefaultProjectQuery.meta.defaultProject;
+        return this.projectName;
       } else {
-        throw new Error('No projects found');
+        return this.projectName;
       }
     } catch (error) {
-      let message = 'Projects cannot be fetched: ';
-      message += error.statusText ? error.statusText + ': ' : '';
-      if (error && error.data && error.data.error && error.data.error.message) {
-        if (error.data.error.code === 403) {
-          message += `
-            A list of projects could not be fetched from the Google Cloud Resource Manager API.
-            You might need to enable it first:
-            https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com`;
-        } else {
-          message += error.data.error.code + '. ' + error.data.error.message;
-        }
-      } else {
-        message += 'Cannot connect to Stackdriver API';
-      }
-      appEvents.emit('ds-request-error', message);
+      throw this.formatStackdriverError(error);
     }
   }
 
-  async getMetricTypes(projectId: string) {
+  async getMetricTypes(projectName: string) {
     try {
-      const metricsApiPath = `v3/projects/${projectId}/metricDescriptors`;
+      const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
       const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
 
       const metrics = data.metricDescriptors.map(m => {
@@ -256,7 +275,8 @@ export default class StackdriverDatasource {
 
       return metrics;
     } catch (error) {
-      console.log(error);
+      appEvents.emit('ds-request-error', this.formatStackdriverError(error));
+      return [];
     }
   }
 
