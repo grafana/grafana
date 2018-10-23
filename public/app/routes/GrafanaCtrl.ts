@@ -176,7 +176,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const search = $location.search();
 
         if (options && options.exit) {
-          search.kiosk = 1;
+          search.kiosk = '1';
         }
 
         switch (search.kiosk) {
