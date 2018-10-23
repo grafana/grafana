@@ -66,7 +66,6 @@ export class ResultTransformer {
     return {
       datapoints: dps,
       query: options.query,
-      responseIndex: options.responseIndex,
       target: metricLabel,
     };
   }

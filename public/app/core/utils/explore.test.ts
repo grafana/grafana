@@ -11,7 +11,6 @@ const DEFAULT_EXPLORE_STATE: ExploreState = {
   graphRange: DEFAULT_RANGE,
   history: [],
   queries: [],
-  queryHints: [],
   queryTransactions: [],
   range: DEFAULT_RANGE,
   showingGraph: true,

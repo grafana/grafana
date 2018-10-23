@@ -22,6 +22,7 @@ export interface QueryTransaction {
   id: string;
   done: boolean;
   error?: string;
+  hints?: any[];
   latency: number;
   options: any;
   query: string;
@@ -55,7 +56,6 @@ export interface ExploreState {
   /**
    * Hints gathered for the query row.
    */
-  queryHints: any[];
   queryTransactions: QueryTransaction[];
   range: Range;
   showingGraph: boolean;

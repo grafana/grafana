@@ -176,7 +176,6 @@ export class PrometheusDatasource {
 
     return this.$q.all(allQueryPromise).then(responseList => {
       let result = [];
-      let hints = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
@@ -196,19 +195,13 @@ export class PrometheusDatasource {
           end: queries[index].end,
           query: queries[index].expr,
           responseListLength: responseList.length,
-          responseIndex: index,
           refId: activeTargets[index].refId,
         };
         const series = this.resultTransformer.transform(response, transformerOptions);
         result = [...result, ...series];
-
-        if (queries[index].hinting) {
-          const queryHints = getQueryHints(series, this);
-          hints = [...hints, ...queryHints];
-        }
       });
 
-      return { data: result, hints };
+      return { data: result };
     });
   }
 
@@ -435,6 +428,10 @@ export class PrometheusDatasource {
       };
     }
     return state;
+  }
+
+  getQueryHints(query: string, result: any[]) {
+    return getQueryHints(query, result, this);
   }
 
   loadRules() {
