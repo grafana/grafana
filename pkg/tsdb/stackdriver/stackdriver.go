@@ -358,9 +358,18 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 	var resourceTypes []string
 
 	for _, series := range data.TimeSeries {
+		if !containsLabel(resourceTypes, series.Resource.Type) {
+			resourceTypes = append(resourceTypes, series.Resource.Type)
+		}
+	}
+
+	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
 
 		defaultMetricName := series.Metric.Type
+		if len(resourceTypes) > 1 {
+			defaultMetricName += " " + series.Resource.Type
+		}
 
 		for key, value := range series.Metric.Labels {
 			if !containsLabel(metricLabels[key], value) {
@@ -378,10 +387,6 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			if containsLabel(query.GroupBys, "resource.label."+key) {
 				defaultMetricName += " " + value
 			}
-		}
-
-		if !containsLabel(resourceTypes, series.Resource.Type) {
-			resourceTypes = append(resourceTypes, series.Resource.Type)
 		}
 
 		// reverse the order to be ascending
