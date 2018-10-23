@@ -3,14 +3,17 @@ export class MysqlMetaQuery {
 
   getOperators(datatype: string) {
     switch (datatype) {
-      case 'float4':
-      case 'float8': {
+      case 'double':
+      case 'float': {
         return ['=', '!=', '<', '<=', '>', '>='];
       }
       case 'text':
+      case 'tinytext':
+      case 'mediumtext':
+      case 'longtext':
       case 'varchar':
       case 'char': {
-        return ['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE', '~', '~*', '!~', '!~*'];
+        return ['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'];
       }
       default: {
         return ['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN'];
@@ -99,7 +102,7 @@ export class MysqlMetaQuery {
         break;
       }
       case 'metric': {
-        query += " AND data_type IN ('text' 'tinytext','mediumtext', 'longtext', 'varchar')";
+        query += " AND data_type IN ('text','tinytext','mediumtext','longtext','varchar','char')";
         break;
       }
       case 'value': {
@@ -108,7 +111,7 @@ export class MysqlMetaQuery {
         break;
       }
       case 'group': {
-        query += " AND data_type IN ('text' 'tinytext','mediumtext', 'longtext', 'varchar')";
+        query += " AND data_type IN ('text','tinytext','mediumtext','longtext','varchar','char')";
         break;
       }
     }
