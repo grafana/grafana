@@ -13,6 +13,7 @@ import ResetStyles from 'app/core/components/Picker/ResetStyles';
 import PickerOption from 'app/core/components/Picker/PickerOption';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
+import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
 import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
@@ -389,8 +390,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       to: parseDate(range.to, true),
     };
     const { interval } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
-    const targets = this.queryExpressions.map(q => ({
+    const targets = this.queryExpressions.map((q, i) => ({
       ...targetOptions,
+      // Target identifier is needed for table transformations
+      refId: i + 1,
       expr: q,
     }));
     return {
@@ -437,7 +440,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
     try {
       const res = await datasource.query(options);
-      const tableModel = res.data[0];
+      const tableModel = mergeTablesIntoModel(new TableModel(), ...res.data);
       const latency = Date.now() - now;
       this.setState({ latency, loading: false, tableResult: tableModel, requestOptions: options });
       this.onQuerySuccess(datasource.meta.id, queries);
