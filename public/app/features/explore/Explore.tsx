@@ -456,7 +456,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.saveState();
   };
 
-  buildQueryOptions(query: string, rowIndex: number, targetOptions: { format: string; hinting?: boolean; instant?: boolean }) {
+  buildQueryOptions(
+    query: string,
+    rowIndex: number,
+    targetOptions: { format: string; hinting?: boolean; instant?: boolean }
+  ) {
     const { datasource, range } = this.state;
     const resolution = this.el.offsetWidth;
     const absoluteRange = {
@@ -483,7 +487,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     };
   }
 
-  startQueryTransaction(query: string, rowIndex: number, resultType: string, options: any): QueryTransaction {
+  startQueryTransaction(query: string, rowIndex: number, resultType: ResultType, options: any): QueryTransaction {
     const queryOptions = this.buildQueryOptions(query, rowIndex, options);
     const transaction: QueryTransaction = {
       query,
@@ -565,6 +569,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   }
 
+  discardTransactions(rowIndex: number) {
+    this.setState(state => {
+      const remainingTransactions = state.queryTransactions.filter(qt => qt.rowIndex !== rowIndex);
+      return { queryTransactions: remainingTransactions };
+    });
+  }
+
   failQueryTransaction(transactionId: string, error: string, datasourceId: string) {
     const { datasource } = this.state;
     if (datasource.meta.id !== datasourceId) {
@@ -609,7 +620,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         const transaction = this.startQueryTransaction(query, rowIndex, 'Graph', {
           format: 'time_series',
           instant: false,
-          hinting: true,
         });
         try {
           const now = Date.now();
@@ -623,6 +633,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           const queryError = response.data ? response.data.error : response;
           this.failQueryTransaction(transaction.id, queryError, datasourceId);
         }
+      } else {
+        this.discardTransactions(rowIndex);
       }
     });
   }
@@ -637,18 +649,24 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // Run all queries concurrently
     queries.forEach(async (query, rowIndex) => {
       if (query) {
-        const transaction = this.startQueryTransaction(query, rowIndex, 'Table', { format: 'table', instant: true });
+        const transaction = this.startQueryTransaction(query, rowIndex, 'Table', {
+          format: 'table',
+          instant: true,
+          valueWithRefId: true,
+        });
         try {
           const now = Date.now();
           const res = await datasource.query(transaction.options);
           const latency = Date.now() - now;
-          const results = mergeTablesIntoModel(new TableModel(), ...res.data);
+          const results = res.data[0];
           this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
         } catch (response) {
           console.error(response);
           const queryError = response.data ? response.data.error : response;
           this.failQueryTransaction(transaction.id, queryError, datasourceId);
         }
+      } else {
+        this.discardTransactions(rowIndex);
       }
     });
   }
@@ -675,6 +693,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           const queryError = response.data ? response.data.error : response;
           this.failQueryTransaction(transaction.id, queryError, datasourceId);
         }
+      } else {
+        this.discardTransactions(rowIndex);
       }
     });
   }
@@ -730,7 +750,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const graphResult = _.flatten(
       queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
     );
-    const tableResult = queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done).map(qt => qt.result)[0];
+    const tableResult = mergeTablesIntoModel(
+      new TableModel(),
+      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done).map(qt => qt.result)
+    );
     const logsResult = _.flatten(
       queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done).map(qt => qt.result)
     );
@@ -748,12 +771,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </a>
             </div>
           ) : (
-              <div className="navbar-buttons explore-first-button">
-                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                  Close Split
+            <div className="navbar-buttons explore-first-button">
+              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                Close Split
               </button>
-              </div>
-            )}
+            </div>
+          )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select

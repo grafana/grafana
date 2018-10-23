@@ -196,6 +196,7 @@ export class PrometheusDatasource {
           query: queries[index].expr,
           responseListLength: responseList.length,
           refId: activeTargets[index].refId,
+          valueWithRefId: activeTargets[index].valueWithRefId,
         };
         const series = this.resultTransformer.transform(response, transformerOptions);
         result = [...result, ...series];
