@@ -26,8 +26,8 @@ export interface QueryTransaction {
   latency: number;
   options: any;
   query: string;
-  result?: any; // Table / Timeseries / Logs
-  resultType: string;
+  result?: any; // Table model / Timeseries[] / Logs
+  resultType: ResultType;
   rowIndex: number;
 }
 
@@ -71,3 +71,5 @@ export interface ExploreUrlState {
   queries: Query[];
   range: Range;
 }
+
+export type ResultType = 'Graph' | 'Logs' | 'Table';

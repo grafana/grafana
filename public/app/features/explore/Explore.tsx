@@ -3,7 +3,15 @@ import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 import _ from 'lodash';
 
-import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, Range } from 'app/types/explore';
+import {
+  ExploreState,
+  ExploreUrlState,
+  HistoryItem,
+  Query,
+  QueryTransaction,
+  Range,
+  ResultType,
+} from 'app/types/explore';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -306,11 +314,41 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onClickGraphButton = () => {
-    this.setState(state => ({ showingGraph: !state.showingGraph }));
+    this.setState(
+      state => {
+        const showingGraph = !state.showingGraph;
+        let nextQueryTransactions = state.queryTransactions;
+        if (!showingGraph) {
+          // Discard transactions related to Graph query
+          nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Graph');
+        }
+        return { queryTransactions: nextQueryTransactions, showingGraph };
+      },
+      () => {
+        if (this.state.showingGraph) {
+          this.onSubmit();
+        }
+      }
+    );
   };
 
   onClickLogsButton = () => {
-    this.setState(state => ({ showingLogs: !state.showingLogs }));
+    this.setState(
+      state => {
+        const showingLogs = !state.showingLogs;
+        let nextQueryTransactions = state.queryTransactions;
+        if (!showingLogs) {
+          // Discard transactions related to Logs query
+          nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Logs');
+        }
+        return { queryTransactions: nextQueryTransactions, showingLogs };
+      },
+      () => {
+        if (this.state.showingLogs) {
+          this.onSubmit();
+        }
+      }
+    );
   };
 
   onClickSplit = () => {
@@ -322,7 +360,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onClickTableButton = () => {
-    this.setState(state => ({ showingTable: !state.showingTable }));
+    this.setState(
+      state => {
+        const showingTable = !state.showingTable;
+        let nextQueryTransactions = state.queryTransactions;
+        if (!showingTable) {
+          // Discard transactions related to Table query
+          nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
+        }
+        return { queryTransactions: nextQueryTransactions, showingTable };
+      },
+      () => {
+        if (this.state.showingTable) {
+          this.onSubmit();
+        }
+      }
+    );
   };
 
   onClickTableCell = (columnKey: string, rowValue: string) => {
