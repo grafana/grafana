@@ -1,4 +1,4 @@
-export interface Alert {
+export interface AppNotification {
   severity: string;
   icon: string;
   title: string;
@@ -6,5 +6,5 @@ export interface Alert {
 }
 
 export interface AlertsState {
-  alerts: Alert[];
+  alerts: AppNotification[];
 }

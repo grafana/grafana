@@ -21,7 +21,7 @@ describe('clear alert', () => {
     };
 
     const result = alertsReducer(initialState, {
-      type: ActionTypes.ClearAlert,
+      type: ActionTypes.ClearAppNotification,
       payload: initialState.alerts[1],
     });
 
