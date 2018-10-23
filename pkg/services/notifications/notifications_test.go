@@ -9,12 +9,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-type testTriggeredAlert struct {
-	ActualValue float64
-	Name        string
-	State       string
-}
-
 func TestNotifications(t *testing.T) {
 
 	Convey("Given the notifications service", t, func() {

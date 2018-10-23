@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import config from 'app/core/config';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardImportCtrl {
   navModel: any;
@@ -51,8 +52,8 @@ export class DashboardImportCtrl {
     this.inputs = [];
 
     if (this.dash.__inputs) {
-      for (let input of this.dash.__inputs) {
-        var inputModel = {
+      for (const input of this.dash.__inputs) {
+        const inputModel = {
           name: input.name,
           label: input.label,
           info: input.description,
@@ -78,7 +79,7 @@ export class DashboardImportCtrl {
   }
 
   setDatasourceOptions(input, inputModel) {
-    var sources = _.filter(config.datasources, val => {
+    const sources = _.filter(config.datasources, val => {
       return val.type === input.pluginId;
     });
 
@@ -95,7 +96,7 @@ export class DashboardImportCtrl {
 
   inputValueChanged() {
     this.inputsValid = true;
-    for (let input of this.inputs) {
+    for (const input of this.inputs) {
       if (!input.value) {
         this.inputsValid = false;
       }
@@ -162,7 +163,7 @@ export class DashboardImportCtrl {
   }
 
   saveDashboard() {
-    var inputs = this.inputs.map(input => {
+    const inputs = this.inputs.map(input => {
       return {
         name: input.name,
         type: input.type,
@@ -179,14 +180,15 @@ export class DashboardImportCtrl {
         folderId: this.folderId,
       })
       .then(res => {
-        this.$location.url(res.importedUrl);
+        const dashUrl = locationUtil.stripBaseFromUrl(res.importedUrl);
+        this.$location.url(dashUrl);
       });
   }
 
   loadJsonText() {
     try {
       this.parseError = '';
-      var dash = JSON.parse(this.jsonText);
+      const dash = JSON.parse(this.jsonText);
       this.onUpload(dash);
     } catch (err) {
       console.log(err);
@@ -198,8 +200,8 @@ export class DashboardImportCtrl {
   checkGnetDashboard() {
     this.gnetError = '';
 
-    var match = /(^\d+$)|dashboards\/(\d+)/.exec(this.gnetUrl);
-    var dashboardId;
+    const match = /(^\d+$)|dashboards\/(\d+)/.exec(this.gnetUrl);
+    let dashboardId;
 
     if (match && match[1]) {
       dashboardId = match[1];

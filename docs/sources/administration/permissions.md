@@ -52,12 +52,10 @@ This admin flag makes a user a `Super Admin`. This means they can access the `Se
 
 ### Dashboard & Folder Permissions
 
-> Introduced in Grafana v5.0
-
 {{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="500px" class="docs-image--right" >}}
 
 For dashboards and dashboard folders there is a **Permissions** page that make it possible to
-remove the default role based permssions for Editors and Viewers. It's here you can add and assign permissions to specific **Users** and **Teams**.
+remove the default role based permissions for Editors and Viewers. It's here you can add and assign permissions to specific **Users** and **Teams**.
 
 You can assign & remove permissions for **Organization Roles**, **Users** and **Teams**.
 
@@ -104,7 +102,7 @@ Permissions for a dashboard:
 
 Result: You cannot override to a lower permission. `user1` has Admin permission as the highest permission always wins.
 
-- **View**: Can only view existing dashboars/folders.
+- **View**: Can only view existing dashboards/folders.
 - You cannot override permissions for users with **Org Admin Role**
 - A more specific permission with lower permission level will not have any effect if a more general rule exists with higher permission level. For example if "Everyone with Editor Role Can Edit" exists in the ACL list then **John Doe** will still have Edit permission even after you have specifically added a permission for this user with the permission set to **View**. You need to remove or lower the permission level of the more general rule.
 

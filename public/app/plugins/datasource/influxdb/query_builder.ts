@@ -1,9 +1,9 @@
 import _ from 'lodash';
 
 function renderTagCondition(tag, index) {
-  var str = '';
-  var operator = tag.operator;
-  var value = tag.value;
+  let str = '';
+  let operator = tag.operator;
+  let value = tag.value;
   if (index > 0) {
     str = (tag.condition || 'AND') + ' ';
   }
@@ -28,9 +28,9 @@ export class InfluxQueryBuilder {
   constructor(private target, private database?) {}
 
   buildExploreQuery(type: string, withKey?: string, withMeasurementFilter?: string) {
-    var query;
-    var measurement;
-    var policy;
+    let query;
+    let measurement;
+    let policy;
 
     if (type === 'TAG_KEYS') {
       query = 'SHOW TAG KEYS';
@@ -82,9 +82,9 @@ export class InfluxQueryBuilder {
     }
 
     if (this.target.tags && this.target.tags.length > 0) {
-      var whereConditions = _.reduce(
+      const whereConditions = _.reduce(
         this.target.tags,
-        function(memo, tag) {
+        (memo, tag) => {
           // do not add a condition for the key we want to explore for
           if (tag.key === withKey) {
             return memo;

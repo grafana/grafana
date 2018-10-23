@@ -28,7 +28,7 @@ installation.
 ```bash
 wget <debian package url>
 sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.1.4_amd64.deb
+sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
 Example:
@@ -100,6 +100,8 @@ This will start the `grafana-server` process as the `grafana` user,
 which was created during the package installation. The default HTTP port
 is `3000` and default user and group is `admin`.
 
+Default login and password `admin`/ `admin`
+
 To configure the Grafana server to start at boot time:
 
 ```bash
@@ -166,3 +168,8 @@ To configure Grafana add a configuration file named `custom.ini` to the
 Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
 binary needs the working directory to be the root install directory (where the
 binary and the `public` folder is located).
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+Then follow the instructions [here](/guides/getting_started/).

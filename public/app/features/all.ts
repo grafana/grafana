@@ -1,13 +1,11 @@
-import './panellinks/module';
-import './dashlinks/module';
 import './annotations/all';
 import './templating/all';
 import './plugins/all';
 import './dashboard/all';
 import './playlist/all';
-import './snapshot/all';
 import './panel/all';
 import './org/all';
-import './admin/admin';
-import './alerting/all';
-import './styleguide/styleguide';
+import './admin';
+import './alerting/NotificationsEditCtrl';
+import './alerting/NotificationsListCtrl';
+import './manage-dashboards';

@@ -1,0 +1,53 @@
+{
+  "name": "Stackdriver",
+  "type": "datasource",
+  "id": "stackdriver",
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+  "state": "beta",
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+  "info": {
+    "description": "Google Stackdriver Datasource for Grafana",
+    "version": "1.0.0",
+    "logos": {
+      "small": "img/stackdriver_logo.png",
+      "large": "img/stackdriver_logo.png"
+    },
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    }
+  },
+  "routes": [
+    {
+      "path": "stackdriver",
+      "method": "GET",
+      "url": "https://content-monitoring.googleapis.com",
+      "jwtTokenAuth": {
+        "scopes": ["https://www.googleapis.com/auth/monitoring.read"],
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}"
+        }
+      }
+    },
+    {
+      "path": "cloudresourcemanager",
+      "method": "GET",
+      "url": "https://cloudresourcemanager.googleapis.com",
+      "jwtTokenAuth": {
+        "scopes": ["https://www.googleapis.com/auth/cloudplatformprojects.readonly"],
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}"
+        }
+      }
+    }
+  ]
+}

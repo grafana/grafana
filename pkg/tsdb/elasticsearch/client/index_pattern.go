@@ -248,13 +248,28 @@ var datePatternReplacements = map[string]string{
 
 func formatDate(t time.Time, pattern string) string {
 	var datePattern string
-	parts := strings.Split(strings.TrimLeft(pattern, "["), "]")
-	base := parts[0]
-	if len(parts) == 2 {
-		datePattern = parts[1]
-	} else {
-		datePattern = base
-		base = ""
+	base := ""
+	ltr := false
+
+	if strings.HasPrefix(pattern, "[") {
+		parts := strings.Split(strings.TrimLeft(pattern, "["), "]")
+		base = parts[0]
+		if len(parts) == 2 {
+			datePattern = parts[1]
+		} else {
+			datePattern = base
+			base = ""
+		}
+		ltr = true
+	} else if strings.HasSuffix(pattern, "]") {
+		parts := strings.Split(strings.TrimRight(pattern, "]"), "[")
+		datePattern = parts[0]
+		if len(parts) == 2 {
+			base = parts[1]
+		} else {
+			base = ""
+		}
+		ltr = false
 	}
 
 	formatted := t.Format(patternToLayout(datePattern))
@@ -293,7 +308,11 @@ func formatDate(t time.Time, pattern string) string {
 		formatted = strings.Replace(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()), -1)
 	}
 
-	return base + formatted
+	if ltr {
+		return base + formatted
+	}
+
+	return formatted + base
 }
 
 func patternToLayout(pattern string) string {

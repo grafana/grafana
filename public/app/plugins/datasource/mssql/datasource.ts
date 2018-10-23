@@ -5,18 +5,20 @@ export class MssqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  interval: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
+        return "'" + value.replace(/'/g, `''`) + "'";
       } else {
         return value;
       }
@@ -26,18 +28,18 @@ export class MssqlDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       if (typeof value === 'number') {
         return value;
       }
 
-      return "'" + val + "'";
+      return "'" + val.replace(/'/g, `''`) + "'";
     });
     return quotedValues.join(',');
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {

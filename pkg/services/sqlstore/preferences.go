@@ -94,7 +94,7 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()
 		prefs.Version += 1
-		_, err = sess.Id(prefs.Id).AllCols().Update(&prefs)
+		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
 		return err
 	})
 }

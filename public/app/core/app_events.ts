@@ -1,4 +1,4 @@
 import { Emitter } from './utils/emitter';
 
-var appEvents = new Emitter();
+const appEvents = new Emitter();
 export default appEvents;

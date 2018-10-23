@@ -21,15 +21,23 @@ import _ from 'lodash';
 import moment from 'moment';
 
 // add move to lodash for backward compatabiltiy
-_.move = function(array, fromIndex, toIndex) {
+_.move = (array, fromIndex, toIndex) => {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
   return array;
 };
 
-import { coreModule, registerAngularDirectives } from './core/core';
-import { setupAngularRoutes } from './routes/routes';
+import { coreModule, angularModules } from 'app/core/core_module';
+import { registerAngularDirectives } from 'app/core/core';
+import { setupAngularRoutes } from 'app/routes/routes';
 
-declare var System: any;
+import 'app/routes/GrafanaCtrl';
+import 'app/features/all';
+
+// import symlinked extensions
+const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
+extensionsIndex.keys().forEach(key => {
+  extensionsIndex(key);
+});
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -53,7 +61,7 @@ export class GrafanaApp {
   }
 
   init() {
-    var app = angular.module('grafana', []);
+    const app = angular.module('grafana', []);
 
     moment.locale(config.bootData.user.locale);
 
@@ -76,9 +84,9 @@ export class GrafanaApp {
       $provide.decorator('$http', [
         '$delegate',
         '$templateCache',
-        function($delegate, $templateCache) {
-          var get = $delegate.get;
-          $delegate.get = function(url, config) {
+        ($delegate, $templateCache) => {
+          const get = $delegate.get;
+          $delegate.get = (url, config) => {
             if (url.match(/\.html$/)) {
               // some template's already exist in the cache
               if (!$templateCache.get(url)) {
@@ -105,39 +113,26 @@ export class GrafanaApp {
       'react',
     ];
 
-    var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
-
-    _.each(module_types, type => {
-      var moduleName = 'grafana.' + type;
-      this.useModule(angular.module(moduleName, []));
-    });
-
     // makes it possible to add dynamic stuff
-    this.useModule(coreModule);
+    _.each(angularModules, m => {
+      this.useModule(m);
+    });
 
     // register react angular wrappers
     coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    var preBootRequires = [System.import('app/features/all')];
+    // disable tool tip animation
+    $.fn.tooltip.defaults.animation = false;
 
-    Promise.all(preBootRequires)
-      .then(() => {
-        // disable tool tip animation
-        $.fn.tooltip.defaults.animation = false;
-
-        // bootstrap the app
-        angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
-          _.each(this.preBootModules, module => {
-            _.extend(module, this.registerFunctions);
-          });
-
-          this.preBootModules = null;
-        });
-      })
-      .catch(function(err) {
-        console.log('Application boot failed:', err);
+    // bootstrap the app
+    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+      _.each(this.preBootModules, module => {
+        _.extend(module, this.registerFunctions);
       });
+
+      this.preBootModules = null;
+    });
   }
 }
 

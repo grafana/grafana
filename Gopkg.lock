@@ -20,6 +20,12 @@
   revision = "7677a1d7c1137cd3dd5ba7a076d0c898a1ef4520"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/VividCortex/mysqlerr"
+  packages = ["."]
+  revision = "6c6b55f8796f578c870b7e19bafb16103bc40095"
+
+[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -32,6 +38,7 @@
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
     "aws/credentials/stscreds",
+    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
@@ -43,6 +50,8 @@
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
@@ -54,8 +63,8 @@
     "service/s3",
     "service/sts"
   ]
-  revision = "c7cd1ebe87257cde9b65112fc876b0339ea0ac30"
-  version = "v1.13.49"
+  revision = "fde4ded7becdeae4d26bf1212916aabba79349b4"
+  version = "v1.14.12"
 
 [[projects]]
   branch = "master"
@@ -255,7 +264,7 @@
   branch = "master"
   name = "github.com/hashicorp/yamux"
   packages = ["."]
-  revision = "2658be15c5f05e76244154714161f17e3e77de2e"
+  revision = "7221087c3d281fda5f794e28c2ea4c6e4d5c4558"
 
 [[projects]]
   name = "github.com/inconshreveable/log15"
@@ -498,6 +507,8 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "ed25519",
+    "ed25519/internal/edwards25519",
     "md4",
     "pbkdf2"
   ]
@@ -662,6 +673,16 @@
   version = "v2.3.2"
 
 [[projects]]
+  name = "gopkg.in/square/go-jose.v2"
+  packages = [
+    ".",
+    "cipher",
+    "json"
+  ]
+  revision = "ef984e69dd356202fd4e4910d4d9c24468bdf0b8"
+  version = "v2.1.9"
+
+[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -670,6 +691,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "85cc057e0cc074ab5b43bd620772d63d51e07b04e8782fcfe55e6929d2fc40f7"
+  inputs-digest = "6f7f271afd27f78b7d8ebe27436fee72c9925fb82a978bdc57fde44e01f3ca51"
   solver-name = "gps-cdcl"
   solver-version = 1

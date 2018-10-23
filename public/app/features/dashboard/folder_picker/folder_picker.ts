@@ -131,6 +131,7 @@ export class FolderPickerCtrl {
   private loadInitialValue() {
     const resetFolder = { text: this.initialTitle, value: null };
     const rootFolder = { text: this.rootName, value: 0 };
+
     this.getOptions('').then(result => {
       let folder;
       if (this.initialFolderId) {
@@ -150,7 +151,7 @@ export class FolderPickerCtrl {
       this.folder = folder;
 
       // if this is not the same as our initial value notify parent
-      if (this.folder.id !== this.initialFolderId) {
+      if (this.folder.value !== this.initialFolderId) {
         this.onChange({ $folder: { id: this.folder.value, title: this.folder.text } });
       }
     });

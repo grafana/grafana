@@ -23,7 +23,7 @@ export class ElasticConfigCtrl {
   esVersions = [{ name: '2.x', value: 2 }, { name: '5.x', value: 5 }, { name: '5.6+', value: 56 }];
 
   indexPatternTypeChanged() {
-    var def = _.find(this.indexPatternTypes, {
+    const def = _.find(this.indexPatternTypes, {
       value: this.current.jsonData.interval,
     });
     this.current.database = def.example || 'es-index-name';

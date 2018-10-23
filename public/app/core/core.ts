@@ -19,8 +19,6 @@ import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';
 
-import { grafanaAppDirective } from './components/grafana_app';
-import { sideMenuDirective } from './components/sidemenu/sidemenu';
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
 import { navbarDirective } from './components/navbar/navbar';
@@ -31,6 +29,7 @@ import { layoutSelector } from './components/layout_selector/layout_selector';
 import { switchDirective } from './components/switch';
 import { dashboardSelector } from './components/dashboard_selector';
 import { queryPartEditorDirective } from './components/query_part/query_part_editor';
+import { sqlPartEditorDirective } from './components/sql_part/sql_part_editor';
 import { formDropdownDirective } from './components/form_dropdown/form_dropdown';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
@@ -60,8 +59,6 @@ export {
   registerAngularDirectives,
   arrayJoin,
   coreModule,
-  grafanaAppDirective,
-  sideMenuDirective,
   navbarDirective,
   searchDirective,
   liveSrv,
@@ -72,6 +69,7 @@ export {
   appEvents,
   dashboardSelector,
   queryPartEditorDirective,
+  sqlPartEditorDirective,
   colors,
   formDropdownDirective,
   assignModelProperties,

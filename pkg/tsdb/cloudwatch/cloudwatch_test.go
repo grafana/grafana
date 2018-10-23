@@ -71,6 +71,7 @@ func TestCloudWatch(t *testing.T) {
 							"p50.00": aws.Float64(30.0),
 							"p90.00": aws.Float64(40.0),
 						},
+						Unit: aws.String("Seconds"),
 					},
 				},
 			}
@@ -103,6 +104,7 @@ func TestCloudWatch(t *testing.T) {
 			So(queryRes.Series[1].Points[0][0].String(), ShouldEqual, null.FloatFrom(20.0).String())
 			So(queryRes.Series[2].Points[0][0].String(), ShouldEqual, null.FloatFrom(30.0).String())
 			So(queryRes.Series[3].Points[0][0].String(), ShouldEqual, null.FloatFrom(40.0).String())
+			So(queryRes.Meta.Get("unit").MustString(), ShouldEqual, "s")
 		})
 
 		Convey("terminate gap of data points", func() {
@@ -118,6 +120,7 @@ func TestCloudWatch(t *testing.T) {
 							"p50.00": aws.Float64(30.0),
 							"p90.00": aws.Float64(40.0),
 						},
+						Unit: aws.String("Seconds"),
 					},
 					{
 						Timestamp: aws.Time(timestamp.Add(60 * time.Second)),
@@ -127,6 +130,7 @@ func TestCloudWatch(t *testing.T) {
 							"p50.00": aws.Float64(40.0),
 							"p90.00": aws.Float64(50.0),
 						},
+						Unit: aws.String("Seconds"),
 					},
 					{
 						Timestamp: aws.Time(timestamp.Add(180 * time.Second)),
@@ -136,6 +140,7 @@ func TestCloudWatch(t *testing.T) {
 							"p50.00": aws.Float64(50.0),
 							"p90.00": aws.Float64(60.0),
 						},
+						Unit: aws.String("Seconds"),
 					},
 				},
 			}

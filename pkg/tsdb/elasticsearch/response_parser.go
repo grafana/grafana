@@ -13,6 +13,19 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
+const (
+	// Metric types
+	countType         = "count"
+	percentilesType   = "percentiles"
+	extendedStatsType = "extended_stats"
+	// Bucket types
+	dateHistType    = "date_histogram"
+	histogramType   = "histogram"
+	filtersType     = "filters"
+	termsType       = "terms"
+	geohashGridType = "geohash_grid"
+)
+
 type responseParser struct {
 	Responses []*es.SearchResponse
 	Targets   []*Query
@@ -81,7 +94,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 		}
 
 		if depth == maxDepth {
-			if aggDef.Type == "date_histogram" {
+			if aggDef.Type == dateHistType {
 				err = rp.processMetrics(esAgg, target, series, props)
 			} else {
 				err = rp.processAggregationDocs(esAgg, aggDef, target, table, props)
@@ -92,7 +105,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 		} else {
 			for _, b := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(b)
-				newProps := make(map[string]string, 0)
+				newProps := make(map[string]string)
 
 				for k, v := range props {
 					newProps[k] = v
@@ -122,7 +135,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 			for _, bucketKey := range bucketKeys {
 				bucket := simplejson.NewFromAny(buckets[bucketKey])
-				newProps := make(map[string]string, 0)
+				newProps := make(map[string]string)
 
 				for k, v := range props {
 					newProps[k] = v
@@ -149,7 +162,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 		}
 
 		switch metric.Type {
-		case "count":
+		case countType:
 			newSeries := tsdb.TimeSeries{
 				Tags: make(map[string]string),
 			}
@@ -164,10 +177,10 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			for k, v := range props {
 				newSeries.Tags[k] = v
 			}
-			newSeries.Tags["metric"] = "count"
+			newSeries.Tags["metric"] = countType
 			*series = append(*series, &newSeries)
 
-		case "percentiles":
+		case percentilesType:
 			buckets := esAgg.Get("buckets").MustArray()
 			if len(buckets) == 0 {
 				break
@@ -198,7 +211,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 				*series = append(*series, &newSeries)
 			}
-		case "extended_stats":
+		case extendedStatsType:
 			buckets := esAgg.Get("buckets").MustArray()
 
 			metaKeys := make([]string, 0)
@@ -312,10 +325,9 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 
 		for _, metric := range target.Metrics {
 			switch metric.Type {
-			case "count":
+			case countType:
 				addMetricValue(&values, rp.getMetricName(metric.Type), castToNullFloat(bucket.Get("doc_count")))
-				break
-			case "extended_stats":
+			case extendedStatsType:
 				metaKeys := make([]string, 0)
 				meta := metric.Meta.MustMap()
 				for k := range meta {
@@ -355,7 +367,6 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 				}
 
 				addMetricValue(&values, metricName, castToNullFloat(bucket.GetPath(metric.ID, "value")))
-				break
 			}
 		}
 
@@ -368,7 +379,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 func (rp *responseParser) trimDatapoints(series *tsdb.TimeSeriesSlice, target *Query) {
 	var histogram *BucketAgg
 	for _, bucketAgg := range target.BucketAggs {
-		if bucketAgg.Type == "date_histogram" {
+		if bucketAgg.Type == dateHistType {
 			histogram = bucketAgg
 			break
 		}

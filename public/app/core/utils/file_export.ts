@@ -74,7 +74,7 @@ export function convertSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATE
 }
 
 export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  let text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel);
+  const text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
@@ -84,7 +84,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     formatSpecialHeader(excel) +
     formatRow(
       ['Time'].concat(
-        seriesList.map(function(val) {
+        seriesList.map(val => {
           return val.alias;
         })
       )
@@ -97,7 +97,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     const timestamp = moment(seriesList[0].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat);
     text += formatRow(
       [timestamp].concat(
-        seriesList.map(function(series) {
+        seriesList.map(series => {
           return series.datapoints[i][POINT_VALUE_INDEX];
         })
       ),
@@ -115,7 +115,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
 function mergeSeriesByTime(seriesList) {
   let timestamps = [];
   for (let i = 0; i < seriesList.length; i++) {
-    let seriesPoints = seriesList[i].datapoints;
+    const seriesPoints = seriesList[i].datapoints;
     for (let j = 0; j < seriesPoints.length; j++) {
       timestamps.push(seriesPoints[j][POINT_TIME_INDEX]);
     }
@@ -123,9 +123,9 @@ function mergeSeriesByTime(seriesList) {
   timestamps = sortedUniq(timestamps.sort());
 
   for (let i = 0; i < seriesList.length; i++) {
-    let seriesPoints = seriesList[i].datapoints;
-    let seriesTimestamps = seriesPoints.map(p => p[POINT_TIME_INDEX]);
-    let extendedSeries = [];
+    const seriesPoints = seriesList[i].datapoints;
+    const seriesTimestamps = seriesPoints.map(p => p[POINT_TIME_INDEX]);
+    const extendedSeries = [];
     let pointIndex;
     for (let j = 0; j < timestamps.length; j++) {
       pointIndex = sortedIndexOf(seriesTimestamps, timestamps[j]);
@@ -141,7 +141,7 @@ function mergeSeriesByTime(seriesList) {
 }
 
 export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  let text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel);
+  const text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
@@ -157,11 +157,11 @@ export function convertTableDataToCsv(table, excel = false) {
 }
 
 export function exportTableDataToCsv(table, excel = false) {
-  let text = convertTableDataToCsv(table, excel);
+  const text = convertTableDataToCsv(table, excel);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
 export function saveSaveBlob(payload, fname) {
-  let blob = new Blob([payload], { type: 'text/csv;charset=utf-8;header=present;' });
+  const blob = new Blob([payload], { type: 'text/csv;charset=utf-8;header=present;' });
   saveAs(blob, fname);
 }

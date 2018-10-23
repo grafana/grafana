@@ -2268,11 +2268,7 @@ func (c *EC2) CancelSpotInstanceRequestsRequest(input *CancelSpotInstanceRequest
 
 // CancelSpotInstanceRequests API operation for Amazon Elastic Compute Cloud.
 //
-// Cancels one or more Spot Instance requests. Spot Instances are instances
-// that Amazon EC2 starts on your behalf when the maximum price that you specify
-// exceeds the current Spot price. For more information, see Spot Instance Requests
-// (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html) in
-// the Amazon EC2 User Guide for Linux Instances.
+// Cancels one or more Spot Instance requests.
 //
 // Canceling a Spot Instance request does not terminate running Spot Instances
 // associated with the request.
@@ -4179,8 +4175,8 @@ func (c *EC2) CreateNetworkInterfacePermissionRequest(input *CreateNetworkInterf
 
 // CreateNetworkInterfacePermission API operation for Amazon Elastic Compute Cloud.
 //
-// Grants an AWS authorized partner account permission to attach the specified
-// network interface to an instance in their account.
+// Grants an AWS-authorized account permission to attach the specified network
+// interface to an instance in their account.
 //
 // You can grant permission to a single AWS account only, and only one account
 // at a time.
@@ -13675,11 +13671,7 @@ func (c *EC2) DescribeSpotInstanceRequestsRequest(input *DescribeSpotInstanceReq
 
 // DescribeSpotInstanceRequests API operation for Amazon Elastic Compute Cloud.
 //
-// Describes the Spot Instance requests that belong to your account. Spot Instances
-// are instances that Amazon EC2 launches when the Spot price that you specify
-// exceeds the current Spot price. For more information, see Spot Instance Requests
-// (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html) in
-// the Amazon EC2 User Guide for Linux Instances.
+// Describes the specified Spot Instance requests.
 //
 // You can use DescribeSpotInstanceRequests to find a running Spot Instance
 // by examining the response. If the status of the Spot Instance is fulfilled,
@@ -21367,9 +21359,9 @@ func (c *EC2) RequestSpotInstancesRequest(input *RequestSpotInstancesInput) (req
 
 // RequestSpotInstances API operation for Amazon Elastic Compute Cloud.
 //
-// Creates a Spot Instance request. Spot Instances are instances that Amazon
-// EC2 launches when the maximum price that you specify exceeds the current
-// Spot price. For more information, see Spot Instance Requests (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html)
+// Creates a Spot Instance request.
+//
+// For more information, see Spot Instance Requests (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html)
 // in the Amazon EC2 User Guide for Linux Instances.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -37615,7 +37607,7 @@ type DescribeInstancesInput struct {
 	// The maximum number of results to return in a single call. To retrieve the
 	// remaining results, make another call with the returned NextToken value. This
 	// value can be between 5 and 1000. You cannot specify this parameter and the
-	// instance IDs parameter or tag filters in the same call.
+	// instance IDs parameter in the same call.
 	MaxResults *int64 `locationName:"maxResults" type:"integer"`
 
 	// The token to request the next page of results.
@@ -66458,19 +66450,23 @@ type StateReason struct {
 
 	// The message for the state change.
 	//
-	//    * Server.InsufficientInstanceCapacity: There was insufficient instance
-	//    capacity to satisfy the launch request.
+	//    * Server.InsufficientInstanceCapacity: There was insufficient capacity
+	//    available to satisfy the launch request.
 	//
-	//    * Server.InternalError: An internal error occurred during instance launch,
-	//    resulting in termination.
+	//    * Server.InternalError: An internal error caused the instance to terminate
+	//    during launch.
 	//
 	//    * Server.ScheduledStop: The instance was stopped due to a scheduled retirement.
 	//
-	//    * Server.SpotInstanceTermination: A Spot Instance was terminated due to
-	//    an increase in the Spot price.
+	//    * Server.SpotInstanceShutdown: The instance was stopped because the number
+	//    of Spot requests with a maximum price equal to or higher than the Spot
+	//    price exceeded available capacity or because of an increase in the Spot
+	//    price.
 	//
-	//    * Client.InternalError: A client error caused the instance to terminate
-	//    on launch.
+	//    * Server.SpotInstanceTermination: The instance was terminated because
+	//    the number of Spot requests with a maximum price equal to or higher than
+	//    the Spot price exceeded available capacity or because of an increase in
+	//    the Spot price.
 	//
 	//    * Client.InstanceInitiatedShutdown: The instance was shut down using the
 	//    shutdown -h command from the instance.
@@ -66478,14 +66474,17 @@ type StateReason struct {
 	//    * Client.InstanceTerminated: The instance was terminated or rebooted during
 	//    AMI creation.
 	//
+	//    * Client.InternalError: A client error caused the instance to terminate
+	//    during launch.
+	//
+	//    * Client.InvalidSnapshot.NotFound: The specified snapshot was not found.
+	//
 	//    * Client.UserInitiatedShutdown: The instance was shut down using the Amazon
 	//    EC2 API.
 	//
 	//    * Client.VolumeLimitExceeded: The limit on the number of EBS volumes or
 	//    total storage was exceeded. Decrease usage or request an increase in your
-	//    limits.
-	//
-	//    * Client.InvalidSnapshot.NotFound: The specified snapshot was not found.
+	//    account limits.
 	Message *string `locationName:"message" type:"string"`
 }
 
@@ -66969,7 +66968,7 @@ type TagSpecification struct {
 	_ struct{} `type:"structure"`
 
 	// The type of resource to tag. Currently, the resource types that support tagging
-	// on creation are instance and volume.
+	// on creation are instance, snapshot, and volume.
 	ResourceType *string `locationName:"resourceType" type:"string" enum:"ResourceType"`
 
 	// The tags to apply to the resource.
@@ -70694,6 +70693,9 @@ const (
 	// InstanceTypeI316xlarge is a InstanceType enum value
 	InstanceTypeI316xlarge = "i3.16xlarge"
 
+	// InstanceTypeI3Metal is a InstanceType enum value
+	InstanceTypeI3Metal = "i3.metal"
+
 	// InstanceTypeHi14xlarge is a InstanceType enum value
 	InstanceTypeHi14xlarge = "hi1.4xlarge"
 
@@ -70753,6 +70755,24 @@ const (
 
 	// InstanceTypeC518xlarge is a InstanceType enum value
 	InstanceTypeC518xlarge = "c5.18xlarge"
+
+	// InstanceTypeC5dLarge is a InstanceType enum value
+	InstanceTypeC5dLarge = "c5d.large"
+
+	// InstanceTypeC5dXlarge is a InstanceType enum value
+	InstanceTypeC5dXlarge = "c5d.xlarge"
+
+	// InstanceTypeC5d2xlarge is a InstanceType enum value
+	InstanceTypeC5d2xlarge = "c5d.2xlarge"
+
+	// InstanceTypeC5d4xlarge is a InstanceType enum value
+	InstanceTypeC5d4xlarge = "c5d.4xlarge"
+
+	// InstanceTypeC5d9xlarge is a InstanceType enum value
+	InstanceTypeC5d9xlarge = "c5d.9xlarge"
+
+	// InstanceTypeC5d18xlarge is a InstanceType enum value
+	InstanceTypeC5d18xlarge = "c5d.18xlarge"
 
 	// InstanceTypeCc14xlarge is a InstanceType enum value
 	InstanceTypeCc14xlarge = "cc1.4xlarge"
@@ -70831,6 +70851,24 @@ const (
 
 	// InstanceTypeM524xlarge is a InstanceType enum value
 	InstanceTypeM524xlarge = "m5.24xlarge"
+
+	// InstanceTypeM5dLarge is a InstanceType enum value
+	InstanceTypeM5dLarge = "m5d.large"
+
+	// InstanceTypeM5dXlarge is a InstanceType enum value
+	InstanceTypeM5dXlarge = "m5d.xlarge"
+
+	// InstanceTypeM5d2xlarge is a InstanceType enum value
+	InstanceTypeM5d2xlarge = "m5d.2xlarge"
+
+	// InstanceTypeM5d4xlarge is a InstanceType enum value
+	InstanceTypeM5d4xlarge = "m5d.4xlarge"
+
+	// InstanceTypeM5d12xlarge is a InstanceType enum value
+	InstanceTypeM5d12xlarge = "m5d.12xlarge"
+
+	// InstanceTypeM5d24xlarge is a InstanceType enum value
+	InstanceTypeM5d24xlarge = "m5d.24xlarge"
 
 	// InstanceTypeH12xlarge is a InstanceType enum value
 	InstanceTypeH12xlarge = "h1.2xlarge"

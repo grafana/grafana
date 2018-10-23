@@ -88,6 +88,11 @@ So as you can see from the above scenario Grafana will not send out notification
 to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series
 we plan to track state **per series** in a future release.
 
+> Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
+> when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will
+> be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
+> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here](/alerting/notifications/#send-reminders).
+
 ### No Data / Null values
 
 Below your conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.

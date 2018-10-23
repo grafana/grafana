@@ -13,7 +13,7 @@ export class DashNavCtrl {
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
 
     if (this.dashboard.meta.isSnapshot) {
-      var meta = this.dashboard.meta;
+      const meta = this.dashboard.meta;
       this.titleTooltip = 'Created: &nbsp;' + moment(meta.created).calendar();
       if (meta.expires) {
         this.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
@@ -22,7 +22,7 @@ export class DashNavCtrl {
   }
 
   toggleSettings() {
-    let search = this.$location.search();
+    const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
     } else {
@@ -31,13 +31,19 @@ export class DashNavCtrl {
     this.$location.search(search);
   }
 
+  toggleViewMode() {
+    appEvents.emit('toggle-kiosk-mode');
+  }
+
   close() {
-    let search = this.$location.search();
+    const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
     } else if (search.fullscreen) {
       delete search.fullscreen;
       delete search.edit;
+      delete search.tab;
+      delete search.panelId;
     }
     this.$location.search(search);
   }
@@ -49,7 +55,7 @@ export class DashNavCtrl {
   }
 
   shareDashboard(tabIndex) {
-    var modalScope = this.$scope.$new();
+    const modalScope = this.$scope.$new();
     modalScope.tabIndex = tabIndex;
     modalScope.dashboard = this.dashboard;
 

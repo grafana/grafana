@@ -19,6 +19,7 @@ var (
 	allProperties                   = "testdata/all-properties"
 	versionZero                     = "testdata/version-0"
 	brokenYaml                      = "testdata/broken-yaml"
+	multipleOrgsWithDefault         = "testdata/multiple-org-default"
 
 	fakeRepo *fakeRepository
 )
@@ -70,6 +71,19 @@ func TestDatasourceAsConfig(t *testing.T) {
 				Convey("should raise error", func() {
 					So(err, ShouldEqual, ErrInvalidConfigToManyDefault)
 				})
+			})
+		})
+
+		Convey("Multiple datasources in different organizations with isDefault in each organization", func() {
+			dc := newDatasourceProvisioner(logger)
+			err := dc.applyChanges(multipleOrgsWithDefault)
+			Convey("should not raise error", func() {
+				So(err, ShouldBeNil)
+				So(len(fakeRepo.inserted), ShouldEqual, 4)
+				So(fakeRepo.inserted[0].IsDefault, ShouldBeTrue)
+				So(fakeRepo.inserted[0].OrgId, ShouldEqual, 1)
+				So(fakeRepo.inserted[2].IsDefault, ShouldBeTrue)
+				So(fakeRepo.inserted[2].OrgId, ShouldEqual, 2)
 			})
 		})
 

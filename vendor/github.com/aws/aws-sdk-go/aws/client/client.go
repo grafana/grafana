@@ -91,6 +91,6 @@ func (c *Client) AddDebugHandlers() {
 		return
 	}
 
-	c.Handlers.Send.PushFrontNamed(request.NamedHandler{Name: "awssdk.client.LogRequest", Fn: logRequest})
-	c.Handlers.Send.PushBackNamed(request.NamedHandler{Name: "awssdk.client.LogResponse", Fn: logResponse})
+	c.Handlers.Send.PushFrontNamed(LogHTTPRequestHandler)
+	c.Handlers.Send.PushBackNamed(LogHTTPResponseHandler)
 }

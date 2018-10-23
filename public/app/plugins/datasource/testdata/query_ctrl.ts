@@ -12,7 +12,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   newPointTime: any;
   selectedPoint: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
 

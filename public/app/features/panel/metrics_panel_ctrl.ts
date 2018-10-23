@@ -6,14 +6,12 @@ import kbn from 'app/core/utils/kbn';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
-import { encodePathComponent } from 'app/core/utils/location_util';
-
+import { getExploreUrl } from 'app/core/utils/explore';
 import { metricsTabDirective } from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: any;
-  datasourceName: any;
   $q: any;
   $timeout: any;
   contextSrv: any;
@@ -45,10 +43,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
-    if (!this.panel.targets) {
-      this.panel.targets = [{}];
-    }
-
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
@@ -62,7 +56,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', metricsTabDirective);
+    this.addEditorTab('Metrics', metricsTabDirective, 1, 'fa fa-database');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
@@ -75,7 +69,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
       this.updateTimeRange();
-      var data = this.panel.snapshotData;
+      let data = this.panel.snapshotData;
       // backward compatibility
       if (!_.isArray(data)) {
         data = data.data;
@@ -155,7 +149,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   calculateInterval() {
-    var intervalOverride = this.panel.interval;
+    let intervalOverride = this.panel.interval;
 
     // if no panel interval check datasource
     if (intervalOverride) {
@@ -164,7 +158,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       intervalOverride = this.datasource.interval;
     }
 
-    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
     this.interval = res.interval;
     this.intervalMs = res.intervalMs;
   }
@@ -174,15 +168,15 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // check panel time overrrides
     if (this.panel.timeFrom) {
-      var timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
-      var timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
+      const timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
+      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
       if (timeFromInfo.invalid) {
         this.timeInfo = 'invalid time override';
         return;
       }
 
       if (_.isString(this.range.raw.from)) {
-        var timeFromDate = dateMath.parse(timeFromInfo.from);
+        const timeFromDate = dateMath.parse(timeFromInfo.from);
         this.timeInfo = timeFromInfo.display;
         this.range.from = timeFromDate;
         this.range.to = dateMath.parse(timeFromInfo.to);
@@ -192,14 +186,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (this.panel.timeShift) {
-      var timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
-      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+      const timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
+      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
       if (timeShiftInfo.invalid) {
         this.timeInfo = 'invalid timeshift';
         return;
       }
 
-      var timeShift = '-' + timeShiftInterpolated;
+      const timeShift = '-' + timeShiftInterpolated;
       this.timeInfo += ' timeshift ' + timeShift;
       this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
       this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
@@ -220,12 +214,12 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // make shallow copy of scoped vars,
     // and add built in variables interval and interval_ms
-    var scopedVars = Object.assign({}, this.panel.scopedVars, {
+    const scopedVars = Object.assign({}, this.panel.scopedVars, {
       __interval: { text: this.interval, value: this.interval },
       __interval_ms: { text: this.intervalMs, value: this.intervalMs },
     });
 
-    var metricsQuery = {
+    const metricsQuery = {
       timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
       dashboardId: this.dashboard.id,
@@ -291,30 +285,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-  setDatasource(datasource) {
-    // switching to mixed
-    if (datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        target.datasource = this.panel.datasource;
-        if (!target.datasource) {
-          target.datasource = config.defaultDatasource;
-        }
-      });
-    } else if (this.datasource && this.datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        delete target.datasource;
-      });
-    }
-
-    this.panel.datasource = datasource.value;
-    this.datasourceName = datasource.name;
-    this.datasource = null;
-    this.refresh();
-  }
-
   getAdditionalMenuItems() {
     const items = [];
-    if (config.exploreEnabled && this.contextSrv.isEditor && this.datasource && this.datasource.supportsExplore) {
+    if (
+      config.exploreEnabled &&
+      this.contextSrv.isEditor &&
+      this.datasource &&
+      (this.datasource.meta.explore || this.datasource.meta.id === 'mixed')
+    ) {
       items.push({
         text: 'Explore',
         click: 'ctrl.explore();',
@@ -325,14 +303,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     return items;
   }
 
-  explore() {
-    const range = this.timeSrv.timeRangeForUrl();
-    const state = {
-      ...this.datasource.getExploreState(this.panel),
-      range,
-    };
-    const exploreState = encodePathComponent(JSON.stringify(state));
-    this.$location.url(`/explore?state=${exploreState}`);
+  async explore() {
+    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
+    if (url) {
+      this.$timeout(() => this.$location.url(url));
+    }
   }
 
   addQuery(target) {
@@ -343,14 +318,14 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   removeQuery(target) {
-    var index = _.indexOf(this.panel.targets, target);
+    const index = _.indexOf(this.panel.targets, target);
     this.panel.targets.splice(index, 1);
     this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
     this.refresh();
   }
 
   moveQuery(target, direction) {
-    var index = _.indexOf(this.panel.targets, target);
+    const index = _.indexOf(this.panel.targets, target);
     _.move(this.panel.targets, index, index + direction);
   }
 }

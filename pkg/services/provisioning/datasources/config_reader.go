@@ -83,7 +83,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*D
 }
 
 func validateDefaultUniqueness(datasources []*DatasourcesAsConfig) error {
-	defaultCount := 0
+	defaultCount := map[int64]int{}
 	for i := range datasources {
 		if datasources[i].Datasources == nil {
 			continue
@@ -95,8 +95,8 @@ func validateDefaultUniqueness(datasources []*DatasourcesAsConfig) error {
 			}
 
 			if ds.IsDefault {
-				defaultCount++
-				if defaultCount > 1 {
+				defaultCount[ds.OrgId] = defaultCount[ds.OrgId] + 1
+				if defaultCount[ds.OrgId] > 1 {
 					return ErrInvalidConfigToManyDefault
 				}
 			}

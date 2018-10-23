@@ -56,9 +56,7 @@ func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 			if err != nil {
 				return nil, err
 			}
-			for _, agg := range aggArray {
-				sr.Aggs = append(sr.Aggs, agg)
-			}
+			sr.Aggs = append(sr.Aggs, aggArray...)
 		}
 	}
 
@@ -112,7 +110,7 @@ func (b *SearchRequestBuilder) Query() *QueryBuilder {
 	return b.queryBuilder
 }
 
-// Agg initaite and returns a new aggregation builder
+// Agg initiate and returns a new aggregation builder
 func (b *SearchRequestBuilder) Agg() AggBuilder {
 	aggBuilder := newAggBuilder()
 	b.aggBuilders = append(b.aggBuilders, aggBuilder)
@@ -300,9 +298,7 @@ func (b *aggBuilderImpl) Build() (AggArray, error) {
 				return nil, err
 			}
 
-			for _, childAgg := range childAggs {
-				agg.Aggregation.Aggs = append(agg.Aggregation.Aggs, childAgg)
-			}
+			agg.Aggregation.Aggs = append(agg.Aggregation.Aggs, childAggs...)
 		}
 
 		aggs = append(aggs, agg)

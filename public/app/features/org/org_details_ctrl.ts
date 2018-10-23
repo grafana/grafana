@@ -1,30 +1,30 @@
 import angular from 'angular';
 
 export class OrgDetailsCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $http, backendSrv, contextSrv, navModelSrv) {
-    $scope.init = function() {
+    $scope.init = () => {
       $scope.getOrgInfo();
       $scope.navModel = navModelSrv.getNav('cfg', 'org-settings', 0);
     };
 
-    $scope.getOrgInfo = function() {
-      backendSrv.get('/api/org').then(function(org) {
+    $scope.getOrgInfo = () => {
+      backendSrv.get('/api/org').then(org => {
         $scope.org = org;
         $scope.address = org.address;
         contextSrv.user.orgName = org.name;
       });
     };
 
-    $scope.update = function() {
+    $scope.update = () => {
       if (!$scope.orgForm.$valid) {
         return;
       }
-      var data = { name: $scope.org.name };
+      const data = { name: $scope.org.name };
       backendSrv.put('/api/org', data).then($scope.getOrgInfo);
     };
 
-    $scope.updateAddress = function() {
+    $scope.updateAddress = () => {
       if (!$scope.addressForm.$valid) {
         return;
       }

@@ -49,6 +49,13 @@ func TestDSRouteRule(t *testing.T) {
 							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 						},
 					},
+					{
+						Path: "api/common",
+						Url:  "{{.JsonData.dynamicUrl}}",
+						Headers: []plugins.AppPluginRouteHeader{
+							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
+						},
+					},
 				},
 			}
 
@@ -57,7 +64,8 @@ func TestDSRouteRule(t *testing.T) {
 
 			ds := &m.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"clientId": "asd",
+					"clientId":   "asd",
+					"dynamicUrl": "https://dynamic.grafana.com",
 				}),
 				SecureJsonData: map[string][]byte{
 					"key": key,
@@ -75,10 +83,21 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("When matching route path", func() {
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method")
 				proxy.route = plugin.Routes[0]
-				proxy.applyRoute(req)
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 				Convey("should add headers and update url", func() {
 					So(req.URL.String(), ShouldEqual, "https://www.google.com/some/method")
+					So(req.Header.Get("x-header"), ShouldEqual, "my secret 123")
+				})
+			})
+
+			Convey("When matching route path and has dynamic url", func() {
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method")
+				proxy.route = plugin.Routes[3]
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+
+				Convey("should add headers and interpolate the url", func() {
+					So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com/some/method")
 					So(req.Header.Get("x-header"), ShouldEqual, "my secret 123")
 				})
 			})
@@ -169,7 +188,7 @@ func TestDSRouteRule(t *testing.T) {
 					client = newFakeHTTPClient(json)
 					proxy1 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
 					proxy1.route = plugin.Routes[0]
-					proxy1.applyRoute(req)
+					ApplyRoute(proxy1.ctx.Req.Context(), req, proxy1.proxyPath, proxy1.route, proxy1.ds)
 
 					authorizationHeaderCall1 = req.Header.Get("Authorization")
 					So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")
@@ -183,7 +202,7 @@ func TestDSRouteRule(t *testing.T) {
 						client = newFakeHTTPClient(json2)
 						proxy2 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2")
 						proxy2.route = plugin.Routes[1]
-						proxy2.applyRoute(req)
+						ApplyRoute(proxy2.ctx.Req.Context(), req, proxy2.proxyPath, proxy2.route, proxy2.ds)
 
 						authorizationHeaderCall2 = req.Header.Get("Authorization")
 
@@ -198,7 +217,7 @@ func TestDSRouteRule(t *testing.T) {
 							client = newFakeHTTPClient([]byte{})
 							proxy3 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
 							proxy3.route = plugin.Routes[0]
-							proxy3.applyRoute(req)
+							ApplyRoute(proxy3.ctx.Req.Context(), req, proxy3.proxyPath, proxy3.route, proxy3.ds)
 
 							authorizationHeaderCall3 := req.Header.Get("Authorization")
 							So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")
@@ -212,20 +231,21 @@ func TestDSRouteRule(t *testing.T) {
 		})
 
 		Convey("When proxying graphite", func() {
+			setting.BuildVersion = "5.3.0"
 			plugin := &plugins.DataSourcePlugin{}
 			ds := &m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
 			ctx := &m.ReqContext{}
 
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "/render")
+			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+			So(err, ShouldBeNil)
 
-			requestURL, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestURL}
-
-			proxy.getDirector()(&req)
+			proxy.getDirector()(req)
 
 			Convey("Can translate request url and path", func() {
 				So(req.URL.Host, ShouldEqual, "graphite:8080")
 				So(req.URL.Path, ShouldEqual, "/render")
+				So(req.Header.Get("User-Agent"), ShouldEqual, "Grafana/5.3.0")
 			})
 		})
 
@@ -243,10 +263,10 @@ func TestDSRouteRule(t *testing.T) {
 			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
-			requestURL, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestURL}
+			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+			So(err, ShouldBeNil)
 
-			proxy.getDirector()(&req)
+			proxy.getDirector()(req)
 
 			Convey("Should add db to url", func() {
 				So(req.URL.Path, ShouldEqual, "/db/site/")
@@ -311,18 +331,6 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
-		Convey("When interpolating string", func() {
-			data := templateData{
-				SecureJsonData: map[string]string{
-					"Test": "0asd+asd",
-				},
-			}
-
-			interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
-			So(err, ShouldBeNil)
-			So(interpolated, ShouldEqual, "0asd+asd")
-		})
-
 		Convey("When proxying a data source with custom headers specified", func() {
 			plugin := &plugins.DataSourcePlugin{}
 
@@ -354,6 +362,23 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
+		Convey("When proxying a custom datasource", func() {
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				Type: "custom-datasource",
+				Url:  "http://host/root/",
+			}
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/")
+			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+			So(err, ShouldBeNil)
+
+			proxy.getDirector()(req)
+
+			Convey("Shoudl keep user request (including trailing slash)", func() {
+				So(req.URL.String(), ShouldEqual, "http://host/root/path/to/folder/")
+			})
+		})
 	})
 }
 

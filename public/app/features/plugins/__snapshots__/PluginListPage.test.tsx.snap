@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <OrgActionBar
+      layoutMode="grid"
+      linkButton={
+        Object {
+          "href": "https://grafana.com/plugins?utm_source=grafana_plugin_list",
+          "title": "Find more plugins on Grafana.com",
+        }
+      }
+      onSetLayoutMode={[Function]}
+      searchQuery=""
+      setSearchQuery={[Function]}
+    />
+    <PageLoader
+      pageName="Plugins"
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should render list 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <OrgActionBar
+      layoutMode="grid"
+      linkButton={
+        Object {
+          "href": "https://grafana.com/plugins?utm_source=grafana_plugin_list",
+          "title": "Find more plugins on Grafana.com",
+        }
+      }
+      onSetLayoutMode={[Function]}
+      searchQuery=""
+      setSearchQuery={[Function]}
+    />
+    <PluginList
+      layoutMode="grid"
+      plugins={Array []}
+    />
+  </div>
+</div>
+`;

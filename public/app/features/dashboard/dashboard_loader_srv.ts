@@ -36,7 +36,7 @@ export class DashboardLoaderSrv {
   }
 
   loadDashboard(type, slug, uid) {
-    var promise;
+    let promise;
 
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
@@ -59,7 +59,7 @@ export class DashboardLoaderSrv {
         });
     }
 
-    promise.then(function(result) {
+    promise.then(result => {
       if (result.meta.dashboardNotFound !== true) {
         impressionSrv.addDashboardImpression(result.dashboard.id);
       }
@@ -71,7 +71,7 @@ export class DashboardLoaderSrv {
   }
 
   _loadScriptedDashboard(file) {
-    var url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
+    const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return this.$http({ url: url, method: 'GET' })
       .then(this._executeScript.bind(this))
@@ -99,14 +99,14 @@ export class DashboardLoaderSrv {
   }
 
   _executeScript(result) {
-    var services = {
+    const services = {
       dashboardSrv: this.dashboardSrv,
       datasourceSrv: this.datasourceSrv,
       $q: this.$q,
     };
 
     /*jshint -W054 */
-    var script_func = new Function(
+    const scriptFunc = new Function(
       'ARGS',
       'kbn',
       'dateMath',
@@ -119,12 +119,12 @@ export class DashboardLoaderSrv {
       'services',
       result.data
     );
-    var script_result = script_func(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
+    const scriptResult = scriptFunc(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
 
     // Handle async dashboard scripts
-    if (_.isFunction(script_result)) {
-      var deferred = this.$q.defer();
-      script_result(dashboard => {
+    if (_.isFunction(scriptResult)) {
+      const deferred = this.$q.defer();
+      scriptResult(dashboard => {
         this.$timeout(() => {
           deferred.resolve({ data: dashboard });
         });
@@ -132,7 +132,7 @@ export class DashboardLoaderSrv {
       return deferred.promise;
     }
 
-    return { data: script_result };
+    return { data: scriptResult };
   }
 }
 

@@ -3,7 +3,7 @@ import _ from 'lodash';
 import classNames from 'classnames';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
-import { PanelContainer } from './PanelContainer';
+import { DashboardModel } from '../dashboard_model';
 import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -11,7 +11,7 @@ import Highlighter from 'react-highlight-words';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
-  getPanelContainer: () => PanelContainer;
+  dashboard: DashboardModel;
 }
 
 export interface AddPanelPanelState {
@@ -68,18 +68,18 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   getCopiedPanelPlugins(filter) {
-    let panels = _.chain(config.panels)
+    const panels = _.chain(config.panels)
       .filter({ hideFromList: false })
       .map(item => item)
       .value();
     let copiedPanels = [];
 
-    let copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
+    const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
     if (copiedPanelJson) {
-      let copiedPanel = JSON.parse(copiedPanelJson);
-      let pluginInfo = _.find(panels, { id: copiedPanel.type });
+      const copiedPanel = JSON.parse(copiedPanelJson);
+      const pluginInfo = _.find(panels, { id: copiedPanel.type });
       if (pluginInfo) {
-        let pluginCopy = _.cloneDeep(pluginInfo);
+        const pluginCopy = _.cloneDeep(pluginInfo);
         pluginCopy.name = copiedPanel.title;
         pluginCopy.sort = -1;
         pluginCopy.defaults = copiedPanel;
@@ -93,11 +93,10 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   onAddPanel = panelPluginInfo => {
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
+    const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
-    var newPanel: any = {
+    const newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
@@ -123,13 +122,11 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
 
   handleCloseAddPanel(evt) {
     evt.preventDefault();
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
-    dashboard.removePanel(dashboard.panels[0]);
+    this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
   }
 
   renderText(text: string) {
-    let searchWords = this.state.filter.split('');
+    const searchWords = this.state.filter.split('');
     return <Highlighter highlightClassName="highlight-search-match" textToHighlight={text} searchWords={searchWords} />;
   }
 
@@ -156,7 +153,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
 
   filterKeyPress(evt) {
     if (evt.key === 'Enter') {
-      let panel = _.head(this.state.panelPlugins);
+      const panel = _.head(this.state.panelPlugins);
       if (panel) {
         this.onAddPanel(panel);
       }
@@ -164,7 +161,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   filterPanels(panels, filter) {
-    let regex = new RegExp(filter, 'i');
+    const regex = new RegExp(filter, 'i');
     return panels.filter(panel => {
       return regex.test(panel.name);
     });
@@ -189,12 +186,12 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   render() {
-    let addClass = classNames({
+    const addClass = classNames({
       'active active--panel': this.state.tab === 'Add',
       '': this.state.tab === 'Copy',
     });
 
-    let copyClass = classNames({
+    const copyClass = classNames({
       '': this.state.tab === 'Add',
       'active active--panel': this.state.tab === 'Copy',
     });

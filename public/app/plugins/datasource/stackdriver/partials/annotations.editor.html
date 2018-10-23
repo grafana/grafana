@@ -1,0 +1,37 @@
+<stackdriver-filter target="ctrl.annotation.target" refresh="ctrl.refresh()" datasource="ctrl.datasource"
+  default-dropdown-value="ctrl.defaultDropdownValue" default-service-value="ctrl.defaultServiceValue" hide-group-bys="true"></stackdriver-filter>
+
+<div class="gf-form gf-form-inline">
+  <div class="gf-form">
+    <span class="gf-form-label query-keyword width-9">Title</span>
+    <input type="text" class="gf-form-input width-20" ng-model="ctrl.annotation.target.title" />
+  </div>
+  <div class="gf-form">
+    <span class="gf-form-label query-keyword width-9">Text</span>
+    <input type="text" class="gf-form-input width-20" ng-model="ctrl.annotation.target.text" />
+  </div>
+  <div class="gf-form gf-form--grow">
+    <div class="gf-form-label gf-form-label--grow"></div>
+  </div>
+</div>
+
+<div class="gf-form grafana-info-box" style="padding: 0">
+  <pre class="gf-form-pre alert alert-info" style="margin-right: 0"><h5>Annotation Query Format</h5>
+An annotation is an event that is overlaid on top of graphs. Annotation rendering is expensive so it is important to limit the number of rows returned.
+
+The Title and Text fields support templating and can use data returned from the query. For example, the Title field could have the following text:
+
+<code ng-non-bindable>{{metric.type}} has value: {{metric.value}}</code>
+
+Example Result: <code ng-non-bindable>monitoring.googleapis.com/uptime_check/http_status has this value: 502</code>
+
+<label>Patterns:</label>
+<code ng-non-bindable>{{metric.value}}</code> = value of the metric/point
+<code ng-non-bindable>{{metric.type}}</code> = metric type e.g. compute.googleapis.com/instance/cpu/usage_time
+<code ng-non-bindable>{{metric.name}}</code> = name part of metric e.g. instance/cpu/usage_time
+<code ng-non-bindable>{{metric.service}}</code> = service part of metric e.g. compute
+
+<code ng-non-bindable>{{metric.label.label_name}}</code> = Metric label metadata e.g. metric.label.instance_name
+<code ng-non-bindable>{{resource.label.label_name}}</code> = Resource label metadata e.g. resource.label.zone
+</pre>
+</div>

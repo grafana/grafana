@@ -30,7 +30,7 @@ export class AdHocFiltersCtrl {
     if (this.variable.value && !_.isArray(this.variable.value)) {
     }
 
-    for (let tag of this.variable.filters) {
+    for (const tag of this.variable.filters) {
       if (this.segments.length > 0) {
         this.segments.push(this.uiSegmentSrv.newCondition('AND'));
       }
@@ -55,14 +55,14 @@ export class AdHocFiltersCtrl {
     }
 
     return this.datasourceSrv.get(this.variable.datasource).then(ds => {
-      var options: any = {};
-      var promise = null;
+      const options: any = {};
+      let promise = null;
 
       if (segment.type !== 'value') {
-        promise = ds.getTagKeys();
+        promise = ds.getTagKeys ? ds.getTagKeys() : Promise.resolve([]);
       } else {
         options.key = this.segments[index - 2].value;
-        promise = ds.getTagValues(options);
+        promise = ds.getTagValues ? ds.getTagValues(options) : Promise.resolve([]);
       }
 
       return promise.then(results => {
@@ -99,7 +99,7 @@ export class AdHocFiltersCtrl {
           this.segments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
         }
         this.segments.push(this.uiSegmentSrv.newOperator('='));
-        this.segments.push(this.uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'));
+        this.segments.push(this.uiSegmentSrv.newFake('select value', 'value', 'query-segment-value'));
         segment.type = 'key';
         segment.cssClass = 'query-segment-key';
       }
@@ -113,9 +113,9 @@ export class AdHocFiltersCtrl {
   }
 
   updateVariableModel() {
-    var filters = [];
-    var filterIndex = -1;
-    var hasFakes = false;
+    const filters = [];
+    let filterIndex = -1;
+    let hasFakes = false;
 
     this.segments.forEach(segment => {
       if (segment.type === 'value' && segment.fake) {
@@ -153,7 +153,7 @@ export class AdHocFiltersCtrl {
   }
 }
 
-var template = `
+const template = `
 <div class="gf-form-inline">
   <div class="gf-form" ng-repeat="segment in ctrl.segments">
     <metric-segment segment="segment" get-options="ctrl.getOptions(segment, $index)"

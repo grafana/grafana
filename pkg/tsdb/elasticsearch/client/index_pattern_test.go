@@ -28,8 +28,13 @@ func TestIndexPattern(t *testing.T) {
 		to := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 
 		indexPatternScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", tsdb.NewTimeRange(from, to), func(indices []string) {
-			//So(indices, ShouldHaveLength, 1)
+			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.05.15.17")
+		})
+
+		indexPatternScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "2018.05.15.17-data")
 		})
 
 		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", tsdb.NewTimeRange(from, to), func(indices []string) {
@@ -37,9 +42,19 @@ func TestIndexPattern(t *testing.T) {
 			So(indices[0], ShouldEqual, "data-2018.05.15")
 		})
 
+		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "2018.05.15-data")
+		})
+
 		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", tsdb.NewTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.20")
+		})
+
+		indexPatternScenario(intervalWeekly, "GGGG.WW[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "2018.20-data")
 		})
 
 		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", tsdb.NewTimeRange(from, to), func(indices []string) {
@@ -47,9 +62,19 @@ func TestIndexPattern(t *testing.T) {
 			So(indices[0], ShouldEqual, "data-2018.05")
 		})
 
+		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "2018.05-data")
+		})
+
 		indexPatternScenario(intervalYearly, "[data-]YYYY", tsdb.NewTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018")
+		})
+
+		indexPatternScenario(intervalYearly, "YYYY[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "2018-data")
 		})
 	})
 

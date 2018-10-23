@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { PanelPlugin } from 'app/types/plugins';
 
 export interface BuildInfo {
   version: string;
@@ -9,11 +10,11 @@ export interface BuildInfo {
 
 export class Settings {
   datasources: any;
-  panels: any;
+  panels: PanelPlugin[];
   appSubUrl: string;
-  window_title_prefix: string;
+  windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  new_panel_title: string;
+  newPanelTitle: string;
   bootData: any;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
@@ -22,6 +23,8 @@ export class Settings {
   disableLoginForm: boolean;
   defaultDatasource: string;
   alertingEnabled: boolean;
+  alertingErrorOrTimeout: string;
+  alertingNoDataOrNullValues: string;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;
@@ -31,11 +34,11 @@ export class Settings {
   loginError: any;
 
   constructor(options) {
-    var defaults = {
+    const defaults = {
       datasources: {},
-      window_title_prefix: 'Grafana - ',
+      windowTitlePrefix: 'Grafana - ',
       panels: {},
-      new_panel_title: 'Panel Title',
+      newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
       appSubUrl: '',
@@ -51,8 +54,8 @@ export class Settings {
   }
 }
 
-var bootData = (<any>window).grafanaBootData || { settings: {} };
-var options = bootData.settings;
+const bootData = (window as any).grafanaBootData || { settings: {} };
+const options = bootData.settings;
 options.bootData = bootData;
 
 const config = new Settings(options);

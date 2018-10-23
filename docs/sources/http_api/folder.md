@@ -223,7 +223,7 @@ Status Codes:
 - **404** – Folder not found
 - **412** – Precondition failed
 
-The **412** status code is used for explaing that you cannot update the folder and why.
+The **412** status code is used for explaining that you cannot update the folder and why.
 There can be different reasons for this:
 
 - The folder has been changed by someone else, `status=version-mismatch`

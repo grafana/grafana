@@ -51,7 +51,7 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Key:          key,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.pagerduty"),
@@ -76,7 +76,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == m.AlertStateOK {
 		eventType = "resolve"
 	}
-	customData := "Triggered metrics:\n\n"
+	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}

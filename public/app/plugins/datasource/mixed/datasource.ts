@@ -6,21 +6,21 @@ class MixedDatasource {
   constructor(private $q, private datasourceSrv) {}
 
   query(options) {
-    var sets = _.groupBy(options.targets, 'datasource');
-    var promises = _.map(sets, targets => {
-      var dsName = targets[0].datasource;
+    const sets = _.groupBy(options.targets, 'datasource');
+    const promises = _.map(sets, targets => {
+      const dsName = targets[0].datasource;
       if (dsName === '-- Mixed --') {
         return this.$q([]);
       }
 
-      return this.datasourceSrv.get(dsName).then(function(ds) {
-        var opt = angular.copy(options);
+      return this.datasourceSrv.get(dsName).then(ds => {
+        const opt = angular.copy(options);
         opt.targets = targets;
         return ds.query(opt);
       });
     });
 
-    return this.$q.all(promises).then(function(results) {
+    return this.$q.all(promises).then(results => {
       return { data: _.flatten(_.map(results, 'data')) };
     });
   }

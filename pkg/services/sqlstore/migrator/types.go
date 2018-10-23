@@ -3,6 +3,8 @@ package migrator
 import (
 	"fmt"
 	"strings"
+
+	"github.com/go-xorm/xorm"
 )
 
 const (
@@ -17,6 +19,11 @@ type Migration interface {
 	Id() string
 	SetId(string)
 	GetCondition() MigrationCondition
+}
+
+type CodeMigration interface {
+	Migration
+	Exec(sess *xorm.Session, migrator *Migrator) error
 }
 
 type SQLType string

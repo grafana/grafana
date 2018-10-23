@@ -1,7 +1,13 @@
+// Libraries
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
+
+// Utils
 import config from 'app/core/config';
 import { importPluginModule } from './plugin_loader';
+
+// Types
+import { DataSourceApi } from 'app/types/series';
 
 export class DatasourceSrv {
   datasources: any;
@@ -15,7 +21,7 @@ export class DatasourceSrv {
     this.datasources = {};
   }
 
-  get(name?) {
+  get(name?): Promise<DataSourceApi> {
     if (!name) {
       return this.get(config.defaultDatasource);
     }
@@ -77,7 +83,7 @@ export class DatasourceSrv {
 
     this.addDataSourceVariables(sources);
 
-    _.each(config.datasources, function(value) {
+    _.each(config.datasources, value => {
       if (value.meta && value.meta.annotations) {
         sources.push(value);
       }
@@ -95,9 +101,9 @@ export class DatasourceSrv {
   }
 
   getMetricSources(options) {
-    var metricSources = [];
+    const metricSources = [];
 
-    _.each(config.datasources, function(value, key) {
+    _.each(config.datasources, (value, key) => {
       if (value.meta && value.meta.metrics) {
         let metricSource = { value: key, name: key, meta: value.meta, sort: key };
 
@@ -121,7 +127,7 @@ export class DatasourceSrv {
       this.addDataSourceVariables(metricSources);
     }
 
-    metricSources.sort(function(a, b) {
+    metricSources.sort((a, b) => {
       if (a.sort.toLowerCase() > b.sort.toLowerCase()) {
         return 1;
       }
@@ -136,18 +142,18 @@ export class DatasourceSrv {
 
   addDataSourceVariables(list) {
     // look for data source variables
-    for (var i = 0; i < this.templateSrv.variables.length; i++) {
-      var variable = this.templateSrv.variables[i];
+    for (let i = 0; i < this.templateSrv.variables.length; i++) {
+      const variable = this.templateSrv.variables[i];
       if (variable.type !== 'datasource') {
         continue;
       }
 
-      var first = variable.current.value;
+      let first = variable.current.value;
       if (first === 'default') {
         first = config.defaultDatasource;
       }
 
-      var ds = config.datasources[first];
+      const ds = config.datasources[first];
 
       if (ds) {
         const key = `$${variable.name}`;
@@ -160,6 +166,16 @@ export class DatasourceSrv {
       }
     }
   }
+}
+
+let singleton: DatasourceSrv;
+
+export function setDatasourceSrv(srv: DatasourceSrv) {
+  singleton = srv;
+}
+
+export function getDatasourceSrv(): DatasourceSrv {
+  return singleton;
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);

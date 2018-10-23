@@ -111,6 +111,21 @@ func GetSignedInUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.UserId)
 }
 
+// GET /api/user/teams
+func GetSignedInUserTeamList(c *m.ReqContext) Response {
+	query := m.GetTeamsByUserQuery{OrgId: c.OrgId, UserId: c.UserId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get user teams", err)
+	}
+
+	for _, team := range query.Result {
+		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+	}
+
+	return JSON(200, query.Result)
+}
+
 // GET /api/user/:id/orgs
 func GetUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.ParamsInt64(":id"))
@@ -162,17 +177,17 @@ func UserSetUsingOrg(c *m.ReqContext) Response {
 }
 
 // GET /profile/switch-org/:id
-func ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
+func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
 	orgID := c.ParamsInt64(":id")
 
 	if !validateUsingOrg(c.UserId, orgID) {
-		NotFoundHandler(c)
+		hs.NotFoundHandler(c)
 	}
 
 	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		NotFoundHandler(c)
+		hs.NotFoundHandler(c)
 	}
 
 	c.Redirect(setting.AppSubUrl + "/")

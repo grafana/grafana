@@ -20,7 +20,7 @@ $ docker run -d -p 3000:3000 grafana/grafana
 
 ## Configuration
 
-All options defined in conf/grafana.ini can be overridden using environment
+All options defined in `conf/grafana.ini` can be overridden using environment
 variables by using the syntax `GF_<SectionName>_<KeyName>`.
 For example:
 
@@ -38,6 +38,21 @@ The back-end web server has a number of configuration options. Go to the
 [Configuration]({{< relref "configuration.md" >}}) page for details on all
 those options.
 
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect you need to restart Grafana by restarting the Docker container.
+
+### Default Paths
+
+The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
+
+Setting               | Default value
+----------------------|---------------------------
+GF_PATHS_CONFIG       | /etc/grafana/grafana.ini
+GF_PATHS_DATA         | /var/lib/grafana
+GF_PATHS_HOME         | /usr/share/grafana
+GF_PATHS_LOGS         | /var/log/grafana
+GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
+GF_PATHS_PROVISIONING | /etc/grafana/provisioning
+
 ## Running a Specific Version of Grafana
 
 ```bash
@@ -49,10 +64,13 @@ $ docker run \
   grafana/grafana:5.1.0
 ```
 
-## Running of the master branch
+## Running the master branch
 
-For every successful commit we publish a Grafana container to [`grafana/grafana`](https://hub.docker.com/r/grafana/grafana/tags/) and [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags/). In `grafana/grafana` container we will always overwrite the `master` tag with the latest version. In `grafana/grafana-dev` we will include
-the git commit in the tag. If you run Grafana master in production we **strongly** recommend that you use the later since different machines might run different version of grafana if they pull the master tag at different times.
+For every successful build of the master branch we update the `grafana/grafana:master` tag and create a new tag `grafana/grafana-dev:master-<commit hash>` with the hash of the git commit that was built. This means you can always get the latest version of Grafana.
+
+When running Grafana master in production we **strongly** recommend that you use the `grafana/grafana-dev:master-<commit hash>` tag as that will guarantee that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+
+For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/). 
 
 ## Installing Plugins for Grafana
 
@@ -69,7 +87,7 @@ docker run \
 
 ## Building a custom Grafana image with pre-installed plugins
 
-In the [grafana-docker](https://github.com/grafana/grafana-docker/)  there is a folder called `custom/` which includes a `Dockerfile` that can be used to build a custom Grafana image.  It accepts `GRAFANA_VERSION` and `GF_INSTALL_PLUGINS` as build arguments.
+In the [grafana-docker](https://github.com/grafana/grafana/tree/master/packaging/docker)  there is a folder called `custom/` which includes a `Dockerfile` that can be used to build a custom Grafana image.  It accepts `GRAFANA_VERSION` and `GF_INSTALL_PLUGINS` as build arguments.
 
 Example of how to build and run:
 ```bash
@@ -83,6 +101,21 @@ docker run \
   -p 3000:3000 \
   --name=grafana \
   grafana:latest-with-plugins
+```
+
+## Installing Plugins from other sources
+
+> Only available in Grafana v5.3.1+
+
+It's possible to install plugins from custom url:s by specifying the url like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`
+
+```bash
+docker run \
+  -d \
+  -p 3000:3000 \
+  --name=grafana \
+  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin" \
+  grafana/grafana
 ```
 
 ## Configuring AWS Credentials for CloudWatch Support
@@ -212,3 +245,8 @@ chown -R root:root /etc/grafana && \
   chown -R grafana:grafana /var/lib/grafana && \
   chown -R grafana:grafana /usr/share/grafana
 ```
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+Then follow the instructions [here](/guides/getting_started/).

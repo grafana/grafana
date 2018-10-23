@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -33,7 +34,7 @@ func NewAlertmanagerNotifier(model *m.AlertNotification) (alerting.Notifier, err
 	}
 
 	return &AlertmanagerNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		log:          log.New("alerting.notifier.prometheus-alertmanager"),
 	}, nil
@@ -45,7 +46,7 @@ type AlertmanagerNotifier struct {
 	log log.Logger
 }
 
-func (this *AlertmanagerNotifier) ShouldNotify(evalContext *alerting.EvalContext) bool {
+func (this *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext *alerting.EvalContext, notificationState *m.AlertNotificationState) bool {
 	this.log.Debug("Should notify", "ruleId", evalContext.Rule.Id, "state", evalContext.Rule.State, "previousState", evalContext.PrevAlertState)
 
 	// Do not notify when we become OK for the first time.

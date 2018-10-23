@@ -13,6 +13,7 @@ import { axesEditorComponent } from './axes_editor';
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
+  renderError: boolean;
   hiddenSeries: any = {};
   seriesList: any = [];
   dataList: any = [];
@@ -133,9 +134,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
     this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
       this.addEditorTab('Alert', alertTab, 5);
@@ -155,7 +156,16 @@ class GraphCtrl extends MetricsPanelCtrl {
       panel: this.panel,
       range: this.range,
     });
-    return super.issueQueries(datasource);
+
+    /* Wait for annotationSrv requests to get datasources to
+     * resolve before issuing queries. This allows the annotations
+     * service to fire annotations queries before graph queries
+     * (but not wait for completion). This resolves
+     * issue 11806.
+     */
+    return this.annotationsSrv.datasourcePromises.then(r => {
+      return super.issueQueries(datasource);
+    });
   }
 
   zoomOut(evt) {
@@ -195,7 +205,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         tip: 'No datapoints returned from data query',
       };
     } else {
-      for (let series of this.seriesList) {
+      for (const series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
             title: 'Data points outside time range',
@@ -225,7 +235,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    for (let series of this.seriesList) {
+    for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
       if (series.unit) {
@@ -254,14 +264,14 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleSeriesExclusiveMode(serie) {
-    var hidden = this.hiddenSeries;
+    const hidden = this.hiddenSeries;
 
     if (hidden[serie.alias]) {
       delete hidden[serie.alias];
     }
 
     // check if every other series is hidden
-    var alreadyExclusive = _.every(this.seriesList, value => {
+    const alreadyExclusive = _.every(this.seriesList, value => {
       if (value.alias === serie.alias) {
         return true;
       }
@@ -287,7 +297,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleAxis(info) {
-    var override = _.find(this.panel.seriesOverrides, { alias: info.alias });
+    let override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
@@ -311,13 +321,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   legendValuesOptionChanged() {
-    var legend = this.panel.legend;
+    const legend = this.panel.legend;
     legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
     this.render();
   }
 
   exportCsv() {
-    var scope = this.$scope.$new(true);
+    const scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
     this.publishAppEvent('show-modal', {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',

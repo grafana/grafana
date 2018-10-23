@@ -35,13 +35,34 @@ Name | Description
 *Database* | Name of your MySQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
+*Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+*Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).
+
+### Min time interval
+
+A lower limit for the [$__interval](/reference/templating/#the-interval-variable) and [$__interval_ms](/reference/templating/#the-interval-ms-variable) variables.
+Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
 
 ### Database User Permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommmend you create a specific mysql user with restricted permissions.
+executed. To protect against this we **Highly** recommend you create a specific mysql user with restricted permissions.
 
 Example:
 
@@ -64,10 +85,15 @@ Macro example | Description
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
 *$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
-*$__timeGroup(dateColumn,'5m',0)* | Same as above but with a fill parameter so all null values will be converted to the fill value (all null values would be set to zero using this example).
+*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
+*$__timeGroup(dateColumn,'5m', NULL)* | Same as above but NULL will be used as value for missing points.
+*$__timeGroup(dateColumn,'5m', previous)* | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
+*$__timeGroupAlias(dateColumn,'5m')* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
+*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as unix timestamp (only available in Grafana 5.3+).
+*$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -104,6 +130,9 @@ The resulting table panel:
 If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch.
 Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
+If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
+
+Resultsets of time series queries need to be sorted by time.
 
 **Example with `metric` column:**
 
@@ -290,4 +319,8 @@ datasources:
     database: grafana
     user: grafana
     password: password
+    jsonData:
+      maxOpenConns: 0         # Grafana v5.4+
+      maxIdleConns: 2         # Grafana v5.4+
+      connMaxLifetime: 14400  # Grafana v5.4+
 ```

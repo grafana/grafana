@@ -236,3 +236,20 @@ func (w *FileLogWriter) Close() {
 func (w *FileLogWriter) Flush() {
 	w.mw.fd.Sync()
 }
+
+// Reload file logger
+func (w *FileLogWriter) Reload() {
+	// block Logger's io.Writer
+	w.mw.Lock()
+	defer w.mw.Unlock()
+
+	// Close
+	fd := w.mw.fd
+	fd.Close()
+
+	// Open again
+	err := w.StartLogger()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Reload StartLogger: %s\n", err)
+	}
+}

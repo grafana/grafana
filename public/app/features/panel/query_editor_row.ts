@@ -1,6 +1,6 @@
 import angular from 'angular';
 
-var module = angular.module('grafana.directives');
+const module = angular.module('grafana.directives');
 
 export class QueryRowCtrl {
   collapsedText: string;
@@ -56,7 +56,7 @@ export class QueryRowCtrl {
     try {
       this.collapsedText = this.queryCtrl.getCollapsedText();
     } catch (e) {
-      var err = e.message || e.toString();
+      const err = e.message || e.toString();
       this.collapsedText = 'Error: ' + err;
     }
   }
@@ -78,7 +78,7 @@ export class QueryRowCtrl {
   }
 
   duplicateQuery() {
-    var clone = angular.copy(this.target);
+    const clone = angular.copy(this.target);
     this.panelCtrl.addQuery(clone);
   }
 
@@ -87,7 +87,7 @@ export class QueryRowCtrl {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 function queryEditorRowDirective() {
   return {
     restrict: 'E',

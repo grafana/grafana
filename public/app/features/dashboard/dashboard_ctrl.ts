@@ -1,11 +1,10 @@
 import config from 'app/core/config';
 
 import coreModule from 'app/core/core_module';
-import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
 
-export class DashboardCtrl implements PanelContainer {
+export class DashboardCtrl {
   dashboard: DashboardModel;
   dashboardViewState: any;
   loadedFallbackDashboard: boolean;
@@ -22,8 +21,7 @@ export class DashboardCtrl implements PanelContainer {
     private dashboardSrv,
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
-    public playlistSrv,
-    private panelLoader
+    public playlistSrv
   ) {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
@@ -62,6 +60,8 @@ export class DashboardCtrl implements PanelContainer {
       .finally(() => {
         this.dashboard = dashboard;
         this.dashboard.processRepeats();
+        this.dashboard.updateSubmenuVisibility();
+        this.dashboard.autoFitPanels(window.innerHeight);
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
@@ -70,8 +70,6 @@ export class DashboardCtrl implements PanelContainer {
         this.dashboardViewState = this.dashboardViewStateSrv.create(this.$scope);
 
         this.keybindingSrv.setupDashboardBindings(this.$scope, dashboard);
-
-        this.dashboard.updateSubmenuVisibility();
         this.setWindowTitleAndTheme();
 
         this.$scope.appEvent('dashboard-initialized', dashboard);
@@ -102,11 +100,11 @@ export class DashboardCtrl implements PanelContainer {
   }
 
   setWindowTitleAndTheme() {
-    window.document.title = config.window_title_prefix + this.dashboard.title;
+    window.document.title = config.windowTitlePrefix + this.dashboard.title;
   }
 
   showJsonEditor(evt, options) {
-    var editScope = this.$rootScope.$new();
+    const editScope = this.$rootScope.$new();
     editScope.object = options.object;
     editScope.updateHandler = options.updateHandler;
     this.$scope.appEvent('show-dash-editor', {
@@ -119,14 +117,6 @@ export class DashboardCtrl implements PanelContainer {
     return this.dashboard;
   }
 
-  getPanelLoader() {
-    return this.panelLoader;
-  }
-
-  timezoneChanged() {
-    this.$rootScope.$broadcast('refresh');
-  }
-
   getPanelContainer() {
     return this;
   }
@@ -137,14 +127,14 @@ export class DashboardCtrl implements PanelContainer {
       return;
     }
 
-    var panelInfo = this.dashboard.getPanelInfoById(options.panelId);
+    const panelInfo = this.dashboard.getPanelInfoById(options.panelId);
     this.removePanel(panelInfo.panel, true);
   }
 
   removePanel(panel: PanelModel, ask: boolean) {
     // confirm deletion
     if (ask !== false) {
-      var text2, confirmText;
+      let text2, confirmText;
 
       if (panel.alert) {
         text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
@@ -168,10 +158,17 @@ export class DashboardCtrl implements PanelContainer {
     this.dashboard.removePanel(panel);
   }
 
+  onDestroy() {
+    if (this.dashboard) {
+      this.dashboard.destroy();
+    }
+  }
+
   init(dashboard) {
     this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
     this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
     this.$scope.onAppEvent('panel-remove', this.onRemovingPanel.bind(this));
+    this.$scope.$on('$destroy', this.onDestroy.bind(this));
     this.setupDashboard(dashboard);
   }
 }

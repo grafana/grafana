@@ -22,6 +22,11 @@ import (
 	"time"
 )
 
+const (
+	windows = "windows"
+	linux   = "linux"
+)
+
 var (
 	//versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
 	goarch  string
@@ -64,6 +69,10 @@ func main() {
 
 	readVersionFromPackageJson()
 
+	if pkgArch == "" {
+		pkgArch = goarch
+	}
+
 	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
 	if flag.NArg() == 0 {
@@ -105,10 +114,16 @@ func main() {
 
 		case "package":
 			grunt(gruntBuildArg("build")...)
-			packageGrafana()
+			grunt(gruntBuildArg("package")...)
+			if goos == linux {
+				createLinuxPackages()
+			}
 
 		case "package-only":
-			packageGrafana()
+			grunt(gruntBuildArg("package")...)
+			if goos == linux {
+				createLinuxPackages()
+			}
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
@@ -130,22 +145,6 @@ func main() {
 		default:
 			log.Fatalf("Unknown command %q", cmd)
 		}
-	}
-}
-
-func packageGrafana() {
-	platformArg := fmt.Sprintf("--platform=%v", goos)
-	previousPkgArch := pkgArch
-	if pkgArch == "" {
-		pkgArch = goarch
-	}
-	postProcessArgs := gruntBuildArg("package")
-	postProcessArgs = append(postProcessArgs, platformArg)
-	grunt(postProcessArgs...)
-	pkgArch = previousPkgArch
-
-	if goos == "linux" {
-		createLinuxPackages()
 	}
 }
 
@@ -384,7 +383,7 @@ func ensureGoPath() {
 }
 
 func grunt(params ...string) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		runPrint(`.\node_modules\.bin\grunt`, params...)
 	} else {
 		runPrint("./node_modules/.bin/grunt", params...)
@@ -404,6 +403,8 @@ func gruntBuildArg(task string) []string {
 	if phjsToRelease != "" {
 		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
 	}
+	args = append(args, fmt.Sprintf("--platform=%v", goos))
+
 	return args
 }
 
@@ -420,11 +421,11 @@ func test(pkg string) {
 func build(binaryName, pkg string, tags []string) {
 	binary := fmt.Sprintf("./bin/%s-%s/%s", goos, goarch, binaryName)
 	if isDev {
-		//dont include os and arch in output path in dev environment
+		//don't include os and arch in output path in dev environment
 		binary = fmt.Sprintf("./bin/%s", binaryName)
 	}
 
-	if goos == "windows" {
+	if goos == windows {
 		binary += ".exe"
 	}
 
@@ -488,11 +489,11 @@ func clean() {
 
 func setBuildEnv() {
 	os.Setenv("GOOS", goos)
-	if goos == "windows" {
+	if goos == windows {
 		// require windows >=7
 		os.Setenv("CGO_CFLAGS", "-D_WIN32_WINNT=0x0601")
 	}
-	if goarch != "amd64" || goos != "linux" {
+	if goarch != "amd64" || goos != linux {
 		// needed for all other archs
 		cgo = true
 	}

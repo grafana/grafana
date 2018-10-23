@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<li
+  className="divider"
+>
+  <a />
+</li>
+`;
+
+exports[`Render should render icon if exists 1`] = `
+<li
+  className=""
+>
+  <a>
+    <i
+      className="icon-test"
+    />
+  </a>
+</li>
+`;

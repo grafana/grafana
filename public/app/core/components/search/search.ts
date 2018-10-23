@@ -130,8 +130,8 @@ export class SearchCtrl {
     }
 
     const max = flattenedResult.length;
-    let newIndex = this.selectedIndex + direction;
-    this.selectedIndex = (newIndex %= max) < 0 ? newIndex + max : newIndex;
+    const newIndex = (this.selectedIndex + direction) % max;
+    this.selectedIndex = newIndex < 0 ? newIndex + max : newIndex;
     const selectedItem = flattenedResult[this.selectedIndex];
 
     if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
@@ -159,9 +159,13 @@ export class SearchCtrl {
 
   searchDashboards() {
     this.currentSearchId = this.currentSearchId + 1;
-    var localSearchId = this.currentSearchId;
+    const localSearchId = this.currentSearchId;
+    const query = {
+      ...this.query,
+      tag: this.query.tag.map(i => i.value),
+    };
 
-    return this.searchSrv.search(this.query).then(results => {
+    return this.searchSrv.search(query).then(results => {
       if (localSearchId < this.currentSearchId) {
         return;
       }
@@ -172,7 +176,7 @@ export class SearchCtrl {
   }
 
   queryHasNoFilters() {
-    var query = this.query;
+    const query = this.query;
     return query.query === '' && query.starred === false && query.tag.length === 0;
   }
 
@@ -196,7 +200,7 @@ export class SearchCtrl {
   }
 
   onTagSelect(newTags) {
-    this.query.tag = _.map(newTags, tag => tag.value);
+    this.query.tag = newTags;
     this.search();
   }
 

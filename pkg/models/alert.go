@@ -75,7 +75,7 @@ type Alert struct {
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
-	StateChanges int
+	StateChanges int64
 
 	Created time.Time
 	Updated time.Time
@@ -156,7 +156,7 @@ type SetAlertStateCommand struct {
 	Error    string
 	EvalData *simplejson.Json
 
-	Timestamp time.Time
+	Result Alert
 }
 
 //Queries

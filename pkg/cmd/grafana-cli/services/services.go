@@ -63,7 +63,7 @@ func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
 	var data m.PluginRepo
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		logger.Info("Failed to unmarshal plugin repo response error:", err)
 		return m.PluginRepo{}, err
 	}
 
@@ -140,7 +140,7 @@ func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
 	var data m.Plugin
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		logger.Info("Failed to unmarshal plugin repo response error:", err)
 		return m.Plugin{}, err
 	}
 

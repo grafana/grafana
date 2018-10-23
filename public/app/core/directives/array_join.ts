@@ -7,7 +7,7 @@ export function arrayJoin() {
   return {
     restrict: 'A',
     require: 'ngModel',
-    link: function(scope, element, attr, ngModel) {
+    link: (scope, element, attr, ngModel) => {
       function split_array(text) {
         return (text || '').split(',');
       }

@@ -8,7 +8,7 @@ function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   }
 
   if (aliasOrRegex[0] === '/') {
-    var regex = kbn.stringToJsRegex(aliasOrRegex);
+    const regex = kbn.stringToJsRegex(aliasOrRegex);
     return seriesAlias.match(regex) != null;
   }
 
@@ -27,11 +27,11 @@ function translateFillOption(fill) {
  */
 export function updateLegendValues(data: TimeSeries[], panel, height) {
   for (let i = 0; i < data.length; i++) {
-    let series = data[i];
+    const series = data[i];
     const yaxes = panel.yaxes;
     const seriesYAxis = series.yaxis || 1;
     const axis = yaxes[seriesYAxis - 1];
-    let formater = kbn.valueFormats[axis.format];
+    const formater = kbn.valueFormats[axis.format];
 
     // decimal override
     if (_.isNumber(panel.decimals)) {
@@ -43,9 +43,9 @@ export function updateLegendValues(data: TimeSeries[], panel, height) {
       // legend and tooltip gets one more decimal precision
       // than graph legend ticks
       const { datamin, datamax } = getDataMinMax(data);
-      let { tickDecimals, scaledDecimals } = getFlotTickDecimals(datamin, datamax, axis, height);
-      tickDecimals = (tickDecimals || -1) + 1;
-      series.updateLegendValues(formater, tickDecimals, scaledDecimals + 2);
+      const { tickDecimals, scaledDecimals } = getFlotTickDecimals(datamin, datamax, axis, height);
+      const tickDecimalsPlusOne = (tickDecimals || -1) + 1;
+      series.updateLegendValues(formater, tickDecimalsPlusOne, scaledDecimals + 2);
     }
   }
 }
@@ -54,7 +54,7 @@ export function getDataMinMax(data: TimeSeries[]) {
   let datamin = null;
   let datamax = null;
 
-  for (let series of data) {
+  for (const series of data) {
     if (datamax === null || datamax < series.stats.max) {
       datamax = series.stats.max;
     }
@@ -76,6 +76,7 @@ export default class TimeSeries {
   valueFormater: any;
   stats: any;
   legend: boolean;
+  hideTooltip: boolean;
   allIsNull: boolean;
   allIsZero: boolean;
   decimals: number;
@@ -123,8 +124,8 @@ export default class TimeSeries {
     delete this.stack;
     delete this.bars.show;
 
-    for (var i = 0; i < overrides.length; i++) {
-      var override = overrides[i];
+    for (let i = 0; i < overrides.length; i++) {
+      const override = overrides[i];
       if (!matchSeriesOverride(override.alias, this.alias)) {
         continue;
       }
@@ -181,6 +182,9 @@ export default class TimeSeries {
       if (override.legend !== void 0) {
         this.legend = override.legend;
       }
+      if (override.hideTooltip !== void 0) {
+        this.hideTooltip = override.hideTooltip;
+      }
 
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;
@@ -189,7 +193,7 @@ export default class TimeSeries {
   }
 
   getFlotPairs(fillStyle) {
-    var result = [];
+    const result = [];
 
     this.stats.total = 0;
     this.stats.max = -Number.MAX_VALUE;
@@ -205,23 +209,23 @@ export default class TimeSeries {
     this.allIsNull = true;
     this.allIsZero = true;
 
-    var ignoreNulls = fillStyle === 'connected';
-    var nullAsZero = fillStyle === 'null as zero';
-    var currentTime;
-    var currentValue;
-    var nonNulls = 0;
-    var previousTime;
-    var previousValue = 0;
-    var previousDeltaUp = true;
+    const ignoreNulls = fillStyle === 'connected';
+    const nullAsZero = fillStyle === 'null as zero';
+    let currentTime;
+    let currentValue;
+    let nonNulls = 0;
+    let previousTime;
+    let previousValue = 0;
+    let previousDeltaUp = true;
 
-    for (var i = 0; i < this.datapoints.length; i++) {
+    for (let i = 0; i < this.datapoints.length; i++) {
       currentValue = this.datapoints[i][0];
       currentTime = this.datapoints[i][1];
 
       // Due to missing values we could have different timeStep all along the series
       // so we have to find the minimum one (could occur with aggregators such as ZimSum)
       if (previousTime !== undefined) {
-        let timeStep = currentTime - previousTime;
+        const timeStep = currentTime - previousTime;
         if (timeStep < this.stats.timeStep) {
           this.stats.timeStep = timeStep;
         }
@@ -324,9 +328,9 @@ export default class TimeSeries {
   }
 
   isMsResolutionNeeded() {
-    for (var i = 0; i < this.datapoints.length; i++) {
+    for (let i = 0; i < this.datapoints.length; i++) {
       if (this.datapoints[i][1] !== null) {
-        var timestamp = this.datapoints[i][1].toString();
+        const timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && timestamp % 1000 !== 0) {
           return true;
         }

@@ -55,7 +55,7 @@ export class EventManager {
       return;
     }
 
-    var types = {
+    const types = {
       $__alerting: {
         color: ALERTING_COLOR,
         position: 'BOTTOM',
@@ -102,8 +102,8 @@ export class EventManager {
       }
     } else {
       // annotations from query
-      for (var i = 0; i < annotations.length; i++) {
-        var item = annotations[i];
+      for (let i = 0; i < annotations.length; i++) {
+        const item = annotations[i];
 
         // add properties used by jquery flot events
         item.min = item.time;
@@ -125,11 +125,11 @@ export class EventManager {
       }
     }
 
-    let regions = getRegions(annotations);
+    const regions = getRegions(annotations);
     addRegionMarking(regions, flotOptions);
 
-    let eventSectionHeight = 20;
-    let eventSectionMargin = 7;
+    const eventSectionHeight = 20;
+    const eventSectionMargin = 7;
     flotOptions.grid.eventSectionHeight = eventSectionMargin;
     flotOptions.xaxis.eventSectionHeight = eventSectionHeight;
 
@@ -147,8 +147,8 @@ function getRegions(events) {
 }
 
 function addRegionMarking(regions, flotOptions) {
-  let markings = flotOptions.grid.markings;
-  let defaultColor = DEFAULT_ANNOTATION_COLOR;
+  const markings = flotOptions.grid.markings;
+  const defaultColor = DEFAULT_ANNOTATION_COLOR;
   let fillColor;
 
   _.each(regions, region => {
@@ -167,7 +167,7 @@ function addRegionMarking(regions, flotOptions) {
 }
 
 function addAlphaToRGB(colorString: string, alpha: number): string {
-  let color = tinycolor(colorString);
+  const color = tinycolor(colorString);
   if (color.isValid()) {
     color.setAlpha(alpha);
     return color.toRgbString();

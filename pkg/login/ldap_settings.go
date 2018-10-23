@@ -21,6 +21,8 @@ type LdapServerConf struct {
 	StartTLS      bool             `toml:"start_tls"`
 	SkipVerifySSL bool             `toml:"ssl_skip_verify"`
 	RootCACert    string           `toml:"root_ca_cert"`
+	ClientCert    string           `toml:"client_cert"`
+	ClientKey     string           `toml:"client_key"`
 	BindDN        string           `toml:"bind_dn"`
 	BindPassword  string           `toml:"bind_password"`
 	Attr          LdapAttributeMap `toml:"attributes"`
@@ -46,7 +48,7 @@ type LdapAttributeMap struct {
 type LdapGroupToOrgRole struct {
 	GroupDN        string     `toml:"group_dn"`
 	OrgId          int64      `toml:"org_id"`
-	IsGrafanaAdmin *bool      `toml:"grafana_admin"` // This is a pointer to know if it was set or not (for backwards compatability)
+	IsGrafanaAdmin *bool      `toml:"grafana_admin"` // This is a pointer to know if it was set or not (for backwards compatibility)
 	OrgRole        m.RoleType `toml:"org_role"`
 }
 

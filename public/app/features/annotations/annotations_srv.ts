@@ -8,6 +8,7 @@ import { makeRegions, dedupAnnotations } from './events_processing';
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
   alertStatesPromise: any;
+  datasourcePromises: any;
 
   /** @ngInject */
   constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {
@@ -18,6 +19,7 @@ export class AnnotationsSrv {
   clearCache() {
     this.globalAnnotationsPromise = null;
     this.alertStatesPromise = null;
+    this.datasourcePromises = null;
   }
 
   getAnnotations(options) {
@@ -25,7 +27,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        var annotations = _.flattenDeep(results[0]);
+        let annotations = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -40,7 +42,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        var alertState = _.find(results[1], { panelId: options.panel.id });
+        const alertState = _.find(results[1], { panelId: options.panel.id });
 
         return {
           annotations: annotations,
@@ -82,16 +84,17 @@ export class AnnotationsSrv {
   }
 
   getGlobalAnnotations(options) {
-    var dashboard = options.dashboard;
+    const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
       return this.globalAnnotationsPromise;
     }
 
-    var range = this.timeSrv.timeRange();
-    var promises = [];
+    const range = this.timeSrv.timeRange();
+    const promises = [];
+    const dsPromises = [];
 
-    for (let annotation of dashboard.annotations.list) {
+    for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
         continue;
       }
@@ -99,10 +102,10 @@ export class AnnotationsSrv {
       if (annotation.snapshotData) {
         return this.translateQueryResult(annotation, annotation.snapshotData);
       }
-
+      const datasourcePromise = this.datasourceSrv.get(annotation.datasource);
+      dsPromises.push(datasourcePromise);
       promises.push(
-        this.datasourceSrv
-          .get(annotation.datasource)
+        datasourcePromise
           .then(datasource => {
             // issue query against data source
             return datasource.annotationQuery({
@@ -122,7 +125,7 @@ export class AnnotationsSrv {
           })
       );
     }
-
+    this.datasourcePromises = this.$q.all(dsPromises);
     this.globalAnnotationsPromise = this.$q.all(promises);
     return this.globalAnnotationsPromise;
   }
@@ -155,7 +158,7 @@ export class AnnotationsSrv {
       delete annotation.snapshotData;
     }
 
-    for (var item of results) {
+    for (const item of results) {
       item.source = annotation;
     }
     return results;

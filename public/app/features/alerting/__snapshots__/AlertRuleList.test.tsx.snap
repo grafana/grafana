@@ -1,0 +1,256 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render alert rules 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <label
+          className="gf-form--has-input-icon gf-form--grow"
+        >
+          <input
+            className="gf-form-input"
+            onChange={[Function]}
+            placeholder="Search alerts"
+            type="text"
+            value=""
+          />
+          <i
+            className="gf-form-input-icon fa fa-search"
+          />
+        </label>
+      </div>
+      <div
+        className="gf-form"
+      >
+        <label
+          className="gf-form-label"
+        >
+          States
+        </label>
+        <div
+          className="gf-form-select-wrapper width-13"
+        >
+          <select
+            className="gf-form-input"
+            onChange={[Function]}
+            value="all"
+          >
+            <option
+              key="all"
+              value="all"
+            >
+              All
+            </option>
+            <option
+              key="ok"
+              value="ok"
+            >
+              OK
+            </option>
+            <option
+              key="not_ok"
+              value="not_ok"
+            >
+              Not OK
+            </option>
+            <option
+              key="alerting"
+              value="alerting"
+            >
+              Alerting
+            </option>
+            <option
+              key="no_data"
+              value="no_data"
+            >
+              No Data
+            </option>
+            <option
+              key="paused"
+              value="paused"
+            >
+              Paused
+            </option>
+          </select>
+        </div>
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <a
+        className="btn btn-secondary"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-info-circle"
+        />
+         How to add an alert
+      </a>
+    </div>
+    <section>
+      <ol
+        className="alert-rule-list"
+      >
+        <AlertRuleItem
+          key="1"
+          onTogglePause={[Function]}
+          rule={
+            Object {
+              "dashboardId": 7,
+              "dashboardSlug": "alerting-with-testdata",
+              "dashboardUid": "ggHbN42mk",
+              "evalData": Object {},
+              "evalDate": "0001-01-01T00:00:00Z",
+              "executionError": "",
+              "id": 1,
+              "name": "TestData - Always OK",
+              "newStateDate": "2018-09-04T10:01:01+02:00",
+              "panelId": 3,
+              "state": "ok",
+              "url": "/d/ggHbN42mk/alerting-with-testdata",
+            }
+          }
+          search=""
+        />
+        <AlertRuleItem
+          key="3"
+          onTogglePause={[Function]}
+          rule={
+            Object {
+              "dashboardId": 7,
+              "dashboardSlug": "alerting-with-testdata",
+              "dashboardUid": "ggHbN42mk",
+              "evalData": Object {},
+              "evalDate": "0001-01-01T00:00:00Z",
+              "executionError": "error",
+              "id": 3,
+              "name": "TestData - ok",
+              "newStateDate": "2018-09-04T10:01:01+02:00",
+              "panelId": 3,
+              "state": "ok",
+              "url": "/d/ggHbN42mk/alerting-with-testdata",
+            }
+          }
+          search=""
+        />
+      </ol>
+    </section>
+  </div>
+</div>
+`;
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <label
+          className="gf-form--has-input-icon gf-form--grow"
+        >
+          <input
+            className="gf-form-input"
+            onChange={[Function]}
+            placeholder="Search alerts"
+            type="text"
+            value=""
+          />
+          <i
+            className="gf-form-input-icon fa fa-search"
+          />
+        </label>
+      </div>
+      <div
+        className="gf-form"
+      >
+        <label
+          className="gf-form-label"
+        >
+          States
+        </label>
+        <div
+          className="gf-form-select-wrapper width-13"
+        >
+          <select
+            className="gf-form-input"
+            onChange={[Function]}
+            value="all"
+          >
+            <option
+              key="all"
+              value="all"
+            >
+              All
+            </option>
+            <option
+              key="ok"
+              value="ok"
+            >
+              OK
+            </option>
+            <option
+              key="not_ok"
+              value="not_ok"
+            >
+              Not OK
+            </option>
+            <option
+              key="alerting"
+              value="alerting"
+            >
+              Alerting
+            </option>
+            <option
+              key="no_data"
+              value="no_data"
+            >
+              No Data
+            </option>
+            <option
+              key="paused"
+              value="paused"
+            >
+              Paused
+            </option>
+          </select>
+        </div>
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <a
+        className="btn btn-secondary"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-info-circle"
+        />
+         How to add an alert
+      </a>
+    </div>
+    <section>
+      <ol
+        className="alert-rule-list"
+      />
+    </section>
+  </div>
+</div>
+`;
