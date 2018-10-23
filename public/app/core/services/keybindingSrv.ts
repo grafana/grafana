@@ -242,6 +242,18 @@ export class KeybindingSrv {
       }
     });
 
+    // toggle panel legend
+    this.bind('p l', () => {
+      if (dashboard.meta.focusPanelId) {
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        if (panelInfo.panel.legend) {
+          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          panelRef.legend.show = !panelRef.legend.show;
+          panelRef.refresh();
+        }
+      }
+    });
+
     // collapse all rows
     this.bind('d shift+c', () => {
       dashboard.collapseRows();
