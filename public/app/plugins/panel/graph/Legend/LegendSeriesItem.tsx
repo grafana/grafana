@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
 import { SeriesColorPicker } from 'app/core/components/colorpicker/SeriesColorPicker';
 
@@ -61,18 +62,6 @@ export class LegendItem extends React.PureComponent<LegendItemProps, LegendItemS
     this.forceUpdate();
   };
 
-  getOptionSeriesCSSClasses() {
-    const { series, hidden } = this.props;
-    const classes = [];
-    if (series.yaxis === 2) {
-      classes.push('graph-legend-series--right-y');
-    }
-    if (hidden) {
-      classes.push('graph-legend-series-hidden');
-    }
-    return classes.join(' ');
-  }
-
   renderLegendValues() {
     const { series, asTable } = this.props;
     const legendValueItems = [];
@@ -88,8 +77,11 @@ export class LegendItem extends React.PureComponent<LegendItemProps, LegendItemS
   }
 
   render() {
-    const { series, values, asTable } = this.props;
-    const seriesOptionClasses = this.getOptionSeriesCSSClasses();
+    const { series, values, asTable, hidden } = this.props;
+    const seriesOptionClasses = classNames({
+      'graph-legend-series-hidden': hidden,
+      'graph-legend-series--right-y': series.yaxis === 2,
+    });
     const valueItems = values ? this.renderLegendValues() : [];
     const seriesLabel = (
       <LegendSeriesLabel
@@ -173,25 +165,13 @@ class LegendSeriesIcon extends React.PureComponent<LegendSeriesIconProps, Legend
     onToggleAxis: () => {},
   };
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      color: this.props.color,
-    };
-  }
-
-  onColorChange = color => {
-    this.setState({ color: color });
-    this.props.onColorChange(color);
-  };
-
   render() {
     return (
       <SeriesColorPicker
         optionalClass="graph-legend-icon"
         yaxis={this.props.yaxis}
-        color={this.state.color}
-        onColorChange={this.onColorChange}
+        color={this.props.color}
+        onColorChange={this.props.onColorChange}
         onToggleAxis={this.props.onToggleAxis}
       >
         <SeriesIcon color={this.props.color} />

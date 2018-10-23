@@ -61,13 +61,6 @@
   position: relative;
 }
 
-// @TODO: delete unused class
-.graph-legend-scroll {
-  position: relative;
-  overflow: auto !important;
-  padding: 1px;
-}
-
 .graph-legend-icon {
   position: relative;
   padding-right: 4px;
@@ -133,10 +126,6 @@
     .graph-legend-table {
       display: table;
       width: auto;
-
-      .graph-legend-scroll {
-        display: table;
-      }
     }
   }
 }

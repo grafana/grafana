@@ -58,7 +58,7 @@ export type LegendComponentProps = LegendProps &
   LegendComponentEventHandlers;
 
 interface LegendState {
-  hiddenSeries: any;
+  hiddenSeries: { [seriesAlias: string]: boolean };
 }
 
 export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendState> {
@@ -127,7 +127,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendSta
     }
 
     // check if every other series is hidden
-    const alreadyExclusive = _.every(this.props.seriesList, value => {
+    const alreadyExclusive = this.props.seriesList.every(value => {
       if (value.alias === series.alias) {
         return true;
       }
@@ -137,12 +137,12 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendSta
 
     if (alreadyExclusive) {
       // remove all hidden series
-      _.each(this.props.seriesList, value => {
+      this.props.seriesList.forEach(value => {
         delete hiddenSeries[value.alias];
       });
     } else {
       // hide all but this serie
-      _.each(this.props.seriesList, value => {
+      this.props.seriesList.forEach(value => {
         if (value.alias === series.alias) {
           return;
         }
@@ -155,13 +155,26 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendSta
   }
 
   render() {
-    const { optionalClass, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.props;
-    const { values, min, max, avg, current, total } = this.props;
+    const {
+      optionalClass,
+      rightSide,
+      sideWidth,
+      sort,
+      sortDesc,
+      hideEmpty,
+      hideZero,
+      values,
+      min,
+      max,
+      avg,
+      current,
+      total,
+    } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     const hiddenSeries = this.state.hiddenSeries;
     const seriesHideProps = { hideEmpty, hideZero };
     const sortProps = { sort, sortDesc };
-    const seriesList = _.filter(this.sortLegend(), series => !series.hideFromLegend(seriesHideProps));
+    const seriesList = this.sortLegend().filter(series => !series.hideFromLegend(seriesHideProps));
     const legendClass = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${optionalClass}`;
 
     // Set min-width if side style and there is a value, otherwise remove the CSS property
@@ -198,7 +211,9 @@ class LegendSeriesList extends React.PureComponent<LegendComponentProps> {
     const seriesValuesProps = { values, min, max, avg, current, total };
     return seriesList.map((series, i) => (
       <LegendItem
-        key={i}
+        // This trick required because TimeSeries.id is not unique (it's just TimeSeries.alias).
+        // In future would be good to make id unique across the series list.
+        key={`${series.id}-${i}`}
         series={series}
         hidden={hiddenSeries[series.alias]}
         {...seriesValuesProps}
@@ -253,7 +268,7 @@ class LegendTable extends React.PureComponent<Partial<LegendComponentProps>> {
           </tr>
           {seriesList.map((series, i) => (
             <LegendItem
-              key={i}
+              key={`${series.id}-${i}`}
               asTable={true}
               series={series}
               hidden={hiddenSeries[series.alias]}
