@@ -156,6 +156,16 @@ Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
 
 Example Result: `compute.googleapis.com/instance/cpu/usage_time - server1-prod`
 
+It is also possible to resolve the name of the Monitored Resource Type. 
+
+| Alias Pattern Format     | Description                                     | Example Result   |
+| ------------------------ | ------------------------------------------------| ---------------- |
+| `{{resource.type}}`      | returns the name of the monitored resource type | `gce_instance`     |
+
+Example Alias By: `{{resource.type}} - {{metric.type}}`
+
+Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
+
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
