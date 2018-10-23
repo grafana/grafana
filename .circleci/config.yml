@@ -242,7 +242,7 @@ jobs:
           command: '/tmp/bootstrap.sh'
       - run:
           name: checkout enterprise
-          command: './scripts/build/prepare_enterprise.sh'
+          command: './scripts/build/prepare-enterprise.sh'
       - run:
           name: test enterprise
           command: 'go test ./pkg/extensions/...'
@@ -274,7 +274,7 @@ jobs:
         command: '/tmp/bootstrap.sh'
     - run:
         name: checkout enterprise
-        command: './scripts/build/prepare_enterprise.sh'
+        command: './scripts/build/prepare-enterprise.sh'
     - restore_cache:
         key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
     - run:
