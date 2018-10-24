@@ -2,19 +2,12 @@ import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { addAppNotification, clearAppNotification } from './state/actions';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { AppNotification, StoreState } from '../../../types';
+import { AppNotification, AppNotificationSeverity, StoreState } from 'app/types';
 
 export interface Props {
   appNotifications: AppNotification[];
   addAppNotification: typeof addAppNotification;
   clearAppNotification: typeof clearAppNotification;
-}
-
-enum AppNotificationSeverity {
-  Success = 'success',
-  Warning = 'warning',
-  Error = 'error',
-  Info = 'info',
 }
 
 export class AppNotificationList extends PureComponent<Props> {

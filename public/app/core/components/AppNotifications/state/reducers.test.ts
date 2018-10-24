@@ -1,5 +1,6 @@
 import { appNotificationsReducer } from './reducers';
 import { ActionTypes } from './actions';
+import { AppNotificationSeverity } from 'app/types';
 
 describe('clear alert', () => {
   it('should filter alert', () => {
@@ -10,14 +11,14 @@ describe('clear alert', () => {
       appNotifications: [
         {
           id: id1,
-          severity: 'success',
+          severity: AppNotificationSeverity.Success,
           icon: 'success',
           title: 'test',
           text: 'test alert',
         },
         {
           id: id2,
-          severity: 'fail',
+          severity: AppNotificationSeverity.Warning,
           icon: 'warning',
           title: 'test2',
           text: 'test alert fail 2',
@@ -34,7 +35,7 @@ describe('clear alert', () => {
       appNotifications: [
         {
           id: id1,
-          severity: 'success',
+          severity: AppNotificationSeverity.Success,
           icon: 'success',
           title: 'test',
           text: 'test alert',

@@ -9,7 +9,7 @@ import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
-import { AppNotification, AppNotificationsState } from './alerts';
+import { AppNotification, AppNotificationSeverity, AppNotificationsState } from './appNotifications';
 
 export {
   Team,
@@ -49,6 +49,7 @@ export {
   PluginDashboard,
   AppNotification,
   AppNotificationsState,
+  AppNotificationSeverity,
 };
 
 export interface StoreState {
