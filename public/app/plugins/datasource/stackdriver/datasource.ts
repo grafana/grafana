@@ -129,6 +129,9 @@ export default class StackdriverDatasource {
           result.push(timeSerie);
         });
       });
+      return { data: result };
+    } else {
+      return { data: [] };
     }
   }
 
