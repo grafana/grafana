@@ -33,16 +33,6 @@ import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 
 const MAX_HISTORY_ITEMS = 100;
 
-function makeHints(transactions: QueryTransaction[]) {
-  const hintsByIndex = [];
-  transactions.forEach(qt => {
-    if (qt.hints && qt.hints.length > 0) {
-      hintsByIndex[qt.rowIndex] = qt.hints[0];
-    }
-  });
-  return hintsByIndex;
-}
-
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
     const datapoints = seriesData.datapoints || [];
@@ -222,30 +212,32 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onAddQueryRow = index => {
-    const { queries, queryTransactions } = this.state;
-
     // Local cache
     this.queryExpressions[index + 1] = '';
 
-    // Add row by generating new react key
-    const nextQueries = [
-      ...queries.slice(0, index + 1),
-      { query: '', key: generateQueryKey() },
-      ...queries.slice(index + 1),
-    ];
+    this.setState(state => {
+      const { queries, queryTransactions } = state;
 
-    // Ongoing transactions need to update their row indices
-    const nextQueryTransactions = queryTransactions.map(qt => {
-      if (qt.rowIndex > index) {
-        return {
-          ...qt,
-          rowIndex: qt.rowIndex + 1,
-        };
-      }
-      return qt;
+      // Add row by generating new react key
+      const nextQueries = [
+        ...queries.slice(0, index + 1),
+        { query: '', key: generateQueryKey() },
+        ...queries.slice(index + 1),
+      ];
+
+      // Ongoing transactions need to update their row indices
+      const nextQueryTransactions = queryTransactions.map(qt => {
+        if (qt.rowIndex > index) {
+          return {
+            ...qt,
+            rowIndex: qt.rowIndex + 1,
+          };
+        }
+        return qt;
+      });
+
+      return { queries: nextQueries, queryTransactions: nextQueryTransactions };
     });
-
-    this.setState({ queries: nextQueries, queryTransactions: nextQueryTransactions });
   };
 
   onChangeDatasource = async option => {
@@ -265,25 +257,24 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.queryExpressions[index] = value;
 
     if (override) {
-      // Replace query row
-      const { queries, queryTransactions } = this.state;
-      const nextQuery: Query = {
-        key: generateQueryKey(index),
-        query: value,
-      };
-      const nextQueries = [...queries];
-      nextQueries[index] = nextQuery;
+      this.setState(state => {
+        // Replace query row
+        const { queries, queryTransactions } = state;
+        const nextQuery: Query = {
+          key: generateQueryKey(index),
+          query: value,
+        };
+        const nextQueries = [...queries];
+        nextQueries[index] = nextQuery;
 
-      // Discard ongoing transaction related to row query
-      const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+        // Discard ongoing transaction related to row query
+        const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
 
-      this.setState(
-        {
+        return {
           queries: nextQueries,
           queryTransactions: nextQueryTransactions,
-        },
-        this.onSubmit
-      );
+        };
+      }, this.onSubmit);
     }
   };
 
@@ -383,36 +374,39 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onModifyQueries = (action: object, index?: number) => {
-    const { datasource, queries, queryTransactions } = this.state;
+    const { datasource } = this.state;
     if (datasource && datasource.modifyQuery) {
-      let nextQueries;
-      let nextQueryTransactions;
-      if (index === undefined) {
-        // Modify all queries
-        nextQueries = queries.map((q, i) => ({
-          key: generateQueryKey(i),
-          query: datasource.modifyQuery(this.queryExpressions[i], action),
-        }));
-        // Discard all ongoing transactions
-        nextQueryTransactions = [];
-      } else {
-        // Modify query only at index
-        nextQueries = [
-          ...queries.slice(0, index),
-          {
-            key: generateQueryKey(index),
-            query: datasource.modifyQuery(this.queryExpressions[index], action),
-          },
-          ...queries.slice(index + 1),
-        ];
-        // Discard transactions related to row query
-        nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
-      }
-      this.queryExpressions = nextQueries.map(q => q.query);
       this.setState(
-        {
-          queries: nextQueries,
-          queryTransactions: nextQueryTransactions,
+        state => {
+          const { queries, queryTransactions } = state;
+          let nextQueries;
+          let nextQueryTransactions;
+          if (index === undefined) {
+            // Modify all queries
+            nextQueries = queries.map((q, i) => ({
+              key: generateQueryKey(i),
+              query: datasource.modifyQuery(this.queryExpressions[i], action),
+            }));
+            // Discard all ongoing transactions
+            nextQueryTransactions = [];
+          } else {
+            // Modify query only at index
+            nextQueries = [
+              ...queries.slice(0, index),
+              {
+                key: generateQueryKey(index),
+                query: datasource.modifyQuery(this.queryExpressions[index], action),
+              },
+              ...queries.slice(index + 1),
+            ];
+            // Discard transactions related to row query
+            nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+          }
+          this.queryExpressions = nextQueries.map(q => q.query);
+          return {
+            queries: nextQueries,
+            queryTransactions: nextQueryTransactions,
+          };
         },
         () => this.onSubmit()
       );
@@ -420,23 +414,25 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onRemoveQueryRow = index => {
-    const { queries, queryTransactions } = this.state;
-    if (queries.length <= 1) {
-      return;
-    }
     // Remove from local cache
     this.queryExpressions = [...this.queryExpressions.slice(0, index), ...this.queryExpressions.slice(index + 1)];
 
-    // Remove row from react state
-    const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
-
-    // Discard transactions related to row query
-    const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
-
     this.setState(
-      {
-        queries: nextQueries,
-        queryTransactions: nextQueryTransactions,
+      state => {
+        const { queries, queryTransactions } = state;
+        if (queries.length <= 1) {
+          return null;
+        }
+        // Remove row from react state
+        const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
+
+        // Discard transactions related to row query
+        const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+
+        return {
+          queries: nextQueries,
+          queryTransactions: nextQueryTransactions,
+        };
       },
       () => this.onSubmit()
     );
@@ -708,6 +704,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // Copy state, but copy queries including modifications
     return {
       ...this.state,
+      queryTransactions: [],
       queries: ensureQueries(this.queryExpressions.map(query => ({ query }))),
     };
   }
@@ -758,7 +755,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done).map(qt => qt.result)
     );
     const loading = queryTransactions.some(qt => !qt.done);
-    const queryHints = makeHints(queryTransactions);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -837,7 +833,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             <QueryRows
               history={history}
               queries={queries}
-              queryHints={queryHints}
               request={this.request}
               onAddQueryRow={this.onAddQueryRow}
               onChangeQuery={this.onChangeQuery}

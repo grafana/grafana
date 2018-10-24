@@ -1,8 +1,18 @@
 import React, { PureComponent } from 'react';
 
+import { QueryTransaction } from 'app/types/explore';
+
 // TODO make this datasource-plugin-dependent
 import QueryField from './PromQueryField';
 import QueryTransactions from './QueryTransactions';
+
+function getFirstHintFromTransactions(transactions: QueryTransaction[]) {
+  const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
+  if (transaction) {
+    return transaction.hints[0];
+  }
+  return undefined;
+}
 
 class QueryRow extends PureComponent<any, {}> {
   onChangeQuery = (value, override?: boolean) => {
@@ -45,8 +55,9 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { history, query, queryHint, request, supportsLogs, transactions } = this.props;
+    const { history, query, request, supportsLogs, transactions } = this.props;
     const transactionWithError = transactions.find(t => t.error);
+    const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
     return (
       <div className="query-row">
@@ -56,7 +67,7 @@ class QueryRow extends PureComponent<any, {}> {
         <div className="query-row-field">
           <QueryField
             error={queryError}
-            hint={queryHint}
+            hint={hint}
             initialQuery={query}
             history={history}
             onClickHintFix={this.onClickHintFix}
@@ -93,7 +104,6 @@ export default class QueryRows extends PureComponent<any, {}> {
             index={index}
             query={q.query}
             transactions={transactions.filter(t => t.rowIndex === index)}
-            queryHint={queryHints[index]}
             {...handlers}
           />
         ))}
