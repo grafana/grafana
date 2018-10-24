@@ -1,6 +1,6 @@
 import { appNotificationsReducer } from './appNotification';
 import { ActionTypes } from '../actions/appNotification';
-import { AppNotificationSeverity } from 'app/types/index';
+import { AppNotificationSeverity, AppNotificationTimeout } from 'app/types/';
 
 describe('clear alert', () => {
   it('should filter alert', () => {
@@ -15,6 +15,7 @@ describe('clear alert', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
+          timeout: AppNotificationTimeout.Success,
         },
         {
           id: id2,
@@ -22,6 +23,7 @@ describe('clear alert', () => {
           icon: 'warning',
           title: 'test2',
           text: 'test alert fail 2',
+          timeout: AppNotificationTimeout.Warning,
         },
       ],
     };
@@ -39,6 +41,7 @@ describe('clear alert', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
+          timeout: AppNotificationTimeout.Success,
         },
       ],
     };

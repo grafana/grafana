@@ -4,6 +4,7 @@ export interface AppNotification {
   icon: string;
   title: string;
   text: string;
+  timeout: AppNotificationTimeout;
 }
 
 export enum AppNotificationSeverity {
@@ -11,6 +12,12 @@ export enum AppNotificationSeverity {
   Warning = 'warning',
   Error = 'error',
   Info = 'info',
+}
+
+export enum AppNotificationTimeout {
+  Warning = 5000,
+  Success = 3000,
+  Error = 7000,
 }
 
 export interface AppNotificationsState {

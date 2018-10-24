@@ -22,7 +22,7 @@ export const clearAppNotification = (appNotificationId: number) => ({
   payload: appNotificationId,
 });
 
-export const addAppNotification = (alert: AppNotification) => ({
+export const notifyApp = (appNotification: AppNotification) => ({
   type: ActionTypes.AddAppNotification,
-  payload: alert,
+  payload: appNotification,
 });

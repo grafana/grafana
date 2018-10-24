@@ -1,4 +1,4 @@
-import { AppNotification, AppNotificationsState } from 'app/types/index';
+import { AppNotification, AppNotificationsState } from 'app/types/';
 import { Action, ActionTypes } from '../actions/appNotification';
 
 export const initialState: AppNotificationsState = {
@@ -16,8 +16,4 @@ export const appNotificationsReducer = (state = initialState, action: Action): A
       };
   }
   return state;
-};
-
-export default {
-  appNotifications: appNotificationsReducer,
 };
