@@ -60,6 +60,7 @@ export interface Plugin {
   pinned: boolean;
   state: string;
   type: string;
+  module: any;
 }
 
 export interface PluginDashboard {
