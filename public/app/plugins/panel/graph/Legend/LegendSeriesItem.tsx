@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
 import { SeriesColorPicker } from 'app/core/components/colorpicker/SeriesColorPicker';
@@ -29,7 +29,7 @@ interface LegendItemState {
   yaxis: number;
 }
 
-export class LegendItem extends React.PureComponent<LegendItemProps, LegendItemState> {
+export class LegendItem extends PureComponent<LegendItemProps, LegendItemState> {
   static defaultProps = {
     asTable: false,
     hidden: false,
@@ -119,7 +119,7 @@ interface LegendSeriesLabelProps {
   onLabelClick?: (event) => void;
 }
 
-class LegendSeriesLabel extends React.PureComponent<LegendSeriesLabelProps & LegendSeriesIconProps> {
+class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSeriesIconProps> {
   static defaultProps = {
     yaxis: undefined,
     onLabelClick: () => {},
@@ -158,7 +158,7 @@ function SeriesIcon(props) {
   return <i className="fa fa-minus pointer" style={{ color: props.color }} />;
 }
 
-class LegendSeriesIcon extends React.PureComponent<LegendSeriesIconProps, LegendSeriesIconState> {
+class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeriesIconState> {
   static defaultProps = {
     yaxis: undefined,
     onColorChange: () => {},

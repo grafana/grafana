@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React from 'react';
+import React, { PureComponent } from 'react';
 import { TimeSeries } from 'app/core/core';
 import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
@@ -61,7 +61,7 @@ interface LegendState {
   hiddenSeries: { [seriesAlias: string]: boolean };
 }
 
-export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendState> {
+export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
   static defaultProps: Partial<GraphLegendProps> = {
     values: false,
     min: false,
@@ -205,7 +205,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, LegendSta
   }
 }
 
-class LegendSeriesList extends React.PureComponent<LegendComponentProps> {
+class LegendSeriesList extends PureComponent<LegendComponentProps> {
   render() {
     const { seriesList, hiddenSeries, values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
@@ -225,7 +225,7 @@ class LegendSeriesList extends React.PureComponent<LegendComponentProps> {
   }
 }
 
-class LegendTable extends React.PureComponent<Partial<LegendComponentProps>> {
+class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
   onToggleSort = stat => {
     let sortDesc = this.props.sortDesc;
     let sortBy = this.props.sort;
@@ -289,7 +289,7 @@ interface LegendTableHeaderProps {
   onClick?: (statName: string) => void;
 }
 
-class LegendTableHeaderItem extends React.PureComponent<LegendTableHeaderProps & LegendSortProps> {
+class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & LegendSortProps> {
   onClick = () => this.props.onClick(this.props.statName);
 
   render() {
@@ -303,7 +303,7 @@ class LegendTableHeaderItem extends React.PureComponent<LegendTableHeaderProps &
   }
 }
 
-export class Legend extends React.PureComponent<GraphLegendProps> {
+export class Legend extends PureComponent<GraphLegendProps> {
   render() {
     return (
       <CustomScrollbar>
