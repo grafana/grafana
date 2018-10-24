@@ -1,4 +1,4 @@
-import { AppNotification } from 'app/types';
+import { AppNotification } from 'app/types/';
 
 export enum ActionTypes {
   AddAppNotification = 'ADD_APP_NOTIFICATION',

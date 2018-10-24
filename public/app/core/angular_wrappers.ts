@@ -10,7 +10,7 @@ import AppNotificationList from './components/AppNotifications/AppNotificationLi
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
   react2AngularDirective('sidemenu', SideMenu, []);
-  react2AngularDirective('pageAlertList', AppNotificationList, []);
+  react2AngularDirective('appNotificationsList', AppNotificationList, []);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, ['model']);
   react2AngularDirective('searchResult', SearchResult, []);

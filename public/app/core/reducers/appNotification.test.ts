@@ -1,6 +1,6 @@
-import { appNotificationsReducer } from './reducers';
-import { ActionTypes } from './actions';
-import { AppNotificationSeverity } from 'app/types';
+import { appNotificationsReducer } from './appNotification';
+import { ActionTypes } from '../actions/appNotification';
+import { AppNotificationSeverity } from 'app/types/index';
 
 describe('clear alert', () => {
   it('should filter alert', () => {

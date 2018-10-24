@@ -1,5 +1,5 @@
-import { AppNotification, AppNotificationsState } from 'app/types';
-import { Action, ActionTypes } from './actions';
+import { AppNotification, AppNotificationsState } from 'app/types/index';
+import { Action, ActionTypes } from '../actions/appNotification';
 
 export const initialState: AppNotificationsState = {
   appNotifications: [] as AppNotification[],

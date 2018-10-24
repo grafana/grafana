@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
-import { addAppNotification, clearAppNotification } from './state/actions';
+import { addAppNotification, clearAppNotification } from '../../actions/appNotification';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { AppNotification, AppNotificationSeverity, StoreState } from 'app/types';
 
