@@ -17,14 +17,16 @@
 				</a>
 				<div class="grafana-info-box">
 					<h5>What do variables do?</h5>
-					<p>Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names
-					in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
-					the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+					<p>Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor
+						names
+						in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the
+						top of
+						the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-					Check out the
-					<a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
-						Templating documentation
-					</a> for more information.
+						Check out the
+						<a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
+							Templating documentation
+						</a> for more information.
 				</div>
 			</div>
 		</div>
@@ -32,7 +34,7 @@
 		<div ng-if="variables.length">
 			<div class="page-action-bar">
 				<div class="page-action-bar__spacer"></div>
-				<a type="button" class="btn btn-success" ng-click="setMode('new');"><i class="fa fa-plus" ></i> New</a>
+				<a type="button" class="btn btn-success" ng-click="setMode('new');"><i class="fa fa-plus"></i> New</a>
 			</div>
 
 			<table class="filter-table filter-table--hover">
@@ -77,7 +79,8 @@
 			<div class="gf-form-inline">
 				<div class="gf-form max-width-19">
 					<span class="gf-form-label width-6">Name</span>
-					<input type="text" class="gf-form-input" name="name" placeholder="name" ng-model='current.name' required ng-pattern="namePattern"></input>
+					<input type="text" class="gf-form-input" name="name" placeholder="name" ng-model='current.name' required
+					 ng-pattern="namePattern"></input>
 				</div>
 				<div class="gf-form max-width-19">
 					<span class="gf-form-label width-6">
@@ -87,13 +90,15 @@
 						</info-popover>
 					</span>
 					<div class="gf-form-select-wrapper max-width-17">
-						<select class="gf-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in variableTypes" ng-change="typeChanged()"></select>
+						<select class="gf-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in variableTypes"
+						 ng-change="typeChanged()"></select>
 					</div>
 				</div>
 			</div>
 
 			<div class="gf-form" ng-show="ctrl.form.name.$error.pattern">
-				<span class="gf-form-label gf-form-label--error">Template names cannot begin with '__', that's reserved for Grafana's global variables</span>
+				<span class="gf-form-label gf-form-label--error">Template names cannot begin with '__', that's reserved for
+					Grafana's global variables</span>
 			</div>
 
 			<div class="gf-form-inline">
@@ -127,14 +132,16 @@
 						Step count <tip>How many times should the current time range be divided to calculate the value</tip>
 					</span>
 					<div class="gf-form-select-wrapper max-width-10" ng-show="current.auto">
-						<select class="gf-form-input" ng-model="current.auto_count" ng-options="f for f in [1,2,3,4,5,10,20,30,40,50,100,200,300,400,500]" ng-change="runQuery()"></select>
+						<select class="gf-form-input" ng-model="current.auto_count" ng-options="f for f in [1,2,3,4,5,10,20,30,40,50,100,200,300,400,500]"
+						 ng-change="runQuery()"></select>
 					</div>
 				</div>
 				<div class="gf-form">
 					<span class="gf-form-label" ng-show="current.auto">
 						Min interval <tip>The calculated value will not go below this threshold</tip>
 					</span>
-					<input type="text" class="gf-form-input max-width-10" ng-show="current.auto" ng-model="current.auto_min" ng-change="runQuery()" placeholder="10s"></input>
+					<input type="text" class="gf-form-input max-width-10" ng-show="current.auto" ng-model="current.auto_min" ng-change="runQuery()"
+					 placeholder="10s"></input>
 				</div>
 			</div>
 		</div>
@@ -143,7 +150,8 @@
 			<h5 class="section-heading">Custom Options</h5>
 			<div class="gf-form">
 				<span class="gf-form-label width-14">Values separated by comma</span>
-				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue" required></input>
+				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"
+				 required></input>
 			</div>
 		</div>
 
@@ -170,7 +178,8 @@
 				<div class="gf-form max-width-21">
 					<span class="gf-form-label width-7">Data source</span>
 					<div class="gf-form-select-wrapper max-width-14">
-						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" ng-change="datasourceChanged()" required>
+						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"
+						 ng-change="datasourceChanged()" required>
 							<option value="" ng-if="false"></option>
 						</select>
 					</div>
@@ -188,16 +197,16 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<rebuild-on-change property="currentDatasource">
-				<plugin-react-component type="template-query-ctrl">
-				</plugin-react-component>
+				<plugin-template-query-component>
+				</plugin-template-query-component>
 			</rebuild-on-change>
 
-			<div class="gf-form">
+			<!-- <div class="gf-form">
 				<span class="gf-form-label width-7">Query</span>
 				<input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()" required></input>
-			</div>
+			</div> -->
 			<div class="gf-form">
 				<span class="gf-form-label width-7">
 					Regex
@@ -205,7 +214,8 @@
 						Optional, if you want to extract part of a series name or metric node segment.
 					</info-popover>
 				</span>
-				<input type="text" class="gf-form-input" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
+				<input type="text" class="gf-form-input" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur
+				 ng-change="runQuery()"></input>
 			</div>
 			<div class="gf-form max-width-21">
 				<span class="gf-form-label width-7">
@@ -215,7 +225,8 @@
 					</info-popover>
 				</span>
 				<div class="gf-form-select-wrapper max-width-14">
-					<select class="gf-form-input" ng-model="current.sort" ng-options="f.value as f.text for f in sortOptions" ng-change="runQuery()"></select>
+					<select class="gf-form-input" ng-model="current.sort" ng-options="f.value as f.text for f in sortOptions"
+					 ng-change="runQuery()"></select>
 				</div>
 			</div>
 		</div>
@@ -226,7 +237,8 @@
 			<div class="gf-form">
 				<label class="gf-form-label width-12">Type</label>
 				<div class="gf-form-select-wrapper max-width-18">
-					<select class="gf-form-input" ng-model="current.query" ng-options="f.value as f.text for f in datasourceTypes" ng-change="runQuery()"></select>
+					<select class="gf-form-input" ng-model="current.query" ng-options="f.value as f.text for f in datasourceTypes"
+					 ng-change="runQuery()"></select>
 				</div>
 			</div>
 
@@ -241,7 +253,8 @@
 
 					</info-popover>
 				</label>
-				<input type="text" class="gf-form-input max-width-18" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
+				<input type="text" class="gf-form-input max-width-18" ng-model='current.regex' placeholder="/.*-(.*)-.*/"
+				 ng-model-onblur ng-change="runQuery()"></input>
 			</div>
 		</div>
 
@@ -250,7 +263,8 @@
 			<div class="gf-form max-width-21">
 				<span class="gf-form-label width-8">Data source</span>
 				<div class="gf-form-select-wrapper max-width-14">
-					<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required ng-change="validate()">
+					<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"
+					 required ng-change="validate()">
 						<option value="" ng-if="false"></option>
 					</select>
 				</div>
@@ -260,18 +274,11 @@
 		<div class="section gf-form-group" ng-show="variableTypes[current.type].supportsMulti">
 			<h5 class="section-heading">Selection Options</h5>
 			<div class="section">
-				<gf-form-switch class="gf-form"
-										label="Multi-value"
-					label-class="width-10"
-		 tooltip="Enables multiple values to be selected at the same time"
-	 checked="current.multi"
-	on-change="runQuery()">
+				<gf-form-switch class="gf-form" label="Multi-value" label-class="width-10" tooltip="Enables multiple values to be selected at the same time"
+				 checked="current.multi" on-change="runQuery()">
 				</gf-form-switch>
-				<gf-form-switch class="gf-form"
-										label="Include All option"
-					label-class="width-10"
-		 checked="current.includeAll"
-	 on-change="runQuery()">
+				<gf-form-switch class="gf-form" label="Include All option" label-class="width-10" checked="current.includeAll"
+				 on-change="runQuery()">
 				</gf-form-switch>
 			</div>
 			<div class="gf-form" ng-if="current.includeAll">
@@ -286,11 +293,13 @@
 			</gf-form-switch>
 			<div class="gf-form last" ng-if="current.useTags">
 				<span class="gf-form-label width-10">Tags query</span>
-				<input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
+				<input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query"
+				 ng-model-onblur></input>
 			</div>
 			<div class="gf-form" ng-if="current.useTags">
 				<li class="gf-form-label width-10">Tag values query</li>
-				<input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
+				<input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*"
+				 ng-model-onblur></input>
 			</div>
 		</div>
 
@@ -298,11 +307,11 @@
 			<h5>Preview of values</h5>
 			<div class="gf-form-inline">
 				<div class="gf-form" ng-repeat="option in current.options | limitTo: optionsLimit">
-          <span class="gf-form-label">{{option.text}}</span>
-        </div>
-        <div class="gf-form" ng-if= "current.options.length > optionsLimit">
-          <a class="gf-form-label btn-secondary" ng-click="showMoreOptions()">Show more</a>
-        </div>
+					<span class="gf-form-label">{{option.text}}</span>
+				</div>
+				<div class="gf-form" ng-if="current.options.length > optionsLimit">
+					<a class="gf-form-label btn-secondary" ng-click="showMoreOptions()">Show more</a>
+				</div>
 			</div>
 		</div>
 
@@ -317,4 +326,3 @@
 
 	</form>
 </div>
-

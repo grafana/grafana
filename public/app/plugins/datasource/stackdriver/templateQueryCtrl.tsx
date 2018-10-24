@@ -1,6 +1,11 @@
 import React, { PureComponent } from 'react';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
-interface Props {}
+interface Props {
+  query: string;
+  datasourceSrv: DatasourceSrv;
+  isValid: any;
+}
 
 export class StackdriverTemplateQueryCtrl extends PureComponent<Props> {
   constructor(props) {
