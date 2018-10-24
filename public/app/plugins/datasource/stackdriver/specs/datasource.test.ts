@@ -235,8 +235,8 @@ describe('StackdriverDataSource', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }]);
         });
-        it('should return none', () => {
-          expect(res).toEqual('none');
+        it('should return undefined', () => {
+          expect(res).toBeUndefined();
         });
       });
       describe('and the stackdriver unit has a corresponding grafana unit', () => {
@@ -262,16 +262,16 @@ describe('StackdriverDataSource', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }, { unit: 'megaseconds' }]);
         });
-        it('should return the default value - none', () => {
-          expect(res).toEqual('none');
+        it('should return the default value of undefined', () => {
+          expect(res).toBeUndefined();
         });
       });
       describe('and all target units are not the same', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'min' }]);
         });
-        it('should return the default value - none', () => {
-          expect(res).toEqual('none');
+        it('should return the default value of undefined', () => {
+          expect(res).toBeUndefined();
         });
       });
     });

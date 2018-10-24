@@ -101,6 +101,5 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         this.lastQueryError = jsonBody.error.message;
       }
     }
-    console.error(err);
   }
 }

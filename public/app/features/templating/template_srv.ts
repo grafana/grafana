@@ -1,5 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
+import { variableRegex } from 'app/features/templating/variable';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -8,13 +9,7 @@ function luceneEscape(value) {
 export class TemplateSrv {
   variables: any[];
 
-  /*
-   * This regex matches 3 types of variable reference with an optional format specifier
-   * \$(\w+)                          $var1
-   * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
-   * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
-   */
-  private regex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?::(\w+))?}/g;
+  private regex = variableRegex;
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
@@ -30,17 +25,14 @@ export class TemplateSrv {
   }
 
   updateTemplateData() {
-    this.index = {};
+    const existsOrEmpty = value => value || value === '';
 
-    for (let i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-
-      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
-        continue;
+    this.index = this.variables.reduce((acc, currentValue) => {
+      if (currentValue.current && !currentValue.current.isNone && existsOrEmpty(currentValue.current.value)) {
+        acc[currentValue.name] = currentValue;
       }
-
-      this.index[variable.name] = variable;
-    }
+      return acc;
+    }, {});
   }
 
   variableInitialized(variable) {
