@@ -5,6 +5,8 @@ import ReactTable from 'react-table';
 import TableModel from 'app/core/table_model';
 
 const EMPTY_TABLE = new TableModel();
+// Identify columns that contain values
+const VALUE_REGEX = /^[Vv]alue #\d+/;
 
 interface TableProps {
   data: TableModel;
@@ -34,6 +36,7 @@ export default class Table extends PureComponent<TableProps> {
     const columns = tableModel.columns.map(({ filterable, text }) => ({
       Header: text,
       accessor: text,
+      className: VALUE_REGEX.test(text) ? 'text-right' : '',
       show: text !== 'Time',
       Cell: row => <span className={filterable ? 'link' : ''}>{row.value}</span>,
     }));
@@ -48,7 +51,7 @@ export default class Table extends PureComponent<TableProps> {
         minRows={0}
         noDataText={noDataText}
         resolveData={data => prepareRows(data, columnNames)}
-        showPagination={data}
+        showPagination={Boolean(data)}
       />
     );
   }
