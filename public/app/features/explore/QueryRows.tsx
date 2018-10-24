@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 
-import { QueryTransaction } from 'app/types/explore';
+import { QueryTransaction, HistoryItem, Query, QueryHint } from 'app/types/explore';
 
 // TODO make this datasource-plugin-dependent
 import QueryField from './PromQueryField';
 import QueryTransactions from './QueryTransactions';
 
-function getFirstHintFromTransactions(transactions: QueryTransaction[]) {
+function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
   if (transaction) {
     return transaction.hints[0];
@@ -14,7 +14,30 @@ function getFirstHintFromTransactions(transactions: QueryTransaction[]) {
   return undefined;
 }
 
-class QueryRow extends PureComponent<any, {}> {
+interface QueryRowEventHandlers {
+  onAddQueryRow: (index: number) => void;
+  onChangeQuery: (value: string, index: number, override?: boolean) => void;
+  onClickHintFix: (action: object, index?: number) => void;
+  onExecuteQuery: () => void;
+  onRemoveQueryRow: (index: number) => void;
+}
+
+interface QueryRowCommonProps {
+  className?: string;
+  history: HistoryItem[];
+  request: (url: string) => Promise<any>;
+  // Temporarily
+  supportsLogs?: boolean;
+  transactions: QueryTransaction[];
+}
+
+type QueryRowProps = QueryRowCommonProps &
+  QueryRowEventHandlers & {
+    index: number;
+    query: string;
+  };
+
+class QueryRow extends PureComponent<QueryRowProps> {
   onChangeQuery = (value, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
@@ -56,7 +79,7 @@ class QueryRow extends PureComponent<any, {}> {
 
   render() {
     const { history, query, request, supportsLogs, transactions } = this.props;
-    const transactionWithError = transactions.find(t => t.error);
+    const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
     return (
@@ -93,9 +116,14 @@ class QueryRow extends PureComponent<any, {}> {
   }
 }
 
-export default class QueryRows extends PureComponent<any, {}> {
+type QueryRowsProps = QueryRowCommonProps &
+  QueryRowEventHandlers & {
+    queries: Query[];
+  };
+
+export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', queries, queryHints, transactions, ...handlers } = this.props;
+    const { className = '', queries, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (

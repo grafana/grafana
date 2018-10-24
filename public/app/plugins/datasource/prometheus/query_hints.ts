@@ -1,6 +1,8 @@
 import _ from 'lodash';
 
-export function getQueryHints(query: string, series?: any[], datasource?: any): any[] {
+import { QueryHint } from 'app/types/explore';
+
+export function getQueryHints(query: string, series?: any[], datasource?: any): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()

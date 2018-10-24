@@ -18,11 +18,28 @@ export interface Query {
   key?: string;
 }
 
+export interface QueryFix {
+  type: string;
+  label: string;
+  action?: QueryFixAction;
+}
+
+export interface QueryFixAction {
+  type: string;
+  query?: string;
+}
+
+export interface QueryHint {
+  type: string;
+  label: string;
+  fix?: QueryFix;
+}
+
 export interface QueryTransaction {
   id: string;
   done: boolean;
   error?: string;
-  hints?: any[];
+  hints?: QueryHint[];
   latency: number;
   options: any;
   query: string;
