@@ -1,5 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
+import { variableRegex } from 'app/features/templating/variable';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -8,13 +9,7 @@ function luceneEscape(value) {
 export class TemplateSrv {
   variables: any[];
 
-  /*
-   * This regex matches 3 types of variable reference with an optional format specifier
-   * \$(\w+)                          $var1
-   * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
-   * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
-   */
-  private regex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?::(\w+))?}/g;
+  private regex = variableRegex;
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
