@@ -51,6 +51,7 @@ export class MysqlMetaQuery {
     ) AS value_column
   FROM information_schema.tables t
   WHERE
+    t.table_schema = database() AND
     EXISTS
     ( SELECT 1
       FROM information_schema.columns c
