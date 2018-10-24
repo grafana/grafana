@@ -1,6 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { variableRegex } from 'app/core/constants';
+import { variableRegex } from 'app/features/templating/variable';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
