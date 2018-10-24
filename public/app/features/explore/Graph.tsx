@@ -168,7 +168,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const data = this.getGraphData();
 
     return (
-      <>
+      <div className="panel-container">
+        {loading && <div className="explore-graph__loader" />}
         {this.props.data &&
           this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
           !this.state.showAllTimeSeries && (
@@ -180,12 +181,9 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
               }`}</span>
             </div>
           )}
-        <div className="panel-container">
-          {loading && <div className="explore-graph__loader" />}
-          <div id={id} className="explore-graph" style={{ height }} />
-          <Legend data={data} />
-        </div>
-      </>
+        <div id={id} className="explore-graph" style={{ height }} />
+        <Legend data={data} />
+      </div>
     );
   }
 }
