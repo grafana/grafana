@@ -170,11 +170,12 @@
 				<div class="gf-form max-width-21">
 					<span class="gf-form-label width-7">Data source</span>
 					<div class="gf-form-select-wrapper max-width-14">
-						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required>
+						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" ng-change="datasourceChanged()" required>
 							<option value="" ng-if="false"></option>
 						</select>
 					</div>
 				</div>
+
 				<div class="gf-form max-width-22">
 					<span class="gf-form-label width-7">
 						Refresh
@@ -187,6 +188,12 @@
 					</div>
 				</div>
 			</div>
+			
+			<rebuild-on-change property="currentDatasource">
+				<plugin-react-component type="template-query-ctrl">
+				</plugin-react-component>
+			</rebuild-on-change>
+
 			<div class="gf-form">
 				<span class="gf-form-label width-7">Query</span>
 				<input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()" required></input>

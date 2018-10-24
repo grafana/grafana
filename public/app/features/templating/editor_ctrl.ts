@@ -171,6 +171,11 @@ export class VariableEditorCtrl {
     $scope.showMoreOptions = () => {
       $scope.optionsLimit += 20;
     };
+
+    $scope.datasourceChanged = async () => {
+      $scope.currentDatasource = await datasourceSrv.get($scope.current.datasource);
+      console.log($scope.currentDatasource);
+    };
   }
 }
 
