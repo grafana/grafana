@@ -106,7 +106,6 @@ export default class StackdriverDatasource {
         if (!queryRes.series) {
           return;
         }
-
         const unit = this.resolvePanelUnitFromTargets(options.targets);
         queryRes.series.forEach(series => {
           let timeSerie: any = {
@@ -121,9 +120,10 @@ export default class StackdriverDatasource {
           result.push(timeSerie);
         });
       });
+      return { data: result };
+    } else {
+      return { data: [] };
     }
-
-    return { data: result };
   }
 
   async annotationQuery(options) {
