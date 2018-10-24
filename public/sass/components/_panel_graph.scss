@@ -136,11 +136,10 @@
 }
 
 .graph-legend-table {
+  table {
+    width: 100%;
+  }
   tbody {
-    display: block;
-    position: relative;
-    overflow-y: auto;
-    overflow-x: hidden;
     padding-bottom: 1px;
     padding-right: 5px;
     padding-left: 5px;

@@ -250,7 +250,10 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
     const seriesValuesProps = { values, min, max, avg, current, total };
     return (
       <table>
-        <tbody>
+        <colgroup>
+          <col style={{ width: '100%' }} />
+        </colgroup>
+        <thead>
           <tr>
             <th style={{ textAlign: 'left' }} />
             {LEGEND_STATS.map(
@@ -266,6 +269,8 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
                 )
             )}
           </tr>
+        </thead>
+        <tbody>
           {seriesList.map((series, i) => (
             <LegendItem
               key={`${series.id}-${i}`}
