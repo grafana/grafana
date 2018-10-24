@@ -1,5 +1,6 @@
 +++
 title = "Tutorials"
+type = "docs"
 [menu.docs]
 identifier = "tutorials"
 weight = 6
