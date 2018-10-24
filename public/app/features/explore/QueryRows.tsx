@@ -1,7 +1,18 @@
 import React, { PureComponent } from 'react';
 
+import { QueryTransaction } from 'app/types/explore';
+
 // TODO make this datasource-plugin-dependent
 import QueryField from './PromQueryField';
+import QueryTransactions from './QueryTransactions';
+
+function getFirstHintFromTransactions(transactions: QueryTransaction[]) {
+  const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
+  if (transaction) {
+    return transaction.hints[0];
+  }
+  return undefined;
+}
 
 class QueryRow extends PureComponent<any, {}> {
   onChangeQuery = (value, override?: boolean) => {
@@ -44,13 +55,19 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { history, query, queryError, queryHint, request, supportsLogs } = this.props;
+    const { history, query, request, supportsLogs, transactions } = this.props;
+    const transactionWithError = transactions.find(t => t.error);
+    const hint = getFirstHintFromTransactions(transactions);
+    const queryError = transactionWithError ? transactionWithError.error : null;
     return (
       <div className="query-row">
+        <div className="query-row-status">
+          <QueryTransactions transactions={transactions} />
+        </div>
         <div className="query-row-field">
           <QueryField
             error={queryError}
-            hint={queryHint}
+            hint={hint}
             initialQuery={query}
             history={history}
             onClickHintFix={this.onClickHintFix}
@@ -78,7 +95,7 @@ class QueryRow extends PureComponent<any, {}> {
 
 export default class QueryRows extends PureComponent<any, {}> {
   render() {
-    const { className = '', queries, queryErrors, queryHints, ...handlers } = this.props;
+    const { className = '', queries, queryHints, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (
@@ -86,8 +103,7 @@ export default class QueryRows extends PureComponent<any, {}> {
             key={q.key}
             index={index}
             query={q.query}
-            queryError={queryErrors[index]}
-            queryHint={queryHints[index]}
+            transactions={transactions.filter(t => t.rowIndex === index)}
             {...handlers}
           />
         ))}

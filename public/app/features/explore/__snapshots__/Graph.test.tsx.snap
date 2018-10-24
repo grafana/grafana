@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div>
+<Fragment>
   <div
     className="panel-container"
   >
@@ -458,11 +458,11 @@ exports[`Render should render component 1`] = `
       }
     />
   </div>
-</div>
+</Fragment>
 `;
 
 exports[`Render should render component with disclaimer 1`] = `
-<div>
+<Fragment>
   <div
     className="time-series-disclaimer"
   >
@@ -956,17 +956,26 @@ exports[`Render should render component with disclaimer 1`] = `
       }
     />
   </div>
-</div>
+</Fragment>
 `;
 
 exports[`Render should show query return no time series 1`] = `
-<div
-  className="panel-container"
->
+<Fragment>
   <div
-    className="muted m-a-1"
+    className="panel-container"
   >
-    The queries returned no time series to graph.
+    <div
+      className="explore-graph"
+      id="graph"
+      style={
+        Object {
+          "height": "100px",
+        }
+      }
+    />
+    <Legend
+      data={Array []}
+    />
   </div>
-</div>
+</Fragment>
 `;
