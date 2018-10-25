@@ -239,7 +239,8 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
 	}
 
-	err := e.ensureClientSession("us-east-1")
+	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	err := e.ensureClientSession(defaultRegion)
 	if err != nil {
 		return nil, err
 	}
