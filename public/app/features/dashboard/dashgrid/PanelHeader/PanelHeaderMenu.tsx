@@ -1,11 +1,9 @@
 ﻿import React, { PureComponent } from 'react';
-// import { store } from 'app/store/configureStore';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-import { PanelModel } from 'app/features/dashboard/panel_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemTypes } from './PanelHeaderMenuItem';
-import appEvents from 'app/core/app_events';
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
+import { removePanel } from 'app/features/dashboard/utils/panel';
 
 export interface PanelHeaderMenuProps {
   panelId: number;
@@ -40,30 +38,7 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
   onRemovePanel = () => {
     const { panelId, dashboard } = this.props;
     const panelInfo = dashboard.getPanelInfoById(panelId);
-    this.removePanel(panelInfo.panel, true);
-  };
-
-  removePanel = (panel: PanelModel, ask: boolean) => {
-    const { dashboard } = this.props;
-
-    // confirm deletion
-    if (ask !== false) {
-      const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : null;
-      const confirmText = panel.alert ? 'YES' : null;
-
-      appEvents.emit('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => this.removePanel(panel, false),
-      });
-      return;
-    }
-
-    dashboard.removePanel(panel);
+    removePanel(dashboard, panelInfo.panel, true);
   };
 
   render() {
@@ -105,13 +80,9 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
                 handleClick={() => {}}
                 shortcut="p d"
               />
-
               <PanelHeaderMenuItem type={PanelHeaderMenuItemTypes.Link} text="Copy" handleClick={() => {}} />
-
               <PanelHeaderMenuItem type={PanelHeaderMenuItemTypes.Link} text="Panel JSON" handleClick={() => {}} />
-
               <PanelHeaderMenuItem type={PanelHeaderMenuItemTypes.Link} text="Export CSV" handleClick={() => {}} />
-
               <PanelHeaderMenuItem
                 type={PanelHeaderMenuItemTypes.Link}
                 text="Toggle legend"
