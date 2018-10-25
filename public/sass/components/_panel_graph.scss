@@ -121,7 +121,8 @@
 .body--phantomjs {
   .graph-panel--legend-right {
     .graph-legend {
-      display: inline-block;
+      display: block;
+      max-width: min-content;
     }
 
     .graph-panel__chart {
