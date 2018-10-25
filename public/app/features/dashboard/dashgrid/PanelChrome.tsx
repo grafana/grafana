@@ -5,7 +5,7 @@ import React, { ComponentClass, PureComponent } from 'react';
 import { getTimeSrv } from '../time_srv';
 
 // Components
-import { PanelHeader } from './PanelHeader';
+import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
 
 // Types

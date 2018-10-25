@@ -38,7 +38,6 @@ export class DataPanel extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-
     this.state = {
       loading: LoadingState.NotStarted,
       response: {
