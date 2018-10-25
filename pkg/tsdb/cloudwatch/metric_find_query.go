@@ -35,6 +35,7 @@ type CustomMetricsCache struct {
 
 var customMetricsMetricsMap map[string]map[string]map[string]*CustomMetricsCache
 var customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
+var regionCache sync.Map
 
 func init() {
 	metricsMap = map[string][]string{
@@ -233,14 +234,19 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	dsInfo := e.getDsInfo("default")
+	if cache, ok := regionCache.Load(dsInfo.Profile); ok {
+		if cache2, ok2 := cache.([]suggestData); ok2 {
+			return cache2, nil
+		}
+	}
+
 	regions := []string{
 		"ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1",
 		"eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2",
 		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
 	}
-
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
-	err := e.ensureClientSession(defaultRegion)
+	err := e.ensureClientSession("default")
 	if err != nil {
 		return nil, err
 	}
@@ -270,6 +276,7 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	for _, region := range regions {
 		result = append(result, suggestData{Text: region, Value: region})
 	}
+	regionCache.Store(dsInfo.Profile, result)
 
 	return result, nil
 }
