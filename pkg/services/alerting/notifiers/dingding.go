@@ -10,11 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
+const DefaultDingdingMsgType = "link"
 const DingdingOptionsTemplate = `
       <h3 class="page-heading">DingDing settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-10">Url</span>
         <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"></input>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">MessageType</span>
+        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.msgType" ng-options="s for s in ['link','actionCard']" ng-init="ctrl.model.settings.msgType=ctrl.model.settings.msgType || '` + DefaultDingdingMsgType + `'"></select>
       </div>
 `
 
@@ -35,8 +40,11 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
+	msgType := model.Settings.Get("msgType").MustString(DefaultDingdingMsgType)
+
 	return &DingDingNotifier{
 		NotifierBase: NewNotifierBase(model),
+		MsgType:      msgType,
 		Url:          url,
 		log:          log.New("alerting.notifier.dingding"),
 	}, nil
@@ -44,8 +52,9 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 
 type DingDingNotifier struct {
 	NotifierBase
-	Url string
-	log log.Logger
+	MsgType string
+	Url     string
+	log     log.Logger
 }
 
 func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -69,15 +78,29 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message += fmt.Sprintf("\\n%2d. %s value %s", i+1, match.Metric, match.Value)
 	}
 
-	bodyStr := `{
-		"msgtype": "link",
-		"link": {
-			"text": "` + message + `",
-			"title": "` + title + `",
-			"picUrl": "` + picUrl + `",
-			"messageUrl": "` + messageUrl + `"
-		}
-	}`
+	var bodyStr string
+	if this.MsgType == "actionCard" {
+		bodyStr = `{
+			"msgtype": "actionCard",
+			"actionCard": {
+				"text": "` + message + `",
+				"title": "` + title + `",
+				"singleTitle": "More",
+				"singleURL": "` + messageUrl + `"
+			}
+		}`
+	} else {
+		bodyStr = `{
+			"msgtype": "link",
+			"link": {
+				"text": "` + message + `",
+				"title": "` + title + `",
+				"picUrl": "` + picUrl + `",
+				"messageUrl": "` + messageUrl + `"
+			}
+		}`
+	}
+
 	bodyJSON, err := simplejson.NewJson([]byte(bodyStr))
 
 	if err != nil {
