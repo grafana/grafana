@@ -170,13 +170,13 @@ func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, 
 }
 
 type UserInfoJson struct {
-	Name        string              `json:"name"`
-	DisplayName string              `json:"display_name"`
-	Login       string              `json:"login"`
-	Username    string              `json:"username"`
-	Email       string              `json:"email"`
-	Upn         string              `json:"upn"`
-	Attributes  map[string][]string `json:"attributes"`
+	Name        string                 `json:"name"`
+	DisplayName string                 `json:"display_name"`
+	Login       string                 `json:"login"`
+	Username    string                 `json:"username"`
+	Email       string                 `json:"email"`
+	Upn         string                 `json:"upn"`
+	Attributes  map[string]interface{} `json:"attributes"`
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -192,6 +192,11 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		err = json.Unmarshal(response.Body, &data)
 		if err != nil {
 			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
+		}
+
+		err = json.Unmarshal(response.Body, &data.Attributes)
+		if err != nil {
+			return nil, fmt.Errorf("Error decoding user info Attributes JSON: %s", err)
 		}
 	}
 
@@ -266,8 +271,11 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	}
 
 	emails, ok := data.Attributes[s.emailAttributeName]
-	if ok && len(emails) != 0 {
-		return emails[0]
+	if ok {
+		emailStr := emails.(string)
+		if len(emailStr) != 0 {
+			return emailStr
+		}
 	}
 
 	if data.Upn != "" {
