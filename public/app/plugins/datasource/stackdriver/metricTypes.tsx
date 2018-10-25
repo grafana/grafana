@@ -1,5 +1,4 @@
 import React, { SFC } from 'react';
-import uniqBy from 'lodash/uniqBy';
 
 interface Props {
   onMetricTypeChanged: any;
@@ -18,11 +17,6 @@ const MetricTypes: SFC<Props> = props => {
       name: m.displayName,
     }));
   };
-
-  uniqBy(props.metricDescriptors, 'service').map(m => ({
-    value: m.service,
-    name: m.serviceShortName,
-  }));
 
   return (
     <div className="gf-form max-width-21">
