@@ -403,6 +403,10 @@ func gruntBuildArg(task string) []string {
 	if phjsToRelease != "" {
 		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
 	}
+	if enterprise {
+		args = append(args, "--enterprise")
+	}
+
 	args = append(args, fmt.Sprintf("--platform=%v", goos))
 
 	return args
