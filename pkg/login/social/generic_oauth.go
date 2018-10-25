@@ -177,6 +177,7 @@ type UserInfoJson struct {
 	Email       string                 `json:"email"`
 	Upn         string                 `json:"upn"`
 	Attributes  map[string]interface{} `json:"attributes"`
+	AllAttributes map[string]interface{} `json:"all_attributes"`
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -196,7 +197,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 		err = json.Unmarshal(response.Body, &data.Attributes)
 		if err != nil {
-			return nil, fmt.Errorf("Error decoding user info Attributes JSON: %s", err)
+			return nil, fmt.Errorf("Error decoding user info AllAttributes JSON: %s", err)
 		}
 	}
 
@@ -271,8 +272,13 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	}
 
 	emails, ok := data.Attributes[s.emailAttributeName]
+	if ok && len(emails) != 0 {
+		return emails[0]
+	}
+
+	emailsFromAll, ok := data.AllAttributes[s.emailAttributeName]
 	if ok {
-		emailStr := emails.(string)
+		emailStr := emailsFromAll.(string)
 		if len(emailStr) != 0 {
 			return emailStr
 		}
