@@ -106,6 +106,11 @@ export class VariableEditorCtrl {
       });
     };
 
+    $scope.onQueryChange = value => {
+      $scope.current.query = value;
+      $scope.runQuery();
+    };
+
     $scope.edit = variable => {
       $scope.current = variable;
       $scope.currentIsNew = false;
@@ -173,8 +178,9 @@ export class VariableEditorCtrl {
     };
 
     $scope.datasourceChanged = async () => {
-      $scope.currentDatasource = await datasourceSrv.get($scope.current.datasource);
-      console.log($scope.currentDatasource);
+      datasourceSrv.get($scope.current.datasource).then(ds => {
+        $scope.currentDatasource = ds;
+      });
     };
   }
 }
