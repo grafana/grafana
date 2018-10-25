@@ -14,6 +14,7 @@ interface PanelHeaderProps {
 
 export class PanelHeader extends React.Component<PanelHeaderProps, any> {
   render() {
+    const { dashboard } = this.props;
     const isFullscreen = false;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
@@ -38,7 +39,7 @@ export class PanelHeader extends React.Component<PanelHeaderProps, any> {
               {this.props.panel.title} <span className="fa fa-caret-down panel-menu-toggle" />
             </span>
 
-            <PanelHeaderMenu panelId={this.props.panel.id} />
+            <PanelHeaderMenu panelId={this.props.panel.id} dashboard={dashboard} />
             <span className="panel-time-info">
               <i className="fa fa-clock-o" /> 4m
             </span>

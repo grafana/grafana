@@ -1,5 +1,7 @@
 ﻿import React, { PureComponent } from 'react';
 // import { store } from 'app/store/configureStore';
+import { DashboardModel } from 'app/features/dashboard/dashboard_model';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemTypes } from './PanelHeaderMenuItem';
 import appEvents from 'app/core/app_events';
 import { store } from 'app/store/configureStore';
@@ -7,6 +9,7 @@ import { updateLocation } from 'app/core/actions';
 
 export interface PanelHeaderMenuProps {
   panelId: number;
+  dashboard: DashboardModel;
 }
 
 export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
@@ -35,9 +38,32 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
   };
 
   onRemovePanel = () => {
-    appEvents.emit('panel-remove', {
-      panelId: this.props.panelId,
-    });
+    const { panelId, dashboard } = this.props;
+    const panelInfo = dashboard.getPanelInfoById(panelId);
+    this.removePanel(panelInfo.panel, true);
+  };
+
+  removePanel = (panel: PanelModel, ask: boolean) => {
+    const { dashboard } = this.props;
+
+    // confirm deletion
+    if (ask !== false) {
+      const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : null;
+      const confirmText = panel.alert ? 'YES' : null;
+
+      appEvents.emit('confirm-modal', {
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'fa-trash',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => this.removePanel(panel, false),
+      });
+      return;
+    }
+
+    dashboard.removePanel(panel);
   };
 
   render() {
