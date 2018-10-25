@@ -137,14 +137,9 @@
 }
 
 .graph-legend-table {
-  table {
-    width: 100%;
-  }
-  tbody {
-    padding-bottom: 1px;
-    padding-right: 5px;
-    padding-left: 5px;
-  }
+  padding-bottom: 1px;
+  padding-right: 5px;
+  padding-left: 5px;
 
   .graph-legend-series {
     display: table-row;
