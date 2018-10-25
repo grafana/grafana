@@ -235,7 +235,8 @@ func parseMultiSelectValue(input string) []string {
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	dsInfo := e.getDsInfo("default")
-	if cache, ok := regionCache.Load(dsInfo.Profile); ok {
+	profile := dsInfo.Profile
+	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
 		}
@@ -276,7 +277,7 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	for _, region := range regions {
 		result = append(result, suggestData{Text: region, Value: region})
 	}
-	regionCache.Store(dsInfo.Profile, result)
+	regionCache.Store(profile, result)
 
 	return result, nil
 }
