@@ -198,7 +198,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     if (textChanged && value.selection.isCollapsed) {
       // Need one paint to allow DOM-based typeahead rules to work
       window.requestAnimationFrame(this.handleTypeahead);
-    } else {
+    } else if (!this.resetTimer) {
       this.resetTypeahead();
     }
   };
@@ -402,6 +402,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
       typeaheadPrefix: '',
       typeaheadContext: null,
     });
+    this.resetTimer = null;
   };
 
   handleBlur = () => {

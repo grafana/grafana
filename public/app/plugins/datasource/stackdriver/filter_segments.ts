@@ -44,7 +44,7 @@ export class FilterSegments {
         this.removeSegment.value = DefaultRemoveFilterValue;
         return Promise.resolve([this.removeSegment]);
       } else {
-        return this.getFilterKeysFunc();
+        return this.getFilterKeysFunc(segment, DefaultRemoveFilterValue);
       }
     }
 

@@ -21,6 +21,9 @@ div.flot-text {
   height: 100%;
 
   &--solo {
+    position: fixed;
+    bottom: 0;
+    right: 0;
     margin: 0;
     .panel-container {
       border: none;

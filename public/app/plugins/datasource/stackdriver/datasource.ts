@@ -107,34 +107,32 @@ export default class StackdriverDatasource {
   }
 
   async query(options) {
-    this.queryPromise = new Promise(async resolve => {
-      const result = [];
-      const data = await this.getTimeSeries(options);
-      if (data.results) {
-        Object['values'](data.results).forEach(queryRes => {
-          if (!queryRes.series) {
-            return;
+    const result = [];
+    const data = await this.getTimeSeries(options);
+    if (data.results) {
+      Object['values'](data.results).forEach(queryRes => {
+        if (!queryRes.series) {
+          return;
+        }
+        this.projectName = queryRes.meta.defaultProject;
+        const unit = this.resolvePanelUnitFromTargets(options.targets);
+        queryRes.series.forEach(series => {
+          let timeSerie: any = {
+            target: series.name,
+            datapoints: series.points,
+            refId: queryRes.refId,
+            meta: queryRes.meta,
+          };
+          if (unit) {
+            timeSerie = { ...timeSerie, unit };
           }
-          this.projectName = queryRes.meta.defaultProject;
-          const unit = this.resolvePanelUnitFromTargets(options.targets);
-          queryRes.series.forEach(series => {
-            let timeSerie: any = {
-              target: series.name,
-              datapoints: series.points,
-              refId: queryRes.refId,
-              meta: queryRes.meta,
-            };
-            if (unit) {
-              timeSerie = { ...timeSerie, unit };
-            }
-            result.push(timeSerie);
-          });
+          result.push(timeSerie);
         });
-      }
-
-      resolve({ data: result });
-    });
-    return this.queryPromise;
+      });
+      return { data: result };
+    } else {
+      return { data: [] };
+    }
   }
 
   async annotationQuery(options) {
