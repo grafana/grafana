@@ -1,9 +1,10 @@
-import { Organisation, OrganisationPreferences, OrganisationState } from 'app/types';
+import { DashboardAcl, Organization, OrganisationPreferences, OrganisationState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 const initialState: OrganisationState = {
-  organisation: {} as Organisation,
+  organisation: {} as Organization,
   preferences: {} as OrganisationPreferences,
+  starredDashboards: [] as DashboardAcl[],
 };
 
 const organisationReducer = (state = initialState, action: Action): OrganisationState => {
@@ -13,6 +14,9 @@ const organisationReducer = (state = initialState, action: Action): Organisation
 
     case ActionTypes.LoadPreferences:
       return { ...state, preferences: action.payload };
+
+    case ActionTypes.LoadStarredDashboards:
+      return { ...state, starredDashboards: action.payload };
   }
 
   return state;

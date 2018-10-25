@@ -1,4 +1,6 @@
-export interface Organisation {
+import { DashboardAcl } from './acl';
+
+export interface Organization {
   name: string;
   id: number;
 }
@@ -10,6 +12,7 @@ export interface OrganisationPreferences {
 }
 
 export interface OrganisationState {
-  organisation: Organisation;
+  organisation: Organization;
   preferences: OrganisationPreferences;
+  starredDashboards: DashboardAcl[];
 }

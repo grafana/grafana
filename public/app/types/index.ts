@@ -22,7 +22,7 @@ import {
 } from './series';
 import { PanelProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
-import { Organisation, OrganisationPreferences, OrganisationState } from './organisation';
+import { Organization, OrganisationPreferences, OrganisationState } from './organization';
 
 export {
   Team,
@@ -71,7 +71,7 @@ export {
   DataQueryResponse,
   DataQueryOptions,
   PluginDashboard,
-  Organisation,
+  Organization,
   OrganisationState,
   OrganisationPreferences,
 };
