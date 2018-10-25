@@ -75,7 +75,7 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	for i, match := range evalContext.EvalMatches {
-		message += fmt.Sprintf("\\n%2d. %s value %s", i+1, match.Metric, match.Value)
+		message += fmt.Sprintf("\\n%2d. %s: %s", i+1, match.Metric, match.Value)
 	}
 
 	var bodyStr string
