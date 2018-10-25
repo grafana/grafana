@@ -22,13 +22,13 @@ var versionRe = regexp.MustCompile(`grafana-(.*)(\.|_)(arm64|armhfp|aarch64|armv
 var debVersionRe = regexp.MustCompile(`grafana_(.*)_(arm64|armv7|armhf|amd64)\.deb`)
 var builds = []build{}
 var architectureMapping = map[string]string{
-	"armv7":"armv7",
-	"armhfp":"armv7",
-	"armhf":"armv7",
-	"arm64":"arm64",
-	"aarch64":"arm64",
-	"amd64":"amd64",
-	"x86_64":"amd64",
+	"armv7":   "armv7",
+	"armhfp":  "armv7",
+	"armhf":   "armv7",
+	"arm64":   "arm64",
+	"aarch64": "arm64",
+	"amd64":   "amd64",
+	"x86_64":  "amd64",
 }
 
 func main() {
@@ -78,7 +78,7 @@ func mapPackage(path string, name string, shaBytes []byte) (build, error) {
 	if len(result) > 0 {
 		version = string(result[1])
 		log.Printf("Version detected: %v", version)
-	} else if (len(debResult) > 0) {
+	} else if len(debResult) > 0 {
 		version = string(debResult[1])
 	} else {
 		return build{}, fmt.Errorf("Unable to figure out version from '%v'", name)
@@ -124,6 +124,9 @@ func mapPackage(path string, name string, shaBytes []byte) (build, error) {
 }
 
 func packageWalker(path string, f os.FileInfo, err error) error {
+	if err != nil {
+		log.Printf("error: %v", err)
+	}
 	if f.Name() == "dist" || strings.Contains(f.Name(), "sha256") || strings.Contains(f.Name(), "latest") {
 		return nil
 	}
@@ -134,7 +137,6 @@ func packageWalker(path string, f os.FileInfo, err error) error {
 	}
 
 	build, err := mapPackage(path, f.Name(), shaBytes)
-
 	if err != nil {
 		log.Printf("Could not map metadata from package: %v", err)
 		return nil
