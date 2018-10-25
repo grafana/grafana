@@ -14,6 +14,7 @@ import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
+import OrgDetailsPage from '../features/org/OrgDetailsPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -131,8 +132,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/org', {
-      templateUrl: 'public/app/features/org/partials/orgDetails.html',
-      controller: 'OrgDetailsCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => OrgDetailsPage,
+      },
     })
     .when('/org/new', {
       templateUrl: 'public/app/features/org/partials/newOrg.html',
