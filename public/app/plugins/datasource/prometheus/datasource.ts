@@ -5,6 +5,7 @@ import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
+import PrometheusLanguageProvider from './language_provider';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
 import addLabelToQuery from './add_label_to_query';
@@ -60,6 +61,7 @@ export class PrometheusDatasource {
   interval: string;
   queryTimeout: string;
   httpMethod: string;
+  languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
 
   /** @ngInject */
@@ -76,6 +78,7 @@ export class PrometheusDatasource {
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
+    this.languageProvider = new PrometheusLanguageProvider(this);
   }
 
   init() {

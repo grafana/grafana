@@ -24,8 +24,8 @@ interface QueryRowEventHandlers {
 
 interface QueryRowCommonProps {
   className?: string;
+  datasource: any;
   history: HistoryItem[];
-  request: (url: string) => Promise<any>;
   // Temporarily
   supportsLogs?: boolean;
   transactions: QueryTransaction[];
@@ -78,7 +78,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { history, query, request, supportsLogs, transactions } = this.props;
+    const { datasource, history, query, supportsLogs, transactions } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
@@ -89,6 +89,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
         </div>
         <div className="query-row-field">
           <QueryField
+            datasource={datasource}
             error={queryError}
             hint={hint}
             initialQuery={query}
@@ -96,7 +97,6 @@ class QueryRow extends PureComponent<QueryRowProps> {
             onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}
-            request={request}
             supportsLogs={supportsLogs}
           />
         </div>
