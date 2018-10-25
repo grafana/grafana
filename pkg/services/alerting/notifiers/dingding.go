@@ -10,19 +10,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
-func init() {
-	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type:        "dingding",
-		Name:        "DingDing",
-		Description: "Sends HTTP POST request to DingDing",
-		Factory:     NewDingDingNotifier,
-		OptionsTemplate: `
+const DingdingOptionsTemplate = `
       <h3 class="page-heading">DingDing settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-10">Url</span>
         <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"></input>
       </div>
-    `,
+`
+
+func init() {
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:            "dingding",
+		Name:            "DingDing",
+		Description:     "Sends HTTP POST request to DingDing",
+		Factory:         NewDingDingNotifier,
+		OptionsTemplate: DingdingOptionsTemplate,
 	})
 
 }
@@ -67,7 +69,7 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message += fmt.Sprintf("\\n%2d. %s value %s", i+1, match.Metric, match.Value)
 	}
 
-	bodyJSON, err := simplejson.NewJson([]byte(`{
+	bodyStr := `{
 		"msgtype": "link",
 		"link": {
 			"text": "` + message + `",
@@ -75,7 +77,8 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 			"picUrl": "` + picUrl + `",
 			"messageUrl": "` + messageUrl + `"
 		}
-	}`))
+	}`
+	bodyJSON, err := simplejson.NewJson([]byte(bodyStr))
 
 	if err != nil {
 		this.log.Error("Failed to create Json data", "error", err, "dingding", this.Name)
