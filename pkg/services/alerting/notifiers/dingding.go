@@ -1,6 +1,8 @@
 package notifiers
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -59,6 +61,10 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 	title := evalContext.GetNotificationTitle()
 	if message == "" {
 		message = title
+	}
+
+	for i, match := range evalContext.EvalMatches {
+		message += fmt.Sprintf("\\n%2d. %s value %s", i+1, match.Metric, match.Value)
 	}
 
 	bodyJSON, err := simplejson.NewJson([]byte(`{
