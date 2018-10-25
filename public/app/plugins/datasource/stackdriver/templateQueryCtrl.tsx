@@ -1,22 +1,36 @@
 import React, { PureComponent } from 'react';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import StackdriverDatasource from './datasource';
 
 interface Props {
+  datasource: StackdriverDatasource;
   query: string;
-  datasourceSrv: DatasourceSrv;
-  isValid: any;
+  onChange: (c: string) => void;
 }
 
-export class StackdriverTemplateQueryCtrl extends PureComponent<Props> {
+export class StackdriverTemplateQueryCtrl extends PureComponent<Props, any> {
   constructor(props) {
     super(props);
   }
 
-  componentDidMount() {
-    console.log('componentDidMount');
+  async componentDidMount() {
+    const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
+    console.log(metricDescriptors);
   }
 
   render() {
-    return <h1>Hello Stackdriver Template Query</h1>;
+    return (
+      <div className="gf-form">
+        <span className="gf-form-label width-7">Query</span>
+        <input
+          type="text"
+          className="gf-form-input"
+          // value={this.state.value}
+          // onChange={this.handleChange}
+          // onBlur={this.handleBlur}
+          placeholder="metric name or tags query"
+          required
+        />
+      </div>
+    );
   }
 }

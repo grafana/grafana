@@ -14,13 +14,13 @@ async function loadComponent(module) {
 }
 
 /** @ngInject */
-function pluginTemplateQueryComponentLoader(datasourceSrv) {
+function pluginTemplateQueryComponentLoader() {
   return {
     restrict: 'E',
     link: async (scope, elem) => {
       const Component = await loadComponent(scope.currentDatasource.meta.module);
       const props = {
-        datasourceSrv,
+        datasource: scope.currentDatasource,
         query: scope.current.query,
         onChange: scope.onQueryChange,
       };
