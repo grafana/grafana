@@ -9,7 +9,7 @@ describe('backend_srv', () => {
     return Promise.resolve({});
   };
 
-  const _backendSrv = new BackendSrv(_httpBackend, {}, {}, {}, {});
+  const _backendSrv = new BackendSrv(_httpBackend, {}, {}, {});
 
   describe('when handling errors', () => {
     it('should return the http status code', async () => {
