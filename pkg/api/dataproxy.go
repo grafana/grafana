@@ -1,62 +1,22 @@
 package api
 
 import (
-	"fmt"
-	"github.com/pkg/errors"
-	"time"
-
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-const HeaderNameNoBackendCache = "X-Grafana-NoCache"
-
-func (hs *HTTPServer) getDatasourceFromCache(id int64, c *m.ReqContext) (*m.DataSource, error) {
-	userPermissionsQuery := m.GetDataSourcePermissionsForUserQuery{
-		User: c.SignedInUser,
-	}
-	if err := bus.Dispatch(&userPermissionsQuery); err != nil {
-		if err != bus.ErrHandlerNotFound {
-			return nil, err
-		}
-	} else {
-		permissionType, exists := userPermissionsQuery.Result[id]
-		if exists && permissionType != m.DsPermissionQuery {
-			return nil, errors.New("User not allowed to access datasource")
-		}
-	}
-
-	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"
-	cacheKey := fmt.Sprintf("ds-%d", id)
-
-	if !nocache {
-		if cached, found := hs.cache.Get(cacheKey); found {
-			ds := cached.(*m.DataSource)
-			if ds.OrgId == c.OrgId {
-				return ds, nil
-			}
-		}
-	}
-
-	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}
-	if err := bus.Dispatch(&query); err != nil {
-		return nil, err
-	}
-
-	hs.cache.Set(cacheKey, query.Result, time.Second*5)
-	return query.Result, nil
-}
-
 func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
 	dsId := c.ParamsInt64(":id")
-	ds, err := hs.getDatasourceFromCache(dsId, c)
-
+	ds, err := hs.DatasourceCache.GetDatasource(dsId, c.SignedInUser, c.SkipCache)
 	if err != nil {
+		if err == m.ErrDataSourceAccessDenied {
+			c.JsonApiErr(403, "Access denied to datasource", nil)
+			return
+		}
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
 		return
 	}
