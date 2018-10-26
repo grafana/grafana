@@ -2,14 +2,14 @@ import coreModule from 'app/core/core_module';
 import { importPluginModule } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import DefaultTemplateQueryCtrl from '../templating/defaultTemplateQueryCtrl';
+import DefaultTemplateQueryComponent from '../templating/DefaultTemplateQueryComponent';
 
 async function loadComponent(module) {
   const component = await importPluginModule(module);
   if (component && component.TemplateQueryComponent) {
     return component.TemplateQueryComponent;
   } else {
-    return DefaultTemplateQueryCtrl;
+    return DefaultTemplateQueryComponent;
   }
 }
 

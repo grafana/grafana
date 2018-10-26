@@ -5,7 +5,7 @@ interface Props {
   onChange: (c: string) => void;
 }
 
-export default class DefaultTemplateQueryCtrl extends PureComponent<Props, any> {
+export default class DefaultTemplateQueryComponent extends PureComponent<Props, any> {
   constructor(props) {
     super(props);
     this.state = { value: props.query };
