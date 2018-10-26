@@ -128,15 +128,13 @@ export class DashboardPanel extends React.Component<Props, State> {
           />
         </div>
         {this.props.panel.isEditing && (
-          <div className="panel-editor-container__editor">
-            <PanelEditor
-              panel={this.props.panel}
-              panelType={this.props.panel.type}
-              dashboard={this.props.dashboard}
-              onTypeChanged={this.onPluginTypeChanged}
-              pluginExports={pluginExports}
-            />
-          </div>
+          <PanelEditor
+            panel={this.props.panel}
+            panelType={this.props.panel.type}
+            dashboard={this.props.dashboard}
+            onTypeChanged={this.onPluginTypeChanged}
+            pluginExports={pluginExports}
+          />
         )}
       </div>
     );

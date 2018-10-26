@@ -77,20 +77,24 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     const activeTab = location.query.tab || 'queries';
 
     return (
-      <div className="tabbed-view tabbed-view--new">
-        <div className="tabbed-view-header">
-          <ul className="gf-tabs">
-            {this.tabs.map(tab => {
-              return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
-            })}
-          </ul>
+      <div className="panel-editor-container__editor">
+        <div className="panel-editor__aside">
+          <h2 className="panel-editor__aside-header">
+            <i className="fa fa-cog" />
+            Edit Panel
+          </h2>
+          {this.tabs.map(tab => {
+            return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
+          })}
 
-          <button className="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-            <i className="fa fa-remove" />
-          </button>
+          <div className="dashboard-settings__aside-actions">
+            <button className="btn btn-inverse" ng-click="ctrl.exitFullscreen();">
+              <i className="fa fa-remove" /> Close
+            </button>
+          </div>
         </div>
 
-        <div className="tabbed-view-body">
+        <div className="panel-editor__content">
           {activeTab === 'queries' && this.renderQueriesTab()}
           {activeTab === 'visualization' && this.renderVizTab()}
         </div>
@@ -107,15 +111,13 @@ interface TabItemParams {
 
 function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   const tabClasses = classNames({
-    'gf-tabs-link': true,
+    'dashboard-settings__nav-item': true,
     active: activeTab === tab.id,
   });
 
   return (
-    <li className="gf-tabs-item" key={tab.id}>
-      <a className={tabClasses} onClick={() => onClick(tab)}>
-        <i className={tab.icon} /> {tab.text}
-      </a>
-    </li>
+    <a className={tabClasses} onClick={() => onClick(tab)}>
+      <i className={tab.icon} /> {tab.text}
+    </a>
   );
 }

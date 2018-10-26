@@ -41,7 +41,8 @@
 
 .panel-in-fullscreen {
   .navbar {
-    @include navbar-alt-look();
+    // @include navbar-alt-look();
+    display: none;
   }
 
   .navbar-button--add-panel,
@@ -98,11 +99,11 @@
 }
 
 .navbar-buttons {
-  height: $navbarHeight;
+  // height: $navbarHeight;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-right: $spacer;
+  // margin-right: $spacer;
 
   &--close {
     display: none;
