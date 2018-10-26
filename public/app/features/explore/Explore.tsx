@@ -695,11 +695,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   }
 
-  request = url => {
-    const { datasource } = this.state;
-    return datasource.metadataRequest(url);
-  };
-
   cloneState(): ExploreState {
     // Copy state, but copy queries including modifications
     return {
@@ -831,9 +826,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasource && !datasourceError ? (
           <div className="explore-container">
             <QueryRows
+              datasource={datasource}
               history={history}
               queries={queries}
-              request={this.request}
               onAddQueryRow={this.onAddQueryRow}
               onChangeQuery={this.onChangeQuery}
               onClickHintFix={this.onModifyQueries}
