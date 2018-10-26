@@ -6,7 +6,7 @@ export interface PluginExports {
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
-  TemplateQueryCtrl?: any;
+  TemplateQueryComponent?: any;
   ExploreQueryField?: any;
   ExploreStartPage?: any;
 

@@ -1,13 +1,13 @@
 import React, { SFC } from 'react';
 
 interface Props {
-  onMetricTypeChanged: any;
+  onMetricTypeChange: any;
   selectedService: string;
   metricDescriptors: any[];
 }
 
-const MetricTypes: SFC<Props> = props => {
-  const extractMetricTypes = () => {
+const MetricTypeSelector: SFC<Props> = props => {
+  const filterMetricTypes = () => {
     if (!props.selectedService) {
       return [];
     }
@@ -22,8 +22,8 @@ const MetricTypes: SFC<Props> = props => {
     <div className="gf-form max-width-21">
       <span className="gf-form-label width-7">Metric Types</span>
       <div className="gf-form-select-wrapper max-width-14">
-        <select className="gf-form-input" required onChange={props.onMetricTypeChanged}>
-          {extractMetricTypes().map((qt, i) => (
+        <select className="gf-form-input" required onChange={props.onMetricTypeChange}>
+          {filterMetricTypes().map((qt, i) => (
             <option key={i} value={qt.value} ng-if="false">
               {qt.name}
             </option>
@@ -34,4 +34,4 @@ const MetricTypes: SFC<Props> = props => {
   );
 };
 
-export default MetricTypes;
+export default MetricTypeSelector;

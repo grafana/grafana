@@ -1,15 +1,15 @@
 import React, { PureComponent } from 'react';
-import StackdriverDatasource from './datasource';
-import Services from './services';
-import MetricTypes from './metricTypes';
+import StackdriverDatasource from '../datasource';
+import ServiceSelector from './ServiceSelector';
+import MetricTypeSelector from './MetricTypeSelector';
 
 interface Props {
   datasource: StackdriverDatasource;
-  query: string;
+  query: any;
   onChange: (c: string) => void;
 }
 
-export class StackdriverTemplateQueryCtrl extends PureComponent<Props, any> {
+export class StackdriverTemplateQueryComponent extends PureComponent<Props, any> {
   queryTypes: Array<{ value: string; name: string }> = [
     { value: 'services', name: 'Services' },
     { value: 'metricTypes', name: 'Metric Types' },
@@ -18,9 +18,9 @@ export class StackdriverTemplateQueryCtrl extends PureComponent<Props, any> {
 
   constructor(props) {
     super(props);
-    this.handleChange = this.handleChange.bind(this);
+    this.handleQueryTypeChange = this.handleQueryTypeChange.bind(this);
     this.onServiceChange = this.onServiceChange.bind(this);
-    this.onMetricTypeChanged = this.onMetricTypeChanged.bind(this);
+    this.onMetricTypeChange = this.onMetricTypeChange.bind(this);
     this.state = { queryType: undefined, metricDescriptors: [], service: undefined, metricType: undefined };
   }
 
@@ -29,7 +29,7 @@ export class StackdriverTemplateQueryCtrl extends PureComponent<Props, any> {
     this.setState({ metricDescriptors });
   }
 
-  handleChange(event) {
+  handleQueryTypeChange(event) {
     this.setState({ queryType: event.target.value });
   }
 
@@ -37,22 +37,24 @@ export class StackdriverTemplateQueryCtrl extends PureComponent<Props, any> {
     this.setState({ service: event.target.value });
   }
 
-  onMetricTypeChanged(event) {
+  onMetricTypeChange(event) {
     this.setState({ metricType: event.target.value });
   }
 
   renderSwitch(queryType) {
     switch (queryType) {
       case 'metricTypes':
-        return <Services metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />;
+        return (
+          <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+        );
       case 'metricLabels':
         return (
           <React.Fragment>
-            <Services metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
-            <MetricTypes
+            <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+            <MetricTypeSelector
               selectedService={this.state.service}
               metricDescriptors={this.state.metricDescriptors}
-              onMetricTypeChanged={this.onMetricTypeChanged}
+              onMetricTypeChange={this.onMetricTypeChange}
             />
           </React.Fragment>
         );
@@ -67,7 +69,7 @@ export class StackdriverTemplateQueryCtrl extends PureComponent<Props, any> {
         <div className="gf-form max-width-21">
           <span className="gf-form-label width-7">Query Type</span>
           <div className="gf-form-select-wrapper max-width-14">
-            <select className="gf-form-input" required onChange={this.handleChange}>
+            <select className="gf-form-input" required onChange={this.handleQueryTypeChange}>
               {this.queryTypes.map((qt, i) => (
                 <option key={i} value={qt.value} ng-if="false">
                   {qt.name}

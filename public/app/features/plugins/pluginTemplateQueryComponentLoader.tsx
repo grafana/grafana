@@ -6,10 +6,10 @@ import DefaultTemplateQueryCtrl from '../templating/defaultTemplateQueryCtrl';
 
 async function loadComponent(module) {
   const component = await importPluginModule(module);
-  if (!component.TemplateQueryCtrl) {
-    return DefaultTemplateQueryCtrl;
+  if (component && component.TemplateQueryComponent) {
+    return component.TemplateQueryComponent;
   } else {
-    return component.TemplateQueryCtrl;
+    return DefaultTemplateQueryCtrl;
   }
 }
 

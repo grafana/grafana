@@ -6,7 +6,7 @@ interface Props {
   metricDescriptors: any[];
 }
 
-const Services: SFC<Props> = props => {
+const ServiceSelector: SFC<Props> = props => {
   const extractServices = () =>
     uniqBy(props.metricDescriptors, 'service').map(m => ({
       value: m.service,
@@ -29,4 +29,4 @@ const Services: SFC<Props> = props => {
   );
 };
 
-export default Services;
+export default ServiceSelector;
