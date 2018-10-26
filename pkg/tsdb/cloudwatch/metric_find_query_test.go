@@ -9,19 +9,25 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/bmizerany/assert"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 type mockedEc2 struct {
 	ec2iface.EC2API
-	Resp ec2.DescribeInstancesOutput
+	Resp        ec2.DescribeInstancesOutput
+	RespRegions ec2.DescribeRegionsOutput
 }
 
 func (m mockedEc2) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
 	fn(&m.Resp, true)
 	return nil
+}
+func (m mockedEc2) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+	return &m.RespRegions, nil
 }
 
 func TestCloudWatchMetrics(t *testing.T) {
@@ -79,6 +85,31 @@ func TestCloudWatchMetrics(t *testing.T) {
 
 		Convey("Should contain Test_DimensionName", func() {
 			So(dimensionKeys, ShouldContain, "Test_DimensionName")
+		})
+	})
+
+	Convey("When calling handleGetRegions", t, func() {
+		executor := &CloudWatchExecutor{
+			ec2Svc: mockedEc2{RespRegions: ec2.DescribeRegionsOutput{
+				Regions: []*ec2.Region{
+					{
+						RegionName: aws.String("ap-northeast-2"),
+					},
+				},
+			}},
+		}
+		jsonData := simplejson.New()
+		jsonData.Set("defaultRegion", "default")
+		executor.DataSource = &models.DataSource{
+			JsonData:       jsonData,
+			SecureJsonData: securejsondata.SecureJsonData{},
+		}
+
+		result, _ := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
+
+		Convey("Should return regions", func() {
+			So(result[0].Text, ShouldEqual, "ap-northeast-1")
+			So(result[1].Text, ShouldEqual, "ap-northeast-2")
 		})
 	})
 
