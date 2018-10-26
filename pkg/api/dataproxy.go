@@ -14,7 +14,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	ds, err := hs.DatasourceCache.GetDatasource(dsId, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if err == m.ErrDataSourceAccessDenied {
-			c.JsonApiErr(403, "Access denied to datasource", nil)
+			c.JsonApiErr(403, "Access denied to datasource", err)
 			return
 		}
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
