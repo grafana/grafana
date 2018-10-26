@@ -10,7 +10,14 @@ const OrgProfile: SFC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
   return (
     <div>
       <h3 className="page-sub-heading">Organization profile</h3>
-      <form name="orgForm" className="gf-form-group" onSubmit={onSubmit}>
+      <form
+        name="orgForm"
+        className="gf-form-group"
+        onSubmit={event => {
+          event.preventDefault();
+          onSubmit();
+        }}
+      >
         <div className="gf-form-inline">
           <div className="gf-form max-width-28">
             <span className="gf-form-label">Organization name</span>

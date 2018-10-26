@@ -29,15 +29,22 @@ const OrgPreferences: SFC<Props> = ({
   ];
 
   return (
-    <form className="section gf-form-group" onSubmit={onSubmit}>
+    <form
+      className="section gf-form-group"
+      onSubmit={event => {
+        event.preventDefault();
+        onSubmit();
+      }}
+    >
       <h3 className="page-heading">Preferences</h3>
       <div className="gf-form">
         <span className="gf-form-label width-11">UI Theme</span>
         <SimplePicker
+          defaultValue={themes.find(theme => theme.value === preferences.theme)}
           options={themes}
           getOptionValue={i => i.value}
           getOptionLabel={i => i.text}
-          onSelected={theme => onThemeChange(theme)}
+          onSelected={theme => onThemeChange(theme.value)}
           width={20}
         />
       </div>
@@ -53,6 +60,7 @@ const OrgPreferences: SFC<Props> = ({
           </Tooltip>
         </span>
         <SimplePicker
+          defaultValue={starredDashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
           getOptionValue={i => i.id}
           getOptionLabel={i => i.title}
           onSelected={(dashboard: DashboardAcl) => onDashboardChange(dashboard.id)}
@@ -64,9 +72,10 @@ const OrgPreferences: SFC<Props> = ({
       <div className="gf-form">
         <label className="gf-form-label width-11">Timezone</label>
         <SimplePicker
+          defaultValue={timezones.find(timezone => timezone.value === preferences.timezone)}
           getOptionValue={i => i.value}
           getOptionLabel={i => i.text}
-          onSelected={timezone => onTimeZoneChange(timezone)}
+          onSelected={timezone => onTimeZoneChange(timezone.value)}
           options={timezones}
           width={20}
         />

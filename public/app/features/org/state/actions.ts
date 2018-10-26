@@ -59,11 +59,6 @@ const preferencesLoaded = (preferences: OrganizationPreferences) => ({
   payload: preferences,
 });
 
-const starredDashboardsLoaded = (dashboards: DashboardAcl[]) => ({
-  type: ActionTypes.LoadStarredDashboards,
-  payload: dashboards,
-});
-
 export const setOrganizationName = (orgName: string) => ({
   type: ActionTypes.SetOrganizationName,
   payload: orgName,
@@ -95,7 +90,7 @@ export type Action =
 
 export function loadOrganization(): ThunkResult<void> {
   return async dispatch => {
-    const organisationResponse = await loadOrg();
+    const organisationResponse = await getBackendSrv().get('/api/org');
     dispatch(organisationLoaded(organisationResponse));
 
     return organisationResponse;
@@ -104,18 +99,27 @@ export function loadOrganization(): ThunkResult<void> {
 
 export function loadOrganizationPreferences(): ThunkResult<void> {
   return async dispatch => {
-    const preferencesResponse = await loadPreferences();
+    const preferencesResponse = await getBackendSrv().get('/api/org/preferences');
     dispatch(preferencesLoaded(preferencesResponse));
-
-    const starredDashboards = await getBackendSrv().search({ starred: true });
-    dispatch(starredDashboardsLoaded(starredDashboards));
   };
 }
 
-export async function loadOrg() {
-  return await await getBackendSrv().get('/api/org');
+export function updateOrganization() {
+  return async (dispatch, getStore) => {
+    const organization = getStore().organization.organization;
+
+    await getBackendSrv().put('/api/org', { name: organization.name });
+
+    dispatch(loadOrganization());
+  };
 }
 
-export async function loadPreferences() {
-  return await getBackendSrv().get('/api/org/preferences');
+export function updateOrganizationPreferences() {
+  return async (dispatch, getStore) => {
+    const preferences = getStore().organization.preferences;
+
+    await getBackendSrv().put('/api/org/preferences', preferences);
+
+    dispatch(loadOrganizationPreferences());
+  };
 }

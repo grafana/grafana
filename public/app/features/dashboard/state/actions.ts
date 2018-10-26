@@ -13,6 +13,7 @@ import {
 
 export enum ActionTypes {
   LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
+  LoadStarredDashboards = 'LOAD_STARRED_DASHBOARDS',
 }
 
 export interface LoadDashboardPermissionsAction {
@@ -20,7 +21,12 @@ export interface LoadDashboardPermissionsAction {
   payload: DashboardAcl[];
 }
 
-export type Action = LoadDashboardPermissionsAction;
+export interface LoadStarredDashboardsAction {
+  type: ActionTypes.LoadStarredDashboards;
+  payload: DashboardAcl[];
+}
+
+export type Action = LoadDashboardPermissionsAction | LoadStarredDashboardsAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 
@@ -29,10 +35,22 @@ export const loadDashboardPermissions = (items: DashboardAclDTO[]): LoadDashboar
   payload: items,
 });
 
+const starredDashboardsLoaded = (dashboards: DashboardAcl[]) => ({
+  type: ActionTypes.LoadStarredDashboards,
+  payload: dashboards,
+});
+
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {
     const permissions = await getBackendSrv().get(`/api/dashboards/id/${id}/permissions`);
     dispatch(loadDashboardPermissions(permissions));
+  };
+}
+
+export function loadStarredDashboards(): ThunkResult<void> {
+  return async dispatch => {
+    const starredDashboards = await getBackendSrv().search({ starred: true });
+    dispatch(starredDashboardsLoaded(starredDashboards));
   };
 }
 

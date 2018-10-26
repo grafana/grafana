@@ -4,17 +4,19 @@ import DescriptionOption from './DescriptionOption';
 import ResetStyles from './ResetStyles';
 
 interface Props {
-  options: any[];
   className?: string;
+  defaultValue: any;
+  getOptionLabel: (item: any) => string;
+  getOptionValue: (item: any) => string;
+  onSelected: (item: any) => {} | void;
+  options: any[];
   placeholder?: string;
   width: number;
-  onSelected: (item: any) => {} | void;
-  getOptionValue: (item: any) => string;
-  getOptionLabel: (item: any) => string;
 }
 
 const SimplePicker: SFC<Props> = ({
   className,
+  defaultValue,
   getOptionLabel,
   getOptionValue,
   onSelected,
@@ -24,18 +26,19 @@ const SimplePicker: SFC<Props> = ({
 }) => {
   return (
     <Select
-      isSearchable={false}
       classNamePrefix={`gf-form-select-box`}
       className={`width-${width} gf-form-input gf-form-input--form-dropdown ${className || ''}`}
-      placeholder={placeholder || 'Choose'}
-      options={options}
-      onChange={onSelected}
       components={{
         Option: DescriptionOption,
       }}
-      styles={ResetStyles}
-      getOptionValue={getOptionValue}
+      defaultValue={defaultValue}
       getOptionLabel={getOptionLabel}
+      getOptionValue={getOptionValue}
+      isSearchable={false}
+      onChange={onSelected}
+      options={options}
+      placeholder={placeholder || 'Choose'}
+      styles={ResetStyles}
     />
   );
 };

@@ -12,7 +12,10 @@ import {
   setOrganizationTheme,
   setOrganizationHomeDashboard,
   setOrganizationTimezone,
+  updateOrganization,
+  updateOrganizationPreferences,
 } from './state/actions';
+import { loadStarredDashboards } from '../dashboard/state/actions';
 import { DashboardAcl, NavModel, Organization, OrganizationPreferences, StoreState } from 'app/types';
 import { getNavModel } from '../../core/selectors/navModel';
 
@@ -23,29 +26,33 @@ export interface Props {
   starredDashboards: DashboardAcl[];
   loadOrganization: typeof loadOrganization;
   loadOrganizationPreferences: typeof loadOrganizationPreferences;
+  loadStarredDashboards: typeof loadStarredDashboards;
   setOrganizationName: typeof setOrganizationName;
   setOrganizationHomeDashboard: typeof setOrganizationHomeDashboard;
   setOrganizationTheme: typeof setOrganizationTheme;
   setOrganizationTimezone: typeof setOrganizationTimezone;
+  updateOrganization: typeof updateOrganization;
+  updateOrganizationPreferences: typeof updateOrganizationPreferences;
 }
 
 export class OrgDetailsPage extends PureComponent<Props> {
   async componentDidMount() {
-    this.fetchOrganisation();
-  }
-
-  async fetchOrganisation() {
+    await this.props.loadStarredDashboards();
     await this.props.loadOrganization();
     await this.props.loadOrganizationPreferences();
   }
 
-  onOrgNameChange = event => {
-    this.props.setOrganizationName(event.target.value);
+  onOrgNameChange = name => {
+    this.props.setOrganizationName(name);
   };
 
-  onSubmitForm = () => {};
+  onUpdateOrganization = () => {
+    this.props.updateOrganization();
+  };
 
-  onSubmitPreferences = () => {};
+  onSubmitPreferences = () => {
+    this.props.updateOrganizationPreferences();
+  };
 
   onThemeChange = theme => {
     this.props.setOrganizationTheme(theme);
@@ -72,7 +79,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
             <div>
               <OrgProfile
                 onOrgNameChange={name => this.onOrgNameChange(name)}
-                onSubmit={this.onSubmitForm}
+                onSubmit={this.onUpdateOrganization}
                 orgName={organization.name}
               />
               <OrgPreferences
@@ -103,10 +110,13 @@ function mapStateToProps(state: StoreState) {
 const mapDispatchToProps = {
   loadOrganization,
   loadOrganizationPreferences,
+  loadStarredDashboards,
   setOrganizationName,
   setOrganizationTheme,
   setOrganizationHomeDashboard,
   setOrganizationTimezone,
+  updateOrganization,
+  updateOrganizationPreferences,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
