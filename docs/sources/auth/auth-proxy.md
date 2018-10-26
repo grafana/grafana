@@ -29,6 +29,10 @@ header_property = username
 auto_sign_up = true
 # If combined with Grafana LDAP integration define sync interval
 ldap_sync_ttl = 60
+# If HTTP Header is a JSON string, set this to true. Defaults to 'false'.
+json_header = true
+# Needed when using json_header, specify the JSON key that will contain the user as a value.
+json_property = preferred_username
 # Limit where auth proxy requests come from by configuring a list of IP addresses.
 # This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 whitelist =

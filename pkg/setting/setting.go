@@ -13,15 +13,12 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-
-	"gopkg.in/ini.v1"
-
-	"github.com/go-macaron/session"
-
 	"time"
 
+	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -119,13 +116,15 @@ var (
 	AnonymousOrgRole string
 
 	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderName     string
-	AuthProxyHeaderProperty string
-	AuthProxyAutoSignUp     bool
-	AuthProxyLdapSyncTtl    int
-	AuthProxyWhitelist      string
-	AuthProxyHeaders        map[string]string
+	AuthProxyEnabled            bool
+	AuthProxyHeaderName         string
+	AuthProxyHeaderProperty     string
+	AuthProxyAutoSignUp         bool
+	AuthProxyLdapSyncTtl        int
+	AuthProxyWhitelist          string
+	AuthProxyHeaders            map[string]string
+	AuthProxyJsonHeader         bool
+	AuthProxyJsonHeaderProperty string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -639,6 +638,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist = authProxy.Key("whitelist").String()
+	AuthProxyJsonHeader = authProxy.Key("json_header").MustBool(false)
+	AuthProxyJsonHeaderProperty = authProxy.Key("json_property").String()
 
 	AuthProxyHeaders = make(map[string]string)
 	for _, propertyAndHeader := range util.SplitString(authProxy.Key("headers").String()) {

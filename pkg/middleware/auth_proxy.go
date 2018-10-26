@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -24,6 +25,25 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	}
 
 	proxyHeaderValue := ctx.Req.Header.Get(setting.AuthProxyHeaderName)
+
+	if setting.AuthProxyJsonHeader {
+		headermap := map[string]string{}
+
+		// if JSON header doesn't exist, validation will return an error
+		if len(proxyHeaderValue) == 0 || len(setting.AuthProxyJsonHeaderProperty) == 0 {
+			return false
+		}
+
+		err := json.Unmarshal([]byte(proxyHeaderValue), &headermap)
+		if err != nil {
+			ctx.Handle(500, "Unable to authenticate user", err)
+			return false
+		}
+
+		proxyHeaderValue = headermap[setting.AuthProxyJsonHeaderProperty]
+
+	}
+
 	if len(proxyHeaderValue) == 0 {
 		return false
 	}
