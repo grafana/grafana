@@ -12,7 +12,7 @@ exports[`EmptyListCTA renders correctly 1`] = `
   <a
     className="empty-list-cta__button btn btn-xlarge btn-success"
     href="http://url/to/destination"
-    onClick="handler"
+    onClick={[MockFunction]}
   >
     <i
       className="ga css class"
