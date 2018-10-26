@@ -1,27 +1,24 @@
 import React, { PureComponent } from 'react';
-import StackdriverDatasource from '../datasource';
+// import StackdriverDatasource from '../datasource';
 import ServiceSelector from './ServiceSelector';
 import MetricTypeSelector from './MetricTypeSelector';
+import { TemplateQueryProps } from 'app/types/plugins';
+import defaultsDeep from 'lodash/defaultsDeep';
 
-interface Props {
-  datasource: StackdriverDatasource;
-  query: any;
-  onChange: (c: string) => void;
-}
-
-export class StackdriverTemplateQueryComponent extends PureComponent<Props, any> {
+export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, any> {
   queryTypes: Array<{ value: string; name: string }> = [
     { value: 'services', name: 'Services' },
     { value: 'metricTypes', name: 'Metric Types' },
     { value: 'metricLabels', name: 'Metric labels For Metric Type' },
   ];
+  defaults = { type: undefined, metricDescriptors: [], service: undefined, metricType: undefined };
 
-  constructor(props) {
+  constructor(props: TemplateQueryProps) {
     super(props);
     this.handleQueryTypeChange = this.handleQueryTypeChange.bind(this);
     this.onServiceChange = this.onServiceChange.bind(this);
     this.onMetricTypeChange = this.onMetricTypeChange.bind(this);
-    this.state = { queryType: undefined, metricDescriptors: [], service: undefined, metricType: undefined };
+    this.state = defaultsDeep(this.props.query, this.defaults);
   }
 
   async componentDidMount() {
@@ -30,7 +27,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<Props, any>
   }
 
   handleQueryTypeChange(event) {
-    this.setState({ queryType: event.target.value });
+    this.setState({ type: event.target.value });
   }
 
   onServiceChange(event) {
@@ -39,6 +36,11 @@ export class StackdriverTemplateQueryComponent extends PureComponent<Props, any>
 
   onMetricTypeChange(event) {
     this.setState({ metricType: event.target.value });
+  }
+
+  componentDidUpdate() {
+    const { metricDescriptors, ...queryModel } = this.state;
+    this.props.onChange(queryModel);
   }
 
   renderSwitch(queryType) {
@@ -78,7 +80,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<Props, any>
             </select>
           </div>
         </div>
-        {this.renderSwitch(this.state.queryType)}
+        {this.renderSwitch(this.state.type)}
       </React.Fragment>
     );
   }

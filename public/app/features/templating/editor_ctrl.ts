@@ -72,6 +72,7 @@ export class VariableEditorCtrl {
 
       if (
         $scope.current.type === 'query' &&
+        _.isString($scope.current.query) &&
         $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))
       ) {
         appEvents.emit('alert-warning', [

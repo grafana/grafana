@@ -1,4 +1,5 @@
 import React, { SFC } from 'react';
+import { getMetricTypesByService } from '../functions';
 
 interface Props {
   onMetricTypeChange: any;
@@ -12,7 +13,7 @@ const MetricTypeSelector: SFC<Props> = props => {
       return [];
     }
 
-    return props.metricDescriptors.filter(m => m.service === props.selectedService).map(m => ({
+    return getMetricTypesByService(props.metricDescriptors, props.selectedService).map(m => ({
       value: m.service,
       name: m.displayName,
     }));

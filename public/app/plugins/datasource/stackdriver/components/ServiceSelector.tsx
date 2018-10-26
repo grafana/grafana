@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import uniqBy from 'lodash/uniqBy';
+import { extractServicesFromMetricDescriptors } from '../functions';
 
 interface Props {
   onServiceChange: any;
@@ -7,11 +7,12 @@ interface Props {
 }
 
 const ServiceSelector: SFC<Props> = props => {
-  const extractServices = () =>
-    uniqBy(props.metricDescriptors, 'service').map(m => ({
+  const extractServices = () => {
+    return extractServicesFromMetricDescriptors(props.metricDescriptors).map(m => ({
       value: m.service,
       name: m.serviceShortName,
     }));
+  };
 
   return (
     <div className="gf-form max-width-21">

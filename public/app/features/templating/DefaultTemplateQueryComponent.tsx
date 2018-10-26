@@ -1,11 +1,7 @@
 import React, { PureComponent } from 'react';
+import { TemplateQueryProps } from 'app/types/plugins';
 
-interface Props {
-  query: string;
-  onChange: (c: string) => void;
-}
-
-export default class DefaultTemplateQueryComponent extends PureComponent<Props, any> {
+export default class DefaultTemplateQueryComponent extends PureComponent<TemplateQueryProps, any> {
   constructor(props) {
     super(props);
     this.state = { value: props.query };

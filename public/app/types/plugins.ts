@@ -99,3 +99,10 @@ export interface PluginsState {
   hasFetched: boolean;
   dashboards: PluginDashboard[];
 }
+
+export interface TemplateQueryProps {
+  query: any;
+  onChange: (c: any) => void;
+  datasource: any;
+  // datasource: StackdriverDatasource;
+}
