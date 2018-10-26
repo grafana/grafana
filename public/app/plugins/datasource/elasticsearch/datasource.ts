@@ -15,6 +15,7 @@ export class ElasticDatasource {
   esVersion: number;
   interval: string;
   maxConcurrentShardRequests: number;
+  timeZone: string;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
 
@@ -30,6 +31,11 @@ export class ElasticDatasource {
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;
     this.maxConcurrentShardRequests = instanceSettings.jsonData.maxConcurrentShardRequests;
+    if (timeSrv.dashboard && timeSrv.dashboard.timezone === 'utc') {
+      this.timeZone = 'UTC';
+    } else {
+      this.timeZone = moment().format('Z');
+    }
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
       esVersion: this.esVersion,
@@ -270,8 +276,10 @@ export class ElasticDatasource {
       return this.$q.when([]);
     }
 
-    payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
-    payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
+    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf());
+    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf());
+    payload = payload.replace(/\$timeZone/g, this.timeZone);
+
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
     return this.post('_msearch', payload).then(res => {
@@ -364,8 +372,9 @@ export class ElasticDatasource {
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-    esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
-    esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
+    esQuery = esQuery.replace(/"\$timeFrom"/g, range.from.valueOf());
+    esQuery = esQuery.replace(/"\$timeTo"/g, range.to.valueOf());
+    esQuery = esQuery.replace(/\$timeZone/g, this.timeZone);
     esQuery = header + '\n' + esQuery + '\n';
 
     return this.post('_msearch?search_type=' + searchType, esQuery).then(res => {
