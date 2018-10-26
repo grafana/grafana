@@ -7,6 +7,7 @@ import { QueriesTab } from './QueriesTab';
 import { PanelPlugin, PluginExports } from 'app/types/plugins';
 import { VizTypePicker } from './VizTypePicker';
 import { updateLocation } from 'app/core/actions';
+import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -31,6 +32,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     this.tabs = [
       { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
       { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
+      { id: 'alert', text: 'Alert', icon: 'gicon gicon-alert' },
     ];
   }
 
@@ -52,13 +54,9 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   renderVizTab() {
     return (
       <div className="viz-editor">
-        <div className="viz-editor-col1">
-          <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.props.onTypeChanged} />
-        </div>
-        <div className="viz-editor-col2">
-          <h5 className="page-heading">Options</h5>
-          {this.renderPanelOptions()}
-        </div>
+        <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.props.onTypeChanged} />
+        <h5 className="page-heading p-t-2">Options</h5>
+        {this.renderPanelOptions()}
       </div>
     );
   }
@@ -95,8 +93,10 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
         </div>
 
         <div className="panel-editor__content">
-          {activeTab === 'queries' && this.renderQueriesTab()}
-          {activeTab === 'visualization' && this.renderVizTab()}
+          <CustomScrollbar>
+            {activeTab === 'queries' && this.renderQueriesTab()}
+            {activeTab === 'visualization' && this.renderVizTab()}
+          </CustomScrollbar>
         </div>
       </div>
     );
