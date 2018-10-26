@@ -10,7 +10,7 @@ import dashboardReducers from 'app/features/dashboard/state/reducers';
 import pluginReducers from 'app/features/plugins/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
-import organisationReducers from 'app/features/org/state/reducers';
+import organizationReducers from 'app/features/org/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -22,7 +22,7 @@ const rootReducers = {
   ...pluginReducers,
   ...dataSourcesReducers,
   ...usersReducers,
-  ...organisationReducers,
+  ...organizationReducers,
 };
 
 export let store;

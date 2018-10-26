@@ -1,22 +1,24 @@
 import React, { SFC } from 'react';
 import Tooltip from '../../core/components/Tooltip/Tooltip';
-import { DashboardAcl, OrganisationPreferences } from 'app/types';
 import SimplePicker from '../../core/components/Picker/SimplePicker';
+import { DashboardAcl, OrganizationPreferences } from 'app/types';
 
 interface Props {
-  preferences: OrganisationPreferences;
+  preferences: OrganizationPreferences;
   starredDashboards: DashboardAcl[];
-  onDashboardSelected: (dashboard: DashboardAcl) => void;
+  onDashboardChange: (dashboardId: number) => void;
   onTimeZoneChange: (timeZone: string) => void;
+  onThemeChange: (theme: string) => void;
   onSubmit: () => void;
 }
 
 const OrgPreferences: SFC<Props> = ({
   preferences,
   starredDashboards,
-  onDashboardSelected,
+  onDashboardChange,
   onSubmit,
   onTimeZoneChange,
+  onThemeChange,
 }) => {
   const themes = [{ value: '', text: 'Default' }, { value: 'dark', text: 'Dark' }, { value: 'light', text: 'Light' }];
 
@@ -35,9 +37,8 @@ const OrgPreferences: SFC<Props> = ({
           options={themes}
           getOptionValue={i => i.value}
           getOptionLabel={i => i.text}
-          onSelected={theme => {
-            console.log(theme);
-          }}
+          onSelected={theme => onThemeChange(theme)}
+          width={20}
         />
       </div>
       <div className="gf-form">
@@ -52,23 +53,22 @@ const OrgPreferences: SFC<Props> = ({
           </Tooltip>
         </span>
         <SimplePicker
-          getOptionLabel={i => i.title}
           getOptionValue={i => i.id}
-          onSelected={dashboard => onDashboardSelected(dashboard)}
+          getOptionLabel={i => i.title}
+          onSelected={(dashboard: DashboardAcl) => onDashboardChange(dashboard.id)}
           options={starredDashboards}
+          placeholder="Chose default dashboard"
+          width={20}
         />
       </div>
       <div className="gf-form">
         <label className="gf-form-label width-11">Timezone</label>
-
         <SimplePicker
-          className="gf-form-input"
-          onSelected={timezone => {
-            console.log(timezone);
-          }}
-          options={timezones}
-          getOptionLabel={i => i.text}
           getOptionValue={i => i.value}
+          getOptionLabel={i => i.text}
+          onSelected={timezone => onTimeZoneChange(timezone)}
+          options={timezones}
+          width={20}
         />
       </div>
       <div className="gf-form-button-row">

@@ -22,7 +22,7 @@ import {
 } from './series';
 import { PanelProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
-import { Organization, OrganisationPreferences, OrganisationState } from './organization';
+import { Organization, OrganizationPreferences, OrganizationState } from './organization';
 
 export {
   Team,
@@ -72,8 +72,8 @@ export {
   DataQueryOptions,
   PluginDashboard,
   Organization,
-  OrganisationState,
-  OrganisationPreferences,
+  OrganizationState,
+  OrganizationPreferences,
 };
 
 export interface StoreState {
@@ -86,5 +86,5 @@ export interface StoreState {
   dashboard: DashboardState;
   dataSources: DataSourcesState;
   users: UsersState;
-  organisation: OrganisationState;
+  organization: OrganizationState;
 }

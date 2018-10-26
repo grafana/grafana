@@ -5,14 +5,14 @@ export interface Organization {
   id: number;
 }
 
-export interface OrganisationPreferences {
+export interface OrganizationPreferences {
   homeDashboardId: number;
   theme: string;
   timezone: string;
 }
 
-export interface OrganisationState {
-  organisation: Organization;
-  preferences: OrganisationPreferences;
+export interface OrganizationState {
+  organization: Organization;
+  preferences: OrganizationPreferences;
   starredDashboards: DashboardAcl[];
 }
