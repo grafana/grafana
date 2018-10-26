@@ -150,10 +150,10 @@ export class StackdriverFilterCtrl {
   async getLabels() {
     this.loadLabelsPromise = new Promise(async resolve => {
       try {
-        const data = await this.datasource.getLabels(this.target.metricType, this.target.refId);
-        this.metricLabels = data.results[this.target.refId].meta.metricLabels;
-        this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
-        this.resourceTypes = data.results[this.target.refId].meta.resourceTypes;
+        const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
+        this.metricLabels = meta.metricLabels;
+        this.resourceLabels = meta.resourceLabels;
+        this.resourceTypes = meta.resourceTypes;
         resolve();
       } catch (error) {
         if (error.data && error.data.message) {

@@ -70,7 +70,7 @@ export default class StackdriverDatasource {
   }
 
   async getLabels(metricType, refId) {
-    return await this.getTimeSeries({
+    const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
@@ -84,6 +84,8 @@ export default class StackdriverDatasource {
       ],
       range: this.timeSrv.timeRange(),
     });
+
+    return response.results[refId];
   }
 
   interpolateGroupBys(groupBys: string[], scopedVars): string[] {
