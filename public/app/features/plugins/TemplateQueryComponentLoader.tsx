@@ -14,7 +14,7 @@ async function loadComponent(module) {
 }
 
 /** @ngInject */
-function pluginTemplateQueryComponentLoader() {
+function templateQueryComponentLoader() {
   return {
     restrict: 'E',
     link: async (scope, elem) => {
@@ -32,4 +32,4 @@ function pluginTemplateQueryComponentLoader() {
   };
 }
 
-coreModule.directive('pluginTemplateQueryComponent', pluginTemplateQueryComponentLoader);
+coreModule.directive('templateQueryComponentLoader', templateQueryComponentLoader);

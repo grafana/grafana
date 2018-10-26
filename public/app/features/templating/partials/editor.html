@@ -120,7 +120,8 @@
 
 			<div class="gf-form">
 				<span class="gf-form-label width-9">Values</span>
-				<input type="text" class="gf-form-input" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()" required></input>
+				<input type="text" class="gf-form-input" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur
+				 ng-change="runQuery()" required></input>
 			</div>
 
 			<div class="gf-form-inline">
@@ -199,14 +200,10 @@
 			</div>
 
 			<rebuild-on-change property="currentDatasource">
-				<plugin-template-query-component>
-				</plugin-template-query-component>
+				<template-query-component-loader>
+				</template-query-component-loader>
 			</rebuild-on-change>
 
-			<!-- <div class="gf-form">
-				<span class="gf-form-label width-7">Query</span>
-				<input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()" required></input>
-			</div> -->
 			<div class="gf-form">
 				<span class="gf-form-label width-7">
 					Regex
