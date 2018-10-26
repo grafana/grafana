@@ -21,7 +21,8 @@ export default class StackdriverMetricFindQuery {
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const services = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
-      text: s.name,
+      text: s.serviceShortName,
+      value: s.name,
       expandable: true,
     }));
   }
@@ -32,7 +33,8 @@ export default class StackdriverMetricFindQuery {
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     return getMetricTypesByService(metricDescriptors, service).map(s => ({
-      text: s.name,
+      text: s.displayName,
+      value: s.name,
       expandable: true,
     }));
   }
