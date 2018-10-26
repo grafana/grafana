@@ -1,4 +1,5 @@
 import { extractServicesFromMetricDescriptors, getMetricTypesByService } from './functions';
+import has from 'lodash/has';
 
 export default class StackdriverMetricFindQuery {
   constructor(private datasource) {}
@@ -9,6 +10,8 @@ export default class StackdriverMetricFindQuery {
         return this.handleServiceQueryType();
       case 'metricTypes':
         return this.handleMetricTypesQueryType(query);
+      case 'metricLabels':
+        return this.handleMetricLabelsQueryType(query);
       default:
         return [];
     }
@@ -32,5 +35,19 @@ export default class StackdriverMetricFindQuery {
       text: s.name,
       expandable: true,
     }));
+  }
+
+  async handleMetricLabelsQueryType({ metricType, metricLabelKey }) {
+    if (!metricType || !metricLabelKey) {
+      return [];
+    }
+    const refId = 'handleMetricLabelsQueryType';
+    const response = await this.datasource.getLabels(metricType, refId);
+    return has(response, `meta.metricLabels.${metricLabelKey}`)
+      ? response.meta.metricLabels[metricLabelKey].map(s => ({
+          text: s,
+          expandable: true,
+        }))
+      : [];
   }
 }

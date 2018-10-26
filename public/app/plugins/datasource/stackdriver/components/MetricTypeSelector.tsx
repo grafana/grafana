@@ -14,7 +14,7 @@ const MetricTypeSelector: SFC<Props> = props => {
     }
 
     return getMetricTypesByService(props.metricDescriptors, props.selectedService).map(m => ({
-      value: m.service,
+      value: m.type,
       name: m.displayName,
     }));
   };
