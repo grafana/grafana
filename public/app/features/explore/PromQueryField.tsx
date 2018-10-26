@@ -90,7 +90,7 @@ interface CascaderOption {
 
 interface PromQueryFieldProps {
   datasource: any;
-  error?: string;
+  error?: string | JSX.Element;
   hint?: any;
   history?: any[];
   initialQuery?: string | null;

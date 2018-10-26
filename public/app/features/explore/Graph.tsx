@@ -6,7 +6,7 @@ import { withSize } from 'react-sizeme';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 
-import { Range } from 'app/types/explore';
+import { RawTimeRange } from 'app/types/series';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
@@ -76,7 +76,7 @@ interface GraphProps {
   height?: string; // e.g., '200px'
   id?: string;
   loading?: boolean;
-  range: Range;
+  range: RawTimeRange;
   split?: boolean;
   size?: { width: number; height: number };
 }

@@ -3,15 +3,7 @@ import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 import _ from 'lodash';
 
-import {
-  ExploreState,
-  ExploreUrlState,
-  HistoryItem,
-  Query,
-  QueryTransaction,
-  Range,
-  ResultType,
-} from 'app/types/explore';
+import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, ResultType } from 'app/types/explore';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -24,12 +16,14 @@ import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer'
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
+import ErrorBoundary from './ErrorBoundary';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
+import { RawTimeRange } from 'app/types/series';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -154,11 +148,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   }
 
-  componentDidCatch(error) {
-    this.setState({ datasourceError: error });
-    console.error(error);
-  }
-
   async setDatasource(datasource) {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
@@ -170,7 +159,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const testResult = await datasource.testDatasource();
       datasourceError = testResult.status === 'success' ? null : testResult.message;
     } catch (error) {
-      datasourceError = (error && error.statusText) || error;
+      datasourceError = (error && error.statusText) || 'Network error';
     }
 
     const historyKey = `grafana.explore.history.${datasourceId}`;
@@ -278,10 +267,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   };
 
-  onChangeTime = nextRange => {
-    const range = {
-      from: nextRange.from,
-      to: nextRange.to,
+  onChangeTime = (nextRange: RawTimeRange) => {
+    const range: RawTimeRange = {
+      ...nextRange,
     };
     this.setState({ range }, () => this.onSubmit());
   };
@@ -459,7 +447,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   ) {
     const { datasource, range } = this.state;
     const resolution = this.el.offsetWidth;
-    const absoluteRange = {
+    const absoluteRange: RawTimeRange = {
       from: parseDate(range.from, false),
       to: parseDate(range.to, true),
     };
@@ -474,7 +462,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     ];
 
     // Clone range for query request
-    const queryRange: Range = { ...range };
+    const queryRange: RawTimeRange = { ...range };
 
     return {
       interval,
@@ -572,11 +560,26 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   }
 
-  failQueryTransaction(transactionId: string, error: string, datasourceId: string) {
+  failQueryTransaction(transactionId: string, response: any, datasourceId: string) {
     const { datasource } = this.state;
     if (datasource.meta.id !== datasourceId) {
       // Navigated away, queries did not matter
       return;
+    }
+
+    console.error(response);
+
+    let error: string | JSX.Element = response;
+    if (response.data) {
+      error = response.data.error;
+      if (response.data.response) {
+        error = (
+          <>
+            <span>{response.data.error}</span>
+            <details>{response.data.response}</details>
+          </>
+        );
+      }
     }
 
     this.setState(state => {
@@ -625,9 +628,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
           this.setState({ graphRange: transaction.options.range });
         } catch (response) {
-          console.error(response);
-          const queryError = response.data ? response.data.error : response;
-          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+          this.failQueryTransaction(transaction.id, response, datasourceId);
         }
       } else {
         this.discardTransactions(rowIndex);
@@ -657,9 +658,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           const results = res.data[0];
           this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
         } catch (response) {
-          console.error(response);
-          const queryError = response.data ? response.data.error : response;
-          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+          this.failQueryTransaction(transaction.id, response, datasourceId);
         }
       } else {
         this.discardTransactions(rowIndex);
@@ -685,9 +684,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           const results = res.data;
           this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
         } catch (response) {
-          console.error(response);
-          const queryError = response.data ? response.data.error : response;
-          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+          this.failQueryTransaction(transaction.id, response, datasourceId);
         }
       } else {
         this.discardTransactions(rowIndex);
@@ -739,15 +736,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
+    // TODO don't recreate those on each re-render
     const graphResult = _.flatten(
       queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
     );
     const tableResult = mergeTablesIntoModel(
       new TableModel(),
-      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done).map(qt => qt.result)
+      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
     );
     const logsResult = _.flatten(
-      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done).map(qt => qt.result)
+      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
     );
     const loading = queryTransactions.some(qt => !qt.done);
 
@@ -856,23 +854,25 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             </div>
 
             <main className="m-t-2">
-              {supportsGraph &&
-                showingGraph && (
-                  <Graph
-                    data={graphResult}
-                    height={graphHeight}
-                    loading={graphLoading}
-                    id={`explore-graph-${position}`}
-                    range={graphRange}
-                    split={split}
-                  />
-                )}
-              {supportsTable && showingTable ? (
-                <div className="panel-container m-t-2">
-                  <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
-                </div>
-              ) : null}
-              {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+              <ErrorBoundary>
+                {supportsGraph &&
+                  showingGraph && (
+                    <Graph
+                      data={graphResult}
+                      height={graphHeight}
+                      loading={graphLoading}
+                      id={`explore-graph-${position}`}
+                      range={graphRange}
+                      split={split}
+                    />
+                  )}
+                {supportsTable && showingTable ? (
+                  <div className="panel-container m-t-2">
+                    <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
+                  </div>
+                ) : null}
+                {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+              </ErrorBoundary>
             </main>
           </div>
         ) : null}
