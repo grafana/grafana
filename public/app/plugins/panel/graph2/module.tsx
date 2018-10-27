@@ -36,7 +36,11 @@ export class Graph2 extends PureComponent<Props> {
 
 export class TextOptions extends PureComponent<any> {
   render() {
-    return <p>Text2 Options component</p>;
+    return (
+      <div className="section gf-form-group">
+        <h5 className="section-heading">Draw Modes</h5>
+      </div>
+    );
   }
 }
 
