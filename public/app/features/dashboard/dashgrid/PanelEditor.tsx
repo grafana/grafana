@@ -1,5 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
+
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { store } from 'app/store/configureStore';
@@ -55,7 +56,6 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     return (
       <div className="viz-editor">
         <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.props.onTypeChanged} />
-        <h5 className="page-heading p-t-2">Options</h5>
         {this.renderPanelOptions()}
       </div>
     );
@@ -73,7 +73,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   onClose = () => {
     store.dispatch(
       updateLocation({
-        query: { tab: false, fullscreen: false, edit: false },
+        query: { tab: null, fullscreen: null, edit: null },
         partial: true,
       })
     );
@@ -85,6 +85,11 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
 
     return (
       <div className="panel-editor-container__editor">
+        <div className="panel-editor-resizer">
+          <div className="panel-editor-resizer__handle">
+            <div className="panel-editor-resizer__handle-dots" />
+          </div>
+        </div>
         <div className="panel-editor__aside">
           <h2 className="panel-editor__aside-header">
             <i className="fa fa-cog" />

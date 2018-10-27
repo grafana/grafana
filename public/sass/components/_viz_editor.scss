@@ -24,17 +24,14 @@
   }
 }
 
-.viz-picker {
-}
-
 .viz-picker__search {
   flex-grow: 0;
 }
 
 .viz-picker__items {
-  flex-grow: 1;
   display: flex;
-  flex-wrap: wrap;
+  // for scrollbar
+  margin-bottom: 10px;
 }
 
 .viz-picker__item {
@@ -42,16 +39,16 @@
   box-shadow: $card-shadow;
 
   border-radius: 3px;
-  padding: $spacer;
-  height: 60px;
-  width: 157px;
+  height: 70px;
+  width: 130px;
+  flex-shrink: 0;
+  flex-direction: column;
   text-align: center;
-  margin: 0 7px 7px 0;
   cursor: pointer;
   display: flex;
-  flex-shrink: 0;
+  margin-right: 6px;
   border: 1px solid transparent;
-  @include left-brand-border;
+  align-items: center;
 
   &:hover {
     background: $card-background-hover;
@@ -68,17 +65,15 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  font-size: $font-size-h5;
+  font-size: $font-size-sm;
   display: flex;
   flex-direction: column;
   align-self: center;
-  padding-left: $spacer;
-  font-size: $font-size-md;
-  color: $text-muted;
+  height: 20px;
 }
 
 .viz-picker__item-img {
-  height: 100%;
+  height: 40px;
 }
 
 .panel-editor-container {
@@ -96,6 +91,7 @@
   display: flex;
   flex-direction: row;
   height: 65%;
+  position: relative;
 }
 
 .panel-editor__content {
@@ -152,9 +148,8 @@
 .panel-editor__aside-header {
   color: $text-muted;
   font-size: $font-size-h3;
-  padding: 20px 20px 10px 20px;
+  padding: 20px 30px 10px 20px;
   white-space: nowrap;
-  margin-bottom: $spacer;
 
   i {
     font-size: 25px;
@@ -167,4 +162,34 @@
 .viz-picker__bar {
   display: flex;
   margin-bottom: $spacer;
+}
+
+.panel-editor-resizer {
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  top: 1px;
+  padding-left: 32px;
+}
+
+.panel-editor-resizer__handle {
+  display: inline-block;
+  width: 100px;
+  position: relative;
+  background: $input-label-bg;
+  top: -12px;
+  border-radius: 2px;
+  box-shadow: 0 0 8px $black;
+  height: 8px;
+  cursor: grabbing;
+}
+
+.panel-editor-resizer__handle-dots {
+  border-top: 2px dotted $text-color-faint;
+  position: relative;
+  top: 3px;
+}
+
+.panel-editor {
+  height: calc(100% - 10px);
 }

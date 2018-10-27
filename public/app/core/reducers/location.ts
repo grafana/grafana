@@ -18,6 +18,7 @@ export const locationReducer = (state = initialState, action: Action): LocationS
 
       if (action.payload.partial) {
         query = _.defaults(query, state.query);
+        query = _.omitBy(query, _.isNull);
       }
 
       return {

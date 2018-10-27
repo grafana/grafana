@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+
 import config from 'app/core/config';
 import { PanelPlugin } from 'app/types/plugins';
+import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 import _ from 'lodash';
 
 interface Props {
@@ -40,30 +42,45 @@ export class VizTypePicker extends PureComponent<Props, State> {
 
     return (
       <div key={index} className={cssClass} onClick={() => this.props.onTypeChanged(plugin)} title={plugin.name}>
-        <img className="viz-picker__item-img" src={plugin.info.logos.small} />
         <div className="viz-picker__item-name">{plugin.name}</div>
+        <img className="viz-picker__item-img" src={plugin.info.logos.small} />
       </div>
     );
   };
 
+  renderFilters() {
+    return (
+      <>
+        <label className="gf-form--has-input-icon">
+          <input type="text" className="gf-form-input width-13" placeholder="" />
+          <i className="gf-form-input-icon fa fa-search" />
+        </label>
+        <div>
+          <button className="btn toggle-btn gf-form-btn active">Basic Types</button>
+          <button className="btn toggle-btn gf-form-btn">Master Types</button>
+        </div>
+      </>
+    );
+  }
+
   render() {
+    const { currentType } = this.props;
+    const { pluginList } = this.state;
+
     return (
       <div className="viz-picker">
         <div className="viz-picker__bar">
           <label className="gf-form-label">Visualization</label>
-          <label className="gf-form-input width-10">{this.props.currentType}</label>
-          <div className="gf-form--grow" />
-          <label className="gf-form--has-input-icon">
-            <input type="text" className="gf-form-input width-13" placeholder="" />
-            <i className="gf-form-input-icon fa fa-search" />
+          <label className="gf-form-input width-10">
+            <span>{currentType}</span>
           </label>
-          <div>
-            <button className="btn toggle-btn gf-form-btn active">Basic Types</button>
-            <button className="btn toggle-btn gf-form-btn">Master Types</button>
-          </div>
+          <div className="gf-form--grow" />
+          {this.renderFilters()}
         </div>
 
-        <div className="viz-picker__items">{this.state.pluginList.map(this.renderVizPlugin)}</div>
+        <CustomScrollbar>
+          <div className="viz-picker__items">{pluginList.map(this.renderVizPlugin)}</div>
+        </CustomScrollbar>
       </div>
     );
   }
