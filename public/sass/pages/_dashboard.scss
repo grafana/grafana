@@ -9,18 +9,6 @@
   }
 }
 
-.panel-in-fullscreen {
-  .scroll-canvas--dashboard {
-    height: 100%;
-  }
-  .sidemenu {
-    display: none;
-  }
-  .main-view {
-    background: unset;
-  }
-}
-
 .template-variable {
   color: $variable;
 }

@@ -108,8 +108,11 @@ export class Graph extends PureComponent<GraphProps> {
       ...dynamicOptions,
     };
 
-    console.log('plot', timeSeries, options);
-    $.plot(this.element, timeSeries, options);
+    try {
+      $.plot(this.element, timeSeries, options);
+    } catch (err) {
+      console.log('plot error', err);
+    }
   }
 
   render() {

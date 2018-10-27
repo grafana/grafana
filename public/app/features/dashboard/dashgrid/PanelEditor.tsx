@@ -70,6 +70,15 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     );
   };
 
+  onClose = () => {
+    store.dispatch(
+      updateLocation({
+        query: { tab: false, fullscreen: false, edit: false },
+        partial: true,
+      })
+    );
+  };
+
   render() {
     const { location } = store.getState();
     const activeTab = location.query.tab || 'queries';
@@ -81,17 +90,23 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
             <i className="fa fa-cog" />
             Edit Panel
           </h2>
+
           {this.tabs.map(tab => {
             return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
           })}
 
-          <div className="dashboard-settings__aside-actions">
-            <button className="btn btn-inverse" ng-click="ctrl.exitFullscreen();">
-              <i className="fa fa-remove" /> Close
-            </button>
+          <div className="panel-editor__aside-actions">
+            <a className="btn btn-link" onClick={this.onClose}>
+              <i className="fa fa-check" /> Close
+            </a>
+            <a className="btn btn-link" onClick={this.onClose}>
+              <i className="fa fa-trash" /> Discard
+            </a>
+            <a className="btn btn-link" onClick={this.onClose}>
+              <i className="fa fa-copy" /> Save as master type
+            </a>
           </div>
         </div>
-
         <div className="panel-editor__content">
           <CustomScrollbar>
             {activeTab === 'queries' && this.renderQueriesTab()}
@@ -111,7 +126,7 @@ interface TabItemParams {
 
 function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   const tabClasses = classNames({
-    'dashboard-settings__nav-item': true,
+    'panel-editor__aside-item': true,
     active: activeTab === tab.id,
   });
 

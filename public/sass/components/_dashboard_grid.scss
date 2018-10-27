@@ -3,7 +3,7 @@
 
 .panel-in-fullscreen {
   .react-grid-layout {
-    height: 100% !important;
+    height: calc(100% - 20px) !important;
   }
 
   .react-grid-item {

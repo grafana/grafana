@@ -54,11 +54,11 @@ export class VizTypePicker extends PureComponent<Props, State> {
           <label className="gf-form-input width-10">{this.props.currentType}</label>
           <div className="gf-form--grow" />
           <label className="gf-form--has-input-icon">
-            <input type="text" className="gf-form-input width-13" value={''} placeholder="" />
+            <input type="text" className="gf-form-input width-13" placeholder="" />
             <i className="gf-form-input-icon fa fa-search" />
           </label>
           <div>
-            <button className="btn toggle-btn gf-form-btn active">Panel Types</button>
+            <button className="btn toggle-btn gf-form-btn active">Basic Types</button>
             <button className="btn toggle-btn gf-form-btn">Master Types</button>
           </div>
         </div>

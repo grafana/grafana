@@ -1,5 +1,27 @@
-.viz-editor {
-  height: 100%;
+.panel-in-fullscreen {
+  .scroll-canvas--dashboard {
+    height: 100%;
+  }
+
+  .sidemenu {
+    display: none;
+  }
+
+  .main-view {
+    background: unset;
+  }
+
+  .dashboard-container {
+    padding: 0;
+  }
+
+  .submenu-controls {
+    padding: $dashboard-padding $dashboard-padding $panel-margin $dashboard-padding;
+  }
+
+  .panel-editor-container__panel {
+    margin: 0 $dashboard-padding;
+  }
 }
 
 .viz-picker {
@@ -66,35 +88,71 @@
 }
 
 .panel-editor-container__panel {
-  height: 35%;
+  flex: 1 1 0;
 }
 
 .panel-editor-container__editor {
-  height: 65%;
   margin-top: $panel-margin*2;
   display: flex;
   flex-direction: row;
+  height: 65%;
 }
 
 .panel-editor__content {
   flex-grow: 1;
   min-width: 0;
   height: 100%;
-  padding: 0px 0 20px 20px;
+  padding: 0 20px;
   max-width: 1100px;
 }
 
 .panel-editor__aside {
-  padding: 18px 0 0 20px;
   background: $panel-bg;
   display: flex;
   flex-direction: column;
 }
 
+.panel-editor__aside-item {
+  padding: 8px 20px;
+  color: $text-color;
+  font-size: $font-size-md;
+  @include left-brand-border;
+
+  &.active {
+    @include left-brand-border-gradient();
+    background: $page-bg;
+  }
+
+  i {
+    width: 23px;
+  }
+
+  .gicon {
+    margin-bottom: 2px;
+  }
+
+  .fa {
+    font-size: 17px;
+  }
+}
+
+.panel-editor__aside-actions {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-grow: 1;
+  padding: 30px 0 0 0;
+
+  a {
+    text-align: left;
+    padding-left: 20px;
+  }
+}
+
 .panel-editor__aside-header {
   color: $text-muted;
   font-size: $font-size-h3;
-  padding-right: 50px;
+  padding: 20px 20px 10px 20px;
   white-space: nowrap;
   margin-bottom: $spacer;
 
