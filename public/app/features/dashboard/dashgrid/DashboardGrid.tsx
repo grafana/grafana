@@ -21,15 +21,14 @@ function GridWrapper({
   className,
   isResizable,
   isDraggable,
+  isFullscreen,
 }) {
-  if (size.width === 0) {
-    console.log('size is zero!');
-  }
-
   const width = size.width > 0 ? size.width : lastGridWidth;
   if (width !== lastGridWidth) {
-    onWidthChange();
-    lastGridWidth = width;
+    if (!isFullscreen && Math.abs(width - lastGridWidth) > 8) {
+      onWidthChange();
+      lastGridWidth = width;
+    }
   }
 
   return (
@@ -197,6 +196,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         onDragStop={this.onDragStop}
         onResize={this.onResize}
         onResizeStop={this.onResizeStop}
+        isFullscreen={this.props.dashboard.meta.fullscreen}
       >
         {this.renderPanels()}
       </SizedReactLayoutGrid>
