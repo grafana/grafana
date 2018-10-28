@@ -198,5 +198,76 @@ describe('Language completion provider', () => {
       expect(result.context).toBe('context-aggregation');
       expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
     });
+
+    it('returns label suggestions inside a multi-line aggregation context', () => {
+      const instance = new LanguageProvider(datasource, {
+        labelKeys: { '{__name__="metric"}': ['label1', 'label2', 'label3'] },
+      });
+      const value = Plain.deserialize('sum(\nmetric\n)\nby ()');
+      const aggregationTextBlock = value.document.getBlocksAsArray()[3];
+      const range = value.selection.moveToStartOf(aggregationTextBlock).merge({ anchorOffset: 4 });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.provideCompletionItems({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-aggregation'],
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-aggregation');
+      expect(result.suggestions).toEqual([
+        {
+          items: [{ label: 'label1' }, { label: 'label2' }, { label: 'label3' }],
+          label: 'Labels',
+        },
+      ]);
+    });
+
+    it('returns label suggestions inside an aggregation context with a range vector', () => {
+      const instance = new LanguageProvider(datasource, {
+        labelKeys: { '{__name__="metric"}': ['label1', 'label2', 'label3'] },
+      });
+      const value = Plain.deserialize('sum(rate(metric[1h])) by ()');
+      const range = value.selection.merge({
+        anchorOffset: 26,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.provideCompletionItems({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-aggregation'],
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-aggregation');
+      expect(result.suggestions).toEqual([
+        {
+          items: [{ label: 'label1' }, { label: 'label2' }, { label: 'label3' }],
+          label: 'Labels',
+        },
+      ]);
+    });
+
+    it('returns label suggestions inside an aggregation context with a range vector and label', () => {
+      const instance = new LanguageProvider(datasource, {
+        labelKeys: { '{__name__="metric",label1="value"}': ['label1', 'label2', 'label3'] },
+      });
+      const value = Plain.deserialize('sum(rate(metric{label1="value"}[1h])) by ()');
+      const range = value.selection.merge({
+        anchorOffset: 42,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.provideCompletionItems({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-aggregation'],
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-aggregation');
+      expect(result.suggestions).toEqual([
+        {
+          items: [{ label: 'label1' }, { label: 'label2' }, { label: 'label3' }],
+          label: 'Labels',
+        },
+      ]);
+    });
   });
 });
