@@ -1,3 +1,28 @@
+.panel-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel-editor-container__panel {
+  flex: 1 1 0;
+}
+
+.panel-editor-container__editor {
+  margin-top: $panel-margin*2;
+  display: flex;
+  flex-direction: row;
+  height: 65%;
+  position: relative;
+}
+
+.panel-editor__content {
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 20px;
+}
+
 .panel-in-fullscreen {
   .scroll-canvas--dashboard {
     height: 100%;
@@ -74,32 +99,6 @@
 
 .viz-picker__item-img {
   height: 40px;
-}
-
-.panel-editor-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.panel-editor-container__panel {
-  flex: 1 1 0;
-}
-
-.panel-editor-container__editor {
-  margin-top: $panel-margin*2;
-  display: flex;
-  flex-direction: row;
-  height: 65%;
-  position: relative;
-}
-
-.panel-editor__content {
-  flex-grow: 1;
-  min-width: 0;
-  height: 100%;
-  padding: 0 20px;
-  max-width: 1100px;
 }
 
 .panel-editor__aside {
