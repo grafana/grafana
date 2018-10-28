@@ -119,6 +119,7 @@ export interface QueryFix {
 export interface QueryFixAction {
   type: string;
   query?: string;
+  preventSubmit?: boolean;
 }
 
 export interface QueryHint {

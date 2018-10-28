@@ -12,6 +12,7 @@ import NewlinePlugin from './slate-plugins/newline';
 
 import Typeahead from './Typeahead';
 import { makeFragment, makeValue } from './Value';
+import PlaceholdersBuffer from './PlaceholdersBuffer';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
 
@@ -61,11 +62,14 @@ export interface TypeaheadInput {
 
 class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadFieldState> {
   menuEl: HTMLElement | null;
+  placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
   resetTimer: any;
 
   constructor(props, context) {
     super(props, context);
+
+    this.placeholdersBuffer = new PlaceholdersBuffer(props.initialValue || '');
 
     // Base plugins
     this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
@@ -76,7 +80,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
       typeaheadIndex: 0,
       typeaheadPrefix: '',
       typeaheadText: '',
-      value: makeValue(props.initialValue || '', props.syntax),
+      value: makeValue(this.placeholdersBuffer.toString(), props.syntax),
     };
   }
 
@@ -101,12 +105,14 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
   componentWillReceiveProps(nextProps: TypeaheadFieldProps) {
     if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
       // Need a bogus edit to re-render the editor after syntax has fully loaded
-      this.onChange(
-        this.state.value
-          .change()
-          .insertText(' ')
-          .deleteBackward()
-      );
+      const change = this.state.value
+        .change()
+        .insertText(' ')
+        .deleteBackward();
+      if (this.placeholdersBuffer.hasPlaceholders()) {
+        change.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
+      }
+      this.onChange(change);
     }
   }
 
@@ -289,7 +295,17 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
           }
 
           const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
-          this.applyTypeahead(change, suggestion);
+          const nextChange = this.applyTypeahead(change, suggestion);
+
+          const insertTextOperation = nextChange.operations.find(operation => operation.type === 'insert_text');
+          if (insertTextOperation) {
+            const suggestionText = insertTextOperation.text;
+            this.placeholdersBuffer.setNextPlaceholderValue(suggestionText);
+            if (this.placeholdersBuffer.hasPlaceholders()) {
+              nextChange.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
+            }
+          }
+
           return true;
         }
         break;
@@ -336,6 +352,8 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
     this.resetTimer = setTimeout(this.resetTypeahead, 100);
+    // Disrupting placeholder entry wipes all remaining placeholders needing input
+    this.placeholdersBuffer.clearPlaceholders();
     if (onBlur) {
       onBlur();
     }

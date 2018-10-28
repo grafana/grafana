@@ -162,16 +162,29 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     let refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
 
-    // sum(foo{bar="1"}) by (|)
-    const line = value.anchorBlock.getText();
-    const cursorOffset: number = value.anchorOffset;
-    // sum(foo{bar="1"}) by (
-    const leftSide = line.slice(0, cursorOffset);
+    // Stitch all query lines together to support multi-line queries
+    let queryOffset;
+    const queryText = value.document.getBlocks().reduce((text, block) => {
+      const blockText = block.getText();
+      if (value.anchorBlock.key === block.key) {
+        // Newline characters are not accounted for but this is irrelevant
+        // for the purpose of extracting the selector string
+        queryOffset = value.anchorOffset + text.length;
+      }
+      text += blockText;
+      return text;
+    }, '');
+
+    const leftSide = queryText.slice(0, queryOffset);
     const openParensAggregationIndex = leftSide.lastIndexOf('(');
     const openParensSelectorIndex = leftSide.slice(0, openParensAggregationIndex).lastIndexOf('(');
     const closeParensSelectorIndex = leftSide.slice(openParensSelectorIndex).indexOf(')') + openParensSelectorIndex;
-    // foo{bar="1"}
-    const selectorString = leftSide.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
+
+    let selectorString = leftSide.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
+
+    // Range vector syntax not accounted for by subsequent parse so discard it if present
+    selectorString = selectorString.replace(/\[[^\]]+\]$/, '');
+
     const selector = parseSelector(selectorString, selectorString.length - 2).selector;
 
     const labelKeys = this.labelKeys[selector];
