@@ -40,9 +40,19 @@ export class TextOptions extends PureComponent<any> {
 
   render() {
     return (
-      <div className="section gf-form-group">
-        <h5 className="section-heading">Draw Modes</h5>
-        <Switch label="Lines" checked={true} onChange={this.onChange} />
+      <div>
+        <div className="section gf-form-group">
+          <h5 className="page-heading">Draw Modes</h5>
+          <Switch label="Lines" labelClass="width-5" checked={true} onChange={this.onChange} />
+          <Switch label="Bars" labelClass="width-5" checked={false} onChange={this.onChange} />
+          <Switch label="Points" labelClass="width-5" checked={false} onChange={this.onChange} />
+        </div>
+        <div className="section gf-form-group">
+          <h5 className="page-heading">Modes Options</h5>
+          <Switch label="Lines" labelClass="width-5" checked={true} onChange={this.onChange} />
+          <Switch label="Bars" labelClass="width-5" checked={false} onChange={this.onChange} />
+          <Switch label="Points" labelClass="width-5" checked={false} onChange={this.onChange} />
+        </div>
       </div>
     );
   }

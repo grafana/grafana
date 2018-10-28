@@ -53,6 +53,10 @@
   flex-grow: 0;
 }
 
+.viz-picker {
+  margin-bottom: $spacer;
+}
+
 .viz-picker__items {
   display: flex;
   // for scrollbar
