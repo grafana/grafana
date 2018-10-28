@@ -5,6 +5,7 @@ import React, { PureComponent } from 'react';
 // Components
 import Graph from 'app/viz/Graph';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
+import { Switch } from 'app/core/components/Switch/Switch';
 
 // Types
 import { PanelProps, NullValueMode } from 'app/types';
@@ -35,10 +36,13 @@ export class Graph2 extends PureComponent<Props> {
 }
 
 export class TextOptions extends PureComponent<any> {
+  onChange = () => {};
+
   render() {
     return (
       <div className="section gf-form-group">
         <h5 className="section-heading">Draw Modes</h5>
+        <Switch label="Lines" checked={true} onChange={this.onChange} />
       </div>
     );
   }

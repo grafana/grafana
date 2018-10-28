@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Label } from 'app/core/components/Forms/Forms';
+import { Label } from 'app/core/components/Label/Label';
 import { Team } from '../../types';
 import { updateTeam } from './state/actions';
 import { getRouteParamsId } from '../../core/selectors/location';
