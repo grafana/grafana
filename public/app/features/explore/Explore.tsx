@@ -373,9 +373,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.onModifyQueries({ type: 'ADD_FILTER', key: columnKey, value: rowValue });
   };
 
-  onModifyQueries = (action: object, index?: number) => {
+  onModifyQueries = (action, index?: number) => {
     const { datasource } = this.state;
     if (datasource && datasource.modifyQuery) {
+      const preventSubmit = action.preventSubmit;
       this.setState(
         state => {
           const { queries, queryTransactions } = state;
@@ -391,16 +392,26 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             nextQueryTransactions = [];
           } else {
             // Modify query only at index
-            nextQueries = [
-              ...queries.slice(0, index),
-              {
-                key: generateQueryKey(index),
-                query: datasource.modifyQuery(this.queryExpressions[index], action),
-              },
-              ...queries.slice(index + 1),
-            ];
-            // Discard transactions related to row query
-            nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+            nextQueries = queries.map((q, i) => {
+              // Synchronise all queries with local query cache to ensure consistency
+              q.query = this.queryExpressions[i];
+              return i === index
+                ? {
+                    key: generateQueryKey(index),
+                    query: datasource.modifyQuery(q.query, action),
+                  }
+                : q;
+            });
+            nextQueryTransactions = queryTransactions
+              // Consume the hint corresponding to the action
+              .map(qt => {
+                if (qt.hints != null && qt.rowIndex === index) {
+                  qt.hints = qt.hints.filter(hint => hint.fix.action !== action);
+                }
+                return qt;
+              })
+              // Preserve previous row query transaction to keep results visible if next query is incomplete
+              .filter(qt => preventSubmit || qt.rowIndex !== index);
           }
           this.queryExpressions = nextQueries.map(q => q.query);
           return {
@@ -408,7 +419,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             queryTransactions: nextQueryTransactions,
           };
         },
-        () => this.onSubmit()
+        // Accepting certain fixes do not result in a well-formed query which should not be submitted
+        !preventSubmit ? () => this.onSubmit() : null
       );
     }
   };
