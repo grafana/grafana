@@ -86,14 +86,16 @@ describe('getQueryHints()', () => {
       datapoints: [[0, 0], [0, 0]],
     }));
     const hints = getQueryHints('metric', series);
-    expect(hints.length).toBe(seriesCount);
+    expect(hints.length).toBe(1);
     expect(hints[0]).toMatchObject({
+      type: 'ADD_SUM',
       label: 'Many time series results returned.',
-      index: 0,
       fix: {
+        label: 'Consider aggregating with sum().',
         action: {
           type: 'ADD_SUM',
           query: 'metric',
+          preventSubmit: true,
         },
       },
     });
