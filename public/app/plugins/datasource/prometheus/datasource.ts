@@ -464,6 +464,9 @@ export class PrometheusDatasource {
       case 'ADD_RATE': {
         return `rate(${query}[5m])`;
       }
+      case 'ADD_SUM': {
+        return `sum(${query.trim()}) by ($1)`;
+      }
       case 'EXPAND_RULES': {
         const mapping = action.mapping;
         if (mapping) {
