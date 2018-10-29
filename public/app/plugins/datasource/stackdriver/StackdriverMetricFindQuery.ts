@@ -1,4 +1,8 @@
-import { extractServicesFromMetricDescriptors, getMetricTypesByService } from './functions';
+import {
+  extractServicesFromMetricDescriptors,
+  getMetricTypesByService,
+  getAlignmentOptionsByMetric,
+} from './functions';
 import has from 'lodash/has';
 
 export default class StackdriverMetricFindQuery {
@@ -15,6 +19,8 @@ export default class StackdriverMetricFindQuery {
         return this.handleLabelQueryType(query);
       case 'resourceTypes':
         return this.handleResourceType(query);
+      case 'alignerns':
+        return this.handleAlignersType(query);
       default:
         return [];
     }
@@ -84,5 +90,14 @@ export default class StackdriverMetricFindQuery {
     } catch (error) {
       return [];
     }
+  }
+
+  async handleAlignersType({ metricType }) {
+    if (!metricType) {
+      return [];
+    }
+    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
+    return getAlignmentOptionsByMetric(valueType, metricKind);
   }
 }

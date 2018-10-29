@@ -1,6 +1,7 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as options from './constants';
+import { getAlignmentOptionsByMetric } from './functions';
 import kbn from 'app/core/utils/kbn';
 
 export class StackdriverAggregation {
@@ -41,13 +42,7 @@ export class StackdriverAggregationCtrl {
   }
 
   setAlignOptions() {
-    this.alignOptions = !this.target.valueType
-      ? []
-      : options.alignOptions.filter(i => {
-          return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
-          );
-        });
+    this.alignOptions = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind);
     if (!this.alignOptions.find(o => o.value === this.target.aggregation.perSeriesAligner)) {
       this.target.aggregation.perSeriesAligner = this.alignOptions.length > 0 ? this.alignOptions[0].value : '';
     }

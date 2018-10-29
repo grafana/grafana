@@ -133,6 +133,17 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
             {dropdown}
           </React.Fragment>
         );
+      case 'alignerns':
+        return (
+          <React.Fragment>
+            <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+            <MetricTypeSelector
+              selectedService={this.state.service}
+              metricDescriptors={this.state.metricDescriptors}
+              onMetricTypeChange={this.onMetricTypeChange}
+            />
+          </React.Fragment>
+        );
       default:
         return '';
     }
