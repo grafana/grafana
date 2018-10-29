@@ -14,6 +14,9 @@
   <link rel="icon" type="image/png" href="public/img/fav32.png">
   <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28">
   <link rel="apple-touch-icon" sizes="180x180" href="public/img/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].css?v[[ .BuildVersion ]]+[[ .BuildCommit ]]">
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="msapplication-TileColor" content="#2b5797">
@@ -253,14 +256,7 @@
       navTree: [[.NavTree]]
     };
 
-    // load css async
-    var myCSS = document.createElement("link");
-    myCSS.rel = "stylesheet";
-    myCSS.href = "public/build/grafana.[[ .Theme ]].css?v[[ .BuildVersion ]]+[[ .BuildCommit ]]";
-
-    // insert it at the end of the head in a legacy-friendly manner
-    document.head.insertBefore(myCSS, document.head.childNodes[document.head.childNodes.length - 1].nextSibling);
-    // switch loader to show all has loaded
+		// In case the js files fails to load the code below will show an info message.
     window.onload = function() {
       var preloader = document.getElementsByClassName("preloader");
       if (preloader.length) {
