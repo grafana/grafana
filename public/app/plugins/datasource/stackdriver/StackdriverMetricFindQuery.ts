@@ -11,7 +11,8 @@ export default class StackdriverMetricFindQuery {
       case 'metricTypes':
         return this.handleMetricTypesQueryType(query);
       case 'metricLabels':
-        return this.handleMetricLabelsQueryType(query);
+      case 'resourceLabels':
+        return this.handleLabelQueryType(query);
       default:
         return [];
     }
@@ -39,17 +40,19 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricLabelsQueryType({ metricType, metricLabelKey }) {
-    if (!metricType || !metricLabelKey) {
+  async handleLabelQueryType({ type, metricType, metricLabelKey, resourceLabelKey }) {
+    if (!metricType) {
       return [];
     }
-    const refId = 'handleMetricLabelsQueryType';
+    const key = type === 'metricLabels' ? metricLabelKey : resourceLabelKey;
+    const refId = 'handleLabelsQueryType';
     const response = await this.datasource.getLabels(metricType, refId);
-    return has(response, `meta.metricLabels.${metricLabelKey}`)
-      ? response.meta.metricLabels[metricLabelKey].map(s => ({
-          text: s,
-          expandable: true,
-        }))
-      : [];
+    if (!has(response, `meta.${type}.${key}`)) {
+      return [];
+    }
+    return response.meta[type][key].map(s => ({
+      text: s,
+      expandable: true,
+    }));
   }
 }

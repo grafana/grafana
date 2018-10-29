@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import ServiceSelector from './ServiceSelector';
 import MetricTypeSelector from './MetricTypeSelector';
-import MetricLabelKeySelector from './MetricLabelKeySelector';
+import SimpleDropdown from './SimpleDropdown';
 import { TemplateQueryProps } from 'app/types/plugins';
 import defaultsDeep from 'lodash/defaultsDeep';
 import has from 'lodash/has';
@@ -17,13 +17,16 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     { value: 'alignerns', name: 'Aligners' },
     { value: 'alignmentPeriods', name: 'Alignment Periods' },
   ];
+
   defaults = {
     type: undefined,
     metricDescriptors: [],
     service: undefined,
     metricType: undefined,
     metricLabels: [],
+    resourceLabels: [],
     metricLabelKey: undefined,
+    resourceLabelKey: undefined,
   };
 
   constructor(props: TemplateQueryProps) {
@@ -32,6 +35,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     this.onServiceChange = this.onServiceChange.bind(this);
     this.onMetricTypeChange = this.onMetricTypeChange.bind(this);
     this.onMetricLabelKeyChange = this.onMetricLabelKeyChange.bind(this);
+    this.onResourceLabelKeyChange = this.onResourceLabelKeyChange.bind(this);
     this.state = defaultsDeep(this.props.query, this.defaults);
   }
 
@@ -43,13 +47,20 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   async loadTimeSeriesData() {
     const refId = 'StackdriverTemplateQueryComponent';
     const response = await this.props.datasource.getLabels(this.state.metricType, refId);
-    if (has(response, 'meta.metricLabels')) {
-      this.setState({ metricLabels: Object.keys(response.meta.metricLabels) });
+    if (this.isLabelQuery(this.state.type) && has(response, `meta.${this.state.type}`)) {
+      this.setState({ [this.state.type]: Object.keys(response.meta[this.state.type]) });
     }
+  }
+
+  isLabelQuery(queryType) {
+    return ['metricLabels', 'resourceLabels'].indexOf(queryType) !== -1;
   }
 
   handleQueryTypeChange(event) {
     this.setState({ type: event.target.value });
+    if (this.isLabelQuery(event.target.value)) {
+      this.loadTimeSeriesData();
+    }
   }
 
   onServiceChange(event) {
@@ -58,15 +69,21 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   onMetricTypeChange(event) {
     this.setState({ metricType: event.target.value });
-    this.loadTimeSeriesData();
+    if (this.isLabelQuery(this.state.type)) {
+      this.loadTimeSeriesData();
+    }
   }
 
   onMetricLabelKeyChange(event) {
     this.setState({ metricLabelKey: event.target.value });
   }
 
+  onResourceLabelKeyChange(event) {
+    this.setState({ resourceLabelKey: event.target.value });
+  }
+
   componentDidUpdate() {
-    const { metricDescriptors, metricLabels, ...queryModel } = this.state;
+    const { metricDescriptors, metricLabels, resourceLabels, ...queryModel } = this.state;
     this.props.onChange(queryModel);
   }
 
@@ -77,6 +94,23 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
           <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
         );
       case 'metricLabels':
+      case 'resourceLabels':
+        const dropdown =
+          queryType === 'resourceLabels' ? (
+            <SimpleDropdown
+              value={this.state.resourceLabelKey}
+              options={this.state.resourceLabels}
+              onValueChange={this.onResourceLabelKeyChange}
+              label="Resource Labels"
+            />
+          ) : (
+            <SimpleDropdown
+              value={this.state.metricLabelKey}
+              options={this.state.metricLabels}
+              onValueChange={this.onMetricLabelKeyChange}
+              label="Metric Labels"
+            />
+          );
         return (
           <React.Fragment>
             <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
@@ -85,11 +119,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
               metricDescriptors={this.state.metricDescriptors}
               onMetricTypeChange={this.onMetricTypeChange}
             />
-            <MetricLabelKeySelector
-              metricLabelKey={this.state.metricLabelKey}
-              metricLabels={this.state.metricLabels}
-              onMetricLabelKeyChange={this.onMetricLabelKeyChange}
-            />
+            {dropdown}
           </React.Fragment>
         );
       default:
