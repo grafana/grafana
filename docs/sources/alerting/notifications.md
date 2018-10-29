@@ -140,7 +140,7 @@ In DingTalk PC Client:
 
 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
 
-Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `text` message type is supported.
+Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
 
 ### Kafka
 

@@ -28,7 +28,7 @@
   <div class="gf-form">
     <span class="gf-form-label query-keyword width-9">Group By</span>
     <div class="gf-form" ng-repeat="segment in ctrl.groupBySegments">
-      <metric-segment segment="segment" get-options="ctrl.getGroupBys(segment, $index)" on-change="ctrl.groupByChanged(segment, $index)"></metric-segment>
+      <metric-segment segment="segment" get-options="ctrl.getGroupBys(segment)" on-change="ctrl.groupByChanged(segment, $index)"></metric-segment>
     </div>
   </div>
   <div class="gf-form gf-form--grow">

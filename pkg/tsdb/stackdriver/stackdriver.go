@@ -186,8 +186,7 @@ func reverse(s string) string {
 }
 
 func interpolateFilterWildcards(value string) string {
-	re := regexp.MustCompile("[*]")
-	matches := len(re.FindAllStringIndex(value, -1))
+	matches := strings.Count(value, "*")
 	if matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
 		value = strings.Replace(value, "*", "", -1)
 		value = fmt.Sprintf(`has_substring("%s")`, value)
@@ -355,11 +354,21 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
 	metricLabels := make(map[string][]string)
 	resourceLabels := make(map[string][]string)
+	var resourceTypes []string
+
+	for _, series := range data.TimeSeries {
+		if !containsLabel(resourceTypes, series.Resource.Type) {
+			resourceTypes = append(resourceTypes, series.Resource.Type)
+		}
+	}
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
 
 		defaultMetricName := series.Metric.Type
+		if len(resourceTypes) > 1 {
+			defaultMetricName += " " + series.Resource.Type
+		}
 
 		for key, value := range series.Metric.Labels {
 			if !containsLabel(metricLabels[key], value) {
@@ -403,7 +412,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 				points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
 			}
 
-			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, series.Metric.Labels, series.Resource.Labels, make(map[string]string), query)
+			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, make(map[string]string), query)
 
 			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 				Name:   metricName,
@@ -429,7 +438,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
 						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
 							Points: make([]tsdb.TimePoint, 0),
 						}
 						if maxKey < i {
@@ -445,7 +454,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
 						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
 							Points: make([]tsdb.TimePoint, 0),
 						}
 					}
@@ -460,6 +469,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 	queryRes.Meta.Set("resourceLabels", resourceLabels)
 	queryRes.Meta.Set("metricLabels", metricLabels)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
+	queryRes.Meta.Set("resourceTypes", resourceTypes)
 
 	return nil
 }
@@ -473,7 +483,7 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, metricLabels map[string]string, resourceLabels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
+func formatLegendKeys(metricType string, defaultMetricName string, resourceType string, metricLabels map[string]string, resourceLabels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
@@ -485,6 +495,10 @@ func formatLegendKeys(metricType string, defaultMetricName string, metricLabels 
 
 		if metaPartName == "metric.type" {
 			return []byte(metricType)
+		}
+
+		if metaPartName == "resource.type" && resourceType != "" {
+			return []byte(resourceType)
 		}
 
 		metricPart := replaceWithMetricPart(metaPartName, metricType)

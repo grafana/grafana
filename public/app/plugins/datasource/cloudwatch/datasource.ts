@@ -37,6 +37,9 @@ export default class CloudWatchDatasource {
       item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
       item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
+      item.statistics = item.statistics.map(s => {
+        return this.templateSrv.replace(s, options.scopedVars);
+      });
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
       item.id = this.templateSrv.replace(item.id, options.scopedVars);
       item.expression = this.templateSrv.replace(item.expression, options.scopedVars);

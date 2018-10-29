@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { StoreState, FolderInfo } from 'app/types';
@@ -13,7 +12,7 @@ import {
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
-import { store } from 'app/store/configureStore';
+import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 
 export interface Props {
   dashboardId: number;
@@ -93,13 +92,6 @@ export class DashboardPermissions extends PureComponent<Props, State> {
       </div>
     );
   }
-}
-
-function connectWithStore(WrappedComponent, ...args) {
-  const ConnectedWrappedComponent = connect(...args)(WrappedComponent);
-  return props => {
-    return <ConnectedWrappedComponent {...props} store={store} />;
-  };
 }
 
 const mapStateToProps = (state: StoreState) => ({

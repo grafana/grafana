@@ -100,12 +100,12 @@ display name, especially if the display name contains spaces or special
 characters. Make sure you always use the group or subgroup name as it appears
 in the URL of the group or subgroup.
 
-Here's a complete example with `alloed_sign_up` enabled, and access limited to
+Here's a complete example with `allow_sign_up` enabled, and access limited to
 the `example` and `foo/bar` groups:
 
 ```ini
 [auth.gitlab]
-enabled = false
+enabled = true
 allow_sign_up = true
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
