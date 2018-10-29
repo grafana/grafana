@@ -284,7 +284,7 @@ export class TableRenderer {
       cellClass = ' class="' + cellClasses.join(' ') + '"';
     }
 
-    columnHtml = '<td' + cellClass + cellStyle + '>' + columnHtml + '</td>';
+    columnHtml = '<td' + cellClass + cellStyle + textStyle + '>' + columnHtml + '</td>';
     return columnHtml;
   }
 
