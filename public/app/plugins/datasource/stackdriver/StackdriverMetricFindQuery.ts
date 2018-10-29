@@ -3,6 +3,7 @@ import {
   getMetricTypesByService,
   getAlignmentOptionsByMetric,
 } from './functions';
+import { alignmentPeriods } from './constants';
 import has from 'lodash/has';
 
 export default class StackdriverMetricFindQuery {
@@ -21,6 +22,8 @@ export default class StackdriverMetricFindQuery {
         return this.handleResourceType(query);
       case 'alignerns':
         return this.handleAlignersType(query);
+      case 'alignmentPeriods':
+        return this.handleAlignmentPeriodType();
       default:
         return [];
     }
@@ -98,6 +101,16 @@ export default class StackdriverMetricFindQuery {
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
-    return getAlignmentOptionsByMetric(valueType, metricKind);
+    return getAlignmentOptionsByMetric(valueType, metricKind).map(o => ({
+      ...o,
+      expandable: true,
+    }));
+  }
+
+  handleAlignmentPeriodType() {
+    return alignmentPeriods.map(s => ({
+      ...s,
+      expandable: true,
+    }));
   }
 }
