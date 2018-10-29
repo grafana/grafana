@@ -79,5 +79,14 @@
       </li>
     </ul>
   </div>
+
+  <div class="gf-timepicker-relative-section" ng-if="ctrl.customTimeOptions.length !== 0">
+      <h3 class="section-heading">Custom ranges</h3>
+      <ul>
+        <li bindonce ng-repeat='option in ctrl.customTimeOptions' ng-class="{active: option.active}">
+          <a ng-click="ctrl.customTimeOptionPicked(option)" bo-text="option.name"></a>
+        </li>
+      </ul>
+    </div>
 </div>
 

@@ -3,6 +3,7 @@ import angular from 'angular';
 import moment from 'moment';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as customRangeCtrl from '../customTimeRanges/range_ctrl';
 
 export class TimePickerCtrl {
   static tooltipFormat = 'MMM D, YYYY HH:mm:ss';
@@ -18,12 +19,17 @@ export class TimePickerCtrl {
   editTimeRaw: any;
   tooltip: string;
   rangeString: string;
+  customRangeString: string;
   timeOptions: any;
+  customTimeOptions: any;
   refresh: any;
   isUtc: boolean;
   firstDayOfWeek: number;
   isOpen: boolean;
   isAbsolute: boolean;
+  isCustom: boolean;
+  customRangeIndex: any;
+  dayShift: any;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
@@ -62,7 +68,9 @@ export class TimePickerCtrl {
       this.isUtc = true;
     }
 
-    this.rangeString = rangeUtil.describeTimeRange(timeRaw);
+    this.isCustom
+      ? (this.rangeString = this.customRangeString)
+      : (this.rangeString = rangeUtil.describeTimeRange(timeRaw));
     this.absolute = { fromJs: time.from.toDate(), toJs: time.to.toDate() };
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
@@ -75,26 +83,36 @@ export class TimePickerCtrl {
   }
 
   move(direction) {
-    const range = this.timeSrv.timeRange();
+    if (!this.isCustom) {
+      const range = this.timeSrv.timeRange();
 
-    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    let to, from;
-    if (direction === -1) {
-      to = range.to.valueOf() - timespan;
-      from = range.from.valueOf() - timespan;
-    } else if (direction === 1) {
-      to = range.to.valueOf() + timespan;
-      from = range.from.valueOf() + timespan;
-      if (to > Date.now() && range.to < Date.now()) {
-        to = Date.now();
+      const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+      let to, from;
+      if (direction === -1) {
+        to = range.to.valueOf() - timespan;
+        from = range.from.valueOf() - timespan;
+      } else if (direction === 1) {
+        to = range.to.valueOf() + timespan;
+        from = range.from.valueOf() + timespan;
+        if (to > Date.now() && range.to < Date.now()) {
+          to = Date.now();
+          from = range.from.valueOf();
+        }
+      } else {
+        to = range.to.valueOf();
         from = range.from.valueOf();
       }
+      this.timeSrv.setTime({ from: moment.utc(from), to: moment.utc(to) });
     } else {
-      to = range.to.valueOf();
-      from = range.from.valueOf();
+      const functionResult = customRangeCtrl.customMove(
+        direction,
+        this.customRangeIndex,
+        this.customTimeOptions,
+        this.dayShift
+      );
+      this.dayShift = functionResult.dayShift;
+      this.customTimeOptionMoved(this.customTimeOptions[functionResult.index], this.dayShift);
     }
-
-    this.timeSrv.setTime({ from: moment.utc(from), to: moment.utc(to) });
   }
 
   openDropdown() {
@@ -106,6 +124,7 @@ export class TimePickerCtrl {
     this.onRefresh();
     this.editTimeRaw = this.timeRaw;
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
+    this.customTimeOptions = this.dashboard.ranges;
     this.refresh = {
       value: this.dashboard.refresh,
       options: _.map(this.panel.refresh_intervals, (interval: any) => {
@@ -134,10 +153,12 @@ export class TimePickerCtrl {
 
   absoluteFromChanged() {
     this.editTimeRaw.from = this.getAbsoluteMomentForTimezone(this.absolute.fromJs);
+    this.isCustom = false;
   }
 
   absoluteToChanged() {
     this.editTimeRaw.to = this.getAbsoluteMomentForTimezone(this.absolute.toJs);
+    this.isCustom = false;
   }
 
   getAbsoluteMomentForTimezone(jsDate) {
@@ -153,6 +174,31 @@ export class TimePickerCtrl {
 
     this.timeSrv.setTime(range);
     this.closeDropdown();
+    this.isCustom = false;
+  }
+
+  // dayShift a shift nejsou nejstastnejsí nazvy :/ pak jeste dayShift a this.dayShift
+  // TODO Picked neni uplne korektni slovo treba seleted nebo tak pouyit
+  customTimeOptionPicked(range) {
+    const time = angular.copy(this.timeSrv.timeRange());
+    this.editTimeRaw.from = this.dashboard.formatDate(time.from);
+    this.dayShift = customRangeCtrl.customTimeRangePicked('shiftByDay', range, 0, this.editTimeRaw).dayShift;
+    this.applyCustomRange(range);
+  }
+
+  customTimeOptionMoved(range, dayShift) {
+    this.dayShift = dayShift;
+    customRangeCtrl.customTimeRangePicked('shift', range, dayShift, this.editTimeRaw);
+    this.applyCustomRange(range);
+  }
+
+  applyCustomRange(range) {
+    this.editTimeRaw.from = this.getAbsoluteMomentForTimezone(range.absoluteFrom);
+    this.editTimeRaw.to = this.getAbsoluteMomentForTimezone(range.absoluteTo);
+    this.applyCustom();
+    this.customRangeString = range.name + ', ' + rangeUtil.describeTimeRange(this.editTimeRaw).substring(0, 12);
+    this.isCustom = true;
+    this.customRangeIndex = this.customTimeOptions.indexOf(range);
   }
 }
 

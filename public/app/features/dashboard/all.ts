@@ -28,6 +28,7 @@ import './move_to_folder_modal/move_to_folder';
 import './settings/settings';
 import './panellinks/module';
 import './dashlinks/module';
+import './customTimeRanges/module';
 
 // angular wrappers
 import { react2AngularDirective } from 'app/core/utils/react2angular';

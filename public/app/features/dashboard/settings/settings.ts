@@ -70,6 +70,11 @@ export class SettingsCtrl {
         icon: 'gicon gicon-variable',
       });
       this.sections.push({
+        title: 'Time Ranges',
+        id: 'customTimeRanges',
+        icon: 'fa fa-clock-o',
+      });
+      this.sections.push({
         title: 'Links',
         id: 'links',
         icon: 'gicon gicon-link',

@@ -33,6 +33,7 @@ export class DashboardModel {
   version: number;
   revision: number;
   links: any;
+  ranges: any;
   gnetId: any;
   panels: PanelModel[];
 
@@ -80,6 +81,7 @@ export class DashboardModel {
     this.schemaVersion = data.schemaVersion || 0;
     this.version = data.version || 0;
     this.links = data.links || [];
+    this.ranges = data.ranges || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
 
@@ -629,6 +631,10 @@ export class DashboardModel {
   updateSubmenuVisibility() {
     this.meta.submenuEnabled = (() => {
       if (this.links.length > 0) {
+        return true;
+      }
+
+      if (this.ranges > 0) {
         return true;
       }
 
