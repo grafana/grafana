@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import Tooltip from '../../core/components/Tooltip/Tooltip';
+import { Label } from '../../core/components/Label/Label';
 import SimplePicker from '../../core/components/Picker/SimplePicker';
 import { Dashboard, OrganizationPreferences } from 'app/types';
 import {
@@ -59,16 +59,12 @@ export class OrgPreferences extends PureComponent<Props> {
           />
         </div>
         <div className="gf-form">
-          <span className="gf-form-label width-11">
+          <Label
+            width={11}
+            tooltip="Not finding dashboard you want? Star it first, then it should appear in this select box."
+          >
             Home Dashboard
-            <Tooltip
-              className="gf-form-help-icon gf-form-help-icon--right-normal"
-              placement="right"
-              content="Not finding dashboard you want? Star it first, then it should appear in this select box."
-            >
-              <i className="fa fa-info-circle" />
-            </Tooltip>
-          </span>
+          </Label>
           <SimplePicker
             defaultValue={starredDashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
             getOptionValue={i => i.id}
