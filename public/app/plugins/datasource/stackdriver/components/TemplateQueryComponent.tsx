@@ -20,14 +20,14 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   ];
 
   defaults = {
-    type: undefined,
+    type: '',
     metricDescriptors: [],
-    service: undefined,
-    metricType: undefined,
+    service: '',
+    metricType: '',
     metricLabels: [],
     resourceLabels: [],
-    metricLabelKey: undefined,
-    resourceLabelKey: undefined,
+    metricLabelKey: '',
+    resourceLabelKey: '',
   };
 
   constructor(props: TemplateQueryProps) {
@@ -43,10 +43,6 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   async componentDidMount() {
     const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
     this.setState({ metricDescriptors });
-  }
-
-  isLabelQuery(queryType) {
-    return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
   }
 
   async loadTimeSeriesData() {
@@ -88,7 +84,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     this.props.onChange(queryModel);
   }
 
-  switchMetaType(queryType) {
+  getDropdown(queryType) {
     switch (queryType) {
       case MetricFindQueryTypes.ResourceLabels:
         return (
@@ -113,7 +109,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     }
   }
 
-  renderSwitch(queryType) {
+  renderQueryTypeSwitch(queryType) {
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
         return (
@@ -122,7 +118,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.MetricLabels:
       case MetricFindQueryTypes.ResourceLabels:
       case MetricFindQueryTypes.ResourceTypes:
-        const dropdown = this.switchMetaType(queryType);
+        const dropdown = this.getDropdown(queryType);
         return (
           <React.Fragment>
             <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
@@ -151,6 +147,10 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     }
   }
 
+  isLabelQuery(queryType) {
+    return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
+  }
+
   render() {
     return (
       <React.Fragment>
@@ -166,7 +166,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
             </select>
           </div>
         </div>
-        {this.renderSwitch(this.state.type)}
+        {this.renderQueryTypeSwitch(this.state.type)}
       </React.Fragment>
     );
   }
