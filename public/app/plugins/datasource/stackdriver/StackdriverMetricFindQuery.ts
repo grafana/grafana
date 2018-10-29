@@ -2,6 +2,7 @@ import {
   extractServicesFromMetricDescriptors,
   getMetricTypesByService,
   getAlignmentOptionsByMetric,
+  getAggregationOptionsByMetric,
 } from './functions';
 import { alignmentPeriods } from './constants';
 import has from 'lodash/has';
@@ -24,6 +25,8 @@ export default class StackdriverMetricFindQuery {
         return this.handleAlignersType(query);
       case 'alignmentPeriods':
         return this.handleAlignmentPeriodType();
+      case 'aggregations':
+        return this.handleAggregationType(query);
       default:
         return [];
     }
@@ -102,6 +105,18 @@ export default class StackdriverMetricFindQuery {
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
     return getAlignmentOptionsByMetric(valueType, metricKind).map(o => ({
+      ...o,
+      expandable: true,
+    }));
+  }
+
+  async handleAggregationType({ metricType }) {
+    if (!metricType) {
+      return [];
+    }
+    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
+    return getAggregationOptionsByMetric(valueType, metricKind).map(o => ({
       ...o,
       expandable: true,
     }));

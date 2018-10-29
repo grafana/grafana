@@ -134,6 +134,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
           </React.Fragment>
         );
       case 'alignerns':
+      case 'aggregations':
         return (
           <React.Fragment>
             <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />

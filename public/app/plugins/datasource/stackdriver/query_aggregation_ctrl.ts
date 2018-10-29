@@ -1,7 +1,7 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as options from './constants';
-import { getAlignmentOptionsByMetric } from './functions';
+import { getAlignmentOptionsByMetric, getAggregationOptionsByMetric } from './functions';
 import kbn from 'app/core/utils/kbn';
 
 export class StackdriverAggregation {
@@ -49,13 +49,7 @@ export class StackdriverAggregationCtrl {
   }
 
   setAggOptions() {
-    this.aggOptions = !this.target.metricKind
-      ? []
-      : options.aggOptions.filter(i => {
-          return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
-          );
-        });
+    this.aggOptions = getAggregationOptionsByMetric(this.target.valueType, this.target.metricKind);
 
     if (!this.aggOptions.find(o => o.value === this.target.aggregation.crossSeriesReducer)) {
       this.deselectAggregationOption('REDUCE_NONE');
