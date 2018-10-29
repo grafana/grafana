@@ -35,8 +35,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     this.handleQueryTypeChange = this.handleQueryTypeChange.bind(this);
     this.onServiceChange = this.onServiceChange.bind(this);
     this.onMetricTypeChange = this.onMetricTypeChange.bind(this);
-    this.onMetricLabelKeyChange = this.onMetricLabelKeyChange.bind(this);
-    this.onResourceLabelKeyChange = this.onResourceLabelKeyChange.bind(this);
+    this.onLabelKeyChange = this.onLabelKeyChange.bind(this);
     this.state = defaultsDeep(this.props.query, this.defaults);
   }
 
@@ -71,17 +70,18 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     }
   }
 
-  onMetricLabelKeyChange(event) {
-    this.setState({ metricLabelKey: event.target.value });
-  }
-
-  onResourceLabelKeyChange(event) {
-    this.setState({ resourceLabelKey: event.target.value });
+  onLabelKeyChange(event) {
+    const key = this.state.type === MetricFindQueryTypes.MetricLabels ? 'metricLabelKey' : 'resourceLabelKey';
+    this.setState({ [key]: event.target.value });
   }
 
   componentDidUpdate() {
     const { metricDescriptors, metricLabels, resourceLabels, ...queryModel } = this.state;
     this.props.onChange(queryModel);
+  }
+
+  isLabelQuery(queryType) {
+    return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
   }
 
   getDropdown(queryType) {
@@ -91,7 +91,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
           <SimpleDropdown
             value={this.state.resourceLabelKey}
             options={this.state.resourceLabels}
-            onValueChange={this.onResourceLabelKeyChange}
+            onValueChange={this.onLabelKeyChange}
             label="Resource Labels"
           />
         );
@@ -100,7 +100,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
           <SimpleDropdown
             value={this.state.metricLabelKey}
             options={this.state.metricLabels}
-            onValueChange={this.onMetricLabelKeyChange}
+            onValueChange={this.onLabelKeyChange}
             label="Metric Labels"
           />
         );
@@ -145,10 +145,6 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       default:
         return '';
     }
-  }
-
-  isLabelQuery(queryType) {
-    return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
   }
 
   render() {
