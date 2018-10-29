@@ -62,7 +62,12 @@ exports[`Render should render component 1`] = `
       defaultValue={
         Object {
           "id": 1,
-          "name": "Standard dashboard",
+          "tags": Array [],
+          "title": "Standard dashboard",
+          "type": "",
+          "uid": "",
+          "uri": "",
+          "url": "",
         }
       }
       getOptionLabel={[Function]}
@@ -71,8 +76,22 @@ exports[`Render should render component 1`] = `
       options={
         Array [
           Object {
+            "id": 0,
+            "tags": Array [],
+            "title": "Default",
+            "type": "",
+            "uid": "",
+            "uri": "",
+            "url": "",
+          },
+          Object {
             "id": 1,
-            "name": "Standard dashboard",
+            "tags": Array [],
+            "title": "Standard dashboard",
+            "type": "",
+            "uid": "",
+            "uri": "",
+            "url": "",
           },
         ]
       }

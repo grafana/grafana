@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import Tooltip from '../../core/components/Tooltip/Tooltip';
 import SimplePicker from '../../core/components/Picker/SimplePicker';
-import { DashboardAcl, OrganizationPreferences } from 'app/types';
+import { Dashboard, OrganizationPreferences } from 'app/types';
 import {
   setOrganizationHomeDashboard,
   setOrganizationTheme,
@@ -12,7 +12,7 @@ import {
 
 export interface Props {
   preferences: OrganizationPreferences;
-  starredDashboards: DashboardAcl[];
+  starredDashboards: Dashboard[];
   setOrganizationHomeDashboard: typeof setOrganizationHomeDashboard;
   setOrganizationTheme: typeof setOrganizationTheme;
   setOrganizationTimezone: typeof setOrganizationTimezone;
@@ -42,7 +42,7 @@ export class OrgPreferences extends PureComponent<Props> {
       setOrganizationTheme,
     } = this.props;
 
-    starredDashboards.unshift({ id: 0, title: 'Default' });
+    starredDashboards.unshift({ id: 0, title: 'Default', tags: [], type: '', uid: '', uri: '', url: '' });
 
     return (
       <form className="section gf-form-group" onSubmit={this.onSubmitForm}>
@@ -73,7 +73,7 @@ export class OrgPreferences extends PureComponent<Props> {
             defaultValue={starredDashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
             getOptionValue={i => i.id}
             getOptionLabel={i => i.title}
-            onSelected={(dashboard: DashboardAcl) => setOrganizationHomeDashboard(dashboard.id)}
+            onSelected={(dashboard: Dashboard) => setOrganizationHomeDashboard(dashboard.id)}
             options={starredDashboards}
             placeholder="Chose default dashboard"
             width={20}

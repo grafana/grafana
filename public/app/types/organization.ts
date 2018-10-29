@@ -1,4 +1,4 @@
-import { DashboardAcl } from './acl';
+import { Dashboard } from './dashboard';
 
 export interface Organization {
   name: string;
@@ -14,5 +14,5 @@ export interface OrganizationPreferences {
 export interface OrganizationState {
   organization: Organization;
   preferences: OrganizationPreferences;
-  starredDashboards: DashboardAcl[];
+  starredDashboards: Dashboard[];
 }

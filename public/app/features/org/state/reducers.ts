@@ -1,10 +1,10 @@
-import { DashboardAcl, Organization, OrganizationPreferences, OrganizationState } from 'app/types';
+import { Dashboard, Organization, OrganizationPreferences, OrganizationState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 const initialState: OrganizationState = {
   organization: {} as Organization,
   preferences: {} as OrganizationPreferences,
-  starredDashboards: [] as DashboardAcl[],
+  starredDashboards: [] as Dashboard[],
 };
 
 const organizationReducer = (state = initialState, action: Action): OrganizationState => {

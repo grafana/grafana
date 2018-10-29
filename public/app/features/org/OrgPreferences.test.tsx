@@ -9,7 +9,7 @@ const setup = () => {
       timezone: 'UTC',
       theme: 'Default',
     },
-    starredDashboards: [{ id: 1, name: 'Standard dashboard' }],
+    starredDashboards: [{ id: 1, title: 'Standard dashboard', url: '', uri: '', uid: '', type: '', tags: [] }],
     setOrganizationTimezone: jest.fn(),
     setOrganizationTheme: jest.fn(),
     setOrganizationHomeDashboard: jest.fn(),

@@ -39,7 +39,6 @@ export interface DashboardAcl {
   name?: string;
   inherited?: boolean;
   sortRank?: number;
-  title?: string;
 }
 
 export interface DashboardPermissionInfo {

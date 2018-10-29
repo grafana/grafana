@@ -1,5 +1,5 @@
 import { ThunkAction } from 'redux-thunk';
-import { DashboardAcl, Organization, OrganizationPreferences, StoreState } from 'app/types';
+import { Dashboard, Organization, OrganizationPreferences, StoreState } from 'app/types';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
@@ -26,7 +26,7 @@ interface LoadPreferencesAction {
 
 interface LoadStarredDashboardsAction {
   type: ActionTypes.LoadStarredDashboards;
-  payload: DashboardAcl[];
+  payload: Dashboard[];
 }
 
 interface SetOrganizationNameAction {
