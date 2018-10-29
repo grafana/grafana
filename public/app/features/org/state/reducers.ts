@@ -1,10 +1,10 @@
-import { Dashboard, Organization, OrganizationPreferences, OrganizationState } from 'app/types';
+import { DashboardSearchHit, Organization, OrganizationPreferences, OrganizationState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 const initialState: OrganizationState = {
   organization: {} as Organization,
   preferences: {} as OrganizationPreferences,
-  starredDashboards: [] as Dashboard[],
+  starredDashboards: [] as DashboardSearchHit[],
 };
 
 const organizationReducer = (state = initialState, action: Action): OrganizationState => {

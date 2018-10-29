@@ -1,6 +1,6 @@
 import { DashboardAcl } from './acl';
 
-export interface Dashboard {
+export interface DashboardSearchHit {
   id: number;
   tags: string[];
   title: string;

@@ -1,4 +1,4 @@
-import { Dashboard } from './dashboard';
+import { DashboardSearchHit } from './dashboardSearchHit';
 
 export interface Organization {
   name: string;
@@ -14,5 +14,5 @@ export interface OrganizationPreferences {
 export interface OrganizationState {
   organization: Organization;
   preferences: OrganizationPreferences;
-  starredDashboards: Dashboard[];
+  starredDashboards: DashboardSearchHit[];
 }

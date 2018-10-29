@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { Label } from '../../core/components/Label/Label';
 import SimplePicker from '../../core/components/Picker/SimplePicker';
-import { Dashboard, OrganizationPreferences } from 'app/types';
+import { DashboardSearchHit, OrganizationPreferences } from 'app/types';
 import {
   setOrganizationHomeDashboard,
   setOrganizationTheme,
@@ -12,7 +12,7 @@ import {
 
 export interface Props {
   preferences: OrganizationPreferences;
-  starredDashboards: Dashboard[];
+  starredDashboards: DashboardSearchHit[];
   setOrganizationHomeDashboard: typeof setOrganizationHomeDashboard;
   setOrganizationTheme: typeof setOrganizationTheme;
   setOrganizationTimezone: typeof setOrganizationTimezone;
@@ -69,7 +69,7 @@ export class OrgPreferences extends PureComponent<Props> {
             defaultValue={starredDashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
             getOptionValue={i => i.id}
             getOptionLabel={i => i.title}
-            onSelected={(dashboard: Dashboard) => setOrganizationHomeDashboard(dashboard.id)}
+            onSelected={(dashboard: DashboardSearchHit) => setOrganizationHomeDashboard(dashboard.id)}
             options={starredDashboards}
             placeholder="Chose default dashboard"
             width={20}
