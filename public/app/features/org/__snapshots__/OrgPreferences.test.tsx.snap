@@ -1,0 +1,125 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<form
+  className="section gf-form-group"
+  onSubmit={[Function]}
+>
+  <h3
+    className="page-heading"
+  >
+    Preferences
+  </h3>
+  <div
+    className="gf-form"
+  >
+    <span
+      className="gf-form-label width-11"
+    >
+      UI Theme
+    </span>
+    <SimplePicker
+      getOptionLabel={[Function]}
+      getOptionValue={[Function]}
+      onSelected={[Function]}
+      options={
+        Array [
+          Object {
+            "text": "Default",
+            "value": "",
+          },
+          Object {
+            "text": "Dark",
+            "value": "dark",
+          },
+          Object {
+            "text": "Light",
+            "value": "light",
+          },
+        ]
+      }
+      width={20}
+    />
+  </div>
+  <div
+    className="gf-form"
+  >
+    <span
+      className="gf-form-label width-11"
+    >
+      Home Dashboard
+      <class_1
+        className="gf-form-help-icon gf-form-help-icon--right-normal"
+        content="Not finding dashboard you want? Star it first, then it should appear in this select box."
+        placement="right"
+      >
+        <i
+          className="fa fa-info-circle"
+        />
+      </class_1>
+    </span>
+    <SimplePicker
+      defaultValue={
+        Object {
+          "id": 1,
+          "name": "Standard dashboard",
+        }
+      }
+      getOptionLabel={[Function]}
+      getOptionValue={[Function]}
+      onSelected={[Function]}
+      options={
+        Array [
+          Object {
+            "id": 1,
+            "name": "Standard dashboard",
+          },
+        ]
+      }
+      placeholder="Chose default dashboard"
+      width={20}
+    />
+  </div>
+  <div
+    className="gf-form"
+  >
+    <label
+      className="gf-form-label width-11"
+    >
+      Timezone
+    </label>
+    <SimplePicker
+      getOptionLabel={[Function]}
+      getOptionValue={[Function]}
+      onSelected={[Function]}
+      options={
+        Array [
+          Object {
+            "text": "Default",
+            "value": "",
+          },
+          Object {
+            "text": "Local browser time",
+            "value": "browser",
+          },
+          Object {
+            "text": "UTC",
+            "value": "utc",
+          },
+        ]
+      }
+      width={20}
+    />
+  </div>
+  <div
+    className="gf-form-button-row"
+  >
+    <button
+      className="btn btn-success"
+      type="submit"
+    >
+      Save
+    </button>
+  </div>
+</form>
+`;

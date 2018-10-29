@@ -1,6 +1,6 @@
 import React, { SFC } from 'react';
 
-interface Props {
+export interface Props {
   orgName: string;
   onSubmit: () => void;
   onOrgNameChange: (orgName: string) => void;

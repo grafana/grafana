@@ -9,30 +9,21 @@ import {
   loadOrganization,
   loadOrganizationPreferences,
   setOrganizationName,
-  setOrganizationTheme,
-  setOrganizationHomeDashboard,
-  setOrganizationTimezone,
   updateOrganization,
-  updateOrganizationPreferences,
 } from './state/actions';
 import { loadStarredDashboards } from '../dashboard/state/actions';
-import { DashboardAcl, NavModel, Organization, OrganizationPreferences, StoreState } from 'app/types';
+import { NavModel, Organization, OrganizationPreferences, StoreState } from 'app/types';
 import { getNavModel } from '../../core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
   organization: Organization;
   preferences: OrganizationPreferences;
-  starredDashboards: DashboardAcl[];
   loadOrganization: typeof loadOrganization;
   loadOrganizationPreferences: typeof loadOrganizationPreferences;
   loadStarredDashboards: typeof loadStarredDashboards;
   setOrganizationName: typeof setOrganizationName;
-  setOrganizationHomeDashboard: typeof setOrganizationHomeDashboard;
-  setOrganizationTheme: typeof setOrganizationTheme;
-  setOrganizationTimezone: typeof setOrganizationTimezone;
   updateOrganization: typeof updateOrganization;
-  updateOrganizationPreferences: typeof updateOrganizationPreferences;
 }
 
 export class OrgDetailsPage extends PureComponent<Props> {
@@ -50,24 +41,8 @@ export class OrgDetailsPage extends PureComponent<Props> {
     this.props.updateOrganization();
   };
 
-  onSubmitPreferences = () => {
-    this.props.updateOrganizationPreferences();
-  };
-
-  onThemeChange = theme => {
-    this.props.setOrganizationTheme(theme);
-  };
-
-  onHomeDashboardChange = dashboardId => {
-    this.props.setOrganizationHomeDashboard(dashboardId);
-  };
-
-  onTimeZoneChange = timeZone => {
-    this.props.setOrganizationTimezone(timeZone);
-  };
-
   render() {
-    const { navModel, organization, preferences, starredDashboards } = this.props;
+    const { navModel, organization, preferences } = this.props;
 
     return (
       <div>
@@ -82,14 +57,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
                 onSubmit={this.onUpdateOrganization}
                 orgName={organization.name}
               />
-              <OrgPreferences
-                preferences={preferences}
-                starredDashboards={starredDashboards}
-                onDashboardChange={dashboardId => this.onHomeDashboardChange(dashboardId)}
-                onThemeChange={theme => this.onThemeChange(theme)}
-                onTimeZoneChange={timeZone => this.onTimeZoneChange(timeZone)}
-                onSubmit={this.onSubmitPreferences}
-              />
+              <OrgPreferences />
             </div>
           )}
         </div>
@@ -103,7 +71,6 @@ function mapStateToProps(state: StoreState) {
     navModel: getNavModel(state.navIndex, 'org-settings'),
     organization: state.organization.organization,
     preferences: state.organization.preferences,
-    starredDashboards: state.organization.starredDashboards,
   };
 }
 
@@ -112,11 +79,7 @@ const mapDispatchToProps = {
   loadOrganizationPreferences,
   loadStarredDashboards,
   setOrganizationName,
-  setOrganizationTheme,
-  setOrganizationHomeDashboard,
-  setOrganizationTimezone,
   updateOrganization,
-  updateOrganizationPreferences,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
