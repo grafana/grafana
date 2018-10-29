@@ -13,6 +13,8 @@ export default class StackdriverMetricFindQuery {
       case 'metricLabels':
       case 'resourceLabels':
         return this.handleLabelQueryType(query);
+      case 'resourceTypes':
+        return this.handleResourceType(query);
       default:
         return [];
     }
@@ -40,11 +42,23 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleLabelQueryType({ type, metricType, metricLabelKey, resourceLabelKey }) {
+  getLabelKey({ type, metricLabelKey, resourceLabelKey }) {
+    switch (type) {
+      case 'metricLabels':
+        return metricLabelKey;
+        break;
+      case 'resourceLabels':
+        return resourceLabelKey;
+      default:
+        return '';
+    }
+  }
+
+  async handleLabelQueryType({ type, metricType, metricLabelKey, resourceLabelKey, resourceTypeKey }) {
     if (!metricType) {
       return [];
     }
-    const key = type === 'metricLabels' ? metricLabelKey : resourceLabelKey;
+    const key = this.getLabelKey({ type, metricLabelKey, resourceLabelKey });
     const refId = 'handleLabelsQueryType';
     const response = await this.datasource.getLabels(metricType, refId);
     if (!has(response, `meta.${type}.${key}`)) {
@@ -54,5 +68,21 @@ export default class StackdriverMetricFindQuery {
       text: s,
       expandable: true,
     }));
+  }
+
+  async handleResourceType({ metricType }) {
+    if (!metricType) {
+      return [];
+    }
+    try {
+      const refId = 'handleResourceTypeQueryType';
+      const response = await this.datasource.getLabels(metricType, refId);
+      return response.meta.resourceTypes.map(s => ({
+        text: s,
+        expandable: true,
+      }));
+    } catch (error) {
+      return [];
+    }
   }
 }

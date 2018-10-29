@@ -44,16 +44,16 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     this.setState({ metricDescriptors });
   }
 
+  isLabelQuery(queryType) {
+    return ['metricLabels', 'resourceLabels'].indexOf(queryType) !== -1;
+  }
+
   async loadTimeSeriesData() {
     const refId = 'StackdriverTemplateQueryComponent';
     const response = await this.props.datasource.getLabels(this.state.metricType, refId);
     if (this.isLabelQuery(this.state.type) && has(response, `meta.${this.state.type}`)) {
       this.setState({ [this.state.type]: Object.keys(response.meta[this.state.type]) });
     }
-  }
-
-  isLabelQuery(queryType) {
-    return ['metricLabels', 'resourceLabels'].indexOf(queryType) !== -1;
   }
 
   handleQueryTypeChange(event) {
@@ -87,6 +87,31 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     this.props.onChange(queryModel);
   }
 
+  switchMetaType(queryType) {
+    switch (queryType) {
+      case 'resourceLabels':
+        return (
+          <SimpleDropdown
+            value={this.state.resourceLabelKey}
+            options={this.state.resourceLabels}
+            onValueChange={this.onResourceLabelKeyChange}
+            label="Resource Labels"
+          />
+        );
+      case 'metricLabels':
+        return (
+          <SimpleDropdown
+            value={this.state.metricLabelKey}
+            options={this.state.metricLabels}
+            onValueChange={this.onMetricLabelKeyChange}
+            label="Metric Labels"
+          />
+        );
+      default:
+        return '';
+    }
+  }
+
   renderSwitch(queryType) {
     switch (queryType) {
       case 'metricTypes':
@@ -95,22 +120,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
         );
       case 'metricLabels':
       case 'resourceLabels':
-        const dropdown =
-          queryType === 'resourceLabels' ? (
-            <SimpleDropdown
-              value={this.state.resourceLabelKey}
-              options={this.state.resourceLabels}
-              onValueChange={this.onResourceLabelKeyChange}
-              label="Resource Labels"
-            />
-          ) : (
-            <SimpleDropdown
-              value={this.state.metricLabelKey}
-              options={this.state.metricLabels}
-              onValueChange={this.onMetricLabelKeyChange}
-              label="Metric Labels"
-            />
-          );
+      case 'resourceTypes':
+        const dropdown = this.switchMetaType(queryType);
         return (
           <React.Fragment>
             <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
