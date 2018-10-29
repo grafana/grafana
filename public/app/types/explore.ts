@@ -1,5 +1,7 @@
 import { Value } from 'slate';
 
+import { RawTimeRange } from './series';
+
 export interface CompletionItem {
   /**
    * The label of this completion item. By default
@@ -100,11 +102,6 @@ export interface TypeaheadOutput {
   suggestions: CompletionItemGroup[];
 }
 
-export interface Range {
-  from: string;
-  to: string;
-}
-
 export interface Query {
   query: string;
   key?: string;
@@ -131,7 +128,7 @@ export interface QueryHint {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string;
+  error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
   options: any;
@@ -155,7 +152,7 @@ export interface ExploreState {
   datasourceMissing: boolean;
   datasourceName?: string;
   exploreDatasources: ExploreDatasource[];
-  graphRange: Range;
+  graphRange: RawTimeRange;
   history: HistoryItem[];
   /**
    * Initial rows of queries to push down the tree.
@@ -167,7 +164,7 @@ export interface ExploreState {
    * Hints gathered for the query row.
    */
   queryTransactions: QueryTransaction[];
-  range: Range;
+  range: RawTimeRange;
   showingGraph: boolean;
   showingLogs: boolean;
   showingTable: boolean;
@@ -179,7 +176,7 @@ export interface ExploreState {
 export interface ExploreUrlState {
   datasource: string;
   queries: Query[];
-  range: Range;
+  range: RawTimeRange;
 }
 
 export type ResultType = 'Graph' | 'Logs' | 'Table';

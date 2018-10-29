@@ -258,6 +258,11 @@
 
   .prom-query-field-info {
     margin: 0.25em 0.5em 0.5em;
+    display: flex;
+
+    details {
+      margin-left: 1em;
+    }
   }
 }
 
