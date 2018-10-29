@@ -47,7 +47,7 @@ module.exports = merge(common, {
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.(j|t)sx?$/,
         exclude: /node_modules/,
         use: [{
           loader: 'babel-loader',
@@ -55,17 +55,23 @@ module.exports = merge(common, {
             cacheDirectory: true,
             babelrc: false,
             plugins: [
-              'syntax-dynamic-import',
+              ["@babel/plugin-proposal-class-properties", { loose: true }],
+              'angularjs-annotate',
+              'syntax-dynamic-import', // needed for `() => import()` in routes.ts
               'react-hot-loader/babel'
-            ]
+            ],
+            presets: [
+              [
+                '@babel/preset-env',
+                {
+                  targets: { browsers: 'last 3 versions' },
+                  useBuiltIns: 'entry'
+                }
+              ],
+              '@babel/preset-typescript',
+              '@babel/preset-react'
+            ],
           }
-        },
-        {
-          loader: 'ts-loader',
-          options: {
-            transpileOnly: true,
-            experimentalWatchApi: true
-          },
         }],
       },
       {
