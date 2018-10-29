@@ -6,33 +6,35 @@ import {
 } from './functions';
 import { alignmentPeriods } from './constants';
 import has from 'lodash/has';
+import isString from 'lodash/isString';
+import { MetricFindQueryTypes } from './types';
 
 export default class StackdriverMetricFindQuery {
   constructor(private datasource) {}
 
   async query(query: any) {
     switch (query.type) {
-      case 'services':
-        return this.handleServiceQueryType();
-      case 'metricTypes':
-        return this.handleMetricTypesQueryType(query);
-      case 'metricLabels':
-      case 'resourceLabels':
-        return this.handleLabelQueryType(query);
-      case 'resourceTypes':
-        return this.handleResourceType(query);
-      case 'alignerns':
-        return this.handleAlignersType(query);
-      case 'alignmentPeriods':
-        return this.handleAlignmentPeriodType();
-      case 'aggregations':
-        return this.handleAggregationType(query);
+      case MetricFindQueryTypes.Services:
+        return this.handleServiceQuery();
+      case MetricFindQueryTypes.MetricTypes:
+        return this.handleMetricTypesQuery(query);
+      case MetricFindQueryTypes.MetricLabels:
+      case MetricFindQueryTypes.ResourceLabels:
+        return this.handleLabelQuery(query);
+      case MetricFindQueryTypes.ResourceTypes:
+        return this.handleResourceTypeQuery(query);
+      case MetricFindQueryTypes.Alignerns:
+        return this.handleAlignersQuery(query);
+      case MetricFindQueryTypes.AlignmentPeriods:
+        return this.handleAlignmentPeriodQuery();
+      case MetricFindQueryTypes.Aggregations:
+        return this.handleAggregationQuery(query);
       default:
         return [];
     }
   }
 
-  async handleServiceQueryType() {
+  async handleServiceQuery() {
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const services = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
@@ -42,7 +44,7 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQueryType({ service }) {
+  async handleMetricTypesQuery({ service }) {
     if (!service) {
       return [];
     }
@@ -54,19 +56,7 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  getLabelKey({ type, metricLabelKey, resourceLabelKey }) {
-    switch (type) {
-      case 'metricLabels':
-        return metricLabelKey;
-        break;
-      case 'resourceLabels':
-        return resourceLabelKey;
-      default:
-        return '';
-    }
-  }
-
-  async handleLabelQueryType({ type, metricType, metricLabelKey, resourceLabelKey, resourceTypeKey }) {
+  async handleLabelQuery({ type, metricType, metricLabelKey, resourceLabelKey, resourceTypeKey }) {
     if (!metricType) {
       return [];
     }
@@ -76,56 +66,57 @@ export default class StackdriverMetricFindQuery {
     if (!has(response, `meta.${type}.${key}`)) {
       return [];
     }
-    return response.meta[type][key].map(s => ({
-      text: s,
-      expandable: true,
-    }));
+    return response.meta[type][key].map(this.toFindQueryResult);
   }
 
-  async handleResourceType({ metricType }) {
+  async handleResourceTypeQuery({ metricType }) {
     if (!metricType) {
       return [];
     }
     try {
-      const refId = 'handleResourceTypeQueryType';
+      const refId = 'handleResourceTypeQueryQueryType';
       const response = await this.datasource.getLabels(metricType, refId);
-      return response.meta.resourceTypes.map(s => ({
-        text: s,
-        expandable: true,
-      }));
+      return response.meta.resourceTypes.map(this.toFindQueryResult);
     } catch (error) {
       return [];
     }
   }
 
-  async handleAlignersType({ metricType }) {
+  async handleAlignersQuery({ metricType }) {
     if (!metricType) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
-    return getAlignmentOptionsByMetric(valueType, metricKind).map(o => ({
-      ...o,
-      expandable: true,
-    }));
+    return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationType({ metricType }) {
+  async handleAggregationQuery({ metricType }) {
     if (!metricType) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
-    return getAggregationOptionsByMetric(valueType, metricKind).map(o => ({
-      ...o,
-      expandable: true,
-    }));
+    return getAggregationOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  handleAlignmentPeriodType() {
-    return alignmentPeriods.map(s => ({
-      ...s,
-      expandable: true,
-    }));
+  handleAlignmentPeriodQuery() {
+    return alignmentPeriods.map(this.toFindQueryResult);
+  }
+
+  toFindQueryResult(x) {
+    return isString(x) ? { text: x, expandable: true } : { ...x, expandable: true };
+  }
+
+  getLabelKey({ type, metricLabelKey, resourceLabelKey }) {
+    switch (type) {
+      case MetricFindQueryTypes.MetricLabels:
+        return metricLabelKey;
+        break;
+      case MetricFindQueryTypes.ResourceLabels:
+        return resourceLabelKey;
+      default:
+        return '';
+    }
   }
 }

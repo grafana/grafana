@@ -5,17 +5,18 @@ import SimpleDropdown from './SimpleDropdown';
 import { TemplateQueryProps } from 'app/types/plugins';
 import defaultsDeep from 'lodash/defaultsDeep';
 import has from 'lodash/has';
+import { MetricFindQueryTypes } from '../types';
 
 export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, any> {
   queryTypes: Array<{ value: string; name: string }> = [
-    { value: 'services', name: 'Services' },
-    { value: 'metricTypes', name: 'Metric Types' },
-    { value: 'metricLabels', name: 'Metric Labels' },
-    { value: 'resourceLabels', name: 'Resource Labels' },
-    { value: 'resourceTypes', name: 'Resource Types' },
-    { value: 'aggregations', name: 'Aggregations' },
-    { value: 'alignerns', name: 'Aligners' },
-    { value: 'alignmentPeriods', name: 'Alignment Periods' },
+    { value: MetricFindQueryTypes.Services, name: 'Services' },
+    { value: MetricFindQueryTypes.MetricTypes, name: 'Metric Types' },
+    { value: MetricFindQueryTypes.MetricLabels, name: 'Metric Labels' },
+    { value: MetricFindQueryTypes.ResourceLabels, name: 'Resource Labels' },
+    { value: MetricFindQueryTypes.ResourceTypes, name: 'Resource Types' },
+    { value: MetricFindQueryTypes.Aggregations, name: 'Aggregations' },
+    { value: MetricFindQueryTypes.Alignerns, name: 'Aligners' },
+    { value: MetricFindQueryTypes.AlignmentPeriods, name: 'Alignment Periods' },
   ];
 
   defaults = {
@@ -45,7 +46,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   }
 
   isLabelQuery(queryType) {
-    return ['metricLabels', 'resourceLabels'].indexOf(queryType) !== -1;
+    return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
   }
 
   async loadTimeSeriesData() {
@@ -89,7 +90,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   switchMetaType(queryType) {
     switch (queryType) {
-      case 'resourceLabels':
+      case MetricFindQueryTypes.ResourceLabels:
         return (
           <SimpleDropdown
             value={this.state.resourceLabelKey}
@@ -98,7 +99,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
             label="Resource Labels"
           />
         );
-      case 'metricLabels':
+      case MetricFindQueryTypes.MetricLabels:
         return (
           <SimpleDropdown
             value={this.state.metricLabelKey}
@@ -114,13 +115,13 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   renderSwitch(queryType) {
     switch (queryType) {
-      case 'metricTypes':
+      case MetricFindQueryTypes.MetricTypes:
         return (
           <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
         );
-      case 'metricLabels':
-      case 'resourceLabels':
-      case 'resourceTypes':
+      case MetricFindQueryTypes.MetricLabels:
+      case MetricFindQueryTypes.ResourceLabels:
+      case MetricFindQueryTypes.ResourceTypes:
         const dropdown = this.switchMetaType(queryType);
         return (
           <React.Fragment>
@@ -133,8 +134,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
             {dropdown}
           </React.Fragment>
         );
-      case 'alignerns':
-      case 'aggregations':
+      case MetricFindQueryTypes.Alignerns:
+      case MetricFindQueryTypes.Aggregations:
         return (
           <React.Fragment>
             <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
