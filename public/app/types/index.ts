@@ -23,6 +23,12 @@ import {
 import { PanelProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
 import { Organization, OrganizationPreferences, OrganizationState } from './organization';
+import {
+  AppNotification,
+  AppNotificationSeverity,
+  AppNotificationsState,
+  AppNotificationTimeout,
+} from './appNotifications';
 
 export {
   Team,
@@ -74,6 +80,10 @@ export {
   Organization,
   OrganizationState,
   OrganizationPreferences,
+  AppNotification,
+  AppNotificationsState,
+  AppNotificationSeverity,
+  AppNotificationTimeout,
 };
 
 export interface StoreState {
@@ -87,4 +97,5 @@ export interface StoreState {
   dataSources: DataSourcesState;
   users: UsersState;
   organization: OrganizationState;
+  appNotifications: AppNotificationsState;
 }

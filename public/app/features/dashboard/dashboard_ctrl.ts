@@ -1,6 +1,12 @@
+// Utils
 import config from 'app/core/config';
-
+import appEvents from 'app/core/app_events';
 import coreModule from 'app/core/core_module';
+
+// Services
+import { AnnotationsSrv } from '../annotations/annotations_srv';
+
+// Types
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
 
@@ -21,6 +27,7 @@ export class DashboardCtrl {
     private dashboardSrv,
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
+    private annotationsSrv: AnnotationsSrv,
     public playlistSrv
   ) {
     // temp hack due to way dashboards are loaded
@@ -49,6 +56,7 @@ export class DashboardCtrl {
     // init services
     this.timeSrv.init(dashboard);
     this.alertingSrv.init(dashboard, data.alerts);
+    this.annotationsSrv.init(dashboard);
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
@@ -72,7 +80,7 @@ export class DashboardCtrl {
         this.keybindingSrv.setupDashboardBindings(this.$scope, dashboard);
         this.setWindowTitleAndTheme();
 
-        this.$scope.appEvent('dashboard-initialized', dashboard);
+        appEvents.emit('dashboard-initialized', dashboard);
       })
       .catch(this.onInitFailed.bind(this, 'Dashboard init failed', true));
   }

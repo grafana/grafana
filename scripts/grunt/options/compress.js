@@ -4,7 +4,7 @@ module.exports = function(config) {
   var task = {
     release: {
       options: {
-        archive: '<%= destDir %>/<%= pkg.name %>-<%= pkg.version %>.<%= platform %>-<%= arch %>.tar.gz'
+        archive: '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %>.tar.gz'
       },
       files : [
         {
@@ -23,7 +23,7 @@ module.exports = function(config) {
   };
 
   if (config.platform === 'windows') {
-    task.release.options.archive = '<%= destDir %>/<%= pkg.name %>-<%= pkg.version %>.<%= platform %>-<%= arch %>.zip';
+    task.release.options.archive = '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %>.zip';
   }
 
   return task;

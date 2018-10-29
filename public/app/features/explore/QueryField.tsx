@@ -5,93 +5,26 @@ import { Change, Value } from 'slate';
 import { Editor } from 'slate-react';
 import Plain from 'slate-plain-serializer';
 
+import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/explore';
+
 import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
 import Typeahead from './Typeahead';
 import { makeFragment, makeValue } from './Value';
+import PlaceholdersBuffer from './PlaceholdersBuffer';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
 
-function getSuggestionByIndex(suggestions: SuggestionGroup[], index: number): Suggestion {
+function getSuggestionByIndex(suggestions: CompletionItemGroup[], index: number): CompletionItem {
   // Flatten suggestion groups
   const flattenedSuggestions = suggestions.reduce((acc, g) => acc.concat(g.items), []);
   const correctedIndex = Math.max(index, 0) % flattenedSuggestions.length;
   return flattenedSuggestions[correctedIndex];
 }
 
-function hasSuggestions(suggestions: SuggestionGroup[]): boolean {
+function hasSuggestions(suggestions: CompletionItemGroup[]): boolean {
   return suggestions && suggestions.length > 0;
-}
-
-export interface Suggestion {
-  /**
-   * The label of this completion item. By default
-   * this is also the text that is inserted when selecting
-   * this completion.
-   */
-  label: string;
-  /**
-   * The kind of this completion item. Based on the kind
-   * an icon is chosen by the editor.
-   */
-  kind?: string;
-  /**
-   * A human-readable string with additional information
-   * about this item, like type or symbol information.
-   */
-  detail?: string;
-  /**
-   * A human-readable string, can be Markdown, that represents a doc-comment.
-   */
-  documentation?: string;
-  /**
-   * A string that should be used when comparing this item
-   * with other items. When `falsy` the `label` is used.
-   */
-  sortText?: string;
-  /**
-   * A string that should be used when filtering a set of
-   * completion items. When `falsy` the `label` is used.
-   */
-  filterText?: string;
-  /**
-   * A string or snippet that should be inserted in a document when selecting
-   * this completion. When `falsy` the `label` is used.
-   */
-  insertText?: string;
-  /**
-   * Delete number of characters before the caret position,
-   * by default the letters from the beginning of the word.
-   */
-  deleteBackwards?: number;
-  /**
-   * Number of steps to move after the insertion, can be negative.
-   */
-  move?: number;
-}
-
-export interface SuggestionGroup {
-  /**
-   * Label that will be displayed for all entries of this group.
-   */
-  label: string;
-  /**
-   * List of suggestions of this group.
-   */
-  items: Suggestion[];
-  /**
-   * If true, match only by prefix (and not mid-word).
-   */
-  prefixMatch?: boolean;
-  /**
-   * If true, do not filter items in this group based on the search.
-   */
-  skipFilter?: boolean;
-  /**
-   * If true, do not sort items.
-   */
-  skipSort?: boolean;
 }
 
 interface TypeaheadFieldProps {
@@ -110,7 +43,7 @@ interface TypeaheadFieldProps {
 }
 
 export interface TypeaheadFieldState {
-  suggestions: SuggestionGroup[];
+  suggestions: CompletionItemGroup[];
   typeaheadContext: string | null;
   typeaheadIndex: number;
   typeaheadPrefix: string;
@@ -127,19 +60,16 @@ export interface TypeaheadInput {
   wrapperNode: Element;
 }
 
-export interface TypeaheadOutput {
-  context?: string;
-  refresher?: Promise<{}>;
-  suggestions: SuggestionGroup[];
-}
-
 class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadFieldState> {
   menuEl: HTMLElement | null;
+  placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
   resetTimer: any;
 
   constructor(props, context) {
     super(props, context);
+
+    this.placeholdersBuffer = new PlaceholdersBuffer(props.initialValue || '');
 
     // Base plugins
     this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
@@ -150,7 +80,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
       typeaheadIndex: 0,
       typeaheadPrefix: '',
       typeaheadText: '',
-      value: makeValue(props.initialValue || '', props.syntax),
+      value: makeValue(this.placeholdersBuffer.toString(), props.syntax),
     };
   }
 
@@ -175,12 +105,14 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
   componentWillReceiveProps(nextProps: TypeaheadFieldProps) {
     if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
       // Need a bogus edit to re-render the editor after syntax has fully loaded
-      this.onChange(
-        this.state.value
-          .change()
-          .insertText(' ')
-          .deleteBackward()
-      );
+      const change = this.state.value
+        .change()
+        .insertText(' ')
+        .deleteBackward();
+      if (this.placeholdersBuffer.hasPlaceholders()) {
+        change.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
+      }
+      this.onChange(change);
     }
   }
 
@@ -293,7 +225,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     }
   }, TYPEAHEAD_DEBOUNCE);
 
-  applyTypeahead(change: Change, suggestion: Suggestion): Change {
+  applyTypeahead(change: Change, suggestion: CompletionItem): Change {
     const { cleanText, onWillApplySuggestion, syntax } = this.props;
     const { typeaheadPrefix, typeaheadText } = this.state;
     let suggestionText = suggestion.insertText || suggestion.label;
@@ -363,7 +295,17 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
           }
 
           const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
-          this.applyTypeahead(change, suggestion);
+          const nextChange = this.applyTypeahead(change, suggestion);
+
+          const insertTextOperation = nextChange.operations.find(operation => operation.type === 'insert_text');
+          if (insertTextOperation) {
+            const suggestionText = insertTextOperation.text;
+            this.placeholdersBuffer.setNextPlaceholderValue(suggestionText);
+            if (this.placeholdersBuffer.hasPlaceholders()) {
+              nextChange.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
+            }
+          }
+
           return true;
         }
         break;
@@ -410,6 +352,8 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
     this.resetTimer = setTimeout(this.resetTypeahead, 100);
+    // Disrupting placeholder entry wipes all remaining placeholders needing input
+    this.placeholdersBuffer.clearPlaceholders();
     if (onBlur) {
       onBlur();
     }
@@ -422,7 +366,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     }
   };
 
-  onClickMenu = (item: Suggestion) => {
+  onClickMenu = (item: CompletionItem) => {
     // Manually triggering change
     const change = this.applyTypeahead(this.state.value.change(), item);
     this.onChange(change);
