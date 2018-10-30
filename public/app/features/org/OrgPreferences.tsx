@@ -99,7 +99,7 @@ export class OrgPreferences extends PureComponent<Props> {
 function mapStateToProps(state) {
   return {
     preferences: state.organization.preferences,
-    starredDashboards: state.organization.starredDashboards,
+    starredDashboards: state.user.starredDashboards,
   };
 }
 

@@ -1,10 +1,9 @@
-import { DashboardSearchHit, Organization, OrganizationPreferences, OrganizationState } from 'app/types';
+import { Organization, OrganizationPreferences, OrganizationState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 const initialState: OrganizationState = {
   organization: {} as Organization,
   preferences: {} as OrganizationPreferences,
-  starredDashboards: [] as DashboardSearchHit[],
 };
 
 const organizationReducer = (state = initialState, action: Action): OrganizationState => {
@@ -14,9 +13,6 @@ const organizationReducer = (state = initialState, action: Action): Organization
 
     case ActionTypes.LoadPreferences:
       return { ...state, preferences: action.payload };
-
-    case ActionTypes.LoadStarredDashboards:
-      return { ...state, starredDashboards: action.payload };
 
     case ActionTypes.SetOrganizationName:
       return { ...state, organization: { ...state.organization, name: action.payload } };

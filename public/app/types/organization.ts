@@ -1,5 +1,3 @@
-import { DashboardSearchHit } from './search';
-
 export interface Organization {
   name: string;
   id: number;
@@ -14,5 +12,4 @@ export interface OrganizationPreferences {
 export interface OrganizationState {
   organization: Organization;
   preferences: OrganizationPreferences;
-  starredDashboards: DashboardSearchHit[];
 }

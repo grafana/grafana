@@ -6,7 +6,7 @@ import { FolderDTO, FolderState, FolderInfo } from './folders';
 import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
-import { Invitee, OrgUser, User, UsersState } from './user';
+import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
 import {
   TimeRange,
@@ -86,6 +86,7 @@ export {
   AppNotificationSeverity,
   AppNotificationTimeout,
   DashboardSearchHit,
+  UserState,
 };
 
 export interface StoreState {
@@ -100,4 +101,5 @@ export interface StoreState {
   users: UsersState;
   organization: OrganizationState;
   appNotifications: AppNotificationsState;
+  user: UserState;
 }

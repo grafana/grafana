@@ -11,7 +11,7 @@ import {
   setOrganizationName,
   updateOrganization,
 } from './state/actions';
-import { loadStarredDashboards } from '../dashboard/state/actions';
+import { loadStarredDashboards } from '../../core/actions/user';
 import { NavModel, Organization, OrganizationPreferences, StoreState } from 'app/types';
 import { getNavModel } from '../../core/selectors/navModel';
 

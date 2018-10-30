@@ -1,5 +1,5 @@
 import { ThunkAction } from 'redux-thunk';
-import { DashboardSearchHit, Organization, OrganizationPreferences, StoreState } from 'app/types';
+import { Organization, OrganizationPreferences, StoreState } from 'app/types';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
@@ -7,7 +7,6 @@ type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 export enum ActionTypes {
   LoadOrganization = 'LOAD_ORGANISATION',
   LoadPreferences = 'LOAD_PREFERENCES',
-  LoadStarredDashboards = 'LOAD_STARRED_DASHBOARDS',
   SetOrganizationName = 'SET_ORGANIZATION_NAME',
   SetOrganizationTheme = 'SET_ORGANIZATION_THEME',
   SetOrganizationHomeDashboard = 'SET_ORGANIZATION_HOME_DASHBOARD',
@@ -22,11 +21,6 @@ interface LoadOrganizationAction {
 interface LoadPreferencesAction {
   type: ActionTypes.LoadPreferences;
   payload: OrganizationPreferences;
-}
-
-interface LoadStarredDashboardsAction {
-  type: ActionTypes.LoadStarredDashboards;
-  payload: DashboardSearchHit[];
 }
 
 interface SetOrganizationNameAction {
@@ -82,7 +76,6 @@ export const setOrganizationTimezone = (timezone: string) => ({
 export type Action =
   | LoadOrganizationAction
   | LoadPreferencesAction
-  | LoadStarredDashboardsAction
   | SetOrganizationNameAction
   | SetOrganizationThemeAction
   | SetOrganizationHomeDashboardAction
