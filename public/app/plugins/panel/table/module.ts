@@ -263,7 +263,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       const xmlhttp = new XMLHttpRequest();
       xmlhttp.onreadystatechange = function() {
         if (this.readyState === 4) {
-          let responseStatus = ''
+          let responseStatus = '';
           if (this.status === 200) {
             responseStatus = this.responseText;
           } else {
