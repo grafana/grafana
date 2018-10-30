@@ -2,8 +2,11 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import { profiler } from 'app/core/core';
-import { PanelModel } from 'app/features/dashboard/panel_model';
-import { duplicatePanel, copyPanel } from 'app/features/dashboard/utils/panel';
+import {
+  duplicatePanel,
+  copyPanel as copyPanelUtil,
+  editPanelJson as editPanelJsonUtil,
+} from 'app/features/dashboard/utils/panel';
 import Remarkable from 'remarkable';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -251,36 +254,11 @@ export class PanelCtrl {
   }
 
   editPanelJson() {
-    const editScope = this.$scope.$root.$new();
-    editScope.object = this.panel.getSaveModel();
-    editScope.updateHandler = this.replacePanel.bind(this);
-    editScope.enableCopy = true;
-
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/partials/edit_json.html',
-      scope: editScope,
-    });
+    editPanelJsonUtil(this.dashboard, this.panel);
   }
 
   copyPanel() {
-    copyPanel(this.panel);
-  }
-
-  replacePanel(newPanel, oldPanel) {
-    const dashboard = this.dashboard;
-    const index = _.findIndex(dashboard.panels, panel => {
-      return panel.id === oldPanel.id;
-    });
-
-    const deletedPanel = dashboard.panels.splice(index, 1);
-    this.dashboard.events.emit('panel-removed', deletedPanel);
-
-    newPanel = new PanelModel(newPanel);
-    newPanel.id = oldPanel.id;
-
-    dashboard.panels.splice(index, 0, newPanel);
-    dashboard.sortPanelsByGridPos();
-    dashboard.events.emit('panel-added', newPanel);
+    copyPanelUtil(this.panel);
   }
 
   sharePanel() {

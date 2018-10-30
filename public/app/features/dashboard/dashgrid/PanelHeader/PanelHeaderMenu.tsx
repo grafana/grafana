@@ -3,7 +3,7 @@ import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemTypes } from './PanelHeaderMenuItem';
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
-import { removePanel, duplicatePanel, copyPanel } from 'app/features/dashboard/utils/panel';
+import { removePanel, duplicatePanel, copyPanel, editPanelJson } from 'app/features/dashboard/utils/panel';
 import appEvents from 'app/core/app_events';
 
 export interface PanelHeaderMenuProps {
@@ -74,6 +74,12 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
     copyPanel(panel);
   };
 
+  onEditPanelJson = () => {
+    const { dashboard } = this.props;
+    const panel = this.getPanel();
+    editPanelJson(dashboard, panel);
+  };
+
   render() {
     return (
       <div className="panel-menu-container dropdown">
@@ -114,7 +120,11 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
                 shortcut="p d"
               />
               <PanelHeaderMenuItem type={PanelHeaderMenuItemTypes.Link} text="Copy" handleClick={this.onCopyPanel} />
-              <PanelHeaderMenuItem type={PanelHeaderMenuItemTypes.Link} text="Panel JSON" handleClick={() => {}} />
+              <PanelHeaderMenuItem
+                type={PanelHeaderMenuItemTypes.Link}
+                text="Panel JSON"
+                handleClick={this.onEditPanelJson}
+              />
               <PanelHeaderMenuItem type={PanelHeaderMenuItemTypes.Link} text="Export CSV" handleClick={() => {}} />
               <PanelHeaderMenuItem
                 type={PanelHeaderMenuItemTypes.Link}

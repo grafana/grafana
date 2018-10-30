@@ -19,7 +19,6 @@ export class DashboardCtrl {
   /** @ngInject */
   constructor(
     private $scope,
-    private $rootScope,
     private keybindingSrv,
     private timeSrv,
     private variableSrv,
@@ -112,12 +111,14 @@ export class DashboardCtrl {
   }
 
   showJsonEditor(evt, options) {
-    const editScope = this.$rootScope.$new();
-    editScope.object = options.object;
-    editScope.updateHandler = options.updateHandler;
+    const model = {
+      object: options.object,
+      updateHandler: options.updateHandler,
+    };
+
     this.$scope.appEvent('show-dash-editor', {
       src: 'public/app/partials/edit_json.html',
-      scope: editScope,
+      model: model,
     });
   }
 

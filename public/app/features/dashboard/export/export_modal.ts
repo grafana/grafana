@@ -29,13 +29,14 @@ export class DashExportCtrl {
 
   saveJson() {
     const clone = this.dash;
-    const editScope = this.$rootScope.$new();
-    editScope.object = clone;
-    editScope.enableCopy = true;
+    const model = {
+      object: clone,
+      enableCopy: true,
+    };
 
     this.$rootScope.appEvent('show-modal', {
       src: 'public/app/partials/edit_json.html',
-      scope: editScope,
+      model: model,
     });
 
     this.dismiss();
