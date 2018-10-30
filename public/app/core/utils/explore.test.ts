@@ -2,7 +2,6 @@ import { DEFAULT_RANGE, serializeStateToUrlParam, parseUrlState } from './explor
 import { ExploreState } from 'app/types/explore';
 
 const DEFAULT_EXPLORE_STATE: ExploreState = {
-  customComponents: {},
   datasource: null,
   datasourceError: null,
   datasourceLoading: null,

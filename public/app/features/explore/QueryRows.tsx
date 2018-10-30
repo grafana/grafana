@@ -4,6 +4,7 @@ import { QueryTransaction, HistoryItem, Query, QueryHint } from 'app/types/explo
 
 import DefaultQueryField from './QueryField';
 import QueryTransactionStatus from './QueryTransactionStatus';
+import { DataSource } from 'app/types';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
@@ -23,8 +24,7 @@ interface QueryRowEventHandlers {
 
 interface QueryRowCommonProps {
   className?: string;
-  customComponents: any;
-  datasource: any;
+  datasource: DataSource;
   history: HistoryItem[];
   // Temporarily
   supportsLogs?: boolean;
@@ -37,7 +37,7 @@ type QueryRowProps = QueryRowCommonProps &
     query: string;
   };
 
-class DefaultQueryRow extends PureComponent<QueryRowProps> {
+class QueryRow extends PureComponent<QueryRowProps> {
   onChangeQuery = (value, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
@@ -78,11 +78,11 @@ class DefaultQueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { customComponents, datasource, history, query, supportsLogs, transactions } = this.props;
+    const { datasource, history, query, supportsLogs, transactions } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
-    const QueryField = customComponents.QueryField || DefaultQueryField;
+    const QueryField = datasource.pluginExports.ExploreQueryField || DefaultQueryField;
     return (
       <div className="query-row">
         <div className="query-row-status">
@@ -124,14 +124,12 @@ type QueryRowsProps = QueryRowCommonProps &
 
 export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', customComponents, queries, transactions, ...handlers } = this.props;
-    const QueryRow = customComponents.QueryRow || DefaultQueryRow;
+    const { className = '', queries, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (
           <QueryRow
             key={q.key}
-            customComponents={customComponents}
             index={index}
             query={q.query}
             transactions={transactions.filter(t => t.rowIndex === index)}

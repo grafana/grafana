@@ -9,15 +9,11 @@ class PrometheusAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 }
 
-const ExploreComponents = {
-  QueryField: PromQueryField,
-  StartPage: PrometheusStartPage,
-};
-
 export {
   PrometheusDatasource as Datasource,
   PrometheusQueryCtrl as QueryCtrl,
   PrometheusConfigCtrl as ConfigCtrl,
   PrometheusAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-  ExploreComponents,
+  PromQueryField as ExploreQueryField,
+  PrometheusStartPage as ExploreStartPage,
 };

@@ -10,7 +10,7 @@ import { TypeaheadOutput } from 'app/types/explore';
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import TypeaheadField, { TypeaheadInput, TypeaheadFieldState } from 'app/features/explore/QueryField';
+import TypeaheadField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -50,10 +50,7 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   return [...options, ...metricsOptions];
 }
 
-export function willApplySuggestion(
-  suggestion: string,
-  { typeaheadContext, typeaheadText }: TypeaheadFieldState
-): string {
+export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {

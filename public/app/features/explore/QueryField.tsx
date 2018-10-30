@@ -27,7 +27,7 @@ function hasSuggestions(suggestions: CompletionItemGroup[]): boolean {
   return suggestions && suggestions.length > 0;
 }
 
-interface TypeaheadFieldProps {
+interface QueryFieldProps {
   additionalPlugins?: any[];
   cleanText?: (text: string) => string;
   initialValue: string | null;
@@ -35,14 +35,14 @@ interface TypeaheadFieldProps {
   onFocus?: () => void;
   onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
   onValueChanged?: (value: Value) => void;
-  onWillApplySuggestion?: (suggestion: string, state: TypeaheadFieldState) => string;
+  onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
   placeholder?: string;
   portalOrigin?: string;
   syntax?: string;
   syntaxLoaded?: boolean;
 }
 
-export interface TypeaheadFieldState {
+export interface QueryFieldState {
   suggestions: CompletionItemGroup[];
   typeaheadContext: string | null;
   typeaheadIndex: number;
@@ -60,7 +60,7 @@ export interface TypeaheadInput {
   wrapperNode: Element;
 }
 
-class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadFieldState> {
+export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
   menuEl: HTMLElement | null;
   placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
@@ -102,7 +102,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     }
   }
 
-  componentWillReceiveProps(nextProps: TypeaheadFieldProps) {
+  componentWillReceiveProps(nextProps: QueryFieldProps) {
     if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
       // Need a bogus edit to re-render the editor after syntax has fully loaded
       const change = this.state.value

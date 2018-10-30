@@ -17,13 +17,14 @@ import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer'
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
-import DefaultQueryRows from './QueryRows';
-import DefaultGraph from './Graph';
-import DefaultLogs from './Logs';
-import DefaultTable from './Table';
+import QueryRows from './QueryRows';
+import Graph from './Graph';
+import Logs from './Logs';
+import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
+import { DataSource } from 'app/types/datasources';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -96,7 +97,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       initialQueries = ensureQueries(queries);
       const initialRange = range || { ...DEFAULT_RANGE };
       this.state = {
-        customComponents: {},
         datasource: null,
         datasourceError: null,
         datasourceLoading: null,
@@ -149,7 +149,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   }
 
-  async setDatasource(datasource) {
+  async setDatasource(datasource: DataSource) {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
     const supportsTable = datasource.meta.metrics;
@@ -177,13 +177,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       query: this.queryExpressions[i],
     }));
 
-    const customComponents = {
-      ...datasource.exploreComponents,
-    };
+    // Custom components
+    const StartPage = datasource.pluginExports.ExploreStartPage;
 
     this.setState(
       {
-        customComponents,
+        StartPage,
         datasource,
         datasourceError,
         history,
@@ -398,9 +397,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               q.query = this.queryExpressions[i];
               return i === index
                 ? {
-                  key: generateQueryKey(index),
-                  query: datasource.modifyQuery(q.query, action),
-                }
+                    key: generateQueryKey(index),
+                    query: datasource.modifyQuery(q.query, action),
+                  }
                 : q;
             });
             nextQueryTransactions = queryTransactions
@@ -734,7 +733,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   render() {
     const { position, split } = this.props;
     const {
-      customComponents,
+      StartPage,
       datasource,
       datasourceError,
       datasourceLoading,
@@ -774,14 +773,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
     );
     const loading = queryTransactions.some(qt => !qt.done);
-    const showStartPages = queryTransactions.length === 0 && customComponents.StartPage;
-
-    // Custom components
-    const Graph = customComponents.Graph || DefaultGraph;
-    const Logs = customComponents.Logs || DefaultLogs;
-    const QueryRows = customComponents.QueryRows || DefaultQueryRows;
-    const StartPage = customComponents.StartPage;
-    const Table = customComponents.Table || DefaultTable;
+    const showStartPages = StartPage && queryTransactions.length === 0;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -794,12 +786,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </a>
             </div>
           ) : (
-              <div className="navbar-buttons explore-first-button">
-                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                  Close Split
+            <div className="navbar-buttons explore-first-button">
+              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                Close Split
               </button>
-              </div>
-            )}
+            </div>
+          )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
@@ -858,7 +850,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasource && !datasourceError ? (
           <div className="explore-container">
             <QueryRows
-              customComponents={customComponents}
               datasource={datasource}
               history={history}
               queries={queries}
@@ -879,17 +870,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       {supportsGraph ? (
                         <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
                           Graph
-                      </button>
+                        </button>
                       ) : null}
                       {supportsTable ? (
                         <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
                           Table
-                      </button>
+                        </button>
                       ) : null}
                       {supportsLogs ? (
                         <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
                           Logs
-                      </button>
+                        </button>
                       ) : null}
                     </div>
 
