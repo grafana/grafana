@@ -77,6 +77,7 @@ export class ColumnOptionsCtrl {
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
       mappingType: 1,
+      details: false,
     };
 
     const styles = this.panel.styles;
@@ -137,6 +138,19 @@ export class ColumnOptionsCtrl {
 
   removeRangeMap(style, index) {
     style.rangeMaps.splice(index, 1);
+    this.panelCtrl.render();
+  }
+
+  toggleLink(el) {
+    if (el.details === true && el.link === true) {
+      el.details = false;
+    }
+    this.panelCtrl.render();
+  }
+  toggleDetail(el) {
+    if (el.details === true && el.link === true) {
+      el.link = false;
+    }
     this.panelCtrl.render();
   }
 }

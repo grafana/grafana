@@ -262,6 +262,32 @@ export class TableRenderer {
           ${value}
         </a>
       `;
+    } else if (column.style && column.style.details && column.style.detailURL) {
+      const scopedVars = this.renderRowVariables(rowIndex);
+      scopedVars['__cell'] = { value: value };
+
+      const cellDetailURL = this.templateSrv.replace(column.style.detailURL, scopedVars, encodeURIComponent);
+      const cellDetailTooltip = this.templateSrv.replace(column.style.detailTooltip, scopedVars);
+
+      if (column.style.detailReplaceText === '') {
+        columnHtml += `
+          <span class="table-panel-column-lookup-detail"
+          data-lookupURL="${cellDetailURL}"
+          data-lookupValue="${value}"
+          data-link-tooltip data-original-title="${cellDetailTooltip}"
+          data-placement="right" ${style}>
+          <b>${value}</b>
+          </span>`;
+      } else {
+        columnHtml += `
+          <span class="table-panel-column-lookup-detail"
+          data-lookupURL="${cellDetailURL}"
+          data-lookupValue="${value}"
+          data-link-tooltip data-original-title="${cellDetailTooltip}"
+          data-placement="right" ${style}>
+          <b>` + column.style.detailReplaceText + `</b>
+          </span>`;
+      }
     } else {
       columnHtml += value;
     }
@@ -314,6 +340,10 @@ export class TableRenderer {
       }
 
       html += '<tr ' + rowClass + rowStyle + '>' + cellHtml + '</tr>';
+      html += '<tr class="tabledetails" ' + rowClass + rowStyle + ' style="display:none;">';
+      html += '<td style="overflow-wrap: break-word;" colspan="' + this.table.columns.length +
+       '" ng-model="ctrl.panel.fontsize"><div></div></td>';
+      html += '</tr>';
     }
 
     return html;
