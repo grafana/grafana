@@ -47,7 +47,7 @@ module.exports = merge(common, {
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /(?!.*\.test)\.tsx$/,
         exclude: /node_modules/,
         use: [{
           loader: 'babel-loader',

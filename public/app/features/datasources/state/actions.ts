@@ -14,41 +14,47 @@ export enum ActionTypes {
   SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
   SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
   SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
+  SetDataSourceName = 'SET_DATA_SOURCE_NAME',
 }
 
-export interface LoadDataSourcesAction {
+interface LoadDataSourcesAction {
   type: ActionTypes.LoadDataSources;
   payload: DataSource[];
 }
 
-export interface SetDataSourcesSearchQueryAction {
+interface SetDataSourcesSearchQueryAction {
   type: ActionTypes.SetDataSourcesSearchQuery;
   payload: string;
 }
 
-export interface SetDataSourcesLayoutModeAction {
+interface SetDataSourcesLayoutModeAction {
   type: ActionTypes.SetDataSourcesLayoutMode;
   payload: LayoutMode;
 }
 
-export interface LoadDataSourceTypesAction {
+interface LoadDataSourceTypesAction {
   type: ActionTypes.LoadDataSourceTypes;
   payload: Plugin[];
 }
 
-export interface SetDataSourceTypeSearchQueryAction {
+interface SetDataSourceTypeSearchQueryAction {
   type: ActionTypes.SetDataSourceTypeSearchQuery;
   payload: string;
 }
 
-export interface LoadDataSourceAction {
+interface LoadDataSourceAction {
   type: ActionTypes.LoadDataSource;
   payload: DataSource;
 }
 
-export interface LoadDataSourceMetaAction {
+interface LoadDataSourceMetaAction {
   type: ActionTypes.LoadDataSourceMeta;
   payload: Plugin;
+}
+
+interface SetDataSourceNameAction {
+  type: ActionTypes.SetDataSourceName;
+  payload: string;
 }
 
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
@@ -86,6 +92,11 @@ export const setDataSourceTypeSearchQuery = (query: string): SetDataSourceTypeSe
   payload: query,
 });
 
+export const setDataSourceName = (name: string) => ({
+  type: ActionTypes.SetDataSourceName,
+  payload: name,
+});
+
 export type Action =
   | LoadDataSourcesAction
   | SetDataSourcesSearchQueryAction
@@ -95,7 +106,8 @@ export type Action =
   | SetDataSourceTypeSearchQueryAction
   | LoadDataSourceAction
   | UpdateNavIndexAction
-  | LoadDataSourceMetaAction;
+  | LoadDataSourceMetaAction
+  | SetDataSourceNameAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 

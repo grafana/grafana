@@ -20,7 +20,7 @@ export const getDataSource = (state, dataSourceId): DataSource | null => {
   if (state.dataSource.id === parseInt(dataSourceId, 10)) {
     return state.dataSource;
   }
-  return null;
+  return {} as DataSource;
 };
 
 export const getDataSourcesSearchQuery = state => state.searchQuery;
