@@ -4,6 +4,7 @@ import { PanelHeaderMenuItem, PanelHeaderMenuItemTypes } from './PanelHeaderMenu
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
 import { removePanel } from 'app/features/dashboard/utils/panel';
+import appEvents from 'app/core/app_events';
 
 export interface PanelHeaderMenuProps {
   panelId: number;
@@ -11,6 +12,13 @@ export interface PanelHeaderMenuProps {
 }
 
 export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
+  getPanel = () => {
+    // Pass in panel as prop instead?
+    const { panelId, dashboard } = this.props;
+    const panelInfo = dashboard.getPanelInfoById(panelId);
+    return panelInfo.panel;
+  };
+
   onEditPanel = () => {
     store.dispatch(
       updateLocation({
@@ -36,9 +44,22 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
   };
 
   onRemovePanel = () => {
-    const { panelId, dashboard } = this.props;
-    const panelInfo = dashboard.getPanelInfoById(panelId);
-    removePanel(dashboard, panelInfo.panel, true);
+    const { dashboard } = this.props;
+    const panel = this.getPanel();
+    removePanel(dashboard, panel, true);
+  };
+
+  onSharePanel = () => {
+    const { dashboard } = this.props;
+    const panel = this.getPanel();
+
+    appEvents.emit('show-modal', {
+      src: 'public/app/features/dashboard/partials/shareModal.html',
+      model: {
+        panel: panel,
+        dashboard: dashboard,
+      },
+    });
   };
 
   render() {
@@ -63,7 +84,7 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
             type={PanelHeaderMenuItemTypes.Link}
             text="Share"
             iconClassName="fa fa-fw fa-share"
-            handleClick={() => {}}
+            handleClick={this.onSharePanel}
             shortcut="p s"
           />
           <PanelHeaderMenuItem
