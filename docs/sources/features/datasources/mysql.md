@@ -88,7 +88,7 @@ The query editor has a link named `Generated SQL` that shows up after a query ha
 
 When you enter edit mode for the first time or add a new query Grafana will try to prefill the query builder with the first table that has a timestamp column and a numeric column.
 
-In the FROM field, Grafana will suggest tables that are in the configured database. You can also manually enter a fully qualified name (schema.table) like `public.metrics`.
+In the FROM field, Grafana will suggest tables that are in the configured database. To select a table or view in another database that your database user has access to you can manually enter a fully qualified name (database.table) like `otherDb.metrics`.
 
 The Time column field refers to the name of the column holding your time values. Selecting a value for the Metric column field is optional. If a value is selected, the Metric column field will be used as the series name.
 
