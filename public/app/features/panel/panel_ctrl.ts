@@ -6,6 +6,7 @@ import {
   duplicatePanel,
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
+  sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 import Remarkable from 'remarkable';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
@@ -262,14 +263,7 @@ export class PanelCtrl {
   }
 
   sharePanel() {
-    const shareScope = this.$scope.$new();
-    shareScope.panel = this.panel;
-    shareScope.dashboard = this.dashboard;
-
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/shareModal.html',
-      scope: shareScope,
-    });
+    sharePanelUtil(this.dashboard, this.panel);
   }
 
   getInfoMode() {

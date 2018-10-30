@@ -63,3 +63,13 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
     model: model,
   });
 };
+
+export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
+  appEvents.emit('show-modal', {
+    src: 'public/app/features/dashboard/partials/shareModal.html',
+    model: {
+      dashboard: dashboard,
+      panel: panel,
+    },
+  });
+};

@@ -3,8 +3,7 @@ import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemTypes } from './PanelHeaderMenuItem';
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
-import { removePanel, duplicatePanel, copyPanel, editPanelJson } from 'app/features/dashboard/utils/panel';
-import appEvents from 'app/core/app_events';
+import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
 
 export interface PanelHeaderMenuProps {
   panelId: number;
@@ -53,13 +52,7 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
     const { dashboard } = this.props;
     const panel = this.getPanel();
 
-    appEvents.emit('show-modal', {
-      src: 'public/app/features/dashboard/partials/shareModal.html',
-      model: {
-        panel: panel,
-        dashboard: dashboard,
-      },
-    });
+    sharePanel(dashboard, panel);
   };
 
   onDuplicatePanel = () => {

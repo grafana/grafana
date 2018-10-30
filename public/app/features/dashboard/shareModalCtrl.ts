@@ -12,6 +12,8 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   $scope.editor = { index: $scope.tabIndex || 0 };
 
   $scope.init = () => {
+    $scope.panel = $scope.model.panel || $scope.panel; // React pass panel and dashboard in the "model" property
+    $scope.dashboard = $scope.model.dashboard || $scope.dashboard;
     $scope.modeSharePanel = $scope.panel ? true : false;
 
     $scope.tabs = [{ title: 'Link', src: 'shareLink.html' }];
