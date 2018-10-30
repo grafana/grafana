@@ -76,7 +76,7 @@ if [ -d '/tmp/phantomjs/windows' ]; then
   cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
   rm tools/phantomjs/phantomjs
 else
-    echo 'PhantomJS binaries for darwin missing!'
+    echo 'PhantomJS binaries for Windows missing!'
 fi
 go run build.go -goos windows -pkg-arch amd64 ${OPT} package-only
 

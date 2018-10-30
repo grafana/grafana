@@ -22,6 +22,12 @@ import {
 } from './series';
 import { PanelProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
+import {
+  AppNotification,
+  AppNotificationSeverity,
+  AppNotificationsState,
+  AppNotificationTimeout,
+} from './appNotifications';
 
 export {
   Team,
@@ -70,6 +76,10 @@ export {
   DataQueryResponse,
   DataQueryOptions,
   PluginDashboard,
+  AppNotification,
+  AppNotificationsState,
+  AppNotificationSeverity,
+  AppNotificationTimeout,
 };
 
 export interface StoreState {
@@ -82,4 +92,5 @@ export interface StoreState {
   dashboard: DashboardState;
   dataSources: DataSourcesState;
   users: UsersState;
+  appNotifications: AppNotificationsState;
 }

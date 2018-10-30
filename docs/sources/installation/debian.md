@@ -28,7 +28,7 @@ installation.
 ```bash
 wget <debian package url>
 sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.1.4_amd64.deb
+sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
 Example:

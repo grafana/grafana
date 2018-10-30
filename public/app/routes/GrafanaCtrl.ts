@@ -17,7 +17,6 @@ export class GrafanaCtrl {
   /** @ngInject */
   constructor(
     $scope,
-    alertSrv,
     utilSrv,
     $rootScope,
     $controller,
@@ -41,11 +40,8 @@ export class GrafanaCtrl {
       $scope._ = _;
 
       profiler.init(config, $rootScope);
-      alertSrv.init();
       utilSrv.init();
       bridgeSrv.init();
-
-      $scope.dashAlerts = alertSrv;
     };
 
     $rootScope.colors = colors;
@@ -88,7 +84,7 @@ function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
       break;
     }
     // 1 & true for legacy states
-    case 1:
+    case '1':
     case true: {
       body.removeClass('sidemenu-open');
       body.addClass('view-mode--kiosk');
@@ -176,16 +172,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const search = $location.search();
 
         if (options && options.exit) {
-          search.kiosk = 1;
+          search.kiosk = '1';
         }
 
         switch (search.kiosk) {
           case 'tv': {
-            search.kiosk = 1;
+            search.kiosk = true;
             appEvents.emit('alert-success', ['Press ESC to exit Kiosk mode']);
             break;
           }
-          case 1:
+          case '1':
           case true: {
             delete search.kiosk;
             break;

@@ -13,15 +13,12 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-
-	"gopkg.in/ini.v1"
-
-	"github.com/go-macaron/session"
-
 	"time"
 
+	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -49,6 +46,7 @@ var (
 	// build
 	BuildVersion    string
 	BuildCommit     string
+	BuildBranch     string
 	BuildStamp      int64
 	IsEnterprise    bool
 	ApplicationName string
