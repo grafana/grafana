@@ -257,6 +257,40 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     elem.on('click', '.table-panel-page-link', switchPage);
     elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
+    function detailLookup(e) {
+      const el = e.currentTarget;
+      const uid = e.currentTarget.dataset.lookupurl;
+      const xmlhttp = new XMLHttpRequest();
+      xmlhttp.onreadystatechange = function() {
+        if (this.readyState === 4) {
+          let responseStatus = '';
+          if (this.status === 200) {
+            responseStatus = this.responseText;
+          } else {
+            responseStatus = "Unable to access data.  Status: " + this.status;
+          }
+          const parentRow = el.closest("tr");
+          const maxWidth = parentRow.offsetWidth - 50;
+          const detailSelected = parentRow.nextElementSibling.getAttribute("style");
+          const detailRows = parentRow.parentElement.getElementsByClassName("tabledetails");
+          for ( let i = 0; i < detailRows.length ; i++ ) {
+            detailRows[i].setAttribute("style","display:none;");
+          }
+          if (detailSelected === "display:none;") {
+            parentRow.nextElementSibling.childNodes[0].childNodes[0].setAttribute("style","border: 20px;max-width: " + maxWidth + "px;");
+            parentRow.nextElementSibling.childNodes[0].childNodes[0].innerText = responseStatus;
+            parentRow.nextElementSibling.removeAttribute("style");
+          } else {
+            parentRow.nextElementSibling.setAttribute("style","display:none;");
+          }
+        }
+      };
+      xmlhttp.open("GET", uid, true);
+      xmlhttp.send();
+    }
+
+    elem.on('click', '.table-panel-column-lookup-detail', detailLookup);
+
     const unbindDestroy = scope.$on('$destroy', () => {
       elem.off('click', '.table-panel-page-link');
       elem.off('click', '.table-panel-filter-link');
