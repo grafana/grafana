@@ -28,6 +28,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     resourceLabels: [],
     metricLabelKey: '',
     resourceLabelKey: '',
+    // metricLabelValue: '',
+    // resourceLabelValue: '',
   };
 
   constructor(props: TemplateQueryProps) {
@@ -41,10 +43,15 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   async componentDidMount() {
     const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
-    this.setState({ metricDescriptors });
+    this.setState({ metricDescriptors }, () => {
+      if (this.state.metricType) {
+        this.loadTimeSeriesData();
+      }
+    });
   }
 
   async loadTimeSeriesData() {
+    console.log('loadTimeSeriesData', this.state.metricType);
     const refId = 'StackdriverTemplateQueryComponent';
     const response = await this.props.datasource.getLabels(this.state.metricType, refId);
     if (this.isLabelQuery(this.state.type) && has(response, `meta.${this.state.type}`)) {
@@ -53,10 +60,11 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   }
 
   handleQueryTypeChange(event) {
-    this.setState({ type: event.target.value });
-    if (this.isLabelQuery(event.target.value)) {
-      this.loadTimeSeriesData();
-    }
+    this.setState({ type: event.target.value }, () => {
+      if (this.isLabelQuery(event.target.value)) {
+        this.loadTimeSeriesData();
+      }
+    });
   }
 
   onServiceChange(event) {
@@ -64,10 +72,11 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   }
 
   onMetricTypeChange(event) {
-    this.setState({ metricType: event.target.value });
-    if (this.isLabelQuery(this.state.type)) {
-      this.loadTimeSeriesData();
-    }
+    this.setState({ metricType: event.target.value }, () => {
+      if (this.isLabelQuery(this.state.type)) {
+        this.loadTimeSeriesData();
+      }
+    });
   }
 
   onLabelKeyChange(event) {
@@ -113,7 +122,11 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
         return (
-          <ServicePicker metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+          <ServicePicker
+            selectedService={this.state.service}
+            metricDescriptors={this.state.metricDescriptors}
+            onServiceChange={this.onServiceChange}
+          />
         );
       case MetricFindQueryTypes.MetricLabels:
       case MetricFindQueryTypes.ResourceLabels:
@@ -121,9 +134,15 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
         const dropdown = this.getDropdown(queryType);
         return (
           <React.Fragment>
-            <ServicePicker metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+            {this.state.metricLabels.join(',')}
+            <ServicePicker
+              selectedService={this.state.service}
+              metricDescriptors={this.state.metricDescriptors}
+              onServiceChange={this.onServiceChange}
+            />
             <MetricTypePicker
               selectedService={this.state.service}
+              selectedMetricType={this.state.metricType}
               metricDescriptors={this.state.metricDescriptors}
               onMetricTypeChange={this.onMetricTypeChange}
             />
@@ -134,8 +153,13 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.Aggregations:
         return (
           <React.Fragment>
-            <ServicePicker metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+            <ServicePicker
+              selectedService={this.state.service}
+              metricDescriptors={this.state.metricDescriptors}
+              onServiceChange={this.onServiceChange}
+            />
             <MetricTypePicker
+              selectedMetricType={this.state.metricType}
               selectedService={this.state.service}
               metricDescriptors={this.state.metricDescriptors}
               onMetricTypeChange={this.onMetricTypeChange}
@@ -153,7 +177,12 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
         <div className="gf-form max-width-21">
           <span className="gf-form-label width-7">Query Type</span>
           <div className="gf-form-select-wrapper max-width-14">
-            <select className="gf-form-input" required onChange={this.handleQueryTypeChange}>
+            <select
+              className="gf-form-input"
+              defaultValue={this.state.type}
+              required
+              onChange={this.handleQueryTypeChange}
+            >
               {this.queryTypes.map((qt, i) => (
                 <option key={i} value={qt.value} ng-if="false">
                   {qt.name}
