@@ -22,9 +22,9 @@ that can only be found in the Enterprise edition.
 
 With Grafana Enterprise you can setup syncing between LDAP Groups and Teams. [Learn More](link).
 
-### Data source permissions
+### Datasource Permissions
 
-Assign and restrict query permissions on Data Sources to specific teams or users. [Learn More](link).
+Datasource permissions allows you to restrict access for users to query a datasource. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
 
 ## Try Grafana Enterprise
 
