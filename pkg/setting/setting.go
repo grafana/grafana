@@ -13,15 +13,12 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-
-	"gopkg.in/ini.v1"
-
-	"github.com/go-macaron/session"
-
 	"time"
 
+	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -49,6 +46,7 @@ var (
 	// build
 	BuildVersion    string
 	BuildCommit     string
+	BuildBranch     string
 	BuildStamp      int64
 	IsEnterprise    bool
 	ApplicationName string
@@ -213,6 +211,8 @@ type Cfg struct {
 	TempDataLifetime time.Duration
 
 	MetricsEndpointEnabled bool
+
+	EnableAlphaPanels bool
 }
 
 type CommandLineArgs struct {
@@ -693,6 +693,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(false)
+
+	panels := iniFile.Section("panels")
+	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()

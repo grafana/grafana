@@ -8,27 +8,30 @@ import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
 import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { configureStore } from 'app/store/configureStore';
+import { TimeSrv, setTimeSrv } from 'app/features/dashboard/time_srv';
+import { DatasourceSrv, setDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
+import { configureStore } from 'app/store/configureStore';
 
 export class GrafanaCtrl {
   /** @ngInject */
   constructor(
     $scope,
-    alertSrv,
     utilSrv,
     $rootScope,
     $controller,
     contextSrv,
     bridgeSrv,
     backendSrv: BackendSrv,
+    timeSrv: TimeSrv,
     datasourceSrv: DatasourceSrv,
     angularLoader: AngularLoader
   ) {
-    // sets singleston instances for angular services so react components can access them
+    // make angular loader service available to react components
     setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);
+    setDatasourceSrv(datasourceSrv);
+    setTimeSrv(timeSrv);
     configureStore();
 
     $scope.init = () => {
@@ -37,11 +40,8 @@ export class GrafanaCtrl {
       $scope._ = _;
 
       profiler.init(config, $rootScope);
-      alertSrv.init();
       utilSrv.init();
       bridgeSrv.init();
-
-      $scope.dashAlerts = alertSrv;
     };
 
     $rootScope.colors = colors;
@@ -84,7 +84,7 @@ function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
       break;
     }
     // 1 & true for legacy states
-    case 1:
+    case '1':
     case true: {
       body.removeClass('sidemenu-open');
       body.addClass('view-mode--kiosk');
@@ -172,16 +172,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const search = $location.search();
 
         if (options && options.exit) {
-          search.kiosk = 1;
+          search.kiosk = '1';
         }
 
         switch (search.kiosk) {
           case 'tv': {
-            search.kiosk = 1;
+            search.kiosk = true;
             appEvents.emit('alert-success', ['Press ESC to exit Kiosk mode']);
             break;
           }
-          case 1:
+          case '1':
           case true: {
             delete search.kiosk;
             break;

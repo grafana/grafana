@@ -5,6 +5,7 @@ import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
+import PrometheusLanguageProvider from './language_provider';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
 import addLabelToQuery from './add_label_to_query';
@@ -60,6 +61,7 @@ export class PrometheusDatasource {
   interval: string;
   queryTimeout: string;
   httpMethod: string;
+  languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
 
   /** @ngInject */
@@ -76,6 +78,7 @@ export class PrometheusDatasource {
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
+    this.languageProvider = new PrometheusLanguageProvider(this);
   }
 
   init() {
@@ -176,7 +179,6 @@ export class PrometheusDatasource {
 
     return this.$q.all(allQueryPromise).then(responseList => {
       let result = [];
-      let hints = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
@@ -196,19 +198,14 @@ export class PrometheusDatasource {
           end: queries[index].end,
           query: queries[index].expr,
           responseListLength: responseList.length,
-          responseIndex: index,
           refId: activeTargets[index].refId,
+          valueWithRefId: activeTargets[index].valueWithRefId,
         };
         const series = this.resultTransformer.transform(response, transformerOptions);
         result = [...result, ...series];
-
-        if (queries[index].hinting) {
-          const queryHints = getQueryHints(series, this);
-          hints = [...hints, ...queryHints];
-        }
       });
 
-      return { data: result, hints };
+      return { data: result };
     });
   }
 
@@ -437,6 +434,10 @@ export class PrometheusDatasource {
     return state;
   }
 
+  getQueryHints(query: string, result: any[]) {
+    return getQueryHints(query, result, this);
+  }
+
   loadRules() {
     this.metadataRequest('/api/v1/rules')
       .then(res => res.data || res.json())
@@ -462,6 +463,9 @@ export class PrometheusDatasource {
       }
       case 'ADD_RATE': {
         return `rate(${query}[5m])`;
+      }
+      case 'ADD_SUM': {
+        return `sum(${query.trim()}) by ($1)`;
       }
       case 'EXPAND_RULES': {
         const mapping = action.mapping;

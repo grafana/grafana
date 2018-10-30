@@ -753,7 +753,7 @@
             "steppedLine": false,
             "targets": [
               {
-                "expr": "increase(grafana_alerting_result_total[1m])",
+                "expr": "increase(grafana_alerting_active_alerts[1m])",
                 "format": "time_series",
                 "intervalFactor": 3,
                 "legendFormat": "{{state}}",
@@ -764,7 +764,7 @@
             "thresholds": [],
             "timeFrom": null,
             "timeShift": null,
-            "title": "Grafana alert results",
+            "title": "Grafana active alerts",
             "tooltip": {
               "shared": true,
               "sort": 0,

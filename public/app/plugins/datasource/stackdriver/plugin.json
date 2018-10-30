@@ -28,10 +28,7 @@
       "method": "GET",
       "url": "https://content-monitoring.googleapis.com",
       "jwtTokenAuth": {
-        "scopes": [
-          "https://www.googleapis.com/auth/monitoring.read",
-          "https://www.googleapis.com/auth/cloudplatformprojects.readonly"
-        ],
+        "scopes": ["https://www.googleapis.com/auth/monitoring.read"],
         "params": {
           "token_uri": "{{.JsonData.tokenUri}}",
           "client_email": "{{.JsonData.clientEmail}}",

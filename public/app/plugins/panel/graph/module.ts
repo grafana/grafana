@@ -134,9 +134,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
     this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
       this.addEditorTab('Alert', alertTab, 5);
@@ -147,7 +147,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onInitPanelActions(actions) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
-    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()' });
+    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
   issueQueries(datasource) {

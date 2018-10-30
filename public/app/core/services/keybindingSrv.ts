@@ -148,7 +148,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('mod+s', e => {
@@ -242,6 +242,18 @@ export class KeybindingSrv {
       }
     });
 
+    // toggle panel legend
+    this.bind('p l', () => {
+      if (dashboard.meta.focusPanelId) {
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        if (panelInfo.panel.legend) {
+          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          panelRef.legend.show = !panelRef.legend.show;
+          panelRef.refresh();
+        }
+      }
+    });
+
     // collapse all rows
     this.bind('d shift+c', () => {
       dashboard.collapseRows();
@@ -257,7 +269,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('d s', () => {

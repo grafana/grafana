@@ -5,13 +5,23 @@ export class StackdriverConfigCtrl {
   jsonText: string;
   validationErrors: string[] = [];
   inputDataValid: boolean;
+  authenticationTypes: any[];
+  defaultAuthenticationType: string;
 
   /** @ngInject */
   constructor(datasourceSrv) {
+    this.defaultAuthenticationType = 'jwt';
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
+    this.current.jsonData.authenticationType = this.current.jsonData.authenticationType
+      ? this.current.jsonData.authenticationType
+      : this.defaultAuthenticationType;
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
+    this.authenticationTypes = [
+      { key: this.defaultAuthenticationType, value: 'Google JWT File' },
+      { key: 'gce', value: 'GCE Default Service Account' },
+    ];
   }
 
   save(jwt) {
@@ -33,6 +43,10 @@ export class StackdriverConfigCtrl {
 
     if (!jwt.client_email || jwt.client_email.length === 0) {
       this.validationErrors.push('Client Email field missing in JWT file.');
+    }
+
+    if (!jwt.project_id || jwt.project_id.length === 0) {
+      this.validationErrors.push('Project Id field missing in JWT file.');
     }
 
     if (this.validationErrors.length === 0) {
@@ -67,7 +81,7 @@ export class StackdriverConfigCtrl {
     this.inputDataValid = false;
     this.jsonText = '';
 
-    this.current.jsonData = {};
+    this.current.jsonData = Object.assign({}, { authenticationType: this.current.jsonData.authenticationType });
     this.current.secureJsonData = {};
     this.current.secureJsonFields = {};
   }

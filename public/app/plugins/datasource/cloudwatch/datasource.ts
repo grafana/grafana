@@ -37,6 +37,9 @@ export default class CloudWatchDatasource {
       item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
       item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
+      item.statistics = item.statistics.map(s => {
+        return this.templateSrv.replace(s, options.scopedVars);
+      });
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
       item.id = this.templateSrv.replace(item.id, options.scopedVars);
       item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
@@ -137,7 +140,11 @@ export default class CloudWatchDatasource {
       if (res.results) {
         _.forEach(res.results, queryRes => {
           _.forEach(queryRes.series, series => {
-            data.push({ target: series.name, datapoints: series.points, unit: queryRes.meta.unit || 'none' });
+            const s = { target: series.name, datapoints: series.points } as any;
+            if (queryRes.meta.unit) {
+              s.unit = queryRes.meta.unit;
+            }
+            data.push(s);
           });
         });
       }

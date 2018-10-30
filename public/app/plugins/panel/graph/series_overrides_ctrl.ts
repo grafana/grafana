@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 
 /** @ngInject */
 export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
@@ -156,4 +156,4 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.updateCurrentOverrides();
 }
 
-angular.module('grafana.controllers').controller('SeriesOverridesCtrl', SeriesOverridesCtrl);
+coreModule.controller('SeriesOverridesCtrl', SeriesOverridesCtrl);

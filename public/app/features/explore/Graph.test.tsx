@@ -4,24 +4,11 @@ import { Graph } from './Graph';
 import { mockData } from './__mocks__/mockData';
 
 const setup = (propOverrides?: object) => {
-  const props = Object.assign(
-    {
-      data: mockData().slice(0, 19),
-      options: {
-        interval: '20s',
-        range: { from: 'now-6h', to: 'now' },
-        targets: [
-          {
-            format: 'time_series',
-            instant: false,
-            hinting: true,
-            expr: 'prometheus_http_request_duration_seconds_bucket',
-          },
-        ],
-      },
-    },
-    propOverrides
-  );
+  const props = {
+    data: mockData().slice(0, 19),
+    range: { from: 'now-6h', to: 'now' },
+    ...propOverrides,
+  };
 
   // Enzyme.shallow did not work well with jquery.flop. Mocking the draw function.
   Graph.prototype.draw = jest.fn();

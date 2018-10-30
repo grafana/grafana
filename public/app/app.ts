@@ -26,8 +26,12 @@ _.move = (array, fromIndex, toIndex) => {
   return array;
 };
 
-import { coreModule, registerAngularDirectives } from './core/core';
-import { setupAngularRoutes } from './routes/routes';
+import { coreModule, angularModules } from 'app/core/core_module';
+import { registerAngularDirectives } from 'app/core/core';
+import { setupAngularRoutes } from 'app/routes/routes';
+
+import 'app/routes/GrafanaCtrl';
+import 'app/features/all';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -109,39 +113,26 @@ export class GrafanaApp {
       'react',
     ];
 
-    const moduleTypes = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
-
-    _.each(moduleTypes, type => {
-      const moduleName = 'grafana.' + type;
-      this.useModule(angular.module(moduleName, []));
-    });
-
     // makes it possible to add dynamic stuff
-    this.useModule(coreModule);
+    _.each(angularModules, m => {
+      this.useModule(m);
+    });
 
     // register react angular wrappers
     coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    const preBootRequires = [import('app/features/all')];
+    // disable tool tip animation
+    $.fn.tooltip.defaults.animation = false;
 
-    Promise.all(preBootRequires)
-      .then(() => {
-        // disable tool tip animation
-        $.fn.tooltip.defaults.animation = false;
-
-        // bootstrap the app
-        angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
-          _.each(this.preBootModules, module => {
-            _.extend(module, this.registerFunctions);
-          });
-
-          this.preBootModules = null;
-        });
-      })
-      .catch(err => {
-        console.log('Application boot failed:', err);
+    // bootstrap the app
+    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+      _.each(this.preBootModules, module => {
+        _.extend(module, this.registerFunctions);
       });
+
+      this.preBootModules = null;
+    });
   }
 }
 

@@ -320,13 +320,18 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard WHERE id = ?",
 			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
 			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
-			"DELETE FROM dashboard WHERE folder_id = ?",
 			"DELETE FROM annotation WHERE dashboard_id = ?",
 			"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
 		}
 
+		if dashboard.IsFolder {
+			deletes = append(deletes, "DELETE FROM dashboard_provisioning WHERE dashboard_id in (select id from dashboard where folder_id = ?)")
+			deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
+		}
+
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, dashboard.Id)
+
 			if err != nil {
 				return err
 			}
