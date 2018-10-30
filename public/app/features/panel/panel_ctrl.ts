@@ -3,6 +3,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import { appEvents, profiler } from 'app/core/core';
 import { PanelModel } from 'app/features/dashboard/panel_model';
+import { duplicatePanel } from 'app/features/dashboard/utils/panel';
 import Remarkable from 'remarkable';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -241,7 +242,7 @@ export class PanelCtrl {
   }
 
   duplicate() {
-    this.dashboard.duplicatePanel(this.panel);
+    duplicatePanel(this.dashboard, this.panel);
   }
 
   removePanel() {

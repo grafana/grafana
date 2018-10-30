@@ -22,6 +22,11 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
   dashboard.removePanel(panel);
 };
 
+export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => {
+  dashboard.duplicatePanel(panel);
+};
+
 export default {
   removePanel,
+  duplicatePanel,
 };

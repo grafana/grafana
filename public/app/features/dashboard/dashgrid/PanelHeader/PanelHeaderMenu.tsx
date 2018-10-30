@@ -3,7 +3,7 @@ import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemTypes } from './PanelHeaderMenuItem';
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
-import { removePanel } from 'app/features/dashboard/utils/panel';
+import { removePanel, duplicatePanel } from 'app/features/dashboard/utils/panel';
 import appEvents from 'app/core/app_events';
 
 export interface PanelHeaderMenuProps {
@@ -62,6 +62,13 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
     });
   };
 
+  onDuplicatePanel = () => {
+    const { dashboard } = this.props;
+    const panel = this.getPanel();
+
+    duplicatePanel(dashboard, panel);
+  };
+
   render() {
     return (
       <div className="panel-menu-container dropdown">
@@ -98,7 +105,7 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
                 type={PanelHeaderMenuItemTypes.Link}
                 text="Duplicate"
                 iconClassName=""
-                handleClick={() => {}}
+                handleClick={this.onDuplicatePanel}
                 shortcut="p d"
               />
               <PanelHeaderMenuItem type={PanelHeaderMenuItemTypes.Link} text="Copy" handleClick={() => {}} />
