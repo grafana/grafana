@@ -20,7 +20,11 @@ type CacheServiceImpl struct {
 }
 
 func init() {
-	registry.RegisterService(&CacheServiceImpl{})
+	registry.Register(&registry.Descriptor{
+		Name:         "DatasourceCacheService",
+		Instance:     &CacheServiceImpl{},
+		InitPriority: registry.Low,
+	})
 }
 
 func (dc *CacheServiceImpl) Init() error {
