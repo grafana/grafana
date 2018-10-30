@@ -80,7 +80,7 @@ func main() {
 	setting.BuildBranch = buildBranch
 	setting.IsEnterprise = extensions.IsEnterprise
 
-	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
+	metrics.SetBuildInformation(version, commit, buildBranch)
 
 	server := NewGrafanaServer()
 
