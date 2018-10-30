@@ -296,7 +296,7 @@ func init() {
 
 	M_Grafana_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "info",
-		Help:      "Information about the Grafana. This metrics is deprecated. please use `grafana_build_info`",
+Help:      "Information about the Grafana. This metric is deprecated. please use `grafana_build_info`
 		Namespace: exporterName,
 	}, []string{"version"})
 
