@@ -263,10 +263,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       const xmlhttp = new XMLHttpRequest();
       xmlhttp.onreadystatechange = function() {
         if (this.readyState === 4) {
+          let responseStatus = ''
           if (this.status === 200) {
-            const response = this.responseText;
+            responseStatus = this.responseText;
           } else {
-            const response = "Unable to access data.  Status: " + this.status;
+            responseStatus = "Unable to access data.  Status: " + this.status;
           }
           const parentRow = el.closest("tr");
           const maxWidth = parentRow.offsetWidth - 50;
@@ -277,7 +278,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
           }
           if (detailSelected === "display:none;") {
             parentRow.nextElementSibling.childNodes[0].childNodes[0].setAttribute("style","border: 20px;max-width: " + maxWidth + "px;");
-            parentRow.nextElementSibling.childNodes[0].childNodes[0].innerText = response;
+            parentRow.nextElementSibling.childNodes[0].childNodes[0].innerText = responseStatus;
             parentRow.nextElementSibling.removeAttribute("style");
           } else {
             parentRow.nextElementSibling.setAttribute("style","display:none;");
