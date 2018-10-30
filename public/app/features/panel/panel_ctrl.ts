@@ -1,12 +1,11 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
-import { appEvents, profiler } from 'app/core/core';
+import { profiler } from 'app/core/core';
 import { PanelModel } from 'app/features/dashboard/panel_model';
-import { duplicatePanel } from 'app/features/dashboard/utils/panel';
+import { duplicatePanel, copyPanel } from 'app/features/dashboard/utils/panel';
 import Remarkable from 'remarkable';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
-import store from 'app/core/store';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -264,8 +263,7 @@ export class PanelCtrl {
   }
 
   copyPanel() {
-    store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
-    appEvents.emit('alert-success', ['Panel copied. Open Add Panel to paste']);
+    copyPanel(this.panel);
   }
 
   replacePanel(newPanel, oldPanel) {
