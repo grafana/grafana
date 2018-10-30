@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/lifecycle"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -20,11 +19,9 @@ var (
 	ErrGettingUserQuota      = errors.New("Error getting user quota")
 )
 
-func init() {
-	lifecycle.AddListener(lifecycle.ApplicationStarting, func() {
-		bus.AddHandler("auth", AuthenticateUser)
-		loadLdapConfig()
-	})
+func Init() {
+	bus.AddHandler("auth", AuthenticateUser)
+	loadLdapConfig()
 }
 
 func AuthenticateUser(query *m.LoginUserQuery) error {

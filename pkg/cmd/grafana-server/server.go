@@ -15,9 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/lifecycle"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/social"
 
 	"golang.org/x/sync/errgroup"
 
@@ -69,7 +70,8 @@ func (g *GrafanaServerImpl) Run() error {
 	g.loadConfiguration()
 	g.writePIDFile()
 
-	lifecycle.Notify(lifecycle.ApplicationStarting)
+	login.Init()
+	social.NewOAuthService()
 
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
@@ -142,7 +144,6 @@ func (g *GrafanaServerImpl) Run() error {
 	}
 
 	sendSystemdNotification("READY=1")
-	lifecycle.Notify(lifecycle.ApplicationStarted)
 	return g.childRoutines.Wait()
 }
 

@@ -8,17 +8,10 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/lifecycle"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-func init() {
-	lifecycle.AddListener(lifecycle.ApplicationStarting, func() {
-		initOAuthService()
-	})
-}
 
 type BasicUserInfo struct {
 	Id      string
@@ -63,7 +56,7 @@ var (
 	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom}
 )
 
-func initOAuthService() {
+func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
