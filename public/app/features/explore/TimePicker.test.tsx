@@ -33,8 +33,8 @@ describe('<TimePicker />', () => {
       to: '1000',
     };
     const rangeString = rangeUtil.describeTimeRange({
-      from: parseTime(range.from),
-      to: parseTime(range.to),
+      from: parseTime(range.from, true),
+      to: parseTime(range.to, true),
     });
     const wrapper = shallow(<TimePicker range={range} isUtc isOpen />);
     expect(wrapper.state('fromRaw')).toBe('1970-01-01 00:00:00');
@@ -50,8 +50,8 @@ describe('<TimePicker />', () => {
       to: '4000',
     };
     const rangeString = rangeUtil.describeTimeRange({
-      from: parseTime(range.from),
-      to: parseTime(range.to),
+      from: parseTime(range.from, true),
+      to: parseTime(range.to, true),
     });
 
     const onChangeTime = sinon.spy();
