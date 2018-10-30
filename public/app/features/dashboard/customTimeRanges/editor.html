@@ -8,16 +8,16 @@
   <div ng-if="ctrl.dashboard.ranges.length === 0">
     <div class="empty-list-cta">
       <div class="empty-list-cta__title">
-        No custom time ranges defined
+        There are no time ranges added yet
       </div>
       <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-success">
-        <i class="gicon gicon-add-link"></i>
+        <i class="fa fa-clock-o"></i>
         Add time range
       </a>
       <div class="grafana-info-box">
-        <h5>What is this?</h5>
+        <h5>What are Time Ranges?</h5>
         <p>
-					What the hell is time range anyway?
+					Time Ranges allow you to define and browse your own ranges easily! Your ranges will be added to timepicker for quick and convenient access.
         </p>
       </div>
     </div>
@@ -80,7 +80,7 @@
       <div class="gf-form">
         <span class="gf-form-label width-8">Type</span>
         <div class="gf-form-select-wrapper width-10">
-          <select class="gf-form-input" ng-model="ctrl.range.type" ng-options="f for f in ['shift','range']"></select>
+          <select class="gf-form-input" ng-model="ctrl.range.type" ng-options="f for f in ['shift']"></select>
         </div>
       </div>
     </div>
@@ -92,15 +92,15 @@
       </div>
       <div class="gf-form" ng-show="ctrl.range.type === 'shift'">
         <span class="gf-form-label width-5">From</span>
-        <input type="number" min="0" max="23" step="1" class="gf-form-input width-3" name="fromHour" placeholder="08" ng-model='ctrl.range.fromHour' required onchange="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
+        <input id="fromHourInput" type="number" min="0" max="23" step="1" class="gf-form-input width-3" name="fromHour" placeholder="08" ng-model='ctrl.range.fromHour' required onblur="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
         :&nbsp
-        <input type="number" min="0" max="59" step="1" class="gf-form-input width-3" name="fromMin" placeholder="00" ng-model='ctrl.range.fromMin' required onchange="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
+        <input id="fromMinInput" type="number" min="0" max="59" step="1" class="gf-form-input width-3" name="fromMin" placeholder="00" ng-model='ctrl.range.fromMin' required onblur="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
       </div>
       <div class="gf-form" ng-show="ctrl.range.type === 'shift'">
         <span class="gf-form-label width-5">To</span>
-        <input type="number" min="0" max="23" step="1" class="gf-form-input width-3" name="toHour" placeholder="15" ng-model='ctrl.range.toHour' required onchange="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
+        <input id="toHourInput" type="number" min="0" max="23" step="1" class="gf-form-input width-3" name="toHour" placeholder="15" ng-model='ctrl.range.toHour' required onblur="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
         :&nbsp
-        <input type="number" min="0" max="59" step="1" class="gf-form-input width-3" name="toMin" placeholder="30" ng-model='ctrl.range.toMin' required onchange="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
+        <input id="toMinInput" type="number" min="0" max="59" step="1" class="gf-form-input width-3" name="toMin" placeholder="30" ng-model='ctrl.range.toMin' required onblur="if(this.value.toString().length === 1)this.value='0'+this.value;"></input>
       </div>
     </div>
 
@@ -109,13 +109,9 @@
           <gf-form-switch class="gf-form"
 					label="Starts a new day"
 					label-class="width-12"
-					tooltip="If time range crosses midnight chech this"
+					tooltip="Check when time range crosses midnight"
 					checked="ctrl.range.newDay">
 				</gf-form-switch>
-      </div>
-
-      <div ng-show="ctrl.range.type === 'range'">
-        <h3>Coming soon... or not :/</h3>
       </div>
     </div>
 

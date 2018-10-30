@@ -7,7 +7,7 @@ export let iconMap = {
 };
 
 export function timeToString(hour, minute) {
-  if (hour % 1 === 0 && minute % 1 === 0 && hour < 24 && hour > 0 && minute < 60 && minute > 0) {
+  if (hour % 1 === 0 && minute % 1 === 0 && hour < 24 && hour >= 0 && minute < 60 && minute >= 0) {
     if (hour.toString().length === 1) {
       hour = '0' + hour;
     }
@@ -45,7 +45,7 @@ export class CustomTimeRangeEditorCtrl {
 
     const sameName = _.find(this.dashboard.ranges, { name: this.range.name });
     if (sameName && sameName !== this.range) {
-      appEvents.emit('alert-warning', ['Validation', 'Variable with the same name already exists']);
+      appEvents.emit('alert-warning', ['Validation', 'Time Range with the same name already exists']);
       return false;
     }
 
