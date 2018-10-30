@@ -59,9 +59,13 @@ var (
 	M_StatTotal_Orgs         prometheus.Gauge
 	M_StatTotal_Playlists    prometheus.Gauge
 
-	// Metrics about this binary
-	M_Grafana_Version       *prometheus.GaugeVec
-	M_Grafana_Build_Version *prometheus.GaugeVec
+	// M_Grafana_Version is a gauge that contains build info about this binary
+	//
+	// Deprecated: use M_Grafana_Build_Version instead.
+	M_Grafana_Version *prometheus.GaugeVec
+
+	// grafanaBuildVersion is a gauge that contains build info about this binary
+	grafanaBuildVersion *prometheus.GaugeVec
 )
 
 func newCounterVecStartingAtZero(opts prometheus.CounterOpts, labels []string, labelValues ...string) *prometheus.CounterVec {
@@ -296,11 +300,11 @@ func init() {
 
 	M_Grafana_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "info",
-Help:      "Information about the Grafana. This metric is deprecated. please use `grafana_build_info`
+		Help:      "Information about the Grafana. This metric is deprecated. please use `grafana_build_info`",
 		Namespace: exporterName,
 	}, []string{"version"})
 
-	M_Grafana_Build_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "build_info",
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built.",
 		Namespace: exporterName,
@@ -314,7 +318,7 @@ func SetBuildInformation(version, revision, branch string) {
 	// The reason we added a new one is that its common practice in the prometheus community
 	// to name this metric `*_build_info` so its easy to do aggregation on all programs.
 	M_Grafana_Version.WithLabelValues(version).Set(1)
-	M_Grafana_Build_Version.WithLabelValues(version, revision, branch, runtime.Version()).Set(1)
+	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version()).Set(1)
 }
 
 func initMetricVars() {
@@ -354,7 +358,7 @@ func initMetricVars() {
 		M_StatTotal_Orgs,
 		M_StatTotal_Playlists,
 		M_Grafana_Version,
-		M_Grafana_Build_Version)
+		grafanaBuildVersion)
 
 }
 
