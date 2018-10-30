@@ -25,6 +25,7 @@ import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 import { DataSource } from 'app/types/datasources';
+import { mergeStreams } from 'app/core/logs_model';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -769,11 +770,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       new TableModel(),
       ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
     );
-    const logsResult = _.flatten(
+    const logsResult = mergeStreams(
       queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
     );
     const loading = queryTransactions.some(qt => !qt.done);
     const showStartPages = StartPage && queryTransactions.length === 0;
+    const viewModeCount = [supportsGraph, supportsLogs, supportsTable].filter(m => m).length;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -858,7 +860,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               onClickHintFix={this.onModifyQueries}
               onExecuteQuery={this.onSubmit}
               onRemoveQueryRow={this.onRemoveQueryRow}
-              supportsLogs={supportsLogs}
               transactions={queryTransactions}
             />
             <main className="m-t-2">
@@ -866,23 +867,25 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 {showStartPages && <StartPage onClickQuery={this.onClickQuery} />}
                 {!showStartPages && (
                   <>
-                    <div className="result-options">
-                      {supportsGraph ? (
-                        <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
-                          Graph
-                        </button>
-                      ) : null}
-                      {supportsTable ? (
-                        <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
-                          Table
-                        </button>
-                      ) : null}
-                      {supportsLogs ? (
-                        <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
-                          Logs
-                        </button>
-                      ) : null}
-                    </div>
+                    {viewModeCount > 1 && (
+                      <div className="result-options">
+                        {supportsGraph ? (
+                          <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
+                            Graph
+                          </button>
+                        ) : null}
+                        {supportsTable ? (
+                          <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
+                            Table
+                          </button>
+                        ) : null}
+                        {supportsLogs ? (
+                          <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
+                            Logs
+                          </button>
+                        ) : null}
+                      </div>
+                    )}
 
                     {supportsGraph &&
                       showingGraph && (
