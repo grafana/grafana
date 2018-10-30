@@ -7,7 +7,7 @@ interface Props {
   metricDescriptors: any[];
 }
 
-const MetricTypeSelector: SFC<Props> = props => {
+const MetricTypePicker: SFC<Props> = props => {
   const filterMetricTypes = () => {
     if (!props.selectedService) {
       return [];
@@ -35,4 +35,4 @@ const MetricTypeSelector: SFC<Props> = props => {
   );
 };
 
-export default MetricTypeSelector;
+export default MetricTypePicker;

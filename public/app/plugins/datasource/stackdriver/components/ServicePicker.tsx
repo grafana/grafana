@@ -6,7 +6,7 @@ interface Props {
   metricDescriptors: any[];
 }
 
-const ServiceSelector: SFC<Props> = props => {
+const ServicePicker: SFC<Props> = props => {
   const extractServices = () => {
     return extractServicesFromMetricDescriptors(props.metricDescriptors).map(m => ({
       value: m.service,
@@ -30,4 +30,4 @@ const ServiceSelector: SFC<Props> = props => {
   );
 };
 
-export default ServiceSelector;
+export default ServicePicker;

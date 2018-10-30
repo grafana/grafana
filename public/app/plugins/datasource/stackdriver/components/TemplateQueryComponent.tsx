@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import ServiceSelector from './ServiceSelector';
-import MetricTypeSelector from './MetricTypeSelector';
+import ServicePicker from './ServicePicker';
+import MetricTypePicker from './MetricTypePicker';
 import SimpleDropdown from './SimpleDropdown';
 import { TemplateQueryProps } from 'app/types/plugins';
 import defaultsDeep from 'lodash/defaultsDeep';
@@ -113,7 +113,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
         return (
-          <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+          <ServicePicker metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
         );
       case MetricFindQueryTypes.MetricLabels:
       case MetricFindQueryTypes.ResourceLabels:
@@ -121,8 +121,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
         const dropdown = this.getDropdown(queryType);
         return (
           <React.Fragment>
-            <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
-            <MetricTypeSelector
+            <ServicePicker metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+            <MetricTypePicker
               selectedService={this.state.service}
               metricDescriptors={this.state.metricDescriptors}
               onMetricTypeChange={this.onMetricTypeChange}
@@ -134,8 +134,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.Aggregations:
         return (
           <React.Fragment>
-            <ServiceSelector metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
-            <MetricTypeSelector
+            <ServicePicker metricDescriptors={this.state.metricDescriptors} onServiceChange={this.onServiceChange} />
+            <MetricTypePicker
               selectedService={this.state.service}
               metricDescriptors={this.state.metricDescriptors}
               onMetricTypeChange={this.onMetricTypeChange}
