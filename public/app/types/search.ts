@@ -1,5 +1,3 @@
-import { DashboardAcl } from './acl';
-
 export interface DashboardSearchHit {
   id: number;
   tags: string[];
@@ -8,8 +6,4 @@ export interface DashboardSearchHit {
   uid: string;
   uri: string;
   url: string;
-}
-
-export interface DashboardState {
-  permissions: DashboardAcl[];
 }

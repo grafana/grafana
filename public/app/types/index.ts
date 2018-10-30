@@ -3,7 +3,7 @@ import { AlertRuleDTO, AlertRule, AlertRulesState } from './alerting';
 import { LocationState, LocationUpdate, UrlQueryMap, UrlQueryValue } from './location';
 import { NavModel, NavModelItem, NavIndex } from './navModel';
 import { FolderDTO, FolderState, FolderInfo } from './folders';
-import { DashboardSearchHit, DashboardState } from './dashboardSearchHit';
+import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState } from './user';
@@ -29,6 +29,7 @@ import {
   AppNotificationsState,
   AppNotificationTimeout,
 } from './appNotifications';
+import { DashboardSearchHit } from './search';
 
 export {
   Team,

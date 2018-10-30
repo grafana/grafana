@@ -1,4 +1,4 @@
-import { DashboardSearchHit } from './dashboardSearchHit';
+import { DashboardSearchHit } from './search';
 
 export interface Organization {
   name: string;
