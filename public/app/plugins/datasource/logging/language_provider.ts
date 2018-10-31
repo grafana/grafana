@@ -12,9 +12,9 @@ import {
 import { parseSelector } from 'app/plugins/datasource/prometheus/language_utils';
 import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';
 
-const DEFAULT_KEYS = ['job', 'instance'];
+const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
-const HISTORY_ITEM_COUNT = 5;
+const HISTORY_ITEM_COUNT = 10;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
 const wrapLabel = (label: string) => ({ label });
@@ -65,7 +65,7 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   start = () => {
     if (!this.started) {
       this.started = true;
-      return Promise.all([this.fetchLogLabels()]);
+      return this.fetchLogLabels();
     }
     return Promise.resolve([]);
   };
@@ -118,35 +118,36 @@ export default class LoggingLanguageProvider extends LanguageProvider {
 
   getLabelCompletionItems({ text, wrapperClasses, labelKey, value }: TypeaheadInput): TypeaheadOutput {
     let context: string;
+    let refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset: number = value.anchorOffset;
 
-    // Get normalized selector
-    let selector;
+    // Use EMPTY_SELECTOR until series API is implemented for facetting
+    const selector = EMPTY_SELECTOR;
     let parsedSelector;
     try {
       parsedSelector = parseSelector(line, cursorOffset);
-      selector = parsedSelector.selector;
-    } catch {
-      selector = EMPTY_SELECTOR;
-    }
-    const containsMetric = selector.indexOf('__name__=') > -1;
+    } catch {}
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
     if ((text && text.match(/^!?=~?/)) || _.includes(wrapperClasses, 'attr-value')) {
       // Label values
-      if (labelKey && this.labelValues[selector] && this.labelValues[selector][labelKey]) {
+      if (labelKey && this.labelValues[selector]) {
         const labelValues = this.labelValues[selector][labelKey];
-        context = 'context-label-values';
-        suggestions.push({
-          label: `Label values for "${labelKey}"`,
-          items: labelValues.map(wrapLabel),
-        });
+        if (labelValues) {
+          context = 'context-label-values';
+          suggestions.push({
+            label: `Label values for "${labelKey}"`,
+            items: labelValues.map(wrapLabel),
+          });
+        } else {
+          refresher = this.fetchLabelValues(labelKey);
+        }
       }
     } else {
       // Label keys
-      const labelKeys = this.labelKeys[selector] || (containsMetric ? null : DEFAULT_KEYS);
+      const labelKeys = this.labelKeys[selector] || DEFAULT_KEYS;
       if (labelKeys) {
         const possibleKeys = _.difference(labelKeys, existingKeys);
         if (possibleKeys.length > 0) {
@@ -156,7 +157,7 @@ export default class LoggingLanguageProvider extends LanguageProvider {
       }
     }
 
-    return { context, suggestions };
+    return { context, refresher, suggestions };
   }
 
   async fetchLogLabels() {
@@ -165,29 +166,18 @@ export default class LoggingLanguageProvider extends LanguageProvider {
       const res = await this.request(url);
       const body = await (res.data || res.json());
       const labelKeys = body.data.slice().sort();
-      const labelKeysBySelector = {
+      this.labelKeys = {
         ...this.labelKeys,
         [EMPTY_SELECTOR]: labelKeys,
       };
-      const labelValuesByKey = {};
-      this.logLabelOptions = [];
-      for (const key of labelKeys) {
-        const valuesUrl = `/api/prom/label/${key}/values`;
-        const res = await this.request(valuesUrl);
-        const body = await (res.data || res.json());
-        const values = body.data.slice().sort();
-        labelValuesByKey[key] = values;
-        this.logLabelOptions.push({
-          label: key,
-          value: key,
-          children: values.map(value => ({ label: value, value })),
-        });
-      }
-      this.labelValues = { [EMPTY_SELECTOR]: labelValuesByKey };
-      this.labelKeys = labelKeysBySelector;
+      this.logLabelOptions = labelKeys.map(key => ({ label: key, value: key, isLeaf: false }));
+
+      // Pre-load values for default labels
+      return labelKeys.filter(key => DEFAULT_KEYS.indexOf(key) > -1).map(key => this.fetchLabelValues(key));
     } catch (e) {
       console.error(e);
     }
+    return [];
   }
 
   async fetchLabelValues(key: string) {
@@ -195,14 +185,28 @@ export default class LoggingLanguageProvider extends LanguageProvider {
     try {
       const res = await this.request(url);
       const body = await (res.data || res.json());
+      const values = body.data.slice().sort();
+
+      // Add to label options
+      this.logLabelOptions = this.logLabelOptions.map(keyOption => {
+        if (keyOption.value === key) {
+          return {
+            ...keyOption,
+            children: values.map(value => ({ label: value, value })),
+          };
+        }
+        return keyOption;
+      });
+
+      // Add to key map
       const exisingValues = this.labelValues[EMPTY_SELECTOR];
-      const values = {
+      const nextValues = {
         ...exisingValues,
-        [key]: body.data,
+        [key]: values,
       };
       this.labelValues = {
         ...this.labelValues,
-        [EMPTY_SELECTOR]: values,
+        [EMPTY_SELECTOR]: nextValues,
       };
     } catch (e) {
       console.error(e);
