@@ -13,52 +13,39 @@ import (
 
 type publisher struct {
 	apiKey string
+	baseUri string
+	product string
+	dryRun bool
 }
 
-func (p *publisher) doRelease(version string, whatsNewUrl string, releaseNotesUrl string, dryRun bool) error {
+func (p *publisher) doRelease(version string, whatsNewUrl string, releaseNotesUrl string) error {
 	currentRelease, err := newRelease(version, whatsNewUrl, releaseNotesUrl, buildArtifactConfigurations, getHttpContents{})
 	if err != nil {
 		return err
 	}
 
-	if dryRun {
-		relJson, err := json.Marshal(currentRelease)
-		if err != nil {
-			return err
-		}
-		log.Println(string(relJson))
-
-		for _, b := range currentRelease.Builds {
-			artifactJson, err := json.Marshal(b)
-			if err != nil {
-				return err
-			}
-			log.Println(string(artifactJson))
-		}
-	} else {
-		if err := p.postRelease(currentRelease); err != nil {
-			return err
-		}
+	if err := p.postRelease(currentRelease); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (p *publisher) postRelease(r *release) error {
-	err := p.postRequest("/grafana/versions", r, fmt.Sprintf("Create Release %s", r.Version))
+	err := p.postRequest("/versions", r, fmt.Sprintf("Create Release %s", r.Version))
 	if err != nil {
 		return err
 	}
-	err = p.postRequest("/grafana/versions/"+r.Version, r, fmt.Sprintf("Update Release %s", r.Version))
+	err = p.postRequest("/versions/"+r.Version, r, fmt.Sprintf("Update Release %s", r.Version))
 	if err != nil {
 		return err
 	}
 	for _, b := range r.Builds {
-		err = p.postRequest(fmt.Sprintf("/grafana/versions/%s/packages", r.Version), b, fmt.Sprintf("Create Build %s %s", b.Os, b.Arch))
+		err = p.postRequest(fmt.Sprintf("/versions/%s/packages", r.Version), b, fmt.Sprintf("Create Build %s %s", b.Os, b.Arch))
 		if err != nil {
 			return err
 		}
-		err = p.postRequest(fmt.Sprintf("/grafana/versions/%s/packages/%s/%s", r.Version, b.Arch, b.Os), b, fmt.Sprintf("Update Build %s %s", b.Os, b.Arch))
+		err = p.postRequest(fmt.Sprintf("/versions/%s/packages/%s/%s", r.Version, b.Arch, b.Os), b, fmt.Sprintf("Update Build %s %s", b.Os, b.Arch))
 		if err != nil {
 			return err
 		}
@@ -185,12 +172,23 @@ func newBuild(ba buildArtifact, version string, isBeta bool, sha256 string) buil
 	}
 }
 
+func (p *publisher) apiUrl(url string) string {
+	return fmt.Sprintf("%s/%s%s", p.baseUri, p.product, url)
+}
+
 func (p *publisher) postRequest(url string, obj interface{}, desc string) error {
 	jsonBytes, err := json.Marshal(obj)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, baseUri+url, bytes.NewReader(jsonBytes))
+
+	if p.dryRun {
+		log.Println(fmt.Sprintf("POST to %s:", p.apiUrl(url)))
+		log.Println(string(jsonBytes))
+		return nil
+	}
+
+	req, err := http.NewRequest(http.MethodPost, p.apiUrl(url), bytes.NewReader(jsonBytes))
 	if err != nil {
 		return err
 	}

@@ -7,8 +7,6 @@ import (
 	"os"
 )
 
-var baseUri string = "https://grafana.com/api"
-
 func main() {
 	var version string
 	var whatsNewUrl string
@@ -33,8 +31,13 @@ func main() {
 		log.Println("Dry-run has been enabled.")
 	}
 
-	p := publisher{apiKey: apiKey}
-	if err := p.doRelease(version, whatsNewUrl, releaseNotesUrl, dryRun); err != nil {
+	p := publisher{
+		apiKey:  apiKey,
+		baseUri: "https://grafana.com/api",
+		product: "grafana",
+		dryRun: dryRun,
+	}
+	if err := p.doRelease(version, whatsNewUrl, releaseNotesUrl); err != nil {
 		log.Fatalf("error: %v", err)
 	}
 }
