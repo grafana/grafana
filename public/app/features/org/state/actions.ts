@@ -113,6 +113,6 @@ export function updateOrganizationPreferences() {
 
     await getBackendSrv().put('/api/org/preferences', preferences);
 
-    dispatch(loadOrganizationPreferences());
+    window.location.reload();
   };
 }
