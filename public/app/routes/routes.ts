@@ -179,12 +179,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/profile', {
-      templateUrl: 'public/app/features/org/partials/profile.html',
+      templateUrl: 'public/app/features/profile/partials/profile.html',
       controller: 'ProfileCtrl',
       controllerAs: 'ctrl',
     })
     .when('/profile/password', {
-      templateUrl: 'public/app/features/org/partials/change_password.html',
+      templateUrl: 'public/app/features/profile/partials/change_password.html',
       controller: 'ChangePasswordCtrl',
     })
     .when('/profile/select-org', {
