@@ -48,11 +48,6 @@ export class PanelCtrl {
     }
 
     $scope.$on('component-did-mount', () => this.panelDidMount());
-
-    $scope.$on('$destroy', () => {
-      this.events.emit('panel-teardown');
-      this.events.removeAllListeners();
-    });
   }
 
   panelDidMount() {

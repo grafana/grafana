@@ -20,6 +20,9 @@ import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
 
@@ -35,6 +38,7 @@ class GraphElement {
   panelWidth: number;
   eventManager: EventManager;
   thresholdManager: ThresholdManager;
+  legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
@@ -50,7 +54,7 @@ class GraphElement {
     });
 
     // panel events
-    this.ctrl.events.on('panel-teardown', this.onPanelteardown.bind(this));
+    this.ctrl.events.on('panel-teardown', this.onPanelTeardown.bind(this));
 
     /**
      * Split graph rendering into two parts.
@@ -63,13 +67,14 @@ class GraphElement {
 
     // global events
     appEvents.on('graph-hover', this.onGraphHover.bind(this), scope);
-
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
-
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
-
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
-    scope.$on('$destroy', this.onScopeDestroy.bind(this));
+
+    // get graph legend element
+    if (this.elem && this.elem.parent) {
+      this.legendElem = this.elem.parent().find('.graph-legend')[0];
+    }
   }
 
   onRender(renderData) {
@@ -82,7 +87,26 @@ class GraphElement {
     const graphHeight = this.elem.height();
     updateLegendValues(this.data, this.panel, graphHeight);
 
-    this.ctrl.events.emit('render-legend');
+    const { values, min, max, avg, current, total } = this.panel.legend;
+    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+    const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
+    const valueOptions = { values, min, max, avg, current, total };
+    const legendProps: GraphLegendProps = {
+      seriesList: this.data,
+      hiddenSeries: this.ctrl.hiddenSeries,
+      ...legendOptions,
+      ...valueOptions,
+      onToggleSeries: this.ctrl.onToggleSeries,
+      onToggleSort: this.ctrl.onToggleSort,
+      onColorChange: this.ctrl.onColorChange,
+      onToggleAxis: this.ctrl.onToggleAxis,
+    };
+    const legendReactElem = React.createElement(Legend, legendProps);
+    ReactDOM.render(legendReactElem, this.legendElem, () => this.onLegendRenderingComplete());
+  }
+
+  onLegendRenderingComplete() {
+    this.render_panel();
   }
 
   onGraphHover(evt) {
@@ -99,17 +123,20 @@ class GraphElement {
     this.tooltip.show(evt.pos);
   }
 
-  onPanelteardown() {
+  onPanelTeardown() {
     this.thresholdManager = null;
 
     if (this.plot) {
       this.plot.destroy();
       this.plot = null;
     }
-  }
 
-  onLegendRenderingComplete() {
-    this.render_panel();
+    this.tooltip.destroy();
+    this.elem.off();
+    this.elem.remove();
+
+    console.log('react unmount');
+    ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
   onGraphHoverClear(event, info) {
@@ -155,12 +182,6 @@ class GraphElement {
         }, 100);
       }
     }
-  }
-
-  onScopeDestroy() {
-    this.tooltip.destroy();
-    this.elem.off();
-    this.elem.remove();
   }
 
   shouldAbortRender() {
