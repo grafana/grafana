@@ -372,6 +372,12 @@ jobs:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://$GCP_BUCKET_NAME/oss/master'
       - run:
@@ -389,6 +395,12 @@ jobs:
       - run:
           name: deploy to s3
           command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
+      - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
       - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://R/oss/release'
