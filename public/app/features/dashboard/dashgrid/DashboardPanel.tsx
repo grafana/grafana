@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
@@ -20,7 +20,7 @@ export interface State {
   pluginExports: PluginExports;
 }
 
-export class DashboardPanel extends React.Component<Props, State> {
+export class DashboardPanel extends PureComponent<Props, State> {
   element: any;
   angularPanel: AngularComponent;
   pluginInfo: any;
