@@ -76,13 +76,22 @@ export class DataSourceSettings extends PureComponent<Props, State> {
     return null;
   }
 
+  renderIsReadOnlyMessage() {
+    return (
+      <div className="grafana-info-box span8">
+        This datasource was added by config and cannot be modified using the UI. Please contact your server admin to
+        update this datasource.
+      </div>
+    );
+  }
+
   render() {
     const { dataSource, dataSourceMeta, navModel } = this.props;
 
     return (
       <div>
         <PageHeader model={navModel} />
-        {Object.keys(dataSource).length === 0 && Object.keys(dataSourceMeta).length === 0 ? (
+        {Object.keys(dataSource).length === 0 ? (
           <PageLoader pageName="Data source settings" />
         ) : (
           <div className="page-container page-body">
@@ -95,14 +104,9 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
                 {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
 
-                {this.isReadOnly() ? (
-                  <div className="grafana-info-box span8">
-                    This datasource was added by config and cannot be modified using the UI. Please contact your server
-                    admin to update this datasource.
-                  </div>
-                ) : (
-                  dataSourceMeta.module && <PluginSettings dataSource={dataSource} dataSourceMeta={dataSourceMeta} />
-                )}
+                {this.isReadOnly()
+                  ? this.renderIsReadOnlyMessage()
+                  : dataSourceMeta.module && <PluginSettings dataSource={dataSource} dataSourceMeta={dataSourceMeta} />}
 
                 <ButtonRow
                   onSubmit={event => this.onSubmit(event)}
