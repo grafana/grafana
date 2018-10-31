@@ -167,7 +167,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/org/teams/new', {
-      templateUrl: 'public/app/features/org/partials/create_team.html',
+      templateUrl: 'public/app/features/teams/partials/create_team.html',
       controller: 'CreateTeamCtrl',
       controllerAs: 'ctrl',
     })
