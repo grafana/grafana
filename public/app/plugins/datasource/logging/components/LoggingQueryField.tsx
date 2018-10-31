@@ -12,43 +12,7 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import TypeaheadField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 
-const HISTOGRAM_GROUP = '__histograms__';
-const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
-export const RECORDING_RULES_GROUP = '__recording_rules__';
-
-export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
-  // Filter out recording rules and insert as first option
-  const ruleRegex = /:\w+:/;
-  const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
-  const rulesOption = {
-    label: 'Recording rules',
-    value: RECORDING_RULES_GROUP,
-    children: ruleNames
-      .slice()
-      .sort()
-      .map(name => ({ label: name, value: name })),
-  };
-
-  const options = ruleNames.length > 0 ? [rulesOption] : [];
-
-  const metricsOptions = _.chain(metrics)
-    .filter(metric => !ruleRegex.test(metric))
-    .groupBy(metric => metric.split(delimiter)[0])
-    .map((metricsForPrefix: string[], prefix: string): CascaderOption => {
-      const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-      const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
-      return {
-        children,
-        label: prefix,
-        value: prefix,
-      };
-    })
-    .sortBy('label')
-    .value();
-
-  return [...options, ...metricsOptions];
-}
 
 export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
   // Modify suggestion based on context
@@ -84,29 +48,27 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface PromQueryFieldProps {
+interface LoggingQueryFieldProps {
   datasource: any;
   error?: string | JSX.Element;
   hint?: any;
   history?: any[];
   initialQuery?: string | null;
-  metricsByPrefix?: CascaderOption[];
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
   onQueryChange?: (value: string, override?: boolean) => void;
 }
 
-interface PromQueryFieldState {
-  metricsOptions: any[];
-  metricsByPrefix: CascaderOption[];
+interface LoggingQueryFieldState {
+  logLabelOptions: any[];
   syntaxLoaded: boolean;
 }
 
-class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
+class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, LoggingQueryFieldState> {
   plugins: any[];
   languageProvider: any;
 
-  constructor(props: PromQueryFieldProps, context) {
+  constructor(props: LoggingQueryFieldProps, context) {
     super(props, context);
 
     if (props.datasource.languageProvider) {
@@ -123,8 +85,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     ];
 
     this.state = {
-      metricsByPrefix: [],
-      metricsOptions: [],
+      logLabelOptions: [],
       syntaxLoaded: false,
     };
   }
@@ -135,7 +96,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
   }
 
-  onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
+  onChangeLogLabels = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
     if (selectedOptions.length === 1) {
       if (selectedOptions[0].children.length === 0) {
@@ -145,13 +106,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
         return;
       }
     } else {
-      const prefix = selectedOptions[0].value;
-      const metric = selectedOptions[1].value;
-      if (prefix === HISTOGRAM_GROUP) {
-        query = `histogram_quantile(0.95, sum(rate(${metric}[5m])) by (le))`;
-      } else {
-        query = metric;
-      }
+      const key = selectedOptions[0].value;
+      const value = selectedOptions[1].value;
+      query = `{${key}="${value}"}`;
     }
     this.onChangeQuery(query, true);
   };
@@ -172,26 +129,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onReceiveMetrics = () => {
-    const { histogramMetrics, metrics } = this.languageProvider;
-    if (!metrics) {
-      return;
-    }
-
     Prism.languages[PRISM_SYNTAX] = this.languageProvider.getSyntax();
-    Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
-      alias: 'variable',
-      pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
-    };
-
-    // Build metrics tree
-    const metricsByPrefix = groupMetricsByPrefix(metrics);
-    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
-    const metricsOptions = [
-      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
-      ...metricsByPrefix,
-    ];
-
-    this.setState({ metricsOptions, syntaxLoaded: true });
+    const { logLabelOptions } = this.languageProvider;
+    this.setState({
+      logLabelOptions,
+      syntaxLoaded: true,
+    });
   };
 
   onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
@@ -220,14 +163,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   render() {
     const { error, hint, initialQuery } = this.props;
-    const { metricsOptions, syntaxLoaded } = this.state;
+    const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
 
     return (
       <div className="prom-query-field">
         <div className="prom-query-field-tools">
-          <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-            <button className="btn navbar-button navbar-button--tight">Metrics</button>
+          <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels}>
+            <button className="btn navbar-button navbar-button--tight">Log labels</button>
           </Cascader>
         </div>
         <div className="prom-query-field-wrapper">
@@ -259,4 +202,4 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 }
 
-export default PromQueryField;
+export default LoggingQueryField;

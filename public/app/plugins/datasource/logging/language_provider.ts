@@ -9,21 +9,15 @@ import {
   TypeaheadOutput,
 } from 'app/types/explore';
 
-import { parseSelector, processLabels, RATE_RANGES } from './language_utils';
-import PromqlSyntax, { FUNCTIONS } from './promql';
+import { parseSelector } from 'app/plugins/datasource/prometheus/language_utils';
+import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
-const HISTOGRAM_SELECTOR = '{le!=""}'; // Returns all timeseries for histograms
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
 const wrapLabel = (label: string) => ({ label });
-
-const setFunctionMove = (suggestion: CompletionItem): CompletionItem => {
-  suggestion.move = -1;
-  return suggestion;
-};
 
 export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
@@ -41,21 +35,18 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   };
 }
 
-export default class PromQlLanguageProvider extends LanguageProvider {
-  histogramMetrics?: string[];
+export default class LoggingLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
-  metrics?: string[];
+  logLabelOptions: any[];
   started: boolean;
 
   constructor(datasource: any, initialValues?: any) {
     super();
 
     this.datasource = datasource;
-    this.histogramMetrics = [];
     this.labelKeys = {};
     this.labelValues = {};
-    this.metrics = [];
     this.started = false;
 
     Object.assign(this, initialValues);
@@ -74,7 +65,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   start = () => {
     if (!this.started) {
       this.started = true;
-      return Promise.all([this.fetchMetricNames(), this.fetchHistogramMetrics()]);
+      return Promise.all([this.fetchLogLabels()]);
     }
     return Promise.resolve([]);
   };
@@ -84,14 +75,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Syntax spans have 3 classes by default. More indicate a recognized token
     const tokenRecognized = wrapperClasses.length > 3;
     // Determine candidates by CSS context
-    if (_.includes(wrapperClasses, 'context-range')) {
-      // Suggestions for metric[|]
-      return this.getRangeCompletionItems();
-    } else if (_.includes(wrapperClasses, 'context-labels')) {
+    if (_.includes(wrapperClasses, 'context-labels')) {
       // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
       return this.getLabelCompletionItems.apply(this, arguments);
-    } else if (_.includes(wrapperClasses, 'context-aggregation')) {
-      return this.getAggregationCompletionItems.apply(this, arguments);
     } else if (
       // Show default suggestions in a couple of scenarios
       (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
@@ -108,7 +94,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getEmptyCompletionItems(context: any): TypeaheadOutput {
     const { history } = context;
-    const { metrics } = this;
     const suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length > 0) {
@@ -128,79 +113,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       });
     }
 
-    suggestions.push({
-      prefixMatch: true,
-      label: 'Functions',
-      items: FUNCTIONS.map(setFunctionMove),
-    });
-
-    if (metrics) {
-      suggestions.push({
-        label: 'Metrics',
-        items: metrics.map(wrapLabel),
-      });
-    }
     return { suggestions };
-  }
-
-  getRangeCompletionItems(): TypeaheadOutput {
-    return {
-      context: 'context-range',
-      suggestions: [
-        {
-          label: 'Range vector',
-          items: [...RATE_RANGES].map(wrapLabel),
-        },
-      ],
-    };
-  }
-
-  getAggregationCompletionItems({ value }: TypeaheadInput): TypeaheadOutput {
-    let refresher: Promise<any> = null;
-    const suggestions: CompletionItemGroup[] = [];
-
-    // Stitch all query lines together to support multi-line queries
-    let queryOffset;
-    const queryText = value.document.getBlocks().reduce((text, block) => {
-      const blockText = block.getText();
-      if (value.anchorBlock.key === block.key) {
-        // Newline characters are not accounted for but this is irrelevant
-        // for the purpose of extracting the selector string
-        queryOffset = value.anchorOffset + text.length;
-      }
-      text += blockText;
-      return text;
-    }, '');
-
-    const leftSide = queryText.slice(0, queryOffset);
-    const openParensAggregationIndex = leftSide.lastIndexOf('(');
-    const openParensSelectorIndex = leftSide.slice(0, openParensAggregationIndex).lastIndexOf('(');
-    const closeParensSelectorIndex = leftSide.slice(openParensSelectorIndex).indexOf(')') + openParensSelectorIndex;
-
-    let selectorString = leftSide.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
-
-    // Range vector syntax not accounted for by subsequent parse so discard it if present
-    selectorString = selectorString.replace(/\[[^\]]+\]$/, '');
-
-    const selector = parseSelector(selectorString, selectorString.length - 2).selector;
-
-    const labelKeys = this.labelKeys[selector];
-    if (labelKeys) {
-      suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
-    } else {
-      refresher = this.fetchSeriesLabels(selector);
-    }
-
-    return {
-      refresher,
-      suggestions,
-      context: 'context-aggregation',
-    };
   }
 
   getLabelCompletionItems({ text, wrapperClasses, labelKey, value }: TypeaheadInput): TypeaheadOutput {
     let context: string;
-    let refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset: number = value.anchorOffset;
@@ -239,40 +156,42 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       }
     }
 
-    // Query labels for selector
-    if (selector && !this.labelValues[selector]) {
-      if (selector === EMPTY_SELECTOR) {
-        // Query label values for default labels
-        refresher = Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
-      } else {
-        refresher = this.fetchSeriesLabels(selector, !containsMetric);
-      }
-    }
-
-    return { context, refresher, suggestions };
+    return { context, suggestions };
   }
 
-  async fetchMetricNames() {
-    const url = '/api/v1/label/__name__/values';
+  async fetchLogLabels() {
+    const url = '/api/prom/label';
     try {
       const res = await this.request(url);
       const body = await (res.data || res.json());
-      this.metrics = body.data;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  async fetchHistogramMetrics() {
-    await this.fetchSeriesLabels(HISTOGRAM_SELECTOR, true);
-    const histogramSeries = this.labelValues[HISTOGRAM_SELECTOR];
-    if (histogramSeries && histogramSeries['__name__']) {
-      this.histogramMetrics = histogramSeries['__name__'].slice().sort();
+      const labelKeys = body.data.slice().sort();
+      const labelKeysBySelector = {
+        ...this.labelKeys,
+        [EMPTY_SELECTOR]: labelKeys,
+      };
+      const labelValuesByKey = {};
+      this.logLabelOptions = [];
+      for (const key of labelKeys) {
+        const valuesUrl = `/api/prom/label/${key}/values`;
+        const res = await this.request(valuesUrl);
+        const body = await (res.data || res.json());
+        const values = body.data.slice().sort();
+        labelValuesByKey[key] = values;
+        this.logLabelOptions.push({
+          label: key,
+          value: key,
+          children: values.map(value => ({ label: value, value })),
+        });
+      }
+      this.labelValues = { [EMPTY_SELECTOR]: labelValuesByKey };
+      this.labelKeys = labelKeysBySelector;
+    } catch (e) {
+      console.error(e);
     }
   }
 
   async fetchLabelValues(key: string) {
-    const url = `/api/v1/label/${key}/values`;
+    const url = `/api/prom/label/${key}/values`;
     try {
       const res = await this.request(url);
       const body = await (res.data || res.json());
@@ -284,25 +203,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       this.labelValues = {
         ...this.labelValues,
         [EMPTY_SELECTOR]: values,
-      };
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async fetchSeriesLabels(name: string, withName?: boolean) {
-    const url = `/api/v1/series?match[]=${name}`;
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const { keys, values } = processLabels(body.data, withName);
-      this.labelKeys = {
-        ...this.labelKeys,
-        [name]: keys,
-      };
-      this.labelValues = {
-        ...this.labelValues,
-        [name]: values,
       };
     } catch (e) {
       console.error(e);
