@@ -3,9 +3,9 @@ import SimpleDropdown from './SimpleDropdown';
 import { TemplateQueryProps } from 'app/types/plugins';
 import { getMetricTypes, extractServicesFromMetricDescriptors } from '../functions';
 import defaultsDeep from 'lodash/defaultsDeep';
-import { MetricFindQueryTypes, TemplateQueryComponentState } from '../types';
+import { MetricFindQueryTypes, TemplateQueryComponentData } from '../types';
 
-export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, TemplateQueryComponentState> {
+export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, TemplateQueryComponentData> {
   queryTypes: Array<{ value: string; name: string }> = [
     { value: MetricFindQueryTypes.Services, name: 'Services' },
     { value: MetricFindQueryTypes.MetricTypes, name: 'Metric Types' },
@@ -17,7 +17,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     { value: MetricFindQueryTypes.AlignmentPeriods, name: 'Alignment Periods' },
   ];
 
-  defaults: TemplateQueryComponentState = {
+  defaults: TemplateQueryComponentData = {
     selectedQueryType: '',
     metricDescriptors: [],
     selectedService: '',
