@@ -1,6 +1,6 @@
 ﻿import React, { SFC } from 'react';
 
-export enum PanelHeaderMenuItemTypes {
+export enum PanelHeaderMenuItemTypes { // TODO: Evaluate. Remove?
   Button = 'Button', // ?
   Divider = 'Divider',
   Link = 'Link',
@@ -14,6 +14,8 @@ export interface PanelHeaderMenuItemProps {
   handleClick?: () => void;
   shortcut?: string;
   children?: any;
+  subMenu?: PanelHeaderMenuItemProps[];
+  role?: string;
 }
 
 export const PanelHeaderMenuItem: SFC<PanelHeaderMenuItemProps> = props => {
