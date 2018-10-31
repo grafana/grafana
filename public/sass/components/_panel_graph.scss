@@ -28,6 +28,7 @@
   position: relative;
   cursor: crosshair;
   flex-grow: 1;
+  min-height: 65%;
 }
 
 .datapoints-warning {
@@ -46,7 +47,7 @@
 .graph-legend {
   display: flex;
   flex: 0 1 auto;
-  max-height: 30%;
+  max-height: 35%;
   margin: 0;
   text-align: center;
   padding-top: 6px;
