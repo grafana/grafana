@@ -18,10 +18,10 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   ];
 
   defaults = {
-    type: '',
+    selectedQueryType: '',
     metricDescriptors: [],
-    service: '',
-    metricType: '',
+    selectedService: '',
+    selectedMetricType: '',
     labels: [],
     labelKey: '',
     metricTypes: [],
@@ -43,41 +43,50 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       value: m.service,
       name: m.serviceShortName,
     }));
-    const service = services.some(s => s.value === this.state.service) ? this.state.service : services[0].value;
-    const { metricTypes, metricType } = getMetricTypes(metricDescriptors, this.state.metricType, service);
+    const selectedService = services.some(s => s.value === this.state.selectedService)
+      ? this.state.selectedService
+      : services[0].value;
+    const { metricTypes, selectedMetricType } = getMetricTypes(
+      metricDescriptors,
+      this.state.selectedMetricType,
+      selectedService
+    );
     const state: any = {
       services,
-      service,
+      selectedService,
       metricTypes,
-      metricType,
+      selectedMetricType,
       metricDescriptors,
-      ...await this.getLabels(this.state.metricType),
+      ...await this.getLabels(this.state.selectedMetricType),
     };
     this.setState(state);
   }
 
   async handleQueryTypeChange(event) {
-    const state: any = { type: event.target.value, ...await this.getLabels(this.state.metricType, event.target.value) };
+    const state: any = {
+      selectedQueryType: event.target.value,
+      ...await this.getLabels(this.state.selectedMetricType, event.target.value),
+    };
     this.setState(state);
   }
 
   async onServiceChange(event) {
-    const { metricTypes, metricType } = getMetricTypes(
+    const { metricTypes, selectedMetricType } = getMetricTypes(
       this.state.metricDescriptors,
-      this.state.metricType,
+      this.state.selectedMetricType,
       event.target.value
     );
     const state: any = {
-      service: event.target.value,
+      selectedService: event.target.value,
       metricTypes,
-      metricType,
-      ...await this.getLabels(metricType),
+      selectedMetricType,
+      ...await this.getLabels(selectedMetricType),
     };
     this.setState(state);
   }
 
   async onMetricTypeChange(event) {
-    const state: any = { metricType: event.target.value, ...await this.getLabels(event.target.value) };
+    const state: any = { selectedMetricType: event.target.value, ...await this.getLabels(event.target.value) };
     this.setState(state);
   }
 
@@ -94,12 +103,12 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
   }
 
-  async getLabels(metricType, type = this.state.type) {
+  async getLabels(selectedMetricType, selectedQueryType = this.state.selectedQueryType) {
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
-    if (this.isLabelQuery(type)) {
+    if (this.isLabelQuery(selectedQueryType)) {
       const refId = 'StackdriverTemplateQueryComponent';
-      const response = await this.props.datasource.getLabels(metricType, refId);
-      const labels = Object.keys(response.meta[type]);
+      const response = await this.props.datasource.getLabels(selectedMetricType, refId);
+      const labels = Object.keys(response.meta[selectedQueryType]);
       const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
       result = { labels, labelKey };
     }
@@ -111,7 +120,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.MetricTypes:
         return (
           <SimpleDropdown
-            value={this.state.service}
+            value={this.state.selectedService}
             options={this.state.services}
             onValueChange={this.onServiceChange}
             label="Services"
@@ -123,13 +132,13 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
         return (
           <React.Fragment>
             <SimpleDropdown
-              value={this.state.service}
+              value={this.state.selectedService}
               options={this.state.services}
               onValueChange={this.onServiceChange}
               label="Services"
             />
             <SimpleDropdown
-              value={this.state.metricType}
+              value={this.state.selectedMetricType}
               options={this.state.metricTypes}
               onValueChange={this.onMetricTypeChange}
               label="Metric Types"
@@ -139,7 +148,9 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
               options={this.state.labels.map(l => ({ value: l, name: l }))}
               onValueChange={this.onLabelKeyChange}
               label={
-                this.state.type === MetricFindQueryTypes.ResourceLabels ? 'Resource Label Key' : 'Metric Label Key'
+                this.state.selectedQueryType === MetricFindQueryTypes.ResourceLabels
+                  ? 'Resource Label Key'
+                  : 'Metric Label Key'
               }
             />
           </React.Fragment>
@@ -149,13 +160,13 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
         return (
           <React.Fragment>
             <SimpleDropdown
-              value={this.state.service}
+              value={this.state.selectedService}
               options={this.state.services}
               onValueChange={this.onServiceChange}
               label="Services"
             />
             <SimpleDropdown
-              value={this.state.metricType}
+              value={this.state.selectedMetricType}
               options={this.state.metricTypes}
               onValueChange={this.onMetricTypeChange}
               label="Metric Types"
@@ -171,12 +182,12 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     return (
       <React.Fragment>
         <SimpleDropdown
-          value={this.state.type}
+          value={this.state.selectedQueryType}
           options={this.queryTypes}
           onValueChange={this.handleQueryTypeChange}
           label="Query Types"
         />
-        {this.renderQueryTypeSwitch(this.state.type)}
+        {this.renderQueryTypeSwitch(this.state.selectedQueryType)}
       </React.Fragment>
     );
   }

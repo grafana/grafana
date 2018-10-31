@@ -14,7 +14,7 @@ export default class StackdriverMetricFindQuery {
 
   async query(query: any) {
     try {
-      switch (query.type) {
+      switch (query.selectedQueryType) {
         case MetricFindQueryTypes.Services:
           return this.handleServiceQuery();
         case MetricFindQueryTypes.MetricTypes:
@@ -49,58 +49,58 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQuery({ service }) {
-    if (!service) {
+  async handleMetricTypesQuery({ selectedService }) {
+    if (!selectedService) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    return getMetricTypesByService(metricDescriptors, service).map(s => ({
+    return getMetricTypesByService(metricDescriptors, selectedService).map(s => ({
       text: s.displayName,
       value: s.name,
       expandable: true,
     }));
   }
 
-  async handleLabelQuery({ type, metricType, labelKey }) {
-    if (!metricType) {
+  async handleLabelQuery({ selectedQueryType, selectedMetricType, labelKey }) {
+    if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleLabelsQueryType';
-    const response = await this.datasource.getLabels(metricType, refId);
-    if (!has(response, `meta.${type}.${labelKey}`)) {
+    const response = await this.datasource.getLabels(selectedMetricType, refId);
+    if (!has(response, `meta.${selectedQueryType}.${labelKey}`)) {
       return [];
     }
-    return response.meta[type][labelKey].map(this.toFindQueryResult);
+    return response.meta[selectedQueryType][labelKey].map(this.toFindQueryResult);
   }
 
-  async handleResourceTypeQuery({ metricType }) {
-    if (!metricType) {
+  async handleResourceTypeQuery({ selectedMetricType }) {
+    if (!selectedMetricType) {
       return [];
     }
     try {
       const refId = 'handleResourceTypeQueryQueryType';
-      const response = await this.datasource.getLabels(metricType, refId);
+      const response = await this.datasource.getLabels(selectedMetricType, refId);
       return response.meta.resourceTypes.map(this.toFindQueryResult);
     } catch (error) {
       return [];
     }
   }
 
-  async handleAlignersQuery({ metricType }) {
-    if (!metricType) {
+  async handleAlignersQuery({ selectedMetricType }) {
+    if (!selectedMetricType) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
+    const { valueType, metricKind } = metricDescriptors.find(m => m.type === selectedMetricType);
     return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationQuery({ metricType }) {
-    if (!metricType) {
+  async handleAggregationQuery({ selectedMetricType }) {
+    if (!selectedMetricType) {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    const { valueType, metricKind } = metricDescriptors.find(m => m.type === metricType);
+    const { valueType, metricKind } = metricDescriptors.find(m => m.type === selectedMetricType);
     return getAggregationOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 

@@ -6,16 +6,16 @@ export const extractServicesFromMetricDescriptors = metricDescriptors => uniqBy(
 export const getMetricTypesByService = (metricDescriptors, service) =>
   metricDescriptors.filter(m => m.service === service);
 
-export const getMetricTypes = (metricDescriptors, selectedMetricType, service) => {
-  const metricTypes = getMetricTypesByService(metricDescriptors, service).map(m => ({
+export const getMetricTypes = (metricDescriptors, metricType, selectedService) => {
+  const metricTypes = getMetricTypesByService(metricDescriptors, selectedService).map(m => ({
     value: m.type,
     name: m.displayName,
   }));
-  const metricTypeExistInArray = metricTypes.some(m => m.value === selectedMetricType);
-  const metricType = metricTypeExistInArray ? metricTypeExistInArray.value : metricTypes[0].value;
+  const metricTypeExistInArray = metricTypes.some(m => m.value === metricType);
+  const selectedMetricType = metricTypeExistInArray ? metricTypeExistInArray.value : metricTypes[0].value;
   return {
     metricTypes,
-    metricType,
+    selectedMetricType,
   };
 };
 
