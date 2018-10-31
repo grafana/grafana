@@ -7,7 +7,7 @@ interface Props {
   label: string;
 }
 
-const SimpleDropdown: SFC<Props> = props => {
+const SimpleSelect: SFC<Props> = props => {
   const { label, onValueChange, value, options } = props;
   return (
     <div className="gf-form max-width-21">
@@ -25,4 +25,4 @@ const SimpleDropdown: SFC<Props> = props => {
   );
 };
 
-export default SimpleDropdown;
+export default SimpleSelect;

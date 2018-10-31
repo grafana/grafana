@@ -1,5 +1,5 @@
-import { alignOptions, aggOptions } from './constants';
 import uniqBy from 'lodash/uniqBy';
+import { alignOptions, aggOptions } from './constants';
 
 export const extractServicesFromMetricDescriptors = metricDescriptors => uniqBy(metricDescriptors, 'service');
 

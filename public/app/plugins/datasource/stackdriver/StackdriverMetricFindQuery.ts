@@ -1,13 +1,13 @@
+import has from 'lodash/has';
+import isString from 'lodash/isString';
+import { alignmentPeriods } from './constants';
+import { MetricFindQueryTypes } from './types';
 import {
   extractServicesFromMetricDescriptors,
   getMetricTypesByService,
   getAlignmentOptionsByMetric,
   getAggregationOptionsByMetric,
 } from './functions';
-import { alignmentPeriods } from './constants';
-import has from 'lodash/has';
-import isString from 'lodash/isString';
-import { MetricFindQueryTypes } from './types';
 
 export default class StackdriverMetricFindQuery {
   constructor(private datasource) {}

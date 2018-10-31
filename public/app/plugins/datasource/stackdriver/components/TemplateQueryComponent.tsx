@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
-import SimpleDropdown from './SimpleDropdown';
 import { TemplateQueryProps } from 'app/types/plugins';
-import { getMetricTypes, extractServicesFromMetricDescriptors } from '../functions';
 import defaultsDeep from 'lodash/defaultsDeep';
+import SimpleSelect from './SimpleSelect';
+import { getMetricTypes, extractServicesFromMetricDescriptors } from '../functions';
 import { MetricFindQueryTypes, TemplateQueryComponentData } from '../types';
 
 export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, TemplateQueryComponentData> {
@@ -109,7 +109,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       const refId = 'StackdriverTemplateQueryComponent';
       const response = await this.props.datasource.getLabels(selectedMetricType, refId);
       const labels = Object.keys(response.meta[selectedQueryType]);
-      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
+      const labelKey = labels.some(l => l === this.state.labelKey) ? this.state.labelKey : labels[0];
       result = { labels, labelKey };
     }
     return result;
@@ -119,7 +119,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
         return (
-          <SimpleDropdown
+          <SimpleSelect
             value={this.state.selectedService}
             options={this.state.services}
             onValueChange={this.onServiceChange}
@@ -131,19 +131,19 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.ResourceTypes:
         return (
           <React.Fragment>
-            <SimpleDropdown
+            <SimpleSelect
               value={this.state.selectedService}
               options={this.state.services}
               onValueChange={this.onServiceChange}
               label="Services"
             />
-            <SimpleDropdown
+            <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.state.metricTypes}
               onValueChange={this.onMetricTypeChange}
               label="Metric Types"
             />
-            <SimpleDropdown
+            <SimpleSelect
               value={this.state.labelKey}
               options={this.state.labels.map(l => ({ value: l, name: l }))}
               onValueChange={this.onLabelKeyChange}
@@ -159,13 +159,13 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.Aggregations:
         return (
           <React.Fragment>
-            <SimpleDropdown
+            <SimpleSelect
               value={this.state.selectedService}
               options={this.state.services}
               onValueChange={this.onServiceChange}
               label="Services"
             />
-            <SimpleDropdown
+            <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.state.metricTypes}
               onValueChange={this.onMetricTypeChange}
@@ -181,7 +181,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   render() {
     return (
       <React.Fragment>
-        <SimpleDropdown
+        <SimpleSelect
           value={this.state.selectedQueryType}
           options={this.queryTypes}
           onValueChange={this.handleQueryTypeChange}
