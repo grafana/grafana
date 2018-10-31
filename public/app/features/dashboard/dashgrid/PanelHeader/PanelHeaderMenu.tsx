@@ -1,4 +1,4 @@
-﻿import React, { PureComponent, Fragment } from 'react';
+﻿import React, { PureComponent } from 'react';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemProps } from './PanelHeaderMenuItem';
 import { getPanelMenu } from 'app/features/dashboard/utils/panel_menu';
@@ -22,17 +22,15 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
         {menu.map(menuItem => {
           console.log(this);
           return (
-            <Fragment>
-              <PanelHeaderMenuItem
-                type={menuItem.type}
-                text={menuItem.text}
-                iconClassName={menuItem.iconClassName}
-                handleClick={menuItem.handleClick}
-                shortcut={menuItem.shortcut}
-              >
-                {menuItem.subMenu && this.renderItems(menuItem.subMenu, true)}
-              </PanelHeaderMenuItem>
-            </Fragment>
+            <PanelHeaderMenuItem
+              type={menuItem.type}
+              text={menuItem.text}
+              iconClassName={menuItem.iconClassName}
+              handleClick={menuItem.handleClick}
+              shortcut={menuItem.shortcut}
+            >
+              {menuItem.subMenu && this.renderItems(menuItem.subMenu, true)}
+            </PanelHeaderMenuItem>
           );
         })}
       </ul>
