@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import { DataSource, Plugin } from 'app/types/';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
@@ -23,11 +24,22 @@ export class PluginSettings extends PureComponent<Props> {
     const scopeProps = {
       ctrl: {
         datasourceMeta: dataSourceMeta,
-        current: dataSource,
+        current: _.cloneDeep(dataSource),
       },
+      onModelChanged: this.onModelChanged,
     };
 
     this.component = loader.load(this.element, scopeProps, template);
+  }
+
+  componentWillUnmount() {
+    if (this.component) {
+      this.component.destroy();
+    }
+  }
+
+  onModelChanged(dataSource: DataSource) {
+    console.log(dataSource);
   }
 
   render() {
