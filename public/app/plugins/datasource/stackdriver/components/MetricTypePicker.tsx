@@ -6,6 +6,7 @@ interface Props {
   selectedService: string;
   selectedMetricType: string;
   metricDescriptors: any[];
+  metricTypes: any[];
 }
 
 const MetricTypePicker: SFC<Props> = props => {

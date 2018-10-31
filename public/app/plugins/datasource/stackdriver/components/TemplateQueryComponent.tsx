@@ -1,10 +1,8 @@
 import React, { PureComponent } from 'react';
-import ServicePicker from './ServicePicker';
-import MetricTypePicker from './MetricTypePicker';
-import SimpleDropdown from './SimpleDropdown';
+import SimpleDropdown, { KeyValueDropdown } from './SimpleDropdown';
 import { TemplateQueryProps } from 'app/types/plugins';
+import { getMetricTypesByService, extractServicesFromMetricDescriptors } from '../functions';
 import defaultsDeep from 'lodash/defaultsDeep';
-import has from 'lodash/has';
 import { MetricFindQueryTypes } from '../types';
 
 export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, any> {
@@ -24,12 +22,10 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     metricDescriptors: [],
     service: '',
     metricType: '',
-    metricLabels: [],
-    resourceLabels: [],
-    metricLabelKey: '',
-    resourceLabelKey: '',
-    // metricLabelValue: '',
-    // resourceLabelValue: '',
+    labels: [],
+    labelKey: '',
+    metricTypes: [],
+    services: [],
   };
 
   constructor(props: TemplateQueryProps) {
@@ -43,45 +39,63 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   async componentDidMount() {
     const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
-    this.setState({ metricDescriptors }, () => {
-      if (this.state.metricType) {
-        this.loadTimeSeriesData();
-      }
-    });
+    const services = extractServicesFromMetricDescriptors(metricDescriptors).map(m => ({
+      value: m.service,
+      name: m.serviceShortName,
+    }));
+    const service = this.state.service || services[0].value;
+    const metricTypes = getMetricTypesByService(metricDescriptors, service).map(m => ({
+      value: m.type,
+      name: m.displayName,
+    }));
+    const metricType = this.state.metricType || metricTypes[0].value;
+    this.setState({ services, service, metricTypes, metricType, metricDescriptors });
   }
 
-  async loadTimeSeriesData() {
-    console.log('loadTimeSeriesData', this.state.metricType);
-    const refId = 'StackdriverTemplateQueryComponent';
-    const response = await this.props.datasource.getLabels(this.state.metricType, refId);
-    if (this.isLabelQuery(this.state.type) && has(response, `meta.${this.state.type}`)) {
-      this.setState({ [this.state.type]: Object.keys(response.meta[this.state.type]) });
+  async handleQueryTypeChange(event) {
+    let state: any = { type: event.target.value };
+    if (this.isLabelQuery(event.target.value)) {
+      const labels = await this.getLabelKeys(this.state.metricType, event.target.value);
+      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
+      state = { ...state, labels, labelKey };
     }
+    this.setState(state);
   }
 
-  handleQueryTypeChange(event) {
-    this.setState({ type: event.target.value }, () => {
-      if (this.isLabelQuery(event.target.value)) {
-        this.loadTimeSeriesData();
-      }
-    });
+  async onServiceChange(event) {
+    const metricTypes = getMetricTypesByService(this.state.metricDescriptors, event.target.value).map(m => ({
+      value: m.type,
+      name: m.displayName,
+    }));
+    const metricTypeExistInArray = metricTypes.find(m => m.value === this.state.metricType);
+    const metricType = metricTypeExistInArray ? metricTypeExistInArray.value : metricTypes[0].value;
+    let state: any = { service: event.target.value, metricTypes, metricType };
+    if (this.isLabelQuery(this.state.type)) {
+      const labels = await this.getLabelKeys(metricType);
+      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
+      state = { ...state, labelKey, labels: labels };
+    }
+    this.setState(state);
   }
 
-  onServiceChange(event) {
-    this.setState({ service: event.target.value });
+  async onMetricTypeChange(event) {
+    let state: any = { metricType: event.target.value };
+    if (this.isLabelQuery(this.state.type)) {
+      const labels = await this.getLabelKeys(event.target.value);
+      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
+      state = { ...state, labels, labelKey };
+    }
+    this.setState(state);
   }
 
-  onMetricTypeChange(event) {
-    this.setState({ metricType: event.target.value }, () => {
-      if (this.isLabelQuery(this.state.type)) {
-        this.loadTimeSeriesData();
-      }
-    });
+  async getLabelKeys(metricType, type = this.state.type) {
+    const refId = 'StackdriverTemplateQueryComponent';
+    const response = await this.props.datasource.getLabels(metricType, refId);
+    return Object.keys(response.meta[type]);
   }
 
   onLabelKeyChange(event) {
-    const key = this.state.type === MetricFindQueryTypes.MetricLabels ? 'metricLabelKey' : 'resourceLabelKey';
-    this.setState({ [key]: event.target.value });
+    this.setState({ labelKey: event.target.value });
   }
 
   componentDidUpdate() {
@@ -98,8 +112,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.ResourceLabels:
         return (
           <SimpleDropdown
-            value={this.state.resourceLabelKey}
-            options={this.state.resourceLabels}
+            value={this.state.labelKey}
+            options={this.state.labels}
             onValueChange={this.onLabelKeyChange}
             label="Resource Labels"
           />
@@ -107,8 +121,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.MetricLabels:
         return (
           <SimpleDropdown
-            value={this.state.metricLabelKey}
-            options={this.state.metricLabels}
+            value={this.state.labelKey}
+            options={this.state.labels}
             onValueChange={this.onLabelKeyChange}
             label="Metric Labels"
           />
@@ -122,10 +136,11 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
         return (
-          <ServicePicker
-            selectedService={this.state.service}
-            metricDescriptors={this.state.metricDescriptors}
-            onServiceChange={this.onServiceChange}
+          <KeyValueDropdown
+            value={this.state.service}
+            options={this.state.services}
+            onValueChange={this.onServiceChange}
+            label="Services"
           />
         );
       case MetricFindQueryTypes.MetricLabels:
@@ -134,17 +149,18 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
         const dropdown = this.getDropdown(queryType);
         return (
           <React.Fragment>
-            {this.state.metricLabels.join(',')}
-            <ServicePicker
-              selectedService={this.state.service}
-              metricDescriptors={this.state.metricDescriptors}
-              onServiceChange={this.onServiceChange}
+            {this.state.labels.join(',')}
+            <KeyValueDropdown
+              value={this.state.service}
+              options={this.state.services}
+              onValueChange={this.onServiceChange}
+              label="Services"
             />
-            <MetricTypePicker
-              selectedService={this.state.service}
-              selectedMetricType={this.state.metricType}
-              metricDescriptors={this.state.metricDescriptors}
-              onMetricTypeChange={this.onMetricTypeChange}
+            <KeyValueDropdown
+              value={this.state.metricType}
+              options={this.state.metricTypes}
+              onValueChange={this.onMetricTypeChange}
+              label="Metric Types"
             />
             {dropdown}
           </React.Fragment>
@@ -153,16 +169,17 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.Aggregations:
         return (
           <React.Fragment>
-            <ServicePicker
-              selectedService={this.state.service}
-              metricDescriptors={this.state.metricDescriptors}
-              onServiceChange={this.onServiceChange}
+            <KeyValueDropdown
+              value={this.state.service}
+              options={this.state.services}
+              onValueChange={this.onServiceChange}
+              label="Services"
             />
-            <MetricTypePicker
-              selectedMetricType={this.state.metricType}
-              selectedService={this.state.service}
-              metricDescriptors={this.state.metricDescriptors}
-              onMetricTypeChange={this.onMetricTypeChange}
+            <KeyValueDropdown
+              value={this.state.metricType}
+              options={this.state.metricTypes}
+              onValueChange={this.onMetricTypeChange}
+              label="Metric Types"
             />
           </React.Fragment>
         );

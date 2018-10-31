@@ -56,17 +56,17 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleLabelQuery({ type, metricType, metricLabelKey, resourceLabelKey, resourceTypeKey }) {
+  async handleLabelQuery({ type, metricType, labelKey }) {
     if (!metricType) {
       return [];
     }
-    const key = this.getLabelKey({ type, metricLabelKey, resourceLabelKey });
+    // const key = this.getLabelKey({ type });
     const refId = 'handleLabelsQueryType';
     const response = await this.datasource.getLabels(metricType, refId);
-    if (!has(response, `meta.${type}.${key}`)) {
+    if (!has(response, `meta.${type}.${labelKey}`)) {
       return [];
     }
-    return response.meta[type][key].map(this.toFindQueryResult);
+    return response.meta[type][labelKey].map(this.toFindQueryResult);
   }
 
   async handleResourceTypeQuery({ metricType }) {
@@ -109,12 +109,22 @@ export default class StackdriverMetricFindQuery {
   }
 
   getLabelKey({ type, metricLabelKey, resourceLabelKey }) {
+    //   switch (type) {
+    //     case MetricFindQueryTypes.MetricLabels:
+    //       return metricLabelKey;
+    //       break;
+    //     case MetricFindQueryTypes.ResourceLabels:
+    //       return resourceLabelKey;
+    //     default:
+    //       return '';
+    //   }
+    // }
     switch (type) {
       case MetricFindQueryTypes.MetricLabels:
-        return metricLabelKey;
+        return 'metricLabels';
         break;
       case MetricFindQueryTypes.ResourceLabels:
-        return resourceLabelKey;
+        return 'resourceLabels';
       default:
         return '';
     }
