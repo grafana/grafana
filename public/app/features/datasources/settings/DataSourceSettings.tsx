@@ -1,15 +1,16 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSource, NavModel, Plugin } from 'app/types';
-import PageHeader from '../../core/components/PageHeader/PageHeader';
-import DataSourcePluginSettings from './DataSourcePluginSettings';
-import { loadDataSource, setDataSourceName } from './state/actions';
-import { getNavModel } from '../../core/selectors/navModel';
-import { getRouteParamsId } from '../../core/selectors/location';
-import { Label } from '../../core/components/Forms/Forms';
-import PageLoader from '../../core/components/PageLoader/PageLoader';
-import { getDataSource } from './state/selectors';
+import { DataSource, NavModel, Plugin } from 'app/types/';
+import PageHeader from '../../../core/components/PageHeader/PageHeader';
+import PageLoader from '../../../core/components/PageLoader/PageLoader';
+import PluginSettings from './PluginSettings';
+import BasicSettings from './BasicSettings';
+import ButtonRow from './ButtonRow';
+import { loadDataSource, setDataSourceName } from '../state/actions';
+import { getNavModel } from '../../../core/selectors/navModel';
+import { getRouteParamsId } from '../../../core/selectors/location';
+import { getDataSource, getDataSourceMeta } from '../state/selectors';
 
 export interface Props {
   navModel: NavModel;
@@ -45,7 +46,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
     console.log(event);
   };
 
-  isReadyOnly() {
+  isReadOnly() {
     return this.props.dataSource.readOnly === true;
   }
 
@@ -87,59 +88,27 @@ export class DataSourceSettings extends PureComponent<Props, State> {
           <div className="page-container page-body">
             <div>
               <form onSubmit={this.onSubmit}>
-                <div className="gf-form-group">
-                  <div className="gf-form max-width-30">
-                    <Label
-                      tooltip={
-                        'The name is used when you select the data source in panels. The Default data source is' +
-                        'preselected in new panels.'
-                      }
-                    >
-                      Name
-                    </Label>
-                    <input
-                      className="gf-form-input max-width-23"
-                      type="text"
-                      value={this.props.dataSource.name}
-                      placeholder="Name"
-                      onChange={event => this.props.setDataSourceName(event.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+                <BasicSettings
+                  dataSourceName={this.props.dataSource.name}
+                  onChange={name => this.props.setDataSourceName(name)}
+                />
 
                 {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
 
-                {this.isReadyOnly() ? (
+                {this.isReadOnly() ? (
                   <div className="grafana-info-box span8">
                     This datasource was added by config and cannot be modified using the UI. Please contact your server
                     admin to update this datasource.
                   </div>
                 ) : (
-                  <DataSourcePluginSettings dataSource={dataSource} dataSourceMeta={dataSourceMeta} />
+                  dataSourceMeta.module && <PluginSettings dataSource={dataSource} dataSourceMeta={dataSourceMeta} />
                 )}
 
-                <div className="gf-form-button-row">
-                  <button
-                    type="submit"
-                    className="btn btn-success"
-                    disabled={this.isReadyOnly()}
-                    onClick={this.onSubmit}
-                  >
-                    Save &amp; Test
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-danger"
-                    disabled={this.isReadyOnly()}
-                    onClick={this.onDelete}
-                  >
-                    Delete
-                  </button>
-                  <a className="btn btn-inverse" href="/datasources">
-                    Back
-                  </a>
-                </div>
+                <ButtonRow
+                  onSubmit={event => this.onSubmit(event)}
+                  isReadOnly={this.isReadOnly()}
+                  onDelete={event => this.onDelete(event)}
+                />
               </form>
             </div>
           </div>
@@ -151,11 +120,12 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
 function mapStateToProps(state) {
   const pageId = getRouteParamsId(state.location);
+  const dataSource = getDataSource(state.dataSources, pageId);
 
   return {
     navModel: getNavModel(state.navIndex, `datasource-settings-${pageId}`),
     dataSource: getDataSource(state.dataSources, pageId),
-    dataSourceMeta: state.dataSources.dataSourceMeta,
+    dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
   };
 }

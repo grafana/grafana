@@ -23,6 +23,14 @@ export const getDataSource = (state, dataSourceId): DataSource | null => {
   return {} as DataSource;
 };
 
+export const getDataSourceMeta = (state, type): Plugin => {
+  if (state.dataSourceMeta.id === type) {
+    return state.dataSourceMeta;
+  }
+
+  return {} as Plugin;
+};
+
 export const getDataSourcesSearchQuery = state => state.searchQuery;
 export const getDataSourcesLayoutMode = state => state.layoutMode;
 export const getDataSourcesCount = state => state.dataSourcesCount;

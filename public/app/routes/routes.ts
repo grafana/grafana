@@ -14,7 +14,7 @@ import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
-import DataSourceSettings from '../features/datasources/DataSourceSettings';
+import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {

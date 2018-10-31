@@ -1,31 +1,29 @@
 import React, { PureComponent } from 'react';
-import { DataSource, Plugin } from 'app/types';
+import { DataSource, Plugin } from 'app/types/';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { importPluginModule } from '../plugins/plugin_loader';
+
 interface Props {
   dataSource: DataSource;
   dataSourceMeta: Plugin;
 }
 
-export class DataSourcePluginSettings extends PureComponent<Props> {
+export class PluginSettings extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
 
   componentDidMount() {
+    const { dataSource, dataSourceMeta } = this.props;
+
     if (!this.element) {
       return;
     }
-
-    importPluginModule(this.props.dataSourceMeta.module).then(pluginExports => {
-      console.log(pluginExports);
-    });
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="datasource-config-ctrl" />';
     const scopeProps = {
       ctrl: {
-        dataSourceMeta: this.props.dataSourceMeta,
-        current: this.props.dataSource,
+        datasourceMeta: dataSourceMeta,
+        current: dataSource,
       },
     };
 
@@ -37,4 +35,4 @@ export class DataSourcePluginSettings extends PureComponent<Props> {
   }
 }
 
-export default DataSourcePluginSettings;
+export default PluginSettings;
