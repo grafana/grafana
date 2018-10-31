@@ -2,7 +2,7 @@ import React, { SFC } from 'react';
 
 export interface Props {
   isReadOnly: boolean;
-  onDelete: (event) => void;
+  onDelete: () => void;
   onSubmit: (event) => void;
 }
 
@@ -12,7 +12,7 @@ const ButtonRow: SFC<Props> = ({ isReadOnly, onDelete, onSubmit }) => {
       <button type="submit" className="btn btn-success" disabled={isReadOnly} onClick={event => onSubmit(event)}>
         Save &amp; Test
       </button>
-      <button type="submit" className="btn btn-danger" disabled={isReadOnly} onClick={event => onDelete(event)}>
+      <button type="submit" className="btn btn-danger" disabled={isReadOnly} onClick={onDelete}>
         Delete
       </button>
       <a className="btn btn-inverse" href="/datasources">

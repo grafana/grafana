@@ -157,6 +157,24 @@ export function loadDataSourceTypes(): ThunkResult<void> {
   };
 }
 
+export function updateDataSource(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const dataSource = getStore().dataSources.dataSource;
+
+    await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
+    dispatch(loadDataSource(dataSource.id));
+  };
+}
+
+export function deleteDataSource(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const dataSource = getStore().dataSources.dataSource;
+
+    await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
+    dispatch(updateLocation({ path: '/datasources' }));
+  };
+}
+
 export function nameExits(dataSources, name) {
   return (
     dataSources.filter(dataSource => {

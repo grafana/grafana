@@ -7,18 +7,21 @@ import PageLoader from '../../../core/components/PageLoader/PageLoader';
 import PluginSettings from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
-import { loadDataSource, setDataSourceName } from '../state/actions';
+import { deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
 import { getNavModel } from '../../../core/selectors/navModel';
 import { getRouteParamsId } from '../../../core/selectors/location';
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
+import appEvents from '../../../core/app_events';
 
 export interface Props {
   navModel: NavModel;
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   pageId: number;
+  deleteDataSource: typeof deleteDataSource;
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
+  updateDataSource: typeof updateDataSource;
 }
 interface State {
   name: string;
@@ -39,11 +42,24 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
   onSubmit = event => {
     event.preventDefault();
-    console.log(event);
+
+    this.props.updateDataSource();
   };
 
-  onDelete = event => {
-    console.log(event);
+  onDelete = () => {
+    appEvents.emit('confirm-modal', {
+      title: 'Delete',
+      text: 'Are you sure you want to delete this data source?',
+      yesText: 'Delete',
+      icon: 'fa-trash',
+      onConfirm: () => {
+        this.confirmDelete();
+      },
+    });
+  };
+
+  confirmDelete = () => {
+    this.props.deleteDataSource();
   };
 
   isReadOnly() {
@@ -111,7 +127,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
                 <ButtonRow
                   onSubmit={event => this.onSubmit(event)}
                   isReadOnly={this.isReadOnly()}
-                  onDelete={event => this.onDelete(event)}
+                  onDelete={this.onDelete}
                 />
               </form>
             </div>
@@ -135,8 +151,10 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
+  deleteDataSource,
   loadDataSource,
   setDataSourceName,
+  updateDataSource,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettings));
