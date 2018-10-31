@@ -36,12 +36,6 @@ exports[`Render should render CTA if there are no API keys 1`] = `
     />
     <Component
       in={false}
-      style={
-        Object {
-          "overflow": "hidden",
-          "transition": "unset",
-        }
-      }
     >
       <div
         className="cta-form"
