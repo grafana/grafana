@@ -73,3 +73,14 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
     },
   });
 };
+
+export const refreshPanel = (panel: PanelModel) => {
+  panel.refresh();
+};
+
+export const toggleLegend = (panel: PanelModel) => {
+  console.log('Toggle legend is not implemented yet');
+  // We need to set panel.legend defaults first
+  // panel.legend.show = !panel.legend.show;
+  refreshPanel(panel);
+};

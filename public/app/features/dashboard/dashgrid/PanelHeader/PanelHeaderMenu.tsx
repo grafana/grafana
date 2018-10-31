@@ -3,7 +3,14 @@ import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemTypes } from './PanelHeaderMenuItem';
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
-import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
+import {
+  removePanel,
+  duplicatePanel,
+  copyPanel,
+  editPanelJson,
+  sharePanel,
+  toggleLegend,
+} from 'app/features/dashboard/utils/panel';
 
 export interface PanelHeaderMenuProps {
   panelId: number;
@@ -73,6 +80,11 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
     editPanelJson(dashboard, panel);
   };
 
+  onToggleLegend = () => {
+    const panel = this.getPanel();
+    toggleLegend(panel);
+  };
+
   render() {
     return (
       <div className="panel-menu-container dropdown">
@@ -122,7 +134,7 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
               <PanelHeaderMenuItem
                 type={PanelHeaderMenuItemTypes.Link}
                 text="Toggle legend"
-                handleClick={() => {}}
+                handleClick={this.onToggleLegend}
                 shortcut="p l"
               />
             </ul>
