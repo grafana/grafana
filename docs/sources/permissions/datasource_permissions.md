@@ -1,7 +1,7 @@
 +++
 title = "Datasource Permissions"
 description = "Grafana Datasource Permissions Guide "
-keywords = ["grafana", "configuration", "documentation", "datasource", "permissions", "users", "teams"]
+keywords = ["grafana", "configuration", "documentation", "datasource", "permissions", "users", "teams", "enterprise"]
 type = "docs"
 [menu.docs]
 name = "Datasource Permissions"
