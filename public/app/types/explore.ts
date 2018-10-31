@@ -85,7 +85,11 @@ export interface HistoryItem {
 export abstract class LanguageProvider {
   datasource: any;
   request: (url) => Promise<any>;
-  start: () => Promise<any>;
+  /**
+   * Returns a promise that resolves with a task list when main syntax is loaded.
+   * Task list consists of secondary promises that load more detailed language features.
+   */
+  start: () => Promise<any[]>;
 }
 
 export interface TypeaheadInput {

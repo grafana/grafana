@@ -329,6 +329,16 @@
   text-align: right;
 }
 
+// React-component cascade fix: show "loading" even though item can expand
+
+.rc-cascader-menu-item-loading:after {
+  position: absolute;
+  right: 12px;
+  content: 'loading';
+  color: #767980;
+  font-style: italic;
+}
+
 // TODO Experimental
 
 .cheat-sheet-item {

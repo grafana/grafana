@@ -131,7 +131,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProvider.start().then(() => this.onReceiveMetrics());
+      this.languageProvider
+        .start()
+        .then(remaining => {
+          remaining.map(task => task.then(this.onReceiveMetrics).catch(() => {}));
+        })
+        .then(() => this.onReceiveMetrics());
     }
   }
 
@@ -186,10 +191,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Build metrics tree
     const metricsByPrefix = groupMetricsByPrefix(metrics);
     const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
-    const metricsOptions = [
-      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
-      ...metricsByPrefix,
-    ];
+    const metricsOptions =
+      histogramMetrics.length > 0
+        ? [
+            { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions, isLeaf: false },
+            ...metricsByPrefix,
+          ]
+        : metricsByPrefix;
 
     this.setState({ metricsOptions, syntaxLoaded: true });
   };
@@ -222,12 +230,15 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { error, hint, initialQuery } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
+    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading matrics...';
 
     return (
       <div className="prom-query-field">
         <div className="prom-query-field-tools">
           <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-            <button className="btn navbar-button navbar-button--tight">Metrics</button>
+            <button className="btn navbar-button navbar-button--tight" disabled={!syntaxLoaded}>
+              {chooserText}
+            </button>
           </Cascader>
         </div>
         <div className="prom-query-field-wrapper">

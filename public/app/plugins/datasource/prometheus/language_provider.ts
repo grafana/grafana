@@ -74,7 +74,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   start = () => {
     if (!this.started) {
       this.started = true;
-      return Promise.all([this.fetchMetricNames(), this.fetchHistogramMetrics()]);
+      return this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
     }
     return Promise.resolve([]);
   };

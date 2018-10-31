@@ -92,25 +92,44 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProvider.start().then(() => this.onReceiveMetrics());
+      this.languageProvider
+        .start()
+        .then(remaining => {
+          remaining.map(task => task.then(this.onReceiveMetrics).catch(() => {}));
+        })
+        .then(() => this.onReceiveMetrics());
     }
   }
 
+  loadOptions = (selectedOptions: CascaderOption[]) => {
+    const targetOption = selectedOptions[selectedOptions.length - 1];
+
+    this.setState(state => {
+      const nextOptions = state.logLabelOptions.map(option => {
+        if (option.value === targetOption.value) {
+          return {
+            ...option,
+            loading: true,
+          };
+        }
+        return option;
+      });
+      return { logLabelOptions: nextOptions };
+    });
+
+    this.languageProvider
+      .fetchLabelValues(targetOption.value)
+      .then(this.onReceiveMetrics)
+      .catch(() => {});
+  };
+
   onChangeLogLabels = (values: string[], selectedOptions: CascaderOption[]) => {
-    let query;
-    if (selectedOptions.length === 1) {
-      if (selectedOptions[0].children.length === 0) {
-        query = selectedOptions[0].value;
-      } else {
-        // Ignore click on group
-        return;
-      }
-    } else {
+    if (selectedOptions.length === 2) {
       const key = selectedOptions[0].value;
       const value = selectedOptions[1].value;
-      query = `{${key}="${value}"}`;
+      const query = `{${key}="${value}"}`;
+      this.onChangeQuery(query, true);
     }
-    this.onChangeQuery(query, true);
   };
 
   onChangeQuery = (value: string, override?: boolean) => {
@@ -165,12 +184,15 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
     const { error, hint, initialQuery } = this.props;
     const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
+    const chooserText = syntaxLoaded ? 'Log labels' : 'Loading labels...';
 
     return (
       <div className="prom-query-field">
         <div className="prom-query-field-tools">
-          <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels}>
-            <button className="btn navbar-button navbar-button--tight">Log labels</button>
+          <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels} loadData={this.loadOptions}>
+            <button className="btn navbar-button navbar-button--tight" disabled={!syntaxLoaded}>
+              {chooserText}
+            </button>
           </Cascader>
         </div>
         <div className="prom-query-field-wrapper">
