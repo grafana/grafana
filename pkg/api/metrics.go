@@ -25,8 +25,11 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 		return Error(400, "Query missing datasourceId", nil)
 	}
 
-	ds, err := hs.getDatasourceFromCache(datasourceId, c)
+	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
+		if err == m.ErrDataSourceAccessDenied {
+			return Error(403, "Access denied to datasource", err)
+		}
 		return Error(500, "Unable to load datasource meta data", err)
 	}
 
