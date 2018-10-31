@@ -8,7 +8,7 @@ import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import SlideDown, { defaultStyle as slideDownDefaultStyle } from 'app/core/components/Animations/SlideDown';
+import SlideDown from 'app/core/components/Animations/SlideDown';
 import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
@@ -85,6 +85,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       return {
         ...prevState,
         newApiKey: initialApiKeyState,
+        isAdding: false,
       };
     });
   };
@@ -130,10 +131,9 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
   renderAddApiKeyForm() {
     const { newApiKey, isAdding } = this.state;
-    const slideDownStyle = isAdding ? slideDownDefaultStyle : { ...slideDownDefaultStyle, transition: 'unset' };
 
     return (
-      <SlideDown in={isAdding} style={slideDownStyle}>
+      <SlideDown in={isAdding}>
         <div className="cta-form">
           <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
             <i className="fa fa-close" />
@@ -242,9 +242,15 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return (
       <div>
         <PageHeader model={navModel} />
-        {hasFetched ?
-          (apiKeysCount > 0 ? this.renderApiKeyList() : this.renderEmptyList())
-        : <PageLoader pageName="Api keys" />}
+        {hasFetched ? (
+          apiKeysCount > 0 ? (
+            this.renderApiKeyList()
+          ) : (
+            this.renderEmptyList()
+          )
+        ) : (
+          <PageLoader pageName="Api keys" />
+        )}
       </div>
     );
   }
@@ -256,7 +262,7 @@ function mapStateToProps(state) {
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
     apiKeysCount: getApiKeysCount(state.apiKeys),
-    hasFetched: state.apiKeys.hasFetched
+    hasFetched: state.apiKeys.hasFetched,
   };
 }
 

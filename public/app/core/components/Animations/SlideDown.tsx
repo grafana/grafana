@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Transition from 'react-transition-group/Transition';
 
 interface Style {
@@ -6,9 +6,11 @@ interface Style {
   overflow?: string;
 }
 
-const defaultMaxHeight = '200px'; // When animating using max-height we need to use a static value.
+// When animating using max-height we need to use a static value.
 // If this is not enough, pass in <SlideDown maxHeight="....
+const defaultMaxHeight = '200px';
 const defaultDuration = 200;
+
 export const defaultStyle: Style = {
   transition: `max-height ${defaultDuration}ms ease-in-out`,
   overflow: 'hidden',
