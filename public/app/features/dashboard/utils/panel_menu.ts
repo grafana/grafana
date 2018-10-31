@@ -5,7 +5,12 @@ import { PanelModel } from 'app/features/dashboard/panel_model';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
 
-export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
+export const getPanelMenu = (
+  dashboard: DashboardModel,
+  panel: PanelModel,
+  extraMenuItems: PanelHeaderMenuItemProps[] = [],
+  extraSubMenuItems: PanelHeaderMenuItemProps[] = []
+) => {
   const onViewPanel = () => {
     store.dispatch(
       updateLocation({
@@ -77,6 +82,9 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
 
     // TODO: Handle this somehow
     // this.events.emit('init-panel-actions', menu);
+    extraSubMenuItems.forEach(item => {
+      menu.push(item);
+    });
     return menu;
   };
 
@@ -107,6 +115,10 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     iconClassName: 'fa fa-fw fa-share',
     handleClick: onSharePanel,
     shortcut: 'p s',
+  });
+
+  extraMenuItems.forEach(item => {
+    menu.push(item);
   });
 
   const subMenu: PanelHeaderMenuItemProps[] = getSubMenu();
