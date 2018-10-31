@@ -13,24 +13,29 @@ export default class StackdriverMetricFindQuery {
   constructor(private datasource) {}
 
   async query(query: any) {
-    switch (query.type) {
-      case MetricFindQueryTypes.Services:
-        return this.handleServiceQuery();
-      case MetricFindQueryTypes.MetricTypes:
-        return this.handleMetricTypesQuery(query);
-      case MetricFindQueryTypes.MetricLabels:
-      case MetricFindQueryTypes.ResourceLabels:
-        return this.handleLabelQuery(query);
-      case MetricFindQueryTypes.ResourceTypes:
-        return this.handleResourceTypeQuery(query);
-      case MetricFindQueryTypes.Alignerns:
-        return this.handleAlignersQuery(query);
-      case MetricFindQueryTypes.AlignmentPeriods:
-        return this.handleAlignmentPeriodQuery();
-      case MetricFindQueryTypes.Aggregations:
-        return this.handleAggregationQuery(query);
-      default:
-        return [];
+    try {
+      switch (query.type) {
+        case MetricFindQueryTypes.Services:
+          return this.handleServiceQuery();
+        case MetricFindQueryTypes.MetricTypes:
+          return this.handleMetricTypesQuery(query);
+        case MetricFindQueryTypes.MetricLabels:
+        case MetricFindQueryTypes.ResourceLabels:
+          return this.handleLabelQuery(query);
+        case MetricFindQueryTypes.ResourceTypes:
+          return this.handleResourceTypeQuery(query);
+        case MetricFindQueryTypes.Alignerns:
+          return this.handleAlignersQuery(query);
+        case MetricFindQueryTypes.AlignmentPeriods:
+          return this.handleAlignmentPeriodQuery();
+        case MetricFindQueryTypes.Aggregations:
+          return this.handleAggregationQuery(query);
+        default:
+          return [];
+      }
+    } catch (error) {
+      console.error(`Could not run StackdriverMetricFindQuery ${query}`, error);
+      return [];
     }
   }
 
@@ -60,7 +65,6 @@ export default class StackdriverMetricFindQuery {
     if (!metricType) {
       return [];
     }
-    // const key = this.getLabelKey({ type });
     const refId = 'handleLabelsQueryType';
     const response = await this.datasource.getLabels(metricType, refId);
     if (!has(response, `meta.${type}.${labelKey}`)) {
@@ -106,27 +110,5 @@ export default class StackdriverMetricFindQuery {
 
   toFindQueryResult(x) {
     return isString(x) ? { text: x, expandable: true } : { ...x, expandable: true };
-  }
-
-  getLabelKey({ type, metricLabelKey, resourceLabelKey }) {
-    //   switch (type) {
-    //     case MetricFindQueryTypes.MetricLabels:
-    //       return metricLabelKey;
-    //       break;
-    //     case MetricFindQueryTypes.ResourceLabels:
-    //       return resourceLabelKey;
-    //     default:
-    //       return '';
-    //   }
-    // }
-    switch (type) {
-      case MetricFindQueryTypes.MetricLabels:
-        return 'metricLabels';
-        break;
-      case MetricFindQueryTypes.ResourceLabels:
-        return 'resourceLabels';
-      default:
-        return '';
-    }
   }
 }
