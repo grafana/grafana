@@ -49,7 +49,13 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       name: m.displayName,
     }));
     const metricType = this.state.metricType || metricTypes[0].value;
-    this.setState({ services, service, metricTypes, metricType, metricDescriptors });
+    let state: any = { services, service, metricTypes, metricType, metricDescriptors };
+    if (this.isLabelQuery(this.state.queryType)) {
+      const labels = await this.getLabelKeys(this.state.metricType);
+      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
+      state = { ...state, labels, labelKey };
+    }
+    this.setState(state);
   }
 
   async handleQueryTypeChange(event) {
@@ -107,31 +113,6 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
   }
 
-  getLabelType(queryType) {
-    switch (queryType) {
-      case MetricFindQueryTypes.ResourceLabels:
-        return (
-          <SimpleDropdown
-            value={this.state.labelKey}
-            options={this.state.labels.map(l => ({ value: l, name: l }))}
-            onValueChange={this.onLabelKeyChange}
-            label="Resource Labels"
-          />
-        );
-      case MetricFindQueryTypes.MetricLabels:
-        return (
-          <SimpleDropdown
-            value={this.state.labelKey}
-            options={this.state.labels.map(l => ({ value: l, name: l }))}
-            onValueChange={this.onLabelKeyChange}
-            label="Metric Labels"
-          />
-        );
-      default:
-        return '';
-    }
-  }
-
   renderQueryTypeSwitch(queryType) {
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
@@ -146,10 +127,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.MetricLabels:
       case MetricFindQueryTypes.ResourceLabels:
       case MetricFindQueryTypes.ResourceTypes:
-        const labelSelect = this.getLabelType(queryType);
         return (
           <React.Fragment>
-            {this.state.labels.join(',')}
             <SimpleDropdown
               value={this.state.service}
               options={this.state.services}
@@ -162,7 +141,14 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
               onValueChange={this.onMetricTypeChange}
               label="Metric Types"
             />
-            {labelSelect}
+            <SimpleDropdown
+              value={this.state.labelKey}
+              options={this.state.labels.map(l => ({ value: l, name: l }))}
+              onValueChange={this.onLabelKeyChange}
+              label={
+                this.state.type === MetricFindQueryTypes.ResourceLabels ? 'Resource Label Key' : 'Metric Label Key'
+              }
+            />
           </React.Fragment>
         );
       case MetricFindQueryTypes.Alignerns:
