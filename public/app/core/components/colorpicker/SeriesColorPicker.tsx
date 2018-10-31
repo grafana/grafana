@@ -23,14 +23,13 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
 
   constructor(props) {
     super(props);
-    this.openColorPicker = this.openColorPicker.bind(this);
   }
 
   componentWillUnmount() {
     this.destroyDrop();
   }
 
-  openColorPicker() {
+  onClickToOpen = () => {
     if (this.colorPickerDrop) {
       this.destroyDrop();
     }
@@ -59,7 +58,7 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
 
     this.colorPickerDrop = drop;
     this.colorPickerDrop.open();
-  }
+  };
 
   closeColorPicker() {
     setTimeout(() => {
@@ -77,7 +76,7 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
   render() {
     const { optionalClass, children } = this.props;
     return (
-      <div className={optionalClass} ref={e => (this.pickerElem = e)} onClick={this.openColorPicker}>
+      <div className={optionalClass} ref={e => (this.pickerElem = e)} onClick={this.onClickToOpen}>
         {children}
       </div>
     );

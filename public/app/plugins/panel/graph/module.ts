@@ -243,24 +243,24 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  changeSeriesColor(series, color) {
+  onColorChange = (series, color) => {
     series.setColor(color);
     this.panel.aliasColors[series.alias] = series.color;
     this.render();
-  }
+  };
 
-  toggleSeries(hiddenSeries) {
+  onToggleSeries = hiddenSeries => {
     this.hiddenSeries = hiddenSeries;
     this.render();
-  }
+  };
 
-  toggleSort(sortBy, sortDesc) {
+  onToggleSort = (sortBy, sortDesc) => {
     this.panel.legend.sort = sortBy;
     this.panel.legend.sortDesc = sortDesc;
     this.render();
-  }
+  };
 
-  setSeriesAxis(info) {
+  onToggleAxis = info => {
     let override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
@@ -268,7 +268,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
     override.yaxis = info.yaxis;
     this.render();
-  }
+  };
 
   addSeriesOverride(override) {
     this.panel.seriesOverrides.push(override || {});

@@ -38,6 +38,7 @@ class GraphElement {
   panelWidth: number;
   eventManager: EventManager;
   thresholdManager: ThresholdManager;
+  legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
@@ -53,7 +54,7 @@ class GraphElement {
     });
 
     // panel events
-    this.ctrl.events.on('panel-teardown', this.onPanelteardown.bind(this));
+    this.ctrl.events.on('panel-teardown', this.onPanelTeardown.bind(this));
 
     /**
      * Split graph rendering into two parts.
@@ -69,13 +70,11 @@ class GraphElement {
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
-    scope.$on('$destroy', this.onScopeDestroy.bind(this));
 
-    // Bind legend event handlers once in constructor to avoid unnecessary re-rendering
-    this.ctrl.toggleSeries = this.ctrl.toggleSeries.bind(this.ctrl);
-    this.ctrl.toggleSort = this.ctrl.toggleSort.bind(this.ctrl);
-    this.ctrl.changeSeriesColor = this.ctrl.changeSeriesColor.bind(this.ctrl);
-    this.ctrl.setSeriesAxis = this.ctrl.setSeriesAxis.bind(this.ctrl);
+    // get graph legend element
+    if (this.elem && this.elem.parent) {
+      this.legendElem = this.elem.parent().find('.graph-legend')[0];
+    }
   }
 
   onRender(renderData) {
@@ -97,14 +96,13 @@ class GraphElement {
       hiddenSeries: this.ctrl.hiddenSeries,
       ...legendOptions,
       ...valueOptions,
-      onToggleSeries: this.ctrl.toggleSeries,
-      onToggleSort: this.ctrl.toggleSort,
-      onColorChange: this.ctrl.changeSeriesColor,
-      onToggleAxis: this.ctrl.setSeriesAxis,
+      onToggleSeries: this.ctrl.onToggleSeries,
+      onToggleSort: this.ctrl.onToggleSort,
+      onColorChange: this.ctrl.onColorChange,
+      onToggleAxis: this.ctrl.onToggleAxis,
     };
     const legendReactElem = React.createElement(Legend, legendProps);
-    const legendElem = this.elem.parent().find('.graph-legend');
-    ReactDOM.render(legendReactElem, legendElem[0], () => this.onLegendRenderingComplete());
+    ReactDOM.render(legendReactElem, this.legendElem, () => this.onLegendRenderingComplete());
   }
 
   onLegendRenderingComplete() {
@@ -125,13 +123,20 @@ class GraphElement {
     this.tooltip.show(evt.pos);
   }
 
-  onPanelteardown() {
+  onPanelTeardown() {
     this.thresholdManager = null;
 
     if (this.plot) {
       this.plot.destroy();
       this.plot = null;
     }
+
+    this.tooltip.destroy();
+    this.elem.off();
+    this.elem.remove();
+
+    console.log('react unmount');
+    ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
   onGraphHoverClear(event, info) {
@@ -177,12 +182,6 @@ class GraphElement {
         }, 100);
       }
     }
-  }
-
-  onScopeDestroy() {
-    this.tooltip.destroy();
-    this.elem.off();
-    this.elem.remove();
   }
 
   shouldAbortRender() {
