@@ -31,9 +31,11 @@ const (
 )
 
 const (
-	DEV  string = "development"
-	PROD string = "production"
-	TEST string = "test"
+	DEV                 = "development"
+	PROD                = "production"
+	TEST                = "test"
+	APP_NAME            = "Grafana"
+	APP_NAME_ENTERPRISE = "Grafana Enterprise"
 )
 
 var (
@@ -531,9 +533,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Temporary keep global, to make refactor in steps
 	Raw = cfg.Raw
 
-	ApplicationName = "Grafana"
+	ApplicationName = APP_NAME
 	if IsEnterprise {
-		ApplicationName += " Enterprise"
+		ApplicationName = APP_NAME_ENTERPRISE
 	}
 
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
