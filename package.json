@@ -38,7 +38,7 @@
     "fork-ts-checker-webpack-plugin": "^0.4.9",
     "gaze": "^1.1.2",
     "glob": "~7.0.0",
-    "grunt": "1.0.1",
+    "grunt": "^1.0.3",
     "grunt-angular-templates": "^1.1.0",
     "grunt-cli": "~1.2.0",
     "grunt-contrib-clean": "~1.0.0",

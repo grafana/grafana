@@ -3,7 +3,7 @@ import angular from 'angular';
 import moment from 'moment';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import * as customRangeCtrl from '../customTimeRanges/range_ctrl';
+import * as customRangeCtrl from '../custom_time_ranges/range_ctrl';
 
 export class TimePickerCtrl {
   static tooltipFormat = 'MMM D, YYYY HH:mm:ss';

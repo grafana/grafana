@@ -189,15 +189,6 @@ describe('range_ctrl', () => {
       };
       expect(rangeIsValid(range)).toEqual(false);
     });
-    it('should validate range object and return false for invalid range.newDay', () => {
-      const range = {
-        name: 'name',
-        newDay: 'false',
-        from: '08:00',
-        to: '15:30',
-      };
-      expect(rangeIsValid(range)).toEqual(false);
-    });
     it('should validate range object and return false for invalid range.from', () => {
       const range = {
         name: 'name',

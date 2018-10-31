@@ -4,9 +4,7 @@ import { iconMap } from './editor';
 
 export class CustomTimeRangesCtrl {
   /** @ngInject */
-  constructor($scope, $rootScope, $q, rangeDef /*dashboardSrv*/) {
-    //    const currentDashId = dashboardSrv.getCurrent().id;
-
+  constructor($scope, $rootScope, $q, rangeDef) {
     if (rangeDef.type === 'range') {
       return $q.when([
         {

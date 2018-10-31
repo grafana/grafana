@@ -113,39 +113,9 @@ export function shift(range, dayShift) {
   throw new Error('Invalid range');
 }
 
-// Sets range absoluteFrom and absoluteTo to its last posible state till now
-/*
-function lastShift (range) {
-    const now = new Date();
-    let today, yesterday, dayShift = 0;
-
-    range.to > getTimeString(now) ? dayShift = -1 : dayShift = 0;
-    //console.log(range.to,' < ',getTimeString(now),' result:', dayShift);
-
-    now.setDate(now.getDate() + dayShift);
-    today = getDateString(now);
-
-    if (range.newDay) {
-        //console.log('new day');
-        now.setDate(now.getDate() - 1);
-        yesterday = getDateString(now);
-        range.absoluteFrom = yesterday + ' ' + range.from + ':00';
-        range.absoluteTo = today + ' ' + range.to + ':00';
-        //console.log(range);
-        return range;
-    } else {
-        //console.log('not new day');
-        range.absoluteFrom = today + ' ' + range.from + ':00';
-        range.absoluteTo = today + ' ' + range.to + ':00';
-        //console.log(range);
-        return range;
-    }
-}*/
-
 // Sets range absoluteFrom and absoluteTo based on TimeRaw.from from timepicker itself
 export function shiftByDay(range, editTimeRaw) {
   if (rangeIsValid(range)) {
-    //console.log(editTimeRaw);
     const from = moment(editTimeRaw.from).format('YYYY-MM-DD');
     const diff = moment().diff(from, 'days');
     if (range.newDay) {
@@ -189,12 +159,6 @@ export function rangeIsValid(range) {
   }
   const re = /^([[0-1][0-9]|2[0-4]):[0-5][0-9]$/;
   if (!re.test(range.to) || !re.test(range.from)) {
-    return false;
-  }
-  // newDay validation
-  if (typeof range.newDay !== 'boolean') {
-    return false;
-  } else if (range.newDay === undefined || range.newDay === null) {
     return false;
   }
   // name validation
