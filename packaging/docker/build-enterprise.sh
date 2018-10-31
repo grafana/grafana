@@ -8,3 +8,5 @@ docker build \
   --tag "${_docker_repo}:${_grafana_tag}"\
   --no-cache=true \
   .
+
+docker push "${_docker_repo}:${_grafana_tag}"
