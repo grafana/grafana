@@ -11,25 +11,33 @@ interface Props {
 export class PluginSettings extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
+  scopeProps: any;
+
+  constructor(props) {
+    super(props);
+
+    this.scopeProps = {
+      ctrl: {
+        datasourceMeta: this.props.dataSourceMeta,
+        current: this.props.dataSource,
+      },
+      onModelChanged: this.onModelChanged,
+    };
+  }
+
+  componentDidUpdate() {
+    this.scopeProps.ctrl.current = this.props.dataSource;
+  }
 
   componentDidMount() {
-    const { dataSource, dataSourceMeta } = this.props;
-
     if (!this.element) {
       return;
     }
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="datasource-config-ctrl" />';
-    const scopeProps = {
-      ctrl: {
-        datasourceMeta: dataSourceMeta,
-        current: _.cloneDeep(dataSource),
-      },
-      onModelChanged: this.onModelChanged,
-    };
 
-    this.component = loader.load(this.element, scopeProps, template);
+    this.component = loader.load(this.element, this.scopeProps, template);
   }
 
   componentWillUnmount() {
