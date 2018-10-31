@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import SimpleDropdown from './SimpleDropdown';
 import { TemplateQueryProps } from 'app/types/plugins';
-import { getMetricTypesByService, extractServicesFromMetricDescriptors } from '../functions';
+import { getMetricTypes, extractServicesFromMetricDescriptors } from '../functions';
 import defaultsDeep from 'lodash/defaultsDeep';
 import { MetricFindQueryTypes } from '../types';
 
@@ -43,12 +43,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       value: m.service,
       name: m.serviceShortName,
     }));
-    const service = this.state.service || services[0].value;
-    const metricTypes = getMetricTypesByService(metricDescriptors, service).map(m => ({
-      value: m.type,
-      name: m.displayName,
-    }));
-    const metricType = this.state.metricType || metricTypes[0].value;
+    const service = services.some(s => s.value === this.state.service) ? this.state.service : services[0].value;
+    const { metricTypes, metricType } = getMetricTypes(metricDescriptors, this.state.metricType, service);
     const state: any = {
       services,
       service,
@@ -66,37 +62,23 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   }
 
   async onServiceChange(event) {
-    const metricTypes = getMetricTypesByService(this.state.metricDescriptors, event.target.value).map(m => ({
-      value: m.type,
-      name: m.displayName,
-    }));
-    const metricTypeExistInArray = metricTypes.find(m => m.value === this.state.metricType);
-    const metricType = metricTypeExistInArray ? metricTypeExistInArray.value : metricTypes[0].value;
-    const state: any = { service: event.target.value, metricTypes, metricType, ...await this.getLabels(metricType) };
+    const { metricTypes, metricType } = getMetricTypes(
+      this.state.metricDescriptors,
+      this.state.metricType,
+      event.target.value
+    );
+    const state: any = {
+      service: event.target.value,
+      metricTypes,
+      metricType,
+      ...await this.getLabels(metricType),
+    };
     this.setState(state);
   }
 
   async onMetricTypeChange(event) {
     const state: any = { metricType: event.target.value, ...await this.getLabels(event.target.value) };
     this.setState(state);
-  }
-
-  async getLabelKeys(metricType, type = this.state.type) {
-    const refId = 'StackdriverTemplateQueryComponent';
-    const response = await this.props.datasource.getLabels(metricType, refId);
-    return Object.keys(response.meta[type]);
-  }
-
-  async getLabels(metricType, type = this.state.type) {
-    let result = { labels: this.state.labels, labelKey: this.state.labelKey };
-    if (this.isLabelQuery(type)) {
-      const refId = 'StackdriverTemplateQueryComponent';
-      const response = await this.props.datasource.getLabels(metricType, refId);
-      const labels = Object.keys(response.meta[type]);
-      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
-      result = { labels, labelKey };
-    }
-    return result;
   }
 
   onLabelKeyChange(event) {
@@ -110,6 +92,18 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   isLabelQuery(queryType) {
     return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
+  }
+
+  async getLabels(metricType, type = this.state.type) {
+    let result = { labels: this.state.labels, labelKey: this.state.labelKey };
+    if (this.isLabelQuery(type)) {
+      const refId = 'StackdriverTemplateQueryComponent';
+      const response = await this.props.datasource.getLabels(metricType, refId);
+      const labels = Object.keys(response.meta[type]);
+      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
+      result = { labels, labelKey };
+    }
+    return result;
   }
 
   renderQueryTypeSwitch(queryType) {
