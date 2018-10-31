@@ -97,7 +97,7 @@ function customRangeEditor() {
   return {
     restrict: 'E',
     controller: CustomTimeRangeEditorCtrl,
-    templateUrl: 'public/app/features/dashboard/customTimeRanges/editor.html',
+    templateUrl: 'public/app/features/dashboard/custom_time_ranges/editor.html',
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
