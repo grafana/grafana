@@ -135,7 +135,6 @@ class GraphElement {
     this.elem.off();
     this.elem.remove();
 
-    console.log('react unmount');
     ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
