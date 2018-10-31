@@ -49,22 +49,19 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       name: m.displayName,
     }));
     const metricType = this.state.metricType || metricTypes[0].value;
-    let state: any = { services, service, metricTypes, metricType, metricDescriptors };
-    if (this.isLabelQuery(this.state.queryType)) {
-      const labels = await this.getLabelKeys(this.state.metricType);
-      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
-      state = { ...state, labels, labelKey };
-    }
+    const state: any = {
+      services,
+      service,
+      metricTypes,
+      metricType,
+      metricDescriptors,
+      ...await this.getLabels(this.state.metricType),
+    };
     this.setState(state);
   }
 
   async handleQueryTypeChange(event) {
-    let state: any = { type: event.target.value };
-    if (this.isLabelQuery(event.target.value)) {
-      const labels = await this.getLabelKeys(this.state.metricType, event.target.value);
-      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
-      state = { ...state, labels, labelKey };
-    }
+    const state: any = { type: event.target.value, ...await this.getLabels(this.state.metricType, event.target.value) };
     this.setState(state);
   }
 
@@ -75,22 +72,12 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     }));
     const metricTypeExistInArray = metricTypes.find(m => m.value === this.state.metricType);
     const metricType = metricTypeExistInArray ? metricTypeExistInArray.value : metricTypes[0].value;
-    let state: any = { service: event.target.value, metricTypes, metricType };
-    if (this.isLabelQuery(this.state.type)) {
-      const labels = await this.getLabelKeys(metricType);
-      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
-      state = { ...state, labelKey, labels: labels };
-    }
+    const state: any = { service: event.target.value, metricTypes, metricType, ...await this.getLabels(metricType) };
     this.setState(state);
   }
 
   async onMetricTypeChange(event) {
-    let state: any = { metricType: event.target.value };
-    if (this.isLabelQuery(this.state.type)) {
-      const labels = await this.getLabelKeys(event.target.value);
-      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
-      state = { ...state, labels, labelKey };
-    }
+    const state: any = { metricType: event.target.value, ...await this.getLabels(event.target.value) };
     this.setState(state);
   }
 
@@ -98,6 +85,18 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     const refId = 'StackdriverTemplateQueryComponent';
     const response = await this.props.datasource.getLabels(metricType, refId);
     return Object.keys(response.meta[type]);
+  }
+
+  async getLabels(metricType, type = this.state.type) {
+    let result = { labels: this.state.labels, labelKey: this.state.labelKey };
+    if (this.isLabelQuery(type)) {
+      const refId = 'StackdriverTemplateQueryComponent';
+      const response = await this.props.datasource.getLabels(metricType, refId);
+      const labels = Object.keys(response.meta[type]);
+      const labelKey = labels.indexOf(this.state.labelKey) !== -1 ? this.state.labelKey : labels[0];
+      result = { labels, labelKey };
+    }
+    return result;
   }
 
   onLabelKeyChange(event) {
