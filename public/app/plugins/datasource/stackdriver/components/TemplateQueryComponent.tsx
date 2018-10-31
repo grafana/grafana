@@ -107,7 +107,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
   }
 
-  getDropdown(queryType) {
+  getLabelType(queryType) {
     switch (queryType) {
       case MetricFindQueryTypes.ResourceLabels:
         return (
@@ -146,7 +146,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       case MetricFindQueryTypes.MetricLabels:
       case MetricFindQueryTypes.ResourceLabels:
       case MetricFindQueryTypes.ResourceTypes:
-        const dropdown = this.getDropdown(queryType);
+        const labelSelect = this.getLabelType(queryType);
         return (
           <React.Fragment>
             {this.state.labels.join(',')}
@@ -162,7 +162,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
               onValueChange={this.onMetricTypeChange}
               label="Metric Types"
             />
-            {dropdown}
+            {labelSelect}
           </React.Fragment>
         );
       case MetricFindQueryTypes.Alignerns:
@@ -191,23 +191,12 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   render() {
     return (
       <React.Fragment>
-        <div className="gf-form max-width-21">
-          <span className="gf-form-label width-7">Query Type</span>
-          <div className="gf-form-select-wrapper max-width-14">
-            <select
-              className="gf-form-input"
-              defaultValue={this.state.type}
-              required
-              onChange={this.handleQueryTypeChange}
-            >
-              {this.queryTypes.map((qt, i) => (
-                <option key={i} value={qt.value} ng-if="false">
-                  {qt.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <KeyValueDropdown
+          value={this.state.type}
+          options={this.queryTypes}
+          onValueChange={this.handleQueryTypeChange}
+          label="Query Types"
+        />
         {this.renderQueryTypeSwitch(this.state.type)}
       </React.Fragment>
     );
