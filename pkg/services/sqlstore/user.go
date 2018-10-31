@@ -15,8 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func init() {
-	//bus.AddHandler("sql", CreateUser)
+func (ss *SqlStore) addUserQueryAndCommandHandlers() {
+	ss.Bus.AddHandler(ss.GetSignedInUser)
+
 	bus.AddHandler("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
@@ -25,7 +26,6 @@ func init() {
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", UpdateUserLastSeenAt)
 	bus.AddHandler("sql", GetUserProfile)
-	bus.AddHandler("sql", GetSignedInUser)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DeleteUser)
@@ -345,10 +345,16 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 	return err
 }
 
-func GetSignedInUser(query *m.GetSignedInUserQuery) error {
+func (ss *SqlStore) GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	orgId := "u.org_id"
 	if query.OrgId > 0 {
 		orgId = strconv.FormatInt(query.OrgId, 10)
+	}
+
+	cacheKey := fmt.Sprintf("signed-in-user-%d-%s", query.UserId, query.OrgId)
+	if cached, found := ss.CacheService.Get(cacheKey); found {
+		query.Result = cached.(*m.SignedInUser)
+		return nil
 	}
 
 	var rawSql = `SELECT
@@ -401,6 +407,7 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	}
 
 	query.Result = &user
+	ss.CacheService.Set(cacheKey, &user, time.Second*5)
 	return err
 }
 
