@@ -7,6 +7,7 @@ const model = {
   buttonIcon: 'ga css class',
   buttonLink: 'http://url/to/destination',
   buttonTitle: 'Click me',
+  onClick: jest.fn(),
   proTip: 'This is a tip',
   proTipLink: 'http://url/to/tip/destination',
   proTipLinkTitle: 'Learn more',
