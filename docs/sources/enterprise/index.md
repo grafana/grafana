@@ -1,6 +1,7 @@
 +++
 title = "Grafana Enterprise"
 description = "Grafana Enterprise overview"
+keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise"]
 type = "docs"
 [menu.docs]
 name = "Grafana Enterprise"
@@ -18,9 +19,9 @@ version.
 Grafana Enterprise includes all of the features found in the open source version. Below we list the additional features
 that can only be found in the Enterprise edition.
 
-### Enhanced LDAP
+### Enhanced LDAP Integration
 
-With Grafana Enterprise you can setup syncing between LDAP Groups and Teams. [Learn More](link).
+With Grafana Enterprise you can setup synchronization between LDAP Groups and Teams. [Learn More]({{< relref "auth/enhanced_ldap.md" >}}).
 
 ### Datasource Permissions
 
@@ -28,5 +29,5 @@ Datasource permissions allows you to restrict access for users to query a dataso
 
 ## Try Grafana Enterprise
 
-## Licence file mangement
+## Licence file management
 
