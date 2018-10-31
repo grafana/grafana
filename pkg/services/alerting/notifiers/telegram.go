@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	captionLengthLimit = 200
+	captionLengthLimit = 1024
 )
 
 var (
