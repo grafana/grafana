@@ -139,7 +139,7 @@ export class StackdriverFilterCtrl {
       result = metrics.filter(m => m.service === this.target.service);
     }
 
-    if (result.find(m => m.value === this.target.metricType)) {
+    if (result.find(m => m.value === this.templateSrv.replace(this.target.metricType))) {
       this.metricType = this.target.metricType;
     } else if (result.length > 0) {
       this.metricType = this.target.metricType = result[0].value;
@@ -187,7 +187,9 @@ export class StackdriverFilterCtrl {
 
   setMetricType() {
     this.target.metricType = this.metricType;
-    const { valueType, metricKind, unit } = this.metricDescriptors.find(m => m.type === this.target.metricType);
+    const { valueType, metricKind, unit } = this.metricDescriptors.find(
+      m => m.type === this.templateSrv.replace(this.metricType)
+    );
     this.target.unit = unit;
     this.target.valueType = valueType;
     this.target.metricKind = metricKind;
