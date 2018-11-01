@@ -11,8 +11,8 @@ const SimpleSelect: SFC<Props> = props => {
   const { label, onValueChange, value, options } = props;
   return (
     <div className="gf-form max-width-21">
-      <span className="gf-form-label width-7">{label}</span>
-      <div className="gf-form-select-wrapper max-width-14">
+      <span className="gf-form-label width-10">{label}</span>
+      <div className="gf-form-select-wrapper max-width-10">
         <select className="gf-form-input" required onChange={onValueChange} value={value}>
           {options.map(({ value, name }, i) => (
             <option key={i} value={value}>

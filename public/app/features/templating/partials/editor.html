@@ -177,7 +177,7 @@
 
 			<div class="gf-form-inline">
 				<div class="gf-form max-width-21">
-					<span class="gf-form-label width-7">Data source</span>
+					<span class="gf-form-label width-10">Data source</span>
 					<div class="gf-form-select-wrapper max-width-14">
 						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"
 						 ng-change="datasourceChanged()" required>
@@ -187,7 +187,7 @@
 				</div>
 
 				<div class="gf-form max-width-22">
-					<span class="gf-form-label width-7">
+					<span class="gf-form-label width-10">
 						Refresh
 						<info-popover mode="right-normal">
 							When to update the values of this variable.
@@ -205,7 +205,7 @@
 			</rebuild-on-change>
 
 			<div class="gf-form">
-				<span class="gf-form-label width-7">
+				<span class="gf-form-label width-10">
 					Regex
 					<info-popover mode="right-normal">
 						Optional, if you want to extract part of a series name or metric node segment.
@@ -215,7 +215,7 @@
 				 ng-change="runQuery()"></input>
 			</div>
 			<div class="gf-form max-width-21">
-				<span class="gf-form-label width-7">
+				<span class="gf-form-label width-10">
 					Sort
 					<info-popover mode="right-normal">
 						How to sort the values of this variable.

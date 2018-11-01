@@ -20,7 +20,7 @@ export default class DefaultTemplateQueryComponent extends PureComponent<Templat
   render() {
     return (
       <div className="gf-form">
-        <span className="gf-form-label width-7">Query</span>
+        <span className="gf-form-label width-10">Query</span>
         <input
           type="text"
           className="gf-form-input"
