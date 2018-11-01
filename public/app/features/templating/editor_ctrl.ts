@@ -117,6 +117,9 @@ export class VariableEditorCtrl {
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
       $scope.validate();
+      datasourceSrv.get($scope.current.datasource).then(ds => {
+        $scope.currentDatasource = ds;
+      });
     };
 
     $scope.duplicate = variable => {
