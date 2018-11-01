@@ -206,6 +206,10 @@ jobs:
       - run: docker info
       - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
       - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
+      - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh "master"
+
 
   grafana-docker-pr:
     docker:
@@ -230,6 +234,9 @@ jobs:
         - run: docker info
         - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
         - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
+        - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
+        - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+        - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
@@ -312,39 +319,49 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.0.0
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
       - run:
           name: deploy to s3
           command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
+
 
   deploy-enterprise-release:
     docker:
-    - image: circleci/python:2.7-stretch
+    - image: grafana/grafana-ci-deploy:1.0.0
     steps:
-    - attach_workspace:
-        at: .
-    - run:
-        name: install awscli
-        command: 'sudo pip install awscli'
-    - run:
-        name: deploy to s3
-        command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
+      - attach_workspace:
+         at: .
+      - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to s3
+          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/release'
 
   deploy-master:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.0.0
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
       - run:
           name: deploy to s3
           command: |
@@ -355,6 +372,15 @@ jobs:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://$GCP_BUCKET_NAME/oss/master'
+      - run:
           name: Publish to Grafana.com
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
@@ -362,16 +388,22 @@ jobs:
 
   deploy-release:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.0.0
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
-      - run:
           name: deploy to s3
           command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
+      - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://R/oss/release'
       - run:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh'
@@ -409,6 +441,7 @@ workflows:
       - grafana-docker-master:
           requires:
             - build-all
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell

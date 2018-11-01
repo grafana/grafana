@@ -40,15 +40,15 @@
 
 .login-page {
   .footer {
+    bottom: $spacer;
+    position: absolute;
     padding: 1rem 0 1rem 0;
   }
 }
 
-@include media-breakpoint-up(md) {
+@include media-breakpoint-up(sm) {
   .login-page {
     .footer {
-      bottom: $spacer;
-      position: absolute;
       padding: 5rem 0 1rem 0;
     }
   }

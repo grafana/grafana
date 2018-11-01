@@ -3,6 +3,8 @@
   "name": "React Graph",
   "id": "graph2",
 
+  "state": "alpha",
+
   "info": {
     "author": {
       "name": "Grafana Project",

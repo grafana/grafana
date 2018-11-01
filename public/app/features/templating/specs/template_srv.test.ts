@@ -286,9 +286,39 @@ describe('templateSrv', () => {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
-    it('should return true if exists', () => {
+    it('should return true if $test exists', () => {
       const result = _templateSrv.variableExists('$test');
       expect(result).toBe(true);
+    });
+
+    it('should return true if $test exists in string', () => {
+      const result = _templateSrv.variableExists('something $test something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if [[test]] exists in string', () => {
+      const result = _templateSrv.variableExists('something [[test]] something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if [[test:csv]] exists in string', () => {
+      const result = _templateSrv.variableExists('something [[test:csv]] something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if ${test} exists in string', () => {
+      const result = _templateSrv.variableExists('something ${test} something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if ${test:raw} exists in string', () => {
+      const result = _templateSrv.variableExists('something ${test:raw} something');
+      expect(result).toBe(true);
+    });
+
+    it('should return null if there are no variables in string', () => {
+      const result = _templateSrv.variableExists('string without variables');
+      expect(result).toBe(null);
     });
   });
 

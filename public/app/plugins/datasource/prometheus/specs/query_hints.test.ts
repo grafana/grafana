@@ -1,4 +1,4 @@
-import { getQueryHints } from '../query_hints';
+import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from '../query_hints';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
@@ -75,6 +75,27 @@ describe('getQueryHints()', () => {
         action: {
           type: 'ADD_HISTOGRAM_QUANTILE',
           query: 'metric_bucket',
+        },
+      },
+    });
+  });
+
+  it('returns a sum hint when many time series results are returned for a simple metric', () => {
+    const seriesCount = SUM_HINT_THRESHOLD_COUNT;
+    const series = Array.from({ length: seriesCount }, _ => ({
+      datapoints: [[0, 0], [0, 0]],
+    }));
+    const hints = getQueryHints('metric', series);
+    expect(hints.length).toBe(1);
+    expect(hints[0]).toMatchObject({
+      type: 'ADD_SUM',
+      label: 'Many time series results returned.',
+      fix: {
+        label: 'Consider aggregating with sum().',
+        action: {
+          type: 'ADD_SUM',
+          query: 'metric',
+          preventSubmit: true,
         },
       },
     });

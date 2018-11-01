@@ -933,13 +933,130 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "gdev-testdata",
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 0,
+        "y": 44
+      },
+      "id": 21,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "C-series",
+          "steppedLine": true
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,null,40,null,90,null,null,100,null,null,100,null,null,80,null",
+          "target": ""
+        },
+        {
+          "alias": "",
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "20,null40,null,null,50,null,70,null,100,null,10,null,30,null",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Null between points",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "content": "Left is showing null between values for a normal line graph and staircase graph. Orphaned data points should be rendered as points",
+      "editable": true,
+      "error": false,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 44
+      },
+      "id": 22,
+      "links": [],
+      "mode": "markdown",
+      "title": "",
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-testdata",
       "decimals": 3,
       "fill": 1,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 51
       },
       "id": 20,
       "legend": {
@@ -1024,7 +1141,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 58
       },
       "id": 16,
       "legend": {
@@ -1127,7 +1244,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 58
       },
       "id": 17,
       "legend": {
@@ -1266,7 +1383,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 58
+        "y": 65
       },
       "id": 18,
       "legend": {
@@ -1370,7 +1487,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 58
+        "y": 65
       },
       "id": 19,
       "legend": {
@@ -1554,5 +1671,5 @@
   "timezone": "browser",
   "title": "Panel Tests - Graph",
   "uid": "5SdHCadmz",
-  "version": 3
+  "version": 1
 }

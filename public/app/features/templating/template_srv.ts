@@ -136,7 +136,8 @@ export class TemplateSrv {
     if (!match) {
       return null;
     }
-    return match[1] || match[2];
+    const variableName = match.slice(1).find(match => match !== undefined);
+    return variableName;
   }
 
   variableExists(expression) {

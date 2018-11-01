@@ -83,6 +83,10 @@ function areRowsMatching(columns, row, otherRow) {
 export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]): TableModel {
   const model = dst || new TableModel();
 
+  if (arguments.length === 1) {
+    return model;
+  }
+
   // Single query returns data columns and rows as is
   if (arguments.length === 2) {
     model.columns = [...tables[0].columns];

@@ -1,15 +1,22 @@
-﻿import React from 'react';
+import React from 'react';
 import Transition from 'react-transition-group/Transition';
 
-const defaultMaxHeight = '200px'; // When animating using max-height we need to use a static value.
+interface Style {
+  transition?: string;
+  overflow?: string;
+}
+
+// When animating using max-height we need to use a static value.
 // If this is not enough, pass in <SlideDown maxHeight="....
+const defaultMaxHeight = '200px';
 const defaultDuration = 200;
-const defaultStyle = {
+
+export const defaultStyle: Style = {
   transition: `max-height ${defaultDuration}ms ease-in-out`,
   overflow: 'hidden',
 };
 
-export default ({ children, in: inProp, maxHeight = defaultMaxHeight }) => {
+export default ({ children, in: inProp, maxHeight = defaultMaxHeight, style = defaultStyle }) => {
   // There are 4 main states a Transition can be in:
   // ENTERING, ENTERED, EXITING, EXITED
   // https://reactcommunity.org/react-transition-group/
@@ -25,7 +32,7 @@ export default ({ children, in: inProp, maxHeight = defaultMaxHeight }) => {
       {state => (
         <div
           style={{
-            ...defaultStyle,
+            ...style,
             ...transitionStyles[state],
           }}
         >

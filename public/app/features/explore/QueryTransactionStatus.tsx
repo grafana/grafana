@@ -1,17 +1,17 @@
 import React, { PureComponent } from 'react';
 
-import { QueryTransaction as QueryTransactionModel } from 'app/types/explore';
+import { QueryTransaction } from 'app/types/explore';
 import ElapsedTime from './ElapsedTime';
 
 function formatLatency(value) {
   return `${(value / 1000).toFixed(1)}s`;
 }
 
-interface QueryTransactionProps {
-  transaction: QueryTransactionModel;
+interface QueryTransactionStatusItemProps {
+  transaction: QueryTransaction;
 }
 
-class QueryTransaction extends PureComponent<QueryTransactionProps> {
+class QueryTransactionStatusItem extends PureComponent<QueryTransactionStatusItemProps> {
   render() {
     const { transaction } = this.props;
     const className = transaction.done ? 'query-transaction' : 'query-transaction query-transaction--loading';
@@ -26,16 +26,16 @@ class QueryTransaction extends PureComponent<QueryTransactionProps> {
   }
 }
 
-interface QueryTransactionsProps {
-  transactions: QueryTransactionModel[];
+interface QueryTransactionStatusProps {
+  transactions: QueryTransaction[];
 }
 
-export default class QueryTransactions extends PureComponent<QueryTransactionsProps> {
+export default class QueryTransactionStatus extends PureComponent<QueryTransactionStatusProps> {
   render() {
     const { transactions } = this.props;
     return (
       <div className="query-transactions">
-        {transactions.map((t, i) => <QueryTransaction key={`${t.query}:${t.resultType}`} transaction={t} />)}
+        {transactions.map((t, i) => <QueryTransactionStatusItem key={`${t.query}:${t.resultType}`} transaction={t} />)}
       </div>
     );
   }
