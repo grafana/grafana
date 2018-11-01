@@ -1,7 +1,7 @@
 $login-border: #8daac5;
 
 .login {
-  min-height: 85vh;
+  min-height: 100vh;
   background-position: center;
   background-repeat: no-repeat;
   min-width: 100%;
@@ -97,6 +97,7 @@ select:-webkit-autofill:focus {
 
 .login-content {
   max-width: 700px;
+  width: 100%;
   display: flex;
   align-items: stretch;
   flex-direction: column;
@@ -120,18 +121,29 @@ select:-webkit-autofill:focus {
     width: 70px;
     margin-bottom: 15px;
   }
+}
 
-  .icon-gf-grafana_wordmark {
-    color: darken($white, 11%);
-    position: relative;
-    font-size: 2rem;
-    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+.app-grafana {
+  .logo-wordmark {
+    background: url('../img/grafana_typelogo.svg') top center no-repeat;
+    width: 100%;
+    height: 70px;
+  }
+}
+
+.app-enterprise {
+  .logo-wordmark {
+    background: url('../img/grafana_enterprise_typelogo.svg') top center no-repeat;
+    width: 100%;
+    height: 70px;
   }
 }
 
 .login-outer-box {
   display: flex;
   overflow-y: hidden;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-inner-box {
@@ -143,6 +155,7 @@ select:-webkit-autofill:focus {
   justify-content: center;
   flex-grow: 1;
   max-width: 415px;
+  width: 100%;
   transform: tranlate(0px, 0px);
   transition: 0.25s ease;
 
@@ -324,23 +337,19 @@ select:-webkit-autofill:focus {
 }
 
 @include media-breakpoint-up(sm) {
-  .login-content {
-    flex-direction: row;
-  }
-
   .login-branding {
-    width: 35%;
-    padding: 4rem 2rem;
-    border-right: 1px solid $login-border;
+    padding: 1rem;
 
     .logo-icon {
       width: 80px;
     }
   }
+}
 
-  .login-inner-box {
-    width: 65%;
-    padding: 1rem 2rem;
+@include media-breakpoint-up(md) {
+  .login-content {
+    flex-direction: row;
+    flex: 1 0 100%;
   }
 
   .login-divider {
@@ -348,28 +357,15 @@ select:-webkit-autofill:focus {
       width: 110px;
     }
   }
-}
-
-@include media-breakpoint-up(md) {
-  .login {
-    min-height: 100vh;
-  }
-
-  .login-content {
-    flex: 1 0 100%;
-  }
 
   .login-branding {
     width: 45%;
-    padding: 2rem 4rem;
+    padding: 2rem;
     flex-grow: 1;
+    border-right: 1px solid $login-border;
 
     .logo-icon {
       width: 130px;
-    }
-
-    .icon-gf-grafana_wordmark {
-      font-size: 3.2rem;
     }
   }
 
@@ -386,9 +382,7 @@ select:-webkit-autofill:focus {
     padding-top: 0;
     padding-left: 10px;
   }
-}
 
-@include media-breakpoint-up(lg) {
   .login-form-input {
     min-width: 300px;
   }
