@@ -12,14 +12,21 @@ import (
 )
 
 type publisher struct {
-	apiKey string
-	baseUri string
-	product string
-	dryRun bool
+	apiKey         string
+	baseUri        string
+	product        string
+	dryRun         bool
+	enterprise     bool
+	baseArchiveUrl string
+	builder        releaseBuilder
 }
 
-func (p *publisher) doRelease(version string, whatsNewUrl string, releaseNotesUrl string) error {
-	currentRelease, err := newRelease(version, whatsNewUrl, releaseNotesUrl, buildArtifactConfigurations, getHttpContents{})
+type releaseBuilder interface {
+	prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, artifactConfigurations []buildArtifact) (*release, error)
+}
+
+func (p *publisher) doRelease(whatsNewUrl string, releaseNotesUrl string) error {
+	currentRelease, err := p.builder.prepareRelease(p.baseArchiveUrl, whatsNewUrl, releaseNotesUrl, buildArtifactConfigurations)
 	if err != nil {
 		return err
 	}
@@ -54,15 +61,13 @@ func (p *publisher) postRelease(r *release) error {
 	return nil
 }
 
-const baseArhiveUrl = "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana"
-
 type buildArtifact struct {
 	os         string
 	arch       string
 	urlPostfix string
 }
 
-func (t buildArtifact) getUrl(version string, isBeta bool) string {
+func (t buildArtifact) getUrl(baseArchiveUrl, version string, isBeta bool) string {
 	prefix := "-"
 	rhelReleaseExtra := ""
 
@@ -74,7 +79,7 @@ func (t buildArtifact) getUrl(version string, isBeta bool) string {
 		rhelReleaseExtra = "-1"
 	}
 
-	url := strings.Join([]string{baseArhiveUrl, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
+	url := strings.Join([]string{baseArchiveUrl, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
 	return url
 }
 
@@ -136,18 +141,23 @@ var buildArtifactConfigurations = []buildArtifact{
 	},
 }
 
-func newRelease(rawVersion string, whatsNewUrl string, releaseNotesUrl string, artifactConfigurations []buildArtifact, getter urlGetter) (*release, error) {
-	version := rawVersion[1:]
+type releaseFromExternalContent struct {
+	getter     urlGetter
+	rawVersion string
+}
+
+func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, artifactConfigurations []buildArtifact) (*release, error) {
+	version := re.rawVersion[1:]
 	now := time.Now()
 	isBeta := strings.Contains(version, "beta")
 
 	builds := []build{}
 	for _, ba := range artifactConfigurations {
-		sha256, err := getter.getContents(fmt.Sprintf("%s.sha256", ba.getUrl(version, isBeta)))
+		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", ba.getUrl(baseArchiveUrl, version, isBeta)))
 		if err != nil {
 			return nil, err
 		}
-		builds = append(builds, newBuild(ba, version, isBeta, sha256))
+		builds = append(builds, newBuild(baseArchiveUrl, ba, version, isBeta, sha256))
 	}
 
 	r := release{
@@ -163,10 +173,10 @@ func newRelease(rawVersion string, whatsNewUrl string, releaseNotesUrl string, a
 	return &r, nil
 }
 
-func newBuild(ba buildArtifact, version string, isBeta bool, sha256 string) build {
+func newBuild(baseArchiveUrl string, ba buildArtifact, version string, isBeta bool, sha256 string) build {
 	return build{
 		Os:     ba.os,
-		Url:    ba.getUrl(version, isBeta),
+		Url:    ba.getUrl(baseArchiveUrl, version, isBeta),
 		Sha256: sha256,
 		Arch:   ba.arch,
 	}

@@ -9,9 +9,14 @@ func TestNewRelease(t *testing.T) {
 	relNotesUrl := "https://relnotes.foo/"
 	expectedArch := "amd64"
 	expectedOs := "linux"
-	buildArtifacts := []buildArtifact{{expectedOs, expectedArch, ".linux-amd64.tar.gz"}}
+	buildArtifacts := []buildArtifact{{expectedOs,expectedArch, ".linux-amd64.tar.gz"}}
 
-	rel, _ := newRelease(versionIn, whatsNewUrl, relNotesUrl, buildArtifacts, mockHttpGetter{})
+	builder := releaseFromExternalContent{
+		getter:     mockHttpGetter{},
+		rawVersion: versionIn,
+	}
+
+	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl, buildArtifacts)
 
 	if !rel.Beta || rel.Stable {
 		t.Errorf("%s should have been tagged as beta (not stable), but wasn't	.", versionIn)
