@@ -14,11 +14,11 @@ weight = 5
 Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source
 version.
 
-Building on everything you already know and love about Grafana, Grafana Enterprise layers on [premium data sources](https://grafana.com/plugins?premium=1),
- advanced authentication options, **Data Source** permissions and 24x7x365 support and training from the core Grafana team.
+Building on everything you already know and love about Grafana, Grafana Enterprise layers on premium data sources.
+advanced authentication options, more permissions controls and 24x7x365 support and training from the core Grafana team.
 
-Grafana Enterprise includes all of the features found in the open source version. Below we list the additional features
-that can only be found in the Enterprise edition.
+Grafana Enterprise includes all of the features found in the open source edition. Below we list the additional features
+that can only be found in the Grafana Enterprise.
 
 ### Enhanced LDAP Integration
 
