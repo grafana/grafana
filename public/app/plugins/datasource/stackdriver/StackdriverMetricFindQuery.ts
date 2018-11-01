@@ -56,7 +56,7 @@ export default class StackdriverMetricFindQuery {
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
     return getMetricTypesByService(metricDescriptors, selectedService).map(s => ({
       text: s.displayName,
-      value: s.name,
+      value: s.type,
       expandable: true,
     }));
   }
