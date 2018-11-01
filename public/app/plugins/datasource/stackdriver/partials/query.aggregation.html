@@ -2,8 +2,8 @@
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Aggregation</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <select class="gf-form-input width-12" ng-model="ctrl.target.aggregation.crossSeriesReducer" ng-options="f.value as f.text for f in ctrl.aggOptions"
-        ng-change="refresh()"></select>
+      <gf-form-dropdown model="ctrl.target.aggregation.crossSeriesReducer" get-options="ctrl.aggOptions" class="gf-form width-12"
+        disabled type="text" allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="refresh()"></gf-form-dropdown>
     </div>
   </div>
   <div class="gf-form gf-form--grow">
