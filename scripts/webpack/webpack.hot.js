@@ -44,7 +44,7 @@ module.exports = merge(common, {
   module: {
     rules: [
       {
-        test: /(?!.*\.test)\.(ts|tsx)$/,
+        test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
           {
