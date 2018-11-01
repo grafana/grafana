@@ -105,7 +105,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   async getLabels(selectedMetricType, selectedQueryType = this.state.selectedQueryType) {
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
-    if (this.isLabelQuery(selectedQueryType)) {
+    if (selectedMetricType && this.isLabelQuery(selectedQueryType)) {
       const refId = 'StackdriverTemplateQueryComponent';
       const response = await this.props.datasource.getLabels(selectedMetricType, refId);
       const labels = Object.keys(response.meta[selectedQueryType]);
@@ -115,55 +115,64 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     return result;
   }
 
-  servicePicker = (
-    <SimpleSelect
-      value={this.state.selectedService}
-      options={this.state.services}
-      onValueChange={this.onServiceChange}
-      label="Services"
-    />
-  );
-
-  metricTypesPicker = (
-    <SimpleSelect
-      value={this.state.selectedMetricType}
-      options={this.state.metricTypes}
-      onValueChange={this.onMetricTypeChange}
-      label="Metric Types"
-    />
-  );
-
-  labelPicker = (
-    <SimpleSelect
-      value={this.state.labelKey}
-      options={this.state.labels.map(l => ({ value: l, name: l }))}
-      onValueChange={this.onLabelKeyChange}
-      label={
-        this.state.selectedQueryType === MetricFindQueryTypes.ResourceLabels ? 'Resource Label Key' : 'Metric Label Key'
-      }
-    />
-  );
-
   renderQueryTypeSwitch(queryType) {
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
-        return this.servicePicker;
+        return (
+          <SimpleSelect
+            value={this.state.selectedService}
+            options={this.state.services}
+            onValueChange={this.onServiceChange}
+            label="Services"
+          />
+        );
       case MetricFindQueryTypes.MetricLabels:
       case MetricFindQueryTypes.ResourceLabels:
       case MetricFindQueryTypes.ResourceTypes:
         return (
           <React.Fragment>
-            {this.servicePicker}
-            {this.metricTypesPicker}
-            {queryType !== MetricFindQueryTypes.ResourceTypes && this.labelPicker}
+            <SimpleSelect
+              value={this.state.selectedService}
+              options={this.state.services}
+              onValueChange={this.onServiceChange}
+              label="Services"
+            />
+            <SimpleSelect
+              value={this.state.selectedMetricType}
+              options={this.state.metricTypes}
+              onValueChange={this.onMetricTypeChange}
+              label="Metric Types"
+            />
+            {queryType !== MetricFindQueryTypes.ResourceTypes && (
+              <SimpleSelect
+                value={this.state.labelKey}
+                options={this.state.labels.map(l => ({ value: l, name: l }))}
+                onValueChange={this.onLabelKeyChange}
+                label={
+                  this.state.selectedQueryType === MetricFindQueryTypes.ResourceLabels
+                    ? 'Resource Label Key'
+                    : 'Metric Label Key'
+                }
+              />
+            )}
           </React.Fragment>
         );
       case MetricFindQueryTypes.Alignerns:
       case MetricFindQueryTypes.Aggregations:
         return (
           <React.Fragment>
-            {this.servicePicker}
-            {this.metricTypesPicker}
+            <SimpleSelect
+              value={this.state.selectedService}
+              options={this.state.services}
+              onValueChange={this.onServiceChange}
+              label="Services"
+            />
+            <SimpleSelect
+              value={this.state.selectedMetricType}
+              options={this.state.metricTypes}
+              onValueChange={this.onMetricTypeChange}
+              label="Metric Types"
+            />
           </React.Fragment>
         );
       default:
