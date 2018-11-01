@@ -12,7 +12,7 @@ export const getMetricTypes = (metricDescriptors, metricType, selectedService) =
     name: m.displayName,
   }));
   const metricTypeExistInArray = metricTypes.some(m => m.value === metricType);
-  const selectedMetricType = metricTypeExistInArray ? metricTypeExistInArray.value : metricTypes[0].value;
+  const selectedMetricType = metricTypeExistInArray ? metricType : metricTypes[0].value;
   return {
     metricTypes,
     selectedMetricType,
