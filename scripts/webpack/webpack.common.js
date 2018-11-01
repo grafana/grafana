@@ -16,7 +16,7 @@ module.exports = {
     publicPath: "public/build/",
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.es6', '.js', '.json'],
+    extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
     },
     modules: [

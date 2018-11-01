@@ -1,24 +1,27 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
+import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 
 export class MysqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  queryModel: MysqlQuery;
   interval: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.queryModel = new MysqlQuery({});
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
-  interpolateVariable(value, variable) {
+  interpolateVariable = (value, variable) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value.replace(/'/g, `''`) + "'";
+        return this.queryModel.quoteLiteral(value);
       } else {
         return value;
       }
@@ -28,27 +31,25 @@ export class MysqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, val => {
-      if (typeof value === 'number') {
-        return value;
-      }
-
-      return "'" + val.replace(/'/g, `''`) + "'";
+    const quotedValues = _.map(value, v => {
+      return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
-  }
+  };
 
   query(options) {
-    const queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
+    const queries = _.filter(options.targets, target => {
+      return target.hide !== true;
+    }).map(target => {
+      const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
+
       return {
-        refId: item.refId,
+        refId: target.refId,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: this.templateSrv.replace(item.rawSql, options.scopedVars, this.interpolateVariable),
-        format: item.format,
+        rawSql: queryModel.render(this.interpolateVariable),
+        format: target.format,
       };
     });
 
@@ -109,8 +110,11 @@ export class MysqlDatasource {
       format: 'table',
     };
 
+    const range = this.timeSrv.timeRange();
     const data = {
       queries: [interpolatedQuery],
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
     };
 
     if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {

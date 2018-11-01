@@ -471,6 +471,7 @@ func ldflags() string {
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
+	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", getGitBranch()))
 	return b.String()
 }
 
@@ -516,6 +517,14 @@ func setBuildEnv() {
 	if gocc != "" {
 		os.Setenv("CC", gocc)
 	}
+}
+
+func getGitBranch() string {
+	v, err := runError("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return "master"
+	}
+	return string(v)
 }
 
 func getGitSha() string {

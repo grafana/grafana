@@ -1,5 +1,7 @@
 import { Value } from 'slate';
 
+import { RawTimeRange } from './series';
+
 export interface CompletionItem {
   /**
    * The label of this completion item. By default
@@ -83,7 +85,11 @@ export interface HistoryItem {
 export abstract class LanguageProvider {
   datasource: any;
   request: (url) => Promise<any>;
-  start: () => Promise<any>;
+  /**
+   * Returns a promise that resolves with a task list when main syntax is loaded.
+   * Task list consists of secondary promises that load more detailed language features.
+   */
+  start: () => Promise<any[]>;
 }
 
 export interface TypeaheadInput {
@@ -98,11 +104,6 @@ export interface TypeaheadOutput {
   context?: string;
   refresher?: Promise<{}>;
   suggestions: CompletionItemGroup[];
-}
-
-export interface Range {
-  from: string;
-  to: string;
 }
 
 export interface Query {
@@ -131,7 +132,7 @@ export interface QueryHint {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string;
+  error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
   options: any;
@@ -149,13 +150,14 @@ export interface TextMatch {
 }
 
 export interface ExploreState {
+  StartPage?: any;
   datasource: any;
   datasourceError: any;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   datasourceName?: string;
   exploreDatasources: ExploreDatasource[];
-  graphRange: Range;
+  graphRange: RawTimeRange;
   history: HistoryItem[];
   /**
    * Initial rows of queries to push down the tree.
@@ -167,7 +169,7 @@ export interface ExploreState {
    * Hints gathered for the query row.
    */
   queryTransactions: QueryTransaction[];
-  range: Range;
+  range: RawTimeRange;
   showingGraph: boolean;
   showingLogs: boolean;
   showingTable: boolean;
@@ -179,7 +181,7 @@ export interface ExploreState {
 export interface ExploreUrlState {
   datasource: string;
   queries: Query[];
-  range: Range;
+  range: RawTimeRange;
 }
 
 export type ResultType = 'Graph' | 'Logs' | 'Table';

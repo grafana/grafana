@@ -290,7 +290,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses: "carl@grafana.com;dev@grafana.com"
+    "addresses": "carl@grafana.com;dev@grafana.com"
   }
 }
 ```

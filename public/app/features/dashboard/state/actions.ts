@@ -13,6 +13,7 @@ import {
 
 export enum ActionTypes {
   LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
+  LoadStarredDashboards = 'LOAD_STARRED_DASHBOARDS',
 }
 
 export interface LoadDashboardPermissionsAction {
@@ -20,7 +21,12 @@ export interface LoadDashboardPermissionsAction {
   payload: DashboardAcl[];
 }
 
-export type Action = LoadDashboardPermissionsAction;
+export interface LoadStarredDashboardsAction {
+  type: ActionTypes.LoadStarredDashboards;
+  payload: DashboardAcl[];
+}
+
+export type Action = LoadDashboardPermissionsAction | LoadStarredDashboardsAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 

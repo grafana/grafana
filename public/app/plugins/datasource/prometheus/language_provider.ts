@@ -46,8 +46,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics?: string[];
-  logLabelOptions: any[];
-  supportsLogs?: boolean;
   started: boolean;
 
   constructor(datasource: any, initialValues?: any) {
@@ -58,7 +56,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.labelKeys = {};
     this.labelValues = {};
     this.metrics = [];
-    this.supportsLogs = false;
     this.started = false;
 
     Object.assign(this, initialValues);
@@ -77,7 +74,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   start = () => {
     if (!this.started) {
       this.started = true;
-      return Promise.all([this.fetchMetricNames(), this.fetchHistogramMetrics()]);
+      return this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
     }
     return Promise.resolve([]);
   };
@@ -243,8 +240,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     // Query labels for selector
-    // Temporarily add skip for logging
-    if (selector && !this.labelValues[selector] && !this.supportsLogs) {
+    if (selector && !this.labelValues[selector]) {
       if (selector === EMPTY_SELECTOR) {
         // Query label values for default labels
         refresher = Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
@@ -272,38 +268,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const histogramSeries = this.labelValues[HISTOGRAM_SELECTOR];
     if (histogramSeries && histogramSeries['__name__']) {
       this.histogramMetrics = histogramSeries['__name__'].slice().sort();
-    }
-  }
-
-  // Temporarily here while reusing this field for logging
-  async fetchLogLabels() {
-    const url = '/api/prom/label';
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const labelKeys = body.data.slice().sort();
-      const labelKeysBySelector = {
-        ...this.labelKeys,
-        [EMPTY_SELECTOR]: labelKeys,
-      };
-      const labelValuesByKey = {};
-      this.logLabelOptions = [];
-      for (const key of labelKeys) {
-        const valuesUrl = `/api/prom/label/${key}/values`;
-        const res = await this.request(valuesUrl);
-        const body = await (res.data || res.json());
-        const values = body.data.slice().sort();
-        labelValuesByKey[key] = values;
-        this.logLabelOptions.push({
-          label: key,
-          value: key,
-          children: values.map(value => ({ label: value, value })),
-        });
-      }
-      this.labelValues = { [EMPTY_SELECTOR]: labelValuesByKey };
-      this.labelKeys = labelKeysBySelector;
-    } catch (e) {
-      console.error(e);
     }
   }
 
