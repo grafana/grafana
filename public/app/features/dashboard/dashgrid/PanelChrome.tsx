@@ -13,19 +13,20 @@ import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { TimeRange, PanelProps } from 'app/types';
 
-export interface Props {
+export interface PanelChromeProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   component: ComponentClass<PanelProps>;
+  withMenuOptions: any;
 }
 
-export interface State {
+export interface PanelChromeState {
   refreshCounter: number;
   renderCounter: number;
   timeRange?: TimeRange;
 }
 
-export class PanelChrome extends PureComponent<Props, State> {
+export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeState> {
   constructor(props) {
     super(props);
 
@@ -67,16 +68,15 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, withMenuOptions } = this.props;
     const { datasource, targets } = panel;
     const { timeRange, renderCounter, refreshCounter } = this.state;
     const PanelComponent = this.props.component;
-
     console.log('Panel chrome render');
 
     return (
       <div className="panel-container">
-        <PanelHeader panel={panel} dashboard={dashboard} />
+        <PanelHeader panel={panel} dashboard={dashboard} withMenuOptions={withMenuOptions} />
         <div className="panel-content">
           <DataPanel
             datasource={datasource}

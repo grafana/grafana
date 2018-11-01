@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+﻿import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
@@ -123,6 +123,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
         <div className={panelWrapperClass}>
           <PanelChrome
             component={pluginExports.PanelComponent}
+            withMenuOptions={pluginExports.withMenuOptions}
             panel={this.props.panel}
             dashboard={this.props.dashboard}
           />

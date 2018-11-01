@@ -6,6 +6,9 @@ import { getPanelMenu } from 'app/features/dashboard/utils/panel_menu';
 export interface PanelHeaderMenuProps {
   panelId: number;
   dashboard: DashboardModel;
+  datasource: any;
+  additionalMenuItems?: PanelHeaderMenuItemProps[];
+  additionalSubMenuItems?: PanelHeaderMenuItemProps[];
 }
 
 export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
@@ -19,10 +22,10 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
   renderItems = (menu: PanelHeaderMenuItemProps[], isSubMenu = false) => {
     return (
       <ul className="dropdown-menu dropdown-menu--menu panel-menu" role={isSubMenu ? '' : 'menu'}>
-        {menu.map(menuItem => {
-          console.log(this);
+        {menu.map((menuItem, idx) => {
           return (
             <PanelHeaderMenuItem
+              key={idx} // TODO: Fix proper key
               type={menuItem.type}
               text={menuItem.text}
               iconClassName={menuItem.iconClassName}
@@ -38,8 +41,9 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
   };
 
   render() {
-    const { dashboard } = this.props;
-    const menu = getPanelMenu(dashboard, this.getPanel());
+    console.log('PanelHeaderMenu render');
+    const { dashboard, additionalMenuItems, additionalSubMenuItems } = this.props;
+    const menu = getPanelMenu(dashboard, this.getPanel(), additionalMenuItems, additionalSubMenuItems);
     return <div className="panel-menu-container dropdown">{this.renderItems(menu)}</div>;
   }
 }

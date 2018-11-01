@@ -8,8 +8,8 @@ import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } fro
 export const getPanelMenu = (
   dashboard: DashboardModel,
   panel: PanelModel,
-  extraMenuItems: PanelHeaderMenuItemProps[] = [],
-  extraSubMenuItems: PanelHeaderMenuItemProps[] = []
+  additionalMenuItems: PanelHeaderMenuItemProps[] = [],
+  additionalSubMenuItems: PanelHeaderMenuItemProps[] = []
 ) => {
   const onViewPanel = () => {
     store.dispatch(
@@ -80,9 +80,7 @@ export const getPanelMenu = (
       handleClick: onEditPanelJson,
     });
 
-    // TODO: Handle this somehow
-    // this.events.emit('init-panel-actions', menu);
-    extraSubMenuItems.forEach(item => {
+    additionalSubMenuItems.forEach(item => {
       menu.push(item);
     });
     return menu;
@@ -117,7 +115,7 @@ export const getPanelMenu = (
     shortcut: 'p s',
   });
 
-  extraMenuItems.forEach(item => {
+  additionalMenuItems.forEach(item => {
     menu.push(item);
   });
 

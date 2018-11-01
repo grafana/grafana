@@ -1,23 +1,21 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-// import { store } from 'app/store/configureStore';
-// import { updateLocation } from 'app/core/actions';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
-// import appEvents from 'app/core/app_events';
 
 interface PanelHeaderProps {
   panel: PanelModel;
   dashboard: DashboardModel;
+  withMenuOptions: any;
 }
-
-export class PanelHeader extends React.Component<PanelHeaderProps, any> {
+export class PanelHeader extends PureComponent<PanelHeaderProps, any> {
   render() {
-    const { dashboard } = this.props;
+    const { dashboard, withMenuOptions, panel } = this.props;
     const isFullscreen = false;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
+    const PanelHeaderMenuComponent = withMenuOptions ? withMenuOptions(PanelHeaderMenu, panel) : PanelHeaderMenu;
 
     return (
       <div className={panelHeaderClass}>
@@ -39,7 +37,7 @@ export class PanelHeader extends React.Component<PanelHeaderProps, any> {
               {this.props.panel.title} <span className="fa fa-caret-down panel-menu-toggle" />
             </span>
 
-            <PanelHeaderMenu panelId={this.props.panel.id} dashboard={dashboard} />
+            <PanelHeaderMenuComponent panelId={panel.id} dashboard={dashboard} />
             <span className="panel-time-info">
               <i className="fa fa-clock-o" /> 4m
             </span>
