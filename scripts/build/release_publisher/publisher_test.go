@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func TestNewRelease(t *testing.T) {
+func TestPreparingReleaseFromRemote(t *testing.T) {
 	versionIn := "v5.2.0-beta1"
 	expectedVersion := "5.2.0-beta1"
 	whatsNewUrl := "https://whatsnews.foo/"
@@ -45,4 +45,9 @@ type mockHttpGetter struct{}
 
 func (mockHttpGetter) getContents(url string) (string, error) {
 	return url, nil
+}
+
+
+func TestPreparingReleaseFromLocal(t *testing.T) {
+
 }
