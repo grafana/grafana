@@ -180,6 +180,7 @@ export class VariableEditorCtrl {
 
     $scope.datasourceChanged = async () => {
       datasourceSrv.get($scope.current.datasource).then(ds => {
+        $scope.current.query = '';
         $scope.currentDatasource = ds;
       });
     };
