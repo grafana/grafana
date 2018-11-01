@@ -209,12 +209,10 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	DisableBruteForceLoginProtection bool
-
-	TempDataLifetime time.Duration
-
-	MetricsEndpointEnabled bool
-
-	EnableAlphaPanels bool
+	TempDataLifetime                 time.Duration
+	MetricsEndpointEnabled           bool
+	EnableAlphaPanels                bool
+	EnterpriseLicensePath            string
 }
 
 type CommandLineArgs struct {
@@ -715,6 +713,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("")
+
+	enterprise := iniFile.Section("enterprise")
+	cfg.EnterpriseLicensePath = enterprise.Key("license_path").MustString(filepath.Join(cfg.DataPath, "license.jwt"))
+
 	return nil
 }
 
