@@ -69,7 +69,7 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Text:  "Alerting",
 		}
 	default:
-		panic("Unknown rule state " + c.Rule.State)
+		panic("Unknown rule state for alert notifications " + c.Rule.State)
 	}
 }
 
@@ -125,11 +125,26 @@ func (c *EvalContext) GetNewState() m.AlertStateType {
 			return c.PrevAlertState
 		}
 		return c.Rule.ExecutionErrorState.ToAlertState()
+	}
 
-	} else if c.Firing {
+	if c.Firing && c.Rule.DebounceDuration != 0 {
+		since := time.Now().Sub(c.Rule.LastStateChange)
+		if since > c.Rule.DebounceDuration {
+			return m.AlertStateAlerting
+		}
+
+		if c.PrevAlertState == m.AlertStateAlerting {
+			return m.AlertStateAlerting
+		}
+
+		return m.AlertStatePending
+	}
+
+	if c.Firing {
 		return m.AlertStateAlerting
+	}
 
-	} else if c.NoDataFound {
+	if c.NoDataFound {
 		c.log.Info("Alert Rule returned no data",
 			"ruleId", c.Rule.Id,
 			"name", c.Rule.Name,
