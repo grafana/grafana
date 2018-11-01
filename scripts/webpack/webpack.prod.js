@@ -80,6 +80,11 @@ module.exports = merge(common, {
       inject: 'body',
       chunks: ['vendor', 'app'],
     }),
+    new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/error.html'),
+      template: path.resolve(__dirname, '../../public/views/error.template.html'),
+      inject: false,
+    }),
     function () {
       this.hooks.done.tap('Done', function (stats) {
         if (stats.compilation.errors && stats.compilation.errors.length) {
