@@ -4,7 +4,7 @@ description = "Grafana Dashboard & Folder Permissions Guide "
 keywords = ["grafana", "configuration", "documentation", "dashboard", "folder", "permissions", "teams"]
 type = "docs"
 [menu.docs]
-name = "Dashboard & Folder Permissions"
+name = "Dashboard & Folder"
 identifier = "dashboard-folder-permissions"
 parent = "permissions"
 weight = 3
