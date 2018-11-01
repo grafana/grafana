@@ -46,7 +46,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics?: string[];
-  started: boolean;
+  startTask: Promise<any>;
 
   constructor(datasource: any, initialValues?: any) {
     super();
@@ -56,7 +56,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.labelKeys = {};
     this.labelValues = {};
     this.metrics = [];
-    this.started = false;
 
     Object.assign(this, initialValues);
   }
@@ -72,11 +71,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   start = () => {
-    if (!this.started) {
-      this.started = true;
-      return this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
+    if (!this.startTask) {
+      this.startTask = this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
     }
-    return Promise.resolve([]);
+    return this.startTask;
   };
 
   // Keep this DOM-free for testing

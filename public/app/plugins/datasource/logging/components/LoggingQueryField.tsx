@@ -95,9 +95,9 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
       this.languageProvider
         .start()
         .then(remaining => {
-          remaining.map(task => task.then(this.onReceiveMetrics).catch(() => {}));
+          remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
         })
-        .then(() => this.onReceiveMetrics());
+        .then(() => this.onUpdateLanguage());
     }
   }
 
@@ -119,7 +119,7 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
 
     this.languageProvider
       .fetchLabelValues(targetOption.value)
-      .then(this.onReceiveMetrics)
+      .then(this.onUpdateLanguage)
       .catch(() => {});
   };
 
@@ -147,7 +147,7 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
     }
   };
 
-  onReceiveMetrics = () => {
+  onUpdateLanguage = () => {
     Prism.languages[PRISM_SYNTAX] = this.languageProvider.getSyntax();
     const { logLabelOptions } = this.languageProvider;
     this.setState({
