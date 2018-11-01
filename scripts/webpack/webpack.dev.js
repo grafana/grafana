@@ -80,7 +80,7 @@ module.exports = merge(common, {
   plugins: [
     new CleanWebpackPlugin('../../public/build', { allowExternal: true }),
     new MiniCssExtractPlugin({
-      filename: "grafana.[name].css"
+      filename: "grafana.[name].[hash].css"
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),

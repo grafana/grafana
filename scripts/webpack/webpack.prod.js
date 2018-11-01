@@ -71,7 +71,7 @@ module.exports = merge(common, {
 
   plugins: [
     new MiniCssExtractPlugin({
-      filename: "grafana.[name].css"
+      filename: "grafana.[name].[hash].css"
     }),
     new ngAnnotatePlugin(),
     new HtmlWebpackPlugin({
