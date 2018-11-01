@@ -158,6 +158,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       text: 'Window Functions',
       value: 'window',
       submenu: [
+        { text: 'Delta', value: 'delta' },
         { text: 'Increase', value: 'increase' },
         { text: 'Rate', value: 'rate' },
         { text: 'Sum', value: 'sum' },
