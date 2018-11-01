@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { DataSource, Plugin } from 'app/types/';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
-interface Props {
+export interface Props {
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   onModelChange: (dataSource: DataSource) => void;
