@@ -7,11 +7,11 @@ import PageLoader from '../../../core/components/PageLoader/PageLoader';
 import PluginSettings from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
+import appEvents from '../../../core/app_events';
 import { deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
 import { getNavModel } from '../../../core/selectors/navModel';
 import { getRouteParamsId } from '../../../core/selectors/location';
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import appEvents from '../../../core/app_events';
 
 export interface Props {
   navModel: NavModel;
@@ -24,8 +24,7 @@ export interface Props {
   updateDataSource: typeof updateDataSource;
 }
 interface State {
-  name: string;
-  showNamePopover: boolean;
+  dataSource: DataSource;
 }
 
 enum DataSourceStates {
@@ -34,6 +33,10 @@ enum DataSourceStates {
 }
 
 export class DataSourceSettings extends PureComponent<Props, State> {
+  state = {
+    dataSource: {} as DataSource,
+  };
+
   async componentDidMount() {
     const { loadDataSource, pageId } = this.props;
 
@@ -43,7 +46,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
   onSubmit = event => {
     event.preventDefault();
 
-    this.props.updateDataSource();
+    this.props.updateDataSource({ ...this.state.dataSource, name: this.props.dataSource.name });
   };
 
   onDelete = () => {
@@ -60,6 +63,12 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
   confirmDelete = () => {
     this.props.deleteDataSource();
+  };
+
+  onModelChange = dataSource => {
+    this.setState({
+      dataSource: dataSource,
+    });
   };
 
   isReadOnly() {
@@ -120,10 +129,14 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
                 {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
 
-                {this.isReadOnly()
-                  ? this.renderIsReadOnlyMessage()
-                  : dataSourceMeta.module && <PluginSettings dataSource={dataSource} dataSourceMeta={dataSourceMeta} />}
-
+                {this.isReadOnly() && this.renderIsReadOnlyMessage()}
+                {dataSourceMeta.module && (
+                  <PluginSettings
+                    dataSource={dataSource}
+                    dataSourceMeta={dataSourceMeta}
+                    onModelChange={this.onModelChange}
+                  />
+                )}
                 <ButtonRow
                   onSubmit={event => this.onSubmit(event)}
                   isReadOnly={this.isReadOnly()}

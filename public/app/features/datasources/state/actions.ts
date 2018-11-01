@@ -157,10 +157,8 @@ export function loadDataSourceTypes(): ThunkResult<void> {
   };
 }
 
-export function updateDataSource(): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const dataSource = getStore().dataSources.dataSource;
-
+export function updateDataSource(dataSource: DataSource): ThunkResult<void> {
+  return async dispatch => {
     await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
     dispatch(loadDataSource(dataSource.id));
   };
