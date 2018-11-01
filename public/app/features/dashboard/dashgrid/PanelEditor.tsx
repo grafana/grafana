@@ -101,15 +101,12 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
           })}
 
           <div className="panel-editor__aside-actions">
-            <a className="btn btn-link" onClick={this.onClose}>
-              <i className="fa fa-check" /> Close
-            </a>
-            <a className="btn btn-link" onClick={this.onClose}>
-              <i className="fa fa-trash" /> Discard
-            </a>
-            <a className="btn btn-link" onClick={this.onClose}>
-              <i className="fa fa-copy" /> Save as master type
-            </a>
+            <button className="btn btn-success" onClick={this.onClose}>
+              Back to dashboard
+            </button>
+            <button className="btn btn-inverse" onClick={this.onClose}>
+              Discard changes
+            </button>
           </div>
         </div>
         <div className="panel-editor__content">
