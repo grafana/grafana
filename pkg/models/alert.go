@@ -59,19 +59,20 @@ func (s ExecutionErrorOption) ToAlertState() AlertStateType {
 }
 
 type Alert struct {
-	Id             int64
-	Version        int64
-	OrgId          int64
-	DashboardId    int64
-	PanelId        int64
-	Name           string
-	Message        string
-	Severity       string
-	State          AlertStateType
-	Handler        int64
-	Silenced       bool
-	ExecutionError string
-	Frequency      int64
+	Id               int64
+	Version          int64
+	OrgId            int64
+	DashboardId      int64
+	PanelId          int64
+	Name             string
+	Message          string
+	Severity         string //Unused
+	State            AlertStateType
+	Handler          int64 //Unused
+	Silenced         bool
+	ExecutionError   string
+	Frequency        int64
+	DebounceDuration time.Duration
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
