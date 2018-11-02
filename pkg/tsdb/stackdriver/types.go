@@ -12,6 +12,7 @@ type StackdriverQuery struct {
 	RefID    string
 	GroupBys []string
 	AliasBy  string
+	Project  string
 }
 
 type StackdriverBucketOptions struct {

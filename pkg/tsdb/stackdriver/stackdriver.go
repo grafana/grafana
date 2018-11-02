@@ -15,9 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/context/ctxhttp"
-	"golang.org/x/oauth2/google"
-
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -27,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2/google"
 )
 
 var (
@@ -144,6 +143,8 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		metricType := query.Model.Get("metricType").MustString()
 		filterParts := query.Model.Get("filters").MustArray()
 
+		projectName := getProjectFromFilter(filterParts)
+
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
@@ -171,6 +172,7 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 			RefID:    query.RefId,
 			GroupBys: groupBysAsStrings,
 			AliasBy:  aliasBy,
+			Project:  projectName,
 		})
 	}
 
@@ -232,6 +234,21 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
 }
 
+func getProjectFromFilter(filterParts []interface{}) string {
+	projectName := ""
+
+	for i, part := range filterParts {
+		mod := i % 4
+		if mod == 2 {
+			param := filterParts[i-2]
+			if param == "project" {
+				projectName = part.(string)
+			}
+		}
+	}
+	return projectName
+}
+
 func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
 	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
@@ -282,7 +299,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, StackdriverResponse, error) {
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, e.dsInfo, query.Project)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, StackdriverResponse{}, nil
@@ -564,7 +581,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, projectName string) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
@@ -591,7 +608,10 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 		}
 	}
 
-	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
+	// read default project from JSON if not specified in the search filter
+	if projectName == "" {
+		projectName = dsInfo.JsonData.Get("defaultProject").MustString()
+	}
 	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
