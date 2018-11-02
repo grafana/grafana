@@ -20,8 +20,10 @@
   <div class="gf-form offset-width-9">
     <label class="gf-form-label query-keyword width-12">Aligner</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <select class="gf-form-input width-14" ng-model="ctrl.target.aggregation.perSeriesAligner" ng-options="f.value as f.text for f in ctrl.alignOptions"
-        ng-change="refresh()"></select>
+      <gf-form-dropdown model="ctrl.target.aggregation.perSeriesAligner" get-options="ctrl.alignOptions" class="gf-form width-12"
+        disabled type="text" allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="refresh()"></gf-form-dropdown>
+      <!-- <select class="gf-form-input width-14" ng-model="ctrl.target.aggregation.perSeriesAligner" ng-options="f.value as f.text for f in ctrl.alignOptions"
+        ng-change="refresh()"></select> -->
     </div>
 
     <div class="gf-form gf-form--grow">

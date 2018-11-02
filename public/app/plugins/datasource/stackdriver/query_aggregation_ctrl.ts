@@ -26,7 +26,7 @@ export class StackdriverAggregationCtrl {
   target: any;
 
   /** @ngInject */
-  constructor(private $scope) {
+  constructor(private $scope, private templateSrv) {
     this.$scope.ctrl = this;
     this.target = $scope.target;
     this.alignmentPeriods = options.alignmentPeriods;
@@ -51,7 +51,7 @@ export class StackdriverAggregationCtrl {
   setAggOptions() {
     this.aggOptions = getAggregationOptionsByMetric(this.target.valueType, this.target.metricKind);
 
-    if (!this.aggOptions.find(o => o.value === this.target.aggregation.crossSeriesReducer)) {
+    if (!this.aggOptions.find(o => o.value === this.templateSrv.replace(this.target.aggregation.crossSeriesReducer))) {
       this.deselectAggregationOption('REDUCE_NONE');
     }
 
