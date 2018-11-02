@@ -43,7 +43,7 @@ export class StackdriverAggregationCtrl {
 
   setAlignOptions() {
     this.alignOptions = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind);
-    if (!this.alignOptions.find(o => o.value === this.target.aggregation.perSeriesAligner)) {
+    if (!this.alignOptions.find(o => o.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner))) {
       this.target.aggregation.perSeriesAligner = this.alignOptions.length > 0 ? this.alignOptions[0].value : '';
     }
   }
@@ -62,7 +62,9 @@ export class StackdriverAggregationCtrl {
   }
 
   formatAlignmentText() {
-    const selectedAlignment = this.alignOptions.find(ap => ap.value === this.target.aggregation.perSeriesAligner);
+    const selectedAlignment = this.alignOptions.find(
+      ap => ap.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner)
+    );
     return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${selectedAlignment.text})`;
   }
 
