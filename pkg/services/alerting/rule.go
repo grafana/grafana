@@ -104,7 +104,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Frequency = ruleDef.Frequency
 	model.State = ruleDef.State
 	model.LastStateChange = ruleDef.NewStateDate
-	model.DebounceDuration = time.Duration(ruleDef.DebounceDuration)
+	model.DebounceDuration = ruleDef.DebounceDuration
 	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
