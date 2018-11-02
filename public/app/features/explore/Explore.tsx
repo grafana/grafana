@@ -4,6 +4,7 @@ import Select from 'react-select';
 import _ from 'lodash';
 
 import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, ResultType } from 'app/types/explore';
+import { RawTimeRange } from 'app/types/series';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -16,14 +17,15 @@ import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer'
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
-import ErrorBoundary from './ErrorBoundary';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
+import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
-import { RawTimeRange } from 'app/types/series';
+import { DataSource } from 'app/types/datasources';
+import { mergeStreams } from 'app/core/logs_model';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -148,7 +150,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   }
 
-  async setDatasource(datasource) {
+  async setDatasource(datasource: DataSource) {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
     const supportsTable = datasource.meta.metrics;
@@ -176,8 +178,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       query: this.queryExpressions[i],
     }));
 
+    // Custom components
+    const StartPage = datasource.pluginExports.ExploreStartPage;
+
     this.setState(
       {
+        StartPage,
         datasource,
         datasourceError,
         history,
@@ -328,6 +334,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         }
       }
     );
+  };
+
+  // Use this in help pages to set page to a single query
+  onClickQuery = query => {
+    const nextQueries = [{ query, key: generateQueryKey() }];
+    this.queryExpressions = nextQueries.map(q => q.query);
+    this.setState({ queries: nextQueries }, this.onSubmit);
   };
 
   onClickSplit = () => {
@@ -721,6 +734,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   render() {
     const { position, split } = this.props;
     const {
+      StartPage,
       datasource,
       datasourceError,
       datasourceLoading,
@@ -756,10 +770,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       new TableModel(),
       ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
     );
-    const logsResult = _.flatten(
+    const logsResult = mergeStreams(
       queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
     );
     const loading = queryTransactions.some(qt => !qt.done);
+    const showStartPages = StartPage && queryTransactions.length === 0;
+    const viewModeCount = [supportsGraph, supportsLogs, supportsTable].filter(m => m).length;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -844,46 +860,52 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               onClickHintFix={this.onModifyQueries}
               onExecuteQuery={this.onSubmit}
               onRemoveQueryRow={this.onRemoveQueryRow}
-              supportsLogs={supportsLogs}
               transactions={queryTransactions}
             />
-            <div className="result-options">
-              {supportsGraph ? (
-                <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
-                  Graph
-                </button>
-              ) : null}
-              {supportsTable ? (
-                <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
-                  Table
-                </button>
-              ) : null}
-              {supportsLogs ? (
-                <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
-                  Logs
-                </button>
-              ) : null}
-            </div>
-
             <main className="m-t-2">
               <ErrorBoundary>
-                {supportsGraph &&
-                  showingGraph && (
-                    <Graph
-                      data={graphResult}
-                      height={graphHeight}
-                      loading={graphLoading}
-                      id={`explore-graph-${position}`}
-                      range={graphRange}
-                      split={split}
-                    />
-                  )}
-                {supportsTable && showingTable ? (
-                  <div className="panel-container m-t-2">
-                    <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
-                  </div>
-                ) : null}
-                {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+                {showStartPages && <StartPage onClickQuery={this.onClickQuery} />}
+                {!showStartPages && (
+                  <>
+                    {viewModeCount > 1 && (
+                      <div className="result-options">
+                        {supportsGraph ? (
+                          <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
+                            Graph
+                          </button>
+                        ) : null}
+                        {supportsTable ? (
+                          <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
+                            Table
+                          </button>
+                        ) : null}
+                        {supportsLogs ? (
+                          <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
+                            Logs
+                          </button>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {supportsGraph &&
+                      showingGraph && (
+                        <Graph
+                          data={graphResult}
+                          height={graphHeight}
+                          loading={graphLoading}
+                          id={`explore-graph-${position}`}
+                          range={graphRange}
+                          split={split}
+                        />
+                      )}
+                    {supportsTable && showingTable ? (
+                      <div className="panel-container m-t-2">
+                        <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
+                      </div>
+                    ) : null}
+                    {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+                  </>
+                )}
               </ErrorBoundary>
             </main>
           </div>

@@ -146,6 +146,7 @@ export interface TextMatch {
 }
 
 export interface ExploreState {
+  StartPage?: any;
   datasource: any;
   datasourceError: any;
   datasourceLoading: boolean | null;

@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 export enum LogLevel {
   crit = 'crit',
   warn = 'warn',
@@ -26,4 +28,16 @@ export interface LogRow {
 
 export interface LogsModel {
   rows: LogRow[];
+}
+
+export function mergeStreams(streams: LogsModel[], limit?: number): LogsModel {
+  const combinedEntries = streams.reduce((acc, stream) => {
+    return [...acc, ...stream.rows];
+  }, []);
+  const sortedEntries = _.chain(combinedEntries)
+    .sortBy('timestamp')
+    .reverse()
+    .slice(0, limit || combinedEntries.length)
+    .value();
+  return { rows: sortedEntries };
 }

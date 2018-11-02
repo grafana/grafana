@@ -52,7 +52,7 @@
   }
 
   .result-options {
-    margin-top: 2 * $panel-margin;
+    margin: 2 * $panel-margin 0;
   }
 
   .time-series-disclaimer {
@@ -87,7 +87,7 @@
     flex-wrap: wrap;
   }
 
-  .explore-graph__loader {
+  .explore-panel__loader {
     height: 2px;
     position: relative;
     overflow: hidden;
@@ -95,7 +95,7 @@
     margin: $panel-margin / 2;
   }
 
-  .explore-graph__loader:after {
+  .explore-panel__loader:after {
     content: ' ';
     display: block;
     width: 25%;
@@ -219,7 +219,13 @@
     }
 
     .logs-row-match-highlight {
-      background-color: lighten($blue, 20%);
+      // Undoing mark styling
+      background: inherit;
+      padding: inherit;
+
+      color: $typeahead-selected-color;
+      border-bottom: 1px solid $typeahead-selected-color;
+      background-color: lighten($typeahead-selected-color, 60%);
     }
 
     .logs-row-level {
@@ -321,4 +327,20 @@
 }
 .ReactTable .rt-tr .rt-td:last-child {
   text-align: right;
+}
+
+// TODO Experimental
+
+.cheat-sheet-item {
+  margin: 2*$panel-margin 0;
+  width: 50%;
+}
+
+.cheat-sheet-item__title {
+  font-size: $font-size-h3;
+}
+
+.cheat-sheet-item__expression {
+  margin: $panel-margin/2 0;
+  cursor: pointer;
 }

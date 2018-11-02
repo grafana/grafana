@@ -169,7 +169,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     return (
       <div className="panel-container">
-        {loading && <div className="explore-graph__loader" />}
+        {loading && <div className="explore-panel__loader" />}
         {this.props.data &&
           this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
           !this.state.showAllTimeSeries && (
