@@ -62,6 +62,54 @@ describe('ElasticQueryBuilder', () => {
     expect(aggs['1'].avg.field).toBe('@value');
   });
 
+  it('with term agg and order by term', () => {
+    const query = builder.build(
+      {
+        metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
+        bucketAggs: [
+          {
+            type: 'terms',
+            field: '@host',
+            settings: { size: 5, order: 'asc', orderBy: '_term' },
+            id: '2',
+          },
+          { type: 'date_histogram', field: '@timestamp', id: '3' },
+        ],
+      },
+      100,
+      1000
+    );
+
+    const firstLevel = query.aggs['2'];
+    expect(firstLevel.terms.order._term).toBe('asc');
+  });
+
+  it('with term agg and order by term on es6.x', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.build(
+      {
+        metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
+        bucketAggs: [
+          {
+            type: 'terms',
+            field: '@host',
+            settings: { size: 5, order: 'asc', orderBy: '_term' },
+            id: '2',
+          },
+          { type: 'date_histogram', field: '@timestamp', id: '3' },
+        ],
+      },
+      100,
+      1000
+    );
+
+    const firstLevel = query.aggs['2'];
+    expect(firstLevel.terms.order._key).toBe('asc');
+  });
+
   it('with term agg and order by metric agg', () => {
     const query = builder.build(
       {
@@ -301,5 +349,19 @@ describe('ElasticQueryBuilder', () => {
     expect(query.query.bool.filter[3].range['key4'].gt).toBe('value4');
     expect(query.query.bool.filter[4].regexp['key5']).toBe('value5');
     expect(query.query.bool.filter[5].bool.must_not.regexp['key6']).toBe('value6');
+  });
+
+  it('getTermsQuery should set correct sorting', () => {
+    const query = builder.getTermsQuery({});
+    expect(query.aggs['1'].terms.order._term).toBe('asc');
+  });
+
+  it('getTermsQuery es6.x should set correct sorting', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.getTermsQuery({});
+    expect(query.aggs['1'].terms.order._key).toBe('asc');
   });
 });
