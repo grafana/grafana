@@ -25,7 +25,6 @@ import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 import { DataSource } from 'app/types/datasources';
-import { mergeStreams } from 'app/core/logs_model';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -770,9 +769,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       new TableModel(),
       ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
     );
-    const logsResult = mergeStreams(
-      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-    );
+    const logsResult =
+      datasource && datasource.mergeStreams
+        ? datasource.mergeStreams(
+            _.flatten(
+              queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
+            )
+          )
+        : undefined;
     const loading = queryTransactions.some(qt => !qt.done);
     const showStartPages = StartPage && queryTransactions.length === 0;
     const viewModeCount = [supportsGraph, supportsLogs, supportsTable].filter(m => m).length;
@@ -903,7 +907,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
                       </div>
                     ) : null}
-                    {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+                    {supportsLogs && showingLogs ? (
+                      <Logs data={logsResult} loading={logsLoading} position={position} range={range} />
+                    ) : null}
                   </>
                 )}
               </ErrorBoundary>

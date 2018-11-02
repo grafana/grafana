@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { TimeSeries } from 'app/core/core';
 
 export enum LogLevel {
   crit = 'crit',
@@ -19,25 +20,34 @@ export interface LogSearchMatch {
 export interface LogRow {
   key: string;
   entry: string;
+  labels: string;
   logLevel: LogLevel;
   timestamp: string;
   timeFromNow: string;
+  timeJs: number;
   timeLocal: string;
   searchWords?: string[];
 }
 
-export interface LogsModel {
-  rows: LogRow[];
+export interface LogsMetaItem {
+  label: string;
+  value: string;
 }
 
-export function mergeStreams(streams: LogsModel[], limit?: number): LogsModel {
-  const combinedEntries = streams.reduce((acc, stream) => {
-    return [...acc, ...stream.rows];
-  }, []);
-  const sortedEntries = _.chain(combinedEntries)
-    .sortBy('timestamp')
-    .reverse()
-    .slice(0, limit || combinedEntries.length)
-    .value();
-  return { rows: sortedEntries };
+export interface LogsModel {
+  meta?: LogsMetaItem[];
+  rows: LogRow[];
+  series?: TimeSeries[];
+}
+
+export interface LogsStream {
+  labels: string;
+  entries: LogsStreamEntry[];
+  parsedLabels: { [key: string]: string };
+  graphSeries: TimeSeries;
+}
+
+export interface LogsStreamEntry {
+  line: string;
+  timestamp: string;
 }

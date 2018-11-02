@@ -3,9 +3,10 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 
 import LanguageProvider from './language_provider';
-import { processStreams } from './result_transformer';
+import { mergeStreams, processStream } from './result_transformer';
+import { LogsStream } from 'app/core/logs_model';
 
-const DEFAULT_LIMIT = 100;
+const DEFAULT_LIMIT = 1000;
 
 const DEFAULT_QUERY_PARAMS = {
   direction: 'BACKWARD',
@@ -67,6 +68,10 @@ export default class LoggingDatasource {
     return this.backendSrv.datasourceRequest(req);
   }
 
+  mergeStreams(streams: LogsStream[]) {
+    return mergeStreams(streams, DEFAULT_LIMIT);
+  }
+
   prepareQueryTarget(target, options) {
     const interpolated = this.templateSrv.replace(target.expr);
     const start = this.getTime(options.range.from, false);
@@ -100,8 +105,8 @@ export default class LoggingDatasource {
         });
         return [...acc, ...streams];
       }, []);
-      const model = processStreams(allStreams, DEFAULT_LIMIT);
-      return { data: model };
+      const processedStreams = allStreams.map(stream => processStream(stream, DEFAULT_LIMIT));
+      return { data: processedStreams };
     });
   }
 

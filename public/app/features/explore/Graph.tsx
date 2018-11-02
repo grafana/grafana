@@ -79,6 +79,7 @@ interface GraphProps {
   range: RawTimeRange;
   split?: boolean;
   size?: { width: number; height: number };
+  userOptions?: any;
 }
 
 interface GraphState {
@@ -122,7 +123,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   draw() {
-    const { range, size } = this.props;
+    const { range, size, userOptions = {} } = this.props;
     const data = this.getGraphData();
 
     const $el = $(`#${this.props.id}`);
@@ -153,12 +154,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
+        timezone: 'browser',
         timeformat: time_format(ticks, min, max),
       },
     };
     const options = {
       ...FLOT_OPTIONS,
       ...dynamicOptions,
+      ...userOptions,
     };
     $.plot($el, series, options);
   }
