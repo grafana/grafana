@@ -16,7 +16,7 @@ import (
 )
 
 func (ss *SqlStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandler(ss.GetSignedInUser)
+	ss.Bus.AddHandler(ss.GetSignedInUserWithCache)
 
 	bus.AddHandler("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
@@ -345,16 +345,22 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 	return err
 }
 
-func (ss *SqlStore) GetSignedInUser(query *m.GetSignedInUserQuery) error {
-	orgId := "u.org_id"
-	if query.OrgId > 0 {
-		orgId = strconv.FormatInt(query.OrgId, 10)
-	}
-
-	cacheKey := fmt.Sprintf("signed-in-user-%d-%s", query.UserId, query.OrgId)
+func (ss *SqlStore) GetSignedInUserWithCache(query *m.GetSignedInUserQuery) error {
+	cacheKey := fmt.Sprintf("signed-in-user-%d-%d", query.UserId, query.OrgId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		query.Result = cached.(*m.SignedInUser)
 		return nil
+	}
+
+	err := GetSignedInUser(query)
+	ss.CacheService.Set(cacheKey, query.Result, time.Second*5)
+	return err
+}
+
+func GetSignedInUser(query *m.GetSignedInUserQuery) error {
+	orgId := "u.org_id"
+	if query.OrgId > 0 {
+		orgId = strconv.FormatInt(query.OrgId, 10)
 	}
 
 	var rawSql = `SELECT
@@ -407,7 +413,6 @@ func (ss *SqlStore) GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	}
 
 	query.Result = &user
-	ss.CacheService.Set(cacheKey, &user, time.Second*5)
 	return err
 }
 

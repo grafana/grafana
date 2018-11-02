@@ -326,6 +326,7 @@ func InitTestDB(t *testing.T) *SqlStore {
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
+	sqlstore.CacheService = cache.New(5*time.Minute, 10*time.Minute)
 
 	dbType := migrator.SQLITE
 
