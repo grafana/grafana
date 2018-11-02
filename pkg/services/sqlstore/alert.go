@@ -193,7 +193,8 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 			if alertToUpdate.ContainsUpdates(alert) {
 				alert.Updated = timeNow()
 				alert.State = alertToUpdate.State
-				sess.MustCols("message")
+				sess.MustCols("message", "debounce_duration")
+
 				_, err := sess.ID(alert.Id).Update(alert)
 				if err != nil {
 					return err

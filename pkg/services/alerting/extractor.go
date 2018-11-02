@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"errors"
+	"time"
 
 	"fmt"
 
@@ -113,15 +114,25 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			return nil, ValidationError{Reason: "Could not parse frequency"}
 		}
 
+		rawDebouce := jsonAlert.Get("debounceDuration").MustString()
+		var debounceDuration time.Duration
+		if rawDebouce != "" {
+			debounceDuration, err = time.ParseDuration(rawDebouce)
+			if err != nil {
+				return nil, ValidationError{Reason: "Could not parse debounceDuration"}
+			}
+		}
+
 		alert := &m.Alert{
-			DashboardId: e.Dash.Id,
-			OrgId:       e.OrgID,
-			PanelId:     panelID,
-			Id:          jsonAlert.Get("id").MustInt64(),
-			Name:        jsonAlert.Get("name").MustString(),
-			Handler:     jsonAlert.Get("handler").MustInt64(),
-			Message:     jsonAlert.Get("message").MustString(),
-			Frequency:   frequency,
+			DashboardId:      e.Dash.Id,
+			OrgId:            e.OrgID,
+			PanelId:          panelID,
+			Id:               jsonAlert.Get("id").MustInt64(),
+			Name:             jsonAlert.Get("name").MustString(),
+			Handler:          jsonAlert.Get("handler").MustInt64(),
+			Message:          jsonAlert.Get("message").MustString(),
+			Frequency:        frequency,
+			DebounceDuration: debounceDuration,
 		}
 
 		for _, condition := range jsonAlert.Get("conditions").MustArray() {
