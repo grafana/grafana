@@ -36,7 +36,7 @@ func (ctx *ReqContext) Handle(status int, title string, err error) {
 	ctx.Data["AppSubUrl"] = setting.AppSubUrl
 	ctx.Data["Theme"] = "dark"
 
-	ctx.HTML(status, "error")
+	ctx.HTML(status, setting.ERR_TEMPLATE_NAME)
 }
 
 func (ctx *ReqContext) JsonOK(message string) {
