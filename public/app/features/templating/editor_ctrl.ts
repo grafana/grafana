@@ -107,8 +107,9 @@ export class VariableEditorCtrl {
       });
     };
 
-    $scope.onQueryChange = value => {
-      $scope.current.query = value;
+    $scope.onQueryChange = (query, definition) => {
+      $scope.current.query = query;
+      $scope.current.definition = definition;
       $scope.runQuery();
     };
 

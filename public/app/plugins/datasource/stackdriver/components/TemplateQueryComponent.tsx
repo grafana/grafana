@@ -96,7 +96,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   componentDidUpdate() {
     const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
-    this.props.onChange(queryModel);
+    const queryName = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
+    this.props.onChange(queryModel, `Stackdriver - ${queryName.name}`);
   }
 
   isLabelQuery(queryType) {

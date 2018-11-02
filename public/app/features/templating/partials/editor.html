@@ -53,7 +53,7 @@
 							</span>
 						</td>
 						<td style="max-width: 200px;" ng-click="edit(variable)" class="pointer max-width">
-							{{variable.query}}
+							{{variable.definition ? variable.definition : variable.query}}
 						</td>
 						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>

@@ -14,7 +14,7 @@ export default class DefaultTemplateQueryComponent extends PureComponent<Templat
   }
 
   handleBlur(event) {
-    this.props.onChange(event.target.value);
+    this.props.onChange(event.target.value, event.target.value);
   }
 
   render() {
