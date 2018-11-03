@@ -80,9 +80,11 @@ export const getPanelMenu = (
       handleClick: onEditPanelJson,
     });
 
-    additionalSubMenuItems.forEach(item => {
-      menu.push(item);
-    });
+    if (additionalSubMenuItems) {
+      additionalSubMenuItems.forEach(item => {
+        menu.push(item);
+      });
+    }
     return menu;
   };
 
@@ -115,9 +117,11 @@ export const getPanelMenu = (
     shortcut: 'p s',
   });
 
-  additionalMenuItems.forEach(item => {
-    menu.push(item);
-  });
+  if (additionalMenuItems) {
+    additionalMenuItems.forEach(item => {
+      menu.push(item);
+    });
+  }
 
   const subMenu: PanelHeaderMenuItemProps[] = getSubMenu();
 

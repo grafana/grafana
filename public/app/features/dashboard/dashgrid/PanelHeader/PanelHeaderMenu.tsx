@@ -1,28 +1,25 @@
 ﻿import React, { PureComponent } from 'react';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 import { PanelHeaderMenuItem, PanelHeaderMenuItemProps } from './PanelHeaderMenuItem';
 import { getPanelMenu } from 'app/features/dashboard/utils/panel_menu';
+import { DataSourceApi } from 'app/types/series';
+import { TimeSeries } from 'app/types';
 
 export interface PanelHeaderMenuProps {
-  panelId: number;
+  panel: PanelModel;
   dashboard: DashboardModel;
-  datasource: any;
+  dataSourceApi: DataSourceApi;
   additionalMenuItems?: PanelHeaderMenuItemProps[];
   additionalSubMenuItems?: PanelHeaderMenuItemProps[];
+  timeSeries?: TimeSeries[];
 }
 
 export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
-  getPanel = () => {
-    // Pass in panel as prop instead?
-    const { panelId, dashboard } = this.props;
-    const panelInfo = dashboard.getPanelInfoById(panelId);
-    return panelInfo.panel;
-  };
-
   renderItems = (menu: PanelHeaderMenuItemProps[], isSubMenu = false) => {
     return (
       <ul className="dropdown-menu dropdown-menu--menu panel-menu" role={isSubMenu ? '' : 'menu'}>
-        {menu.map((menuItem, idx) => {
+        {menu.map((menuItem, idx: number) => {
           return (
             <PanelHeaderMenuItem
               key={idx} // TODO: Fix proper key
@@ -42,8 +39,8 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
 
   render() {
     console.log('PanelHeaderMenu render');
-    const { dashboard, additionalMenuItems, additionalSubMenuItems } = this.props;
-    const menu = getPanelMenu(dashboard, this.getPanel(), additionalMenuItems, additionalSubMenuItems);
+    const { dashboard, additionalMenuItems, additionalSubMenuItems, panel } = this.props;
+    const menu = getPanelMenu(dashboard, panel, additionalMenuItems, additionalSubMenuItems);
     return <div className="panel-menu-container dropdown">{this.renderItems(menu)}</div>;
   }
 }

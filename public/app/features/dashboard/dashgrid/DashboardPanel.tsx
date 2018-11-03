@@ -115,7 +115,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     const { pluginExports } = this.state;
     const containerClass = this.props.panel.isEditing ? 'panel-editor-container' : 'panel-height-helper';
     const panelWrapperClass = this.props.panel.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
-
     // this might look strange with these classes that change when edit, but
     // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
     return (
@@ -126,6 +125,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
             withMenuOptions={pluginExports.withMenuOptions}
             panel={this.props.panel}
             dashboard={this.props.dashboard}
+            moduleMenu={pluginExports.moduleMenu}
           />
         </div>
         {this.props.panel.isEditing && (

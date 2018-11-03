@@ -14,6 +14,7 @@ export interface PluginExports {
   PanelComponent?: ComponentClass<PanelProps>;
   PanelOptionsComponent: ComponentClass<PanelOptionsProps>;
   withMenuOptions?: any;
+  moduleMenu?: any;
 }
 
 export interface PanelPlugin {

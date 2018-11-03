@@ -1,11 +1,9 @@
 // Library
 import React, { Component } from 'react';
 
-// Services
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-
 // Types
 import { TimeRange, LoadingState, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
+import { DataSourceApi } from 'app/types/series';
 
 interface RenderProps {
   loading: LoadingState;
@@ -13,7 +11,7 @@ interface RenderProps {
 }
 
 export interface Props {
-  datasource: string | null;
+  dataSourceApi: DataSourceApi;
   queries: any[];
   panelId?: number;
   dashboardId?: number;
@@ -21,6 +19,7 @@ export interface Props {
   timeRange?: TimeRange;
   refreshCounter: number;
   children: (r: RenderProps) => JSX.Element;
+  onIssueQueryResponse: any;
 }
 
 export interface State {
@@ -60,13 +59,19 @@ export class DataPanel extends Component<Props, State> {
   }
 
   hasPropsChanged(prevProps: Props) {
-    return this.props.refreshCounter !== prevProps.refreshCounter || this.props.isVisible !== prevProps.isVisible;
+    const { refreshCounter, isVisible, dataSourceApi } = this.props;
+
+    return (
+      refreshCounter !== prevProps.refreshCounter ||
+      isVisible !== prevProps.isVisible ||
+      dataSourceApi !== prevProps.dataSourceApi
+    );
   }
 
   issueQueries = async () => {
-    const { isVisible, queries, datasource, panelId, dashboardId, timeRange } = this.props;
+    const { isVisible, queries, panelId, dashboardId, timeRange, dataSourceApi } = this.props;
 
-    if (!isVisible) {
+    if (!isVisible || !dataSourceApi) {
       return;
     }
 
@@ -78,9 +83,6 @@ export class DataPanel extends Component<Props, State> {
     this.setState({ loading: LoadingState.Loading });
 
     try {
-      const dataSourceSrv = getDatasourceSrv();
-      const ds = await dataSourceSrv.get(datasource);
-
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
         panelId: panelId,
@@ -96,7 +98,7 @@ export class DataPanel extends Component<Props, State> {
       };
 
       console.log('Issuing DataPanel query', queryOptions);
-      const resp = await ds.query(queryOptions);
+      const resp = await dataSourceApi.query(queryOptions);
       console.log('Issuing DataPanel query Resp', resp);
 
       this.setState({
@@ -104,6 +106,8 @@ export class DataPanel extends Component<Props, State> {
         response: resp,
         isFirstLoad: false,
       });
+
+      this.props.onIssueQueryResponse(resp.data);
     } catch (err) {
       console.log('Loading error', err);
       this.setState({ loading: LoadingState.Error, isFirstLoad: false });

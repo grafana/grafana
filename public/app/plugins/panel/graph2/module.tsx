@@ -7,6 +7,8 @@ import { Switch } from 'app/core/components/Switch/Switch';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 import { PanelProps, PanelOptionsProps, NullValueMode } from 'app/types';
 
+// import { moduleMenu } from './moduleMenu';
+
 interface Options {
   showBars: boolean;
   showLines: boolean;
@@ -74,3 +76,4 @@ export class GraphOptions extends PureComponent<PanelOptionsProps<Options>> {
 
 export { Graph2 as PanelComponent, GraphOptions as PanelOptionsComponent };
 export { withMenuOptions } from './withMenuOptions';
+export { moduleMenu } from './moduleMenu';
