@@ -1,6 +1,6 @@
 import { Action, ActionTypes } from './actions';
 import { OrgRole, PermissionLevel, DashboardState } from 'app/types';
-import { inititalState, dashboardReducer } from './reducers';
+import { initialState, dashboardReducer } from './reducers';
 
 describe('dashboard reducer', () => {
   describe('loadDashboardPermissions', () => {
@@ -14,7 +14,7 @@ describe('dashboard reducer', () => {
           { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
         ],
       };
-      state = dashboardReducer(inititalState, action);
+      state = dashboardReducer(initialState, action);
     });
 
     it('should add permissions to state', async () => {

@@ -127,9 +127,12 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 ### protocol
 
-`http` or `https`
+`http`,`https` or `socket`
 
 > **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+
+### socket
+Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
 
 ### domain
 

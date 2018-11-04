@@ -42,6 +42,8 @@ export class DashNavCtrl {
     } else if (search.fullscreen) {
       delete search.fullscreen;
       delete search.edit;
+      delete search.tab;
+      delete search.panelId;
     }
     this.$location.search(search);
   }

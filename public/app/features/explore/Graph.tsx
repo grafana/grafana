@@ -1,13 +1,18 @@
 import $ from 'jquery';
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import moment from 'moment';
+import { withSize } from 'react-sizeme';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
+
+import { RawTimeRange } from 'app/types/series';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
 import Legend from './Legend';
+
+const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 // Copied from graph.ts
 function time_format(ticks, min, max) {
@@ -66,37 +71,73 @@ const FLOT_OPTIONS = {
   // },
 };
 
-class Graph extends Component<any, any> {
+interface GraphProps {
+  data: any[];
+  height?: string; // e.g., '200px'
+  id?: string;
+  loading?: boolean;
+  range: RawTimeRange;
+  split?: boolean;
+  size?: { width: number; height: number };
+}
+
+interface GraphState {
+  showAllTimeSeries: boolean;
+}
+
+export class Graph extends PureComponent<GraphProps, GraphState> {
+  state = {
+    showAllTimeSeries: false,
+  };
+
+  getGraphData() {
+    const { data } = this.props;
+
+    return this.state.showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+  }
+
   componentDidMount() {
     this.draw();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: GraphProps) {
     if (
       prevProps.data !== this.props.data ||
-      prevProps.options !== this.props.options ||
+      prevProps.range !== this.props.range ||
       prevProps.split !== this.props.split ||
-      prevProps.height !== this.props.height
+      prevProps.height !== this.props.height ||
+      (prevProps.size && prevProps.size.width !== this.props.size.width)
     ) {
       this.draw();
     }
   }
 
-  draw() {
-    const { data, options: userOptions } = this.props;
-    const $el = $(`#${this.props.id}`);
-    if (!data) {
-      $el.empty();
-      return;
-    }
-    const series = data.map((ts: TimeSeries) => ({
-      color: ts.color,
-      label: ts.label,
-      data: ts.getFlotPairs('null'),
-    }));
+  onShowAllTimeSeries = () => {
+    this.setState(
+      {
+        showAllTimeSeries: true,
+      },
+      this.draw
+    );
+  };
 
-    const ticks = $el.width() / 100;
-    let { from, to } = userOptions.range;
+  draw() {
+    const { range, size } = this.props;
+    const data = this.getGraphData();
+
+    const $el = $(`#${this.props.id}`);
+    let series = [{ data: [[0, 0]] }];
+
+    if (data && data.length > 0) {
+      series = data.map((ts: TimeSeries) => ({
+        color: ts.color,
+        label: ts.label,
+        data: ts.getFlotPairs('null'),
+      }));
+    }
+
+    const ticks = (size.width || 0) / 100;
+    let { from, to } = range;
     if (!moment.isMoment(from)) {
       from = dateMath.parse(from, false);
     }
@@ -118,27 +159,33 @@ class Graph extends Component<any, any> {
     const options = {
       ...FLOT_OPTIONS,
       ...dynamicOptions,
-      ...userOptions,
     };
     $.plot($el, series, options);
   }
 
   render() {
-    const { data, height, loading } = this.props;
-    if (!loading && data && data.length === 0) {
-      return (
-        <div className="panel-container">
-          <div className="muted m-a-1">The queries returned no time series to graph.</div>
-        </div>
-      );
-    }
+    const { height = '100px', id = 'graph', loading = false } = this.props;
+    const data = this.getGraphData();
+
     return (
       <div className="panel-container">
-        <div id={this.props.id} className="explore-graph" style={{ height }} />
+        {loading && <div className="explore-panel__loader" />}
+        {this.props.data &&
+          this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
+          !this.state.showAllTimeSeries && (
+            <div className="time-series-disclaimer">
+              <i className="fa fa-fw fa-warning disclaimer-icon" />
+              {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
+              <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
+                this.props.data.length
+              }`}</span>
+            </div>
+          )}
+        <div id={id} className="explore-graph" style={{ height }} />
         <Legend data={data} />
       </div>
     );
   }
 }
 
-export default Graph;
+export default withSize()(Graph);

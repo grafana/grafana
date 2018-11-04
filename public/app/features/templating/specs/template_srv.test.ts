@@ -286,9 +286,39 @@ describe('templateSrv', () => {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
-    it('should return true if exists', () => {
+    it('should return true if $test exists', () => {
       const result = _templateSrv.variableExists('$test');
       expect(result).toBe(true);
+    });
+
+    it('should return true if $test exists in string', () => {
+      const result = _templateSrv.variableExists('something $test something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if [[test]] exists in string', () => {
+      const result = _templateSrv.variableExists('something [[test]] something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if [[test:csv]] exists in string', () => {
+      const result = _templateSrv.variableExists('something [[test:csv]] something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if ${test} exists in string', () => {
+      const result = _templateSrv.variableExists('something ${test} something');
+      expect(result).toBe(true);
+    });
+
+    it('should return true if ${test:raw} exists in string', () => {
+      const result = _templateSrv.variableExists('something ${test:raw} something');
+      expect(result).toBe(true);
+    });
+
+    it('should return null if there are no variables in string', () => {
+      const result = _templateSrv.variableExists('string without variables');
+      expect(result).toBe(null);
     });
   });
 
@@ -429,6 +459,11 @@ describe('templateSrv', () => {
           name: 'period',
           current: { value: '$__auto_interval_interval', text: 'auto' },
         },
+        {
+          type: 'textbox',
+          name: 'empty_on_init',
+          current: { value: '', text: '' },
+        },
       ]);
       _templateSrv.setGrafanaVariable('$__auto_interval_interval', '13m');
       _templateSrv.updateTemplateData();
@@ -437,6 +472,11 @@ describe('templateSrv', () => {
     it('should replace with text except for grafanaVariables', () => {
       const target = _templateSrv.replaceWithText('Server: $server, period: $period');
       expect(target).toBe('Server: All, period: 13m');
+    });
+
+    it('should replace empty string-values with an empty string', () => {
+      const target = _templateSrv.replaceWithText('Hello $empty_on_init');
+      expect(target).toBe('Hello ');
     });
   });
 

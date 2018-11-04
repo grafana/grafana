@@ -1,7 +1,8 @@
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-
+import appEvents from 'app/core/app_events';
+import { loadPluginDashboards } from '../../plugins/state/actions';
 import {
   DashboardAcl,
   DashboardAclDTO,
@@ -12,6 +13,7 @@ import {
 
 export enum ActionTypes {
   LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
+  LoadStarredDashboards = 'LOAD_STARRED_DASHBOARDS',
 }
 
 export interface LoadDashboardPermissionsAction {
@@ -19,7 +21,12 @@ export interface LoadDashboardPermissionsAction {
   payload: DashboardAcl[];
 }
 
-export type Action = LoadDashboardPermissionsAction;
+export interface LoadStarredDashboardsAction {
+  type: ActionTypes.LoadStarredDashboards;
+  payload: DashboardAcl[];
+}
+
+export type Action = LoadDashboardPermissionsAction | LoadStarredDashboardsAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 
@@ -58,7 +65,7 @@ export function updateDashboardPermission(
         continue;
       }
 
-      const updated = toUpdateItem(itemToUpdate);
+      const updated = toUpdateItem(item);
 
       // if this is the item we want to update, update it's permisssion
       if (itemToUpdate === item) {
@@ -111,5 +118,20 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
 
     await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
     await dispatch(getDashboardPermissions(dashboardId));
+  };
+}
+
+export function importDashboard(data, dashboardTitle: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post('/api/dashboards/import', data);
+    appEvents.emit('alert-success', ['Dashboard Imported', dashboardTitle]);
+    dispatch(loadPluginDashboards());
+  };
+}
+
+export function removeDashboard(uri: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().delete(`/api/dashboards/${uri}`);
+    dispatch(loadPluginDashboards());
   };
 }

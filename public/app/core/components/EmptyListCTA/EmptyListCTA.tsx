@@ -11,6 +11,7 @@ class EmptyListCTA extends Component<Props, any> {
       buttonIcon,
       buttonLink,
       buttonTitle,
+      onClick,
       proTip,
       proTipLink,
       proTipLinkTitle,
@@ -19,7 +20,7 @@ class EmptyListCTA extends Component<Props, any> {
     return (
       <div className="empty-list-cta">
         <div className="empty-list-cta__title">{title}</div>
-        <a href={buttonLink} className="empty-list-cta__button btn btn-xlarge btn-success">
+        <a onClick={onClick} href={buttonLink} className="empty-list-cta__button btn btn-xlarge btn-success">
           <i className={buttonIcon} />
           {buttonTitle}
         </a>

@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <h3
+    className="page-sub-heading"
+  >
+    Organization profile
+  </h3>
+  <form
+    className="gf-form-group"
+    name="orgForm"
+    onSubmit={[Function]}
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form max-width-28"
+      >
+        <span
+          className="gf-form-label"
+        >
+          Organization name
+        </span>
+        <input
+          className="gf-form-input"
+          onChange={[Function]}
+          type="text"
+          value="Main org"
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form-button-row"
+    >
+      <button
+        className="btn btn-success"
+        type="submit"
+      >
+        Save
+      </button>
+    </div>
+  </form>
+</div>
+`;

@@ -8,6 +8,7 @@ awsconfig
 /dist
 /public/build
 /public/views/index.html
+/public/views/error.html
 /emails/dist
 /public_gen
 /public/vendor/npm
@@ -54,6 +55,7 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions
+/public/app/extensions
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -68,8 +70,9 @@ debug.test
 /vendor/**/*.yml
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
-/vendor/**/appengine*
 *.orig
 
 /devenv/bulk-dashboards/*.json
 /devenv/bulk_alerting_dashboards/*.json
+
+/scripts/build/release_publisher/release_publisher

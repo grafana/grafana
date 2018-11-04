@@ -6,7 +6,7 @@
       - "8083:8083"
       - "8086:8086"
     volumes:
-      - ./blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
+      - ./docker/blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
 
   fake-influxdb-data:
     image: grafana/fake-data-gen

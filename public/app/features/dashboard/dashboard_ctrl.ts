@@ -1,11 +1,16 @@
+// Utils
 import config from 'app/core/config';
-
+import appEvents from 'app/core/app_events';
 import coreModule from 'app/core/core_module';
-import { PanelContainer } from './dashgrid/PanelContainer';
+
+// Services
+import { AnnotationsSrv } from '../annotations/annotations_srv';
+
+// Types
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
 
-export class DashboardCtrl implements PanelContainer {
+export class DashboardCtrl {
   dashboard: DashboardModel;
   dashboardViewState: any;
   loadedFallbackDashboard: boolean;
@@ -22,8 +27,8 @@ export class DashboardCtrl implements PanelContainer {
     private dashboardSrv,
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
-    public playlistSrv,
-    private panelLoader
+    private annotationsSrv: AnnotationsSrv,
+    public playlistSrv
   ) {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
@@ -51,6 +56,7 @@ export class DashboardCtrl implements PanelContainer {
     // init services
     this.timeSrv.init(dashboard);
     this.alertingSrv.init(dashboard, data.alerts);
+    this.annotationsSrv.init(dashboard);
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
@@ -74,7 +80,7 @@ export class DashboardCtrl implements PanelContainer {
         this.keybindingSrv.setupDashboardBindings(this.$scope, dashboard);
         this.setWindowTitleAndTheme();
 
-        this.$scope.appEvent('dashboard-initialized', dashboard);
+        appEvents.emit('dashboard-initialized', dashboard);
       })
       .catch(this.onInitFailed.bind(this, 'Dashboard init failed', true));
   }
@@ -119,14 +125,6 @@ export class DashboardCtrl implements PanelContainer {
     return this.dashboard;
   }
 
-  getPanelLoader() {
-    return this.panelLoader;
-  }
-
-  timezoneChanged() {
-    this.$rootScope.$broadcast('refresh');
-  }
-
   getPanelContainer() {
     return this;
   }
@@ -168,10 +166,17 @@ export class DashboardCtrl implements PanelContainer {
     this.dashboard.removePanel(panel);
   }
 
+  onDestroy() {
+    if (this.dashboard) {
+      this.dashboard.destroy();
+    }
+  }
+
   init(dashboard) {
     this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
     this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
     this.$scope.onAppEvent('panel-remove', this.onRemovingPanel.bind(this));
+    this.$scope.$on('$destroy', this.onDestroy.bind(this));
     this.setupDashboard(dashboard);
   }
 }

@@ -221,6 +221,31 @@ $btn-service-icon-width: 35px;
   }
 }
 
+//Toggle button
+
+.toggle-btn {
+  background: $input-label-bg;
+  color: $text-color-weak;
+  box-shadow: $card-shadow;
+
+  &:first-child {
+    border-radius: 2px 0 0 2px;
+    margin: 0;
+  }
+  &:last-child {
+    border-radius: 0 2px 2px 0;
+    margin-left: 0 !important;
+  }
+
+  &.active {
+    background-color: lighten($input-label-bg, 5%);
+    color: $link-color;
+    &:hover {
+      cursor: default;
+    }
+  }
+}
+
 //Button animations
 
 .btn-loading span {

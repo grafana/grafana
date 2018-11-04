@@ -71,6 +71,9 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Add column send_reminder", NewAddColumnMigration(alert_notification, &Column{
 		Name: "send_reminder", Type: DB_Bool, Nullable: true, Default: "0",
 	}))
+	mg.AddMigration("Add column disable_resolve_message", NewAddColumnMigration(alert_notification, &Column{
+		Name: "disable_resolve_message", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
 
@@ -107,4 +110,27 @@ func addAlertMigrations(mg *Migrator) {
 
 	mg.AddMigration("create notification_journal table v1", NewAddTableMigration(notification_journal))
 	mg.AddMigration("add index notification_journal org_id & alert_id & notifier_id", NewAddIndexMigration(notification_journal, notification_journal.Indices[0]))
+
+	mg.AddMigration("drop alert_notification_journal", NewDropTableMigration("alert_notification_journal"))
+
+	alert_notification_state := Table{
+		Name: "alert_notification_state",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
+			{Name: "notifier_id", Type: DB_BigInt, Nullable: false},
+			{Name: "state", Type: DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "version", Type: DB_BigInt, Nullable: false},
+			{Name: "updated_at", Type: DB_BigInt, Nullable: false},
+			{Name: "alert_rule_state_updated_version", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create alert_notification_state table v1", NewAddTableMigration(alert_notification_state))
+	mg.AddMigration("add index alert_notification_state org_id & alert_id & notifier_id",
+		NewAddIndexMigration(alert_notification_state, alert_notification_state.Indices[0]))
 }

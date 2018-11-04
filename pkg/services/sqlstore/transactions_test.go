@@ -10,10 +10,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-type testQuery struct {
-	result bool
-}
-
 var ProvokedError = errors.New("testing error.")
 
 func TestTransaction(t *testing.T) {

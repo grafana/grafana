@@ -6,14 +6,12 @@ import kbn from 'app/core/utils/kbn';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
-import { encodePathComponent } from 'app/core/utils/location_util';
-
+import { getExploreUrl } from 'app/core/utils/explore';
 import { metricsTabDirective } from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: any;
-  datasourceName: any;
   $q: any;
   $timeout: any;
   contextSrv: any;
@@ -45,10 +43,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
-    if (!this.panel.targets) {
-      this.panel.targets = [{}];
-    }
-
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
@@ -62,7 +56,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', metricsTabDirective);
+    this.addEditorTab('Metrics', metricsTabDirective, 1, 'fa fa-database');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
@@ -291,30 +285,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-  setDatasource(datasource) {
-    // switching to mixed
-    if (datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        target.datasource = this.panel.datasource;
-        if (!target.datasource) {
-          target.datasource = config.defaultDatasource;
-        }
-      });
-    } else if (this.datasource && this.datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        delete target.datasource;
-      });
-    }
-
-    this.panel.datasource = datasource.value;
-    this.datasourceName = datasource.name;
-    this.datasource = null;
-    this.refresh();
-  }
-
   getAdditionalMenuItems() {
     const items = [];
-    if (config.exploreEnabled && this.contextSrv.isEditor && this.datasource && this.datasource.supportsExplore) {
+    if (
+      config.exploreEnabled &&
+      this.contextSrv.isEditor &&
+      this.datasource &&
+      (this.datasource.meta.explore || this.datasource.meta.id === 'mixed')
+    ) {
       items.push({
         text: 'Explore',
         click: 'ctrl.explore();',
@@ -325,14 +303,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     return items;
   }
 
-  explore() {
-    const range = this.timeSrv.timeRangeForUrl();
-    const state = {
-      ...this.datasource.getExploreState(this.panel),
-      range,
-    };
-    const exploreState = encodePathComponent(JSON.stringify(state));
-    this.$location.url(`/explore?state=${exploreState}`);
+  async explore() {
+    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
+    if (url) {
+      this.$timeout(() => this.$location.url(url));
+    }
   }
 
   addQuery(target) {

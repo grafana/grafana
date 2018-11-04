@@ -34,6 +34,7 @@ export class HelpCtrl {
         { keys: ['p', 's'], description: 'Open Panel Share Modal' },
         { keys: ['p', 'd'], description: 'Duplicate Panel' },
         { keys: ['p', 'r'], description: 'Remove Panel' },
+        { keys: ['p', 'l'], description: 'Toggle panel legend' },
       ],
       'Time Range': [
         { keys: ['t', 'z'], description: 'Zoom out time range' },

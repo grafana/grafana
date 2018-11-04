@@ -17,8 +17,8 @@ const (
 	ViewIndex = "index"
 )
 
-func LoginView(c *m.ReqContext) {
-	viewData, err := setIndexViewData(c)
+func (hs *HTTPServer) LoginView(c *m.ReqContext) {
+	viewData, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return

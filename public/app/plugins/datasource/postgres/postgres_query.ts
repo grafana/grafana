@@ -184,6 +184,11 @@ export default class PostgresQuery {
       switch (windows.type) {
         case 'window':
           switch (windows.params[0]) {
+            case 'delta':
+              curr = query;
+              prev = 'lag(' + curr + ') OVER (' + over + ')';
+              query = curr + ' - ' + prev;
+              break;
             case 'increase':
               curr = query;
               prev = 'lag(' + curr + ') OVER (' + over + ')';

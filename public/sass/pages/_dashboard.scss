@@ -1,7 +1,12 @@
 .dashboard-container {
   padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+
+  &--has-submenu {
+    height: calc(100% - 50px);
+  }
 }
 
 .template-variable {
@@ -16,6 +21,9 @@ div.flot-text {
   height: 100%;
 
   &--solo {
+    position: fixed;
+    bottom: 0;
+    right: 0;
     margin: 0;
     .panel-container {
       border: none;
@@ -29,15 +37,42 @@ div.flot-text {
   height: 100%;
 }
 
+.panel-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel-editor-container__panel {
+  height: 35%;
+}
+
+.panel-editor-container__editor {
+  height: 65%;
+}
+
 .panel-container {
   background-color: $panel-bg;
   border: $panel-border;
   position: relative;
   border-radius: 3px;
+  height: 100%;
 
   &.panel-transparent {
     background-color: transparent;
     border: none;
+  }
+
+  &:hover {
+    .panel-menu-toggle {
+      visibility: visible;
+      transition: opacity 0.1s ease-in 0.2s;
+      opacity: 1;
+    }
+  }
+
+  &--is-editing {
+    height: auto;
   }
 }
 
@@ -199,14 +234,6 @@ div.flot-text {
   }
 }
 
-.panel-hover-highlight {
-  .panel-menu-toggle {
-    visibility: visible;
-    transition: opacity 0.1s ease-in 0.2s;
-    opacity: 1;
-  }
-}
-
 .panel-time-info {
   font-weight: bold;
   float: right;
@@ -233,5 +260,5 @@ div.flot-text {
 }
 
 .panel-full-edit {
-  margin: $dashboard-padding (-$dashboard-padding) 0 (-$dashboard-padding);
+  padding-top: $dashboard-padding;
 }

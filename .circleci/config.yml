@@ -83,13 +83,14 @@ jobs:
       - checkout
       - run: 'go get -u github.com/alecthomas/gometalinter'
       - run: 'go get -u github.com/tsenart/deadcode'
+      - run: 'go get -u github.com/jgautheron/goconst/cmd/goconst'
       - run: 'go get -u github.com/gordonklaus/ineffassign'
       - run: 'go get -u github.com/opennota/check/cmd/structcheck'
       - run: 'go get -u github.com/mdempsky/unconvert'
       - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
           name: run linters
-          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=goconst --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
       - run:
           name: run go vet
           command: 'go vet ./pkg/...'
@@ -125,7 +126,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.1.0
+     - image: grafana/build-container:1.2.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -157,18 +158,23 @@ jobs:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
       - run:
-          name: Build Grafana.com publisher
+          name: Build Grafana.com master publisher
           command: 'go build -o scripts/publish scripts/build/publish.go'
+      - run:
+          name: Build Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go build -o release_publisher .'
       - persist_to_workspace:
           root: .
           paths:
             - dist/grafana*
             - scripts/*.sh
             - scripts/publish
+            - scripts/build/release_publisher/release_publisher
+            - scripts/build/publish.sh
 
   build:
     docker:
-     - image: grafana/build-container:1.1.0
+     - image: grafana/build-container:1.2.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -200,6 +206,10 @@ jobs:
       - run: docker info
       - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
       - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
+      - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh "master"
+
 
   grafana-docker-pr:
     docker:
@@ -224,16 +234,28 @@ jobs:
         - run: docker info
         - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
         - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
+        - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
+        - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+        - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:v0.1
+     - image: grafana/build-container:1.2.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
-          name: build, test and package grafana enterprise
-          command: './scripts/build/build_enterprise.sh'
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: checkout enterprise
+          command: './scripts/build/prepare-enterprise.sh'
+      - run:
+          name: test enterprise
+          command: 'go test ./pkg/extensions/...'
+      - run:
+          name: build and package enterprise
+          command: './scripts/build/build.sh -enterprise'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -248,28 +270,98 @@ jobs:
           paths:
             - enterprise-dist/grafana-enterprise*
 
+  build-all-enterprise:
+    docker:
+    - image: grafana/build-container:1.2.0
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+    - checkout
+    - run:
+        name: prepare build tools
+        command: '/tmp/bootstrap.sh'
+    - run:
+        name: checkout enterprise
+        command: './scripts/build/prepare-enterprise.sh'
+    - restore_cache:
+        key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+    - run:
+        name: download phantomjs binaries
+        command: './scripts/build/download-phantomjs.sh'
+    - save_cache:
+        key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+        paths:
+        - /tmp/phantomjs
+    - run:
+        name: test enterprise
+        command: 'go test ./pkg/extensions/...'
+    - run:
+        name: build and package grafana
+        command: './scripts/build/build-all.sh -enterprise'
+    - run:
+        name: sign packages
+        command: './scripts/build/sign_packages.sh'
+    - run:
+        name: verify signed packages
+        command: |
+          mkdir -p ~/.rpmdb/pubkeys
+          curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+          ./scripts/build/verify_signed_packages.sh dist/*.rpm
+    - run:
+        name: sha-sum packages
+        command: 'go run build.go sha-dist'
+    - run:
+        name: move enterprise packages into their own folder
+        command: 'mv dist enterprise-dist'
+    - persist_to_workspace:
+        root: .
+        paths:
+        - enterprise-dist/grafana-enterprise*
+
   deploy-enterprise-master:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.0.0
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
       - run:
           name: deploy to s3
           command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
+
+
+  deploy-enterprise-release:
+    docker:
+    - image: grafana/grafana-ci-deploy:1.0.0
+    steps:
+      - attach_workspace:
+         at: .
+      - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to s3
+          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/release'
 
   deploy-master:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.0.0
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
       - run:
           name: deploy to s3
           command: |
@@ -280,6 +372,15 @@ jobs:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://$GCP_BUCKET_NAME/oss/master'
+      - run:
           name: Publish to Grafana.com
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
@@ -287,19 +388,25 @@ jobs:
 
   deploy-release:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.0.0
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
-      - run:
           name: deploy to s3
           command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
       - run:
-          name: Trigger Windows build
-          command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} release'
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://R/oss/release'
+      - run:
+          name: Deploy to Grafana.com
+          command: './scripts/build/publish.sh'
 
 workflows:
   version: 2
@@ -307,7 +414,7 @@ workflows:
     jobs:
       - build-all:
           filters: *filter-only-master
-      - build-enterprise:
+      - build-all-enterprise:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
@@ -334,6 +441,7 @@ workflows:
       - grafana-docker-master:
           requires:
             - build-all
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell
@@ -350,12 +458,14 @@ workflows:
             - gometalinter
             - mysql-integration-test
             - postgres-integration-test
-            - build-enterprise
+            - build-all-enterprise
           filters: *filter-only-master
 
   release:
     jobs:
       - build-all:
+          filters: *filter-only-release
+      - build-all-enterprise:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
@@ -372,6 +482,17 @@ workflows:
       - deploy-release:
           requires:
             - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+      - deploy-enterprise-release:
+          requires:
+            - build-all
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell

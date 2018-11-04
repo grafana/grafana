@@ -13,15 +13,12 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-
-	"gopkg.in/ini.v1"
-
-	"github.com/go-macaron/session"
-
 	"time"
 
+	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -34,9 +31,15 @@ const (
 )
 
 const (
-	DEV  string = "development"
-	PROD string = "production"
-	TEST string = "test"
+	DEV                 = "development"
+	PROD                = "production"
+	TEST                = "test"
+	APP_NAME            = "Grafana"
+	APP_NAME_ENTERPRISE = "Grafana Enterprise"
+)
+
+var (
+	ERR_TEMPLATE_NAME = "error"
 )
 
 var (
@@ -49,19 +52,17 @@ var (
 	// build
 	BuildVersion    string
 	BuildCommit     string
+	BuildBranch     string
 	BuildStamp      int64
 	IsEnterprise    bool
 	ApplicationName string
 
 	// Paths
-	LogsPath       string
 	HomePath       string
-	DataPath       string
 	PluginsPath    string
 	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
-	LogModes   []string
 	LogConfigs []util.DynMap
 
 	// Http server options
@@ -187,11 +188,18 @@ var (
 	ImageUploadProvider string
 )
 
+// TODO move all global vars to this struct
 type Cfg struct {
 	Raw *ini.File
 
+	// HTTP Server Settings
+	AppUrl    string
+	AppSubUrl string
+
 	// Paths
 	ProvisioningPath string
+	DataPath         string
+	LogsPath         string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -205,10 +213,10 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	DisableBruteForceLoginProtection bool
-
-	TempDataLifetime time.Duration
-
-	MetricsEndpointEnabled bool
+	TempDataLifetime                 time.Duration
+	MetricsEndpointEnabled           bool
+	EnableAlphaPanels                bool
+	EnterpriseLicensePath            string
 }
 
 type CommandLineArgs struct {
@@ -411,7 +419,7 @@ func loadSpecifedConfigFile(configFile string, masterFile *ini.File) error {
 	return nil
 }
 
-func loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
+func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	var err error
 
 	// load config defaults
@@ -442,7 +450,7 @@ func loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load specified config file
 	err = loadSpecifedConfigFile(args.Config, parsedFile)
 	if err != nil {
-		initLogging(parsedFile)
+		cfg.initLogging(parsedFile)
 		log.Fatal(3, err.Error())
 	}
 
@@ -459,8 +467,8 @@ func loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	evalConfigValues(parsedFile)
 
 	// update data path and logging config
-	DataPath = makeAbsolute(parsedFile.Section("paths").Key("data").String(), HomePath)
-	initLogging(parsedFile)
+	cfg.DataPath = makeAbsolute(parsedFile.Section("paths").Key("data").String(), HomePath)
+	cfg.initLogging(parsedFile)
 
 	return parsedFile, err
 }
@@ -517,7 +525,7 @@ func NewCfg() *Cfg {
 func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	setHomePath(args)
 
-	iniFile, err := loadConfiguration(args)
+	iniFile, err := cfg.loadConfiguration(args)
 	if err != nil {
 		return err
 	}
@@ -527,9 +535,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Temporary keep global, to make refactor in steps
 	Raw = cfg.Raw
 
-	ApplicationName = "Grafana"
+	ApplicationName = APP_NAME
 	if IsEnterprise {
-		ApplicationName += " Enterprise"
+		ApplicationName = APP_NAME_ENTERPRISE
 	}
 
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
@@ -538,6 +546,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
+	cfg.AppUrl = AppUrl
+	cfg.AppSubUrl = AppSubUrl
 
 	Protocol = HTTP
 	if server.Key("protocol").MustString("http") == "https" {
@@ -662,7 +672,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
 		}
 	}
-	cfg.ImagesDir = filepath.Join(DataPath, "png")
+	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
@@ -688,6 +698,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(false)
 
+	panels := iniFile.Section("panels")
+	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
+
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -704,6 +717,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("")
+
+	enterprise := iniFile.Section("enterprise")
+	cfg.EnterpriseLicensePath = enterprise.Key("license_path").MustString(filepath.Join(cfg.DataPath, "license.jwt"))
+
 	return nil
 }
 
@@ -720,7 +737,7 @@ func (cfg *Cfg) readSessionConfig() {
 	SessionOptions.IDLength = 16
 
 	if SessionOptions.Provider == "file" {
-		SessionOptions.ProviderConfig = makeAbsolute(SessionOptions.ProviderConfig, DataPath)
+		SessionOptions.ProviderConfig = makeAbsolute(SessionOptions.ProviderConfig, cfg.DataPath)
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
 	}
 
@@ -731,15 +748,15 @@ func (cfg *Cfg) readSessionConfig() {
 	SessionConnMaxLifetime = cfg.Raw.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
-func initLogging(file *ini.File) {
+func (cfg *Cfg) initLogging(file *ini.File) {
 	// split on comma
-	LogModes = strings.Split(file.Section("log").Key("mode").MustString("console"), ",")
+	logModes := strings.Split(file.Section("log").Key("mode").MustString("console"), ",")
 	// also try space
-	if len(LogModes) == 1 {
-		LogModes = strings.Split(file.Section("log").Key("mode").MustString("console"), " ")
+	if len(logModes) == 1 {
+		logModes = strings.Split(file.Section("log").Key("mode").MustString("console"), " ")
 	}
-	LogsPath = makeAbsolute(file.Section("paths").Key("logs").String(), HomePath)
-	log.ReadLoggingConfig(LogModes, LogsPath, file)
+	cfg.LogsPath = makeAbsolute(file.Section("paths").Key("logs").String(), HomePath)
+	log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
 func (cfg *Cfg) LogConfigSources() {
@@ -763,8 +780,8 @@ func (cfg *Cfg) LogConfigSources() {
 	}
 
 	logger.Info("Path Home", "path", HomePath)
-	logger.Info("Path Data", "path", DataPath)
-	logger.Info("Path Logs", "path", LogsPath)
+	logger.Info("Path Data", "path", cfg.DataPath)
+	logger.Info("Path Logs", "path", cfg.LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
 	logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	logger.Info("App mode " + Env)

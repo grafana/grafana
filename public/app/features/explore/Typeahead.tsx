@@ -1,6 +1,7 @@
 import React from 'react';
+import Highlighter from 'react-highlight-words';
 
-import { Suggestion, SuggestionGroup } from './QueryField';
+import { CompletionItem, CompletionItemGroup } from 'app/types/explore';
 
 function scrollIntoView(el: HTMLElement) {
   if (!el || !el.offsetParent) {
@@ -14,16 +15,19 @@ function scrollIntoView(el: HTMLElement) {
 
 interface TypeaheadItemProps {
   isSelected: boolean;
-  item: Suggestion;
+  item: CompletionItem;
   onClickItem: (Suggestion) => void;
+  prefix?: string;
 }
 
-class TypeaheadItem extends React.PureComponent<TypeaheadItemProps, {}> {
+class TypeaheadItem extends React.PureComponent<TypeaheadItemProps> {
   el: HTMLElement;
 
   componentDidUpdate(prevProps) {
     if (this.props.isSelected && !prevProps.isSelected) {
-      scrollIntoView(this.el);
+      requestAnimationFrame(() => {
+        scrollIntoView(this.el);
+      });
     }
   }
 
@@ -36,11 +40,12 @@ class TypeaheadItem extends React.PureComponent<TypeaheadItemProps, {}> {
   };
 
   render() {
-    const { isSelected, item } = this.props;
+    const { isSelected, item, prefix } = this.props;
     const className = isSelected ? 'typeahead-item typeahead-item__selected' : 'typeahead-item';
+    const { label } = item;
     return (
       <li ref={this.getRef} className={className} onClick={this.onClick}>
-        {item.detail || item.label}
+        <Highlighter textToHighlight={label} searchWords={[prefix]} highlightClassName="typeahead-match" />
         {item.documentation && isSelected ? <div className="typeahead-item-hint">{item.documentation}</div> : null}
       </li>
     );
@@ -48,22 +53,29 @@ class TypeaheadItem extends React.PureComponent<TypeaheadItemProps, {}> {
 }
 
 interface TypeaheadGroupProps {
-  items: Suggestion[];
+  items: CompletionItem[];
   label: string;
-  onClickItem: (Suggestion) => void;
-  selected: Suggestion;
+  onClickItem: (CompletionItem) => void;
+  selected: CompletionItem;
+  prefix?: string;
 }
 
-class TypeaheadGroup extends React.PureComponent<TypeaheadGroupProps, {}> {
+class TypeaheadGroup extends React.PureComponent<TypeaheadGroupProps> {
   render() {
-    const { items, label, selected, onClickItem } = this.props;
+    const { items, label, selected, onClickItem, prefix } = this.props;
     return (
       <li className="typeahead-group">
         <div className="typeahead-group__title">{label}</div>
         <ul className="typeahead-group__list">
           {items.map(item => {
             return (
-              <TypeaheadItem key={item.label} onClickItem={onClickItem} isSelected={selected === item} item={item} />
+              <TypeaheadItem
+                key={item.label}
+                onClickItem={onClickItem}
+                isSelected={selected === item}
+                item={item}
+                prefix={prefix}
+              />
             );
           })}
         </ul>
@@ -73,18 +85,19 @@ class TypeaheadGroup extends React.PureComponent<TypeaheadGroupProps, {}> {
 }
 
 interface TypeaheadProps {
-  groupedItems: SuggestionGroup[];
+  groupedItems: CompletionItemGroup[];
   menuRef: any;
-  selectedItem: Suggestion | null;
+  selectedItem: CompletionItem | null;
   onClickItem: (Suggestion) => void;
+  prefix?: string;
 }
-class Typeahead extends React.PureComponent<TypeaheadProps, {}> {
+class Typeahead extends React.PureComponent<TypeaheadProps> {
   render() {
-    const { groupedItems, menuRef, selectedItem, onClickItem } = this.props;
+    const { groupedItems, menuRef, selectedItem, onClickItem, prefix } = this.props;
     return (
       <ul className="typeahead" ref={menuRef}>
         {groupedItems.map(g => (
-          <TypeaheadGroup key={g.label} onClickItem={onClickItem} selected={selectedItem} {...g} />
+          <TypeaheadGroup key={g.label} onClickItem={onClickItem} prefix={prefix} selected={selectedItem} {...g} />
         ))}
       </ul>
     );

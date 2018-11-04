@@ -445,25 +445,29 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		deletes := []string{
-			"DELETE FROM star WHERE user_id = ?",
-			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
-			"DELETE FROM org_user WHERE user_id = ?",
-			"DELETE FROM dashboard_acl WHERE user_id = ?",
-			"DELETE FROM preferences WHERE user_id = ?",
-			"DELETE FROM team_member WHERE user_id = ?",
-			"DELETE FROM user_auth WHERE user_id = ?",
-		}
-
-		for _, sql := range deletes {
-			_, err := sess.Exec(sql, cmd.UserId)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return deleteUserInTransaction(sess, cmd)
 	})
+}
+
+func deleteUserInTransaction(sess *DBSession, cmd *m.DeleteUserCommand) error {
+	deletes := []string{
+		"DELETE FROM star WHERE user_id = ?",
+		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
+		"DELETE FROM org_user WHERE user_id = ?",
+		"DELETE FROM dashboard_acl WHERE user_id = ?",
+		"DELETE FROM preferences WHERE user_id = ?",
+		"DELETE FROM team_member WHERE user_id = ?",
+		"DELETE FROM user_auth WHERE user_id = ?",
+	}
+
+	for _, sql := range deletes {
+		_, err := sess.Exec(sql, cmd.UserId)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {

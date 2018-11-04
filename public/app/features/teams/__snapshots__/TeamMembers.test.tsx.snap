@@ -60,7 +60,6 @@ exports[`Render should render component 1`] = `
         <UserPicker
           className="width-30"
           onSelected={[Function]}
-          value={null}
         />
       </div>
     </div>
@@ -155,7 +154,6 @@ exports[`Render should render team members 1`] = `
         <UserPicker
           className="width-30"
           onSelected={[Function]}
-          value={null}
         />
       </div>
     </div>
@@ -376,7 +374,6 @@ exports[`Render should render team members when sync enabled 1`] = `
         <UserPicker
           className="width-30"
           onSelected={[Function]}
-          value={null}
         />
       </div>
     </div>

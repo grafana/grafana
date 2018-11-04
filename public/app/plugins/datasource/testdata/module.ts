@@ -6,7 +6,7 @@ class TestDataAnnotationsQueryCtrl {
 
   constructor() {}
 
-  static template = '<h2>test data</h2>';
+  static template = '<h2>Annotation scenario</h2>';
 }
 
 export {

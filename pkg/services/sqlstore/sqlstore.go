@@ -53,6 +53,7 @@ type SqlStore struct {
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
 	log             log.Logger
+	Dialect         migrator.Dialect
 	skipEnsureAdmin bool
 }
 
@@ -125,10 +126,12 @@ func (ss *SqlStore) Init() error {
 	}
 
 	ss.engine = engine
+	ss.Dialect = migrator.NewDialect(ss.engine)
 
 	// temporarily still set global var
 	x = engine
-	dialect = migrator.NewDialect(x)
+	dialect = ss.Dialect
+
 	migrator := migrator.NewMigrator(x)
 	migrations.AddMigrations(migrator)
 
@@ -233,7 +236,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 	case migrator.SQLITE:
 		// special case for tests
 		if !filepath.IsAbs(ss.dbCfg.Path) {
-			ss.dbCfg.Path = filepath.Join(setting.DataPath, ss.dbCfg.Path)
+			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + ss.dbCfg.Path + "?cache=shared&mode=rwc"
@@ -347,7 +350,11 @@ func InitTestDB(t *testing.T) *SqlStore {
 		t.Fatalf("Failed to init test database: %v", err)
 	}
 
-	dialect = migrator.NewDialect(engine)
+	sqlstore.Dialect = migrator.NewDialect(engine)
+
+	// temp global var until we get rid of global vars
+	dialect = sqlstore.Dialect
+
 	if err := dialect.CleanDB(); err != nil {
 		t.Fatalf("Failed to clean test db %v", err)
 	}

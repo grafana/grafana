@@ -4,7 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { encodePathComponent } from 'app/core/utils/location_util';
+import { getExploreUrl } from 'app/core/utils/explore';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
@@ -15,7 +15,14 @@ export class KeybindingSrv {
   timepickerOpen = false;
 
   /** @ngInject */
-  constructor(private $rootScope, private $location, private datasourceSrv, private timeSrv, private contextSrv) {
+  constructor(
+    private $rootScope,
+    private $location,
+    private $timeout,
+    private datasourceSrv,
+    private timeSrv,
+    private contextSrv
+  ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
       Mousetrap.reset();
@@ -141,7 +148,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('mod+s', e => {
@@ -194,14 +201,9 @@ export class KeybindingSrv {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
           const datasource = await this.datasourceSrv.get(panel.datasource);
-          if (datasource && datasource.supportsExplore) {
-            const range = this.timeSrv.timeRangeForUrl();
-            const state = {
-              ...datasource.getExploreState(panel),
-              range,
-            };
-            const exploreState = encodePathComponent(JSON.stringify(state));
-            this.$location.url(`/explore?state=${exploreState}`);
+          const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
+          if (url) {
+            this.$timeout(() => this.$location.url(url));
           }
         }
       });
@@ -240,6 +242,18 @@ export class KeybindingSrv {
       }
     });
 
+    // toggle panel legend
+    this.bind('p l', () => {
+      if (dashboard.meta.focusPanelId) {
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        if (panelInfo.panel.legend) {
+          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          panelRef.legend.show = !panelRef.legend.show;
+          panelRef.refresh();
+        }
+      }
+    });
+
     // collapse all rows
     this.bind('d shift+c', () => {
       dashboard.collapseRows();
@@ -255,7 +269,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('d s', () => {

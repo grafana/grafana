@@ -4,10 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -16,13 +14,14 @@ const (
 )
 
 type NotifierBase struct {
-	Name         string
-	Type         string
-	Id           int64
-	IsDeault     bool
-	UploadImage  bool
-	SendReminder bool
-	Frequency    time.Duration
+	Name                  string
+	Type                  string
+	Id                    int64
+	IsDeault              bool
+	UploadImage           bool
+	SendReminder          bool
+	DisableResolveMessage bool
+	Frequency             time.Duration
 
 	log log.Logger
 }
@@ -35,65 +34,62 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 
 	return NotifierBase{
-		Id:           model.Id,
-		Name:         model.Name,
-		IsDeault:     model.IsDefault,
-		Type:         model.Type,
-		UploadImage:  uploadImage,
-		SendReminder: model.SendReminder,
-		Frequency:    model.Frequency,
-		log:          log.New("alerting.notifier." + model.Name),
+		Id:                    model.Id,
+		Name:                  model.Name,
+		IsDeault:              model.IsDefault,
+		Type:                  model.Type,
+		UploadImage:           uploadImage,
+		SendReminder:          model.SendReminder,
+		DisableResolveMessage: model.DisableResolveMessage,
+		Frequency:             model.Frequency,
+		log:                   log.New("alerting.notifier." + model.Name),
 	}
 }
 
-func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, journals []models.AlertNotificationJournal) bool {
+// ShouldNotify checks this evaluation should send an alert notification
+func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalContext, notiferState *models.AlertNotificationState) bool {
 	// Only notify on state change.
-	if context.PrevAlertState == context.Rule.State && !sendReminder {
+	if context.PrevAlertState == context.Rule.State && !n.SendReminder {
 		return false
 	}
 
-	// get last successfully sent notification
-	lastNotify := time.Time{}
-	for _, j := range journals {
-		if j.Success {
-			lastNotify = time.Unix(j.SentAt, 0)
-			break
+	if context.PrevAlertState == context.Rule.State && n.SendReminder {
+		// Do not notify if interval has not elapsed
+		lastNotify := time.Unix(notiferState.UpdatedAt, 0)
+		if notiferState.UpdatedAt != 0 && lastNotify.Add(n.Frequency).After(time.Now()) {
+			return false
+		}
+
+		// Do not notify if alert state is OK or pending even on repeated notify
+		if context.Rule.State == models.AlertStateOK || context.Rule.State == models.AlertStatePending {
+			return false
 		}
 	}
 
-	// Do not notify if interval has not elapsed
-	if sendReminder && !lastNotify.IsZero() && lastNotify.Add(frequency).After(time.Now()) {
-		return false
-	}
-
-	// Do not notify if alert state if OK or pending even on repeated notify
-	if sendReminder && (context.Rule.State == models.AlertStateOK || context.Rule.State == models.AlertStatePending) {
-		return false
-	}
-
 	// Do not notify when we become OK for the first time.
-	if (context.PrevAlertState == models.AlertStatePending) && (context.Rule.State == models.AlertStateOK) {
+	if context.PrevAlertState == models.AlertStatePending && context.Rule.State == models.AlertStateOK {
+		return false
+	}
+
+	// Do not notify when we OK -> Pending
+	if context.PrevAlertState == models.AlertStateOK && context.Rule.State == models.AlertStatePending {
+		return false
+	}
+
+	// Do not notifu if state pending and it have been updated last minute
+	if notiferState.State == models.AlertNotificationStatePending {
+		lastUpdated := time.Unix(notiferState.UpdatedAt, 0)
+		if lastUpdated.Add(1 * time.Minute).After(time.Now()) {
+			return false
+		}
+	}
+
+	// Do not notify when state is OK if DisableResolveMessage is set to true
+	if context.Rule.State == models.AlertStateOK && n.DisableResolveMessage {
 		return false
 	}
 
 	return true
-}
-
-// ShouldNotify checks this evaluation should send an alert notification
-func (n *NotifierBase) ShouldNotify(ctx context.Context, c *alerting.EvalContext) bool {
-	cmd := &models.GetLatestNotificationQuery{
-		OrgId:      c.Rule.OrgId,
-		AlertId:    c.Rule.Id,
-		NotifierId: n.Id,
-	}
-
-	err := bus.DispatchCtx(ctx, cmd)
-	if err != nil {
-		n.log.Error("Could not determine last time alert notifier fired", "Alert name", c.Rule.Name, "Error", err)
-		return false
-	}
-
-	return defaultShouldNotify(c, n.SendReminder, n.Frequency, cmd.Result)
 }
 
 func (n *NotifierBase) GetType() string {
@@ -114,6 +110,10 @@ func (n *NotifierBase) GetIsDefault() bool {
 
 func (n *NotifierBase) GetSendReminder() bool {
 	return n.SendReminder
+}
+
+func (n *NotifierBase) GetDisableResolveMessage() bool {
+	return n.DisableResolveMessage
 }
 
 func (n *NotifierBase) GetFrequency() time.Duration {

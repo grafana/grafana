@@ -14,6 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	ReqGrafanaAdmin = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
+	ReqSignedIn     = Auth(&AuthOptions{ReqSignedIn: true})
+	ReqEditorRole   = RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
+)
+
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
@@ -36,12 +43,13 @@ func GetContextHandler() macaron.Handler {
 		// then init session and look for userId in session
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
-		if initContextWithRenderAuth(ctx) ||
-			initContextWithApiKey(ctx) ||
-			initContextWithBasicAuth(ctx, orgId) ||
-			initContextWithAuthProxy(ctx, orgId) ||
-			initContextWithUserSessionCookie(ctx, orgId) ||
-			initContextWithAnonymousUser(ctx) {
+		switch {
+		case initContextWithRenderAuth(ctx):
+		case initContextWithApiKey(ctx):
+		case initContextWithBasicAuth(ctx, orgId):
+		case initContextWithAuthProxy(ctx, orgId):
+		case initContextWithUserSessionCookie(ctx, orgId):
+		case initContextWithAnonymousUser(ctx):
 		}
 
 		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
