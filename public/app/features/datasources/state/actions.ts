@@ -1,10 +1,13 @@
 import { ThunkAction } from 'redux-thunk';
 import { DataSource, Plugin, StoreState } from 'app/types';
 import { getBackendSrv } from '../../../core/services/backend_srv';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from '../../../core/actions';
 import { UpdateLocationAction } from '../../../core/actions/location';
 import { buildNavModel } from './navModel';
+
+import config from '../../../core/config';
 
 export enum ActionTypes {
   LoadDataSources = 'LOAD_DATA_SOURCES',
@@ -159,7 +162,14 @@ export function loadDataSourceTypes(): ThunkResult<void> {
 
 export function updateDataSource(dataSource: DataSource): ThunkResult<void> {
   return async dispatch => {
-    await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
+    await getBackendSrv()
+      .put(`/api/datasources/${dataSource.id}`, dataSource)
+      .then(response => {
+        updateFrontendSettings().then(() => {
+          testDataSource(response.name);
+        });
+      });
+
     dispatch(loadDataSource(dataSource.id));
   };
 }
@@ -199,6 +209,49 @@ export function findNewName(dataSources, name) {
   }
 
   return name;
+}
+
+function updateFrontendSettings() {
+  return getBackendSrv()
+    .get('/api/frontend/settings')
+    .then(settings => {
+      config.datasources = settings.datasources;
+      config.defaultDatasource = settings.defaultDatasource;
+      getDatasourceSrv().init();
+    });
+}
+
+function testDataSource(name) {
+  getDatasourceSrv()
+    .get(name)
+    .then(dataSource => {
+      if (!dataSource.testDatasource) {
+        return;
+      }
+
+      const testing = { done: false, status: 'error', message: '' };
+
+      // make test call in no backend cache context
+      getBackendSrv()
+        .withNoBackendCache(() => {
+          return dataSource
+            .testDatasource()
+            .then(result => {
+              testing.message = result.message;
+              testing.status = result.status;
+            })
+            .catch(err => {
+              if (err.statusText) {
+                testing.message = 'HTTP Error ' + err.statusText;
+              } else {
+                testing.message = err.message;
+              }
+            });
+        })
+        .finally(() => {
+          testing.done = true;
+        });
+    });
 }
 
 function nameHasSuffix(name) {
