@@ -62,7 +62,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 				ec.PrevAlertState = models.AlertStateOK
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 2)
-				ec.Rule.DebounceDuration = time.Minute * 5
+				ec.Rule.For = time.Minute * 5
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 				ec.PrevAlertState = models.AlertStateOK
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-(time.Hour * 5))
-				ec.Rule.DebounceDuration = time.Minute * 2
+				ec.Rule.For = time.Minute * 2
 			},
 		},
 		{
@@ -82,7 +82,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 				ec.PrevAlertState = models.AlertStateAlerting
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
-				ec.Rule.DebounceDuration = time.Minute * 2
+				ec.Rule.For = time.Minute * 2
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 			applyFn: func(ec *EvalContext) {
 				ec.PrevAlertState = models.AlertStateOK
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
-				ec.Rule.DebounceDuration = time.Minute * 2
+				ec.Rule.For = time.Minute * 2
 			},
 		},
 		{

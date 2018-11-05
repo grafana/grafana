@@ -134,7 +134,7 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("add index alert_notification_state org_id & alert_id & notifier_id",
 		NewAddIndexMigration(alert_notification_state, alert_notification_state.Indices[0]))
 
-	mg.AddMigration("Add decounce_duration to alert table", NewAddColumnMigration(alertV1, &Column{
-		Name: "debounce_duration", Type: DB_BigInt, Nullable: true,
+	mg.AddMigration("Add for to alert table", NewAddColumnMigration(alertV1, &Column{
+		Name: "for", Type: DB_BigInt, Nullable: true,
 	}))
 }

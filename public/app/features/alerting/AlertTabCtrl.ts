@@ -169,7 +169,7 @@ export class AlertTabCtrl {
     alert.frequency = alert.frequency || '1m';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
-    alert.debounceDuration = alert.debounceDuration || '5m';
+    alert.for = alert.for || '5m';
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;

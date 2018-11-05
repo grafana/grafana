@@ -114,25 +114,25 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			return nil, ValidationError{Reason: "Could not parse frequency"}
 		}
 
-		rawDebouce := jsonAlert.Get("debounceDuration").MustString()
-		var debounceDuration time.Duration
-		if rawDebouce != "" {
-			debounceDuration, err = time.ParseDuration(rawDebouce)
+		rawFow := jsonAlert.Get("for").MustString()
+		var forValue time.Duration
+		if rawFow != "" {
+			forValue, err = time.ParseDuration(rawFow)
 			if err != nil {
-				return nil, ValidationError{Reason: "Could not parse debounceDuration"}
+				return nil, ValidationError{Reason: "Could not parse for"}
 			}
 		}
 
 		alert := &m.Alert{
-			DashboardId:      e.Dash.Id,
-			OrgId:            e.OrgID,
-			PanelId:          panelID,
-			Id:               jsonAlert.Get("id").MustInt64(),
-			Name:             jsonAlert.Get("name").MustString(),
-			Handler:          jsonAlert.Get("handler").MustInt64(),
-			Message:          jsonAlert.Get("message").MustString(),
-			Frequency:        frequency,
-			DebounceDuration: debounceDuration,
+			DashboardId: e.Dash.Id,
+			OrgId:       e.OrgID,
+			PanelId:     panelID,
+			Id:          jsonAlert.Get("id").MustInt64(),
+			Name:        jsonAlert.Get("name").MustString(),
+			Handler:     jsonAlert.Get("handler").MustInt64(),
+			Message:     jsonAlert.Get("message").MustString(),
+			Frequency:   frequency,
+			For:         forValue,
 		}
 
 		for _, condition := range jsonAlert.Get("conditions").MustArray() {

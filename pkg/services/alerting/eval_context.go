@@ -132,9 +132,9 @@ func (c *EvalContext) GetNewState() m.AlertStateType {
 		return c.Rule.ExecutionErrorState.ToAlertState()
 	}
 
-	if c.Firing && c.Rule.DebounceDuration != 0 {
+	if c.Firing && c.Rule.For != 0 {
 		since := time.Now().Sub(c.Rule.LastStateChange)
-		if since > c.Rule.DebounceDuration {
+		if since > c.Rule.For {
 			return m.AlertStateAlerting
 		}
 

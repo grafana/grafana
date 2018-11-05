@@ -28,16 +28,16 @@
         <h5 class="section-heading">Alert Config</h5>
         <div class="gf-form">
           <span class="gf-form-label width-6">Name</span>
-          <input type="text" class="gf-form-input width-22" ng-model="ctrl.alert.name">
+          <input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name">
         </div>
         <div class="gf-form-inline">
           <div class="gf-form">
-            <span class="gf-form-label width-8">Evaluate every</span>
-            <input class="gf-form-input max-width-5" type="text" ng-model="ctrl.alert.frequency">
+            <span class="gf-form-label width-9">Evaluate every</span>
+            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alert.frequency">
           </div>
-          <div class="gf-form max-width-15">
-            <label class="gf-form-label width-10">Debounce duration</label>
-            <input type="text" class="gf-form-input max-width-5" ng-model="ctrl.alert.debounceDuration" spellcheck='false' placeholder="5m">
+          <div class="gf-form max-width-11">
+            <label class="gf-form-label width-5">For</label>
+            <input type="text" class="gf-form-input max-width-6" ng-model="ctrl.alert.for" spellcheck='false' placeholder="5m">
             <info-popover mode="right-absolute">
               Configuring this value means that an alert rule have to be firing for atleast this duration before changing state.
               This should reduce false positive alerts and avoid flapping alerts.

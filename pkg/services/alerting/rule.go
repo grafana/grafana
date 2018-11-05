@@ -20,7 +20,7 @@ type Rule struct {
 	Name                string
 	Message             string
 	LastStateChange     time.Time
-	DebounceDuration    time.Duration
+	For                 time.Duration
 	NoDataState         m.NoDataOption
 	ExecutionErrorState m.ExecutionErrorOption
 	State               m.AlertStateType
@@ -104,7 +104,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Frequency = ruleDef.Frequency
 	model.State = ruleDef.State
 	model.LastStateChange = ruleDef.NewStateDate
-	model.DebounceDuration = ruleDef.DebounceDuration
+	model.For = ruleDef.For
 	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
