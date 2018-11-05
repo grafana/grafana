@@ -403,17 +403,17 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	if user.OrgRole == "" {
 		user.OrgId = -1
 		user.OrgName = "Org missing"
-	} else {
-		getTeamsByUserQuery := &m.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
-		err = GetTeamsByUser(getTeamsByUserQuery)
-		if err != nil {
-			return err
-		}
+	}
 
-		user.Teams = make([]int64, len(getTeamsByUserQuery.Result))
-		for i, t := range getTeamsByUserQuery.Result {
-			user.Teams[i] = t.Id
-		}
+	getTeamsByUserQuery := &m.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
+	err = GetTeamsByUser(getTeamsByUserQuery)
+	if err != nil {
+		return err
+	}
+
+	user.Teams = make([]int64, len(getTeamsByUserQuery.Result))
+	for i, t := range getTeamsByUserQuery.Result {
+		user.Teams[i] = t.Id
 	}
 
 	query.Result = &user
