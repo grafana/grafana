@@ -21,7 +21,7 @@ if [ "$CIRCLE_TAG" != "" ]; then
   OPT="-includeBuildNumber=false ${EXTRA_OPTS}"
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  OPT="-buildNumber=${CIRCLE_BUILD_NUM} ${EXTRA_OPTS}"
+  OPT="-buildId=${CIRCLE_WORKFLOW_ID} ${EXTRA_OPTS}"
 fi
 
 echo "Build arguments: $OPT"

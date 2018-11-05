@@ -42,7 +42,7 @@ var (
 	phjsToRelease         string
 	workingDir            string
 	includeBuildNumber    bool     = true
-	buildNumber           int      = 0
+	buildId               string   = "0"
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
 	enterprise            bool     = false
@@ -54,6 +54,8 @@ func main() {
 
 	ensureGoPath()
 
+	var buildIdRaw string
+
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
@@ -63,9 +65,11 @@ func main() {
 	flag.BoolVar(&race, "race", race, "Use race detector")
 	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
-	flag.IntVar(&buildNumber, "buildNumber", 0, "Build number from CI system")
+	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
 	flag.Parse()
+
+	buildId = shortenBuildId(buildIdRaw)
 
 	readVersionFromPackageJson()
 
@@ -198,8 +202,8 @@ func readVersionFromPackageJson() {
 
 	// add timestamp to iteration
 	if includeBuildNumber {
-		if buildNumber != 0 {
-			linuxPackageIteration = fmt.Sprintf("%d%s", buildNumber, linuxPackageIteration)
+		if buildId != "0" {
+			linuxPackageIteration = fmt.Sprintf("%d%s", buildId, linuxPackageIteration)
 		} else {
 			linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
 		}
@@ -631,4 +635,12 @@ func shaFile(file string) error {
 	}
 
 	return out.Close()
+}
+
+func shortenBuildId(buildId string) string {
+	buildId = strings.Replace(buildId, "-", "", -1)
+	if(len(buildId) < 9) {
+		return buildId
+	}
+	return buildId[0:8]
 }
