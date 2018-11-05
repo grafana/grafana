@@ -353,8 +353,12 @@ func (ss *SqlStore) GetSignedInUserWithCache(query *m.GetSignedInUserQuery) erro
 	}
 
 	err := GetSignedInUser(query)
+	if err != nil {
+		return err
+	}
+
 	ss.CacheService.Set(cacheKey, query.Result, time.Second*5)
-	return err
+	return nil
 }
 
 func GetSignedInUser(query *m.GetSignedInUserQuery) error {
