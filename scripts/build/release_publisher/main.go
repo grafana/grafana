@@ -13,6 +13,7 @@ func main() {
 	var releaseNotesUrl string
 	var dryRun bool
 	var enterprise bool
+	var fromLocal bool
 	var apiKey string
 
 	flag.StringVar(&version, "version", "", "Grafana version (ex: --version v5.2.0-beta1)")
@@ -21,6 +22,7 @@ func main() {
 	flag.StringVar(&apiKey, "apikey", "", "Grafana.com API key (ex: --apikey ABCDEF)")
 	flag.BoolVar(&dryRun, "dry-run", false, "--dry-run")
 	flag.BoolVar(&enterprise, "enterprise", false, "--enterprise")
+	flag.BoolVar(&fromLocal, "from-local", false, "--from-local")
 	flag.Parse()
 
 	if len(os.Args) == 1 {
@@ -33,24 +35,39 @@ func main() {
 		log.Println("Dry-run has been enabled.")
 	}
 	var baseUrl string
+	var builder releaseBuilder
+	var product string
+
+	if fromLocal {
+		path, _ := os.Getwd()
+		builder = releaseLocalSources{
+			path: path,
+			artifactConfigurations: buildArtifactConfigurations,
+		}
+	} else {
+		builder = releaseFromExternalContent{
+			getter:     getHttpContents{},
+			rawVersion: version,
+			artifactConfigurations: buildArtifactConfigurations,
+		}
+	}
 
 	if enterprise {
-		baseUrl = fmt.Sprintf("https://s3-us-west-2.amazonaws.com/%s", "grafana-enterprise-releases/release/grafana-enterprise")
+		baseUrl = "https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/release/grafana-enterprise"
+		product = "grafana-enterprise"
 	} else {
-		baseUrl = fmt.Sprintf("https://s3-us-west-2.amazonaws.com/%s", "grafana-releases/release/grafana")
+		baseUrl = "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana"
+		product = "grafana"
 	}
 
 	p := publisher{
 		apiKey:         apiKey,
-		baseUri:        "https://grafana.com/api",
-		product:        "grafana",
+		apiUri:         "https://grafana.com/api",
+		product:        product,
 		dryRun:         dryRun,
 		enterprise:     enterprise,
 		baseArchiveUrl: baseUrl,
-		builder: releaseFromExternalContent{
-			getter:     getHttpContents{},
-			rawVersion: version,
-		},
+		builder:        builder,
 	}
 	if err := p.doRelease(whatsNewUrl, releaseNotesUrl); err != nil {
 		log.Fatalf("error: %v", err)

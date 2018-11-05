@@ -11,15 +11,16 @@ import (
 type releaseFromExternalContent struct {
 	getter     urlGetter
 	rawVersion string
+	artifactConfigurations []buildArtifact
 }
 
-func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, artifactConfigurations []buildArtifact) (*release, error) {
+func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string) (*release, error) {
 	version := re.rawVersion[1:]
 	now := time.Now()
 	isBeta := strings.Contains(version, "beta")
 
 	builds := []build{}
-	for _, ba := range artifactConfigurations {
+	for _, ba := range re.artifactConfigurations {
 		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", ba.getUrl(baseArchiveUrl, version, isBeta)))
 		if err != nil {
 			return nil, err

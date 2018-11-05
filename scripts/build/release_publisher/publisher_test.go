@@ -16,9 +16,10 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 	builder = releaseFromExternalContent{
 		getter:     mockHttpGetter{},
 		rawVersion: versionIn,
+		artifactConfigurations: buildArtifactConfigurations,
 	}
 
-	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl, buildArtifacts)
+	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl)
 
 	if !rel.Beta || rel.Stable {
 		t.Errorf("%s should have been tagged as beta (not stable), but wasn't	.", versionIn)
@@ -57,11 +58,13 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	expectedBuilds := 4
 
 	var builder releaseBuilder
+	testDataPath := "local_test_data"
 	builder = releaseLocalSources{
-		path: "local_test_data",
+		path:                   testDataPath,
+		artifactConfigurations: buildArtifactConfigurations,
 	}
 
-	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl, buildArtifactConfigurations)
+	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl)
 
 	if relAll.Stable || !relAll.Nightly {
 		t.Error("Expected a nightly release but wasn't.")
@@ -88,11 +91,17 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 
 	expectedArch := "amd64"
 	expectedOs := "win"
-	relOne, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl, []buildArtifact{{
-		os:         expectedOs,
-		arch:       expectedArch,
-		urlPostfix: ".windows-amd64.zip",
-	}})
+
+	builder = releaseLocalSources{
+		path:                   testDataPath,
+		artifactConfigurations: []buildArtifact{{
+			os:         expectedOs,
+			arch:       expectedArch,
+			urlPostfix: ".windows-amd64.zip",
+		}},
+	}
+
+	relOne, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl)
 
 	if len(relOne.Builds) != 1 {
 		t.Errorf("Expected 1 artifact, but was %v", len(relOne.Builds))

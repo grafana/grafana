@@ -13,7 +13,7 @@ import (
 
 type publisher struct {
 	apiKey         string
-	baseUri        string
+	apiUri         string
 	product        string
 	dryRun         bool
 	enterprise     bool
@@ -22,11 +22,11 @@ type publisher struct {
 }
 
 type releaseBuilder interface {
-	prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, artifactConfigurations []buildArtifact) (*release, error)
+	prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string) (*release, error)
 }
 
 func (p *publisher) doRelease(whatsNewUrl string, releaseNotesUrl string) error {
-	currentRelease, err := p.builder.prepareRelease(p.baseArchiveUrl, whatsNewUrl, releaseNotesUrl, buildArtifactConfigurations)
+	currentRelease, err := p.builder.prepareRelease(p.baseArchiveUrl, whatsNewUrl, releaseNotesUrl)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func newBuild(baseArchiveUrl string, ba buildArtifact, version string, isBeta bo
 }
 
 func (p *publisher) apiUrl(url string) string {
-	return fmt.Sprintf("%s/%s%s", p.baseUri, p.product, url)
+	return fmt.Sprintf("%s/%s%s", p.apiUri, p.product, url)
 }
 
 func (p *publisher) postRequest(url string, obj interface{}, desc string) error {
