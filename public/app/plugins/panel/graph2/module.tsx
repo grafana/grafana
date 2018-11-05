@@ -12,6 +12,10 @@ import { PanelProps, NullValueMode } from 'app/types';
 
 interface Options {
   showBars: boolean;
+  showLines: boolean;
+  showPoints: boolean;
+
+  onChange: (options: Options) => void;
 }
 
 interface Props extends PanelProps {
@@ -35,14 +39,27 @@ export class Graph2 extends PureComponent<Props> {
   }
 }
 
-export class TextOptions extends PureComponent<any> {
-  onChange = () => {};
+export class TextOptions extends PureComponent<Options> {
+  onToggleLines = () => {
+    const options = this.props as Options;
+
+    this.props.onChange({
+      ...options,
+      showLines: !this.props.showLines,
+    });
+  };
 
   render() {
+    const { showBars, showPoints, showLines } = this.props;
+
     return (
-      <div className="section gf-form-group">
-        <h5 className="section-heading">Draw Modes</h5>
-        <Switch label="Lines" checked={true} onChange={this.onChange} />
+      <div>
+        <div className="section gf-form-group">
+          <h5 className="page-heading">Draw Modes</h5>
+          <Switch label="Lines" labelClass="width-5" checked={showLines} onChange={this.onToggleLines} />
+          <Switch label="Bars" labelClass="width-5" checked={showBars} onChange={this.onToggleLines} />
+          <Switch label="Points" labelClass="width-5" checked={showPoints} onChange={this.onToggleLines} />
+        </div>
       </div>
     );
   }
