@@ -156,7 +156,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getAggregationCompletionItems({ value }: TypeaheadInput): TypeaheadOutput {
-    let refresher: Promise<any> = null;
+    const refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
@@ -172,12 +172,30 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return text;
     }, '');
 
-    const leftSide = queryText.slice(0, queryOffset);
-    const openParensAggregationIndex = leftSide.lastIndexOf('(');
-    const openParensSelectorIndex = leftSide.slice(0, openParensAggregationIndex).lastIndexOf('(');
-    const closeParensSelectorIndex = leftSide.slice(openParensSelectorIndex).indexOf(')') + openParensSelectorIndex;
+    // Try search for selector part on the left-hand side, such as `sum (m) by (l)`
+    const openParensAggregationIndex = queryText.lastIndexOf('(', queryOffset);
+    let openParensSelectorIndex = queryText.lastIndexOf('(', openParensAggregationIndex - 1);
+    let closeParensSelectorIndex = queryText.indexOf(')', openParensSelectorIndex);
 
-    let selectorString = leftSide.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
+    // Try search for selector part of an alternate aggregation clause, such as `sum by (l) (m)`
+    if (openParensSelectorIndex === -1) {
+      const closeParensAggregationIndex = queryText.indexOf(')', queryOffset);
+      closeParensSelectorIndex = queryText.indexOf(')', closeParensAggregationIndex + 1);
+      openParensSelectorIndex = queryText.lastIndexOf('(', closeParensSelectorIndex);
+    }
+
+    const result = {
+      refresher,
+      suggestions,
+      context: 'context-aggregation',
+    };
+
+    // Suggestions are useless for alternative aggregation clauses without a selector in context
+    if (openParensSelectorIndex === -1) {
+      return result;
+    }
+
+    let selectorString = queryText.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
 
     // Range vector syntax not accounted for by subsequent parse so discard it if present
     selectorString = selectorString.replace(/\[[^\]]+\]$/, '');
@@ -188,14 +206,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (labelKeys) {
       suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
     } else {
-      refresher = this.fetchSeriesLabels(selector);
+      result.refresher = this.fetchSeriesLabels(selector);
     }
 
-    return {
-      refresher,
-      suggestions,
-      context: 'context-aggregation',
-    };
+    return result;
   }
 
   getLabelCompletionItems({ text, wrapperClasses, labelKey, value }: TypeaheadInput): TypeaheadOutput {
