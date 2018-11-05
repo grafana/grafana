@@ -41,7 +41,7 @@ var (
 	race                  bool
 	phjsToRelease         string
 	workingDir            string
-	includeBuildNumber    bool     = true
+	includeBuildId        bool     = true
 	buildId               string   = "0"
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
@@ -63,7 +63,7 @@ func main() {
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
-	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
+	flag.BoolVar(&includeBuildId, "includeBuildId", includeBuildId, "IncludeBuildId in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
@@ -201,9 +201,9 @@ func readVersionFromPackageJson() {
 	}
 
 	// add timestamp to iteration
-	if includeBuildNumber {
+	if includeBuildId {
 		if buildId != "0" {
-			linuxPackageIteration = fmt.Sprintf("%d%s", buildId, linuxPackageIteration)
+			linuxPackageIteration = fmt.Sprintf("%s%s", buildId, linuxPackageIteration)
 		} else {
 			linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
 		}
@@ -396,7 +396,7 @@ func grunt(params ...string) {
 
 func gruntBuildArg(task string) []string {
 	args := []string{task}
-	if includeBuildNumber {
+	if includeBuildId {
 		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
 	} else {
 		args = append(args, fmt.Sprintf("--pkgVer=%v", version))
@@ -639,7 +639,7 @@ func shaFile(file string) error {
 
 func shortenBuildId(buildId string) string {
 	buildId = strings.Replace(buildId, "-", "", -1)
-	if(len(buildId) < 9) {
+	if (len(buildId) < 9) {
 		return buildId
 	}
 	return buildId[0:8]
