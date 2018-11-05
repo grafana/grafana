@@ -20,10 +20,9 @@ type releaseLocalSources struct {
 func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string) (*release, error) {
 	buildData := r.findBuilds(baseArchiveUrl)
 
-	now := time.Now()
 	rel := release{
 		Version:         buildData.version,
-		ReleaseDate:     time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local),
+		ReleaseDate:     time.Now(),
 		Stable:          false,
 		Beta:            false,
 		Nightly:         true,
