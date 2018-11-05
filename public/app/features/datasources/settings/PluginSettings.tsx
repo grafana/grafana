@@ -40,6 +40,8 @@ export class PluginSettings extends PureComponent<Props> {
   componentDidUpdate(prevProps) {
     if (this.props.dataSource !== prevProps.dataSource) {
       this.scopeProps.ctrl.current = _.cloneDeep(this.props.dataSource);
+
+      this.component.digest();
     }
   }
 
