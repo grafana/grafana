@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
 
 interface PanelHeaderProps {
