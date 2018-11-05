@@ -45,24 +45,15 @@ export class Graph2 extends PureComponent<Props> {
 
 export class GraphOptions extends PureComponent<PanelOptionsProps<Options>> {
   onToggleLines = () => {
-    this.props.onChange({
-      ...this.props.options,
-      showLines: !this.props.options.showLines,
-    });
+    this.props.onChange({ showLines: !this.props.options.showLines, ...this.props.options });
   };
 
   onToggleBars = () => {
-    this.props.onChange({
-      ...this.props.options,
-      showBars: !this.props.options.showBars,
-    });
+    this.props.onChange({ showBars: !this.props.options.showBars, ...this.props.options });
   };
 
   onTogglePoints = () => {
-    this.props.onChange({
-      ...this.props.options,
-      showPoints: !this.props.options.showPoints,
-    });
+    this.props.onChange({ showPoints: !this.props.options.showPoints, ...this.props.options });
   };
 
   render() {
