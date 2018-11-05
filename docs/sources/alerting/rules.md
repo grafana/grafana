@@ -39,7 +39,7 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 ## Rule Config
 
-{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
+
 
 Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
 panels as well in a future release.
@@ -47,6 +47,16 @@ panels as well in a future release.
 ### Name & Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
+
+### For
+
+> This setting is available in Grafana 5.4 and above.
+
+The `For` setting allows you to specify a duration for which the alert has to violate the threshold before switching to `Alerting` state and sending notifications. This is useful when you want to reduce the amount of false positive alerts and problems from which the system selfheal. Which in case a human does not need to be woken up.
+
+Typically, it's always a good idea to use this setting since its often worse to get false positive than wait a few minutes before the alert notification triggers.
+
+{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
 ### Conditions
 
@@ -57,11 +67,11 @@ specify a query letter, time range and an aggregation function.
 ### Query condition example
 
 ```sql
-avg() OF query(A, 5m, now) IS BELOW 14
+avg() OF query(A, 15m, now) IS BELOW 14
 ```
 
 - `avg()` Controls how the values for **each** series should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
-- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `5m, now` means 5 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
+- `query(A, 15m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `15m, now` means 5 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
 - `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
 
 The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
