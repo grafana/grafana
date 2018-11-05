@@ -29,7 +29,7 @@ func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl 
 
 	r := release{
 		Version:         version,
-		ReleaseDate:     time.Now(),
+		ReleaseDate:     time.Now().UTC(),
 		Stable:          !isBeta,
 		Beta:            isBeta,
 		Nightly:         false,

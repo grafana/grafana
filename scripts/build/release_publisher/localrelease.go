@@ -22,7 +22,7 @@ func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, 
 
 	rel := release{
 		Version:         buildData.version,
-		ReleaseDate:     time.Now(),
+		ReleaseDate:     time.Now().UTC(),
 		Stable:          false,
 		Beta:            false,
 		Nightly:         true,
