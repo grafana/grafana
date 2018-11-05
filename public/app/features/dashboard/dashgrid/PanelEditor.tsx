@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+
+import { QueriesTab } from './QueriesTab';
+import { VizTypePicker } from './VizTypePicker';
+
+import { store } from 'app/store/configureStore';
+import { updateLocation } from 'app/core/actions';
+
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { store } from 'app/store/configureStore';
-import { QueriesTab } from './QueriesTab';
 import { PanelPlugin, PluginExports } from 'app/types/plugins';
-import { VizTypePicker } from './VizTypePicker';
-import { updateLocation } from 'app/core/actions';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -22,7 +25,7 @@ interface PanelEditorTab {
   icon: string;
 }
 
-export class PanelEditor extends React.Component<PanelEditorProps, any> {
+export class PanelEditor extends PureComponent<PanelEditorProps> {
   tabs: PanelEditorTab[];
 
   constructor(props) {
@@ -39,15 +42,19 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   }
 
   renderPanelOptions() {
-    const { pluginExports } = this.props;
+    const { pluginExports, panel } = this.props;
 
-    if (pluginExports.PanelOptions) {
-      const PanelOptions = pluginExports.PanelOptions;
-      return <PanelOptions />;
+    if (pluginExports.PanelOptionsComponent) {
+      const OptionsComponent = pluginExports.PanelOptionsComponent;
+      return <OptionsComponent options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
     } else {
       return <p>Visualization has no options</p>;
     }
   }
+
+  onPanelOptionsChanged = (options: any) => {
+    this.props.panel.updateOptions(options);
+  };
 
   renderVizTab() {
     return (
@@ -70,6 +77,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
         partial: true,
       })
     );
+    this.forceUpdate();
   };
 
   render() {

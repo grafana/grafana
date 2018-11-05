@@ -34,37 +34,22 @@ function time_format(ticks, min, max) {
   return '%H:%M';
 }
 
-const FLOT_OPTIONS = {
-  legend: {
-    show: false,
-  },
-  series: {
-    lines: {
-      linewidth: 1,
-      zero: false,
-    },
-    shadowSize: 0,
-  },
-  grid: {
-    minBorderMargin: 0,
-    markings: [],
-    backgroundColor: null,
-    borderWidth: 0,
-    // hoverable: true,
-    clickable: true,
-    color: '#a1a1a1',
-    margin: { left: 0, right: 0 },
-    labelMarginX: 0,
-  },
-};
-
 interface GraphProps {
   timeSeries: TimeSeriesVMs;
   timeRange: TimeRange;
+  showLines?: boolean;
+  showPoints?: boolean;
+  showBars?: boolean;
   size?: { width: number; height: number };
 }
 
 export class Graph extends PureComponent<GraphProps> {
+  static defaultProps = {
+    showLines: true,
+    showPoints: false,
+    showBars: false,
+  };
+
   element: any;
 
   componentDidUpdate(prevProps: GraphProps) {
@@ -82,7 +67,7 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   draw() {
-    const { size, timeSeries, timeRange } = this.props;
+    const { size, timeSeries, timeRange, showLines, showBars, showPoints } = this.props;
 
     if (!size) {
       return;
@@ -92,7 +77,31 @@ export class Graph extends PureComponent<GraphProps> {
     const min = timeRange.from.valueOf();
     const max = timeRange.to.valueOf();
 
-    const dynamicOptions = {
+    const flotOptions = {
+      legend: {
+        show: false,
+      },
+      series: {
+        lines: {
+          show: showLines,
+          linewidth: 1,
+          zero: false,
+        },
+        points: {
+          show: showPoints,
+          fill: 1,
+          fillColor: false,
+          radius: 2,
+        },
+        bars: {
+          show: showBars,
+          fill: 1,
+          barWidth: 1,
+          zero: false,
+          lineWidth: 0,
+        },
+        shadowSize: 0,
+      },
       xaxis: {
         mode: 'time',
         min: min,
@@ -101,15 +110,24 @@ export class Graph extends PureComponent<GraphProps> {
         ticks: ticks,
         timeformat: time_format(ticks, min, max),
       },
+      grid: {
+        minBorderMargin: 0,
+        markings: [],
+        backgroundColor: null,
+        borderWidth: 0,
+        // hoverable: true,
+        clickable: true,
+        color: '#a1a1a1',
+        margin: { left: 0, right: 0 },
+        labelMarginX: 0,
+      },
     };
 
-    const options = {
-      ...FLOT_OPTIONS,
-      ...dynamicOptions,
-    };
-
-    console.log('plot', timeSeries, options);
-    $.plot(this.element, timeSeries, options);
+    try {
+      $.plot(this.element, timeSeries, flotOptions);
+    } catch (err) {
+      console.log('Graph rendering error', err, flotOptions, timeSeries);
+    }
   }
 
   render() {
