@@ -2,9 +2,8 @@ package alerting
 
 import (
 	"errors"
-	"time"
-
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -114,10 +113,10 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			return nil, ValidationError{Reason: "Could not parse frequency"}
 		}
 
-		rawFow := jsonAlert.Get("for").MustString()
+		rawFor := jsonAlert.Get("for").MustString()
 		var forValue time.Duration
-		if rawFow != "" {
-			forValue, err = time.ParseDuration(rawFow)
+		if rawFor != "" {
+			forValue, err = time.ParseDuration(rawFor)
 			if err != nil {
 				return nil, ValidationError{Reason: "Could not parse for"}
 			}

@@ -3,6 +3,7 @@ package alerting
 import (
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -46,7 +47,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			return nil
 		})
 
-		json, err := ioutil.ReadFile("./test-data/graphite-alert.json")
+		json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
 		So(err, ShouldBeNil)
 
 		Convey("Extractor should not modify the original json", func() {
@@ -118,6 +119,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 					So(alerts[1].PanelId, ShouldEqual, 4)
 				})
 
+				Convey("should extract for param", func() {
+					So(alerts[0].For, ShouldEqual, time.Minute*2)
+					So(alerts[1].For, ShouldEqual, time.Duration(0))
+				})
+
 				Convey("should extract name and desc", func() {
 					So(alerts[0].Name, ShouldEqual, "name1")
 					So(alerts[0].Message, ShouldEqual, "desc1")
@@ -140,7 +146,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Panels missing id should return error", func() {
-			panelWithoutId, err := ioutil.ReadFile("./test-data/panels-missing-id.json")
+			panelWithoutId, err := ioutil.ReadFile("./testdata/panels-missing-id.json")
 			So(err, ShouldBeNil)
 
 			dashJson, err := simplejson.NewJson(panelWithoutId)
@@ -156,7 +162,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Panel with id set to zero should return error", func() {
-			panelWithIdZero, err := ioutil.ReadFile("./test-data/panel-with-id-0.json")
+			panelWithIdZero, err := ioutil.ReadFile("./testdata/panel-with-id-0.json")
 			So(err, ShouldBeNil)
 
 			dashJson, err := simplejson.NewJson(panelWithIdZero)
@@ -172,7 +178,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Parse alerts from dashboard without rows", func() {
-			json, err := ioutil.ReadFile("./test-data/v5-dashboard.json")
+			json, err := ioutil.ReadFile("./testdata/v5-dashboard.json")
 			So(err, ShouldBeNil)
 
 			dashJson, err := simplejson.NewJson(json)
@@ -192,7 +198,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Parse and validate dashboard containing influxdb alert", func() {
-			json, err := ioutil.ReadFile("./test-data/influxdb-alert.json")
+			json, err := ioutil.ReadFile("./testdata/influxdb-alert.json")
 			So(err, ShouldBeNil)
 
 			dashJson, err := simplejson.NewJson(json)
@@ -221,7 +227,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Should be able to extract collapsed panels", func() {
-			json, err := ioutil.ReadFile("./test-data/collapsed-panels.json")
+			json, err := ioutil.ReadFile("./testdata/collapsed-panels.json")
 			So(err, ShouldBeNil)
 
 			dashJson, err := simplejson.NewJson(json)
@@ -242,7 +248,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Parse and validate dashboard without id and containing an alert", func() {
-			json, err := ioutil.ReadFile("./test-data/dash-without-id.json")
+			json, err := ioutil.ReadFile("./testdata/dash-without-id.json")
 			So(err, ShouldBeNil)
 
 			dashJSON, err := simplejson.NewJson(json)
