@@ -101,7 +101,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
           })}
 
           <div className="panel-editor__aside-actions">
-            <button className="btn btn-success" onClick={this.onClose}>
+            <button className="btn btn-secondary" onClick={this.onClose}>
               Back to dashboard
             </button>
             <button className="btn btn-inverse" onClick={this.onClose}>
