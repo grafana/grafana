@@ -335,6 +335,9 @@ jobs:
       - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
+      - run:
+          name: Deploy to grafana.com
+          command: 'cd enterprise-dist && scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -from-local'
 
 
   deploy-enterprise-release:
