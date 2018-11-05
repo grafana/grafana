@@ -60,7 +60,8 @@ Here is a minimal policy example:
             "Effect": "Allow",
             "Action": [
                 "cloudwatch:ListMetrics",
-                "cloudwatch:GetMetricStatistics"
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:GetMetricData"
             ],
             "Resource": "*"
         },
