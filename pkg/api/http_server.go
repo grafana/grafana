@@ -16,7 +16,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	gocache "github.com/patrickmn/go-cache"
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/live"
@@ -28,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/cache"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,19 +47,19 @@ type HTTPServer struct {
 	macaron       *macaron.Macaron
 	context       context.Context
 	streamManager *live.StreamManager
-	cache         *gocache.Cache
 	httpSrv       *http.Server
 
-	RouteRegister routing.RouteRegister `inject:""`
-	Bus           bus.Bus               `inject:""`
-	RenderService rendering.Service     `inject:""`
-	Cfg           *setting.Cfg          `inject:""`
-	HooksService  *hooks.HooksService   `inject:""`
+	RouteRegister   routing.RouteRegister    `inject:""`
+	Bus             bus.Bus                  `inject:""`
+	RenderService   rendering.Service        `inject:""`
+	Cfg             *setting.Cfg             `inject:""`
+	HooksService    *hooks.HooksService      `inject:""`
+	CacheService    *cache.CacheService      `inject:""`
+	DatasourceCache datasources.CacheService `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
-	hs.cache = gocache.New(5*time.Minute, 10*time.Minute)
 
 	hs.streamManager = live.NewStreamManager()
 	hs.macaron = hs.newMacaron()
@@ -231,6 +232,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.Use(middleware.ValidateHostHeader(setting.Domain))
 	}
 
+	m.Use(middleware.HandleNoCacheHeader())
 	m.Use(middleware.AddDefaultResponseHeaders())
 }
 
