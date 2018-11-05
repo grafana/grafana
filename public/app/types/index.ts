@@ -6,7 +6,7 @@ import { FolderDTO, FolderState, FolderInfo } from './folders';
 import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
-import { Invitee, OrgUser, User, UsersState } from './user';
+import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
 import {
   TimeRange,
@@ -22,12 +22,14 @@ import {
 } from './series';
 import { PanelProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
+import { Organization, OrganizationPreferences, OrganizationState } from './organization';
 import {
   AppNotification,
   AppNotificationSeverity,
   AppNotificationsState,
   AppNotificationTimeout,
 } from './appNotifications';
+import { DashboardSearchHit } from './search';
 
 export {
   Team,
@@ -76,10 +78,15 @@ export {
   DataQueryResponse,
   DataQueryOptions,
   PluginDashboard,
+  Organization,
+  OrganizationState,
+  OrganizationPreferences,
   AppNotification,
   AppNotificationsState,
   AppNotificationSeverity,
   AppNotificationTimeout,
+  DashboardSearchHit,
+  UserState,
 };
 
 export interface StoreState {
@@ -92,5 +99,7 @@ export interface StoreState {
   dashboard: DashboardState;
   dataSources: DataSourcesState;
   users: UsersState;
+  organization: OrganizationState;
   appNotifications: AppNotificationsState;
+  user: UserState;
 }

@@ -2,9 +2,9 @@ import React, { PureComponent } from 'react';
 
 import { QueryTransaction, HistoryItem, Query, QueryHint } from 'app/types/explore';
 
-// TODO make this datasource-plugin-dependent
-import QueryField from './PromQueryField';
-import QueryTransactions from './QueryTransactions';
+import DefaultQueryField from './QueryField';
+import QueryTransactionStatus from './QueryTransactionStatus';
+import { DataSource } from 'app/types';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
@@ -24,10 +24,8 @@ interface QueryRowEventHandlers {
 
 interface QueryRowCommonProps {
   className?: string;
-  datasource: any;
+  datasource: DataSource;
   history: HistoryItem[];
-  // Temporarily
-  supportsLogs?: boolean;
   transactions: QueryTransaction[];
 }
 
@@ -78,14 +76,15 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { datasource, history, query, supportsLogs, transactions } = this.props;
+    const { datasource, history, query, transactions } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
+    const QueryField = datasource.pluginExports.ExploreQueryField || DefaultQueryField;
     return (
       <div className="query-row">
         <div className="query-row-status">
-          <QueryTransactions transactions={transactions} />
+          <QueryTransactionStatus transactions={transactions} />
         </div>
         <div className="query-row-field">
           <QueryField
@@ -97,7 +96,6 @@ class QueryRow extends PureComponent<QueryRowProps> {
             onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}
-            supportsLogs={supportsLogs}
           />
         </div>
         <div className="query-row-tools">

@@ -107,7 +107,7 @@ register({
     {
       name: 'function',
       type: 'string',
-      options: ['increase', 'rate', 'sum'],
+      options: ['delta', 'increase', 'rate', 'sum'],
     },
   ],
   defaultParams: ['increase'],

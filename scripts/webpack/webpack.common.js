@@ -16,7 +16,7 @@ module.exports = {
     publicPath: "public/build/",
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.es6', '.js', '.json'],
+    extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
     },
     modules: [
@@ -47,7 +47,7 @@ module.exports = {
       },
       {
         test: /\.html$/,
-        exclude: /index\.template.html/,
+        exclude: /(index|error)\-template\.html/,
         use: [
           { loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public' },
           {

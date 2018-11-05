@@ -14,36 +14,24 @@
   <link rel="icon" type="image/png" href="public/img/fav32.png">
   <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28">
   <link rel="apple-touch-icon" sizes="180x180" href="public/img/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css">
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="msapplication-TileColor" content="#2b5797">
   <meta name="msapplication-config" content="public/img/browserconfig.xml">
 </head>
 
-<body class="theme-[[ .Theme ]]">
+<body class="theme-[[ .Theme ]] [[.AppNameBodyClass]]">
 
   <style>
-    body {
-      margin: 0;
-      height: 100%;
-      width: 100%;
-      position: absolute;
-    }
-
     .preloader {
       height: 100%;
       flex-direction: column;
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-
-    .theme-light .preloader {
-      background: linear-gradient(-60deg, #f7f8fa, #f5f6f9 70%, #f7f8fa 98%);
-    }
-
-    .theme-dark .preloader {
-      background: linear-gradient(180deg, #222426 10px, #161719 100px);
     }
 
     .preloader__enter {
@@ -253,14 +241,7 @@
       navTree: [[.NavTree]]
     };
 
-    // load css async
-    var myCSS = document.createElement("link");
-    myCSS.rel = "stylesheet";
-    myCSS.href = "public/build/grafana.[[ .Theme ]].css?v[[ .BuildVersion ]]+[[ .BuildCommit ]]";
-
-    // insert it at the end of the head in a legacy-friendly manner
-    document.head.insertBefore(myCSS, document.head.childNodes[document.head.childNodes.length - 1].nextSibling);
-    // switch loader to show all has loaded
+		// In case the js files fails to load the code below will show an info message.
     window.onload = function() {
       var preloader = document.getElementsByClassName("preloader");
       if (preloader.length) {

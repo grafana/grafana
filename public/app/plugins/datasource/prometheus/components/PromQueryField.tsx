@@ -7,11 +7,10 @@ import Prism from 'prismjs';
 import { TypeaheadOutput } from 'app/types/explore';
 
 // dom also includes Element polyfills
-import { getNextCharacter, getPreviousCousin } from './utils/dom';
-import BracesPlugin from './slate-plugins/braces';
-import RunnerPlugin from './slate-plugins/runner';
-
-import TypeaheadField, { TypeaheadInput, TypeaheadFieldState } from './QueryField';
+import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
+import BracesPlugin from 'app/features/explore/slate-plugins/braces';
+import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
+import TypeaheadField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -51,10 +50,7 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   return [...options, ...metricsOptions];
 }
 
-export function willApplySuggestion(
-  suggestion: string,
-  { typeaheadContext, typeaheadText }: TypeaheadFieldState
-): string {
+export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {
@@ -90,7 +86,7 @@ interface CascaderOption {
 
 interface PromQueryFieldProps {
   datasource: any;
-  error?: string;
+  error?: string | JSX.Element;
   hint?: any;
   history?: any[];
   initialQuery?: string | null;
@@ -98,11 +94,9 @@ interface PromQueryFieldProps {
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
   onQueryChange?: (value: string, override?: boolean) => void;
-  supportsLogs?: boolean; // To be removed after Logging gets its own query field
 }
 
 interface PromQueryFieldState {
-  logLabelOptions: any[];
   metricsOptions: any[];
   metricsByPrefix: CascaderOption[];
   syntaxLoaded: boolean;
@@ -129,7 +123,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     ];
 
     this.state = {
-      logLabelOptions: [],
       metricsByPrefix: [],
       metricsOptions: [],
       syntaxLoaded: false,
@@ -138,26 +131,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProvider.start().then(() => this.onReceiveMetrics());
+      this.languageProvider
+        .start()
+        .then(remaining => {
+          remaining.map(task => task.then(this.onReceiveMetrics).catch(() => {}));
+        })
+        .then(() => this.onReceiveMetrics());
     }
   }
-
-  onChangeLogLabels = (values: string[], selectedOptions: CascaderOption[]) => {
-    let query;
-    if (selectedOptions.length === 1) {
-      if (selectedOptions[0].children.length === 0) {
-        query = selectedOptions[0].value;
-      } else {
-        // Ignore click on group
-        return;
-      }
-    } else {
-      const key = selectedOptions[0].value;
-      const value = selectedOptions[1].value;
-      query = `{${key}="${value}"}`;
-    }
-    this.onChangeQuery(query, true);
-  };
 
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
@@ -210,10 +191,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Build metrics tree
     const metricsByPrefix = groupMetricsByPrefix(metrics);
     const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
-    const metricsOptions = [
-      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
-      ...metricsByPrefix,
-    ];
+    const metricsOptions =
+      histogramMetrics.length > 0
+        ? [
+            { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions, isLeaf: false },
+            ...metricsByPrefix,
+          ]
+        : metricsByPrefix;
 
     this.setState({ metricsOptions, syntaxLoaded: true });
   };
@@ -243,37 +227,32 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, initialQuery, supportsLogs } = this.props;
-    const { logLabelOptions, metricsOptions, syntaxLoaded } = this.state;
+    const { error, hint, initialQuery } = this.props;
+    const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
+    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading matrics...';
 
     return (
       <div className="prom-query-field">
         <div className="prom-query-field-tools">
-          {supportsLogs ? (
-            <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels}>
-              <button className="btn navbar-button navbar-button--tight">Log labels</button>
-            </Cascader>
-          ) : (
-            <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-              <button className="btn navbar-button navbar-button--tight">Metrics</button>
-            </Cascader>
-          )}
+          <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
+            <button className="btn navbar-button navbar-button--tight" disabled={!syntaxLoaded}>
+              {chooserText}
+            </button>
+          </Cascader>
         </div>
         <div className="prom-query-field-wrapper">
-          <div className="slate-query-field-wrapper">
-            <TypeaheadField
-              additionalPlugins={this.plugins}
-              cleanText={cleanText}
-              initialValue={initialQuery}
-              onTypeahead={this.onTypeahead}
-              onWillApplySuggestion={willApplySuggestion}
-              onValueChanged={this.onChangeQuery}
-              placeholder="Enter a PromQL query"
-              portalOrigin="prometheus"
-              syntaxLoaded={syntaxLoaded}
-            />
-          </div>
+          <TypeaheadField
+            additionalPlugins={this.plugins}
+            cleanText={cleanText}
+            initialValue={initialQuery}
+            onTypeahead={this.onTypeahead}
+            onWillApplySuggestion={willApplySuggestion}
+            onValueChanged={this.onChangeQuery}
+            placeholder="Enter a PromQL query"
+            portalOrigin="prometheus"
+            syntaxLoaded={syntaxLoaded}
+          />
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
           {hint ? (
             <div className="prom-query-field-info text-warning">
