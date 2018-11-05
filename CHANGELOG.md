@@ -26,6 +26,7 @@
 
 # 5.3.3 (unreleased)
 
+* **Alerting**: Delete alerts when parent folder was deleted [#13322](https://github.com/grafana/grafana/issues/13322)
 * **MySQL**: Fix `$__timeFilter()` should respect local time zone [#13769](https://github.com/grafana/grafana/issues/13769)
 
 # 5.3.2 (2018-10-24)
