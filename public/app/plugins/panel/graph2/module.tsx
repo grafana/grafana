@@ -5,7 +5,7 @@ import Graph from 'app/viz/Graph';
 import { Switch } from 'app/core/components/Switch/Switch';
 
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
-import { PanelProps, NullValueMode } from 'app/types';
+import { PanelProps, PanelOptionsProps, NullValueMode } from 'app/types';
 
 interface Options {
   showBars: boolean;
@@ -43,34 +43,37 @@ export class Graph2 extends PureComponent<Props> {
   }
 }
 
-export class GraphOptions extends PureComponent<Options> {
+export class GraphOptions extends PureComponent<PanelOptionsProps<Options>> {
   onToggleLines = () => {
-    const options = this.props as Options;
-
     this.props.onChange({
-      ...options,
-      showLines: !this.props.showLines,
+      ...this.props.options,
+      showLines: !this.props.options.showLines,
+    });
+  };
+
+  onToggleBars = () => {
+    this.props.onChange({
+      ...this.props.options,
+      showBars: !this.props.options.showBars,
     });
   };
 
   onTogglePoints = () => {
-    const options = this.props as Options;
-
     this.props.onChange({
-      ...options,
-      showPoints: !this.props.showPoints,
+      ...this.props.options,
+      showPoints: !this.props.options.showPoints,
     });
   };
 
   render() {
-    const { showBars, showPoints, showLines } = this.props;
+    const { showBars, showPoints, showLines } = this.props.options;
 
     return (
       <div>
         <div className="section gf-form-group">
           <h5 className="page-heading">Draw Modes</h5>
           <Switch label="Lines" labelClass="width-5" checked={showLines} onChange={this.onToggleLines} />
-          <Switch label="Bars" labelClass="width-5" checked={showBars} onChange={this.onToggleLines} />
+          <Switch label="Bars" labelClass="width-5" checked={showBars} onChange={this.onToggleBars} />
           <Switch label="Points" labelClass="width-5" checked={showPoints} onChange={this.onTogglePoints} />
         </div>
       </div>

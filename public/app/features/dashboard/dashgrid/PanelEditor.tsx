@@ -54,6 +54,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
 
   onPanelOptionsChanged = (options: any) => {
     this.props.panel.updateOptions(options);
+    this.forceUpdate();
   };
 
   renderVizTab() {

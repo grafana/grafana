@@ -8,7 +8,7 @@ export interface PanelProps<T = any> {
   renderCounter: number;
 }
 
-export interface PanelOptionProps<T = any> {
+export interface PanelOptionsProps<T = any> {
   options: T;
   onChange: (options: T) => void;
 }

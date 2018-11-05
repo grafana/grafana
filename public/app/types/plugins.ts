@@ -1,5 +1,5 @@
 import { ComponentClass } from 'react';
-import { PanelProps, PanelOptionProps } from './panel';
+import { PanelProps, PanelOptionsProps } from './panel';
 
 export interface PluginExports {
   Datasource?: any;
@@ -12,7 +12,7 @@ export interface PluginExports {
   // Panel plugin
   PanelCtrl?;
   PanelComponent?: ComponentClass<PanelProps>;
-  PanelOptionsComponent: ComponentClass<PanelOptionProps>;
+  PanelOptionsComponent: ComponentClass<PanelOptionsProps>;
 }
 
 export interface PanelPlugin {
