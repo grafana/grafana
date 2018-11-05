@@ -5,6 +5,7 @@ import { withSize } from 'react-sizeme';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
+import 'vendor/flot/jquery.flot.selection';
 
 import { RawTimeRange } from 'app/types/series';
 import * as dateMath from 'app/core/utils/datemath';
@@ -62,10 +63,10 @@ const FLOT_OPTIONS = {
     margin: { left: 0, right: 0 },
     labelMarginX: 0,
   },
-  // selection: {
-  //   mode: 'x',
-  //   color: '#666',
-  // },
+  selection: {
+    mode: 'x',
+    color: '#666',
+  },
   // crosshair: {
   //   mode: 'x',
   // },
@@ -80,6 +81,7 @@ interface GraphProps {
   split?: boolean;
   size?: { width: number; height: number };
   userOptions?: any;
+  onChangeTime?: (range: RawTimeRange) => void;
 }
 
 interface GraphState {
@@ -87,6 +89,8 @@ interface GraphState {
 }
 
 export class Graph extends PureComponent<GraphProps, GraphState> {
+  $el: any;
+
   state = {
     showAllTimeSeries: false,
   };
@@ -99,6 +103,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   componentDidMount() {
     this.draw();
+    this.$el = $(`#${this.props.id}`);
+    this.$el.bind('plotselected', this.onPlotSelected);
   }
 
   componentDidUpdate(prevProps: GraphProps) {
@@ -112,6 +118,20 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       this.draw();
     }
   }
+
+  componentWillUnmount() {
+    this.$el.unbind('plotselected', this.onPlotSelected);
+  }
+
+  onPlotSelected = (event, ranges) => {
+    if (this.props.onChangeTime) {
+      const range = {
+        from: moment(ranges.xaxis.from),
+        to: moment(ranges.xaxis.to),
+      };
+      this.props.onChangeTime(range);
+    }
+  };
 
   onShowAllTimeSeries = () => {
     this.setState(

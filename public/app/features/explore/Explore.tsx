@@ -898,6 +898,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           height={graphHeight}
                           loading={graphLoading}
                           id={`explore-graph-${position}`}
+                          onChangeTime={this.onChangeTime}
                           range={graphRange}
                           split={split}
                         />
@@ -908,7 +909,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       </div>
                     ) : null}
                     {supportsLogs && showingLogs ? (
-                      <Logs data={logsResult} loading={logsLoading} position={position} range={range} />
+                      <Logs
+                        data={logsResult}
+                        loading={logsLoading}
+                        position={position}
+                        onChangeTime={this.onChangeTime}
+                        range={range}
+                      />
                     ) : null}
                   </>
                 )}

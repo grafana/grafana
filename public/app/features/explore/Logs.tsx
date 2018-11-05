@@ -25,6 +25,7 @@ interface LogsProps {
   loading: boolean;
   position: string;
   range?: RawTimeRange;
+  onChangeTime?: (range: RawTimeRange) => void;
 }
 
 interface LogsState {
@@ -88,6 +89,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             height="100px"
             range={range}
             id={`explore-logs-graph-${position}`}
+            onChangeTime={this.props.onChangeTime}
             userOptions={graphOptions}
           />
         </div>
