@@ -68,6 +68,11 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#D63232",
 			Text:  "Alerting",
 		}
+	case m.AlertStateUnknown:
+		return &StateDescription{
+			Color: "888888",
+			Text:  "Unknown",
+		}
 	default:
 		panic("Unknown rule state for alert notifications " + c.Rule.State)
 	}

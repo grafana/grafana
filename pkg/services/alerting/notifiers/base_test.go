@@ -134,6 +134,22 @@ func TestShouldSendAlertNotification(t *testing.T) {
 
 			expect: true,
 		},
+		{
+			name:      "unknown -> ok",
+			prevState: m.AlertStateUnknown,
+			newState:  m.AlertStateOK,
+			state:     &m.AlertNotificationState{},
+
+			expect: false,
+		},
+		{
+			name:      "unknown -> alerting",
+			prevState: m.AlertStateUnknown,
+			newState:  m.AlertStateAlerting,
+			state:     &m.AlertNotificationState{},
+
+			expect: true,
+		},
 	}
 
 	for _, tc := range tcs {

@@ -67,6 +67,11 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 	}
 
 	// Do not notify when we become OK for the first time.
+	if context.PrevAlertState == models.AlertStateUnknown && context.Rule.State == models.AlertStateOK {
+		return false
+	}
+
+	// Do not notify when we become OK from pending
 	if context.PrevAlertState == models.AlertStatePending && context.Rule.State == models.AlertStateOK {
 		return false
 	}
