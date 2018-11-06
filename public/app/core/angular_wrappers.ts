@@ -7,6 +7,9 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 
+import { Teste } from 'app/features/dashboard/custom_time_ranges/reactTest';
+import { CustomTimeRangeEditor } from 'app/features/dashboard/custom_time_ranges/editorReact';
+
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
   react2AngularDirective('sidemenu', SideMenu, []);
@@ -19,4 +22,6 @@ export function registerAngularDirectives() {
     ['onSelect', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
+  react2AngularDirective('teste', Teste, []);
+  react2AngularDirective('customtimerangeeditor', CustomTimeRangeEditor, ['dashboard']);
 }
