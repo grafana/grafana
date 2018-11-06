@@ -58,7 +58,7 @@ permissions to users and teams which will allow access to query the datasource.
 
 {{< docs-imagebox img="/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/img/docs/enterprise/datasource_permissions_disable.gif" >}}
 
-If you have enabled permissions for a datasource and want to revoke datasource permissions to the default, i.e.
+If you have enabled permissions for a datasource and want to return datasource permissions to the default, i.e.
 datasource can be queried by any user in that organization, you can disable permissions with a click of a button.
 Note that all existing permissions created for datasource will be deleted.
 
