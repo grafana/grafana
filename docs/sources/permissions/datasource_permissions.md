@@ -15,7 +15,7 @@ weight = 4
 > Datasource Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise/index.md" >}}).
 
 Datasource permissions allows you to restrict access for users to query a datasource. For each datasource there is
-a permission page that makes it possible to enable permissions and add restrict query permissions to specific
+a permission page that makes it possible to enable permissions and restrict query permissions to specific
 **Users** and **Teams**.
 
 ## Restricting Access - Enable Permissions
