@@ -20,7 +20,7 @@ export interface PanelChromeProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   component: ComponentClass<PanelProps>;
-  withMenuOptions?: (c: typeof PanelHeaderMenu, p: PanelModel) => typeof PanelHeaderMenu;
+  // withMenuOptions?: (c: typeof PanelHeaderMenu, p: PanelModel) => typeof PanelHeaderMenu;
   moduleMenu?: any;
 }
 
@@ -99,18 +99,15 @@ export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeStat
     const { refreshCounter, timeRange, dataSourceApi, timeSeries, renderCounter } = this.state;
     const { targets } = panel;
     const PanelComponent = this.props.component;
-    console.log('Panel chrome render');
-    // const PanelHeaderMenuComponent: typeof PanelHeaderMenu = withMenuOptions ? withMenuOptions(PanelHeaderMenu, panel) : PanelHeaderMenu;
-    const PanelHeaderMenuComponent = PanelHeaderMenu;
-    const mm = moduleMenu(panel, dataSourceApi, timeSeries);
-    const additionalMenuItems = mm.getAdditionalMenuItems || undefined;
-    const additionalSubMenuItems = mm.getAdditionalSubMenuItems || undefined;
+    const panelSpecificMenuOptions = moduleMenu(panel, dataSourceApi, timeSeries);
+    const additionalMenuItems = panelSpecificMenuOptions.additionalMenuItems || undefined;
+    const additionalSubMenuItems = panelSpecificMenuOptions.additionalSubMenuItems || undefined;
 
     console.log('panelChrome render');
     return (
       <div className="panel-container">
         <PanelHeader title={panel.title}>
-          <PanelHeaderMenuComponent
+          <PanelHeaderMenu
             panel={panel}
             dashboard={dashboard}
             dataSourceApi={dataSourceApi}

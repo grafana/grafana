@@ -1,4 +1,4 @@
-﻿import { PanelHeaderMenuItemTypes, PanelHeaderMenuItemProps } from './../dashgrid/PanelHeader/PanelHeaderMenuItem';
+﻿import { PanelHeaderMenuItemTypes, PanelHeaderMenuItemProps } from 'app/types/panel';
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
 import { PanelModel } from 'app/features/dashboard/panel_model';

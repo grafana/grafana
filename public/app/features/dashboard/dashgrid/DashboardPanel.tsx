@@ -122,7 +122,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
         <div className={panelWrapperClass}>
           <PanelChrome
             component={pluginExports.PanelComponent}
-            withMenuOptions={pluginExports.withMenuOptions}
+            // withMenuOptions={pluginExports.withMenuOptions}
             panel={this.props.panel}
             dashboard={this.props.dashboard}
             moduleMenu={pluginExports.moduleMenu}

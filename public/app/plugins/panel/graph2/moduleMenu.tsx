@@ -6,11 +6,7 @@ import { getTimeSrv } from 'app/features/dashboard/time_srv';
 import { store } from 'app/store/configureStore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import appEvents from 'app/core/app_events';
-
-import {
-  PanelHeaderMenuItemProps,
-  PanelHeaderMenuItemTypes,
-} from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
+import { PanelHeaderMenuItemProps, PanelHeaderMenuItemTypes } from 'app/types/panel';
 
 export const moduleMenu = (panel, dataSourceApi, timeSeries) => {
   const onExploreClick = async () => {
@@ -70,7 +66,7 @@ export const moduleMenu = (panel, dataSourceApi, timeSeries) => {
   };
 
   return {
-    getAdditionalMenuItems: getAdditionalMenuItems(),
-    getAdditionalSubMenuItems: getAdditionalSubMenuItems(),
+    additionalMenuItems: getAdditionalMenuItems(),
+    additionalSubMenuItems: getAdditionalSubMenuItems(),
   };
 };

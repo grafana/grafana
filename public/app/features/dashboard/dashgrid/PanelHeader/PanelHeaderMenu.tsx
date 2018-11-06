@@ -1,7 +1,8 @@
 ﻿import React, { PureComponent } from 'react';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
-import { PanelHeaderMenuItem, PanelHeaderMenuItemProps } from './PanelHeaderMenuItem';
+import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
+import { PanelHeaderMenuItemProps } from 'app/types/panel';
 import { getPanelMenu } from 'app/features/dashboard/utils/panel_menu';
 import { DataSourceApi } from 'app/types/series';
 import { TimeSeries } from 'app/types';

@@ -1,22 +1,5 @@
 ﻿import React, { SFC } from 'react';
-
-export enum PanelHeaderMenuItemTypes { // TODO: Evaluate. Remove?
-  Button = 'Button', // ?
-  Divider = 'Divider',
-  Link = 'Link',
-  SubMenu = 'SubMenu',
-}
-
-export interface PanelHeaderMenuItemProps {
-  type: PanelHeaderMenuItemTypes;
-  text?: string;
-  iconClassName?: string;
-  handleClick?: () => void;
-  shortcut?: string;
-  children?: any;
-  subMenu?: PanelHeaderMenuItemProps[];
-  role?: string;
-}
+import { PanelHeaderMenuItemProps, PanelHeaderMenuItemTypes } from 'app/types/panel';
 
 export const PanelHeaderMenuItem: SFC<PanelHeaderMenuItemProps> = props => {
   const isSubMenu = props.type === PanelHeaderMenuItemTypes.SubMenu;
