@@ -26,7 +26,7 @@ With Grafana Enterprise you can set up synchronization between LDAP Groups and T
 
 ### Datasource Permissions
 
-Datasource permissions allows you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
+Datasource permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
 
 ### Premium Plugins
 
