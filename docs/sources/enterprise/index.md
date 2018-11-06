@@ -22,7 +22,7 @@ that can only be found in the Grafana Enterprise.
 
 ### Enhanced LDAP Integration
 
-With Grafana Enterprise you can setup synchronization between LDAP Groups and Teams. [Learn More]({{< relref "auth/enhanced_ldap.md" >}}).
+With Grafana Enterprise you can set up synchronization between LDAP Groups and Teams. [Learn More]({{< relref "auth/enhanced_ldap.md" >}}).
 
 ### Datasource Permissions
 
