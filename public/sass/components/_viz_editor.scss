@@ -172,10 +172,12 @@
   width: 100%;
   top: -23px;
   text-align: center;
-  height: 1px;
+  border-bottom: 2px dashed transparent;
 
   &:hover {
-    border-bottom: 2px dashed $text-color-faint;
+    transition: border-color 0.2s ease-in 0.4s;
+    transition-delay: 0.2s;
+    border-color: $text-color-faint;
   }
 }
 
@@ -190,9 +192,12 @@
   top: -8px;
 
   &:hover {
-    background: linear-gradient(80deg, $blue-dark, lighten($blue-dark, 10%));
+    transition: background 0.2s ease-in 0.4s;
+    transition-delay: 0.2s;
+    background: $blue-dark;
     .panel-editor-resizer__handle-dots {
-      display: none;
+      transition: opacity 0.2s ease-in;
+      opacity: 0;
     }
   }
 }
