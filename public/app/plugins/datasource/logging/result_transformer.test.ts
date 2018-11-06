@@ -4,11 +4,11 @@ import { findCommonLabels, findUncommonLabels, formatLabels, getLogLevel, parseL
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
-    expect(getLogLevel('')).toBe(undefined);
+    expect(getLogLevel('')).toBe(LogLevel.none);
   });
 
   it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('this is a warning')).toBe(undefined);
+    expect(getLogLevel('this is a warning')).toBe(LogLevel.none);
   });
 
   it('returns log level on line contains a log level', () => {
