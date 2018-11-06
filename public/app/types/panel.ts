@@ -1,4 +1,5 @@
-import { LoadingState, TimeSeries, TimeRange } from './series';
+import { LoadingState, TimeSeries, TimeRange, DataSourceApi } from './series';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 
 export interface PanelProps<T = any> {
   timeSeries: TimeSeries[];
@@ -31,7 +32,11 @@ export interface PanelHeaderMenuItemProps {
   role?: string;
 }
 
-export interface PanelMenuExtras {
+export interface PanelHeaderMenuAdditional {
   additionalMenuItems: PanelHeaderMenuItemProps[];
   additionalSubMenuItems: PanelHeaderMenuItemProps[];
+}
+
+export interface PanelHeaderGetMenuAdditional {
+  (panel: PanelModel, dataSourceApi: DataSourceApi, timeSeries: TimeSeries[]): PanelHeaderMenuAdditional;
 }

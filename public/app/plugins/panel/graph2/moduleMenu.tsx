@@ -7,8 +7,11 @@ import { store } from 'app/store/configureStore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import appEvents from 'app/core/app_events';
 import { PanelHeaderMenuItemProps, PanelHeaderMenuItemTypes } from 'app/types/panel';
+import { TimeSeries } from 'app/types/series';
+import { DataSource } from 'app/types/datasources';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 
-export const moduleMenu = (panel, dataSourceApi, timeSeries) => {
+export const getMenuAdditional = (panel: PanelModel, dataSourceApi: DataSource, timeSeries: TimeSeries[]) => {
   const onExploreClick = async () => {
     const datasourceSrv = getDatasourceSrv();
     const timeSrv = getTimeSrv();
@@ -19,7 +22,7 @@ export const moduleMenu = (panel, dataSourceApi, timeSeries) => {
   };
 
   const onExportCsv = () => {
-    const model = {} as { seriesList: string };
+    const model = {} as { seriesList: TimeSeries[] };
     model.seriesList = timeSeries;
     appEvents.emit('show-modal', {
       templateHtml: '<export-data-modal data="model.seriesList"></export-data-modal>',

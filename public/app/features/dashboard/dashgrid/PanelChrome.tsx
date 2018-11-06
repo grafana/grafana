@@ -14,14 +14,14 @@ import { PanelHeaderMenu } from './PanelHeader/PanelHeaderMenu';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { TimeRange, PanelProps, TimeSeries } from 'app/types';
+import { PanelHeaderGetMenuAdditional } from 'app/types/panel';
 import { DataSourceApi } from 'app/types/series';
 
 export interface PanelChromeProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   component: ComponentClass<PanelProps>;
-  // withMenuOptions?: (c: typeof PanelHeaderMenu, p: PanelModel) => typeof PanelHeaderMenu;
-  moduleMenu?: any;
+  getMenuAdditional?: PanelHeaderGetMenuAdditional;
 }
 
 export interface PanelChromeState {
@@ -52,7 +52,7 @@ export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeStat
     try {
       const dataSourceSrv = getDatasourceSrv();
       const dataSourceApi = await dataSourceSrv.get(datasource);
-      this.setState(prevState => ({
+      this.setState((prevState: PanelChromeState) => ({
         ...prevState,
         dataSourceApi,
       }));
@@ -95,11 +95,12 @@ export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeStat
   }
 
   render() {
-    const { panel, dashboard, moduleMenu } = this.props;
+    const { panel, dashboard, getMenuAdditional } = this.props;
     const { refreshCounter, timeRange, dataSourceApi, timeSeries, renderCounter } = this.state;
+
     const { targets } = panel;
     const PanelComponent = this.props.component;
-    const panelSpecificMenuOptions = moduleMenu(panel, dataSourceApi, timeSeries);
+    const panelSpecificMenuOptions = getMenuAdditional(panel, dataSourceApi, timeSeries);
     const additionalMenuItems = panelSpecificMenuOptions.additionalMenuItems || undefined;
     const additionalSubMenuItems = panelSpecificMenuOptions.additionalSubMenuItems || undefined;
 

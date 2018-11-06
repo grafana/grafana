@@ -125,7 +125,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
             // withMenuOptions={pluginExports.withMenuOptions}
             panel={this.props.panel}
             dashboard={this.props.dashboard}
-            moduleMenu={pluginExports.moduleMenu}
+            getMenuAdditional={pluginExports.getMenuAdditional}
           />
         </div>
         {this.props.panel.isEditing && (

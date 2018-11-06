@@ -1,5 +1,6 @@
 import { ComponentClass } from 'react';
 import { PanelProps, PanelOptionsProps } from './panel';
+import { PanelHeaderGetMenuAdditional } from 'app/types/panel';
 
 export interface PluginExports {
   Datasource?: any;
@@ -13,7 +14,7 @@ export interface PluginExports {
   PanelCtrl?;
   PanelComponent?: ComponentClass<PanelProps>;
   PanelOptionsComponent: ComponentClass<PanelOptionsProps>;
-  moduleMenu?: any;
+  getMenuAdditional?: PanelHeaderGetMenuAdditional;
 }
 
 export interface PanelPlugin {
