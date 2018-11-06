@@ -170,26 +170,37 @@
   position: absolute;
   height: 2px;
   width: 100%;
-  top: 1px;
-  padding-left: 32px;
+  top: -23px;
+  text-align: center;
+  height: 1px;
+
+  &:hover {
+    border-bottom: 2px dashed $text-color-faint;
+  }
 }
 
 .panel-editor-resizer__handle {
   display: inline-block;
-  width: 100px;
+  width: 180px;
   position: relative;
-  background: $input-label-bg;
-  top: -12px;
   border-radius: 2px;
-  box-shadow: 0 0 8px $black;
-  height: 8px;
+  height: 10px;
   cursor: grabbing;
+  background: $dark-4;
+  top: -8px;
+
+  &:hover {
+    background: linear-gradient(80deg, $blue-dark, lighten($blue-dark, 10%));
+    .panel-editor-resizer__handle-dots {
+      display: none;
+    }
+  }
 }
 
 .panel-editor-resizer__handle-dots {
-  border-top: 2px dotted $text-color-faint;
+  border-top: 2px dashed $text-color-faint;
   position: relative;
-  top: 3px;
+  top: 4px;
 }
 
 .panel-editor {
