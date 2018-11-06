@@ -19,7 +19,7 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 		artifactConfigurations: buildArtifactConfigurations,
 	}
 
-	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl)
+	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl, false)
 
 	if !rel.Beta || rel.Stable {
 		t.Errorf("%s should have been tagged as beta (not stable), but wasn't	.", versionIn)
@@ -64,7 +64,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 		artifactConfigurations: buildArtifactConfigurations,
 	}
 
-	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl)
+	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl, true)
 
 	if relAll.Stable || !relAll.Nightly {
 		t.Error("Expected a nightly release but wasn't.")
@@ -101,7 +101,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 		}},
 	}
 
-	relOne, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl)
+	relOne, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl, true)
 
 	if len(relOne.Builds) != 1 {
 		t.Errorf("Expected 1 artifact, but was %v", len(relOne.Builds))
