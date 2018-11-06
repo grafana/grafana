@@ -14,6 +14,7 @@ func main() {
 	var dryRun bool
 	var enterprise bool
 	var fromLocal bool
+	var nightly bool
 	var apiKey string
 
 	flag.StringVar(&version, "version", "", "Grafana version (ex: --version v5.2.0-beta1)")
@@ -22,11 +23,13 @@ func main() {
 	flag.StringVar(&apiKey, "apikey", "", "Grafana.com API key (ex: --apikey ABCDEF)")
 	flag.BoolVar(&dryRun, "dry-run", false, "--dry-run")
 	flag.BoolVar(&enterprise, "enterprise", false, "--enterprise")
-	flag.BoolVar(&fromLocal, "from-local", false, "--from-local")
+	flag.BoolVar(&fromLocal, "from-local", false, "--from-local (builds will be tagged as nightly)")
 	flag.Parse()
 
+	nightly = fromLocal
+
 	if len(os.Args) == 1 {
-		fmt.Println("Usage: go run publisher.go main.go --version <v> --wn <what's new url> --rn <release notes url> --apikey <api key> --dry-run false --enterprise false")
+		fmt.Println("Usage: go run publisher.go main.go --version <v> --wn <what's new url> --rn <release notes url> --apikey <api key> --dry-run false --enterprise false --nightly false")
 		fmt.Println("example: go run publisher.go main.go --version v5.2.0-beta2 --wn http://docs.grafana.org/guides/whats-new-in-v5-2/ --rn https://community.grafana.com/t/release-notes-v5-2-x/7894 --apikey ASDF123 --dry-run --enterprise")
 		os.Exit(1)
 	}
@@ -52,12 +55,14 @@ func main() {
 		}
 	}
 
+	archiveProviderRoot := "https://s3-us-west-2.amazonaws.com"
+
 	if enterprise {
-		baseUrl = "https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/release/grafana-enterprise"
 		product = "grafana-enterprise"
+		baseUrl = createBaseUrl(archiveProviderRoot, "grafana-enterprise-releases", product, nightly)
 	} else {
-		baseUrl = "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana"
 		product = "grafana"
+		baseUrl = createBaseUrl(archiveProviderRoot, "grafana-releases", product, nightly)
 	}
 
 	p := publisher{
@@ -69,7 +74,17 @@ func main() {
 		baseArchiveUrl: baseUrl,
 		builder:        builder,
 	}
-	if err := p.doRelease(whatsNewUrl, releaseNotesUrl); err != nil {
+	if err := p.doRelease(whatsNewUrl, releaseNotesUrl, nightly); err != nil {
 		log.Fatalf("error: %v", err)
 	}
+}
+func createBaseUrl(root string, bucketName string, product string, nightly bool) string {
+	var subPath string
+	if nightly {
+		subPath = "master"
+	} else {
+		subPath = "release"
+	}
+
+	return fmt.Sprintf("%s/%s/%s/%s", root, bucketName, subPath, product)
 }

@@ -14,7 +14,7 @@ type releaseFromExternalContent struct {
 	artifactConfigurations []buildArtifact
 }
 
-func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string) (*release, error) {
+func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
 	version := re.rawVersion[1:]
 	isBeta := strings.Contains(version, "beta")
 
@@ -30,9 +30,9 @@ func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl 
 	r := release{
 		Version:         version,
 		ReleaseDate:     time.Now().UTC(),
-		Stable:          !isBeta,
+		Stable:          !isBeta && !nightly,
 		Beta:            isBeta,
-		Nightly:         false,
+		Nightly:         nightly,
 		WhatsNewUrl:     whatsNewUrl,
 		ReleaseNotesUrl: releaseNotesUrl,
 		Builds:          builds,

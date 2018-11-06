@@ -17,7 +17,7 @@ type releaseLocalSources struct {
 	artifactConfigurations []buildArtifact
 }
 
-func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string) (*release, error) {
+func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
 	buildData := r.findBuilds(baseArchiveUrl)
 
 	rel := release{
@@ -25,7 +25,7 @@ func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, 
 		ReleaseDate:     time.Now().UTC(),
 		Stable:          false,
 		Beta:            false,
-		Nightly:         true,
+		Nightly:         nightly,
 		WhatsNewUrl:     whatsNewUrl,
 		ReleaseNotesUrl: releaseNotesUrl,
 		Builds:          buildData.builds,

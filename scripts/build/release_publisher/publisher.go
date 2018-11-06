@@ -22,11 +22,11 @@ type publisher struct {
 }
 
 type releaseBuilder interface {
-	prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string) (*release, error)
+	prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error)
 }
 
-func (p *publisher) doRelease(whatsNewUrl string, releaseNotesUrl string) error {
-	currentRelease, err := p.builder.prepareRelease(p.baseArchiveUrl, whatsNewUrl, releaseNotesUrl)
+func (p *publisher) doRelease(whatsNewUrl string, releaseNotesUrl string, nightly bool) error {
+	currentRelease, err := p.builder.prepareRelease(p.baseArchiveUrl, whatsNewUrl, releaseNotesUrl, nightly)
 	if err != nil {
 		return err
 	}
