@@ -1,53 +1,18 @@
-﻿import config from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getExploreUrl } from 'app/core/utils/explore';
-import { updateLocation } from 'app/core/actions';
-import { getTimeSrv } from 'app/features/dashboard/time_srv';
-import { store } from 'app/store/configureStore';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import appEvents from 'app/core/app_events';
-import { PanelHeaderMenuItemProps, PanelHeaderMenuItemTypes } from 'app/types/panel';
-import { TimeSeries } from 'app/types/series';
-import { DataSource } from 'app/types/datasources';
+﻿import { PanelHeaderMenuItemProps, PanelHeaderMenuItemTypes } from 'app/types/panel';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 
-export const getMenuAdditional = (panel: PanelModel, dataSourceApi: DataSource, timeSeries: TimeSeries[]) => {
-  const onExploreClick = async () => {
-    const datasourceSrv = getDatasourceSrv();
-    const timeSrv = getTimeSrv();
-    const url = await getExploreUrl(panel, panel.targets, dataSourceApi, datasourceSrv, timeSrv);
-    if (url) {
-      store.dispatch(updateLocation({ path: url }));
-    }
-  };
-
-  const onExportCsv = () => {
-    const model = {} as { seriesList: TimeSeries[] };
-    model.seriesList = timeSeries;
-    appEvents.emit('show-modal', {
-      templateHtml: '<export-data-modal data="model.seriesList"></export-data-modal>',
-      model,
-      modalClass: 'modal--narrow',
-    });
-  };
-
+export const getMenuAdditional = (panel: PanelModel) => {
   const getAdditionalMenuItems = () => {
-    const items = [];
-    if (
-      config.exploreEnabled &&
-      contextSrv.isEditor &&
-      dataSourceApi &&
-      (dataSourceApi.meta.explore || dataSourceApi.meta.id === 'mixed')
-    ) {
-      items.push({
+    return [
+      {
         type: PanelHeaderMenuItemTypes.Link,
-        text: 'Explore',
-        handleClick: onExploreClick,
-        iconClassName: 'fa fa-fw fa-rocket',
-        shortcut: 'x',
-      });
-    }
-    return items;
+        text: 'Hello menu',
+        handleClick: () => {
+          alert('Hello world from menu');
+        },
+        shortcut: 'hi',
+      },
+    ] as PanelHeaderMenuItemProps[];
   };
 
   const getAdditionalSubMenuItems = () => {
@@ -56,14 +21,9 @@ export const getMenuAdditional = (panel: PanelModel, dataSourceApi: DataSource, 
         type: PanelHeaderMenuItemTypes.Link,
         text: 'Hello Sub Menu',
         handleClick: () => {
-          alert('Hello world from moduleMenu');
+          alert('Hello world from sub menu');
         },
-        shortcut: 'hi',
-      },
-      {
-        type: PanelHeaderMenuItemTypes.Link,
-        text: 'Export CSV',
-        handleClick: onExportCsv,
+        shortcut: 'subhi',
       },
     ] as PanelHeaderMenuItemProps[];
   };

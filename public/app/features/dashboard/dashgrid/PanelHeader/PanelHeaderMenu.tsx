@@ -4,16 +4,12 @@ import { PanelModel } from 'app/features/dashboard/panel_model';
 import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 import { PanelHeaderMenuItemProps } from 'app/types/panel';
 import { getPanelMenu } from 'app/features/dashboard/utils/panel_menu';
-import { TimeSeries } from 'app/types';
-import { DataSourceApi } from 'app/types/series';
 
 export interface PanelHeaderMenuProps {
   panel: PanelModel;
   dashboard: DashboardModel;
-  dataSourceApi: DataSourceApi;
   additionalMenuItems?: PanelHeaderMenuItemProps[];
   additionalSubMenuItems?: PanelHeaderMenuItemProps[];
-  timeSeries?: TimeSeries[];
 }
 
 export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {

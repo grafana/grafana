@@ -3,7 +3,6 @@ import React, { ComponentClass, PureComponent } from 'react';
 
 // Services
 import { getTimeSrv } from '../time_srv';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -13,52 +12,36 @@ import { PanelHeaderMenu } from './PanelHeader/PanelHeaderMenu';
 // Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { TimeRange, PanelProps, TimeSeries } from 'app/types';
+import { TimeRange, PanelProps } from 'app/types';
 import { PanelHeaderGetMenuAdditional } from 'app/types/panel';
-import { DataSourceApi } from 'app/types/series';
 
-export interface PanelChromeProps {
+export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   component: ComponentClass<PanelProps>;
   getMenuAdditional?: PanelHeaderGetMenuAdditional;
 }
 
-export interface PanelChromeState {
+export interface State {
   refreshCounter: number;
   renderCounter: number;
   timeRange?: TimeRange;
-  timeSeries?: TimeSeries[];
-  dataSourceApi?: DataSourceApi;
 }
 
-export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeState> {
+export class PanelChrome extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
+
     this.state = {
       refreshCounter: 0,
       renderCounter: 0,
     };
   }
 
-  async componentDidMount() {
-    const { panel } = this.props;
-    const { datasource } = panel;
-
+  componentDidMount() {
     this.props.panel.events.on('refresh', this.onRefresh);
     this.props.panel.events.on('render', this.onRender);
     this.props.dashboard.panelInitialized(this.props.panel);
-
-    try {
-      const dataSourceSrv = getDatasourceSrv();
-      const dataSourceApi = await dataSourceSrv.get(datasource);
-      this.setState((prevState: PanelChromeState) => ({
-        ...prevState,
-        dataSourceApi,
-      }));
-    } catch (err) {
-      console.log('Datasource loading error', err);
-    }
   }
 
   componentWillUnmount() {
@@ -78,15 +61,9 @@ export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeStat
 
   onRender = () => {
     console.log('onRender');
-    this.setState({
-      renderCounter: this.state.renderCounter + 1,
-    });
-  };
-
-  onIssueQueryResponse = (timeSeries: any) => {
     this.setState(prevState => ({
       ...prevState,
-      timeSeries,
+      renderCounter: this.state.renderCounter + 1,
     }));
   };
 
@@ -96,11 +73,11 @@ export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeStat
 
   render() {
     const { panel, dashboard, getMenuAdditional } = this.props;
-    const { refreshCounter, timeRange, dataSourceApi, timeSeries, renderCounter } = this.state;
+    const { refreshCounter, timeRange, renderCounter } = this.state;
 
-    const { targets } = panel;
+    const { datasource, targets } = panel;
     const PanelComponent = this.props.component;
-    const panelSpecificMenuOptions = getMenuAdditional(panel, dataSourceApi, timeSeries);
+    const panelSpecificMenuOptions = getMenuAdditional(panel);
     const additionalMenuItems = panelSpecificMenuOptions.additionalMenuItems || undefined;
     const additionalSubMenuItems = panelSpecificMenuOptions.additionalSubMenuItems || undefined;
 
@@ -111,20 +88,17 @@ export class PanelChrome extends PureComponent<PanelChromeProps, PanelChromeStat
           <PanelHeaderMenu
             panel={panel}
             dashboard={dashboard}
-            dataSourceApi={dataSourceApi}
             additionalMenuItems={additionalMenuItems}
             additionalSubMenuItems={additionalSubMenuItems}
-            timeSeries={timeSeries}
           />
         </PanelHeader>
         <div className="panel-content">
           <DataPanel
-            dataSourceApi={dataSourceApi}
+            datasource={datasource}
             queries={targets}
             timeRange={timeRange}
             isVisible={this.isVisible}
             refreshCounter={refreshCounter}
-            onIssueQueryResponse={this.onIssueQueryResponse}
           >
             {({ loading, timeSeries }) => {
               console.log('panelcrome inner render');
