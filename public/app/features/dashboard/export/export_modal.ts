@@ -21,11 +21,11 @@ export class DashExportCtrl {
     if (this.shareExternally) {
       this.exporter.makeExportable(this.dash).then((dashboardJson: any) => {
         this.$scope.$apply(() => {
-          this._saveFile(dashboardJson);
+          this.openSaveAsDialog(dashboardJson);
         });
       });
     } else {
-      this._saveFile(this.dash.getSaveModelClone());
+      this.openSaveAsDialog(this.dash.getSaveModelClone());
     }
   }
 
@@ -33,22 +33,22 @@ export class DashExportCtrl {
     if (this.shareExternally) {
       this.exporter.makeExportable(this.dash).then((dashboardJson: any) => {
         this.$scope.$apply(() => {
-          this._viewJson(dashboardJson);
+          this.openJsonModal(dashboardJson);
         });
       });
     } else {
-      this._viewJson(this.dash.getSaveModelClone());
+      this.openJsonModal(this.dash.getSaveModelClone());
     }
   }
 
-  _saveFile(dash: any) {
+  private openSaveAsDialog(dash: any) {
     const blob = new Blob([angular.toJson(dash, true)], {
       type: 'application/json;charset=utf-8',
     });
     saveAs(blob, dash.title + '-' + new Date().getTime() + '.json');
   }
 
-  _viewJson(clone: any) {
+  private openJsonModal(clone: any) {
     const editScope = this.$rootScope.$new();
     editScope.object = clone;
     editScope.enableCopy = true;
