@@ -8,32 +8,6 @@ import 'vendor/flot/jquery.flot.time';
 // Types
 import { TimeRange, TimeSeriesVMs } from 'app/types';
 
-// Copied from graph.ts
-function time_format(ticks, min, max) {
-  if (min && max && ticks) {
-    const range = max - min;
-    const secPerTick = range / ticks / 1000;
-    const oneDay = 86400000;
-    const oneYear = 31536000000;
-
-    if (secPerTick <= 45) {
-      return '%H:%M:%S';
-    }
-    if (secPerTick <= 7200 || range <= oneDay) {
-      return '%H:%M';
-    }
-    if (secPerTick <= 80000) {
-      return '%m/%d %H:%M';
-    }
-    if (secPerTick <= 2419200 || range <= oneYear) {
-      return '%m/%d';
-    }
-    return '%Y-%m';
-  }
-
-  return '%H:%M';
-}
-
 interface GraphProps {
   timeSeries: TimeSeriesVMs;
   timeRange: TimeRange;
@@ -137,6 +111,32 @@ export class Graph extends PureComponent<GraphProps> {
       </div>
     );
   }
+}
+
+// Copied from graph.ts
+function time_format(ticks, min, max) {
+  if (min && max && ticks) {
+    const range = max - min;
+    const secPerTick = range / ticks / 1000;
+    const oneDay = 86400000;
+    const oneYear = 31536000000;
+
+    if (secPerTick <= 45) {
+      return '%H:%M:%S';
+    }
+    if (secPerTick <= 7200 || range <= oneDay) {
+      return '%H:%M';
+    }
+    if (secPerTick <= 80000) {
+      return '%m/%d %H:%M';
+    }
+    if (secPerTick <= 2419200 || range <= oneYear) {
+      return '%m/%d';
+    }
+    return '%Y-%m';
+  }
+
+  return '%H:%M';
 }
 
 export default withSize()(Graph);
