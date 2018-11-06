@@ -270,18 +270,26 @@
       opacity: 0.8;
     }
 
-    .logs-row-level-crit,
+    .logs-row-level-crit {
+      background-color: #705da0;
+    }
+
     .logs-row-level-error,
     .logs-row-level-err {
-      background-color: $red;
+      background-color: #e24d42;
     }
 
     .logs-row-level-warn {
-      background-color: $orange;
+      background-color: #eab839;
     }
 
     .logs-row-level-info {
-      background-color: $green;
+      background-color: #7eb26d;
+    }
+
+    .logs-row-level-trace,
+    .logs-row-level-debug {
+      background-color: #1f78c1;
     }
   }
 }
