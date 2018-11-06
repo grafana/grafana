@@ -105,7 +105,7 @@ export default class LoggingDatasource {
         });
         return [...acc, ...streams];
       }, []);
-      const processedStreams = allStreams.map(stream => processStream(stream, DEFAULT_LIMIT));
+      const processedStreams = allStreams.map(stream => processStream(stream, DEFAULT_LIMIT, options.intervalMs));
       return { data: processedStreams };
     });
   }

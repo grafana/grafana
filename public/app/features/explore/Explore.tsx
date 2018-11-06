@@ -475,7 +475,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       from: parseDate(range.from, false),
       to: parseDate(range.to, true),
     };
-    const { interval } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+    const { interval, intervalMs } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
     const targets = [
       {
         ...targetOptions,
@@ -490,6 +490,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     return {
       interval,
+      intervalMs,
       targets,
       range: queryRange,
     };

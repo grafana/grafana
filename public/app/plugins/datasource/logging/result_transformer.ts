@@ -143,7 +143,7 @@ export function mergeStreams(streams: LogsStream[], limit?: number): LogsModel {
   return { meta, series, rows: sortedEntries };
 }
 
-export function processStream(stream: LogsStream, limit?: number): LogsStream {
+export function processStream(stream: LogsStream, limit?: number, intervalMs?: number): LogsStream {
   const sortedEntries: any[] = _.chain(stream.entries)
     .map(entry => processEntry(entry, stream))
     .sortBy('timestamp')
@@ -155,7 +155,7 @@ export function processStream(stream: LogsStream, limit?: number): LogsStream {
   let previousTime;
   const datapoints = sortedEntries.reduce((acc, entry, index) => {
     // Bucket to nearest minute
-    const time = Math.round(entry.timeJs / 1000 / 60) * 1000 * 60;
+    const time = Math.round(entry.timeJs / intervalMs / 10) * intervalMs * 10;
     // Entry for time
     if (time === previousTime) {
       acc[acc.length - 1][0]++;

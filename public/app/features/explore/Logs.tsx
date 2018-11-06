@@ -12,7 +12,10 @@ const graphOptions = {
   series: {
     bars: {
       show: true,
+      lineWidth: 5,
+      // barWidth: 10,
     },
+    // stack: true,
   },
   yaxis: {
     tickDecimals: 0,

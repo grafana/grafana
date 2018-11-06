@@ -6,6 +6,7 @@ import { withSize } from 'react-sizeme';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.stack';
 
 import { RawTimeRange } from 'app/types/series';
 import * as dateMath from 'app/core/utils/datemath';
