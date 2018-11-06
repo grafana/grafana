@@ -212,3 +212,14 @@
 .panel-editor {
   height: calc(100% - 10px);
 }
+
+.form-option-box {
+  margin-bottom: 20px;
+}
+
+.form-option-box__header {
+  border-bottom: 2px solid $blue-dark;
+  padding: 5px 0px;
+  font-size: $font-size-lg;
+  margin-bottom: 20px;
+}

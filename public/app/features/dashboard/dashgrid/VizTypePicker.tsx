@@ -90,7 +90,7 @@ export class VizTypePicker extends PureComponent<Props, State> {
             </div>
             <div className="gf-form">
               <label className="gf-form-label">
-                <i className="fa fa-caret-down" /> Help
+                <i className="fa fa-fw fa-caret-down" /> Help
               </label>
             </div>
           </div>
