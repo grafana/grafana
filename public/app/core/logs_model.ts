@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { TimeSeries } from 'app/core/core';
+import colors from 'app/core/utils/colors';
 
 export enum LogLevel {
   crit = 'crit',
@@ -9,7 +10,19 @@ export enum LogLevel {
   info = 'info',
   debug = 'debug',
   trace = 'trace',
+  none = 'none',
 }
+
+export const LogLevelColor = {
+  [LogLevel.crit]: colors[7],
+  [LogLevel.warn]: colors[1],
+  [LogLevel.err]: colors[4],
+  [LogLevel.error]: colors[4],
+  [LogLevel.info]: colors[0],
+  [LogLevel.debug]: colors[3],
+  [LogLevel.trace]: colors[3],
+  [LogLevel.none]: '#eee',
+};
 
 export interface LogSearchMatch {
   start: number;
@@ -44,7 +57,7 @@ export interface LogsStream {
   labels: string;
   entries: LogsStreamEntry[];
   parsedLabels: { [key: string]: string };
-  graphSeries: TimeSeries;
+  intervalMs?: number;
 }
 
 export interface LogsStreamEntry {

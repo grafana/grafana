@@ -1,13 +1,12 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-import { LogLevel, LogsMetaItem, LogsModel, LogRow, LogsStream } from 'app/core/logs_model';
+import { LogLevel, LogLevelColor, LogsMetaItem, LogsModel, LogRow, LogsStream } from 'app/core/logs_model';
 import { TimeSeries } from 'app/core/core';
-import colors from 'app/core/utils/colors';
 
 export function getLogLevel(line: string): LogLevel {
   if (!line) {
-    return undefined;
+    return LogLevel.none;
   }
   let level: LogLevel;
   Object.keys(LogLevel).forEach(key => {
@@ -18,6 +17,9 @@ export function getLogLevel(line: string): LogLevel {
       }
     }
   });
+  if (!level) {
+    level = LogLevel.none;
+  }
   return level;
 }
 
@@ -107,8 +109,13 @@ export function mergeStreams(streams: LogsStream[], limit?: number): LogsModel {
     },
   ];
 
+  let intervalMs;
+
   // Flatten entries of streams
-  const combinedEntries = streams.reduce((acc, stream) => {
+  const combinedEntries: LogRow[] = streams.reduce((acc, stream) => {
+    // Set interval for graphs
+    intervalMs = stream.intervalMs;
+
     // Overwrite labels to be only the non-common ones
     const labels = formatLabels(findUncommonLabels(stream.parsedLabels, commonLabels));
     return [
@@ -120,14 +127,33 @@ export function mergeStreams(streams: LogsStream[], limit?: number): LogsModel {
     ];
   }, []);
 
-  const commonLabelsAlias =
-    streams.length === 1 ? formatLabels(commonLabels) : `Stream with common labels ${formatLabels(commonLabels)}`;
-  const series = streams.map((stream, index) => {
-    const colorIndex = index % colors.length;
-    stream.graphSeries.setColor(colors[colorIndex]);
-    stream.graphSeries.alias = formatLabels(findUncommonLabels(stream.parsedLabels, commonLabels), commonLabelsAlias);
-    return stream.graphSeries;
+  // Graph time series by log level
+  const seriesByLevel = {};
+  combinedEntries.forEach(entry => {
+    if (!seriesByLevel[entry.logLevel]) {
+      seriesByLevel[entry.logLevel] = { lastTs: null, datapoints: [], alias: entry.logLevel };
+    }
+    const levelSeries = seriesByLevel[entry.logLevel];
+
+    // Bucket to nearest minute
+    const time = Math.round(entry.timeJs / intervalMs / 10) * intervalMs * 10;
+    // Entry for time
+    if (time === levelSeries.lastTs) {
+      levelSeries.datapoints[levelSeries.datapoints.length - 1][0]++;
+    } else {
+      levelSeries.datapoints.push([1, time]);
+      levelSeries.lastTs = time;
+    }
   });
+
+  const series = Object.keys(seriesByLevel).reduce((acc, level, index) => {
+    if (seriesByLevel[level]) {
+      const gs = new TimeSeries(seriesByLevel[level]);
+      gs.setColor(LogLevelColor[level]);
+      acc.push(gs);
+    }
+    return acc;
+  }, []);
 
   const sortedEntries = _.chain(combinedEntries)
     .sortBy('timestamp')
@@ -151,25 +177,9 @@ export function processStream(stream: LogsStream, limit?: number, intervalMs?: n
     .slice(0, limit || stream.entries.length)
     .value();
 
-  // Build graph data
-  let previousTime;
-  const datapoints = sortedEntries.reduce((acc, entry, index) => {
-    // Bucket to nearest minute
-    const time = Math.round(entry.timeJs / intervalMs / 10) * intervalMs * 10;
-    // Entry for time
-    if (time === previousTime) {
-      acc[acc.length - 1][0]++;
-    } else {
-      acc.push([1, time]);
-      previousTime = time;
-    }
-    return acc;
-  }, []);
-  const graphSeries = new TimeSeries({ datapoints, alias: stream.labels });
-
   return {
     ...stream,
-    graphSeries,
+    intervalMs,
     entries: sortedEntries,
     parsedLabels: parseLabels(stream.labels),
   };
