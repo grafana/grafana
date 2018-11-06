@@ -25,7 +25,7 @@ The permission levels for the permission field:
 
 `POST /api/datasources/:id/enable-permissions`
 
-Enables permissions for the datasource with the given `id`. No one except Org Admins will be able to query the datasource until a permission have been added which permits certain users or teams to query the datasource.
+Enables permissions for the datasource with the given `id`. No one except Org Admins will be able to query the datasource until permissions have been added which permit certain users or teams to query the datasource.
 
 **Example request**:
 
