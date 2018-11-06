@@ -410,7 +410,27 @@ select.gf-form-input ~ .gf-form-help-icon {
 }
 
 .cta-form__close {
+  background: transparent;
+  padding: 4px 8px 4px 9px;
+  border: none;
   position: absolute;
   right: 0;
-  top: 0;
+  top: -2px;
+  font-size: $font-size-lg;
+
+  &:hover {
+    color: $text-color-strong;
+  }
+}
+
+.cta-form__bar {
+  display: flex;
+  align-items: center;
+  align-content: center;
+  margin-bottom: 20px;
+}
+
+.cta-form__bar-header {
+  font-size: $font-size-h4;
+  padding-right: 20px;
 }

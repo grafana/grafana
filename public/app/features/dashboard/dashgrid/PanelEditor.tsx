@@ -10,13 +10,12 @@ import { updateLocation } from 'app/core/actions';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { PanelPlugin, PluginExports } from 'app/types/plugins';
+import { PanelPlugin } from 'app/types/plugins';
 
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
-  panelType: string;
-  pluginExports: PluginExports;
+  plugin: PanelPlugin;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
@@ -44,11 +43,11 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   }
 
   renderPanelOptions() {
-    const { pluginExports, panel } = this.props;
+    const { plugin, panel } = this.props;
+    const { PanelOptionsComponent } = plugin.exports;
 
-    if (pluginExports.PanelOptionsComponent) {
-      const OptionsComponent = pluginExports.PanelOptionsComponent;
-      return <OptionsComponent options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
+    if (PanelOptionsComponent) {
+      return <PanelOptionsComponent options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
     } else {
       return <p>Visualization has no options</p>;
     }
@@ -62,7 +61,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   renderVizTab() {
     return (
       <div className="viz-editor">
-        <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.props.onTypeChanged} />
+        <VizTypePicker current={this.props.plugin} onTypeChanged={this.props.onTypeChanged} />
         {this.renderPanelOptions()}
       </div>
     );
