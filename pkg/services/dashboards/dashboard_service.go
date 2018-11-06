@@ -90,6 +90,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		validateAlertsCmd := models.ValidateDashboardAlertsCommand{
 			OrgId:     dto.OrgId,
 			Dashboard: dash,
+			User:      dto.User,
 		}
 
 		if err := bus.Dispatch(&validateAlertsCmd); err != nil {
@@ -159,8 +160,8 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := models.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
-		UserId:    dto.User.UserId,
 		Dashboard: cmd.Result,
+		User:      dto.User,
 	}
 
 	if err := bus.Dispatch(&alertCmd); err != nil {

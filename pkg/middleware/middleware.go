@@ -29,6 +29,7 @@ func GetContextHandler() macaron.Handler {
 			Session:        session.GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
+			SkipCache:      false,
 			Logger:         log.New("context"),
 		}
 

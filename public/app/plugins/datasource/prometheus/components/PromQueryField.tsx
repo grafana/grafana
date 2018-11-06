@@ -134,9 +134,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       this.languageProvider
         .start()
         .then(remaining => {
-          remaining.map(task => task.then(this.onReceiveMetrics).catch(() => {}));
+          remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
         })
-        .then(() => this.onReceiveMetrics());
+        .then(() => this.onUpdateLanguage());
     }
   }
 
@@ -176,7 +176,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
   };
 
-  onReceiveMetrics = () => {
+  onUpdateLanguage = () => {
     const { histogramMetrics, metrics } = this.languageProvider;
     if (!metrics) {
       return;

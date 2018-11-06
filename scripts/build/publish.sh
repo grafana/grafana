@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 # no relation to publish.go
 

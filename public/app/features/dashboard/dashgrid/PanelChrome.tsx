@@ -21,6 +21,7 @@ export interface Props {
 
 export interface State {
   refreshCounter: number;
+  renderCounter: number;
   timeRange?: TimeRange;
 }
 
@@ -30,11 +31,13 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     this.state = {
       refreshCounter: 0,
+      renderCounter: 0,
     };
   }
 
   componentDidMount() {
     this.props.panel.events.on('refresh', this.onRefresh);
+    this.props.panel.events.on('render', this.onRender);
     this.props.dashboard.panelInitialized(this.props.panel);
   }
 
@@ -52,6 +55,13 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
+  onRender = () => {
+    console.log('onRender');
+    this.setState({
+      renderCounter: this.state.renderCounter + 1,
+    });
+  };
+
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
@@ -59,8 +69,10 @@ export class PanelChrome extends PureComponent<Props, State> {
   render() {
     const { panel, dashboard } = this.props;
     const { datasource, targets } = panel;
-    const { refreshCounter, timeRange } = this.state;
+    const { timeRange, renderCounter, refreshCounter } = this.state;
     const PanelComponent = this.props.component;
+
+    console.log('Panel chrome render');
 
     return (
       <div className="panel-container">
@@ -74,7 +86,16 @@ export class PanelChrome extends PureComponent<Props, State> {
             refreshCounter={refreshCounter}
           >
             {({ loading, timeSeries }) => {
-              return <PanelComponent loading={loading} timeSeries={timeSeries} timeRange={timeRange} />;
+              console.log('panelcrome inner render');
+              return (
+                <PanelComponent
+                  loading={loading}
+                  timeSeries={timeSeries}
+                  timeRange={timeRange}
+                  options={panel.getOptions()}
+                  renderCounter={renderCounter}
+                />
+              );
             }}
           </DataPanel>
         </div>

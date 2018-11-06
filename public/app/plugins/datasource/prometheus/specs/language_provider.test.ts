@@ -269,5 +269,48 @@ describe('Language completion provider', () => {
         },
       ]);
     });
+
+    it('returns no suggestions inside an unclear aggregation context using alternate syntax', () => {
+      const instance = new LanguageProvider(datasource, {
+        labelKeys: { '{__name__="metric"}': ['label1', 'label2', 'label3'] },
+      });
+      const value = Plain.deserialize('sum by ()');
+      const range = value.selection.merge({
+        anchorOffset: 8,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.provideCompletionItems({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-aggregation'],
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-aggregation');
+      expect(result.suggestions).toEqual([]);
+    });
+
+    it('returns label suggestions inside an aggregation context using alternate syntax', () => {
+      const instance = new LanguageProvider(datasource, {
+        labelKeys: { '{__name__="metric"}': ['label1', 'label2', 'label3'] },
+      });
+      const value = Plain.deserialize('sum by () (metric)');
+      const range = value.selection.merge({
+        anchorOffset: 8,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.provideCompletionItems({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-aggregation'],
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-aggregation');
+      expect(result.suggestions).toEqual([
+        {
+          items: [{ label: 'label1' }, { label: 'label2' }, { label: 'label3' }],
+          label: 'Labels',
+        },
+      ]);
+    });
   });
 });

@@ -327,6 +327,24 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 		if dashboard.IsFolder {
 			deletes = append(deletes, "DELETE FROM dashboard_provisioning WHERE dashboard_id in (select id from dashboard where folder_id = ?)")
 			deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
+
+			dashIds := []struct {
+				Id int64
+			}{}
+			err := sess.SQL("select id from dashboard where folder_id = ?", dashboard.Id).Find(&dashIds)
+			if err != nil {
+				return err
+			}
+
+			for _, id := range dashIds {
+				if err := deleteAlertDefinition(id.Id, sess); err != nil {
+					return nil
+				}
+			}
+		}
+
+		if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
+			return nil
 		}
 
 		for _, sql := range deletes {
@@ -335,10 +353,6 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			if err != nil {
 				return err
 			}
-		}
-
-		if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
-			return nil
 		}
 
 		return nil
