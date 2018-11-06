@@ -19,7 +19,7 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
         {menu.map((menuItem, idx: number) => {
           return (
             <PanelHeaderMenuItem
-              key={idx} // TODO: Fix proper key
+              key={`${menuItem.text}${idx}`}
               type={menuItem.type}
               text={menuItem.text}
               iconClassName={menuItem.iconClassName}

@@ -72,25 +72,17 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard, getMenuAdditional } = this.props;
+    const { panel, dashboard } = this.props;
     const { refreshCounter, timeRange, renderCounter } = this.state;
 
     const { datasource, targets } = panel;
     const PanelComponent = this.props.component;
-    const panelSpecificMenuOptions = getMenuAdditional(panel);
-    const additionalMenuItems = panelSpecificMenuOptions.additionalMenuItems || undefined;
-    const additionalSubMenuItems = panelSpecificMenuOptions.additionalSubMenuItems || undefined;
 
     console.log('panelChrome render');
     return (
       <div className="panel-container">
         <PanelHeader title={panel.title}>
-          <PanelHeaderMenu
-            panel={panel}
-            dashboard={dashboard}
-            additionalMenuItems={additionalMenuItems}
-            additionalSubMenuItems={additionalSubMenuItems}
-          />
+          <PanelHeaderMenu panel={panel} dashboard={dashboard} />
         </PanelHeader>
         <div className="panel-content">
           <DataPanel
