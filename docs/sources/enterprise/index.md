@@ -6,7 +6,7 @@ type = "docs"
 [menu.docs]
 name = "Grafana Enterprise"
 identifier = "enterprise"
-weight = 5
+weight = 30
 +++
 
 # Grafana Enterprise
