@@ -1,7 +1,11 @@
 import React, { SFC } from 'react';
 import { PanelMenuItem } from 'app/types/panel';
 
-export const PanelHeaderMenuItem: SFC<PanelMenuItem> = props => {
+interface Props {
+  children: any;
+}
+
+export const PanelHeaderMenuItem: SFC<Props & PanelMenuItem> = props => {
   const isSubMenu = props.type === 'submenu';
   const isDivider = props.type === 'divider';
   return isDivider ? (

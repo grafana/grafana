@@ -7,7 +7,6 @@ import { getTimeSrv } from '../time_srv';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
-import { PanelHeaderMenu } from './PanelHeader/PanelHeaderMenu';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -79,9 +78,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     console.log('panelChrome render');
     return (
       <div className="panel-container">
-        <PanelHeader title={panel.title}>
-          <PanelHeaderMenu panel={panel} dashboard={dashboard} />
-        </PanelHeader>
+        <PanelHeader panel={panel} dashboard={dashboard} />
         <div className="panel-content">
           <DataPanel
             datasource={datasource}

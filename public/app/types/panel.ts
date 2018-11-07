@@ -19,6 +19,5 @@ export interface PanelMenuItem {
   iconClassName?: string;
   onClick?: () => void;
   shortcut?: string;
-  children?: any;
   subMenu?: PanelMenuItem[];
 }

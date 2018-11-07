@@ -1,8 +1,14 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
-interface Props {
-  title: string;
+import { PanelHeaderMenu } from './PanelHeaderMenu';
+
+import { DashboardModel } from 'app/features/dashboard/dashboard_model';
+import { PanelModel } from 'app/features/dashboard/panel_model';
+
+export interface Props {
+  panel: PanelModel;
+  dashboard: DashboardModel;
 }
 
 export class PanelHeader extends PureComponent<Props> {
@@ -10,7 +16,7 @@ export class PanelHeader extends PureComponent<Props> {
     const isFullscreen = false;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
-    const { title } = this.props;
+    const { panel, dashboard } = this.props;
 
     return (
       <div className={panelHeaderClass}>
@@ -29,10 +35,11 @@ export class PanelHeader extends PureComponent<Props> {
           <div className="panel-title">
             <span className="icon-gf panel-alert-icon" />
             <span className="panel-title-text" data-toggle="dropdown">
-              {title} <span className="fa fa-caret-down panel-menu-toggle" />
+              {panel.title} <span className="fa fa-caret-down panel-menu-toggle" />
             </span>
 
-            {this.props.children}
+            <PanelHeaderMenu panel={panel} dashboard={dashboard} />
+
             <span className="panel-time-info">
               <i className="fa fa-clock-o" /> 4m
             </span>
