@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DataSourceSettings, Props } from './DataSourceSettings';
-import { DataSource, DataSourceTest, NavModel } from '../../../types';
+import { DataSource, NavModel } from '../../../types';
 import { getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 
@@ -15,8 +15,6 @@ const setup = (propOverrides?: object) => {
     loadDataSource: jest.fn(),
     setDataSourceName: jest.fn(),
     updateDataSource: jest.fn(),
-    testing: {} as DataSourceTest,
-    clearTesting: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

@@ -1,33 +1,40 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSource, DataSourceTest, NavModel, Plugin } from 'app/types/';
-import PageHeader from '../../../core/components/PageHeader/PageHeader';
-import PageLoader from '../../../core/components/PageLoader/PageLoader';
+
+import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import PluginSettings from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
-import appEvents from '../../../core/app_events';
-import { clearTesting, deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
-import { getNavModel } from '../../../core/selectors/navModel';
-import { getRouteParamsId } from '../../../core/selectors/location';
+
+import appEvents from 'app/core/app_events';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
+import { deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { getRouteParamsId } from 'app/core/selectors/location';
+
+import { DataSource, NavModel, Plugin } from 'app/types/';
 
 export interface Props {
   navModel: NavModel;
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   pageId: number;
-  testing: DataSourceTest;
   deleteDataSource: typeof deleteDataSource;
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
-  clearTesting: typeof clearTesting;
 }
+
 interface State {
   dataSource: DataSource;
-  hasClosedTest: boolean;
+  isTesting?: boolean;
+  testingMessage?: string;
+  testingStatus?: string;
 }
 
 enum DataSourceStates {
@@ -36,10 +43,13 @@ enum DataSourceStates {
 }
 
 export class DataSourceSettings extends PureComponent<Props, State> {
-  state = {
-    dataSource: {} as DataSource,
-    hasClosedTest: false,
-  };
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      dataSource: {} as DataSource,
+    };
+  }
 
   async componentDidMount() {
     const { loadDataSource, pageId } = this.props;
@@ -47,27 +57,12 @@ export class DataSourceSettings extends PureComponent<Props, State> {
     await loadDataSource(pageId);
   }
 
-  componentDidUpdate(prevProps) {
-    const { clearTesting } = this.props;
-
-    if (!this.state.hasClosedTest && prevProps.testing.status === 'success') {
-      this.setState({ hasClosedTest: true });
-
-      setTimeout(() => {
-        clearTesting();
-        this.setState({ hasClosedTest: false });
-      }, 3000);
-    }
-  }
-
-  componentWillUnmount() {
-    this.props.clearTesting();
-  }
-
-  onSubmit = event => {
+  onSubmit = async event => {
     event.preventDefault();
 
-    this.props.updateDataSource({ ...this.state.dataSource, name: this.props.dataSource.name });
+    await this.props.updateDataSource({ ...this.state.dataSource, name: this.props.dataSource.name });
+
+    this.testDataSource();
   };
 
   onDelete = () => {
@@ -131,8 +126,45 @@ export class DataSourceSettings extends PureComponent<Props, State> {
     );
   }
 
+  async testDataSource() {
+    const dsApi = await getDatasourceSrv().get(this.state.dataSource.name);
+
+    if (!dsApi.testDatasource) {
+      return;
+    }
+
+    this.setState({ isTesting: true, testingMessage: 'Testing...', testingStatus: 'info' });
+
+    getBackendSrv().withNoBackendCache(async () => {
+      try {
+        const result = await dsApi.testDatasource();
+
+        this.setState({
+          isTesting: false,
+          testingStatus: result.status,
+          testingMessage: result.message,
+        });
+      } catch (err) {
+        let message = '';
+
+        if (err.statusText) {
+          message = 'HTTP Error ' + err.statusText;
+        } else {
+          message = err.message;
+        }
+
+        this.setState({
+          isTesting: false,
+          testingStatus: 'error',
+          testingMessage: message,
+        });
+      }
+    });
+  }
+
   render() {
-    const { dataSource, dataSourceMeta, navModel, testing } = this.props;
+    const { dataSource, dataSourceMeta, navModel } = this.props;
+    const { testingMessage, testingStatus } = this.state;
 
     return (
       <div>
@@ -160,26 +192,20 @@ export class DataSourceSettings extends PureComponent<Props, State> {
                 )}
 
                 <div className="gf-form-group section">
-                  {testing.inProgress && (
-                    <h5>
-                      Testing.... <i className="fa fa-spiner fa-spin" />
-                    </h5>
-                  )}
-                  {!testing.inProgress &&
-                    testing.status && (
-                      <div className={`alert-${testing.status} alert`}>
-                        <div className="alert-icon">
-                          {testing.status === 'error' ? (
-                            <i className="fa fa-exclamation-triangle" />
-                          ) : (
-                            <i className="fa fa-check" />
-                          )}
-                        </div>
-                        <div className="alert-body">
-                          <div className="alert-title">{testing.message}</div>
-                        </div>
+                  {testingMessage && (
+                    <div className={`alert-${testingStatus} alert`}>
+                      <div className="alert-icon">
+                        {testingStatus === 'error' ? (
+                          <i className="fa fa-exclamation-triangle" />
+                        ) : (
+                          <i className="fa fa-check" />
+                        )}
                       </div>
-                    )}
+                      <div className="alert-body">
+                        <div className="alert-title">{testingMessage}</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <ButtonRow
@@ -205,7 +231,6 @@ function mapStateToProps(state) {
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
-    testing: state.dataSources.testing,
   };
 }
 
@@ -214,7 +239,6 @@ const mapDispatchToProps = {
   loadDataSource,
   setDataSourceName,
   updateDataSource,
-  clearTesting,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettings));
