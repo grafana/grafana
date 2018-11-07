@@ -1,6 +1,13 @@
 import _ from 'lodash';
 
-export function getQueryHints(query: string, series?: any[], datasource?: any): any[] {
+import { QueryHint } from 'app/types/explore';
+
+/**
+ * Number of time series results needed before starting to suggest sum aggregation hints
+ */
+export const SUM_HINT_THRESHOLD_COUNT = 20;
+
+export function getQueryHints(query: string, series?: any[], datasource?: any): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
@@ -88,5 +95,24 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
       });
     }
   }
+
+  if (series.length >= SUM_HINT_THRESHOLD_COUNT) {
+    const simpleMetric = query.trim().match(/^\w+$/);
+    if (simpleMetric) {
+      hints.push({
+        type: 'ADD_SUM',
+        label: 'Many time series results returned.',
+        fix: {
+          label: 'Consider aggregating with sum().',
+          action: {
+            type: 'ADD_SUM',
+            query: query,
+            preventSubmit: true,
+          },
+        },
+      });
+    }
+  }
+
   return hints.length > 0 ? hints : null;
 }

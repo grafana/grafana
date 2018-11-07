@@ -74,7 +74,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
-        {syncEnabled ? this.renderLabels(member.labels) : ''}
+        {syncEnabled ? this.renderLabels(member.labels) : null}
         <td className="text-right">
           <DeleteButton onConfirmDelete={() => this.onRemoveMember(member)} />
         </td>

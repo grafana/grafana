@@ -1,3 +1,77 @@
+import { Value } from 'slate';
+
+import { RawTimeRange } from './series';
+
+export interface CompletionItem {
+  /**
+   * The label of this completion item. By default
+   * this is also the text that is inserted when selecting
+   * this completion.
+   */
+  label: string;
+  /**
+   * The kind of this completion item. Based on the kind
+   * an icon is chosen by the editor.
+   */
+  kind?: string;
+  /**
+   * A human-readable string with additional information
+   * about this item, like type or symbol information.
+   */
+  detail?: string;
+  /**
+   * A human-readable string, can be Markdown, that represents a doc-comment.
+   */
+  documentation?: string;
+  /**
+   * A string that should be used when comparing this item
+   * with other items. When `falsy` the `label` is used.
+   */
+  sortText?: string;
+  /**
+   * A string that should be used when filtering a set of
+   * completion items. When `falsy` the `label` is used.
+   */
+  filterText?: string;
+  /**
+   * A string or snippet that should be inserted in a document when selecting
+   * this completion. When `falsy` the `label` is used.
+   */
+  insertText?: string;
+  /**
+   * Delete number of characters before the caret position,
+   * by default the letters from the beginning of the word.
+   */
+  deleteBackwards?: number;
+  /**
+   * Number of steps to move after the insertion, can be negative.
+   */
+  move?: number;
+}
+
+export interface CompletionItemGroup {
+  /**
+   * Label that will be displayed for all entries of this group.
+   */
+  label: string;
+  /**
+   * List of suggestions of this group.
+   */
+  items: CompletionItem[];
+  /**
+   * If true, match only by prefix (and not mid-word).
+   */
+  prefixMatch?: boolean;
+  /**
+   * If true, do not filter items in this group based on the search.
+   */
+  skipFilter?: boolean;
+  /**
+   * If true, do not sort items.
+   */
+  skipSort?: boolean;
+}
+
 interface ExploreDatasource {
   value: string;
   label: string;
@@ -8,9 +82,29 @@ export interface HistoryItem {
   query: string;
 }
 
-export interface Range {
-  from: string;
-  to: string;
+export abstract class LanguageProvider {
+  datasource: any;
+  request: (url) => Promise<any>;
+  /**
+   * Returns startTask that resolves with a task list when main syntax is loaded.
+   * Task list consists of secondary promises that load more detailed language features.
+   */
+  start: () => Promise<any[]>;
+  startTask?: Promise<any[]>;
+}
+
+export interface TypeaheadInput {
+  text: string;
+  prefix: string;
+  wrapperClasses: string[];
+  labelKey?: string;
+  value?: Value;
+}
+
+export interface TypeaheadOutput {
+  context?: string;
+  refresher?: Promise<{}>;
+  suggestions: CompletionItemGroup[];
 }
 
 export interface Query {
@@ -18,11 +112,29 @@ export interface Query {
   key?: string;
 }
 
+export interface QueryFix {
+  type: string;
+  label: string;
+  action?: QueryFixAction;
+}
+
+export interface QueryFixAction {
+  type: string;
+  query?: string;
+  preventSubmit?: boolean;
+}
+
+export interface QueryHint {
+  type: string;
+  label: string;
+  fix?: QueryFix;
+}
+
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string;
-  hints?: any[];
+  error?: string | JSX.Element;
+  hints?: QueryHint[];
   latency: number;
   options: any;
   query: string;
@@ -39,13 +151,14 @@ export interface TextMatch {
 }
 
 export interface ExploreState {
+  StartPage?: any;
   datasource: any;
   datasourceError: any;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   datasourceName?: string;
   exploreDatasources: ExploreDatasource[];
-  graphRange: Range;
+  graphRange: RawTimeRange;
   history: HistoryItem[];
   /**
    * Initial rows of queries to push down the tree.
@@ -57,7 +170,7 @@ export interface ExploreState {
    * Hints gathered for the query row.
    */
   queryTransactions: QueryTransaction[];
-  range: Range;
+  range: RawTimeRange;
   showingGraph: boolean;
   showingLogs: boolean;
   showingTable: boolean;
@@ -69,7 +182,7 @@ export interface ExploreState {
 export interface ExploreUrlState {
   datasource: string;
   queries: Query[];
-  range: Range;
+  range: RawTimeRange;
 }
 
 export type ResultType = 'Graph' | 'Logs' | 'Table';

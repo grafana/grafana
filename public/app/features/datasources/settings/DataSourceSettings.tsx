@@ -1,31 +1,33 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSource, NavModel, Plugin } from 'app/types/';
+import { DataSource, DataSourceTest, NavModel, Plugin } from 'app/types/';
 import PageHeader from '../../../core/components/PageHeader/PageHeader';
 import PageLoader from '../../../core/components/PageLoader/PageLoader';
 import PluginSettings from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
-import { deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
+import appEvents from '../../../core/app_events';
+import { clearTesting, deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
 import { getNavModel } from '../../../core/selectors/navModel';
 import { getRouteParamsId } from '../../../core/selectors/location';
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import appEvents from '../../../core/app_events';
 
 export interface Props {
   navModel: NavModel;
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   pageId: number;
+  testing: DataSourceTest;
   deleteDataSource: typeof deleteDataSource;
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
+  clearTesting: typeof clearTesting;
 }
 interface State {
-  name: string;
-  showNamePopover: boolean;
+  dataSource: DataSource;
+  hasClosedTest: boolean;
 }
 
 enum DataSourceStates {
@@ -34,16 +36,38 @@ enum DataSourceStates {
 }
 
 export class DataSourceSettings extends PureComponent<Props, State> {
+  state = {
+    dataSource: {} as DataSource,
+    hasClosedTest: false,
+  };
+
   async componentDidMount() {
     const { loadDataSource, pageId } = this.props;
 
     await loadDataSource(pageId);
   }
 
+  componentDidUpdate(prevProps) {
+    const { clearTesting } = this.props;
+
+    if (!this.state.hasClosedTest && prevProps.testing.status === 'success') {
+      this.setState({ hasClosedTest: true });
+
+      setTimeout(() => {
+        clearTesting();
+        this.setState({ hasClosedTest: false });
+      }, 3000);
+    }
+  }
+
+  componentWillUnmount() {
+    this.props.clearTesting();
+  }
+
   onSubmit = event => {
     event.preventDefault();
 
-    this.props.updateDataSource();
+    this.props.updateDataSource({ ...this.state.dataSource, name: this.props.dataSource.name });
   };
 
   onDelete = () => {
@@ -60,6 +84,12 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
   confirmDelete = () => {
     this.props.deleteDataSource();
+  };
+
+  onModelChange = dataSource => {
+    this.setState({
+      dataSource: dataSource,
+    });
   };
 
   isReadOnly() {
@@ -102,7 +132,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dataSource, dataSourceMeta, navModel } = this.props;
+    const { dataSource, dataSourceMeta, navModel, testing } = this.props;
 
     return (
       <div>
@@ -120,9 +150,37 @@ export class DataSourceSettings extends PureComponent<Props, State> {
 
                 {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
 
-                {this.isReadOnly()
-                  ? this.renderIsReadOnlyMessage()
-                  : dataSourceMeta.module && <PluginSettings dataSource={dataSource} dataSourceMeta={dataSourceMeta} />}
+                {this.isReadOnly() && this.renderIsReadOnlyMessage()}
+                {dataSourceMeta.module && (
+                  <PluginSettings
+                    dataSource={dataSource}
+                    dataSourceMeta={dataSourceMeta}
+                    onModelChange={this.onModelChange}
+                  />
+                )}
+
+                <div className="gf-form-group section">
+                  {testing.inProgress && (
+                    <h5>
+                      Testing.... <i className="fa fa-spiner fa-spin" />
+                    </h5>
+                  )}
+                  {!testing.inProgress &&
+                    testing.status && (
+                      <div className={`alert-${testing.status} alert`}>
+                        <div className="alert-icon">
+                          {testing.status === 'error' ? (
+                            <i className="fa fa-exclamation-triangle" />
+                          ) : (
+                            <i className="fa fa-check" />
+                          )}
+                        </div>
+                        <div className="alert-body">
+                          <div className="alert-title">{testing.message}</div>
+                        </div>
+                      </div>
+                    )}
+                </div>
 
                 <ButtonRow
                   onSubmit={event => this.onSubmit(event)}
@@ -147,6 +205,7 @@ function mapStateToProps(state) {
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
+    testing: state.dataSources.testing,
   };
 }
 
@@ -155,6 +214,7 @@ const mapDispatchToProps = {
   loadDataSource,
   setDataSourceName,
   updateDataSource,
+  clearTesting,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettings));

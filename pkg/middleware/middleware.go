@@ -29,6 +29,7 @@ func GetContextHandler() macaron.Handler {
 			Session:        session.GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
+			SkipCache:      false,
 			Logger:         log.New("context"),
 		}
 
@@ -43,12 +44,13 @@ func GetContextHandler() macaron.Handler {
 		// then init session and look for userId in session
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
-		if initContextWithRenderAuth(ctx) ||
-			initContextWithApiKey(ctx) ||
-			initContextWithBasicAuth(ctx, orgId) ||
-			initContextWithAuthProxy(ctx, orgId) ||
-			initContextWithUserSessionCookie(ctx, orgId) ||
-			initContextWithAnonymousUser(ctx) {
+		switch {
+		case initContextWithRenderAuth(ctx):
+		case initContextWithApiKey(ctx):
+		case initContextWithBasicAuth(ctx, orgId):
+		case initContextWithAuthProxy(ctx, orgId):
+		case initContextWithUserSessionCookie(ctx, orgId):
+		case initContextWithAnonymousUser(ctx):
 		}
 
 		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)

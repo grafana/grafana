@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 
-import { QueryTransaction } from 'app/types/explore';
+import { QueryTransaction, HistoryItem, Query, QueryHint } from 'app/types/explore';
 
-// TODO make this datasource-plugin-dependent
-import QueryField from './PromQueryField';
-import QueryTransactions from './QueryTransactions';
+import DefaultQueryField from './QueryField';
+import QueryTransactionStatus from './QueryTransactionStatus';
+import { DataSource } from 'app/types';
 
-function getFirstHintFromTransactions(transactions: QueryTransaction[]) {
+function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
   if (transaction) {
     return transaction.hints[0];
@@ -14,7 +14,28 @@ function getFirstHintFromTransactions(transactions: QueryTransaction[]) {
   return undefined;
 }
 
-class QueryRow extends PureComponent<any, {}> {
+interface QueryRowEventHandlers {
+  onAddQueryRow: (index: number) => void;
+  onChangeQuery: (value: string, index: number, override?: boolean) => void;
+  onClickHintFix: (action: object, index?: number) => void;
+  onExecuteQuery: () => void;
+  onRemoveQueryRow: (index: number) => void;
+}
+
+interface QueryRowCommonProps {
+  className?: string;
+  datasource: DataSource;
+  history: HistoryItem[];
+  transactions: QueryTransaction[];
+}
+
+type QueryRowProps = QueryRowCommonProps &
+  QueryRowEventHandlers & {
+    index: number;
+    query: string;
+  };
+
+class QueryRow extends PureComponent<QueryRowProps> {
   onChangeQuery = (value, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
@@ -55,17 +76,19 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { history, query, request, supportsLogs, transactions } = this.props;
-    const transactionWithError = transactions.find(t => t.error);
+    const { datasource, history, query, transactions } = this.props;
+    const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
+    const QueryField = datasource.pluginExports.ExploreQueryField || DefaultQueryField;
     return (
       <div className="query-row">
         <div className="query-row-status">
-          <QueryTransactions transactions={transactions} />
+          <QueryTransactionStatus transactions={transactions} />
         </div>
         <div className="query-row-field">
           <QueryField
+            datasource={datasource}
             error={queryError}
             hint={hint}
             initialQuery={query}
@@ -73,8 +96,6 @@ class QueryRow extends PureComponent<any, {}> {
             onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}
-            request={request}
-            supportsLogs={supportsLogs}
           />
         </div>
         <div className="query-row-tools">
@@ -93,9 +114,14 @@ class QueryRow extends PureComponent<any, {}> {
   }
 }
 
-export default class QueryRows extends PureComponent<any, {}> {
+type QueryRowsProps = QueryRowCommonProps &
+  QueryRowEventHandlers & {
+    queries: Query[];
+  };
+
+export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', queries, queryHints, transactions, ...handlers } = this.props;
+    const { className = '', queries, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (

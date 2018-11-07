@@ -3,15 +3,8 @@ import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 import _ from 'lodash';
 
-import {
-  ExploreState,
-  ExploreUrlState,
-  HistoryItem,
-  Query,
-  QueryTransaction,
-  Range,
-  ResultType,
-} from 'app/types/explore';
+import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, ResultType } from 'app/types/explore';
+import { RawTimeRange } from 'app/types/series';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -28,8 +21,11 @@ import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
+import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
+import { DataSource } from 'app/types/datasources';
+import { mergeStreams } from 'app/core/logs_model';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -154,12 +150,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   }
 
-  componentDidCatch(error) {
-    this.setState({ datasourceError: error });
-    console.error(error);
-  }
-
-  async setDatasource(datasource) {
+  async setDatasource(datasource: DataSource) {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
     const supportsTable = datasource.meta.metrics;
@@ -170,7 +161,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const testResult = await datasource.testDatasource();
       datasourceError = testResult.status === 'success' ? null : testResult.message;
     } catch (error) {
-      datasourceError = (error && error.statusText) || error;
+      datasourceError = (error && error.statusText) || 'Network error';
     }
 
     const historyKey = `grafana.explore.history.${datasourceId}`;
@@ -187,8 +178,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       query: this.queryExpressions[i],
     }));
 
+    // Custom components
+    const StartPage = datasource.pluginExports.ExploreStartPage;
+
     this.setState(
       {
+        StartPage,
         datasource,
         datasourceError,
         history,
@@ -278,10 +273,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   };
 
-  onChangeTime = nextRange => {
-    const range = {
-      from: nextRange.from,
-      to: nextRange.to,
+  onChangeTime = (nextRange: RawTimeRange) => {
+    const range: RawTimeRange = {
+      ...nextRange,
     };
     this.setState({ range }, () => this.onSubmit());
   };
@@ -342,6 +336,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
+  // Use this in help pages to set page to a single query
+  onClickQuery = query => {
+    const nextQueries = [{ query, key: generateQueryKey() }];
+    this.queryExpressions = nextQueries.map(q => q.query);
+    this.setState({ queries: nextQueries }, this.onSubmit);
+  };
+
   onClickSplit = () => {
     const { onChangeSplit } = this.props;
     if (onChangeSplit) {
@@ -373,9 +374,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.onModifyQueries({ type: 'ADD_FILTER', key: columnKey, value: rowValue });
   };
 
-  onModifyQueries = (action: object, index?: number) => {
+  onModifyQueries = (action, index?: number) => {
     const { datasource } = this.state;
     if (datasource && datasource.modifyQuery) {
+      const preventSubmit = action.preventSubmit;
       this.setState(
         state => {
           const { queries, queryTransactions } = state;
@@ -391,16 +393,26 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             nextQueryTransactions = [];
           } else {
             // Modify query only at index
-            nextQueries = [
-              ...queries.slice(0, index),
-              {
-                key: generateQueryKey(index),
-                query: datasource.modifyQuery(this.queryExpressions[index], action),
-              },
-              ...queries.slice(index + 1),
-            ];
-            // Discard transactions related to row query
-            nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+            nextQueries = queries.map((q, i) => {
+              // Synchronise all queries with local query cache to ensure consistency
+              q.query = this.queryExpressions[i];
+              return i === index
+                ? {
+                    key: generateQueryKey(index),
+                    query: datasource.modifyQuery(q.query, action),
+                  }
+                : q;
+            });
+            nextQueryTransactions = queryTransactions
+              // Consume the hint corresponding to the action
+              .map(qt => {
+                if (qt.hints != null && qt.rowIndex === index) {
+                  qt.hints = qt.hints.filter(hint => hint.fix.action !== action);
+                }
+                return qt;
+              })
+              // Preserve previous row query transaction to keep results visible if next query is incomplete
+              .filter(qt => preventSubmit || qt.rowIndex !== index);
           }
           this.queryExpressions = nextQueries.map(q => q.query);
           return {
@@ -408,7 +420,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             queryTransactions: nextQueryTransactions,
           };
         },
-        () => this.onSubmit()
+        // Accepting certain fixes do not result in a well-formed query which should not be submitted
+        !preventSubmit ? () => this.onSubmit() : null
       );
     }
   };
@@ -459,7 +472,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   ) {
     const { datasource, range } = this.state;
     const resolution = this.el.offsetWidth;
-    const absoluteRange = {
+    const absoluteRange: RawTimeRange = {
       from: parseDate(range.from, false),
       to: parseDate(range.to, true),
     };
@@ -474,7 +487,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     ];
 
     // Clone range for query request
-    const queryRange: Range = { ...range };
+    const queryRange: RawTimeRange = { ...range };
 
     return {
       interval,
@@ -572,11 +585,26 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   }
 
-  failQueryTransaction(transactionId: string, error: string, datasourceId: string) {
+  failQueryTransaction(transactionId: string, response: any, datasourceId: string) {
     const { datasource } = this.state;
     if (datasource.meta.id !== datasourceId) {
       // Navigated away, queries did not matter
       return;
+    }
+
+    console.error(response);
+
+    let error: string | JSX.Element = response;
+    if (response.data) {
+      error = response.data.error;
+      if (response.data.response) {
+        error = (
+          <>
+            <span>{response.data.error}</span>
+            <details>{response.data.response}</details>
+          </>
+        );
+      }
     }
 
     this.setState(state => {
@@ -625,9 +653,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
           this.setState({ graphRange: transaction.options.range });
         } catch (response) {
-          console.error(response);
-          const queryError = response.data ? response.data.error : response;
-          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+          this.failQueryTransaction(transaction.id, response, datasourceId);
         }
       } else {
         this.discardTransactions(rowIndex);
@@ -657,9 +683,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           const results = res.data[0];
           this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
         } catch (response) {
-          console.error(response);
-          const queryError = response.data ? response.data.error : response;
-          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+          this.failQueryTransaction(transaction.id, response, datasourceId);
         }
       } else {
         this.discardTransactions(rowIndex);
@@ -685,20 +709,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           const results = res.data;
           this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
         } catch (response) {
-          console.error(response);
-          const queryError = response.data ? response.data.error : response;
-          this.failQueryTransaction(transaction.id, queryError, datasourceId);
+          this.failQueryTransaction(transaction.id, response, datasourceId);
         }
       } else {
         this.discardTransactions(rowIndex);
       }
     });
   }
-
-  request = url => {
-    const { datasource } = this.state;
-    return datasource.metadataRequest(url);
-  };
 
   cloneState(): ExploreState {
     // Copy state, but copy queries including modifications
@@ -717,6 +734,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   render() {
     const { position, split } = this.props;
     const {
+      StartPage,
       datasource,
       datasourceError,
       datasourceLoading,
@@ -744,17 +762,20 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
+    // TODO don't recreate those on each re-render
     const graphResult = _.flatten(
       queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
     );
     const tableResult = mergeTablesIntoModel(
       new TableModel(),
-      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done).map(qt => qt.result)
+      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
     );
-    const logsResult = _.flatten(
-      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done).map(qt => qt.result)
+    const logsResult = mergeStreams(
+      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
     );
     const loading = queryTransactions.some(qt => !qt.done);
+    const showStartPages = StartPage && queryTransactions.length === 0;
+    const viewModeCount = [supportsGraph, supportsLogs, supportsTable].filter(m => m).length;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -831,53 +852,61 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasource && !datasourceError ? (
           <div className="explore-container">
             <QueryRows
+              datasource={datasource}
               history={history}
               queries={queries}
-              request={this.request}
               onAddQueryRow={this.onAddQueryRow}
               onChangeQuery={this.onChangeQuery}
               onClickHintFix={this.onModifyQueries}
               onExecuteQuery={this.onSubmit}
               onRemoveQueryRow={this.onRemoveQueryRow}
-              supportsLogs={supportsLogs}
               transactions={queryTransactions}
             />
-            <div className="result-options">
-              {supportsGraph ? (
-                <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
-                  Graph
-                </button>
-              ) : null}
-              {supportsTable ? (
-                <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
-                  Table
-                </button>
-              ) : null}
-              {supportsLogs ? (
-                <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
-                  Logs
-                </button>
-              ) : null}
-            </div>
-
             <main className="m-t-2">
-              {supportsGraph &&
-                showingGraph && (
-                  <Graph
-                    data={graphResult}
-                    height={graphHeight}
-                    loading={graphLoading}
-                    id={`explore-graph-${position}`}
-                    range={graphRange}
-                    split={split}
-                  />
+              <ErrorBoundary>
+                {showStartPages && <StartPage onClickQuery={this.onClickQuery} />}
+                {!showStartPages && (
+                  <>
+                    {viewModeCount > 1 && (
+                      <div className="result-options">
+                        {supportsGraph ? (
+                          <button className={`btn toggle-btn ${graphButtonActive}`} onClick={this.onClickGraphButton}>
+                            Graph
+                          </button>
+                        ) : null}
+                        {supportsTable ? (
+                          <button className={`btn toggle-btn ${tableButtonActive}`} onClick={this.onClickTableButton}>
+                            Table
+                          </button>
+                        ) : null}
+                        {supportsLogs ? (
+                          <button className={`btn toggle-btn ${logsButtonActive}`} onClick={this.onClickLogsButton}>
+                            Logs
+                          </button>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {supportsGraph &&
+                      showingGraph && (
+                        <Graph
+                          data={graphResult}
+                          height={graphHeight}
+                          loading={graphLoading}
+                          id={`explore-graph-${position}`}
+                          range={graphRange}
+                          split={split}
+                        />
+                      )}
+                    {supportsTable && showingTable ? (
+                      <div className="panel-container m-t-2">
+                        <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
+                      </div>
+                    ) : null}
+                    {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+                  </>
                 )}
-              {supportsTable && showingTable ? (
-                <div className="panel-container m-t-2">
-                  <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
-                </div>
-              ) : null}
-              {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+              </ErrorBoundary>
             </main>
           </div>
         ) : null}

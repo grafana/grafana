@@ -15,6 +15,7 @@ import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
 import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
+import OrgDetailsPage from '../features/org/OrgDetailsPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -133,8 +134,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/org', {
-      templateUrl: 'public/app/features/org/partials/orgDetails.html',
-      controller: 'OrgDetailsCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => OrgDetailsPage,
+      },
     })
     .when('/org/new', {
       templateUrl: 'public/app/features/org/partials/newOrg.html',
@@ -166,7 +169,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/org/teams/new', {
-      templateUrl: 'public/app/features/org/partials/create_team.html',
+      templateUrl: 'public/app/features/teams/partials/create_team.html',
       controller: 'CreateTeamCtrl',
       controllerAs: 'ctrl',
     })
@@ -178,12 +181,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/profile', {
-      templateUrl: 'public/app/features/org/partials/profile.html',
+      templateUrl: 'public/app/features/profile/partials/profile.html',
       controller: 'ProfileCtrl',
       controllerAs: 'ctrl',
     })
     .when('/profile/password', {
-      templateUrl: 'public/app/features/org/partials/change_password.html',
+      templateUrl: 'public/app/features/profile/partials/change_password.html',
       controller: 'ChangePasswordCtrl',
     })
     .when('/profile/select-org', {

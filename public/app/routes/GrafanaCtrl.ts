@@ -17,7 +17,6 @@ export class GrafanaCtrl {
   /** @ngInject */
   constructor(
     $scope,
-    alertSrv,
     utilSrv,
     $rootScope,
     $controller,
@@ -41,11 +40,8 @@ export class GrafanaCtrl {
       $scope._ = _;
 
       profiler.init(config, $rootScope);
-      alertSrv.init();
       utilSrv.init();
       bridgeSrv.init();
-
-      $scope.dashAlerts = alertSrv;
     };
 
     $rootScope.colors = colors;

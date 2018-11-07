@@ -8,6 +8,7 @@ awsconfig
 /dist
 /public/build
 /public/views/index.html
+/public/views/error.html
 /emails/dist
 /public_gen
 /public/vendor/npm
@@ -75,3 +76,4 @@ debug.test
 /devenv/bulk_alerting_dashboards/*.json
 
 /scripts/build/release_publisher/release_publisher
+*.patch

@@ -2,6 +2,7 @@ import _ from 'lodash';
 
 import * as dateMath from 'app/core/utils/datemath';
 
+import LanguageProvider from './language_provider';
 import { processStreams } from './result_transformer';
 
 const DEFAULT_LIMIT = 100;
@@ -48,8 +49,12 @@ function serializeParams(data: any) {
 }
 
 export default class LoggingDatasource {
+  languageProvider: LanguageProvider;
+
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv, private templateSrv) {}
+  constructor(private instanceSettings, private backendSrv, private templateSrv) {
+    this.languageProvider = new LanguageProvider(this);
+  }
 
   _request(apiUrl: string, data?, options?: any) {
     const baseUrl = this.instanceSettings.url;

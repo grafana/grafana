@@ -18,10 +18,10 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
-  OPT="-includeBuildNumber=false ${EXTRA_OPTS}"
+  OPT="-includeBuildId=false ${EXTRA_OPTS}"
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  OPT="-buildNumber=${CIRCLE_BUILD_NUM} ${EXTRA_OPTS}"
+  OPT="-buildId=${CIRCLE_WORKFLOW_ID} ${EXTRA_OPTS}"
 fi
 
 echo "Build arguments: $OPT"

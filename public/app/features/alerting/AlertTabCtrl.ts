@@ -166,7 +166,7 @@ export class AlertTabCtrl {
 
     alert.noDataState = alert.noDataState || config.alertingNoDataOrNullValues;
     alert.executionErrorState = alert.executionErrorState || config.alertingErrorOrTimeout;
-    alert.frequency = alert.frequency || '60s';
+    alert.frequency = alert.frequency || '1m';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
 
@@ -217,7 +217,7 @@ export class AlertTabCtrl {
   buildDefaultCondition() {
     return {
       type: 'query',
-      query: { params: ['A', '5m', 'now'] },
+      query: { params: ['A', '15m', 'now'] },
       reducer: { type: 'avg', params: [] },
       evaluator: { type: 'gt', params: [null] },
       operator: { type: 'and' },

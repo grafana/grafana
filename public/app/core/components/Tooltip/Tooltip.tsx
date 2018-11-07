@@ -1,37 +1,28 @@
-﻿import React from 'react';
+﻿import React, { PureComponent } from 'react';
 import withTooltip from './withTooltip';
 import { Target } from 'react-popper';
 
-interface TooltipProps {
+interface Props {
   tooltipSetState: (prevState: object) => void;
 }
 
-class Tooltip extends React.Component<TooltipProps, any> {
-  constructor(props) {
-    super(props);
-    this.showTooltip = this.showTooltip.bind(this);
-    this.hideTooltip = this.hideTooltip.bind(this);
-  }
-
-  showTooltip() {
+class Tooltip extends PureComponent<Props> {
+  showTooltip = () => {
     const { tooltipSetState } = this.props;
-    tooltipSetState(prevState => {
-      return {
-        ...prevState,
-        show: true,
-      };
-    });
-  }
 
-  hideTooltip() {
+    tooltipSetState(prevState => ({
+      ...prevState,
+      show: true,
+    }));
+  };
+
+  hideTooltip = () => {
     const { tooltipSetState } = this.props;
-    tooltipSetState(prevState => {
-      return {
-        ...prevState,
-        show: false,
-      };
-    });
-  }
+    tooltipSetState(prevState => ({
+      ...prevState,
+      show: false,
+    }));
+  };
 
   render() {
     return (

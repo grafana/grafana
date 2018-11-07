@@ -14,7 +14,7 @@ export class SoloPanelCtrl {
       const params = $location.search();
       panelId = parseInt(params.panelId, 10);
 
-      $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
+      appEvents.on('dashboard-initialized', $scope.initPanelScope);
 
       // if no uid, redirect to new route based on slug
       if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {

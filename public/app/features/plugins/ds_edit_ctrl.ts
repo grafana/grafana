@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import { coreModule, appEvents } from 'app/core/core';
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { buildNavModel } from './state/navModel';
 

@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import { Label } from '../../../core/components/Forms/Forms';
+import { Label } from 'app/core/components/Label/Label';
 
 export interface Props {
   dataSourceName: string;

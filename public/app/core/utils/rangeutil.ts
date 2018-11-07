@@ -1,5 +1,8 @@
 import _ from 'lodash';
 import moment from 'moment';
+
+import { RawTimeRange } from 'app/types/series';
+
 import * as dateMath from './datemath';
 
 const spans = {
@@ -129,7 +132,7 @@ export function describeTextRange(expr: any) {
   return opt;
 }
 
-export function describeTimeRange(range) {
+export function describeTimeRange(range: RawTimeRange): string {
   const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
   if (option) {
     return option.display;

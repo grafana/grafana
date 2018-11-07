@@ -1,5 +1,5 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { Plugin } from './plugins';
+import { Plugin, PluginExports, PluginMeta } from './plugins';
 
 export interface DataSource {
   id: number;
@@ -19,6 +19,16 @@ export interface DataSource {
   jsonData: { authType: string; defaultRegion: string };
   readOnly: boolean;
   withCredentials: boolean;
+  meta?: PluginMeta;
+  pluginExports?: PluginExports;
+  init?: () => void;
+  testDatasource?: () => Promise<any>;
+}
+
+export interface DataSourceTest {
+  inProgress: boolean;
+  message: string;
+  status: string;
 }
 
 export interface DataSourcesState {
@@ -31,4 +41,5 @@ export interface DataSourcesState {
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   hasFetched: boolean;
+  testing: DataSourceTest;
 }
