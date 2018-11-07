@@ -12,3 +12,12 @@ export interface PanelOptionsProps<T = any> {
   options: T;
   onChange: (options: T) => void;
 }
+
+export interface PanelMenuItem {
+  type?: 'submenu' | 'divider';
+  text?: string;
+  iconClassName?: string;
+  onClick?: () => void;
+  shortcut?: string;
+  subMenu?: PanelMenuItem[];
+}

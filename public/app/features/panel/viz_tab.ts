@@ -16,9 +16,7 @@ export class VizTabCtrl {
     $scope.ctrl = this;
   }
 
-  onTypeChanged = (plugin: PanelPlugin) => {
-    this.dashboard.changePanelType(this.panelCtrl.panel, plugin.id);
-  };
+  onTypeChanged = (plugin: PanelPlugin) => {};
 }
 
 const template = `

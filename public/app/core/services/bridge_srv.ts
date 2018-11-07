@@ -4,7 +4,7 @@ import { store } from 'app/store/configureStore';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 
-// Services that handles angular -> mobx store sync & other react <-> angular sync
+// Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
   private fullPageReloadRoutes;
 
