@@ -181,8 +181,8 @@ export class ElasticQueryBuilder {
 
   build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;
-    target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-    target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2', settings: { interval: 'auto' } }];
+    target.metrics = target.metrics || [queryDef.defaultMetricAgg()];
+    target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
     target.timeField = this.timeField;
 
     let i, nestedAggs, metric;
