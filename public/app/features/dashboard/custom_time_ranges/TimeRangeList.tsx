@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 const width1 = {
   width: '1%',
@@ -21,7 +21,7 @@ export interface Props {
   add: any;
 }
 
-export default class List extends React.Component<Props> {
+export default class List extends PureComponent<Props> {
   constructor(props) {
     super(props);
     this.state = { show: false };
@@ -55,7 +55,7 @@ export default class List extends React.Component<Props> {
     const rowLen = this.props.ranges.length;
     const tableRows = this.props.ranges.map((range, index) => {
       return (
-        <tr>
+        <tr key={index}>
           <td className="pointer" onClick={() => this.clickEdit(index)}>
             <i className="fa fa-clock-o" />
             <span>&nbsp;&nbsp;shift</span>

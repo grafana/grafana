@@ -1,60 +1,87 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 export interface Props {
-  ranges: any;
+  range: any;
+  mode: string;
   add: any;
   update: any;
 }
 
-export default class TimeRangeEditor extends React.Component<Props> {
+export default class TimeRangeEditor extends PureComponent<Props> {
   constructor(props) {
     super(props);
+
+    this.onChange = this.onChange.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
+    // Set the state
+    console.log(this.props.range);
+    this.state = { mode: this.props.mode };
+    if (this.props.mode === 'edit') {
+      console.log('Edit Mode', this.props.range);
+    } else {
+      console.log('Not Edit Mode', this.props.range);
+    }
   }
 
   add = () => {
-    this.props.add();
+    this.props.add(this.state);
   };
   update = () => {
-    this.props.update();
+    this.props.update(this.state);
   };
+  onChange(e) {
+    this.setState({
+      [e.target.name]: e.target.value,
+    });
+  }
+  onSubmit(e) {
+    e.preventDefault();
+    if (this.props.mode === 'new') {
+      this.add();
+    }
+    if (this.props.mode === 'edit') {
+      this.update();
+    }
+  }
 
   render() {
+    const mode = this.props.mode;
     return (
-      <form name="form">
+      <form name="form" onSubmit={this.onSubmit}>
         <div className="gf-form-group">
           <div className="gf-form">
             <span className="gf-form-label width-5">Name</span>
             <input
+              name="name"
+              onBlur={this.onChange}
               type="text"
               className="gf-form-input width-10"
-              name="name"
               placeholder="name"
-              ng-model="ctrl.range.name"
               required
             />
           </div>
           <div className="gf-form">
             <span className="gf-form-label width-5">From</span>
             <input
-              id="fromHourInput"
+              name="fromHour"
+              onBlur={this.onChange}
               type="number"
               min="0"
               max="23"
               step="1"
               className="gf-form-input width-3"
-              name="fromHour"
               placeholder="08"
               required
             />
             <span>&nbsp;:&nbsp;</span>
             <input
-              id="fromMinInput"
+              name="fromMin"
+              onBlur={this.onChange}
               type="number"
               min="0"
               max="59"
               step="1"
               className="gf-form-input width-3"
-              name="fromMin"
               placeholder="00"
               required
             />
@@ -62,25 +89,25 @@ export default class TimeRangeEditor extends React.Component<Props> {
           <div className="gf-form">
             <span className="gf-form-label width-5">To</span>
             <input
-              id="toHourInput"
+              name="toHour"
+              onBlur={this.onChange}
               type="number"
               min="0"
               max="23"
               step="1"
               className="gf-form-input width-3"
-              name="toHour"
               placeholder="15"
               required
             />
             <span>&nbsp;:&nbsp;</span>
             <input
-              id="toMinInput"
+              name="toMin"
+              onBlur={this.onChange}
               type="number"
               min="0"
               max="59"
               step="1"
               className="gf-form-input width-3"
-              name="toMin"
               placeholder="30"
               required
             />
@@ -92,12 +119,8 @@ export default class TimeRangeEditor extends React.Component<Props> {
             <input type="checkbox" value="newDay" className="gf-form-switch" />
           </div>
         </div>
-        <a className="btn btn-success" onClick={this.add}>
-          Add
-        </a>
-        <a className="btn btn-success" onClick={this.update}>
-          Update
-        </a>
+        {mode === 'new' ? <button className="btn btn-success">Add</button> : null}
+        {mode === 'edit' ? <button className="btn btn-success">Update</button> : null}
       </form>
     );
   }

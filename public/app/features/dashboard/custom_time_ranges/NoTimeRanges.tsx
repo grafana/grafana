@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 export interface Props {
   add: any;
 }
 
-export default class NoTimeRanges extends React.Component<Props> {
+export default class NoTimeRanges extends PureComponent<Props> {
   constructor(props) {
     super(props);
   }
