@@ -1,13 +1,18 @@
+import { ComponentClass } from 'react';
+import { PanelProps, PanelOptionsProps } from './panel';
+
 export interface PluginExports {
-  PanelCtrl?;
-  PanelComponent?: any;
   Datasource?: any;
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
-  PanelOptions?: any;
   ExploreQueryField?: any;
   ExploreStartPage?: any;
+
+  // Panel plugin
+  PanelCtrl?;
+  PanelComponent?: ComponentClass<PanelProps>;
+  PanelOptionsComponent: ComponentClass<PanelOptionsProps>;
 }
 
 export interface PanelPlugin {

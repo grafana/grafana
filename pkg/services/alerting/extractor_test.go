@@ -69,7 +69,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				So(getTarget(dashJson), ShouldEqual, "")
 			})
 
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 			_, _ = extractor.GetAlerts()
 
 			Convey("Dashboard json should not be updated after extracting rules", func() {
@@ -83,7 +83,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -146,7 +146,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJson, err := simplejson.NewJson(panelWithoutId)
 			So(err, ShouldBeNil)
 			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
 
@@ -162,7 +162,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJson, err := simplejson.NewJson(panelWithIdZero)
 			So(err, ShouldBeNil)
 			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
 
@@ -178,7 +178,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJson, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -198,7 +198,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJson, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -228,7 +228,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -248,7 +248,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 			dash := m.NewDashboardFromJson(dashJSON)
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			err = extractor.ValidateAlerts()
 

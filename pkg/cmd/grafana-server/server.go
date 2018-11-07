@@ -15,13 +15,21 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	_ "github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
-	_ "github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
-	_ "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/social"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/services/cache"
+	"github.com/grafana/grafana/pkg/setting"
+
+	// self registering services
+	_ "github.com/grafana/grafana/pkg/extensions"
+	_ "github.com/grafana/grafana/pkg/metrics"
+	_ "github.com/grafana/grafana/pkg/plugins"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
@@ -29,10 +37,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/social" // self registering services
 	_ "github.com/grafana/grafana/pkg/tracing"
-	"golang.org/x/sync/errgroup"
 )
 
 func NewGrafanaServer() *GrafanaServerImpl {
@@ -72,6 +77,7 @@ func (g *GrafanaServerImpl) Run() error {
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
 	serviceGraph.Provide(&inject.Object{Value: g.cfg})
 	serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	serviceGraph.Provide(&inject.Object{Value: cache.New(5*time.Minute, 10*time.Minute)})
 
 	// self registered services
 	services := registry.GetServices()
@@ -138,7 +144,6 @@ func (g *GrafanaServerImpl) Run() error {
 	}
 
 	sendSystemdNotification("READY=1")
-
 	return g.childRoutines.Wait()
 }
 

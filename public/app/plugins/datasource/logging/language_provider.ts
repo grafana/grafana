@@ -47,7 +47,6 @@ export default class LoggingLanguageProvider extends LanguageProvider {
     this.datasource = datasource;
     this.labelKeys = {};
     this.labelValues = {};
-    this.started = false;
 
     Object.assign(this, initialValues);
   }
@@ -63,11 +62,10 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   };
 
   start = () => {
-    if (!this.started) {
-      this.started = true;
-      return this.fetchLogLabels();
+    if (!this.startTask) {
+      this.startTask = this.fetchLogLabels();
     }
-    return Promise.resolve([]);
+    return this.startTask;
   };
 
   // Keep this DOM-free for testing

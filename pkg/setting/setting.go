@@ -39,6 +39,10 @@ const (
 )
 
 var (
+	ERR_TEMPLATE_NAME = "error"
+)
+
+var (
 	// App settings.
 	Env          = DEV
 	AppUrl       string
