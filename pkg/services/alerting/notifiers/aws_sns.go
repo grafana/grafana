@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -26,11 +25,11 @@ func init() {
       <h3 class="page-heading">AWS SNS settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-10">Region</span>
-        <input type="text" required class="gf-form-input max-width-14" ng-model="ctrl.model.settings.region" placeholder="us-east-1"></input>
+        <input type="text" required class="gf-form-input max-width-14" ng-model="ctrl.model.settings.region" placeholder="eu-west-1"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label width-10">Topic Arn</span>
-				<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.topic_arn" placeholder="arn:aws:sns:us-east-1:123456789012:topic"></input>
+				<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.topic_arn" placeholder="arn:aws:sns:eu-west-1:123456789012:topic"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label width-10">Access Key</span>
@@ -56,7 +55,7 @@ func NewAwsSnsNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &AwsSnsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Region:       region,
 		TopicArn:     topicArn,
 		AccessKey:    model.Settings.Get("access_key").MustString(),
@@ -76,7 +75,6 @@ type AwsSnsNotifier struct {
 
 func (this *AwsSnsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending AWS SNS message")
-	metrics.M_Alerting_Notification_Sent_AwsSns.Inc(1)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("title", evalContext.GetNotificationTitle())
