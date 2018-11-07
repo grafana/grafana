@@ -29,16 +29,33 @@ export class DashboardExporter {
     }
 
     const templateizeDatasourceUsage = obj => {
+      let datasource = obj.datasource;
+      let datasourceVariable = null;
+
       // ignore data source properties that contain a variable
-      if (obj.datasource && obj.datasource.indexOf('$') === 0) {
-        if (variableLookup[obj.datasource.substring(1)]) {
-          return;
+      if (datasource && datasource.indexOf('$') === 0) {
+        datasourceVariable = variableLookup[datasource.substring(1)];
+        if (datasourceVariable && datasourceVariable.current) {
+          datasource = datasourceVariable.current.value;
         }
       }
 
       promises.push(
-        this.datasourceSrv.get(obj.datasource).then(ds => {
+        this.datasourceSrv.get(datasource).then(ds => {
           if (ds.meta.builtIn) {
+            return;
+          }
+
+          // add data source type to require list
+          requires['datasource' + ds.meta.id] = {
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
+          };
+
+          // if used via variable we can skip templatizing usage
+          if (datasourceVariable) {
             return;
           }
 
@@ -51,14 +68,8 @@ export class DashboardExporter {
             pluginId: ds.meta.id,
             pluginName: ds.meta.name,
           };
-          obj.datasource = '${' + refName + '}';
 
-          requires['datasource' + ds.meta.id] = {
-            type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
-          };
+          obj.datasource = '${' + refName + '}';
         })
       );
     };
