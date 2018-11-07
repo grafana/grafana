@@ -62,6 +62,12 @@ Permissions for a dashboard:
 
 Result: You cannot override to a lower permission. `user1` has Admin permission as the highest permission always wins.
 
+## Summary
+
 - **View**: Can only view existing dashboards/folders.
+- You cannot override permissions for users with **Org Admin Role**
+- A more specific permission with lower permission level will not have any effect if a more general rule exists with higher permission level.
+
+For example if "Everyone with Editor Role Can Edit" exists in the ACL list then **John Doe** will still have Edit permission even after you have specifically added a permission for this user with the permission set to **View**. You need to remove or lower the permission level of the more general rule.
 - You cannot override permissions for users with **Org Admin Role**
 - A more specific permission with lower permission level will not have any effect if a more general rule exists with higher permission level. For example if "Everyone with Editor Role Can Edit" exists in the ACL list then **John Doe** will still have Edit permission even after you have specifically added a permission for this user with the permission set to **View**. You need to remove or lower the permission level of the more general rule.
