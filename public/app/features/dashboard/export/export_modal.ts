@@ -8,27 +8,47 @@ export class DashExportCtrl {
   dash: any;
   exporter: DashboardExporter;
   dismiss: () => void;
+  shareExternally: boolean;
 
   /** @ngInject */
   constructor(private dashboardSrv, datasourceSrv, private $scope, private $rootScope) {
     this.exporter = new DashboardExporter(datasourceSrv);
 
-    this.exporter.makeExportable(this.dashboardSrv.getCurrent()).then(dash => {
-      this.$scope.$apply(() => {
-        this.dash = dash;
-      });
-    });
+    this.dash = this.dashboardSrv.getCurrent();
   }
 
-  save() {
-    const blob = new Blob([angular.toJson(this.dash, true)], {
+  saveDashboardAsFile() {
+    if (this.shareExternally) {
+      this.exporter.makeExportable(this.dash).then((dashboardJson: any) => {
+        this.$scope.$apply(() => {
+          this.openSaveAsDialog(dashboardJson);
+        });
+      });
+    } else {
+      this.openSaveAsDialog(this.dash.getSaveModelClone());
+    }
+  }
+
+  viewJson() {
+    if (this.shareExternally) {
+      this.exporter.makeExportable(this.dash).then((dashboardJson: any) => {
+        this.$scope.$apply(() => {
+          this.openJsonModal(dashboardJson);
+        });
+      });
+    } else {
+      this.openJsonModal(this.dash.getSaveModelClone());
+    }
+  }
+
+  private openSaveAsDialog(dash: any) {
+    const blob = new Blob([angular.toJson(dash, true)], {
       type: 'application/json;charset=utf-8',
     });
-    saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');
+    saveAs(blob, dash.title + '-' + new Date().getTime() + '.json');
   }
 
-  saveJson() {
-    const clone = this.dash;
+  private openJsonModal(clone: any) {
     const editScope = this.$rootScope.$new();
     editScope.object = clone;
     editScope.enableCopy = true;
