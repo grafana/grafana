@@ -84,7 +84,8 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
-		"--web-security=false",
+		"--web-security=true",
+		"--local-url-access=false",
 		scriptPath,
 		"url=" + url,
 		"width=" + params.Width,
