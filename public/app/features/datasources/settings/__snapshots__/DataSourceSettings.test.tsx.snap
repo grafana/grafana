@@ -79,6 +79,9 @@ exports[`Render should render alpha info text 1`] = `
           }
           onModelChange={[Function]}
         />
+        <div
+          className="gf-form-group section"
+        />
         <ButtonRow
           isReadOnly={false}
           onDelete={[Function]}
@@ -169,6 +172,9 @@ exports[`Render should render beta info text 1`] = `
           }
           onModelChange={[Function]}
         />
+        <div
+          className="gf-form-group section"
+        />
         <ButtonRow
           isReadOnly={false}
           onDelete={[Function]}
@@ -253,6 +259,9 @@ exports[`Render should render component 1`] = `
             }
           }
           onModelChange={[Function]}
+        />
+        <div
+          className="gf-form-group section"
         />
         <ButtonRow
           isReadOnly={false}
@@ -343,6 +352,9 @@ exports[`Render should render is ready only message 1`] = `
             }
           }
           onModelChange={[Function]}
+        />
+        <div
+          className="gf-form-group section"
         />
         <ButtonRow
           isReadOnly={true}

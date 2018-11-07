@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSource, NavModel, Plugin } from 'app/types/';
+import { DataSource, DataSourceTest, NavModel, Plugin } from 'app/types/';
 import PageHeader from '../../../core/components/PageHeader/PageHeader';
 import PageLoader from '../../../core/components/PageLoader/PageLoader';
 import PluginSettings from './PluginSettings';
@@ -18,6 +18,7 @@ export interface Props {
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   pageId: number;
+  testing: DataSourceTest;
   deleteDataSource: typeof deleteDataSource;
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
@@ -111,7 +112,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dataSource, dataSourceMeta, navModel } = this.props;
+    const { dataSource, dataSourceMeta, navModel, testing } = this.props;
 
     return (
       <div>
@@ -137,6 +138,30 @@ export class DataSourceSettings extends PureComponent<Props, State> {
                     onModelChange={this.onModelChange}
                   />
                 )}
+
+                <div className="gf-form-group section">
+                  {testing.inProgress && (
+                    <h5>
+                      Testing.... <i className="fa fa-spiner fa-spin" />
+                    </h5>
+                  )}
+                  {!testing.inProgress &&
+                    testing.status && (
+                      <div className={`alert-${testing.status} alert`}>
+                        <div className="alert-icon">
+                          {testing.status === 'error' ? (
+                            <i className="fa fa-exclamation-triangle" />
+                          ) : (
+                            <i className="fa fa-check" />
+                          )}
+                        </div>
+                        <div className="alert-body">
+                          <div className="alert-title">{testing.message}</div>
+                        </div>
+                      </div>
+                    )}
+                </div>
+
                 <ButtonRow
                   onSubmit={event => this.onSubmit(event)}
                   isReadOnly={this.isReadOnly()}
@@ -160,6 +185,7 @@ function mapStateToProps(state) {
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
+    testing: state.dataSources.testing,
   };
 }
 

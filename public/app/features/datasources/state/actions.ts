@@ -18,6 +18,9 @@ export enum ActionTypes {
   SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
   SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
   SetDataSourceName = 'SET_DATA_SOURCE_NAME',
+  SetDataSourceTestingProgess = 'SET_TESTING_PROGRESS',
+  SetDataSourceTestingSuccess = 'SET_DATA_SOURCE_TESTING_SUCCESS',
+  SetDataSourceTestingFail = 'SET_DATA_SOURCE_TESTING_FAIL',
 }
 
 interface LoadDataSourcesAction {
@@ -57,6 +60,21 @@ interface LoadDataSourceMetaAction {
 
 interface SetDataSourceNameAction {
   type: ActionTypes.SetDataSourceName;
+  payload: string;
+}
+
+interface SetDataSourceTestingProgessAction {
+  type: ActionTypes.SetDataSourceTestingProgess;
+  payload: boolean;
+}
+
+interface SetDataSourceTestingSuccessAction {
+  type: ActionTypes.SetDataSourceTestingSuccess;
+  payload: { status: string; message: string };
+}
+
+interface SetDataSourceTestingFailAction {
+  type: ActionTypes.SetDataSourceTestingFail;
   payload: string;
 }
 
@@ -100,6 +118,24 @@ export const setDataSourceName = (name: string) => ({
   payload: name,
 });
 
+const setDataSourceTestingProgress = (state: boolean): SetDataSourceTestingProgessAction => ({
+  type: ActionTypes.SetDataSourceTestingProgess,
+  payload: state,
+});
+
+const setDataSourceTestingSuccess = (status: string, message: string): SetDataSourceTestingSuccessAction => ({
+  type: ActionTypes.SetDataSourceTestingSuccess,
+  payload: {
+    status: status,
+    message: message,
+  },
+});
+
+const setDataSourceTestingFail = (message: string): SetDataSourceTestingFailAction => ({
+  type: ActionTypes.SetDataSourceTestingFail,
+  payload: message,
+});
+
 export type Action =
   | LoadDataSourcesAction
   | SetDataSourcesSearchQueryAction
@@ -110,7 +146,10 @@ export type Action =
   | LoadDataSourceAction
   | UpdateNavIndexAction
   | LoadDataSourceMetaAction
-  | SetDataSourceNameAction;
+  | SetDataSourceNameAction
+  | SetDataSourceTestingProgessAction
+  | SetDataSourceTestingSuccessAction
+  | SetDataSourceTestingFailAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -166,7 +205,7 @@ export function updateDataSource(dataSource: DataSource): ThunkResult<void> {
       .put(`/api/datasources/${dataSource.id}`, dataSource)
       .then(response => {
         updateFrontendSettings().then(() => {
-          testDataSource(response.name);
+          testDataSource(dispatch, response.name);
         });
       });
 
@@ -221,7 +260,8 @@ function updateFrontendSettings() {
     });
 }
 
-function testDataSource(name) {
+function testDataSource(dispatch, name) {
+  dispatch(setDataSourceTestingProgress(true));
   getDatasourceSrv()
     .get(name)
     .then(dataSource => {
@@ -229,27 +269,27 @@ function testDataSource(name) {
         return;
       }
 
-      const testing = { done: false, status: 'error', message: '' };
-
       // make test call in no backend cache context
       getBackendSrv()
         .withNoBackendCache(() => {
           return dataSource
             .testDatasource()
             .then(result => {
-              testing.message = result.message;
-              testing.status = result.status;
+              dispatch(setDataSourceTestingSuccess(result.status, result.message));
             })
             .catch(err => {
+              let message = '';
+
               if (err.statusText) {
-                testing.message = 'HTTP Error ' + err.statusText;
+                message = 'HTTP Error ' + err.statusText;
               } else {
-                testing.message = err.message;
+                message = err.message;
               }
+              dispatch(setDataSourceTestingFail(message));
             });
         })
         .finally(() => {
-          testing.done = true;
+          dispatch(setDataSourceTestingProgress(false));
         });
     });
 }

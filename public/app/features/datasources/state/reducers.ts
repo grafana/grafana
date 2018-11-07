@@ -1,4 +1,4 @@
-import { DataSource, DataSourcesState, Plugin } from 'app/types';
+import { DataSource, DataSourcesState, DataSourceTest, Plugin } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 
@@ -12,6 +12,7 @@ const initialState: DataSourcesState = {
   dataSourceTypeSearchQuery: '',
   hasFetched: false,
   dataSourceMeta: {} as Plugin,
+  testing: {} as DataSourceTest,
 };
 
 export const dataSourcesReducer = (state = initialState, action: Action): DataSourcesState => {
@@ -39,6 +40,25 @@ export const dataSourcesReducer = (state = initialState, action: Action): DataSo
 
     case ActionTypes.SetDataSourceName:
       return { ...state, dataSource: { ...state.dataSource, name: action.payload } };
+
+    case ActionTypes.SetDataSourceTestingProgess:
+      return { ...state, testing: { ...state.testing, inProgress: action.payload } };
+
+    case ActionTypes.SetDataSourceTestingSuccess:
+      return {
+        ...state,
+        testing: {
+          status: action.payload.status,
+          message: action.payload.message,
+          inProgress: false,
+        },
+      };
+
+    case ActionTypes.SetDataSourceTestingFail:
+      return {
+        ...state,
+        testing: { status: 'error', message: action.payload, inProgress: false },
+      };
   }
 
   return state;

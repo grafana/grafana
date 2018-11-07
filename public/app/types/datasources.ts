@@ -25,6 +25,12 @@ export interface DataSource {
   testDatasource?: () => Promise<any>;
 }
 
+export interface DataSourceTest {
+  inProgress: boolean;
+  message: string;
+  status: string;
+}
+
 export interface DataSourcesState {
   dataSources: DataSource[];
   searchQuery: string;
@@ -35,4 +41,5 @@ export interface DataSourcesState {
   dataSource: DataSource;
   dataSourceMeta: Plugin;
   hasFetched: boolean;
+  testing: DataSourceTest;
 }
