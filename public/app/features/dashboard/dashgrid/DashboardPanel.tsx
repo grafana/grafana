@@ -11,9 +11,10 @@ import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from './PanelEditor';
 
 export interface Props {
-  panelType: string;
   panel: PanelModel;
   dashboard: DashboardModel;
+  isEditing: boolean;
+  isFullscreen: boolean;
 }
 
 export interface State {
@@ -113,8 +114,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   renderReactPanel() {
     const { pluginExports } = this.state;
-    const containerClass = this.props.panel.isEditing ? 'panel-editor-container' : 'panel-height-helper';
-    const panelWrapperClass = this.props.panel.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
+    const containerClass = this.props.isEditing ? 'panel-editor-container' : 'panel-height-helper';
+    const panelWrapperClass = this.props.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
     // this might look strange with these classes that change when edit, but
     // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
     return (
