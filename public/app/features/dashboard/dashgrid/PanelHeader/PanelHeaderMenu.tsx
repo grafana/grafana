@@ -1,19 +1,17 @@
-﻿import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
-import { PanelHeaderMenuItemProps } from 'app/types/panel';
 import { getPanelMenu } from 'app/features/dashboard/utils/panel_menu';
+import { PanelMenuItem } from 'app/types/panel';
 
-export interface PanelHeaderMenuProps {
+export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  additionalMenuItems?: PanelHeaderMenuItemProps[];
-  additionalSubMenuItems?: PanelHeaderMenuItemProps[];
 }
 
-export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
-  renderItems = (menu: PanelHeaderMenuItemProps[], isSubMenu = false) => {
+export class PanelHeaderMenu extends PureComponent<Props> {
+  renderItems = (menu: PanelMenuItem[], isSubMenu = false) => {
     return (
       <ul className="dropdown-menu dropdown-menu--menu panel-menu" role={isSubMenu ? '' : 'menu'}>
         {menu.map((menuItem, idx: number) => {
@@ -23,7 +21,7 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
               type={menuItem.type}
               text={menuItem.text}
               iconClassName={menuItem.iconClassName}
-              handleClick={menuItem.handleClick}
+              onClick={menuItem.onClick}
               shortcut={menuItem.shortcut}
             >
               {menuItem.subMenu && this.renderItems(menuItem.subMenu, true)}
@@ -35,9 +33,8 @@ export class PanelHeaderMenu extends PureComponent<PanelHeaderMenuProps, any> {
   };
 
   render() {
-    console.log('PanelHeaderMenu render');
-    const { dashboard, additionalMenuItems, additionalSubMenuItems, panel } = this.props;
-    const menu = getPanelMenu(dashboard, panel, additionalMenuItems, additionalSubMenuItems);
+    const { dashboard, panel } = this.props;
+    const menu = getPanelMenu(dashboard, panel);
     return <div className="panel-menu-container dropdown">{this.renderItems(menu)}</div>;
   }
 }

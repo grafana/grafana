@@ -1,16 +1,12 @@
-﻿import { PanelHeaderMenuItemTypes, PanelHeaderMenuItemProps } from 'app/types/panel';
-import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
+import { store } from 'app/store/configureStore';
+
+import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
+import { PanelMenuItem } from 'app/types/panel';
 
-export const getPanelMenu = (
-  dashboard: DashboardModel,
-  panel: PanelModel,
-  additionalMenuItems: PanelHeaderMenuItemProps[] = [],
-  additionalSubMenuItems: PanelHeaderMenuItemProps[] = []
-) => {
+export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   const onViewPanel = () => {
     store.dispatch(
       updateLocation({
@@ -19,6 +15,7 @@ export const getPanelMenu = (
           edit: false,
           fullscreen: true,
         },
+        partial: true,
       })
     );
   };
@@ -31,6 +28,7 @@ export const getPanelMenu = (
           edit: true,
           fullscreen: true,
         },
+        partial: true,
       })
     );
   };
@@ -55,100 +53,68 @@ export const getPanelMenu = (
     removePanel(dashboard, panel, true);
   };
 
-  const getSubMenu = () => {
-    const menu: PanelHeaderMenuItemProps[] = [];
-
-    if (!panel.fullscreen && dashboard.meta.canEdit) {
-      menu.push({
-        type: PanelHeaderMenuItemTypes.Link,
-        text: 'Duplicate',
-        handleClick: onDuplicatePanel,
-        shortcut: 'p d',
-        role: 'Editor',
-      });
-      menu.push({
-        type: PanelHeaderMenuItemTypes.Link,
-        text: 'Copy',
-        handleClick: onCopyPanel,
-        role: 'Editor',
-      });
-    }
-
-    menu.push({
-      type: PanelHeaderMenuItemTypes.Link,
-      text: 'Panel JSON',
-      handleClick: onEditPanelJson,
-    });
-
-    if (additionalSubMenuItems) {
-      additionalSubMenuItems.forEach(item => {
-        menu.push(item);
-      });
-    }
-    return menu;
-  };
-
-  const menu: PanelHeaderMenuItemProps[] = [];
+  const menu: PanelMenuItem[] = [];
 
   menu.push({
-    type: PanelHeaderMenuItemTypes.Link,
     text: 'View',
     iconClassName: 'fa fa-fw fa-eye',
-    handleClick: onViewPanel,
+    onClick: onViewPanel,
     shortcut: 'v',
   });
 
   if (dashboard.meta.canEdit) {
     menu.push({
-      type: PanelHeaderMenuItemTypes.Link,
       text: 'Edit',
       iconClassName: 'fa fa-fw fa-edit',
-      handleClick: onEditPanel,
+      onClick: onEditPanel,
       shortcut: 'e',
-      role: 'Editor',
     });
   }
 
   menu.push({
-    type: PanelHeaderMenuItemTypes.Link,
     text: 'Share',
     iconClassName: 'fa fa-fw fa-share',
-    handleClick: onSharePanel,
+    onClick: onSharePanel,
     shortcut: 'p s',
   });
 
-  if (additionalMenuItems) {
-    additionalMenuItems.forEach(item => {
-      menu.push(item);
+  const subMenu: PanelMenuItem[] = [];
+
+  if (!panel.fullscreen && dashboard.meta.canEdit) {
+    subMenu.push({
+      text: 'Duplicate',
+      onClick: onDuplicatePanel,
+      shortcut: 'p d',
+    });
+
+    subMenu.push({
+      text: 'Copy',
+      onClick: onCopyPanel,
     });
   }
 
-  const subMenu: PanelHeaderMenuItemProps[] = getSubMenu();
+  subMenu.push({
+    text: 'Panel JSON',
+    onClick: onEditPanelJson,
+  });
 
   menu.push({
-    type: PanelHeaderMenuItemTypes.SubMenu,
+    type: 'submenu',
     text: 'More...',
     iconClassName: 'fa fa-fw fa-cube',
-    handleClick: null,
     subMenu: subMenu,
   });
 
   if (dashboard.meta.canEdit) {
+    menu.push({ type: 'divider' });
+
     menu.push({
-      type: PanelHeaderMenuItemTypes.Divider,
-      role: 'Editor',
-    });
-    menu.push({
-      type: PanelHeaderMenuItemTypes.Link,
       text: 'Remove',
       iconClassName: 'fa fa-fw fa-trash',
-      handleClick: onRemovePanel,
+      onClick: onRemovePanel,
       shortcut: 'p r',
-      role: 'Editor',
     });
   }
 
-  // Additional items from sub-class
-  // menu.push(...this.getAdditionalMenuItems());
   return menu;
 };

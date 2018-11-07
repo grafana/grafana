@@ -13,13 +13,11 @@ import { PanelHeaderMenu } from './PanelHeader/PanelHeaderMenu';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { TimeRange, PanelProps } from 'app/types';
-import { PanelHeaderGetMenuAdditional } from 'app/types/panel';
 
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   component: ComponentClass<PanelProps>;
-  getMenuAdditional?: PanelHeaderGetMenuAdditional;
 }
 
 export interface State {

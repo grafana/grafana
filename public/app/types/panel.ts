@@ -1,5 +1,4 @@
 import { LoadingState, TimeSeries, TimeRange } from './series';
-import { PanelModel } from 'app/features/dashboard/panel_model';
 
 export interface PanelProps<T = any> {
   timeSeries: TimeSeries[];
@@ -14,29 +13,12 @@ export interface PanelOptionsProps<T = any> {
   onChange: (options: T) => void;
 }
 
-export enum PanelHeaderMenuItemTypes { // TODO: Evaluate. Remove?
-  Button = 'Button', // ?
-  Divider = 'Divider',
-  Link = 'Link',
-  SubMenu = 'SubMenu',
-}
-
-export interface PanelHeaderMenuItemProps {
-  type: PanelHeaderMenuItemTypes;
+export interface PanelMenuItem {
+  type?: 'submenu' | 'divider';
   text?: string;
   iconClassName?: string;
-  handleClick?: () => void;
+  onClick?: () => void;
   shortcut?: string;
   children?: any;
-  subMenu?: PanelHeaderMenuItemProps[];
-  role?: string;
-}
-
-export interface PanelHeaderMenuAdditional {
-  additionalMenuItems: PanelHeaderMenuItemProps[];
-  additionalSubMenuItems: PanelHeaderMenuItemProps[];
-}
-
-export interface PanelHeaderGetMenuAdditional {
-  (panel: PanelModel): PanelHeaderMenuAdditional;
+  subMenu?: PanelMenuItem[];
 }

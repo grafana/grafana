@@ -73,4 +73,3 @@ export class GraphOptions extends PureComponent<PanelOptionsProps<Options>> {
 }
 
 export { Graph2 as PanelComponent, GraphOptions as PanelOptionsComponent };
-export { getMenuAdditional } from './moduleMenu';

@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
-interface PanelHeaderProps {
+interface Props {
   title: string;
 }
 
-export class PanelHeader extends PureComponent<PanelHeaderProps, any> {
+export class PanelHeader extends PureComponent<Props> {
   render() {
     const isFullscreen = false;
     const isLoading = false;
