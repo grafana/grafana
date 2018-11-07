@@ -16,6 +16,7 @@ const setup = (propOverrides?: object) => {
     setDataSourceName: jest.fn(),
     updateDataSource: jest.fn(),
     testing: {} as DataSourceTest,
+    clearTesting: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

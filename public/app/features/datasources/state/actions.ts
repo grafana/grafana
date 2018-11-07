@@ -21,6 +21,7 @@ export enum ActionTypes {
   SetDataSourceTestingProgess = 'SET_TESTING_PROGRESS',
   SetDataSourceTestingSuccess = 'SET_DATA_SOURCE_TESTING_SUCCESS',
   SetDataSourceTestingFail = 'SET_DATA_SOURCE_TESTING_FAIL',
+  ClearTesting = 'CLEAR_TEST',
 }
 
 interface LoadDataSourcesAction {
@@ -78,6 +79,10 @@ interface SetDataSourceTestingFailAction {
   payload: string;
 }
 
+interface ClearTestingAction {
+  type: ActionTypes.ClearTesting;
+}
+
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
   type: ActionTypes.LoadDataSources,
   payload: dataSources,
@@ -118,6 +123,10 @@ export const setDataSourceName = (name: string) => ({
   payload: name,
 });
 
+export const clearTesting = (): ClearTestingAction => ({
+  type: ActionTypes.ClearTesting,
+});
+
 const setDataSourceTestingProgress = (state: boolean): SetDataSourceTestingProgessAction => ({
   type: ActionTypes.SetDataSourceTestingProgess,
   payload: state,
@@ -149,7 +158,8 @@ export type Action =
   | SetDataSourceNameAction
   | SetDataSourceTestingProgessAction
   | SetDataSourceTestingSuccessAction
-  | SetDataSourceTestingFailAction;
+  | SetDataSourceTestingFailAction
+  | ClearTestingAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 

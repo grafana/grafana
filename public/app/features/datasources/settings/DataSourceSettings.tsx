@@ -8,7 +8,7 @@ import PluginSettings from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 import appEvents from '../../../core/app_events';
-import { deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
+import { clearTesting, deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
 import { getNavModel } from '../../../core/selectors/navModel';
 import { getRouteParamsId } from '../../../core/selectors/location';
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
@@ -23,9 +23,11 @@ export interface Props {
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
+  clearTesting: typeof clearTesting;
 }
 interface State {
   dataSource: DataSource;
+  hasClosedTest: boolean;
 }
 
 enum DataSourceStates {
@@ -36,12 +38,30 @@ enum DataSourceStates {
 export class DataSourceSettings extends PureComponent<Props, State> {
   state = {
     dataSource: {} as DataSource,
+    hasClosedTest: false,
   };
 
   async componentDidMount() {
     const { loadDataSource, pageId } = this.props;
 
     await loadDataSource(pageId);
+  }
+
+  componentDidUpdate(prevProps) {
+    const { clearTesting } = this.props;
+
+    if (!this.state.hasClosedTest && prevProps.testing.status === 'success') {
+      this.setState({ hasClosedTest: true });
+
+      setTimeout(() => {
+        clearTesting();
+        this.setState({ hasClosedTest: false });
+      }, 3000);
+    }
+  }
+
+  componentWillUnmount() {
+    this.props.clearTesting();
   }
 
   onSubmit = event => {
@@ -194,6 +214,7 @@ const mapDispatchToProps = {
   loadDataSource,
   setDataSourceName,
   updateDataSource,
+  clearTesting,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettings));
