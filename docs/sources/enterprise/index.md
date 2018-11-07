@@ -17,8 +17,9 @@ version.
 Building on everything you already know and love about Grafana, Grafana Enterprise adds premium data sources,
 advanced authentication options, more permission controls, 24x7x365 support, and training from the core Grafana team.
 
-Grafana Enterprise includes all of the features found in the open source edition. Below we list the additional features
-that can only be found in the Grafana Enterprise.
+Grafana Enterprise includes all of the features found in the open source edition and more.
+
+___
 
 ### Enhanced LDAP Integration
 
