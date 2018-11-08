@@ -18,7 +18,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   ];
 
   defaults: TemplateQueryComponentData = {
-    selectedQueryType: '',
+    selectedQueryType: this.queryTypes[0].value,
     metricDescriptors: [],
     selectedService: '',
     selectedMetricType: '',
