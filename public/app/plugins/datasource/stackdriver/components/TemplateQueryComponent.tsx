@@ -43,9 +43,14 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       value: m.service,
       name: m.serviceShortName,
     }));
-    const selectedService = services.some(s => s.value === this.state.selectedService)
-      ? this.state.selectedService
-      : services[0].value;
+
+    let selectedService = '';
+    if (services.some(s => s.value === this.state.selectedService)) {
+      selectedService = this.state.selectedService;
+    } else if (services && services.length > 0) {
+      selectedService = services[0].value;
+    }
+
     const { metricTypes, selectedMetricType } = getMetricTypes(
       metricDescriptors,
       this.state.selectedMetricType,
