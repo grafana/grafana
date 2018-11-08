@@ -44,6 +44,7 @@ export class QueryVariable implements Variable {
     tagsQuery: '',
     tagValuesQuery: '',
     skipUrlSync: false,
+    definition: '',
   };
 
   /** @ngInject */
