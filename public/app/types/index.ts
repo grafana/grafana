@@ -9,6 +9,7 @@ import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
 import {
+  TimeData,
   TimeRange,
   LoadingState,
   TimeSeries,
@@ -66,6 +67,7 @@ export {
   OrgUser,
   User,
   UsersState,
+  TimeData,
   TimeRange,
   LoadingState,
   PanelProps,

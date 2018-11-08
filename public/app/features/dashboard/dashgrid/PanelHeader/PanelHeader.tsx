@@ -9,6 +9,7 @@ import { PanelModel } from 'app/features/dashboard/panel_model';
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
+  timeInfo: string;
 }
 
 export class PanelHeader extends PureComponent<Props> {
@@ -16,7 +17,7 @@ export class PanelHeader extends PureComponent<Props> {
     const isFullscreen = false;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, timeInfo } = this.props;
 
     return (
       <div className={panelHeaderClass}>
@@ -39,10 +40,11 @@ export class PanelHeader extends PureComponent<Props> {
             </span>
 
             <PanelHeaderMenu panel={panel} dashboard={dashboard} />
-
-            <span className="panel-time-info">
-              <i className="fa fa-clock-o" /> 4m
-            </span>
+            {timeInfo ? (
+              <span className="panel-time-info">
+                <i className="fa fa-clock-o" /> {timeInfo}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>

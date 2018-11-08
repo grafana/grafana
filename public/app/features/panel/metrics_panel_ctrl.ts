@@ -4,10 +4,10 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import kbn from 'app/core/utils/kbn';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-import * as rangeUtil from 'app/core/utils/rangeutil';
-import * as dateMath from 'app/core/utils/datemath';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { metricsTabDirective } from './metrics_tab';
+import { applyPanelTimeOverrides as applyPanelTimeOverridesUtil } from 'app/features/dashboard/utils/panel';
+import { TimeData } from 'app/types';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -164,45 +164,14 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   applyPanelTimeOverrides() {
-    this.timeInfo = '';
+    const timeData: TimeData = {
+      timeInfo: '',
+      timeRange: this.range,
+    };
 
-    // check panel time overrrides
-    if (this.panel.timeFrom) {
-      const timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
-      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
-      if (timeFromInfo.invalid) {
-        this.timeInfo = 'invalid time override';
-        return;
-      }
-
-      if (_.isString(this.range.raw.from)) {
-        const timeFromDate = dateMath.parse(timeFromInfo.from);
-        this.timeInfo = timeFromInfo.display;
-        this.range.from = timeFromDate;
-        this.range.to = dateMath.parse(timeFromInfo.to);
-        this.range.raw.from = timeFromInfo.from;
-        this.range.raw.to = timeFromInfo.to;
-      }
-    }
-
-    if (this.panel.timeShift) {
-      const timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
-      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
-      if (timeShiftInfo.invalid) {
-        this.timeInfo = 'invalid timeshift';
-        return;
-      }
-
-      const timeShift = '-' + timeShiftInterpolated;
-      this.timeInfo += ' timeshift ' + timeShift;
-      this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
-      this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
-      this.range.raw = { from: this.range.from, to: this.range.to };
-    }
-
-    if (this.panel.hideTimeOverride) {
-      this.timeInfo = '';
-    }
+    const newTimeData = applyPanelTimeOverridesUtil(this.panel, timeData);
+    this.timeInfo = newTimeData.timeInfo;
+    this.range = newTimeData.timeRange;
   }
 
   issueQueries(datasource) {
