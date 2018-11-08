@@ -24,6 +24,7 @@ import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
+import * as gaugePanel from 'app/plugins/panel/gauge/module';
 
 const builtInPlugins = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -52,6 +53,7 @@ const builtInPlugins = {
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
+  'app/plugins/panel/gauge/module': gaugePanel,
 };
 
 export default builtInPlugins;

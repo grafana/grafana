@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Gauge",
+  "id": "gauge",
+
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+
+    }
+  }
+}
+
