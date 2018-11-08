@@ -1,4 +1,4 @@
-import { timeToString } from '../editor';
+import { timeToString } from '../editorReact';
 
 describe('CustomTimeRangeEditorCtrl', () => {
   describe('timeToString function', () => {

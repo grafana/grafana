@@ -5,10 +5,6 @@ export interface Props {
 }
 
 export default class NoTimeRanges extends PureComponent<Props> {
-  constructor(props) {
-    super(props);
-  }
-
   clickAdd = () => {
     this.props.add();
   };

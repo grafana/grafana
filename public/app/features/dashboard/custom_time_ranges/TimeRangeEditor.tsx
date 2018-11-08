@@ -1,40 +1,26 @@
 import React, { PureComponent } from 'react';
+import RangeModel from './range_model';
 
 export interface Props {
-  range: any;
+  range: RangeModel;
   mode: string;
   add: any;
   update: any;
 }
 
 export default class TimeRangeEditor extends PureComponent<Props> {
-  constructor(props) {
-    super(props);
-
-    this.onChange = this.onChange.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
-    // Set the state
-    console.log(this.props.range);
-    this.state = { mode: this.props.mode };
-    if (this.props.mode === 'edit') {
-      console.log('Edit Mode', this.props.range);
-    } else {
-      console.log('Not Edit Mode', this.props.range);
-    }
-  }
-
   add = () => {
     this.props.add(this.state);
   };
   update = () => {
     this.props.update(this.state);
   };
-  onChange(e) {
+  onChange = e => {
     this.setState({
       [e.target.name]: e.target.value,
     });
-  }
-  onSubmit(e) {
+  };
+  onSubmit = e => {
     e.preventDefault();
     if (this.props.mode === 'new') {
       this.add();
@@ -42,7 +28,7 @@ export default class TimeRangeEditor extends PureComponent<Props> {
     if (this.props.mode === 'edit') {
       this.update();
     }
-  }
+  };
 
   render() {
     const mode = this.props.mode;
