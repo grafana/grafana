@@ -102,6 +102,6 @@ export interface PluginsState {
 
 export interface TemplateQueryProps {
   query: any;
-  onChange: (c: any, definition: string) => void;
+  onChange: (query: any, definition: string) => void;
   datasource: any;
 }
