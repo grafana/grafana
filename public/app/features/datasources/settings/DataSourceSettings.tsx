@@ -18,6 +18,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 import { DataSource, NavModel, Plugin } from 'app/types/';
+import { getDataSourceLoadingNav } from '../state/navModel';
 
 export interface Props {
   navModel: NavModel;
@@ -227,7 +228,7 @@ function mapStateToProps(state) {
   const dataSource = getDataSource(state.dataSources, pageId);
 
   return {
-    navModel: getNavModel(state.navIndex, `datasource-settings-${pageId}`),
+    navModel: getNavModel(state.navIndex, `datasource-settings-${pageId}`, getDataSourceLoadingNav('settings')),
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
