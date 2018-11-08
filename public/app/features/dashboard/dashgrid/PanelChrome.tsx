@@ -5,7 +5,7 @@ import React, { ComponentClass, PureComponent } from 'react';
 import { getTimeSrv } from '../time_srv';
 
 // Components
-import { PanelHeader } from './PanelHeader';
+import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
 
 // Types
@@ -49,17 +49,19 @@ export class PanelChrome extends PureComponent<Props, State> {
     const timeSrv = getTimeSrv();
     const timeRange = timeSrv.timeRange();
 
-    this.setState({
+    this.setState(prevState => ({
+      ...prevState,
       refreshCounter: this.state.refreshCounter + 1,
       timeRange: timeRange,
-    });
+    }));
   };
 
   onRender = () => {
     console.log('onRender');
-    this.setState({
+    this.setState(prevState => ({
+      ...prevState,
       renderCounter: this.state.renderCounter + 1,
-    });
+    }));
   };
 
   get isVisible() {
@@ -68,12 +70,12 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard } = this.props;
+    const { refreshCounter, timeRange, renderCounter } = this.state;
+
     const { datasource, targets } = panel;
-    const { timeRange, renderCounter, refreshCounter } = this.state;
     const PanelComponent = this.props.component;
 
-    console.log('Panel chrome render');
-
+    console.log('panelChrome render');
     return (
       <div className="panel-container">
         <PanelHeader panel={panel} dashboard={dashboard} />

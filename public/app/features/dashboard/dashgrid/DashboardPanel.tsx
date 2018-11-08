@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
@@ -14,16 +14,17 @@ import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 
 export interface Props {
-  panelType: string;
   panel: PanelModel;
   dashboard: DashboardModel;
+  isEditing: boolean;
+  isFullscreen: boolean;
 }
 
 export interface State {
   plugin: PanelPlugin;
 }
 
-export class DashboardPanel extends React.Component<Props, State> {
+export class DashboardPanel extends PureComponent<Props, State> {
   element: any;
   angularPanel: AngularComponent;
   specialPanels = {};
@@ -119,9 +120,8 @@ export class DashboardPanel extends React.Component<Props, State> {
     const { dashboard, panel } = this.props;
     const { plugin } = this.state;
 
-    const containerClass = panel.isEditing ? 'panel-editor-container' : 'panel-height-helper';
-    const panelWrapperClass = panel.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
-
+    const containerClass = this.props.isEditing ? 'panel-editor-container' : 'panel-height-helper';
+    const panelWrapperClass = this.props.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
     // this might look strange with these classes that change when edit, but
     // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
     return (
