@@ -28,6 +28,17 @@ import { DataSource } from 'app/types/datasources';
 
 const MAX_HISTORY_ITEMS = 100;
 
+function getIntervals(range: RawTimeRange, datasource, resolution: number): { interval: string; intervalMs: number } {
+  if (!datasource || !resolution) {
+    return { interval: '1s', intervalMs: 1000 };
+  }
+  const absoluteRange: RawTimeRange = {
+    from: parseDate(range.from, false),
+    to: parseDate(range.to, true),
+  };
+  return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+}
+
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
     const datapoints = seriesData.datapoints || [];
@@ -470,12 +481,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     targetOptions: { format: string; hinting?: boolean; instant?: boolean }
   ) {
     const { datasource, range } = this.state;
-    const resolution = this.el.offsetWidth;
-    const absoluteRange: RawTimeRange = {
-      from: parseDate(range.from, false),
-      to: parseDate(range.to, true),
-    };
-    const { interval, intervalMs } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+    const { interval, intervalMs } = getIntervals(range, datasource, this.el.offsetWidth);
     const targets = [
       {
         ...targetOptions,
@@ -759,6 +765,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
+    const graphRangeIntervals = getIntervals(graphRange, datasource, this.el ? this.el.offsetWidth : 0);
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
@@ -775,7 +782,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         ? datasource.mergeStreams(
             _.flatten(
               queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-            )
+            ),
+            graphRangeIntervals.intervalMs
           )
         : undefined;
     const loading = queryTransactions.some(qt => !qt.done);

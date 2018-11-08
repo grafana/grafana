@@ -1,9 +1,23 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-import { LogLevel, LogLevelColor, LogsMetaItem, LogsModel, LogRow, LogsStream } from 'app/core/logs_model';
-import { TimeSeries } from 'app/core/core';
+import {
+  LogLevel,
+  LogsMetaItem,
+  LogsModel,
+  LogRow,
+  LogsStream,
+  LogsStreamEntry,
+  LogsStreamLabels,
+} from 'app/core/logs_model';
+import { DEFAULT_LIMIT } from './datasource';
 
+/**
+ * Returns the log level of a log line.
+ * Parse the line for level words. If no level is found, it returns `LogLevel.none`.
+ *
+ * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
+ */
 export function getLogLevel(line: string): LogLevel {
   if (!line) {
     return LogLevel.none;
@@ -23,9 +37,18 @@ export function getLogLevel(line: string): LogLevel {
   return level;
 }
 
+/**
+ * Regexp to extract Prometheus-style labels
+ */
 const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
-export function parseLabels(labels: string): { [key: string]: string } {
-  const labelsByKey = {};
+
+/**
+ * Returns a map of label keys to value from an input selector string.
+ *
+ * Example: `parseLabels('{job="foo", instance="bar"}) // {job: "foo", instance: "bar"}`
+ */
+export function parseLabels(labels: string): LogsStreamLabels {
+  const labelsByKey: LogsStreamLabels = {};
   labels.replace(labelRegexp, (_, key, operator, value) => {
     labelsByKey[key] = value;
     return '';
@@ -33,7 +56,10 @@ export function parseLabels(labels: string): { [key: string]: string } {
   return labelsByKey;
 }
 
-export function findCommonLabels(labelsSets: any[]) {
+/**
+ * Returns a map labels that are common to the given label sets.
+ */
+export function findCommonLabels(labelsSets: LogsStreamLabels[]): LogsStreamLabels {
   return labelsSets.reduce((acc, labels) => {
     if (!labels) {
       throw new Error('Need parsed labels to find common labels.');
@@ -59,15 +85,21 @@ export function findCommonLabels(labelsSets: any[]) {
   }, undefined);
 }
 
-export function findUncommonLabels(labels, commonLabels) {
-  const uncommonLabels = { ...labels };
+/**
+ * Returns a map of labels that are in `labels`, but not in `commonLabels`.
+ */
+export function findUniqueLabels(labels: LogsStreamLabels, commonLabels: LogsStreamLabels): LogsStreamLabels {
+  const uncommonLabels: LogsStreamLabels = { ...labels };
   Object.keys(commonLabels).forEach(key => {
     delete uncommonLabels[key];
   });
   return uncommonLabels;
 }
 
-export function formatLabels(labels, defaultValue = '') {
+/**
+ * Serializes the given labels to a string.
+ */
+export function formatLabels(labels: LogsStreamLabels, defaultValue = ''): string {
   if (!labels || Object.keys(labels).length === 0) {
     return defaultValue;
   }
@@ -76,111 +108,72 @@ export function formatLabels(labels, defaultValue = '') {
   return ['{', cleanSelector, '}'].join('');
 }
 
-export function processEntry(entry: { line: string; timestamp: string }, stream): LogRow {
+export function processEntry(entry: LogsStreamEntry, labels: string, uniqueLabels: string, search: string): LogRow {
   const { line, timestamp } = entry;
-  const { labels } = stream;
+  // Assumes unique-ness, needs nanosec precision for timestamp
   const key = `EK${timestamp}${labels}`;
   const time = moment(timestamp);
-  const timeJs = time.valueOf();
+  const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
   const logLevel = getLogLevel(line);
 
   return {
     key,
+    labels,
     logLevel,
     timeFromNow,
-    timeJs,
+    timeEpochMs,
     timeLocal,
+    uniqueLabels,
     entry: line,
-    labels: formatLabels(labels),
-    searchWords: [stream.search],
+    searchWords: search ? [search] : [],
     timestamp: timestamp,
   };
 }
 
-export function mergeStreams(streams: LogsStream[], limit?: number): LogsModel {
-  // Find meta data
-  const commonLabels = findCommonLabels(streams.map(stream => stream.parsedLabels));
-  const meta: LogsMetaItem[] = [
-    {
+export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT): LogsModel {
+  // Find unique labels for each stream
+  streams = streams.map(stream => ({
+    ...stream,
+    parsedLabels: parseLabels(stream.labels),
+  }));
+  const commonLabels = findCommonLabels(streams.map(model => model.parsedLabels));
+  streams = streams.map(stream => ({
+    ...stream,
+    uniqueLabels: formatLabels(findUniqueLabels(stream.parsedLabels, commonLabels)),
+  }));
+
+  // Merge stream entries into single list of log rows
+  const sortedRows: LogRow[] = _.chain(streams)
+    .reduce(
+      (acc: LogRow[], stream: LogsStream) => [
+        ...acc,
+        ...stream.entries.map(entry => processEntry(entry, stream.labels, stream.uniqueLabels, stream.search)),
+      ],
+      []
+    )
+    .sortBy('timestamp')
+    .reverse()
+    .value();
+
+  // Meta data to display in status
+  const meta: LogsMetaItem[] = [];
+  if (_.size(commonLabels) > 0) {
+    meta.push({
       label: 'Common labels',
       value: formatLabels(commonLabels),
-    },
-  ];
-
-  let intervalMs;
-
-  // Flatten entries of streams
-  const combinedEntries: LogRow[] = streams.reduce((acc, stream) => {
-    // Set interval for graphs
-    intervalMs = stream.intervalMs;
-
-    // Overwrite labels to be only the non-common ones
-    const labels = formatLabels(findUncommonLabels(stream.parsedLabels, commonLabels));
-    return [
-      ...acc,
-      ...stream.entries.map(entry => ({
-        ...entry,
-        labels,
-      })),
-    ];
-  }, []);
-
-  // Graph time series by log level
-  const seriesByLevel = {};
-  combinedEntries.forEach(entry => {
-    if (!seriesByLevel[entry.logLevel]) {
-      seriesByLevel[entry.logLevel] = { lastTs: null, datapoints: [], alias: entry.logLevel };
-    }
-    const levelSeries = seriesByLevel[entry.logLevel];
-
-    // Bucket to nearest minute
-    const time = Math.round(entry.timeJs / intervalMs / 10) * intervalMs * 10;
-    // Entry for time
-    if (time === levelSeries.lastTs) {
-      levelSeries.datapoints[levelSeries.datapoints.length - 1][0]++;
-    } else {
-      levelSeries.datapoints.push([1, time]);
-      levelSeries.lastTs = time;
-    }
-  });
-
-  const series = Object.keys(seriesByLevel).reduce((acc, level, index) => {
-    if (seriesByLevel[level]) {
-      const gs = new TimeSeries(seriesByLevel[level]);
-      gs.setColor(LogLevelColor[level]);
-      acc.push(gs);
-    }
-    return acc;
-  }, []);
-
-  const sortedEntries = _.chain(combinedEntries)
-    .sortBy('timestamp')
-    .reverse()
-    .slice(0, limit || combinedEntries.length)
-    .value();
-
-  meta.push({
-    label: 'Limit',
-    value: `${limit} (${sortedEntries.length} returned)`,
-  });
-
-  return { meta, series, rows: sortedEntries };
-}
-
-export function processStream(stream: LogsStream, limit?: number, intervalMs?: number): LogsStream {
-  const sortedEntries: any[] = _.chain(stream.entries)
-    .map(entry => processEntry(entry, stream))
-    .sortBy('timestamp')
-    .reverse()
-    .slice(0, limit || stream.entries.length)
-    .value();
+    });
+  }
+  if (limit) {
+    meta.push({
+      label: 'Limit',
+      value: `${limit} (${sortedRows.length} returned)`,
+    });
+  }
 
   return {
-    ...stream,
-    intervalMs,
-    entries: sortedEntries,
-    parsedLabels: parseLabels(stream.labels),
+    meta,
+    rows: sortedRows,
   };
 }

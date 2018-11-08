@@ -3,10 +3,10 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 
 import LanguageProvider from './language_provider';
-import { mergeStreams, processStream } from './result_transformer';
-import { LogsStream } from 'app/core/logs_model';
+import { mergeStreamsToLogs } from './result_transformer';
+import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
 
-const DEFAULT_LIMIT = 1000;
+export const DEFAULT_LIMIT = 1000;
 
 const DEFAULT_QUERY_PARAMS = {
   direction: 'BACKWARD',
@@ -68,8 +68,10 @@ export default class LoggingDatasource {
     return this.backendSrv.datasourceRequest(req);
   }
 
-  mergeStreams(streams: LogsStream[]) {
-    return mergeStreams(streams, DEFAULT_LIMIT);
+  mergeStreams(streams: LogsStream[], intervalMs: number): LogsModel {
+    const logs = mergeStreamsToLogs(streams);
+    logs.series = makeSeriesForLogs(logs.rows, intervalMs);
+    return logs;
   }
 
   prepareQueryTarget(target, options) {
@@ -84,7 +86,7 @@ export default class LoggingDatasource {
     };
   }
 
-  query(options) {
+  query(options): Promise<{ data: LogsStream[] }> {
     const queryTargets = options.targets
       .filter(target => target.expr)
       .map(target => this.prepareQueryTarget(target, options));
@@ -96,17 +98,16 @@ export default class LoggingDatasource {
 
     return Promise.all(queries).then((results: any[]) => {
       // Flatten streams from multiple queries
-      const allStreams = results.reduce((acc, response, i) => {
-        const streams = response.data.streams || [];
+      const allStreams: LogsStream[] = results.reduce((acc, response, i) => {
+        const streams: LogsStream[] = response.data.streams || [];
         // Inject search for match highlighting
-        const search = queryTargets[i].regexp;
+        const search: string = queryTargets[i].regexp;
         streams.forEach(s => {
           s.search = search;
         });
         return [...acc, ...streams];
       }, []);
-      const processedStreams = allStreams.map(stream => processStream(stream, DEFAULT_LIMIT, options.intervalMs));
-      return { data: processedStreams };
+      return { data: allStreams };
     });
   }
 
