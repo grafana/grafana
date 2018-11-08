@@ -16,6 +16,9 @@ export const DEFAULT_RANGE = {
  * @param value Epoch or relative time
  */
 export function parseTime(value: string, isUtc = false): string {
+  if (moment.isMoment(value)) {
+    return value;
+  }
   if (value.indexOf('now') !== -1) {
     return value;
   }
@@ -39,7 +42,8 @@ interface TimePickerState {
   isOpen: boolean;
   isUtc: boolean;
   rangeString: string;
-  refreshInterval: string;
+  refreshInterval?: string;
+  initialRange?: RawTimeRange;
 
   // Input-controlled text, keep these in a shape that is human-editable
   fromRaw: string;
@@ -52,6 +56,22 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
   constructor(props) {
     super(props);
 
+    this.state = {
+      isOpen: props.isOpen,
+      isUtc: props.isUtc,
+      rangeString: '',
+      fromRaw: '',
+      toRaw: '',
+      initialRange: DEFAULT_RANGE,
+      refreshInterval: '',
+    };
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    if (state.initialRange && state.initialRange === props.range) {
+      return state;
+    }
+
     const from = props.range ? props.range.from : DEFAULT_RANGE.from;
     const to = props.range ? props.range.to : DEFAULT_RANGE.to;
 
@@ -63,13 +83,12 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
       to: toRaw,
     };
 
-    this.state = {
+    return {
+      ...state,
       fromRaw,
       toRaw,
-      isOpen: props.isOpen,
-      isUtc: props.isUtc,
+      initialRange: props.range,
       rangeString: rangeUtil.describeTimeRange(range),
-      refreshInterval: '',
     };
   }
 

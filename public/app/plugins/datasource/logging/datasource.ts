@@ -3,9 +3,10 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 
 import LanguageProvider from './language_provider';
-import { processStreams } from './result_transformer';
+import { mergeStreamsToLogs } from './result_transformer';
+import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
 
-const DEFAULT_LIMIT = 100;
+export const DEFAULT_LIMIT = 1000;
 
 const DEFAULT_QUERY_PARAMS = {
   direction: 'BACKWARD',
@@ -67,6 +68,12 @@ export default class LoggingDatasource {
     return this.backendSrv.datasourceRequest(req);
   }
 
+  mergeStreams(streams: LogsStream[], intervalMs: number): LogsModel {
+    const logs = mergeStreamsToLogs(streams);
+    logs.series = makeSeriesForLogs(logs.rows, intervalMs);
+    return logs;
+  }
+
   prepareQueryTarget(target, options) {
     const interpolated = this.templateSrv.replace(target.expr);
     const start = this.getTime(options.range.from, false);
@@ -79,7 +86,7 @@ export default class LoggingDatasource {
     };
   }
 
-  query(options) {
+  query(options): Promise<{ data: LogsStream[] }> {
     const queryTargets = options.targets
       .filter(target => target.expr)
       .map(target => this.prepareQueryTarget(target, options));
@@ -91,17 +98,16 @@ export default class LoggingDatasource {
 
     return Promise.all(queries).then((results: any[]) => {
       // Flatten streams from multiple queries
-      const allStreams = results.reduce((acc, response, i) => {
-        const streams = response.data.streams || [];
+      const allStreams: LogsStream[] = results.reduce((acc, response, i) => {
+        const streams: LogsStream[] = response.data.streams || [];
         // Inject search for match highlighting
-        const search = queryTargets[i].regexp;
+        const search: string = queryTargets[i].regexp;
         streams.forEach(s => {
           s.search = search;
         });
         return [...acc, ...streams];
       }, []);
-      const model = processStreams(allStreams, DEFAULT_LIMIT);
-      return { data: model };
+      return { data: allStreams };
     });
   }
 

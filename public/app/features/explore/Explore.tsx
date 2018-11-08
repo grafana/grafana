@@ -25,9 +25,19 @@ import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 import { DataSource } from 'app/types/datasources';
-import { mergeStreams } from 'app/core/logs_model';
 
 const MAX_HISTORY_ITEMS = 100;
+
+function getIntervals(range: RawTimeRange, datasource, resolution: number): { interval: string; intervalMs: number } {
+  if (!datasource || !resolution) {
+    return { interval: '1s', intervalMs: 1000 };
+  }
+  const absoluteRange: RawTimeRange = {
+    from: parseDate(range.from, false),
+    to: parseDate(range.to, true),
+  };
+  return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+}
 
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
@@ -471,12 +481,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     targetOptions: { format: string; hinting?: boolean; instant?: boolean }
   ) {
     const { datasource, range } = this.state;
-    const resolution = this.el.offsetWidth;
-    const absoluteRange: RawTimeRange = {
-      from: parseDate(range.from, false),
-      to: parseDate(range.to, true),
-    };
-    const { interval } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+    const { interval, intervalMs } = getIntervals(range, datasource, this.el.offsetWidth);
     const targets = [
       {
         ...targetOptions,
@@ -491,6 +496,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     return {
       interval,
+      intervalMs,
       targets,
       range: queryRange,
     };
@@ -759,6 +765,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
+    const graphRangeIntervals = getIntervals(graphRange, datasource, this.el ? this.el.offsetWidth : 0);
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
@@ -770,9 +777,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       new TableModel(),
       ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
     );
-    const logsResult = mergeStreams(
-      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-    );
+    const logsResult =
+      datasource && datasource.mergeStreams
+        ? datasource.mergeStreams(
+            _.flatten(
+              queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
+            ),
+            graphRangeIntervals.intervalMs
+          )
+        : undefined;
     const loading = queryTransactions.some(qt => !qt.done);
     const showStartPages = StartPage && queryTransactions.length === 0;
     const viewModeCount = [supportsGraph, supportsLogs, supportsTable].filter(m => m).length;
@@ -894,6 +907,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           height={graphHeight}
                           loading={graphLoading}
                           id={`explore-graph-${position}`}
+                          onChangeTime={this.onChangeTime}
                           range={graphRange}
                           split={split}
                         />
@@ -903,7 +917,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
                       </div>
                     ) : null}
-                    {supportsLogs && showingLogs ? <Logs data={logsResult} loading={logsLoading} /> : null}
+                    {supportsLogs && showingLogs ? (
+                      <Logs
+                        data={logsResult}
+                        loading={logsLoading}
+                        position={position}
+                        onChangeTime={this.onChangeTime}
+                        range={range}
+                      />
+                    ) : null}
                   </>
                 )}
               </ErrorBoundary>

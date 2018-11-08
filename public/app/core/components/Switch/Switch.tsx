@@ -5,6 +5,7 @@ export interface Props {
   label: string;
   checked: boolean;
   labelClass?: string;
+  small?: boolean;
   switchClass?: string;
   onChange: (event) => any;
 }
@@ -24,10 +25,14 @@ export class Switch extends PureComponent<Props, State> {
   };
 
   render() {
-    const { labelClass, switchClass, label, checked } = this.props;
+    const { labelClass = '', switchClass = '', label, checked, small } = this.props;
     const labelId = `check-${this.state.id}`;
-    const labelClassName = `gf-form-label ${labelClass} pointer`;
-    const switchClassName = `gf-form-switch ${switchClass}`;
+    let labelClassName = `gf-form-label ${labelClass} pointer`;
+    let switchClassName = `gf-form-switch ${switchClass}`;
+    if (small) {
+      labelClassName += ' gf-form-label--small';
+      switchClassName += ' gf-form-switch--small';
+    }
 
     return (
       <div className="gf-form">
