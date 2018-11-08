@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`StackdriverTemplateQueryComponent renders correctly 1`] = `
+Array [
+  <div
+    className="gf-form max-width-21"
+  >
+    <span
+      className="gf-form-label width-10"
+    >
+      Query Types
+    </span>
+    <div
+      className="gf-form-select-wrapper max-width-10"
+    >
+      <select
+        className="gf-form-input"
+        onChange={[Function]}
+        required={true}
+        value="services"
+      >
+        <option
+          value="services"
+        >
+          Services
+        </option>
+        <option
+          value="metricTypes"
+        >
+          Metric Types
+        </option>
+        <option
+          value="metricLabels"
+        >
+          Metric Labels
+        </option>
+        <option
+          value="resourceLabels"
+        >
+          Resource Labels
+        </option>
+        <option
+          value="resourceTypes"
+        >
+          Resource Types
+        </option>
+        <option
+          value="aggregations"
+        >
+          Aggregations
+        </option>
+        <option
+          value="alignerns"
+        >
+          Aligners
+        </option>
+        <option
+          value="alignmentPeriods"
+        >
+          Alignment Periods
+        </option>
+      </select>
+    </div>
+  </div>,
+  "",
+]
+`;
