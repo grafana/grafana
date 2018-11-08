@@ -52,7 +52,7 @@ Here you can specify the name of the alert rule and how often the scheduler shou
 
 > This setting is available in Grafana 5.4 and above.
 
-The `For` setting allows you to specify a duration for which the alert has to violate the threshold before switching to `Alerting` state and sending notifications. This is useful when you want to reduce the amount of false positive alerts and problems from which the system selfheal. Which in case a human does not need to be woken up.
+If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications. 
 
 Typically, it's always a good idea to use this setting since its often worse to get false positive than wait a few minutes before the alert notification triggers.
 
