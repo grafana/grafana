@@ -87,7 +87,50 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   render() {
+    return this.renderAsTabs();
+    // return this.renderAsBoxes();
+    // const { location } = store.getState();
+    // const activeTab = location.query.tab || 'queries';
+    //
+    // return (
+    //   <div className="panel-editor-container__editor">
+    //     <div className="panel-editor-resizer">
+    //       <div className="panel-editor-resizer__handle">
+    //         <div className="panel-editor-resizer__handle-dots" />
+    //       </div>
+    //     </div>
+    //     <div className="panel-editor__aside">
+    //       <h2 className="panel-editor__aside-header">
+    //         <i className="fa fa-cog" />
+    //         Edit Panel
+    //       </h2>
+    //
+    //       {this.tabs.map(tab => {
+    //         return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
+    //       })}
+    //
+    //       <div className="panel-editor__aside-actions">
+    //         <button className="btn btn-secondary" onClick={this.onClose}>
+    //           Back to dashboard
+    //         </button>
+    //         <button className="btn btn-inverse" onClick={this.onClose}>
+    //           Discard changes
+    //         </button>
+    //       </div>
+    //     </div>
+    //     <div className="panel-editor__content">
+    //       <CustomScrollbar>
+    //         {activeTab === 'queries' && this.renderQueriesTab()}
+    //         {activeTab === 'visualization' && this.renderVizTab()}
+    //       </CustomScrollbar>
+    //     </div>
+    //   </div>
+    // );
+  }
+
+  renderAsTabs() {
     const { location } = store.getState();
+    const { panel } = this.props;
     const activeTab = location.query.tab || 'queries';
 
     return (
@@ -97,31 +140,50 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
             <div className="panel-editor-resizer__handle-dots" />
           </div>
         </div>
-        <div className="panel-editor__aside">
-          <h2 className="panel-editor__aside-header">
-            <i className="fa fa-cog" />
-            Edit Panel
-          </h2>
 
-          {this.tabs.map(tab => {
-            return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
-          })}
+        <div className="tabbed-view tabbed-view--new">
+          <div className="tabbed-view-header">
+            <h3 className="tabbed-view-panel-title">{panel.title}</h3>
 
-          <div className="panel-editor__aside-actions">
-            <button className="btn btn-secondary" onClick={this.onClose}>
-              Back to dashboard
-            </button>
-            <button className="btn btn-inverse" onClick={this.onClose}>
-              Discard changes
+            <ul className="gf-tabs">
+              {this.tabs.map(tab => {
+                return <OldTabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
+              })}
+            </ul>
+
+            <button className="tabbed-view-close-btn" onClick={this.onClose}>
+              <i className="fa fa-remove" />
             </button>
           </div>
+
+          <div className="tabbed-view-body">
+            <CustomScrollbar>
+              {activeTab === 'queries' && this.renderQueriesTab()}
+              {activeTab === 'visualization' && this.renderVizTab()}
+            </CustomScrollbar>
+          </div>
         </div>
-        <div className="panel-editor__content">
-          <CustomScrollbar>
-            {activeTab === 'queries' && this.renderQueriesTab()}
-            {activeTab === 'visualization' && this.renderVizTab()}
-          </CustomScrollbar>
+      </div>
+    );
+  }
+
+  renderAsBoxes() {
+    const { location } = store.getState();
+    const { panel } = this.props;
+    const activeTab = location.query.tab || 'queries';
+
+    return (
+      <div className="panel-editor-container__editor">
+        <div className="panel-editor-resizer">
+          <div className="panel-editor-resizer__handle">
+            <div className="panel-editor-resizer__handle-dots" />
+          </div>
         </div>
+
+        <CustomScrollbar>
+          {this.renderQueriesTab()}
+          {this.renderVizTab()}
+        </CustomScrollbar>
       </div>
     );
   }
@@ -143,5 +205,18 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
     <a className={tabClasses} onClick={() => onClick(tab)}>
       <i className={tab.icon} /> {tab.text}
     </a>
+  );
+}
+
+function OldTabItem({ tab, activeTab, onClick }: TabItemParams) {
+  const tabClasses = classNames({
+    'gf-tabs-link': true,
+    active: activeTab === tab.id,
+  });
+
+  return (
+    <li className="gf-tabs-item" onClick={() => onClick(tab)}>
+      <a className={tabClasses}>{tab.text}</a>
+    </li>
   );
 }
