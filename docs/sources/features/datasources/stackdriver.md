@@ -158,9 +158,9 @@ Example Result: `compute.googleapis.com/instance/cpu/usage_time - server1-prod`
 
 It is also possible to resolve the name of the Monitored Resource Type. 
 
-| Alias Pattern Format | Description                                     | Example Result |
-| -------------------- | ----------------------------------------------- | -------------- |
-| `{{resource.type}}`  | returns the name of the monitored resource type | `gce_instance` |
+| Alias Pattern Format     | Description                                     | Example Result   |
+| ------------------------ | ------------------------------------------------| ---------------- |
+| `{{resource.type}}`      | returns the name of the monitored resource type | `gce_instance`     |
 
 Example Alias By: `{{resource.type}} - {{metric.type}}`
 
