@@ -2,12 +2,7 @@ import has from 'lodash/has';
 import isString from 'lodash/isString';
 import { alignmentPeriods } from './constants';
 import { MetricFindQueryTypes } from './types';
-import {
-  extractServicesFromMetricDescriptors,
-  getMetricTypesByService,
-  getAlignmentOptionsByMetric,
-  getAggregationOptionsByMetric,
-} from './functions';
+import { getMetricTypesByService, getAlignmentOptionsByMetric, getAggregationOptionsByMetric } from './functions';
 
 export default class StackdriverMetricFindQuery {
   constructor(private datasource) {}
@@ -15,8 +10,6 @@ export default class StackdriverMetricFindQuery {
   async query(query: any) {
     try {
       switch (query.selectedQueryType) {
-        case MetricFindQueryTypes.Services:
-          return this.handleServiceQuery();
         case MetricFindQueryTypes.MetricTypes:
           return this.handleMetricTypesQuery(query);
         case MetricFindQueryTypes.MetricLabels:
@@ -37,16 +30,6 @@ export default class StackdriverMetricFindQuery {
       console.error(`Could not run StackdriverMetricFindQuery ${query}`, error);
       return [];
     }
-  }
-
-  async handleServiceQuery() {
-    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    const services = extractServicesFromMetricDescriptors(metricDescriptors);
-    return services.map(s => ({
-      text: s.serviceShortName,
-      value: s.name,
-      expandable: true,
-    }));
   }
 
   async handleMetricTypesQuery({ selectedService }) {

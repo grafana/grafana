@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
+import uniqBy from 'lodash/uniqBy';
 import { TemplateQueryProps } from 'app/types/plugins';
 import SimpleSelect from './SimpleSelect';
-import { getMetricTypes, extractServicesFromMetricDescriptors } from '../functions';
+import { getMetricTypes } from '../functions';
 import { MetricFindQueryTypes, TemplateQueryComponentData } from '../types';
 
 export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, TemplateQueryComponentData> {
   queryTypes: Array<{ value: string; name: string }> = [
-    { value: MetricFindQueryTypes.Services, name: 'Services' },
     { value: MetricFindQueryTypes.MetricTypes, name: 'Metric Types' },
     { value: MetricFindQueryTypes.MetricLabels, name: 'Metric Labels' },
     { value: MetricFindQueryTypes.ResourceLabels, name: 'Resource Labels' },
@@ -38,7 +38,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   async componentDidMount() {
     const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
-    const services = extractServicesFromMetricDescriptors(metricDescriptors).map(m => ({
+    const services = uniqBy(metricDescriptors, 'service').map(m => ({
       value: m.service,
       name: m.serviceShortName,
     }));
