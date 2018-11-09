@@ -12,7 +12,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     { value: MetricFindQueryTypes.ResourceLabels, name: 'Resource Labels' },
     { value: MetricFindQueryTypes.ResourceTypes, name: 'Resource Types' },
     { value: MetricFindQueryTypes.Aggregations, name: 'Aggregations' },
-    { value: MetricFindQueryTypes.Alignerns, name: 'Aligners' },
+    { value: MetricFindQueryTypes.Aligners, name: 'Aligners' },
     { value: MetricFindQueryTypes.AlignmentPeriods, name: 'Alignment Periods' },
   ];
 
@@ -162,7 +162,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
             )}
           </React.Fragment>
         );
-      case MetricFindQueryTypes.Alignerns:
+      case MetricFindQueryTypes.Aligners:
       case MetricFindQueryTypes.Aggregations:
         return (
           <React.Fragment>

@@ -45,7 +45,7 @@ Array [
           Aggregations
         </option>
         <option
-          value="alignerns"
+          value="aligners"
         >
           Aligners
         </option>

@@ -17,7 +17,7 @@ export default class StackdriverMetricFindQuery {
           return this.handleLabelQuery(query);
         case MetricFindQueryTypes.ResourceTypes:
           return this.handleResourceTypeQuery(query);
-        case MetricFindQueryTypes.Alignerns:
+        case MetricFindQueryTypes.Aligners:
           return this.handleAlignersQuery(query);
         case MetricFindQueryTypes.AlignmentPeriods:
           return this.handleAlignmentPeriodQuery();
