@@ -19,6 +19,10 @@
     transform: translate(0px, 0px) !important;
   }
 
+  .panel {
+    margin: 0 !important;
+  }
+
   // Disable grid interaction indicators in fullscreen panels
   .panel-header:hover {
     background-color: inherit;

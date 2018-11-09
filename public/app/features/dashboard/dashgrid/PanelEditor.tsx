@@ -2,8 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 import { QueriesTab } from './QueriesTab';
-import { VizTypePicker } from './VizTypePicker';
-import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
+import { VisualizationTab } from './VisualizationTab';
 
 import { store } from 'app/store/configureStore';
 import { updateLocation } from 'app/core/actions';
@@ -38,35 +37,6 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     ];
   }
 
-  renderQueriesTab() {
-    return <QueriesTab panel={this.props.panel} dashboard={this.props.dashboard} />;
-  }
-
-  renderPanelOptions() {
-    const { plugin, panel } = this.props;
-    const { PanelOptionsComponent } = plugin.exports;
-
-    if (PanelOptionsComponent) {
-      return <PanelOptionsComponent options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
-    } else {
-      return <p>Visualization has no options</p>;
-    }
-  }
-
-  onPanelOptionsChanged = (options: any) => {
-    this.props.panel.updateOptions(options);
-    this.forceUpdate();
-  };
-
-  renderVizTab() {
-    return (
-      <div className="viz-editor">
-        <VizTypePicker current={this.props.plugin} onTypeChanged={this.props.onTypeChanged} />
-        {this.renderPanelOptions()}
-      </div>
-    );
-  }
-
   onChangeTab = (tab: PanelEditorTab) => {
     store.dispatch(
       updateLocation({
@@ -87,50 +57,8 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   render() {
-    return this.renderAsTabs();
-    // return this.renderAsBoxes();
-    // const { location } = store.getState();
-    // const activeTab = location.query.tab || 'queries';
-    //
-    // return (
-    //   <div className="panel-editor-container__editor">
-    //     <div className="panel-editor-resizer">
-    //       <div className="panel-editor-resizer__handle">
-    //         <div className="panel-editor-resizer__handle-dots" />
-    //       </div>
-    //     </div>
-    //     <div className="panel-editor__aside">
-    //       <h2 className="panel-editor__aside-header">
-    //         <i className="fa fa-cog" />
-    //         Edit Panel
-    //       </h2>
-    //
-    //       {this.tabs.map(tab => {
-    //         return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
-    //       })}
-    //
-    //       <div className="panel-editor__aside-actions">
-    //         <button className="btn btn-secondary" onClick={this.onClose}>
-    //           Back to dashboard
-    //         </button>
-    //         <button className="btn btn-inverse" onClick={this.onClose}>
-    //           Discard changes
-    //         </button>
-    //       </div>
-    //     </div>
-    //     <div className="panel-editor__content">
-    //       <CustomScrollbar>
-    //         {activeTab === 'queries' && this.renderQueriesTab()}
-    //         {activeTab === 'visualization' && this.renderVizTab()}
-    //       </CustomScrollbar>
-    //     </div>
-    //   </div>
-    // );
-  }
-
-  renderAsTabs() {
+    const { panel, dashboard, onTypeChanged, plugin } = this.props;
     const { location } = store.getState();
-    const { panel } = this.props;
     const activeTab = location.query.tab || 'queries';
 
     return (
@@ -141,49 +69,22 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
           </div>
         </div>
 
-        <div className="tabbed-view tabbed-view--new">
-          <div className="tabbed-view-header">
-            <h3 className="tabbed-view-panel-title">{panel.title}</h3>
+        <div className="panel-editor-tabs">
+          <ul className="gf-tabs">
+            {this.tabs.map(tab => {
+              return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
+            })}
+          </ul>
 
-            <ul className="gf-tabs">
-              {this.tabs.map(tab => {
-                return <OldTabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
-              })}
-            </ul>
-
-            <button className="tabbed-view-close-btn" onClick={this.onClose}>
-              <i className="fa fa-remove" />
-            </button>
-          </div>
-
-          <div className="tabbed-view-body">
-            <CustomScrollbar>
-              {activeTab === 'queries' && this.renderQueriesTab()}
-              {activeTab === 'visualization' && this.renderVizTab()}
-            </CustomScrollbar>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  renderAsBoxes() {
-    const { location } = store.getState();
-    const { panel } = this.props;
-    const activeTab = location.query.tab || 'queries';
-
-    return (
-      <div className="panel-editor-container__editor">
-        <div className="panel-editor-resizer">
-          <div className="panel-editor-resizer__handle">
-            <div className="panel-editor-resizer__handle-dots" />
-          </div>
+          <button className="panel-editor-tabs__close" onClick={this.onClose}>
+            <i className="fa fa-remove" />
+          </button>
         </div>
 
-        <CustomScrollbar>
-          {this.renderQueriesTab()}
-          {this.renderVizTab()}
-        </CustomScrollbar>
+        {activeTab === 'queries' && <QueriesTab panel={panel} dashboard={dashboard} />}
+        {activeTab === 'visualization' && (
+          <VisualizationTab panel={panel} dashboard={dashboard} plugin={plugin} onTypeChanged={onTypeChanged} />
+        )}
       </div>
     );
   }
@@ -197,26 +98,15 @@ interface TabItemParams {
 
 function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   const tabClasses = classNames({
-    'panel-editor__aside-item': true,
-    active: activeTab === tab.id,
-  });
-
-  return (
-    <a className={tabClasses} onClick={() => onClick(tab)}>
-      <i className={tab.icon} /> {tab.text}
-    </a>
-  );
-}
-
-function OldTabItem({ tab, activeTab, onClick }: TabItemParams) {
-  const tabClasses = classNames({
     'gf-tabs-link': true,
     active: activeTab === tab.id,
   });
 
   return (
     <li className="gf-tabs-item" onClick={() => onClick(tab)}>
-      <a className={tabClasses}>{tab.text}</a>
+      <a className={tabClasses}>
+        <i className={tab.icon} /> {tab.text}
+      </a>
     </li>
   );
 }

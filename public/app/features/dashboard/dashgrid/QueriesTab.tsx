@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Services & utils
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { EditorTabBody } from './EditorTabBody';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -48,6 +49,20 @@ export class QueriesTab extends PureComponent<Props> {
   }
 
   render() {
-    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
+    const currentDataSource = {
+      title: 'ProductionDB',
+      imgSrc: 'public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
+      render: () => {
+        return (
+          <h2>Hello</h2>
+        );
+      },
+    };
+
+    return (
+      <EditorTabBody toolbarItems={[currentDataSource]}>
+        <div ref={element => (this.element = element)} style={{ width: '100%' }} />
+      </EditorTabBody>
+    );
   }
 }
