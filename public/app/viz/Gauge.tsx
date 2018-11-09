@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
+import { withSize } from 'react-sizeme';
 import { TimeSeriesVMs } from 'app/types';
 import config from '../core/config';
 
@@ -10,10 +11,14 @@ interface Props {
   showThresholdMarkers?: boolean;
   thresholds?: number[];
   showThresholdLables?: boolean;
+  size?: { width: number; height: number };
 }
 
+const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
+
 export class Gauge extends PureComponent<Props> {
-  element: any;
+  parentElement: any;
+  canvasElement: any;
 
   static defaultProps = {
     minValue: 0,
@@ -28,17 +33,32 @@ export class Gauge extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (prevProps.timeSeries !== this.props.timeSeries) {
-      this.draw();
-    }
+    this.draw();
   }
 
   draw() {
-    const { maxValue, minValue, showThresholdLables, showThresholdMarkers, timeSeries, thresholds } = this.props;
+    const { maxValue, minValue, showThresholdLables, size, showThresholdMarkers, timeSeries, thresholds } = this.props;
 
-    console.log(timeSeries);
+    const width = size.width;
+    const height = size.height;
+    const dimension = Math.min(width, height * 1.3);
+
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
     const fontColor = config.bootData.user.lightTheme ? 'rgb(38,38,38)' : 'rgb(230,230,230)';
+    const fontScale = parseInt('80', 10) / 100;
+    const fontSize = Math.min(dimension / 5, 100) * fontScale;
+    const gaugeWidth = Math.min(dimension / 6, 60);
+    const thresholdMarkersWidth = gaugeWidth / 5;
+    const thresholdLabelFontSize = fontSize / 2.5;
+
+    const formattedThresholds = [];
+
+    thresholds.forEach((threshold, index) => {
+      formattedThresholds.push({
+        value: threshold,
+        color: colors[index],
+      });
+    });
 
     const options = {
       series: {
@@ -49,21 +69,21 @@ export class Gauge extends PureComponent<Props> {
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },
-            width: '100%',
+            width: gaugeWidth,
           },
           frame: { show: false },
           label: { show: false },
           layout: { margin: 0, thresholdWidth: 0 },
           cell: { border: { width: 0 } },
           threshold: {
-            values: thresholds,
+            values: formattedThresholds,
             label: {
               show: showThresholdLables,
-              margin: 2,
-              font: { size: 14 },
+              margin: thresholdMarkersWidth + 1,
+              font: { size: thresholdLabelFontSize },
             },
             show: showThresholdMarkers,
-            width: 1,
+            width: thresholdMarkersWidth,
           },
           value: {
             color: fontColor,
@@ -71,7 +91,7 @@ export class Gauge extends PureComponent<Props> {
               return Math.round(timeSeries[0].stats.avg);
             },
             font: {
-              size: 78,
+              size: fontSize,
               family: '"Helvetica Neue", Helvetica, Arial, sans-serif',
             },
           },
@@ -80,20 +100,34 @@ export class Gauge extends PureComponent<Props> {
       },
     };
 
+    const plotSeries = {
+      data: [[0, timeSeries[0].stats.avg]],
+    };
+
     try {
-      $.plot(this.element, timeSeries, options);
+      $.plot(this.canvasElement, [plotSeries], options);
     } catch (err) {
       console.log('Gauge rendering error', err, options, timeSeries);
     }
   }
 
-  getValueText() {}
-
   render() {
+    const { height, width } = this.props.size;
+
     return (
-      <div className="singlestat-panel">
-        <div className="graph-panel__chart" ref={e => (this.element = e)} />
+      <div className="singlestat-panel" ref={element => (this.parentElement = element)}>
+        <div
+          style={{
+            height: `${height * 0.9}px`,
+            width: `${Math.min(width, height * 1.3)}px`,
+            top: '10px',
+            margin: 'auto',
+          }}
+          ref={element => (this.canvasElement = element)}
+        />
       </div>
     );
   }
 }
+
+export default withSize({ monitorHeight: true })(Gauge);

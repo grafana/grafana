@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { NullValueMode, PanelProps } from '../../../types';
-import { Gauge } from '../../../viz/Gauge';
-import { getTimeSeriesVMs } from '../../../viz/state/timeSeries';
+import Gauge from 'app/viz/Gauge';
+import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 
 export interface Options {}
 
@@ -16,7 +16,7 @@ export class GaugePanel extends PureComponent<Props> {
       nullValueMode: NullValueMode.Ignore,
     });
 
-    return <Gauge maxValue={100} minValue={100} timeSeries={vmSeries} />;
+    return <Gauge maxValue={100} minValue={0} timeSeries={vmSeries} thresholds={[0, 100]} />;
   }
 }
 
