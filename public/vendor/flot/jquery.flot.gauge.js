@@ -583,7 +583,7 @@
          * @param  {Number} [a] the angle of the value drawn
          */
         function drawText(x, y, id, text, textOptions, a) {
-            var span = $("." + id, placeholder);
+            var span = $(placeholder).find("#" + id);
             var exists = span.length;
             if (!exists) {
                 span = $("<span></span>")
