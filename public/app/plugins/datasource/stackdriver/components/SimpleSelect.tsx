@@ -1,8 +1,8 @@
 import React, { SFC } from 'react';
 
 interface Props {
-  onValueChange: any;
-  options: any;
+  onValueChange: (e) => void;
+  options: any[];
   value: string;
   label: string;
 }
