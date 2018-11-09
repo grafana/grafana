@@ -4,7 +4,7 @@ import { StackdriverTemplateQueryComponent } from './TemplateQueryComponent';
 import { TemplateQueryProps } from 'app/types/plugins';
 
 jest.mock('../functions', () => ({
-  getMetricTypes: () => Promise.resolve({ metricTypes: [], selectedMetricType: '' }),
+  getMetricTypes: async () => ({ metricTypes: [], selectedMetricType: '' }),
   extractServicesFromMetricDescriptors: m => m,
 }));
 
