@@ -184,8 +184,7 @@ export default class StackdriverDatasource {
 
   async metricFindQuery(query) {
     const stackdriverMetricFindQuery = new StackdriverMetricFindQuery(this);
-    return stackdriverMetricFindQuery.query(query);
-    // throw new Error('Template variables support is not yet imlemented');
+    return stackdriverMetricFindQuery.execute(query);
   }
 
   async testDatasource() {

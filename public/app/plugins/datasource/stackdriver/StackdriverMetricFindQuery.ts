@@ -7,7 +7,7 @@ import { getMetricTypesByService, getAlignmentOptionsByMetric, getAggregationOpt
 export default class StackdriverMetricFindQuery {
   constructor(private datasource) {}
 
-  async query(query: any) {
+  async execute(query: any) {
     try {
       switch (query.selectedQueryType) {
         case MetricFindQueryTypes.MetricTypes:
