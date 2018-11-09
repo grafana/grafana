@@ -60,13 +60,9 @@ export default class StackdriverMetricFindQuery {
     if (!selectedMetricType) {
       return [];
     }
-    try {
-      const refId = 'handleResourceTypeQueryQueryType';
-      const response = await this.datasource.getLabels(selectedMetricType, refId);
-      return response.meta.resourceTypes.map(this.toFindQueryResult);
-    } catch (error) {
-      return [];
-    }
+    const refId = 'handleResourceTypeQueryQueryType';
+    const response = await this.datasource.getLabels(selectedMetricType, refId);
+    return response.meta.resourceTypes.map(this.toFindQueryResult);
   }
 
   async handleAlignersQuery({ selectedMetricType }) {
