@@ -5,7 +5,6 @@ import { TemplateQueryProps } from 'app/types/plugins';
 
 jest.mock('../functions', () => ({
   getMetricTypes: async () => ({ metricTypes: [], selectedMetricType: '' }),
-  extractServicesFromMetricDescriptors: m => m,
 }));
 
 const props: TemplateQueryProps = {
@@ -24,7 +23,7 @@ describe('StackdriverTemplateQueryComponent', () => {
 
   it('should use the first query type in the array if no query type was saved before', done => {
     props.onChange = (query, definition) => {
-      expect(definition).toBe('Stackdriver - Services');
+      expect(definition).toBe('Stackdriver - Metric Types');
       done();
     };
     renderer.create(<StackdriverTemplateQueryComponent {...props} />).toJSON();

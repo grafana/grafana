@@ -17,13 +17,8 @@ Array [
         className="gf-form-input"
         onChange={[Function]}
         required={true}
-        value="services"
+        value="metricTypes"
       >
-        <option
-          value="services"
-        >
-          Services
-        </option>
         <option
           value="metricTypes"
         >
@@ -62,6 +57,24 @@ Array [
       </select>
     </div>
   </div>,
-  "",
+  <div
+    className="gf-form max-width-21"
+  >
+    <span
+      className="gf-form-label width-10"
+    >
+      Services
+    </span>
+    <div
+      className="gf-form-select-wrapper max-width-10"
+    >
+      <select
+        className="gf-form-input"
+        onChange={[Function]}
+        required={true}
+        value=""
+      />
+    </div>
+  </div>,
 ]
 `;
