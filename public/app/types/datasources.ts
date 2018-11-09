@@ -22,6 +22,13 @@ export interface DataSource {
   testDatasource?: () => Promise<any>;
 }
 
+export interface DataSourceSelectItem {
+  name: string;
+  value: string | null;
+  meta: PluginMeta;
+  sort: string;
+}
+
 export interface DataSourcesState {
   dataSources: DataSource[];
   searchQuery: string;

@@ -15,6 +15,8 @@ interface State {
 }
 
 export class VizTypePicker extends PureComponent<Props, State> {
+  searchInput: HTMLElement;
+
   constructor(props) {
     super(props);
 
@@ -47,11 +49,22 @@ export class VizTypePicker extends PureComponent<Props, State> {
     );
   };
 
+  componentDidMount() {
+    setTimeout(() => {
+      this.searchInput.focus();
+    }, 300);
+  }
+
   renderFilters() {
     return (
       <>
         <label className="gf-form--has-input-icon">
-          <input type="text" className="gf-form-input width-13" placeholder="" />
+          <input
+            type="text"
+            className="gf-form-input width-13"
+            placeholder=""
+            ref={elem => (this.searchInput = elem)}
+          />
           <i className="gf-form-input-icon fa fa-search" />
         </label>
         <div className="p-l-1">
@@ -63,7 +76,6 @@ export class VizTypePicker extends PureComponent<Props, State> {
   }
 
   render() {
-    const { current } = this.props;
     const { pluginList } = this.state;
 
     return (

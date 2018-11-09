@@ -15,7 +15,6 @@ interface Props {
 }
 
 export class VisualizationTab extends PureComponent<Props> {
-
   constructor(props) {
     super(props);
   }
@@ -37,7 +36,7 @@ export class VisualizationTab extends PureComponent<Props> {
   };
 
   render() {
-    const {plugin, onTypeChanged} = this.props;
+    const { plugin, onTypeChanged } = this.props;
 
     const panelSelection = {
       title: plugin.name,
@@ -48,7 +47,7 @@ export class VisualizationTab extends PureComponent<Props> {
     };
 
     return (
-      <EditorTabBody toolbarItems={[panelSelection]}>
+      <EditorTabBody main={panelSelection} toolbarItems={[]}>
         {this.renderPanelOptions()}
       </EditorTabBody>
     );

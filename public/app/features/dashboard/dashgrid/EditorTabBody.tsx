@@ -3,15 +3,15 @@ import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface Props {
-  selectedText?: string;
-  selectedImage?: string;
   children: JSX.Element;
+  main: EditorToolBarView;
   toolbarItems: EditorToolBarView[];
 }
 
 export interface EditorToolBarView {
   title: string;
-  imgSrc: string;
+  imgSrc?: string;
+  icon?: string;
   render: () => JSX.Element;
 }
 
@@ -32,18 +32,28 @@ export class EditorTabBody extends PureComponent<Props, State> {
     this.setState({
       openView: item === this.state.openView ? null : item,
     });
-  }
+  };
 
   onCloseOpenView = () => {
     this.setState({ openView: null });
+  };
+
+  renderMainSelection(view: EditorToolBarView) {
+    return (
+      <div className="edit-section__selected" onClick={() => this.onToggleToolBarView(view)} key={view.title}>
+        <img className="edit-section__selected-image" src={view.imgSrc} />
+        <div className="edit-section__selected-name">{view.title}</div>
+        <i className="fa fa-caret-down" />
+      </div>
+    );
   }
 
-  renderToolBarViewToggle(item: EditorToolBarView) {
+  renderButton(view: EditorToolBarView) {
     return (
-      <div className="edit-section__selected" onClick={() => this.onToggleToolBarView(item)} key={item.title}>
-        <img className="edit-section__selected-image" src={item.imgSrc} />
-        <div className="edit-section__selected-name">{item.title}</div>
-        <i className="fa fa-caret-down" />
+      <div className="nav-buttons" key={view.title}>
+        <button className="btn navbar-button">
+          <i className={view.icon} /> {view.title}
+        </button>
       </div>
     );
   }
@@ -60,25 +70,29 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   render() {
-    const { children, toolbarItems} = this.props;
+    const { children, toolbarItems, main } = this.props;
     const { openView } = this.state;
 
     return (
       <>
-      <div className="edit-section">
-        <div className="edit-section__header">{toolbarItems.map(item => this.renderToolBarViewToggle(item))}</div>
-      </div>
-      <div className="panel-editor__scroll">
-        <CustomScrollbar>
-          <div className="panel-editor__content">
-            <FadeIn in={openView !== null} duration={300}>
-              {openView && this.renderOpenView(openView)}
-            </FadeIn>
-            {children}
+        <div className="edit-section">
+          <div className="edit-section__header">
+            {this.renderMainSelection(main)}
+            <div className="gf-form--grow" />
+            {toolbarItems.map(item => this.renderButton(item))}
           </div>
-        </CustomScrollbar>
-      </div>
+        </div>
+        <div className="panel-editor__scroll">
+          <CustomScrollbar>
+            <div className="panel-editor__content">
+              <FadeIn in={openView !== null} duration={200}>
+                {openView && this.renderOpenView(openView)}
+              </FadeIn>
+              {children}
+            </div>
+          </CustomScrollbar>
+        </div>
       </>
-      );
+    );
   }
 }

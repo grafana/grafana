@@ -1,11 +1,9 @@
-// Libraries
 import React, { PureComponent } from 'react';
 
-// Services & utils
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
+import { DataSourcePicker } from './DataSourcePicker';
 
-// Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 
@@ -52,15 +50,23 @@ export class QueriesTab extends PureComponent<Props> {
     const currentDataSource = {
       title: 'ProductionDB',
       imgSrc: 'public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
-      render: () => {
-        return (
-          <h2>Hello</h2>
-        );
-      },
+      render: () => <DataSourcePicker />,
+    };
+
+    const queryInspector = {
+      title: 'Query Inspector',
+      icon: 'fa fa-lightbulb-o',
+      render: () => <h2>hello</h2>,
+    };
+
+    const dsHelp = {
+      title: 'Help',
+      icon: 'fa fa-question',
+      render: () => <h2>hello</h2>,
     };
 
     return (
-      <EditorTabBody toolbarItems={[currentDataSource]}>
+      <EditorTabBody main={currentDataSource} toolbarItems={[dsHelp, queryInspector]}>
         <div ref={element => (this.element = element)} style={{ width: '100%' }} />
       </EditorTabBody>
     );
