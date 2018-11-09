@@ -33,7 +33,9 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     this.onServiceChange = this.onServiceChange.bind(this);
     this.onMetricTypeChange = this.onMetricTypeChange.bind(this);
     this.onLabelKeyChange = this.onLabelKeyChange.bind(this);
+    console.log(this.props.query);
     this.state = Object.assign(this.defaults, this.props.query);
+    console.log(Object.assign(this.defaults, this.props.query));
   }
 
   async componentDidMount() {
@@ -63,6 +65,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       metricDescriptors,
       ...await this.getLabels(selectedMetricType),
     };
+    console.log(state);
     this.setState(state);
   }
 
