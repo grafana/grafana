@@ -229,6 +229,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     const { cleanText, onWillApplySuggestion, syntax } = this.props;
     const { typeaheadPrefix, typeaheadText } = this.state;
     let suggestionText = suggestion.insertText || suggestion.label;
+    const preserveSuffix = suggestion.kind === 'function';
     const move = suggestion.move || 0;
 
     if (onWillApplySuggestion) {
@@ -243,7 +244,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     const suffixLength = text.length - typeaheadPrefix.length;
     const offset = typeaheadText.indexOf(typeaheadPrefix);
     const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
-    const forward = midWord ? suffixLength + offset : 0;
+    const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
 
     // If new-lines, apply suggestion as block
     if (suggestionText.match(/\n/)) {
