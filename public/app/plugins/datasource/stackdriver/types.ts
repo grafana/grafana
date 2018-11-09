@@ -1,5 +1,4 @@
 export enum MetricFindQueryTypes {
-  Services = 'services',
   MetricTypes = 'metricTypes',
   MetricLabels = 'metricLabels',
   ResourceLabels = 'resourceLabels',
