@@ -165,7 +165,7 @@
   position: absolute;
   top: 0;
   right: 90px;
-  z-index: 1024;
+  z-index: 1015;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -214,7 +214,42 @@
       display: grid;
       grid-column-gap: 1rem;
       grid-row-gap: 0.1rem;
-      grid-template-columns: 4px minmax(100px, max-content) 1fr;
+      grid-template-columns: 4px minmax(100px, max-content) minmax(100px, 25%) 1fr;
+      font-family: $font-family-monospace;
+      font-size: 12px;
+    }
+
+    .logs-controls {
+      display: flex;
+
+      > * {
+        margin-right: 1em;
+      }
+    }
+
+    .logs-options,
+    .logs-graph {
+      margin-bottom: $panel-margin;
+    }
+
+    .logs-meta {
+      flex: 1;
+      color: $text-color-weak;
+      padding: 2px 0;
+    }
+
+    .logs-meta-item {
+      display: inline-block;
+      margin-right: 1em;
+    }
+
+    .logs-meta-item__label {
+      margin-right: 0.5em;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .logs-meta-item__value {
       font-family: $font-family-monospace;
     }
 
@@ -235,18 +270,26 @@
       opacity: 0.8;
     }
 
-    .logs-row-level-crit,
+    .logs-row-level-crit {
+      background-color: #705da0;
+    }
+
     .logs-row-level-error,
     .logs-row-level-err {
-      background-color: $red;
+      background-color: #e24d42;
     }
 
     .logs-row-level-warn {
-      background-color: $orange;
+      background-color: #eab839;
     }
 
     .logs-row-level-info {
-      background-color: $green;
+      background-color: #7eb26d;
+    }
+
+    .logs-row-level-trace,
+    .logs-row-level-debug {
+      background-color: #1f78c1;
     }
   }
 }

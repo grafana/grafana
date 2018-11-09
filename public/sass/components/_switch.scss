@@ -41,7 +41,6 @@
     bottom: 0;
     right: 0;
     color: #fff;
-    font-size: $font-size-sm;
     text-align: center;
     font-size: 150%;
     display: flex;
@@ -89,6 +88,20 @@
 
   input:checked + label::after {
     transform: rotateY(0);
+  }
+
+  &--small {
+    max-width: 2rem;
+    min-width: 1.5rem;
+
+    input + label {
+      height: 25px;
+    }
+
+    input + label::before,
+    input + label::after {
+      font-size: $font-size-sm;
+    }
   }
 
   &--table-cell {

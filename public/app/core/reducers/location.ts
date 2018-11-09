@@ -23,7 +23,9 @@ export const locationReducer = (state = initialState, action: Action): LocationS
       return {
         url: renderUrl(path || state.path, query),
         path: path || state.path,
-        query: query,
+        query: {
+          ...query,
+        },
         routeParams: routeParams || state.routeParams,
       };
     }

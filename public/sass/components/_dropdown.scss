@@ -183,6 +183,11 @@
     display: block;
   }
 
+  & > .dropdown > .dropdown-menu {
+    // Panel menu. TODO: See if we can merge this with above
+    display: block;
+  }
+
   &.cascade-open {
     .dropdown-menu {
       display: block;

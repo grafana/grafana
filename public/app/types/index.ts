@@ -20,7 +20,7 @@ import {
   DataQueryResponse,
   DataQueryOptions,
 } from './series';
-import { PanelProps } from './panel';
+import { PanelProps, PanelOptionsProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
 import { Organization, OrganizationPreferences, OrganizationState } from './organization';
 import {
@@ -69,6 +69,7 @@ export {
   TimeRange,
   LoadingState,
   PanelProps,
+  PanelOptionsProps,
   TimeSeries,
   TimeSeriesVM,
   TimeSeriesVMs,

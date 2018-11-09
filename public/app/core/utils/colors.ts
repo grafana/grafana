@@ -10,16 +10,16 @@ export const NO_DATA_COLOR = 'rgba(150, 150, 150, 1)';
 export const REGION_FILL_ALPHA = 0.09;
 
 const colors = [
-  '#7EB26D',
-  '#EAB839',
-  '#6ED0E0',
-  '#EF843C',
-  '#E24D42',
-  '#1F78C1',
-  '#BA43A9',
-  '#705DA0',
-  '#508642',
-  '#CCA300',
+  '#7EB26D', // 0: pale green
+  '#EAB839', // 1: mustard
+  '#6ED0E0', // 2: light blue
+  '#EF843C', // 3: orange
+  '#E24D42', // 4: red
+  '#1F78C1', // 5: ocean
+  '#BA43A9', // 6: purple
+  '#705DA0', // 7: violet
+  '#508642', // 8: dark green
+  '#CCA300', // 9: dark sand
   '#447EBC',
   '#C15C17',
   '#890F02',

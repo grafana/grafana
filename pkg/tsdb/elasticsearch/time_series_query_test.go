@@ -127,6 +127,60 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(avgAgg.Aggregation.Type, ShouldEqual, "avg")
 		})
 
+		Convey("With term agg and order by term", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "_term"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "2")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			So(termsAgg.Order["_term"], ShouldEqual, "asc")
+		})
+
+		Convey("With term agg and order by term with es6.x", func() {
+			c := newFakeClient(60)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "_term"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "2")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			So(termsAgg.Order["_key"], ShouldEqual, "asc")
+		})
+
 		Convey("With metric percentiles", func() {
 			c := newFakeClient(5)
 			_, err := executeTsdbQuery(c, `{

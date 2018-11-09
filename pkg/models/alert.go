@@ -215,13 +215,14 @@ type AlertStateInfoDTO struct {
 // "Internal" commands
 
 type UpdateDashboardAlertsCommand struct {
-	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }
 
 type ValidateDashboardAlertsCommand struct {
 	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }

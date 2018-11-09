@@ -60,6 +60,21 @@ export class PanelModel {
     _.defaultsDeep(this, _.cloneDeep(defaults));
   }
 
+  getOptions() {
+    return this[this.getOptionsKey()] || {};
+  }
+
+  updateOptions(options: object) {
+    const update: any = {};
+    update[this.getOptionsKey()] = options;
+    Object.assign(this, update);
+    this.render();
+  }
+
+  private getOptionsKey() {
+    return this.type + 'Options';
+  }
+
   getSaveModel() {
     const model: any = {};
     for (const property in this) {
@@ -119,10 +134,6 @@ export class PanelModel {
 
   panelInitialized() {
     this.events.emit('panel-initialized');
-  }
-
-  initEditMode() {
-    this.events.emit('panel-init-edit-mode');
   }
 
   changeType(pluginId: string) {
