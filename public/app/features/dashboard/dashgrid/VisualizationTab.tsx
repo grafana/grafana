@@ -36,12 +36,14 @@ export class VisualizationTab extends PureComponent<Props> {
   };
 
   render() {
-    const { plugin, onTypeChanged } = this.props;
+    const { plugin } = this.props;
 
     const panelSelection = {
       title: plugin.name,
       imgSrc: plugin.info.logos.small,
       render: () => {
+        // the needs to be scoped inside this closure
+        const { plugin, onTypeChanged } = this.props;
         return <VizTypePicker current={plugin} onTypeChanged={onTypeChanged} />;
       },
     };

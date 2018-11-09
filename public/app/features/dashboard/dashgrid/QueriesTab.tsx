@@ -55,18 +55,17 @@ export class QueriesTab extends PureComponent<Props> {
 
     const queryInspector = {
       title: 'Query Inspector',
-      icon: 'fa fa-lightbulb-o',
       render: () => <h2>hello</h2>,
     };
 
     const dsHelp = {
-      title: 'Help',
+      title: '',
       icon: 'fa fa-question',
       render: () => <h2>hello</h2>,
     };
 
     return (
-      <EditorTabBody main={currentDataSource} toolbarItems={[dsHelp, queryInspector]}>
+      <EditorTabBody main={currentDataSource} toolbarItems={[queryInspector, dsHelp]}>
         <div ref={element => (this.element = element)} style={{ width: '100%' }} />
       </EditorTabBody>
     );

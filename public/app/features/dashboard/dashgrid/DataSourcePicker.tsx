@@ -78,7 +78,6 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     return (
       <>
         <div className="cta-form__bar">
-          <div className="cta-form__bar-header">Select data source</div>
           {this.renderFilters()}
           <div className="gf-form--grow" />
         </div>

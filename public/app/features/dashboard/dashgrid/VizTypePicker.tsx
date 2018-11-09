@@ -81,7 +81,6 @@ export class VizTypePicker extends PureComponent<Props, State> {
     return (
       <>
         <div className="cta-form__bar">
-          <div className="cta-form__bar-header">Select visualization</div>
           {this.renderFilters()}
           <div className="gf-form--grow" />
         </div>

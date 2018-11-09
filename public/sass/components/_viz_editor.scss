@@ -85,9 +85,7 @@
   }
 
   &--selected {
-    .viz-picker__item-name {
-      color: $text-color;
-    }
+    box-shadow: 0 0 12px #ff4d00;
   }
 }
 
@@ -171,10 +169,12 @@
   display: flex;
   align-content: center;
   align-items: center;
-  background: linear-gradient(90deg, #292a2d, black);
-  padding: 7px 30px 7px 20px;
+  background: $page-header-bg;
   box-shadow: 0 0 20px black;
+  padding: 7px 30px 7px 20px;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
 .edit-section__selected {
@@ -208,14 +208,15 @@
 }
 
 .panel-editor-tabs {
-  z-index: 1;
+  position: relative;
+  z-index: 2;
   box-shadow: $page-header-shadow;
   border-bottom: 1px solid $page-header-border-color;
   padding: 0 $dashboard-padding;
   @include clearfix();
 
   .active.gf-tabs-link {
-    background: #242427;
+    background: $input-label-bg;
   }
 }
 
@@ -231,6 +232,7 @@
   i {
     font-size: 120%;
   }
+
   &:hover {
     color: $text-color-strong;
   }
@@ -238,11 +240,10 @@
 
 .editor-toolbar-view {
   position: relative;
-  padding: 10px 20px;
+  padding: 20px 20px;
   background-color: $empty-list-cta-bg;
-  border-top: 3px solid $orange;
-  margin: 0 100px;
-  margin-bottom: 20px;
+  top: -45px;
+  margin: 0 30px 20px 0px;
 }
 
 .editor-toolbar-view__close {
@@ -250,8 +251,8 @@
   padding: 4px 8px 4px 9px;
   border: none;
   position: absolute;
-  right: 9px;
-  top: 7px;
+  right: 15px;
+  top: 20px;
   font-size: $font-size-md;
 
   &:hover {

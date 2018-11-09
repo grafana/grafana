@@ -51,8 +51,8 @@ export class EditorTabBody extends PureComponent<Props, State> {
   renderButton(view: EditorToolBarView) {
     return (
       <div className="nav-buttons" key={view.title}>
-        <button className="btn navbar-button">
-          <i className={view.icon} /> {view.title}
+        <button className="btn navbar-button" onClick={() => this.onToggleToolBarView(view)}>
+          {view.icon && <i className={view.icon} />} {view.title}
         </button>
       </div>
     );
@@ -62,7 +62,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     return (
       <div className="editor-toolbar-view">
         <button className="editor-toolbar-view__close" onClick={this.onCloseOpenView}>
-          <i className="fa fa-remove" />
+          <i className="fa fa-chevron-up" />
         </button>
         {view.render()}
       </div>
