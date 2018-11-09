@@ -63,7 +63,6 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
       metricDescriptors,
       ...await this.getLabels(selectedMetricType),
     };
-    console.log(state);
     this.setState(state);
   }
 
@@ -101,8 +100,8 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
 
   componentDidUpdate() {
     const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
-    const queryName = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
-    this.props.onChange(queryModel, `Stackdriver - ${queryName.name}`);
+    const query = this.queryTypes.find(q => q.value === this.state.selectedQueryType);
+    this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
   }
 
   isLabelQuery(queryType) {
