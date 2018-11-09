@@ -20,8 +20,8 @@ const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
 const wrapLabel = (label: string) => ({ label });
 
-const setFunctionMove = (suggestion: CompletionItem): CompletionItem => {
-  suggestion.move = -1;
+const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
+  suggestion.kind = 'function';
   return suggestion;
 };
 
@@ -129,7 +129,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     suggestions.push({
       prefixMatch: true,
       label: 'Functions',
-      items: FUNCTIONS.map(setFunctionMove),
+      items: FUNCTIONS.map(setFunctionKind),
     });
 
     if (metrics) {
