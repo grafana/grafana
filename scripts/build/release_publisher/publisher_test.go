@@ -3,19 +3,20 @@ package main
 import "testing"
 
 func TestPreparingReleaseFromRemote(t *testing.T) {
+
+	var builder releaseBuilder
+
 	versionIn := "v5.2.0-beta1"
 	expectedVersion := "5.2.0-beta1"
 	whatsNewUrl := "https://whatsnews.foo/"
 	relNotesUrl := "https://relnotes.foo/"
 	expectedArch := "amd64"
 	expectedOs := "linux"
-	buildArtifacts := []buildArtifact{{expectedOs,expectedArch, ".linux-amd64.tar.gz"}}
-
-	var builder releaseBuilder
+	buildArtifacts := []buildArtifact{{expectedOs, expectedArch, ".linux-amd64.tar.gz"}}
 
 	builder = releaseFromExternalContent{
-		getter:     mockHttpGetter{},
-		rawVersion: versionIn,
+		getter:                 mockHttpGetter{},
+		rawVersion:             versionIn,
 		artifactConfigurations: buildArtifactConfigurations,
 	}
 
@@ -50,7 +51,6 @@ func (mockHttpGetter) getContents(url string) (string, error) {
 	return url, nil
 }
 
-
 func TestPreparingReleaseFromLocal(t *testing.T) {
 	whatsNewUrl := "https://whatsnews.foo/"
 	relNotesUrl := "https://relnotes.foo/"
@@ -60,7 +60,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	var builder releaseBuilder
 	testDataPath := "testdata"
 	builder = releaseLocalSources{
-		path:                   testDataPath,
+		path: testDataPath,
 		artifactConfigurations: buildArtifactConfigurations,
 	}
 
@@ -93,7 +93,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	expectedOs := "win"
 
 	builder = releaseLocalSources{
-		path:                   testDataPath,
+		path: testDataPath,
 		artifactConfigurations: []buildArtifact{{
 			os:         expectedOs,
 			arch:       expectedArch,
