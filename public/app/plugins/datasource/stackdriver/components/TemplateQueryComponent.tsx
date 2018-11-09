@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { TemplateQueryProps } from 'app/types/plugins';
-import defaultsDeep from 'lodash/defaultsDeep';
 import SimpleSelect from './SimpleSelect';
 import { getMetricTypes, extractServicesFromMetricDescriptors } from '../functions';
 import { MetricFindQueryTypes, TemplateQueryComponentData } from '../types';
@@ -34,7 +33,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     this.onServiceChange = this.onServiceChange.bind(this);
     this.onMetricTypeChange = this.onMetricTypeChange.bind(this);
     this.onLabelKeyChange = this.onLabelKeyChange.bind(this);
-    this.state = defaultsDeep(this.props.query, this.defaults);
+    this.state = Object.assign(this.defaults, this.props.query);
   }
 
   async componentDidMount() {
