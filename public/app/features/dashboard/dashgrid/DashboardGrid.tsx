@@ -150,9 +150,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
     // So it's required to call it explicitly when panel resized or moved to save layout changes.
     this.onLayoutChange(layout);
-
-    // Check all panels
-    this.observer.check();
   }
 
   onResize(layout, oldItem, newItem) {
@@ -162,7 +159,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   onResizeStop(layout, oldItem, newItem) {
     this.updateGridPos(newItem, layout);
     this.panelMap[newItem.i].resizeDone();
-    this.observer.check();
   }
 
   onDragStop(layout, oldItem, newItem) {
@@ -185,6 +181,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
+        /** panel-id is set for html bookmarks */
         <div
           key={panel.id.toString()}
           className={panelClasses}

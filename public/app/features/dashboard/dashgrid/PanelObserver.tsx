@@ -7,7 +7,6 @@ export const PANEL_VISIBILITY_CHANGED_EVENT = 'panel-visibility-changed';
 export interface PanelObserver {
   dispose: () => void;
   watch: (e: HTMLElement, panel: PanelModel) => void;
-  check: () => void;
 }
 
 export class PanelObserverIntersection implements PanelObserver {
@@ -34,11 +33,6 @@ export class PanelObserverIntersection implements PanelObserver {
       e['data-garfana-panel'] = panel;
       this.observer.observe(e);
     }
-  }
-
-  // Called externally on big change
-  check() {
-    // Is there a way to force a callback?
   }
 
   //---------------------------------------------------------
