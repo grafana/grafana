@@ -12,19 +12,19 @@ import (
 	"time"
 
 	"github.com/facebookgo/inject"
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/social"
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/social"
 
 	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
@@ -77,6 +77,7 @@ func (g *GrafanaServerImpl) Run() error {
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
 	serviceGraph.Provide(&inject.Object{Value: g.cfg})
 	serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	serviceGraph.Provide(&inject.Object{Value: cache.New(5*time.Minute, 10*time.Minute)})
 
 	// self registered services
 	services := registry.GetServices()
@@ -143,7 +144,6 @@ func (g *GrafanaServerImpl) Run() error {
 	}
 
 	sendSystemdNotification("READY=1")
-
 	return g.childRoutines.Wait()
 }
 
@@ -159,7 +159,7 @@ func (g *GrafanaServerImpl) loadConfiguration() {
 		os.Exit(1)
 	}
 
-	g.log.Info("Starting "+setting.ApplicationName, "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
+	g.log.Info("Starting "+setting.ApplicationName, "version", version, "commit", commit, "branch", buildBranch, "compiled", time.Unix(setting.BuildStamp, 0))
 	g.cfg.LogConfigSources()
 }
 

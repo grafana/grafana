@@ -1,4 +1,6 @@
-﻿export interface OrgUser {
+﻿import { DashboardSearchHit } from './search';
+
+export interface OrgUser {
   avatarUrl: string;
   email: string;
   lastSeenAt: string;
@@ -41,4 +43,9 @@ export interface UsersState {
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
+  hasFetched: boolean;
+}
+
+export interface UserState {
+  starredDashboards: DashboardSearchHit[];
 }

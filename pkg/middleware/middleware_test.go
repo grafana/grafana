@@ -18,6 +18,7 @@ import (
 )
 
 func TestMiddlewareContext(t *testing.T) {
+	setting.ERR_TEMPLATE_NAME = "error-template"
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario("middleware should add context to injector", func(sc *scenarioContext) {

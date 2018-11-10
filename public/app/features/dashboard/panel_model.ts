@@ -13,7 +13,14 @@ const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
   isEditing: true,
+  hasRefreshed: true,
   visible: true,
+};
+
+const defaults: any = {
+  gridPos: { x: 0, y: 0, h: 3, w: 6 },
+  datasource: null,
+  targets: [{}],
 };
 
 export class PanelModel {
@@ -32,11 +39,15 @@ export class PanelModel {
   collapsed?: boolean;
   panels?: any;
   soloMode?: boolean;
+  targets: any[];
+  datasource: string;
+  thresholds?: any;
 
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
   visible: boolean;
+  hasRefreshed: boolean;
   events: Emitter;
 
   constructor(model) {
@@ -47,15 +58,33 @@ export class PanelModel {
       this[property] = model[property];
     }
 
-    if (!this.gridPos) {
-      this.gridPos = { x: 0, y: 0, h: 3, w: 6 };
-    }
+    // defaults
+    _.defaultsDeep(this, _.cloneDeep(defaults));
+  }
+
+  getOptions() {
+    return this[this.getOptionsKey()] || {};
+  }
+
+  updateOptions(options: object) {
+    const update: any = {};
+    update[this.getOptionsKey()] = options;
+    Object.assign(this, update);
+    this.render();
+  }
+
+  private getOptionsKey() {
+    return this.type + 'Options';
   }
 
   getSaveModel() {
     const model: any = {};
     for (const property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
+        continue;
+      }
+
+      if (_.isEqual(this[property], defaults[property])) {
         continue;
       }
 
@@ -84,7 +113,6 @@ export class PanelModel {
     this.gridPos.h = newPos.h;
 
     if (sizeChanged) {
-      console.log('PanelModel sizeChanged event and render events fired');
       this.events.emit('panel-size-changed');
     }
   }
@@ -93,7 +121,32 @@ export class PanelModel {
     this.events.emit('panel-size-changed');
   }
 
+  refresh() {
+    this.hasRefreshed = true;
+    this.events.emit('refresh');
+  }
+
+  render() {
+    if (!this.hasRefreshed) {
+      this.refresh();
+    } else {
+      this.events.emit('render');
+    }
+  }
+
+  panelInitialized() {
+    this.events.emit('panel-initialized');
+  }
+
+  changeType(pluginId: string) {
+    this.type = pluginId;
+
+    delete this.thresholds;
+    delete this.alert;
+  }
+
   destroy() {
+    this.events.emit('panel-teardown');
     this.events.removeAllListeners();
   }
 }

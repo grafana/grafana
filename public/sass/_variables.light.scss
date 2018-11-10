@@ -190,6 +190,7 @@ $input-box-shadow-focus: $blue !default;
 $input-color-placeholder: $gray-4 !default;
 $input-label-bg: $gray-5;
 $input-label-border-color: $gray-5;
+$input-color-select-arrow: $gray-1;
 
 // Sidemenu
 // -------------------------
@@ -309,8 +310,7 @@ $graph-tooltip-bg: $gray-5;
 $checkboxImageUrl: '../img/checkbox_white.png';
 
 // info box
-$info-box-background: linear-gradient(100deg, $blue, darken($blue, 5%));
-$info-box-color: $gray-7;
+$info-box-border-color: lighten($blue, 20%);
 
 // footer
 $footer-link-color: $gray-3;

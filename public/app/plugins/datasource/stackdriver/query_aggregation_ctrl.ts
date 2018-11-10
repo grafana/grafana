@@ -1,4 +1,4 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as options from './constants';
 import kbn from 'app/core/utils/kbn';
@@ -83,5 +83,5 @@ export class StackdriverAggregationCtrl {
   }
 }
 
-angular.module('grafana.controllers').directive('stackdriverAggregation', StackdriverAggregation);
-angular.module('grafana.controllers').controller('StackdriverAggregationCtrl', StackdriverAggregationCtrl);
+coreModule.directive('stackdriverAggregation', StackdriverAggregation);
+coreModule.controller('StackdriverAggregationCtrl', StackdriverAggregationCtrl);

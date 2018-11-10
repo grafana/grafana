@@ -1,9 +1,14 @@
 import $ from 'jquery';
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import moment from 'moment';
+import { withSize } from 'react-sizeme';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.stack';
+
+import { RawTimeRange } from 'app/types/series';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
@@ -59,16 +64,34 @@ const FLOT_OPTIONS = {
     margin: { left: 0, right: 0 },
     labelMarginX: 0,
   },
-  // selection: {
-  //   mode: 'x',
-  //   color: '#666',
-  // },
+  selection: {
+    mode: 'x',
+    color: '#666',
+  },
   // crosshair: {
   //   mode: 'x',
   // },
 };
 
-class Graph extends Component<any, any> {
+interface GraphProps {
+  data: any[];
+  height?: string; // e.g., '200px'
+  id?: string;
+  loading?: boolean;
+  range: RawTimeRange;
+  split?: boolean;
+  size?: { width: number; height: number };
+  userOptions?: any;
+  onChangeTime?: (range: RawTimeRange) => void;
+}
+
+interface GraphState {
+  showAllTimeSeries: boolean;
+}
+
+export class Graph extends PureComponent<GraphProps, GraphState> {
+  $el: any;
+
   state = {
     showAllTimeSeries: false,
   };
@@ -81,18 +104,35 @@ class Graph extends Component<any, any> {
 
   componentDidMount() {
     this.draw();
+    this.$el = $(`#${this.props.id}`);
+    this.$el.bind('plotselected', this.onPlotSelected);
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: GraphProps) {
     if (
       prevProps.data !== this.props.data ||
-      prevProps.options !== this.props.options ||
+      prevProps.range !== this.props.range ||
       prevProps.split !== this.props.split ||
-      prevProps.height !== this.props.height
+      prevProps.height !== this.props.height ||
+      (prevProps.size && prevProps.size.width !== this.props.size.width)
     ) {
       this.draw();
     }
   }
+
+  componentWillUnmount() {
+    this.$el.unbind('plotselected', this.onPlotSelected);
+  }
+
+  onPlotSelected = (event, ranges) => {
+    if (this.props.onChangeTime) {
+      const range = {
+        from: moment(ranges.xaxis.from),
+        to: moment(ranges.xaxis.to),
+      };
+      this.props.onChangeTime(range);
+    }
+  };
 
   onShowAllTimeSeries = () => {
     this.setState(
@@ -104,22 +144,22 @@ class Graph extends Component<any, any> {
   };
 
   draw() {
-    const { options: userOptions } = this.props;
+    const { range, size, userOptions = {} } = this.props;
     const data = this.getGraphData();
 
     const $el = $(`#${this.props.id}`);
-    if (!data) {
-      $el.empty();
-      return;
-    }
-    const series = data.map((ts: TimeSeries) => ({
-      color: ts.color,
-      label: ts.label,
-      data: ts.getFlotPairs('null'),
-    }));
+    let series = [{ data: [[0, 0]] }];
 
-    const ticks = $el.width() / 100;
-    let { from, to } = userOptions.range;
+    if (data && data.length > 0) {
+      series = data.map((ts: TimeSeries) => ({
+        color: ts.color,
+        label: ts.label,
+        data: ts.getFlotPairs('null'),
+      }));
+    }
+
+    const ticks = (size.width || 0) / 100;
+    let { from, to } = range;
     if (!moment.isMoment(from)) {
       from = dateMath.parse(from, false);
     }
@@ -135,6 +175,7 @@ class Graph extends Component<any, any> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
+        timezone: 'browser',
         timeformat: time_format(ticks, min, max),
       },
     };
@@ -147,19 +188,14 @@ class Graph extends Component<any, any> {
   }
 
   render() {
-    const { height, loading } = this.props;
+    const { height = '100px', id = 'graph', loading = false } = this.props;
     const data = this.getGraphData();
 
-    if (!loading && data.length === 0) {
-      return (
-        <div className="panel-container">
-          <div className="muted m-a-1">The queries returned no time series to graph.</div>
-        </div>
-      );
-    }
     return (
-      <div>
-        {this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
+      <div className="panel-container">
+        {loading && <div className="explore-panel__loader" />}
+        {this.props.data &&
+          this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
           !this.state.showAllTimeSeries && (
             <div className="time-series-disclaimer">
               <i className="fa fa-fw fa-warning disclaimer-icon" />
@@ -169,13 +205,11 @@ class Graph extends Component<any, any> {
               }`}</span>
             </div>
           )}
-        <div className="panel-container">
-          <div id={this.props.id} className="explore-graph" style={{ height }} />
-          <Legend data={data} />
-        </div>
+        <div id={id} className="explore-graph" style={{ height }} />
+        <Legend data={data} />
       </div>
     );
   }
 }
 
-export default Graph;
+export default withSize()(Graph);

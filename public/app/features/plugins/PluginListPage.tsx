@@ -3,6 +3,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import PluginList from './PluginList';
 import { NavModel, Plugin } from 'app/types';
 import { loadPlugins, setPluginsLayoutMode, setPluginsSearchQuery } from './state/actions';
@@ -15,6 +16,7 @@ export interface Props {
   plugins: Plugin[];
   layoutMode: LayoutMode;
   searchQuery: string;
+  hasFetched: boolean;
   loadPlugins: typeof loadPlugins;
   setPluginsLayoutMode: typeof setPluginsLayoutMode;
   setPluginsSearchQuery: typeof setPluginsSearchQuery;
@@ -30,12 +32,21 @@ export class PluginListPage extends PureComponent<Props> {
   }
 
   render() {
-    const { navModel, plugins, layoutMode, setPluginsLayoutMode, setPluginsSearchQuery, searchQuery } = this.props;
+    const {
+      hasFetched,
+      navModel,
+      plugins,
+      layoutMode,
+      setPluginsLayoutMode,
+      setPluginsSearchQuery,
+      searchQuery,
+    } = this.props;
 
     const linkButton = {
       href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
       title: 'Find more plugins on Grafana.com',
     };
+
     return (
       <div>
         <PageHeader model={navModel} />
@@ -47,7 +58,11 @@ export class PluginListPage extends PureComponent<Props> {
             setSearchQuery={query => setPluginsSearchQuery(query)}
             linkButton={linkButton}
           />
-          {plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />}
+          {hasFetched ? (
+            plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />
+          ) : (
+            <PageLoader pageName="Plugins" />
+          )}
         </div>
       </div>
     );
@@ -60,6 +75,7 @@ function mapStateToProps(state) {
     plugins: getPlugins(state.plugins),
     layoutMode: getLayoutMode(state.plugins),
     searchQuery: getPluginsSearchQuery(state.plugins),
+    hasFetched: state.plugins.hasFetched,
   };
 }
 

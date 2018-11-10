@@ -44,7 +44,7 @@ export class FilterSegments {
         this.removeSegment.value = DefaultRemoveFilterValue;
         return Promise.resolve([this.removeSegment]);
       } else {
-        return this.getFilterKeysFunc();
+        return this.getFilterKeysFunc(segment, DefaultRemoveFilterValue);
       }
     }
 
@@ -87,7 +87,7 @@ export class FilterSegments {
     }
 
     // remove condition if it is first segment
-    if (index === 0 && this.filterSegments[0].type === 'condition') {
+    if (index === 0 && this.filterSegments.length > 0 && this.filterSegments[0].type === 'condition') {
       this.filterSegments.splice(0, 1);
     }
   }

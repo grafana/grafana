@@ -17,6 +17,9 @@ can find examples using Okta, BitBucket, OneLogin and Azure.
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
+You may have to set the `root_url` option of `[server]` for the callback URL to be 
+correct. For example in case you are serving Grafana behind a proxy.
+
 Example config:
 
 ```bash

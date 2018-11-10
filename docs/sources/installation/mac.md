@@ -60,6 +60,8 @@ Then start Grafana using:
 brew services start grafana
 ```
 
+Default login and password `admin`/ `admin`
+
 
 ### Configuration
 

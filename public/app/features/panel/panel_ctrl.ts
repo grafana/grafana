@@ -1,11 +1,15 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
-import { appEvents, profiler } from 'app/core/core';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { profiler } from 'app/core/core';
+import {
+  duplicatePanel,
+  copyPanel as copyPanelUtil,
+  editPanelJson as editPanelJsonUtil,
+  sharePanel as sharePanelUtil,
+} from 'app/features/dashboard/utils/panel';
 import Remarkable from 'remarkable';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
-import store from 'app/core/store';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -24,10 +28,8 @@ export class PanelCtrl {
   $injector: any;
   $location: any;
   $timeout: any;
-  fullscreen: boolean;
   inspector: any;
   editModeInitiated: boolean;
-  editMode: any;
   height: any;
   containerHeight: any;
   events: Emitter;
@@ -49,22 +51,12 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on('refresh', () => this.refresh());
     $scope.$on('component-did-mount', () => this.panelDidMount());
-
-    $scope.$on('$destroy', () => {
-      this.events.emit('panel-teardown');
-      this.events.removeAllListeners();
-    });
-  }
-
-  init() {
-    this.events.emit('panel-initialized');
-    this.publishAppEvent('panel-initialized', { scope: this.$scope });
   }
 
   panelDidMount() {
     this.events.emit('component-did-mount');
+    this.dashboard.panelInitialized(this.panel);
   }
 
   renderingCompleted() {
@@ -72,7 +64,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.events.emit('refresh', null);
+    this.panel.refresh();
   }
 
   publishAppEvent(evtName, evt) {
@@ -102,6 +94,7 @@ export class PanelCtrl {
   initEditMode() {
     this.editorTabs = [];
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
+
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
@@ -122,14 +115,15 @@ export class PanelCtrl {
     route.updateParams();
   }
 
-  addEditorTab(title, directiveFn, index?) {
-    const editorTab = { title, directiveFn };
+  addEditorTab(title, directiveFn, index?, icon?) {
+    const editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
       editorTab.directiveFn = () => {
         return { templateUrl: directiveFn };
       };
     }
+
     if (index) {
       this.editorTabs.splice(index, 0, editorTab);
     } else {
@@ -190,7 +184,7 @@ export class PanelCtrl {
 
   getExtendedMenu() {
     const menu = [];
-    if (!this.fullscreen && this.dashboard.meta.canEdit) {
+    if (!this.panel.fullscreen && this.dashboard.meta.canEdit) {
       menu.push({
         text: 'Duplicate',
         click: 'ctrl.duplicate()',
@@ -220,21 +214,26 @@ export class PanelCtrl {
   }
 
   otherPanelInFullscreenMode() {
-    return this.dashboard.meta.fullscreen && !this.fullscreen;
+    return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
   calculatePanelHeight() {
-    if (this.fullscreen) {
-      const docHeight = $(window).height();
-      const editHeight = Math.floor(docHeight * 0.4);
+    if (this.panel.fullscreen) {
+      const docHeight = $('.react-grid-layout').height();
+      const editHeight = Math.floor(docHeight * 0.35);
       const fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+      this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
     if (this.panel.soloMode) {
       this.containerHeight = $(window).height();
+    }
+
+    // hacky solution
+    if (this.panel.isEditing && !this.editModeInitiated) {
+      this.initEditMode();
     }
 
     this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
@@ -246,10 +245,7 @@ export class PanelCtrl {
   }
 
   duplicate() {
-    this.dashboard.duplicatePanel(this.panel);
-    this.$timeout(() => {
-      this.$scope.$root.$broadcast('render');
-    });
+    duplicatePanel(this.dashboard, this.panel);
   }
 
   removePanel() {
@@ -259,48 +255,15 @@ export class PanelCtrl {
   }
 
   editPanelJson() {
-    const editScope = this.$scope.$root.$new();
-    editScope.object = this.panel.getSaveModel();
-    editScope.updateHandler = this.replacePanel.bind(this);
-    editScope.enableCopy = true;
-
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/partials/edit_json.html',
-      scope: editScope,
-    });
+    editPanelJsonUtil(this.dashboard, this.panel);
   }
 
   copyPanel() {
-    store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
-    appEvents.emit('alert-success', ['Panel copied. Open Add Panel to paste']);
-  }
-
-  replacePanel(newPanel, oldPanel) {
-    const dashboard = this.dashboard;
-    const index = _.findIndex(dashboard.panels, panel => {
-      return panel.id === oldPanel.id;
-    });
-
-    const deletedPanel = dashboard.panels.splice(index, 1);
-    this.dashboard.events.emit('panel-removed', deletedPanel);
-
-    newPanel = new PanelModel(newPanel);
-    newPanel.id = oldPanel.id;
-
-    dashboard.panels.splice(index, 0, newPanel);
-    dashboard.sortPanelsByGridPos();
-    dashboard.events.emit('panel-added', newPanel);
+    copyPanelUtil(this.panel);
   }
 
   sharePanel() {
-    const shareScope = this.$scope.$new();
-    shareScope.panel = this.panel;
-    shareScope.dashboard = this.dashboard;
-
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/shareModal.html',
-      scope: shareScope,
-    });
+    sharePanelUtil(this.dashboard, this.panel);
   }
 
   getInfoMode() {

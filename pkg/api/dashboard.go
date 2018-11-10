@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -251,8 +252,8 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		return Error(403, err.Error(), err)
 	}
 
-	if err == m.ErrDashboardContainsInvalidAlertData {
-		return Error(500, "Invalid alert data. Cannot save dashboard", err)
+	if validationErr, ok := err.(alerting.ValidationError); ok {
+		return Error(422, validationErr.Error(), nil)
 	}
 
 	if err != nil {

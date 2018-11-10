@@ -6,6 +6,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     searchQuery: '',
     setSearchQuery: jest.fn(),
+    target: '_blank',
     linkButton: { href: 'some/url', title: 'test' },
   };
 

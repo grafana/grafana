@@ -165,6 +165,7 @@ type SignedInUser struct {
 	IsAnonymous    bool
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time
+	Teams          []int64
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {

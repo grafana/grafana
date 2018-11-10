@@ -13,17 +13,30 @@ func TestDashboardProvisioningTest(t *testing.T) {
 	Convey("Testing Dashboard provisioning", t, func() {
 		InitTestDB(t)
 
-		saveDashboardCmd := &models.SaveDashboardCommand{
+		folderCmd := &models.SaveDashboardCommand{
 			OrgId:    1,
 			FolderId: 0,
-			IsFolder: false,
+			IsFolder: true,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"id":    nil,
 				"title": "test dashboard",
 			}),
 		}
 
-		Convey("Saving dashboards with extras", func() {
+		err := SaveDashboard(folderCmd)
+		So(err, ShouldBeNil)
+
+		saveDashboardCmd := &models.SaveDashboardCommand{
+			OrgId:    1,
+			IsFolder: false,
+			FolderId: folderCmd.Result.Id,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"id":    nil,
+				"title": "test dashboard",
+			}),
+		}
+
+		Convey("Saving dashboards with provisioning meta data", func() {
 			now := time.Now()
 
 			cmd := &models.SaveProvisionedDashboardCommand{
@@ -64,6 +77,21 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				query := &models.IsDashboardProvisionedQuery{DashboardId: 3000}
 
 				err := GetProvisionedDataByDashboardId(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldBeFalse)
+			})
+
+			Convey("Deleteing folder should delete provision meta data", func() {
+				deleteCmd := &models.DeleteDashboardCommand{
+					Id:    folderCmd.Result.Id,
+					OrgId: 1,
+				}
+
+				So(DeleteDashboard(deleteCmd), ShouldBeNil)
+
+				query := &models.IsDashboardProvisionedQuery{DashboardId: cmd.Result.Id}
+
+				err = GetProvisionedDataByDashboardId(query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldBeFalse)
 			})

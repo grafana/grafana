@@ -1,5 +1,8 @@
+// Libaries
 import angular from 'angular';
 import _ from 'lodash';
+
+// Utils & Services
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
@@ -10,13 +13,12 @@ export class VariableSrv {
 
   /** @ngInject */
   constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
-    // update time variant variables
-    $rootScope.$on('refresh', this.onDashboardRefresh.bind(this), $rootScope);
     $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
   }
 
   init(dashboard) {
     this.dashboard = dashboard;
+    this.dashboard.events.on('time-range-updated', this.onTimeRangeUpdated.bind(this));
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
@@ -39,11 +41,7 @@ export class VariableSrv {
       });
   }
 
-  onDashboardRefresh(evt, payload) {
-    if (payload && payload.fromVariableValueUpdated) {
-      return Promise.resolve({});
-    }
-
+  onTimeRangeUpdated() {
     const promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
       const previousOptions = variable.options.slice();
 
@@ -54,7 +52,9 @@ export class VariableSrv {
       });
     });
 
-    return this.$q.all(promises);
+    return this.$q.all(promises).then(() => {
+      this.dashboard.startRefresh();
+    });
   }
 
   processVariable(variable, queryParams) {
@@ -133,7 +133,7 @@ export class VariableSrv {
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
         this.$rootScope.$emit('template-variable-value-updated');
-        this.$rootScope.$broadcast('refresh', { fromVariableValueUpdated: true });
+        this.dashboard.startRefresh();
       }
     });
   }
@@ -291,9 +291,11 @@ export class VariableSrv {
   createGraph() {
     const g = new Graph();
 
-    this.variables.forEach(v1 => {
-      g.createNode(v1.name);
+    this.variables.forEach(v => {
+      g.createNode(v.name);
+    });
 
+    this.variables.forEach(v1 => {
       this.variables.forEach(v2 => {
         if (v1 === v2) {
           return;

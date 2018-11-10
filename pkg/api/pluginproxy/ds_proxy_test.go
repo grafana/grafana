@@ -362,6 +362,23 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
+		Convey("When proxying a custom datasource", func() {
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				Type: "custom-datasource",
+				Url:  "http://host/root/",
+			}
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/")
+			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+			So(err, ShouldBeNil)
+
+			proxy.getDirector()(req)
+
+			Convey("Shoudl keep user request (including trailing slash)", func() {
+				So(req.URL.String(), ShouldEqual, "http://host/root/path/to/folder/")
+			})
+		})
 	})
 }
 

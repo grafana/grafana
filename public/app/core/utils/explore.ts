@@ -60,7 +60,20 @@ export async function getExploreUrl(
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   if (initial) {
     try {
-      return JSON.parse(decodeURI(initial));
+      const parsed = JSON.parse(decodeURI(initial));
+      if (Array.isArray(parsed)) {
+        if (parsed.length <= 3) {
+          throw new Error('Error parsing compact URL state for Explore.');
+        }
+        const range = {
+          from: parsed[0],
+          to: parsed[1],
+        };
+        const datasource = parsed[2];
+        const queries = parsed.slice(3).map(query => ({ query }));
+        return { datasource, queries, range };
+      }
+      return parsed;
     } catch (e) {
       console.error(e);
     }
@@ -68,11 +81,19 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   return { datasource: null, queries: [], range: DEFAULT_RANGE };
 }
 
-export function serializeStateToUrlParam(state: ExploreState): string {
+export function serializeStateToUrlParam(state: ExploreState, compact?: boolean): string {
   const urlState: ExploreUrlState = {
     datasource: state.datasourceName,
     queries: state.queries.map(q => ({ query: q.query })),
     range: state.range,
   };
+  if (compact) {
+    return JSON.stringify([
+      urlState.range.from,
+      urlState.range.to,
+      urlState.datasource,
+      ...urlState.queries.map(q => q.query),
+    ]);
+  }
   return JSON.stringify(urlState);
 }

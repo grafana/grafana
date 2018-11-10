@@ -1,19 +1,5 @@
 $select-input-height: 35px;
-$select-menu-max-height: 300px;
-$select-item-font-size: $font-size-base;
-$select-item-bg: $dropdownBackground;
-$select-item-fg: $input-color;
-$select-option-bg: $menu-dropdown-bg;
-$select-option-color: $input-color;
-$select-noresults-color: $text-color;
-$select-input-bg: $input-bg;
-$select-input-border-color: $input-border-color;
-$select-menu-box-shadow: $menu-dropdown-shadow;
-$select-text-color: $text-color;
 $select-input-bg-disabled: $input-bg-disabled;
-$select-option-selected-bg: $dropdownLinkBackgroundActive;
-
-@import '../../../node_modules/react-select/scss/default.scss';
 
 @mixin select-control() {
   width: 100%;
@@ -29,73 +15,113 @@ $select-option-selected-bg: $dropdownLinkBackgroundActive;
   @include box-shadow($shadow);
 }
 
-// react-select tweaks
+.gf-form-select-box__control {
+  @include select-control();
+  border: 1px solid $input-border-color;
+  color: $input-color;
+  cursor: default;
+  display: table;
+  border-spacing: 0;
+  border-collapse: separate;
+  height: $select-input-height;
+  outline: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.gf-form-select-box__control--is-focused {
+  background-color: $input-bg;
+  @include select-control-focus();
+}
+
+.gf-form-select-box__control--is-disabled {
+  background-color: $select-input-bg-disabled;
+}
+
+.gf-form-select-box__control--menu-right {
+  .gf-form-select-box__menu {
+    right: 0;
+    left: unset;
+  }
+}
+
+.gf-form-select-box__input {
+  padding-left: 5px;
+}
+
+.gf-form-select-box__menu {
+  background: $dropdownBackground;
+  position: absolute;
+  z-index: 2;
+}
+
+.tag-filter .gf-form-select-box__menu {
+  width: 100%;
+}
+
+.gf-form-select-box__multi-value {
+  display: inline;
+}
+
+.gf-form-select-box__option {
+  border-left: 2px solid transparent;
+
+  &.gf-form-select-box__option--is-focused {
+    color: $dropdownLinkColorHover;
+    background-color: $dropdownLinkBackgroundHover;
+    @include left-brand-border-gradient();
+  }
+
+  &.gf-form-select-box__option--is-selected {
+    .fa {
+      color: $input-color-select-arrow;
+    }
+  }
+}
+
+.gf-form-select-box__control--is-focused .gf-form-select-box__placeholder {
+  display: none;
+}
+
+.gf-form-select-box__value-container {
+  display: table-cell;
+  padding: 8px 10px;
+  > div {
+    display: inline-block;
+  }
+}
+
+.gf-form-select-box__indicators {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: right;
+  padding-right: 10px;
+  width: 20px;
+}
+
+.gf-form-select-box__select-arrow {
+  border-color: $input-color-select-arrow transparent transparent;
+  border-style: solid;
+  border-width: 5px 5px 2.5px;
+  display: inline-block;
+  height: 0;
+  width: 0;
+  position: relative;
+
+  &.gf-form-select-box__select-arrow--reversed {
+    border-color: transparent transparent $input-color-select-arrow;
+    top: -2px;
+    border-width: 0 5px 5px;
+  }
+}
 .gf-form-input--form-dropdown {
   padding: 0;
   border: 0;
   overflow: visible;
-
-  .Select-placeholder {
-    color: $input-color-placeholder;
-  }
-
-  > .Select-control {
-    @include select-control();
-    border-color: $dark-3;
-
-    input {
-      min-width: 1rem;
-    }
-
-    .Select-clear,
-    .Select-arrow {
-      margin-right: 8px;
-    }
-
-    .Select-value {
-      display: inline-block;
-      padding: $input-padding-y $input-padding-x;
-      font-size: $font-size-md;
-      line-height: $input-line-height;
-      vertical-align: baseline;
-      white-space: nowrap;
-    }
-  }
-
-  &.is-open > .Select-control {
-    background: transparent;
-    border-color: $dark-3;
-  }
-
-  &.is-focused > .Select-control {
-    background-color: $input-bg;
-    @include select-control-focus();
-  }
-
-  &.is-focused:not(.is-open) > .Select-control {
-    background-color: $input-bg;
-    @include select-control-focus();
-  }
-
-  .Select-menu-outer {
-    border: 0;
-    width: auto;
-  }
-
-  .Select-option {
-    border-left: 2px solid transparent;
-  }
-
-  .Select-option.is-focused {
-    background-color: $dropdownLinkBackgroundHover;
-    color: $dropdownLinkColorHover;
-    @include left-brand-border-gradient();
-  }
 }
 
-.gf-form-input--form-dropdown-right {
-  .Select-menu-outer {
-    right: 0;
-    left: unset;
+.gf-form--has-input-icon {
+  .gf-form-select-box__value-container {
+    padding-left: 30px;
   }
 }

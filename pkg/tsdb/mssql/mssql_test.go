@@ -1,6 +1,7 @@
 package mssql
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -128,7 +129,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["A"]
 				So(err, ShouldBeNil)
 
@@ -218,7 +219,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -265,7 +266,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -327,7 +328,7 @@ func TestMSSQL(t *testing.T) {
 						},
 					}
 
-					resp, err := endpoint.Query(nil, nil, query)
+					resp, err := endpoint.Query(context.Background(), nil, query)
 					So(err, ShouldBeNil)
 					queryResult := resp.Results["A"]
 					So(queryResult.Error, ShouldBeNil)
@@ -352,7 +353,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -441,7 +442,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -463,7 +464,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -485,7 +486,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -507,7 +508,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -529,7 +530,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -551,7 +552,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -573,7 +574,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -595,7 +596,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -617,7 +618,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -640,7 +641,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -663,7 +664,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -673,6 +674,30 @@ func TestMSSQL(t *testing.T) {
 				So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
 				So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
 				So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
+			})
+
+			Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
+				tsdb.Interpolate = origInterpolate
+				query := &tsdb.TsdbQuery{
+					TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
+					Queries: []*tsdb.Query{
+						{
+							DataSource: &models.DataSource{JsonData: simplejson.New()},
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+
 			})
 
 			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
@@ -719,9 +744,11 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When doing a metric query using stored procedure should return correct result", func() {
+					tsdb.Interpolate = origInterpolate
 					query := &tsdb.TsdbQuery{
 						Queries: []*tsdb.Query{
 							{
+								DataSource: &models.DataSource{JsonData: simplejson.New()},
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
 											@from int = $__unixEpochFrom(),
@@ -739,7 +766,7 @@ func TestMSSQL(t *testing.T) {
 						},
 					}
 
-					resp, err := endpoint.Query(nil, nil, query)
+					resp, err := endpoint.Query(context.Background(), nil, query)
 					queryResult := resp.Results["A"]
 					So(err, ShouldBeNil)
 					So(queryResult.Error, ShouldBeNil)
@@ -796,9 +823,11 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When doing a metric query using stored procedure should return correct result", func() {
+					tsdb.Interpolate = origInterpolate
 					query := &tsdb.TsdbQuery{
 						Queries: []*tsdb.Query{
 							{
+								DataSource: &models.DataSource{JsonData: simplejson.New()},
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
 											@from int = $__unixEpochFrom(),
@@ -816,7 +845,7 @@ func TestMSSQL(t *testing.T) {
 						},
 					}
 
-					resp, err := endpoint.Query(nil, nil, query)
+					resp, err := endpoint.Query(context.Background(), nil, query)
 					queryResult := resp.Results["A"]
 					So(err, ShouldBeNil)
 					So(queryResult.Error, ShouldBeNil)
@@ -892,7 +921,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Deploys"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
@@ -915,7 +944,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Tickets"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
@@ -941,7 +970,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -971,7 +1000,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -1001,7 +1030,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -1031,7 +1060,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -1059,7 +1088,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -1087,7 +1116,7 @@ func TestMSSQL(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)

@@ -5,9 +5,11 @@ import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
+import PrometheusLanguageProvider from './language_provider';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
 import addLabelToQuery from './add_label_to_query';
+import { getQueryHints } from './query_hints';
 
 export function alignRange(start, end, step) {
   const alignedEnd = Math.ceil(end / step) * step;
@@ -16,104 +18,6 @@ export function alignRange(start, end, step) {
     end: alignedEnd,
     start: alignedStart,
   };
-}
-
-export function determineQueryHints(series: any[], datasource?: any): any[] {
-  const hints = series.map((s, i) => {
-    const query: string = s.query;
-    const index: number = s.responseIndex;
-    if (query === undefined || index === undefined) {
-      return null;
-    }
-
-    // ..._bucket metric needs a histogram_quantile()
-    const histogramMetric = query.trim().match(/^\w+_bucket$/);
-    if (histogramMetric) {
-      const label = 'Time series has buckets, you probably wanted a histogram.';
-      return {
-        index,
-        label,
-        fix: {
-          label: 'Fix by adding histogram_quantile().',
-          action: {
-            type: 'ADD_HISTOGRAM_QUANTILE',
-            query,
-            index,
-          },
-        },
-      };
-    }
-
-    // Check for monotony
-    const datapoints: number[][] = s.datapoints;
-    if (query.indexOf('rate(') === -1 && datapoints.length > 1) {
-      let increasing = false;
-      const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
-        if (index === 0) {
-          return true;
-        }
-        increasing = increasing || dp[0] > datapoints[index - 1][0];
-        // monotonic?
-        return dp[0] >= datapoints[index - 1][0];
-      });
-      if (increasing && monotonic) {
-        const simpleMetric = query.trim().match(/^\w+$/);
-        let label = 'Time series is monotonously increasing.';
-        let fix;
-        if (simpleMetric) {
-          fix = {
-            label: 'Fix by adding rate().',
-            action: {
-              type: 'ADD_RATE',
-              query,
-              index,
-            },
-          };
-        } else {
-          label = `${label} Try applying a rate() function.`;
-        }
-        return {
-          label,
-          index,
-          fix,
-        };
-      }
-    }
-
-    // Check for recording rules expansion
-    if (datasource && datasource.ruleMappings) {
-      const mapping = datasource.ruleMappings;
-      const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
-        if (query.search(ruleName) > -1) {
-          return {
-            ...acc,
-            [ruleName]: mapping[ruleName],
-          };
-        }
-        return acc;
-      }, {});
-      if (_.size(mappingForQuery) > 0) {
-        const label = 'Query contains recording rules.';
-        return {
-          label,
-          index,
-          fix: {
-            label: 'Expand rules',
-            action: {
-              type: 'EXPAND_RULES',
-              query,
-              index,
-              mapping: mappingForQuery,
-            },
-          },
-        };
-      }
-    }
-
-    // No hint found
-    return null;
-  });
-  return hints;
 }
 
 export function extractRuleMappingFromGroups(groups: any[]) {
@@ -157,6 +61,7 @@ export class PrometheusDatasource {
   interval: string;
   queryTimeout: string;
   httpMethod: string;
+  languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
 
   /** @ngInject */
@@ -173,6 +78,7 @@ export class PrometheusDatasource {
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
+    this.languageProvider = new PrometheusLanguageProvider(this);
   }
 
   init() {
@@ -273,7 +179,6 @@ export class PrometheusDatasource {
 
     return this.$q.all(allQueryPromise).then(responseList => {
       let result = [];
-      let hints = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
@@ -293,19 +198,14 @@ export class PrometheusDatasource {
           end: queries[index].end,
           query: queries[index].expr,
           responseListLength: responseList.length,
-          responseIndex: index,
           refId: activeTargets[index].refId,
+          valueWithRefId: activeTargets[index].valueWithRefId,
         };
         const series = this.resultTransformer.transform(response, transformerOptions);
         result = [...result, ...series];
-
-        if (queries[index].hinting) {
-          const queryHints = determineQueryHints(series, this);
-          hints = [...hints, ...queryHints];
-        }
       });
 
-      return { data: result, hints };
+      return { data: result };
     });
   }
 
@@ -534,6 +434,10 @@ export class PrometheusDatasource {
     return state;
   }
 
+  getQueryHints(query: string, result: any[]) {
+    return getQueryHints(query, result, this);
+  }
+
   loadRules() {
     this.metadataRequest('/api/v1/rules')
       .then(res => res.data || res.json())
@@ -559,6 +463,9 @@ export class PrometheusDatasource {
       }
       case 'ADD_RATE': {
         return `rate(${query}[5m])`;
+      }
+      case 'ADD_SUM': {
+        return `sum(${query.trim()}) by ($1)`;
       }
       case 'EXPAND_RULES': {
         const mapping = action.mapping;

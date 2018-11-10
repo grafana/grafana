@@ -58,6 +58,9 @@ api_url = https://gitlab.com/api/v4
 allowed_groups =
 ```
 
+You may have to set the `root_url` option of `[server]` for the callback URL to be 
+correct. For example in case you are serving Grafana behind a proxy.
+
 Restart the Grafana backend for your changes to take effect.
 
 If you use your own instance of GitLab instead of `gitlab.com`, adjust
@@ -97,12 +100,12 @@ display name, especially if the display name contains spaces or special
 characters. Make sure you always use the group or subgroup name as it appears
 in the URL of the group or subgroup.
 
-Here's a complete example with `alloed_sign_up` enabled, and access limited to
+Here's a complete example with `allow_sign_up` enabled, and access limited to
 the `example` and `foo/bar` groups:
 
 ```ini
 [auth.gitlab]
-enabled = false
+enabled = true
 allow_sign_up = true
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET

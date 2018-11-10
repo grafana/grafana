@@ -160,8 +160,12 @@ export class SearchCtrl {
   searchDashboards() {
     this.currentSearchId = this.currentSearchId + 1;
     const localSearchId = this.currentSearchId;
+    const query = {
+      ...this.query,
+      tag: this.query.tag.map(i => i.value),
+    };
 
-    return this.searchSrv.search(this.query).then(results => {
+    return this.searchSrv.search(query).then(results => {
       if (localSearchId < this.currentSearchId) {
         return;
       }
@@ -196,7 +200,7 @@ export class SearchCtrl {
   }
 
   onTagSelect(newTags) {
-    this.query.tag = _.map(newTags, tag => tag.value);
+    this.query.tag = newTags;
     this.search();
   }
 

@@ -1,9 +1,41 @@
 import React, { PureComponent } from 'react';
 
-// TODO make this datasource-plugin-dependent
-import QueryField from './PromQueryField';
+import { QueryTransaction, HistoryItem, Query, QueryHint } from 'app/types/explore';
 
-class QueryRow extends PureComponent<any, {}> {
+import DefaultQueryField from './QueryField';
+import QueryTransactionStatus from './QueryTransactionStatus';
+import { DataSource } from 'app/types';
+
+function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
+  const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
+  if (transaction) {
+    return transaction.hints[0];
+  }
+  return undefined;
+}
+
+interface QueryRowEventHandlers {
+  onAddQueryRow: (index: number) => void;
+  onChangeQuery: (value: string, index: number, override?: boolean) => void;
+  onClickHintFix: (action: object, index?: number) => void;
+  onExecuteQuery: () => void;
+  onRemoveQueryRow: (index: number) => void;
+}
+
+interface QueryRowCommonProps {
+  className?: string;
+  datasource: DataSource;
+  history: HistoryItem[];
+  transactions: QueryTransaction[];
+}
+
+type QueryRowProps = QueryRowCommonProps &
+  QueryRowEventHandlers & {
+    index: number;
+    query: string;
+  };
+
+class QueryRow extends PureComponent<QueryRowProps> {
   onChangeQuery = (value, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
@@ -44,21 +76,26 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { edited, history, query, queryError, queryHint, request, supportsLogs } = this.props;
+    const { datasource, history, query, transactions } = this.props;
+    const transactionWithError = transactions.find(t => t.error !== undefined);
+    const hint = getFirstHintFromTransactions(transactions);
+    const queryError = transactionWithError ? transactionWithError.error : null;
+    const QueryField = datasource.pluginExports.ExploreQueryField || DefaultQueryField;
     return (
       <div className="query-row">
+        <div className="query-row-status">
+          <QueryTransactionStatus transactions={transactions} />
+        </div>
         <div className="query-row-field">
           <QueryField
+            datasource={datasource}
             error={queryError}
-            hint={queryHint}
-            initialQuery={edited ? null : query}
+            hint={hint}
+            initialQuery={query}
             history={history}
-            portalPrefix="explore"
             onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}
-            request={request}
-            supportsLogs={supportsLogs}
           />
         </div>
         <div className="query-row-tools">
@@ -77,9 +114,14 @@ class QueryRow extends PureComponent<any, {}> {
   }
 }
 
-export default class QueryRows extends PureComponent<any, {}> {
+type QueryRowsProps = QueryRowCommonProps &
+  QueryRowEventHandlers & {
+    queries: Query[];
+  };
+
+export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', queries, queryErrors = [], queryHints = [], ...handlers } = this.props;
+    const { className = '', queries, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (
@@ -87,9 +129,7 @@ export default class QueryRows extends PureComponent<any, {}> {
             key={q.key}
             index={index}
             query={q.query}
-            queryError={queryErrors[index]}
-            queryHint={queryHints[index]}
-            edited={q.edited}
+            transactions={transactions.filter(t => t.rowIndex === index)}
             {...handlers}
           />
         ))}

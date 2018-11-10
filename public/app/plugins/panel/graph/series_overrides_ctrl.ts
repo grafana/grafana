@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 
 /** @ngInject */
 export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
@@ -53,7 +53,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
       element: $element.find('.dropdown')[0],
       position: 'top center',
       openOn: 'click',
-      template: '<series-color-picker series="series" onColorChange="colorSelected" />',
+      template: '<series-color-picker-popover series="series" onColorChange="colorSelected" />',
       model: {
         autoClose: true,
         colorSelected: $scope.colorSelected,
@@ -156,4 +156,4 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.updateCurrentOverrides();
 }
 
-angular.module('grafana.controllers').controller('SeriesOverridesCtrl', SeriesOverridesCtrl);
+coreModule.controller('SeriesOverridesCtrl', SeriesOverridesCtrl);

@@ -1,5 +1,6 @@
 import './dashboard_loaders';
 import './ReactContainer';
+import { applyRouteRegistrationHandlers } from './registry';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
@@ -10,7 +11,10 @@ import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
+import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
+import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
+import OrgDetailsPage from '../features/org/OrgDetailsPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -76,14 +80,16 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/datasources/edit/:id/dashboards', {
-      templateUrl: 'public/app/features/plugins/partials/ds_dashboards.html',
-      controller: 'DataSourceDashboardsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => DataSourceDashboards,
+      },
     })
     .when('/datasources/new', {
-      templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
-      controller: 'DataSourceEditCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => NewDataSourcePage,
+      },
     })
     .when('/dashboards', {
       templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
@@ -126,8 +132,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/org', {
-      templateUrl: 'public/app/features/org/partials/orgDetails.html',
-      controller: 'OrgDetailsCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => OrgDetailsPage,
+      },
     })
     .when('/org/new', {
       templateUrl: 'public/app/features/org/partials/newOrg.html',
@@ -159,7 +167,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/org/teams/new', {
-      templateUrl: 'public/app/features/org/partials/create_team.html',
+      templateUrl: 'public/app/features/teams/partials/create_team.html',
       controller: 'CreateTeamCtrl',
       controllerAs: 'ctrl',
     })
@@ -171,12 +179,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/profile', {
-      templateUrl: 'public/app/features/org/partials/profile.html',
+      templateUrl: 'public/app/features/profile/partials/profile.html',
       controller: 'ProfileCtrl',
       controllerAs: 'ctrl',
     })
     .when('/profile/password', {
-      templateUrl: 'public/app/features/org/partials/change_password.html',
+      templateUrl: 'public/app/features/profile/partials/change_password.html',
       controller: 'ChangePasswordCtrl',
     })
     .when('/profile/select-org', {
@@ -279,11 +287,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       redirectTo: '/alerting/list',
     })
     .when('/alerting/list', {
-      templateUrl: 'public/app/features/alerting/partials/alert_list.html',
-      controller: 'AlertListCtrl',
-      controllerAs: 'ctrl',
-    })
-    .when('/alerting/list', {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
@@ -309,4 +312,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
     });
+
+  applyRouteRegistrationHandlers($routeProvider);
 }

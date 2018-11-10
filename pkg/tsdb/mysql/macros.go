@@ -60,11 +60,7 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
-	case "__timeFrom":
-		return fmt.Sprintf("'%s'", m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
-	case "__timeTo":
-		return fmt.Sprintf("'%s'", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("%s BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", args[0], m.timeRange.GetFromAsSecondsEpoch(), m.timeRange.GetToAsSecondsEpoch()), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
@@ -91,10 +87,6 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
-	case "__unixEpochFrom":
-		return fmt.Sprintf("%d", m.timeRange.GetFromAsSecondsEpoch()), nil
-	case "__unixEpochTo":
-		return fmt.Sprintf("%d", m.timeRange.GetToAsSecondsEpoch()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)

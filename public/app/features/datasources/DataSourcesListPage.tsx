@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import PageHeader from '../../core/components/PageHeader/PageHeader';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import OrgActionBar from '../../core/components/OrgActionBar/OrgActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
@@ -22,6 +23,7 @@ export interface Props {
   dataSourcesCount: number;
   layoutMode: LayoutMode;
   searchQuery: string;
+  hasFetched: boolean;
   loadDataSources: typeof loadDataSources;
   setDataSourcesLayoutMode: typeof setDataSourcesLayoutMode;
   setDataSourcesSearchQuery: typeof setDataSourcesSearchQuery;
@@ -56,6 +58,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
       searchQuery,
       setDataSourcesSearchQuery,
       setDataSourcesLayoutMode,
+      hasFetched,
     } = this.props;
 
     const linkButton = {
@@ -67,10 +70,10 @@ export class DataSourcesListPage extends PureComponent<Props> {
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          {dataSourcesCount === 0 ? (
-            <EmptyListCTA model={emptyListModel} />
-          ) : (
-            [
+          {!hasFetched && <PageLoader pageName="Data sources" />}
+          {hasFetched && dataSourcesCount === 0 && <EmptyListCTA model={emptyListModel} />}
+          {hasFetched &&
+            dataSourcesCount > 0 && [
               <OrgActionBar
                 layoutMode={layoutMode}
                 searchQuery={searchQuery}
@@ -80,8 +83,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
                 key="action-bar"
               />,
               <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
-            ]
-          )}
+            ]}
         </div>
       </div>
     );
@@ -95,6 +97,7 @@ function mapStateToProps(state) {
     layoutMode: getDataSourcesLayoutMode(state.dataSources),
     dataSourcesCount: getDataSourcesCount(state.dataSources),
     searchQuery: getDataSourcesSearchQuery(state.dataSources),
+    hasFetched: state.dataSources.hasFetched,
   };
 }
 

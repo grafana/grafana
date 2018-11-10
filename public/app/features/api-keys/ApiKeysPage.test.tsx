@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, ApiKeysPage } from './ApiKeysPage';
 import { NavModel, ApiKey } from 'app/types';
@@ -9,10 +9,12 @@ const setup = (propOverrides?: object) => {
     navModel: {} as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
+    hasFetched: false,
     loadApiKeys: jest.fn(),
     deleteApiKey: jest.fn(),
     setSearchQuery: jest.fn(),
     addApiKey: jest.fn(),
+    apiKeysCount: 0,
   };
 
   Object.assign(props, propOverrides);
@@ -27,14 +29,20 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
-  it('should render component', () => {
-    const { wrapper } = setup();
+  it('should render API keys table if there are any keys', () => {
+    const { wrapper } = setup({
+      apiKeys: getMultipleMockKeys(5),
+      apiKeysCount: 5,
+    });
+
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render API keys table', () => {
+  it('should render CTA if there are no API keys', () => {
     const { wrapper } = setup({
-      apiKeys: getMultipleMockKeys(5),
+      apiKeys: getMultipleMockKeys(0),
+      apiKeysCount: 0,
+      hasFetched: true,
     });
 
     expect(wrapper).toMatchSnapshot();

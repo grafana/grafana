@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Text v2",
+  "id": "text2",
+
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-graph-panel.svg",
+      "large": "img/icn-graph-panel.svg"
+    }
+  }
+}
+

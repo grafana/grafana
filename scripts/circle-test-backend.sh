@@ -11,7 +11,7 @@ function exit_if_fail {
 }
 
 echo "running go fmt"
-exit_if_fail test -z "$(gofmt -s -l ./pkg | tee /dev/stderr)"
+exit_if_fail test -z \"'$(gofmt -s -l ./pkg | tee /dev/stderr)'\"
 
 echo "building backend with install to cache pkgs"
 exit_if_fail time go install ./pkg/cmd/grafana-server

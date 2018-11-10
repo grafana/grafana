@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"golang.org/x/net/context/ctxhttp"
+	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -32,6 +33,11 @@ var (
 	slog             log.Logger
 	legendKeyFormat  *regexp.Regexp
 	metricNameFormat *regexp.Regexp
+)
+
+const (
+	gceAuthentication string = "gce"
+	jwtAuthentication string = "jwt"
 )
 
 // StackdriverExecutor executes queries for the Stackdriver datasource
@@ -71,6 +77,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	switch queryType {
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
+	case "ensureDefaultProjectQuery":
+		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -83,6 +91,16 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
+	}
+
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
+	if authenticationType == gceAuthentication {
+		defaultProject, err := e.getDefaultProject(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		}
+
+		e.dsInfo.JsonData.Set("defaultProject", defaultProject)
 	}
 
 	queries, err := e.buildQueries(tsdbQuery)
@@ -159,6 +177,38 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	return stackdriverQueries, nil
 }
 
+func reverse(s string) string {
+	chars := []rune(s)
+	for i, j := 0, len(chars)-1; i < j; i, j = i+1, j-1 {
+		chars[i], chars[j] = chars[j], chars[i]
+	}
+	return string(chars)
+}
+
+func interpolateFilterWildcards(value string) string {
+	matches := strings.Count(value, "*")
+	if matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*") {
+		value = strings.Replace(value, "*", "", -1)
+		value = fmt.Sprintf(`has_substring("%s")`, value)
+	} else if matches == 1 && strings.HasPrefix(value, "*") {
+		value = strings.Replace(value, "*", "", 1)
+		value = fmt.Sprintf(`ends_with("%s")`, value)
+	} else if matches == 1 && strings.HasSuffix(value, "*") {
+		value = reverse(strings.Replace(reverse(value), "*", "", 1))
+		value = fmt.Sprintf(`starts_with("%s")`, value)
+	} else if matches != 0 {
+		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
+			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
+		}))
+		value = strings.Replace(value, "*", ".*", -1)
+		value = strings.Replace(value, `"`, `\\"`, -1)
+		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
+	}
+
+	return value
+}
+
 func buildFilterString(metricType string, filterParts []interface{}) string {
 	filterString := ""
 	for i, part := range filterParts {
@@ -166,7 +216,15 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 		if part == "AND" {
 			filterString += " "
 		} else if mod == 2 {
-			filterString += fmt.Sprintf(`"%s"`, part)
+			operator := filterParts[i-1]
+			if operator == "=~" || operator == "!=~" {
+				filterString = reverse(strings.Replace(reverse(filterString), "~", "", 1))
+				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, part)
+			} else if strings.Contains(part.(string), "*") {
+				filterString += interpolateFilterWildcards(part.(string))
+			} else {
+				filterString += fmt.Sprintf(`"%s"`, part)
+			}
 		} else {
 			filterString += part.(string)
 		}
@@ -296,34 +354,21 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
 	metricLabels := make(map[string][]string)
 	resourceLabels := make(map[string][]string)
+	var resourceTypes []string
+
+	for _, series := range data.TimeSeries {
+		if !containsLabel(resourceTypes, series.Resource.Type) {
+			resourceTypes = append(resourceTypes, series.Resource.Type)
+		}
+	}
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
 
-		// reverse the order to be ascending
-		for i := len(series.Points) - 1; i >= 0; i-- {
-			point := series.Points[i]
-			value := point.Value.DoubleValue
-
-			if series.ValueType == "INT64" {
-				parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
-				if err == nil {
-					value = parsedValue
-				}
-			}
-
-			if series.ValueType == "BOOL" {
-				if point.Value.BoolValue {
-					value = 1
-				} else {
-					value = 0
-				}
-			}
-
-			points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
-		}
-
 		defaultMetricName := series.Metric.Type
+		if len(resourceTypes) > 1 {
+			defaultMetricName += " " + series.Resource.Type
+		}
 
 		for key, value := range series.Metric.Labels {
 			if !containsLabel(metricLabels[key], value) {
@@ -338,23 +383,93 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			if !containsLabel(resourceLabels[key], value) {
 				resourceLabels[key] = append(resourceLabels[key], value)
 			}
-
 			if containsLabel(query.GroupBys, "resource.label."+key) {
 				defaultMetricName += " " + value
 			}
 		}
 
-		metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, series.Metric.Labels, series.Resource.Labels, query)
+		// reverse the order to be ascending
+		if series.ValueType != "DISTRIBUTION" {
+			for i := len(series.Points) - 1; i >= 0; i-- {
+				point := series.Points[i]
+				value := point.Value.DoubleValue
 
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   metricName,
-			Points: points,
-		})
+				if series.ValueType == "INT64" {
+					parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
+					if err == nil {
+						value = parsedValue
+					}
+				}
+
+				if series.ValueType == "BOOL" {
+					if point.Value.BoolValue {
+						value = 1
+					} else {
+						value = 0
+					}
+				}
+
+				points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
+			}
+
+			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, make(map[string]string), query)
+
+			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
+				Name:   metricName,
+				Points: points,
+			})
+		} else {
+			buckets := make(map[int]*tsdb.TimeSeries)
+
+			for i := len(series.Points) - 1; i >= 0; i-- {
+				point := series.Points[i]
+				if len(point.Value.DistributionValue.BucketCounts) == 0 {
+					continue
+				}
+				maxKey := 0
+				for i := 0; i < len(point.Value.DistributionValue.BucketCounts); i++ {
+					value, err := strconv.ParseFloat(point.Value.DistributionValue.BucketCounts[i], 64)
+					if err != nil {
+						continue
+					}
+					if _, ok := buckets[i]; !ok {
+						// set lower bounds
+						// https://cloud.google.com/monitoring/api/ref_v3/rest/v3/TimeSeries#Distribution
+						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
+						additionalLabels := map[string]string{"bucket": bucketBound}
+						buckets[i] = &tsdb.TimeSeries{
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Points: make([]tsdb.TimePoint, 0),
+						}
+						if maxKey < i {
+							maxKey = i
+						}
+					}
+					buckets[i].Points = append(buckets[i].Points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
+				}
+
+				// fill empty bucket
+				for i := 0; i < maxKey; i++ {
+					if _, ok := buckets[i]; !ok {
+						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
+						additionalLabels := map[string]string{"bucket": bucketBound}
+						buckets[i] = &tsdb.TimeSeries{
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, series.Resource.Type, series.Metric.Labels, series.Resource.Labels, additionalLabels, query),
+							Points: make([]tsdb.TimePoint, 0),
+						}
+					}
+				}
+			}
+			for i := 0; i < len(buckets); i++ {
+				queryRes.Series = append(queryRes.Series, buckets[i])
+			}
+		}
 	}
 
 	queryRes.Meta.Set("resourceLabels", resourceLabels)
 	queryRes.Meta.Set("metricLabels", metricLabels)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
+	queryRes.Meta.Set("resourceTypes", resourceTypes)
 
 	return nil
 }
@@ -368,7 +483,7 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, metricLabels map[string]string, resourceLabels map[string]string, query *StackdriverQuery) string {
+func formatLegendKeys(metricType string, defaultMetricName string, resourceType string, metricLabels map[string]string, resourceLabels map[string]string, additionalLabels map[string]string, query *StackdriverQuery) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
@@ -380,6 +495,10 @@ func formatLegendKeys(metricType string, defaultMetricName string, metricLabels 
 
 		if metaPartName == "metric.type" {
 			return []byte(metricType)
+		}
+
+		if metaPartName == "resource.type" && resourceType != "" {
+			return []byte(resourceType)
 		}
 
 		metricPart := replaceWithMetricPart(metaPartName, metricType)
@@ -397,6 +516,10 @@ func formatLegendKeys(metricType string, defaultMetricName string, metricLabels 
 		metaPartName = strings.Replace(metaPartName, "resource.label.", "", 1)
 
 		if val, exists := resourceLabels[metaPartName]; exists {
+			return []byte(val)
+		}
+
+		if val, exists := additionalLabels[metaPartName]; exists {
 			return []byte(val)
 		}
 
@@ -425,6 +548,22 @@ func replaceWithMetricPart(metaPartName string, metricType string) []byte {
 	return nil
 }
 
+func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
+	bucketBound := "0"
+	if n == 0 {
+		return bucketBound
+	}
+
+	if bucketOptions.LinearBuckets != nil {
+		bucketBound = strconv.FormatInt(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*int64(n-1)), 10)
+	} else if bucketOptions.ExponentialBuckets != nil {
+		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
+	} else if bucketOptions.ExplicitBuckets != nil {
+		bucketBound = strconv.FormatInt(bucketOptions.ExplicitBuckets.Bounds[(n-1)], 10)
+	}
+	return bucketBound
+}
+
 func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
@@ -443,8 +582,6 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	if !ok {
 		return nil, errors.New("Unable to find datasource plugin Stackdriver")
 	}
-	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	var stackdriverRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
@@ -454,7 +591,22 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 		}
 	}
 
+	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
+	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
+
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
 	return req, nil
+}
+
+func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, error) {
+	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
+	if authenticationType == gceAuthentication {
+		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
+		if err != nil {
+			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		}
+		return defaultCredentials.ProjectID, nil
+	}
+	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
 }

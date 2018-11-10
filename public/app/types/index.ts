@@ -6,9 +6,30 @@ import { FolderDTO, FolderState, FolderInfo } from './folders';
 import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
-import { Invitee, OrgUser, User, UsersState } from './user';
+import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourcesState } from './datasources';
-import { PluginMeta, Plugin, PluginsState } from './plugins';
+import {
+  TimeRange,
+  LoadingState,
+  TimeSeries,
+  TimeSeriesVM,
+  TimeSeriesVMs,
+  TimeSeriesStats,
+  NullValueMode,
+  DataQuery,
+  DataQueryResponse,
+  DataQueryOptions,
+} from './series';
+import { PanelProps, PanelOptionsProps } from './panel';
+import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
+import { Organization, OrganizationPreferences, OrganizationState } from './organization';
+import {
+  AppNotification,
+  AppNotificationSeverity,
+  AppNotificationsState,
+  AppNotificationTimeout,
+} from './appNotifications';
+import { DashboardSearchHit } from './search';
 
 export {
   Team,
@@ -45,6 +66,28 @@ export {
   OrgUser,
   User,
   UsersState,
+  TimeRange,
+  LoadingState,
+  PanelProps,
+  PanelOptionsProps,
+  TimeSeries,
+  TimeSeriesVM,
+  TimeSeriesVMs,
+  NullValueMode,
+  TimeSeriesStats,
+  DataQuery,
+  DataQueryResponse,
+  DataQueryOptions,
+  PluginDashboard,
+  Organization,
+  OrganizationState,
+  OrganizationPreferences,
+  AppNotification,
+  AppNotificationsState,
+  AppNotificationSeverity,
+  AppNotificationTimeout,
+  DashboardSearchHit,
+  UserState,
 };
 
 export interface StoreState {
@@ -57,4 +100,7 @@ export interface StoreState {
   dashboard: DashboardState;
   dataSources: DataSourcesState;
   users: UsersState;
+  organization: OrganizationState;
+  appNotifications: AppNotificationsState;
+  user: UserState;
 }

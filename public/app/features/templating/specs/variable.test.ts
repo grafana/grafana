@@ -22,6 +22,11 @@ describe('containsVariable', () => {
       expect(contains).toBe(true);
     });
 
+    it('should find it with [[var:option]] syntax', () => {
+      const contains = containsVariable('this.[[test:csv]].filters', 'test');
+      expect(contains).toBe(true);
+    });
+
     it('should find it when part of segment', () => {
       const contains = containsVariable('metrics.$env.$group-*', 'group');
       expect(contains).toBe(true);
@@ -34,6 +39,16 @@ describe('containsVariable', () => {
 
     it('should be able to pass in multiple test strings', () => {
       const contains = containsVariable('asd', 'asd2.$env', 'env');
+      expect(contains).toBe(true);
+    });
+
+    it('should find it with ${var} syntax', () => {
+      const contains = containsVariable('this.${test}.filters', 'test');
+      expect(contains).toBe(true);
+    });
+
+    it('should find it with ${var:option} syntax', () => {
+      const contains = containsVariable('this.${test:csv}.filters', 'test');
       expect(contains).toBe(true);
     });
   });

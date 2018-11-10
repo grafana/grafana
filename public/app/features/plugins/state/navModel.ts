@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { DataSource, PluginMeta, NavModel } from 'app/types';
+import config from 'app/core/config';
 
 export function buildNavModel(ds: DataSource, plugin: PluginMeta, currentPage: string): NavModel {
   let title = 'New';
@@ -35,6 +36,16 @@ export function buildNavModel(ds: DataSource, plugin: PluginMeta, currentPage: s
       id: 'datasource-dashboards',
       text: 'Dashboards',
       url: `datasources/edit/${ds.id}/dashboards`,
+    });
+  }
+
+  if (config.buildInfo.isEnterprise) {
+    main.children.push({
+      active: currentPage === 'datasource-permissions',
+      icon: 'fa fa-fw fa-lock',
+      id: 'datasource-permissions',
+      text: 'Permissions',
+      url: `datasources/edit/${ds.id}/permissions`,
     });
   }
 

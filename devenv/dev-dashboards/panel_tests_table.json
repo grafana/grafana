@@ -404,6 +404,112 @@
       "title": "Column style thresholds & units",
       "transform": "timeseries_to_columns",
       "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": "gdev-testdata",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 6,
+      "links": [],
+      "pageSize": 20,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(245, 54, 54, 0.5)",
+            "rgba(237, 129, 40, 0.5)",
+            "rgba(50, 172, 45, 0.5)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "linkTargetBlank": true,
+          "linkTooltip": "",
+          "linkUrl": "http://www.grafana.com",
+          "mappingType": 1,
+          "pattern": "ColorCell",
+          "thresholds": [
+            "5",
+            "10"
+          ],
+          "type": "number",
+          "unit": "currencyUSD"
+        },
+        {
+          "alias": "",
+          "colorMode": "value",
+          "colors": [
+            "rgba(245, 54, 54, 0.5)",
+            "rgba(237, 129, 40, 0.5)",
+            "rgba(50, 172, 45, 0.5)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": true,
+          "linkUrl": "http://www.grafana.com",
+          "mappingType": 1,
+          "pattern": "ColorValue",
+          "thresholds": [
+            "5",
+            "10"
+          ],
+          "type": "number",
+          "unit": "Bps"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "alias": "ColorValue",
+          "expr": "",
+          "format": "table",
+          "intervalFactor": 1,
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "null,1,20,90,30,5,0,20,10"
+        },
+        {
+          "alias": "ColorCell",
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "null,5,1,2,3,4,5,10,20"
+        }
+      ],
+      "title": "Column style thresholds and links",
+      "transform": "timeseries_to_columns",
+      "type": "table"
     }
   ],
   "refresh": false,
@@ -449,5 +555,5 @@
   "timezone": "browser",
   "title": "Panel Tests - Table",
   "uid": "pttable",
-  "version": 1
+  "version": 2
 }

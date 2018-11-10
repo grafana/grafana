@@ -3,7 +3,6 @@ import moment from 'moment';
 import q from 'q';
 import {
   alignRange,
-  determineQueryHints,
   extractRuleMappingFromGroups,
   PrometheusDatasource,
   prometheusSpecialRegexEscape,
@@ -213,84 +212,6 @@ describe('PrometheusDatasource', () => {
       const range = alignRange(1, 5, 3);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
-    });
-  });
-
-  describe('determineQueryHints()', () => {
-    it('returns no hints for no series', () => {
-      expect(determineQueryHints([])).toEqual([]);
-    });
-
-    it('returns no hints for empty series', () => {
-      expect(determineQueryHints([{ datapoints: [], query: '' }])).toEqual([null]);
-    });
-
-    it('returns no hint for a monotonously decreasing series', () => {
-      const series = [{ datapoints: [[23, 1000], [22, 1001]], query: 'metric', responseIndex: 0 }];
-      const hints = determineQueryHints(series);
-      expect(hints).toEqual([null]);
-    });
-
-    it('returns a rate hint for a monotonously increasing series', () => {
-      const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'metric', responseIndex: 0 }];
-      const hints = determineQueryHints(series);
-      expect(hints.length).toBe(1);
-      expect(hints[0]).toMatchObject({
-        label: 'Time series is monotonously increasing.',
-        index: 0,
-        fix: {
-          action: {
-            type: 'ADD_RATE',
-            query: 'metric',
-          },
-        },
-      });
-    });
-
-    it('returns no rate hint for a monotonously increasing series that already has a rate', () => {
-      const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'rate(metric[1m])', responseIndex: 0 }];
-      const hints = determineQueryHints(series);
-      expect(hints).toEqual([null]);
-    });
-
-    it('returns a rate hint w/o action for a complex monotonously increasing series', () => {
-      const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'sum(metric)', responseIndex: 0 }];
-      const hints = determineQueryHints(series);
-      expect(hints.length).toBe(1);
-      expect(hints[0].label).toContain('rate()');
-      expect(hints[0].fix).toBeUndefined();
-    });
-
-    it('returns a rate hint for a monotonously increasing series with missing data', () => {
-      const series = [{ datapoints: [[23, 1000], [null, 1001], [24, 1002]], query: 'metric', responseIndex: 0 }];
-      const hints = determineQueryHints(series);
-      expect(hints.length).toBe(1);
-      expect(hints[0]).toMatchObject({
-        label: 'Time series is monotonously increasing.',
-        index: 0,
-        fix: {
-          action: {
-            type: 'ADD_RATE',
-            query: 'metric',
-          },
-        },
-      });
-    });
-
-    it('returns a histogram hint for a bucket series', () => {
-      const series = [{ datapoints: [[23, 1000]], query: 'metric_bucket', responseIndex: 0 }];
-      const hints = determineQueryHints(series);
-      expect(hints.length).toBe(1);
-      expect(hints[0]).toMatchObject({
-        label: 'Time series has buckets, you probably wanted a histogram.',
-        index: 0,
-        fix: {
-          action: {
-            type: 'ADD_HISTOGRAM_QUANTILE',
-            query: 'metric_bucket',
-          },
-        },
-      });
     });
   });
 

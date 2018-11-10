@@ -307,6 +307,7 @@
   .view {
     display: flex;
     flex-grow: 1;
+    flex-direction: column;
   }
 
   .track-vertical {
@@ -336,4 +337,8 @@
     @include gradient-horizontal($scrollbarBackground, $scrollbarBackground2);
     border-radius: 6px;
   }
+}
+
+.scroll-margin-helper {
+  margin-right: 12px;
 }

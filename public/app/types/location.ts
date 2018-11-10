@@ -2,6 +2,7 @@ export interface LocationUpdate {
   path?: string;
   query?: UrlQueryMap;
   routeParams?: UrlQueryMap;
+  partial?: boolean;
 }
 
 export interface LocationState {

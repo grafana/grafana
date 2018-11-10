@@ -16,6 +16,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -47,12 +48,14 @@ func init() {
 }
 
 type SqlStore struct {
-	Cfg *setting.Cfg `inject:""`
-	Bus bus.Bus      `inject:""`
+	Cfg          *setting.Cfg        `inject:""`
+	Bus          bus.Bus             `inject:""`
+	CacheService *cache.CacheService `inject:""`
 
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
 	log             log.Logger
+	Dialect         migrator.Dialect
 	skipEnsureAdmin bool
 }
 
@@ -125,10 +128,12 @@ func (ss *SqlStore) Init() error {
 	}
 
 	ss.engine = engine
+	ss.Dialect = migrator.NewDialect(ss.engine)
 
 	// temporarily still set global var
 	x = engine
-	dialect = migrator.NewDialect(x)
+	dialect = ss.Dialect
+
 	migrator := migrator.NewMigrator(x)
 	migrations.AddMigrations(migrator)
 
@@ -145,8 +150,10 @@ func (ss *SqlStore) Init() error {
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
-
 	ss.Bus.SetTransactionManager(ss)
+
+	// Register handlers
+	ss.addUserQueryAndCommandHandlers()
 
 	// ensure admin user
 	if ss.skipEnsureAdmin {
@@ -233,7 +240,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 	case migrator.SQLITE:
 		// special case for tests
 		if !filepath.IsAbs(ss.dbCfg.Path) {
-			ss.dbCfg.Path = filepath.Join(setting.DataPath, ss.dbCfg.Path)
+			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + ss.dbCfg.Path + "?cache=shared&mode=rwc"
@@ -319,6 +326,7 @@ func InitTestDB(t *testing.T) *SqlStore {
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
+	sqlstore.CacheService = cache.New(5*time.Minute, 10*time.Minute)
 
 	dbType := migrator.SQLITE
 
@@ -347,7 +355,11 @@ func InitTestDB(t *testing.T) *SqlStore {
 		t.Fatalf("Failed to init test database: %v", err)
 	}
 
-	dialect = migrator.NewDialect(engine)
+	sqlstore.Dialect = migrator.NewDialect(engine)
+
+	// temp global var until we get rid of global vars
+	dialect = sqlstore.Dialect
+
 	if err := dialect.CleanDB(); err != nil {
 		t.Fatalf("Failed to clean test db %v", err)
 	}

@@ -1,12 +1,10 @@
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import * as d3 from 'd3';
 import { contextSrv } from 'app/core/core';
 import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
-
-const module = angular.module('grafana.directives');
+import coreModule from 'app/core/core_module';
 
 const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
@@ -16,7 +14,7 @@ const LEGEND_VALUE_MARGIN = 0;
 /**
  * Color legend for heatmap editor.
  */
-module.directive('colorLegend', () => {
+coreModule.directive('colorLegend', () => {
   return {
     restrict: 'E',
     template: '<div class="heatmap-color-legend"><svg width="16.5rem" height="24px"></svg></div>',
@@ -52,7 +50,7 @@ module.directive('colorLegend', () => {
 /**
  * Heatmap legend with scale values.
  */
-module.directive('heatmapLegend', () => {
+coreModule.directive('heatmapLegend', () => {
   return {
     restrict: 'E',
     template: `<div class="heatmap-color-legend"><svg width="${LEGEND_WIDTH_PX}px" height="${LEGEND_HEIGHT_PX}px"></svg></div>`,

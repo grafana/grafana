@@ -14,6 +14,22 @@ type StackdriverQuery struct {
 	AliasBy  string
 }
 
+type StackdriverBucketOptions struct {
+	LinearBuckets *struct {
+		NumFiniteBuckets int64 `json:"numFiniteBuckets"`
+		Width            int64 `json:"width"`
+		Offset           int64 `json:"offset"`
+	} `json:"linearBuckets"`
+	ExponentialBuckets *struct {
+		NumFiniteBuckets int64   `json:"numFiniteBuckets"`
+		GrowthFactor     float64 `json:"growthFactor"`
+		Scale            float64 `json:"scale"`
+	} `json:"exponentialBuckets"`
+	ExplicitBuckets *struct {
+		Bounds []int64 `json:"bounds"`
+	} `json:"explicitBuckets"`
+}
+
 // StackdriverResponse is the data returned from the external Google Stackdriver API
 type StackdriverResponse struct {
 	TimeSeries []struct {
@@ -33,10 +49,26 @@ type StackdriverResponse struct {
 				EndTime   time.Time `json:"endTime"`
 			} `json:"interval"`
 			Value struct {
-				DoubleValue float64 `json:"doubleValue"`
-				StringValue string  `json:"stringValue"`
-				BoolValue   bool    `json:"boolValue"`
-				IntValue    string  `json:"int64Value"`
+				DoubleValue       float64 `json:"doubleValue"`
+				StringValue       string  `json:"stringValue"`
+				BoolValue         bool    `json:"boolValue"`
+				IntValue          string  `json:"int64Value"`
+				DistributionValue struct {
+					Count                 string  `json:"count"`
+					Mean                  float64 `json:"mean"`
+					SumOfSquaredDeviation float64 `json:"sumOfSquaredDeviation"`
+					Range                 struct {
+						Min int `json:"min"`
+						Max int `json:"max"`
+					} `json:"range"`
+					BucketOptions StackdriverBucketOptions `json:"bucketOptions"`
+					BucketCounts  []string                 `json:"bucketCounts"`
+					Examplars     []struct {
+						Value     float64 `json:"value"`
+						Timestamp string  `json:"timestamp"`
+						// attachments
+					} `json:"examplars"`
+				} `json:"distributionValue"`
 			} `json:"value"`
 		} `json:"points"`
 	} `json:"timeSeries"`
