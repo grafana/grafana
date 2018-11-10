@@ -28,24 +28,24 @@
 }
 
 .panel-in-fullscreen {
-  .scroll-canvas--dashboard {
-    height: 100%;
-  }
+  // .scroll-canvas--dashboard {
+  //   height: 100%;
+  // }
 
   .sidemenu {
     display: none;
   }
 
-  .main-view {
-    background: unset;
-  }
+  // .main-view {
+  //   background: unset;
+  // }
 
   .dashboard-container {
     padding: 0;
   }
 
   .submenu-controls {
-    padding: $dashboard-padding $dashboard-padding $panel-margin $dashboard-padding;
+    padding: 0 $dashboard-padding $panel-margin $dashboard-padding;
   }
 
   .panel-editor-container__panel {

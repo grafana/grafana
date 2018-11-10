@@ -40,20 +40,11 @@
 }
 
 .panel-in-fullscreen {
-  .navbar {
-    // @include navbar-alt-look();
-    display: none;
-  }
-
   .navbar-button--add-panel,
   .navbar-button--star,
   .navbar-button--tv,
   .navbar-page-btn .fa-caret-down {
     display: none;
-  }
-
-  .navbar-buttons--close {
-    display: flex;
   }
 }
 
@@ -103,7 +94,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  // margin-right: $spacer;
+  margin-right: $spacer;
 
   &--close {
     display: none;

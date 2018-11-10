@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
 let lastGridWidth = 1200;
+let ignoreNextWidthChange = false;
 
 function GridWrapper({
   size,
@@ -24,8 +25,12 @@ function GridWrapper({
   isFullscreen,
 }) {
   const width = size.width > 0 ? size.width : lastGridWidth;
+
+  // logic to ignore width changes (optimization)
   if (width !== lastGridWidth) {
-    if (!isFullscreen && Math.abs(width - lastGridWidth) > 8) {
+    if (ignoreNextWidthChange) {
+      ignoreNextWidthChange = false;
+    } else if (!isFullscreen && Math.abs(width - lastGridWidth) > 8) {
       onWidthChange();
       lastGridWidth = width;
     }
@@ -138,6 +143,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 
   onViewModeChanged(payload) {
+    ignoreNextWidthChange = true;
     this.setState({ animated: !payload.fullscreen });
   }
 
