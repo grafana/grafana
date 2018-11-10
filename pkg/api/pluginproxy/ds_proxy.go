@@ -2,7 +2,6 @@ package pluginproxy
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +11,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
@@ -25,16 +23,9 @@ import (
 )
 
 var (
-	logger     = log.New("data-proxy-log")
-	tokenCache = map[string]*jwtToken{}
-	client     = newHTTPClient()
+	logger = log.New("data-proxy-log")
+	client = newHTTPClient()
 )
-
-type jwtToken struct {
-	ExpiresOn       time.Time `json:"-"`
-	ExpiresOnString string    `json:"expires_on"`
-	AccessToken     string    `json:"access_token"`
-}
 
 type DataSourceProxy struct {
 	ds        *m.DataSource
@@ -162,7 +153,6 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		} else {
 			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
-
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
@@ -219,7 +209,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		}
 
 		if proxy.route != nil {
-			proxy.applyRoute(req)
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 		}
 	}
 }
@@ -310,121 +300,4 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 	}
 
 	return true
-}
-
-func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
-	proxy.proxyPath = strings.TrimPrefix(proxy.proxyPath, proxy.route.Path)
-
-	data := templateData{
-		JsonData:       proxy.ds.JsonData.Interface().(map[string]interface{}),
-		SecureJsonData: proxy.ds.SecureJsonData.Decrypt(),
-	}
-
-	interpolatedURL, err := interpolateString(proxy.route.Url, data)
-	if err != nil {
-		logger.Error("Error interpolating proxy url", "error", err)
-		return
-	}
-
-	routeURL, err := url.Parse(interpolatedURL)
-	if err != nil {
-		logger.Error("Error parsing plugin route url", "error", err)
-		return
-	}
-
-	req.URL.Scheme = routeURL.Scheme
-	req.URL.Host = routeURL.Host
-	req.Host = routeURL.Host
-	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxy.proxyPath)
-
-	if err := addHeaders(&req.Header, proxy.route, data); err != nil {
-		logger.Error("Failed to render plugin headers", "error", err)
-	}
-
-	if proxy.route.TokenAuth != nil {
-		if token, err := proxy.getAccessToken(data); err != nil {
-			logger.Error("Failed to get access token", "error", err)
-		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-	}
-
-	logger.Info("Requesting", "url", req.URL.String())
-}
-
-func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
-		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
-			logger.Info("Using token from cache")
-			return cachedToken.AccessToken, nil
-		}
-	}
-
-	urlInterpolated, err := interpolateString(proxy.route.TokenAuth.Url, data)
-	if err != nil {
-		return "", err
-	}
-
-	params := make(url.Values)
-	for key, value := range proxy.route.TokenAuth.Params {
-		interpolatedParam, err := interpolateString(value, data)
-		if err != nil {
-			return "", err
-		}
-		params.Add(key, interpolatedParam)
-	}
-
-	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
-	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
-
-	resp, err := client.Do(getTokenReq)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	var token jwtToken
-	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
-		return "", err
-	}
-
-	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
-	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	tokenCache[proxy.getAccessTokenCacheKey()] = &token
-
-	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
-	return token.AccessToken, nil
-}
-
-func (proxy *DataSourceProxy) getAccessTokenCacheKey() string {
-	return fmt.Sprintf("%v_%v_%v", proxy.ds.Id, proxy.route.Path, proxy.route.Method)
-}
-
-func interpolateString(text string, data templateData) (string, error) {
-	t, err := template.New("content").Parse(text)
-	if err != nil {
-		return "", fmt.Errorf("could not parse template %s", text)
-	}
-
-	var contentBuf bytes.Buffer
-	err = t.Execute(&contentBuf, data)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute template %s", text)
-	}
-
-	return contentBuf.String(), nil
-}
-
-func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
-	for _, header := range route.Headers {
-		interpolated, err := interpolateString(header.Content, data)
-		if err != nil {
-			return err
-		}
-		reqHeaders.Add(header.Name, interpolated)
-	}
-
-	return nil
 }

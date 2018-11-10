@@ -1,22 +1,32 @@
 .grafana-info-box {
   position: relative;
-  background: $info-box-background;
-  box-shadow: $card-shadow;
-  padding: 1rem;
-  border-radius: 4px;
+  padding: 1.5rem;
+  background-color: $empty-list-cta-bg;
+  margin-bottom: 2rem;
+  border-top: 3px solid $info-box-border-color;
   margin-bottom: $spacer;
   margin-right: $gf-form-margin;
+  box-shadow: $card-shadow;
   flex-grow: 1;
-  color: $info-box-color;
-  h5 {
-    color: $info-box-color;
-  }
 
   h5 {
     margin-bottom: $spacer;
   }
   ul {
     padding-left: $spacer * 1.5;
+  }
+
+  code {
+    @include font-family-monospace();
+    font-size: $font-size-base - 2;
+    background-color: $code-tag-bg;
+    color: $text-color;
+    border: 1px solid $code-tag-border;
+    border-radius: 4px;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
   }
 
   a {

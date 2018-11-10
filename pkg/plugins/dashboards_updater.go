@@ -48,11 +48,7 @@ func autoUpdateAppDashboard(pluginDashInfo *PluginDashboardInfoDTO, orgId int64)
 		Path:      pluginDashInfo.Path,
 	}
 
-	if err := bus.Dispatch(&updateCmd); err != nil {
-		return err
-	}
-
-	return nil
+	return bus.Dispatch(&updateCmd)
 }
 
 func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {

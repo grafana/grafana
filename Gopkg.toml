@@ -203,3 +203,11 @@ ignored = [
 [[constraint]]
   name = "github.com/denisenkom/go-mssqldb"
   revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
+
+[[constraint]]
+  name = "github.com/VividCortex/mysqlerr"
+  branch = "master"
+
+[[constraint]]
+  name = "gopkg.in/square/go-jose.v2"
+  version = "2.1.9"

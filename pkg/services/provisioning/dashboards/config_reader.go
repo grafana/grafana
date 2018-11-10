@@ -83,7 +83,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 		}
 
 		if dashboards[i].UpdateIntervalSeconds == 0 {
-			dashboards[i].UpdateIntervalSeconds = 3
+			dashboards[i].UpdateIntervalSeconds = 10
 		}
 	}
 

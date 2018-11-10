@@ -8,7 +8,6 @@ import * as templatingVariable from 'app/features/templating/variable';
 export default class CloudWatchDatasource {
   type: any;
   name: any;
-  supportMetrics: any;
   proxyUrl: any;
   defaultRegion: any;
   instanceSettings: any;
@@ -17,7 +16,6 @@ export default class CloudWatchDatasource {
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
     this.type = 'cloudwatch';
     this.name = instanceSettings.name;
-    this.supportMetrics = true;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.instanceSettings = instanceSettings;
@@ -39,6 +37,9 @@ export default class CloudWatchDatasource {
       item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
       item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
+      item.statistics = item.statistics.map(s => {
+        return this.templateSrv.replace(s, options.scopedVars);
+      });
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
       item.id = this.templateSrv.replace(item.id, options.scopedVars);
       item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
@@ -46,8 +47,14 @@ export default class CloudWatchDatasource {
 
       // valid ExtendedStatistics is like p90.00, check the pattern
       const hasInvalidStatistics = item.statistics.some(s => {
-        return s.indexOf('p') === 0 && !/p\d{2}\.\d{2}/.test(s);
+        if (s.indexOf('p') === 0) {
+          const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
+          return !matches || matches[0] !== s;
+        }
+
+        return false;
       });
+
       if (hasInvalidStatistics) {
         throw { message: 'Invalid extended statistics' };
       }
@@ -133,7 +140,11 @@ export default class CloudWatchDatasource {
       if (res.results) {
         _.forEach(res.results, queryRes => {
           _.forEach(queryRes.series, series => {
-            data.push({ target: series.name, datapoints: series.points });
+            const s = { target: series.name, datapoints: series.points } as any;
+            if (queryRes.meta.unit) {
+              s.unit = queryRes.meta.unit;
+            }
+            data.push(s);
           });
         });
       }

@@ -5,6 +5,7 @@ type OAuthInfo struct {
 	Scopes                 []string
 	AuthUrl, TokenUrl      string
 	Enabled                bool
+	EmailAttributeName     string
 	AllowedDomains         []string
 	HostedDomain           string
 	ApiUrl                 string

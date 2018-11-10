@@ -1,4 +1,7 @@
-// vendor
+// DEPENDENCIES
+@import '../../node_modules/react-table/react-table.css';
+
+// VENDOR
 @import '../vendor/css/timepicker.css';
 @import '../vendor/css/spectrum.css';
 @import '../vendor/css/rc-cascader.scss';
@@ -94,7 +97,10 @@
 @import 'components/form_select_box';
 @import 'components/user-picker';
 @import 'components/description-picker';
+@import 'components/viz_editor';
 @import 'components/delete_button';
+@import 'components/add_data_source.scss';
+@import 'components/page_loader';
 
 // PAGES
 @import 'pages/login';

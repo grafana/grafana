@@ -75,7 +75,7 @@ type Alert struct {
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
-	StateChanges int
+	StateChanges int64
 
 	Created time.Time
 	Updated time.Time
@@ -156,7 +156,7 @@ type SetAlertStateCommand struct {
 	Error    string
 	EvalData *simplejson.Json
 
-	Timestamp time.Time
+	Result Alert
 }
 
 //Queries
@@ -215,13 +215,14 @@ type AlertStateInfoDTO struct {
 // "Internal" commands
 
 type UpdateDashboardAlertsCommand struct {
-	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }
 
 type ValidateDashboardAlertsCommand struct {
 	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }

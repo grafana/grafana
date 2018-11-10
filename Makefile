@@ -5,8 +5,7 @@ all: deps build
 deps-go:
 	go run build.go setup
 
-deps-js:
-	yarn install --pure-lockfile --no-progress
+deps-js: node_modules
 
 deps: deps-js
 
@@ -44,5 +43,9 @@ test: test-go test-js
 run:
 	./bin/grafana-server
 
-protoc:
-	protoc -I pkg/tsdb/models pkg/tsdb/models/*.proto --go_out=plugins=grpc:pkg/tsdb/models/.
+clean:
+	rm -rf node_modules
+	rm -rf public/build
+
+node_modules: package.json yarn.lock
+	yarn install --pure-lockfile --no-progress

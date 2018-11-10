@@ -3,6 +3,8 @@ package alerting
 import (
 	"context"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type EvalHandler interface {
@@ -20,19 +22,25 @@ type Notifier interface {
 	NeedsImage() bool
 
 	// ShouldNotify checks this evaluation should send an alert notification
-	ShouldNotify(ctx context.Context, evalContext *EvalContext) bool
+	ShouldNotify(ctx context.Context, evalContext *EvalContext, notificationState *models.AlertNotificationState) bool
 
 	GetNotifierId() int64
 	GetIsDefault() bool
 	GetSendReminder() bool
+	GetDisableResolveMessage() bool
 	GetFrequency() time.Duration
 }
 
-type NotifierSlice []Notifier
+type notifierState struct {
+	notifier Notifier
+	state    *models.AlertNotificationState
+}
 
-func (notifiers NotifierSlice) ShouldUploadImage() bool {
-	for _, notifier := range notifiers {
-		if notifier.NeedsImage() {
+type notifierStateSlice []*notifierState
+
+func (notifiers notifierStateSlice) ShouldUploadImage() bool {
+	for _, ns := range notifiers {
+		if ns.notifier.NeedsImage() {
 			return true
 		}
 	}

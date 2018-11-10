@@ -60,6 +60,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -121,7 +122,7 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it('should cancel query for invalid extended statistics', () => {
+    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
       const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -133,7 +134,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               InstanceId: 'i-12345678',
             },
-            statistics: ['pNN.NN'],
+            statistics: [stat],
             period: '60s',
           },
         ],
@@ -221,6 +222,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'TargetResponseTime_p90.00',

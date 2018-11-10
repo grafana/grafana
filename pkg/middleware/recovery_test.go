@@ -8,11 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
+	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/macaron.v1"
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
+	setting.ERR_TEMPLATE_NAME = "error-template"
+
 	Convey("Given an api route that panics", t, func() {
 		apiURL := "/api/whatever"
 		recoveryScenario("recovery middleware should return json", apiURL, func(sc *scenarioContext) {
@@ -50,6 +53,7 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 		sc := &scenarioContext{
 			url: url,
 		}
+
 		viewsPath, _ := filepath.Abs("../../public/views")
 
 		sc.m = macaron.New()

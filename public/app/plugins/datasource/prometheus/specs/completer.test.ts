@@ -18,22 +18,12 @@ describe('Prometheus editor completer', () => {
   const backendSrv = {} as BackendSrv;
   const datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
 
-  datasourceStub.performInstantQuery = jest.fn(() =>
-    Promise.resolve({
-      data: {
-        data: {
-          result: [
-            {
-              metric: {
-                job: 'node',
-                instance: 'localhost:9100',
-              },
-            },
-          ],
-        },
-      },
-    })
+  datasourceStub.metadataRequest = jest.fn(() =>
+    Promise.resolve({ data: { data: [{ metric: { job: 'node', instance: 'localhost:9100' } }] } })
   );
+  datasourceStub.getTimeRange = jest.fn(() => {
+    return { start: 1514732400, end: 1514818800 };
+  });
   datasourceStub.performSuggestQuery = jest.fn(() => Promise.resolve(['node_cpu']));
 
   const templateSrv = {

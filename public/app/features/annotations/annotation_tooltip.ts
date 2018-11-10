@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
-import alertDef from '../alerting/alert_def';
+import alertDef from '../alerting/state/alertDef';
 
 /** @ngInject */
 export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, $compile) {

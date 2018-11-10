@@ -1,16 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'mobx-react';
+import { Provider } from 'react-redux';
 
 import coreModule from 'app/core/core_module';
-import { store } from 'app/stores/store';
+import { store } from 'app/store/configureStore';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 
 function WrapInProvider(store, Component, props) {
   return (
-    <Provider {...store}>
+    <Provider store={store}>
       <Component {...props} />
     </Provider>
   );

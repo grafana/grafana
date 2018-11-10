@@ -43,26 +43,6 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.Error("Cannot read directory", "error", err)
-	}
-
-	copy := path
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error("Could not create absolute path ", "path", path)
-	}
-
-	path, err = filepath.EvalSymlinks(path)
-	if err != nil {
-		log.Error("Failed to read content of symlinked path: %s", path)
-	}
-
-	if path == "" {
-		path = copy
-		log.Info("falling back to original path due to EvalSymlink/Abs failure")
-	}
-
 	return &fileReader{
 		Cfg:              cfg,
 		Path:             path,
@@ -99,7 +79,8 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 }
 
 func (fr *fileReader) startWalkingDisk() error {
-	if _, err := os.Stat(fr.Path); err != nil {
+	resolvedPath := fr.resolvePath(fr.Path)
+	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
 		}
@@ -116,7 +97,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(fr.Path, createWalkFn(filesFoundOnDisk))
+	err = filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk))
 	if err != nil {
 		return err
 	}
@@ -156,7 +137,7 @@ func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs ma
 		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
 		err := bus.Dispatch(cmd)
 		if err != nil {
-			fr.log.Error("failed to delete dashboard", "id", cmd.Id)
+			fr.log.Error("failed to delete dashboard", "id", cmd.Id, "error", err)
 		}
 	}
 }
@@ -342,6 +323,29 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 		checkSum:     checkSum,
 		lastModified: lastModified,
 	}, nil
+}
+
+func (fr *fileReader) resolvePath(path string) string {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		fr.log.Error("Cannot read directory", "error", err)
+	}
+
+	copy := path
+	path, err := filepath.Abs(path)
+	if err != nil {
+		fr.log.Error("Could not create absolute path ", "path", path)
+	}
+
+	path, err = filepath.EvalSymlinks(path)
+	if err != nil {
+		fr.log.Error("Failed to read content of symlinked path: %s", path)
+	}
+
+	if path == "" {
+		path = copy
+		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
+	}
+	return path
 }
 
 type provisioningMetadata struct {

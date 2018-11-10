@@ -11,8 +11,11 @@ import * as postgresPlugin from 'app/plugins/datasource/postgres/module';
 import * as prometheusPlugin from 'app/plugins/datasource/prometheus/module';
 import * as mssqlPlugin from 'app/plugins/datasource/mssql/module';
 import * as testDataDSPlugin from 'app/plugins/datasource/testdata/module';
+import * as stackdriverPlugin from 'app/plugins/datasource/stackdriver/module';
 
 import * as textPanel from 'app/plugins/panel/text/module';
+import * as text2Panel from 'app/plugins/panel/text2/module';
+import * as graph2Panel from 'app/plugins/panel/graph2/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
@@ -36,8 +39,11 @@ const builtInPlugins = {
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
+  'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
 
   'app/plugins/panel/text/module': textPanel,
+  'app/plugins/panel/text2/module': text2Panel,
+  'app/plugins/panel/graph2/module': graph2Panel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/pluginlist/module': pluginsListPanel,

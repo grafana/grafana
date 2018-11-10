@@ -16,7 +16,7 @@ func TestPluginDashboards(t *testing.T) {
 	Convey("When asking plugin dashboard info", t, func() {
 		setting.Raw = ini.Empty()
 		sec, _ := setting.Raw.NewSection("plugin.test-app")
-		sec.NewKey("path", "../../tests/test-app")
+		sec.NewKey("path", "testdata/test-app")
 
 		pm := &PluginManager{}
 		err := pm.Init()

@@ -1,16 +1,15 @@
 package alerting
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -40,61 +39,78 @@ type notificationService struct {
 }
 
 func (n *notificationService) SendIfNeeded(context *EvalContext) error {
-	notifiers, err := n.getNeededNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
+	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
 		return err
 	}
 
-	if len(notifiers) == 0 {
+	if len(notifierStates) == 0 {
 		return nil
 	}
 
-	if notifiers.ShouldUploadImage() {
+	if notifierStates.ShouldUploadImage() {
 		if err = n.uploadImage(context); err != nil {
 			n.log.Error("Failed to upload alert panel image.", "error", err)
 		}
 	}
 
-	return n.sendNotifications(context, notifiers)
+	return n.sendNotifications(context, notifierStates)
 }
 
-func (n *notificationService) sendNotifications(evalContext *EvalContext, notifiers []Notifier) error {
-	for _, notifier := range notifiers {
-		not := notifier
+func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
+	notifier := notifierState.notifier
 
-		err := bus.InTransaction(evalContext.Ctx, func(ctx context.Context) error {
-			n.log.Debug("trying to send notification", "id", not.GetNotifierId())
+	n.log.Debug("Sending notification", "type", notifier.GetType(), "id", notifier.GetNotifierId(), "isDefault", notifier.GetIsDefault())
+	metrics.M_Alerting_Notification_Sent.WithLabelValues(notifier.GetType()).Inc()
 
-			// Verify that we can send the notification again
-			// but this time within the same transaction.
-			if !evalContext.IsTestRun && !not.ShouldNotify(context.Background(), evalContext) {
-				return nil
-			}
+	err := notifier.Notify(evalContext)
 
-			n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
-			metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
+	if err != nil {
+		n.log.Error("failed to send notification", "id", notifier.GetNotifierId(), "error", err)
+	}
 
-			//send notification
-			success := not.Notify(evalContext) == nil
+	if evalContext.IsTestRun {
+		return nil
+	}
 
-			if evalContext.IsTestRun {
-				return nil
-			}
+	cmd := &m.SetAlertNotificationStateToCompleteCommand{
+		Id:      notifierState.state.Id,
+		Version: notifierState.state.Version,
+	}
 
-			//write result to db.
-			cmd := &m.RecordNotificationJournalCommand{
-				OrgId:      evalContext.Rule.OrgId,
-				AlertId:    evalContext.Rule.Id,
-				NotifierId: not.GetNotifierId(),
-				SentAt:     time.Now().Unix(),
-				Success:    success,
-			}
+	return bus.DispatchCtx(evalContext.Ctx, cmd)
+}
 
-			return bus.DispatchCtx(ctx, cmd)
-		})
+func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
+	if !evalContext.IsTestRun {
+		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
+			Id:                           notifierState.state.Id,
+			Version:                      notifierState.state.Version,
+			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
+		}
+
+		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
+		if err == m.ErrAlertNotificationStateVersionConflict {
+			return nil
+		}
 
 		if err != nil {
-			n.log.Error("failed to send notification", "id", not.GetNotifierId())
+			return err
+		}
+
+		// We need to update state version to be able to log
+		// unexpected version conflicts when marking notifications as ok
+		notifierState.state.Version = setPendingCmd.ResultVersion
+	}
+
+	return n.sendAndMarkAsComplete(evalContext, notifierState)
+}
+
+func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates notifierStateSlice) error {
+	for _, notifierState := range notifierStates {
+		err := n.sendNotification(evalContext, notifierState)
+		if err != nil {
+			n.log.Error("failed to send notification", "id", notifierState.notifier.GetNotifierId(), "error", err)
 		}
 	}
 
@@ -108,11 +124,12 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	}
 
 	renderOpts := rendering.Opts{
-		Width:   1000,
-		Height:  500,
-		Timeout: alertTimeout / 2,
-		OrgId:   context.Rule.OrgId,
-		OrgRole: m.ROLE_ADMIN,
+		Width:           1000,
+		Height:          500,
+		Timeout:         alertTimeout / 2,
+		OrgId:           context.Rule.OrgId,
+		OrgRole:         m.ROLE_ADMIN,
+		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 
 	ref, err := context.GetDashboardUID()
@@ -140,22 +157,38 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, evalContext *EvalContext) (NotifierSlice, error) {
+func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, evalContext *EvalContext) (notifierStateSlice, error) {
 	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
 
-	var result []Notifier
+	var result notifierStateSlice
 	for _, notification := range query.Result {
 		not, err := n.createNotifierFor(notification)
 		if err != nil {
-			return nil, err
+			n.log.Error("Could not create notifier", "notifier", notification.Id, "error", err)
+			continue
 		}
 
-		if not.ShouldNotify(evalContext.Ctx, evalContext) {
-			result = append(result, not)
+		query := &m.GetOrCreateNotificationStateQuery{
+			NotifierId: notification.Id,
+			AlertId:    evalContext.Rule.Id,
+			OrgId:      evalContext.Rule.OrgId,
+		}
+
+		err = bus.DispatchCtx(evalContext.Ctx, query)
+		if err != nil {
+			n.log.Error("Could not get notification state.", "notifier", notification.Id, "error", err)
+			continue
+		}
+
+		if not.ShouldNotify(evalContext.Ctx, evalContext, query.Result) {
+			result = append(result, &notifierState{
+				notifier: not,
+				state:    query.Result,
+			})
 		}
 	}
 

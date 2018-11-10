@@ -45,7 +45,7 @@ We might add more global built in variables in the future and if we do we will p
 
 ### Dedupe alert notifications when running multiple servers
 
-In this release we will dedupe alert notificiations when you are running multiple servers.
+In this release we will dedupe alert notifications when you are running multiple servers.
 This makes it possible to run alerting on multiple servers and only get one notification.
 
 We currently solve this with sql transactions which puts some limitations for how many servers you can use to execute the same rules.
@@ -67,7 +67,7 @@ Making it possible to have users in multiple groups and have detailed access con
 
 ## Upgrade & Breaking changes
 
-If your using https in grafana we now force you to use tls 1.2 and the most secure ciphers.
+If you're using https in grafana we now force you to use tls 1.2 and the most secure ciphers.
 We think its better to be secure by default rather then making it configurable.
 If you want to run https with lower versions of tls we suggest you put a reserve proxy in front of grafana.
 

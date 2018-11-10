@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <DashboardsTable
+      dashboards={Array []}
+      onImport={[Function]}
+      onRemove={[Function]}
+    />
+  </div>
+</div>
+`;

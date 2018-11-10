@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { PanelPlugin } from 'app/types/plugins';
 
 export interface BuildInfo {
   version: string;
@@ -9,7 +10,7 @@ export interface BuildInfo {
 
 export class Settings {
   datasources: any;
-  panels: any;
+  panels: PanelPlugin[];
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
@@ -22,6 +23,8 @@ export class Settings {
   disableLoginForm: boolean;
   defaultDatasource: string;
   alertingEnabled: boolean;
+  alertingErrorOrTimeout: string;
+  alertingNoDataOrNullValues: string;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;

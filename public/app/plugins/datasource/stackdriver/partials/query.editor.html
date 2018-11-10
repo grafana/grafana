@@ -1,0 +1,73 @@
+<query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
+  <stackdriver-filter target="ctrl.target" refresh="ctrl.refresh()" datasource="ctrl.datasource" default-dropdown-value="ctrl.defaultDropdownValue"
+    default-service-value="ctrl.defaultServiceValue"></stackdriver-filter>
+  <stackdriver-aggregation target="ctrl.target" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()"></stackdriver-aggregation>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label query-keyword width-9">Alias By</span>
+      <input type="text" class="gf-form-input width-30" ng-model="ctrl.target.aliasBy" ng-change="ctrl.refresh()"
+        ng-model-options="{ debounce: 500 }" />
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Project</span>
+      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.defaultProject' css-class="min-width-12" />
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+        Show Help
+        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+      </label>
+    </div>
+    <div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuery = !ctrl.showLastQuery">
+        Raw Query
+        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuery"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuery"></i>
+      </label>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+
+  <div class="gf-form" ng-show="ctrl.showLastQuery">
+    <pre class="gf-form-pre">{{ctrl.lastQueryMeta.rawQueryString}}</pre>
+  </div>
+  <div class="gf-form grafana-info-box" style="padding: 0" ng-show="ctrl.showHelp">
+    <pre class="gf-form-pre alert alert-info" style="margin-right: 0"><h5>Alias Patterns</h5>Format the legend keys any way you want by using alias patterns.
+
+    Format the legend keys any way you want by using alias patterns.<br /> <br />
+
+    Example: <code ng-non-bindable>{{metric.name}} - {{metric.label.instance_name}}</code><br />
+    Result: &nbsp;&nbsp;<code ng-non-bindable>cpu/usage_time - server1-europe-west-1</code><br /><br />
+
+    <strong>Patterns</strong><br />
+    <ul>
+      <li>
+        <code ng-non-bindable>{{metric.type}}</code> = metric type e.g. compute.googleapis.com/instance/cpu/usage_time
+      </li>
+      <li>
+        <code ng-non-bindable>{{metric.name}}</code> = name part of metric e.g. instance/cpu/usage_time
+      </li>
+      <li>
+        <code ng-non-bindable>{{metric.service}}</code> = service part of metric e.g. compute
+      </li>
+      <li>
+        <code ng-non-bindable>{{metric.label.label_name}}</code> = Metric label metadata e.g.
+        metric.label.instance_name
+      </li>
+      <li>
+        <code ng-non-bindable>{{resource.label.label_name}}</code> = Resource label metadata e.g. resource.label.zone
+      </li>
+    </ul>
+  </div>
+  <div class="gf-form" ng-show="ctrl.lastQueryError">
+    <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+  </div>
+</query-editor-row>

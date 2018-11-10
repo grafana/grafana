@@ -128,7 +128,7 @@ Example json body:
 
 In DingTalk PC Client:
 
-1. Click "more" icon on left bottom of the panel.
+1. Click "more" icon on upper right of the panel.
 
 2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
@@ -140,7 +140,7 @@ In DingTalk PC Client:
 
 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
 
-Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `text` message type is supported.
+Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
 
 ### Kafka
 

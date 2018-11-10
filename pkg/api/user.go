@@ -177,17 +177,17 @@ func UserSetUsingOrg(c *m.ReqContext) Response {
 }
 
 // GET /profile/switch-org/:id
-func ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
+func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
 	orgID := c.ParamsInt64(":id")
 
 	if !validateUsingOrg(c.UserId, orgID) {
-		NotFoundHandler(c)
+		hs.NotFoundHandler(c)
 	}
 
 	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		NotFoundHandler(c)
+		hs.NotFoundHandler(c)
 	}
 
 	c.Redirect(setting.AppSubUrl + "/")

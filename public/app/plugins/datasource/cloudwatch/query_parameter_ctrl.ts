@@ -1,4 +1,5 @@
 import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 
 export class CloudWatchQueryParameter {
@@ -239,5 +240,5 @@ export class CloudWatchQueryParameterCtrl {
   }
 }
 
-angular.module('grafana.controllers').directive('cloudwatchQueryParameter', CloudWatchQueryParameter);
-angular.module('grafana.controllers').controller('CloudWatchQueryParameterCtrl', CloudWatchQueryParameterCtrl);
+coreModule.directive('cloudwatchQueryParameter', CloudWatchQueryParameter);
+coreModule.controller('CloudWatchQueryParameterCtrl', CloudWatchQueryParameterCtrl);
