@@ -1,0 +1,59 @@
+.toolbar {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  background: $page-header-bg;
+  box-shadow: 0 0 20px black;
+  padding: 7px 30px 7px 20px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+}
+
+.toolbar__main {
+  padding: $input-padding-y $input-padding-x;
+  font-size: $font-size-md;
+  line-height: $input-line-height;
+  color: $input-color;
+  background-color: $input-bg;
+  border: $input-border;
+  border-radius: $input-border-radius;
+  display: flex;
+  align-items: center;
+
+  .fa {
+    margin-left: 20px;
+    display: inline-block;
+    position: relative;
+  }
+}
+
+.toolbar__main-image {
+  margin-right: 10px;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.toolbar-subview {
+  position: relative;
+  padding: 20px 20px;
+  background-color: $empty-list-cta-bg;
+  top: -45px;
+  margin: 0 30px 20px 0px;
+}
+
+.toolbar-subview__close {
+  background: transparent;
+  padding: 4px 8px 4px 9px;
+  border: none;
+  position: absolute;
+  right: 15px;
+  top: 20px;
+  font-size: $font-size-md;
+
+  &:hover {
+    color: $text-color-strong;
+  }
+}

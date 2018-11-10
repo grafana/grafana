@@ -1,16 +1,16 @@
 import React, { PureComponent } from 'react';
 
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
+import { PanelPlugin } from 'app/types/plugins';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  plugin: PluginModel;
+  plugin: PanelPlugin;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 

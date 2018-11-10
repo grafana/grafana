@@ -28,17 +28,9 @@
 }
 
 .panel-in-fullscreen {
-  // .scroll-canvas--dashboard {
-  //   height: 100%;
-  // }
-
   .sidemenu {
     display: none;
   }
-
-  // .main-view {
-  //   background: unset;
-  // }
 
   .dashboard-container {
     padding: 0;
@@ -53,11 +45,49 @@
   }
 }
 
-.viz-picker {
-  margin-bottom: $spacer;
+.panel-editor-resizer {
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  top: -23px;
+  text-align: center;
+  border-bottom: 2px dashed transparent;
+
+  &:hover {
+    transition: border-color 0.2s ease-in 0.4s;
+    transition-delay: 0.2s;
+    border-color: $text-color-faint;
+  }
 }
 
-.viz-picker__items {
+.panel-editor-resizer__handle {
+  display: inline-block;
+  width: 180px;
+  position: relative;
+  border-radius: 2px;
+  height: 10px;
+  cursor: grabbing;
+  background: $dark-4;
+  top: -8px;
+
+  &:hover {
+    transition: background 0.2s ease-in 0.4s;
+    transition-delay: 0.2s;
+    background: $blue-dark;
+    .panel-editor-resizer__handle-dots {
+      transition: opacity 0.2s ease-in;
+      opacity: 0;
+    }
+  }
+}
+
+.panel-editor-resizer__handle-dots {
+  border-top: 2px dashed $text-color-faint;
+  position: relative;
+  top: 4px;
+}
+
+.viz-picker {
   display: flex;
   flex-wrap: wrap;
   margin-bottom: 13px;
@@ -104,108 +134,6 @@
   height: 55px;
 }
 
-.panel-editor-resizer {
-  position: absolute;
-  height: 2px;
-  width: 100%;
-  top: -23px;
-  text-align: center;
-  border-bottom: 2px dashed transparent;
-
-  &:hover {
-    transition: border-color 0.2s ease-in 0.4s;
-    transition-delay: 0.2s;
-    border-color: $text-color-faint;
-  }
-}
-
-.panel-editor-resizer__handle {
-  display: inline-block;
-  width: 180px;
-  position: relative;
-  border-radius: 2px;
-  height: 10px;
-  cursor: grabbing;
-  background: $dark-4;
-  top: -8px;
-
-  &:hover {
-    transition: background 0.2s ease-in 0.4s;
-    transition-delay: 0.2s;
-    background: $blue-dark;
-    .panel-editor-resizer__handle-dots {
-      transition: opacity 0.2s ease-in;
-      opacity: 0;
-    }
-  }
-}
-
-.panel-editor-resizer__handle-dots {
-  border-top: 2px dashed $text-color-faint;
-  position: relative;
-  top: 4px;
-}
-
-.panel-editor {
-  height: calc(100% - 10px);
-}
-
-.form-option-box {
-  margin-bottom: 20px;
-}
-
-.form-option-box__header {
-  border-bottom: 2px solid $blue-dark;
-  padding: 5px 0px;
-  font-size: $font-size-lg;
-  margin-bottom: 20px;
-}
-
-.edit-section {
-  position: relative;
-}
-
-.edit-section__header {
-  display: flex;
-  align-content: center;
-  align-items: center;
-  background: $page-header-bg;
-  box-shadow: 0 0 20px black;
-  padding: 7px 30px 7px 20px;
-  cursor: pointer;
-  position: relative;
-  z-index: 1;
-}
-
-.edit-section__selected {
-  padding: $input-padding-y $input-padding-x;
-  font-size: $font-size-md;
-  line-height: $input-line-height;
-  color: $input-color;
-  background-color: $input-bg;
-  border: $input-border;
-  border-radius: $input-border-radius;
-  display: flex;
-  align-items: center;
-  .fa {
-    margin-left: 20px;
-    display: inline-block;
-    position: relative;
-  }
-}
-
-.edit-section__title {
-  font-size: $font-size-lg;
-  padding-right: 20px;
-  width: 150px;
-}
-
-.edit-section__selected-image {
-  margin-right: 10px;
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-}
 
 .panel-editor-tabs {
   position: relative;
@@ -213,6 +141,7 @@
   box-shadow: $page-header-shadow;
   border-bottom: 1px solid $page-header-border-color;
   padding: 0 $dashboard-padding;
+
   @include clearfix();
 
   .active.gf-tabs-link {
@@ -232,28 +161,6 @@
   i {
     font-size: 120%;
   }
-
-  &:hover {
-    color: $text-color-strong;
-  }
-}
-
-.editor-toolbar-view {
-  position: relative;
-  padding: 20px 20px;
-  background-color: $empty-list-cta-bg;
-  top: -45px;
-  margin: 0 30px 20px 0px;
-}
-
-.editor-toolbar-view__close {
-  background: transparent;
-  padding: 4px 8px 4px 9px;
-  border: none;
-  position: absolute;
-  right: 15px;
-  top: 20px;
-  font-size: $font-size-md;
 
   &:hover {
     color: $text-color-strong;
@@ -299,4 +206,15 @@
 
 .ds-picker-list__img {
   width: 30px;
+}
+
+.form-option-box {
+  margin-bottom: 20px;
+}
+
+.form-option-box__header {
+  border-bottom: 2px solid $blue-dark;
+  padding: 5px 0px;
+  font-size: $font-size-lg;
+  margin-bottom: 20px;
 }

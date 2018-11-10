@@ -85,7 +85,7 @@ export class VizTypePicker extends PureComponent<Props, State> {
           <div className="gf-form--grow" />
         </div>
 
-        <div className="viz-picker__items">{pluginList.map(this.renderVizPlugin)}</div>
+        <div className="viz-picker">{pluginList.map(this.renderVizPlugin)}</div>
       </>
     );
   }

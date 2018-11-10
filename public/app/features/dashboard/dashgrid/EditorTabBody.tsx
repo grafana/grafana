@@ -40,9 +40,9 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderMainSelection(view: EditorToolBarView) {
     return (
-      <div className="edit-section__selected" onClick={() => this.onToggleToolBarView(view)} key={view.title}>
-        <img className="edit-section__selected-image" src={view.imgSrc} />
-        <div className="edit-section__selected-name">{view.title}</div>
+      <div className="toolbar__main" onClick={() => this.onToggleToolBarView(view)} key={view.title}>
+        <img className="toolbar__main-image" src={view.imgSrc} />
+        <div className="toolbar__main-name">{view.title}</div>
         <i className="fa fa-caret-down" />
       </div>
     );
@@ -60,8 +60,8 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderOpenView(view: EditorToolBarView) {
     return (
-      <div className="editor-toolbar-view">
-        <button className="editor-toolbar-view__close" onClick={this.onCloseOpenView}>
+      <div className="toolbar-subview">
+        <button className="toolbar-subview__close" onClick={this.onCloseOpenView}>
           <i className="fa fa-chevron-up" />
         </button>
         {view.render()}
@@ -75,12 +75,10 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className="edit-section">
-          <div className="edit-section__header">
-            {this.renderMainSelection(main)}
-            <div className="gf-form--grow" />
-            {toolbarItems.map(item => this.renderButton(item))}
-          </div>
+        <div className="toolbar">
+          {this.renderMainSelection(main)}
+          <div className="gf-form--grow" />
+          {toolbarItems.map(item => this.renderButton(item))}
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar>
