@@ -5,7 +5,6 @@
   background: $page-header-bg;
   box-shadow: 0 0 20px black;
   padding: 7px 30px 7px 20px;
-  cursor: pointer;
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
@@ -21,6 +20,7 @@
   border-radius: $input-border-radius;
   display: flex;
   align-items: center;
+  cursor: pointer;
 
   .fa {
     margin-left: 20px;

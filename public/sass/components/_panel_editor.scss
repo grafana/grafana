@@ -134,7 +134,6 @@
   height: 55px;
 }
 
-
 .panel-editor-tabs {
   position: relative;
   z-index: 2;
@@ -213,8 +212,8 @@
 }
 
 .form-option-box__header {
-  border-bottom: 2px solid $blue-dark;
+  border-bottom: 2px solid $dark-4;
   padding: 5px 0px;
-  font-size: $font-size-lg;
+  font-size: $font-size-md;
   margin-bottom: 20px;
 }
