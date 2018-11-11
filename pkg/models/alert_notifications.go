@@ -29,20 +29,20 @@ type AlertNotification struct {
 	Type                  string           `json:"type"`
 	SendReminder          bool             `json:"sendReminder"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             time.Duration    `json:"frequency"`
 	IsDefault             bool             `json:"isDefault"`
+	Frequency             time.Duration    `json:"frequency"`
 	Settings              *simplejson.Json `json:"settings"`
 	Created               time.Time        `json:"created"`
 	Updated               time.Time        `json:"updated"`
 }
 
 type CreateAlertNotificationCommand struct {
-	Name                  string           `json:"name"  binding:"Required"`
-	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
 	IsDefault             bool             `json:"isDefault"`
+	Name                  string           `json:"name"  binding:"Required"`
+	Type                  string           `json:"type"  binding:"Required"`
+	Frequency             string           `json:"frequency"`
 	Settings              *simplejson.Json `json:"settings"`
 
 	OrgId  int64 `json:"-"`
@@ -51,12 +51,12 @@ type CreateAlertNotificationCommand struct {
 
 type UpdateAlertNotificationCommand struct {
 	Id                    int64            `json:"id"  binding:"Required"`
-	Name                  string           `json:"name"  binding:"Required"`
-	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Frequency             string           `json:"frequency"`
 	IsDefault             bool             `json:"isDefault"`
+	Name                  string           `json:"name"  binding:"Required"`
+	Type                  string           `json:"type"  binding:"Required"`
+	Frequency             string           `json:"frequency"`
 	Settings              *simplejson.Json `json:"settings"  binding:"Required"`
 
 	OrgId  int64 `json:"-"`

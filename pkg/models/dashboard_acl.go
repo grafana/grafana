@@ -53,11 +53,13 @@ type DashboardAclInfoDTO struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
+	IsFolder       bool           `json:"isFolder"`
+	Inherited      bool           `json:"inherited"`
 	UserId         int64          `json:"userId"`
+	TeamId         int64          `json:"teamId"`
 	UserLogin      string         `json:"userLogin"`
 	UserEmail      string         `json:"userEmail"`
 	UserAvatarUrl  string         `json:"userAvatarUrl"`
-	TeamId         int64          `json:"teamId"`
 	TeamEmail      string         `json:"teamEmail"`
 	TeamAvatarUrl  string         `json:"teamAvatarUrl"`
 	Team           string         `json:"team"`
@@ -67,9 +69,7 @@ type DashboardAclInfoDTO struct {
 	Uid            string         `json:"uid"`
 	Title          string         `json:"title"`
 	Slug           string         `json:"slug"`
-	IsFolder       bool           `json:"isFolder"`
 	Url            string         `json:"url"`
-	Inherited      bool           `json:"inherited"`
 }
 
 func (dto *DashboardAclInfoDTO) hasSameRoleAs(other *DashboardAclInfoDTO) bool {

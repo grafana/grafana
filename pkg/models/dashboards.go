@@ -233,17 +233,16 @@ type ValidateDashboardBeforeSaveResult struct {
 //
 
 type SaveDashboardCommand struct {
-	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
-	UserId       int64            `json:"userId"`
-	Overwrite    bool             `json:"overwrite"`
-	Message      string           `json:"message"`
-	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
-	PluginId     string           `json:"-"`
+	UserId       int64            `json:"userId"`
+	OrgId        int64            `json:"-"`
 	FolderId     int64            `json:"folderId"`
+	Overwrite    bool             `json:"overwrite"`
 	IsFolder     bool             `json:"isFolder"`
-
-	UpdatedAt time.Time
+	Message      string           `json:"message"`
+	PluginId     string           `json:"-"`
+	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
+	UpdatedAt    time.Time
 
 	Result *Dashboard
 }

@@ -18,7 +18,10 @@ func (p Password) IsWeak() bool {
 
 type User struct {
 	Id            int64
+	OrgId         int64
 	Version       int
+	EmailVerified bool
+	IsAdmin       bool
 	Email         string
 	Name          string
 	Login         string
@@ -26,12 +29,8 @@ type User struct {
 	Salt          string
 	Rands         string
 	Company       string
-	EmailVerified bool
 	Theme         string
 	HelpFlags1    HelpFlags1
-
-	IsAdmin bool
-	OrgId   int64
 
 	Created    time.Time
 	Updated    time.Time
