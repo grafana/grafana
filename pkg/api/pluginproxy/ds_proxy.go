@@ -195,6 +195,10 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		req.Header.Del("X-Forwarded-Proto")
 		req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
+		// Clear Origin and Referer to avoir CORS issues
+		req.Header.Del("Origin")
+		req.Header.Del("Referer")
+
 		// set X-Forwarded-For header
 		if req.RemoteAddr != "" {
 			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
