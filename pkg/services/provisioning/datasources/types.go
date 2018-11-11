@@ -25,6 +25,10 @@ type DataSourceFromConfig struct {
 	OrgId   int64
 	Version int
 
+	BasicAuth         bool
+	WithCredentials   bool
+	IsDefault         bool
+	Editable          bool
 	Name              string
 	Type              string
 	Access            string
@@ -32,14 +36,10 @@ type DataSourceFromConfig struct {
 	Password          string
 	User              string
 	Database          string
-	BasicAuth         bool
 	BasicAuthUser     string
 	BasicAuthPassword string
-	WithCredentials   bool
-	IsDefault         bool
 	JsonData          map[string]interface{}
 	SecureJsonData    map[string]string
-	Editable          bool
 }
 
 type DatasourcesAsConfigV0 struct {
@@ -69,6 +69,10 @@ type DeleteDatasourceConfigV1 struct {
 type DataSourceFromConfigV0 struct {
 	OrgId             int64                  `json:"org_id" yaml:"org_id"`
 	Version           int                    `json:"version" yaml:"version"`
+	BasicAuth         bool                   `json:"basic_auth" yaml:"basic_auth"`
+	WithCredentials   bool                   `json:"with_credentials" yaml:"with_credentials"`
+	IsDefault         bool                   `json:"is_default" yaml:"is_default"`
+	Editable          bool                   `json:"editable" yaml:"editable"`
 	Name              string                 `json:"name" yaml:"name"`
 	Type              string                 `json:"type" yaml:"type"`
 	Access            string                 `json:"access" yaml:"access"`
@@ -76,19 +80,19 @@ type DataSourceFromConfigV0 struct {
 	Password          string                 `json:"password" yaml:"password"`
 	User              string                 `json:"user" yaml:"user"`
 	Database          string                 `json:"database" yaml:"database"`
-	BasicAuth         bool                   `json:"basic_auth" yaml:"basic_auth"`
 	BasicAuthUser     string                 `json:"basic_auth_user" yaml:"basic_auth_user"`
 	BasicAuthPassword string                 `json:"basic_auth_password" yaml:"basic_auth_password"`
-	WithCredentials   bool                   `json:"with_credentials" yaml:"with_credentials"`
-	IsDefault         bool                   `json:"is_default" yaml:"is_default"`
 	JsonData          map[string]interface{} `json:"json_data" yaml:"json_data"`
 	SecureJsonData    map[string]string      `json:"secure_json_data" yaml:"secure_json_data"`
-	Editable          bool                   `json:"editable" yaml:"editable"`
 }
 
 type DataSourceFromConfigV1 struct {
 	OrgId             int64                  `json:"orgId" yaml:"orgId"`
 	Version           int                    `json:"version" yaml:"version"`
+	BasicAuth         bool                   `json:"basicAuth" yaml:"basicAuth"`
+	WithCredentials   bool                   `json:"withCredentials" yaml:"withCredentials"`
+	IsDefault         bool                   `json:"isDefault" yaml:"isDefault"`
+	Editable          bool                   `json:"editable" yaml:"editable"`
 	Name              string                 `json:"name" yaml:"name"`
 	Type              string                 `json:"type" yaml:"type"`
 	Access            string                 `json:"access" yaml:"access"`
@@ -96,14 +100,10 @@ type DataSourceFromConfigV1 struct {
 	Password          string                 `json:"password" yaml:"password"`
 	User              string                 `json:"user" yaml:"user"`
 	Database          string                 `json:"database" yaml:"database"`
-	BasicAuth         bool                   `json:"basicAuth" yaml:"basicAuth"`
 	BasicAuthUser     string                 `json:"basicAuthUser" yaml:"basicAuthUser"`
 	BasicAuthPassword string                 `json:"basicAuthPassword" yaml:"basicAuthPassword"`
-	WithCredentials   bool                   `json:"withCredentials" yaml:"withCredentials"`
-	IsDefault         bool                   `json:"isDefault" yaml:"isDefault"`
 	JsonData          map[string]interface{} `json:"jsonData" yaml:"jsonData"`
 	SecureJsonData    map[string]string      `json:"secureJsonData" yaml:"secureJsonData"`
-	Editable          bool                   `json:"editable" yaml:"editable"`
 }
 
 func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *DatasourcesAsConfig {

@@ -10,25 +10,25 @@ import (
 )
 
 type DashboardsAsConfig struct {
+	Editable              bool
+	DisableDeletion       bool
+	OrgId                 int64
+	UpdateIntervalSeconds int64
 	Name                  string
 	Type                  string
-	OrgId                 int64
 	Folder                string
-	Editable              bool
 	Options               map[string]interface{}
-	DisableDeletion       bool
-	UpdateIntervalSeconds int64
 }
 
 type DashboardsAsConfigV0 struct {
+	Editable              bool                   `json:"editable" yaml:"editable"`
+	DisableDeletion       bool                   `json:"disableDeletion" yaml:"disableDeletion"`
+	OrgId                 int64                  `json:"org_id" yaml:"org_id"`
+	UpdateIntervalSeconds int64                  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
 	Name                  string                 `json:"name" yaml:"name"`
 	Type                  string                 `json:"type" yaml:"type"`
-	OrgId                 int64                  `json:"org_id" yaml:"org_id"`
 	Folder                string                 `json:"folder" yaml:"folder"`
-	Editable              bool                   `json:"editable" yaml:"editable"`
 	Options               map[string]interface{} `json:"options" yaml:"options"`
-	DisableDeletion       bool                   `json:"disableDeletion" yaml:"disableDeletion"`
-	UpdateIntervalSeconds int64                  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
 }
 
 type ConfigVersion struct {
@@ -40,14 +40,14 @@ type DashboardAsConfigV1 struct {
 }
 
 type DashboardProviderConfigs struct {
+	Editable              bool                   `json:"editable" yaml:"editable"`
+	DisableDeletion       bool                   `json:"disableDeletion" yaml:"disableDeletion"`
+	OrgId                 int64                  `json:"orgId" yaml:"orgId"`
+	UpdateIntervalSeconds int64                  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
 	Name                  string                 `json:"name" yaml:"name"`
 	Type                  string                 `json:"type" yaml:"type"`
-	OrgId                 int64                  `json:"orgId" yaml:"orgId"`
 	Folder                string                 `json:"folder" yaml:"folder"`
-	Editable              bool                   `json:"editable" yaml:"editable"`
 	Options               map[string]interface{} `json:"options" yaml:"options"`
-	DisableDeletion       bool                   `json:"disableDeletion" yaml:"disableDeletion"`
-	UpdateIntervalSeconds int64                  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
 }
 
 func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardDTO, error) {
