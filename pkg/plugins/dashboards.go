@@ -12,7 +12,6 @@ import (
 type PluginDashboardInfoDTO struct {
 	PluginId         string `json:"pluginId"`
 	Title            string `json:"title"`
-	Imported         bool   `json:"imported"`
 	ImportedUri      string `json:"importedUri"`
 	ImportedUrl      string `json:"importedUrl"`
 	Slug             string `json:"slug"`
@@ -22,6 +21,7 @@ type PluginDashboardInfoDTO struct {
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`
 	Path             string `json:"path"`
+	Imported         bool   `json:"imported"`
 	Removed          bool   `json:"removed"`
 }
 

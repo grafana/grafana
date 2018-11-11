@@ -38,15 +38,14 @@ type PluginBase struct {
 	Includes     []*PluginInclude   `json:"includes"`
 	Module       string             `json:"module"`
 	BaseUrl      string             `json:"baseUrl"`
-	HideFromList bool               `json:"hideFromList,omitempty"`
 	State        string             `json:"state,omitempty"`
 
-	IncludedInAppId string `json:"-"`
-	PluginDir       string `json:"-"`
-	DefaultNavUrl   string `json:"-"`
-	IsCorePlugin    bool   `json:"-"`
-
+	IncludedInAppId     string `json:"-"`
+	PluginDir           string `json:"-"`
+	DefaultNavUrl       string `json:"-"`
 	GrafanaNetVersion   string `json:"-"`
+	IsCorePlugin        bool   `json:"-"`
+	HideFromList        bool   `json:"hideFromList,omitempty"`
 	GrafanaNetHasUpdate bool   `json:"-"`
 }
 

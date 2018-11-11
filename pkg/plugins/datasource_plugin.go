@@ -25,14 +25,13 @@ type DataSourcePlugin struct {
 	Alerting     bool              `json:"alerting"`
 	Explore      bool              `json:"explore"`
 	Logs         bool              `json:"logs"`
-	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
 	BuiltIn      bool              `json:"builtIn,omitempty"`
 	Mixed        bool              `json:"mixed,omitempty"`
 	HasQueryHelp bool              `json:"hasQueryHelp,omitempty"`
+	Backend      bool              `json:"backend,omitempty"`
+	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
 	Routes       []*AppPluginRoute `json:"routes"`
-
-	Backend    bool   `json:"backend,omitempty"`
-	Executable string `json:"executable,omitempty"`
+	Executable   string            `json:"executable,omitempty"`
 
 	log    log.Logger
 	client *plugin.Client
