@@ -1,18 +1,17 @@
 package setting
 
 type SmtpSettings struct {
-	Enabled      bool
-	Host         string
-	User         string
-	Password     string
-	CertFile     string
-	KeyFile      string
-	FromAddress  string
-	FromName     string
-	EhloIdentity string
-	SkipVerify   bool
-
+	Enabled                  bool
+	SkipVerify               bool
 	SendWelcomeEmailOnSignUp bool
+	Host                     string
+	User                     string
+	Password                 string
+	CertFile                 string
+	KeyFile                  string
+	FromAddress              string
+	FromName                 string
+	EhloIdentity             string
 	TemplatesPattern         string
 }
 

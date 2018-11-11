@@ -205,18 +205,17 @@ type Cfg struct {
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir             string
-	PhantomDir            string
-	RendererUrl           string
-	RendererCallbackUrl   string
-	RendererLimit         int
-	RendererLimitAlerting int
-
+	ImagesDir                        string
+	PhantomDir                       string
+	RendererUrl                      string
+	RendererCallbackUrl              string
+	EnterpriseLicensePath            string
+	RendererLimit                    int
+	RendererLimitAlerting            int
 	DisableBruteForceLoginProtection bool
-	TempDataLifetime                 time.Duration
 	MetricsEndpointEnabled           bool
 	EnableAlphaPanels                bool
-	EnterpriseLicensePath            string
+	TempDataLifetime                 time.Duration
 }
 
 type CommandLineArgs struct {
