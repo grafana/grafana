@@ -6,11 +6,12 @@ import (
 )
 
 type PluginSetting struct {
+	Enabled       bool                        `json:"enabled"`
+	Pinned        bool                        `json:"pinned"`
+	HasUpdate     bool                        `json:"hasUpdate"`
 	Name          string                      `json:"name"`
 	Type          string                      `json:"type"`
 	Id            string                      `json:"id"`
-	Enabled       bool                        `json:"enabled"`
-	Pinned        bool                        `json:"pinned"`
 	Module        string                      `json:"module"`
 	BaseUrl       string                      `json:"baseUrl"`
 	Info          *plugins.PluginInfo         `json:"info"`
@@ -20,19 +21,18 @@ type PluginSetting struct {
 	DefaultNavUrl string                      `json:"defaultNavUrl"`
 
 	LatestVersion string `json:"latestVersion"`
-	HasUpdate     bool   `json:"hasUpdate"`
 	State         string `json:"state"`
 }
 
 type PluginListItem struct {
+	Enabled       bool                `json:"enabled"`
+	Pinned        bool                `json:"pinned"`
+	HasUpdate     bool                `json:"hasUpdate"`
 	Name          string              `json:"name"`
 	Type          string              `json:"type"`
 	Id            string              `json:"id"`
-	Enabled       bool                `json:"enabled"`
-	Pinned        bool                `json:"pinned"`
 	Info          *plugins.PluginInfo `json:"info"`
 	LatestVersion string              `json:"latestVersion"`
-	HasUpdate     bool                `json:"hasUpdate"`
 	DefaultNavUrl string              `json:"defaultNavUrl"`
 	State         string              `json:"state"`
 }

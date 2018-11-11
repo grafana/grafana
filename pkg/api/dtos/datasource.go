@@ -8,6 +8,12 @@ import (
 )
 
 type DataSource struct {
+	BasicAuth         bool             `json:"basicAuth"`
+	WithCredentials   bool             `json:"withCredentials"`
+	IsDefault         bool             `json:"isDefault"`
+	ReadOnly          bool             `json:"readOnly"`
+	SecureJsonFields  map[string]bool  `json:"secureJsonFields"`
+	Version           int              `json:"version"`
 	Id                int64            `json:"id"`
 	OrgId             int64            `json:"orgId"`
 	Name              string           `json:"name"`
@@ -18,18 +24,15 @@ type DataSource struct {
 	Password          string           `json:"password"`
 	User              string           `json:"user"`
 	Database          string           `json:"database"`
-	BasicAuth         bool             `json:"basicAuth"`
 	BasicAuthUser     string           `json:"basicAuthUser"`
 	BasicAuthPassword string           `json:"basicAuthPassword"`
-	WithCredentials   bool             `json:"withCredentials"`
-	IsDefault         bool             `json:"isDefault"`
 	JsonData          *simplejson.Json `json:"jsonData,omitempty"`
-	SecureJsonFields  map[string]bool  `json:"secureJsonFields"`
-	Version           int              `json:"version"`
-	ReadOnly          bool             `json:"readOnly"`
 }
 
 type DataSourceListItemDTO struct {
+	BasicAuth   bool             `json:"basicAuth"`
+	IsDefault   bool             `json:"isDefault"`
+	ReadOnly    bool             `json:"readOnly"`
 	Id          int64            `json:"id"`
 	OrgId       int64            `json:"orgId"`
 	Name        string           `json:"name"`
@@ -40,10 +43,7 @@ type DataSourceListItemDTO struct {
 	Password    string           `json:"password"`
 	User        string           `json:"user"`
 	Database    string           `json:"database"`
-	BasicAuth   bool             `json:"basicAuth"`
-	IsDefault   bool             `json:"isDefault"`
 	JsonData    *simplejson.Json `json:"jsonData,omitempty"`
-	ReadOnly    bool             `json:"readOnly"`
 }
 
 type DataSourceList []DataSourceListItemDTO
