@@ -33,9 +33,9 @@ type FileLogWriter struct {
 	maxsize_cursize int
 
 	// Rotate daily
-	Daily          bool
-	Maxdays        int64
 	daily_opendate int
+	Maxdays        int64
+	Daily          bool
 
 	Rotate    bool
 	startLock sync.Mutex
