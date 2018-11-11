@@ -2,9 +2,9 @@
   display: flex;
   align-content: center;
   align-items: center;
-  background: $page-header-bg;
-  box-shadow: 0 0 20px black;
-  padding: 7px 30px 7px 20px;
+  background: $toolbar-bg;
+  box-shadow: $toolbar-shadow;
+  padding: 7px 20px 7px 20px;
   position: relative;
   z-index: 1;
   flex: 0 0 auto;

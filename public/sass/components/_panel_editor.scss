@@ -67,13 +67,13 @@
   border-radius: 2px;
   height: 10px;
   cursor: grabbing;
-  background: $dark-4;
+  background: $input-label-bg;
   top: -8px;
 
   &:hover {
     transition: background 0.2s ease-in 0.4s;
     transition-delay: 0.2s;
-    background: $blue-dark;
+    background: linear-gradient(90deg, $orange, $red);
     .panel-editor-resizer__handle-dots {
       transition: opacity 0.2s ease-in;
       opacity: 0;
@@ -144,26 +144,15 @@
   @include clearfix();
 
   .active.gf-tabs-link {
-    background: $input-label-bg;
+    background: $toolbar-tab-bg;
   }
 }
 
 .panel-editor-tabs__close {
+  padding: 5px 9px;
+  border-radius: $border-radius;
   float: right;
-  padding: 0;
-  margin: 0;
-  background-color: transparent;
-  border: none;
-  padding: $tabs-padding;
-  color: $text-color;
-
-  i {
-    font-size: 120%;
-  }
-
-  &:hover {
-    color: $text-color-strong;
-  }
+  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
 }
 
 .ds-picker-list {

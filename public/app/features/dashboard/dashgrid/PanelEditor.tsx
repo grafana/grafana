@@ -77,7 +77,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
           </ul>
 
           <button className="panel-editor-tabs__close" onClick={this.onClose}>
-            <i className="fa fa-remove" />
+            <i className="fa fa-reply" />
           </button>
         </div>
 
