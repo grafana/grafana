@@ -10,13 +10,13 @@ import (
 type SearchBuilder struct {
 	SqlBuilder
 	tags                []string
+	whereTitle          string
 	isStarred           bool
+	whereTypeFolder     bool
+	whereTypeDash       bool
 	limit               int
 	signedInUser        *m.SignedInUser
 	whereDashboardIdsIn []int64
-	whereTitle          string
-	whereTypeFolder     bool
-	whereTypeDash       bool
 	whereFolderIds      []int64
 	permission          m.PermissionType
 }

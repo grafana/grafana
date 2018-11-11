@@ -14,6 +14,7 @@ import (
 type EvalContext struct {
 	Firing         bool
 	IsTestRun      bool
+	NoDataFound    bool
 	EvalMatches    []*EvalMatch
 	Logs           []*ResultLogEntry
 	Error          error
@@ -27,7 +28,6 @@ type EvalContext struct {
 
 	ImagePublicUrl  string
 	ImageOnDiskPath string
-	NoDataFound     bool
 	PrevAlertState  m.AlertStateType
 
 	Ctx context.Context
