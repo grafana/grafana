@@ -1,6 +1,6 @@
 import { getTeam, getTeamMembers, getTeams } from './selectors';
 import { getMockTeam, getMockTeamMembers, getMultipleMockTeams } from '../__mocks__/teamMocks';
-import { Team, TeamGroup, TeamsState, TeamState } from '../../../types';
+import { Team, TeamGroup, TeamsState, TeamState, OrganizationPreferences } from '../../../types';
 
 describe('Teams selectors', () => {
   describe('Get teams', () => {
@@ -29,7 +29,13 @@ describe('Team selectors', () => {
     const mockTeam = getMockTeam();
 
     it('should return team if matching with location team', () => {
-      const mockState: TeamState = { team: mockTeam, searchMemberQuery: '', members: [], groups: [] };
+      const mockState: TeamState = {
+        team: mockTeam,
+        searchMemberQuery: '',
+        members: [],
+        groups: [],
+        preferences: {} as OrganizationPreferences,
+      };
 
       const team = getTeam(mockState, '1');
 
@@ -46,6 +52,7 @@ describe('Team selectors', () => {
         searchMemberQuery: '',
         members: mockTeamMembers,
         groups: [] as TeamGroup[],
+        preferences: {} as OrganizationPreferences,
       };
 
       const members = getTeamMembers(mockState);
