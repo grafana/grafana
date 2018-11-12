@@ -71,6 +71,10 @@ export class PanelModel {
     this.render();
   }
 
+  updateTitle(title: string) {
+    this.title = title;
+  }
+
   private getOptionsKey() {
     return this.type + 'Options';
   }

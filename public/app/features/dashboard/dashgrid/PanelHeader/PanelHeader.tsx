@@ -30,9 +30,14 @@ export class PanelHeader extends PureComponent<Props, State> {
 
   onToggleEditTitle = () => {
     if (this.props.isEditing) {
-      this.setState(prevState => ({
-        titleEditable: !prevState.titleEditable,
-      }));
+      this.setState(
+        prevState => ({
+          titleEditable: !prevState.titleEditable,
+        }),
+        () => {
+          this.props.panel.updateTitle(this.state.title);
+        }
+      );
     }
   };
 
