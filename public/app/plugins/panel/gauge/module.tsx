@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { NullValueMode, PanelProps } from '../../../types';
 import Gauge from 'app/viz/Gauge';
+import { NullValueMode, PanelProps } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 
 export interface Options {}
