@@ -7,12 +7,14 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
-import { NavModel, Team } from 'app/types';
-import { loadTeam } from './state/actions';
+import TeamPreferences from './TeamPreferences';
+import { NavModel, Team, OrganizationPreferences } from 'app/types';
+import { loadTeam, loadTeamPreferences } from './state/actions';
 import { getTeam } from './state/selectors';
 import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId, getRouteParamsPage } from '../../core/selectors/location';
+import { loadStarredDashboards } from '../../core/actions/user';
 
 export interface Props {
   team: Team;
@@ -20,6 +22,9 @@ export interface Props {
   teamId: number;
   pageName: string;
   navModel: NavModel;
+  preferences: OrganizationPreferences;
+  loadStarredDashboards: typeof loadStarredDashboards;
+  loadTeamPreferences: typeof loadTeamPreferences;
 }
 
 interface State {
@@ -41,14 +46,16 @@ export class TeamPages extends PureComponent<Props, State> {
     };
   }
 
-  componentDidMount() {
-    this.fetchTeam();
+  async componentDidMount() {
+    await this.props.loadStarredDashboards();
+    await this.fetchTeam();
+    await this.props.loadTeamPreferences();
   }
 
   async fetchTeam() {
     const { loadTeam, teamId } = this.props;
 
-    await loadTeam(teamId);
+    return await loadTeam(teamId);
   }
 
   getCurrentPage() {
@@ -66,7 +73,12 @@ export class TeamPages extends PureComponent<Props, State> {
         return <TeamMembers syncEnabled={isSyncEnabled} />;
 
       case PageTypes.Settings:
-        return <TeamSettings />;
+        return (
+          <div>
+            <TeamSettings />
+            <TeamPreferences />
+          </div>
+        );
 
       case PageTypes.GroupSync:
         return isSyncEnabled && <TeamGroupSync />;
@@ -97,11 +109,14 @@ function mapStateToProps(state) {
     teamId: teamId,
     pageName: pageName,
     team: getTeam(state.team, teamId),
+    preferences: state.preferences,
   };
 }
 
 const mapDispatchToProps = {
   loadTeam,
+  loadStarredDashboards,
+  loadTeamPreferences,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamPages));

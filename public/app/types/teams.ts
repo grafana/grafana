@@ -1,3 +1,5 @@
+import { OrganizationPreferences } from './organization';
+
 export interface Team {
   id: number;
   name: string;
@@ -31,4 +33,5 @@ export interface TeamState {
   members: TeamMember[];
   groups: TeamGroup[];
   searchMemberQuery: string;
+  preferences: OrganizationPreferences;
 }

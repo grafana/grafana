@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { TeamPages, Props } from './TeamPages';
-import { NavModel, Team } from '../../types';
+import { NavModel, Team, OrganizationPreferences } from '../../types';
 import { getMockTeam } from './__mocks__/teamMocks';
 
 jest.mock('app/core/config', () => ({
@@ -15,6 +15,9 @@ const setup = (propOverrides?: object) => {
     loadTeam: jest.fn(),
     pageName: 'members',
     team: {} as Team,
+    loadStarredDashboards: jest.fn(),
+    loadTeamPreferences: jest.fn(),
+    preferences: {} as OrganizationPreferences,
   };
 
   Object.assign(props, propOverrides);
@@ -43,10 +46,15 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render settings page', () => {
+  it('should render settings and preferences page', () => {
     const { wrapper } = setup({
       team: getMockTeam(),
       pageName: 'settings',
+      preferences: {
+        homeDashboardId: 1,
+        theme: 'Default',
+        timezone: 'Default',
+      },
     });
 
     expect(wrapper).toMatchSnapshot();
