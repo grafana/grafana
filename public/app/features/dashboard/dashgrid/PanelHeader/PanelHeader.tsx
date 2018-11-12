@@ -40,11 +40,11 @@ export class PanelHeader extends PureComponent<Props> {
             </span>
 
             <PanelHeaderMenu panel={panel} dashboard={dashboard} />
-            {timeInfo ? (
+            {timeInfo && (
               <span className="panel-time-info">
                 <i className="fa fa-clock-o" /> {timeInfo}
               </span>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
