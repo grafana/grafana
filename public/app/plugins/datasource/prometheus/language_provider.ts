@@ -78,9 +78,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   // Keep this DOM-free for testing
-  provideCompletionItems({ prefix, wrapperClasses, text }: TypeaheadInput, context?: any): TypeaheadOutput {
+  provideCompletionItems({ prefix, wrapperClasses, text, value }: TypeaheadInput, context?: any): TypeaheadOutput {
     // Syntax spans have 3 classes by default. More indicate a recognized token
     const tokenRecognized = wrapperClasses.length > 3;
+
+    // Local text properties
+    const empty = value.document.text.length === 0;
+    const selectedLines = value.document.getTextsAtRangeAsArray(value.selection);
+    const currentLine = selectedLines.length === 1 ? selectedLines[0] : null;
+    const nextCharacter = currentLine ? currentLine.text[value.selection.anchorOffset] : null;
+
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-range')) {
       // Suggestions for metric[|]
@@ -90,13 +97,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return this.getLabelCompletionItems.apply(this, arguments);
     } else if (_.includes(wrapperClasses, 'context-aggregation')) {
       return this.getAggregationCompletionItems.apply(this, arguments);
+    } else if (empty) {
+      return this.getEmptyCompletionItems(context || {});
     } else if (
       // Show default suggestions in a couple of scenarios
       (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
-      (prefix === '' && !text.match(/^[\]})\s]+$/)) || // Empty prefix, but not following a closing brace
+      // Empty prefix, but not directly following a closing brace (e.g., `]|`), or not succeeded by anything except a closing parens, e.g., `sum(|)`
+      (prefix === '' && !text.match(/^[\]})\s]+$/) && (!nextCharacter || nextCharacter === ')')) ||
       text.match(/[+\-*/^%]/) // Anything after binary operator
     ) {
-      return this.getEmptyCompletionItems(context || {});
+      return this.getTermCompletionItems();
     }
 
     return {
@@ -106,8 +116,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getEmptyCompletionItems(context: any): TypeaheadOutput {
     const { history } = context;
-    const { metrics } = this;
-    const suggestions: CompletionItemGroup[] = [];
+    let suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
@@ -126,13 +135,23 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       });
     }
 
+    const termCompletionItems = this.getTermCompletionItems();
+    suggestions = [...suggestions, ...termCompletionItems.suggestions];
+
+    return { suggestions };
+  }
+
+  getTermCompletionItems(): TypeaheadOutput {
+    const { metrics } = this;
+    const suggestions: CompletionItemGroup[] = [];
+
     suggestions.push({
       prefixMatch: true,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
 
-    if (metrics) {
+    if (metrics && metrics.length > 0) {
       suggestions.push({
         label: 'Metrics',
         items: metrics.map(wrapLabel),
