@@ -149,6 +149,14 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             return { notFound: true };
           }
 
+          scope.$watch(
+            'ctrl.current',
+            () => {
+              scope.onModelChanged(scope.ctrl.current);
+            },
+            true
+          );
+
           return {
             baseUrl: dsMeta.baseUrl,
             name: 'ds-config-' + dsMeta.id,

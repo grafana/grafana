@@ -26,6 +26,7 @@ export const getMockPlugins = (amount: number): Plugin[] => {
       pinned: false,
       state: '',
       type: '',
+      module: {},
     });
   }
 
@@ -55,5 +56,6 @@ export const getMockPlugin = () => {
     pinned: false,
     state: '',
     type: '',
+    module: {},
   };
 };

@@ -4,6 +4,7 @@ import _ from 'lodash';
 
 export interface AngularComponent {
   destroy();
+  digest();
 }
 
 export class AngularLoader {
@@ -23,6 +24,9 @@ export class AngularLoader {
       destroy: () => {
         scope.$destroy();
         compiledElem.remove();
+      },
+      digest: () => {
+        scope.$digest();
       },
     };
   }

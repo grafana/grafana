@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { QueriesTab } from './QueriesTab';
 import { VizTypePicker } from './VizTypePicker';
 
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
 
 import { PanelModel } from '../panel_model';
