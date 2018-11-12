@@ -15,7 +15,7 @@ interface Props {
 class CustomScrollbar extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     customClassName: 'custom-scrollbars',
-    autoHide: false,
+    autoHide: true,
     autoHideTimeout: 200,
     autoHideDuration: 200,
     hideTracksWhenNotNeeded: false,
