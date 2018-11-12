@@ -125,6 +125,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
             component={pluginExports.PanelComponent}
             panel={this.props.panel}
             dashboard={this.props.dashboard}
+            isEditing={this.props.isEditing}
+            isFullscreen={this.props.isFullscreen}
           />
         </div>
         {this.props.panel.isEditing && (

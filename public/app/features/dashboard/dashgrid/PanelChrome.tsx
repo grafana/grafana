@@ -17,6 +17,8 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   component: ComponentClass<PanelProps>;
+  isEditing: boolean;
+  isFullscreen: boolean;
 }
 
 export interface State {
@@ -69,7 +71,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard } = this.props;
+    const { isEditing, isFullscreen, panel, dashboard } = this.props;
     const { refreshCounter, timeRange, renderCounter } = this.state;
 
     const { datasource, targets } = panel;
@@ -78,7 +80,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     console.log('panelChrome render');
     return (
       <div className="panel-container">
-        <PanelHeader panel={panel} dashboard={dashboard} />
+        <PanelHeader panel={panel} dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
         <div className="panel-content">
           <DataPanel
             datasource={datasource}
