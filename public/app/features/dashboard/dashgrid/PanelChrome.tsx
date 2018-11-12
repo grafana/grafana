@@ -67,10 +67,9 @@ export class PanelChrome extends PureComponent<Props, State> {
       return;
     }
 
-    const { timeRange } = this.state;
     const { panel } = this.props;
+    const timeRange = this.timeSrv.timeRange();
     const timeData = applyPanelTimeOverrides(panel, timeRange);
-
     const resolution = getResolution(panel);
     const interval = calculateInterval(panel, panel.datasource, timeData.timeRange, resolution);
 
