@@ -47,8 +47,8 @@ export class PanelModel {
   timeShift?: any;
   hideTimeOverride?: any;
 
-  maxDataPoints?: any;
-  interval?: any;
+  maxDataPoints?: number;
+  interval?: string;
 
   // non persisted
   fullscreen: boolean;

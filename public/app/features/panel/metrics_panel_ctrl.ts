@@ -148,19 +148,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   calculateInterval() {
-    // let intervalOverride = this.panel.interval;
-
-    // // if no panel interval check datasource
-    // if (intervalOverride) {
-    //   intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
-    // } else if (this.datasource && this.datasource.interval) {
-    //   intervalOverride = this.datasource.interval;
-    // }
-
-    // const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
-    // this.interval = res.interval;
-    // this.intervalMs = res.intervalMs;
-
     const interval = calculateIntervalUtil(this.panel, this.datasource, this.range, this.resolution);
     this.interval = interval.interval;
     this.intervalMs = this.intervalMs;
