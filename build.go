@@ -639,7 +639,7 @@ func shaFile(file string) error {
 
 func shortenBuildId(buildId string) string {
 	buildId = strings.Replace(buildId, "-", "", -1)
-	if (len(buildId) < 9) {
+	if len(buildId) < 9 {
 		return buildId
 	}
 	return buildId[0:8]

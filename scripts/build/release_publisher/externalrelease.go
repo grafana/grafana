@@ -9,8 +9,8 @@ import (
 )
 
 type releaseFromExternalContent struct {
-	getter     urlGetter
-	rawVersion string
+	getter                 urlGetter
+	rawVersion             string
 	artifactConfigurations []buildArtifact
 }
 
