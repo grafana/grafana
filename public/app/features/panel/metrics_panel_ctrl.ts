@@ -10,7 +10,6 @@ import {
   calculateInterval as calculateIntervalUtil,
   getResolution,
 } from 'app/features/dashboard/utils/panel';
-import { TimeData } from 'app/types';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -154,12 +153,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   applyPanelTimeOverrides() {
-    const timeData: TimeData = {
-      timeInfo: '',
-      timeRange: this.range,
-    };
-
-    const newTimeData = applyPanelTimeOverridesUtil(this.panel, timeData);
+    const newTimeData = applyPanelTimeOverridesUtil(this.panel, this.range);
     this.timeInfo = newTimeData.timeInfo;
     this.range = newTimeData.timeRange;
   }

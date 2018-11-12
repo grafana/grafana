@@ -18,11 +18,6 @@ export interface TimeRange {
   raw: RawTimeRange;
 }
 
-export interface TimeData {
-  timeRange: TimeRange;
-  timeInfo: string;
-}
-
 export type TimeSeriesValue = string | number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];

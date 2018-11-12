@@ -4,7 +4,6 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
-import { TimeData } from 'app/types';
 import { TimeRange } from 'app/types/series';
 
 // Utils
@@ -101,9 +100,14 @@ export const toggleLegend = (panel: PanelModel) => {
   refreshPanel(panel);
 };
 
-export const applyPanelTimeOverrides = (panel: PanelModel, timeData: TimeData): TimeData => {
-  const { timeRange } = timeData;
-  const newTimeData = { ...timeData };
+export const applyPanelTimeOverrides = (
+  panel: PanelModel,
+  timeRange: TimeRange
+): { timeInfo: string; timeRange: TimeRange } => {
+  const newTimeData = {
+    timeInfo: '',
+    timeRange: timeRange,
+  };
 
   if (panel.timeFrom) {
     const timeFromInterpolated = templateSrv.replace(panel.timeFrom, panel.scopedVars);
