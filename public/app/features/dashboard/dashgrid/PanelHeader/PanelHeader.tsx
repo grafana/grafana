@@ -30,7 +30,6 @@ export class PanelHeader extends PureComponent<Props, State> {
 
   onToggleEditTitle = () => {
     if (this.props.isEditing) {
-      console.log('toggle');
       this.setState(prevState => ({
         titleEditable: !prevState.titleEditable,
       }));
@@ -38,7 +37,6 @@ export class PanelHeader extends PureComponent<Props, State> {
   };
 
   onTitleChange = event => {
-    console.log('change');
     this.setState({
       title: event.target.value,
     });
