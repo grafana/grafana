@@ -21,7 +21,7 @@ import {
   DataQueryOptions,
 } from './series';
 import { PanelProps, PanelOptionsProps } from './panel';
-import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
+import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
 import { Organization, OrganizationPreferences, OrganizationState } from './organization';
 import {
   AppNotification,
@@ -69,6 +69,7 @@ export {
   UsersState,
   TimeRange,
   LoadingState,
+  PanelPlugin,
   PanelProps,
   PanelOptionsProps,
   TimeSeries,

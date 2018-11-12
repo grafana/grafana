@@ -81,7 +81,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
           {toolbarItems.map(item => this.renderButton(item))}
         </div>
         <div className="panel-editor__scroll">
-          <CustomScrollbar>
+          <CustomScrollbar autoHide={false}>
             <div className="panel-editor__content">
               <FadeIn in={openView !== null} duration={200}>
                 {openView && this.renderOpenView(openView)}

@@ -12,13 +12,13 @@ export interface PluginExports {
   // Panel plugin
   PanelCtrl?;
   PanelComponent?: ComponentClass<PanelProps>;
-  PanelOptionsComponent: ComponentClass<PanelOptionsProps>;
+  PanelOptionsComponent?: ComponentClass<PanelOptionsProps>;
 }
 
 export interface PanelPlugin {
   id: string;
   name: string;
-  meta: any;
+  meta: PluginMeta;
   hideFromList: boolean;
   module: string;
   baseUrl: string;
