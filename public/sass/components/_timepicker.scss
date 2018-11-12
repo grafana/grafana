@@ -20,6 +20,7 @@
   background-color: $page-bg;
   border-radius: 0 0 0 4px;
   box-shadow: $search-shadow;
+  z-index: $zindex-dropdown;
 }
 
 .gf-timepicker-absolute-section {

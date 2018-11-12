@@ -44,8 +44,8 @@ const panelTemplate = `
             </li>
           </ul>
 
-          <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-            <i class="fa fa-remove"></i>
+          <button class="panel-editor-tabs__close" ng-click="ctrl.exitFullscreen();">
+            <i class="fa fa-reply"></i>
           </button>
         </div>
 

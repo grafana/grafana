@@ -1,14 +1,17 @@
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { DashboardRow } from './DashboardRow';
-import { AddPanelPanel } from './AddPanelPanel';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { PluginExports, PanelPlugin } from 'app/types/plugins';
+
+import { AddPanelPanel } from './AddPanelPanel';
+import { DashboardRow } from './DashboardRow';
+import { PanelPlugin } from 'app/types/plugins';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from './PanelEditor';
+
+import { PanelModel } from '../panel_model';
+import { DashboardModel } from '../dashboard_model';
 
 export interface Props {
   panel: PanelModel;
@@ -18,20 +21,19 @@ export interface Props {
 }
 
 export interface State {
-  pluginExports: PluginExports;
+  plugin: PanelPlugin;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
   element: any;
   angularPanel: AngularComponent;
-  pluginInfo: any;
   specialPanels = {};
 
   constructor(props) {
     super(props);
 
     this.state = {
-      pluginExports: null,
+      plugin: null,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -64,20 +66,22 @@ export class DashboardPanel extends PureComponent<Props, State> {
       return;
     }
 
-    // handle plugin loading & changing of plugin type
-    if (!this.pluginInfo || this.pluginInfo.id !== this.props.panel.type) {
-      this.pluginInfo = config.panels[this.props.panel.type];
+    const { panel } = this.props;
 
-      if (this.pluginInfo.exports) {
+    // handle plugin loading & changing of plugin type
+    if (!this.state.plugin || this.state.plugin.id !== panel.type) {
+      const plugin = config.panels[panel.type];
+
+      if (plugin.exports) {
         this.cleanUpAngularPanel();
-        this.setState({ pluginExports: this.pluginInfo.exports });
+        this.setState({ plugin: plugin });
       } else {
-        importPluginModule(this.pluginInfo.module).then(pluginExports => {
+        importPluginModule(plugin.module).then(pluginExports => {
           this.cleanUpAngularPanel();
           // cache plugin exports (saves a promise async cycle next time)
-          this.pluginInfo.exports = pluginExports;
+          plugin.exports = pluginExports;
           // update panel state
-          this.setState({ pluginExports: pluginExports });
+          this.setState({ plugin: plugin });
         });
       }
     }
@@ -113,7 +117,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   renderReactPanel() {
-    const { pluginExports } = this.state;
+    const { dashboard, panel } = this.props;
+    const { plugin } = this.state;
+
     const containerClass = this.props.isEditing ? 'panel-editor-container' : 'panel-height-helper';
     const panelWrapperClass = this.props.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
     // this might look strange with these classes that change when edit, but
@@ -121,37 +127,30 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return (
       <div className={containerClass}>
         <div className={panelWrapperClass}>
-          <PanelChrome
-            component={pluginExports.PanelComponent}
-            panel={this.props.panel}
-            dashboard={this.props.dashboard}
-          />
+          <PanelChrome component={plugin.exports.PanelComponent} panel={panel} dashboard={dashboard} />
         </div>
-        {this.props.panel.isEditing && (
-          <div className="panel-editor-container__editor">
-            <PanelEditor
-              panel={this.props.panel}
-              panelType={this.props.panel.type}
-              dashboard={this.props.dashboard}
-              onTypeChanged={this.onPluginTypeChanged}
-              pluginExports={pluginExports}
-            />
-          </div>
+        {panel.isEditing && (
+          <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} onTypeChanged={this.onPluginTypeChanged} />
         )}
       </div>
     );
   }
 
   render() {
+    const { panel } = this.props;
+    const { plugin } = this.state;
+
     if (this.isSpecial()) {
-      return this.specialPanels[this.props.panel.type]();
+      return this.specialPanels[panel.type]();
     }
 
-    if (!this.state.pluginExports) {
+    // if we have not loaded plugin exports yet, wait
+    if (!plugin || !plugin.exports) {
       return null;
     }
 
-    if (this.state.pluginExports.PanelComponent) {
+    // if exporting PanelComponent it must be a react panel
+    if (plugin.exports.PanelComponent) {
       return this.renderReactPanel();
     }
 
