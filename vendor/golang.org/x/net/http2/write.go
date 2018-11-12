@@ -186,7 +186,6 @@ type writeResHeaders struct {
 	date          string
 	contentType   string
 	contentLength string
-	noSniff       bool
 }
 
 func encKV(enc *hpack.Encoder, k, v string) {
@@ -200,7 +199,7 @@ func (w *writeResHeaders) staysWithinBuffer(max int) bool {
 	// TODO: this is a common one. It'd be nice to return true
 	// here and get into the fast path if we could be clever and
 	// calculate the size fast enough, or at least a conservative
-	// uppper bound that usually fires. (Maybe if w.h and
+	// upper bound that usually fires. (Maybe if w.h and
 	// w.trailers are nil, so we don't need to enumerate it.)
 	// Otherwise I'm afraid that just calculating the length to
 	// answer this question would be slower than the ~2µs benefit.
@@ -222,9 +221,6 @@ func (w *writeResHeaders) writeFrame(ctx writeContext) error {
 	}
 	if w.contentLength != "" {
 		encKV(enc, "content-length", w.contentLength)
-	}
-	if w.noSniff {
-		encKV(enc, "x-content-type-options", "nosniff")
 	}
 	if w.date != "" {
 		encKV(enc, "date", w.date)
@@ -333,7 +329,7 @@ func (wu writeWindowUpdate) writeFrame(ctx writeContext) error {
 }
 
 // encodeHeaders encodes an http.Header. If keys is not nil, then (k, h[k])
-// is encoded only only if k is in keys.
+// is encoded only if k is in keys.
 func encodeHeaders(enc *hpack.Encoder, h http.Header, keys []string) {
 	if keys == nil {
 		sorter := sorterPool.Get().(*sorter)

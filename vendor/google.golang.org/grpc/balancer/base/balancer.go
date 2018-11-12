@@ -146,7 +146,6 @@ func (b *baseBalancer) HandleSubConnStateChange(sc balancer.SubConn, s connectiv
 	}
 
 	b.cc.UpdateBalancerState(b.state, b.picker)
-	return
 }
 
 // Close is a nop because base balancer doesn't have internal state to clean up,

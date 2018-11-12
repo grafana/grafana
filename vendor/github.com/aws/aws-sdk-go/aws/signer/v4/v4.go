@@ -134,6 +134,7 @@ var requiredSignedHeaders = rules{
 			"X-Amz-Server-Side-Encryption-Customer-Key":                   struct{}{},
 			"X-Amz-Server-Side-Encryption-Customer-Key-Md5":               struct{}{},
 			"X-Amz-Storage-Class":                                         struct{}{},
+			"X-Amz-Tagging":					       struct{}{},
 			"X-Amz-Website-Redirect-Location":                             struct{}{},
 			"X-Amz-Content-Sha256":                                        struct{}{},
 		},
@@ -739,7 +740,15 @@ func makeSha256Reader(reader io.ReadSeeker) []byte {
 	start, _ := reader.Seek(0, sdkio.SeekCurrent)
 	defer reader.Seek(start, sdkio.SeekStart)
 
-	io.Copy(hash, reader)
+	// Use CopyN to avoid allocating the 32KB buffer in io.Copy for bodies
+	// smaller than 32KB. Fall back to io.Copy if we fail to determine the size.
+	size, err := aws.SeekerLen(reader)
+	if err != nil {
+		io.Copy(hash, reader)
+	} else {
+		io.CopyN(hash, reader, size)
+	}
+
 	return hash.Sum(nil)
 }
 

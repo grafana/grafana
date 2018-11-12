@@ -65,6 +65,10 @@ func main() {
 	convertUtsnameRegex := regexp.MustCompile(`((Sys|Node|Domain)name|Release|Version|Machine)(\s+)\[(\d+)\]u?int8`)
 	b = convertUtsnameRegex.ReplaceAll(b, []byte("$1$3[$4]byte"))
 
+	// Convert [1024]int8 to [1024]byte in Ptmget members
+	convertPtmget := regexp.MustCompile(`([SC]n)(\s+)\[(\d+)\]u?int8`)
+	b = convertPtmget.ReplaceAll(b, []byte("$1[$3]byte"))
+
 	// Remove spare fields (e.g. in Statx_t)
 	spareFieldsRegex := regexp.MustCompile(`X__spare\S*`)
 	b = spareFieldsRegex.ReplaceAll(b, []byte("_"))

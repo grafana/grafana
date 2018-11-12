@@ -17,6 +17,10 @@ const (
 	ParamMinValueErrCode = "ParamMinValueError"
 	// ParamMinLenErrCode is the error code for fields without enough elements.
 	ParamMinLenErrCode = "ParamMinLenError"
+
+	// ParamFormatErrCode is the error code for a field with invalid
+	// format or characters.
+	ParamFormatErrCode = "ParamFormatInvalidError"
 )
 
 // Validator provides a way for types to perform validation logic on their
@@ -231,4 +235,27 @@ func NewErrParamMinLen(field string, min int) *ErrParamMinLen {
 // MinLen returns the field's required minimum length.
 func (e *ErrParamMinLen) MinLen() int {
 	return e.min
+}
+
+// An ErrParamFormat represents a invalid format parameter error.
+type ErrParamFormat struct {
+	errInvalidParam
+	format string
+}
+
+// NewErrParamFormat creates a new invalid format parameter error.
+func NewErrParamFormat(field string, format, value string) *ErrParamFormat {
+	return &ErrParamFormat{
+		errInvalidParam: errInvalidParam{
+			code:  ParamFormatErrCode,
+			field: field,
+			msg:   fmt.Sprintf("format %v, %v", format, value),
+		},
+		format: format,
+	}
+}
+
+// Format returns the field's required format.
+func (e *ErrParamFormat) Format() string {
+	return e.format
 }

@@ -15,13 +15,29 @@
  *
  */
 
-// Package internal contains gRPC-internal code for testing, to avoid polluting
-// the godoc of the top-level grpc package.
+// Package internal contains gRPC-internal code, to avoid polluting
+// the godoc of the top-level grpc package.  It must not import any grpc
+// symbols to avoid circular dependencies.
 package internal
 
-// TestingUseHandlerImpl enables the http.Handler-based server implementation.
-// It must be called before Serve and requires TLS credentials.
-//
-// The provided grpcServer must be of type *grpc.Server. It is untyped
-// for circular dependency reasons.
-var TestingUseHandlerImpl func(grpcServer interface{})
+import "golang.org/x/net/context"
+
+var (
+	// WithContextDialer is exported by clientconn.go
+	WithContextDialer interface{} // func(context.Context, string) (net.Conn, error) grpc.DialOption
+	// WithResolverBuilder is exported by clientconn.go
+	WithResolverBuilder interface{} // func (resolver.Builder) grpc.DialOption
+	// HealthCheckFunc is used to provide client-side LB channel health checking
+	HealthCheckFunc func(ctx context.Context, newStream func() (interface{}, error), reportHealth func(bool), serviceName string) error
+)
+
+const (
+	// CredsBundleModeFallback switches GoogleDefaultCreds to fallback mode.
+	CredsBundleModeFallback = "fallback"
+	// CredsBundleModeBalancer switches GoogleDefaultCreds to grpclb balancer
+	// mode.
+	CredsBundleModeBalancer = "balancer"
+	// CredsBundleModeBackendFromBalancer switches GoogleDefaultCreds to mode
+	// that supports backend returned by grpclb balancer.
+	CredsBundleModeBackendFromBalancer = "backend-from-balancer"
+)

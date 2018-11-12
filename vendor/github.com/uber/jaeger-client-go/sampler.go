@@ -511,6 +511,7 @@ func (s *RemotelyControlledSampler) updateSampler() {
 	res, err := s.manager.GetSamplingStrategy(s.serviceName)
 	if err != nil {
 		s.metrics.SamplerQueryFailure.Inc(1)
+		s.logger.Infof("Unable to query sampling strategy: %v", err)
 		return
 	}
 	s.Lock()

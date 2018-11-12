@@ -27,6 +27,9 @@ func (lw LogWrapper) Error(msg string, args ...interface{}) {
 	lw.Logger.Error(msg, args...)
 }
 
+func (lw LogWrapper) SetLevel(level hclog.Level) {
+}
+
 func (lw LogWrapper) IsTrace() bool { return true }
 func (lw LogWrapper) IsDebug() bool { return true }
 func (lw LogWrapper) IsInfo() bool  { return true }

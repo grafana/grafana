@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris
+// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
 
 // Socket control messages
 
@@ -12,7 +12,7 @@ import "unsafe"
 
 // Round the length of a raw sockaddr up to align it properly.
 func cmsgAlignOf(salen int) int {
-	salign := sizeofPtr
+	salign := SizeofPtr
 	// NOTE: It seems like 64-bit Darwin, DragonFly BSD and
 	// Solaris kernels still require 32-bit aligned access to
 	// network subsystem.

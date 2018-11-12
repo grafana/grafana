@@ -90,14 +90,13 @@ func (rep *Reporter) sendAPICallAttemptMetric(r *request.Request) {
 }
 
 func setError(m *metric, err awserr.Error) {
-	msg := err.Message()
+	msg := err.Error()
 	code := err.Code()
 
 	switch code {
 	case "RequestError",
 		"SerializationError",
 		request.CanceledErrorCode:
-
 		m.SDKException = &code
 		m.SDKExceptionMessage = &msg
 	default:
@@ -113,14 +112,16 @@ func (rep *Reporter) sendAPICallMetric(r *request.Request) {
 
 	now := time.Now()
 	m := metric{
-		ClientID:      aws.String(rep.clientID),
-		API:           aws.String(r.Operation.Name),
-		Service:       aws.String(r.ClientInfo.ServiceID),
-		Timestamp:     (*metricTime)(&now),
-		Type:          aws.String("ApiCall"),
-		AttemptCount:  aws.Int(r.RetryCount + 1),
-		Latency:       aws.Int(int(time.Now().Sub(r.Time) / time.Millisecond)),
-		XAmzRequestID: aws.String(r.RequestID),
+		ClientID:           aws.String(rep.clientID),
+		API:                aws.String(r.Operation.Name),
+		Service:            aws.String(r.ClientInfo.ServiceID),
+		Timestamp:          (*metricTime)(&now),
+		Type:               aws.String("ApiCall"),
+		AttemptCount:       aws.Int(r.RetryCount + 1),
+		Region:             r.Config.Region,
+		Latency:            aws.Int(int(time.Now().Sub(r.Time) / time.Millisecond)),
+		XAmzRequestID:      aws.String(r.RequestID),
+		MaxRetriesExceeded: aws.Int(boolIntValue(r.RetryCount >= r.MaxRetries())),
 	}
 
 	// TODO: Probably want to figure something out for logging dropped
@@ -223,8 +224,19 @@ func (rep *Reporter) InjectHandlers(handlers *request.Handlers) {
 	}
 
 	apiCallHandler := request.NamedHandler{Name: APICallMetricHandlerName, Fn: rep.sendAPICallMetric}
-	handlers.Complete.PushFrontNamed(apiCallHandler)
-
 	apiCallAttemptHandler := request.NamedHandler{Name: APICallAttemptMetricHandlerName, Fn: rep.sendAPICallAttemptMetric}
+
+	handlers.Complete.PushFrontNamed(apiCallHandler)
+	handlers.Complete.PushFrontNamed(apiCallAttemptHandler)
+
 	handlers.AfterRetry.PushFrontNamed(apiCallAttemptHandler)
+}
+
+// boolIntValue return 1 for true and 0 for false.
+func boolIntValue(b bool) int {
+	if b {
+		return 1
+	}
+
+	return 0
 }

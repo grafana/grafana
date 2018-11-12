@@ -13,7 +13,7 @@ var (
 	DefaultLevel  = Info
 )
 
-type Level int
+type Level int32
 
 const (
 	// This is a special level used to indicate that no level has been
@@ -121,6 +121,10 @@ type Logger interface {
 	// the current name as well.
 	ResetNamed(name string) Logger
 
+	// Updates the level. This should affect all sub-loggers as well. If an
+	// implementation cannot update the level on the fly, it should no-op.
+	SetLevel(level Level)
+
 	// Return a value that conforms to the stdlib log.Logger interface
 	StandardLogger(opts *StandardLoggerOptions) *log.Logger
 }
@@ -140,7 +144,7 @@ type LoggerOptions struct {
 	// The threshold for the logger. Anything less severe is supressed
 	Level Level
 
-	// Where to write the logs to. Defaults to os.Stdout if nil
+	// Where to write the logs to. Defaults to os.Stderr if nil
 	Output io.Writer
 
 	// An optional mutex pointer in case Output is shared

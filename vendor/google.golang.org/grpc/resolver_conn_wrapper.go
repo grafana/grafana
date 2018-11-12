@@ -23,17 +23,19 @@ import (
 	"strings"
 
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/internal/channelz"
 	"google.golang.org/grpc/resolver"
 )
 
 // ccResolverWrapper is a wrapper on top of cc for resolvers.
 // It implements resolver.ClientConnection interface.
 type ccResolverWrapper struct {
-	cc       *ClientConn
-	resolver resolver.Resolver
-	addrCh   chan []resolver.Address
-	scCh     chan string
-	done     chan struct{}
+	cc                 *ClientConn
+	resolver           resolver.Resolver
+	addrCh             chan []resolver.Address
+	scCh               chan string
+	done               chan struct{}
+	lastAddressesCount int
 }
 
 // split2 returns the values from strings.SplitN(s, sep, 2).
@@ -65,8 +67,8 @@ func parseTarget(target string) (ret resolver.Target) {
 }
 
 // newCCResolverWrapper parses cc.target for scheme and gets the resolver
-// builder for this scheme. It then builds the resolver and starts the
-// monitoring goroutine for it.
+// builder for this scheme and builds the resolver. The monitoring goroutine
+// for it is not started yet and can be created by calling start().
 //
 // If withResolverBuilder dial option is set, the specified resolver will be
 // used instead.
@@ -84,7 +86,7 @@ func newCCResolverWrapper(cc *ClientConn) (*ccResolverWrapper, error) {
 	}
 
 	var err error
-	ccr.resolver, err = rb.Build(cc.parsedTarget, ccr, resolver.BuildOption{})
+	ccr.resolver, err = rb.Build(cc.parsedTarget, ccr, resolver.BuildOption{DisableServiceConfig: cc.dopts.disableServiceConfig})
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +97,7 @@ func (ccr *ccResolverWrapper) start() {
 	go ccr.watcher()
 }
 
-// watcher processes address updates and service config updates sequencially.
+// watcher processes address updates and service config updates sequentially.
 // Otherwise, we need to resolve possible races between address and service
 // config (e.g. they specify different balancer types).
 func (ccr *ccResolverWrapper) watcher() {
@@ -114,6 +116,9 @@ func (ccr *ccResolverWrapper) watcher() {
 			default:
 			}
 			grpclog.Infof("ccResolverWrapper: sending new addresses to cc: %v", addrs)
+			if channelz.IsOn() {
+				ccr.addChannelzTraceEvent(addrs)
+			}
 			ccr.cc.handleResolvedAddrs(addrs, nil)
 		case sc := <-ccr.scCh:
 			select {
@@ -148,11 +153,37 @@ func (ccr *ccResolverWrapper) NewAddress(addrs []resolver.Address) {
 }
 
 // NewServiceConfig is called by the resolver implemenetion to send service
-// configs to gPRC.
+// configs to gRPC.
 func (ccr *ccResolverWrapper) NewServiceConfig(sc string) {
 	select {
 	case <-ccr.scCh:
 	default:
 	}
 	ccr.scCh <- sc
+}
+
+func (ccr *ccResolverWrapper) addChannelzTraceEvent(addrs []resolver.Address) {
+	if len(addrs) == 0 && ccr.lastAddressesCount != 0 {
+		channelz.AddTraceEvent(ccr.cc.channelzID, &channelz.TraceEventDesc{
+			Desc:     "Resolver returns an empty address list",
+			Severity: channelz.CtWarning,
+		})
+	} else if len(addrs) != 0 && ccr.lastAddressesCount == 0 {
+		var s string
+		for i, a := range addrs {
+			if a.ServerName != "" {
+				s += a.Addr + "(" + a.ServerName + ")"
+			} else {
+				s += a.Addr
+			}
+			if i != len(addrs)-1 {
+				s += " "
+			}
+		}
+		channelz.AddTraceEvent(ccr.cc.channelzID, &channelz.TraceEventDesc{
+			Desc:     fmt.Sprintf("Resolver returns a non-empty address list (previous one was empty) %q", s),
+			Severity: channelz.CtINFO,
+		})
+	}
+	ccr.lastAddressesCount = len(addrs)
 }

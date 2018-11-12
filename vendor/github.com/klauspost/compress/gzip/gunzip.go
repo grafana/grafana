@@ -10,11 +10,11 @@ import (
 	"bufio"
 	"encoding/binary"
 	"errors"
+	"hash/crc32"
 	"io"
 	"time"
 
 	"github.com/klauspost/compress/flate"
-	"github.com/klauspost/crc32"
 )
 
 const (

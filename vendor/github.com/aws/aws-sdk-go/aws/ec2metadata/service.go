@@ -72,6 +72,7 @@ func NewClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 			cfg,
 			metadata.ClientInfo{
 				ServiceName: ServiceName,
+				ServiceID:   ServiceName,
 				Endpoint:    endpoint,
 				APIVersion:  "latest",
 			},

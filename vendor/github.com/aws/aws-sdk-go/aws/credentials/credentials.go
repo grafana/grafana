@@ -64,8 +64,6 @@ import (
 //       Credentials: credentials.AnonymousCredentials,
 //     })))
 //     // Access public S3 buckets.
-//
-// @readonly
 var AnonymousCredentials = NewStaticCredentials("", "", "")
 
 // A Value is the AWS credentials value for individual credential fields.
@@ -158,13 +156,14 @@ func (e *Expiry) SetExpiration(expiration time.Time, window time.Duration) {
 
 // IsExpired returns if the credentials are expired.
 func (e *Expiry) IsExpired() bool {
-	if e.CurrentTime == nil {
-		e.CurrentTime = time.Now
+	curTime := e.CurrentTime
+	if curTime == nil {
+		curTime = time.Now
 	}
-	return e.expiration.Before(e.CurrentTime())
+	return e.expiration.Before(curTime())
 }
 
-// A Credentials provides synchronous safe retrieval of AWS credentials Value.
+// A Credentials provides concurrency safe retrieval of AWS credentials Value.
 // Credentials will cache the credentials value until they expire. Once the value
 // expires the next Get will attempt to retrieve valid credentials.
 //

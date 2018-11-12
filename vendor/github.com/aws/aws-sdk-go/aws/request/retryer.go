@@ -97,7 +97,7 @@ func isNestedErrorRetryable(parentErr awserr.Error) bool {
 	}
 
 	if t, ok := err.(temporaryError); ok {
-		return t.Temporary()
+		return t.Temporary() || isErrConnectionReset(err)
 	}
 
 	return isErrConnectionReset(err)

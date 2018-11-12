@@ -82,6 +82,7 @@ func (s *Section) NewKey(name, val string) (*Key, error) {
 			}
 		} else {
 			s.keys[name].value = val
+			s.keysHash[name] = val
 		}
 		return s.keys[name], nil
 	}
