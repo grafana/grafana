@@ -3,8 +3,7 @@ import $ from 'jquery';
 import baron from 'baron';
 import coreModule from 'app/core/core_module';
 
-/** @ngInject */
-function graphLegendDirective(popoverSrv, $timeout) {
+coreModule.directive('graphLegend', (popoverSrv, $timeout) => {
   return {
     link: (scope, elem) => {
       let firstRender = true;
@@ -301,6 +300,4 @@ function graphLegendDirective(popoverSrv, $timeout) {
       }
     },
   };
-}
-
-coreModule.directive('graphLegend', graphLegendDirective);
+});

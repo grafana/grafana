@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
@@ -13,12 +11,16 @@ import (
 	"syscall"
 	"time"
 
-	extensions "github.com/grafana/grafana/pkg/extensions"
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/setting"
+
+	extensions "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	_ "github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -33,7 +35,6 @@ import (
 
 var version = "5.0.0"
 var commit = "NA"
-var buildBranch = "master"
 var buildstamp string
 
 var configFile = flag.String("config", "", "path to config file")
@@ -46,7 +47,7 @@ func main() {
 	profilePort := flag.Int("profile-port", 6060, "Define custom port for profiling")
 	flag.Parse()
 	if *v {
-		fmt.Printf("Version %s (commit: %s, branch: %s)\n", version, commit, buildBranch)
+		fmt.Printf("Version %s (commit: %s)\n", version, commit)
 		os.Exit(0)
 	}
 
@@ -77,10 +78,9 @@ func main() {
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
-	setting.BuildBranch = buildBranch
 	setting.IsEnterprise = extensions.IsEnterprise
 
-	metrics.SetBuildInformation(version, commit, buildBranch)
+	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
 
 	server := NewGrafanaServer()
 

@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
-import { FilterSegments } from './filter_segments';
+import { FilterSegments, DefaultRemoveFilterValue } from './filter_segments';
 import appEvents from 'app/core/app_events';
 
 export class StackdriverFilter {
@@ -26,10 +26,8 @@ export class StackdriverFilter {
 export class StackdriverFilterCtrl {
   metricLabels: { [key: string]: string[] };
   resourceLabels: { [key: string]: string[] };
-  resourceTypes: string[];
 
   defaultRemoveGroupByValue = '-- remove group by --';
-  resourceTypeValue = 'resource.type';
   loadLabelsPromise: Promise<any>;
 
   service: string;
@@ -74,29 +72,19 @@ export class StackdriverFilterCtrl {
     this.filterSegments = new FilterSegments(
       this.uiSegmentSrv,
       this.target,
-      this.getFilterKeys.bind(this),
+      this.getGroupBys.bind(this, null, null, DefaultRemoveFilterValue, false),
       this.getFilterValues.bind(this)
     );
     this.filterSegments.buildSegmentModel();
   }
 
   async getCurrentProject() {
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (!this.target.defaultProject || this.target.defaultProject === 'loading project...') {
-          this.target.defaultProject = await this.datasource.getDefaultProject();
-        }
-        resolve(this.target.defaultProject);
-      } catch (error) {
-        appEvents.emit('ds-request-error', error);
-        reject();
-      }
-    });
+    this.target.project = await this.datasource.getDefaultProject();
   }
 
   async loadMetricDescriptors() {
-    if (this.target.defaultProject !== 'loading project...') {
-      this.metricDescriptors = await this.datasource.getMetricTypes(this.target.defaultProject);
+    if (this.target.project.id !== 'default') {
+      this.metricDescriptors = await this.datasource.getMetricTypes(this.target.project.id);
       this.services = this.getServicesList();
       this.metrics = this.getMetricsList();
       return this.metricDescriptors;
@@ -153,7 +141,6 @@ export class StackdriverFilterCtrl {
         const data = await this.datasource.getLabels(this.target.metricType, this.target.refId);
         this.metricLabels = data.results[this.target.refId].meta.metricLabels;
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
-        this.resourceTypes = data.results[this.target.refId].meta.resourceTypes;
         resolve();
       } catch (error) {
         if (error.data && error.data.message) {
@@ -194,66 +181,45 @@ export class StackdriverFilterCtrl {
     this.$rootScope.$broadcast('metricTypeChanged');
   }
 
-  async createLabelKeyElements() {
+  async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
     await this.loadLabelsPromise;
 
-    let elements = Object.keys(this.metricLabels || {}).map(l => {
-      return this.uiSegmentSrv.newSegment({
-        value: `metric.label.${l}`,
-        expandable: false,
+    const metricLabels = Object.keys(this.metricLabels || {})
+      .filter(ml => {
+        if (!removeUsed) {
+          return true;
+        }
+        return this.target.aggregation.groupBys.indexOf('metric.label.' + ml) === -1;
+      })
+      .map(l => {
+        return this.uiSegmentSrv.newSegment({
+          value: `metric.label.${l}`,
+          expandable: false,
+        });
       });
-    });
 
-    elements = [
-      ...elements,
-      ...Object.keys(this.resourceLabels || {}).map(l => {
+    const resourceLabels = Object.keys(this.resourceLabels || {})
+      .filter(ml => {
+        if (!removeUsed) {
+          return true;
+        }
+
+        return this.target.aggregation.groupBys.indexOf('resource.label.' + ml) === -1;
+      })
+      .map(l => {
         return this.uiSegmentSrv.newSegment({
           value: `resource.label.${l}`,
           expandable: false,
         });
-      }),
-    ];
-
-    if (this.resourceTypes && this.resourceTypes.length > 0) {
-      elements = [
-        ...elements,
-        this.uiSegmentSrv.newSegment({
-          value: this.resourceTypeValue,
-          expandable: false,
-        }),
-      ];
-    }
-
-    return elements;
-  }
-
-  async getFilterKeys(segment, removeText?: string) {
-    let elements = await this.createLabelKeyElements();
-
-    if (this.target.filters.indexOf(this.resourceTypeValue) !== -1) {
-      elements = elements.filter(e => e.value !== this.resourceTypeValue);
-    }
+      });
 
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
-    if (noValueOrPlusButton && elements.length === 0) {
-      return [];
+    if (noValueOrPlusButton && metricLabels.length === 0 && resourceLabels.length === 0) {
+      return Promise.resolve([]);
     }
 
-    this.removeSegment.value = removeText;
-    return [...elements, this.removeSegment];
-  }
-
-  async getGroupBys(segment) {
-    let elements = await this.createLabelKeyElements();
-
-    elements = elements.filter(e => this.target.aggregation.groupBys.indexOf(e.value) === -1);
-    const noValueOrPlusButton = !segment || segment.type === 'plus-button';
-    if (noValueOrPlusButton && elements.length === 0) {
-      return [];
-    }
-
-    this.removeSegment.value = this.defaultRemoveGroupByValue;
-    return [...elements, this.removeSegment];
+    this.removeSegment.value = removeText || this.defaultRemoveGroupByValue;
+    return Promise.resolve([...metricLabels, ...resourceLabels, this.removeSegment]);
   }
 
   groupByChanged(segment, index) {
@@ -295,10 +261,6 @@ export class StackdriverFilterCtrl {
 
     if (filterKey.startsWith('resource.label.') && this.resourceLabels.hasOwnProperty(shortKey)) {
       return this.resourceLabels[shortKey];
-    }
-
-    if (filterKey === this.resourceTypeValue) {
-      return this.resourceTypes;
     }
 
     return [];

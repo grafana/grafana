@@ -7,7 +7,6 @@ import { serializeStateToUrlParam, parseUrlState } from 'app/core/utils/explore'
 import { StoreState } from 'app/types';
 import { ExploreState } from 'app/types/explore';
 
-import ErrorBoundary from './ErrorBoundary';
 import Explore from './Explore';
 
 interface WrapperProps {
@@ -62,33 +61,28 @@ export class Wrapper extends Component<WrapperProps, WrapperState> {
     const { split, splitState } = this.state;
     const urlStateLeft = parseUrlState(this.urlStates[STATE_KEY_LEFT]);
     const urlStateRight = parseUrlState(this.urlStates[STATE_KEY_RIGHT]);
-
     return (
       <div className="explore-wrapper">
-        <ErrorBoundary>
+        <Explore
+          datasourceSrv={datasourceSrv}
+          onChangeSplit={this.onChangeSplit}
+          onSaveState={this.onSaveState}
+          position="left"
+          split={split}
+          stateKey={STATE_KEY_LEFT}
+          urlState={urlStateLeft}
+        />
+        {split && (
           <Explore
             datasourceSrv={datasourceSrv}
             onChangeSplit={this.onChangeSplit}
             onSaveState={this.onSaveState}
-            position="left"
+            position="right"
             split={split}
-            stateKey={STATE_KEY_LEFT}
-            urlState={urlStateLeft}
+            splitState={splitState}
+            stateKey={STATE_KEY_RIGHT}
+            urlState={urlStateRight}
           />
-        </ErrorBoundary>
-        {split && (
-          <ErrorBoundary>
-            <Explore
-              datasourceSrv={datasourceSrv}
-              onChangeSplit={this.onChangeSplit}
-              onSaveState={this.onSaveState}
-              position="right"
-              split={split}
-              splitState={splitState}
-              stateKey={STATE_KEY_RIGHT}
-              urlState={urlStateRight}
-            />
-          </ErrorBoundary>
         )}
       </div>
     );

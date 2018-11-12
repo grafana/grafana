@@ -185,7 +185,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 
 		if ldapUser.isMemberOf(group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
-			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
+			if extUser.IsGrafanaAdmin == nil || *extUser.IsGrafanaAdmin == false {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
 		}

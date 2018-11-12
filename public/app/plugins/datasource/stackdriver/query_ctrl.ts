@@ -14,7 +14,10 @@ export interface QueryMeta {
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
   target: {
-    defaultProject: string;
+    project: {
+      id: string;
+      name: string;
+    };
     unit: string;
     metricType: string;
     service: string;
@@ -35,7 +38,10 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   defaultServiceValue = 'All Services';
 
   defaults = {
-    defaultProject: 'loading project...',
+    project: {
+      id: 'default',
+      name: 'loading project...',
+    },
     metricType: this.defaultDropdownValue,
     service: this.defaultServiceValue,
     metric: '',
@@ -95,5 +101,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         this.lastQueryError = jsonBody.error.message;
       }
     }
+    console.error(err);
   }
 }

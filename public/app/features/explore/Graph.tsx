@@ -5,8 +5,6 @@ import { withSize } from 'react-sizeme';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
-
-import { RawTimeRange } from 'app/types/series';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
@@ -76,7 +74,7 @@ interface GraphProps {
   height?: string; // e.g., '200px'
   id?: string;
   loading?: boolean;
-  range: RawTimeRange;
+  options: any;
   split?: boolean;
   size?: { width: number; height: number };
 }
@@ -103,7 +101,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   componentDidUpdate(prevProps: GraphProps) {
     if (
       prevProps.data !== this.props.data ||
-      prevProps.range !== this.props.range ||
+      prevProps.options !== this.props.options ||
       prevProps.split !== this.props.split ||
       prevProps.height !== this.props.height ||
       (prevProps.size && prevProps.size.width !== this.props.size.width)
@@ -122,22 +120,22 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   draw() {
-    const { range, size } = this.props;
+    const { options: userOptions, size } = this.props;
     const data = this.getGraphData();
 
     const $el = $(`#${this.props.id}`);
-    let series = [{ data: [[0, 0]] }];
-
-    if (data && data.length > 0) {
-      series = data.map((ts: TimeSeries) => ({
-        color: ts.color,
-        label: ts.label,
-        data: ts.getFlotPairs('null'),
-      }));
+    if (!data) {
+      $el.empty();
+      return;
     }
+    const series = data.map((ts: TimeSeries) => ({
+      color: ts.color,
+      label: ts.label,
+      data: ts.getFlotPairs('null'),
+    }));
 
     const ticks = (size.width || 0) / 100;
-    let { from, to } = range;
+    let { from, to } = userOptions.range;
     if (!moment.isMoment(from)) {
       from = dateMath.parse(from, false);
     }
@@ -159,6 +157,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const options = {
       ...FLOT_OPTIONS,
       ...dynamicOptions,
+      ...userOptions,
     };
     $.plot($el, series, options);
   }
@@ -167,11 +166,16 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const { height = '100px', id = 'graph', loading = false } = this.props;
     const data = this.getGraphData();
 
+    if (!loading && data.length === 0) {
+      return (
+        <div className="panel-container">
+          <div className="muted m-a-1">The queries returned no time series to graph.</div>
+        </div>
+      );
+    }
     return (
-      <div className="panel-container">
-        {loading && <div className="explore-graph__loader" />}
-        {this.props.data &&
-          this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
+      <div>
+        {this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
           !this.state.showAllTimeSeries && (
             <div className="time-series-disclaimer">
               <i className="fa fa-fw fa-warning disclaimer-icon" />
@@ -181,8 +185,10 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
               }`}</span>
             </div>
           )}
-        <div id={id} className="explore-graph" style={{ height }} />
-        <Legend data={data} />
+        <div className="panel-container">
+          <div id={id} className="explore-graph" style={{ height }} />
+          <Legend data={data} />
+        </div>
       </div>
     );
   }

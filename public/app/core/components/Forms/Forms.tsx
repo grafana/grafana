@@ -19,4 +19,3 @@ export const Label: SFC<Props> = props => {
     </span>
   );
 };
-

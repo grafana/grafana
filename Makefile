@@ -5,7 +5,8 @@ all: deps build
 deps-go:
 	go run build.go setup
 
-deps-js: node_modules
+deps-js:
+	yarn install --pure-lockfile --no-progress
 
 deps: deps-js
 
@@ -42,10 +43,3 @@ test: test-go test-js
 
 run:
 	./bin/grafana-server
-
-clean:
-	rm -rf node_modules
-	rm -rf public/build
-
-node_modules: package.json yarn.lock
-	yarn install --pure-lockfile --no-progress

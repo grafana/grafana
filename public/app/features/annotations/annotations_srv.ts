@@ -1,16 +1,9 @@
-// Libaries
+import './editor_ctrl';
+
 import angular from 'angular';
 import _ from 'lodash';
-
-// Components
-import './editor_ctrl';
 import coreModule from 'app/core/core_module';
-
-// Utils & Services
 import { makeRegions, dedupAnnotations } from './events_processing';
-
-// Types
-import { DashboardModel } from '../dashboard/dashboard_model';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -18,15 +11,15 @@ export class AnnotationsSrv {
   datasourcePromises: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {}
+  constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {
+    $rootScope.onAppEvent('refresh', this.clearCache.bind(this), $rootScope);
+    $rootScope.onAppEvent('dashboard-initialized', this.clearCache.bind(this), $rootScope);
+  }
 
-  init(dashboard: DashboardModel) {
-    // clear promises on refresh events
-    dashboard.on('refresh', () => {
-      this.globalAnnotationsPromise = null;
-      this.alertStatesPromise = null;
-      this.datasourcePromises = null;
-    });
+  clearCache() {
+    this.globalAnnotationsPromise = null;
+    this.alertStatesPromise = null;
+    this.datasourcePromises = null;
   }
 
   getAnnotations(options) {

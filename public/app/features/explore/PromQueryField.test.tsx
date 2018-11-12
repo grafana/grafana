@@ -1,15 +1,20 @@
+import React from 'react';
+import Enzyme, { shallow } from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider from '../language_provider';
+import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
 
-describe('Language completion provider', () => {
-  const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+Enzyme.configure({ adapter: new Adapter() });
+
+describe('PromQueryField typeahead handling', () => {
+  const defaultProps = {
+    request: () => ({ data: { data: [] } }),
   };
 
   it('returns default suggestions on emtpty context', () => {
-    const instance = new LanguageProvider(datasource);
-    const result = instance.provideCompletionItems({ text: '', prefix: '', wrapperClasses: [] });
+    const instance = shallow(<PromQueryField {...defaultProps} />).instance() as PromQueryField;
+    const result = instance.getTypeahead({ text: '', prefix: '', wrapperClasses: [] });
     expect(result.context).toBeUndefined();
     expect(result.refresher).toBeUndefined();
     expect(result.suggestions.length).toEqual(2);
@@ -17,8 +22,8 @@ describe('Language completion provider', () => {
 
   describe('range suggestions', () => {
     it('returns range suggestions in range context', () => {
-      const instance = new LanguageProvider(datasource);
-      const result = instance.provideCompletionItems({ text: '1', prefix: '1', wrapperClasses: ['context-range'] });
+      const instance = shallow(<PromQueryField {...defaultProps} />).instance() as PromQueryField;
+      const result = instance.getTypeahead({ text: '1', prefix: '1', wrapperClasses: ['context-range'] });
       expect(result.context).toBe('context-range');
       expect(result.refresher).toBeUndefined();
       expect(result.suggestions).toEqual([
@@ -32,16 +37,20 @@ describe('Language completion provider', () => {
 
   describe('metric suggestions', () => {
     it('returns metrics suggestions by default', () => {
-      const instance = new LanguageProvider(datasource, { metrics: ['foo', 'bar'] });
-      const result = instance.provideCompletionItems({ text: 'a', prefix: 'a', wrapperClasses: [] });
+      const instance = shallow(
+        <PromQueryField {...defaultProps} metrics={['foo', 'bar']} />
+      ).instance() as PromQueryField;
+      const result = instance.getTypeahead({ text: 'a', prefix: 'a', wrapperClasses: [] });
       expect(result.context).toBeUndefined();
       expect(result.refresher).toBeUndefined();
       expect(result.suggestions.length).toEqual(2);
     });
 
     it('returns default suggestions after a binary operator', () => {
-      const instance = new LanguageProvider(datasource, { metrics: ['foo', 'bar'] });
-      const result = instance.provideCompletionItems({ text: '*', prefix: '', wrapperClasses: [] });
+      const instance = shallow(
+        <PromQueryField {...defaultProps} metrics={['foo', 'bar']} />
+      ).instance() as PromQueryField;
+      const result = instance.getTypeahead({ text: '*', prefix: '', wrapperClasses: [] });
       expect(result.context).toBeUndefined();
       expect(result.refresher).toBeUndefined();
       expect(result.suggestions.length).toEqual(2);
@@ -50,13 +59,13 @@ describe('Language completion provider', () => {
 
   describe('label suggestions', () => {
     it('returns default label suggestions on label context and no metric', () => {
-      const instance = new LanguageProvider(datasource);
+      const instance = shallow(<PromQueryField {...defaultProps} />).instance() as PromQueryField;
       const value = Plain.deserialize('{}');
       const range = value.selection.merge({
         anchorOffset: 1,
       });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '',
         prefix: '',
         wrapperClasses: ['context-labels'],
@@ -67,13 +76,15 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on label context and metric', () => {
-      const instance = new LanguageProvider(datasource, { labelKeys: { '{__name__="metric"}': ['bar'] } });
+      const instance = shallow(
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="metric"}': ['bar'] }} />
+      ).instance() as PromQueryField;
       const value = Plain.deserialize('metric{}');
       const range = value.selection.merge({
         anchorOffset: 7,
       });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '',
         prefix: '',
         wrapperClasses: ['context-labels'],
@@ -84,15 +95,18 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on label context but leaves out labels that already exist', () => {
-      const instance = new LanguageProvider(datasource, {
-        labelKeys: { '{job1="foo",job2!="foo",job3=~"foo"}': ['bar', 'job1', 'job2', 'job3'] },
-      });
+      const instance = shallow(
+        <PromQueryField
+          {...defaultProps}
+          labelKeys={{ '{job1="foo",job2!="foo",job3=~"foo"}': ['bar', 'job1', 'job2', 'job3'] }}
+        />
+      ).instance() as PromQueryField;
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",}');
       const range = value.selection.merge({
         anchorOffset: 36,
       });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '',
         prefix: '',
         wrapperClasses: ['context-labels'],
@@ -103,14 +117,17 @@ describe('Language completion provider', () => {
     });
 
     it('returns label value suggestions inside a label value context after a negated matching operator', () => {
-      const instance = new LanguageProvider(datasource, {
-        labelKeys: { '{}': ['label'] },
-        labelValues: { '{}': { label: ['a', 'b', 'c'] } },
-      });
+      const instance = shallow(
+        <PromQueryField
+          {...defaultProps}
+          labelKeys={{ '{}': ['label'] }}
+          labelValues={{ '{}': { label: ['a', 'b', 'c'] } }}
+        />
+      ).instance() as PromQueryField;
       const value = Plain.deserialize('{label!=}');
       const range = value.selection.merge({ anchorOffset: 8 });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '!=',
         prefix: '',
         wrapperClasses: ['context-labels'],
@@ -127,13 +144,15 @@ describe('Language completion provider', () => {
     });
 
     it('returns a refresher on label context and unavailable metric', () => {
-      const instance = new LanguageProvider(datasource, { labelKeys: { '{__name__="foo"}': ['bar'] } });
+      const instance = shallow(
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="foo"}': ['bar'] }} />
+      ).instance() as PromQueryField;
       const value = Plain.deserialize('metric{}');
       const range = value.selection.merge({
         anchorOffset: 7,
       });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '',
         prefix: '',
         wrapperClasses: ['context-labels'],
@@ -145,16 +164,19 @@ describe('Language completion provider', () => {
     });
 
     it('returns label values on label context when given a metric and a label key', () => {
-      const instance = new LanguageProvider(datasource, {
-        labelKeys: { '{__name__="metric"}': ['bar'] },
-        labelValues: { '{__name__="metric"}': { bar: ['baz'] } },
-      });
+      const instance = shallow(
+        <PromQueryField
+          {...defaultProps}
+          labelKeys={{ '{__name__="metric"}': ['bar'] }}
+          labelValues={{ '{__name__="metric"}': { bar: ['baz'] } }}
+        />
+      ).instance() as PromQueryField;
       const value = Plain.deserialize('metric{bar=ba}');
       const range = value.selection.merge({
         anchorOffset: 13,
       });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '=ba',
         prefix: 'ba',
         wrapperClasses: ['context-labels'],
@@ -166,13 +188,15 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on aggregation context and metric w/ selector', () => {
-      const instance = new LanguageProvider(datasource, { labelKeys: { '{__name__="metric",foo="xx"}': ['bar'] } });
+      const instance = shallow(
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="metric",foo="xx"}': ['bar'] }} />
+      ).instance() as PromQueryField;
       const value = Plain.deserialize('sum(metric{foo="xx"}) by ()');
       const range = value.selection.merge({
         anchorOffset: 26,
       });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '',
         prefix: '',
         wrapperClasses: ['context-aggregation'],
@@ -183,13 +207,15 @@ describe('Language completion provider', () => {
     });
 
     it('returns label suggestions on aggregation context and metric w/o selector', () => {
-      const instance = new LanguageProvider(datasource, { labelKeys: { '{__name__="metric"}': ['bar'] } });
+      const instance = shallow(
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="metric"}': ['bar'] }} />
+      ).instance() as PromQueryField;
       const value = Plain.deserialize('sum(metric) by ()');
       const range = value.selection.merge({
         anchorOffset: 16,
       });
       const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
+      const result = instance.getTypeahead({
         text: '',
         prefix: '',
         wrapperClasses: ['context-aggregation'],
@@ -198,76 +224,45 @@ describe('Language completion provider', () => {
       expect(result.context).toBe('context-aggregation');
       expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
     });
+  });
+});
 
-    it('returns label suggestions inside a multi-line aggregation context', () => {
-      const instance = new LanguageProvider(datasource, {
-        labelKeys: { '{__name__="metric"}': ['label1', 'label2', 'label3'] },
-      });
-      const value = Plain.deserialize('sum(\nmetric\n)\nby ()');
-      const aggregationTextBlock = value.document.getBlocksAsArray()[3];
-      const range = value.selection.moveToStartOf(aggregationTextBlock).merge({ anchorOffset: 4 });
-      const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
-        text: '',
-        prefix: '',
-        wrapperClasses: ['context-aggregation'],
-        value: valueWithSelection,
-      });
-      expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([
-        {
-          items: [{ label: 'label1' }, { label: 'label2' }, { label: 'label3' }],
-          label: 'Labels',
-        },
-      ]);
-    });
+describe('groupMetricsByPrefix()', () => {
+  it('returns an empty group for no metrics', () => {
+    expect(groupMetricsByPrefix([])).toEqual([]);
+  });
 
-    it('returns label suggestions inside an aggregation context with a range vector', () => {
-      const instance = new LanguageProvider(datasource, {
-        labelKeys: { '{__name__="metric"}': ['label1', 'label2', 'label3'] },
-      });
-      const value = Plain.deserialize('sum(rate(metric[1h])) by ()');
-      const range = value.selection.merge({
-        anchorOffset: 26,
-      });
-      const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
-        text: '',
-        prefix: '',
-        wrapperClasses: ['context-aggregation'],
-        value: valueWithSelection,
-      });
-      expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([
-        {
-          items: [{ label: 'label1' }, { label: 'label2' }, { label: 'label3' }],
-          label: 'Labels',
-        },
-      ]);
-    });
+  it('returns options grouped by prefix', () => {
+    expect(groupMetricsByPrefix(['foo_metric'])).toMatchObject([
+      {
+        value: 'foo',
+        children: [
+          {
+            value: 'foo_metric',
+          },
+        ],
+      },
+    ]);
+  });
 
-    it('returns label suggestions inside an aggregation context with a range vector and label', () => {
-      const instance = new LanguageProvider(datasource, {
-        labelKeys: { '{__name__="metric",label1="value"}': ['label1', 'label2', 'label3'] },
-      });
-      const value = Plain.deserialize('sum(rate(metric{label1="value"}[1h])) by ()');
-      const range = value.selection.merge({
-        anchorOffset: 42,
-      });
-      const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems({
-        text: '',
-        prefix: '',
-        wrapperClasses: ['context-aggregation'],
-        value: valueWithSelection,
-      });
-      expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([
-        {
-          items: [{ label: 'label1' }, { label: 'label2' }, { label: 'label3' }],
-          label: 'Labels',
-        },
-      ]);
-    });
+  it('returns options without prefix as toplevel option', () => {
+    expect(groupMetricsByPrefix(['metric'])).toMatchObject([
+      {
+        value: 'metric',
+      },
+    ]);
+  });
+
+  it('returns recording rules grouped separately', () => {
+    expect(groupMetricsByPrefix([':foo_metric:'])).toMatchObject([
+      {
+        value: RECORDING_RULES_GROUP,
+        children: [
+          {
+            value: ':foo_metric:',
+          },
+        ],
+      },
+    ]);
   });
 });

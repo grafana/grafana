@@ -3,7 +3,6 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange } from 'app/types/series';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_RANGE = {
@@ -11,104 +10,77 @@ export const DEFAULT_RANGE = {
   to: 'now',
 };
 
-/**
- * Return a human-editable string of either relative (inludes "now") or absolute local time (in the shape of DATE_FORMAT).
- * @param value Epoch or relative time
- */
-export function parseTime(value: string, isUtc = false): string {
+export function parseTime(value, isUtc = false, asString = false) {
   if (value.indexOf('now') !== -1) {
     return value;
   }
-  let time: any = value;
-  // Possible epoch
-  if (!isNaN(time)) {
-    time = parseInt(time, 10);
+  if (!isNaN(value)) {
+    const epoch = parseInt(value, 10);
+    const m = isUtc ? moment.utc(epoch) : moment(epoch);
+    return asString ? m.format(DATE_FORMAT) : m;
   }
-  time = isUtc ? moment.utc(time) : moment(time);
-  return time.format(DATE_FORMAT);
+  return undefined;
 }
 
-interface TimePickerProps {
-  isOpen?: boolean;
-  isUtc?: boolean;
-  range?: RawTimeRange;
-  onChangeTime?: (Range) => void;
-}
-
-interface TimePickerState {
-  isOpen: boolean;
-  isUtc: boolean;
-  rangeString: string;
-  refreshInterval: string;
-
-  // Input-controlled text, keep these in a shape that is human-editable
-  fromRaw: string;
-  toRaw: string;
-}
-
-export default class TimePicker extends PureComponent<TimePickerProps, TimePickerState> {
+export default class TimePicker extends PureComponent<any, any> {
   dropdownEl: any;
-
   constructor(props) {
     super(props);
 
-    const from = props.range ? props.range.from : DEFAULT_RANGE.from;
-    const to = props.range ? props.range.to : DEFAULT_RANGE.to;
-
-    // Ensure internal format
-    const fromRaw = parseTime(from, props.isUtc);
-    const toRaw = parseTime(to, props.isUtc);
+    const fromRaw = props.range ? props.range.from : DEFAULT_RANGE.from;
+    const toRaw = props.range ? props.range.to : DEFAULT_RANGE.to;
     const range = {
-      from: fromRaw,
-      to: toRaw,
+      from: parseTime(fromRaw),
+      to: parseTime(toRaw),
     };
-
     this.state = {
-      fromRaw,
-      toRaw,
+      fromRaw: parseTime(fromRaw, props.isUtc, true),
       isOpen: props.isOpen,
       isUtc: props.isUtc,
       rangeString: rangeUtil.describeTimeRange(range),
       refreshInterval: '',
+      toRaw: parseTime(toRaw, props.isUtc, true),
     };
   }
 
-  move(direction: number) {
+  move(direction) {
     const { onChangeTime } = this.props;
     const { fromRaw, toRaw } = this.state;
-    const from = dateMath.parse(fromRaw, false);
-    const to = dateMath.parse(toRaw, true);
-    const timespan = (to.valueOf() - from.valueOf()) / 2;
+    const range = {
+      from: dateMath.parse(fromRaw, false),
+      to: dateMath.parse(toRaw, true),
+    };
 
-    let nextTo, nextFrom;
+    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+    let to, from;
     if (direction === -1) {
-      nextTo = to.valueOf() - timespan;
-      nextFrom = from.valueOf() - timespan;
+      to = range.to.valueOf() - timespan;
+      from = range.from.valueOf() - timespan;
     } else if (direction === 1) {
-      nextTo = to.valueOf() + timespan;
-      nextFrom = from.valueOf() + timespan;
-      if (nextTo > Date.now() && to < Date.now()) {
-        nextTo = Date.now();
-        nextFrom = from.valueOf();
+      to = range.to.valueOf() + timespan;
+      from = range.from.valueOf() + timespan;
+      if (to > Date.now() && range.to < Date.now()) {
+        to = Date.now();
+        from = range.from.valueOf();
       }
     } else {
-      nextTo = to.valueOf();
-      nextFrom = from.valueOf();
+      to = range.to.valueOf();
+      from = range.from.valueOf();
     }
 
-    const nextRange = {
-      from: moment(nextFrom),
-      to: moment(nextTo),
-    };
+    const rangeString = rangeUtil.describeTimeRange(range);
+    // No need to convert to UTC again
+    to = moment(to);
+    from = moment(from);
 
     this.setState(
       {
-        rangeString: rangeUtil.describeTimeRange(nextRange),
-        fromRaw: nextRange.from.format(DATE_FORMAT),
-        toRaw: nextRange.to.format(DATE_FORMAT),
+        rangeString,
+        fromRaw: from.format(DATE_FORMAT),
+        toRaw: to.format(DATE_FORMAT),
       },
       () => {
-        onChangeTime(nextRange);
+        onChangeTime({ to, from });
       }
     );
   }
@@ -127,19 +99,16 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
 
   handleClickApply = () => {
     const { onChangeTime } = this.props;
-    let range;
+    const { toRaw, fromRaw } = this.state;
+    const range = {
+      from: dateMath.parse(fromRaw, false),
+      to: dateMath.parse(toRaw, true),
+    };
+    const rangeString = rangeUtil.describeTimeRange(range);
     this.setState(
-      state => {
-        const { toRaw, fromRaw } = this.state;
-        range = {
-          from: dateMath.parse(fromRaw, false),
-          to: dateMath.parse(toRaw, true),
-        };
-        const rangeString = rangeUtil.describeTimeRange(range);
-        return {
-          isOpen: false,
-          rangeString,
-        };
+      {
+        isOpen: false,
+        rangeString,
       },
       () => {
         if (onChangeTime) {

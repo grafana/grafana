@@ -1,4 +1,4 @@
-import { parseSelector } from '../language_utils';
+import { parseSelector } from './prometheus';
 
 describe('parseSelector()', () => {
   let parsed;

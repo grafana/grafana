@@ -1,7 +1,7 @@
 import React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { CompletionItem, CompletionItemGroup } from 'app/types/explore';
+import { Suggestion, SuggestionGroup } from './QueryField';
 
 function scrollIntoView(el: HTMLElement) {
   if (!el || !el.offsetParent) {
@@ -15,12 +15,12 @@ function scrollIntoView(el: HTMLElement) {
 
 interface TypeaheadItemProps {
   isSelected: boolean;
-  item: CompletionItem;
+  item: Suggestion;
   onClickItem: (Suggestion) => void;
   prefix?: string;
 }
 
-class TypeaheadItem extends React.PureComponent<TypeaheadItemProps> {
+class TypeaheadItem extends React.PureComponent<TypeaheadItemProps, {}> {
   el: HTMLElement;
 
   componentDidUpdate(prevProps) {
@@ -53,14 +53,14 @@ class TypeaheadItem extends React.PureComponent<TypeaheadItemProps> {
 }
 
 interface TypeaheadGroupProps {
-  items: CompletionItem[];
+  items: Suggestion[];
   label: string;
-  onClickItem: (CompletionItem) => void;
-  selected: CompletionItem;
+  onClickItem: (Suggestion) => void;
+  selected: Suggestion;
   prefix?: string;
 }
 
-class TypeaheadGroup extends React.PureComponent<TypeaheadGroupProps> {
+class TypeaheadGroup extends React.PureComponent<TypeaheadGroupProps, {}> {
   render() {
     const { items, label, selected, onClickItem, prefix } = this.props;
     return (
@@ -85,13 +85,13 @@ class TypeaheadGroup extends React.PureComponent<TypeaheadGroupProps> {
 }
 
 interface TypeaheadProps {
-  groupedItems: CompletionItemGroup[];
+  groupedItems: SuggestionGroup[];
   menuRef: any;
-  selectedItem: CompletionItem | null;
+  selectedItem: Suggestion | null;
   onClickItem: (Suggestion) => void;
   prefix?: string;
 }
-class Typeahead extends React.PureComponent<TypeaheadProps> {
+class Typeahead extends React.PureComponent<TypeaheadProps, {}> {
   render() {
     const { groupedItems, menuRef, selectedItem, onClickItem, prefix } = this.props;
     return (

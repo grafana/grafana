@@ -11,7 +11,7 @@ const template = `
 `;
 
 /** @ngInject */
-function uploadDashboardDirective(timer, $location) {
+function uploadDashboardDirective(timer, alertSrv, $location) {
   return {
     restrict: 'E',
     template: template,
@@ -59,7 +59,7 @@ function uploadDashboardDirective(timer, $location) {
         // Something
         elem[0].addEventListener('change', file_selected, false);
       } else {
-        appEvents.emit('alert-error', ['Oops', 'The HTML5 File APIs are not fully supported in this browser']);
+        alertSrv.set('Oops', 'Sorry, the HTML5 File APIs are not fully supported in this browser.', 'error');
       }
     },
   };

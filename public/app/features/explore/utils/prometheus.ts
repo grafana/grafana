@@ -23,6 +23,9 @@ export function processLabels(labels, withName = false) {
   return { values, keys: Object.keys(values) };
 }
 
+// Strip syntax chars
+export const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
 const selectorRegexp = /\{[^}]*?\}/;
 const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;

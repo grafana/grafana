@@ -164,12 +164,14 @@ func formatTimeRange(input string) string {
 
 func fixIntervalFormat(target string) string {
 	rMinute := regexp.MustCompile(`'(\d+)m'`)
+	rMin := regexp.MustCompile("m")
 	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
-		return strings.Replace(m, "m", "min", -1)
+		return rMin.ReplaceAllString(m, "min")
 	})
 	rMonth := regexp.MustCompile(`'(\d+)M'`)
+	rMon := regexp.MustCompile("M")
 	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
-		return strings.Replace(M, "M", "mon", -1)
+		return rMon.ReplaceAllString(M, "mon")
 	})
 	return target
 }

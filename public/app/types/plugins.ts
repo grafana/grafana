@@ -6,8 +6,6 @@ export interface PluginExports {
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   PanelOptions?: any;
-  ExploreQueryField?: any;
-  ExploreStartPage?: any;
 }
 
 export interface PanelPlugin {
@@ -27,12 +25,6 @@ export interface PluginMeta {
   name: string;
   info: PluginMetaInfo;
   includes: PluginInclude[];
-
-  // Datasource-specific
-  metrics?: boolean;
-  logs?: boolean;
-  explore?: boolean;
-  annotations?: boolean;
 }
 
 export interface PluginInclude {

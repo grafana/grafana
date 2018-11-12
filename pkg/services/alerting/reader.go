@@ -34,8 +34,11 @@ func NewRuleReader() *DefaultRuleReader {
 func (arr *DefaultRuleReader) initReader() {
 	heartbeat := time.NewTicker(time.Second * 10)
 
-	for range heartbeat.C {
-		arr.heartbeat()
+	for {
+		select {
+		case <-heartbeat.C:
+			arr.heartbeat()
+		}
 	}
 }
 
