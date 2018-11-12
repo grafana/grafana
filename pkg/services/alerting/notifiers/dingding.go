@@ -101,6 +101,11 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	var bodyStr string
 	if this.MsgType == "actionCard" {
+		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
+		if picUrl != "" {
+			message = "![](" + picUrl + ")\\n\\n" + message
+		}
+
 		bodyStr = `{
 			"msgtype": "actionCard",
 			"actionCard": {
