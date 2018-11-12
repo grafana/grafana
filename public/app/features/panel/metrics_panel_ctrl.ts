@@ -1,12 +1,15 @@
-import $ from 'jquery';
 import _ from 'lodash';
 
 import config from 'app/core/config';
-import kbn from 'app/core/utils/kbn';
+// import kbn from 'app/core/utils/kbn';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { metricsTabDirective } from './metrics_tab';
-import { applyPanelTimeOverrides as applyPanelTimeOverridesUtil } from 'app/features/dashboard/utils/panel';
+import {
+  applyPanelTimeOverrides as applyPanelTimeOverridesUtil,
+  calculateInterval as calculateIntervalUtil,
+  getResolution,
+} from 'app/features/dashboard/utils/panel';
 import { TimeData } from 'app/types';
 
 class MetricsPanelCtrl extends PanelCtrl {
@@ -137,11 +140,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.applyPanelTimeOverrides();
 
-    if (this.panel.maxDataPoints) {
-      this.resolution = this.panel.maxDataPoints;
-    } else {
-      this.resolution = Math.ceil($(window).width() * (this.panel.gridPos.w / 24));
-    }
+    this.resolution = getResolution(this.panel);
 
     this.calculateInterval();
 
@@ -149,18 +148,22 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   calculateInterval() {
-    let intervalOverride = this.panel.interval;
+    // let intervalOverride = this.panel.interval;
 
-    // if no panel interval check datasource
-    if (intervalOverride) {
-      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
-    } else if (this.datasource && this.datasource.interval) {
-      intervalOverride = this.datasource.interval;
-    }
+    // // if no panel interval check datasource
+    // if (intervalOverride) {
+    //   intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+    // } else if (this.datasource && this.datasource.interval) {
+    //   intervalOverride = this.datasource.interval;
+    // }
 
-    const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
-    this.interval = res.interval;
-    this.intervalMs = res.intervalMs;
+    // const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    // this.interval = res.interval;
+    // this.intervalMs = res.intervalMs;
+
+    const interval = calculateIntervalUtil(this.panel, this.datasource, this.range, this.resolution);
+    this.interval = interval.interval;
+    this.intervalMs = this.intervalMs;
   }
 
   applyPanelTimeOverrides() {

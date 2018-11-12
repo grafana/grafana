@@ -5,12 +5,14 @@ import store from 'app/core/store';
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import { TimeData } from 'app/types';
+import { TimeRange } from 'app/types/series';
 
 // Utils
 import { isString as _isString } from 'lodash';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 import appEvents from 'app/core/app_events';
+import kbn from 'app/core/utils/kbn';
 
 // Services
 import templateSrv from 'app/features/templating/template_srv';
@@ -150,4 +152,34 @@ export const applyPanelTimeOverrides = (panel: PanelModel, timeData: TimeData): 
   }
 
   return newTimeData;
+};
+
+export const getResolution = (panel: PanelModel): number => {
+  const htmlEl = document.getElementsByTagName('html')[0];
+  const width = htmlEl.getBoundingClientRect().width; // https://stackoverflow.com/a/21454625
+
+  return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
+};
+
+export const calculateInterval = (
+  panel: PanelModel,
+  datasource,
+  timeRange: TimeRange,
+  resolution: number
+): { interval: string; intervalMs: number } => {
+  let intervalOverride = panel.interval;
+
+  // if no panel interval check datasource
+  if (intervalOverride) {
+    intervalOverride = templateSrv.replace(intervalOverride, panel.scopedVars);
+  } else if (datasource && datasource.interval) {
+    intervalOverride = datasource.interval;
+  }
+
+  const res = kbn.calculateInterval(timeRange, resolution, intervalOverride);
+
+  return {
+    interval: res.interval,
+    intervalMs: res.intervalMs,
+  };
 };

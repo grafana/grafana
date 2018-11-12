@@ -9,7 +9,7 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
 
 // Utils
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides, getResolution, calculateInterval } from 'app/features/dashboard/utils/panel';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -26,6 +26,10 @@ export interface State {
   refreshCounter: number;
   renderCounter: number;
   timeData: TimeData;
+  interval: {
+    interval: string;
+    intervalMs: number;
+  };
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -40,6 +44,10 @@ export class PanelChrome extends PureComponent<Props, State> {
       timeData: {
         timeInfo: '',
         timeRange: this.timeSrv.timeRange(),
+      },
+      interval: {
+        interval: undefined,
+        intervalMs: undefined,
       },
     };
   }
@@ -63,10 +71,14 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { panel } = this.props;
     const timeData = applyPanelTimeOverrides(panel, currTimeData);
 
+    const resolution = getResolution(panel);
+    const interval = calculateInterval(panel, panel.datasource, timeData.timeRange, resolution);
+
     this.setState(prevState => ({
       ...prevState,
       refreshCounter: this.state.refreshCounter + 1,
       timeData,
+      interval,
     }));
   };
 
