@@ -60,7 +60,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	var builder releaseBuilder
 	testDataPath := "testdata"
 	builder = releaseLocalSources{
-		path: testDataPath,
+		path:                   testDataPath,
 		artifactConfigurations: buildArtifactConfigurations,
 	}
 

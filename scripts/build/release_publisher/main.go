@@ -44,13 +44,13 @@ func main() {
 	if fromLocal {
 		path, _ := os.Getwd()
 		builder = releaseLocalSources{
-			path: path,
+			path:                   path,
 			artifactConfigurations: buildArtifactConfigurations,
 		}
 	} else {
 		builder = releaseFromExternalContent{
-			getter:     getHttpContents{},
-			rawVersion: version,
+			getter:                 getHttpContents{},
+			rawVersion:             version,
 			artifactConfigurations: buildArtifactConfigurations,
 		}
 	}

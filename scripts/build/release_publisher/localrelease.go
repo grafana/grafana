@@ -13,7 +13,7 @@ import (
 )
 
 type releaseLocalSources struct {
-	path string
+	path                   string
 	artifactConfigurations []buildArtifact
 }
 
@@ -36,7 +36,7 @@ func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, 
 
 type buildData struct {
 	version string
-	builds []build
+	builds  []build
 }
 
 func (r releaseLocalSources) findBuilds(baseArchiveUrl string) buildData {
