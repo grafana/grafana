@@ -341,7 +341,7 @@ func InitTestDB(t *testing.T) *SqlStore {
 	sec.NewKey("type", dbType)
 
 	switch dbType {
-	case "mysql":
+	case "mysql", "mysql2":
 		sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr)
 	case "postgres":
 		sec.NewKey("connection_string", sqlutil.TestDB_Postgres.ConnStr)
