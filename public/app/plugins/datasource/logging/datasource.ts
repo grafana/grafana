@@ -1,10 +1,11 @@
 import _ from 'lodash';
 
 import * as dateMath from 'app/core/utils/datemath';
+import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
+import { PluginMeta, DataQuery } from 'app/types';
 
 import LanguageProvider from './language_provider';
 import { mergeStreamsToLogs } from './result_transformer';
-import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
 
 export const DEFAULT_LIMIT = 1000;
 
@@ -109,6 +110,10 @@ export default class LoggingDatasource {
       }, []);
       return { data: allStreams };
     });
+  }
+
+  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]> {
+    return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
   metadataRequest(url) {

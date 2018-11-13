@@ -24,8 +24,8 @@ export function processLabels(labels, withName = false) {
 }
 
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
-const selectorRegexp = /\{[^}]*?\}/;
-const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
+export const selectorRegexp = /\{[^}]*?\}/;
+export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics

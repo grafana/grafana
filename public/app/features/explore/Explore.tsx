@@ -3,8 +3,9 @@ import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 import _ from 'lodash';
 
+import { DataSource } from 'app/types/datasources';
 import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, ResultType } from 'app/types/explore';
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange, DataQuery } from 'app/types/series';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
@@ -16,6 +17,7 @@ import PickerOption from 'app/core/components/Picker/PickerOption';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import QueryRows from './QueryRows';
 import Graph from './Graph';
@@ -24,7 +26,6 @@ import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
-import { DataSource } from 'app/types/datasources';
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -77,7 +78,7 @@ function updateHistory(history: HistoryItem[], datasourceId: string, queries: st
 }
 
 interface ExploreProps {
-  datasourceSrv: any;
+  datasourceSrv: DatasourceSrv;
   onChangeSplit: (split: boolean, state?: ExploreState) => void;
   onSaveState: (key: string, state: ExploreState) => void;
   position: string;
@@ -92,6 +93,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
+   * TODO: make this generic (other datasources might not have string representations of current query state)
    */
   queryExpressions: string[];
 
@@ -160,7 +162,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   }
 
-  async setDatasource(datasource: DataSource) {
+  async setDatasource(datasource: any, origin?: DataSource) {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
     const supportsTable = datasource.meta.metrics;
@@ -181,12 +183,33 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasource.init();
     }
 
-    // Keep queries but reset edit state
+    // Check if queries can be imported from previously selected datasource
+    let queryExpressions = this.queryExpressions;
+    if (origin) {
+      if (origin.meta.id === datasource.meta.id) {
+        // Keep same queries if same type of datasource
+        queryExpressions = [...this.queryExpressions];
+      } else if (datasource.importQueries) {
+        // Datasource-specific importers, wrapping to satisfy interface
+        const wrappedQueries: DataQuery[] = this.queryExpressions.map((query, index) => ({
+          refId: String(index),
+          expr: query,
+        }));
+        const modifiedQueries: DataQuery[] = await datasource.importQueries(wrappedQueries, origin.meta);
+        queryExpressions = modifiedQueries.map(({ expr }) => expr);
+      } else {
+        // Default is blank queries
+        queryExpressions = this.queryExpressions.map(() => '');
+      }
+    }
+
+    // Reset edit state with new queries
     const nextQueries = this.state.queries.map((q, i) => ({
       ...q,
       key: generateQueryKey(i),
-      query: this.queryExpressions[i],
+      query: queryExpressions[i],
     }));
+    this.queryExpressions = queryExpressions;
 
     // Custom components
     const StartPage = datasource.pluginExports.ExploreStartPage;
@@ -246,6 +269,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onChangeDatasource = async option => {
+    const origin = this.state.datasource;
     this.setState({
       datasource: null,
       datasourceError: null,
@@ -254,7 +278,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
     const datasourceName = option.value;
     const datasource = await this.props.datasourceSrv.get(datasourceName);
-    this.setDatasource(datasource);
+    this.setDatasource(datasource as any, origin);
   };
 
   onChangeQuery = (value: string, index: number, override?: boolean) => {

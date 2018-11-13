@@ -8,9 +8,9 @@ import {
   TypeaheadInput,
   TypeaheadOutput,
 } from 'app/types/explore';
-
-import { parseSelector } from 'app/plugins/datasource/prometheus/language_utils';
+import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
 import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';
+import { DataQuery } from 'app/types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -156,6 +156,56 @@ export default class LoggingLanguageProvider extends LanguageProvider {
     }
 
     return { context, refresher, suggestions };
+  }
+
+  async importQueries(queries: DataQuery[], datasourceType: string): Promise<DataQuery[]> {
+    if (datasourceType === 'prometheus') {
+      return Promise.all(
+        queries.map(async query => {
+          const expr = await this.importPrometheusQuery(query.expr);
+          return {
+            ...query,
+            expr,
+          };
+        })
+      );
+    }
+    return queries.map(query => ({
+      ...query,
+      expr: '',
+    }));
+  }
+
+  async importPrometheusQuery(query: string): Promise<string> {
+    // Consider only first selector in query
+    const selectorMatch = query.match(selectorRegexp);
+    if (selectorMatch) {
+      const selector = selectorMatch[0];
+      const labels = {};
+      selector.replace(labelRegexp, (_, key, operator, value) => {
+        labels[key] = { value, operator };
+        return '';
+      });
+
+      // Keep only labels that exist on origin and target datasource
+      await this.start(); // fetches all existing label keys
+      const commonLabels = {};
+      for (const key in labels) {
+        const existingKeys = this.labelKeys[EMPTY_SELECTOR];
+        if (existingKeys.indexOf(key) > -1) {
+          // Should we check for label value equality here?
+          commonLabels[key] = labels[key];
+        }
+      }
+      const labelKeys = Object.keys(commonLabels).sort();
+      const cleanSelector = labelKeys
+        .map(key => `${key}${commonLabels[key].operator}${commonLabels[key].value}`)
+        .join(',');
+
+      return ['{', cleanSelector, '}'].join('');
+    }
+
+    return '';
   }
 
   async fetchLogLabels() {
