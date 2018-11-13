@@ -65,7 +65,11 @@ exports[`Render should render alpha info text 1`] = `
                   "large": "large/logo",
                   "small": "small/logo",
                 },
-                "screenshots": "screenshot/1",
+                "screenshots": Array [
+                  Object {
+                    "path": "screenshot",
+                  },
+                ],
                 "updated": "2018-09-26",
                 "version": "1",
               },
@@ -158,7 +162,11 @@ exports[`Render should render beta info text 1`] = `
                   "large": "large/logo",
                   "small": "small/logo",
                 },
-                "screenshots": "screenshot/1",
+                "screenshots": Array [
+                  Object {
+                    "path": "screenshot",
+                  },
+                ],
                 "updated": "2018-09-26",
                 "version": "1",
               },
@@ -246,7 +254,11 @@ exports[`Render should render component 1`] = `
                   "large": "large/logo",
                   "small": "small/logo",
                 },
-                "screenshots": "screenshot/1",
+                "screenshots": Array [
+                  Object {
+                    "path": "screenshot",
+                  },
+                ],
                 "updated": "2018-09-26",
                 "version": "1",
               },
@@ -339,7 +351,11 @@ exports[`Render should render is ready only message 1`] = `
                   "large": "large/logo",
                   "small": "small/logo",
                 },
-                "screenshots": "screenshot/1",
+                "screenshots": Array [
+                  Object {
+                    "path": "screenshot",
+                  },
+                ],
                 "updated": "2018-09-26",
                 "version": "1",
               },
