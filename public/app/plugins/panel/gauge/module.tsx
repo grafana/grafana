@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import Gauge from 'app/viz/Gauge';
 import { NullValueMode, PanelProps } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
+import { GaugeOptions } from './GaugeOptions';
 
 export interface Options {}
 
@@ -20,4 +21,4 @@ export class GaugePanel extends PureComponent<Props> {
   }
 }
 
-export { GaugePanel as PanelComponent };
+export { GaugePanel as Panel, GaugeOptions as PanelOptions };
