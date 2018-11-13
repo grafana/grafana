@@ -32,8 +32,8 @@ describe('given dashboard with repeated panels', () => {
           {
             name: 'ds',
             type: 'datasource',
-            query: 'testdb',
-            current: { value: 'prod', text: 'prod' },
+            query: 'other2',
+            current: { value: 'other2', text: 'other2' },
             options: [],
           },
         ],
@@ -205,6 +205,11 @@ describe('given dashboard with repeated panels', () => {
     expect(variable.options[0].text).toBe('${VAR_PREFIX}');
     expect(variable.options[0].value).toBe('${VAR_PREFIX}');
   });
+
+  it('should add datasources only use via datasource variable to requires', () => {
+    const require = _.find(exported.__requires, { name: 'OtherDB_2' });
+    expect(require.id).toBe('other2');
+  });
 });
 
 // Stub responses
@@ -217,6 +222,11 @@ stubs['gfdb'] = {
 stubs['other'] = {
   name: 'other',
   meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
+};
+
+stubs['other2'] = {
+  name: 'other2',
+  meta: { id: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' },
 };
 
 stubs['-- Mixed --'] = {

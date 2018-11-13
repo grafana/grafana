@@ -28,7 +28,7 @@ export class TemplateSrv {
     const existsOrEmpty = value => value || value === '';
 
     this.index = this.variables.reduce((acc, currentValue) => {
-      if (currentValue.current && !currentValue.current.isNone && existsOrEmpty(currentValue.current.value)) {
+      if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
         acc[currentValue.name] = currentValue;
       }
       return acc;
