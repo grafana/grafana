@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import _ from 'lodash';
 import coreModule from '../core_module';
 
@@ -5,18 +6,20 @@ import coreModule from '../core_module';
 function dashClass($timeout) {
   return {
     link: ($scope, elem) => {
+      const body = $('body');
+
       $scope.ctrl.dashboard.events.on('view-mode-changed', panel => {
         console.log('view-mode-changed', panel.fullscreen);
         if (panel.fullscreen) {
-          elem.addClass('panel-in-fullscreen');
+          body.addClass('panel-in-fullscreen');
         } else {
           $timeout(() => {
-            elem.removeClass('panel-in-fullscreen');
+            body.removeClass('panel-in-fullscreen');
           });
         }
       });
 
-      elem.toggleClass('panel-in-fullscreen', $scope.ctrl.dashboard.meta.fullscreen === true);
+      body.toggleClass('panel-in-fullscreen', $scope.ctrl.dashboard.meta.fullscreen === true);
 
       $scope.$watch('ctrl.dashboardViewState.state.editview', newValue => {
         if (newValue) {

@@ -37,20 +37,6 @@ div.flot-text {
   height: 100%;
 }
 
-.panel-editor-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.panel-editor-container__panel {
-  height: 35%;
-}
-
-.panel-editor-container__editor {
-  height: 65%;
-}
-
 .panel-container {
   background-color: $panel-bg;
   border: $panel-border;

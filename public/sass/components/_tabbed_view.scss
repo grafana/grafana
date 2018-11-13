@@ -2,9 +2,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  flex-grow: 1;
 
   &.tabbed-view--new {
-    padding: 25px 0 0 0;
+    padding: 0 0 0 0;
     height: 100%;
   }
 }
@@ -12,13 +13,14 @@
 .tabbed-view-header {
   box-shadow: $page-header-shadow;
   border-bottom: 1px solid $page-header-border-color;
+  padding: 0 $dashboard-padding;
   @include clearfix();
 }
 
 .tabbed-view-title {
   float: left;
   padding-top: 0.5rem;
-  margin: 0 $spacer*3 0 $spacer*1;
+  margin: 0 $spacer*3 0 0;
 }
 
 .tabbed-view-panel-title {

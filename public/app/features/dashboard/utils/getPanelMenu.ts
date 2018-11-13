@@ -1,5 +1,5 @@
 import { updateLocation } from 'app/core/actions';
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 
 import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/panel_model';

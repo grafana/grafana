@@ -31,6 +31,7 @@ $white: #fff;
 // Accent colors
 // -------------------------
 $blue: #0083b3;
+$blue-dark: #005f81;
 $blue-light: #00a8e6;
 $green: #3aa655;
 $red: #d44939;
@@ -212,6 +213,11 @@ $menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
 // Tabs
 // -------------------------
 $tab-border-color: $gray-5;
+
+// Toolbar
+$toolbar-bg: linear-gradient(90deg, #ffffff, #e6eef9);
+$toolbar-shadow: 1px 1px 3px #c7d0d8;
+$toolbar-tab-bg: $white;
 
 // search
 $search-shadow: 0 5px 30px 0 $gray-4;

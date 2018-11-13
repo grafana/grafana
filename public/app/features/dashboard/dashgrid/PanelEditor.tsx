@@ -2,20 +2,19 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 import { QueriesTab } from './QueriesTab';
-import { VizTypePicker } from './VizTypePicker';
+import { VisualizationTab } from './VisualizationTab';
 
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { PanelPlugin, PluginExports } from 'app/types/plugins';
+import { PanelPlugin } from 'app/types/plugins';
 
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
-  panelType: string;
-  pluginExports: PluginExports;
+  plugin: PanelPlugin;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
@@ -34,41 +33,8 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     this.tabs = [
       { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
       { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
+      { id: 'alert', text: 'Alert', icon: 'gicon gicon-alert' },
     ];
-  }
-
-  renderQueriesTab() {
-    return <QueriesTab panel={this.props.panel} dashboard={this.props.dashboard} />;
-  }
-
-  renderPanelOptions() {
-    const { pluginExports, panel } = this.props;
-
-    if (pluginExports.PanelOptionsComponent) {
-      const OptionsComponent = pluginExports.PanelOptionsComponent;
-      return <OptionsComponent options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
-    } else {
-      return <p>Visualization has no options</p>;
-    }
-  }
-
-  onPanelOptionsChanged = (options: any) => {
-    this.props.panel.updateOptions(options);
-    this.forceUpdate();
-  };
-
-  renderVizTab() {
-    return (
-      <div className="viz-editor">
-        <div className="viz-editor-col1">
-          <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.props.onTypeChanged} />
-        </div>
-        <div className="viz-editor-col2">
-          <h5 className="page-heading">Options</h5>
-          {this.renderPanelOptions()}
-        </div>
-      </div>
-    );
   }
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -81,28 +47,44 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     this.forceUpdate();
   };
 
+  onClose = () => {
+    store.dispatch(
+      updateLocation({
+        query: { tab: null, fullscreen: null, edit: null },
+        partial: true,
+      })
+    );
+  };
+
   render() {
+    const { panel, dashboard, onTypeChanged, plugin } = this.props;
     const { location } = store.getState();
     const activeTab = location.query.tab || 'queries';
 
     return (
-      <div className="tabbed-view tabbed-view--new">
-        <div className="tabbed-view-header">
+      <div className="panel-editor-container__editor">
+        <div className="panel-editor-resizer">
+          <div className="panel-editor-resizer__handle">
+            <div className="panel-editor-resizer__handle-dots" />
+          </div>
+        </div>
+
+        <div className="panel-editor-tabs">
           <ul className="gf-tabs">
             {this.tabs.map(tab => {
               return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
             })}
           </ul>
 
-          <button className="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-            <i className="fa fa-remove" />
+          <button className="panel-editor-tabs__close" onClick={this.onClose}>
+            <i className="fa fa-reply" />
           </button>
         </div>
 
-        <div className="tabbed-view-body">
-          {activeTab === 'queries' && this.renderQueriesTab()}
-          {activeTab === 'visualization' && this.renderVizTab()}
-        </div>
+        {activeTab === 'queries' && <QueriesTab panel={panel} dashboard={dashboard} />}
+        {activeTab === 'visualization' && (
+          <VisualizationTab panel={panel} dashboard={dashboard} plugin={plugin} onTypeChanged={onTypeChanged} />
+        )}
       </div>
     );
   }
@@ -121,8 +103,8 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   });
 
   return (
-    <li className="gf-tabs-item" key={tab.id}>
-      <a className={tabClasses} onClick={() => onClick(tab)}>
+    <li className="gf-tabs-item" onClick={() => onClick(tab)}>
+      <a className={tabClasses}>
         <i className={tab.icon} /> {tab.text}
       </a>
     </li>

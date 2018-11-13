@@ -1,4 +1,4 @@
-import { Plugin } from 'app/types';
+import { Plugin, PanelPlugin } from 'app/types';
 
 export const getMockPlugins = (amount: number): Plugin[] => {
   const plugins = [];
@@ -17,7 +17,7 @@ export const getMockPlugins = (amount: number): Plugin[] => {
         description: 'pretty decent plugin',
         links: ['one link'],
         logos: { small: 'small/logo', large: 'large/logo' },
-        screenshots: `screenshot/${i}`,
+        screenshots: [{ path: `screenshot/${i}` }],
         updated: '2018-09-26',
         version: '1',
       },
@@ -26,10 +26,36 @@ export const getMockPlugins = (amount: number): Plugin[] => {
       pinned: false,
       state: '',
       type: '',
+      module: {},
     });
   }
 
   return plugins;
+};
+
+export const getPanelPlugin = (options: { id: string; sort?: number; hideFromList?: boolean }): PanelPlugin => {
+  return {
+    id: options.id,
+    name: options.id,
+    sort: options.sort || 1,
+    info: {
+      author: {
+        name: options.id + 'name',
+      },
+      description: '',
+      links: [],
+      logos: {
+        large: '',
+        small: '',
+      },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    hideFromList: options.hideFromList === true,
+    module: '',
+    baseUrl: '',
+  };
 };
 
 export const getMockPlugin = () => {
@@ -46,7 +72,7 @@ export const getMockPlugin = () => {
       description: 'pretty decent plugin',
       links: ['one link'],
       logos: { small: 'small/logo', large: 'large/logo' },
-      screenshots: 'screenshot/1',
+      screenshots: [{ path: `screenshot` }],
       updated: '2018-09-26',
       version: '1',
     },
@@ -55,5 +81,6 @@ export const getMockPlugin = () => {
     pinned: false,
     state: '',
     type: '',
+    module: {},
   };
 };
