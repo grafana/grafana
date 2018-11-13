@@ -6,7 +6,7 @@ export interface PluginExports {
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
-  TemplateQueryComponent?: any;
+  VariableQueryEditor?: any;
   ExploreQueryField?: any;
   ExploreStartPage?: any;
 
@@ -100,7 +100,7 @@ export interface PluginsState {
   dashboards: PluginDashboard[];
 }
 
-export interface TemplateQueryProps {
+export interface VariableQueryProps {
   query: any;
   onChange: (query: any, definition: string) => void;
   datasource: any;

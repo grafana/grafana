@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import { TemplateQueryProps } from 'app/types/plugins';
+import { VariableQueryProps } from 'app/types/plugins';
 
-export default class DefaultTemplateQueryComponent extends PureComponent<TemplateQueryProps, any> {
+export default class DefaultVariableQueryEditor extends PureComponent<VariableQueryProps, any> {
   constructor(props) {
     super(props);
     this.state = { value: props.query };

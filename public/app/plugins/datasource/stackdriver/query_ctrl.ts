@@ -52,6 +52,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     metricKind: '',
     valueType: '',
   };
+  projects: any;
 
   showHelp: boolean;
   showLastQuery: boolean;
@@ -62,9 +63,14 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   constructor($scope, $injector) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
-
+    this.setProjects($scope.ctrl.datasource);
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+  }
+
+  async setProjects(ds) {
+    this.projects = await ds.getProjects();
+    console.log(this.projects);
   }
 
   onDataReceived(dataList) {

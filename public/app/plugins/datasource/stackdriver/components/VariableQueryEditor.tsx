@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
-import { TemplateQueryProps } from 'app/types/plugins';
+import { VariableQueryProps } from 'app/types/plugins';
 import SimpleSelect from './SimpleSelect';
 import { getMetricTypes } from '../functions';
-import { MetricFindQueryTypes, TemplateQueryComponentData } from '../types';
+import { MetricFindQueryTypes, VariableQueryData } from '../types';
 
-export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQueryProps, TemplateQueryComponentData> {
+export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   queryTypes: Array<{ value: string; name: string }> = [
     { value: MetricFindQueryTypes.MetricTypes, name: 'Metric Types' },
     { value: MetricFindQueryTypes.MetricLabels, name: 'Metric Labels' },
@@ -16,7 +16,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     { value: MetricFindQueryTypes.AlignmentPeriods, name: 'Alignment Periods' },
   ];
 
-  defaults: TemplateQueryComponentData = {
+  defaults: VariableQueryData = {
     selectedQueryType: this.queryTypes[0].value,
     metricDescriptors: [],
     selectedService: '',
@@ -27,7 +27,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
     services: [],
   };
 
-  constructor(props: TemplateQueryProps) {
+  constructor(props: VariableQueryProps) {
     super(props);
     this.handleQueryTypeChange = this.handleQueryTypeChange.bind(this);
     this.onServiceChange = this.onServiceChange.bind(this);
@@ -111,7 +111,7 @@ export class StackdriverTemplateQueryComponent extends PureComponent<TemplateQue
   async getLabels(selectedMetricType, selectedQueryType = this.state.selectedQueryType) {
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
     if (selectedMetricType && this.isLabelQuery(selectedQueryType)) {
-      const refId = 'StackdriverTemplateQueryComponent';
+      const refId = 'StackdriverVariableQueryEditor';
       const response = await this.props.datasource.getLabels(selectedMetricType, refId);
       const labels = Object.keys(response.meta[selectedQueryType]);
       const labelKey = labels.some(l => l === this.state.labelKey) ? this.state.labelKey : labels[0];

@@ -1,14 +1,14 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import { StackdriverTemplateQueryComponent } from './TemplateQueryComponent';
-import { TemplateQueryProps } from 'app/types/plugins';
+import { StackdriverVariableQueryEditor } from './VariableQueryEditor';
+import { VariableQueryProps } from 'app/types/plugins';
 import { MetricFindQueryTypes } from '../types';
 
 jest.mock('../functions', () => ({
   getMetricTypes: () => ({ metricTypes: [], selectedMetricType: '' }),
 }));
 
-const props: TemplateQueryProps = {
+const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},
   datasource: {
@@ -16,9 +16,9 @@ const props: TemplateQueryProps = {
   },
 };
 
-describe('StackdriverTemplateQueryComponent', () => {
+describe('VariableQueryEditor', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<StackdriverTemplateQueryComponent {...props} />).toJSON();
+    const tree = renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
@@ -28,7 +28,7 @@ describe('StackdriverTemplateQueryComponent', () => {
         expect(definition).toBe('Stackdriver - Metric Types');
         done();
       };
-      renderer.create(<StackdriverTemplateQueryComponent {...props} />).toJSON();
+      renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
     });
   });
 
@@ -39,7 +39,7 @@ describe('StackdriverTemplateQueryComponent', () => {
         expect(definition).toBe('Stackdriver - Metric Labels');
         done();
       };
-      renderer.create(<StackdriverTemplateQueryComponent {...props} />).toJSON();
+      renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
     });
   });
 });

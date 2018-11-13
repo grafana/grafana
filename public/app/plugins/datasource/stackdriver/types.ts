@@ -8,7 +8,7 @@ export enum MetricFindQueryTypes {
   AlignmentPeriods = 'alignmentPeriods',
 }
 
-export interface TemplateQueryComponentData {
+export interface VariableQueryData {
   selectedQueryType: string;
   metricDescriptors: any[];
   selectedService: string;

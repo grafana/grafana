@@ -13,9 +13,14 @@
     </div>
   </div>
   <div class="gf-form-inline">
-    <div class="gf-form">
+    <!-- <div class="gf-form">
       <span class="gf-form-label width-9">Project</span>
       <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.defaultProject' css-class="min-width-12" />
+    </div> -->
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Project</span>
+      <gf-form-dropdown class="gf-form-input" type="text" ng-model='ctrl.target.defaultProject' get-options="ctrl.projects"
+        css-class="min-width-12"></gf-form-dropdown>
     </div>
     <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">

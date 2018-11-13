@@ -2,19 +2,19 @@ import coreModule from 'app/core/core_module';
 import { importPluginModule } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import DefaultTemplateQueryComponent from '../templating/DefaultTemplateQueryComponent';
+import DefaultVariableQueryEditor from '../templating/DefaultVariableQueryEditor';
 
 async function loadComponent(module) {
   const component = await importPluginModule(module);
-  if (component && component.TemplateQueryComponent) {
-    return component.TemplateQueryComponent;
+  if (component && component.VariableQueryEditor) {
+    return component.VariableQueryEditor;
   } else {
-    return DefaultTemplateQueryComponent;
+    return DefaultVariableQueryEditor;
   }
 }
 
 /** @ngInject */
-function templateQueryComponentLoader() {
+function variableQueryEditorLoader() {
   return {
     restrict: 'E',
     link: async (scope, elem) => {
@@ -32,4 +32,4 @@ function templateQueryComponentLoader() {
   };
 }
 
-coreModule.directive('templateQueryComponentLoader', templateQueryComponentLoader);
+coreModule.directive('variableQueryEditorLoader', variableQueryEditorLoader);

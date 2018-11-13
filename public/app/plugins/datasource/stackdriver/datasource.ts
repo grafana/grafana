@@ -111,6 +111,11 @@ export default class StackdriverDatasource {
     return unit;
   }
 
+  async getProjects() {
+    const response = await this.doRequest(`/cloudresourcemanager/v1/projects`);
+    return response.data.projects.map(p => ({ value: p.projectId, name: p.name }));
+  }
+
   async query(options) {
     const result = [];
     const data = await this.getTimeSeries(options);

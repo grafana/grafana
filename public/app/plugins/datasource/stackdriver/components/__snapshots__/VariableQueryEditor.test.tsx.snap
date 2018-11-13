@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`StackdriverTemplateQueryComponent renders correctly 1`] = `
+exports[`VariableQueryEditor renders correctly 1`] = `
 Array [
   <div
     className="gf-form max-width-21"
