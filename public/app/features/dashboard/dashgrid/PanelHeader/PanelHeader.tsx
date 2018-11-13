@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import $ from 'jquery';
 import classNames from 'classnames';
 
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -19,6 +20,9 @@ export interface State {
 }
 
 export class PanelHeader extends PureComponent<Props, State> {
+  dropdownToggleElement: HTMLElement;
+  titleInputElement: HTMLElement;
+
   constructor(props) {
     super(props);
 
@@ -28,8 +32,20 @@ export class PanelHeader extends PureComponent<Props, State> {
     };
   }
 
-  onToggleEditTitle = () => {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (!prevState.titleEditable && this.titleInputElement) {
+      this.titleInputElement.focus();
+    }
+  }
+
+  onToggleDropdown = () => {
+    $(this.dropdownToggleElement).dropdown('toggle');
+  };
+
+  onToggleEditTitle = event => {
     if (this.props.isEditing) {
+      event.stopPropagation();
+
       this.setState(
         prevState => ({
           titleEditable: !prevState.titleEditable,
@@ -66,11 +82,12 @@ export class PanelHeader extends PureComponent<Props, State> {
           </span>
         )}
 
-        <div className="panel-title-container">
+        <div className="panel-title-container" onClick={this.onToggleDropdown}>
           <div className="panel-title">
             <span className="icon-gf panel-alert-icon" />
             {titleEditable ? (
               <input
+                ref={element => (this.titleInputElement = element)}
                 className="panel-title-input"
                 onBlur={this.onToggleEditTitle}
                 onChange={this.onTitleChange}
@@ -83,7 +100,11 @@ export class PanelHeader extends PureComponent<Props, State> {
               </span>
             )}
 
-            <span className="fa fa-caret-down panel-menu-toggle" data-toggle="dropdown" />
+            <span
+              className="fa fa-caret-down panel-menu-toggle"
+              data-toggle="dropdown"
+              ref={element => (this.dropdownToggleElement = element)}
+            />
 
             <PanelHeaderMenu panel={panel} dashboard={dashboard} />
 
