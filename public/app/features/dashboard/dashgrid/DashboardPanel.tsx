@@ -128,7 +128,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return (
       <div className={containerClass}>
         <div className={panelWrapperClass}>
-          <PanelChrome component={plugin.exports.PanelComponent} panel={panel} dashboard={dashboard} />
+          <PanelChrome component={plugin.exports.Panel} panel={panel} dashboard={dashboard} />
         </div>
         {panel.isEditing && (
           <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} onTypeChanged={this.onPluginTypeChanged} />
@@ -151,7 +151,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
 
     // if exporting PanelComponent it must be a react panel
-    if (plugin.exports.PanelComponent) {
+    if (plugin.exports.Panel) {
       return this.renderReactPanel();
     }
 

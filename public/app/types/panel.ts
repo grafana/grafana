@@ -13,6 +13,11 @@ export interface PanelOptionsProps<T = any> {
   onChange: (options: T) => void;
 }
 
+export interface PanelSize {
+  width: number;
+  height: number;
+}
+
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider';
   text?: string;

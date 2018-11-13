@@ -21,10 +21,10 @@ export class VisualizationTab extends PureComponent<Props> {
 
   renderPanelOptions() {
     const { plugin, panel } = this.props;
-    const { PanelOptionsComponent } = plugin.exports;
+    const { PanelOptions } = plugin.exports;
 
-    if (PanelOptionsComponent) {
-      return <PanelOptionsComponent options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
+    if (PanelOptions) {
+      return <PanelOptions options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
     } else {
       return <p>Visualization has no options</p>;
     }
