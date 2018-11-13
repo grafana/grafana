@@ -42,7 +42,10 @@ export class OrgPreferences extends PureComponent<Props> {
       setOrganizationTheme,
     } = this.props;
 
-    starredDashboards.unshift({ id: 0, title: 'Default', tags: [], type: '', uid: '', uri: '', url: '' });
+    const dashboards: DashboardSearchHit[] = [
+      { id: 0, title: 'Default', tags: [], type: '', uid: '', uri: '', url: '' },
+      ...starredDashboards,
+    ];
 
     return (
       <form className="section gf-form-group" onSubmit={this.onSubmitForm}>
@@ -66,11 +69,11 @@ export class OrgPreferences extends PureComponent<Props> {
             Home Dashboard
           </Label>
           <SimplePicker
-            defaultValue={starredDashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
+            defaultValue={dashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
             getOptionValue={i => i.id}
             getOptionLabel={i => i.title}
             onSelected={(dashboard: DashboardSearchHit) => setOrganizationHomeDashboard(dashboard.id)}
-            options={starredDashboards}
+            options={dashboards}
             placeholder="Chose default dashboard"
             width={20}
           />
