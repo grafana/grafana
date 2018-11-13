@@ -14,8 +14,8 @@ class PanelPluginNotFound extends PureComponent<Props> {
   render() {
     const style = {
       display: 'flex',
-      'align-items': 'center',
-      'text-align': 'center',
+      alignItems: 'center',
+      textAlign: 'center' as 'center',
       height: '100%',
     };
 
@@ -58,7 +58,7 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     },
 
     exports: {
-      PanelComponent: NotFound,
+      Panel: NotFound,
     },
   };
 }

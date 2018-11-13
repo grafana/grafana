@@ -87,4 +87,4 @@ export class GraphOptions extends PureComponent<PanelOptionsProps<Options>> {
   }
 }
 
-export { Graph2 as PanelComponent, GraphOptions as PanelOptionsComponent };
+export { Graph2 as Panel, GraphOptions as PanelOptions };
