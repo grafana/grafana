@@ -29,10 +29,6 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
 
   constructor(props: VariableQueryProps) {
     super(props);
-    this.handleQueryTypeChange = this.handleQueryTypeChange.bind(this);
-    this.onServiceChange = this.onServiceChange.bind(this);
-    this.onMetricTypeChange = this.onMetricTypeChange.bind(this);
-    this.onLabelKeyChange = this.onLabelKeyChange.bind(this);
     this.state = Object.assign(this.defaults, this.props.query);
   }
 
@@ -127,7 +123,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
           <SimpleSelect
             value={this.state.selectedService}
             options={this.state.services}
-            onValueChange={this.onServiceChange}
+            onValueChange={e => this.onServiceChange(e)}
             label="Services"
           />
         );
@@ -139,20 +135,20 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
             <SimpleSelect
               value={this.state.selectedService}
               options={this.state.services}
-              onValueChange={this.onServiceChange}
+              onValueChange={e => this.onServiceChange(e)}
               label="Services"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.state.metricTypes}
-              onValueChange={this.onMetricTypeChange}
+              onValueChange={e => this.onMetricTypeChange(e)}
               label="Metric Types"
             />
             {queryType !== MetricFindQueryTypes.ResourceTypes && (
               <SimpleSelect
                 value={this.state.labelKey}
                 options={this.state.labels.map(l => ({ value: l, name: l }))}
-                onValueChange={this.onLabelKeyChange}
+                onValueChange={e => this.onLabelKeyChange(e)}
                 label={
                   this.state.selectedQueryType === MetricFindQueryTypes.ResourceLabels
                     ? 'Resource Label Key'
@@ -169,13 +165,13 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
             <SimpleSelect
               value={this.state.selectedService}
               options={this.state.services}
-              onValueChange={this.onServiceChange}
+              onValueChange={e => this.onServiceChange(e)}
               label="Services"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.state.metricTypes}
-              onValueChange={this.onMetricTypeChange}
+              onValueChange={e => this.onMetricTypeChange(e)}
               label="Metric Types"
             />
           </React.Fragment>
@@ -191,7 +187,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         <SimpleSelect
           value={this.state.selectedQueryType}
           options={this.queryTypes}
-          onValueChange={this.handleQueryTypeChange}
+          onValueChange={e => this.handleQueryTypeChange(e)}
           label="Query Types"
         />
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}
