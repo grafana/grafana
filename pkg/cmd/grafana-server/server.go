@@ -162,7 +162,11 @@ func (g *GrafanaServerImpl) Run() error {
 		})
 	}
 
-	sendSystemdNotification("READY=1")
+	err = sendSystemdNotification("READY=1")
+	if err != nil {
+		return fmt.Errorf("Could not send systemd notification: %v", err)
+	}
+
 	return g.childRoutines.Wait()
 }
 
