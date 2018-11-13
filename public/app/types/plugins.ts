@@ -19,7 +19,7 @@ export interface PanelPlugin {
   id: string;
   name: string;
   meta: PluginMeta;
-  hideFromList: boolean;
+  hideFromList?: boolean;
   module: string;
   baseUrl: string;
   info: any;
@@ -49,7 +49,7 @@ export interface PluginInclude {
 export interface PluginMetaInfo {
   author: {
     name: string;
-    url: string;
+    url?: string;
   };
   description: string;
   links: string[];
@@ -57,7 +57,7 @@ export interface PluginMetaInfo {
     large: string;
     small: string;
   };
-  screenshots: string;
+  screenshots: any[];
   updated: string;
   version: string;
 }

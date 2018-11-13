@@ -3,6 +3,7 @@ import { AddPanelPanel } from './../dashgrid/AddPanelPanel';
 import { PanelModel } from '../panel_model';
 import { shallow } from 'enzyme';
 import config from '../../../core/config';
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 jest.mock('app/core/store', () => ({
   get: key => {
@@ -18,76 +19,11 @@ describe('AddPanelPanel', () => {
 
   beforeEach(() => {
     config.panels = [
-      {
-        id: 'singlestat',
-        hideFromList: false,
-        name: 'Singlestat',
-        sort: 2,
-        module: '',
-        baseUrl: '',
-        meta: {},
-        info: {
-          logos: {
-            small: '',
-          },
-        },
-      },
-      {
-        id: 'hidden',
-        hideFromList: true,
-        name: 'Hidden',
-        sort: 100,
-        meta: {},
-        module: '',
-        baseUrl: '',
-        info: {
-          logos: {
-            small: '',
-          },
-        },
-      },
-      {
-        id: 'graph',
-        hideFromList: false,
-        name: 'Graph',
-        sort: 1,
-        meta: {},
-        module: '',
-        baseUrl: '',
-        info: {
-          logos: {
-            small: '',
-          },
-        },
-      },
-      {
-        id: 'alexander_zabbix',
-        hideFromList: false,
-        name: 'Zabbix',
-        sort: 100,
-        meta: {},
-        module: '',
-        baseUrl: '',
-        info: {
-          logos: {
-            small: '',
-          },
-        },
-      },
-      {
-        id: 'piechart',
-        hideFromList: false,
-        name: 'Piechart',
-        sort: 100,
-        meta: {},
-        module: '',
-        baseUrl: '',
-        info: {
-          logos: {
-            small: '',
-          },
-        },
-      },
+      getPanelPlugin({ id: 'singlestat', sort: 2 }),
+      getPanelPlugin({ id: 'hiddem', sort: 100, hideFromList: true }),
+      getPanelPlugin({ id: 'graph', sort: 1 }),
+      getPanelPlugin({ id: 'alexander_zabbix', sort: 100 }),
+      getPanelPlugin({ id: 'piechart', sort: 100 }),
     ];
 
     dashboardMock = { toggleRow: jest.fn() };

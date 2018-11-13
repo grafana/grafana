@@ -5,14 +5,14 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 import { AddPanelPanel } from './AddPanelPanel';
-import { PanelPluginNotFound } from './PanelPluginNotFound';
+import { getPanelPluginNotFound } from './PanelPluginNotFound';
 import { DashboardRow } from './DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from './PanelEditor';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { PanelPlugin, PanelProps } from 'app/types';
+import { PanelPlugin } from 'app/types';
 
 export interface Props {
   panel: PanelModel;
@@ -71,7 +71,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     // handle plugin loading & changing of plugin type
     if (!this.state.plugin || this.state.plugin.id !== panel.type) {
-      const plugin = config.panels[panel.type] || this.getPanelPluginNotFound(panel.type);
+      const plugin = config.panels[panel.type] || getPanelPluginNotFound(panel.type);
 
       if (plugin.exports) {
         this.cleanUpAngularPanel();
@@ -86,22 +86,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
         });
       }
     }
-  }
-
-  getPanelPluginNotFound(id: string): PanelPlugin {
-    const NotFound = class NotFound extends PureComponent<PanelProps> {
-      render() {
-        return <PanelPluginNotFound pluginId={id} />;
-      }
-    };
-
-    return {
-      id: id,
-      name: id,
-      exports: {
-        PanelComponent: NotFound,
-      },
-    };
   }
 
   componentDidMount() {
