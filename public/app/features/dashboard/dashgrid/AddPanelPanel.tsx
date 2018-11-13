@@ -197,7 +197,6 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     });
 
     let panelTab;
-    console.log('panel plugins', config.panels);
 
     if (this.state.tab === 'Add') {
       panelTab = this.state.panelPlugins.map(this.renderPanelItem);
