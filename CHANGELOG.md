@@ -26,13 +26,19 @@
 
 * Postgres/MySQL/MSSQL datasources now per default uses `max open connections` = `unlimited` (earlier 10), `max idle connections` = `2` (earlier 10) and `connection max lifetime` = `4` hours (earlier unlimited)
 
-# 5.3.3 (unreleased)
+# 5.3.4 (2018-11-13)
 
 * **Alerting**: Delete alerts when parent folder was deleted [#13322](https://github.com/grafana/grafana/issues/13322)
 * **MySQL**: Fix `$__timeFilter()` should respect local time zone [#13769](https://github.com/grafana/grafana/issues/13769)
 * **Dashboard**: Fix datasource selection in panel by enter key [#13932](https://github.com/grafana/grafana/issues/13932)
 * **Graph**: Fix table legend height when positioned below graph and using Internet Explorer 11 [#13903](https://github.com/grafana/grafana/issues/13903)
 * **Dataproxy**: Drop origin and referer http headers [#13328](https://github.com/grafana/grafana/issues/13328) [#13949](https://github.com/grafana/grafana/issues/13949), thx [@roidelapluie](https://github.com/roidelapluie)
+
+# 5.3.3 (2018-11-13)
+
+### File Exfiltration vulnerability Security fix
+
+See [security announcement](https://community.grafana.com/t/grafana-5-3-3-and-4-6-5-security-update/11961) for details.
 
 # 5.3.2 (2018-10-24)
 
