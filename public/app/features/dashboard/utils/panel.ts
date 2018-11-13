@@ -1,4 +1,4 @@
-﻿// Store
+// Store
 import store from 'app/core/store';
 
 // Models

@@ -9,7 +9,7 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
 
 // Utils
-import { applyPanelTimeOverrides, getResolution, calculateInterval } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -25,12 +25,8 @@ export interface Props {
 export interface State {
   refreshCounter: number;
   renderCounter: number;
-  timeInfo: string;
-  timeRange: TimeRange;
-  interval: {
-    interval: string;
-    intervalMs: number;
-  };
+  timeInfo?: string;
+  timeRange?: TimeRange;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -42,12 +38,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.state = {
       refreshCounter: 0,
       renderCounter: 0,
-      timeInfo: '',
-      timeRange: this.timeSrv.timeRange(),
-      interval: {
-        interval: undefined,
-        intervalMs: undefined,
-      },
     };
   }
 
@@ -68,25 +58,20 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
 
     const { panel } = this.props;
-    const timeRange = this.timeSrv.timeRange();
-    const timeData = applyPanelTimeOverrides(panel, timeRange);
-    const resolution = getResolution(panel);
-    const interval = calculateInterval(panel, panel.datasource, timeData.timeRange, resolution);
+    const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
-    this.setState(prevState => ({
-      ...prevState,
+    this.setState({
       refreshCounter: this.state.refreshCounter + 1,
-      interval,
-      ...timeData,
-    }));
+      timeRange: timeData.timeRange,
+      timeInfo: timeData.timeInfo,
+    });
   };
 
   onRender = () => {
     console.log('onRender');
-    this.setState(prevState => ({
-      ...prevState,
+    this.setState({
       renderCounter: this.state.renderCounter + 1,
-    }));
+    });
   };
 
   get isVisible() {
