@@ -31,7 +31,10 @@ export class TeamPreferences extends PureComponent<Props> {
   render() {
     const { preferences, starredDashboards, setTeamHomeDashboard, setTeamTimezone, setTeamTheme } = this.props;
 
-    starredDashboards.unshift({ id: 0, title: 'Default', tags: [], type: '', uid: '', uri: '', url: '' });
+    const dashboards: DashboardSearchHit[] = [
+      { id: 0, title: 'Default', tags: [], type: '', uid: '', uri: '', url: '' },
+      ...starredDashboards,
+    ];
 
     return (
       <form className="section gf-form-group" onSubmit={this.onSubmitForm}>
@@ -55,11 +58,11 @@ export class TeamPreferences extends PureComponent<Props> {
             Home Dashboard
           </Label>
           <SimplePicker
-            defaultValue={starredDashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
+            defaultValue={dashboards.find(dashboard => dashboard.id === preferences.homeDashboardId)}
             getOptionValue={i => i.id}
             getOptionLabel={i => i.title}
             onSelected={(dashboard: DashboardSearchHit) => setTeamHomeDashboard(dashboard.id)}
-            options={starredDashboards}
+            options={dashboards}
             placeholder="Chose default dashboard"
             width={20}
           />
