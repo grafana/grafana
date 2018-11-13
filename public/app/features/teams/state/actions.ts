@@ -223,6 +223,7 @@ export function updateTeamPreferences() {
     const preferences = getStore().team.preferences;
 
     await getBackendSrv().put(`/api/teams/${team.id}/preferences`, preferences);
-    window.location.reload();
+
+    dispatch(loadTeamPreferences());
   };
 }
