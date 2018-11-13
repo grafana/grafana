@@ -1,11 +1,14 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="false">
 	<div class="gf-form-inline">
-		<div class="gf-form max-width-25">
+		<div class="gf-form gf-form--grow">
 			<label class="gf-form-label query-keyword width-8">
 				Metric
 				<label class="gf-form-label" bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
 					<i class="fa fa-warning"></i>
 				</label>
+				<info-popover mode="right-normal">
+					Use patterns like <code>{$var}</code> or <code>{[[var]]}</code> to expand a multi-valued variable into multiple queries.
+				</info-popover>
 			</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric"
 						 spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
@@ -26,11 +29,11 @@
 		 	 </select>
 			</div>
 		</div>
-			<div class="gf-form max-width-20">
+			<div class="gf-form gf-form--grow">
 				<label class="gf-form-label query-keyword width-6">
-					Alias:
+					Alias
 					<info-popover mode="right-normal">
-						Use patterns like $tag_tagname to replace part of the alias for a tag value
+						Use patterns like <code>$tag_&lt;tagname&gt;</code> to replace part of the alias with the value of tag <code>&lt;tagname&gt;</code>. If <code>&lt;tagname&gt;</code> is a number, it is matched with the expanded value of the metric variable at this index.
 					</info-popover>
 				</label>
 				<input  type="text" class="gf-form-input"
@@ -139,7 +142,7 @@
 			</div>
 
       <gf-form-switch class="gf-form"
-                    label="Group by" 
+                    label="Group by"
                     label-class="query-keyword"
                     checked="ctrl.target.currentFilterGroupBy"
                     on-change="ctrl.targetBlur()">
@@ -259,4 +262,3 @@
 		</div>
 	</div>
 </query-editor-row>
-

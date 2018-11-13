@@ -44,7 +44,8 @@ export default class OpenTsDatasource {
       qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
     });
 
-    const queries = _.compact(qs);
+    const queriesData = this.expandQueryVariables(_.compact(qs));
+    const queries = _.map(queriesData, _.property('query'));
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -78,8 +79,9 @@ export default class OpenTsDatasource {
           index = 0;
         }
         this._saveTagKeys(metricData);
+        Object.assign(metricData.tags, queriesData[index].variables);
 
-        return this.transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+        return this.transformMetricData(metricData, groupByTags, options.targets[queriesData[index].index], options, this.tsdbResolution);
       });
       return { data: result };
     });
@@ -458,6 +460,68 @@ export default class OpenTsDatasource {
     }
 
     return query;
+  }
+
+  expandQueryVariables(queries) {
+    const expandedQueries = [];
+    _.each(queries, query => {
+      let queriesParts = [[]];
+      let queriesVariables = [[]];
+      const regex = /(.*){(.*)}(.*)/;
+      let index = 0;
+
+      let metricToParse = query.metric;
+      let regMatch = regex.exec(metricToParse);
+      while (regMatch !== null) {
+        const newQueriesParts = [];
+        const newQueriesVariables = [];
+
+        if (regMatch[3].length !== 0) {
+          _.each(queriesParts, queryParts => {
+            queryParts.push(regMatch[3]);
+          });
+        }
+
+        if (regMatch[2].length !== 0) {
+          const variables = regMatch[2].split('|');
+          for (let i = 0; i < queriesParts.length; i++) {
+            _.each(variables, value => {
+              // Create a new query for each exapnded value
+              const newQueryParts = angular.copy(queriesParts[i]);
+              newQueryParts.push(value);
+              newQueriesParts.push(newQueryParts);
+              const queryVariables = angular.copy(queriesVariables[i]);
+              queryVariables.push(value);
+              newQueriesVariables.push(queryVariables);
+            });
+          }
+        }
+
+        queriesParts = newQueriesParts;
+        queriesVariables = newQueriesVariables;
+        metricToParse = regMatch[1];
+        regMatch = regex.exec(metricToParse);
+      }
+
+      if (metricToParse.length !== 0) {
+        _.each(queriesParts, queryParts => {
+         queryParts.push(metricToParse);
+        });
+      }
+
+      for (let i = 0; i < queriesParts.length; i++) {
+        const newQuery = Object.assign({}, query);
+        newQuery.metric = queriesParts[i].reverse().join('');
+        expandedQueries.push({
+          query: newQuery,
+          variables: queriesVariables[i].reverse(),
+          index: index
+        });
+      }
+      index++;
+    });
+
+    return expandedQueries;
   }
 
   mapMetricsToTargets(metrics, options, tsdbVersion) {
