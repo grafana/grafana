@@ -2273,7 +2273,7 @@ Licensed under the MIT license.
 
         function drawOrphanedPoints(series) {
             /* Filters series data for points with no neighbors before or after
-             * and plots single 0.5 radius points for them so that they are displayed.  
+             * and plots single 0.5 radius points for them so that they are displayed.
              */
             var abandonedPoints = [];
             var beforeX = null;
@@ -2301,7 +2301,7 @@ Licensed under the MIT license.
             }
             var olddatapoints = datapoints.points
             datapoints.points = abandonedPoints;
- 
+
             series.points.radius = series.lines.lineWidth/2;
             // plot the orphan points with a radius of lineWidth/2
             drawSeriesPoints(series);
@@ -2310,12 +2310,13 @@ Licensed under the MIT license.
         }
 
         function drawSeries(series) {
-            if (series.lines.show)
+            if (series.lines.show) {
                 drawSeriesLines(series);
                 if (!series.points.show && !series.bars.show) {
                     // not necessary if user wants points displayed for everything
                     drawOrphanedPoints(series);
                 }
+            }
             if (series.bars.show)
                 drawSeriesBars(series);
             if (series.points.show)
