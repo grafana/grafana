@@ -11,7 +11,6 @@ import { isString as _isString } from 'lodash';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 import appEvents from 'app/core/app_events';
-import kbn from 'app/core/utils/kbn';
 
 // Services
 import templateSrv from 'app/features/templating/template_srv';
@@ -100,10 +99,12 @@ export const toggleLegend = (panel: PanelModel) => {
   refreshPanel(panel);
 };
 
-export const applyPanelTimeOverrides = (
-  panel: PanelModel,
-  timeRange: TimeRange
-): { timeInfo: string; timeRange: TimeRange } => {
+export interface TimeOverrideResult {
+  timeRange: TimeRange;
+  timeInfo: string;
+}
+
+export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange): TimeOverrideResult {
   const newTimeData = {
     timeInfo: '',
     timeRange: timeRange,
@@ -156,34 +157,11 @@ export const applyPanelTimeOverrides = (
   }
 
   return newTimeData;
-};
+}
 
-export const getResolution = (panel: PanelModel): number => {
+export function getResolution(panel: PanelModel): number {
   const htmlEl = document.getElementsByTagName('html')[0];
   const width = htmlEl.getBoundingClientRect().width; // https://stackoverflow.com/a/21454625
 
   return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
-};
-
-export const calculateInterval = (
-  panel: PanelModel,
-  datasource,
-  timeRange: TimeRange,
-  resolution: number
-): { interval: string; intervalMs: number } => {
-  let intervalOverride = panel.interval;
-
-  // if no panel interval check datasource
-  if (intervalOverride) {
-    intervalOverride = templateSrv.replace(intervalOverride, panel.scopedVars);
-  } else if (datasource && datasource.interval) {
-    intervalOverride = datasource.interval;
-  }
-
-  const res = kbn.calculateInterval(timeRange, resolution, intervalOverride);
-
-  return {
-    interval: res.interval,
-    intervalMs: res.intervalMs,
-  };
-};
+}

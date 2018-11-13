@@ -1,15 +1,12 @@
 import _ from 'lodash';
 
+import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
-// import kbn from 'app/core/utils/kbn';
+
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { metricsTabDirective } from './metrics_tab';
-import {
-  applyPanelTimeOverrides as applyPanelTimeOverridesUtil,
-  calculateInterval as calculateIntervalUtil,
-  getResolution,
-} from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -136,10 +133,11 @@ class MetricsPanelCtrl extends PanelCtrl {
   updateTimeRange(datasource?) {
     this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
-
-    this.applyPanelTimeOverrides();
-
     this.resolution = getResolution(this.panel);
+
+    const newTimeData = applyPanelTimeOverrides(this.panel, this.range);
+    this.timeInfo = newTimeData.timeInfo;
+    this.range = newTimeData.timeRange;
 
     this.calculateInterval();
 
@@ -147,15 +145,18 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   calculateInterval() {
-    const interval = calculateIntervalUtil(this.panel, this.datasource, this.range, this.resolution);
-    this.interval = interval.interval;
-    this.intervalMs = this.intervalMs;
-  }
+    let intervalOverride = this.panel.interval;
 
-  applyPanelTimeOverrides() {
-    const newTimeData = applyPanelTimeOverridesUtil(this.panel, this.range);
-    this.timeInfo = newTimeData.timeInfo;
-    this.range = newTimeData.timeRange;
+    // if no panel interval check datasource
+    if (intervalOverride) {
+      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+    } else if (this.datasource && this.datasource.interval) {
+      intervalOverride = this.datasource.interval;
+    }
+
+    const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    this.interval = res.interval;
+    this.intervalMs = res.intervalMs;
   }
 
   issueQueries(datasource) {
