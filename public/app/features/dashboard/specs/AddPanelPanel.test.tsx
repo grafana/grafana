@@ -20,7 +20,7 @@ describe('AddPanelPanel', () => {
   beforeEach(() => {
     config.panels = [
       getPanelPlugin({ id: 'singlestat', sort: 2 }),
-      getPanelPlugin({ id: 'hiddem', sort: 100, hideFromList: true }),
+      getPanelPlugin({ id: 'hidden', sort: 100, hideFromList: true }),
       getPanelPlugin({ id: 'graph', sort: 1 }),
       getPanelPlugin({ id: 'alexander_zabbix', sort: 100 }),
       getPanelPlugin({ id: 'piechart', sort: 100 }),
@@ -33,16 +33,14 @@ describe('AddPanelPanel', () => {
   });
 
   it('should fetch all panels sorted with core plugins first', () => {
-    //console.log(wrapper.debug());
-    //console.log(wrapper.find('.add-panel__item').get(0).props.title);
-    expect(wrapper.find('.add-panel__item').get(1).props.title).toBe('Singlestat');
-    expect(wrapper.find('.add-panel__item').get(4).props.title).toBe('Piechart');
+    expect(wrapper.find('.add-panel__item').get(1).props.title).toBe('singlestat');
+    expect(wrapper.find('.add-panel__item').get(4).props.title).toBe('piechart');
   });
 
   it('should filter', () => {
     wrapper.find('input').simulate('change', { target: { value: 'p' } });
 
-    expect(wrapper.find('.add-panel__item').get(1).props.title).toBe('Piechart');
-    expect(wrapper.find('.add-panel__item').get(0).props.title).toBe('Graph');
+    expect(wrapper.find('.add-panel__item').get(1).props.title).toBe('piechart');
+    expect(wrapper.find('.add-panel__item').get(0).props.title).toBe('graph');
   });
 });

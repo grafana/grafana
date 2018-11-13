@@ -36,34 +36,27 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     }
   };
 
-  const info = {
-    author: {
-      name: '',
-    },
-    description: '',
-    links: [],
-    logos: {
-      large: '',
-      small: '',
-    },
-    screenshots: [],
-    updated: '',
-    version: '',
-  };
-
   return {
     id: id,
     name: id,
     sort: 100,
     module: '',
     baseUrl: '',
-    meta: {
-      id: id,
-      name: id,
-      info: info,
-      includes: [],
+    info: {
+      author: {
+        name: '',
+      },
+      description: '',
+      links: [],
+      logos: {
+        large: '',
+        small: '',
+      },
+      screenshots: [],
+      updated: '',
+      version: '',
     },
-    info: info,
+
     exports: {
       PanelComponent: NotFound,
     },

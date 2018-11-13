@@ -18,7 +18,6 @@ export interface PluginExports {
 export interface PanelPlugin {
   id: string;
   name: string;
-  meta: PluginMeta;
   hideFromList?: boolean;
   module: string;
   baseUrl: string;

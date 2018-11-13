@@ -34,33 +34,25 @@ export const getMockPlugins = (amount: number): Plugin[] => {
 };
 
 export const getPanelPlugin = (options: { id: string; sort?: number; hideFromList?: boolean }): PanelPlugin => {
-  const info = {
-    author: {
-      name: options.id + 'name',
-    },
-    description: '',
-    links: [],
-    logos: {
-      large: '',
-      small: '',
-    },
-    screenshots: [],
-    updated: '',
-    version: '',
-  };
-
   return {
     id: options.id,
     name: options.id,
     sort: options.sort || 1,
-    meta: {
-      id: options.id,
-      name: options.id,
-      info: info,
-      includes: [],
+    info: {
+      author: {
+        name: options.id + 'name',
+      },
+      description: '',
+      links: [],
+      logos: {
+        large: '',
+        small: '',
+      },
+      screenshots: [],
+      updated: '',
+      version: '',
     },
-    info: info,
-    hideFromList: options.hideFromList,
+    hideFromList: options.hideFromList === true,
     module: '',
     baseUrl: '',
   };

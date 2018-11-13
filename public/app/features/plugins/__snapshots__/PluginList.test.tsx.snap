@@ -28,7 +28,11 @@ exports[`Render should render component 1`] = `
               "large": "large/logo",
               "small": "small/logo",
             },
-            "screenshots": "screenshot/0",
+            "screenshots": Array [
+              Object {
+                "path": "screenshot/0",
+              },
+            ],
             "updated": "2018-09-26",
             "version": "1",
           },
@@ -62,7 +66,11 @@ exports[`Render should render component 1`] = `
               "large": "large/logo",
               "small": "small/logo",
             },
-            "screenshots": "screenshot/1",
+            "screenshots": Array [
+              Object {
+                "path": "screenshot/1",
+              },
+            ],
             "updated": "2018-09-26",
             "version": "1",
           },
@@ -96,7 +104,11 @@ exports[`Render should render component 1`] = `
               "large": "large/logo",
               "small": "small/logo",
             },
-            "screenshots": "screenshot/2",
+            "screenshots": Array [
+              Object {
+                "path": "screenshot/2",
+              },
+            ],
             "updated": "2018-09-26",
             "version": "1",
           },
@@ -130,7 +142,11 @@ exports[`Render should render component 1`] = `
               "large": "large/logo",
               "small": "small/logo",
             },
-            "screenshots": "screenshot/3",
+            "screenshots": Array [
+              Object {
+                "path": "screenshot/3",
+              },
+            ],
             "updated": "2018-09-26",
             "version": "1",
           },
@@ -164,7 +180,11 @@ exports[`Render should render component 1`] = `
               "large": "large/logo",
               "small": "small/logo",
             },
-            "screenshots": "screenshot/4",
+            "screenshots": Array [
+              Object {
+                "path": "screenshot/4",
+              },
+            ],
             "updated": "2018-09-26",
             "version": "1",
           },
@@ -198,7 +218,11 @@ exports[`Render should render component 1`] = `
               "large": "large/logo",
               "small": "small/logo",
             },
-            "screenshots": "screenshot/5",
+            "screenshots": Array [
+              Object {
+                "path": "screenshot/5",
+              },
+            ],
             "updated": "2018-09-26",
             "version": "1",
           },
