@@ -81,7 +81,6 @@ export class DataPanel extends Component<Props, State> {
     try {
       const dataSourceSrv = getDatasourceSrv();
       const ds = await dataSourceSrv.get(datasource);
-
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
         panelId: panelId,

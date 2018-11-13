@@ -2,11 +2,14 @@
 import React, { ComponentClass, PureComponent } from 'react';
 
 // Services
-import { getTimeSrv } from '../time_srv';
+import { getTimeSrv, TimeSrv } from '../time_srv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
+
+// Utils
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -22,10 +25,13 @@ export interface Props {
 export interface State {
   refreshCounter: number;
   renderCounter: number;
+  timeInfo?: string;
   timeRange?: TimeRange;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
+  timeSrv: TimeSrv = getTimeSrv();
+
   constructor(props) {
     super(props);
 
@@ -46,22 +52,26 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   onRefresh = () => {
-    const timeSrv = getTimeSrv();
-    const timeRange = timeSrv.timeRange();
+    console.log('onRefresh');
+    if (!this.isVisible) {
+      return;
+    }
 
-    this.setState(prevState => ({
-      ...prevState,
+    const { panel } = this.props;
+    const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
+
+    this.setState({
       refreshCounter: this.state.refreshCounter + 1,
-      timeRange: timeRange,
-    }));
+      timeRange: timeData.timeRange,
+      timeInfo: timeData.timeInfo,
+    });
   };
 
   onRender = () => {
     console.log('onRender');
-    this.setState(prevState => ({
-      ...prevState,
+    this.setState({
       renderCounter: this.state.renderCounter + 1,
-    }));
+    });
   };
 
   get isVisible() {
@@ -70,7 +80,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard } = this.props;
-    const { refreshCounter, timeRange, renderCounter } = this.state;
+    const { refreshCounter, timeRange, timeInfo, renderCounter } = this.state;
 
     const { datasource, targets } = panel;
     const PanelComponent = this.props.component;
@@ -78,7 +88,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     console.log('panelChrome render');
     return (
       <div className="panel-container">
-        <PanelHeader panel={panel} dashboard={dashboard} />
+        <PanelHeader panel={panel} dashboard={dashboard} timeInfo={timeInfo} />
         <div className="panel-content">
           <DataPanel
             datasource={datasource}
