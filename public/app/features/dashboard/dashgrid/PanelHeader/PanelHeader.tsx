@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
-import $ from 'jquery';
 import classNames from 'classnames';
 
 import { PanelHeaderMenu } from './PanelHeaderMenu';
 
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
+import { ClickOutsideWrapper } from '../../../../core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface Props {
   panel: PanelModel;
@@ -17,6 +17,7 @@ export interface Props {
 export interface State {
   title: string;
   titleEditable: boolean;
+  panelMenuOpen: boolean;
 }
 
 export class PanelHeader extends PureComponent<Props, State> {
@@ -29,6 +30,7 @@ export class PanelHeader extends PureComponent<Props, State> {
     this.state = {
       title: props.panel.title,
       titleEditable: false,
+      panelMenuOpen: false,
     };
   }
 
@@ -37,10 +39,6 @@ export class PanelHeader extends PureComponent<Props, State> {
       this.titleInputElement.focus();
     }
   }
-
-  onToggleDropdown = () => {
-    $(this.dropdownToggleElement).dropdown('toggle');
-  };
 
   onToggleEditTitle = event => {
     if (this.props.isEditing) {
@@ -63,6 +61,21 @@ export class PanelHeader extends PureComponent<Props, State> {
     });
   };
 
+  onMenuToggle = event => {
+    event.stopPropagation();
+
+    console.log('toggle menu');
+    this.setState(prevState => ({
+      panelMenuOpen: !prevState.panelMenuOpen,
+    }));
+  };
+
+  closeMenu = () => {
+    this.setState({
+      panelMenuOpen: false,
+    });
+  };
+
   render() {
     const { isFullscreen, panel, dashboard } = this.props;
     const { titleEditable, title } = this.state;
@@ -82,7 +95,7 @@ export class PanelHeader extends PureComponent<Props, State> {
           </span>
         )}
 
-        <div className="panel-title-container" onClick={this.onToggleDropdown}>
+        <div className="panel-title-container" onClick={this.onMenuToggle}>
           <div className="panel-title">
             <span className="icon-gf panel-alert-icon" />
             {titleEditable ? (
@@ -106,7 +119,11 @@ export class PanelHeader extends PureComponent<Props, State> {
               ref={element => (this.dropdownToggleElement = element)}
             />
 
-            <PanelHeaderMenu panel={panel} dashboard={dashboard} />
+            {this.state.panelMenuOpen && (
+              <ClickOutsideWrapper onClick={this.closeMenu}>
+                <PanelHeaderMenu panel={panel} dashboard={dashboard} />
+              </ClickOutsideWrapper>
+            )}
 
             <span className="panel-time-info">
               <i className="fa fa-clock-o" /> 4m

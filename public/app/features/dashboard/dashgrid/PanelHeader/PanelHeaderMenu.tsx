@@ -35,6 +35,7 @@ export class PanelHeaderMenu extends PureComponent<Props> {
   render() {
     const { dashboard, panel } = this.props;
     const menu = getPanelMenu(dashboard, panel);
-    return <div className="panel-menu-container dropdown">{this.renderItems(menu)}</div>;
+
+    return <div className="panel-menu-container dropdown open">{this.renderItems(menu)}</div>;
   }
 }
