@@ -1,5 +1,6 @@
 // Libraries
 import React, { ComponentClass, PureComponent } from 'react';
+import { AutoSizer } from 'react-virtualized';
 
 // Services
 import { getTimeSrv, TimeSrv } from '../time_srv';
@@ -88,29 +89,45 @@ export class PanelChrome extends PureComponent<Props, State> {
     console.log('panelChrome render');
     return (
       <div className="panel-container">
-        <PanelHeader panel={panel} dashboard={dashboard} timeInfo={timeInfo} />
-        <div className="panel-content">
-          <DataPanel
-            datasource={datasource}
-            queries={targets}
-            timeRange={timeRange}
-            isVisible={this.isVisible}
-            refreshCounter={refreshCounter}
-          >
-            {({ loading, timeSeries }) => {
-              console.log('panelcrome inner render');
-              return (
-                <PanelComponent
-                  loading={loading}
-                  timeSeries={timeSeries}
-                  timeRange={timeRange}
-                  options={panel.getOptions()}
-                  renderCounter={renderCounter}
-                />
-              );
-            }}
-          </DataPanel>
-        </div>
+        <AutoSizer>
+          {({ width, height }) => {
+            // console.log('SizeMe', size);
+            console.log('autosizer width', width);
+            if (width === 0) {
+              return null;
+            }
+
+            return (
+              <DataPanel
+                datasource={datasource}
+                queries={targets}
+                timeRange={timeRange}
+                isVisible={this.isVisible}
+                widthPixels={width}
+                refreshCounter={refreshCounter}
+              >
+                {({ loading, timeSeries }) => {
+                  return (
+                    <>
+                      <PanelHeader panel={panel} dashboard={dashboard} timeInfo={timeInfo} />
+                      <div className="panel-content">
+                        <PanelComponent
+                          loading={loading}
+                          timeSeries={timeSeries}
+                          timeRange={timeRange}
+                          options={panel.getOptions()}
+                          width={width}
+                          height={height}
+                          renderCounter={renderCounter}
+                        />
+                      </div>
+                    </>
+                  );
+                }}
+              </DataPanel>
+            );
+          }}
+        </AutoSizer>
       </div>
     );
   }

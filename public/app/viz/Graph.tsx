@@ -1,7 +1,6 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import { withSize } from 'react-sizeme';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 
@@ -14,7 +13,8 @@ interface GraphProps {
   showLines?: boolean;
   showPoints?: boolean;
   showBars?: boolean;
-  size?: { width: number; height: number };
+  width: number;
+  height: number;
 }
 
 export class Graph extends PureComponent<GraphProps> {
@@ -24,16 +24,10 @@ export class Graph extends PureComponent<GraphProps> {
     showBars: false,
   };
 
-  element: any;
+  element: HTMLElement;
 
-  componentDidUpdate(prevProps: GraphProps) {
-    if (
-      prevProps.timeSeries !== this.props.timeSeries ||
-      prevProps.timeRange !== this.props.timeRange ||
-      prevProps.size !== this.props.size
-    ) {
-      this.draw();
-    }
+  componentDidUpdate() {
+    this.draw();
   }
 
   componentDidMount() {
@@ -41,13 +35,13 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   draw() {
-    const { size, timeSeries, timeRange, showLines, showBars, showPoints } = this.props;
+    const { width, timeSeries, timeRange, showLines, showBars, showPoints } = this.props;
 
-    if (!size) {
+    if (!width) {
       return;
     }
 
-    const ticks = (size.width || 0) / 100;
+    const ticks = width / 100;
     const min = timeRange.from.valueOf();
     const max = timeRange.to.valueOf();
 
@@ -139,4 +133,4 @@ function time_format(ticks, min, max) {
   return '%H:%M';
 }
 
-export default withSize()(Graph);
+export default Graph;

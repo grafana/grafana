@@ -19,6 +19,7 @@ export interface Props {
   dashboardId?: number;
   isVisible?: boolean;
   timeRange?: TimeRange;
+  widthPixels: number;
   refreshCounter: number;
   children: (r: RenderProps) => JSX.Element;
 }
@@ -30,6 +31,8 @@ export interface State {
 }
 
 export class DataPanel extends Component<Props, State> {
+  dataSourceSrv = getDatasourceSrv();
+
   static defaultProps = {
     isVisible: true,
     panelId: 1,
@@ -66,6 +69,7 @@ export class DataPanel extends Component<Props, State> {
 
   issueQueries = async () => {
     const { isVisible, queries, datasource, panelId, dashboardId, timeRange } = this.props;
+    console.log('issueQueries', this.props);
 
     if (!isVisible) {
       return;
@@ -79,8 +83,7 @@ export class DataPanel extends Component<Props, State> {
     this.setState({ loading: LoadingState.Loading });
 
     try {
-      const dataSourceSrv = getDatasourceSrv();
-      const ds = await dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource);
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
         panelId: panelId,
@@ -115,13 +118,13 @@ export class DataPanel extends Component<Props, State> {
     console.log('data panel render');
     const timeSeries = response.data;
 
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
-      return (
-        <div className="loading">
-          <p>Loading</p>
-        </div>
-      );
-    }
+    // if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+    //   return (
+    //     <div className="loading">
+    //       <p>Loading</p>
+    //     </div>
+    //   );
+    // }
 
     return (
       <>
