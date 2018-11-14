@@ -82,9 +82,7 @@ export class TimeRegionManager {
       return;
     }
 
-    const tRange = this.panelCtrl.dashboard.isTimezoneUtc()
-      ? { from: this.panelCtrl.range.from, to: this.panelCtrl.range.to }
-      : { from: this.panelCtrl.range.from.local(), to: this.panelCtrl.range.to.local() };
+    const tRange = { from: moment(this.panelCtrl.range.from).utc(), to: moment(this.panelCtrl.range.to).utc() };
 
     let i, hRange, timeRegion, regions, fromStart, fromEnd, timeRegionColor;
 
@@ -188,7 +186,14 @@ export class TimeRegionManager {
             fromEnd.add(24, 'hours');
           }
 
-          regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
+          const outsideRange =
+            (fromStart.unix() < tRange.from.unix() && fromEnd.unix() < tRange.from.unix()) ||
+            (fromStart.unix() > tRange.to.unix() && fromEnd.unix() > tRange.to.unix());
+
+          if (!outsideRange) {
+            regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
+          }
+
           fromStart.add(24, 'hours');
         }
       }
