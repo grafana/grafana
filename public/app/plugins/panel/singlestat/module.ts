@@ -7,7 +7,7 @@ import 'app/features/dashboard/panellinks/link_srv';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { MetricsPanelCtrl, alertTab } from 'app/plugins/sdk';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -56,7 +56,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     prefixFontSize: '50%',
     valueFontSize: '80%',
     postfixFontSize: '50%',
-    thresholds: '',
+    colorThresholds: '',
     colorBackground: false,
     colorValue: false,
     colors: ['#299c46', 'rgba(237, 129, 40, 0.89)', '#d44a3a'],
@@ -74,6 +74,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       thresholdLabels: false,
     },
     tableColumn: '',
+    thresholds: [],
   };
 
   /** @ngInject */
@@ -94,6 +95,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.fontSizes = ['20%', '30%', '50%', '70%', '80%', '100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
+    if (config.alertingEnabled) {
+      this.addEditorTab('Alert', alertTab, 4);
+    }
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -617,7 +621,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data = ctrl.data;
 
       // get thresholds
-      data.thresholds = panel.thresholds.split(',').map(strVale => {
+      data.thresholds = panel.colorThresholds.split(',').map(strVale => {
         return Number(strVale.trim());
       });
       data.colorMap = panel.colors;
