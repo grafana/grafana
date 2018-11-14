@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -243,6 +244,13 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 
 	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
 		return
+	}
+
+	if hs.Cfg.MetricsEndpointBasicAuthEnabled {
+		if !util.BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+			ctx.Resp.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 	}
 
 	promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).

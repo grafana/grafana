@@ -215,6 +215,9 @@ type Cfg struct {
 	DisableBruteForceLoginProtection bool
 	TempDataLifetime                 time.Duration
 	MetricsEndpointEnabled           bool
+	MetricsEndpointBasicAuthEnabled  bool
+	MetricsEndpointBasicAuthUsername string
+	MetricsEndpointBasicAuthPassword string
 	EnableAlphaPanels                bool
 	EnterpriseLicensePath            string
 }
@@ -676,6 +679,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
+	cfg.MetricsEndpointBasicAuthEnabled = iniFile.Section("metrics").Key("basic_auth_enabled").MustBool(true)
+	cfg.MetricsEndpointBasicAuthUsername = iniFile.Section("metrics").Key("basic_auth_username").String()
+	cfg.MetricsEndpointBasicAuthPassword = iniFile.Section("metrics").Key("basic_auth_password").String()
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

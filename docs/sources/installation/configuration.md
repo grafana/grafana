@@ -454,6 +454,15 @@ Ex `filters = sqlstore:debug`
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
+### basic_auth_enabled
+Enables basic authentication on the metrics endpoint. Defaults to false.
+
+### basic_auth_username
+Username to use for basic authentication on the metrics endpoint.
+
+### basic_auth_password
+Password to use for basic authentication on the metrics endpoint.
+
 ### interval_seconds
 
 Flush/Write interval when sending metrics to external TSDB. Defaults to 10s.
