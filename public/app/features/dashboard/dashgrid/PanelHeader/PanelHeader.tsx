@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 import { PanelHeaderMenu } from './PanelHeaderMenu';
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
 
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
@@ -41,14 +42,15 @@ export class PanelHeader extends PureComponent<Props, State> {
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
     const { panel, dashboard, timeInfo } = this.props;
-
+    const cornerCssClass = panel.description ? 'panel-info-corner--info' : '';
     return (
       <div className={panelHeaderClass}>
-        <span className="panel-info-corner">
-          <i className="fa" />
-          <span className="panel-info-corner-inner" />
-        </span>
-
+        <Tooltip content="hello world">
+          <span className={`panel-info-corner ${cornerCssClass}`}>
+            <i className="fa" />
+            <span className="panel-info-corner-inner" />
+          </span>
+        </Tooltip>
         {isLoading && (
           <span className="panel-loading">
             <i className="fa fa-spinner fa-spin" />
