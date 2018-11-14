@@ -241,6 +241,10 @@
           <input type="text" class="gf-form-input width-29" ng-model="style.detailReplaceText" ng-change="editor.render()" ng-model-onblur
             data-placement="right">
         </div>
+        <div class="gf-form">
+          <gf-form-switch class="gf-form" label-class="width-9" label="Pretty Print" checked="style.detailsprint" on-change="editor.toggleDetailPrint(style)">
+          </gf-form-switch>
+        </div>
       </div>
     <div class="clearfix"></div>
 

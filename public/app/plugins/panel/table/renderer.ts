@@ -266,13 +266,14 @@ export class TableRenderer {
     } else if (column.style && column.style.details && column.style.detailURL) {
       const scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
-
       const cellDetailURL = this.templateSrv.replace(column.style.detailURL, scopedVars, encodeURIComponent);
-      const cellDetailTooltip = this.templateSrv.replace(column.style.detailTooltip, scopedVars);
+      const cellDetailPrettyPrint = column.style.detailsprint || '';
+      const cellDetailTooltip = this.templateSrv.replace(column.style.detailTooltip, scopedVars) || '';
 
       columnHtml += `
           <span class="table-panel-column-lookup-detail"
           data-lookupURL="${cellDetailURL}"
+          data-lookupPP="${cellDetailPrettyPrint}"
           data-lookupValue="${value}"
           data-link-tooltip data-original-title="${cellDetailTooltip}"
           data-placement="right" ${textStyle}>`;

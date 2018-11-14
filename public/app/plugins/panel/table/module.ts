@@ -257,6 +257,20 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     elem.on('click', '.table-panel-page-link', switchPage);
     elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
+    function formatDetails(e,doc) {
+      const prettyPrint = e.currentTarget.dataset.lookuppp;
+      if (typeof doc === 'string') {
+        doc = JSON.parse(doc);
+      }
+      if (prettyPrint) {
+        doc = JSON.stringify(doc, undefined, 4);
+      } else {
+        doc = JSON.stringify(doc);
+      }
+      doc = '<pre>' + doc + '</pre>';
+      return doc;
+    }
+
     function detailLookup(e) {
       const el = e.currentTarget;
       const uid = e.currentTarget.dataset.lookupurl;
@@ -265,7 +279,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         if (this.readyState === 4) {
           let responseStatus = '';
           if (this.status === 200) {
-            responseStatus = this.responseText;
+            responseStatus = formatDetails(e,this.responseText);
           } else {
             responseStatus = "Unable to access data.  Status: " + this.status;
           }
@@ -278,7 +292,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
           }
           if (detailSelected === "display:none;") {
             parentRow.nextElementSibling.childNodes[0].childNodes[0].setAttribute("style","border: 20px;max-width: " + maxWidth + "px;");
-            parentRow.nextElementSibling.childNodes[0].childNodes[0].innerText = responseStatus;
+            parentRow.nextElementSibling.childNodes[0].childNodes[0].innerHTML = responseStatus;
             parentRow.nextElementSibling.removeAttribute("style");
           } else {
             parentRow.nextElementSibling.setAttribute("style","display:none;");

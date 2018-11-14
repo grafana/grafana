@@ -154,6 +154,12 @@ export class ColumnOptionsCtrl {
     }
     this.panelCtrl.render();
   }
+  toggleDetailPrint(el) {
+    if (el.details === true && el.link === true) {
+      el.link = false;
+    }
+    this.panelCtrl.render();
+  }
 }
 
 /** @ngInject */
