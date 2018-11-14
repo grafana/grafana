@@ -3,93 +3,6 @@
 ============================================================ */
 
 .gf-form-switch {
-  position: relative;
-  max-width: 4.5rem;
-  flex-grow: 1;
-  min-width: 4rem;
-  margin-right: $gf-form-margin;
-
-  input {
-    position: absolute;
-    margin-left: -9999px;
-    visibility: hidden;
-    display: none;
-  }
-
-  input + label {
-    display: block;
-    position: relative;
-    cursor: pointer;
-    outline: none;
-    user-select: none;
-    width: 100%;
-    height: 37px;
-    background: $input-bg;
-    border: 1px solid $input-border-color;
-    border-left: none;
-    border-radius: $input-border-radius;
-  }
-
-  input + label::before,
-  input + label::after {
-    @include buttonBackground($input-bg, $input-bg);
-
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    color: #fff;
-    text-align: center;
-    font-size: 150%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  &:hover {
-    input + label::before {
-      @include buttonBackground($input-bg, lighten($input-bg, 5%));
-      color: $text-color;
-      text-shadow: $text-shadow-faint;
-    }
-
-    input + label::after {
-      @include buttonBackground($input-bg, lighten($input-bg, 5%));
-      color: lighten($orange, 10%);
-      text-shadow: $text-shadow-strong;
-    }
-  }
-
-  input + label::before {
-    font-family: 'FontAwesome';
-    content: '\f096'; // square-o
-    color: $text-color-weak;
-    transition: transform 0.4s;
-    backface-visibility: hidden;
-    text-shadow: $text-shadow-faint;
-  }
-
-  input + label::after {
-    content: '\f046'; // check-square-o
-    color: $orange;
-    text-shadow: $text-shadow-strong;
-
-    font-family: 'FontAwesome';
-    transition: transform 0.4s;
-    transform: rotateY(180deg);
-    backface-visibility: hidden;
-  }
-
-  input:checked + label::before {
-    transform: rotateY(180deg);
-  }
-
-  input:checked + label::after {
-    transform: rotateY(0);
-  }
-
   &--small {
     max-width: 2rem;
     min-width: 1.5rem;
@@ -173,4 +86,55 @@ gf-form-switch[disabled] {
       text-shadow: none;
     }
   }
+}
+
+.gf-form-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  border-radius: 34px;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+}
+
+/* The slider */
+.gf-form-switch__slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $dark-3;
+  transition: 0.4s;
+
+  &::before {
+    position: absolute;
+    content: '';
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background: $dark-4;
+    transition: 0.4s;
+    border-radius: 50%;
+  }
+}
+
+input:checked + .gf-form-switch__slider {
+  background-color: $dark-5;
+}
+
+/* input:focus + .gf-form-switch__slider { */
+/*   box-shadow: 0 0 1px #2196f3; */
+/* } */
+
+input:checked + .gf-form-switch__slider:before {
+  transform: translateX(26px);
+  background: $blue;
 }
