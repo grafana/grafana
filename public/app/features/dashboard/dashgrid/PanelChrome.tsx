@@ -57,7 +57,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   onRender = () => {
-    console.log('onRender');
     this.setState(prevState => ({
       ...prevState,
       renderCounter: this.state.renderCounter + 1,
@@ -75,7 +74,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { datasource, targets } = panel;
     const PanelComponent = this.props.component;
 
-    console.log('panelChrome render');
     return (
       <div className="panel-container">
         <PanelHeader panel={panel} dashboard={dashboard} />
@@ -88,7 +86,6 @@ export class PanelChrome extends PureComponent<Props, State> {
             refreshCounter={refreshCounter}
           >
             {({ loading, timeSeries }) => {
-              console.log('panelcrome inner render');
               return (
                 <PanelComponent
                   loading={loading}

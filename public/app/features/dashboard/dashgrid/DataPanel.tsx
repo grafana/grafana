@@ -48,10 +48,6 @@ export class DataPanel extends Component<Props, State> {
     };
   }
 
-  componentDidMount() {
-    console.log('DataPanel mount');
-  }
-
   async componentDidUpdate(prevProps: Props) {
     if (!this.hasPropsChanged(prevProps)) {
       return;
@@ -113,7 +109,7 @@ export class DataPanel extends Component<Props, State> {
 
   render() {
     const { response, loading, isFirstLoad } = this.state;
-    console.log('data panel render');
+
     const timeSeries = response.data;
 
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {

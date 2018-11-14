@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import Gauge from 'app/viz/Gauge';
-import { NullValueMode, PanelProps } from 'app/types';
+import { NullValueMode, PanelOptionsProps, PanelProps } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
+import { UnitPicker } from '../../../core/components/Picker/UnitPicker';
 
 export interface Options {}
 
@@ -20,4 +21,17 @@ export class GaugePanel extends PureComponent<Props> {
   }
 }
 
-export { GaugePanel as PanelComponent };
+export class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
+  render() {
+    return (
+      <div>
+        <div className="section gf-form-group">
+          <h5 className="page-heading">Units</h5>
+          <UnitPicker width={20} onSelected={() => {}} />
+        </div>
+      </div>
+    );
+  }
+}
+
+export { GaugePanel as PanelComponent, GaugeOptions as PanelOptionsComponent };
