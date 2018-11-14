@@ -117,6 +117,14 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.cleanUpAngularPanel();
   }
 
+  onMouseEnter = () => {
+    this.props.dashboard.setPanelFocus(this.props.panel.id);
+  };
+
+  onMouseLeave = () => {
+    this.props.dashboard.setPanelFocus(0);
+  };
+
   renderReactPanel() {
     const { dashboard, panel } = this.props;
     const { plugin } = this.state;
@@ -127,7 +135,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
     return (
       <div className={containerClass}>
-        <div className={panelWrapperClass}>
+        <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
           <PanelChrome component={plugin.exports.Panel} panel={panel} dashboard={dashboard} />
         </div>
         {panel.isEditing && (
@@ -156,6 +164,13 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
 
     // legacy angular rendering
-    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
+    return (
+      <div
+        ref={element => (this.element = element)}
+        className="panel-height-helper"
+        onMouseEnter={this.onMouseEnter}
+        onMouseLeave={this.onMouseLeave}
+      />
+    );
   }
 }
