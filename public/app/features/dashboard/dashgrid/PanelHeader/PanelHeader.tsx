@@ -5,6 +5,7 @@ import { PanelHeaderMenu } from './PanelHeaderMenu';
 
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
+import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface Props {
   panel: PanelModel;
@@ -12,7 +13,29 @@ export interface Props {
   timeInfo: string;
 }
 
-export class PanelHeader extends PureComponent<Props> {
+interface State {
+  panelMenuOpen: boolean;
+}
+
+export class PanelHeader extends PureComponent<Props, State> {
+  state = {
+    panelMenuOpen: false,
+  };
+
+  onMenuToggle = event => {
+    event.stopPropagation();
+
+    this.setState(prevState => ({
+      panelMenuOpen: !prevState.panelMenuOpen,
+    }));
+  };
+
+  closeMenu = () => {
+    this.setState({
+      panelMenuOpen: false,
+    });
+  };
+
   render() {
     const isFullscreen = false;
     const isLoading = false;
@@ -32,14 +55,19 @@ export class PanelHeader extends PureComponent<Props> {
           </span>
         )}
 
-        <div className="panel-title-container">
+        <div className="panel-title-container" onClick={this.onMenuToggle}>
           <div className="panel-title">
             <span className="icon-gf panel-alert-icon" />
-            <span className="panel-title-text" data-toggle="dropdown">
+            <span className="panel-title-text">
               {panel.title} <span className="fa fa-caret-down panel-menu-toggle" />
             </span>
 
-            <PanelHeaderMenu panel={panel} dashboard={dashboard} />
+            {this.state.panelMenuOpen && (
+              <ClickOutsideWrapper onClick={this.closeMenu}>
+                <PanelHeaderMenu panel={panel} dashboard={dashboard} />
+              </ClickOutsideWrapper>
+            )}
+
             {timeInfo && (
               <span className="panel-time-info">
                 <i className="fa fa-clock-o" /> {timeInfo}
