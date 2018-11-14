@@ -5,6 +5,7 @@ import Remarkable from 'remarkable';
 // Services & utils
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
+import { Emitter } from 'app/core/utils/emitter';
 
 // Types
 import { DashboardModel } from '../dashboard/dashboard_model';
@@ -25,6 +26,7 @@ export class MetricsTabCtrl {
   hasQueryHelp: boolean;
   helpHtml: string;
   queryOptions: any;
+  events: Emitter;
 
   /** @ngInject */
   constructor($scope, private $sce, datasourceSrv, private backendSrv) {
@@ -38,6 +40,10 @@ export class MetricsTabCtrl {
     this.dashboard = this.panelCtrl.dashboard;
     this.datasources = datasourceSrv.getMetricSources();
     this.panelDsValue = this.panelCtrl.panel.datasource;
+
+    // addded here as old query controller expects this on panelCtrl but
+    // they are getting MetricsTabCtrl instead
+    this.events = this.panel.events;
 
     for (const ds of this.datasources) {
       if (ds.value === this.panelDsValue) {
