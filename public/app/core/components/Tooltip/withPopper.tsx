@@ -68,6 +68,8 @@ export default function withPopper(WrappedComponent) {
 
     render() {
       const { show, placement } = this.state;
+      const className = this.props.className || '';
+
       return (
         <WrappedComponent
           {...this.props}
@@ -76,6 +78,7 @@ export default function withPopper(WrappedComponent) {
           renderContent={this.renderContent}
           show={show}
           placement={placement}
+          className={className}
         />
       );
     }

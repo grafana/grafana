@@ -42,15 +42,16 @@ export class PanelHeader extends PureComponent<Props, State> {
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
     const { panel, dashboard, timeInfo } = this.props;
-    const cornerCssClass = panel.description ? 'panel-info-corner--info' : '';
     return (
       <div className={panelHeaderClass}>
-        <Tooltip content="hello world">
-          <span className={`panel-info-corner ${cornerCssClass}`}>
-            <i className="fa" />
-            <span className="panel-info-corner-inner" />
-          </span>
-        </Tooltip>
+        {panel.description && (
+          <Tooltip content={panel.description}>
+            <span className="panel-info-corner panel-info-corner--info">
+              <i className="fa" />
+              <span className="panel-info-corner-inner" />
+            </span>
+          </Tooltip>
+        )}
         {isLoading && (
           <span className="panel-loading">
             <i className="fa fa-spinner fa-spin" />
