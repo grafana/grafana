@@ -1,25 +1,22 @@
 import React, { PureComponent } from 'react';
-import Select from 'react-select';
+import Select, { components } from 'react-select';
 import ResetStyles from 'app/core/components/Picker/ResetStyles';
-import DescriptionOption from './DescriptionOption';
 import kbn from '../../utils/kbn';
 
 interface Props {
-  width: number;
-  className?: string;
   onSelected: (item: any) => {} | void;
-  placeholder?: string;
 }
 
 export class UnitPicker extends PureComponent<Props> {
   formatGroupLabel = data => {
-    console.log('format', data);
-
     const groupStyles = {
+      margin: '0 15px',
+      fontSize: '16px',
+      fontWeight: 700,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-    };
+    } as React.CSSProperties;
 
     const groupBadgeStyles = {
       backgroundColor: '#EBECF0',
@@ -37,29 +34,39 @@ export class UnitPicker extends PureComponent<Props> {
     return (
       <div style={groupStyles}>
         <span>{data.label}</span>
-        <span style={groupBadgeStyles}>{data.submenu.length}</span>
+        <span style={groupBadgeStyles}>{data.options.length}</span>
       </div>
     );
   };
 
-  render() {
-    const { className, onSelected, placeholder, width } = this.props;
+  renderOption = props => {
+    return (
+      <components.Option {...props}>
+        <div className="description-picker-option__button btn btn-link">
+          <div className="gf-form">{props.children}</div>
+        </div>
+      </components.Option>
+    );
+  };
 
+  renderGroup = props => {
+    return <components.Group {...props} />;
+  };
+
+  render() {
     const options = kbn.getUnitFormats();
 
     return (
       <Select
         classNamePrefix="gf-form-select-box"
-        className={`width-${width} gf-form-input gf-form-input--form-dropdown ${className || ''}`}
-        components={{
-          Option: DescriptionOption,
-        }}
-        getOptionLabel={i => i.text}
-        getOptionValue={i => i.value}
+        className="width-20 gf-form-input"
         isSearchable={false}
-        onChange={onSelected}
         options={options}
-        placeholder={placeholder || 'Choose'}
+        placeholder="Choose"
+        components={{
+          Option: this.renderOption,
+          Group: this.renderGroup,
+        }}
         styles={ResetStyles}
         formatGroupLabel={this.formatGroupLabel}
       />

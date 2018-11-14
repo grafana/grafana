@@ -27,7 +27,7 @@ export class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
       <div>
         <div className="section gf-form-group">
           <h5 className="page-heading">Units</h5>
-          <UnitPicker width={20} onSelected={() => {}} />
+          <UnitPicker onSelected={() => {}} />
         </div>
       </div>
     );
