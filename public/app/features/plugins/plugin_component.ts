@@ -116,7 +116,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               bindings: { target: '=', panelCtrl: '=', datasource: '=' },
               attrs: {
                 target: 'target',
-                'panel-ctrl': 'ctrl.panelCtrl',
+                'panel-ctrl': 'ctrl',
                 datasource: 'datasource',
               },
               Component: dsModule.QueryCtrl,

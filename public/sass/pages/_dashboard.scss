@@ -148,6 +148,20 @@ div.flot-text {
   color: $text-color-weak;
 }
 
+.panel-empty {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+
+  p {
+    text-align: center;
+    color: $text-muted;
+    font-size: $font-size-lg;
+    width: 100%;
+  }
+}
+
 .panel-header {
   &:hover {
     transition: background-color 0.1s ease-in-out;

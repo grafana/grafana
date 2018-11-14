@@ -132,11 +132,20 @@ export class DataPanel extends Component<Props, State> {
   };
 
   render() {
+    const { queries } = this.props;
     const { response, loading, isFirstLoad } = this.state;
     const timeSeries = response.data;
 
     if (isFirstLoad && loading === LoadingState.Loading) {
       return this.renderLoadingSpinner();
+    }
+
+    if (!queries.length) {
+      return (
+        <div className="panel-empty">
+          <p>Add a query to get some data!</p>
+        </div>
+      );
     }
 
     return (
