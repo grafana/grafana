@@ -621,8 +621,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data = ctrl.data;
 
       // get thresholds
-      data.thresholds = panel.colorThresholds.split(',').map(strVale => {
-        return Number(strVale.trim());
+      data.thresholds = panel.colorThresholds.split(',').map(strValue => {
+        return Number(strValue.trim());
       });
       data.colorMap = panel.colors;
 
