@@ -27,7 +27,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataStream: any;
   dataSubscription: any;
   dataList: any;
-  nextRefId: string;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -262,25 +261,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (url) {
       this.$timeout(() => this.$location.url(url));
     }
-  }
-
-  addQuery(target) {
-    target.refId = this.dashboard.getNextQueryLetter(this.panel);
-
-    this.panel.targets.push(target);
-    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
-  }
-
-  removeQuery(target) {
-    const index = _.indexOf(this.panel.targets, target);
-    this.panel.targets.splice(index, 1);
-    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
-    this.refresh();
-  }
-
-  moveQuery(target, direction) {
-    const index = _.indexOf(this.panel.targets, target);
-    _.move(this.panel.targets, index, index + direction);
   }
 }
 

@@ -48,7 +48,7 @@ export class MetricsTabCtrl {
     this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
 
     // update next ref id
-    this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
     this.updateDatasourceOptions();
   }
 
@@ -112,10 +112,6 @@ export class MetricsTabCtrl {
     this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
   }
 
-  addQuery() {
-    this.panelCtrl.addQuery({ isNew: true });
-  }
-
   toggleHelp() {
     this.optionsOpen = false;
     this.queryTroubleshooterOpen = false;
@@ -137,6 +133,35 @@ export class MetricsTabCtrl {
     this.helpOpen = false;
     this.optionsOpen = false;
     this.queryTroubleshooterOpen = !this.queryTroubleshooterOpen;
+  }
+
+  addQuery(query?) {
+    query = query || {};
+    query.refId = this.dashboard.getNextQueryLetter(this.panel);
+    query.isNew = true;
+
+    this.panel.targets.push(query);
+    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+  }
+
+  refresh() {
+    this.panel.refresh();
+  }
+
+  render() {
+    this.panel.render();
+  }
+
+  removeQuery(target) {
+    const index = _.indexOf(this.panel.targets, target);
+    this.panel.targets.splice(index, 1);
+    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+    this.panel.refresh();
+  }
+
+  moveQuery(target, direction) {
+    const index = _.indexOf(this.panel.targets, target);
+    _.move(this.panel.targets, index, index + direction);
   }
 }
 
