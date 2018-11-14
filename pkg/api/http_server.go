@@ -246,11 +246,11 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	if hs.Cfg.MetricsEndpointBasicAuthEnabled {
-		if !util.BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
-			ctx.Resp.WriteHeader(http.StatusUnauthorized)
-			return
-		}
+	if hs.Cfg.MetricsEndpointBasicAuthUsername != "" &&
+		hs.Cfg.MetricsEndpointBasicAuthPassword != "" &&
+		!util.BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+		ctx.Resp.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 
 	promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).

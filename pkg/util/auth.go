@@ -11,7 +11,7 @@ import (
 // Uses constant-time comparison in order to mitigate timing attacks.
 func BasicAuthenticatedRequest(req macaron.Request, expectedUser, expectedPass string) bool {
 	user, pass, ok := req.BasicAuth()
-	if !ok ||  subtle.ConstantTimeCompare([]byte(user), []byte(expectedUser)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(expectedPass)) != 1 {
+	if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(expectedUser)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(expectedPass)) != 1 {
 		return false
 	}
 
