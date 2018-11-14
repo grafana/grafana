@@ -13,13 +13,23 @@ export interface DataSource {
   user: string;
   database: string;
   basicAuth: boolean;
+  basicAuthPassword: string;
+  basicAuthUser: string;
   isDefault: boolean;
   jsonData: { authType: string; defaultRegion: string };
   readOnly: boolean;
+  withCredentials: boolean;
   meta?: PluginMeta;
   pluginExports?: PluginExports;
   init?: () => void;
   testDatasource?: () => Promise<any>;
+}
+
+export interface DataSourceSelectItem {
+  name: string;
+  value: string | null;
+  meta: PluginMeta;
+  sort: string;
 }
 
 export interface DataSourcesState {

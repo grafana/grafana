@@ -6,11 +6,18 @@ export interface PanelProps<T = any> {
   loading: LoadingState;
   options: T;
   renderCounter: number;
+  width: number;
+  height: number;
 }
 
 export interface PanelOptionsProps<T = any> {
   options: T;
   onChange: (options: T) => void;
+}
+
+export interface PanelSize {
+  width: number;
+  height: number;
 }
 
 export interface PanelMenuItem {

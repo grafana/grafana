@@ -3,7 +3,7 @@
 
 .panel-in-fullscreen {
   .react-grid-layout {
-    height: 100% !important;
+    height: calc(100% - 20px) !important;
   }
 
   .react-grid-item {
@@ -17,6 +17,10 @@
     width: 100% !important;
     height: 100% !important;
     transform: translate(0px, 0px) !important;
+  }
+
+  .panel {
+    margin: 0 !important;
   }
 
   // Disable grid interaction indicators in fullscreen panels

@@ -5,13 +5,14 @@ import { PanelHeaderMenu } from './PanelHeaderMenu';
 
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
-import { ClickOutsideWrapper } from '../../../../core/components/ClickOutsideWrapper/ClickOutsideWrapper';
+import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  timeInfo: string;
 }
 
 export interface State {
@@ -64,7 +65,6 @@ export class PanelHeader extends PureComponent<Props, State> {
   onMenuToggle = event => {
     event.stopPropagation();
 
-    console.log('toggle menu');
     this.setState(prevState => ({
       panelMenuOpen: !prevState.panelMenuOpen,
     }));
@@ -77,7 +77,7 @@ export class PanelHeader extends PureComponent<Props, State> {
   };
 
   render() {
-    const { isFullscreen, panel, dashboard } = this.props;
+    const { isFullscreen, panel, dashboard, timeInfo } = this.props;
     const { titleEditable, title } = this.state;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
@@ -125,9 +125,11 @@ export class PanelHeader extends PureComponent<Props, State> {
               </ClickOutsideWrapper>
             )}
 
-            <span className="panel-time-info">
-              <i className="fa fa-clock-o" /> 4m
-            </span>
+            {timeInfo && (
+              <span className="panel-time-info">
+                <i className="fa fa-clock-o" /> {timeInfo}
+              </span>
+            )}
           </div>
         </div>
       </div>

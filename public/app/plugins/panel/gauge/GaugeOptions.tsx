@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { PanelOptionsProps } from '../types';
+import { PanelOptionsProps } from 'app/types';
 
 interface Props {}
 

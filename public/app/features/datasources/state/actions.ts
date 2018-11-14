@@ -1,10 +1,12 @@
 import { ThunkAction } from 'redux-thunk';
-import { DataSource, Plugin, StoreState } from 'app/types';
-import { getBackendSrv } from '../../../core/services/backend_srv';
-import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
-import { updateLocation, updateNavIndex, UpdateNavIndexAction } from '../../../core/actions';
-import { UpdateLocationAction } from '../../../core/actions/location';
+import config from '../../../core/config';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
+import { UpdateLocationAction } from 'app/core/actions/location';
 import { buildNavModel } from './navModel';
+import { DataSource, Plugin, StoreState } from 'app/types';
 
 export enum ActionTypes {
   LoadDataSources = 'LOAD_DATA_SOURCES',
@@ -14,41 +16,47 @@ export enum ActionTypes {
   SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
   SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
   SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
+  SetDataSourceName = 'SET_DATA_SOURCE_NAME',
 }
 
-export interface LoadDataSourcesAction {
+interface LoadDataSourcesAction {
   type: ActionTypes.LoadDataSources;
   payload: DataSource[];
 }
 
-export interface SetDataSourcesSearchQueryAction {
+interface SetDataSourcesSearchQueryAction {
   type: ActionTypes.SetDataSourcesSearchQuery;
   payload: string;
 }
 
-export interface SetDataSourcesLayoutModeAction {
+interface SetDataSourcesLayoutModeAction {
   type: ActionTypes.SetDataSourcesLayoutMode;
   payload: LayoutMode;
 }
 
-export interface LoadDataSourceTypesAction {
+interface LoadDataSourceTypesAction {
   type: ActionTypes.LoadDataSourceTypes;
   payload: Plugin[];
 }
 
-export interface SetDataSourceTypeSearchQueryAction {
+interface SetDataSourceTypeSearchQueryAction {
   type: ActionTypes.SetDataSourceTypeSearchQuery;
   payload: string;
 }
 
-export interface LoadDataSourceAction {
+interface LoadDataSourceAction {
   type: ActionTypes.LoadDataSource;
   payload: DataSource;
 }
 
-export interface LoadDataSourceMetaAction {
+interface LoadDataSourceMetaAction {
   type: ActionTypes.LoadDataSourceMeta;
   payload: Plugin;
+}
+
+interface SetDataSourceNameAction {
+  type: ActionTypes.SetDataSourceName;
+  payload: string;
 }
 
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
@@ -86,6 +94,11 @@ export const setDataSourceTypeSearchQuery = (query: string): SetDataSourceTypeSe
   payload: query,
 });
 
+export const setDataSourceName = (name: string) => ({
+  type: ActionTypes.SetDataSourceName,
+  payload: name,
+});
+
 export type Action =
   | LoadDataSourcesAction
   | SetDataSourcesSearchQueryAction
@@ -95,7 +108,8 @@ export type Action =
   | SetDataSourceTypeSearchQueryAction
   | LoadDataSourceAction
   | UpdateNavIndexAction
-  | LoadDataSourceMetaAction;
+  | LoadDataSourceMetaAction
+  | SetDataSourceNameAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -145,6 +159,23 @@ export function loadDataSourceTypes(): ThunkResult<void> {
   };
 }
 
+export function updateDataSource(dataSource: DataSource): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
+    await updateFrontendSettings();
+    return dispatch(loadDataSource(dataSource.id));
+  };
+}
+
+export function deleteDataSource(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const dataSource = getStore().dataSources.dataSource;
+
+    await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
+    dispatch(updateLocation({ path: '/datasources' }));
+  };
+}
+
 export function nameExits(dataSources, name) {
   return (
     dataSources.filter(dataSource => {
@@ -171,6 +202,16 @@ export function findNewName(dataSources, name) {
   }
 
   return name;
+}
+
+function updateFrontendSettings() {
+  return getBackendSrv()
+    .get('/api/frontend/settings')
+    .then(settings => {
+      config.datasources = settings.datasources;
+      config.defaultDatasource = settings.defaultDatasource;
+      getDatasourceSrv().init();
+    });
 }
 
 function nameHasSuffix(name) {

@@ -120,8 +120,8 @@
 // Info appears as a neutral blue
 .btn-secondary {
   @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  // Inverse appears as dark gray
 }
-// Inverse appears as dark gray
 .btn-inverse {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;

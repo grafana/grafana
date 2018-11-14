@@ -1,12 +1,17 @@
 // Libraries
 import React, { ComponentClass, PureComponent } from 'react';
+import { AutoSizer } from 'react-virtualized';
 
 // Services
-import { getTimeSrv } from '../time_srv';
+import { getTimeSrv, TimeSrv } from '../time_srv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
+
+// Utils
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -24,10 +29,13 @@ export interface Props {
 export interface State {
   refreshCounter: number;
   renderCounter: number;
+  timeInfo?: string;
   timeRange?: TimeRange;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
+  timeSrv: TimeSrv = getTimeSrv();
+
   constructor(props) {
     super(props);
 
@@ -48,22 +56,26 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   onRefresh = () => {
-    const timeSrv = getTimeSrv();
-    const timeRange = timeSrv.timeRange();
+    console.log('onRefresh');
+    if (!this.isVisible) {
+      return;
+    }
 
-    this.setState(prevState => ({
-      ...prevState,
+    const { panel } = this.props;
+    const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
+
+    this.setState({
       refreshCounter: this.state.refreshCounter + 1,
-      timeRange: timeRange,
-    }));
+      timeRange: timeData.timeRange,
+      timeInfo: timeData.timeInfo,
+    });
   };
 
   onRender = () => {
     console.log('onRender');
-    this.setState(prevState => ({
-      ...prevState,
+    this.setState({
       renderCounter: this.state.renderCounter + 1,
-    }));
+    });
   };
 
   get isVisible() {
@@ -72,38 +84,56 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   render() {
     const { isEditing, isFullscreen, panel, dashboard } = this.props;
-    const { refreshCounter, timeRange, renderCounter } = this.state;
+    const { refreshCounter, timeRange, timeInfo, renderCounter } = this.state;
 
     const { datasource, targets } = panel;
     const PanelComponent = this.props.component;
 
     console.log('panelChrome render');
     return (
-      <div className="panel-container">
-        <PanelHeader panel={panel} dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
-        <div className="panel-content">
-          <DataPanel
-            datasource={datasource}
-            queries={targets}
-            timeRange={timeRange}
-            isVisible={this.isVisible}
-            refreshCounter={refreshCounter}
-          >
-            {({ loading, timeSeries }) => {
-              console.log('panelcrome inner render');
-              return (
-                <PanelComponent
-                  loading={loading}
-                  timeSeries={timeSeries}
-                  timeRange={timeRange}
-                  options={panel.getOptions()}
-                  renderCounter={renderCounter}
-                />
-              );
-            }}
-          </DataPanel>
-        </div>
-      </div>
+      <AutoSizer>
+        {({ width, height }) => {
+          if (width === 0) {
+            return null;
+          }
+
+          return (
+            <div className="panel-container panel-container--absolute">
+              <PanelHeader
+                panel={panel}
+                dashboard={dashboard}
+                isEditing={isEditing}
+                isFullscreen={isFullscreen}
+                timeInfo={timeInfo}
+              />
+              <DataPanel
+                datasource={datasource}
+                queries={targets}
+                timeRange={timeRange}
+                isVisible={this.isVisible}
+                widthPixels={width}
+                refreshCounter={refreshCounter}
+              >
+                {({ loading, timeSeries }) => {
+                  return (
+                    <div className="panel-content">
+                      <PanelComponent
+                        loading={loading}
+                        timeSeries={timeSeries}
+                        timeRange={timeRange}
+                        options={panel.getOptions()}
+                        width={width}
+                        height={height - PANEL_HEADER_HEIGHT}
+                        renderCounter={renderCounter}
+                      />
+                    </div>
+                  );
+                }}
+              </DataPanel>
+            </div>
+          );
+        }}
+      </AutoSizer>
     );
   }
 }

@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { withSize } from 'react-sizeme';
 import { TimeSeriesVMs } from 'app/types';
 import config from '../core/config';
 
@@ -11,7 +10,8 @@ interface Props {
   showThresholdMarkers?: boolean;
   thresholds?: number[];
   showThresholdLables?: boolean;
-  size?: { width: number; height: number };
+  width: number;
+  height: number;
 }
 
 const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
@@ -37,12 +37,18 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { maxValue, minValue, showThresholdLables, size, showThresholdMarkers, timeSeries, thresholds } = this.props;
+    const {
+      maxValue,
+      minValue,
+      showThresholdLables,
+      showThresholdMarkers,
+      timeSeries,
+      thresholds,
+      width,
+      height,
+    } = this.props;
 
-    const width = size.width;
-    const height = size.height;
     const dimension = Math.min(width, height * 1.3);
-
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
     const fontColor = config.bootData.user.lightTheme ? 'rgb(38,38,38)' : 'rgb(230,230,230)';
     const fontScale = parseInt('80', 10) / 100;
@@ -100,8 +106,13 @@ export class Gauge extends PureComponent<Props> {
       },
     };
 
+    let value: string | number = 'N/A';
+    if (timeSeries.length) {
+      value = timeSeries[0].stats.avg;
+    }
+
     const plotSeries = {
-      data: [[0, timeSeries[0].stats.avg]],
+      data: [[0, value]],
     };
 
     try {
@@ -112,7 +123,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width } = this.props.size;
+    const { height, width } = this.props;
 
     return (
       <div className="singlestat-panel" ref={element => (this.parentElement = element)}>
@@ -130,4 +141,4 @@ export class Gauge extends PureComponent<Props> {
   }
 }
 
-export default withSize({ monitorHeight: true })(Gauge);
+export default Gauge;

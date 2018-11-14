@@ -163,6 +163,7 @@
     "react-sizeme": "^2.3.6",
     "react-table": "^6.8.6",
     "react-transition-group": "^2.2.1",
+    "react-virtualized": "^9.21.0",
     "redux": "^4.0.0",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",

@@ -41,7 +41,7 @@
 
 .panel-in-fullscreen {
   .navbar {
-    @include navbar-alt-look();
+    padding-left: 15px;
   }
 
   .navbar-button--add-panel,
@@ -49,10 +49,6 @@
   .navbar-button--tv,
   .navbar-page-btn .fa-caret-down {
     display: none;
-  }
-
-  .navbar-buttons--close {
-    display: flex;
   }
 }
 
@@ -98,7 +94,7 @@
 }
 
 .navbar-buttons {
-  height: $navbarHeight;
+  // height: $navbarHeight;
   display: flex;
   align-items: center;
   justify-content: flex-end;
