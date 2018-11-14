@@ -16,13 +16,13 @@
 * **Postgres**: Add delta window function to postgres query builder [#13925](https://github.com/grafana/grafana/issues/13925), thx [svenklemm](https://github.com/svenklemm)
 * **Elasticsearch**: Fix switching to/from es raw document metric query [#6367](https://github.com/grafana/grafana/issues/6367)
 * **Elasticsearch**: Fix deprecation warning about terms aggregation order key in Elasticsearch 6.x [#11977](https://github.com/grafana/grafana/issues/11977)
-* **Units**: New clock time format, to format ms or second values as for example `01h:59m`, [#13635](https://github.com/grafana/grafana/issues/13635), thx [@franciscocpg](https://github.com/franciscocpg)
-* **Datasource Proxy**: Keep trailing slash for datasource proxy requests [#13326](https://github.com/grafana/grafana/pull/13326), thx [@ryantxu](https://github.com/ryantxu)
-* **DingDing**: Can't receive DingDing alert when alert is triggered [#13723](https://github.com/grafana/grafana/issues/13723), thx [@Yukinoshita-Yukino](https://github.com/Yukinoshita-Yukino)
-* **Internal metrics**: Renamed `grafana_info` to `grafana_build_info` and added branch, goversion and revision [#13876](https://github.com/grafana/grafana/pull/13876)
-* **Alerting**: Increaste default duration for queries [#13945](https://github.com/grafana/grafana/pull/13945)
 * **Table**: Fix CSS alpha background-color applied twice in table cell with link [#13606](https://github.com/grafana/grafana/issues/13606), thx [@grisme](https://github.com/grisme)
+* **Units**: New clock time format, to format ms or second values as for example `01h:59m`, [#13635](https://github.com/grafana/grafana/issues/13635), thx [@franciscocpg](https://github.com/franciscocpg)
+* **Alerting**: Increaste default duration for queries [#13945](https://github.com/grafana/grafana/pull/13945)
 * **Alerting**: More options for the Slack Alert notifier [#13993](https://github.com/grafana/grafana/issues/13993), thx [@andreykaipov](https://github.com/andreykaipov)
+* **Alerting**: Can't receive DingDing alert when alert is triggered [#13723](https://github.com/grafana/grafana/issues/13723), thx [@Yukinoshita-Yukino](https://github.com/Yukinoshita-Yukino)
+* **Internal metrics**: Renamed `grafana_info` to `grafana_build_info` and added branch, goversion and revision [#13876](https://github.com/grafana/grafana/pull/13876)
+* **Datasource Proxy**: Keep trailing slash for datasource proxy requests [#13326](https://github.com/grafana/grafana/pull/13326), thx [@ryantxu](https://github.com/ryantxu)
 
 ### Breaking changes
 
