@@ -11,6 +11,7 @@ import { DataPanel } from './DataPanel';
 
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -96,6 +97,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
           return (
             <div className="panel-container panel-container--absolute">
+              <PanelHeader panel={panel} dashboard={dashboard} timeInfo={timeInfo} />
               <DataPanel
                 datasource={datasource}
                 queries={targets}
@@ -106,20 +108,17 @@ export class PanelChrome extends PureComponent<Props, State> {
               >
                 {({ loading, timeSeries }) => {
                   return (
-                    <>
-                      <PanelHeader panel={panel} dashboard={dashboard} timeInfo={timeInfo} />
-                      <div className="panel-content">
-                        <PanelComponent
-                          loading={loading}
-                          timeSeries={timeSeries}
-                          timeRange={timeRange}
-                          options={panel.getOptions()}
-                          width={width}
-                          height={height}
-                          renderCounter={renderCounter}
-                        />
-                      </div>
-                    </>
+                    <div className="panel-content">
+                      <PanelComponent
+                        loading={loading}
+                        timeSeries={timeSeries}
+                        timeRange={timeRange}
+                        options={panel.getOptions()}
+                        width={width}
+                        height={height - PANEL_HEADER_HEIGHT}
+                        renderCounter={renderCounter}
+                      />
+                    </div>
                   );
                 }}
               </DataPanel>

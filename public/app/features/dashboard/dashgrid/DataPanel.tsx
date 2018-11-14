@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 
 // Services
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 // Utils
 import kbn from 'app/core/utils/kbn';
@@ -36,13 +36,14 @@ export interface State {
 }
 
 export class DataPanel extends Component<Props, State> {
-  dataSourceSrv = getDatasourceSrv();
-
   static defaultProps = {
     isVisible: true,
     panelId: 1,
     dashboardId: 1,
   };
+
+  dataSourceSrv: DatasourceSrv = getDatasourceSrv();
+  isUnmounted = false;
 
   constructor(props: Props) {
     super(props);
@@ -60,6 +61,10 @@ export class DataPanel extends Component<Props, State> {
     this.issueQueries();
   }
 
+  componentWillUnmount() {
+    this.isUnmounted = true;
+  }
+
   async componentDidUpdate(prevProps: Props) {
     if (!this.hasPropsChanged(prevProps)) {
       return;
@@ -72,7 +77,7 @@ export class DataPanel extends Component<Props, State> {
     return this.props.refreshCounter !== prevProps.refreshCounter;
   }
 
-  issueQueries = async () => {
+  private issueQueries = async () => {
     const { isVisible, queries, datasource, panelId, dashboardId, timeRange, widthPixels, maxDataPoints } = this.props;
 
     if (!isVisible) {
@@ -111,6 +116,10 @@ export class DataPanel extends Component<Props, State> {
       const resp = await ds.query(queryOptions);
       console.log('Issuing DataPanel query Resp', resp);
 
+      if (this.isUnmounted) {
+        return;
+      }
+
       this.setState({
         loading: LoadingState.Done,
         response: resp,
@@ -123,14 +132,16 @@ export class DataPanel extends Component<Props, State> {
   };
 
   render() {
-    const { response, loading } = this.state;
+    const { response, loading, isFirstLoad } = this.state;
     const timeSeries = response.data;
 
-    console.log('data panel render');
+    if (isFirstLoad && loading === LoadingState.Loading) {
+      return this.renderLoadingSpinner();
+    }
 
     return (
       <>
-        {this.loadingSpinner}
+        {this.renderLoadingSpinner()}
         {this.props.children({
           timeSeries,
           loading,
@@ -139,7 +150,7 @@ export class DataPanel extends Component<Props, State> {
     );
   }
 
-  private get loadingSpinner(): JSX.Element {
+  private renderLoadingSpinner(): JSX.Element {
     const { loading } = this.state;
 
     if (loading === LoadingState.Loading) {
