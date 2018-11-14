@@ -23,7 +23,7 @@ export class Graph2 extends PureComponent<Props> {
   }
 
   render() {
-    const { timeSeries, timeRange } = this.props;
+    const { timeSeries, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
     const vmSeries = getTimeSeriesVMs({
@@ -38,6 +38,8 @@ export class Graph2 extends PureComponent<Props> {
         showLines={showLines}
         showPoints={showPoints}
         showBars={showBars}
+        width={width}
+        height={height}
       />
     );
   }

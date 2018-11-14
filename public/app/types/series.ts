@@ -89,4 +89,6 @@ export interface DataQueryOptions {
 export interface DataSourceApi {
   query(options: DataQueryOptions): Promise<DataQueryResponse>;
   testDatasource(): Promise<any>;
+
+  interval?: string;
 }

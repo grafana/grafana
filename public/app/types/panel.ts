@@ -6,6 +6,8 @@ export interface PanelProps<T = any> {
   loading: LoadingState;
   options: T;
   renderCounter: number;
+  width: number;
+  height: number;
 }
 
 export interface PanelOptionsProps<T = any> {
