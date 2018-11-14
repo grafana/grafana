@@ -26,6 +26,7 @@ export class Switch extends PureComponent<Props, State> {
 
   render() {
     const { labelClass = '', switchClass = '', label, checked, small } = this.props;
+
     const labelId = `check-${this.state.id}`;
     let labelClassName = `gf-form-label ${labelClass} pointer`;
     let switchClassName = `gf-form-switch ${switchClass}`;

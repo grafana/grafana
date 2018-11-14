@@ -43,6 +43,7 @@ div.flot-text {
   position: relative;
   border-radius: 3px;
   height: 100%;
+  width: 100%;
 
   &.panel-transparent {
     background-color: transparent;
@@ -59,6 +60,10 @@ div.flot-text {
 
   &--is-editing {
     height: auto;
+  }
+
+  &--absolute {
+    position: absolute;
   }
 }
 

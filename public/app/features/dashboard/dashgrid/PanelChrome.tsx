@@ -88,16 +88,14 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     console.log('panelChrome render');
     return (
-      <div className="panel-container">
-        <AutoSizer>
-          {({ width, height }) => {
-            // console.log('SizeMe', size);
-            console.log('autosizer width', width);
-            if (width === 0) {
-              return null;
-            }
+      <AutoSizer>
+        {({ width, height }) => {
+          if (width === 0) {
+            return null;
+          }
 
-            return (
+          return (
+            <div className="panel-container panel-container--absolute">
               <DataPanel
                 datasource={datasource}
                 queries={targets}
@@ -125,10 +123,10 @@ export class PanelChrome extends PureComponent<Props, State> {
                   );
                 }}
               </DataPanel>
-            );
-          }}
-        </AutoSizer>
-      </div>
+            </div>
+          );
+        }}
+      </AutoSizer>
     );
   }
 }

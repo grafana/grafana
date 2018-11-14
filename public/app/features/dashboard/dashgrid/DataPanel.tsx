@@ -4,6 +4,9 @@ import React, { Component } from 'react';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
+// Utils
+import kbn from 'app/core/utils/kbn';
+
 // Types
 import { TimeRange, LoadingState, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
 
@@ -21,6 +24,8 @@ export interface Props {
   timeRange?: TimeRange;
   widthPixels: number;
   refreshCounter: number;
+  minInterval?: string;
+  maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
 }
 
@@ -52,7 +57,7 @@ export class DataPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    console.log('DataPanel mount');
+    this.issueQueries();
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -64,12 +69,11 @@ export class DataPanel extends Component<Props, State> {
   }
 
   hasPropsChanged(prevProps: Props) {
-    return this.props.refreshCounter !== prevProps.refreshCounter || this.props.isVisible !== prevProps.isVisible;
+    return this.props.refreshCounter !== prevProps.refreshCounter;
   }
 
   issueQueries = async () => {
-    const { isVisible, queries, datasource, panelId, dashboardId, timeRange } = this.props;
-    console.log('issueQueries', this.props);
+    const { isVisible, queries, datasource, panelId, dashboardId, timeRange, widthPixels, maxDataPoints } = this.props;
 
     if (!isVisible) {
       return;
@@ -84,16 +88,21 @@ export class DataPanel extends Component<Props, State> {
 
     try {
       const ds = await this.dataSourceSrv.get(datasource);
+
+      // TODO interpolate variables
+      const minInterval = this.props.minInterval || ds.interval;
+      const intervalRes = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
         panelId: panelId,
         dashboardId: dashboardId,
         range: timeRange,
         rangeRaw: timeRange.raw,
-        interval: '1s',
-        intervalMs: 60000,
+        interval: intervalRes.interval,
+        intervalMs: intervalRes.intervalMs,
         targets: queries,
-        maxDataPoints: 500,
+        maxDataPoints: maxDataPoints || widthPixels,
         scopedVars: {},
         cacheTimeout: null,
       };
@@ -114,17 +123,10 @@ export class DataPanel extends Component<Props, State> {
   };
 
   render() {
-    const { response, loading, isFirstLoad } = this.state;
-    console.log('data panel render');
+    const { response, loading } = this.state;
     const timeSeries = response.data;
 
-    // if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
-    //   return (
-    //     <div className="loading">
-    //       <p>Loading</p>
-    //     </div>
-    //   );
-    // }
+    console.log('data panel render');
 
     return (
       <>
@@ -142,7 +144,7 @@ export class DataPanel extends Component<Props, State> {
 
     if (loading === LoadingState.Loading) {
       return (
-        <div className="panel__loading">
+        <div className="panel-loading">
           <i className="fa fa-spinner fa-spin" />
         </div>
       );

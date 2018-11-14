@@ -176,6 +176,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
   renderPanels() {
     const panelElements = [];
+    console.log('render panels');
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
