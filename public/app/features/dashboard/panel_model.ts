@@ -49,6 +49,7 @@ export class PanelModel {
 
   maxDataPoints?: number;
   interval?: string;
+  description?: string;
 
   // non persisted
   fullscreen: boolean;
