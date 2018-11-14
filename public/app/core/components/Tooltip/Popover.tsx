@@ -1,34 +1,19 @@
-﻿import React from 'react';
-import withTooltip from './withTooltip';
-import { Target } from 'react-popper';
+﻿import React, { PureComponent } from 'react';
+import Popper from './Popper';
+import withPopper, { UsingPopperProps } from './withPopper';
 
-interface PopoverProps {
-  tooltipSetState: (prevState: object) => void;
-}
-
-class Popover extends React.Component<PopoverProps, any> {
-  constructor(props) {
-    super(props);
-    this.toggleTooltip = this.toggleTooltip.bind(this);
-  }
-
-  toggleTooltip() {
-    const { tooltipSetState } = this.props;
-    tooltipSetState(prevState => {
-      return {
-        ...prevState,
-        show: !prevState.show,
-      };
-    });
-  }
-
+class Popover extends PureComponent<UsingPopperProps> {
   render() {
+    const { children, hidePopper, showPopper, className, ...restProps } = this.props;
+
+    const togglePopper = restProps.show === true ? hidePopper : showPopper;
+
     return (
-      <Target className="popper__target" onClick={this.toggleTooltip}>
-        {this.props.children}
-      </Target>
+      <div className={`popper__manager ${className}`} onClick={togglePopper}>
+        <Popper {...restProps}>{children}</Popper>
+      </div>
     );
   }
 }
 
-export default withTooltip(Popover);
+export default withPopper(Popover);

@@ -3,11 +3,9 @@
 exports[`Popover renders correctly 1`] = `
 <div
   className="popper__manager test-class"
+  onClick={[Function]}
 >
-  <div
-    className="popper__target"
-    onClick={[Function]}
-  >
+  <div>
     <button>
       Button with Popover
     </button>
