@@ -139,6 +139,50 @@ func TestGetStateFromEvalContext(t *testing.T) {
 				ec.NoDataFound = true
 			},
 		},
+		{
+			name:     "pending -> no_data(alerting) with for duration have not passed",
+			expected: models.AlertStatePending,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStatePending
+				ec.Rule.NoDataState = models.NoDataSetAlerting
+				ec.NoDataFound = true
+				ec.Rule.For = time.Minute * 5
+				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 2)
+			},
+		},
+		{
+			name:     "pending -> no_data(alerting) should set alerting since time passed FOR",
+			expected: models.AlertStateAlerting,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStatePending
+				ec.Rule.NoDataState = models.NoDataSetAlerting
+				ec.NoDataFound = true
+				ec.Rule.For = time.Minute * 2
+				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
+			},
+		},
+		{
+			name:     "pending -> error(alerting) with for duration have not passed ",
+			expected: models.AlertStatePending,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStatePending
+				ec.Rule.ExecutionErrorState = models.ExecutionErrorSetAlerting
+				ec.Error = errors.New("test error")
+				ec.Rule.For = time.Minute * 5
+				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 2)
+			},
+		},
+		{
+			name:     "pending -> error(alerting) should set alerting since time passed FOR",
+			expected: models.AlertStateAlerting,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStatePending
+				ec.Rule.ExecutionErrorState = models.ExecutionErrorSetAlerting
+				ec.Error = errors.New("test error")
+				ec.Rule.For = time.Minute * 2
+				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
+			},
+		},
 	}
 
 	for _, tc := range tcs {
