@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import { QueriesTab } from './QueriesTab';
 import { VisualizationTab } from './VisualizationTab';
+import { GeneralTab } from './GeneralTab';
 
 import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
@@ -31,9 +32,9 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     super(props);
 
     this.tabs = [
+      { id: 'general', text: 'General', icon: 'gicon gicon-preferences' },
       { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
       { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
-      { id: 'alert', text: 'Alert', icon: 'gicon gicon-alert' },
     ];
   }
 
@@ -81,6 +82,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
           </button>
         </div>
 
+        {activeTab === 'general' && <GeneralTab panel={panel} dashboard={dashboard} />}
         {activeTab === 'queries' && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab === 'visualization' && (
           <VisualizationTab panel={panel} dashboard={dashboard} plugin={plugin} onTypeChanged={onTypeChanged} />
