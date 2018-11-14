@@ -80,16 +80,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       let lastAlertState;
       let hasAlertRule;
 
-      function mouseEnter() {
-        panelContainer.toggleClass('panel-hover-highlight', true);
-        ctrl.dashboard.setPanelFocus(ctrl.panel.id);
-      }
-
-      function mouseLeave() {
-        panelContainer.toggleClass('panel-hover-highlight', false);
-        ctrl.dashboard.setPanelFocus(0);
-      }
-
       function resizeScrollableContent() {
         if (panelScrollbar) {
           panelScrollbar.update();
@@ -211,9 +201,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         infoDrop.close();
         scope.$apply(ctrl.openInspector.bind(ctrl));
       });
-
-      elem.on('mouseenter', mouseEnter);
-      elem.on('mouseleave', mouseLeave);
 
       scope.$on('$destroy', () => {
         elem.off();
