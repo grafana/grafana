@@ -66,10 +66,20 @@ func TestGetStateFromEvalContext(t *testing.T) {
 			},
 		},
 		{
-			name:     "ok -> alerting. since its been firing for more than FOR",
-			expected: models.AlertStateAlerting,
+			name:     "ok -> pending. since it has to be pending longer than FOR and prev state is ok",
+			expected: models.AlertStatePending,
 			applyFn: func(ec *EvalContext) {
 				ec.PrevAlertState = models.AlertStateOK
+				ec.Firing = true
+				ec.Rule.LastStateChange = time.Now().Add(-(time.Hour * 5))
+				ec.Rule.For = time.Minute * 2
+			},
+		},
+		{
+			name:     "pending -> alerting. since its been firing for more than FOR and prev state is pending",
+			expected: models.AlertStateAlerting,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStatePending
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-(time.Hour * 5))
 				ec.Rule.For = time.Minute * 2
