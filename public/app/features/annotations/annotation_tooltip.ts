@@ -32,7 +32,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       if (event.alertId) {
         const stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
-        title = `<i class="icon-gf ${stateModel.iconClass}"></i> ${stateModel.text}`;
+        title = `<i class="${stateModel.iconClass}"></i> ${stateModel.text}`;
         text = alertDef.getAlertAnnotationInfo(event);
         if (event.text) {
           text = text + '<br />' + event.text;
