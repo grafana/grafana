@@ -22,7 +22,7 @@ import {
 } from './series';
 import { PanelProps, PanelOptionsProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
-import { Organization, OrganizationPreferences, OrganizationState } from './organization';
+import { Organization, OrganizationState } from './organization';
 import {
   AppNotification,
   AppNotificationSeverity,
@@ -83,7 +83,6 @@ export {
   PluginDashboard,
   Organization,
   OrganizationState,
-  OrganizationPreferences,
   AppNotification,
   AppNotificationsState,
   AppNotificationSeverity,

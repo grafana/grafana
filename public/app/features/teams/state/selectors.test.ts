@@ -1,6 +1,6 @@
 import { getTeam, getTeamMembers, getTeams } from './selectors';
 import { getMockTeam, getMockTeamMembers, getMultipleMockTeams } from '../__mocks__/teamMocks';
-import { Team, TeamGroup, TeamsState, TeamState, OrganizationPreferences } from '../../../types';
+import { Team, TeamGroup, TeamsState, TeamState } from '../../../types';
 
 describe('Teams selectors', () => {
   describe('Get teams', () => {
@@ -10,7 +10,6 @@ describe('Teams selectors', () => {
       const mockState: TeamsState = { teams: mockTeams, searchQuery: '', hasFetched: false };
 
       const teams = getTeams(mockState);
-
       expect(teams).toEqual(mockTeams);
     });
 
@@ -18,7 +17,6 @@ describe('Teams selectors', () => {
       const mockState: TeamsState = { teams: mockTeams, searchQuery: '5', hasFetched: false };
 
       const teams = getTeams(mockState);
-
       expect(teams.length).toEqual(1);
     });
   });
@@ -34,11 +32,9 @@ describe('Team selectors', () => {
         searchMemberQuery: '',
         members: [],
         groups: [],
-        preferences: {} as OrganizationPreferences,
       };
 
       const team = getTeam(mockState, '1');
-
       expect(team).toEqual(mockTeam);
     });
   });
@@ -52,11 +48,9 @@ describe('Team selectors', () => {
         searchMemberQuery: '',
         members: mockTeamMembers,
         groups: [] as TeamGroup[],
-        preferences: {} as OrganizationPreferences,
       };
 
       const members = getTeamMembers(mockState);
-
       expect(members).toEqual(mockTeamMembers);
     });
   });

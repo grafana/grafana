@@ -1,4 +1,4 @@
-import { Team, TeamGroup, TeamMember, TeamsState, TeamState, OrganizationPreferences } from 'app/types';
+import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 export const initialTeamsState: TeamsState = { teams: [], searchQuery: '', hasFetched: false };
@@ -7,7 +7,6 @@ export const initialTeamState: TeamState = {
   members: [] as TeamMember[],
   groups: [] as TeamGroup[],
   searchMemberQuery: '',
-  preferences: {} as OrganizationPreferences,
 };
 
 export const teamsReducer = (state = initialTeamsState, action: Action): TeamsState => {
@@ -34,18 +33,6 @@ export const teamReducer = (state = initialTeamState, action: Action): TeamState
 
     case ActionTypes.LoadTeamGroups:
       return { ...state, groups: action.payload };
-
-    case ActionTypes.LoadTeamPreferences:
-      return { ...state, preferences: action.payload };
-
-    case ActionTypes.SetTeamTheme:
-      return { ...state, preferences: { ...state.preferences, theme: action.payload } };
-
-    case ActionTypes.SetTeamHomeDashboard:
-      return { ...state, preferences: { ...state.preferences, homeDashboardId: action.payload } };
-
-    case ActionTypes.SetTeamTimezone:
-      return { ...state, preferences: { ...state.preferences, timezone: action.payload } };
   }
 
   return state;

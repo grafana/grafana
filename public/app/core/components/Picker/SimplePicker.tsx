@@ -5,13 +5,14 @@ import ResetStyles from './ResetStyles';
 
 interface Props {
   className?: string;
-  defaultValue: any;
+  defaultValue?: any;
   getOptionLabel: (item: any) => string;
   getOptionValue: (item: any) => string;
   onSelected: (item: any) => {} | void;
   options: any[];
   placeholder?: string;
   width: number;
+  value: any;
 }
 
 const SimplePicker: SFC<Props> = ({
@@ -23,6 +24,7 @@ const SimplePicker: SFC<Props> = ({
   options,
   placeholder,
   width,
+  value,
 }) => {
   return (
     <Select
@@ -32,6 +34,7 @@ const SimplePicker: SFC<Props> = ({
         Option: DescriptionOption,
       }}
       defaultValue={defaultValue}
+      value={value}
       getOptionLabel={getOptionLabel}
       getOptionValue={getOptionValue}
       isSearchable={false}

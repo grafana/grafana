@@ -1,6 +1,6 @@
 import { Action, ActionTypes } from './actions';
 import { initialTeamsState, initialTeamState, teamReducer, teamsReducer } from './reducers';
-import { getMockTeam, getMockTeamMember, getMockTeamPreferences } from '../__mocks__/teamMocks';
+import { getMockTeam, getMockTeamMember } from '../__mocks__/teamMocks';
 
 describe('teams reducer', () => {
   it('should set teams', () => {
@@ -68,18 +68,5 @@ describe('team reducer', () => {
     const result = teamReducer(initialTeamState, action);
 
     expect(result.searchMemberQuery).toEqual('member');
-  });
-
-  it('should set team preferences', () => {
-    const mockTeamPrefs = getMockTeamPreferences();
-
-    const action: Action = {
-      type: ActionTypes.LoadTeamPreferences,
-      payload: mockTeamPrefs,
-    };
-
-    const result = teamReducer(initialTeamState, action);
-
-    expect(result.preferences).toEqual(mockTeamPrefs);
   });
 });
