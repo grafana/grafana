@@ -79,14 +79,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   // Keep this DOM-free for testing
   provideCompletionItems({ prefix, wrapperClasses, text, value }: TypeaheadInput, context?: any): TypeaheadOutput {
-    // Syntax spans have 3 classes by default. More indicate a recognized token
-    const tokenRecognized = wrapperClasses.length > 3;
-
     // Local text properties
     const empty = value.document.text.length === 0;
     const selectedLines = value.document.getTextsAtRangeAsArray(value.selection);
     const currentLine = selectedLines.length === 1 ? selectedLines[0] : null;
     const nextCharacter = currentLine ? currentLine.text[value.selection.anchorOffset] : null;
+
+    // Syntax spans have 3 classes by default. More indicate a recognized token
+    const tokenRecognized = wrapperClasses.length > 3;
+    // Non-empty prefix, but not inside known token
+    const prefixUnrecognized = prefix && !tokenRecognized;
+    // Prevent suggestions in `function(|suffix)`
+    const noSuffix = !nextCharacter || nextCharacter === ')';
+    // Empty prefix is safe if it does not immediately folllow a complete expression and has no text after it
+    const safeEmptyPrefix = prefix === '' && !text.match(/^[\]})\s]+$/) && noSuffix;
+    // About to type next operand if preceded by binary operator
+    const isNextOperand = text.match(/[+\-*/^%]/);
 
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-range')) {
@@ -96,16 +104,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
       return this.getLabelCompletionItems.apply(this, arguments);
     } else if (_.includes(wrapperClasses, 'context-aggregation')) {
+      // Suggestions for sum(metric) by (|)
       return this.getAggregationCompletionItems.apply(this, arguments);
     } else if (empty) {
+      // Suggestions for empty query field
       return this.getEmptyCompletionItems(context || {});
-    } else if (
-      // Show default suggestions in a couple of scenarios
-      (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
-      // Empty prefix, but not directly following a closing brace (e.g., `]|`), or not succeeded by anything except a closing parens, e.g., `sum(|)`
-      (prefix === '' && !text.match(/^[\]})\s]+$/) && (!nextCharacter || nextCharacter === ')')) ||
-      text.match(/[+\-*/^%]/) // Anything after binary operator
-    ) {
+    } else if (prefixUnrecognized || safeEmptyPrefix || isNextOperand) {
+      // Show term suggestions in a couple of scenarios
       return this.getTermCompletionItems();
     }
 
