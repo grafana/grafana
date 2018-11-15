@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
+import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
 
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
@@ -44,23 +44,13 @@ export class PanelHeader extends PureComponent<Props, State> {
     const { panel, dashboard, timeInfo } = this.props;
     return (
       <>
-        {panel.description && (
-          <Tooltip
-            content={panel.description}
-            className="absolute"
-            refClassName="panel-info-corner panel-info-corner--info"
-          >
-            <i className="fa" />
-            <span className="panel-info-corner-inner" />
-          </Tooltip>
-        )}
-        {isLoading && (
-          <span className="panel-loading">
-            <i className="fa fa-spinner fa-spin" />
-          </span>
-        )}
-
+        <PanelHeaderCorner panel={panel} />
         <div className={panelHeaderClass}>
+          {isLoading && (
+            <span className="panel-loading">
+              <i className="fa fa-spinner fa-spin" />
+            </span>
+          )}
           <div className="panel-title-container" onClick={this.onMenuToggle}>
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
