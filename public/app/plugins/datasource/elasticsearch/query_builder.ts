@@ -266,7 +266,14 @@ export class ElasticQueryBuilder {
 
       if (queryDef.isPipelineAgg(metric.type)) {
         if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-          metricAgg = { buckets_path: metric.pipelineAgg };
+          const appliedAgg = queryDef.findMetricById(target.metrics, metric.pipelineAgg);
+          if (appliedAgg) {
+            if (appliedAgg.type === 'count') {
+              metricAgg = { buckets_path: '_count' };
+            } else {
+              metricAgg = { buckets_path: metric.pipelineAgg };
+            }
+          }
         } else {
           continue;
         }
