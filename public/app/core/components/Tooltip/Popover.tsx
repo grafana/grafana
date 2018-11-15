@@ -6,7 +6,7 @@ class Popover extends PureComponent<UsingPopperProps> {
   render() {
     const { children, hidePopper, showPopper, className, ...restProps } = this.props;
 
-    const togglePopper = restProps.show === true ? hidePopper : showPopper;
+    const togglePopper = restProps.show ? hidePopper : showPopper;
 
     return (
       <div className={`popper__manager ${className}`} onClick={togglePopper}>
