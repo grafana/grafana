@@ -30,7 +30,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   constructor(props) {
     super(props);
-    console.log('props', props);
 
     this.state = {
       homeDashboardId: 0,
@@ -43,6 +42,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
   async componentDidMount() {
     const prefs = await this.backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
     const dashboards = await this.backendSrv.search({ starred: true });
+
+    if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
+      const missing = await this.backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
+      if (missing && missing.length > 0) {
+        dashboards.push(missing[0]);
+      }
+    }
 
     this.setState({
       homeDashboardId: prefs.homeDashboardId,
