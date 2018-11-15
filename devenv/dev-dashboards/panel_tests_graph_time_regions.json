@@ -167,7 +167,7 @@
           "fillColor": "rgba(255, 255, 255, 0.03)",
           "from": "20:00",
           "fromDayOfWeek": 7,
-          "line": true,
+          "line": false,
           "lineColor": "rgba(255, 255, 255, 0.2)",
           "op": "time",
           "to": "23:00",
@@ -420,7 +420,7 @@
       "timeRegions": [
         {
           "colorMode": "red",
-          "fill": true,
+          "fill": false,
           "from": "05:00",
           "line": true,
           "op": "time"
