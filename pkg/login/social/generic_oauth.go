@@ -176,7 +176,7 @@ type UserInfoJson struct {
 	Username    string                 `json:"username"`
 	Email       string                 `json:"email"`
 	Upn         string                 `json:"upn"`
-	Attributes  map[string]interface{} `json:"attributes"`
+	Attributes  map[string][]string `json:"attributes"`
 	AllAttributes map[string]interface{} `json:"all_attributes"`
 }
 
