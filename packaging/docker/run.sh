@@ -80,6 +80,7 @@ fi
 exec grafana-server                                         \
   --homepath="$GF_PATHS_HOME"                               \
   --config="$GF_PATHS_CONFIG"                               \
+  --packaging docker                                        \
   "$@"                                                      \
   cfg:default.log.mode="console"                            \
   cfg:default.paths.data="$GF_PATHS_DATA"                   \
