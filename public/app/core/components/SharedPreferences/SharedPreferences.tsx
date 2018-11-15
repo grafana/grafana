@@ -62,6 +62,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       theme,
       timezone,
     });
+    window.location.reload();
   };
 
   onThemeChanged = (theme: string) => {
