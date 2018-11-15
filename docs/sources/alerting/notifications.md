@@ -128,6 +128,10 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
+### Google Hangouts Chat
+
+Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
+
 ### All supported notifier
 
 Name | Type |Support images
@@ -137,6 +141,7 @@ Pagerduty | `pagerduty` | yes
 Email | `email` | yes
 Webhook | `webhook` | link
 Kafka | `kafka` | no
+Google Hangouts Chat | `googlechat` | yes
 Hipchat | `hipchat` | yes
 VictorOps | `victorops` | yes
 Sensu | `sensu` | yes
