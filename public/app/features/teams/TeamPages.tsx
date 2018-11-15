@@ -41,14 +41,14 @@ export class TeamPages extends PureComponent<Props, State> {
     };
   }
 
-  componentDidMount() {
-    this.fetchTeam();
+  async componentDidMount() {
+    await this.fetchTeam();
   }
 
   async fetchTeam() {
     const { loadTeam, teamId } = this.props;
 
-    await loadTeam(teamId);
+    return await loadTeam(teamId);
   }
 
   getCurrentPage() {
@@ -67,7 +67,6 @@ export class TeamPages extends PureComponent<Props, State> {
 
       case PageTypes.Settings:
         return <TeamSettings />;
-
       case PageTypes.GroupSync:
         return isSyncEnabled && <TeamGroupSync />;
     }

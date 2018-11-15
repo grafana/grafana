@@ -29,7 +29,9 @@ exports[`Render should render organization and preferences 1`] = `
         onSubmit={[Function]}
         orgName="Cool org"
       />
-      <Connect(OrgPreferences) />
+      <SharedPreferences
+        resourceUri="org"
+      />
     </div>
   </div>
 </div>
