@@ -257,8 +257,25 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     elem.on('click', '.table-panel-page-link', switchPage);
     elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
+    function colorizeDetails(json) {
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+          let cls;
+          if ( (/^"/.test(match)) && (/:$/.test(match)) ) {
+            cls = 'key';
+            return '<span style="border: 1px solid #ffffff; \
+            background-color: #ccccff; color: black;" class="' + cls + '">' + match + '</span>';
+          } else {
+            cls = 'value';
+            return '<span style="border: 1px solid #ffffff; \
+            background-color: #ccffcc; color: black;"' + cls + '">' + match + '</span>';
+          }
+      });
+    }
+
     function formatDetails(e,doc) {
       const prettyPrint = e.currentTarget.dataset.lookuppp;
+      const colorize = e.currentTarget.dataset.lookupcolor;
       if (typeof doc === 'string') {
         doc = JSON.parse(doc);
       }
@@ -266,6 +283,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         doc = JSON.stringify(doc, undefined, 4);
       } else {
         doc = JSON.stringify(doc);
+      }
+      if (colorize) {
+        doc = colorizeDetails(doc);
       }
       doc = '<pre>' + doc + '</pre>';
       return doc;

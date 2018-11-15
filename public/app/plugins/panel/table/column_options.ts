@@ -160,6 +160,12 @@ export class ColumnOptionsCtrl {
     }
     this.panelCtrl.render();
   }
+  toggleDetailColor(el) {
+    if (el.details === true && el.link === true) {
+      el.link = false;
+    }
+    this.panelCtrl.render();
+  }
 }
 
 /** @ngInject */
