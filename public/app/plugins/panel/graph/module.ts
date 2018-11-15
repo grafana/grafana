@@ -1,6 +1,7 @@
 import './graph';
 import './series_overrides_ctrl';
 import './thresholds_form';
+import './time_regions_form';
 
 import template from './template';
 import _ from 'lodash';
@@ -111,6 +112,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     thresholds: [],
+    timeRegions: [],
   };
 
   /** @ngInject */

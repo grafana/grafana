@@ -14,6 +14,11 @@
 					Thresholds <span class="muted">({{ctrl.panel.thresholds.length}})</span>
 				</a>
 			</li>
+			<li ng-class="{active: ctrl.subTabIndex === 3}">
+				<a ng-click="ctrl.subTabIndex = 3">
+					Time regions <span class="muted">({{ctrl.panel.timeRegions.length}})</span>
+				</a>
+			</li>
 		</ul>
 	</aside>
 
@@ -130,6 +135,10 @@
 
 	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 2">
 		<graph-threshold-form panel-ctrl="ctrl"></graph-threshold-form>
+	</div>
+
+	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 3">
+		<graph-time-region-form panel-ctrl="ctrl"></graph-time-region-form>
 	</div>
 
 </div>

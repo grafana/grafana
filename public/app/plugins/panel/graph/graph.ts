@@ -16,6 +16,7 @@ import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
+import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
@@ -38,6 +39,7 @@ class GraphElement {
   panelWidth: number;
   eventManager: EventManager;
   thresholdManager: ThresholdManager;
+  timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
@@ -49,6 +51,7 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
+    this.timeRegionManager = new TimeRegionManager(this.ctrl);
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
@@ -125,6 +128,7 @@ class GraphElement {
 
   onPanelTeardown() {
     this.thresholdManager = null;
+    this.timeRegionManager = null;
 
     if (this.plot) {
       this.plot.destroy();
@@ -215,6 +219,7 @@ class GraphElement {
     }
 
     this.thresholdManager.draw(plot);
+    this.timeRegionManager.draw(plot);
   }
 
   processOffsetHook(plot, gridMargin) {
@@ -293,6 +298,7 @@ class GraphElement {
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
     this.thresholdManager.addFlotOptions(options, this.panel);
+    this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
 
     this.sortedSeries = this.sortSeries(this.data, this.panel);
