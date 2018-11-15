@@ -161,7 +161,11 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
             panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           }
 
-          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
+          if (
+            ctrl.alertState.state === 'ok' ||
+            ctrl.alertState.state === 'alerting' ||
+            ctrl.alertState.state === 'pending'
+          ) {
             panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
           }
 
