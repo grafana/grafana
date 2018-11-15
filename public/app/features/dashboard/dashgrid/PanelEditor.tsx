@@ -82,7 +82,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
           </button>
         </div>
 
-        {activeTab === 'general' && <GeneralTab panel={panel} dashboard={dashboard} />}
+        {activeTab === 'general' && <GeneralTab panel={panel} />}
         {activeTab === 'queries' && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab === 'visualization' && (
           <VisualizationTab panel={panel} dashboard={dashboard} plugin={plugin} onTypeChanged={onTypeChanged} />

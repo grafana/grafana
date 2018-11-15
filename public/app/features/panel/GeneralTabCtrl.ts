@@ -1,5 +1,4 @@
 import coreModule from 'app/core/core_module';
-import { DashboardModel } from '../dashboard/dashboard_model';
 
 export class GeneralTabCtrl {
   panelCtrl: any;

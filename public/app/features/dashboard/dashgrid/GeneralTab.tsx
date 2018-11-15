@@ -4,11 +4,9 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 import { EditorTabBody } from './EditorTabBody';
 
 import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
 
 interface Props {
   panel: PanelModel;
-  dashboard: DashboardModel;
 }
 
 export class GeneralTab extends PureComponent<Props> {
@@ -24,14 +22,13 @@ export class GeneralTab extends PureComponent<Props> {
       return;
     }
 
-    const { panel, dashboard } = this.props;
+    const { panel } = this.props;
 
     const loader = getAngularLoader();
     const template = '<panel-general-tab />';
     const scopeProps = {
       ctrl: {
         panel: panel,
-        dashboard: dashboard,
       },
     };
 
