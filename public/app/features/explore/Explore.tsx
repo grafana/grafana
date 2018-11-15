@@ -94,6 +94,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
    * Not kept in component state to prevent edit-render roundtrips.
    */
   queryExpressions: string[];
+  /**
+   * Local ID cache to compare requested vs selected datasource
+   */
+  requestedDatasourceId: string;
 
   constructor(props) {
     super(props);
@@ -167,11 +171,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const datasourceId = datasource.meta.id;
     let datasourceError = null;
 
+    // Keep ID to track selection
+    this.requestedDatasourceId = datasourceId;
+
     try {
       const testResult = await datasource.testDatasource();
       datasourceError = testResult.status === 'success' ? null : testResult.message;
     } catch (error) {
       datasourceError = (error && error.statusText) || 'Network error';
+    }
+
+    if (datasourceId !== this.requestedDatasourceId) {
+      // User already changed datasource again, discard results
+      return;
     }
 
     const historyKey = `grafana.explore.history.${datasourceId}`;
