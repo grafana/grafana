@@ -1,16 +1,13 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
-import { NavModel, Organization, OrganizationPreferences } from '../../types';
+import { NavModel, Organization } from '../../types';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    preferences: {} as OrganizationPreferences,
     organization: {} as Organization,
     navModel: {} as NavModel,
     loadOrganization: jest.fn(),
-    loadOrganizationPreferences: jest.fn(),
-    loadStarredDashboards: jest.fn(),
     setOrganizationName: jest.fn(),
     updateOrganization: jest.fn(),
   };

@@ -4,33 +4,22 @@ import { connect } from 'react-redux';
 import PageHeader from '../../core/components/PageHeader/PageHeader';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
 import OrgProfile from './OrgProfile';
-import OrgPreferences from './OrgPreferences';
-import {
-  loadOrganization,
-  loadOrganizationPreferences,
-  setOrganizationName,
-  updateOrganization,
-} from './state/actions';
-import { loadStarredDashboards } from '../../core/actions/user';
-import { NavModel, Organization, OrganizationPreferences, StoreState } from 'app/types';
+import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
+import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
+import { NavModel, Organization, StoreState } from 'app/types';
 import { getNavModel } from '../../core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
   organization: Organization;
-  preferences: OrganizationPreferences;
   loadOrganization: typeof loadOrganization;
-  loadOrganizationPreferences: typeof loadOrganizationPreferences;
-  loadStarredDashboards: typeof loadStarredDashboards;
   setOrganizationName: typeof setOrganizationName;
   updateOrganization: typeof updateOrganization;
 }
 
 export class OrgDetailsPage extends PureComponent<Props> {
   async componentDidMount() {
-    await this.props.loadStarredDashboards();
     await this.props.loadOrganization();
-    await this.props.loadOrganizationPreferences();
   }
 
   onOrgNameChange = name => {
@@ -42,22 +31,22 @@ export class OrgDetailsPage extends PureComponent<Props> {
   };
 
   render() {
-    const { navModel, organization, preferences } = this.props;
+    const { navModel, organization } = this.props;
+    const isLoading = Object.keys(organization).length === 0;
 
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          {Object.keys(organization).length === 0 || Object.keys(preferences).length === 0 ? (
-            <PageLoader pageName="Organization" />
-          ) : (
+          {isLoading && <PageLoader pageName="Organization" />}
+          {!isLoading && (
             <div>
               <OrgProfile
                 onOrgNameChange={name => this.onOrgNameChange(name)}
                 onSubmit={this.onUpdateOrganization}
                 orgName={organization.name}
               />
-              <OrgPreferences />
+              <SharedPreferences resourceUri="org" />
             </div>
           )}
         </div>
@@ -70,14 +59,11 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'org-settings'),
     organization: state.organization.organization,
-    preferences: state.organization.preferences,
   };
 }
 
 const mapDispatchToProps = {
   loadOrganization,
-  loadOrganizationPreferences,
-  loadStarredDashboards,
   setOrganizationName,
   updateOrganization,
 };

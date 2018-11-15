@@ -320,8 +320,11 @@
 
 .ReactTable {
   border: none;
+}
+
+.ReactTable .rt-table {
   // Allow some space for the no-data text
-  min-height: 120px;
+  min-height: 90px;
 }
 
 .ReactTable .rt-thead.-header {
@@ -350,6 +353,11 @@
 .ReactTable .rt-tbody .rt-td:last-child {
   border-right: none;
 }
+.ReactTable .-pagination {
+  border-top: none;
+  box-shadow: none;
+  margin-top: $panel-margin;
+}
 .ReactTable .-pagination .-btn {
   color: $blue;
   background: $list-item-bg;
@@ -370,6 +378,10 @@
 }
 .ReactTable .rt-tr .rt-td:last-child {
   text-align: right;
+}
+.ReactTable .rt-noData {
+  top: 60px;
+  z-index: inherit;
 }
 
 // React-component cascade fix: show "loading" even though item can expand

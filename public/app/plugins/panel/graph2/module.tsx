@@ -11,8 +11,6 @@ interface Options {
   showBars: boolean;
   showLines: boolean;
   showPoints: boolean;
-
-  onChange: (options: Options) => void;
 }
 
 interface Props extends PanelProps<Options> {}
