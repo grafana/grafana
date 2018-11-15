@@ -118,7 +118,26 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 }
 
+// GetNewState returns the new state from the alert rule evaluation
 func (c *EvalContext) GetNewState() m.AlertStateType {
+	ns := getNewStateInternal(c)
+	if ns != m.AlertStateAlerting || c.Rule.For == 0 {
+		return ns
+	}
+
+	since := time.Now().Sub(c.Rule.LastStateChange)
+	if since > c.Rule.For {
+		return m.AlertStateAlerting
+	}
+
+	if c.PrevAlertState == m.AlertStateAlerting {
+		return m.AlertStateAlerting
+	}
+
+	return m.AlertStatePending
+}
+
+func getNewStateInternal(c *EvalContext) m.AlertStateType {
 	if c.Error != nil {
 		c.log.Error("Alert Rule Result Error",
 			"ruleId", c.Rule.Id,
@@ -130,19 +149,6 @@ func (c *EvalContext) GetNewState() m.AlertStateType {
 			return c.PrevAlertState
 		}
 		return c.Rule.ExecutionErrorState.ToAlertState()
-	}
-
-	if c.Firing && c.Rule.For != 0 {
-		since := time.Now().Sub(c.Rule.LastStateChange)
-		if since > c.Rule.For {
-			return m.AlertStateAlerting
-		}
-
-		if c.PrevAlertState == m.AlertStateAlerting {
-			return m.AlertStateAlerting
-		}
-
-		return m.AlertStatePending
 	}
 
 	if c.Firing {
