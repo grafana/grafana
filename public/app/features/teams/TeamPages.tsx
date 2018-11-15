@@ -7,14 +7,12 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
-import TeamPreferences from './TeamPreferences';
-import { NavModel, Team, OrganizationPreferences } from 'app/types';
-import { loadTeam, loadTeamPreferences } from './state/actions';
+import { NavModel, Team } from 'app/types';
+import { loadTeam } from './state/actions';
 import { getTeam } from './state/selectors';
 import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId, getRouteParamsPage } from '../../core/selectors/location';
-import { loadStarredDashboards } from '../../core/actions/user';
 
 export interface Props {
   team: Team;
@@ -22,9 +20,6 @@ export interface Props {
   teamId: number;
   pageName: string;
   navModel: NavModel;
-  preferences: OrganizationPreferences;
-  loadStarredDashboards: typeof loadStarredDashboards;
-  loadTeamPreferences: typeof loadTeamPreferences;
 }
 
 interface State {
@@ -47,9 +42,7 @@ export class TeamPages extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    await this.props.loadStarredDashboards();
     await this.fetchTeam();
-    await this.props.loadTeamPreferences();
   }
 
   async fetchTeam() {
@@ -73,13 +66,7 @@ export class TeamPages extends PureComponent<Props, State> {
         return <TeamMembers syncEnabled={isSyncEnabled} />;
 
       case PageTypes.Settings:
-        return (
-          <div>
-            <TeamSettings />
-            <TeamPreferences />
-          </div>
-        );
-
+        return <TeamSettings />;
       case PageTypes.GroupSync:
         return isSyncEnabled && <TeamGroupSync />;
     }
@@ -109,14 +96,11 @@ function mapStateToProps(state) {
     teamId: teamId,
     pageName: pageName,
     team: getTeam(state.team, teamId),
-    preferences: state.preferences,
   };
 }
 
 const mapDispatchToProps = {
   loadTeam,
-  loadStarredDashboards,
-  loadTeamPreferences,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamPages));

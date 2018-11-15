@@ -1,4 +1,4 @@
-import { Team, TeamGroup, TeamMember, OrganizationPreferences } from 'app/types';
+import { Team, TeamGroup, TeamMember } from 'app/types';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
@@ -64,12 +64,4 @@ export const getMockTeamGroups = (amount: number): TeamGroup[] => {
   }
 
   return groups;
-};
-
-export const getMockTeamPreferences = (): OrganizationPreferences => {
-  return {
-    theme: 'dark',
-    timezone: 'browser',
-    homeDashboardId: 1,
-  };
 };
