@@ -6,12 +6,36 @@ exports[`Tooltip renders correctly 1`] = `
   onMouseEnter={[Function]}
   onMouseLeave={[Function]}
 >
-  <div>
+  <div
+    className="popper_ref "
+  >
     <a
       href="http://www.grafana.com"
     >
       Link with tooltip
     </a>
+  </div>
+  <div
+    className="popper"
+    style={
+      Object {
+        "left": 0,
+        "opacity": 0,
+        "pointerEvents": "none",
+        "position": "absolute",
+        "top": 0,
+        "transition": "opacity 200ms linear",
+      }
+    }
+  >
+    <div
+      className="popper__background"
+    >
+      Tooltip text
+      <div
+        className="popper__arrow"
+      />
+    </div>
   </div>
 </div>
 `;
