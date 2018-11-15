@@ -8,11 +8,13 @@ export interface UsingPopperProps {
   placement?: string;
   content: string | ((props: any) => JSX.Element);
   className?: string;
+  refClassName?: string;
 }
 
 interface Props {
   placement?: string;
   className?: string;
+  refClassName?: string;
   content: string | ((props: any) => JSX.Element);
 }
 
