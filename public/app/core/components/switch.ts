@@ -9,7 +9,7 @@ const template = `
 </label>
 <div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
   <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
-  <span class="gf-from-switch__slider" for="check-{{ctrl.id}}" data-on="Yes" data-off="No"></span>
+  <span class="gf-form-switch__slider"></span>
 </div>
 `;
 
