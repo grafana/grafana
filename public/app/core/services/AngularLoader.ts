@@ -5,6 +5,7 @@ import _ from 'lodash';
 export interface AngularComponent {
   destroy();
   digest();
+  getScope();
 }
 
 export class AngularLoader {
@@ -27,6 +28,9 @@ export class AngularLoader {
       },
       digest: () => {
         scope.$digest();
+      },
+      getScope: () => {
+        return scope;
       },
     };
   }

@@ -7,6 +7,7 @@ import { GeneralTab } from './GeneralTab';
 
 import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
+import { AngularComponent } from 'app/core/services/AngularLoader';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
@@ -16,6 +17,7 @@ interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
+  angularPanel?: AngularComponent;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
@@ -58,7 +60,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   render() {
-    const { panel, dashboard, onTypeChanged, plugin } = this.props;
+    const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
     const { location } = store.getState();
     const activeTab = location.query.tab || 'queries';
 
@@ -85,7 +87,13 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
         {activeTab === 'general' && <GeneralTab panel={panel} />}
         {activeTab === 'queries' && <QueriesTab panel={panel} dashboard={dashboard} />}
         {activeTab === 'visualization' && (
-          <VisualizationTab panel={panel} dashboard={dashboard} plugin={plugin} onTypeChanged={onTypeChanged} />
+          <VisualizationTab
+            panel={panel}
+            dashboard={dashboard}
+            plugin={plugin}
+            onTypeChanged={onTypeChanged}
+            angularPanel={angularPanel}
+          />
         )}
       </div>
     );
