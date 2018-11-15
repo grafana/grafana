@@ -44,10 +44,7 @@ exports[`Render should render settings and preferences page 1`] = `
   <div
     className="page-container page-body"
   >
-    <div>
-      <Connect(TeamSettings) />
-      <Connect(TeamPreferences) />
-    </div>
+    <Connect(TeamSettings) />
   </div>
 </div>
 `;
