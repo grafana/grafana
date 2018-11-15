@@ -32,7 +32,7 @@ export class TimeRegionFormCtrl {
       from: undefined,
       toDayOfWeek: undefined,
       to: undefined,
-      colorMode: 'critical',
+      colorMode: 'background6',
       fill: true,
       line: false,
     });
