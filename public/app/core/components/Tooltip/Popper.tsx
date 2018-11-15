@@ -36,7 +36,7 @@ class Popper extends PureComponent<Props> {
             </div>
           )}
         </Reference>
-        <Transition in={show} timeout={100}>
+        <Transition in={show} timeout={100} mountOnEnter={true} unmountOnExit={true}>
           {transitionState => (
             <ReactPopper placement={placement}>
               {({ ref, style, placement, arrowProps }) => {
