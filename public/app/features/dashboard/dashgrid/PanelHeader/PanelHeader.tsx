@@ -45,11 +45,13 @@ export class PanelHeader extends PureComponent<Props, State> {
     return (
       <div className={panelHeaderClass}>
         {panel.description && (
-          <Tooltip content={panel.description}>
-            <span className="panel-info-corner panel-info-corner--info">
-              <i className="fa" />
-              <span className="panel-info-corner-inner" />
-            </span>
+          <Tooltip
+            content={panel.description}
+            className="absolute"
+            refClassName="panel-info-corner panel-info-corner--info"
+          >
+            <i className="fa" />
+            <span className="panel-info-corner-inner" />
           </Tooltip>
         )}
         {isLoading && (

@@ -6,22 +6,24 @@ interface Props {
   show: boolean;
   placement?: any;
   content: string | ((props: any) => JSX.Element);
+  refClassName?: string;
 }
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { children, renderContent, show, placement } = this.props;
+    const { children, renderContent, show, placement, refClassName } = this.props;
     const { content } = this.props;
-    const modifiers = {
-      flip: { enabled: false },
-      preventOverflow: { enabled: false },
-      hide: { enabled: false },
-    };
     return (
       <Manager>
-        <Reference>{({ ref }) => <div ref={ref}>{children}</div>}</Reference>
+        <Reference>
+          {({ ref }) => (
+            <div className={`popper_ref ${refClassName || ''}`} ref={ref}>
+              {children}
+            </div>
+          )}
+        </Reference>
         {show && (
-          <ReactPopper placement={placement} modifiers={modifiers}>
+          <ReactPopper placement={placement}>
             {({ ref, style, placement, arrowProps }) => {
               return (
                 <div ref={ref} style={style} data-placement={placement} className="popper">
