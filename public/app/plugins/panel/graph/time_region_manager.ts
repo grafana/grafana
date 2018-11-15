@@ -4,37 +4,29 @@ import moment from 'moment';
 import config from 'app/core/config';
 
 export const colorModes = {
-  custom: { title: 'Custom' },
+  gray: {
+    themeDependent: true,
+    title: 'Gray',
+    darkColor: { fill: 'rgba(255, 255, 255, 0.09)', line: 'rgba(255, 255, 255, 0.2)' },
+    lightColor: { fill: 'rgba(0, 0, 0, 0.09)', line: 'rgba(0, 0, 0, 0.2)' },
+  },
   red: {
     title: 'Red',
     color: { fill: 'rgba(234, 112, 112, 0.12)', line: 'rgba(237, 46, 24, 0.60)' },
-  },
-  yellow: {
-    title: 'Yellow',
-    color: { fill: 'rgba(235, 138, 14, 0.12)', line: 'rgba(247, 149, 32, 0.60)' },
   },
   green: {
     title: 'Green',
     color: { fill: 'rgba(11, 237, 50, 0.090)', line: 'rgba(6,163,69, 0.60)' },
   },
-  background3: {
-    themeDependent: true,
-    title: 'Background (3%)',
-    darkColor: { fill: 'rgba(255, 255, 255, 0.03)', line: 'rgba(255, 255, 255, 0.1)' },
-    lightColor: { fill: 'rgba(0, 0, 0, 0.03)', line: 'rgba(0, 0, 0, 0.1)' },
+  blue: {
+    title: 'Blue',
+    color: { fill: 'rgba(11, 125, 238, 0.12)', line: 'rgba(11, 125, 238, 0.60)' },
   },
-  background6: {
-    themeDependent: true,
-    title: 'Background (6%)',
-    darkColor: { fill: 'rgba(255, 255, 255, 0.06)', line: 'rgba(255, 255, 255, 0.15)' },
-    lightColor: { fill: 'rgba(0, 0, 0, 0.06)', line: 'rgba(0, 0, 0, 0.15)' },
+  yellow: {
+    title: 'Yellow',
+    color: { fill: 'rgba(235, 138, 14, 0.12)', line: 'rgba(247, 149, 32, 0.60)' },
   },
-  background9: {
-    themeDependent: true,
-    title: 'Background (9%)',
-    darkColor: { fill: 'rgba(255, 255, 255, 0.09)', line: 'rgba(255, 255, 255, 0.2)' },
-    lightColor: { fill: 'rgba(0, 0, 0, 0.09)', line: 'rgba(0, 0, 0, 0.2)' },
-  },
+  custom: { title: 'Custom' },
 };
 
 export function getColorModes() {

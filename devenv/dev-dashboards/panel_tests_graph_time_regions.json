@@ -63,7 +63,7 @@
       "timeFrom": null,
       "timeRegions": [
         {
-          "colorMode": "background6",
+          "colorMode": "gray",
           "fill": true,
           "fillColor": "rgba(255, 255, 255, 0.03)",
           "from": "08:30",
