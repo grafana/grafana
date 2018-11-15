@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import Gauge from 'app/viz/Gauge';
 import { NullValueMode, PanelOptionsProps, PanelProps } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
-import { UnitPicker } from '../../../core/components/Picker/UnitPicker';
+import UnitPicker from '../../../core/components/Picker/Unit/UnitPicker';
 
 export interface Options {}
 
