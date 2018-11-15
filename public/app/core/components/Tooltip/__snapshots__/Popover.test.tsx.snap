@@ -12,27 +12,5 @@ exports[`Popover renders correctly 1`] = `
       Button with Popover
     </button>
   </div>
-  <div
-    className="popper"
-    style={
-      Object {
-        "left": 0,
-        "opacity": 0,
-        "pointerEvents": "none",
-        "position": "absolute",
-        "top": 0,
-        "transition": "opacity 200ms linear",
-      }
-    }
-  >
-    <div
-      className="popper__background"
-    >
-      Popover text
-      <div
-        className="popper__arrow"
-      />
-    </div>
-  </div>
 </div>
 `;
