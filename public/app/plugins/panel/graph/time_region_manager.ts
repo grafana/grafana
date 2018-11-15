@@ -86,8 +86,10 @@ export class TimeRegionManager {
 
     let i, hRange, timeRegion, regions, fromStart, fromEnd, timeRegionColor;
 
-    for (i = 0; i < panel.timeRegions.length; i++) {
-      timeRegion = panel.timeRegions[i];
+    const timeRegionsCopy = panel.timeRegions.map(a => ({ ...a }));
+
+    for (i = 0; i < timeRegionsCopy.length; i++) {
+      timeRegion = timeRegionsCopy[i];
 
       if (!(timeRegion.fromDayOfWeek || timeRegion.from) && !(timeRegion.toDayOfWeek || timeRegion.to)) {
         continue;
