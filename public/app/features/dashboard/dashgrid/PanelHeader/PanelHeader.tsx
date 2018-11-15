@@ -43,7 +43,7 @@ export class PanelHeader extends PureComponent<Props, State> {
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
     const { panel, dashboard, timeInfo } = this.props;
     return (
-      <div className={panelHeaderClass}>
+      <>
         {panel.description && (
           <Tooltip
             content={panel.description}
@@ -60,27 +60,29 @@ export class PanelHeader extends PureComponent<Props, State> {
           </span>
         )}
 
-        <div className="panel-title-container" onClick={this.onMenuToggle}>
-          <div className="panel-title">
-            <span className="icon-gf panel-alert-icon" />
-            <span className="panel-title-text">
-              {panel.title} <span className="fa fa-caret-down panel-menu-toggle" />
-            </span>
-
-            {this.state.panelMenuOpen && (
-              <ClickOutsideWrapper onClick={this.closeMenu}>
-                <PanelHeaderMenu panel={panel} dashboard={dashboard} />
-              </ClickOutsideWrapper>
-            )}
-
-            {timeInfo && (
-              <span className="panel-time-info">
-                <i className="fa fa-clock-o" /> {timeInfo}
+        <div className={panelHeaderClass}>
+          <div className="panel-title-container" onClick={this.onMenuToggle}>
+            <div className="panel-title">
+              <span className="icon-gf panel-alert-icon" />
+              <span className="panel-title-text">
+                {panel.title} <span className="fa fa-caret-down panel-menu-toggle" />
               </span>
-            )}
+
+              {this.state.panelMenuOpen && (
+                <ClickOutsideWrapper onClick={this.closeMenu}>
+                  <PanelHeaderMenu panel={panel} dashboard={dashboard} />
+                </ClickOutsideWrapper>
+              )}
+
+              {timeInfo && (
+                <span className="panel-time-info">
+                  <i className="fa fa-clock-o" /> {timeInfo}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 }
