@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export interface UsingPopperProps {
   showPopper: (prevState: object) => void;
@@ -60,6 +60,7 @@ export default function withPopper(WrappedComponent) {
     };
 
     renderContent(content) {
+      console.log('render content');
       if (typeof content === 'function') {
         // If it's a function we assume it's a React component
         const ReactComponent = content;
