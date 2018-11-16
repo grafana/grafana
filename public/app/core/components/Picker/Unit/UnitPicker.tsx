@@ -15,7 +15,9 @@ export default class UnitPicker extends PureComponent<Props> {
     const { defaultValue, onSelected } = this.props;
 
     const unitGroups = kbn.getUnitFormats();
-    const options = unitGroups.map(group => {
+
+    // Need to transform the data structure to work well with Select
+    const groupOptions = unitGroups.map(group => {
       const options = group.submenu.map(unit => {
         return {
           label: unit.text,
@@ -37,13 +39,12 @@ export default class UnitPicker extends PureComponent<Props> {
       }),
       menuList: () =>
         ({
-          WebkitOverflowScrolling: 'touch',
           overflowY: 'auto',
           position: 'relative',
         } as React.CSSProperties),
     };
 
-    const value = options.map(group => {
+    const value = groupOptions.map(group => {
       return group.options.find(option => option.value === defaultValue);
     });
 
@@ -53,7 +54,7 @@ export default class UnitPicker extends PureComponent<Props> {
         className="width-20 gf-form-input--form-dropdown"
         defaultValue={value}
         isSearchable={true}
-        options={options}
+        options={groupOptions}
         placeholder="Choose"
         onChange={onSelected}
         components={{
