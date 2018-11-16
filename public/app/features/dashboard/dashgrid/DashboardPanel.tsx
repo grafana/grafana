@@ -55,7 +55,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   onPluginTypeChanged = (plugin: PanelPlugin) => {
-    this.props.panel.changeType(plugin.id);
+    this.props.panel.changeType(plugin.id, this.state.angularPanel !== null);
     this.loadPlugin();
   };
 
