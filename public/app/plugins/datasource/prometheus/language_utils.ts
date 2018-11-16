@@ -83,3 +83,9 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 
   return { labelKeys, selector: selectorString };
 }
+
+export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
+  const ruleNames = Object.keys(mapping);
+  const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
+  return query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
+}
