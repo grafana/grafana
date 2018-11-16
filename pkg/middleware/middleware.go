@@ -140,7 +140,7 @@ func initContextWithApiKey(ctx *m.ReqContext) bool {
 	}
 
 	ctx.IsSignedIn = true
-	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.SignedInUser = &m.SignedInUser{IsGrafanaAdmin: apikey.Role == m.ROLE_ADMIN}
 	ctx.OrgRole = apikey.Role
 	ctx.ApiKeyId = apikey.Id
 	ctx.OrgId = apikey.OrgId
