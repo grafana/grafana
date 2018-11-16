@@ -14,11 +14,11 @@ type SignUpStep2Form struct {
 }
 
 type AdminCreateUserForm struct {
-	Email         string `json:"email"`
-	Login         string `json:"login"`
-	Name          string `json:"name"`
-	Password      string `json:"password"`
-	ThirdPartUser bool   `json:"is_thirdpart"`
+	Email             string `json:"email"`
+	Login             string `json:"login"`
+	Name              string `json:"name"`
+	Password          string `json:"password"`
+	ShouldGenPassword bool   `json:"shouldGenPassword"`
 }
 
 type AdminUpdateUserForm struct {
