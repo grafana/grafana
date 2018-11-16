@@ -6,6 +6,7 @@ import { DataSourcePicker } from './DataSourcePicker';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
+import './../../panel/metrics_tab';
 
 interface Props {
   panel: PanelModel;

@@ -4,6 +4,7 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 import { EditorTabBody } from './EditorTabBody';
 
 import { PanelModel } from '../panel_model';
+import './../../panel/GeneralTabCtrl';
 
 interface Props {
   panel: PanelModel;

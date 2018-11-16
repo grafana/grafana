@@ -12,8 +12,6 @@ import {
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 
-import { generalTab } from './GeneralTabCtrl';
-
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
 
 export class PanelCtrl {
@@ -93,7 +91,6 @@ export class PanelCtrl {
 
   initEditMode() {
     this.editorTabs = [];
-    this.addEditorTab('General', generalTab);
 
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);

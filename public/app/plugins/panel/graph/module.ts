@@ -4,8 +4,8 @@ import './thresholds_form';
 
 import template from './template';
 import _ from 'lodash';
-import config from 'app/core/config';
-import { MetricsPanelCtrl, alertTab } from 'app/plugins/sdk';
+
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 
@@ -70,11 +70,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
-    spaceLength: 10,
+    paceLength: 10,
     // show hide points
     points: false,
     // point radius in pixels
-    pointradius: 5,
+    pointradius: 2,
     // show hide bars
     bars: false,
     // enable/disable stacking
@@ -137,9 +137,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
 
-    if (config.alertingEnabled) {
-      this.addEditorTab('Alert', alertTab, 5);
-    }
+    // if (config.alertingEnabled) {
+    //   this.addEditorTab('Alert', alertTab, 5);
+    // }
 
     this.subTabIndex = 0;
   }

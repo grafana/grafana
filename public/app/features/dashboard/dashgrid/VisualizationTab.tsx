@@ -45,15 +45,41 @@ export class VisualizationTab extends PureComponent<Props> {
   }
 
   componentDidMount() {
+    this.loadAngularOptions();
+  }
+
+  componentDidUpdate() {
+    // in some cases we need to do this after mount because angularPanel was not available on mount
+    this.loadAngularOptions();
+  }
+
+  loadAngularOptions() {
     const { angularPanel } = this.props;
+
+    if (!angularPanel || !this.element || this.angularOptions) {
+      return;
+    }
 
     if (angularPanel) {
       const scope = angularPanel.getScope();
+
+      // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
+      if (!scope.$$childHead) {
+        setTimeout(() => {
+          this.forceUpdate();
+        });
+        return;
+      }
+
       const panelCtrl = scope.$$childHead.ctrl;
 
+      let template = '';
+      for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
+        template += '<panel-editor-tab editor-tab="ctrl.editorTabs[' + i + ']" ctrl="ctrl"></panel-editor-tab>';
+      }
+
       const loader = getAngularLoader();
-      const template = '<panel-editor-tab editor-tab="tab" ctrl="ctrl"></panel-editor-tab>';
-      const scopeProps = { ctrl: panelCtrl, tab: panelCtrl.editorTabs[2] };
+      const scopeProps = { ctrl: panelCtrl };
 
       this.angularOptions = loader.load(this.element, scopeProps, template);
     }

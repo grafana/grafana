@@ -5,7 +5,6 @@ import config from 'app/core/config';
 
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { metricsTabDirective } from './metrics_tab';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 
 class MetricsPanelCtrl extends PanelCtrl {
@@ -42,7 +41,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.panel.datasource = this.panel.datasource || null;
 
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
-    this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
   }
 
@@ -51,11 +49,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.dataSubscription.unsubscribe();
       this.dataSubscription = null;
     }
-  }
-
-  private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', metricsTabDirective, 1, 'fa fa-database');
-    this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
   private onMetricsPanelRefresh() {
