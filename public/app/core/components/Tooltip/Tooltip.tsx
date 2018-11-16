@@ -1,36 +1,17 @@
 ﻿import React, { PureComponent } from 'react';
-import withTooltip from './withTooltip';
-import { Target } from 'react-popper';
+import Popper from './Popper';
+import withPopper, { UsingPopperProps } from './withPopper';
 
-interface Props {
-  tooltipSetState: (prevState: object) => void;
-}
-
-class Tooltip extends PureComponent<Props> {
-  showTooltip = () => {
-    const { tooltipSetState } = this.props;
-
-    tooltipSetState(prevState => ({
-      ...prevState,
-      show: true,
-    }));
-  };
-
-  hideTooltip = () => {
-    const { tooltipSetState } = this.props;
-    tooltipSetState(prevState => ({
-      ...prevState,
-      show: false,
-    }));
-  };
-
+class Tooltip extends PureComponent<UsingPopperProps> {
   render() {
+    const { children, hidePopper, showPopper, className, ...restProps } = this.props;
+
     return (
-      <Target className="popper__target" onMouseOver={this.showTooltip} onMouseOut={this.hideTooltip}>
-        {this.props.children}
-      </Target>
+      <div className={`popper__manager ${className}`} onMouseEnter={showPopper} onMouseLeave={hidePopper}>
+        <Popper {...restProps}>{children}</Popper>
+      </div>
     );
   }
 }
 
-export default withTooltip(Tooltip);
+export default withPopper(Tooltip);
