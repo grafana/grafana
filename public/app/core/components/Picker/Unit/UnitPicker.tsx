@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import Select from 'react-select';
 import UnitGroup from './UnitGroup';
 import UnitOption from './UnitOption';
-import UnitMenu from './UnitMenu';
 import ResetStyles from '../ResetStyles';
 import kbn from '../../../utils/kbn';
 
@@ -51,7 +50,6 @@ export default class UnitPicker extends PureComponent<Props> {
         components={{
           Group: UnitGroup,
           Option: UnitOption,
-          Menu: UnitMenu,
         }}
         styles={styles}
       />

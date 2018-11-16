@@ -14,6 +14,14 @@ export default class UnitGroup extends PureComponent<ExtendedGroupProps, State> 
     expanded: false,
   };
 
+  componentDidUpdate(nextProps) {
+    if (nextProps.selectProps.inputValue !== '') {
+      this.setState({ expanded: true });
+    } else {
+      this.setState({ expanded: false });
+    }
+  }
+
   onToggleChildren = () => {
     this.setState(prevState => ({
       expanded: !prevState.expanded,
