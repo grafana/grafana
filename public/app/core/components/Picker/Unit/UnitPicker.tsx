@@ -7,10 +7,13 @@ import kbn from '../../../utils/kbn';
 
 interface Props {
   onSelected: (item: any) => {} | void;
+  defaultValue?: string;
 }
 
 export default class UnitPicker extends PureComponent<Props> {
   render() {
+    const { defaultValue, onSelected } = this.props;
+
     const unitGroups = kbn.getUnitFormats();
     const options = unitGroups.map(group => {
       const options = group.submenu.map(unit => {
@@ -40,13 +43,19 @@ export default class UnitPicker extends PureComponent<Props> {
         } as React.CSSProperties),
     };
 
+    const value = options.map(group => {
+      return group.options.find(option => option.value === defaultValue);
+    });
+
     return (
       <Select
         classNamePrefix="gf-form-select-box"
-        className="width-20 gf-form-input"
+        className="width-20 gf-form-input--form-dropdown"
+        defaultValue={value}
         isSearchable={true}
         options={options}
         placeholder="Choose"
+        onChange={onSelected}
         components={{
           Group: UnitGroup,
           Option: UnitOption,

@@ -12,6 +12,7 @@ interface Props {
   thresholds?: number[];
   showThresholdLables?: boolean;
   size?: { width: number; height: number };
+  unit: { label: string; value: string };
 }
 
 const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
@@ -37,7 +38,16 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { maxValue, minValue, showThresholdLables, size, showThresholdMarkers, timeSeries, thresholds } = this.props;
+    const {
+      maxValue,
+      minValue,
+      showThresholdLables,
+      size,
+      showThresholdMarkers,
+      timeSeries,
+      thresholds,
+      unit,
+    } = this.props;
 
     const width = size.width;
     const height = size.height;
@@ -88,7 +98,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: fontColor,
             formatter: () => {
-              return Math.round(timeSeries[0].stats.avg);
+              return `${Math.round(timeSeries[0].stats.avg)} ${unit.label}`;
             },
             font: {
               size: fontSize,
