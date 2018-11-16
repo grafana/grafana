@@ -14,6 +14,7 @@ import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
+import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import TestPage from '../features/test/TestPage';
 
@@ -75,10 +76,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => DataSourcesListPage,
       },
     })
-    .when('/datasources/edit/:id', {
-      templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
-      controller: 'DataSourceEditCtrl',
-      controllerAs: 'ctrl',
+    .when('/datasources/edit/:id/', {
+      template: '<react-container />',
+      resolve: {
+        component: () => DataSourceSettings,
+      },
     })
     .when('/datasources/edit/:id/dashboards', {
       template: '<react-container />',

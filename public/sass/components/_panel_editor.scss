@@ -1,0 +1,208 @@
+.panel-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel-editor-container__panel {
+  flex: 1 1 0;
+}
+
+.panel-editor-container__editor {
+  margin-top: $panel-margin*2;
+  display: flex;
+  flex-direction: column;
+  height: 65%;
+  position: relative;
+}
+
+.panel-editor__scroll {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  padding: 0 5px;
+}
+
+.panel-editor__content {
+  padding: 40px 15px;
+}
+
+.panel-in-fullscreen {
+  .sidemenu {
+    display: none;
+  }
+
+  .dashboard-container {
+    padding: 0;
+  }
+
+  .submenu-controls {
+    padding: 0 $dashboard-padding $panel-margin $dashboard-padding;
+  }
+
+  .panel-editor-container__panel {
+    margin: 0 $dashboard-padding;
+  }
+}
+
+.panel-editor-resizer {
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  top: -23px;
+  text-align: center;
+  border-bottom: 2px dashed transparent;
+
+  &:hover {
+    transition: border-color 0.2s ease-in 0.4s;
+    transition-delay: 0.2s;
+    border-color: $text-color-faint;
+  }
+}
+
+.panel-editor-resizer__handle {
+  display: inline-block;
+  width: 180px;
+  position: relative;
+  border-radius: 2px;
+  height: 7px;
+  cursor: grabbing;
+  background: $input-label-bg;
+  top: -9px;
+
+  &:hover {
+    transition: background 0.2s ease-in 0.4s;
+    transition-delay: 0.2s;
+    background: linear-gradient(90deg, $orange, $red);
+    .panel-editor-resizer__handle-dots {
+      transition: opacity 0.2s ease-in;
+      opacity: 0;
+    }
+  }
+}
+
+.panel-editor-resizer__handle-dots {
+  border-top: 2px dashed $text-color-faint;
+  position: relative;
+  top: 4px;
+}
+
+.viz-picker {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 13px;
+}
+
+.viz-picker__item {
+  background: $card-background;
+  box-shadow: $card-shadow;
+
+  border-radius: 3px;
+  height: 90px;
+  width: 150px;
+  flex-shrink: 0;
+  flex-direction: column;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+  align-items: center;
+
+  &:hover {
+    background: $card-background-hover;
+  }
+
+  &--selected {
+    box-shadow: 0 0 12px #ff4d00;
+  }
+}
+
+.viz-picker__item-name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: $font-size-sm;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  height: 23px;
+}
+
+.viz-picker__item-img {
+  height: 55px;
+}
+
+.panel-editor-tabs {
+  position: relative;
+  z-index: 2;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
+  padding: 0 $dashboard-padding;
+
+  @include clearfix();
+
+  .active.gf-tabs-link {
+    background: $toolbar-tab-bg;
+  }
+}
+
+.panel-editor-tabs__close {
+  padding: 5px 9px;
+  border-radius: $border-radius;
+  float: right;
+  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+}
+
+.ds-picker-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 13px;
+  flex-direction: column;
+}
+
+.ds-picker-list__item {
+  background: $card-background;
+  box-shadow: $card-shadow;
+
+  border-radius: 3px;
+  display: flex;
+  cursor: pointer;
+  margin-bottom: 3px;
+  padding: 5px 15px;
+  align-items: center;
+
+  &:hover {
+    background: $card-background-hover;
+  }
+
+  &--selected {
+    .ds-picker-list__name {
+      color: $text-color;
+    }
+  }
+}
+
+.ds-picker-list__name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: $font-size-md;
+  padding-left: 15px;
+}
+
+.ds-picker-list__img {
+  width: 30px;
+}
+
+.form-option-box {
+  margin-bottom: 20px;
+}
+
+.form-option-box__header {
+  border-bottom: 2px solid $dark-4;
+  padding: 5px 0px;
+  font-size: $font-size-md;
+  margin-bottom: 20px;
+}

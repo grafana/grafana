@@ -11,15 +11,14 @@ export interface PluginExports {
 
   // Panel plugin
   PanelCtrl?;
-  PanelComponent?: ComponentClass<PanelProps>;
-  PanelOptionsComponent: ComponentClass<PanelOptionsProps>;
+  Panel?: ComponentClass<PanelProps>;
+  PanelOptions?: ComponentClass<PanelOptionsProps>;
 }
 
 export interface PanelPlugin {
   id: string;
   name: string;
-  meta: any;
-  hideFromList: boolean;
+  hideFromList?: boolean;
   module: string;
   baseUrl: string;
   info: any;
@@ -49,7 +48,7 @@ export interface PluginInclude {
 export interface PluginMetaInfo {
   author: {
     name: string;
-    url: string;
+    url?: string;
   };
   description: string;
   links: string[];
@@ -57,7 +56,7 @@ export interface PluginMetaInfo {
     large: string;
     small: string;
   };
-  screenshots: string;
+  screenshots: any[];
   updated: string;
   version: string;
 }
@@ -73,6 +72,7 @@ export interface Plugin {
   pinned: boolean;
   state: string;
   type: string;
+  module: any;
 }
 
 export interface PluginDashboard {

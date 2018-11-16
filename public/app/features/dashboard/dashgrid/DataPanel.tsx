@@ -2,7 +2,10 @@
 import React, { Component } from 'react';
 
 // Services
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
+
+// Utils
+import kbn from 'app/core/utils/kbn';
 
 // Types
 import { TimeRange, LoadingState, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
@@ -19,7 +22,10 @@ export interface Props {
   dashboardId?: number;
   isVisible?: boolean;
   timeRange?: TimeRange;
+  widthPixels: number;
   refreshCounter: number;
+  minInterval?: string;
+  maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
 }
 
@@ -36,6 +42,9 @@ export class DataPanel extends Component<Props, State> {
     dashboardId: 1,
   };
 
+  dataSourceSrv: DatasourceSrv = getDatasourceSrv();
+  isUnmounted = false;
+
   constructor(props: Props) {
     super(props);
 
@@ -48,6 +57,14 @@ export class DataPanel extends Component<Props, State> {
     };
   }
 
+  componentDidMount() {
+    this.issueQueries();
+  }
+
+  componentWillUnmount() {
+    this.isUnmounted = true;
+  }
+
   async componentDidUpdate(prevProps: Props) {
     if (!this.hasPropsChanged(prevProps)) {
       return;
@@ -57,11 +74,11 @@ export class DataPanel extends Component<Props, State> {
   }
 
   hasPropsChanged(prevProps: Props) {
-    return this.props.refreshCounter !== prevProps.refreshCounter || this.props.isVisible !== prevProps.isVisible;
+    return this.props.refreshCounter !== prevProps.refreshCounter;
   }
 
-  issueQueries = async () => {
-    const { isVisible, queries, datasource, panelId, dashboardId, timeRange } = this.props;
+  private issueQueries = async () => {
+    const { isVisible, queries, datasource, panelId, dashboardId, timeRange, widthPixels, maxDataPoints } = this.props;
 
     if (!isVisible) {
       return;
@@ -75,8 +92,11 @@ export class DataPanel extends Component<Props, State> {
     this.setState({ loading: LoadingState.Loading });
 
     try {
-      const dataSourceSrv = getDatasourceSrv();
-      const ds = await dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource);
+
+      // TODO interpolate variables
+      const minInterval = this.props.minInterval || ds.interval;
+      const intervalRes = kbn.calculateInterval(timeRange, widthPixels, minInterval);
 
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
@@ -84,10 +104,10 @@ export class DataPanel extends Component<Props, State> {
         dashboardId: dashboardId,
         range: timeRange,
         rangeRaw: timeRange.raw,
-        interval: '1s',
-        intervalMs: 60000,
+        interval: intervalRes.interval,
+        intervalMs: intervalRes.intervalMs,
         targets: queries,
-        maxDataPoints: 500,
+        maxDataPoints: maxDataPoints || widthPixels,
         scopedVars: {},
         cacheTimeout: null,
       };
@@ -95,6 +115,10 @@ export class DataPanel extends Component<Props, State> {
       console.log('Issuing DataPanel query', queryOptions);
       const resp = await ds.query(queryOptions);
       console.log('Issuing DataPanel query Resp', resp);
+
+      if (this.isUnmounted) {
+        return;
+      }
 
       this.setState({
         loading: LoadingState.Done,
@@ -108,21 +132,26 @@ export class DataPanel extends Component<Props, State> {
   };
 
   render() {
+    const { queries } = this.props;
     const { response, loading, isFirstLoad } = this.state;
 
     const timeSeries = response.data;
 
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+    if (isFirstLoad && loading === LoadingState.Loading) {
+      return this.renderLoadingSpinner();
+    }
+
+    if (!queries.length) {
       return (
-        <div className="loading">
-          <p>Loading</p>
+        <div className="panel-empty">
+          <p>Add a query to get some data!</p>
         </div>
       );
     }
 
     return (
       <>
-        {this.loadingSpinner}
+        {this.renderLoadingSpinner()}
         {this.props.children({
           timeSeries,
           loading,
@@ -131,12 +160,12 @@ export class DataPanel extends Component<Props, State> {
     );
   }
 
-  private get loadingSpinner(): JSX.Element {
+  private renderLoadingSpinner(): JSX.Element {
     const { loading } = this.state;
 
     if (loading === LoadingState.Loading) {
       return (
-        <div className="panel__loading">
+        <div className="panel-loading">
           <i className="fa fa-spinner fa-spin" />
         </div>
       );

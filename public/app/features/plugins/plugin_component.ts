@@ -5,8 +5,6 @@ import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { importPluginModule } from './plugin_loader';
 
-import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
-
 /** @ngInject */
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache, $timeout) {
   function getTemplate(component) {
@@ -69,7 +67,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
 
     const panelInfo = config.panels[scope.panel.type];
-    let panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
+    let panelCtrlPromise = Promise.resolve(null);
     if (panelInfo) {
       panelCtrlPromise = importPluginModule(panelInfo.module).then(panelModule => {
         return panelModule.PanelCtrl;
@@ -118,7 +116,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               bindings: { target: '=', panelCtrl: '=', datasource: '=' },
               attrs: {
                 target: 'target',
-                'panel-ctrl': 'ctrl.panelCtrl',
+                'panel-ctrl': 'ctrl',
                 datasource: 'datasource',
               },
               Component: dsModule.QueryCtrl,
@@ -148,6 +146,14 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
           if (!dsModule.ConfigCtrl) {
             return { notFound: true };
           }
+
+          scope.$watch(
+            'ctrl.current',
+            () => {
+              scope.onModelChanged(scope.ctrl.current);
+            },
+            true
+          );
 
           return {
             baseUrl: dsMeta.baseUrl,

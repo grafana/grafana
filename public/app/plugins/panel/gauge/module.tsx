@@ -13,7 +13,7 @@ interface Props extends PanelProps<Options> {}
 
 export class GaugePanel extends PureComponent<Props> {
   render() {
-    const { timeSeries } = this.props;
+    const { timeSeries, width, height } = this.props;
     const { unit } = this.props.options;
 
     const vmSeries = getTimeSeriesVMs({
@@ -21,7 +21,17 @@ export class GaugePanel extends PureComponent<Props> {
       nullValueMode: NullValueMode.Ignore,
     });
 
-    return <Gauge maxValue={100} minValue={0} timeSeries={vmSeries} thresholds={[0, 100]} unit={unit} />;
+    return (
+      <Gauge
+        maxValue={100}
+        minValue={0}
+        timeSeries={vmSeries}
+        thresholds={[0, 100]}
+        height={height}
+        width={width}
+        unit={unit}
+      />
+    );
   }
 }
 
@@ -45,4 +55,4 @@ export class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
   }
 }
 
-export { GaugePanel as PanelComponent, GaugeOptions as PanelOptionsComponent };
+export { GaugePanel as Panel, GaugeOptions as PanelOptions };

@@ -53,5 +53,8 @@ exports[`Render should render component 1`] = `
       </button>
     </div>
   </form>
+  <SharedPreferences
+    resourceUri="teams/1"
+  />
 </div>
 `;

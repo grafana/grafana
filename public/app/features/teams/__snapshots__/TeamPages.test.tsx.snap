@@ -36,7 +36,7 @@ exports[`Render should render member page if team not empty 1`] = `
 </div>
 `;
 
-exports[`Render should render settings page 1`] = `
+exports[`Render should render settings and preferences page 1`] = `
 <div>
   <PageHeader
     model={Object {}}

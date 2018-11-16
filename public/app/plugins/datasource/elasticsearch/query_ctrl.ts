@@ -17,6 +17,19 @@ export class ElasticQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.esVersion = this.datasource.esVersion;
+
+    this.target = this.target || {};
+    this.target.metrics = this.target.metrics || [queryDef.defaultMetricAgg()];
+    this.target.bucketAggs = this.target.bucketAggs || [queryDef.defaultBucketAgg()];
+
+    if (this.target.bucketAggs.length === 0) {
+      const metric = this.target.metrics[0];
+      if (!metric || metric.type !== 'raw_document') {
+        this.target.bucketAggs = [queryDef.defaultBucketAgg()];
+      }
+      this.refresh();
+    }
+
     this.queryUpdated();
   }
 

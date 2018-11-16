@@ -7,7 +7,7 @@ import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState, UserState } from './user';
-import { DataSource, DataSourcesState } from './datasources';
+import { DataSource, DataSourceSelectItem, DataSourcesState } from './datasources';
 import {
   TimeRange,
   LoadingState,
@@ -21,8 +21,8 @@ import {
   DataQueryOptions,
 } from './series';
 import { PanelProps, PanelOptionsProps } from './panel';
-import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
-import { Organization, OrganizationPreferences, OrganizationState } from './organization';
+import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
+import { Organization, OrganizationState } from './organization';
 import {
   AppNotification,
   AppNotificationSeverity,
@@ -55,6 +55,7 @@ export {
   OrgRole,
   PermissionLevel,
   DataSource,
+  DataSourceSelectItem,
   PluginMeta,
   ApiKey,
   ApiKeysState,
@@ -68,6 +69,7 @@ export {
   UsersState,
   TimeRange,
   LoadingState,
+  PanelPlugin,
   PanelProps,
   PanelOptionsProps,
   TimeSeries,
@@ -81,7 +83,6 @@ export {
   PluginDashboard,
   Organization,
   OrganizationState,
-  OrganizationPreferences,
   AppNotification,
   AppNotificationsState,
   AppNotificationSeverity,

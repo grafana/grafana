@@ -30,7 +30,7 @@ Authorization: Basic YWRtaW46YWRtaW4=
 
 ### Using the query parameter
 
-Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. 
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`.
 
 The `totalCount` field in the response can be used for pagination of the teams list E.g. if `totalCount` is equal to 100 teams and the `perpage` parameter is set to 10 then there are 10 pages of teams.
 
@@ -314,3 +314,67 @@ Status Codes:
 - **401** - Unauthorized
 - **403** - Permission denied
 - **404** - Team not found/Team member not found
+
+## Get Team Preferences
+
+`GET /api/teams/:teamId/preferences`
+
+**Example Request**:
+
+```http
+GET /api/teams/2/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "theme": "",
+  "homeDashboardId": 0,
+  "timezone": ""
+}
+```
+
+## Update Team Preferences
+
+`PUT /api/teams/:teamId/preferences`
+
+**Example Request**:
+
+```http
+PUT /api/teams/2/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "theme": "dark",
+  "homeDashboardId": 39,
+  "timezone": "utc"
+}
+```
+
+JSON Body Schema:
+
+- **theme** - One of: ``light``, ``dark``, or an empty string for the default theme
+- **homeDashboardId** - The numerical ``:id`` of a dashboard, default: ``0``
+- **timezone** - One of: ``utc``, ``browser``, or an empty string for the default
+
+Omitting a key will cause the current value to be replaced with the system default value.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: text/plain; charset=utf-8
+
+{
+  "message":"Preferences updated"
+}
+```

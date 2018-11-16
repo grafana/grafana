@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 

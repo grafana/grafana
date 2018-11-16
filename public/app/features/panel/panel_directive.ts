@@ -44,8 +44,8 @@ const panelTemplate = `
             </li>
           </ul>
 
-          <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-            <i class="fa fa-remove"></i>
+          <button class="panel-editor-tabs__close" ng-click="ctrl.exitFullscreen();">
+            <i class="fa fa-reply"></i>
           </button>
         </div>
 
@@ -79,16 +79,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       let lastHasAlertRule = false;
       let lastAlertState;
       let hasAlertRule;
-
-      function mouseEnter() {
-        panelContainer.toggleClass('panel-hover-highlight', true);
-        ctrl.dashboard.setPanelFocus(ctrl.panel.id);
-      }
-
-      function mouseLeave() {
-        panelContainer.toggleClass('panel-hover-highlight', false);
-        ctrl.dashboard.setPanelFocus(0);
-      }
 
       function resizeScrollableContent() {
         if (panelScrollbar) {
@@ -211,9 +201,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         infoDrop.close();
         scope.$apply(ctrl.openInspector.bind(ctrl));
       });
-
-      elem.on('mouseenter', mouseEnter);
-      elem.on('mouseleave', mouseLeave);
 
       scope.$on('$destroy', () => {
         elem.off();

@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import config from 'app/core/config';
-import { PanelPlugin } from 'app/types/plugins';
-import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 import _ from 'lodash';
 
+import config from 'app/core/config';
+import { PanelPlugin } from 'app/types/plugins';
+
 interface Props {
-  currentType: string;
+  current: PanelPlugin;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
@@ -15,6 +15,8 @@ interface State {
 }
 
 export class VizTypePicker extends PureComponent<Props, State> {
+  searchInput: HTMLElement;
+
   constructor(props) {
     super(props);
 
@@ -36,34 +38,55 @@ export class VizTypePicker extends PureComponent<Props, State> {
   renderVizPlugin = (plugin, index) => {
     const cssClass = classNames({
       'viz-picker__item': true,
-      'viz-picker__item--selected': plugin.id === this.props.currentType,
+      'viz-picker__item--selected': plugin.id === this.props.current.id,
     });
 
     return (
       <div key={index} className={cssClass} onClick={() => this.props.onTypeChanged(plugin)} title={plugin.name}>
-        <img className="viz-picker__item-img" src={plugin.info.logos.small} />
         <div className="viz-picker__item-name">{plugin.name}</div>
+        <img className="viz-picker__item-img" src={plugin.info.logos.small} />
       </div>
     );
   };
 
-  render() {
+  componentDidMount() {
+    setTimeout(() => {
+      this.searchInput.focus();
+    }, 300);
+  }
+
+  renderFilters() {
     return (
-      <div className="viz-picker">
-        <div className="viz-picker__search">
-          <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <input type="text" className="gf-form-input" placeholder="Search type" />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
-          </div>
+      <>
+        <label className="gf-form--has-input-icon">
+          <input
+            type="text"
+            className="gf-form-input width-13"
+            placeholder=""
+            ref={elem => (this.searchInput = elem)}
+          />
+          <i className="gf-form-input-icon fa fa-search" />
+        </label>
+        <div className="p-l-1">
+          <button className="btn toggle-btn gf-form-btn active">Basic Types</button>
+          <button className="btn toggle-btn gf-form-btn">Master Types</button>
         </div>
-        <div className="viz-picker__items">
-          <CustomScrollbar>
-            <div className="scroll-margin-helper">{this.state.pluginList.map(this.renderVizPlugin)}</div>
-          </CustomScrollbar>
+      </>
+    );
+  }
+
+  render() {
+    const { pluginList } = this.state;
+
+    return (
+      <>
+        <div className="cta-form__bar">
+          {this.renderFilters()}
+          <div className="gf-form--grow" />
         </div>
-      </div>
+
+        <div className="viz-picker">{pluginList.map(this.renderVizPlugin)}</div>
+      </>
     );
   }
 }

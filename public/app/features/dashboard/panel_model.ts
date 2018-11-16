@@ -42,6 +42,16 @@ export class PanelModel {
   datasource: string;
   thresholds?: any;
 
+  snapshotData?: any;
+  timeFrom?: any;
+  timeShift?: any;
+  hideTimeOverride?: any;
+
+  maxDataPoints?: number;
+  interval?: string;
+  description?: string;
+  links?: [];
+
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
