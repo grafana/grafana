@@ -45,49 +45,63 @@ export class VisualizationTab extends PureComponent<Props> {
   }
 
   componentDidMount() {
-    this.loadAngularOptions();
+    if (this.shouldLoadAngularOptions()) {
+      this.loadAngularOptions();
+    }
   }
 
-  componentDidUpdate() {
-    // in some cases we need to do this after mount because angularPanel was not available on mount
-    this.loadAngularOptions();
+  componentDidUpdate(prevProps: Props) {
+    console.log('VizTab component did update');
+
+    // if type changed
+    if (this.props.plugin !== prevProps.plugin) {
+      this.cleanUpAngularOptions();
+    }
+
+    if (this.shouldLoadAngularOptions()) {
+      this.loadAngularOptions();
+    }
+  }
+
+  shouldLoadAngularOptions() {
+    return this.props.angularPanel && this.element && !this.angularOptions;
   }
 
   loadAngularOptions() {
     const { angularPanel } = this.props;
+    console.log('loadAngularOptions angularPanel=' + angularPanel);
 
-    if (!angularPanel || !this.element || this.angularOptions) {
+    const scope = angularPanel.getScope();
+
+    // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
+    if (!scope.$$childHead) {
+      setTimeout(() => {
+        this.forceUpdate();
+      });
       return;
     }
 
-    if (angularPanel) {
-      const scope = angularPanel.getScope();
+    const panelCtrl = scope.$$childHead.ctrl;
 
-      // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
-      if (!scope.$$childHead) {
-        setTimeout(() => {
-          this.forceUpdate();
-        });
-        return;
-      }
-
-      const panelCtrl = scope.$$childHead.ctrl;
-
-      let template = '';
-      for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
-        template += '<panel-editor-tab editor-tab="ctrl.editorTabs[' + i + ']" ctrl="ctrl"></panel-editor-tab>';
-      }
-
-      const loader = getAngularLoader();
-      const scopeProps = { ctrl: panelCtrl };
-
-      this.angularOptions = loader.load(this.element, scopeProps, template);
+    let template = '';
+    for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
+      template += '<panel-editor-tab editor-tab="ctrl.editorTabs[' + i + ']" ctrl="ctrl"></panel-editor-tab>';
     }
+
+    const loader = getAngularLoader();
+    const scopeProps = { ctrl: panelCtrl };
+
+    this.angularOptions = loader.load(this.element, scopeProps, template);
   }
 
   componentWillUnmount() {
+    this.cleanUpAngularOptions();
+  }
+
+  cleanUpAngularOptions() {
     if (this.angularOptions) {
       this.angularOptions.destroy();
+      this.angularOptions = null;
     }
   }
 
