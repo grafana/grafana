@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import Select from 'react-select';
-import { UnitGroup } from './UnitGroup';
+import UnitGroup from './UnitGroup';
 import UnitOption from './UnitOption';
 import UnitMenu from './UnitMenu';
 import ResetStyles from '../ResetStyles';
@@ -12,7 +12,34 @@ interface Props {
 
 export default class UnitPicker extends PureComponent<Props> {
   render() {
-    const options = kbn.getUnitFormats();
+    const unitGroups = kbn.getUnitFormats();
+    const options = unitGroups.map(group => {
+      const options = group.submenu.map(unit => {
+        return {
+          label: unit.text,
+          value: unit.value,
+        };
+      });
+
+      return {
+        label: group.text,
+        options,
+      };
+    });
+
+    const styles = {
+      ...ResetStyles,
+      menu: () => ({
+        maxHeight: '500px',
+        overflow: 'scroll',
+      }),
+      menuList: () =>
+        ({
+          WebkitOverflowScrolling: 'touch',
+          overflowY: 'auto',
+          position: 'relative',
+        } as React.CSSProperties),
+    };
 
     return (
       <Select
@@ -26,7 +53,7 @@ export default class UnitPicker extends PureComponent<Props> {
           Option: UnitOption,
           Menu: UnitMenu,
         }}
-        styles={ResetStyles}
+        styles={styles}
       />
     );
   }
