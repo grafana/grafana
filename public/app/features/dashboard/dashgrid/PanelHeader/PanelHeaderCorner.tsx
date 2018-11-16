@@ -1,4 +1,4 @@
-﻿import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import templateSrv from 'app/features/templating/template_srv';
@@ -21,10 +21,6 @@ export class PanelHeaderCorner extends PureComponent<Props> {
 
   getInfoMode = () => {
     const { panel } = this.props;
-    // TODO
-    // if (error) {
-    //   return InfoModes.Error;
-    // }
     if (!!panel.description) {
       return InfoModes.Info;
     }
@@ -35,11 +31,10 @@ export class PanelHeaderCorner extends PureComponent<Props> {
     return undefined;
   };
 
-  getInfoContent = () => {
+  getInfoContent = (): JSX.Element => {
     const { panel } = this.props;
     const markdown = panel.description;
     const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
-    const sanitize = str => str; // TODO
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
     const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
 
@@ -63,7 +58,8 @@ export class PanelHeaderCorner extends PureComponent<Props> {
           )}
       </div>
     );
-    return sanitize(html);
+
+    return html;
   };
 
   render() {
@@ -72,13 +68,12 @@ export class PanelHeaderCorner extends PureComponent<Props> {
     if (!infoMode) {
       return null;
     }
-    const infoContent = this.getInfoContent();
 
     return (
       <>
         {infoMode === InfoModes.Info || infoMode === InfoModes.Links ? (
           <Tooltip
-            content={infoContent}
+            content={this.getInfoContent}
             className="absolute"
             refClassName={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}
           >
