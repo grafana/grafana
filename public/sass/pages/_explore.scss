@@ -18,10 +18,39 @@
     margin-left: 15px;
   }
 
-  // Graph panel needs a bit extra padding at top
-  .panel-container {
+  .explore-panel {
+    margin-top: $panel-margin;
+  }
+
+  .explore-panel__body {
     padding: $panel-padding;
-    padding-top: 10px;
+  }
+
+  .explore-panel__header {
+    padding: $panel-padding;
+    padding-top: 5px;
+    padding-bottom: 0;
+    display: flex;
+    cursor: pointer;
+    margin-bottom: 5px;
+    transition: all 0.1s linear;
+  }
+
+  .explore-panel__header:hover {
+    transform: translateY(-1px);
+  }
+
+  .explore-panel__header-label {
+    font-weight: 500;
+    margin-right: $panel-margin;
+    font-size: $font-size-h6;
+    box-shadow: $text-shadow-faint;
+  }
+
+  .explore-panel__header-buttons {
+    margin-right: $panel-margin;
+    font-size: $font-size-lg;
+    line-height: $font-size-h6;
   }
 
   // Make sure wrap buttons around on small screens
@@ -91,11 +120,16 @@
     height: 2px;
     position: relative;
     overflow: hidden;
-    background: $text-color-faint;
+    background: none;
     margin: $panel-margin / 2;
+    transition: background-color 1s ease;
   }
 
-  .explore-panel__loader:after {
+  .explore-panel__loader--active {
+    background: $text-color-faint;
+  }
+
+  .explore-panel__loader--active:after {
     content: ' ';
     display: block;
     width: 25%;
@@ -221,15 +255,16 @@
 
     .logs-controls {
       display: flex;
+      background-color: $page-bg;
+      padding: $panel-padding;
+      padding-top: 10px;
+      border-radius: $border-radius;
+      margin: 2*$panel-margin 0;
+      border: $panel-border;
 
       > * {
         margin-right: 1em;
       }
-    }
-
-    .logs-options,
-    .logs-graph {
-      margin-bottom: $panel-margin;
     }
 
     .logs-meta {
