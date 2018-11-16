@@ -24,7 +24,7 @@ func AdminCreateUser(c *m.ReqContext, form dtos.AdminCreateUserForm) {
 		}
 	}
 
-	if form.ThirdPartUser && cmd.Password == "" {
+	if form.ShouldGenPassword && cmd.Password == "" {
 		// Generate a random password so that nobody can login with password
 		cmd.Password = util.GetRandomString(10)
 	}
