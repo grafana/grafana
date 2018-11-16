@@ -372,3 +372,10 @@ $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
 $switch-slider-on-bg: linear-gradient(90deg, $yellow, $red);
 $switch-slider-shadow: 0 0 3px $dark-5;
+
+//Checkbox
+// -------------------------
+$checkbox-bg: $gray-6;
+$checkbox-border: 1px solid $gray-3;
+$checkbox-checked-bg: linear-gradient(0deg, $yellow, $red);
+$checkbox-color: $gray-7;

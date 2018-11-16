@@ -142,3 +142,29 @@ input:checked + .gf-form-switch__slider {
 input:checked + .gf-form-switch__slider::before {
   transform: translateX(14px);
 }
+
+/* The Checkbox */
+
+.gf-form-switch__checkbox {
+  position: absolute;
+  left: 16px;
+  height: 16px;
+  width: 16px;
+  border-radius: 3px;
+  border: $checkbox-border;
+  background: $checkbox-bg;
+  top: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+input:checked + .gf-form-switch__checkbox::before {
+  font-family: 'FontAwesome';
+  content: '\f00c';
+  color: $checkbox-color;
+}
+
+input:checked + .gf-form-switch__checkbox {
+  background: $checkbox-checked-bg;
+  border: none;
+}
