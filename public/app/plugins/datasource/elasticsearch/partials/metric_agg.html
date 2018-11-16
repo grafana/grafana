@@ -13,7 +13,17 @@
 	<div class="gf-form">
 		<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="width-10"></metric-segment-model>
 		<metric-segment-model ng-if="aggDef.requiresField" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
-		<metric-segment-model ng-if="aggDef.isPipelineAgg" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
+		<metric-segment-model ng-if="aggDef.isPipelineAgg && !aggDef.supportsMultipleBucketPaths" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
+	</div>
+
+  <div class="gf-form gf-form--grow" ng-if="aggDef.isPipelineAgg && aggDef.supportsMultipleBucketPaths">
+		<label class="gf-form-label gf-form-label--grow">
+			<a ng-click="toggleVariables()">
+				<i class="fa fa-caret-down" ng-show="showVariables"></i>
+				<i class="fa fa-caret-right" ng-hide="showVariables"></i>
+        {{variablesLinkText}}
+			</a>
+		</label>
 	</div>
 
 	<div class="gf-form gf-form--grow">
@@ -34,6 +44,20 @@
 			<a class="pointer" ng-click="removeMetricAgg()"><i class="fa fa-minus"></i></a>
 		</label>
 	</div>
+</div>
+
+<div class="gf-form-group" ng-if="showVariables">
+	<elastic-pipeline-variables variables="agg.pipelineVariables" options="pipelineAggOptions" on-change="onChangeInternal()" />
+  <div class="gf-form offset-width-7">
+    <label class="gf-form-label width-10">
+      Script
+      <info-popover mode="right-normal">
+        Elasticsearch v5.0 and above: Scripting language is Painless. Use <i>params.&lt;var&gt;</i> to reference a variable.<br/><br/>
+        Elasticsearch pre-v5.0: Scripting language is per default Groovy if not changed. For Groovy use <i>&lt;var&gt;</i> to reference a variable.
+      </info-popover>
+    </label>
+    <input type="text" class="gf-form-input max-width-24" empty-to-null ng-model="agg.settings.script" ng-blur="onChangeInternal()" spellcheck='false' placeholder="params.var1 / params.var2">
+  </div>
 </div>
 
 <div class="gf-form-group" ng-if="showOptions">
@@ -103,5 +127,5 @@
 			<tip>The missing parameter defines how documents that are missing a value should be treated. By default they will be ignored but it is also possible to treat them as if they had a value</tip>
 		</label>
 		<input type="number" class="gf-form-input max-width-12" empty-to-null ng-model="agg.settings.missing" ng-blur="onChangeInternal()" spellcheck='false'>
-	</div>
+  </div>
 </div>
