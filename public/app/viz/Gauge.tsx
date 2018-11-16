@@ -3,6 +3,7 @@ import $ from 'jquery';
 import { withSize } from 'react-sizeme';
 import { TimeSeriesVMs } from 'app/types';
 import config from '../core/config';
+import kbn from '../core/utils/kbn';
 
 interface Props {
   timeSeries: TimeSeriesVMs;
@@ -37,17 +38,15 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
+  formatValue(value) {
+    const { unit } = this.props;
+
+    const formatFunc = kbn.valueFormats[unit.value];
+    return formatFunc(value);
+  }
+
   draw() {
-    const {
-      maxValue,
-      minValue,
-      showThresholdLables,
-      size,
-      showThresholdMarkers,
-      timeSeries,
-      thresholds,
-      unit,
-    } = this.props;
+    const { maxValue, minValue, showThresholdLables, size, showThresholdMarkers, timeSeries, thresholds } = this.props;
 
     const width = size.width;
     const height = size.height;
@@ -98,7 +97,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: fontColor,
             formatter: () => {
-              return `${Math.round(timeSeries[0].stats.avg)} ${unit.label}`;
+              return this.formatValue(timeSeries[0].stats.avg);
             },
             font: {
               size: fontSize,
