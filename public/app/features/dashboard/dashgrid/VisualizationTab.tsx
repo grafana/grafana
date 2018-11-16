@@ -51,9 +51,6 @@ export class VisualizationTab extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    console.log('VizTab component did update');
-
-    // if type changed
     if (this.props.plugin !== prevProps.plugin) {
       this.cleanUpAngularOptions();
     }
@@ -69,7 +66,6 @@ export class VisualizationTab extends PureComponent<Props> {
 
   loadAngularOptions() {
     const { angularPanel } = this.props;
-    console.log('loadAngularOptions angularPanel=' + angularPanel);
 
     const scope = angularPanel.getScope();
 

@@ -199,7 +199,6 @@ export class PanelModel {
         }
 
         delete this[key];
-        console.log('deleting ', key);
       }
     }
   }

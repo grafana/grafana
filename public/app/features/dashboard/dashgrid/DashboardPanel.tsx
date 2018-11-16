@@ -59,10 +59,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.loadPlugin();
   };
 
-  onAngularPluginTypeChanged = () => {
-    this.loadPlugin();
-  };
-
   loadPlugin() {
     if (this.isSpecial()) {
       return;
@@ -94,9 +90,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentDidUpdate() {
-    this.loadPlugin();
-
-    // handle angular plugin loading
     if (!this.element || this.state.angularPanel) {
       return;
     }
@@ -154,8 +147,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     if (!plugin || !plugin.exports) {
       return null;
     }
-
-    console.log('DashboardPanel.render()');
 
     const containerClass = this.props.isEditing ? 'panel-editor-container' : 'panel-height-helper';
     const panelWrapperClass = this.props.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
