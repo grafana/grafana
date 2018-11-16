@@ -23,10 +23,16 @@ func AdminCreateUser(c *m.ReqContext, form dtos.AdminCreateUserForm) {
 			return
 		}
 	}
-
-	if len(cmd.Password) < 4 {
-		c.JsonApiErr(400, "Password is missing or too short", nil)
-		return
+	if !form.ThirdPartUser {
+		if len(cmd.Password) < 4 {
+			c.JsonApiErr(400, "Password is missing or too short", nil)
+			return
+		}
+	} else {
+		if cmd.Password == "" {
+			// Generate a random password so that nobody can login with password
+			cmd.Password = util.GetRandomString(10)
+		}
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
