@@ -1,4 +1,5 @@
 import { Moment } from 'moment';
+import { PluginMeta } from './plugins';
 
 export enum LoadingState {
   NotStarted = 'NotStarted',
@@ -70,6 +71,7 @@ export interface DataQueryResponse {
 
 export interface DataQuery {
   refId: string;
+  [key: string]: any;
 }
 
 export interface DataQueryOptions {
@@ -87,5 +89,14 @@ export interface DataQueryOptions {
 }
 
 export interface DataSourceApi {
+  /**
+   * Imports queries from a different datasource
+   */
+  importQueries?(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]>;
+  /**
+   * Initializes a datasource after instantiation
+   */
+  init?: () => void;
   query(options: DataQueryOptions): Promise<DataQueryResponse>;
+  testDatasource?: () => Promise<any>;
 }
