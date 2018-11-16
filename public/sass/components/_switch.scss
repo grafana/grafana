@@ -98,6 +98,8 @@ gf-form-switch[disabled] {
   width: 60px;
   height: 34px;
   background: $switch-bg;
+  border: 1px solid $input-border-color;
+  border-left: none;
 
   input {
     opacity: 0;

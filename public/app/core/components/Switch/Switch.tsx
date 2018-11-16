@@ -44,7 +44,7 @@ export class Switch extends PureComponent<Props, State> {
         )}
         <div className={switchClassName}>
           <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
-          <span class="gf-form-switch__slider" />
+          <span className="gf-form-switch__slider" />
         </div>
       </div>
     );
