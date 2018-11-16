@@ -1,16 +1,18 @@
 import coreModule from 'app/core/core_module';
 
 const template = `
-<label for="check-{{ctrl.id}}" class="gf-form-label {{ctrl.labelClass}} pointer" ng-show="ctrl.label">
-  {{ctrl.label}}
-  <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
-    {{ctrl.tooltip}}
-  </info-popover>
+<label for="check-{{ctrl.id}}" class="gf-form-switch-container pointer">
+  <div class="gf-form-label {{ctrl.labelClass}}" ng-show="ctrl.label">
+    {{ctrl.label}}
+    <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
+      {{ctrl.tooltip}}
+    </info-popover>
+  </div>
+  <div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
+    <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
+    <span class="gf-form-switch__slider"></span>
+  </div>
 </label>
-<div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
-  <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
-  <span class="gf-form-switch__slider"></span>
-</div>
 `;
 
 export class SwitchCtrl {

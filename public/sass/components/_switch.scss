@@ -88,12 +88,16 @@ gf-form-switch[disabled] {
   }
 }
 
+.gf-form-switch-container {
+  display: flex;
+}
+
 .gf-form-switch {
   position: relative;
   display: inline-block;
   width: 60px;
   height: 34px;
-  background: black;
+  background: $switch-bg;
 
   input {
     opacity: 0;
@@ -105,37 +109,36 @@ gf-form-switch[disabled] {
 /* The slider */
 .gf-form-switch__slider {
   position: absolute;
-  cursor: pointer;
   top: 8px;
-  left: 14px;
-  right: 10px;
+  left: 16px;
+  right: 14px;
   bottom: 10px;
-  background: #1d1d1d;
-  transition: 0.4s;
-  border-radius: 34px;
+  background: $switch-slider-off-bg;
+  border-radius: 8px;
+  height: 16px;
 
   &::before {
     position: absolute;
     content: '';
-    height: 16px;
-    width: 16px;
+    height: 12px;
+    width: 12px;
     left: 2px;
-    bottom: 0px;
-    background: #333333;
+    bottom: 2px;
+    background: $switch-slider-color;
     transition: 0.4s;
     border-radius: 50%;
+    box-shadow: $switch-slider-shadow;
   }
 }
 
 input:checked + .gf-form-switch__slider {
-  background: linear-gradient(90deg, $orange, $red);
+  background: $switch-slider-on-bg;
 }
 
 /* input:focus + .gf-form-switch__slider { */
 /*   box-shadow: 0 0 1px #2196f3; */
 /* } */
 
-input:checked + .gf-form-switch__slider:before {
-  transform: translateX(20px);
-  box-shadow: 0 0 5px black;
+input:checked + .gf-form-switch__slider::before {
+  transform: translateX(14px);
 }
