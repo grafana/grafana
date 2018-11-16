@@ -16,7 +16,6 @@ import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
 import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
-import TestPage from '../features/test/TestPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -310,12 +309,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
       controller: 'AlertNotificationEditCtrl',
       controllerAs: 'ctrl',
-    })
-    .when('/test', {
-      template: '<react-container />',
-      resolve: {
-        component: () => TestPage,
-      },
     })
     .otherwise({
       templateUrl: 'public/app/partials/error.html',
