@@ -300,8 +300,8 @@
 
     .logs-row-level {
       background-color: transparent;
-      margin: 6px 0;
-      border-radius: 2px;
+      margin: 2px 0;
+      position: relative;
       opacity: 0.8;
     }
 
@@ -325,6 +325,25 @@
     .logs-row-level-trace,
     .logs-row-level-debug {
       background-color: #1f78c1;
+    }
+
+    .logs-row-level__duplicates {
+      position: absolute;
+      width: 9px;
+      height: 100%;
+      top: 0;
+      left: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      align-content: flex-start;
+    }
+
+    .logs-row-level__duplicate {
+      width: 2px;
+      height: 3px;
+      background-color: #1f78c1;
+      margin: 0 1px 1px 0;
     }
   }
 }
