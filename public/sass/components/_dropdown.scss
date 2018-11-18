@@ -183,6 +183,11 @@
     display: block;
   }
 
+  & > .dropdown > .dropdown-menu {
+    // Panel menu. TODO: See if we can merge this with above
+    display: block;
+  }
+
   &.cascade-open {
     .dropdown-menu {
       display: block;
@@ -256,17 +261,15 @@
 
 // Caret to indicate there is a submenu
 .dropdown-submenu > a::after {
-  display: block;
-  content: ' ';
-  float: right;
-  width: 0;
-  height: 0;
-  border-color: transparent;
-  border-style: solid;
-  border-width: 5px 0 5px 5px;
-  border-left-color: $text-color-weak;
-  margin-top: 5px;
-  margin-right: -4px;
+  position: absolute;
+  top: 35%;
+  right: $input-padding-x;
+  background-color: transparent;
+  color: $text-color-weak;
+  font: normal normal normal $font-size-sm/1 FontAwesome;
+  content: '\f0da';
+  pointer-events: none;
+  font-size: 11px;
 }
 .dropdown-submenu:hover > a::after {
   border-left-color: $dropdownLinkColorHover;

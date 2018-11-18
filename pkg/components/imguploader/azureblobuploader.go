@@ -52,7 +52,7 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	}
 	randomFileName := util.GetRandomString(30) + ".png"
 	// upload image
-	az.log.Debug("Uploading image to azure_blob", "conatiner_name", az.container_name, "blob_name", randomFileName)
+	az.log.Debug("Uploading image to azure_blob", "container_name", az.container_name, "blob_name", randomFileName)
 	resp, err := blob.FileUpload(az.container_name, randomFileName, file)
 	if err != nil {
 		return "", err
@@ -126,8 +126,6 @@ type xmlError struct {
 
 const ms_date_layout = "Mon, 02 Jan 2006 15:04:05 GMT"
 const version = "2017-04-17"
-
-var client = &http.Client{}
 
 type StorageClient struct {
 	Auth      *Auth
@@ -225,7 +223,7 @@ func (a *Auth) SignRequest(req *http.Request) {
 	)
 	decodedKey, _ := base64.StdEncoding.DecodeString(a.Key)
 
-	sha256 := hmac.New(sha256.New, []byte(decodedKey))
+	sha256 := hmac.New(sha256.New, decodedKey)
 	sha256.Write([]byte(strToSign))
 
 	signature := base64.StdEncoding.EncodeToString(sha256.Sum(nil))
@@ -274,10 +272,10 @@ func (a *Auth) canonicalizedHeaders(req *http.Request) string {
 		}
 	}
 
-	splitted := strings.Split(buffer.String(), "\n")
-	sort.Strings(splitted)
+	split := strings.Split(buffer.String(), "\n")
+	sort.Strings(split)
 
-	return strings.Join(splitted, "\n")
+	return strings.Join(split, "\n")
 }
 
 /*
@@ -313,8 +311,8 @@ func (a *Auth) canonicalizedResource(req *http.Request) string {
 		buffer.WriteString(fmt.Sprintf("\n%s:%s", key, strings.Join(values, ",")))
 	}
 
-	splitted := strings.Split(buffer.String(), "\n")
-	sort.Strings(splitted)
+	split := strings.Split(buffer.String(), "\n")
+	sort.Strings(split)
 
-	return strings.Join(splitted, "\n")
+	return strings.Join(split, "\n")
 }

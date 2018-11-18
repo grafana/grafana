@@ -13,21 +13,24 @@ import (
 )
 
 // POST /api/tsdb/query
-func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
+func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
-		return ApiError(400, "No queries found in query", nil)
+		return Error(400, "No queries found in query", nil)
 	}
 
-	dsId, err := reqDto.Queries[0].Get("datasourceId").Int64()
+	datasourceId, err := reqDto.Queries[0].Get("datasourceId").Int64()
 	if err != nil {
-		return ApiError(400, "Query missing datasourceId", nil)
+		return Error(400, "Query missing datasourceId", nil)
 	}
 
-	dsQuery := m.GetDataSourceByIdQuery{Id: dsId, OrgId: c.OrgId}
-	if err := bus.Dispatch(&dsQuery); err != nil {
-		return ApiError(500, "failed to fetch data source", err)
+	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		if err == m.ErrDataSourceAccessDenied {
+			return Error(403, "Access denied to datasource", err)
+		}
+		return Error(500, "Unable to load datasource meta data", err)
 	}
 
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
@@ -38,13 +41,13 @@ func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
 			Model:         query,
-			DataSource:    dsQuery.Result,
+			DataSource:    ds,
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(context.Background(), dsQuery.Result, request)
+	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
-		return ApiError(500, "Metric request error", err)
+		return Error(500, "Metric request error", err)
 	}
 
 	statusCode := 200
@@ -52,11 +55,11 @@ func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 		if res.Error != nil {
 			res.ErrorString = res.Error.Error()
 			resp.Message = res.ErrorString
-			statusCode = 500
+			statusCode = 400
 		}
 	}
 
-	return Json(statusCode, &resp)
+	return JSON(statusCode, &resp)
 }
 
 // GET /api/tsdb/testdata/scenarios
@@ -72,22 +75,22 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 		})
 	}
 
-	return Json(200, &result)
+	return JSON(200, &result)
 }
 
-// Genereates a index out of range error
+// Generates a index out of range error
 func GenerateError(c *m.ReqContext) Response {
 	var array []string
-	return Json(200, array[20])
+	return JSON(200, array[20])
 }
 
 // GET /api/tsdb/testdata/gensql
-func GenerateSqlTestData(c *m.ReqContext) Response {
+func GenerateSQLTestData(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.InsertSqlTestDataCommand{}); err != nil {
-		return ApiError(500, "Failed to insert test data", err)
+		return Error(500, "Failed to insert test data", err)
 	}
 
-	return Json(200, &util.DynMap{"message": "OK"})
+	return JSON(200, &util.DynMap{"message": "OK"})
 }
 
 // GET /api/tsdb/testdata/random-walk
@@ -99,7 +102,7 @@ func GetTestDataRandomWalk(c *m.ReqContext) Response {
 	timeRange := tsdb.NewTimeRange(from, to)
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
-	dsInfo := &m.DataSource{Type: "grafana-testdata-datasource"}
+	dsInfo := &m.DataSource{Type: "testdata"}
 	request.Queries = append(request.Queries, &tsdb.Query{
 		RefId:      "A",
 		IntervalMs: intervalMs,
@@ -111,8 +114,8 @@ func GetTestDataRandomWalk(c *m.ReqContext) Response {
 
 	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
 	if err != nil {
-		return ApiError(500, "Metric request error", err)
+		return Error(500, "Metric request error", err)
 	}
 
-	return Json(200, &resp)
+	return JSON(200, &resp)
 }

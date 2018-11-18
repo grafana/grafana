@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/session"
 )
 
-func Sessioner(options *ms.Options) macaron.Handler {
-	session.Init(options)
+func Sessioner(options *ms.Options, sessionConnMaxLifetime int64) macaron.Handler {
+	session.Init(options, sessionConnMaxLifetime)
 
 	return func(ctx *m.ReqContext) {
 		ctx.Next()

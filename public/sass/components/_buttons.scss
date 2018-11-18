@@ -100,6 +100,22 @@
 // Success appears as green
 .btn-success {
   @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+
+  &--processing {
+    @include button-outline-variant($gray-1);
+    @include box-shadow(none);
+    cursor: default;
+
+    &:hover,
+    &:active,
+    &:active:hover,
+    &:focus,
+    &:disabled {
+      color: $gray-1;
+      background-color: transparent;
+      border-color: $gray-1;
+    }
+  }
 }
 // Info appears as a neutral blue
 .btn-secondary {
@@ -202,5 +218,62 @@ $btn-service-icon-width: 35px;
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 60%;
+  }
+}
+
+//Toggle button
+
+.toggle-btn {
+  background: $input-label-bg;
+  color: $text-color-weak;
+  box-shadow: $card-shadow;
+
+  &:first-child {
+    border-radius: 2px 0 0 2px;
+    margin: 0;
+  }
+  &:last-child {
+    border-radius: 0 2px 2px 0;
+    margin-left: 0 !important;
+  }
+
+  &.active {
+    background-color: lighten($input-label-bg, 5%);
+    color: $link-color;
+    &:hover {
+      cursor: default;
+    }
+  }
+}
+
+//Button animations
+
+.btn-loading span {
+  animation-name: blink;
+  animation-duration: 1.4s;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.btn-loading span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.btn-loading span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.2;
+    font-size: 14;
+  }
+  20% {
+    opacity: 1;
+    font-size: 18;
+  }
+  100% {
+    opacity: 0.2;
+    font-size: 14;
   }
 }

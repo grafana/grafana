@@ -34,8 +34,8 @@ const (
 )
 
 var (
-	ErrCannotChangeStateOnPausedAlert error = fmt.Errorf("Cannot change state on pause alert")
-	ErrRequiresNewState               error = fmt.Errorf("update alert state requires a new state.")
+	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
+	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state.")
 )
 
 func (s AlertStateType) IsValid() bool {
@@ -75,7 +75,7 @@ type Alert struct {
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
-	StateChanges int
+	StateChanges int64
 
 	Created time.Time
 	Updated time.Time
@@ -156,17 +156,18 @@ type SetAlertStateCommand struct {
 	Error    string
 	EvalData *simplejson.Json
 
-	Timestamp time.Time
+	Result Alert
 }
 
 //Queries
 type GetAlertsQuery struct {
-	OrgId       int64
-	State       []string
-	DashboardId int64
-	PanelId     int64
-	Limit       int64
-	User        *SignedInUser
+	OrgId        int64
+	State        []string
+	DashboardIDs []int64
+	PanelId      int64
+	Limit        int64
+	Query        string
+	User         *SignedInUser
 
 	Result []*AlertListItemDTO
 }
@@ -214,13 +215,14 @@ type AlertStateInfoDTO struct {
 // "Internal" commands
 
 type UpdateDashboardAlertsCommand struct {
-	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }
 
 type ValidateDashboardAlertsCommand struct {
 	UserId    int64
 	OrgId     int64
 	Dashboard *Dashboard
+	User      *SignedInUser
 }

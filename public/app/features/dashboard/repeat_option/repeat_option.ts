@@ -1,13 +1,13 @@
 import { coreModule } from 'app/core/core';
 
-var template = `
+const template = `
 <div class="gf-form-select-wrapper max-width-18">
   <select class="gf-form-input" ng-model="panel.repeat" ng-options="f.value as f.text for f in variables" ng-change="optionChanged()">
   <option value=""></option>
 </div>
 `;
 
-/** @ngInject **/
+/** @ngInject */
 function dashRepeatOptionDirective(variableSrv) {
   return {
     restrict: 'E',
@@ -15,7 +15,7 @@ function dashRepeatOptionDirective(variableSrv) {
     scope: {
       panel: '=',
     },
-    link: function(scope, element) {
+    link: (scope, element) => {
       element.css({ display: 'block', width: '100%' });
 
       scope.variables = variableSrv.variables.map(item => {
@@ -36,7 +36,7 @@ function dashRepeatOptionDirective(variableSrv) {
         scope.panel.repeatDirection = 'h';
       }
 
-      scope.optionChanged = function() {
+      scope.optionChanged = () => {
         if (scope.panel.repeat) {
           scope.panel.repeatDirection = 'h';
         }

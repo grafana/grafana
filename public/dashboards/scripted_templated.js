@@ -22,7 +22,7 @@ var dashboard;
 // All url parameters are available via the ARGS object
 var ARGS;
 
-// Intialize a skeleton with nothing but a rows array and service object
+// Initialize a skeleton with nothing but a rows array and service object
 dashboard = {
   rows : [],
   schemaVersion: 13,

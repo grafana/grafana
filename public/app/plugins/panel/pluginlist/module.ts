@@ -12,7 +12,7 @@ class PluginListCtrl extends PanelCtrl {
   panelDefaults = {};
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv, private $location) {
+  constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
@@ -44,7 +44,7 @@ class PluginListCtrl extends PanelCtrl {
     $event.stopPropagation();
     $event.preventDefault();
 
-    var modalScope = this.$scope.$new(true);
+    const modalScope = this.$scope.$new(true);
     modalScope.plugin = plugin;
 
     this.publishAppEvent('show-modal', {
@@ -60,7 +60,7 @@ class PluginListCtrl extends PanelCtrl {
       this.viewModel[1].list = _.filter(plugins, { type: 'panel' });
       this.viewModel[2].list = _.filter(plugins, { type: 'datasource' });
 
-      for (let plugin of this.pluginList) {
+      for (const plugin of this.pluginList) {
         if (plugin.hasUpdate) {
           plugin.state = 'has-update';
         } else if (!plugin.enabled) {

@@ -29,7 +29,6 @@ type DashboardSnapshotDTO struct {
 	Id          int64  `json:"id"`
 	Name        string `json:"name"`
 	Key         string `json:"key"`
-	DeleteKey   string `json:"deleteKey"`
 	OrgId       int64  `json:"orgId"`
 	UserId      int64  `json:"userId"`
 	External    bool   `json:"external"`

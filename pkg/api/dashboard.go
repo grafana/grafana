@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -22,12 +23,16 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func isDashboardStarredByUser(c *m.ReqContext, dashId int64) (bool, error) {
+const (
+	anonString = "Anonymous"
+)
+
+func isDashboardStarredByUser(c *m.ReqContext, dashID int64) (bool, error) {
 	if !c.IsSignedIn {
 		return false, nil
 	}
 
-	query := m.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashId}
+	query := m.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
 	if err := bus.Dispatch(&query); err != nil {
 		return false, err
 	}
@@ -37,10 +42,10 @@ func isDashboardStarredByUser(c *m.ReqContext, dashId int64) (bool, error) {
 
 func dashboardGuardianResponse(err error) Response {
 	if err != nil {
-		return ApiError(500, "Error while checking dashboard permissions", err)
+		return Error(500, "Error while checking dashboard permissions", err)
 	}
 
-	return ApiError(403, "Access denied to this dashboard", nil)
+	return Error(403, "Access denied to this dashboard", nil)
 }
 
 func GetDashboard(c *m.ReqContext) Response {
@@ -60,11 +65,11 @@ func GetDashboard(c *m.ReqContext) Response {
 
 	isStarred, err := isDashboardStarredByUser(c, dash.Id)
 	if err != nil {
-		return ApiError(500, "Error while checking if dashboard was starred by user", err)
+		return Error(500, "Error while checking if dashboard was starred by user", err)
 	}
 
 	// Finding creator and last updater of the dashboard
-	updater, creator := "Anonymous", "Anonymous"
+	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
 		updater = getUserLogin(dash.UpdatedBy)
 	}
@@ -96,10 +101,20 @@ func GetDashboard(c *m.ReqContext) Response {
 	if dash.FolderId > 0 {
 		query := m.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
-			return ApiError(500, "Dashboard folder could not be read", err)
+			return Error(500, "Dashboard folder could not be read", err)
 		}
 		meta.FolderTitle = query.Result.Title
 		meta.FolderUrl = query.Result.GetUrl()
+	}
+
+	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
+	err = bus.Dispatch(isDashboardProvisioned)
+	if err != nil {
+		return Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
+	if isDashboardProvisioned.Result {
+		meta.Provisioned = true
 	}
 
 	// make sure db version is in sync with json model version
@@ -111,31 +126,29 @@ func GetDashboard(c *m.ReqContext) Response {
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Get)
-	return Json(200, dto)
+	return JSON(200, dto)
 }
 
-func getUserLogin(userId int64) string {
-	query := m.GetUserByIdQuery{Id: userId}
+func getUserLogin(userID int64) string {
+	query := m.GetUserByIdQuery{Id: userID}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		return "Anonymous"
-	} else {
-		user := query.Result
-		return user.Login
+		return anonString
 	}
+	return query.Result.Login
 }
 
-func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dashboard, Response) {
+func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dashboard, Response) {
 	var query m.GetDashboardQuery
 
 	if len(uid) > 0 {
-		query = m.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgId}
+		query = m.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgID}
 	} else {
-		query = m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgId}
+		query = m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return nil, ApiError(404, "Dashboard not found", err)
+		return nil, Error(404, "Dashboard not found", err)
 	}
 
 	return query.Result, nil
@@ -145,11 +158,11 @@ func DeleteDashboard(c *m.ReqContext) Response {
 	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to retrieve dashboards by slug", err)
+		return Error(500, "Failed to retrieve dashboards by slug", err)
 	}
 
 	if len(query.Result) > 1 {
-		return Json(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
+		return JSON(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
 	}
 
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
@@ -164,16 +177,16 @@ func DeleteDashboard(c *m.ReqContext) Response {
 
 	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete dashboard", err)
+		return Error(500, "Failed to delete dashboard", err)
 	}
 
-	return Json(200, util.DynMap{
+	return JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
 	})
 }
 
-func DeleteDashboardByUid(c *m.ReqContext) Response {
+func DeleteDashboardByUID(c *m.ReqContext) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -186,10 +199,10 @@ func DeleteDashboardByUid(c *m.ReqContext) Response {
 
 	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete dashboard", err)
+		return Error(500, "Failed to delete dashboard", err)
 	}
 
-	return Json(200, util.DynMap{
+	return JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
 	})
@@ -204,10 +217,10 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 	if dash.Id == 0 && dash.Uid == "" {
 		limitReached, err := quota.QuotaReached(c, "dashboard")
 		if err != nil {
-			return ApiError(500, "failed to get quota", err)
+			return Error(500, "failed to get quota", err)
 		}
 		if limitReached {
-			return ApiError(403, "Quota reached", nil)
+			return Error(403, "Quota reached", nil)
 		}
 	}
 
@@ -230,24 +243,25 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		err == m.ErrDashboardWithSameUIDExists ||
 		err == m.ErrFolderNotFound ||
 		err == m.ErrDashboardFolderCannotHaveParent ||
-		err == m.ErrDashboardFolderNameExists {
-		return ApiError(400, err.Error(), nil)
+		err == m.ErrDashboardFolderNameExists ||
+		err == m.ErrDashboardCannotSaveProvisionedDashboard {
+		return Error(400, err.Error(), nil)
 	}
 
 	if err == m.ErrDashboardUpdateAccessDenied {
-		return ApiError(403, err.Error(), err)
+		return Error(403, err.Error(), err)
 	}
 
-	if err == m.ErrDashboardContainsInvalidAlertData {
-		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
+	if validationErr, ok := err.(alerting.ValidationError); ok {
+		return Error(422, validationErr.Error(), nil)
 	}
 
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameInFolderExists {
-			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
+			return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 		}
 		if err == m.ErrDashboardVersionMismatch {
-			return Json(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
+			return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 		}
 		if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
 			message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
@@ -255,20 +269,20 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 			if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
 				message = "The dashboard belongs to plugin " + pluginDef.Name + "."
 			}
-			return Json(412, util.DynMap{"status": "plugin-dashboard", "message": message})
+			return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
 		}
 		if err == m.ErrDashboardNotFound {
-			return Json(404, util.DynMap{"status": "not-found", "message": err.Error()})
+			return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
 		}
-		return ApiError(500, "Failed to save dashboard", err)
+		return Error(500, "Failed to save dashboard", err)
 	}
 
 	if err == m.ErrDashboardFailedToUpdateAlertData {
-		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
+		return Error(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
-	return Json(200, util.DynMap{
+	return JSON(200, util.DynMap{
 		"status":  "success",
 		"slug":    dashboard.Slug,
 		"version": dashboard.Version,
@@ -279,9 +293,9 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 }
 
 func GetHomeDashboard(c *m.ReqContext) Response {
-	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
+	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
-		return ApiError(500, "Failed to get preferences", err)
+		return Error(500, "Failed to get preferences", err)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
@@ -290,16 +304,15 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 		if err == nil {
 			url := m.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
-			return Json(200, &dashRedirect)
-		} else {
-			log.Warn("Failed to get slug from database, %s", err.Error())
+			return JSON(200, &dashRedirect)
 		}
+		log.Warn("Failed to get slug from database, %s", err.Error())
 	}
 
 	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
 	file, err := os.Open(filePath)
 	if err != nil {
-		return ApiError(500, "Failed to load home dashboard", err)
+		return Error(500, "Failed to load home dashboard", err)
 	}
 
 	dash := dtos.DashboardFullWithMeta{}
@@ -309,14 +322,14 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 
 	jsonParser := json.NewDecoder(file)
 	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
-		return ApiError(500, "Failed to load home dashboard", err)
+		return Error(500, "Failed to load home dashboard", err)
 	}
 
 	if c.HasUserRole(m.ROLE_ADMIN) && !c.HasHelpFlag(m.HelpFlagGettingStartedPanelDismissed) {
 		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
 	}
 
-	return Json(200, &dash)
+	return JSON(200, &dash)
 }
 
 func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
@@ -339,22 +352,22 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 
 // GetDashboardVersions returns all dashboard versions as JSON
 func GetDashboardVersions(c *m.ReqContext) Response {
-	dashId := c.ParamsInt64(":dashboardId")
+	dashID := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	query := m.GetDashboardVersionsQuery{
 		OrgId:       c.OrgId,
-		DashboardId: dashId,
+		DashboardId: dashID,
 		Limit:       c.QueryInt("limit"),
 		Start:       c.QueryInt("start"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(404, fmt.Sprintf("No versions found for dashboardId %d", dashId), err)
+		return Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
 	}
 
 	for _, version := range query.Result {
@@ -373,29 +386,29 @@ func GetDashboardVersions(c *m.ReqContext) Response {
 		}
 	}
 
-	return Json(200, query.Result)
+	return JSON(200, query.Result)
 }
 
 // GetDashboardVersion returns the dashboard version with the given ID.
 func GetDashboardVersion(c *m.ReqContext) Response {
-	dashId := c.ParamsInt64(":dashboardId")
+	dashID := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	query := m.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
-		DashboardId: dashId,
+		DashboardId: dashID,
 		Version:     c.ParamsInt(":id"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashId), err)
+		return Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
-	creator := "Anonymous"
+	creator := anonString
 	if query.Result.CreatedBy > 0 {
 		creator = getUserLogin(query.Result.CreatedBy)
 	}
@@ -405,7 +418,7 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 		CreatedBy:        creator,
 	}
 
-	return Json(200, dashVersionMeta)
+	return JSON(200, dashVersionMeta)
 }
 
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
@@ -441,9 +454,9 @@ func CalculateDashboardDiff(c *m.ReqContext, apiOptions dtos.CalculateDiffOption
 	result, err := dashdiffs.CalculateDiff(&options)
 	if err != nil {
 		if err == m.ErrDashboardVersionNotFound {
-			return ApiError(404, "Dashboard version not found", err)
+			return Error(404, "Dashboard version not found", err)
 		}
-		return ApiError(500, "Unable to compute diff", err)
+		return Error(500, "Unable to compute diff", err)
 	}
 
 	if options.DiffType == dashdiffs.DiffDelta {
@@ -467,7 +480,7 @@ func RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.RestoreDashboardVersio
 
 	versionQuery := m.GetDashboardVersionQuery{DashboardId: dash.Id, Version: apiCmd.Version, OrgId: c.OrgId}
 	if err := bus.Dispatch(&versionQuery); err != nil {
-		return ApiError(404, "Dashboard version not found", nil)
+		return Error(404, "Dashboard version not found", nil)
 	}
 
 	version := versionQuery.Result

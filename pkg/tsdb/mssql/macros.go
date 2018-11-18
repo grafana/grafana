@@ -6,30 +6,29 @@ import (
 	"strings"
 	"time"
 
-	"strconv"
-
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-type MsSqlMacroEngine struct {
-	TimeRange *tsdb.TimeRange
-	Query     *tsdb.Query
+type msSqlMacroEngine struct {
+	*tsdb.SqlMacroEngineBase
+	timeRange *tsdb.TimeRange
+	query     *tsdb.Query
 }
 
-func NewMssqlMacroEngine() tsdb.SqlMacroEngine {
-	return &MsSqlMacroEngine{}
+func newMssqlMacroEngine() tsdb.SqlMacroEngine {
+	return &msSqlMacroEngine{SqlMacroEngineBase: tsdb.NewSqlMacroEngineBase()}
 }
 
-func (m *MsSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
-	m.TimeRange = timeRange
-	m.Query = query
+func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+	m.timeRange = timeRange
+	m.query = query
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
@@ -49,49 +48,24 @@ func (m *MsSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	return sql, nil
 }
 
-func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
-	result := ""
-	lastIndex := 0
-
-	for _, v := range re.FindAllSubmatchIndex([]byte(str), -1) {
-		groups := []string{}
-		for i := 0; i < len(v); i += 2 {
-			groups = append(groups, str[v[i]:v[i+1]])
-		}
-
-		result += str[lastIndex:v[0]] + repl(groups)
-		lastIndex = v[1]
-	}
-
-	return result + str[lastIndex:]
-}
-
-func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("%s AS time", args[0]), nil
-	case "__utcTime":
-		if len(args) == 0 {
-			return "", fmt.Errorf("missing time column argument for macro %v", name)
-		}
-		return fmt.Sprintf("DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s) AS time", args[0]), nil
 	case "__timeEpoch":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s) ) AS time", args[0]), nil
+		return fmt.Sprintf("DATEDIFF(second, '1970-01-01', %s) AS time", args[0]), nil
 	case "__timeFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= DATEADD(s, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND %s <= DATEADD(s, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
-	case "__timeFrom":
-		return fmt.Sprintf("DATEADD(second, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
-	case "__timeTo":
-		return fmt.Sprintf("DATEADD(second, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
@@ -101,28 +75,44 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			m.Query.Model.Set("fill", true)
-			m.Query.Model.Set("fillInterval", interval.Seconds())
-			if args[2] == "NULL" {
-				m.Query.Model.Set("fillNull", true)
-			} else {
-				floatVal, err := strconv.ParseFloat(args[2], 64)
-				if err != nil {
-					return "", fmt.Errorf("error parsing fill value %v", args[2])
-				}
-				m.Query.Model.Set("fillValue", floatVal)
+			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			if err != nil {
+				return "", err
 			}
 		}
-		return fmt.Sprintf("cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s))/%.0f as int)*%.0f as int)", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
+	case "__timeGroupAlias":
+		tg, err := m.evaluateMacro("__timeGroup", args)
+		if err == nil {
+			return tg + " AS [time]", err
+		}
+		return "", err
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
-	case "__unixEpochFrom":
-		return fmt.Sprintf("%d", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
-	case "__unixEpochTo":
-		return fmt.Sprintf("%d", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
+	case "__unixEpochGroup":
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
+		}
+		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
+		if err != nil {
+			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if len(args) == 3 {
+			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			if err != nil {
+				return "", err
+			}
+		}
+		return fmt.Sprintf("FLOOR(%s/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+	case "__unixEpochGroupAlias":
+		tg, err := m.evaluateMacro("__unixEpochGroup", args)
+		if err == nil {
+			return tg + " AS [time]", err
+		}
+		return "", err
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}

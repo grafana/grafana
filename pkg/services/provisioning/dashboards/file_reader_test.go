@@ -3,6 +3,7 @@ package dashboards
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -15,12 +16,62 @@ import (
 )
 
 var (
-	defaultDashboards string = "./test-dashboards/folder-one"
-	brokenDashboards  string = "./test-dashboards/broken-dashboards"
-	oneDashboard      string = "./test-dashboards/one-dashboard"
+	defaultDashboards = "testdata/test-dashboards/folder-one"
+	brokenDashboards  = "testdata/test-dashboards/broken-dashboards"
+	oneDashboard      = "testdata/test-dashboards/one-dashboard"
+	containingId      = "testdata/test-dashboards/containing-id"
 
 	fakeService *fakeDashboardProvisioningService
 )
+
+func TestCreatingNewDashboardFileReader(t *testing.T) {
+	Convey("creating new dashboard file reader", t, func() {
+		cfg := &DashboardsAsConfig{
+			Name:    "Default",
+			Type:    "file",
+			OrgId:   1,
+			Folder:  "",
+			Options: map[string]interface{}{},
+		}
+
+		Convey("using path parameter", func() {
+			cfg.Options["path"] = defaultDashboards
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+			So(reader.Path, ShouldNotEqual, "")
+		})
+
+		Convey("using folder as options", func() {
+			cfg.Options["folder"] = defaultDashboards
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+			So(reader.Path, ShouldNotEqual, "")
+		})
+
+		Convey("using full path", func() {
+			fullPath := "/var/lib/grafana/dashboards"
+			if runtime.GOOS == "windows" {
+				fullPath = `c:\var\lib\grafana`
+			}
+
+			cfg.Options["folder"] = fullPath
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+
+			So(reader.Path, ShouldEqual, fullPath)
+			So(filepath.IsAbs(reader.Path), ShouldBeTrue)
+		})
+
+		Convey("using relative path", func() {
+			cfg.Options["folder"] = defaultDashboards
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+
+			resolvedPath := reader.resolvePath(reader.Path)
+			So(filepath.IsAbs(resolvedPath), ShouldBeTrue)
+		})
+	})
+}
 
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
@@ -75,6 +126,18 @@ func TestDashboardFileReader(t *testing.T) {
 					Updated: stat.ModTime().AddDate(0, 0, -1),
 					Slug:    "grafana",
 				})
+
+				reader, err := NewDashboardFileReader(cfg, logger)
+				So(err, ShouldBeNil)
+
+				err = reader.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				So(len(fakeService.inserted), ShouldEqual, 1)
+			})
+
+			Convey("Overrides id from dashboard.json files", func() {
+				cfg.Options["path"] = containingId
 
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
@@ -154,30 +217,6 @@ func TestDashboardFileReader(t *testing.T) {
 			Convey("should keep walking if file is not .json", func() {
 				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
-			})
-		})
-
-		Convey("Can use bpth path and folder as dashboard path", func() {
-			cfg := &DashboardsAsConfig{
-				Name:    "Default",
-				Type:    "file",
-				OrgId:   1,
-				Folder:  "",
-				Options: map[string]interface{}{},
-			}
-
-			Convey("using path parameter", func() {
-				cfg.Options["path"] = defaultDashboards
-				reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
-				So(err, ShouldBeNil)
-				So(reader.Path, ShouldEqual, defaultDashboards)
-			})
-
-			Convey("using folder as options", func() {
-				cfg.Options["folder"] = defaultDashboards
-				reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
-				So(err, ShouldBeNil)
-				So(reader.Path, ShouldEqual, defaultDashboards)
 			})
 		})
 

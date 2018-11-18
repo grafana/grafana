@@ -8,7 +8,7 @@ export class CreateFolderCtrl {
   hasValidationError: boolean;
   validationError: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, private $location, private validationSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
   }

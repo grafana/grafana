@@ -5,10 +5,20 @@ import kbn from 'app/core/utils/kbn';
 import moment from 'moment';
 import angular from 'angular';
 import jquery from 'jquery';
+
+// Experimental module exports
+import prismjs from 'prismjs';
+import slate from 'slate';
+import slateReact from 'slate-react';
+import slatePlain from 'slate-plain-serializer';
+import react from 'react';
+import reactDom from 'react-dom';
+
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
+import { PluginExports } from 'app/types/plugins';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
@@ -27,6 +37,13 @@ import 'rxjs/add/observable/from';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/combineAll';
 
+// add cache busting
+const bust = `?_cache=${Date.now()}`;
+function locate(load) {
+  return load.address + bust;
+}
+System.registry.set('plugin-loader', System.newModule({ locate: locate }));
+
 System.config({
   baseURL: 'public',
   defaultExtension: 'js',
@@ -40,25 +57,16 @@ System.config({
     css: 'vendor/plugin-css/css.js',
   },
   meta: {
-    '*': {
+    '/*': {
       esModule: true,
       authorization: true,
+      loader: 'plugin-loader',
     },
   },
 });
 
-// add cache busting
-var systemLocate = System.locate;
-System.cacheBust = '?bust=' + Date.now();
-System.locate = function(load) {
-  var System = this;
-  return Promise.resolve(systemLocate.call(this, load)).then(function(address) {
-    return address + System.cacheBust;
-  });
-};
-
 function exposeToPlugin(name: string, component: any) {
-  System.registerDynamic(name, [], true, function(require, exports, module) {
+  System.registerDynamic(name, [], true, (require, exports, module) => {
     module.exports = component;
   });
 }
@@ -70,6 +78,14 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
+
+// Experimental modules
+exposeToPlugin('prismjs', prismjs);
+exposeToPlugin('slate', slate);
+exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('slate-plain-serializer', slatePlain);
+exposeToPlugin('react', react);
+exposeToPlugin('react-dom', reactDom);
 
 // backward compatible path
 exposeToPlugin('vendor/npm/rxjs/Rx', {
@@ -111,6 +127,7 @@ import 'vendor/flot/jquery.flot.stackpercent';
 import 'vendor/flot/jquery.flot.fillbelow';
 import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
+import 'vendor/flot/jquery.flot.gauge';
 
 const flotDeps = [
   'jquery.flot',
@@ -122,13 +139,15 @@ const flotDeps = [
   'jquery.flot.selection',
   'jquery.flot.stackpercent',
   'jquery.flot.events',
+  'jquery.flot.gauge',
 ];
-for (let flotDep of flotDeps) {
+
+for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
-  let builtIn = builtInPlugins[path];
+export function importPluginModule(path: string): Promise<PluginExports> {
+  const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
   }

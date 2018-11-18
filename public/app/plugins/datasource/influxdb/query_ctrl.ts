@@ -19,10 +19,9 @@ export class InfluxQueryCtrl extends QueryCtrl {
   measurementSegment: any;
   removeTagFilterSegment: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
-
     this.target = this.target;
     this.queryModel = new InfluxQuery(this.target, templateSrv, this.panel.scopedVars);
     this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
@@ -37,7 +36,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     }
 
     this.tagSegments = [];
-    for (let tag of this.target.tags) {
+    for (const tag of this.target.tags) {
       if (!tag.operator) {
         if (/^\/.*\/$/.test(tag.value)) {
           tag.operator = '=~';
@@ -68,11 +67,11 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   buildSelectMenu() {
-    var categories = queryPart.getCategories();
+    const categories = queryPart.getCategories();
     this.selectMenu = _.reduce(
       categories,
-      function(memo, cat, key) {
-        var menu = {
+      (memo, cat, key) => {
+        const menu = {
           text: key,
           submenu: cat.map(item => {
             return { text: item.type, value: item.type };
@@ -86,12 +85,12 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getGroupByOptions() {
-    var query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
+    const query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
 
     return this.datasource
       .metricFindQuery(query)
       .then(tags => {
-        var options = [];
+        const options = [];
         if (!this.queryModel.hasFill()) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'fill(null)' }));
         }
@@ -107,7 +106,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         if (!this.queryModel.hasGroupByTime()) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));
         }
-        for (let tag of tags) {
+        for (const tag of tags) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'tag(' + tag.text + ')' }));
         }
         return options;
@@ -134,7 +133,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
     }
 
-    var plusButton = this.uiSegmentSrv.newPlusButton();
+    const plusButton = this.uiSegmentSrv.newPlusButton();
     this.groupBySegment.value = plusButton.value;
     this.groupBySegment.html = plusButton.html;
     this.panelCtrl.refresh();
@@ -148,7 +147,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   handleSelectPartEvent(selectParts, part, evt) {
     switch (evt.name) {
       case 'get-param-options': {
-        var fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
+        const fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
         return this.datasource
           .metricFindQuery(fieldsQuery)
           .then(this.transformToSegments(true))
@@ -172,7 +171,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   handleGroupByPartEvent(part, index, evt) {
     switch (evt.name) {
       case 'get-param-options': {
-        var tagsQuery = this.queryBuilder.buildExploreQuery('TAG_KEYS');
+        const tagsQuery = this.queryBuilder.buildExploreQuery('TAG_KEYS');
         return this.datasource
           .metricFindQuery(tagsQuery)
           .then(this.transformToSegments(true))
@@ -194,8 +193,8 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   fixTagSegments() {
-    var count = this.tagSegments.length;
-    var lastSegment = this.tagSegments[Math.max(count - 1, 0)];
+    const count = this.tagSegments.length;
+    const lastSegment = this.tagSegments[Math.max(count - 1, 0)];
 
     if (!lastSegment || lastSegment.type !== 'plus-button') {
       this.tagSegments.push(this.uiSegmentSrv.newPlusButton());
@@ -208,7 +207,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getPolicySegments() {
-    var policiesQuery = this.queryBuilder.buildExploreQuery('RETENTION POLICIES');
+    const policiesQuery = this.queryBuilder.buildExploreQuery('RETENTION POLICIES');
     return this.datasource
       .metricFindQuery(policiesQuery)
       .then(this.transformToSegments(false))
@@ -230,7 +229,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getMeasurements(measurementFilter) {
-    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
+    const query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
     return this.datasource
       .metricFindQuery(query)
       .then(this.transformToSegments(true))
@@ -244,7 +243,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   transformToSegments(addTemplateVars) {
     return results => {
-      var segments = _.map(results, segment => {
+      const segments = _.map(results, segment => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,
@@ -252,7 +251,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       });
 
       if (addTemplateVars) {
-        for (let variable of this.templateSrv.variables) {
+        for (const variable of this.templateSrv.variables) {
           segments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'value',
@@ -272,7 +271,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       return this.$q.when([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
     if (segment.type === 'operator') {
-      var nextValue = this.tagSegments[index + 1].value;
+      const nextValue = this.tagSegments[index + 1].value;
       if (/^\/.*\/$/.test(nextValue)) {
         return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
       } else {
@@ -280,7 +279,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
     }
 
-    var query, addTemplateVars;
+    let query, addTemplateVars;
     if (segment.type === 'key' || segment.type === 'plus-button') {
       query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
       addTemplateVars = false;
@@ -302,7 +301,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getFieldSegments() {
-    var fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
+    const fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
     return this.datasource
       .metricFindQuery(fieldsQuery)
       .then(this.transformToSegments(false))
@@ -343,9 +342,9 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   rebuildTargetTagConditions() {
-    var tags = [];
-    var tagIndex = 0;
-    var tagOperator = '';
+    const tags = [];
+    let tagIndex = 0;
+    let tagOperator = '';
 
     _.each(this.tagSegments, (segment2, index) => {
       if (segment2.type === 'key') {

@@ -14,19 +14,29 @@ const template = `
   </div>
 
   <form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
-    <h6 class="text-center">Add a note to describe your changes</h6>
-    <div class="p-t-2">
+    <div class="p-t-1">
+      <div class="gf-form-group" ng-if="ctrl.timeChange || ctrl.variableValueChange">
+		    <gf-form-switch class="gf-form"
+			    label="Save current time range" ng-if="ctrl.timeChange" label-class="width-12" switch-class="max-width-6"
+			    checked="ctrl.saveTimerange" on-change="buildUrl()">
+		    </gf-form-switch>
+		    <gf-form-switch class="gf-form"
+			    label="Save current variables" ng-if="ctrl.variableValueChange" label-class="width-12" switch-class="max-width-6"
+			    checked="ctrl.saveVariables" on-change="buildUrl()">
+		    </gf-form-switch>
+	    </div>
       <div class="gf-form">
         <label class="gf-form-hint">
           <input
             type="text"
             name="message"
             class="gf-form-input"
-            placeholder="Updates to &hellip;"
+            placeholder="Add a note to describe your changes &hellip;"
             give-focus="true"
             ng-model="ctrl.message"
             ng-model-options="{allowInvalid: true}"
             ng-maxlength="this.max"
+            maxlength="64"
             autocomplete="off" />
           <small class="gf-form-hint-text muted" ng-cloak>
             <span ng-class="{'text-error': ctrl.saveForm.message.$invalid && ctrl.saveForm.message.$dirty }">
@@ -39,7 +49,16 @@ const template = `
     </div>
 
     <div class="gf-form-button-row text-center">
-      <button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
+      <button
+        id="saveBtn"
+        type="submit"
+        class="btn btn-success"
+        ng-class="{'btn-success--processing': ctrl.isSaving}"
+        ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
+      >
+        <span ng-if="!ctrl.isSaving">Save</span>
+        <span ng-if="ctrl.isSaving === true">Saving...</span>
+      </button>
       <button class="btn btn-inverse" ng-click="ctrl.dismiss();">Cancel</button>
     </div>
   </form>
@@ -48,14 +67,26 @@ const template = `
 
 export class SaveDashboardModalCtrl {
   message: string;
+  saveVariables = false;
+  saveTimerange = false;
+  time: any;
+  originalTime: any;
+  current = [];
+  originalCurrent = [];
   max: number;
   saveForm: any;
+  isSaving: boolean;
   dismiss: () => void;
+  timeChange = false;
+  variableValueChange = false;
 
   /** @ngInject */
   constructor(private dashboardSrv) {
     this.message = '';
     this.max = 64;
+    this.isSaving = false;
+    this.timeChange = this.dashboardSrv.getCurrent().hasTimeChanged();
+    this.variableValueChange = this.dashboardSrv.getCurrent().hasVariableValuesChanged();
   }
 
   save() {
@@ -63,11 +94,30 @@ export class SaveDashboardModalCtrl {
       return;
     }
 
-    var dashboard = this.dashboardSrv.getCurrent();
-    var saveModel = dashboard.getSaveModelClone();
-    var options = { message: this.message };
+    const options = {
+      saveVariables: this.saveVariables,
+      saveTimerange: this.saveTimerange,
+      message: this.message,
+    };
 
-    return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
+    const dashboard = this.dashboardSrv.getCurrent();
+    const saveModel = dashboard.getSaveModelClone(options);
+
+    this.isSaving = true;
+
+    return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
+  }
+
+  postSave(options) {
+    if (options.saveVariables) {
+      this.dashboardSrv.getCurrent().resetOriginalVariables();
+    }
+
+    if (options.saveTimerange) {
+      this.dashboardSrv.getCurrent().resetOriginalTime();
+    }
+
+    this.dismiss();
   }
 }
 

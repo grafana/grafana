@@ -1,67 +1,52 @@
 package metrics
 
 import (
+	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/social"
 
 	"github.com/grafana/grafana/pkg/metrics/graphitebridge"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
-	ini "gopkg.in/ini.v1"
 )
 
-type MetricSettings struct {
-	Enabled              bool
-	IntervalSeconds      int64
-	GraphiteBridgeConfig *graphitebridge.Config
+func (im *InternalMetricsService) readSettings() error {
+	var section, err = im.Cfg.Raw.GetSection("metrics")
+	if err != nil {
+		return fmt.Errorf("Unable to find metrics config section %v", err)
+	}
+
+	im.intervalSeconds = section.Key("interval_seconds").MustInt64(10)
+
+	if err := im.parseGraphiteSettings(); err != nil {
+		return fmt.Errorf("Unable to parse metrics graphite section, %v", err)
+	}
+
+	im.oauthProviders = social.GetOAuthProviders(im.Cfg)
+
+	return nil
 }
 
-func ReadSettings(file *ini.File) *MetricSettings {
-	var settings = &MetricSettings{
-		Enabled: false,
-	}
+func (im *InternalMetricsService) parseGraphiteSettings() error {
+	graphiteSection, err := im.Cfg.Raw.GetSection("metrics.graphite")
 
-	var section, err = file.GetSection("metrics")
 	if err != nil {
-		metricsLogger.Crit("Unable to find metrics config section", "error", err)
 		return nil
-	}
-
-	settings.Enabled = section.Key("enabled").MustBool(false)
-	settings.IntervalSeconds = section.Key("interval_seconds").MustInt64(10)
-
-	if !settings.Enabled {
-		return settings
-	}
-
-	cfg, err := parseGraphiteSettings(settings, file)
-	if err != nil {
-		metricsLogger.Crit("Unable to parse metrics graphite section", "error", err)
-		return nil
-	}
-
-	settings.GraphiteBridgeConfig = cfg
-
-	return settings
-}
-
-func parseGraphiteSettings(settings *MetricSettings, file *ini.File) (*graphitebridge.Config, error) {
-	graphiteSection, err := setting.Cfg.GetSection("metrics.graphite")
-	if err != nil {
-		return nil, nil
 	}
 
 	address := graphiteSection.Key("address").String()
 	if address == "" {
-		return nil, nil
+		return nil
 	}
 
-	cfg := &graphitebridge.Config{
+	bridgeCfg := &graphitebridge.Config{
 		URL:             address,
 		Prefix:          graphiteSection.Key("prefix").MustString("prod.grafana.%(instance_name)s"),
 		CountersAsDelta: true,
 		Gatherer:        prometheus.DefaultGatherer,
-		Interval:        time.Duration(settings.IntervalSeconds) * time.Second,
+		Interval:        time.Duration(im.intervalSeconds) * time.Second,
 		Timeout:         10 * time.Second,
 		Logger:          &logWrapper{logger: metricsLogger},
 		ErrorHandling:   graphitebridge.ContinueOnError,
@@ -74,6 +59,8 @@ func parseGraphiteSettings(settings *MetricSettings, file *ini.File) (*graphiteb
 		prefix = "prod.grafana.%(instance_name)s."
 	}
 
-	cfg.Prefix = strings.Replace(prefix, "%(instance_name)s", safeInstanceName, -1)
-	return cfg, nil
+	bridgeCfg.Prefix = strings.Replace(prefix, "%(instance_name)s", safeInstanceName, -1)
+
+	im.graphiteCfg = bridgeCfg
+	return nil
 }

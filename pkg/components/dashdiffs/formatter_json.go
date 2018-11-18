@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	// changeTypeToSymbol is used for populating the terminating characer in
+	// changeTypeToSymbol is used for populating the terminating character in
 	// the diff
 	changeTypeToSymbol = map[ChangeType]string{
 		ChangeNil:     "",

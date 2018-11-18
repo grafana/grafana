@@ -7,51 +7,18 @@ package notifications
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"html/template"
 	"net"
 	"strconv"
-	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/gomail.v2"
+	gomail "gopkg.in/mail.v2"
 )
 
-var mailQueue chan *Message
-
-func initMailQueue() {
-	mailQueue = make(chan *Message, 10)
-	go processMailQueue()
-}
-
-func processMailQueue() {
-	for {
-		select {
-		case msg := <-mailQueue:
-			num, err := send(msg)
-			tos := strings.Join(msg.To, "; ")
-			info := ""
-			if err != nil {
-				if len(msg.Info) > 0 {
-					info = ", info: " + msg.Info
-				}
-				log.Error(4, fmt.Sprintf("Async sent email %d succeed, not send emails: %s%s err: %s", num, tos, info, err))
-			} else {
-				log.Trace(fmt.Sprintf("Async sent email %d succeed, sent emails: %s%s", num, tos, info))
-			}
-		}
-	}
-}
-
-var addToMailQueue = func(msg *Message) {
-	mailQueue <- msg
-}
-
-func send(msg *Message) (int, error) {
-	dialer, err := createDialer()
+func (ns *NotificationService) send(msg *Message) (int, error) {
+	dialer, err := ns.createDialer()
 	if err != nil {
 		return 0, err
 	}
@@ -75,8 +42,8 @@ func send(msg *Message) (int, error) {
 	return len(msg.To), nil
 }
 
-func createDialer() (*gomail.Dialer, error) {
-	host, port, err := net.SplitHostPort(setting.Smtp.Host)
+func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
+	host, port, err := net.SplitHostPort(ns.Cfg.Smtp.Host)
 
 	if err != nil {
 		return nil, err
@@ -87,30 +54,31 @@ func createDialer() (*gomail.Dialer, error) {
 	}
 
 	tlsconfig := &tls.Config{
-		InsecureSkipVerify: setting.Smtp.SkipVerify,
+		InsecureSkipVerify: ns.Cfg.Smtp.SkipVerify,
 		ServerName:         host,
 	}
 
-	if setting.Smtp.CertFile != "" {
-		cert, err := tls.LoadX509KeyPair(setting.Smtp.CertFile, setting.Smtp.KeyFile)
+	if ns.Cfg.Smtp.CertFile != "" {
+		cert, err := tls.LoadX509KeyPair(ns.Cfg.Smtp.CertFile, ns.Cfg.Smtp.KeyFile)
 		if err != nil {
 			return nil, fmt.Errorf("Could not load cert or key file. error: %v", err)
 		}
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
 
-	d := gomail.NewDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
+	d := gomail.NewDialer(host, iPort, ns.Cfg.Smtp.User, ns.Cfg.Smtp.Password)
 	d.TLSConfig = tlsconfig
-	if setting.Smtp.EhloIdentity != "" {
-		d.LocalName = setting.Smtp.EhloIdentity
+
+	if ns.Cfg.Smtp.EhloIdentity != "" {
+		d.LocalName = ns.Cfg.Smtp.EhloIdentity
 	} else {
 		d.LocalName = setting.InstanceName
 	}
 	return d, nil
 }
 
-func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
-	if !setting.Smtp.Enabled {
+func (ns *NotificationService) buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
+	if !ns.Cfg.Smtp.Enabled {
 		return nil, m.ErrSmtpNotEnabled
 	}
 
@@ -135,7 +103,7 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 		subjectText, hasSubject := subjectData["value"]
 
 		if !hasSubject {
-			return nil, errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+			return nil, fmt.Errorf("Missing subject in Template %s", cmd.Template)
 		}
 
 		subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
@@ -154,7 +122,7 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 
 	return &Message{
 		To:           cmd.To,
-		From:         fmt.Sprintf("%s <%s>", setting.Smtp.FromName, setting.Smtp.FromAddress),
+		From:         fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
 		Subject:      subject,
 		Body:         buffer.String(),
 		EmbededFiles: cmd.EmbededFiles,

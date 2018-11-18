@@ -45,21 +45,21 @@ export class TablePanelEditorCtrl {
     if (!this.panelCtrl.dataRaw) {
       return this.$q.when([]);
     }
-    var columns = this.transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
-    var segments = _.map(columns, (c: any) => this.uiSegmentSrv.newSegment({ value: c.text }));
+    const columns = this.transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
+    const segments = _.map(columns, (c: any) => this.uiSegmentSrv.newSegment({ value: c.text }));
     return this.$q.when(segments);
   }
 
   addColumn() {
-    var columns = transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
-    var column = _.find(columns, { text: this.addColumnSegment.value });
+    const columns = transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
+    const column = _.find(columns, { text: this.addColumnSegment.value });
 
     if (column) {
       this.panel.columns.push(column);
       this.render();
     }
 
-    var plusButton = this.uiSegmentSrv.newPlusButton();
+    const plusButton = this.uiSegmentSrv.newPlusButton();
     this.addColumnSegment.html = plusButton.html;
     this.addColumnSegment.value = plusButton.value;
   }

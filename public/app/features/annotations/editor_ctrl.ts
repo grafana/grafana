@@ -70,6 +70,10 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
   }
 
+  move(index, dir) {
+    _.move(this.annotations, index, index + dir);
+  }
+
   add() {
     this.annotations.push(this.currentAnnotation);
     this.reset();
@@ -77,7 +81,7 @@ export class AnnotationsEditorCtrl {
   }
 
   removeAnnotation(annotation) {
-    var index = _.indexOf(this.annotations, annotation);
+    const index = _.indexOf(this.annotations, annotation);
     this.annotations.splice(index, 1);
   }
 

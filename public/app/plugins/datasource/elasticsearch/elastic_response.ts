@@ -9,7 +9,7 @@ export class ElasticResponse {
   }
 
   processMetrics(esAgg, target, seriesList, props) {
-    var metric, y, i, newSeries, bucket, value;
+    let metric, y, i, newSeries, bucket, value;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -33,10 +33,10 @@ export class ElasticResponse {
             break;
           }
 
-          var firstBucket = esAgg.buckets[0];
-          var percentiles = firstBucket[metric.id].values;
+          const firstBucket = esAgg.buckets[0];
+          const percentiles = firstBucket[metric.id].values;
 
-          for (var percentileName in percentiles) {
+          for (const percentileName in percentiles) {
             newSeries = {
               datapoints: [],
               metric: 'p' + percentileName,
@@ -46,7 +46,7 @@ export class ElasticResponse {
 
             for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
-              var values = bucket[metric.id].values;
+              const values = bucket[metric.id].values;
               newSeries.datapoints.push([values[percentileName], bucket.key]);
             }
             seriesList.push(newSeries);
@@ -55,7 +55,7 @@ export class ElasticResponse {
           break;
         }
         case 'extended_stats': {
-          for (var statName in metric.meta) {
+          for (const statName in metric.meta) {
             if (!metric.meta[statName]) {
               continue;
             }
@@ -69,7 +69,7 @@ export class ElasticResponse {
 
             for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
-              var stats = bucket[metric.id];
+              const stats = bucket[metric.id];
 
               // add stats that are in nested obj to top level obj
               stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
@@ -112,41 +112,41 @@ export class ElasticResponse {
   processAggregationDocs(esAgg, aggDef, target, table, props) {
     // add columns
     if (table.columns.length === 0) {
-      for (let propKey of _.keys(props)) {
+      for (const propKey of _.keys(props)) {
         table.addColumn({ text: propKey, filterable: true });
       }
       table.addColumn({ text: aggDef.field, filterable: true });
     }
 
     // helper func to add values to value array
-    let addMetricValue = (values, metricName, value) => {
+    const addMetricValue = (values, metricName, value) => {
       table.addColumn({ text: metricName });
       values.push(value);
     };
 
-    for (let bucket of esAgg.buckets) {
-      let values = [];
+    for (const bucket of esAgg.buckets) {
+      const values = [];
 
-      for (let propValues of _.values(props)) {
+      for (const propValues of _.values(props)) {
         values.push(propValues);
       }
 
       // add bucket key (value)
       values.push(bucket.key);
 
-      for (let metric of target.metrics) {
+      for (const metric of target.metrics) {
         switch (metric.type) {
           case 'count': {
             addMetricValue(values, this.getMetricName(metric.type), bucket.doc_count);
             break;
           }
           case 'extended_stats': {
-            for (var statName in metric.meta) {
+            for (const statName in metric.meta) {
               if (!metric.meta[statName]) {
                 continue;
               }
 
-              var stats = bucket[metric.id];
+              const stats = bucket[metric.id];
               // add stats that are in nested obj to top level obj
               stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
               stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
@@ -157,7 +157,7 @@ export class ElasticResponse {
           }
           default: {
             let metricName = this.getMetricName(metric.type);
-            let otherMetrics = _.filter(target.metrics, { type: metric.type });
+            const otherMetrics = _.filter(target.metrics, { type: metric.type });
 
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
@@ -175,10 +175,10 @@ export class ElasticResponse {
   }
 
   // This is quite complex
-  // neeed to recurise down the nested buckets to build series
+  // need to recurise down the nested buckets to build series
   processBuckets(aggs, target, seriesList, table, props, depth) {
-    var bucket, aggDef, esAgg, aggId;
-    var maxDepth = target.bucketAggs.length - 1;
+    let bucket, aggDef, esAgg, aggId;
+    const maxDepth = target.bucketAggs.length - 1;
 
     for (aggId in aggs) {
       aggDef = _.find(target.bucketAggs, { id: aggId });
@@ -195,7 +195,7 @@ export class ElasticResponse {
           this.processAggregationDocs(esAgg, aggDef, target, table, props);
         }
       } else {
-        for (var nameIndex in esAgg.buckets) {
+        for (const nameIndex in esAgg.buckets) {
           bucket = esAgg.buckets[nameIndex];
           props = _.clone(props);
           if (bucket.key !== void 0) {
@@ -213,7 +213,7 @@ export class ElasticResponse {
   }
 
   private getMetricName(metric) {
-    var metricDef = _.find(queryDef.metricAggTypes, { value: metric });
+    let metricDef = _.find(queryDef.metricAggTypes, { value: metric });
     if (!metricDef) {
       metricDef = _.find(queryDef.extendedStats, { value: metric });
     }
@@ -222,13 +222,13 @@ export class ElasticResponse {
   }
 
   private getSeriesName(series, target, metricTypeCount) {
-    var metricName = this.getMetricName(series.metric);
+    let metricName = this.getMetricName(series.metric);
 
     if (target.alias) {
-      var regex = /\{\{([\s\S]+?)\}\}/g;
+      const regex = /\{\{([\s\S]+?)\}\}/g;
 
-      return target.alias.replace(regex, function(match, g1, g2) {
-        var group = g1 || g2;
+      return target.alias.replace(regex, (match, g1, g2) => {
+        const group = g1 || g2;
 
         if (group.indexOf('term ') === 0) {
           return series.props[group.substring(5)];
@@ -248,7 +248,7 @@ export class ElasticResponse {
     }
 
     if (series.field && queryDef.isPipelineAgg(series.metric)) {
-      var appliedAgg = _.find(target.metrics, { id: series.field });
+      const appliedAgg = _.find(target.metrics, { id: series.field });
       if (appliedAgg) {
         metricName += ' ' + queryDef.describeMetric(appliedAgg);
       } else {
@@ -258,13 +258,13 @@ export class ElasticResponse {
       metricName += ' ' + series.field;
     }
 
-    var propKeys = _.keys(series.props);
+    const propKeys = _.keys(series.props);
     if (propKeys.length === 0) {
       return metricName;
     }
 
-    var name = '';
-    for (var propName in series.props) {
+    let name = '';
+    for (const propName in series.props) {
       name += series.props[propName] + ' ';
     }
 
@@ -276,23 +276,23 @@ export class ElasticResponse {
   }
 
   nameSeries(seriesList, target) {
-    var metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
+    const metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
 
-    for (var i = 0; i < seriesList.length; i++) {
-      var series = seriesList[i];
+    for (let i = 0; i < seriesList.length; i++) {
+      const series = seriesList[i];
       series.target = this.getSeriesName(series, target, metricTypeCount);
     }
   }
 
   processHits(hits, seriesList) {
-    var series = {
+    const series = {
       target: 'docs',
       type: 'docs',
       datapoints: [],
       total: hits.total,
       filterable: true,
     };
-    var propName, hit, doc, i;
+    let propName, hit, doc, i;
 
     for (i = 0; i < hits.hits.length; i++) {
       hit = hits.hits[i];
@@ -318,13 +318,13 @@ export class ElasticResponse {
   }
 
   trimDatapoints(aggregations, target) {
-    var histogram = _.find(target.bucketAggs, { type: 'date_histogram' });
+    const histogram = _.find(target.bucketAggs, { type: 'date_histogram' });
 
-    var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
+    const shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
     if (shouldDropFirstAndLast) {
-      var trim = histogram.settings.trimEdges;
-      for (var prop in aggregations) {
-        var points = aggregations[prop];
+      const trim = histogram.settings.trimEdges;
+      for (const prop in aggregations) {
+        const points = aggregations[prop];
         if (points.datapoints.length > trim * 2) {
           points.datapoints = points.datapoints.slice(trim, points.datapoints.length - trim);
         }
@@ -333,7 +333,7 @@ export class ElasticResponse {
   }
 
   getErrorFromElasticResponse(response, err) {
-    var result: any = {};
+    const result: any = {};
     result.data = JSON.stringify(err, null, 4);
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
@@ -349,10 +349,10 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    var seriesList = [];
+    const seriesList = [];
 
-    for (var i = 0; i < this.response.responses.length; i++) {
-      var response = this.response.responses[i];
+    for (let i = 0; i < this.response.responses.length; i++) {
+      const response = this.response.responses[i];
       if (response.error) {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
@@ -362,16 +362,16 @@ export class ElasticResponse {
       }
 
       if (response.aggregations) {
-        var aggregations = response.aggregations;
-        var target = this.targets[i];
-        var tmpSeriesList = [];
-        var table = new TableModel();
+        const aggregations = response.aggregations;
+        const target = this.targets[i];
+        const tmpSeriesList = [];
+        const table = new TableModel();
 
         this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
         this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
 
-        for (var y = 0; y < tmpSeriesList.length; y++) {
+        for (let y = 0; y < tmpSeriesList.length; y++) {
           seriesList.push(tmpSeriesList[y]);
         }
 

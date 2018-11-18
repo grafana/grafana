@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	VIEW_INDEX = "index"
+	ViewIndex = "index"
 )
 
-func LoginView(c *m.ReqContext) {
-	viewData, err := setIndexViewData(c)
+func (hs *HTTPServer) LoginView(c *m.ReqContext) {
+	viewData, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
@@ -40,7 +40,7 @@ func LoginView(c *m.ReqContext) {
 	}
 
 	if !tryLoginUsingRememberCookie(c) {
-		c.HTML(200, VIEW_INDEX, viewData)
+		c.HTML(200, ViewIndex, viewData)
 		return
 	}
 
@@ -78,7 +78,13 @@ func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
 	user := userQuery.Result
 
 	// validate remember me cookie
-	if val, _ := c.GetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName); val != user.Login {
+	signingKey := user.Rands + user.Password
+	if len(signingKey) < 10 {
+		c.Logger.Error("Invalid user signingKey")
+		return false
+	}
+
+	if val, _ := c.GetSuperSecureCookie(signingKey, setting.CookieRememberName); val != user.Login {
 		return false
 	}
 
@@ -87,7 +93,7 @@ func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
 	return true
 }
 
-func LoginApiPing(c *m.ReqContext) {
+func LoginAPIPing(c *m.ReqContext) {
 	if !tryLoginUsingRememberCookie(c) {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
@@ -98,21 +104,22 @@ func LoginApiPing(c *m.ReqContext) {
 
 func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	if setting.DisableLoginForm {
-		return ApiError(401, "Login is disabled", nil)
+		return Error(401, "Login is disabled", nil)
 	}
 
-	authQuery := login.LoginUserQuery{
-		Username:  cmd.User,
-		Password:  cmd.Password,
-		IpAddress: c.Req.RemoteAddr,
+	authQuery := &m.LoginUserQuery{
+		ReqContext: c,
+		Username:   cmd.User,
+		Password:   cmd.Password,
+		IpAddress:  c.Req.RemoteAddr,
 	}
 
-	if err := bus.Dispatch(&authQuery); err != nil {
+	if err := bus.Dispatch(authQuery); err != nil {
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
-			return ApiError(401, "Invalid username or password", err)
+			return Error(401, "Invalid username or password", err)
 		}
 
-		return ApiError(500, "Error while trying to authenticate user", err)
+		return Error(500, "Error while trying to authenticate user", err)
 	}
 
 	user := authQuery.User
@@ -130,7 +137,7 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 
 	metrics.M_Api_Login_Post.Inc()
 
-	return Json(200, result)
+	return JSON(200, result)
 }
 
 func loginUserWithUser(user *m.User, c *m.ReqContext) {
@@ -154,5 +161,9 @@ func Logout(c *m.ReqContext) {
 	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
 	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
 	c.Session.Destory(c.Context)
-	c.Redirect(setting.AppSubUrl + "/login")
+	if setting.SignoutRedirectUrl != "" {
+		c.Redirect(setting.SignoutRedirectUrl)
+	} else {
+		c.Redirect(setting.AppSubUrl + "/login")
+	}
 }

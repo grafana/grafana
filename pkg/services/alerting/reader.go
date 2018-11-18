@@ -16,7 +16,7 @@ type RuleReader interface {
 
 type DefaultRuleReader struct {
 	sync.RWMutex
-	serverID       string
+	//serverID       string
 	serverPosition int
 	clusterSize    int
 	log            log.Logger
@@ -34,11 +34,8 @@ func NewRuleReader() *DefaultRuleReader {
 func (arr *DefaultRuleReader) initReader() {
 	heartbeat := time.NewTicker(time.Second * 10)
 
-	for {
-		select {
-		case <-heartbeat.C:
-			arr.heartbeat()
-		}
+	for range heartbeat.C {
+		arr.heartbeat()
 	}
 }
 

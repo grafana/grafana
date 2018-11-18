@@ -17,7 +17,7 @@ import (
 
 const (
 	// Version show the xorm's version
-	Version string = "0.6.2.0326"
+	Version string = "0.6.4.0910"
 )
 
 func regDrvsNDialects() bool {
@@ -50,10 +50,13 @@ func close(engine *Engine) {
 	engine.Close()
 }
 
+func init() {
+	regDrvsNDialects()
+}
+
 // NewEngine new a db manager according to the parameter. Currently support four
 // drivers
 func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
-	regDrvsNDialects()
 	driver := core.QueryDriver(driverName)
 	if driver == nil {
 		return nil, fmt.Errorf("Unsupported driver name: %v", driverName)
@@ -87,6 +90,12 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		TagIdentifier: "xorm",
 		TZLocation:    time.Local,
 		tagHandlers:   defaultTagHandlers,
+	}
+
+	if uri.DbType == core.SQLITE {
+		engine.DatabaseTZ = time.UTC
+	} else {
+		engine.DatabaseTZ = time.Local
 	}
 
 	logger := NewSimpleLogger(os.Stdout)

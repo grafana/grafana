@@ -42,6 +42,7 @@ Hit `?` on your keyboard to open the shortcuts help modal.
 - `e`	Toggle panel edit view
 - `v`	Toggle panel fullscreen view
 - `p` `s` Open Panel Share Modal
+- `p` `d` Duplicate Panel
 - `p` `r` Remove Panel
 
 ### Time Range

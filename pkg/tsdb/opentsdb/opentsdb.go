@@ -83,6 +83,10 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	u.Path = path.Join(u.Path, "api/query")
 
 	postData, err := json.Marshal(data)
+	if err != nil {
+		plog.Info("Failed marshalling data", "error", err)
+		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+	}
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
 	if err != nil {

@@ -1,8 +1,11 @@
 import _ from 'lodash';
 import moment from 'moment';
+
+import { RawTimeRange } from 'app/types/series';
+
 import * as dateMath from './datemath';
 
-var spans = {
+const spans = {
   s: { display: 'second' },
   m: { display: 'minute' },
   h: { display: 'hour' },
@@ -12,7 +15,7 @@ var spans = {
   y: { display: 'year' },
 };
 
-var rangeOptions = [
+const rangeOptions = [
   { from: 'now/d', to: 'now/d', display: 'Today', section: 2 },
   { from: 'now/d', to: 'now', display: 'Today so far', section: 2 },
   { from: 'now/w', to: 'now/w', display: 'This week', section: 2 },
@@ -58,15 +61,15 @@ var rangeOptions = [
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 0 },
 ];
 
-var absoluteFormat = 'MMM D, YYYY HH:mm:ss';
+const absoluteFormat = 'MMM D, YYYY HH:mm:ss';
 
-var rangeIndex = {};
-_.each(rangeOptions, function(frame) {
+const rangeIndex = {};
+_.each(rangeOptions, frame => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
 export function getRelativeTimesList(timepickerSettings, currentDisplay) {
-  var groups = _.groupBy(rangeOptions, (option: any) => {
+  const groups = _.groupBy(rangeOptions, (option: any) => {
     option.active = option.display === currentDisplay;
     return option.section;
   });
@@ -92,7 +95,7 @@ function formatDate(date) {
 // now/d
 // if no to <expr> then to now is assumed
 export function describeTextRange(expr: any) {
-  let isLast = expr.indexOf('+') !== 0;
+  const isLast = expr.indexOf('+') !== 0;
   if (expr.indexOf('now') === -1) {
     expr = (isLast ? 'now-' : 'now') + expr;
   }
@@ -108,11 +111,11 @@ export function describeTextRange(expr: any) {
     opt = { from: 'now', to: expr };
   }
 
-  let parts = /^now([-+])(\d+)(\w)/.exec(expr);
+  const parts = /^now([-+])(\d+)(\w)/.exec(expr);
   if (parts) {
-    let unit = parts[3];
-    let amount = parseInt(parts[2]);
-    let span = spans[unit];
+    const unit = parts[3];
+    const amount = parseInt(parts[2], 10);
+    const span = spans[unit];
     if (span) {
       opt.display = isLast ? 'Last ' : 'Next ';
       opt.display += amount + ' ' + span.display;
@@ -129,8 +132,8 @@ export function describeTextRange(expr: any) {
   return opt;
 }
 
-export function describeTimeRange(range) {
-  var option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+export function describeTimeRange(range: RawTimeRange): string {
+  const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
   if (option) {
     return option.display;
   }
@@ -140,17 +143,17 @@ export function describeTimeRange(range) {
   }
 
   if (moment.isMoment(range.from)) {
-    var toMoment = dateMath.parse(range.to, true);
+    const toMoment = dateMath.parse(range.to, true);
     return formatDate(range.from) + ' to ' + toMoment.fromNow();
   }
 
   if (moment.isMoment(range.to)) {
-    var from = dateMath.parse(range.from, false);
+    const from = dateMath.parse(range.from, false);
     return from.fromNow() + ' to ' + formatDate(range.to);
   }
 
   if (range.to.toString() === 'now') {
-    var res = describeTextRange(range.from);
+    const res = describeTextRange(range.from);
     return res.display;
   }
 

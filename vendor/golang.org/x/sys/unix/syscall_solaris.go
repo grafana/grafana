@@ -23,6 +23,7 @@ type syscallFunc uintptr
 func rawSysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err syscall.Errno)
 func sysvicall6(trap, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err syscall.Errno)
 
+// SockaddrDatalink implements the Sockaddr interface for AF_LINK type sockets.
 type SockaddrDatalink struct {
 	Family uint16
 	Index  uint16
@@ -311,6 +312,12 @@ func UtimesNanoAt(dirfd int, path string, ts []Timespec, flags int) error {
 
 //sys	fcntl(fd int, cmd int, arg int) (val int, err error)
 
+// FcntlInt performs a fcntl syscall on fd with the provided command and argument.
+func FcntlInt(fd uintptr, cmd, arg int) (int, error) {
+	valptr, _, err := sysvicall6(uintptr(unsafe.Pointer(&procfcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(arg), 0, 0, 0)
+	return int(valptr), err
+}
+
 // FcntlFlock performs a fcntl syscall for the F_GETLK, F_SETLK or F_SETLKW command.
 func FcntlFlock(fd uintptr, cmd int, lk *Flock_t) error {
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&procfcntl)), 3, uintptr(fd), uintptr(cmd), uintptr(unsafe.Pointer(lk)), 0, 0, 0)
@@ -594,9 +601,10 @@ func Poll(fds []PollFd, timeout int) (n int, err error) {
 //sys	Fchown(fd int, uid int, gid int) (err error)
 //sys	Fchownat(dirfd int, path string, uid int, gid int, flags int) (err error)
 //sys	Fdatasync(fd int) (err error)
-//sys Flock(fd int, how int) (err error)
+//sys	Flock(fd int, how int) (err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error)
+//sys	Fstatat(fd int, path string, stat *Stat_t, flags int) (err error)
 //sys	Fstatvfs(fd int, vfsstat *Statvfs_t) (err error)
 //sys	Getdents(fd int, buf []byte, basep *uintptr) (n int, err error)
 //sysnb	Getgid() (gid int)
@@ -674,6 +682,7 @@ func Poll(fds []PollFd, timeout int) (n int, err error) {
 //sys	connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_connect
 //sys	mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (ret uintptr, err error)
 //sys	munmap(addr uintptr, length uintptr) (err error)
+//sys	sendfile(outfd int, infd int, offset *int64, count int) (written int, err error) = libsendfile.sendfile
 //sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_sendto
 //sys	socket(domain int, typ int, proto int) (fd int, err error) = libsocket.__xnet_socket
 //sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libsocket.__xnet_socketpair

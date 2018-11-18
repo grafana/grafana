@@ -5,9 +5,9 @@ os: Windows Server 2012 R2
 clone_folder: c:\gopath\src\github.com\grafana\grafana
 
 environment:
-  nodejs_version: "6"
-  GOPATH: c:\gopath
-  GOVERSION: 1.9.2
+  nodejs_version: "8"
+  GOPATH: C:\gopath
+  GOVERSION: 1.11
 
 install:
   - rmdir c:\go /s /q
@@ -38,16 +38,3 @@ artifacts:
   - path: grafana-*windows-*.*
     name: binzip
     type: zip
-
-deploy:
-  - provider: Environment
-    name: GrafanaReleaseMaster
-    on:
-      buildType: master
-
-  - provider: Environment
-    name: GrafanaReleaseRelease
-    on:
-      buildType: release
-
-

@@ -10,8 +10,8 @@ import (
 // FolderService service for operating on folders
 type FolderService interface {
 	GetFolders(limit int) ([]*models.Folder, error)
-	GetFolderById(id int64) (*models.Folder, error)
-	GetFolderByUid(uid string) (*models.Folder, error)
+	GetFolderByID(id int64) (*models.Folder, error)
+	GetFolderByUID(uid string) (*models.Folder, error)
 	CreateFolder(cmd *models.CreateFolderCommand) error
 	UpdateFolder(uid string, cmd *models.UpdateFolderCommand) error
 	DeleteFolder(uid string) (*models.Folder, error)
@@ -57,7 +57,7 @@ func (dr *dashboardServiceImpl) GetFolders(limit int) ([]*models.Folder, error) 
 	return folders, nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderById(id int64) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolderByID(id int64) (*models.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: id}
 	dashFolder, err := getFolder(query)
 
@@ -76,7 +76,7 @@ func (dr *dashboardServiceImpl) GetFolderById(id int64) (*models.Folder, error) 
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderByUid(uid string) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolderByUID(uid string) (*models.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: uid}
 	dashFolder, err := getFolder(query)
 
@@ -104,7 +104,7 @@ func (dr *dashboardServiceImpl) CreateFolder(cmd *models.CreateFolderCommand) er
 		User:      dr.user,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false)
+	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false, false)
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -141,7 +141,7 @@ func (dr *dashboardServiceImpl) UpdateFolder(existingUid string, cmd *models.Upd
 		Overwrite: cmd.Overwrite,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false)
+	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false, false)
 	if err != nil {
 		return toFolderError(err)
 	}

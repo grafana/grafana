@@ -47,14 +47,14 @@ func AdminCreateUser(c *m.ReqContext, form dtos.AdminCreateUserForm) {
 }
 
 func AdminUpdateUserPassword(c *m.ReqContext, form dtos.AdminUpdateUserPasswordForm) {
-	userId := c.ParamsInt64(":id")
+	userID := c.ParamsInt64(":id")
 
 	if len(form.Password) < 4 {
 		c.JsonApiErr(400, "New password too short", nil)
 		return
 	}
 
-	userQuery := m.GetUserByIdQuery{Id: userId}
+	userQuery := m.GetUserByIdQuery{Id: userID}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		c.JsonApiErr(500, "Could not read user from database", err)
@@ -64,7 +64,7 @@ func AdminUpdateUserPassword(c *m.ReqContext, form dtos.AdminUpdateUserPasswordF
 	passwordHashed := util.EncodePassword(form.Password, userQuery.Result.Salt)
 
 	cmd := m.ChangeUserPasswordCommand{
-		UserId:      userId,
+		UserId:      userID,
 		NewPassword: passwordHashed,
 	}
 
@@ -77,10 +77,10 @@ func AdminUpdateUserPassword(c *m.ReqContext, form dtos.AdminUpdateUserPasswordF
 }
 
 func AdminUpdateUserPermissions(c *m.ReqContext, form dtos.AdminUpdateUserPermissionsForm) {
-	userId := c.ParamsInt64(":id")
+	userID := c.ParamsInt64(":id")
 
 	cmd := m.UpdateUserPermissionsCommand{
-		UserId:         userId,
+		UserId:         userID,
 		IsGrafanaAdmin: form.IsGrafanaAdmin,
 	}
 
@@ -93,9 +93,9 @@ func AdminUpdateUserPermissions(c *m.ReqContext, form dtos.AdminUpdateUserPermis
 }
 
 func AdminDeleteUser(c *m.ReqContext) {
-	userId := c.ParamsInt64(":id")
+	userID := c.ParamsInt64(":id")
 
-	cmd := m.DeleteUserCommand{UserId: userId}
+	cmd := m.DeleteUserCommand{UserId: userID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to delete user", err)

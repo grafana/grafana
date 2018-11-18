@@ -1,4 +1,4 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 
@@ -19,25 +19,25 @@ export function elasticMetricAgg() {
 
 export class ElasticMetricAggCtrl {
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
-    var metricAggs = $scope.target.metrics;
+    const metricAggs = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];
     $scope.modelSettingsValues = {};
 
-    $scope.init = function() {
+    $scope.init = () => {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
       $scope.updatePipelineAggOptions();
     };
 
-    $scope.updatePipelineAggOptions = function() {
+    $scope.updatePipelineAggOptions = () => {
       $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
     };
 
     $rootScope.onAppEvent(
       'elastic-query-updated',
-      function() {
+      () => {
         $scope.index = _.indexOf(metricAggs, $scope.agg);
         $scope.updatePipelineAggOptions();
         $scope.validateModel();
@@ -45,7 +45,7 @@ export class ElasticMetricAggCtrl {
       $scope
     );
 
-    $scope.validateModel = function() {
+    $scope.validateModel = () => {
       $scope.isFirst = $scope.index === 0;
       $scope.isSingle = metricAggs.length === 1;
       $scope.settingsLinkText = '';
@@ -55,9 +55,9 @@ export class ElasticMetricAggCtrl {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
         $scope.agg.field = $scope.agg.pipelineAgg;
 
-        var pipelineOptions = queryDef.getPipelineOptions($scope.agg);
+        const pipelineOptions = queryDef.getPipelineOptions($scope.agg);
         if (pipelineOptions.length > 0) {
-          _.each(pipelineOptions, function(opt) {
+          _.each(pipelineOptions, opt => {
             $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
           });
           $scope.settingsLinkText = 'Options';
@@ -67,8 +67,8 @@ export class ElasticMetricAggCtrl {
       }
       switch ($scope.agg.type) {
         case 'cardinality': {
-          var precision_threshold = $scope.agg.settings.precision_threshold || '';
-          $scope.settingsLinkText = 'Precision threshold: ' + precision_threshold;
+          const precisionThreshold = $scope.agg.settings.precision_threshold || '';
+          $scope.settingsLinkText = 'Precision threshold: ' + precisionThreshold;
           break;
         }
         case 'percentiles': {
@@ -82,11 +82,11 @@ export class ElasticMetricAggCtrl {
             $scope.agg.meta.std_deviation_bounds_upper = true;
           }
 
-          var stats = _.reduce(
+          const stats = _.reduce(
             $scope.agg.meta,
-            function(memo, val, key) {
+            (memo, val, key) => {
               if (val) {
-                var def = _.find($scope.extendedStats, { value: key });
+                const def = _.find($scope.extendedStats, { value: key });
                 memo.push(def.text);
               }
               return memo;
@@ -115,7 +115,7 @@ export class ElasticMetricAggCtrl {
       if ($scope.aggDef.supportsInlineScript) {
         // I know this stores the inline script twice
         // but having it like this simplifes the query_builder
-        var inlineScript = $scope.agg.inlineScript;
+        const inlineScript = $scope.agg.inlineScript;
         if (inlineScript) {
           $scope.agg.settings.script = { inline: inlineScript };
         } else {
@@ -128,56 +128,62 @@ export class ElasticMetricAggCtrl {
       }
     };
 
-    $scope.toggleOptions = function() {
+    $scope.toggleOptions = () => {
       $scope.showOptions = !$scope.showOptions;
       $scope.updatePipelineAggOptions();
     };
 
-    $scope.onChangeInternal = function() {
+    $scope.onChangeInternal = () => {
       $scope.onChange();
     };
 
-    $scope.updateMovingAvgModelSettings = function() {
-      var modelSettingsKeys = [];
-      var modelSettings = queryDef.getMovingAvgSettings($scope.agg.settings.model, false);
-      for (var i = 0; i < modelSettings.length; i++) {
+    $scope.updateMovingAvgModelSettings = () => {
+      const modelSettingsKeys = [];
+      const modelSettings = queryDef.getMovingAvgSettings($scope.agg.settings.model, false);
+      for (let i = 0; i < modelSettings.length; i++) {
         modelSettingsKeys.push(modelSettings[i].value);
       }
 
-      for (var key in $scope.agg.settings.settings) {
+      for (const key in $scope.agg.settings.settings) {
         if ($scope.agg.settings.settings[key] === null || modelSettingsKeys.indexOf(key) === -1) {
           delete $scope.agg.settings.settings[key];
         }
       }
     };
 
-    $scope.onChangeClearInternal = function() {
+    $scope.onChangeClearInternal = () => {
       delete $scope.agg.settings.minimize;
       $scope.onChange();
     };
 
-    $scope.onTypeChange = function() {
+    $scope.onTypeChange = () => {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
       $scope.showOptions = false;
+
+      // reset back to metric/group by query
+      if ($scope.target.bucketAggs.length === 0 && $scope.agg.type !== 'raw_document') {
+        $scope.target.bucketAggs = [queryDef.defaultBucketAgg()];
+      }
+
       $scope.updatePipelineAggOptions();
       $scope.onChange();
     };
 
-    $scope.getFieldsInternal = function() {
+    $scope.getFieldsInternal = () => {
       if ($scope.agg.type === 'cardinality') {
         return $scope.getFields();
       }
       return $scope.getFields({ $fieldType: 'number' });
     };
 
-    $scope.addMetricAgg = function() {
-      var addIndex = metricAggs.length;
+    $scope.addMetricAgg = () => {
+      const addIndex = metricAggs.length;
 
-      var id = _.reduce(
+      const id = _.reduce(
         $scope.target.bucketAggs.concat($scope.target.metrics),
-        function(max, val) {
-          return parseInt(val.id) > max ? parseInt(val.id) : max;
+        (max, val) => {
+          return parseInt(val.id, 10) > max ? parseInt(val.id, 10) : max;
         },
         0
       );
@@ -186,12 +192,12 @@ export class ElasticMetricAggCtrl {
       $scope.onChange();
     };
 
-    $scope.removeMetricAgg = function() {
+    $scope.removeMetricAgg = () => {
       metricAggs.splice($scope.index, 1);
       $scope.onChange();
     };
 
-    $scope.toggleShowMetric = function() {
+    $scope.toggleShowMetric = () => {
       $scope.agg.hide = !$scope.agg.hide;
       if (!$scope.agg.hide) {
         delete $scope.agg.hide;
@@ -203,6 +209,5 @@ export class ElasticMetricAggCtrl {
   }
 }
 
-var module = angular.module('grafana.directives');
-module.directive('elasticMetricAgg', elasticMetricAgg);
-module.controller('ElasticMetricAggCtrl', ElasticMetricAggCtrl);
+coreModule.directive('elasticMetricAgg', elasticMetricAgg);
+coreModule.controller('ElasticMetricAggCtrl', ElasticMetricAggCtrl);

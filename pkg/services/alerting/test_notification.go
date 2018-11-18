@@ -24,7 +24,7 @@ func init() {
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
-	notifier := newNotificationService()
+	notifier := NewNotificationService(nil).(*notificationService)
 
 	model := &m.AlertNotification{
 		Name:     cmd.Name,
@@ -39,7 +39,7 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	return notifier.sendNotifications(createTestEvalContext(cmd), []Notifier{notifiers})
+	return notifier.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifiers}})
 }
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {

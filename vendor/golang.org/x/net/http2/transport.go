@@ -27,9 +27,9 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2/hpack"
 	"golang.org/x/net/idna"
-	"golang.org/x/net/lex/httplex"
 )
 
 const (
@@ -567,6 +567,10 @@ func (t *Transport) newClientConn(c net.Conn, singleUse bool) (*ClientConn, erro
 	// henc in response to SETTINGS frames?
 	cc.henc = hpack.NewEncoder(&cc.hbuf)
 
+	if t.AllowHTTP {
+		cc.nextStreamID = 3
+	}
+
 	if cs, ok := c.(connectionStater); ok {
 		state := cs.ConnectionState()
 		cc.tlsState = &state
@@ -951,6 +955,9 @@ func (cc *ClientConn) awaitOpenSlotForRequest(req *http.Request) error {
 	for {
 		cc.lastActive = time.Now()
 		if cc.closed || !cc.canTakeNewRequestLocked() {
+			if waitingForConn != nil {
+				close(waitingForConn)
+			}
 			return errClientConnUnusable
 		}
 		if int64(len(cc.streams))+1 <= int64(cc.maxConcurrentStreams) {
@@ -1174,7 +1181,7 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 	if host == "" {
 		host = req.URL.Host
 	}
-	host, err := httplex.PunycodeHostPort(host)
+	host, err := httpguts.PunycodeHostPort(host)
 	if err != nil {
 		return nil, err
 	}
@@ -1199,11 +1206,11 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 	// potentially pollute our hpack state. (We want to be able to
 	// continue to reuse the hpack encoder for future requests)
 	for k, vv := range req.Header {
-		if !httplex.ValidHeaderFieldName(k) {
+		if !httpguts.ValidHeaderFieldName(k) {
 			return nil, fmt.Errorf("invalid HTTP header name %q", k)
 		}
 		for _, v := range vv {
-			if !httplex.ValidHeaderFieldValue(v) {
+			if !httpguts.ValidHeaderFieldValue(v) {
 				return nil, fmt.Errorf("invalid HTTP header value %q for header %q", v, k)
 			}
 		}
@@ -2244,7 +2251,7 @@ func (t *Transport) getBodyWriterState(cs *clientStream, body io.Reader) (s body
 	}
 	s.delay = t.expectContinueTimeout()
 	if s.delay == 0 ||
-		!httplex.HeaderValuesContainsToken(
+		!httpguts.HeaderValuesContainsToken(
 			cs.req.Header["Expect"],
 			"100-continue") {
 		return
@@ -2299,5 +2306,5 @@ func (s bodyWriterState) scheduleBodyWrite() {
 // isConnectionCloseRequest reports whether req should use its own
 // connection for a single request and then close the connection.
 func isConnectionCloseRequest(req *http.Request) bool {
-	return req.Close || httplex.HeaderValuesContainsToken(req.Header["Connection"], "close")
+	return req.Close || httpguts.HeaderValuesContainsToken(req.Header["Connection"], "close")
 }

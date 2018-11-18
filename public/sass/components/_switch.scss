@@ -41,7 +41,6 @@
     bottom: 0;
     right: 0;
     color: #fff;
-    font-size: $font-size-sm;
     text-align: center;
     font-size: 150%;
     display: flex;
@@ -64,8 +63,8 @@
   }
 
   input + label::before {
-    font-family: "FontAwesome";
-    content: "\f096"; // square-o
+    font-family: 'FontAwesome';
+    content: '\f096'; // square-o
     color: $text-color-weak;
     transition: transform 0.4s;
     backface-visibility: hidden;
@@ -73,11 +72,11 @@
   }
 
   input + label::after {
-    content: "\f046"; // check-square-o
+    content: '\f046'; // check-square-o
     color: $orange;
     text-shadow: $text-shadow-strong;
 
-    font-family: "FontAwesome";
+    font-family: 'FontAwesome';
     transition: transform 0.4s;
     transform: rotateY(180deg);
     backface-visibility: hidden;
@@ -89,6 +88,20 @@
 
   input:checked + label::after {
     transform: rotateY(0);
+  }
+
+  &--small {
+    max-width: 2rem;
+    min-width: 1.5rem;
+
+    input + label {
+      height: 25px;
+    }
+
+    input + label::before,
+    input + label::after {
+      font-size: $font-size-sm;
+    }
   }
 
   &--table-cell {
@@ -154,7 +167,8 @@ gf-form-switch[disabled] {
   .gf-form-switch input + label {
     cursor: default;
     pointer-events: none !important;
-    &::before {
+    &::before,
+    &::after {
       color: $text-color-faint;
       text-shadow: none;
     }

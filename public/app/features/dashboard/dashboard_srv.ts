@@ -77,15 +77,16 @@ export class DashboardSrv {
   postSave(clone, data) {
     this.dash.version = data.version;
 
+    // important that these happens before location redirect below
+    this.$rootScope.appEvent('dashboard-saved', this.dash);
+    this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
+
     const newUrl = locationUtil.stripBaseFromUrl(data.url);
     const currentPath = this.$location.path();
 
     if (newUrl !== currentPath) {
       this.$location.url(newUrl).replace();
     }
-
-    this.$rootScope.appEvent('dashboard-saved', this.dash);
-    this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
 
     return this.dash;
   }
@@ -100,9 +101,13 @@ export class DashboardSrv {
       .catch(this.handleSaveDashboardError.bind(this, clone, options));
   }
 
-  saveDashboard(options, clone) {
+  saveDashboard(options?, clone?) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dash.meta));
+    }
+
+    if (this.dash.meta.provisioned) {
+      return this.showDashboardProvisionedModal();
     }
 
     if (!this.dash.meta.canSave && options.makeEditable !== true) {
@@ -118,6 +123,16 @@ export class DashboardSrv {
     }
 
     return this.save(this.dash.getSaveModelClone(), options);
+  }
+
+  saveJSONDashboard(json: string) {
+    return this.save(JSON.parse(json), {});
+  }
+
+  showDashboardProvisionedModal() {
+    this.$rootScope.appEvent('show-modal', {
+      templateHtml: '<save-provisioned-dashboard-modal dismiss="dismiss()"></save-provisioned-dashboard-modal>',
+    });
   }
 
   showSaveAsModal() {

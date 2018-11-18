@@ -1,14 +1,9 @@
 import React, { Component } from 'react';
 import Select from 'react-select';
 import DescriptionOption from './DescriptionOption';
-
-export interface IProps {
-  optionsWithDesc: OptionWithDescription[];
-  handlePicked: (permission) => void;
-  value: number;
-  disabled: boolean;
-  className?: string;
-}
+import IndicatorsContainer from './IndicatorsContainer';
+import ResetStyles from './ResetStyles';
+import NoOptionsMessage from './NoOptionsMessage';
 
 export interface OptionWithDescription {
   value: any;
@@ -16,29 +11,38 @@ export interface OptionWithDescription {
   description: string;
 }
 
-class DescriptionPicker extends Component<IProps, any> {
-  constructor(props) {
-    super(props);
-    this.state = {};
-  }
+export interface Props {
+  optionsWithDesc: OptionWithDescription[];
+  onSelected: (permission) => void;
+  disabled: boolean;
+  className?: string;
+  value?: any;
+}
 
+const getSelectedOption = (optionsWithDesc, value) => optionsWithDesc.find(option => option.value === value);
+
+class DescriptionPicker extends Component<Props, any> {
   render() {
-    const { optionsWithDesc, handlePicked, value, disabled, className } = this.props;
-
+    const { optionsWithDesc, onSelected, disabled, className, value } = this.props;
+    const selectedOption = getSelectedOption(optionsWithDesc, value);
     return (
       <div className="permissions-picker">
         <Select
-          value={value}
-          valueKey="value"
-          multi={false}
-          clearable={false}
-          labelKey="label"
-          options={optionsWithDesc}
-          onChange={handlePicked}
-          className={`width-7 gf-form-input gf-form-input--form-dropdown ${className || ''}`}
-          optionComponent={DescriptionOption}
           placeholder="Choose"
-          disabled={disabled}
+          classNamePrefix={`gf-form-select-box`}
+          className={`width-7 gf-form-input gf-form-input--form-dropdown ${className || ''}`}
+          options={optionsWithDesc}
+          components={{
+            Option: DescriptionOption,
+            IndicatorsContainer,
+            NoOptionsMessage,
+          }}
+          styles={ResetStyles}
+          isDisabled={disabled}
+          onChange={onSelected}
+          getOptionValue={i => i.value}
+          getOptionLabel={i => i.label}
+          value={selectedOption}
         />
       </div>
     );

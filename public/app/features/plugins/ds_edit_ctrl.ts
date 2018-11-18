@@ -1,21 +1,23 @@
 import _ from 'lodash';
-import { toJS } from 'mobx';
 import config from 'app/core/config';
 import { coreModule, appEvents } from 'app/core/core';
-import { store } from 'app/stores/store';
+import { store } from 'app/store/configureStore';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { buildNavModel } from './state/navModel';
 
-var datasourceTypes = [];
+let datasourceTypes = [];
 
-var defaults = {
+const defaults = {
   name: '',
   type: 'graphite',
   url: '',
   access: 'proxy',
   jsonData: {},
   secureJsonFields: {},
+  secureJsonData: {},
 };
 
-var datasourceCreated = false;
+let datasourceCreated = false;
 
 export class DataSourceEditCtrl {
   isNew: boolean;
@@ -30,11 +32,8 @@ export class DataSourceEditCtrl {
 
   /** @ngInject */
   constructor(private $q, private backendSrv, private $routeParams, private $location, private datasourceSrv) {
-    if (store.nav.main === null) {
-      store.nav.load('cfg', 'datasources');
-    }
-
-    this.navModel = toJS(store.nav);
+    const state = store.getState();
+    this.navModel = getNavModel(state.navIndex, 'datasources');
     this.datasources = [];
 
     this.loadDatasourceTypes().then(() => {
@@ -100,8 +99,7 @@ export class DataSourceEditCtrl {
   }
 
   updateNav() {
-    store.nav.initDatasourceEditNav(this.current, this.datasourceMeta, 'datasource-settings');
-    this.navModel = toJS(store.nav);
+    this.navModel = buildNavModel(this.current, this.datasourceMeta, 'datasource-settings');
   }
 
   typeChanged() {
@@ -120,7 +118,7 @@ export class DataSourceEditCtrl {
   }
 
   testDatasource() {
-    this.datasourceSrv.get(this.current.name).then(datasource => {
+    return this.datasourceSrv.get(this.current.name).then(datasource => {
       if (!datasource.testDatasource) {
         return;
       }
@@ -128,7 +126,7 @@ export class DataSourceEditCtrl {
       this.testing = { done: false, status: 'error' };
 
       // make test call in no backend cache context
-      this.backendSrv
+      return this.backendSrv
         .withNoBackendCache(() => {
           return datasource
             .testDatasource()
@@ -163,8 +161,8 @@ export class DataSourceEditCtrl {
       return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
         this.current = result.datasource;
         this.updateNav();
-        this.updateFrontendSettings().then(() => {
-          this.testDatasource();
+        return this.updateFrontendSettings().then(() => {
+          return this.testDatasource();
         });
       });
     } else {
@@ -199,16 +197,24 @@ export class DataSourceEditCtrl {
 
 coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
 
-coreModule.directive('datasourceHttpSettings', function() {
+coreModule.directive('datasourceHttpSettings', () => {
   return {
     scope: {
       current: '=',
       suggestUrl: '@',
+      noDirectAccess: '@',
     },
     templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
     link: {
-      pre: function($scope, elem, attrs) {
-        $scope.getSuggestUrls = function() {
+      pre: ($scope, elem, attrs) => {
+        // do not show access option if direct access is disabled
+        $scope.showAccessOption = $scope.noDirectAccess !== 'true';
+        $scope.showAccessHelp = false;
+        $scope.toggleAccessHelp = () => {
+          $scope.showAccessHelp = !$scope.showAccessHelp;
+        };
+
+        $scope.getSuggestUrls = () => {
           return [$scope.suggestUrl];
         };
       },

@@ -24,7 +24,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.10
+- Go (Latest Stable)
 - NodeJS LTS
 
 ### Building the backend
@@ -39,20 +39,24 @@ go run build.go build
 
 For this you need nodejs (v.6+).
 
+To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run watch
+yarn watch
 ```
 
-Run tests 
+Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
 ```bash
-npm run jest
+yarn start
+# OR set a theme
+env GRAFANA_THEME=light yarn start
 ```
+Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.
 
-Run karma tests
+Run tests
 ```bash
-npm run karma
+yarn jest
 ```
 
 ### Recompile backend on source change
@@ -64,6 +68,27 @@ bra run
 ```
 
 Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
+
+### Building a Docker image
+
+There are two different ways to build a Grafana docker image. If you're machine is setup for Grafana development and you run linux/amd64 you can build just the image. Otherwise, there is the option to build Grafana completely within Docker.
+
+Run the image you have built using: `docker run --rm -p 3000:3000 grafana/grafana:dev`
+
+#### Building on linux/amd64 (fast)
+
+1. Build the frontend `go run build.go build-frontend`
+2. Build the docker image `make build-docker-dev`
+
+The resulting image will be tagged as `grafana/grafana:dev`
+
+#### Building anywhere (slower)
+
+Choose this option to build on platforms other than linux/amd64 and/or not have to setup the Grafana development environment.
+
+1. `make build-docker-full` or `docker build -t grafana/grafana:dev .`
+
+The resulting image will be tagged as `grafana/grafana:dev`
 
 ### Dev config
 
@@ -80,28 +105,24 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 #### Frontend
 Execute all frontend tests
 ```bash
-npm run test
+yarn test
 ```
 
-Writing & watching frontend tests (we have two test runners)
+Writing & watching frontend tests
 
-- jest for all new tests that do not require browser context (React+more)
-   - Start watcher: `npm run jest`
-   - Jest will run all test files that end with the name ".jest.ts"
-- karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
-  - Start watcher: `npm run karma`
-  - Karma+Mocha runs all files that end with the name "_specs.ts".
+- Start watcher: `yarn jest`
+- Jest will run all test files that end with the name ".test.ts"
 
 #### Backend
 ```bash
 # Run Golang tests using sqlite3 as database (default)
-go test ./pkg/... 
+go test ./pkg/...
 
 # Run Golang tests using mysql as database - convenient to use /docker/blocks/mysql_tests
-GRAFANA_TEST_DB=mysql go test ./pkg/... 
+GRAFANA_TEST_DB=mysql go test ./pkg/...
 
 # Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
-GRAFANA_TEST_DB=postgres go test ./pkg/... 
+GRAFANA_TEST_DB=postgres go test ./pkg/...
 ```
 
 ## Contribute
@@ -117,5 +138,5 @@ plugin development.
 
 ## License
 
-Grafana is distributed under Apache 2.0 License.
+Grafana is distributed under [Apache 2.0 License](https://github.com/grafana/grafana/blob/master/LICENSE.md).
 

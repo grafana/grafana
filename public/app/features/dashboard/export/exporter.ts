@@ -12,37 +12,54 @@ export class DashboardExporter {
     // this is pretty hacky and needs to be changed
     dashboard.cleanUpRepeats();
 
-    var saveModel = dashboard.getSaveModelClone();
+    const saveModel = dashboard.getSaveModelClone();
     saveModel.id = null;
 
     // undo repeat cleanup
     dashboard.processRepeats();
 
-    var inputs = [];
-    var requires = {};
-    var datasources = {};
-    var promises = [];
-    var variableLookup: any = {};
+    const inputs = [];
+    const requires = {};
+    const datasources = {};
+    const promises = [];
+    const variableLookup: any = {};
 
-    for (let variable of saveModel.templating.list) {
+    for (const variable of saveModel.templating.list) {
       variableLookup[variable.name] = variable;
     }
 
-    var templateizeDatasourceUsage = obj => {
+    const templateizeDatasourceUsage = obj => {
+      let datasource = obj.datasource;
+      let datasourceVariable = null;
+
       // ignore data source properties that contain a variable
-      if (obj.datasource && obj.datasource.indexOf('$') === 0) {
-        if (variableLookup[obj.datasource.substring(1)]) {
-          return;
+      if (datasource && datasource.indexOf('$') === 0) {
+        datasourceVariable = variableLookup[datasource.substring(1)];
+        if (datasourceVariable && datasourceVariable.current) {
+          datasource = datasourceVariable.current.value;
         }
       }
 
       promises.push(
-        this.datasourceSrv.get(obj.datasource).then(ds => {
+        this.datasourceSrv.get(datasource).then(ds => {
           if (ds.meta.builtIn) {
             return;
           }
 
-          var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          // add data source type to require list
+          requires['datasource' + ds.meta.id] = {
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
+          };
+
+          // if used via variable we can skip templatizing usage
+          if (datasourceVariable) {
+            return;
+          }
+
+          const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
           datasources[refName] = {
             name: refName,
             label: ds.name,
@@ -51,33 +68,26 @@ export class DashboardExporter {
             pluginId: ds.meta.id,
             pluginName: ds.meta.name,
           };
-          obj.datasource = '${' + refName + '}';
 
-          requires['datasource' + ds.meta.id] = {
-            type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
-          };
+          obj.datasource = '${' + refName + '}';
         })
       );
     };
 
-    // check up panel data sources
-    for (let panel of saveModel.panels) {
+    const processPanel = panel => {
       if (panel.datasource !== undefined) {
         templateizeDatasourceUsage(panel);
       }
 
       if (panel.targets) {
-        for (let target of panel.targets) {
+        for (const target of panel.targets) {
           if (target.datasource !== undefined) {
             templateizeDatasourceUsage(target);
           }
         }
       }
 
-      var panelDef = config.panels[panel.type];
+      const panelDef = config.panels[panel.type];
       if (panelDef) {
         requires['panel' + panelDef.id] = {
           type: 'panel',
@@ -86,10 +96,22 @@ export class DashboardExporter {
           version: panelDef.info.version,
         };
       }
+    };
+
+    // check up panel data sources
+    for (const panel of saveModel.panels) {
+      processPanel(panel);
+
+      // handle collapsed rows
+      if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
+        for (const rowPanel of panel.panels) {
+          processPanel(rowPanel);
+        }
+      }
     }
 
     // templatize template vars
-    for (let variable of saveModel.templating.list) {
+    for (const variable of saveModel.templating.list) {
       if (variable.type === 'query') {
         templateizeDatasourceUsage(variable);
         variable.options = [];
@@ -99,7 +121,7 @@ export class DashboardExporter {
     }
 
     // templatize annotations vars
-    for (let annotationDef of saveModel.annotations.list) {
+    for (const annotationDef of saveModel.annotations.list) {
       templateizeDatasourceUsage(annotationDef);
     }
 
@@ -118,9 +140,9 @@ export class DashboardExporter {
         });
 
         // templatize constants
-        for (let variable of saveModel.templating.list) {
+        for (const variable of saveModel.templating.list) {
           if (variable.type === 'constant') {
-            var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
+            const refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({
               name: refName,
               type: 'constant',
@@ -138,7 +160,7 @@ export class DashboardExporter {
         }
 
         // make inputs and requires a top thing
-        var newObj = {};
+        const newObj = {};
         newObj['__inputs'] = inputs;
         newObj['__requires'] = _.sortBy(requires, ['id']);
 

@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"io/ioutil"
 	"testing"
 
@@ -36,7 +35,7 @@ func TestDashboardImport(t *testing.T) {
 			So(cmd.Result, ShouldNotBeNil)
 
 			resultStr, _ := mock.SavedDashboards[0].Dashboard.Data.EncodePretty()
-			expectedBytes, _ := ioutil.ReadFile("../../tests/test-app/dashboards/connections_result.json")
+			expectedBytes, _ := ioutil.ReadFile("testdata/test-app/dashboards/connections_result.json")
 			expectedJson, _ := simplejson.NewJson(expectedBytes)
 			expectedStr, _ := expectedJson.EncodePretty()
 
@@ -88,13 +87,14 @@ func TestDashboardImport(t *testing.T) {
 
 func pluginScenario(desc string, t *testing.T, fn func()) {
 	Convey("Given a plugin", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
-		sec.NewKey("path", "../../tests/test-app")
-		err := initPlugins(context.Background())
+		setting.Raw = ini.Empty()
+		sec, _ := setting.Raw.NewSection("plugin.test-app")
+		sec.NewKey("path", "testdata/test-app")
+
+		pm := &PluginManager{}
+		err := pm.Init()
 
 		So(err, ShouldBeNil)
-
 		Convey(desc, fn)
 	})
 }

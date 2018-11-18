@@ -25,7 +25,7 @@
     display: inline-block;
     padding-right: 2px;
     &::after {
-      content: " | ";
+      content: ' | ';
       padding-left: 2px;
     }
   }
@@ -33,14 +33,23 @@
   li:last-child {
     &::after {
       padding-left: 0;
-      content: "";
+      content: '';
     }
   }
 }
 
 .login-page {
   .footer {
-    position: absolute;
     bottom: $spacer;
+    position: absolute;
+    padding: 1rem 0 1rem 0;
+  }
+}
+
+@include media-breakpoint-up(sm) {
+  .login-page {
+    .footer {
+      padding: 5rem 0 1rem 0;
+    }
   }
 }

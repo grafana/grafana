@@ -1,11 +1,11 @@
 .query-keyword {
   font-weight: $font-weight-semi-bold;
-  color: $query-blue;
+  color: $blue;
 }
 
 .gf-form-disabled {
   .query-keyword {
-    color: darken($query-blue, 20%);
+    color: darken($blue, 20%);
   }
 }
 
@@ -63,7 +63,7 @@
   }
   .gf-form-query-letter-cell-letter {
     font-weight: bold;
-    color: $query-blue;
+    color: $blue;
   }
   .gf-form-query-letter-cell-ds {
     color: $text-color-weak;

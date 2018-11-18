@@ -11,10 +11,19 @@
       display: inline-block;
     }
 
-    .dashboard-row__drag,
-    .dashboard-row__actions {
+    .dashboard-row__drag {
       visibility: visible;
       opacity: 1;
+    }
+
+    .dashboard-row__actions {
+      visibility: hidden;
+    }
+
+    .dashboard-row__toggle-target {
+      flex: 1;
+      cursor: pointer;
+      margin-right: 15px;
     }
   }
 
@@ -43,7 +52,6 @@
   color: $text-muted;
   visibility: hidden;
   opacity: 0;
-  flex-grow: 1;
   transition: 200ms opacity ease-in 200ms;
 
   a {
@@ -69,7 +77,7 @@
   cursor: move;
   width: 1rem;
   height: 100%;
-  background: url("../img/grab_dark.svg") no-repeat 50% 50%;
+  background: url('../img/grab_dark.svg') no-repeat 50% 50%;
   background-size: 8px;
   visibility: hidden;
   position: absolute;

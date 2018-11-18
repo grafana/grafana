@@ -16,11 +16,10 @@ weight = 2
 
 When an alert changes state, it sends out notifications. Each alert rule can have
 multiple notifications. In order to add a notification to an alert rule you first need
-to add and configure a `notification` channel (can be email, PagerDuty or other integration). This is done from the Notification Channels page.
+to add and configure a `notification` channel (can be email, PagerDuty or other integration).
+This is done from the Notification Channels page.
 
 ## Notification Channel Setup
-
-{{< imgbox max-width="30%" img="/img/docs/v50/alerts_notifications_menu.png" caption="Alerting Notification Channels" >}}
 
 On the Notification Channels page hit the `New Channel` button to go the page where you
 can configure and setup a new Notification Channel.
@@ -30,7 +29,31 @@ sure it's setup correctly.
 
 ### Send on all alerts
 
-When checked, this option will nofity for all alert rules - existing and new.
+When checked, this option will notify for all alert rules - existing and new.
+
+### Send reminders
+
+> Only available in Grafana v5.3 and above.
+
+{{< docs-imagebox max-width="600px" img="/img/docs/v53/alerting_notification_reminders.png" class="docs-image--right" caption="Alerting notification reminders setup" >}}
+
+When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
+should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
+
+**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval](/alerting/rules/#name-evaluation-interval).
+
+These examples show how often and when reminders are sent for a triggered alert.
+
+Alert rule evaluation interval | Send reminders every | Reminder sent every (after last alert notification)
+---------- | ----------- | -----------
+`30s` | `15s` | ~30 seconds
+`1m` | `5m` | ~5 minutes
+`5m` | `15m` | ~15 minutes
+`6m` | `20m` | ~24 minutes
+`1h` | `15m` | ~1 hour
+`1h` | `2h` | ~2 hours
+
+<div class="clearfix"></div>
 
 ## Supported Notification Types
 
@@ -41,6 +64,8 @@ Grafana ships with the following set of notification types:
 To enable email notifications you have to setup [SMTP settings](/installation/configuration/#smtp)
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
+Be aware that if you use the `local` image storage email servers and clients might not be
+able to access the image.
 
 ### Slack
 
@@ -103,7 +128,7 @@ Example json body:
 
 In DingTalk PC Client:
 
-1. Click "more" icon on left bottom of the panel.
+1. Click "more" icon on upper right of the panel.
 
 2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
@@ -115,7 +140,7 @@ In DingTalk PC Client:
 
 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
 
-Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `text` message type is supported.
+Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
 
 ### Kafka
 
@@ -152,14 +177,12 @@ Telegram | `telegram` | no
 Line | `line` | no
 Prometheus Alertmanager | `prometheus-alertmanager` | no
 
-
-
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessable (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
+Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
 
-Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If your using local image uploader, your Grafana instance need to be accessible by the internet.
+Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.
 

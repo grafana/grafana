@@ -1,7 +1,7 @@
 import './graph';
-import './legend';
 import './series_overrides_ctrl';
 import './thresholds_form';
+import './time_regions_form';
 
 import template from './template';
 import _ from 'lodash';
@@ -13,6 +13,7 @@ import { axesEditorComponent } from './axes_editor';
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
+  renderError: boolean;
   hiddenSeries: any = {};
   seriesList: any = [];
   dataList: any = [];
@@ -54,6 +55,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       name: null,
       values: [],
       buckets: null,
+    },
+    yaxis: {
+      align: false,
+      alignLevel: null,
     },
     // show/hide lines
     lines: true,
@@ -107,6 +112,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     thresholds: [],
+    timeRegions: [],
   };
 
   /** @ngInject */
@@ -142,7 +148,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onInitPanelActions(actions) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
-    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()' });
+    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
   issueQueries(datasource) {
@@ -151,7 +157,16 @@ class GraphCtrl extends MetricsPanelCtrl {
       panel: this.panel,
       range: this.range,
     });
-    return super.issueQueries(datasource);
+
+    /* Wait for annotationSrv requests to get datasources to
+     * resolve before issuing queries. This allows the annotations
+     * service to fire annotations queries before graph queries
+     * (but not wait for completion). This resolves
+     * issue 11806.
+     */
+    return this.annotationsSrv.datasourcePromises.then(r => {
+      return super.issueQueries(datasource);
+    });
   }
 
   zoomOut(evt) {
@@ -191,7 +206,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         tip: 'No datapoints returned from data query',
       };
     } else {
-      for (let series of this.seriesList) {
+      for (const series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
             title: 'Data points outside time range',
@@ -221,7 +236,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    for (let series of this.seriesList) {
+    for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
       if (series.unit) {
@@ -230,67 +245,32 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  changeSeriesColor(series, color) {
-    series.color = color;
+  onColorChange = (series, color) => {
+    series.setColor(color);
     this.panel.aliasColors[series.alias] = series.color;
     this.render();
-  }
+  };
 
-  toggleSeries(serie, event) {
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      if (this.hiddenSeries[serie.alias]) {
-        delete this.hiddenSeries[serie.alias];
-      } else {
-        this.hiddenSeries[serie.alias] = true;
-      }
-    } else {
-      this.toggleSeriesExclusiveMode(serie);
-    }
+  onToggleSeries = hiddenSeries => {
+    this.hiddenSeries = hiddenSeries;
     this.render();
-  }
+  };
 
-  toggleSeriesExclusiveMode(serie) {
-    var hidden = this.hiddenSeries;
+  onToggleSort = (sortBy, sortDesc) => {
+    this.panel.legend.sort = sortBy;
+    this.panel.legend.sortDesc = sortDesc;
+    this.render();
+  };
 
-    if (hidden[serie.alias]) {
-      delete hidden[serie.alias];
-    }
-
-    // check if every other series is hidden
-    var alreadyExclusive = _.every(this.seriesList, value => {
-      if (value.alias === serie.alias) {
-        return true;
-      }
-
-      return hidden[value.alias];
-    });
-
-    if (alreadyExclusive) {
-      // remove all hidden series
-      _.each(this.seriesList, value => {
-        delete this.hiddenSeries[value.alias];
-      });
-    } else {
-      // hide all but this serie
-      _.each(this.seriesList, value => {
-        if (value.alias === serie.alias) {
-          return;
-        }
-
-        this.hiddenSeries[value.alias] = true;
-      });
-    }
-  }
-
-  toggleAxis(info) {
-    var override = _.find(this.panel.seriesOverrides, { alias: info.alias });
+  onToggleAxis = info => {
+    let override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
     }
-    info.yaxis = override.yaxis = info.yaxis === 2 ? 1 : 2;
+    override.yaxis = info.yaxis;
     this.render();
-  }
+  };
 
   addSeriesOverride(override) {
     this.panel.seriesOverrides.push(override || {});
@@ -307,13 +287,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   legendValuesOptionChanged() {
-    var legend = this.panel.legend;
+    const legend = this.panel.legend;
     legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
     this.render();
   }
 
   exportCsv() {
-    var scope = this.$scope.$new(true);
+    const scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
     this.publishAppEvent('show-modal', {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',

@@ -8,11 +8,17 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
-	l "github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+var (
+	ReqGrafanaAdmin = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
+	ReqSignedIn     = Auth(&AuthOptions{ReqSignedIn: true})
+	ReqEditorRole   = RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
 func GetContextHandler() macaron.Handler {
@@ -23,6 +29,7 @@ func GetContextHandler() macaron.Handler {
 			Session:        session.GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
+			SkipCache:      false,
 			Logger:         log.New("context"),
 		}
 
@@ -37,12 +44,13 @@ func GetContextHandler() macaron.Handler {
 		// then init session and look for userId in session
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
-		if initContextWithRenderAuth(ctx) ||
-			initContextWithApiKey(ctx) ||
-			initContextWithBasicAuth(ctx, orgId) ||
-			initContextWithAuthProxy(ctx, orgId) ||
-			initContextWithUserSessionCookie(ctx, orgId) ||
-			initContextWithAnonymousUser(ctx) {
+		switch {
+		case initContextWithRenderAuth(ctx):
+		case initContextWithApiKey(ctx):
+		case initContextWithBasicAuth(ctx, orgId):
+		case initContextWithAuthProxy(ctx, orgId):
+		case initContextWithUserSessionCookie(ctx, orgId):
+		case initContextWithAnonymousUser(ctx):
 		}
 
 		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
@@ -50,7 +58,6 @@ func GetContextHandler() macaron.Handler {
 
 		c.Map(ctx)
 
-		// update last seen at
 		// update last seen every 5min
 		if ctx.ShouldUpdateLastSeenAt() {
 			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
@@ -165,7 +172,7 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 
 	user := loginQuery.Result
 
-	loginUserQuery := l.LoginUserQuery{Username: username, Password: password, User: user}
+	loginUserQuery := m.LoginUserQuery{Username: username, Password: password, User: user}
 	if err := bus.Dispatch(&loginUserQuery); err != nil {
 		ctx.JsonApiErr(401, "Invalid username or password", err)
 		return true

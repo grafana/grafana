@@ -32,17 +32,18 @@ func TestFolderService(t *testing.T) {
 			})
 
 			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 				return models.ErrDashboardUpdateAccessDenied
 			})
 
 			Convey("When get folder by id should return access denied error", func() {
-				_, err := service.GetFolderById(1)
+				_, err := service.GetFolderByID(1)
 				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
 
 			Convey("When get folder by uid should return access denied error", func() {
-				_, err := service.GetFolderByUid("uid")
+				_, err := service.GetFolderByUID("uid")
 				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
@@ -92,6 +93,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 				return nil
 			})
 
@@ -108,11 +110,19 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
+			provisioningValidated := false
+
+			bus.AddHandler("test", func(query *models.IsDashboardProvisionedQuery) error {
+				provisioningValidated = true
+				return nil
+			})
+
 			Convey("When creating folder should not return access denied error", func() {
 				err := service.CreateFolder(&models.CreateFolderCommand{
 					Title: "Folder",
 				})
 				So(err, ShouldBeNil)
+				So(provisioningValidated, ShouldBeFalse)
 			})
 
 			Convey("When updating folder should not return access denied error", func() {
@@ -121,6 +131,7 @@ func TestFolderService(t *testing.T) {
 					Title: "Folder",
 				})
 				So(err, ShouldBeNil)
+				So(provisioningValidated, ShouldBeFalse)
 			})
 
 			Convey("When deleting folder by uid should not return access denied error", func() {
@@ -147,14 +158,14 @@ func TestFolderService(t *testing.T) {
 			})
 
 			Convey("When get folder by id should return folder", func() {
-				f, _ := service.GetFolderById(1)
+				f, _ := service.GetFolderByID(1)
 				So(f.Id, ShouldEqual, dashFolder.Id)
 				So(f.Uid, ShouldEqual, dashFolder.Uid)
 				So(f.Title, ShouldEqual, dashFolder.Title)
 			})
 
 			Convey("When get folder by uid should return folder", func() {
-				f, _ := service.GetFolderByUid("uid")
+				f, _ := service.GetFolderByUID("uid")
 				So(f.Id, ShouldEqual, dashFolder.Id)
 				So(f.Uid, ShouldEqual, dashFolder.Uid)
 				So(f.Title, ShouldEqual, dashFolder.Title)

@@ -2,6 +2,7 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
+import angular from 'angular';
 import config from 'app/core/config';
 
 export class SettingsCtrl {
@@ -17,20 +18,27 @@ export class SettingsCtrl {
   hasUnsavedFolderChange: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
+  constructor(
+    private $scope,
+    private $route,
+    private $location,
+    private $rootScope,
+    private backendSrv,
+    private dashboardSrv
+  ) {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
     $scope.dashboard = this.dashboard;
 
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
-      this.$rootScope.$broadcast('refresh');
       setTimeout(() => {
         this.$rootScope.appEvent('dash-scroll', { restore: true });
+        this.dashboard.startRefresh();
       });
     });
 
-    this.canSaveAs = contextSrv.isEditor;
+    this.canSaveAs = this.dashboard.meta.canEdit && contextSrv.hasEditPermissionInFolders;
     this.canSave = this.dashboard.meta.canSave;
     this.canDelete = this.dashboard.meta.canSave;
 
@@ -93,15 +101,15 @@ export class SettingsCtrl {
     }
 
     this.sections.push({
-      title: 'View JSON',
-      id: 'view_json',
+      title: 'JSON Model',
+      id: 'dashboard_json',
       icon: 'gicon gicon-json',
     });
 
     const params = this.$location.search();
     const url = this.$location.path();
 
-    for (let section of this.sections) {
+    for (const section of this.sections) {
       const sectionParams = _.defaults({ editview: section.id }, params);
       section.url = config.appSubUrl + url + '?' + $.param(sectionParams);
     }
@@ -111,7 +119,7 @@ export class SettingsCtrl {
     this.viewId = this.$location.search().editview;
 
     if (this.viewId) {
-      this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
+      this.json = angular.toJson(this.dashboard.getSaveModelClone(), true);
     }
 
     if (this.viewId === 'settings' && this.dashboard.meta.canMakeEditable) {
@@ -137,12 +145,18 @@ export class SettingsCtrl {
     this.dashboardSrv.saveDashboard();
   }
 
+  saveDashboardJson() {
+    this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
+      this.$route.reload();
+    });
+  }
+
   onPostSave() {
     this.hasUnsavedFolderChange = false;
   }
 
   hideSettings() {
-    var urlParams = this.$location.search();
+    const urlParams = this.$location.search();
     delete urlParams.editview;
     setTimeout(() => {
       this.$rootScope.$apply(() => {
@@ -165,8 +179,8 @@ export class SettingsCtrl {
   }
 
   deleteDashboard() {
-    var confirmText = '';
-    var text2 = this.dashboard.title;
+    let confirmText = '';
+    let text2 = this.dashboard.title;
 
     const alerts = _.sumBy(this.dashboard.panels, panel => {
       return panel.alert ? 1 : 0;

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
 				}
-				err := CreateUser(userCmd)
+				err := CreateUser(context.Background(), userCmd)
 				So(err, ShouldBeNil)
 				userIds = append(userIds, userCmd.Result.Id)
 			}
@@ -49,13 +50,29 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team1.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team1.Id, UserId: userIds[1], External: true})
+				So(err, ShouldBeNil)
 
 				q1 := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team1.Id}
 				err = GetTeamMembers(q1)
 				So(err, ShouldBeNil)
+				So(q1.Result, ShouldHaveLength, 2)
 				So(q1.Result[0].TeamId, ShouldEqual, team1.Id)
 				So(q1.Result[0].Login, ShouldEqual, "loginuser0")
 				So(q1.Result[0].OrgId, ShouldEqual, testOrgId)
+				So(q1.Result[1].TeamId, ShouldEqual, team1.Id)
+				So(q1.Result[1].Login, ShouldEqual, "loginuser1")
+				So(q1.Result[1].OrgId, ShouldEqual, testOrgId)
+				So(q1.Result[1].External, ShouldEqual, true)
+
+				q2 := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team1.Id, External: true}
+				err = GetTeamMembers(q2)
+				So(err, ShouldBeNil)
+				So(q2.Result, ShouldHaveLength, 1)
+				So(q2.Result[0].TeamId, ShouldEqual, team1.Id)
+				So(q2.Result[0].Login, ShouldEqual, "loginuser1")
+				So(q2.Result[0].OrgId, ShouldEqual, testOrgId)
+				So(q2.Result[0].External, ShouldEqual, true)
 			})
 
 			Convey("Should be able to search for teams", func() {
@@ -74,6 +91,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			Convey("Should be able to return all teams a user is member of", func() {
 				groupId := group2.Result.Id
 				err := AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[0]})
+				So(err, ShouldBeNil)
 
 				query := &m.GetTeamsByUserQuery{OrgId: testOrgId, UserId: userIds[0]}
 				err = GetTeamsByUser(query)
@@ -103,7 +121,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[2]})
 				So(err, ShouldBeNil)
 				err = testHelperUpdateDashboardAcl(1, m.DashboardAcl{DashboardId: 1, OrgId: testOrgId, Permission: m.PERMISSION_EDIT, TeamId: groupId})
-
+				So(err, ShouldBeNil)
 				err = DeleteTeam(&m.DeleteTeamCommand{OrgId: testOrgId, Id: groupId})
 				So(err, ShouldBeNil)
 

@@ -19,12 +19,16 @@ func TestIntegratedDashboardService(t *testing.T) {
 		var testOrgId int64 = 1
 
 		Convey("Given saved folders and dashboards in organization A", func() {
-
 			bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
 				return nil
 			})
 
 			bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+				cmd.Result = false
 				return nil
 			})
 
@@ -74,7 +78,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 			Convey("Given organization B", func() {
 				var otherOrgId int64 = 2
 
-				Convey("When saving a dashboard with id that are saved in organization A", func() {
+				Convey("When creating a dashboard with same id as dashboard in organization A", func() {
 					cmd := models.SaveDashboardCommand{
 						OrgId: otherOrgId,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -93,7 +97,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 				})
 
 				permissionScenario("Given user has permission to save", true, func(sc *dashboardPermissionScenarioContext) {
-					Convey("When saving a dashboard with uid that are saved in organization A", func() {
+					Convey("When creating a dashboard with same uid as dashboard in organization A", func() {
 						var otherOrgId int64 = 2
 						cmd := models.SaveDashboardCommand{
 							OrgId: otherOrgId,
@@ -106,7 +110,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						res := callSaveWithResult(cmd)
 
-						Convey("It should create dashboard in other organization", func() {
+						Convey("It should create a new dashboard in organization B", func() {
 							So(res, ShouldNotBeNil)
 
 							query := models.GetDashboardQuery{OrgId: otherOrgId, Uid: savedDashInFolder.Uid}
@@ -126,7 +130,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 			permissionScenario("Given user has no permission to save", false, func(sc *dashboardPermissionScenarioContext) {
 
-				Convey("When trying to create a new dashboard in the General folder", func() {
+				Convey("When creating a new dashboard in the General folder", func() {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgId,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -138,7 +142,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments and result in access denied error", func() {
+					Convey("It should create dashboard guardian for General Folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
@@ -148,7 +152,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 					})
 				})
 
-				Convey("When trying to create a new dashboard in other folder", func() {
+				Convey("When creating a new dashboard in other folder", func() {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgId,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -161,7 +165,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments and rsult in access denied error", func() {
+					Convey("It should create dashboard guardian for other folder with correct arguments and rsult in access denied error", func() {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
@@ -171,7 +175,54 @@ func TestIntegratedDashboardService(t *testing.T) {
 					})
 				})
 
-				Convey("When trying to update a dashboard by existing id in the General folder", func() {
+				Convey("When creating a new dashboard by existing title in folder", func() {
+					cmd := models.SaveDashboardCommand{
+						OrgId: testOrgId,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"title": savedDashInFolder.Title,
+						}),
+						FolderId:  savedFolder.Id,
+						UserId:    10000,
+						Overwrite: true,
+					}
+
+					err := callSaveWithError(cmd)
+
+					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
+					})
+				})
+
+				Convey("When creating a new dashboard by existing uid in folder", func() {
+					cmd := models.SaveDashboardCommand{
+						OrgId: testOrgId,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"uid":   savedDashInFolder.Uid,
+							"title": "New dash",
+						}),
+						FolderId:  savedFolder.Id,
+						UserId:    10000,
+						Overwrite: true,
+					}
+
+					err := callSaveWithError(cmd)
+
+					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
+					})
+				})
+
+				Convey("When updating a dashboard by existing id in the General folder", func() {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgId,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -185,7 +236,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments and result in access denied error", func() {
+					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
@@ -195,7 +246,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 					})
 				})
 
-				Convey("When trying to update a dashboard by existing id in other folder", func() {
+				Convey("When updating a dashboard by existing id in other folder", func() {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgId,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -209,11 +260,107 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments and result in access denied error", func() {
+					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
 						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedDashInFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
+					})
+				})
+
+				Convey("When moving a dashboard by existing id to other folder from General folder", func() {
+					cmd := models.SaveDashboardCommand{
+						OrgId: testOrgId,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"id":    savedDashInGeneralFolder.Id,
+							"title": "Dash",
+						}),
+						FolderId:  otherSavedFolder.Id,
+						UserId:    10000,
+						Overwrite: true,
+					}
+
+					err := callSaveWithError(cmd)
+
+					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
+					})
+				})
+
+				Convey("When moving a dashboard by existing id to the General folder from other folder", func() {
+					cmd := models.SaveDashboardCommand{
+						OrgId: testOrgId,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"id":    savedDashInFolder.Id,
+							"title": "Dash",
+						}),
+						FolderId:  0,
+						UserId:    10000,
+						Overwrite: true,
+					}
+
+					err := callSaveWithError(cmd)
+
+					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
+					})
+				})
+
+				Convey("When moving a dashboard by existing uid to other folder from General folder", func() {
+					cmd := models.SaveDashboardCommand{
+						OrgId: testOrgId,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"uid":   savedDashInGeneralFolder.Uid,
+							"title": "Dash",
+						}),
+						FolderId:  otherSavedFolder.Id,
+						UserId:    10000,
+						Overwrite: true,
+					}
+
+					err := callSaveWithError(cmd)
+
+					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
+					})
+				})
+
+				Convey("When moving a dashboard by existing uid to the General folder from other folder", func() {
+					cmd := models.SaveDashboardCommand{
+						OrgId: testOrgId,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"uid":   savedDashInFolder.Uid,
+							"title": "Dash",
+						}),
+						FolderId:  0,
+						UserId:    10000,
+						Overwrite: true,
+					}
+
+					err := callSaveWithError(cmd)
+
+					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
 						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
 						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
 					})
@@ -668,7 +815,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						})
 					})
 
-					Convey("When trying to update existing folder to a dashboard using id", func() {
+					Convey("When updating existing folder to a dashboard using id", func() {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -687,7 +834,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						})
 					})
 
-					Convey("When trying to update existing dashboard to a folder using id", func() {
+					Convey("When updating existing dashboard to a folder using id", func() {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -706,7 +853,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						})
 					})
 
-					Convey("When trying to update existing folder to a dashboard using uid", func() {
+					Convey("When updating existing folder to a dashboard using uid", func() {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -725,7 +872,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						})
 					})
 
-					Convey("When trying to update existing dashboard to a folder using uid", func() {
+					Convey("When updating existing dashboard to a folder using uid", func() {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -744,7 +891,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						})
 					})
 
-					Convey("When trying to update existing folder to a dashboard using title", func() {
+					Convey("When updating existing folder to a dashboard using title", func() {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -762,7 +909,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						})
 					})
 
-					Convey("When trying to update existing dashboard to a folder using title", func() {
+					Convey("When updating existing dashboard to a folder using title", func() {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -782,29 +929,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 				})
 			})
 		})
-	})
-}
-
-type scenarioContext struct {
-	dashboardGuardianMock *guardian.FakeDashboardGuardian
-}
-
-type scenarioFunc func(c *scenarioContext)
-
-func dashboardGuardianScenario(desc string, mock *guardian.FakeDashboardGuardian, fn scenarioFunc) {
-	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.New
-		guardian.MockDashboardGuardian(mock)
-
-		sc := &scenarioContext{
-			dashboardGuardianMock: mock,
-		}
-
-		defer func() {
-			guardian.New = origNewDashboardGuardian
-		}()
-
-		fn(sc)
 	})
 }
 
@@ -848,23 +972,6 @@ func callSaveWithError(cmd models.SaveDashboardCommand) error {
 	dto := toSaveDashboardDto(cmd)
 	_, err := dashboards.NewService().SaveDashboard(&dto)
 	return err
-}
-
-func dashboardServiceScenario(desc string, mock *guardian.FakeDashboardGuardian, fn scenarioFunc) {
-	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.New
-		guardian.MockDashboardGuardian(mock)
-
-		sc := &scenarioContext{
-			dashboardGuardianMock: mock,
-		}
-
-		defer func() {
-			guardian.New = origNewDashboardGuardian
-		}()
-
-		fn(sc)
-	})
 }
 
 func saveTestDashboard(title string, orgId int64, folderId int64) *models.Dashboard {

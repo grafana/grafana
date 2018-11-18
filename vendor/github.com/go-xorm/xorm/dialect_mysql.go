@@ -299,7 +299,7 @@ func (db *mysql) TableCheckSql(tableName string) (string, []interface{}) {
 func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
 	args := []interface{}{db.DbName, tableName}
 	s := "SELECT `COLUMN_NAME`, `IS_NULLABLE`, `COLUMN_DEFAULT`, `COLUMN_TYPE`," +
-		" `COLUMN_KEY`, `EXTRA` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
+		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
 	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
@@ -314,13 +314,14 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		col := new(core.Column)
 		col.Indexes = make(map[string]int)
 
-		var columnName, isNullable, colType, colKey, extra string
+		var columnName, isNullable, colType, colKey, extra, comment string
 		var colDefault *string
-		err = rows.Scan(&columnName, &isNullable, &colDefault, &colType, &colKey, &extra)
+		err = rows.Scan(&columnName, &isNullable, &colDefault, &colType, &colKey, &extra, &comment)
 		if err != nil {
 			return nil, nil, err
 		}
 		col.Name = strings.Trim(columnName, "` ")
+		col.Comment = comment
 		if "YES" == isNullable {
 			col.Nullable = true
 		}
@@ -407,7 +408,7 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 
 func (db *mysql) GetTables() ([]*core.Table, error) {
 	args := []interface{}{db.DbName}
-	s := "SELECT `TABLE_NAME`, `ENGINE`, `TABLE_ROWS`, `AUTO_INCREMENT` from " +
+	s := "SELECT `TABLE_NAME`, `ENGINE`, `TABLE_ROWS`, `AUTO_INCREMENT`, `TABLE_COMMENT` from " +
 		"`INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? AND (`ENGINE`='MyISAM' OR `ENGINE` = 'InnoDB' OR `ENGINE` = 'TokuDB')"
 	db.LogSQL(s, args)
 
@@ -420,14 +421,15 @@ func (db *mysql) GetTables() ([]*core.Table, error) {
 	tables := make([]*core.Table, 0)
 	for rows.Next() {
 		table := core.NewEmptyTable()
-		var name, engine, tableRows string
+		var name, engine, tableRows, comment string
 		var autoIncr *string
-		err = rows.Scan(&name, &engine, &tableRows, &autoIncr)
+		err = rows.Scan(&name, &engine, &tableRows, &autoIncr, &comment)
 		if err != nil {
 			return nil, err
 		}
 
 		table.Name = name
+		table.Comment = comment
 		table.StoreEngine = engine
 		tables = append(tables, table)
 	}

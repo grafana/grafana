@@ -20,6 +20,7 @@ type SocialGenericOAuth struct {
 	allowedOrganizations []string
 	apiUrl               string
 	allowSignup          bool
+	emailAttributeName   string
 	teamIds              []int
 }
 
@@ -182,7 +183,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	var data UserInfoJson
 	var err error
 
-	if s.extractToken(&data, token) != true {
+	if !s.extractToken(&data, token) {
 		response, err := HttpGet(client, s.apiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting user info: %s", err)
@@ -264,8 +265,9 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		return data.Email
 	}
 
-	if data.Attributes["email:primary"] != nil {
-		return data.Attributes["email:primary"][0]
+	emails, ok := data.Attributes[s.emailAttributeName]
+	if ok && len(emails) != 0 {
+		return emails[0]
 	}
 
 	if data.Upn != "" {

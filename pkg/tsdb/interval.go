@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	defaultRes         int64         = 1500
-	defaultMinInterval time.Duration = 1 * time.Millisecond
-	year               time.Duration = time.Hour * 24 * 365
-	day                time.Duration = time.Hour * 24
+	defaultRes         int64 = 1500
+	defaultMinInterval       = time.Millisecond * 1
+	year                     = time.Hour * 24 * 365
+	day                      = time.Hour * 24
 )
 
 type Interval struct {
@@ -47,6 +47,10 @@ func NewIntervalCalculator(opt *IntervalOptions) *intervalCalculator {
 	}
 
 	return calc
+}
+
+func (i *Interval) Milliseconds() int64 {
+	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
 func (ic *intervalCalculator) Calculate(timerange *TimeRange, minInterval time.Duration) Interval {

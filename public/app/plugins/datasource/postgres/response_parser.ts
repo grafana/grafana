@@ -4,17 +4,17 @@ export default class ResponseParser {
   constructor(private $q) {}
 
   processQueryResult(res) {
-    var data = [];
+    const data = [];
 
     if (!res.data.results) {
       return { data: data };
     }
 
-    for (let key in res.data.results) {
-      let queryRes = res.data.results[key];
+    for (const key in res.data.results) {
+      const queryRes = res.data.results[key];
 
       if (queryRes.series) {
-        for (let series of queryRes.series) {
+        for (const series of queryRes.series) {
           data.push({
             target: series.name,
             datapoints: series.points,
@@ -25,7 +25,7 @@ export default class ResponseParser {
       }
 
       if (queryRes.tables) {
-        for (let table of queryRes.tables) {
+        for (const table of queryRes.tables) {
           table.type = 'table';
           table.refId = queryRes.refId;
           table.meta = queryRes.meta;
@@ -109,7 +109,7 @@ export default class ResponseParser {
     const table = data.data.results[options.annotation.name].tables[0];
 
     let timeColumnIndex = -1;
-    let titleColumnIndex = -1;
+    const titleColumnIndex = -1;
     let textColumnIndex = -1;
     let tagsColumnIndex = -1;
 
@@ -134,7 +134,7 @@ export default class ResponseParser {
       const row = table.rows[i];
       list.push({
         annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]) * 1000,
+        time: Math.floor(row[timeColumnIndex]),
         title: row[titleColumnIndex],
         text: row[textColumnIndex],
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],

@@ -31,7 +31,6 @@
     //padding: 0.5rem 1.5rem 0.5rem 0;
     padding: 1rem 1rem 0.75rem 1rem;
     height: 51px;
-    line-height: 51px;
     box-sizing: border-box;
     outline: none;
     background: $side-menu-bg;
@@ -61,6 +60,10 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+
+  .search-item--indent {
+    margin-left: 14px;
+  }
 }
 
 .search-dropdown__col_2 {
@@ -99,13 +102,20 @@
   }
 }
 
+.search-results-scroller {
+  display: flex;
+  position: relative;
+}
+
 .search-results-container {
-  height: 100%;
   display: block;
   padding: $spacer;
   position: relative;
   flex-grow: 10;
   margin-bottom: 1rem;
+
+  // Fix for search scroller in mobile view
+  height: unset;
 
   .label-tag {
     margin-left: 6px;
@@ -182,6 +192,10 @@
   &:hover,
   &.selected {
     background: $list-item-hover-bg;
+
+    .search-item__body-title {
+      color: $text-color-strong;
+    }
   }
 }
 
@@ -198,11 +212,20 @@
   color: $list-item-link-color;
 }
 
+.search-item__body-folder-title {
+  color: $text-color-weak;
+  font-size: $font-size-xs;
+  line-height: 11px;
+  position: relative;
+  top: -1px;
+}
+
 .search-item__icon {
-  padding: 5px;
+  display: flex;
+  align-items: center;
   flex: 0 0 auto;
   font-size: 19px;
-  padding: 5px 2px 5px 10px;
+  padding: 0 2px 0 10px;
 }
 
 .search-item__tags {

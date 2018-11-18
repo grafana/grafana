@@ -23,7 +23,7 @@ type cache struct {
 	expiration *time.Time
 }
 
-var awsCredentialCache map[string]cache = make(map[string]cache)
+var awsCredentialCache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
 func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
@@ -42,8 +42,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	accessKeyId := ""
 	secretAccessKey := ""
 	sessionToken := ""
-	var expiration *time.Time
-	expiration = nil
+	var expiration *time.Time = nil
 	if dsInfo.AuthType == "arn" && strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
 			RoleArn:         aws.String(dsInfo.AssumeRoleArn),

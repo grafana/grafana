@@ -26,7 +26,7 @@ Otherwise Grafana will not behave correctly. See example below.
 ## Examples
 Here are some example configurations for running Grafana behind a reverse proxy.
 
-### Grafana configuration (ex http://foo.bar.com)
+### Grafana configuration (ex http://foo.bar)
 
 ```bash
 [server]
@@ -47,13 +47,13 @@ server {
 }
 ```
 
-### Examples with **sub path** (ex http://foo.bar.com/grafana)
+### Examples with **sub path** (ex http://foo.bar/grafana)
 
 #### Grafana configuration with sub path
 ```bash
 [server]
 domain = foo.bar
-root_url = %(protocol)s://%(domain)s:/grafana
+root_url = %(protocol)s://%(domain)s/grafana/
 ```
 
 #### Nginx configuration with sub path
@@ -98,7 +98,7 @@ Given:
     ```bash
     [server]
     domain = localhost:8080
-    root_url = %(protocol)s://%(domain)s:/grafana
+    root_url = %(protocol)s://%(domain)s/grafana/
     ```
 
 Create an Inbound Rule for the parent website (localhost:8080 in this example) in IIS Manager with the following settings:

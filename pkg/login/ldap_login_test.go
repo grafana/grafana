@@ -79,7 +79,7 @@ func TestLdapLogin(t *testing.T) {
 
 			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
 				sc.withLoginResult(false)
-				enabled, err := loginUsingLdap(&LoginUserQuery{
+				enabled, err := loginUsingLdap(&m.LoginUserQuery{
 					Username: "user",
 					Password: "pwd",
 				})
@@ -117,7 +117,7 @@ type mockLdapAuther struct {
 	loginCalled bool
 }
 
-func (a *mockLdapAuther) Login(query *LoginUserQuery) error {
+func (a *mockLdapAuther) Login(query *m.LoginUserQuery) error {
 	a.loginCalled = true
 
 	if !a.validLogin {
@@ -127,20 +127,16 @@ func (a *mockLdapAuther) Login(query *LoginUserQuery) error {
 	return nil
 }
 
-func (a *mockLdapAuther) SyncSignedInUser(signedInUser *m.SignedInUser) error {
+func (a *mockLdapAuther) SyncUser(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *mockLdapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) {
+func (a *mockLdapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error) {
 	return nil, nil
 }
 
-func (a *mockLdapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
-	return nil
-}
-
 type ldapLoginScenarioContext struct {
-	loginUserQuery        *LoginUserQuery
+	loginUserQuery        *m.LoginUserQuery
 	ldapAuthenticatorMock *mockLdapAuther
 }
 
@@ -151,7 +147,7 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 		origNewLdapAuthenticator := NewLdapAuthenticator
 
 		sc := &ldapLoginScenarioContext{
-			loginUserQuery: &LoginUserQuery{
+			loginUserQuery: &m.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",

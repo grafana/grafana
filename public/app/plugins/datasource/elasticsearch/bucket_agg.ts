@@ -1,4 +1,4 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 
@@ -19,40 +19,40 @@ export function elasticBucketAgg() {
 export class ElasticBucketAggCtrl {
   /** @nginject */
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
-    var bucketAggs = $scope.target.bucketAggs;
+    const bucketAggs = $scope.target.bucketAggs;
 
     $scope.orderByOptions = [];
 
-    $scope.getBucketAggTypes = function() {
+    $scope.getBucketAggTypes = () => {
       return queryDef.bucketAggTypes;
     };
 
-    $scope.getOrderOptions = function() {
+    $scope.getOrderOptions = () => {
       return queryDef.orderOptions;
     };
 
-    $scope.getSizeOptions = function() {
+    $scope.getSizeOptions = () => {
       return queryDef.sizeOptions;
     };
 
     $rootScope.onAppEvent(
       'elastic-query-updated',
-      function() {
+      () => {
         $scope.validateModel();
       },
       $scope
     );
 
-    $scope.init = function() {
+    $scope.init = () => {
       $scope.agg = bucketAggs[$scope.index];
       $scope.validateModel();
     };
 
-    $scope.onChangeInternal = function() {
+    $scope.onChangeInternal = () => {
       $scope.onChange();
     };
 
-    $scope.onTypeChanged = function() {
+    $scope.onTypeChanged = () => {
       $scope.agg.settings = {};
       $scope.showOptions = false;
 
@@ -79,13 +79,13 @@ export class ElasticBucketAggCtrl {
       $scope.onChange();
     };
 
-    $scope.validateModel = function() {
+    $scope.validateModel = () => {
       $scope.index = _.indexOf(bucketAggs, $scope.agg);
       $scope.isFirst = $scope.index === 0;
       $scope.bucketAggCount = bucketAggs.length;
 
-      var settingsLinkText = '';
-      var settings = $scope.agg.settings || {};
+      let settingsLinkText = '';
+      const settings = $scope.agg.settings || {};
 
       switch ($scope.agg.type) {
         case 'terms': {
@@ -114,7 +114,7 @@ export class ElasticBucketAggCtrl {
           settings.filters = settings.filters || [{ query: '*' }];
           settingsLinkText = _.reduce(
             settings.filters,
-            function(memo, value, index) {
+            (memo, value, index) => {
               memo += 'Q' + (index + 1) + '  = ' + value.query + ' ';
               return memo;
             },
@@ -168,23 +168,23 @@ export class ElasticBucketAggCtrl {
       return true;
     };
 
-    $scope.addFiltersQuery = function() {
+    $scope.addFiltersQuery = () => {
       $scope.agg.settings.filters.push({ query: '*' });
     };
 
-    $scope.removeFiltersQuery = function(filter) {
+    $scope.removeFiltersQuery = filter => {
       $scope.agg.settings.filters = _.without($scope.agg.settings.filters, filter);
     };
 
-    $scope.toggleOptions = function() {
+    $scope.toggleOptions = () => {
       $scope.showOptions = !$scope.showOptions;
     };
 
-    $scope.getOrderByOptions = function() {
+    $scope.getOrderByOptions = () => {
       return queryDef.getOrderByOptions($scope.target);
     };
 
-    $scope.getFieldsInternal = function() {
+    $scope.getFieldsInternal = () => {
       if ($scope.agg.type === 'date_histogram') {
         return $scope.getFields({ $fieldType: 'date' });
       } else {
@@ -192,23 +192,23 @@ export class ElasticBucketAggCtrl {
       }
     };
 
-    $scope.getIntervalOptions = function() {
+    $scope.getIntervalOptions = () => {
       return $q.when(uiSegmentSrv.transformToSegments(true, 'interval')(queryDef.intervalOptions));
     };
 
-    $scope.addBucketAgg = function() {
+    $scope.addBucketAgg = () => {
       // if last is date histogram add it before
-      var lastBucket = bucketAggs[bucketAggs.length - 1];
-      var addIndex = bucketAggs.length - 1;
+      const lastBucket = bucketAggs[bucketAggs.length - 1];
+      let addIndex = bucketAggs.length - 1;
 
       if (lastBucket && lastBucket.type === 'date_histogram') {
         addIndex -= 1;
       }
 
-      var id = _.reduce(
+      const id = _.reduce(
         $scope.target.bucketAggs.concat($scope.target.metrics),
-        function(max, val) {
-          return parseInt(val.id) > max ? parseInt(val.id) : max;
+        (max, val) => {
+          return parseInt(val.id, 10) > max ? parseInt(val.id, 10) : max;
         },
         0
       );
@@ -217,7 +217,7 @@ export class ElasticBucketAggCtrl {
       $scope.onChange();
     };
 
-    $scope.removeBucketAgg = function() {
+    $scope.removeBucketAgg = () => {
       bucketAggs.splice($scope.index, 1);
       $scope.onChange();
     };
@@ -226,6 +226,5 @@ export class ElasticBucketAggCtrl {
   }
 }
 
-var module = angular.module('grafana.directives');
-module.directive('elasticBucketAgg', elasticBucketAgg);
-module.controller('ElasticBucketAggCtrl', ElasticBucketAggCtrl);
+coreModule.directive('elasticBucketAgg', elasticBucketAgg);
+coreModule.controller('ElasticBucketAggCtrl', ElasticBucketAggCtrl);

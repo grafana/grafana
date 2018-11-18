@@ -32,7 +32,7 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}
 
 	return &DingDingNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		log:          log.New("alerting.notifier.dingding"),
 	}, nil
@@ -57,6 +57,9 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 	message := evalContext.Rule.Message
 	picUrl := evalContext.ImagePublicUrl
 	title := evalContext.GetNotificationTitle()
+	if message == "" {
+		message = title
+	}
 
 	bodyJSON, err := simplejson.NewJson([]byte(`{
 		"msgtype": "link",
@@ -72,7 +75,10 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		this.log.Error("Failed to create Json data", "error", err, "dingding", this.Name)
 	}
 
-	body, _ := bodyJSON.MarshalJSON()
+	body, err := bodyJSON.MarshalJSON()
+	if err != nil {
+		return err
+	}
 
 	cmd := &m.SendWebhookSync{
 		Url:  this.Url,

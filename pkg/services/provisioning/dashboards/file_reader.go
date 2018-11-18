@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
 
@@ -19,9 +21,7 @@ import (
 )
 
 var (
-	checkDiskForChangesInterval time.Duration = time.Second * 3
-
-	ErrFolderNameMissing error = errors.New("Folder name missing")
+	ErrFolderNameMissing = errors.New("Folder name missing")
 )
 
 type fileReader struct {
@@ -43,10 +43,6 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.Error("Cannot read directory", "error", err)
-	}
-
 	return &fileReader{
 		Cfg:              cfg,
 		Path:             path,
@@ -60,7 +56,7 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 		fr.log.Error("failed to search for dashboards", "error", err)
 	}
 
-	ticker := time.NewTicker(checkDiskForChangesInterval)
+	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 
 	running := false
 
@@ -83,7 +79,8 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 }
 
 func (fr *fileReader) startWalkingDisk() error {
-	if _, err := os.Stat(fr.Path); err != nil {
+	resolvedPath := fr.resolvePath(fr.Path)
+	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
 		}
@@ -100,7 +97,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(fr.Path, createWalkFn(filesFoundOnDisk))
+	err = filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk))
 	if err != nil {
 		return err
 	}
@@ -140,7 +137,7 @@ func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs ma
 		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
 		err := bus.Dispatch(cmd)
 		if err != nil {
-			fr.log.Error("failed to delete dashboard", "id", cmd.Id)
+			fr.log.Error("failed to delete dashboard", "id", cmd.Id, "error", err)
 		}
 	}
 }
@@ -153,15 +150,20 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
-	upToDate := alreadyProvisioned && provisionedData.Updated == resolvedFileInfo.ModTime().Unix()
+	upToDate := alreadyProvisioned && provisionedData.Updated >= resolvedFileInfo.ModTime().Unix()
 
-	dash, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderId)
+	jsonFile, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderId)
 	if err != nil {
 		fr.log.Error("failed to load dashboard from ", "file", path, "error", err)
 		return provisioningMetadata, nil
 	}
 
+	if provisionedData != nil && jsonFile.checkSum == provisionedData.CheckSum {
+		upToDate = true
+	}
+
 	// keeps track of what uid's and title's we have already provisioned
+	dash := jsonFile.dashboard
 	provisioningMetadata.uid = dash.Dashboard.Uid
 	provisioningMetadata.title = dash.Dashboard.Title
 
@@ -170,8 +172,8 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	if dash.Dashboard.Id != 0 {
-		fr.log.Error("provisioned dashboard json files cannot contain id")
-		return provisioningMetadata, nil
+		dash.Dashboard.Data.Set("id", nil)
+		dash.Dashboard.Id = 0
 	}
 
 	if alreadyProvisioned {
@@ -179,7 +181,13 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	fr.log.Debug("saving new dashboard", "file", path)
-	dp := &models.DashboardProvisioning{ExternalId: path, Name: fr.Cfg.Name, Updated: resolvedFileInfo.ModTime().Unix()}
+	dp := &models.DashboardProvisioning{
+		ExternalId: path,
+		Name:       fr.Cfg.Name,
+		Updated:    resolvedFileInfo.ModTime().Unix(),
+		CheckSum:   jsonFile.checkSum,
+	}
+
 	_, err = fr.dashboardService.SaveProvisionedDashboard(dash, dp)
 	return provisioningMetadata, err
 }
@@ -235,7 +243,6 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.DashboardPr
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	checkFilepath, err := filepath.EvalSymlinks(path)
 	if path != checkFilepath {
-		path = checkFilepath
 		fi, err := os.Lstat(checkFilepath)
 		if err != nil {
 			return nil, err
@@ -278,14 +285,30 @@ func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
 	return true, nil
 }
 
-func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboards.SaveDashboardDTO, error) {
+type dashboardJsonFile struct {
+	dashboard    *dashboards.SaveDashboardDTO
+	checkSum     string
+	lastModified time.Time
+}
+
+func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboardJsonFile, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer reader.Close()
 
-	data, err := simplejson.NewFromReader(reader)
+	all, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	checkSum, err := util.Md5SumString(string(all))
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := simplejson.NewJson(all)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +318,34 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 		return nil, err
 	}
 
-	return dash, nil
+	return &dashboardJsonFile{
+		dashboard:    dash,
+		checkSum:     checkSum,
+		lastModified: lastModified,
+	}, nil
+}
+
+func (fr *fileReader) resolvePath(path string) string {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		fr.log.Error("Cannot read directory", "error", err)
+	}
+
+	copy := path
+	path, err := filepath.Abs(path)
+	if err != nil {
+		fr.log.Error("Could not create absolute path ", "path", path)
+	}
+
+	path, err = filepath.EvalSymlinks(path)
+	if err != nil {
+		fr.log.Error("Failed to read content of symlinked path: %s", path)
+	}
+
+	if path == "" {
+		path = copy
+		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
+	}
+	return path
 }
 
 type provisioningMetadata struct {
@@ -323,7 +373,6 @@ func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
 	if len(pm.title) > 0 {
 		checker.titleUsage[pm.title] += 1
 	}
-
 }
 
 func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
@@ -338,5 +387,4 @@ func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
 			log.Error("the same 'title' is used more than once", "title", title, "provider", checker.provisioningProvider)
 		}
 	}
-
 }

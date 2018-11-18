@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Uber Technologies, Inc.
+// Copyright (c) 2017-2018 Uber Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,6 +82,15 @@ type Metrics struct {
 
 	// Number of times baggage restrictions failed to update.
 	BaggageRestrictionsUpdateFailure metrics.Counter `metric:"baggage_restrictions_updates" tags:"result=err"`
+
+	// Number of times debug spans were throttled.
+	ThrottledDebugSpans metrics.Counter `metric:"throttled_debug_spans"`
+
+	// Number of times throttler successfully updated.
+	ThrottlerUpdateSuccess metrics.Counter `metric:"throttler_updates" tags:"result=ok"`
+
+	// Number of times throttler failed to update.
+	ThrottlerUpdateFailure metrics.Counter `metric:"throttler_updates" tags:"result=err"`
 }
 
 // NewMetrics creates a new Metrics struct and initializes it.

@@ -1,17 +1,11 @@
-﻿import React, { Component } from 'react';
-import Select from 'react-select';
+import React, { Component } from 'react';
+import AsyncSelect from 'react-select/lib/Async';
 import PickerOption from './PickerOption';
-import withPicker from './withPicker';
 import { debounce } from 'lodash';
-
-export interface IProps {
-  backendSrv: any;
-  isLoading: boolean;
-  toggleLoading: any;
-  handlePicked: (user) => void;
-  value?: string;
-  className?: string;
-}
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import ResetStyles from './ResetStyles';
+import IndicatorsContainer from './IndicatorsContainer';
+import NoOptionsMessage from './NoOptionsMessage';
 
 export interface Team {
   id: number;
@@ -20,25 +14,33 @@ export interface Team {
   avatarUrl: string;
 }
 
-class TeamPicker extends Component<IProps, any> {
+export interface Props {
+  onSelected: (team: Team) => void;
+  className?: string;
+}
+
+export interface State {
+  isLoading: boolean;
+}
+
+export class TeamPicker extends Component<Props, State> {
   debouncedSearch: any;
-  backendSrv: any;
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { isLoading: false };
     this.search = this.search.bind(this);
 
     this.debouncedSearch = debounce(this.search, 300, {
       leading: true,
-      trailing: false,
+      trailing: true,
     });
   }
 
   search(query?: string) {
-    const { toggleLoading, backendSrv } = this.props;
+    const backendSrv = getBackendSrv();
+    this.setState({ isLoading: true });
 
-    toggleLoading(true);
     return backendSrv.get(`/api/teams/search?perpage=10&page=1&query=${query}`).then(result => {
       const teams = result.teams.map(team => {
         return {
@@ -49,36 +51,37 @@ class TeamPicker extends Component<IProps, any> {
         };
       });
 
-      toggleLoading(false);
-      return { options: teams };
+      this.setState({ isLoading: false });
+      return teams;
     });
   }
 
   render() {
-    const AsyncComponent = this.state.creatable ? Select.AsyncCreatable : Select.Async;
-    const { isLoading, handlePicked, value, className } = this.props;
-
+    const { onSelected, className } = this.props;
+    const { isLoading } = this.state;
     return (
       <div className="user-picker">
-        <AsyncComponent
-          valueKey="id"
-          multi={false}
-          labelKey="label"
-          cache={false}
+        <AsyncSelect
+          classNamePrefix={`gf-form-select-box`}
+          isMulti={false}
           isLoading={isLoading}
+          defaultOptions={true}
           loadOptions={this.debouncedSearch}
-          loadingPlaceholder="Loading..."
-          noResultsText="No teams found"
-          onChange={handlePicked}
+          onChange={onSelected}
           className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
-          optionComponent={PickerOption}
-          placeholder="Choose"
-          value={value}
-          autosize={true}
+          styles={ResetStyles}
+          components={{
+            Option: PickerOption,
+            IndicatorsContainer,
+            NoOptionsMessage,
+          }}
+          placeholder="Select a team"
+          loadingMessage={() => 'Loading...'}
+          noOptionsMessage={() => 'No teams found'}
+          getOptionValue={i => i.id}
+          getOptionLabel={i => i.label}
         />
       </div>
     );
   }
 }
-
-export default withPicker(TeamPicker);

@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 
-var template = `
+const template = `
 <label for="check-{{ctrl.id}}" class="gf-form-label {{ctrl.labelClass}} pointer" ng-show="ctrl.label">
   {{ctrl.label}}
   <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">

@@ -44,6 +44,7 @@ var (
 	M_Alerting_Notification_Sent         *prometheus.CounterVec
 	M_Aws_CloudWatch_GetMetricStatistics prometheus.Counter
 	M_Aws_CloudWatch_ListMetrics         prometheus.Counter
+	M_Aws_CloudWatch_GetMetricData       prometheus.Counter
 	M_DB_DataSource_QueryById            prometheus.Counter
 
 	// Timers
@@ -54,10 +55,35 @@ var (
 	M_Alerting_Active_Alerts prometheus.Gauge
 	M_StatTotal_Dashboards   prometheus.Gauge
 	M_StatTotal_Users        prometheus.Gauge
+	M_StatActive_Users       prometheus.Gauge
 	M_StatTotal_Orgs         prometheus.Gauge
 	M_StatTotal_Playlists    prometheus.Gauge
-	M_Grafana_Version        *prometheus.GaugeVec
+
+	// M_Grafana_Version is a gauge that contains build info about this binary
+	//
+	// Deprecated: use M_Grafana_Build_Version instead.
+	M_Grafana_Version *prometheus.GaugeVec
+
+	// grafanaBuildVersion is a gauge that contains build info about this binary
+	grafanaBuildVersion *prometheus.GaugeVec
 )
+
+func newCounterVecStartingAtZero(opts prometheus.CounterOpts, labels []string, labelValues ...string) *prometheus.CounterVec {
+	counter := prometheus.NewCounterVec(opts, labels)
+
+	for _, label := range labelValues {
+		counter.WithLabelValues(label).Add(0)
+	}
+
+	return counter
+}
+
+func newCounterStartingAtZero(opts prometheus.CounterOpts, labelValues ...string) prometheus.Counter {
+	counter := prometheus.NewCounter(opts)
+	counter.Add(0)
+
+	return counter
+}
 
 func init() {
 	M_Instance_Start = prometheus.NewCounter(prometheus.CounterOpts{
@@ -66,32 +92,27 @@ func init() {
 		Namespace: exporterName,
 	})
 
-	M_Page_Status = prometheus.NewCounterVec(
+	httpStatusCodes := []string{"200", "404", "500", "unknown"}
+	M_Page_Status = newCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Name:      "page_response_status_total",
 			Help:      "page http response status",
 			Namespace: exporterName,
-		},
-		[]string{"code"},
-	)
+		}, []string{"code"}, httpStatusCodes...)
 
-	M_Api_Status = prometheus.NewCounterVec(
+	M_Api_Status = newCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Name:      "api_response_status_total",
 			Help:      "api http response status",
 			Namespace: exporterName,
-		},
-		[]string{"code"},
-	)
+		}, []string{"code"}, httpStatusCodes...)
 
-	M_Proxy_Status = prometheus.NewCounterVec(
+	M_Proxy_Status = newCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Name:      "proxy_response_status_total",
 			Help:      "proxy http response status",
 			Namespace: exporterName,
-		},
-		[]string{"code"},
-	)
+		}, []string{"code"}, httpStatusCodes...)
 
 	M_Http_Request_Total = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -109,19 +130,19 @@ func init() {
 		[]string{"handler", "statuscode", "method"},
 	)
 
-	M_Api_User_SignUpStarted = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_User_SignUpStarted = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_started_total",
 		Help:      "amount of users who started the signup flow",
 		Namespace: exporterName,
 	})
 
-	M_Api_User_SignUpCompleted = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_User_SignUpCompleted = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_completed_total",
 		Help:      "amount of users who completed the signup flow",
 		Namespace: exporterName,
 	})
 
-	M_Api_User_SignUpInvite = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_User_SignUpInvite = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_invite_total",
 		Help:      "amount of users who have been invited",
 		Namespace: exporterName,
@@ -145,49 +166,49 @@ func init() {
 		Namespace: exporterName,
 	})
 
-	M_Api_Admin_User_Create = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Admin_User_Create = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_admin_user_created_total",
 		Help:      "api admin user created counter",
 		Namespace: exporterName,
 	})
 
-	M_Api_Login_Post = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Login_Post = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_login_post_total",
 		Help:      "api login post counter",
 		Namespace: exporterName,
 	})
 
-	M_Api_Login_OAuth = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Login_OAuth = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_login_oauth_total",
 		Help:      "api login oauth counter",
 		Namespace: exporterName,
 	})
 
-	M_Api_Org_Create = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Org_Create = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_org_create_total",
 		Help:      "api org created counter",
 		Namespace: exporterName,
 	})
 
-	M_Api_Dashboard_Snapshot_Create = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Dashboard_Snapshot_Create = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_dashboard_snapshot_create_total",
 		Help:      "dashboard snapshots created",
 		Namespace: exporterName,
 	})
 
-	M_Api_Dashboard_Snapshot_External = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Dashboard_Snapshot_External = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_dashboard_snapshot_external_total",
 		Help:      "external dashboard snapshots created",
 		Namespace: exporterName,
 	})
 
-	M_Api_Dashboard_Snapshot_Get = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Dashboard_Snapshot_Get = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_dashboard_snapshot_get_total",
 		Help:      "loaded dashboards",
 		Namespace: exporterName,
 	})
 
-	M_Api_Dashboard_Insert = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Api_Dashboard_Insert = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_models_dashboard_insert_total",
 		Help:      "dashboards inserted ",
 		Namespace: exporterName,
@@ -205,19 +226,25 @@ func init() {
 		Namespace: exporterName,
 	}, []string{"type"})
 
-	M_Aws_CloudWatch_GetMetricStatistics = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Aws_CloudWatch_GetMetricStatistics = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "aws_cloudwatch_get_metric_statistics_total",
 		Help:      "counter for getting metric statistics from aws",
 		Namespace: exporterName,
 	})
 
-	M_Aws_CloudWatch_ListMetrics = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Aws_CloudWatch_ListMetrics = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "aws_cloudwatch_list_metrics_total",
 		Help:      "counter for getting list of metrics from aws",
 		Namespace: exporterName,
 	})
 
-	M_DB_DataSource_QueryById = prometheus.NewCounter(prometheus.CounterOpts{
+	M_Aws_CloudWatch_GetMetricData = newCounterStartingAtZero(prometheus.CounterOpts{
+		Name:      "aws_cloudwatch_get_metric_data_total",
+		Help:      "counter for getting metric data time series from aws",
+		Namespace: exporterName,
+	})
+
+	M_DB_DataSource_QueryById = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
 		Help:      "counter for getting datasource by id",
 		Namespace: exporterName,
@@ -253,6 +280,12 @@ func init() {
 		Namespace: exporterName,
 	})
 
+	M_StatActive_Users = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_active_users",
+		Help:      "number of active users",
+		Namespace: exporterName,
+	})
+
 	M_StatTotal_Orgs = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_orgs",
 		Help:      "total amount of orgs",
@@ -267,13 +300,28 @@ func init() {
 
 	M_Grafana_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "info",
-		Help:      "Information about the Grafana",
+		Help:      "Information about the Grafana. This metric is deprecated. please use `grafana_build_info`",
 		Namespace: exporterName,
 	}, []string{"version"})
 
+	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "build_info",
+		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built.",
+		Namespace: exporterName,
+	}, []string{"version", "revision", "branch", "goversion"})
 }
 
-func initMetricVars(settings *MetricSettings) {
+// SetBuildInformation sets the build information for this binary
+func SetBuildInformation(version, revision, branch string) {
+	// We export this info twice for backwards compability.
+	// Once this have been released for some time we should be able to remote `M_Grafana_Version`
+	// The reason we added a new one is that its common practice in the prometheus community
+	// to name this metric `*_build_info` so its easy to do aggregation on all programs.
+	M_Grafana_Version.WithLabelValues(version).Set(1)
+	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version()).Set(1)
+}
+
+func initMetricVars() {
 	prometheus.MustRegister(
 		M_Instance_Start,
 		M_Page_Status,
@@ -301,52 +349,44 @@ func initMetricVars(settings *MetricSettings) {
 		M_Alerting_Notification_Sent,
 		M_Aws_CloudWatch_GetMetricStatistics,
 		M_Aws_CloudWatch_ListMetrics,
+		M_Aws_CloudWatch_GetMetricData,
 		M_DB_DataSource_QueryById,
 		M_Alerting_Active_Alerts,
 		M_StatTotal_Dashboards,
 		M_StatTotal_Users,
+		M_StatActive_Users,
 		M_StatTotal_Orgs,
 		M_StatTotal_Playlists,
-		M_Grafana_Version)
+		M_Grafana_Version,
+		grafanaBuildVersion)
 
-	go instrumentationLoop(settings)
 }
-
-func instrumentationLoop(settings *MetricSettings) chan struct{} {
-	M_Instance_Start.Inc()
-
-	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
-
-	for {
-		select {
-		case <-onceEveryDayTick.C:
-			sendUsageStats()
-		case <-secondTicker.C:
-			updateTotalStats()
-		}
-	}
-}
-
-var metricPublishCounter int64 = 0
 
 func updateTotalStats() {
-	metricPublishCounter++
-	if metricPublishCounter == 1 || metricPublishCounter%10 == 0 {
-		statsQuery := models.GetSystemStatsQuery{}
-		if err := bus.Dispatch(&statsQuery); err != nil {
-			metricsLogger.Error("Failed to get system stats", "error", err)
-			return
-		}
+	statsQuery := models.GetSystemStatsQuery{}
+	if err := bus.Dispatch(&statsQuery); err != nil {
+		metricsLogger.Error("Failed to get system stats", "error", err)
+		return
+	}
 
-		M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
-		M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
-		M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
-		M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
+	M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
+	M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
+	M_StatActive_Users.Set(float64(statsQuery.Result.ActiveUsers))
+	M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
+	M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
+}
+
+var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
+
+func getEdition() string {
+	if setting.IsEnterprise {
+		return "enterprise"
+	} else {
+		return "oss"
 	}
 }
 
-func sendUsageStats() {
+func sendUsageStats(oauthProviders map[string]bool) {
 	if !setting.ReportingEnabled {
 		return
 	}
@@ -361,6 +401,7 @@ func sendUsageStats() {
 		"metrics": metrics,
 		"os":      runtime.GOOS,
 		"arch":    runtime.GOARCH,
+		"edition": getEdition(),
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -380,6 +421,12 @@ func sendUsageStats() {
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
 	metrics["stats.stars.count"] = statsQuery.Result.Stars
+	metrics["stats.folders.count"] = statsQuery.Result.Folders
+	metrics["stats.dashboard_permissions.count"] = statsQuery.Result.DashboardPermissions
+	metrics["stats.folder_permissions.count"] = statsQuery.Result.FolderPermissions
+	metrics["stats.provisioned_dashboards.count"] = statsQuery.Result.ProvisionedDashboards
+	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
+	metrics["stats.teams.count"] = statsQuery.Result.Teams
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {
@@ -400,9 +447,66 @@ func sendUsageStats() {
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
 
+	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
+	if err := bus.Dispatch(&dsAccessStats); err != nil {
+		metricsLogger.Error("Failed to get datasource access stats", "error", err)
+		return
+	}
+
+	// send access counters for each data source
+	// but ignore any custom data sources
+	// as sending that name could be sensitive information
+	dsAccessOtherCount := make(map[string]int64)
+	for _, dsAccessStat := range dsAccessStats.Result {
+		if dsAccessStat.Access == "" {
+			continue
+		}
+
+		access := strings.ToLower(dsAccessStat.Access)
+
+		if models.IsKnownDataSourcePlugin(dsAccessStat.Type) {
+			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
+		} else {
+			old := dsAccessOtherCount[access]
+			dsAccessOtherCount[access] = old + dsAccessStat.Count
+		}
+	}
+
+	for access, count := range dsAccessOtherCount {
+		metrics["stats.ds_access.other."+access+".count"] = count
+	}
+
+	anStats := models.GetAlertNotifierUsageStatsQuery{}
+	if err := bus.Dispatch(&anStats); err != nil {
+		metricsLogger.Error("Failed to get alert notification stats", "error", err)
+		return
+	}
+
+	for _, stats := range anStats.Result {
+		metrics["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
+	}
+
+	authTypes := map[string]bool{}
+	authTypes["anonymous"] = setting.AnonymousEnabled
+	authTypes["basic_auth"] = setting.BasicAuthEnabled
+	authTypes["ldap"] = setting.LdapEnabled
+	authTypes["auth_proxy"] = setting.AuthProxyEnabled
+
+	for provider, enabled := range oauthProviders {
+		authTypes["oauth_"+provider] = enabled
+	}
+
+	for authType, enabled := range authTypes {
+		enabledValue := 0
+		if enabled {
+			enabledValue = 1
+		}
+		metrics["stats.auth_enabled."+authType+".count"] = enabledValue
+	}
+
 	out, _ := json.MarshalIndent(report, "", " ")
 	data := bytes.NewBuffer(out)
 
-	client := http.Client{Timeout: time.Duration(5 * time.Second)}
-	go client.Post("https://stats.grafana.org/grafana-usage-report", "application/json", data)
+	client := http.Client{Timeout: 5 * time.Second}
+	go client.Post(usageStatsURL, "application/json", data)
 }

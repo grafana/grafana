@@ -3,11 +3,12 @@ package migrator
 import (
 	"fmt"
 	"strings"
+
+	"github.com/go-xorm/xorm"
 )
 
 type Dialect interface {
 	DriverName() string
-	QuoteStr() string
 	Quote(string) string
 	AndStr() string
 	AutoIncrStr() string
@@ -31,16 +32,31 @@ type Dialect interface {
 	TableCheckSql(tableName string) (string, []interface{})
 	RenameTable(oldName string, newName string) string
 	UpdateTableSql(tableName string, columns []*Column) string
+
+	ColString(*Column) string
+	ColStringNoPk(*Column) string
+
+	Limit(limit int64) string
+	LimitOffset(limit int64, offset int64) string
+
+	PreInsertId(table string, sess *xorm.Session) error
+	PostInsertId(table string, sess *xorm.Session) error
+
+	CleanDB() error
+	NoOpSql() string
+
+	IsUniqueConstraintViolation(err error) bool
 }
 
-func NewDialect(name string) Dialect {
+func NewDialect(engine *xorm.Engine) Dialect {
+	name := engine.DriverName()
 	switch name {
 	case MYSQL:
-		return NewMysqlDialect()
+		return NewMysqlDialect(engine)
 	case SQLITE:
-		return NewSqlite3Dialect()
+		return NewSqlite3Dialect(engine)
 	case POSTGRES:
-		return NewPostgresDialect()
+		return NewPostgresDialect(engine)
 	}
 
 	panic("Unsupported database type: " + name)
@@ -48,6 +64,7 @@ func NewDialect(name string) Dialect {
 
 type BaseDialect struct {
 	dialect    Dialect
+	engine     *xorm.Engine
 	driverName string
 }
 
@@ -84,8 +101,7 @@ func (db *BaseDialect) DateTimeFunc(value string) string {
 }
 
 func (b *BaseDialect) CreateTableSql(table *Table) string {
-	var sql string
-	sql = "CREATE TABLE IF NOT EXISTS "
+	sql := "CREATE TABLE IF NOT EXISTS "
 	sql += b.dialect.Quote(table.Name) + " (\n"
 
 	pkList := table.PrimaryKeys
@@ -101,9 +117,12 @@ func (b *BaseDialect) CreateTableSql(table *Table) string {
 	}
 
 	if len(pkList) > 1 {
-		sql += "PRIMARY KEY ( "
-		sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
-		sql += " ), "
+		quotedCols := []string{}
+		for _, col := range pkList {
+			quotedCols = append(quotedCols, b.dialect.Quote(col))
+		}
+
+		sql += "PRIMARY KEY ( " + strings.Join(quotedCols, ",") + " ), "
 	}
 
 	sql = sql[:len(sql)-2] + ")"
@@ -128,9 +147,12 @@ func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
 
 	idxName := index.XName(tableName)
 
-	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
-		quote(idxName), quote(tableName),
-		quote(strings.Join(index.Cols, quote(","))))
+	quotedCols := []string{}
+	for _, col := range index.Cols {
+		quotedCols = append(quotedCols, db.dialect.Quote(col))
+	}
+
+	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique, quote(idxName), quote(tableName), strings.Join(quotedCols, ","))
 }
 
 func (db *BaseDialect) QuoteColList(cols []string) string {
@@ -162,11 +184,81 @@ func (db *BaseDialect) RenameTable(oldName string, newName string) string {
 
 func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
-	var name string
-	name = index.XName(tableName)
+	name := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }
 
 func (db *BaseDialect) UpdateTableSql(tableName string, columns []*Column) string {
 	return "-- NOT REQUIRED"
+}
+
+func (db *BaseDialect) ColString(col *Column) string {
+	sql := db.dialect.Quote(col.Name) + " "
+
+	sql += db.dialect.SqlType(col) + " "
+
+	if col.IsPrimaryKey {
+		sql += "PRIMARY KEY "
+		if col.IsAutoIncrement {
+			sql += db.dialect.AutoIncrStr() + " "
+		}
+	}
+
+	if db.dialect.ShowCreateNull() {
+		if col.Nullable {
+			sql += "NULL "
+		} else {
+			sql += "NOT NULL "
+		}
+	}
+
+	if col.Default != "" {
+		sql += "DEFAULT " + db.dialect.Default(col) + " "
+	}
+
+	return sql
+}
+
+func (db *BaseDialect) ColStringNoPk(col *Column) string {
+	sql := db.dialect.Quote(col.Name) + " "
+
+	sql += db.dialect.SqlType(col) + " "
+
+	if db.dialect.ShowCreateNull() {
+		if col.Nullable {
+			sql += "NULL "
+		} else {
+			sql += "NOT NULL "
+		}
+	}
+
+	if col.Default != "" {
+		sql += "DEFAULT " + db.dialect.Default(col) + " "
+	}
+
+	return sql
+}
+
+func (db *BaseDialect) Limit(limit int64) string {
+	return fmt.Sprintf(" LIMIT %d", limit)
+}
+
+func (db *BaseDialect) LimitOffset(limit int64, offset int64) string {
+	return fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
+}
+
+func (db *BaseDialect) PreInsertId(table string, sess *xorm.Session) error {
+	return nil
+}
+
+func (db *BaseDialect) PostInsertId(table string, sess *xorm.Session) error {
+	return nil
+}
+
+func (db *BaseDialect) CleanDB() error {
+	return nil
+}
+
+func (db *BaseDialect) NoOpSql() string {
+	return "SELECT 0;"
 }

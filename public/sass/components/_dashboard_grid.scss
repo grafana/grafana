@@ -1,4 +1,4 @@
-@import '~react-grid-layout-grafana/css/styles.css';
+@import '~react-grid-layout/css/styles.css';
 @import '~react-resizable/css/styles.css';
 
 .panel-in-fullscreen {
@@ -17,6 +17,24 @@
     width: 100% !important;
     height: 100% !important;
     transform: translate(0px, 0px) !important;
+  }
+
+  // Disable grid interaction indicators in fullscreen panels
+  .panel-header:hover {
+    background-color: inherit;
+  }
+
+  .panel-title-container {
+    cursor: pointer;
+  }
+
+  .react-resizable-handle {
+    display: none;
+  }
+
+  // the react-grid has a height transition
+  .react-grid-layout {
+    transition-property: none;
   }
 }
 
@@ -43,11 +61,6 @@
   .react-grid-item > .react-resizable-handle::after {
     border-right: 2px solid $gray-1;
     border-bottom: 2px solid $gray-1;
-  }
-  // temp fix since we use old commit of grid component
-  // this can be removed when we revert to non fork grid component
-  .react-grid-item > .react-resizable-handle {
-    background-image: url('../img/resize-handle-white.svg');
   }
 }
 

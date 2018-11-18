@@ -60,9 +60,9 @@ aliases = ["v1.1", "guides/reference/admin"]
         <h4>Provisioning</h4>
         <p>A guide to help you automate your Grafana setup & configuration.</p>
     </a>
-    <a href="{{< relref "guides/whats-new-in-v5.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v5.0</h4>
-        <p>Article on all the new cool features and enhancements in v5.0</p>
+    <a href="{{< relref "guides/whats-new-in-v5-3.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v5.3</h4>
+        <p>Article on all the new cool features and enhancements in v5.3</p>
     </a>
     <a href="{{< relref "tutorials/screencasts.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Screencasts</h4>
@@ -88,9 +88,13 @@ aliases = ["v1.1", "guides/reference/admin"]
       <img src="/img/docs/logos/icon_prometheus.svg" >
       <h5>Prometheus</h5>
     </a>
-    <a href="{{< relref "features/datasources/opentsdb.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_opentsdb.png" >
-      <h5>OpenTSDB</h5>
+    <a href="{{< relref "features/datasources/stackdriver.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/stackdriver_logo.png">
+      <h5>Google Stackdriver</h5>
+    </a>
+    <a href="{{< relref "features/datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/icon_cloudwatch.svg">
+      <h5>Cloudwatch</h5>
     </a>
     <a href="{{< relref "features/datasources/mysql.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_mysql.png" >
@@ -100,8 +104,12 @@ aliases = ["v1.1", "guides/reference/admin"]
       <img src="/img/docs/logos/icon_postgres.svg" >
       <h5>Postgres</h5>
     </a>
-    <a href="{{< relref "features/datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_cloudwatch.svg">
-      <h5>Cloudwatch</h5>
+    <a href="{{< relref "features/datasources/mssql.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/sql_server_logo.svg">
+      <h5>Microsoft SQL Server</h5>
+    </a>
+    <a href="{{< relref "features/datasources/opentsdb.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/icon_opentsdb.png" >
+      <h5>OpenTSDB</h5>
     </a>
 </div>

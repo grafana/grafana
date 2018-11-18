@@ -22,8 +22,8 @@ export class TimePickerCtrl {
   refresh: any;
   isUtc: boolean;
   firstDayOfWeek: number;
-  closeDropdown: any;
   isOpen: boolean;
+  isAbsolute: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
@@ -31,7 +31,9 @@ export class TimePickerCtrl {
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
-    $rootScope.onAppEvent('refresh', this.onRefresh.bind(this), $scope);
+    $rootScope.onAppEvent('closeTimepicker', this.openDropdown.bind(this), $scope);
+
+    this.dashboard.on('refresh', this.onRefresh.bind(this), $scope);
 
     // init options
     this.panel = this.dashboard.timepicker;
@@ -43,8 +45,8 @@ export class TimePickerCtrl {
   }
 
   onRefresh() {
-    var time = angular.copy(this.timeSrv.timeRange());
-    var timeRaw = angular.copy(time.raw);
+    const time = angular.copy(this.timeSrv.timeRange());
+    const timeRaw = angular.copy(time.raw);
 
     if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
@@ -65,6 +67,7 @@ export class TimePickerCtrl {
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
+    this.isAbsolute = moment.isMoment(this.timeRaw.to);
   }
 
   zoom(factor) {
@@ -72,10 +75,10 @@ export class TimePickerCtrl {
   }
 
   move(direction) {
-    var range = this.timeSrv.timeRange();
+    const range = this.timeSrv.timeRange();
 
-    var timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    var to, from;
+    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+    let to, from;
     if (direction === -1) {
       to = range.to.valueOf() - timespan;
       from = range.from.valueOf() - timespan;
@@ -96,7 +99,7 @@ export class TimePickerCtrl {
 
   openDropdown() {
     if (this.isOpen) {
-      this.isOpen = false;
+      this.closeDropdown();
       return;
     }
 
@@ -112,6 +115,12 @@ export class TimePickerCtrl {
 
     this.refresh.options.unshift({ text: 'off' });
     this.isOpen = true;
+    this.$rootScope.appEvent('timepickerOpen');
+  }
+
+  closeDropdown() {
+    this.isOpen = false;
+    this.$rootScope.appEvent('timepickerClosed');
   }
 
   applyCustom() {
@@ -120,7 +129,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(this.editTimeRaw);
-    this.isOpen = false;
+    this.closeDropdown();
   }
 
   absoluteFromChanged() {
@@ -136,14 +145,14 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    var range = { from: timespan.from, to: timespan.to };
+    const range = { from: timespan.from, to: timespan.to };
 
     if (this.panel.nowDelay && range.to === 'now') {
       range.to = 'now-' + this.panel.nowDelay;
     }
 
     this.timeSrv.setTime(range);
-    this.isOpen = false;
+    this.closeDropdown();
   }
 }
 

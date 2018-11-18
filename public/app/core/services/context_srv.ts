@@ -8,9 +8,12 @@ export class User {
   isSignedIn: any;
   orgRole: any;
   orgId: number;
+  orgName: string;
+  orgCount: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
+  hasEditPermissionInFolders: boolean;
 
   constructor() {
     if (config.bootData.user) {
@@ -28,22 +31,20 @@ export class ContextSrv {
   isEditor: any;
   sidemenu: any;
   sidemenuSmallBreakpoint = false;
+  hasEditPermissionInFolders: boolean;
 
   constructor() {
     this.sidemenu = store.getBool('grafana.sidemenu', true);
 
-    if (!config.buildInfo) {
-      config.buildInfo = {};
-    }
     if (!config.bootData) {
       config.bootData = { user: {}, settings: {} };
     }
 
-    this.version = config.buildInfo.version;
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
+    this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
   }
 
   hasRole(role) {
@@ -60,9 +61,9 @@ export class ContextSrv {
   }
 }
 
-var contextSrv = new ContextSrv();
+const contextSrv = new ContextSrv();
 export { contextSrv };
 
-coreModule.factory('contextSrv', function() {
+coreModule.factory('contextSrv', () => {
   return contextSrv;
 });

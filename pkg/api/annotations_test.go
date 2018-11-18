@@ -41,7 +41,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
@@ -68,7 +68,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
@@ -100,6 +100,11 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			Id:       1,
 		}
 
+		deleteCmd := dtos.DeleteAnnotationsCmd{
+			DashboardId: 1,
+			PanelId:     1,
+		}
+
 		viewerRole := m.ROLE_VIEWER
 		editorRole := m.ROLE_EDITOR
 
@@ -114,7 +119,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 		})
 
 		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
-			query.Result = []*m.Team{}
+			query.Result = []*m.TeamDTO{}
 			return nil
 		})
 
@@ -132,7 +137,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
@@ -159,7 +164,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
@@ -167,6 +172,25 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationRegion
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+					So(sc.resp.Code, ShouldEqual, 200)
+				})
+			})
+		})
+
+		Convey("When user is an Admin", func() {
+			role := m.ROLE_ADMIN
+			Convey("Should be able to do anything", func() {
+				postAnnotationScenario("When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+					So(sc.resp.Code, ShouldEqual, 200)
+				})
+
+				putAnnotationScenario("When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+					So(sc.resp.Code, ShouldEqual, 200)
+				})
+				deleteAnnotationsScenario("When calling POST on", "/api/annotations/mass-delete", "/api/annotations/mass-delete", role, deleteCmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 			})
@@ -199,7 +223,7 @@ func postAnnotationScenario(desc string, url string, routePattern string, role m
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -222,7 +246,7 @@ func putAnnotationScenario(desc string, url string, routePattern string, role m.
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -235,6 +259,29 @@ func putAnnotationScenario(desc string, url string, routePattern string, role m.
 		annotations.SetRepository(fakeAnnoRepo)
 
 		sc.m.Put(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func deleteAnnotationsScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.DeleteAnnotationsCmd, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+			sc.context = c
+			sc.context.UserId = TestUserID
+			sc.context.OrgId = TestOrgID
+			sc.context.OrgRole = role
+
+			return DeleteAnnotations(c, cmd)
+		})
+
+		fakeAnnoRepo = &fakeAnnotationsRepo{}
+		annotations.SetRepository(fakeAnnoRepo)
+
+		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
 	})

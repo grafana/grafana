@@ -2,34 +2,40 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"path"
-	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
-	ini "gopkg.in/ini.v1"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func Init(ctx context.Context, homePath string, cfg *ini.File) error {
-	provisioningPath := makeAbsolute(cfg.Section("paths").Key("provisioning").String(), homePath)
+func init() {
+	registry.RegisterService(&ProvisioningService{})
+}
 
-	datasourcePath := path.Join(provisioningPath, "datasources")
+type ProvisioningService struct {
+	Cfg *setting.Cfg `inject:""`
+}
+
+func (ps *ProvisioningService) Init() error {
+	datasourcePath := path.Join(ps.Cfg.ProvisioningPath, "datasources")
 	if err := datasources.Provision(datasourcePath); err != nil {
-		return err
-	}
-
-	dashboardPath := path.Join(provisioningPath, "dashboards")
-	_, err := dashboards.Provision(ctx, dashboardPath)
-	if err != nil {
-		return err
+		return fmt.Errorf("Datasource provisioning error: %v", err)
 	}
 
 	return nil
 }
 
-func makeAbsolute(path string, root string) string {
-	if filepath.IsAbs(path) {
-		return path
+func (ps *ProvisioningService) Run(ctx context.Context) error {
+	dashboardPath := path.Join(ps.Cfg.ProvisioningPath, "dashboards")
+	dashProvisioner := dashboards.NewDashboardProvisioner(dashboardPath)
+
+	if err := dashProvisioner.Provision(ctx); err != nil {
+		return err
 	}
-	return filepath.Join(root, path)
+
+	<-ctx.Done()
+	return ctx.Err()
 }

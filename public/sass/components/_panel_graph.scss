@@ -4,24 +4,22 @@
   height: 100%;
 
   &--legend-right {
-    flex-direction: row;
+    @include media-breakpoint-up(sm) {
+      flex-direction: row;
 
-    .graph-legend {
-      flex: 0 1 10px;
-      max-height: 100%;
-    }
+      .graph-legend {
+        flex: 0 1 10px;
+        max-height: 100%;
+      }
 
-    .graph-legend-series {
-      display: block;
-      padding-left: 0px;
-    }
+      .graph-legend-series {
+        display: block;
+        padding-left: 4px;
+      }
 
-    .graph-legend-table {
-      width: auto;
-    }
-
-    .graph-legend-table .graph-legend-series {
-      display: table-row;
+      .graph-legend-table .graph-legend-series {
+        display: table-row;
+      }
     }
   }
 }
@@ -30,10 +28,10 @@
   position: relative;
   cursor: crosshair;
   flex-grow: 1;
+  min-height: 65%;
 }
 
 .datapoints-warning {
-  pointer: none;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -47,8 +45,9 @@
 }
 
 .graph-legend {
+  display: flex;
   flex: 0 1 auto;
-  max-height: 30%;
+  max-height: 35%;
   margin: 0;
   text-align: center;
   padding-top: 6px;
@@ -57,6 +56,10 @@
   .popover-content {
     padding: 0;
   }
+}
+
+.graph-legend-content {
+  position: relative;
 }
 
 .graph-legend-icon {
@@ -68,8 +71,8 @@
 .graph-legend-icon,
 .graph-legend-alias,
 .graph-legend-value {
+  display: inline;
   cursor: pointer;
-  float: left;
   white-space: nowrap;
   font-size: 85%;
   text-align: left;
@@ -106,6 +109,11 @@
   }
 }
 
+// Don't move series to the right if legend is on the right as well
+.graph-panel--legend-right .graph-legend-series--right-y {
+  float: left;
+}
+
 .graph-legend-value {
   padding-left: 6px;
 }
@@ -113,22 +121,26 @@
 // fix for phantomjs
 .body--phantomjs {
   .graph-panel--legend-right {
+    .graph-legend {
+      display: block;
+      max-width: min-content;
+    }
+
+    .graph-panel__chart {
+      display: flex;
+    }
+
     .graph-legend-table {
       display: table;
+      width: auto;
     }
   }
 }
 
 .graph-legend-table {
-  tbody {
-    display: block;
-    overflow-y: auto;
-    overflow-x: hidden;
-    height: 100%;
-    padding-bottom: 1px;
-    padding-right: 5px;
-    padding-left: 5px;
-  }
+  padding-bottom: 1px;
+  padding-right: 5px;
+  padding-left: 5px;
 
   .graph-legend-series {
     display: table-row;

@@ -2,7 +2,7 @@
 // Licence MIT, Copyright (c) 2015 Mohsen Azimi
 
 /*
- * Escapes `"` charachters from string
+ * Escapes `"` characters from string
 */
 function escapeString(str: string): string {
   return str.replace('"', '"');
@@ -12,7 +12,7 @@ function escapeString(str: string): string {
  * Determines if a value is an object
 */
 export function isObject(value: any): boolean {
-  var type = typeof value;
+  const type = typeof value;
   return !!value && type === 'object';
 }
 
@@ -21,7 +21,7 @@ export function isObject(value: any): boolean {
  * From http://stackoverflow.com/a/332429
  *
 */
-export function getObjectName(object: Object): string {
+export function getObjectName(object: object): string {
   if (object === undefined) {
     return '';
   }
@@ -44,7 +44,7 @@ export function getObjectName(object: Object): string {
 /*
  * Gets type of an object. Returns "null" for null objects
 */
-export function getType(object: Object): string {
+export function getType(object: object): string {
   if (object === null) {
     return 'null';
   }
@@ -54,8 +54,8 @@ export function getType(object: Object): string {
 /*
  * Generates inline preview for a JavaScript object based on a value
 */
-export function getValuePreview(object: Object, value: string): string {
-  var type = getType(object);
+export function getValuePreview(object: object, value: string): string {
+  const type = getType(object);
 
   if (type === 'null' || type === 'undefined') {
     return type;
@@ -79,15 +79,15 @@ export function getValuePreview(object: Object, value: string): string {
 /*
  * Generates inline preview for a JavaScript object
 */
-export function getPreview(object: string): string {
-  let value = '';
-  if (isObject(object)) {
-    value = getObjectName(object);
-    if (Array.isArray(object)) {
-      value += '[' + object.length + ']';
+let value = '';
+export function getPreview(obj: object): string {
+  if (isObject(obj)) {
+    value = getObjectName(obj);
+    if (Array.isArray(obj)) {
+      value += '[' + obj.length + ']';
     }
   } else {
-    value = getValuePreview(object, object);
+    value = getValuePreview(obj, obj.toString());
   }
   return value;
 }
@@ -100,7 +100,7 @@ export function cssClass(className: string): string {
 }
 
 /*
-  * Creates a new DOM element wiht given type and class
+  * Creates a new DOM element with given type and class
   * TODO: move me to helpers
 */
 export function createElement(type: string, className?: string, content?: Element | string): Element {

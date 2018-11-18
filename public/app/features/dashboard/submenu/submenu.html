@@ -4,7 +4,8 @@
       <label class="gf-form-label template-variable" ng-hide="variable.hide === 1">
         {{variable.label || variable.name}}
       </label>
-      <value-select-dropdown ng-if="variable.type !== 'adhoc'" variable="variable" on-updated="ctrl.variableUpdated(variable)"></value-select-dropdown>
+      <value-select-dropdown ng-if="variable.type !== 'adhoc' && variable.type !== 'textbox'" variable="variable" on-updated="ctrl.variableUpdated(variable)"></value-select-dropdown>
+      <input type="text" ng-if="variable.type === 'textbox'" ng-model="variable.query" class="gf-form-input width-12"  ng-blur="variable.current.value != variable.query && variable.updateOptions() && ctrl.variableUpdated(variable);" ng-keydown="$event.keyCode === 13 && variable.current.value != variable.query && variable.updateOptions() && ctrl.variableUpdated(variable);" ></input>
     </div>
     <ad-hoc-filters ng-if="variable.type === 'adhoc'" variable="variable"></ad-hoc-filters>
   </div>

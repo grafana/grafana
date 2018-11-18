@@ -30,7 +30,7 @@ type dashboardGuardianImpl struct {
 	dashId int64
 	orgId  int64
 	acl    []*m.DashboardAclInfoDTO
-	groups []*m.Team
+	teams  []*m.TeamDTO
 	log    log.Logger
 }
 
@@ -40,7 +40,7 @@ var New = func(dashId int64, orgId int64, user *m.SignedInUser) DashboardGuardia
 		user:   user,
 		dashId: dashId,
 		orgId:  orgId,
-		log:    log.New("guardians.dashboard"),
+		log:    log.New("dashboard.permissions"),
 	}
 }
 
@@ -66,15 +66,30 @@ func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
 
 func (g *dashboardGuardianImpl) HasPermission(permission m.PermissionType) (bool, error) {
 	if g.user.OrgRole == m.ROLE_ADMIN {
-		return true, nil
+		return g.logHasPermissionResult(permission, true, nil)
 	}
 
 	acl, err := g.GetAcl()
 	if err != nil {
-		return false, err
+		return g.logHasPermissionResult(permission, false, err)
 	}
 
-	return g.checkAcl(permission, acl)
+	result, err := g.checkAcl(permission, acl)
+	return g.logHasPermissionResult(permission, result, err)
+}
+
+func (g *dashboardGuardianImpl) logHasPermissionResult(permission m.PermissionType, hasPermission bool, err error) (bool, error) {
+	if err != nil {
+		return hasPermission, err
+	}
+
+	if hasPermission {
+		g.log.Debug("User granted access to execute action", "userId", g.user.UserId, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
+	} else {
+		g.log.Debug("User denied access to execute action", "userId", g.user.UserId, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
+	}
+
+	return hasPermission, err
 }
 
 func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.DashboardAclInfoDTO) (bool, error) {
@@ -83,7 +98,7 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 
 	for _, p := range acl {
 		// user match
-		if !g.user.IsAnonymous {
+		if !g.user.IsAnonymous && p.UserId > 0 {
 			if p.UserId == g.user.UserId && p.Permission >= permission {
 				return true, nil
 			}
@@ -113,7 +128,7 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 		return false, err
 	}
 
-	// evalute team rules
+	// evaluate team rules
 	for _, p := range acl {
 		for _, ug := range teams {
 			if ug.Id == p.TeamId && p.Permission >= permission {
@@ -154,12 +169,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 	// validate overridden permissions to be higher
 	for _, a := range acl {
 		for _, existingPerm := range existingPermissions {
-			// handle default permissions
-			if existingPerm.DashboardId == -1 {
-				existingPerm.DashboardId = g.dashId
-			}
-
-			if a.DashboardId == existingPerm.DashboardId {
+			if !existingPerm.Inherited {
 				continue
 			}
 
@@ -173,7 +183,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 		return true, nil
 	}
 
-	return g.checkAcl(permission, acl)
+	return g.checkAcl(permission, existingPermissions)
 }
 
 // GetAcl returns dashboard acl
@@ -187,26 +197,19 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 		return nil, err
 	}
 
-	for _, a := range query.Result {
-		// handle default permissions
-		if a.DashboardId == -1 {
-			a.DashboardId = g.dashId
-		}
-	}
-
 	g.acl = query.Result
 	return g.acl, nil
 }
 
-func (g *dashboardGuardianImpl) getTeams() ([]*m.Team, error) {
-	if g.groups != nil {
-		return g.groups, nil
+func (g *dashboardGuardianImpl) getTeams() ([]*m.TeamDTO, error) {
+	if g.teams != nil {
+		return g.teams, nil
 	}
 
 	query := m.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
 	err := bus.Dispatch(&query)
 
-	g.groups = query.Result
+	g.teams = query.Result
 	return query.Result, err
 }
 

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 
-var index = {};
+const index = {};
 
 function addFuncDef(funcDef) {
   funcDef.params = funcDef.params || [];
@@ -13,7 +13,7 @@ function addFuncDef(funcDef) {
   }
 }
 
-var optionalSeriesRefArgs = [{ name: 'other', type: 'value_or_series', optional: true, multiple: true }];
+const optionalSeriesRefArgs = [{ name: 'other', type: 'value_or_series', optional: true, multiple: true }];
 
 addFuncDef({
   name: 'scaleToSeconds',
@@ -962,29 +962,25 @@ export class FuncInstance {
   }
 
   render(metricExp) {
-    var str = this.def.name + '(';
+    const str = this.def.name + '(';
 
-    var parameters = _.map(
-      this.params,
-      function(value, index) {
-        var paramType;
-        if (index < this.def.params.length) {
-          paramType = this.def.params[index].type;
-        } else if (_.get(_.last(this.def.params), 'multiple')) {
-          paramType = _.get(_.last(this.def.params), 'type');
-        }
-        if (paramType === 'value_or_series') {
-          return value;
-        }
-        if (paramType === 'boolean' && _.includes(['true', 'false'], value)) {
-          return value;
-        }
-        if (_.includes(['int', 'float', 'int_or_interval', 'node_or_tag', 'node'], paramType) && _.isFinite(+value)) {
-          return _.toString(+value);
-        }
-        return "'" + value + "'";
-      }.bind(this)
-    );
+    const parameters = _.map(this.params, (value, index) => {
+      let paramType;
+      if (index < this.def.params.length) {
+        paramType = this.def.params[index].type;
+      } else if (_.get(_.last(this.def.params), 'multiple')) {
+        paramType = _.get(_.last(this.def.params), 'type');
+      }
+      // param types that should never be quoted
+      if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
+        return value;
+      }
+      // param types that might be quoted
+      if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+value)) {
+        return _.toString(+value);
+      }
+      return "'" + value + "'";
+    });
 
     // don't send any blank parameters to graphite
     while (parameters[parameters.length - 1] === '') {
@@ -1018,12 +1014,9 @@ export class FuncInstance {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this._hasMultipleParamsInString(strValue, index)) {
-      _.each(
-        strValue.split(','),
-        function(partVal, idx) {
-          this.updateParam(partVal.trim(), index + idx);
-        }.bind(this)
-      );
+      _.each(strValue.split(','), (partVal, idx) => {
+        this.updateParam(partVal.trim(), index + idx);
+      });
       return;
     }
 
@@ -1042,7 +1035,7 @@ export class FuncInstance {
       return;
     }
 
-    var text = this.def.name + '(';
+    let text = this.def.name + '(';
     text += this.params.join(', ');
     text += ')';
     this.text = text;
@@ -1064,11 +1057,11 @@ function getFuncDef(name, idx?) {
 }
 
 function getFuncDefs(graphiteVersion, idx?) {
-  var funcs = {};
-  _.forEach(idx || index, function(funcDef) {
+  const funcs = {};
+  _.forEach(idx || index, funcDef => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
       funcs[funcDef.name] = _.assign({}, funcDef, {
-        params: _.filter(funcDef.params, function(param) {
+        params: _.filter(funcDef.params, param => {
           return isVersionRelatedFunction(param, graphiteVersion);
         }),
       });
@@ -1079,7 +1072,7 @@ function getFuncDefs(graphiteVersion, idx?) {
 
 // parse response from graphite /functions endpoint into internal format
 function parseFuncDefs(rawDefs) {
-  var funcDefs = {};
+  const funcDefs = {};
 
   _.forEach(rawDefs || {}, (funcDef, funcName) => {
     // skip graphite graph functions
@@ -1087,7 +1080,7 @@ function parseFuncDefs(rawDefs) {
       return;
     }
 
-    var description = funcDef.description;
+    let description = funcDef.description;
     if (description) {
       // tidy up some pydoc syntax that rst2html can't handle
       description = description
@@ -1096,7 +1089,7 @@ function parseFuncDefs(rawDefs) {
         .replace(/.. code-block *:: *none/g, '.. code-block::');
     }
 
-    var func = {
+    const func = {
       name: funcDef.name,
       description: description,
       category: funcDef.group,
@@ -1121,7 +1114,7 @@ function parseFuncDefs(rawDefs) {
     }
 
     _.forEach(funcDef.params, rawParam => {
-      var param = {
+      const param = {
         name: rawParam.name,
         type: 'string',
         optional: !rawParam.required,

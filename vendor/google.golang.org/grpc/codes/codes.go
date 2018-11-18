@@ -19,6 +19,7 @@
 // Package codes defines the canonical error codes used by gRPC. It is
 // consistent across various languages.
 package codes // import "google.golang.org/grpc/codes"
+
 import (
 	"fmt"
 )
@@ -33,9 +34,9 @@ const (
 	// Canceled indicates the operation was canceled (typically by the caller).
 	Canceled Code = 1
 
-	// Unknown error.  An example of where this error may be returned is
+	// Unknown error. An example of where this error may be returned is
 	// if a Status value received from another address space belongs to
-	// an error-space that is not known in this address space.  Also
+	// an error-space that is not known in this address space. Also
 	// errors raised by APIs that do not return enough error information
 	// may be converted to this error.
 	Unknown Code = 2
@@ -64,14 +65,10 @@ const (
 	// PermissionDenied indicates the caller does not have permission to
 	// execute the specified operation. It must not be used for rejections
 	// caused by exhausting some resource (use ResourceExhausted
-	// instead for those errors).  It must not be
+	// instead for those errors). It must not be
 	// used if the caller cannot be identified (use Unauthenticated
 	// instead for those errors).
 	PermissionDenied Code = 7
-
-	// Unauthenticated indicates the request does not have valid
-	// authentication credentials for the operation.
-	Unauthenticated Code = 16
 
 	// ResourceExhausted indicates some resource has been exhausted, perhaps
 	// a per-user quota, or perhaps the entire file system is out of space.
@@ -88,7 +85,7 @@ const (
 	//  (b) Use Aborted if the client should retry at a higher-level
 	//      (e.g., restarting a read-modify-write sequence).
 	//  (c) Use FailedPrecondition if the client should not retry until
-	//      the system state has been explicitly fixed.  E.g., if an "rmdir"
+	//      the system state has been explicitly fixed. E.g., if an "rmdir"
 	//      fails because the directory is non-empty, FailedPrecondition
 	//      should be returned since the client should not retry unless
 	//      they have first fixed up the directory by deleting files from it.
@@ -117,7 +114,7 @@ const (
 	// file size.
 	//
 	// There is a fair bit of overlap between FailedPrecondition and
-	// OutOfRange.  We recommend using OutOfRange (the more specific
+	// OutOfRange. We recommend using OutOfRange (the more specific
 	// error) when it applies so that callers who are iterating through
 	// a space can easily look for an OutOfRange error to detect when
 	// they are done.
@@ -127,8 +124,8 @@ const (
 	// supported/enabled in this service.
 	Unimplemented Code = 12
 
-	// Internal errors.  Means some invariants expected by underlying
-	// system has been broken.  If you see one of these errors,
+	// Internal errors. Means some invariants expected by underlying
+	// system has been broken. If you see one of these errors,
 	// something is very broken.
 	Internal Code = 13
 
@@ -142,6 +139,10 @@ const (
 
 	// DataLoss indicates unrecoverable data loss or corruption.
 	DataLoss Code = 15
+
+	// Unauthenticated indicates the request does not have valid
+	// authentication credentials for the operation.
+	Unauthenticated Code = 16
 )
 
 var strToCode = map[string]Code{

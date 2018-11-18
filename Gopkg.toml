@@ -36,7 +36,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.12.65"
+  version = "1.13.56"
 
 [[constraint]]
   branch = "master"
@@ -85,13 +85,11 @@ ignored = [
 
 [[constraint]]
   name = "github.com/go-xorm/core"
-  revision = "e8409d73255791843585964791443dbad877058c"
-  #version = "0.5.7" //keeping this since we would rather depend on version then commit
+  version = "=0.5.7"
 
 [[constraint]]
   name = "github.com/go-xorm/xorm"
-  revision = "6687a2b4e824f4d87f2d65060ec5cb0d896dff1e"
-  #version = "0.6.4" //keeping this since we would rather depend on version then commit
+  version = "=0.6.4"
 
 [[constraint]]
   name = "github.com/gorilla/websocket"
@@ -103,11 +101,15 @@ ignored = [
 
 [[constraint]]
   branch = "master"
-  name = "github.com/grafana/grafana_plugin_model"
+  name = "github.com/grafana/grafana-plugin-model"
 
 [[constraint]]
   branch = "master"
   name = "github.com/hashicorp/go-hclog"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-plugin"
+  revision = "e8d22c780116115ae5624720c9af0c97afe4f551"
 
 [[constraint]]
   branch = "master"
@@ -127,7 +129,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/mattn/go-sqlite3"
-  version = "1.6.0"
+  version = "1.7.0"
 
 [[constraint]]
   name = "github.com/opentracing/opentracing-go"
@@ -174,7 +176,7 @@ ignored = [
   name = "golang.org/x/sync"
 
 [[constraint]]
-  name = "gopkg.in/gomail.v2"
+  name = "gopkg.in/mail.v2"
   branch = "v2"
 
 [[constraint]]
@@ -201,3 +203,11 @@ ignored = [
 [[constraint]]
   name = "github.com/denisenkom/go-mssqldb"
   revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
+
+[[constraint]]
+  name = "github.com/VividCortex/mysqlerr"
+  branch = "master"
+
+[[constraint]]
+  name = "gopkg.in/square/go-jose.v2"
+  version = "2.1.9"

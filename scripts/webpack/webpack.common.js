@@ -1,5 +1,5 @@
 const path = require('path');
-const {CheckerPlugin} = require('awesome-typescript-loader')
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
   target: 'web',
@@ -11,11 +11,12 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[chunkhash].js',
+    filename: '[name].[hash].js',
+    // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: "public/build/",
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.es6', '.js', '.json'],
+    extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
     },
     modules: [
@@ -23,30 +24,14 @@ module.exports = {
       path.resolve('node_modules')
     ],
   },
+  stats: {
+    warningsFilter: /export .* was not found in/
+  },
   node: {
     fs: 'empty',
   },
   module: {
     rules: [
-      {
-        test: /\.tsx?$/,
-        enforce: 'pre',
-        exclude: /node_modules/,
-        use: {
-          loader: 'tslint-loader',
-          options: {
-            emitErrors: true,
-            typeCheck: false,
-          }
-        }
-      },
-      {
-        test: /\.tsx?$/,
-        exclude: /node_modules/,
-        use: [
-          { loader: "awesome-typescript-loader" }
-        ]
-      },
       {
         test: require.resolve('jquery'),
         use: [
@@ -62,9 +47,9 @@ module.exports = {
       },
       {
         test: /\.html$/,
-        exclude: /index\.template.html/,
+        exclude: /(index|error)\-template\.html/,
         use: [
-          { loader:'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public'},
+          { loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public' },
           {
             loader: 'html-loader',
             options: {
@@ -79,6 +64,8 @@ module.exports = {
     ]
   },
   plugins: [
-    new CheckerPlugin(),
+    new ForkTsCheckerWebpackPlugin({
+      checkSyntacticErrors: true,
+    }),
   ]
 };

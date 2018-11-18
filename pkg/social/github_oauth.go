@@ -213,6 +213,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	userInfo := &BasicUserInfo{
 		Name:  data.Login,
 		Login: data.Login,
+		Id:    fmt.Sprintf("%d", data.Id),
 		Email: data.Email,
 	}
 

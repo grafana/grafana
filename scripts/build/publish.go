@@ -18,8 +18,18 @@ import (
 var apiUrl = flag.String("apiUrl", "https://grafana.com/api", "api url")
 var apiKey = flag.String("apiKey", "", "api key")
 var version = ""
-var versionRe = regexp.MustCompile(`grafana-(.*)\.(linux|windows)`)
+var versionRe = regexp.MustCompile(`grafana-(.*)(\.|_)(arm64|armhfp|aarch64|armv7|darwin|linux|windows|x86_64)`)
+var debVersionRe = regexp.MustCompile(`grafana_(.*)_(arm64|armv7|armhf|amd64)\.deb`)
 var builds = []build{}
+var architectureMapping = map[string]string{
+	"armv7":   "armv7",
+	"armhfp":  "armv7",
+	"armhf":   "armv7",
+	"arm64":   "arm64",
+	"aarch64": "arm64",
+	"amd64":   "amd64",
+	"x86_64":  "amd64",
+}
 
 func main() {
 	flag.Parse()
@@ -60,17 +70,65 @@ func main() {
 	}
 }
 
-func packageWalker(path string, f os.FileInfo, err error) error {
-	if f.Name() == "dist" || strings.Contains(f.Name(), "sha256") || strings.Contains(f.Name(), "latest") {
-		return nil
-	}
-
-	log.Printf("Finding package file %s", f.Name())
-	result := versionRe.FindSubmatch([]byte(f.Name()))
+func mapPackage(path string, name string, shaBytes []byte) (build, error) {
+	log.Printf("Finding package file %s", name)
+	result := versionRe.FindSubmatch([]byte(name))
+	debResult := debVersionRe.FindSubmatch([]byte(name))
 
 	if len(result) > 0 {
 		version = string(result[1])
 		log.Printf("Version detected: %v", version)
+	} else if len(debResult) > 0 {
+		version = string(debResult[1])
+	} else {
+		return build{}, fmt.Errorf("Unable to figure out version from '%v'", name)
+	}
+
+	os := ""
+	if strings.Contains(name, "linux") {
+		os = "linux"
+	}
+	if strings.HasSuffix(name, "windows-amd64.zip") {
+		os = "win"
+	}
+	if strings.HasSuffix(name, "darwin-amd64.tar.gz") {
+		os = "darwin"
+	}
+	if strings.HasSuffix(name, ".rpm") {
+		os = "rhel"
+	}
+	if strings.HasSuffix(name, ".deb") {
+		os = "deb"
+	}
+	if os == "" {
+		return build{}, fmt.Errorf("Unable to figure out os from '%v'", name)
+	}
+
+	arch := ""
+	for archListed, archReal := range architectureMapping {
+		if strings.Contains(name, archListed) {
+			arch = archReal
+			break
+		}
+	}
+	if arch == "" {
+		return build{}, fmt.Errorf("Unable to figure out arch from '%v'", name)
+	}
+
+	return build{
+		Os:     os,
+		Arch:   arch,
+		Url:    "https://s3-us-west-2.amazonaws.com/grafana-releases/master/" + name,
+		Sha256: string(shaBytes),
+	}, nil
+}
+
+func packageWalker(path string, f os.FileInfo, err error) error {
+	if err != nil {
+		log.Printf("error: %v", err)
+	}
+	if f.Name() == "dist" || strings.Contains(f.Name(), "sha256") || strings.Contains(f.Name(), "latest") {
+		return nil
 	}
 
 	shaBytes, err := ioutil.ReadFile(path + ".sha256")
@@ -78,27 +136,13 @@ func packageWalker(path string, f os.FileInfo, err error) error {
 		log.Fatalf("Failed to read sha256 file %v", err)
 	}
 
-	os := ""
-	if strings.Contains(f.Name(), "linux-x64.tar.gz") {
-		os = "linux"
-	}
-	if strings.HasSuffix(f.Name(), "windows-x64.zip") {
-		os = "win"
-	}
-	if strings.HasSuffix(f.Name(), ".rpm") {
-		os = "rhel"
-	}
-	if strings.HasSuffix(f.Name(), ".deb") {
-		os = "deb"
+	build, err := mapPackage(path, f.Name(), shaBytes)
+	if err != nil {
+		log.Printf("Could not map metadata from package: %v", err)
+		return nil
 	}
 
-	builds = append(builds, build{
-		Os:     os,
-		Arch:   "amd64",
-		Url:    "https://s3-us-west-2.amazonaws.com/grafana-releases/master/" + f.Name(),
-		Sha256: string(shaBytes),
-	})
-
+	builds = append(builds, build)
 	return nil
 }
 
@@ -125,7 +169,7 @@ func postRequest(url string, obj interface{}, desc string) {
 			} else {
 				log.Printf("Action: %s \t Failed - Status: %v", desc, res.Status)
 				log.Printf("Resp: %s", body)
-				log.Fatalf("Quiting")
+				log.Fatalf("Quitting")
 			}
 		}
 	}

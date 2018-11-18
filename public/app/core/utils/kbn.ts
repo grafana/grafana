@@ -1,17 +1,17 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-var kbn: any = {};
+const kbn: any = {};
 
 kbn.valueFormats = {};
 
-kbn.regexEscape = function(value) {
+kbn.regexEscape = value => {
   return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
 };
 
 ///// HELPER FUNCTIONS /////
 
-kbn.round_interval = function(interval) {
+kbn.round_interval = interval => {
   switch (true) {
     // 0.015s
     case interval < 15:
@@ -102,28 +102,28 @@ kbn.round_interval = function(interval) {
   }
 };
 
-kbn.secondsToHms = function(seconds) {
-  var numyears = Math.floor(seconds / 31536000);
+kbn.secondsToHms = seconds => {
+  const numyears = Math.floor(seconds / 31536000);
   if (numyears) {
     return numyears + 'y';
   }
-  var numdays = Math.floor((seconds % 31536000) / 86400);
+  const numdays = Math.floor((seconds % 31536000) / 86400);
   if (numdays) {
     return numdays + 'd';
   }
-  var numhours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+  const numhours = Math.floor(((seconds % 31536000) % 86400) / 3600);
   if (numhours) {
     return numhours + 'h';
   }
-  var numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+  const numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
   if (numminutes) {
     return numminutes + 'm';
   }
-  var numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
+  const numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
   if (numseconds) {
     return numseconds + 's';
   }
-  var nummilliseconds = Math.floor(seconds * 1000.0);
+  const nummilliseconds = Math.floor(seconds * 1000.0);
   if (nummilliseconds) {
     return nummilliseconds + 'ms';
   }
@@ -131,22 +131,22 @@ kbn.secondsToHms = function(seconds) {
   return 'less than a millisecond'; //'just now' //or other string you like;
 };
 
-kbn.secondsToHhmmss = function(seconds) {
-  var strings = [];
-  var numhours = Math.floor(seconds / 3600);
-  var numminutes = Math.floor((seconds % 3600) / 60);
-  var numseconds = Math.floor((seconds % 3600) % 60);
+kbn.secondsToHhmmss = seconds => {
+  const strings = [];
+  const numhours = Math.floor(seconds / 3600);
+  const numminutes = Math.floor((seconds % 3600) / 60);
+  const numseconds = Math.floor((seconds % 3600) % 60);
   numhours > 9 ? strings.push('' + numhours) : strings.push('0' + numhours);
   numminutes > 9 ? strings.push('' + numminutes) : strings.push('0' + numminutes);
   numseconds > 9 ? strings.push('' + numseconds) : strings.push('0' + numseconds);
   return strings.join(':');
 };
 
-kbn.to_percent = function(nr, outof) {
+kbn.to_percent = (nr, outof) => {
   return Math.floor(nr / outof * 10000) / 100 + '%';
 };
 
-kbn.addslashes = function(str) {
+kbn.addslashes = str => {
   str = str.replace(/\\/g, '\\\\');
   str = str.replace(/\'/g, "\\'");
   str = str.replace(/\"/g, '\\"');
@@ -168,9 +168,9 @@ kbn.intervals_in_seconds = {
   ms: 0.001,
 };
 
-kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
-  var lowLimitMs = 1; // 1 millisecond default low limit
-  var intervalMs;
+kbn.calculateInterval = (range, resolution, lowLimitInterval) => {
+  let lowLimitMs = 1; // 1 millisecond default low limit
+  let intervalMs;
 
   if (lowLimitInterval) {
     if (lowLimitInterval[0] === '>') {
@@ -190,8 +190,8 @@ kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
   };
 };
 
-kbn.describe_interval = function(str) {
-  var matches = str.match(kbn.interval_regex);
+kbn.describe_interval = str => {
+  const matches = str.match(kbn.interval_regex);
   if (!matches || !_.has(kbn.intervals_in_seconds, matches[2])) {
     throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
   } else {
@@ -203,17 +203,17 @@ kbn.describe_interval = function(str) {
   }
 };
 
-kbn.interval_to_ms = function(str) {
-  var info = kbn.describe_interval(str);
+kbn.interval_to_ms = str => {
+  const info = kbn.describe_interval(str);
   return info.sec * 1000 * info.count;
 };
 
-kbn.interval_to_seconds = function(str) {
-  var info = kbn.describe_interval(str);
+kbn.interval_to_seconds = str => {
+  const info = kbn.describe_interval(str);
   return info.sec * info.count;
 };
 
-kbn.query_color_dot = function(color, diameter) {
+kbn.query_color_dot = (color, diameter) => {
   return (
     '<div class="icon-circle" style="' +
     ['display:inline-block', 'color:' + color, 'font-size:' + diameter + 'px'].join(';') +
@@ -221,29 +221,29 @@ kbn.query_color_dot = function(color, diameter) {
   );
 };
 
-kbn.slugifyForUrl = function(str) {
+kbn.slugifyForUrl = str => {
   return str
     .toLowerCase()
     .replace(/[^\w ]+/g, '')
     .replace(/ +/g, '-');
 };
 
-kbn.stringToJsRegex = function(str) {
+kbn.stringToJsRegex = str => {
   if (str[0] !== '/') {
     return new RegExp('^' + str + '$');
   }
 
-  var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+  const match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
   return new RegExp(match[1], match[2]);
 };
 
-kbn.toFixed = function(value, decimals) {
+kbn.toFixed = (value, decimals) => {
   if (value === null) {
     return '';
   }
 
-  var factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
-  var formatted = String(Math.round(value * factor) / factor);
+  const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
+  const formatted = String(Math.round(value * factor) / factor);
 
   // if exponent return directly
   if (formatted.indexOf('e') !== -1 || value === 0) {
@@ -253,8 +253,8 @@ kbn.toFixed = function(value, decimals) {
   // If tickDecimals was specified, ensure that we have exactly that
   // much precision; otherwise default to the value's own precision.
   if (decimals != null) {
-    var decimalPos = formatted.indexOf('.');
-    var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
+    const decimalPos = formatted.indexOf('.');
+    const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
     if (precision < decimals) {
       return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
     }
@@ -263,7 +263,7 @@ kbn.toFixed = function(value, decimals) {
   return formatted;
 };
 
-kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
+kbn.toFixedScaled = (value, decimals, scaledDecimals, additionalDecimals, ext) => {
   if (scaledDecimals === null) {
     return kbn.toFixed(value, decimals) + ext;
   } else {
@@ -271,12 +271,12 @@ kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals
   }
 };
 
-kbn.roundValue = function(num, decimals) {
+kbn.roundValue = (num, decimals) => {
   if (num === null) {
     return null;
   }
-  var n = Math.pow(10, decimals);
-  var formatted = (n * num).toFixed(decimals);
+  const n = Math.pow(10, decimals);
+  const formatted = (n * num).toFixed(decimals);
   return Math.round(parseFloat(formatted)) / n;
 };
 
@@ -286,8 +286,8 @@ kbn.formatBuilders = {};
 
 // Formatter which always appends a fixed unit string to the value. No
 // scaling of the value is performed.
-kbn.formatBuilders.fixedUnit = function(unit) {
-  return function(size, decimals) {
+kbn.formatBuilders.fixedUnit = unit => {
+  return (size, decimals) => {
     if (size === null) {
       return '';
     }
@@ -298,14 +298,14 @@ kbn.formatBuilders.fixedUnit = function(unit) {
 // Formatter which scales the unit string geometrically according to the given
 // numeric factor. Repeatedly scales the value down by the factor until it is
 // less than the factor in magnitude, or the end of the array is reached.
-kbn.formatBuilders.scaledUnits = function(factor, extArray) {
-  return function(size, decimals, scaledDecimals) {
+kbn.formatBuilders.scaledUnits = (factor, extArray) => {
+  return (size, decimals, scaledDecimals) => {
     if (size === null) {
       return '';
     }
 
-    var steps = 0;
-    var limit = extArray.length;
+    let steps = 0;
+    const limit = extArray.length;
 
     while (Math.abs(size) >= factor) {
       steps++;
@@ -327,10 +327,10 @@ kbn.formatBuilders.scaledUnits = function(factor, extArray) {
 // Extension of the scaledUnits builder which uses SI decimal prefixes. If an
 // offset is given, it adjusts the starting units at the given prefix; a value
 // of 0 starts at no scale; -3 drops to nano, +2 starts at mega, etc.
-kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
-  var prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+kbn.formatBuilders.decimalSIPrefix = (unit, offset) => {
+  let prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   prefixes = prefixes.slice(3 + (offset || 0));
-  var units = prefixes.map(function(p) {
+  const units = prefixes.map(p => {
     return ' ' + p + unit;
   });
   return kbn.formatBuilders.scaledUnits(1000, units);
@@ -339,9 +339,9 @@ kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
 // Extension of the scaledUnits builder which uses SI binary prefixes. If
 // offset is given, it starts the units at the given prefix; otherwise, the
 // offset defaults to zero and the initial unit is not prefixed.
-kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
-  var prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
-  var units = prefixes.map(function(p) {
+kbn.formatBuilders.binarySIPrefix = (unit, offset) => {
+  const prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
+  const units = prefixes.map(p => {
     return ' ' + p + unit;
   });
   return kbn.formatBuilders.scaledUnits(1024, units);
@@ -349,26 +349,26 @@ kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
 
 // Currency formatter for prefixing a symbol onto a number. Supports scaling
 // up to the trillions.
-kbn.formatBuilders.currency = function(symbol) {
-  var units = ['', 'K', 'M', 'B', 'T'];
-  var scaler = kbn.formatBuilders.scaledUnits(1000, units);
-  return function(size, decimals, scaledDecimals) {
+kbn.formatBuilders.currency = symbol => {
+  const units = ['', 'K', 'M', 'B', 'T'];
+  const scaler = kbn.formatBuilders.scaledUnits(1000, units);
+  return (size, decimals, scaledDecimals) => {
     if (size === null) {
       return '';
     }
-    var scaled = scaler(size, decimals, scaledDecimals);
+    const scaled = scaler(size, decimals, scaledDecimals);
     return symbol + scaled;
   };
 };
 
-kbn.formatBuilders.simpleCountUnit = function(symbol) {
-  var units = ['', 'K', 'M', 'B', 'T'];
-  var scaler = kbn.formatBuilders.scaledUnits(1000, units);
-  return function(size, decimals, scaledDecimals) {
+kbn.formatBuilders.simpleCountUnit = symbol => {
+  const units = ['', 'K', 'M', 'B', 'T'];
+  const scaler = kbn.formatBuilders.scaledUnits(1000, units);
+  return (size, decimals, scaledDecimals) => {
     if (size === null) {
       return '';
     }
-    var scaled = scaler(size, decimals, scaledDecimals);
+    const scaled = scaler(size, decimals, scaledDecimals);
     return scaled + ' ' + symbol;
   };
 };
@@ -390,14 +390,14 @@ kbn.valueFormats.short = kbn.formatBuilders.scaledUnits(1000, [
 ]);
 kbn.valueFormats.dB = kbn.formatBuilders.fixedUnit('dB');
 
-kbn.valueFormats.percent = function(size, decimals) {
+kbn.valueFormats.percent = (size, decimals) => {
   if (size === null) {
     return '';
   }
   return kbn.toFixed(size, decimals) + '%';
 };
 
-kbn.valueFormats.percentunit = function(size, decimals) {
+kbn.valueFormats.percentunit = (size, decimals) => {
   if (size === null) {
     return '';
   }
@@ -407,7 +407,7 @@ kbn.valueFormats.percentunit = function(size, decimals) {
 /* Formats the value to hex. Uses float if specified decimals are not 0.
  * There are two options, one with 0x, and one without */
 
-kbn.valueFormats.hex = function(value, decimals) {
+kbn.valueFormats.hex = (value, decimals) => {
   if (value == null) {
     return '';
   }
@@ -416,22 +416,22 @@ kbn.valueFormats.hex = function(value, decimals) {
     .toUpperCase();
 };
 
-kbn.valueFormats.hex0x = function(value, decimals) {
+kbn.valueFormats.hex0x = (value, decimals) => {
   if (value == null) {
     return '';
   }
-  var hexString = kbn.valueFormats.hex(value, decimals);
+  const hexString = kbn.valueFormats.hex(value, decimals);
   if (hexString.substring(0, 1) === '-') {
     return '-0x' + hexString.substring(1);
   }
   return '0x' + hexString;
 };
 
-kbn.valueFormats.sci = function(value, decimals) {
+kbn.valueFormats.sci = (value, decimals) => {
   return value.toExponential(decimals);
 };
 
-kbn.valueFormats.locale = function(value, decimals) {
+kbn.valueFormats.locale = (value, decimals) => {
   return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
 };
 
@@ -447,6 +447,10 @@ kbn.valueFormats.currencyDKK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyISK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyNOK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencySEK = kbn.formatBuilders.currency('kr');
+kbn.valueFormats.currencyCZK = kbn.formatBuilders.currency('czk');
+kbn.valueFormats.currencyCHF = kbn.formatBuilders.currency('CHF');
+kbn.valueFormats.currencyPLN = kbn.formatBuilders.currency('zł');
+kbn.valueFormats.currencyBTC = kbn.formatBuilders.currency('฿');
 
 // Data (Binary)
 kbn.valueFormats.bits = kbn.formatBuilders.binarySIPrefix('b');
@@ -484,6 +488,7 @@ kbn.valueFormats.EHs = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
 
 // Throughput
 kbn.valueFormats.ops = kbn.formatBuilders.simpleCountUnit('ops');
+kbn.valueFormats.reqps = kbn.formatBuilders.simpleCountUnit('reqps');
 kbn.valueFormats.rps = kbn.formatBuilders.simpleCountUnit('rps');
 kbn.valueFormats.wps = kbn.formatBuilders.simpleCountUnit('wps');
 kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
@@ -496,6 +501,7 @@ kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
 kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
 kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
+kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m²');
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
 kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
@@ -525,6 +531,7 @@ kbn.valueFormats.pressurebar = kbn.formatBuilders.decimalSIPrefix('bar');
 kbn.valueFormats.pressurembar = kbn.formatBuilders.decimalSIPrefix('bar', -1);
 kbn.valueFormats.pressurekbar = kbn.formatBuilders.decimalSIPrefix('bar', 1);
 kbn.valueFormats.pressurehpa = kbn.formatBuilders.fixedUnit('hPa');
+kbn.valueFormats.pressurekpa = kbn.formatBuilders.fixedUnit('kPa');
 kbn.valueFormats.pressurehg = kbn.formatBuilders.fixedUnit('"Hg');
 kbn.valueFormats.pressurepsi = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
 
@@ -566,9 +573,9 @@ kbn.valueFormats.accG = kbn.formatBuilders.fixedUnit('g');
 // Volume
 kbn.valueFormats.litre = kbn.formatBuilders.decimalSIPrefix('L');
 kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
-kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m3');
-kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm3');
-kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm3');
+kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m³');
+kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm³');
+kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm³');
 kbn.valueFormats.gallons = kbn.formatBuilders.fixedUnit('gal');
 
 // Flow
@@ -576,6 +583,9 @@ kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
 kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
+kbn.valueFormats.litreh = kbn.formatBuilders.fixedUnit('l/h');
+kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
+kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
@@ -594,21 +604,21 @@ kbn.valueFormats.radr = kbn.formatBuilders.decimalSIPrefix('R');
 kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
 
 // Concentration
-kbn.valueFormats.conppm = kbn.formatBuilders.fixedUnit('ppm');
+kbn.valueFormats.ppm = kbn.formatBuilders.fixedUnit('ppm');
 kbn.valueFormats.conppb = kbn.formatBuilders.fixedUnit('ppb');
-kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m3');
-kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm3');
-kbn.valueFormats.conμgm3 = kbn.formatBuilders.fixedUnit('μg/m3');
-kbn.valueFormats.conμgNm3 = kbn.formatBuilders.fixedUnit('μg/Nm3');
-kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m3');
-kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm3');
-kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m3');
-kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm3');
+kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m³');
+kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm³');
+kbn.valueFormats.conμgm3 = kbn.formatBuilders.fixedUnit('μg/m³');
+kbn.valueFormats.conμgNm3 = kbn.formatBuilders.fixedUnit('μg/Nm³');
+kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m³');
+kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm³');
+kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m³');
+kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm³');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
 
-kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.ms = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -619,33 +629,33 @@ kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     // Less than 1 min
     return kbn.toFixedScaled(size / 1000, decimals, scaledDecimals, 3, ' s');
   } else if (Math.abs(size) < 3600000) {
-    // Less than 1 hour, devide in minutes
+    // Less than 1 hour, divide in minutes
     return kbn.toFixedScaled(size / 60000, decimals, scaledDecimals, 5, ' min');
   } else if (Math.abs(size) < 86400000) {
-    // Less than one day, devide in hours
+    // Less than one day, divide in hours
     return kbn.toFixedScaled(size / 3600000, decimals, scaledDecimals, 7, ' hour');
   } else if (Math.abs(size) < 31536000000) {
-    // Less than one year, devide in days
+    // Less than one year, divide in days
     return kbn.toFixedScaled(size / 86400000, decimals, scaledDecimals, 8, ' day');
   }
 
   return kbn.toFixedScaled(size / 31536000000, decimals, scaledDecimals, 10, ' year');
 };
 
-kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.s = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
 
-  // Less than 1 µs, devide in ns
+  // Less than 1 µs, divide in ns
   if (Math.abs(size) < 0.000001) {
     return kbn.toFixedScaled(size * 1e9, decimals, scaledDecimals - decimals, -9, ' ns');
   }
-  // Less than 1 ms, devide in µs
+  // Less than 1 ms, divide in µs
   if (Math.abs(size) < 0.001) {
     return kbn.toFixedScaled(size * 1e6, decimals, scaledDecimals - decimals, -6, ' µs');
   }
-  // Less than 1 second, devide in ms
+  // Less than 1 second, divide in ms
   if (Math.abs(size) < 1) {
     return kbn.toFixedScaled(size * 1e3, decimals, scaledDecimals - decimals, -3, ' ms');
   }
@@ -653,23 +663,23 @@ kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
   if (Math.abs(size) < 60) {
     return kbn.toFixed(size, decimals) + ' s';
   } else if (Math.abs(size) < 3600) {
-    // Less than 1 hour, devide in minutes
+    // Less than 1 hour, divide in minutes
     return kbn.toFixedScaled(size / 60, decimals, scaledDecimals, 1, ' min');
   } else if (Math.abs(size) < 86400) {
-    // Less than one day, devide in hours
+    // Less than one day, divide in hours
     return kbn.toFixedScaled(size / 3600, decimals, scaledDecimals, 4, ' hour');
   } else if (Math.abs(size) < 604800) {
-    // Less than one week, devide in days
+    // Less than one week, divide in days
     return kbn.toFixedScaled(size / 86400, decimals, scaledDecimals, 5, ' day');
   } else if (Math.abs(size) < 31536000) {
-    // Less than one year, devide in week
+    // Less than one year, divide in week
     return kbn.toFixedScaled(size / 604800, decimals, scaledDecimals, 6, ' week');
   }
 
   return kbn.toFixedScaled(size / 3.15569e7, decimals, scaledDecimals, 7, ' year');
 };
 
-kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
+kbn.valueFormats['µs'] = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -683,7 +693,7 @@ kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.ns = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.ns = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -701,7 +711,7 @@ kbn.valueFormats.ns = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.m = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.m = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -719,7 +729,7 @@ kbn.valueFormats.m = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.h = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.h = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -735,7 +745,7 @@ kbn.valueFormats.h = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.valueFormats.d = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.d = (size, decimals, scaledDecimals) => {
   if (size === null) {
     return '';
   }
@@ -749,7 +759,7 @@ kbn.valueFormats.d = function(size, decimals, scaledDecimals) {
   }
 };
 
-kbn.toDuration = function(size, decimals, timeScale) {
+kbn.toDuration = (size, decimals, timeScale) => {
   if (size === null) {
     return '';
   }
@@ -760,7 +770,7 @@ kbn.toDuration = function(size, decimals, timeScale) {
     return kbn.toDuration(-size, decimals, timeScale) + ' ago';
   }
 
-  var units = [
+  const units = [
     { short: 'y', long: 'year' },
     { short: 'M', long: 'month' },
     { short: 'w', long: 'week' },
@@ -774,21 +784,21 @@ kbn.toDuration = function(size, decimals, timeScale) {
   // intervals_in_seconds uses seconds (duh), convert them to milliseconds here to minimize floating point errors
   size *=
     kbn.intervals_in_seconds[
-      units.find(function(e) {
+      units.find(e => {
         return e.long === timeScale;
       }).short
     ] * 1000;
 
-  var strings = [];
+  const strings = [];
   // after first value >= 1 print only $decimals more
-  var decrementDecimals = false;
-  for (var i = 0; i < units.length && decimals >= 0; i++) {
-    var interval = kbn.intervals_in_seconds[units[i].short] * 1000;
-    var value = size / interval;
+  let decrementDecimals = false;
+  for (let i = 0; i < units.length && decimals >= 0; i++) {
+    const interval = kbn.intervals_in_seconds[units[i].short] * 1000;
+    const value = size / interval;
     if (value >= 1 || decrementDecimals) {
       decrementDecimals = true;
-      var floor = Math.floor(value);
-      var unit = units[i].long + (floor !== 1 ? 's' : '');
+      const floor = Math.floor(value);
+      const unit = units[i].long + (floor !== 1 ? 's' : '');
       strings.push(floor + ' ' + unit);
       size = size % interval;
       decimals--;
@@ -798,24 +808,77 @@ kbn.toDuration = function(size, decimals, timeScale) {
   return strings.join(', ');
 };
 
-kbn.valueFormats.dtdurationms = function(size, decimals) {
+kbn.toClock = (size, decimals) => {
+  if (size === null) {
+    return '';
+  }
+
+  // < 1 second
+  if (size < 1000) {
+    return moment.utc(size).format('SSS\\m\\s');
+  }
+
+  // < 1 minute
+  if (size < 60000) {
+    let format = 'ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  // < 1 hour
+  if (size < 3600000) {
+    let format = 'mm\\m:ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'mm\\m';
+    } else if (decimals === 1) {
+      format = 'mm\\m:ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  let format = 'mm\\m:ss\\s:SSS\\m\\s';
+
+  const hours = `${('0' + Math.floor(moment.duration(size, 'milliseconds').asHours())).slice(-2)}h`;
+
+  if (decimals === 0) {
+    format = '';
+  } else if (decimals === 1) {
+    format = 'mm\\m';
+  } else if (decimals === 2) {
+    format = 'mm\\m:ss\\s';
+  }
+
+  return format ? `${hours}:${moment.utc(size).format(format)}` : hours;
+};
+
+kbn.valueFormats.dtdurationms = (size, decimals) => {
   return kbn.toDuration(size, decimals, 'millisecond');
 };
 
-kbn.valueFormats.dtdurations = function(size, decimals) {
+kbn.valueFormats.dtdurations = (size, decimals) => {
   return kbn.toDuration(size, decimals, 'second');
 };
 
-kbn.valueFormats.dthms = function(size, decimals) {
+kbn.valueFormats.dthms = (size, decimals) => {
   return kbn.secondsToHhmmss(size);
 };
 
-kbn.valueFormats.timeticks = function(size, decimals, scaledDecimals) {
+kbn.valueFormats.timeticks = (size, decimals, scaledDecimals) => {
   return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
 };
 
-kbn.valueFormats.dateTimeAsIso = function(epoch) {
-  var time = moment(epoch);
+kbn.valueFormats.clockms = (size, decimals) => {
+  return kbn.toClock(size, decimals);
+};
+
+kbn.valueFormats.clocks = (size, decimals) => {
+  return kbn.toClock(size * 1000, decimals);
+};
+
+kbn.valueFormats.dateTimeAsIso = (epoch, isUtc) => {
+  const time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('HH:mm:ss');
@@ -823,8 +886,8 @@ kbn.valueFormats.dateTimeAsIso = function(epoch) {
   return time.format('YYYY-MM-DD HH:mm:ss');
 };
 
-kbn.valueFormats.dateTimeAsUS = function(epoch) {
-  var time = moment(epoch);
+kbn.valueFormats.dateTimeAsUS = (epoch, isUtc) => {
+  const time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('h:mm:ss a');
@@ -832,13 +895,14 @@ kbn.valueFormats.dateTimeAsUS = function(epoch) {
   return time.format('MM/DD/YYYY h:mm:ss a');
 };
 
-kbn.valueFormats.dateTimeFromNow = function(epoch) {
-  return moment(epoch).fromNow();
+kbn.valueFormats.dateTimeFromNow = (epoch, isUtc) => {
+  const time = isUtc ? moment.utc(epoch) : moment(epoch);
+  return time.fromNow();
 };
 
 ///// FORMAT MENU /////
 
-kbn.getUnitFormats = function() {
+kbn.getUnitFormats = () => {
   return [
     {
       text: 'none',
@@ -869,6 +933,10 @@ kbn.getUnitFormats = function() {
         { text: 'Icelandic Króna (kr)', value: 'currencyISK' },
         { text: 'Norwegian Krone (kr)', value: 'currencyNOK' },
         { text: 'Swedish Krona (kr)', value: 'currencySEK' },
+        { text: 'Czech koruna (czk)', value: 'currencyCZK' },
+        { text: 'Swiss franc (CHF)', value: 'currencyCHF' },
+        { text: 'Polish Złoty (PLN)', value: 'currencyPLN' },
+        { text: 'Bitcoin (฿)', value: 'currencyBTC' },
       ],
     },
     {
@@ -886,6 +954,8 @@ kbn.getUnitFormats = function() {
         { text: 'duration (s)', value: 'dtdurations' },
         { text: 'duration (hh:mm:ss)', value: 'dthms' },
         { text: 'Timeticks (s/100)', value: 'timeticks' },
+        { text: 'clock (ms)', value: 'clockms' },
+        { text: 'clock (s)', value: 'clocks' },
       ],
     },
     {
@@ -946,6 +1016,7 @@ kbn.getUnitFormats = function() {
       text: 'throughput',
       submenu: [
         { text: 'ops/sec (ops)', value: 'ops' },
+        { text: 'requests/sec (rps)', value: 'reqps' },
         { text: 'reads/sec (rps)', value: 'rps' },
         { text: 'writes/sec (wps)', value: 'wps' },
         { text: 'I/O ops/sec (iops)', value: 'iops' },
@@ -984,17 +1055,17 @@ kbn.getUnitFormats = function() {
     {
       text: 'velocity',
       submenu: [
-        { text: 'm/s', value: 'velocityms' },
-        { text: 'km/h', value: 'velocitykmh' },
-        { text: 'mph', value: 'velocitymph' },
+        { text: 'metres/second (m/s)', value: 'velocityms' },
+        { text: 'kilometers/hour (km/h)', value: 'velocitykmh' },
+        { text: 'miles/hour (mph)', value: 'velocitymph' },
         { text: 'knot (kn)', value: 'velocityknot' },
       ],
     },
     {
       text: 'volume',
       submenu: [
-        { text: 'millilitre', value: 'mlitre' },
-        { text: 'litre', value: 'litre' },
+        { text: 'millilitre (mL)', value: 'mlitre' },
+        { text: 'litre (L)', value: 'litre' },
         { text: 'cubic metre', value: 'm3' },
         { text: 'Normal cubic metre', value: 'Nm3' },
         { text: 'cubic decimetre', value: 'dm3' },
@@ -1007,6 +1078,7 @@ kbn.getUnitFormats = function() {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
+        { text: 'Watt per square metre (W/m²)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
@@ -1042,6 +1114,7 @@ kbn.getUnitFormats = function() {
         { text: 'Bars', value: 'pressurebar' },
         { text: 'Kilobars', value: 'pressurekbar' },
         { text: 'Hectopascals', value: 'pressurehpa' },
+        { text: 'Kilopascals', value: 'pressurekpa' },
         { text: 'Inches of mercury', value: 'pressurehg' },
         { text: 'PSI', value: 'pressurepsi' },
       ],
@@ -1062,6 +1135,9 @@ kbn.getUnitFormats = function() {
         { text: 'Cubic meters/sec (cms)', value: 'flowcms' },
         { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
+        { text: 'Litre/hour', value: 'litreh' },
+        { text: 'Litre/min (l/min)', value: 'flowlpm' },
+        { text: 'milliLitre/min (mL/min)', value: 'flowmlpm' },
       ],
     },
     {
@@ -1097,16 +1173,16 @@ kbn.getUnitFormats = function() {
     {
       text: 'concentration',
       submenu: [
-        { text: 'parts-per-million (ppm)', value: 'conppm' },
+        { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
-        { text: 'nanogram per cubic metre (ng/m3)', value: 'conngm3' },
-        { text: 'nanogram per normal cubic metre (ng/Nm3)', value: 'conngNm3' },
-        { text: 'microgram per cubic metre (μg/m3)', value: 'conμgm3' },
-        { text: 'microgram per normal cubic metre (μg/Nm3)', value: 'conμgNm3' },
-        { text: 'milligram per cubic metre (mg/m3)', value: 'conmgm3' },
-        { text: 'milligram per normal cubic metre (mg/Nm3)', value: 'conmgNm3' },
-        { text: 'gram per cubic metre (g/m3)', value: 'congm3' },
-        { text: 'gram per normal cubic metre (g/Nm3)', value: 'congNm3' },
+        { text: 'nanogram per cubic metre (ng/m³)', value: 'conngm3' },
+        { text: 'nanogram per normal cubic metre (ng/Nm³)', value: 'conngNm3' },
+        { text: 'microgram per cubic metre (μg/m³)', value: 'conμgm3' },
+        { text: 'microgram per normal cubic metre (μg/Nm³)', value: 'conμgNm3' },
+        { text: 'milligram per cubic metre (mg/m³)', value: 'conmgm3' },
+        { text: 'milligram per normal cubic metre (mg/Nm³)', value: 'conmgNm3' },
+        { text: 'gram per cubic metre (g/m³)', value: 'congm3' },
+        { text: 'gram per normal cubic metre (g/Nm³)', value: 'congNm3' },
       ],
     },
   ];

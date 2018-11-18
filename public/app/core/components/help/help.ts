@@ -25,13 +25,16 @@ export class HelpCtrl {
         { keys: ['d', 'k'], description: 'Toggle kiosk mode (hides top nav)' },
         { keys: ['d', 'E'], description: 'Expand all rows' },
         { keys: ['d', 'C'], description: 'Collapse all rows' },
+        { keys: ['d', 'a'], description: 'Toggle auto fit panels (experimental feature)' },
         { keys: ['mod+o'], description: 'Toggle shared graph crosshair' },
       ],
       'Focused Panel': [
         { keys: ['e'], description: 'Toggle panel edit view' },
         { keys: ['v'], description: 'Toggle panel fullscreen view' },
         { keys: ['p', 's'], description: 'Open Panel Share Modal' },
+        { keys: ['p', 'd'], description: 'Duplicate Panel' },
         { keys: ['p', 'r'], description: 'Remove Panel' },
+        { keys: ['p', 'l'], description: 'Toggle panel legend' },
       ],
       'Time Range': [
         { keys: ['t', 'z'], description: 'Zoom out time range' },

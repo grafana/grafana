@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	simpleDashboardConfig string = "./test-configs/dashboards-from-disk"
-	oldVersion            string = "./test-configs/version-0"
-	brokenConfigs         string = "./test-configs/broken-configs"
+	simpleDashboardConfig = "./testdata/test-configs/dashboards-from-disk"
+	oldVersion            = "./testdata/test-configs/version-0"
+	brokenConfigs         = "./testdata/test-configs/broken-configs"
 )
 
 func TestDashboardsAsConfig(t *testing.T) {
@@ -22,7 +22,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			cfg, err := cfgProvider.readConfig()
 			So(err, ShouldBeNil)
 
-			validateDashboardAsConfig(cfg)
+			validateDashboardAsConfig(t, cfg)
 		})
 
 		Convey("Can read config file in version 0 format", func() {
@@ -30,7 +30,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			cfg, err := cfgProvider.readConfig()
 			So(err, ShouldBeNil)
 
-			validateDashboardAsConfig(cfg)
+			validateDashboardAsConfig(t, cfg)
 		})
 
 		Convey("Should skip invalid path", func() {
@@ -56,7 +56,9 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 	})
 }
-func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
+func validateDashboardAsConfig(t *testing.T, cfg []*DashboardsAsConfig) {
+	t.Helper()
+
 	So(len(cfg), ShouldEqual, 2)
 
 	ds := cfg[0]
@@ -68,6 +70,7 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(len(ds.Options), ShouldEqual, 1)
 	So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds.DisableDeletion, ShouldBeTrue)
+	So(ds.UpdateIntervalSeconds, ShouldEqual, 15)
 
 	ds2 := cfg[1]
 	So(ds2.Name, ShouldEqual, "default")
@@ -78,4 +81,5 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(len(ds2.Options), ShouldEqual, 1)
 	So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds2.DisableDeletion, ShouldBeFalse)
+	So(ds2.UpdateIntervalSeconds, ShouldEqual, 10)
 }

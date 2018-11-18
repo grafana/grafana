@@ -43,6 +43,42 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
+## IAM Policies
+
+Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
+and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
+utilize Grafana's built-in support for assuming roles.
+
+Here is a minimal policy example:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowReadingMetricsFromCloudWatch",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:ListMetrics",
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:GetMetricData"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeTags",
+                "ec2:DescribeInstances",
+                "ec2:DescribeRegions"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
 ### AWS credentials file
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
@@ -80,6 +116,8 @@ and `dimension keys/values`.
 
 In place of `region` you can specify `default` to use the default region configured in the datasource for the query,
 e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ...)`.
+
+Read more about the available dimensions in the [CloudWatch  Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
 Name | Description
 ------- | --------
@@ -173,3 +211,37 @@ Amazon provides 1 million CloudWatch API requests each month at no additional ch
 it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
+
+## Configure the Datasource with Provisioning
+
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+Using a credentials file
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: credentials
+      defaultRegion: eu-west-2
+```
+
+Using `accessKey` and `secretKey`
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: keys
+      defaultRegion: eu-west-2
+    secureJsonData:
+      accessKey: "<your access key>"
+      secretKey: "<your secret key>"
+```

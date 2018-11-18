@@ -50,7 +50,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 					return nil
 				})
 
-				saveInvalidLoginAttempt(&LoginUserQuery{
+				saveInvalidLoginAttempt(&m.LoginUserQuery{
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
@@ -103,7 +103,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 					return nil
 				})
 
-				saveInvalidLoginAttempt(&LoginUserQuery{
+				saveInvalidLoginAttempt(&m.LoginUserQuery{
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",

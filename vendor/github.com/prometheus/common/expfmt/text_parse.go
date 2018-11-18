@@ -556,8 +556,8 @@ func (p *TextParser) readTokenUntilWhitespace() {
 // byte considered is the byte already read (now in p.currentByte).  The first
 // newline byte encountered is still copied into p.currentByte, but not into
 // p.currentToken. If recognizeEscapeSequence is true, two escape sequences are
-// recognized: '\\' tranlates into '\', and '\n' into a line-feed character. All
-// other escape sequences are invalid and cause an error.
+// recognized: '\\' translates into '\', and '\n' into a line-feed character.
+// All other escape sequences are invalid and cause an error.
 func (p *TextParser) readTokenUntilNewline(recognizeEscapeSequence bool) {
 	p.currentToken.Reset()
 	escaped := false

@@ -1,6 +1,10 @@
-// vendor
+// DEPENDENCIES
+@import '../../node_modules/react-table/react-table.css';
+
+// VENDOR
 @import '../vendor/css/timepicker.css';
 @import '../vendor/css/spectrum.css';
+@import '../vendor/css/rc-cascader.scss';
 
 // MIXINS
 @import 'mixins/mixins';
@@ -67,6 +71,7 @@
 @import 'components/filter-list';
 @import 'components/filter-table';
 @import 'components/old_stuff';
+@import 'components/slate_editor';
 @import 'components/typeahead';
 @import 'components/modals';
 @import 'components/dropdown';
@@ -92,6 +97,10 @@
 @import 'components/form_select_box';
 @import 'components/user-picker';
 @import 'components/description-picker';
+@import 'components/viz_editor';
+@import 'components/delete_button';
+@import 'components/add_data_source.scss';
+@import 'components/page_loader';
 
 // PAGES
 @import 'pages/login';
@@ -104,5 +113,6 @@
 @import 'pages/signup';
 @import 'pages/styleguide';
 @import 'pages/errorpage';
+@import 'pages/explore';
 @import 'old_responsive';
 @import 'components/view_states.scss';

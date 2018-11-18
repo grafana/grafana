@@ -115,7 +115,7 @@
 
 			<div class="gf-form">
 				<span class="gf-form-label width-9">Values</span>
-				<input type="text" class="gf-form-input" placeholder="name" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()" required></input>
+				<input type="text" class="gf-form-input" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()" required></input>
 			</div>
 
 			<div class="gf-form-inline">
@@ -152,6 +152,14 @@
 			<div class="gf-form">
 				<span class="gf-form-label">Value</span>
 				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="your metric prefix"></input>
+			</div>
+		</div>
+
+		<div ng-if="current.type === 'textbox'" class="gf-form-group">
+			<h5 class="section-heading">Text options</h5>
+			<div class="gf-form">
+				<span class="gf-form-label">Default value</span>
+				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="default value, if any"></input>
 			</div>
 		</div>
 
@@ -280,11 +288,14 @@
 		</div>
 
 		<div class="gf-form-group" ng-show="current.options.length">
-			<h5>Preview of values (shows max 20)</h5>
+			<h5>Preview of values</h5>
 			<div class="gf-form-inline">
-				<div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
-					<span class="gf-form-label">{{option.text}}</span>
-				</div>
+				<div class="gf-form" ng-repeat="option in current.options | limitTo: optionsLimit">
+          <span class="gf-form-label">{{option.text}}</span>
+        </div>
+        <div class="gf-form" ng-if= "current.options.length > optionsLimit">
+          <a class="gf-form-label btn-secondary" ng-click="showMoreOptions()">Show more</a>
+        </div>
 			</div>
 		</div>
 

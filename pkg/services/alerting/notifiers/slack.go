@@ -40,6 +40,39 @@ func init() {
         </info-popover>
       </div>
       <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Username</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.username"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Set the username for the bot's message
+        </info-popover>
+      </div>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Icon emoji</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.icon_emoji"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Provide an emoji to use as the icon for the bot's message. Overrides the icon URL
+        </info-popover>
+      </div>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Icon URL</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.icon_url"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Provide a URL to an image to use as the icon for the bot's message
+        </info-popover>
+      </div>
+      <div class="gf-form max-width-30">
         <span class="gf-form-label width-6">Mention</span>
         <input type="text"
           class="gf-form-input max-width-30"
@@ -58,7 +91,7 @@ func init() {
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb")
+          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work 
         </info-popover>
       </div>
     `,
@@ -73,14 +106,20 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	recipient := model.Settings.Get("recipient").MustString()
+	username := model.Settings.Get("username").MustString()
+	iconEmoji := model.Settings.Get("icon_emoji").MustString()
+	iconUrl := model.Settings.Get("icon_url").MustString()
 	mention := model.Settings.Get("mention").MustString()
 	token := model.Settings.Get("token").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	return &SlackNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		Recipient:    recipient,
+		Username:     username,
+		IconEmoji:    iconEmoji,
+		IconUrl:      iconUrl,
 		Mention:      mention,
 		Token:        token,
 		Upload:       uploadImage,
@@ -92,6 +131,9 @@ type SlackNotifier struct {
 	NotifierBase
 	Url       string
 	Recipient string
+	Username  string
+	IconEmoji string
+	IconUrl   string
 	Mention   string
 	Token     string
 	Upload    bool
@@ -129,7 +171,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
+	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 	image_url := ""
@@ -159,6 +201,15 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	//recipient override
 	if this.Recipient != "" {
 		body["channel"] = this.Recipient
+	}
+	if this.Username != "" {
+		body["username"] = this.Username
+	}
+	if this.IconEmoji != "" {
+		body["icon_emoji"] = this.IconEmoji
+	}
+	if this.IconUrl != "" {
+		body["icon_url"] = this.IconUrl
 	}
 	data, _ := json.Marshal(&body)
 	cmd := &m.SendWebhookSync{Url: this.Url, Body: string(data)}

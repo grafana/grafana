@@ -120,6 +120,10 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_data_sources.svg');
 }
 
+.gicon-editor {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_editor.svg');
+}
+
 .gicon-folder-new {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_folder.svg');
 }
@@ -178,6 +182,10 @@
 
 .gicon-variable {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_variable.svg');
+}
+
+.gicon-viewer {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_viewer.svg');
 }
 
 .gicon-zoom-out {

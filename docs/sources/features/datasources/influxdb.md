@@ -28,16 +28,36 @@ Name | Description
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The http protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
-*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Database* | Name of your influxdb database
 *User* | Name of your database user
 *Password* | Database user's password
 
-### Proxy vs Direct access
+Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
-Proxy access means that the Grafana backend will proxy all requests from the browser. So requests to InfluxDB will be channeled through
-`grafana-server`. This means that the URL you specify needs to be accessible from the server you are running Grafana on. Proxy access
-mode is also more secure as the username & password will never reach the browser.
+### Server access mode (Default)
+
+All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
+
+### Browser access mode
+
+All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
+
+### Min time interval
+A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
 
 ## Query Editor
 
@@ -168,9 +188,28 @@ queries via the Dashboard menu / Annotations view.
 An example query:
 
 ```SQL
-SELECT title, description from events WHERE $timeFilter order asc
+SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
 For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
 part. If you only select one column you will not need to enter anything in the column mapping fields. The
 Tags field can be a comma separated string.
+
+## Configure the Datasource with Provisioning
+
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    database: site
+    user: grafana
+    password: grafana
+    url: http://localhost:8086
+```

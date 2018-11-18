@@ -10,7 +10,8 @@ import (
 
 func TestInterval(t *testing.T) {
 	Convey("Default interval ", t, func() {
-		setting.NewConfigContext(&setting.CommandLineArgs{
+		cfg := setting.NewCfg()
+		cfg.Load(&setting.CommandLineArgs{
 			HomePath: "../../",
 		})
 

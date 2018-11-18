@@ -22,13 +22,13 @@ Setting up Grafana for high availability is fairly simple. It comes down to two 
 
 First, you need to do is to setup MySQL or Postgres on another server and configure Grafana to use that database.
 You can find the configuration for doing that in the [[database]]({{< relref "configuration.md" >}}#database) section in the grafana config.
-Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database your using.
+Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database you're using.
 
 ## User sessions
 
-The second thing to consider is how to deal with user sessions and how to configure your load balancer infront of Grafana.
-Grafana support two says of storing session data locally on disk or in a database/cache-server.
-If you want to store sessions on disk you can use `sticky sessions` in your load balanacer. If you prefer to store session data in a database/cache-server
+The second thing to consider is how to deal with user sessions and how to configure your load balancer in front of Grafana.
+Grafana supports two ways of storing session data: locally on disk or in a database/cache-server.
+If you want to store sessions on disk you can use `sticky sessions` in your load balancer. If you prefer to store session data in a database/cache-server
 you can use any stateless routing strategy in your load balancer (ex round robin or least connections).
 
 ### Sticky sessions

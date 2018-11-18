@@ -87,12 +87,22 @@
 	<gf-dashboard-history dashboard="dashboard"></gf-dashboard-history>
 </div>
 
-<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'view_json'" >
-	<h3 class="dashboard-settings__header">View JSON</h3>
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'dashboard_json'" >
+	<h3 class="dashboard-settings__header">JSON Model</h3>
+  <div class="dashboard-settings__subheader">
+    The JSON Model below is data structure that defines the dashboard. Including settings, panel settings & layout,
+    queries etc.
+  </div>
 
 	<div class="gf-form">
 		<code-editor content="ctrl.json" data-mode="json" data-max-lines=30 ></code-editor>
 	</div>
+
+  <div class="gf-form-button-row">
+    <button class="btn btn-success" ng-click="ctrl.saveDashboardJson()" ng-show="ctrl.canSave">
+      <i class="fa fa-save"></i> Save Changes
+    </button>
+  </div>
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'permissions'" >

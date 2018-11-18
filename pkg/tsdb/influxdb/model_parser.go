@@ -40,6 +40,9 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 	}
 
 	parsedInterval, err := tsdb.GetIntervalFrom(dsInfo, model, time.Millisecond*1)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Query{
 		Measurement:  measurement,

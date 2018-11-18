@@ -15,34 +15,49 @@ weight = 2
 
 Description | Download
 ------------ | -------------
-Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [5.0.3 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.3-1.x86_64.rpm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [x86-64](https://grafana.com/grafana/download?platform=linux)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [ARM64](https://grafana.com/grafana/download?platform=arm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [ARMv7](https://grafana.com/grafana/download?platform=arm)
 
-
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
-installation.
+Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
 ## Install Stable
 
 You can install Grafana using Yum directly.
 
 ```bash
-$ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.3-1.x86_64.rpm
+$ sudo yum install <rpm package url>
 ```
 
-Or install manually using `rpm`.
-
-#### On CentOS / Fedora / Redhat:
+Example:
 
 ```bash
-$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.3-1.x86_64.rpm
+$ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4-1.x86_64.rpm
+```
+
+Or install manually using `rpm`. First execute
+
+```bash
+$ wget <rpm package url>
+```
+
+Example:
+
+```bash
+$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4-1.x86_64.rpm
+```
+
+### On CentOS / Fedora / Redhat:
+
+```bash
 $ sudo yum install initscripts fontconfig
-$ sudo rpm -Uvh grafana-5.0.3-1.x86_64.rpm
+$ sudo rpm -Uvh <local rpm package>
 ```
 
-#### On OpenSuse:
+### On OpenSuse:
 
 ```bash
-$ sudo rpm -i --nodeps grafana-5.0.3-1.x86_64.rpm
+$ sudo rpm -i --nodeps <local rpm package>
 ```
 
 ## Install via YUM Repository
@@ -52,7 +67,7 @@ Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
 ```bash
 [grafana]
 name=grafana
-baseurl=https://packagecloud.io/grafana/stable/el/6/$basearch
+baseurl=https://packagecloud.io/grafana/stable/el/7/$basearch
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1
@@ -64,7 +79,7 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 There is also a testing repository if you want beta or release candidates.
 
 ```bash
-baseurl=https://packagecloud.io/grafana/testing/el/6/$basearch
+baseurl=https://packagecloud.io/grafana/testing/el/7/$basearch
 ```
 
 Then install Grafana via the `yum` command.
@@ -99,6 +114,8 @@ $ sudo service grafana-server start
 This will start the `grafana-server` process as the `grafana` user,
 which is created during package installation. The default HTTP port is
 `3000`, and default user and group is `admin`.
+
+Default login and password `admin`/ `admin`
 
 To configure the Grafana server to start at boot time:
 
@@ -178,3 +195,7 @@ Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
 binary needs the working directory to be the root install directory (where the
 binary and the `public` folder is located).
 
+## Logging in for the first time
+
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+Then follow the instructions [here](/guides/getting_started/).

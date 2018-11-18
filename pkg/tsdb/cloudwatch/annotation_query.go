@@ -72,7 +72,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 				MetricName: aws.String(metricName),
 				Dimensions: qd,
 				Statistic:  aws.String(s),
-				Period:     aws.Int64(int64(period)),
+				Period:     aws.Int64(period),
 			}
 			resp, err := svc.DescribeAlarmsForMetric(params)
 			if err != nil {
@@ -88,7 +88,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 				MetricName:        aws.String(metricName),
 				Dimensions:        qd,
 				ExtendedStatistic: aws.String(s),
-				Period:            aws.Int64(int64(period)),
+				Period:            aws.Int64(period),
 			}
 			resp, err := svc.DescribeAlarmsForMetric(params)
 			if err != nil {

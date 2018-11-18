@@ -1,6 +1,6 @@
 import config from 'app/core/config';
 
-const _stripBaseFromUrl = url => {
+export const stripBaseFromUrl = url => {
   const appSubUrl = config.appSubUrl;
   const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
   const urlWithoutBase =
@@ -9,6 +9,4 @@ const _stripBaseFromUrl = url => {
   return urlWithoutBase;
 };
 
-export default {
-  stripBaseFromUrl: _stripBaseFromUrl,
-};
+export default { stripBaseFromUrl };

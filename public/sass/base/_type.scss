@@ -24,7 +24,7 @@ small {
   font-size: 85%;
 }
 strong {
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
 }
 em {
   font-style: italic;
@@ -249,7 +249,7 @@ dd {
   line-height: $line-height-base;
 }
 dt {
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
 }
 dd {
   margin-left: $line-height-base / 2;
@@ -376,7 +376,7 @@ a.external-link {
       padding: $spacer*0.5 $spacer;
     }
     th {
-      font-weight: normal;
+      font-weight: $font-weight-semi-bold;
       background: $table-bg-accent;
     }
   }
@@ -414,4 +414,8 @@ a.external-link {
   background: transparent;
   color: $yellow;
   padding: 0;
+}
+
+th {
+  font-weight: $font-weight-semi-bold;
 }

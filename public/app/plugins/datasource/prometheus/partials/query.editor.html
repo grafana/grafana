@@ -14,8 +14,8 @@
         data-min-length=0 data-items=1000 ng-model-onblur ng-change="ctrl.refreshMetricData()">
       </input>
       <info-popover mode="right-absolute">
-        Controls the name of the time series, using name or pattern. For example {{hostname}} will be replaced with label value for
-        the label hostname.
+        Controls the name of the time series, using name or pattern. For example
+        <span ng-non-bindable>{{hostname}}</span> will be replaced with label value for the label hostname.
       </info-popover>
     </div>
 
@@ -25,7 +25,8 @@
         placeholder="{{ctrl.panelCtrl.interval}}" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()"
       />
       <info-popover mode="right-absolute">
-        Leave blank for auto handling based on time range and panel width
+        Leave blank for auto handling based on time range and panel width. Note that the actual dates used in the query will be adjusted
+        to a multiple of the interval step.
       </info-popover>
     </div>
 

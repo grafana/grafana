@@ -22,6 +22,7 @@ const (
 	DS_MSSQL         = "mssql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
+	DS_STACKDRIVER   = "stackdriver"
 )
 
 var (
@@ -29,6 +30,7 @@ var (
 	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
 	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
 	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration.")
+	ErrDataSourceAccessDenied       = errors.New("Data source access denied")
 )
 
 type DsAccess string
@@ -58,24 +60,24 @@ type DataSource struct {
 	Updated time.Time
 }
 
-var knownDatasourcePlugins map[string]bool = map[string]bool{
-	DS_ES:                       true,
-	DS_GRAPHITE:                 true,
-	DS_INFLUXDB:                 true,
-	DS_INFLUXDB_08:              true,
-	DS_KAIROSDB:                 true,
-	DS_CLOUDWATCH:               true,
-	DS_PROMETHEUS:               true,
-	DS_OPENTSDB:                 true,
-	DS_POSTGRES:                 true,
-	DS_MYSQL:                    true,
-	DS_MSSQL:                    true,
-	"opennms":                   true,
-	"abhisant-druid-datasource": true,
-	"dalmatinerdb-datasource":   true,
-	"gnocci":                    true,
-	"zabbix":                    true,
-	"alexanderzobnin-zabbix-datasource":   true,
+var knownDatasourcePlugins = map[string]bool{
+	DS_ES:                                 true,
+	DS_GRAPHITE:                           true,
+	DS_INFLUXDB:                           true,
+	DS_INFLUXDB_08:                        true,
+	DS_KAIROSDB:                           true,
+	DS_CLOUDWATCH:                         true,
+	DS_PROMETHEUS:                         true,
+	DS_OPENTSDB:                           true,
+	DS_POSTGRES:                           true,
+	DS_MYSQL:                              true,
+	DS_MSSQL:                              true,
+	DS_STACKDRIVER:                        true,
+	"opennms":                             true,
+	"abhisant-druid-datasource":           true,
+	"dalmatinerdb-datasource":             true,
+	"gnocci":                              true,
+	"zabbix":                              true,
 	"newrelic-app":                        true,
 	"grafana-datadog-datasource":          true,
 	"grafana-simple-json":                 true,
@@ -88,6 +90,7 @@ var knownDatasourcePlugins map[string]bool = map[string]bool{
 	"ayoungprogrammer-finance-datasource": true,
 	"monasca-datasource":                  true,
 	"vertamedia-clickhouse-datasource":    true,
+	"alexanderzobnin-zabbix-datasource":   true,
 }
 
 func IsKnownDataSourcePlugin(dsType string) bool {
@@ -165,6 +168,7 @@ type DeleteDataSourceByNameCommand struct {
 
 type GetDataSourcesQuery struct {
 	OrgId  int64
+	User   *SignedInUser
 	Result []*DataSource
 }
 
@@ -185,6 +189,26 @@ type GetDataSourceByNameQuery struct {
 }
 
 // ---------------------
-// EVENTS
-type DataSourceCreatedEvent struct {
+//  Permissions
+// ---------------------
+
+type DsPermissionType int
+
+const (
+	DsPermissionNoAccess DsPermissionType = iota
+	DsPermissionQuery
+)
+
+func (p DsPermissionType) String() string {
+	names := map[int]string{
+		int(DsPermissionQuery):    "Query",
+		int(DsPermissionNoAccess): "No Access",
+	}
+	return names[int(p)]
+}
+
+type DatasourcesPermissionFilterQuery struct {
+	User        *SignedInUser
+	Datasources []*DataSource
+	Result      []*DataSource
 }

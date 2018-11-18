@@ -1,5 +1,5 @@
 import React from 'react';
-import PerfectScrollbar from 'perfect-scrollbar';
+import baron from 'baron';
 
 export interface Props {
   children: any;
@@ -8,31 +8,36 @@ export interface Props {
 
 export default class ScrollBar extends React.Component<Props, any> {
   private container: any;
-  private ps: PerfectScrollbar;
+  private scrollbar: baron;
 
   constructor(props) {
     super(props);
   }
 
   componentDidMount() {
-    this.ps = new PerfectScrollbar(this.container, {
-      wheelPropagation: true,
+    this.scrollbar = baron({
+      root: this.container.parentElement,
+      scroller: this.container,
+      bar: '.baron__bar',
+      barOnCls: '_scrollbar',
+      scrollingCls: '_scrolling',
+      track: '.baron__track',
     });
   }
 
   componentDidUpdate() {
-    this.ps.update();
+    this.scrollbar.update();
   }
 
   componentWillUnmount() {
-    this.ps.destroy();
+    this.scrollbar.dispose();
   }
 
   // methods can be invoked by outside
   setScrollTop(top) {
     if (this.container) {
       this.container.scrollTop = top;
-      this.ps.update();
+      this.scrollbar.update();
 
       return true;
     }
@@ -42,11 +47,15 @@ export default class ScrollBar extends React.Component<Props, any> {
   setScrollLeft(left) {
     if (this.container) {
       this.container.scrollLeft = left;
-      this.ps.update();
+      this.scrollbar.update();
 
       return true;
     }
     return false;
+  }
+
+  update() {
+    this.scrollbar.update();
   }
 
   handleRef = ref => {
@@ -55,8 +64,14 @@ export default class ScrollBar extends React.Component<Props, any> {
 
   render() {
     return (
-      <div className={this.props.className} ref={this.handleRef}>
-        {this.props.children}
+      <div className="baron baron__root baron__clipper">
+        <div className={this.props.className + ' baron__scroller'} ref={this.handleRef}>
+          {this.props.children}
+        </div>
+
+        <div className="baron__track">
+          <div className="baron__bar" />
+        </div>
       </div>
     );
   }

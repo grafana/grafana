@@ -145,7 +145,7 @@ export const movingAvgModelSettings = {
 };
 
 export function getMetricAggTypes(esVersion) {
-  return _.filter(metricAggTypes, function(f) {
+  return _.filter(metricAggTypes, f => {
     if (f.minVersion) {
       return f.minVersion <= esVersion;
     } else {
@@ -164,7 +164,7 @@ export function getPipelineOptions(metric) {
 
 export function isPipelineAgg(metricType) {
   if (metricType) {
-    var po = pipelineOptions[metricType];
+    const po = pipelineOptions[metricType];
     return po !== null && po !== undefined;
   }
 
@@ -172,8 +172,8 @@ export function isPipelineAgg(metricType) {
 }
 
 export function getPipelineAggOptions(targets) {
-  var result = [];
-  _.each(targets.metrics, function(metric) {
+  const result = [];
+  _.each(targets.metrics, metric => {
     if (!isPipelineAgg(metric.type)) {
       result.push({ text: describeMetric(metric), value: metric.id });
     }
@@ -183,9 +183,9 @@ export function getPipelineAggOptions(targets) {
 }
 
 export function getMovingAvgSettings(model, filtered) {
-  var filteredResult = [];
+  const filteredResult = [];
   if (filtered) {
-    _.each(movingAvgModelSettings[model], function(setting) {
+    _.each(movingAvgModelSettings[model], setting => {
       if (!setting.isCheckbox) {
         filteredResult.push(setting);
       }
@@ -196,8 +196,8 @@ export function getMovingAvgSettings(model, filtered) {
 }
 
 export function getOrderByOptions(target) {
-  var metricRefs = [];
-  _.each(target.metrics, function(metric) {
+  const metricRefs = [];
+  _.each(target.metrics, metric => {
     if (metric.type !== 'count') {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
     }
@@ -207,24 +207,32 @@ export function getOrderByOptions(target) {
 }
 
 export function describeOrder(order) {
-  var def = _.find(orderOptions, { value: order });
+  const def = _.find(orderOptions, { value: order });
   return def.text;
 }
 
 export function describeMetric(metric) {
-  var def = _.find(metricAggTypes, { value: metric.type });
+  const def = _.find(metricAggTypes, { value: metric.type });
   return def.text + ' ' + metric.field;
 }
 
 export function describeOrderBy(orderBy, target) {
-  var def = _.find(orderByOptions, { value: orderBy });
+  const def = _.find(orderByOptions, { value: orderBy });
   if (def) {
     return def.text;
   }
-  var metric = _.find(target.metrics, { id: orderBy });
+  const metric = _.find(target.metrics, { id: orderBy });
   if (metric) {
     return describeMetric(metric);
   } else {
     return 'metric not found';
   }
+}
+
+export function defaultMetricAgg() {
+  return { type: 'count', id: '1' };
+}
+
+export function defaultBucketAgg() {
+  return { type: 'date_histogram', id: '2', settings: { interval: 'auto' } };
 }

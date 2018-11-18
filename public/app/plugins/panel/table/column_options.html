@@ -69,7 +69,59 @@
       </div>
     </div>
 
-    <div class="section gf-form-group" ng-if="style.type === 'number'">
+    <div class="section gf-form-group" ng-if="style.type === 'string'">
+      <h5 class="section-heading">Value Mappings</h5>
+      <div class="editor-row">
+        <div class="gf-form-group">
+          <div class="gf-form">
+            <span class="gf-form-label">
+              Type
+            </span>
+            <div class="gf-form-select-wrapper">
+              <select class="gf-form-input" ng-model="style.mappingType"
+                      ng-options="c.value as c.text for c in editor.mappingTypes" ng-change="editor.render()"></select>
+            </div>
+          </div>
+          <div class="gf-form-group" ng-if="style.mappingType==1">
+            <div class="gf-form" ng-repeat="map in style.valueMaps">
+              <span class="gf-form-label">
+                <i class="fa fa-remove pointer" ng-click="editor.removeValueMap(style, $index)"></i>
+              </span>
+              <input type="text" class="gf-form-input max-width-6" ng-model="map.value" placeholder="Value" ng-blur="editor.render()">
+              <label class="gf-form-label">
+                <i class="fa fa-arrow-right"></i>
+              </label>
+              <input type="text" class="gf-form-input max-width-8" ng-model="map.text" placeholder="Text" ng-blur="editor.render()">
+            </div>
+            <div class="gf-form">
+              <label class="gf-form-label">
+                <a class="pointer" ng-click="editor.addValueMap(style)"><i class="fa fa-plus"></i></a>
+              </label>
+            </div>
+          </div>
+          <div class="gf-form-group" ng-if="style.mappingType==2">
+            <div class="gf-form" ng-repeat="rangeMap in style.rangeMaps">
+              <span class="gf-form-label">
+                <i class="fa fa-remove pointer" ng-click="editor.removeRangeMap(style, $index)"></i>
+              </span>
+              <span class="gf-form-label">From</span>
+              <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="editor.render()">
+              <span class="gf-form-label">To</span>
+              <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="editor.render()">
+              <span class="gf-form-label">Text</span>
+              <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="editor.render()">
+            </div>
+            <div class="gf-form">
+              <label class="gf-form-label">
+                <a class="pointer" ng-click="editor.addRangeMap(style)"><i class="fa fa-plus"></i></a>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section gf-form-group" ng-if="['number', 'string'].indexOf(style.type) !== -1">
       <h5 class="section-heading">Thresholds</h5>
       <div class="gf-form">
         <label class="gf-form-label width-8">Thresholds
@@ -104,30 +156,35 @@
     <div class="section gf-form-group" ng-if="style.link">
       <h5 class="section-heading">Link</h5>
       <div class="gf-form">
-        <label class="gf-form-label width-9">Url</label>
+        <label class="gf-form-label width-9">
+          Url
+          <info-popover mode="right-normal">
+            <p>Specify an URL (relative or absolute)</p>
+            <span>
+              Use special variables to specify cell values:
+              <br>
+              <em>${__cell}</em> refers to current cell value
+              <br>
+              <em>${__cell_n}</em> refers to Nth column value in current row. Column indexes are started from 0. For instance,
+              <em>${__cell_1}</em> refers to second column's value.
+              <br>
+              <em>${__cell:raw}</em> syntax. By default values are URI encoded. If the value is a complete URL you can disable all encoding using
+            </span>
+          </info-popover>
+        </label>
         <input type="text" class="gf-form-input width-29" ng-model="style.linkUrl" ng-blur="editor.render()" ng-model-onblur data-placement="right">
-        <info-popover mode="right-absolute">
-          <p>Specify an URL (relative or absolute)</p>
-          <span>
-            Use special variables to specify cell values:
-            <br>
-            <em>$__cell</em> refers to current cell value
-            <br>
-            <em>$__cell_n</em> refers to Nth column value in current row. Column indexes are started from 0. For instance,
-            <em>$__cell_1</em> refers to second column's value.
-          </span>
-        </info-popover>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label width-9">Tooltip</label>
+        <label class="gf-form-label width-9">
+          Tooltip
+          <info-popover mode="right-normal">
+            <p>Specify text for link tooltip.</p>
+            <span>
+              This title appears when user hovers pointer over the cell with link. Use the same variables as for URL.
+            </span>
+          </info-popover></label>
         <input type="text" class="gf-form-input width-29" ng-model="style.linkTooltip" ng-blur="editor.render()" ng-model-onblur
           data-placement="right">
-        <info-popover mode="right-absolute">
-          <p>Specify text for link tooltip.</p>
-          <span>
-            This title appears when user hovers pointer over the cell with link. Use the same variables as for URL.
-          </span>
-        </info-popover>
       </div>
       <gf-form-switch class="gf-form" label-class="width-9" label="Open in new tab" checked="style.linkTargetBlank"></gf-form-switch>
     </div>

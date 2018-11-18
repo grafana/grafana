@@ -23,9 +23,9 @@ Before upgrading it can be a good idea to backup your Grafana database. This wil
 
 #### sqlite
 
-If you use sqlite you only need to make a backup of you `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on unix system.
+If you use sqlite you only need to make a backup of your `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on unix system.
 If you are unsure what database you use and where it is stored check you grafana configuration file. If you
-installed grafana to custom location using a binary tar/zip it is usally in `<grafana_install_dir>/data`.
+installed grafana to custom location using a binary tar/zip it is usually in `<grafana_install_dir>/data`.
 
 #### mysql
 
@@ -109,3 +109,11 @@ positioning system when you load them in v5. Dashboards saved in v5 will not wor
 external panel plugins might need to be updated to work properly.
 
 For more details on the new panel positioning system, [click here]({{< relref "reference/dashboard.md#panel-size-position" >}})
+
+## Upgrading to v5.2
+
+One of the database migrations included in this release will update all annotation timestamps from second to millisecond precision. If you have a large amount of annotations the database migration may take a long time to complete which may cause problems if you use systemd to run Grafana.
+
+We've got one report where using systemd, PostgreSQL and a large amount of annotations (table size 1645mb) took 8-20 minutes for the database migration to complete. However, the grafana-server process was killed after 90 seconds by systemd. Any database migration queries in progress when systemd kills the grafana-server process continues to execute in database until finished.
+
+If you're using systemd and have a large amount of annotations consider temporary adjusting the systemd `TimeoutStartSec` setting to something high like `30m` before upgrading.

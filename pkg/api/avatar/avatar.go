@@ -97,15 +97,6 @@ type CacheServer struct {
 	cache    *gocache.Cache
 }
 
-func (this *CacheServer) mustInt(r *http.Request, defaultValue int, keys ...string) (v int) {
-	for _, k := range keys {
-		if _, err := fmt.Sscanf(r.FormValue(k), "%d", &v); err == nil {
-			defaultValue = v
-		}
-	}
-	return defaultValue
-}
-
 func (this *CacheServer) Handler(ctx *macaron.Context) {
 	urlPath := ctx.Req.URL.Path
 	hash := urlPath[strings.LastIndex(urlPath, "/")+1:]
@@ -226,7 +217,7 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client *http.Client = &http.Client{
+var client = &http.Client{
 	Timeout:   time.Second * 2,
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
@@ -258,9 +249,6 @@ func (this *thunderTask) fetch() error {
 	this.Avatar.data = &bytes.Buffer{}
 	writer := bufio.NewWriter(this.Avatar.data)
 
-	if _, err = io.Copy(writer, resp.Body); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(writer, resp.Body)
+	return err
 }
