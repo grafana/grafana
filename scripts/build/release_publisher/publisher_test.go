@@ -4,44 +4,57 @@ import "testing"
 
 func TestPreparingReleaseFromRemote(t *testing.T) {
 
-	var builder releaseBuilder
-
-	versionIn := "v5.2.0-beta1"
-	expectedVersion := "5.2.0-beta1"
-	whatsNewUrl := "https://whatsnews.foo/"
-	relNotesUrl := "https://relnotes.foo/"
-	expectedArch := "amd64"
-	expectedOs := "linux"
-	buildArtifacts := []buildArtifact{{expectedOs, expectedArch, ".linux-amd64.tar.gz"}}
-
-	builder = releaseFromExternalContent{
-		getter:                 mockHttpGetter{},
-		rawVersion:             versionIn,
-		artifactConfigurations: buildArtifactConfigurations,
+	cases := []struct {
+		version string
+		expectedVersion string
+		whatsNewUrl string
+		relNotesUrl string
+		expectedArch string
+		expectedOs string
+		buildArtifacts []buildArtifact
+	}{
+		{
+			version:         "v5.2.0-beta1",
+			expectedVersion: "5.2.0-beta1",
+			whatsNewUrl:     "https://whatsnews.foo/",
+			relNotesUrl:     "https://relnotes.foo/",
+			expectedArch:    "amd64",
+			expectedOs:      "linux",
+			buildArtifacts:  []buildArtifact{{"linux", "amd64", ".linux-amd64.tar.gz"}},
+		},
 	}
 
-	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl, false)
+	for _, test := range cases {
+		var builder releaseBuilder
+		builder = releaseFromExternalContent{
+			getter:                 mockHttpGetter{},
+			rawVersion:             test.version,
+			artifactConfigurations: test.buildArtifacts,
+		}
 
-	if !rel.Beta || rel.Stable {
-		t.Errorf("%s should have been tagged as beta (not stable), but wasn't	.", versionIn)
-	}
+		rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", test.whatsNewUrl, test.relNotesUrl, false)
 
-	if rel.Version != expectedVersion {
-		t.Errorf("Expected version to be %s, but it was %s.", expectedVersion, rel.Version)
-	}
+		if !rel.Beta || rel.Stable {
+			t.Errorf("%s should have been tagged as beta (not stable), but wasn't	.", test.version)
+		}
 
-	expectedBuilds := len(buildArtifacts)
-	if len(rel.Builds) != expectedBuilds {
-		t.Errorf("Expected %v builds, but got %v.", expectedBuilds, len(rel.Builds))
-	}
+		if rel.Version != test.expectedVersion {
+			t.Errorf("Expected version to be %s, but it was %s.", test.expectedVersion, rel.Version)
+		}
 
-	build := rel.Builds[0]
-	if build.Arch != expectedArch {
-		t.Errorf("Expected arch to be %v, but it was %v", expectedArch, build.Arch)
-	}
+		expectedBuilds := len(test.buildArtifacts)
+		if len(rel.Builds) != expectedBuilds {
+			t.Errorf("Expected %v builds, but got %v.", expectedBuilds, len(rel.Builds))
+		}
 
-	if build.Os != expectedOs {
-		t.Errorf("Expected arch to be %v, but it was %v", expectedOs, build.Os)
+		build := rel.Builds[0]
+		if build.Arch != test.expectedArch {
+			t.Errorf("Expected arch to be %v, but it was %v", test.expectedArch, build.Arch)
+		}
+
+		if build.Os != test.expectedOs {
+			t.Errorf("Expected arch to be %v, but it was %v", test.expectedOs, build.Os)
+		}
 	}
 }
 
