@@ -10,6 +10,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
+import { expandRecordingRules } from './language_utils';
 
 export function alignRange(start, end, step) {
   const alignedEnd = Math.ceil(end / step) * step;
@@ -468,11 +469,8 @@ export class PrometheusDatasource {
         return `sum(${query.trim()}) by ($1)`;
       }
       case 'EXPAND_RULES': {
-        const mapping = action.mapping;
-        if (mapping) {
-          const ruleNames = Object.keys(mapping);
-          const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\()`, 'ig');
-          return query.replace(rulesRegex, (match, pre, name, post) => mapping[name]);
+        if (action.mapping) {
+          return expandRecordingRules(query, action.mapping);
         }
       }
       default:
