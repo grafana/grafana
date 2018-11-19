@@ -1,7 +1,12 @@
 import isString from 'lodash/isString';
 import { alignmentPeriods } from './constants';
 import { MetricFindQueryTypes } from './types';
-import { getMetricTypesByService, getAlignmentOptionsByMetric, getAggregationOptionsByMetric } from './functions';
+import {
+  getMetricTypesByService,
+  getAlignmentOptionsByMetric,
+  getAggregationOptionsByMetric,
+  getLabelKeys,
+} from './functions';
 
 export default class StackdriverMetricFindQuery {
   constructor(private datasource) {}
@@ -37,37 +42,34 @@ export default class StackdriverMetricFindQuery {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    return getMetricTypesByService(metricDescriptors, selectedService).map(s => ({
+    return getMetricTypesByService(metricDescriptors, this.datasource.templateSrv.replace(selectedService)).map(s => ({
       text: s.displayName,
       value: s.type,
       expandable: true,
     }));
   }
 
-  async handleLabelKeysQuery({ selectedQueryType, selectedMetricType, labelKey }) {
+  async handleLabelKeysQuery({ selectedMetricType }) {
     if (!selectedMetricType) {
       return [];
     }
-    const refId = 'handleLabelKeysQuery';
-    const response = await this.datasource.getLabels(selectedMetricType, refId);
-    const labelKeys = response.meta
-      ? [...Object.keys(response.meta.resourceLabels), ...Object.keys(response.meta.metricLabels)]
-      : [];
+    const labelKeys = await getLabelKeys(this.datasource, selectedMetricType);
     return labelKeys.map(this.toFindQueryResult);
   }
 
-  async handleLabelValuesQuery({ selectedQueryType, selectedMetricType, labelKey }) {
+  async handleLabelValuesQuery({ selectedMetricType, labelKey }) {
     if (!selectedMetricType) {
       return [];
     }
     const refId = 'handleLabelValuesQuery';
     const response = await this.datasource.getLabels(selectedMetricType, refId);
-
+    const interpolatedKey = this.datasource.templateSrv.replace(labelKey);
+    const [name] = interpolatedKey.split('.').reverse();
     let values = [];
-    if (response.meta && response.meta.metricLabels && response.meta.metricLabels.hasOwnProperty(labelKey)) {
-      values = response.meta.metricLabels[labelKey];
-    } else if (response.meta && response.meta.resourceLabels && response.meta.resourceLabels.hasOwnProperty(labelKey)) {
-      values = response.meta.resourceLabels[labelKey];
+    if (response.meta && response.meta.metricLabels && response.meta.metricLabels.hasOwnProperty(name)) {
+      values = response.meta.metricLabels[name];
+    } else if (response.meta && response.meta.resourceLabels && response.meta.resourceLabels.hasOwnProperty(name)) {
+      values = response.meta.resourceLabels[name];
     }
 
     return values.map(this.toFindQueryResult);
@@ -87,7 +89,9 @@ export default class StackdriverMetricFindQuery {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    const { valueType, metricKind } = metricDescriptors.find(m => m.type === selectedMetricType);
+    const { valueType, metricKind } = metricDescriptors.find(
+      m => m.type === this.datasource.templateSrv.replace(selectedMetricType)
+    );
     return getAlignmentOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 
@@ -96,7 +100,9 @@ export default class StackdriverMetricFindQuery {
       return [];
     }
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    const { valueType, metricKind } = metricDescriptors.find(m => m.type === selectedMetricType);
+    const { valueType, metricKind } = metricDescriptors.find(
+      m => m.type === this.datasource.templateSrv.replace(selectedMetricType)
+    );
     return getAggregationOptionsByMetric(valueType, metricKind).map(this.toFindQueryResult);
   }
 

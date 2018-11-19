@@ -14,6 +14,7 @@ const props: VariableQueryProps = {
   datasource: {
     getMetricTypes: async p => [],
   },
+  templateSrv: { replace: s => s },
 };
 
 describe('VariableQueryEditor', () => {

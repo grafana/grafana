@@ -65,7 +65,9 @@ export class StackdriverAggregationCtrl {
     const selectedAlignment = this.alignOptions.find(
       ap => ap.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner)
     );
-    return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${selectedAlignment.text})`;
+    return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${
+      selectedAlignment ? selectedAlignment.text : ''
+    })`;
   }
 
   deselectAggregationOption(notValidOptionValue: string) {

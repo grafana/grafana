@@ -14,7 +14,7 @@ async function loadComponent(module) {
 }
 
 /** @ngInject */
-function variableQueryEditorLoader() {
+function variableQueryEditorLoader(templateSrv) {
   return {
     restrict: 'E',
     link: async (scope, elem) => {
@@ -23,6 +23,7 @@ function variableQueryEditorLoader() {
         datasource: scope.currentDatasource,
         query: scope.current.query,
         onChange: scope.onQueryChange,
+        templateSrv,
       };
       ReactDOM.render(<Component {...props} />, elem[0]);
       scope.$on('$destroy', () => {
