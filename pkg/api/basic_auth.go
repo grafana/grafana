@@ -1,11 +1,11 @@
-package util
+package api
 
 import (
 	"crypto/subtle"
 	macaron "gopkg.in/macaron.v1"
 )
 
-// BasicAuthenticated parses the provided HTTP request for basic authentication credentials
+// BasicAuthenticatedRequest parses the provided HTTP request for basic authentication credentials
 // and returns true if the provided credentials match the expected username and password.
 // Returns false if the request is unauthenticated.
 // Uses constant-time comparison in order to mitigate timing attacks.
