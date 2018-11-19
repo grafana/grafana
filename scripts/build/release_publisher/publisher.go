@@ -95,7 +95,7 @@ func (t buildArtifact) getUrl(baseArchiveUrl, version string, releaseType Releas
 		prefix = "_"
 	}
 
-	if releaseType == STABLE && t.os == "rhel" {
+	if releaseType.stable() && t.os == "rhel" {
 		rhelReleaseExtra = "-1"
 	}
 
