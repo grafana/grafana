@@ -57,6 +57,9 @@ var (
 	IsEnterprise    bool
 	ApplicationName string
 
+	// packaging
+	Packaging = "unknown"
+
 	// Paths
 	HomePath       string
 	PluginsPath    string

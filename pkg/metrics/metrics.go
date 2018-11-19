@@ -313,7 +313,7 @@ func init() {
 
 // SetBuildInformation sets the build information for this binary
 func SetBuildInformation(version, revision, branch string) {
-	// We export this info twice for backwards compability.
+	// We export this info twice for backwards compatibility.
 	// Once this have been released for some time we should be able to remote `M_Grafana_Version`
 	// The reason we added a new one is that its common practice in the prometheus community
 	// to name this metric `*_build_info` so its easy to do aggregation on all programs.
@@ -397,11 +397,12 @@ func sendUsageStats(oauthProviders map[string]bool) {
 
 	metrics := map[string]interface{}{}
 	report := map[string]interface{}{
-		"version": version,
-		"metrics": metrics,
-		"os":      runtime.GOOS,
-		"arch":    runtime.GOARCH,
-		"edition": getEdition(),
+		"version":   version,
+		"metrics":   metrics,
+		"os":        runtime.GOOS,
+		"arch":      runtime.GOARCH,
+		"edition":   getEdition(),
+		"packaging": setting.Packaging,
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -446,6 +447,8 @@ func sendUsageStats(oauthProviders map[string]bool) {
 		}
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
+
+	metrics["stats.packaging."+setting.Packaging+".count"] = 1
 
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := bus.Dispatch(&dsAccessStats); err != nil {
