@@ -5,6 +5,7 @@ import {
   getMetricTypesByService,
   getAlignmentOptionsByMetric,
   getAggregationOptionsByMetric,
+  extractServicesFromMetricDescriptors,
   getLabelKeys,
 } from './functions';
 
@@ -14,6 +15,8 @@ export default class StackdriverMetricFindQuery {
   async execute(query: any) {
     try {
       switch (query.selectedQueryType) {
+        case MetricFindQueryTypes.Services:
+          return this.handleServiceQuery();
         case MetricFindQueryTypes.MetricTypes:
           return this.handleMetricTypesQuery(query);
         case MetricFindQueryTypes.LabelKeys:
@@ -35,6 +38,16 @@ export default class StackdriverMetricFindQuery {
       console.error(`Could not run StackdriverMetricFindQuery ${query}`, error);
       return [];
     }
+  }
+
+  async handleServiceQuery() {
+    const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
+    const services = extractServicesFromMetricDescriptors(metricDescriptors);
+    return services.map(s => ({
+      text: s.serviceShortName,
+      value: s.service,
+      expandable: true,
+    }));
   }
 
   async handleMetricTypesQuery({ selectedService }) {

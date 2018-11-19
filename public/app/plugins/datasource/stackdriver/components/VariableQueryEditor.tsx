@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import uniqBy from 'lodash/uniqBy';
 import { VariableQueryProps } from 'app/types/plugins';
 import SimpleSelect from './SimpleSelect';
-import { getMetricTypes, getLabelKeys } from '../functions';
+import { getMetricTypes, getLabelKeys, extractServicesFromMetricDescriptors } from '../functions';
 import { MetricFindQueryTypes, VariableQueryData } from '../types';
 
 export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   queryTypes: Array<{ value: string; name: string }> = [
+    { value: MetricFindQueryTypes.Services, name: 'Services' },
     { value: MetricFindQueryTypes.MetricTypes, name: 'Metric Types' },
     { value: MetricFindQueryTypes.LabelKeys, name: 'Label Keys' },
     { value: MetricFindQueryTypes.LabelValues, name: 'Label Values' },
@@ -34,7 +34,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
 
   async componentDidMount() {
     const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
-    const services = uniqBy(metricDescriptors, 'service').map(m => ({
+    const services = extractServicesFromMetricDescriptors(metricDescriptors).map(m => ({
       value: m.service,
       name: m.serviceShortName,
     }));
@@ -50,7 +50,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       metricDescriptors,
       this.state.selectedMetricType,
       this.props.templateSrv.replace(this.state.selectedMetricType),
-      selectedService
+      this.props.templateSrv.replace(selectedService)
     );
     const state: any = {
       services,
@@ -76,7 +76,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       this.state.metricDescriptors,
       this.state.selectedMetricType,
       this.props.templateSrv.replace(this.state.selectedMetricType),
-      event.target.value
+      this.props.templateSrv.replace(event.target.value)
     );
     const state: any = {
       selectedService: event.target.value,
@@ -125,7 +125,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         return (
           <SimpleSelect
             value={this.state.selectedService}
-            options={this.state.services}
+            options={this.insertTemplateVariables(this.state.services)}
             onValueChange={e => this.onServiceChange(e)}
             label="Services"
           />
@@ -137,7 +137,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
           <React.Fragment>
             <SimpleSelect
               value={this.state.selectedService}
-              options={this.state.services}
+              options={this.insertTemplateVariables(this.state.services)}
               onValueChange={e => this.onServiceChange(e)}
               label="Services"
             />
@@ -163,7 +163,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
           <React.Fragment>
             <SimpleSelect
               value={this.state.selectedService}
-              options={this.state.services}
+              options={this.insertTemplateVariables(this.state.services)}
               onValueChange={e => this.onServiceChange(e)}
               label="Services"
             />

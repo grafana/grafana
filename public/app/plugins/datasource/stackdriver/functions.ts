@@ -1,4 +1,7 @@
+import uniqBy from 'lodash/uniqBy';
 import { alignOptions, aggOptions } from './constants';
+
+export const extractServicesFromMetricDescriptors = metricDescriptors => uniqBy(metricDescriptors, 'service');
 
 export const getMetricTypesByService = (metricDescriptors, service) =>
   metricDescriptors.filter(m => m.service === service);
