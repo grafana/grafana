@@ -69,13 +69,25 @@ const (
 	NIGHTLY
 )
 
+func (rt ReleaseType) beta() bool {
+	return rt == BETA
+}
+
+func (rt ReleaseType) stable() bool {
+	return rt == STABLE
+}
+
+func (rt ReleaseType) nightly() bool {
+	return rt == NIGHTLY
+}
+
 type buildArtifact struct {
 	os         string
 	arch       string
 	urlPostfix string
 }
 
-func (t buildArtifact) getUrl(baseArchiveUrl, version string, rt ReleaseType) string {
+func (t buildArtifact) getUrl(baseArchiveUrl, version string, releaseType ReleaseType) string {
 	prefix := "-"
 	rhelReleaseExtra := ""
 
@@ -83,7 +95,7 @@ func (t buildArtifact) getUrl(baseArchiveUrl, version string, rt ReleaseType) st
 		prefix = "_"
 	}
 
-	if rt == BETA && t.os == "rhel" {
+	if releaseType == STABLE && t.os == "rhel" {
 		rhelReleaseExtra = "-1"
 	}
 

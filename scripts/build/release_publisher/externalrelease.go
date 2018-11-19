@@ -16,10 +16,14 @@ type releaseFromExternalContent struct {
 
 func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
 	version := re.rawVersion[1:]
-	isBeta := strings.Contains(version, "beta")
+	beta := strings.Contains(version, "beta")
 	var rt ReleaseType
-	if isBeta {
+	if beta {
 		rt = BETA
+	} else if nightly {
+		rt = NIGHTLY
+	} else {
+		rt = STABLE
 	}
 
 	builds := []build{}
@@ -34,9 +38,9 @@ func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl 
 	r := release{
 		Version:         version,
 		ReleaseDate:     time.Now().UTC(),
-		Stable:          !isBeta && !nightly,
-		Beta:            isBeta,
-		Nightly:         nightly,
+		Stable:          rt.stable(),
+		Beta:            rt.beta(),
+		Nightly:         rt.nightly(),
 		WhatsNewUrl:     whatsNewUrl,
 		ReleaseNotesUrl: releaseNotesUrl,
 		Builds:          builds,

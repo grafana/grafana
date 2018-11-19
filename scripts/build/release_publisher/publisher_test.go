@@ -5,22 +5,60 @@ import "testing"
 func TestPreparingReleaseFromRemote(t *testing.T) {
 
 	cases := []struct {
-		version string
+		version         string
 		expectedVersion string
-		whatsNewUrl string
-		relNotesUrl string
-		expectedArch string
-		expectedOs string
-		buildArtifacts []buildArtifact
+		whatsNewUrl     string
+		relNotesUrl     string
+		nightly         bool
+		expectedBeta    bool
+		expectedStable  bool
+		expectedArch    string
+		expectedOs      string
+		expectedUrl     string
+		baseArchiveUrl  string
+		buildArtifacts  []buildArtifact
 	}{
 		{
 			version:         "v5.2.0-beta1",
 			expectedVersion: "5.2.0-beta1",
 			whatsNewUrl:     "https://whatsnews.foo/",
 			relNotesUrl:     "https://relnotes.foo/",
+			nightly:         false,
+			expectedBeta:    true,
+			expectedStable:  false,
 			expectedArch:    "amd64",
 			expectedOs:      "linux",
+			expectedUrl:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.2.0-beta1.linux-amd64.tar.gz",
+			baseArchiveUrl:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
 			buildArtifacts:  []buildArtifact{{"linux", "amd64", ".linux-amd64.tar.gz"}},
+		},
+		{
+			version:         "v5.2.3",
+			expectedVersion: "5.2.3",
+			whatsNewUrl:     "https://whatsnews.foo/",
+			relNotesUrl:     "https://relnotes.foo/",
+			nightly:         false,
+			expectedBeta:    false,
+			expectedStable:  true,
+			expectedArch:    "amd64",
+			expectedOs:      "rhel",
+			expectedUrl:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.2.3-1.x86_64.rpm",
+			baseArchiveUrl:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
+			buildArtifacts:  []buildArtifact{{"rhel", "amd64", ".x86_64.rpm"}},
+		},
+		{
+			version:         "v5.4.0-pre1asdf",
+			expectedVersion: "5.4.0-pre1asdf",
+			whatsNewUrl:     "https://whatsnews.foo/",
+			relNotesUrl:     "https://relnotes.foo/",
+			nightly:         true,
+			expectedBeta:    false,
+			expectedStable:  false,
+			expectedArch:    "amd64",
+			expectedOs:      "rhel",
+			expectedUrl:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.4.0-pre1asdf.x86_64.rpm",
+			baseArchiveUrl:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
+			buildArtifacts:  []buildArtifact{{"rhel", "amd64", ".x86_64.rpm"}},
 		},
 	}
 
@@ -32,10 +70,10 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			artifactConfigurations: test.buildArtifacts,
 		}
 
-		rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", test.whatsNewUrl, test.relNotesUrl, false)
+		rel, _ := builder.prepareRelease(test.baseArchiveUrl, test.whatsNewUrl, test.relNotesUrl, test.nightly)
 
-		if !rel.Beta || rel.Stable {
-			t.Errorf("%s should have been tagged as beta (not stable), but wasn't	.", test.version)
+		if rel.Beta != test.expectedBeta || rel.Stable != test.expectedStable {
+			t.Errorf("%s should have been tagged as beta=%v, stable=%v.", test.version, test.expectedBeta, test.expectedStable)
 		}
 
 		if rel.Version != test.expectedVersion {
@@ -53,7 +91,11 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 		}
 
 		if build.Os != test.expectedOs {
-			t.Errorf("Expected arch to be %v, but it was %v", test.expectedOs, build.Os)
+			t.Errorf("Expected os to be %v, but it was %v", test.expectedOs, build.Os)
+		}
+
+		if build.Url != test.expectedUrl {
+			t.Errorf("Expected url to be %v, but it was %v", test.expectedUrl, build.Url)
 		}
 	}
 }
@@ -128,5 +170,10 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 
 	if build.Os != expectedOs {
 		t.Fatalf("Expected os to be %s, but was %s", expectedOs, build.Os)
+	}
+
+	_, err := builder.prepareRelease("", "", "", false)
+	if err == nil {
+		t.Error("Error was nil, but expected an error as the local releaser only supports nightly builds.")
 	}
 }

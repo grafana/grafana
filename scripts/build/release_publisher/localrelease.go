@@ -18,6 +18,9 @@ type releaseLocalSources struct {
 }
 
 func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
+	if !nightly {
+		return nil, errors.New("Local releases only supported for nightly builds.")
+	}
 	buildData := r.findBuilds(baseArchiveUrl)
 
 	rel := release{
