@@ -193,8 +193,6 @@ func TestFilterBuildArtifacts(t *testing.T) {
 		{os: "foobar", arch: "amd64"},
 	})
 
-
-
 	if err == nil {
 		t.Errorf("Expected an error as a we tried to filter on a nonexiststant os.")
 	}
