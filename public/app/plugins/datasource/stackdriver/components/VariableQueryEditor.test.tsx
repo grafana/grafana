@@ -14,7 +14,7 @@ const props: VariableQueryProps = {
   datasource: {
     getMetricTypes: async p => [],
   },
-  templateSrv: { replace: s => s },
+  templateSrv: { replace: s => s, variables: [] },
 };
 
 describe('VariableQueryEditor', () => {
@@ -37,7 +37,7 @@ describe('VariableQueryEditor', () => {
     it('should trigger new query using the saved query type', done => {
       props.query = { selectedQueryType: MetricFindQueryTypes.LabelKeys };
       props.onChange = (query, definition) => {
-        expect(definition).toBe('Stackdriver - Labels Keys');
+        expect(definition).toBe('Stackdriver - Label Keys');
         done();
       };
       renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();

@@ -25,14 +25,14 @@ Array [
           Metric Types
         </option>
         <option
-          value="metricLabels"
+          value="labelKeys"
         >
-          Metric Labels
+          Label Keys
         </option>
         <option
-          value="resourceLabels"
+          value="labelValues"
         >
-          Resource Labels
+          Label Values
         </option>
         <option
           value="resourceTypes"
