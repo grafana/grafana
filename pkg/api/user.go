@@ -118,7 +118,7 @@ func GetSignedInUserTeamList(c *m.ReqContext) Response {
 
 // GET /api/users/:id/teams
 func GetUserTeams(c *m.ReqContext) Response {
-	return getUserTeamList(c.OrgId, c.ParamsInt64("id"))
+	return getUserTeamList(c.OrgId, c.ParamsInt64(":id"))
 }
 
 func getUserTeamList(userID int64, orgID int64) Response {
