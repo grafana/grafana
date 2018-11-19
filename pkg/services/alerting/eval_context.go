@@ -125,7 +125,7 @@ func (c *EvalContext) GetNewState() m.AlertStateType {
 		return ns
 	}
 
-	since := time.Now().Sub(c.Rule.LastStateChange)
+	since := time.Since(c.Rule.LastStateChange)
 	if c.PrevAlertState == m.AlertStatePending && since > c.Rule.For {
 		return m.AlertStateAlerting
 	}

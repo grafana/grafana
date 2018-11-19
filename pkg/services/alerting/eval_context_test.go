@@ -36,7 +36,6 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		name     string
 		expected models.AlertStateType
 		applyFn  func(ec *EvalContext)
-		focus    bool
 	}{
 		{
 			name:     "ok -> alerting",
