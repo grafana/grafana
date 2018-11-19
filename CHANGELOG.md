@@ -15,6 +15,7 @@
 
 ### Minor
 
+* **Security**: Upgrade macaron session package to fix security issue. [#14043](https://github.com/grafana/grafana/pull/14043)
 * **Cloudwatch**: Show all available CloudWatch regions [#12308](https://github.com/grafana/grafana/issues/12308), thx [@mtanda](https://github.com/mtanda)
 * **Cloudwatch**: AWS/Connect metrics and dimensions [#13970](https://github.com/grafana/grafana/pull/13970), thx [@zcoffy](https://github.com/zcoffy)
 * **Postgres**: Add delta window function to postgres query builder [#13925](https://github.com/grafana/grafana/issues/13925), thx [svenklemm](https://github.com/svenklemm)
@@ -32,10 +33,6 @@
 ### Breaking changes
 
 * Postgres/MySQL/MSSQL datasources now per default uses `max open connections` = `unlimited` (earlier 10), `max idle connections` = `2` (earlier 10) and `connection max lifetime` = `4` hours (earlier unlimited)
-
-# 5.3.5 (unreleased)
-
-* **Security**: Upgrade macaron session package to fix security issue. [#14043](https://github.com/grafana/grafana/pull/14043)
 
 # 5.3.4 (2018-11-13)
 
