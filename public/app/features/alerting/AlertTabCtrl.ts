@@ -218,7 +218,7 @@ export class AlertTabCtrl {
   buildDefaultCondition() {
     return {
       type: 'query',
-      query: { params: ['A', '15m', 'now'] },
+      query: { params: ['A', '5m', 'now'] },
       reducer: { type: 'avg', params: [] },
       evaluator: { type: 'gt', params: [null] },
       operator: { type: 'and' },
