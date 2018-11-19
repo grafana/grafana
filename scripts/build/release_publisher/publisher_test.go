@@ -63,8 +63,7 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		var builder releaseBuilder
-		builder = releaseFromExternalContent{
+		builder := releaseFromExternalContent{
 			getter:                 mockHttpGetter{},
 			rawVersion:             test.version,
 			artifactConfigurations: test.buildArtifacts,
