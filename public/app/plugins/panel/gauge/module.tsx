@@ -8,15 +8,13 @@ import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 
 export interface Options {
   decimals: number;
+  prefix: string;
   stat: string;
+  suffix: string;
   unit: string;
 }
 
 interface Props extends PanelProps<Options> {}
-
-interface OptionsState {
-  decimals: number;
-}
 
 const statOptions = [
   { value: 'min', text: 'Min' },
@@ -45,7 +43,7 @@ class GaugePanel extends PureComponent<Props> {
   }
 }
 
-class GaugeOptions extends PureComponent<PanelOptionsProps<Options>, OptionsState> {
+class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
   onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
 
   onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
@@ -56,7 +54,12 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>, OptionsStat
     }
   };
 
+  onPrefixChange = event => this.props.onChange({ ...this.props.options, prefix: event.target.value });
+
+  onSuffixChange = event => this.props.onChange({ ...this.props.options, suffix: event.target.value });
+
   render() {
+    const { stat, unit, decimals, prefix, suffix } = this.props.options;
     return (
       <div>
         <div className="section gf-form-group">
@@ -69,12 +72,12 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>, OptionsStat
               getOptionLabel={i => i.text}
               getOptionValue={i => i.value}
               onSelected={this.onStatChange}
-              value={statOptions.find(option => option.value === this.props.options.stat)}
+              value={statOptions.find(option => option.value === stat)}
             />
           </div>
           <div className="gf-form-inline">
             <Label width={5}>Unit</Label>
-            <UnitPicker defaultValue={this.props.options.unit} onSelected={value => this.onUnitChange(value)} />
+            <UnitPicker defaultValue={unit} onSelected={value => this.onUnitChange(value)} />
           </div>
           <div className="gf-form-inline">
             <Label width={5}>Decimals</Label>
@@ -82,9 +85,17 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>, OptionsStat
               className="gf-form-input width-12"
               type="number"
               placeholder="auto"
-              value={this.props.options.decimals || ''}
+              value={decimals || ''}
               onChange={this.onDecimalChange}
             />
+          </div>
+          <div className="gf-form-inline">
+            <Label width={5}>Prefix</Label>
+            <input className="gf-form-input width-12" type="text" value={prefix || ''} onChange={this.onPrefixChange} />
+          </div>
+          <div className="gf-form-inline">
+            <Label width={5}>Suffix</Label>
+            <input className="gf-form-input width-12" type="text" value={suffix || ''} onChange={this.onSuffixChange} />
           </div>
         </div>
       </div>

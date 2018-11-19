@@ -16,6 +16,8 @@ interface Props {
   width: number;
   height: number;
   stat?: string;
+  prefix: string;
+  suffix: string;
 }
 
 const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
@@ -27,8 +29,10 @@ export class Gauge extends PureComponent<Props> {
   static defaultProps = {
     minValue: 0,
     maxValue: 100,
+    prefix: '',
     showThresholdMarkers: true,
     showThresholdLables: false,
+    suffix: '',
     thresholds: [0, 100],
   };
 
@@ -41,10 +45,10 @@ export class Gauge extends PureComponent<Props> {
   }
 
   formatValue(value) {
-    const { decimals, unit } = this.props;
+    const { decimals, prefix, suffix, unit } = this.props;
 
     const formatFunc = kbn.valueFormats[unit];
-    return formatFunc(value, decimals);
+    return `${prefix} ${formatFunc(value, decimals)} ${suffix}`;
   }
 
   draw() {
@@ -107,6 +111,8 @@ export class Gauge extends PureComponent<Props> {
               if (timeSeries[0]) {
                 return this.formatValue(timeSeries[0].stats[stat]);
               }
+
+              return '';
             },
             font: {
               size: fontSize,
