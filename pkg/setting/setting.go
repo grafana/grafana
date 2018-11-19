@@ -112,6 +112,7 @@ var (
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
+	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
 
 	// Http auth
@@ -626,6 +627,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	auth := iniFile.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
 	SignoutRedirectUrl = auth.Key("signout_redirect_url").String()
 
 	// anonymous access
