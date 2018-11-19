@@ -6,19 +6,24 @@ Array [
     className="gf-form max-width-21"
   >
     <span
-      className="gf-form-label width-10"
+      className="gf-form-label width-10 query-keyword"
     >
-      Query Types
+      Query Type
     </span>
     <div
-      className="gf-form-select-wrapper max-width-10"
+      className="gf-form-select-wrapper max-width-12"
     >
       <select
         className="gf-form-input"
         onChange={[Function]}
         required={true}
-        value="metricTypes"
+        value="services"
       >
+        <option
+          value="services"
+        >
+          Services
+        </option>
         <option
           value="metricTypes"
         >
@@ -57,24 +62,6 @@ Array [
       </select>
     </div>
   </div>,
-  <div
-    className="gf-form max-width-21"
-  >
-    <span
-      className="gf-form-label width-10"
-    >
-      Services
-    </span>
-    <div
-      className="gf-form-select-wrapper max-width-10"
-    >
-      <select
-        className="gf-form-input"
-        onChange={[Function]}
-        required={true}
-        value=""
-      />
-    </div>
-  </div>,
+  "",
 ]
 `;

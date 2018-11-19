@@ -6,6 +6,7 @@ import { MetricFindQueryTypes } from '../types';
 
 jest.mock('../functions', () => ({
   getMetricTypes: () => ({ metricTypes: [], selectedMetricType: '' }),
+  extractServicesFromMetricDescriptors: () => [],
 }));
 
 const props: VariableQueryProps = {
@@ -26,7 +27,7 @@ describe('VariableQueryEditor', () => {
   describe('and a new variable is created', () => {
     it('should trigger a query using the first query type in the array', done => {
       props.onChange = (query, definition) => {
-        expect(definition).toBe('Stackdriver - Metric Types');
+        expect(definition).toBe('Stackdriver - Services');
         done();
       };
       renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
