@@ -70,7 +70,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   onRender = () => {
-    console.log('onRender');
     this.setState({
       renderCounter: this.state.renderCounter + 1,
     });
@@ -87,7 +86,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { datasource, targets } = panel;
     const PanelComponent = this.props.component;
 
-    console.log('panelChrome render');
     return (
       <AutoSizer>
         {({ width, height }) => {

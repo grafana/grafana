@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import { TimeSeriesVMs } from 'app/types';
 import config from '../core/config';
+import kbn from '../core/utils/kbn';
 
 interface Props {
   timeSeries: TimeSeriesVMs;
@@ -10,6 +11,7 @@ interface Props {
   showThresholdMarkers?: boolean;
   thresholds?: number[];
   showThresholdLables?: boolean;
+  unit: { label: string; value: string };
   width: number;
   height: number;
   stat?: { value: string; text: string };
@@ -35,6 +37,13 @@ export class Gauge extends PureComponent<Props> {
 
   componentDidUpdate(prevProps: Props) {
     this.draw();
+  }
+
+  formatValue(value) {
+    const { unit } = this.props;
+
+    const formatFunc = kbn.valueFormats[unit.value];
+    return formatFunc(value);
   }
 
   draw() {
@@ -96,7 +105,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: fontColor,
             formatter: () => {
-              return Math.round(timeSeries[0].stats[stat.value]);
+              return this.formatValue(timeSeries[0].stats[stat.value]);
             },
             font: {
               size: fontSize,

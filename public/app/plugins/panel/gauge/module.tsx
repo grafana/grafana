@@ -1,12 +1,14 @@
 import React, { PureComponent } from 'react';
+import { Label } from 'app/core/components/Label/Label';
+import SimplePicker from 'app/core/components/Picker/SimplePicker';
+import UnitPicker from 'app/core/components/Picker/Unit/UnitPicker';
 import Gauge from 'app/viz/Gauge';
 import { NullValueMode, PanelOptionsProps, PanelProps } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
-import { Label } from '../../../core/components/Label/Label';
-import SimplePicker from '../../../core/components/Picker/SimplePicker';
 
 export interface Options {
   stat: { value: string; text: string };
+  unit: { label: string; value: string };
 }
 
 interface Props extends PanelProps<Options> {}
@@ -25,7 +27,7 @@ const statOptions = [
   { value: 'last_time', text: 'Time of last point' },
 ];
 
-export class GaugePanel extends PureComponent<Props> {
+class GaugePanel extends PureComponent<Props> {
   render() {
     const { timeSeries, width, height } = this.props;
 
@@ -39,13 +41,15 @@ export class GaugePanel extends PureComponent<Props> {
 }
 
 class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
+  onUnitChange = value => {
+    this.props.onChange({ ...this.props.options, unit: value });
+  };
+
   onStatChange = value => {
     this.props.onChange({ ...this.props.options, stat: value });
   };
 
   render() {
-    const { stat } = this.props.options;
-
     return (
       <div>
         <div className="section gf-form-group">
@@ -53,14 +57,18 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
           <div className="gf-form-inline">
             <Label width={5}>Stat</Label>
             <SimplePicker
-              defaultValue={statOptions.find(option => option.value === stat.value)}
+              defaultValue={statOptions.find(option => option.value === this.props.options.stat.value)}
               width={11}
               options={statOptions}
               getOptionLabel={i => i.text}
               getOptionValue={i => i.value}
               onSelected={this.onStatChange}
-              value={stat}
+              value={this.props.options.stat}
             />
+          </div>
+          <div className="gf-form-inline">
+            <Label width={5}>Unit</Label>
+            <UnitPicker defaultValue={this.props.options.unit.value} onSelected={value => this.onUnitChange(value)} />
           </div>
         </div>
       </div>
