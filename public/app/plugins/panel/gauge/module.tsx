@@ -7,11 +7,16 @@ import { NullValueMode, PanelOptionsProps, PanelProps } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 
 export interface Options {
-  stat: { value: string; text: string };
-  unit: { label: string; value: string };
+  decimals: number;
+  stat: string;
+  unit: string;
 }
 
 interface Props extends PanelProps<Options> {}
+
+interface OptionsState {
+  decimals: number;
+}
 
 const statOptions = [
   { value: 'min', text: 'Min' },
@@ -40,13 +45,15 @@ class GaugePanel extends PureComponent<Props> {
   }
 }
 
-class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
-  onUnitChange = value => {
-    this.props.onChange({ ...this.props.options, unit: value });
-  };
+class GaugeOptions extends PureComponent<PanelOptionsProps<Options>, OptionsState> {
+  onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
 
-  onStatChange = value => {
-    this.props.onChange({ ...this.props.options, stat: value });
+  onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
+
+  onDecimalChange = event => {
+    if (!isNaN(event.target.value)) {
+      this.props.onChange({ ...this.props.options, decimals: event.target.value });
+    }
   };
 
   render() {
@@ -57,18 +64,27 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
           <div className="gf-form-inline">
             <Label width={5}>Stat</Label>
             <SimplePicker
-              defaultValue={statOptions.find(option => option.value === this.props.options.stat.value)}
               width={12}
               options={statOptions}
               getOptionLabel={i => i.text}
               getOptionValue={i => i.value}
               onSelected={this.onStatChange}
-              value={this.props.options.stat}
+              value={statOptions.find(option => option.value === this.props.options.stat)}
             />
           </div>
           <div className="gf-form-inline">
             <Label width={5}>Unit</Label>
-            <UnitPicker defaultValue={this.props.options.unit.value} onSelected={value => this.onUnitChange(value)} />
+            <UnitPicker defaultValue={this.props.options.unit} onSelected={value => this.onUnitChange(value)} />
+          </div>
+          <div className="gf-form-inline">
+            <Label width={5}>Decimals</Label>
+            <input
+              className="gf-form-input width-12"
+              type="number"
+              placeholder="auto"
+              value={this.props.options.decimals || ''}
+              onChange={this.onDecimalChange}
+            />
           </div>
         </div>
       </div>

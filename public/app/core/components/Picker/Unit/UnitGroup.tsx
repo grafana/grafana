@@ -15,11 +15,12 @@ export default class UnitGroup extends PureComponent<ExtendedGroupProps, State> 
   };
 
   componentDidMount() {
-    const value = this.props.selectProps.value[this.props.selectProps.value.length - 1].value;
-    console.log(value);
+    if (this.props.selectProps) {
+      const value = this.props.selectProps.value[this.props.selectProps.value.length - 1];
 
-    if (value && this.props.options.some(option => option.value === value)) {
-      this.setState({ expanded: true });
+      if (value && this.props.options.some(option => option.value === value)) {
+        this.setState({ expanded: true });
+      }
     }
   }
 

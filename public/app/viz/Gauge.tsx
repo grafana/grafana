@@ -5,16 +5,17 @@ import config from '../core/config';
 import kbn from '../core/utils/kbn';
 
 interface Props {
+  decimals: number;
   timeSeries: TimeSeriesVMs;
   minValue?: number;
   maxValue?: number;
   showThresholdMarkers?: boolean;
   thresholds?: number[];
   showThresholdLables?: boolean;
-  unit: { label: string; value: string };
+  unit: string;
   width: number;
   height: number;
-  stat?: { value: string; text: string };
+  stat?: string;
 }
 
 const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
@@ -40,10 +41,10 @@ export class Gauge extends PureComponent<Props> {
   }
 
   formatValue(value) {
-    const { unit } = this.props;
+    const { decimals, unit } = this.props;
 
-    const formatFunc = kbn.valueFormats[unit.value];
-    return formatFunc(value);
+    const formatFunc = kbn.valueFormats[unit];
+    return formatFunc(value, decimals);
   }
 
   draw() {
@@ -58,8 +59,6 @@ export class Gauge extends PureComponent<Props> {
       height,
       stat,
     } = this.props;
-
-    console.log(stat);
 
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
@@ -105,7 +104,9 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: fontColor,
             formatter: () => {
-              return this.formatValue(timeSeries[0].stats[stat.value]);
+              if (timeSeries[0]) {
+                return this.formatValue(timeSeries[0].stats[stat]);
+              }
             },
             font: {
               size: fontSize,
