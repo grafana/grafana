@@ -70,7 +70,7 @@ func createBuildWalker(path string, data *buildData, archiveTypes []buildArtifac
 				data.version = version
 				data.builds = append(data.builds, build{
 					Os:     archive.os,
-					Url:    archive.getUrl(baseArchiveUrl, version, false),
+					Url:    archive.getUrl(baseArchiveUrl, version, NIGHTLY),
 					Sha256: string(shaBytes),
 					Arch:   archive.arch,
 				})

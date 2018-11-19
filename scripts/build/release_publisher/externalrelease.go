@@ -17,14 +17,18 @@ type releaseFromExternalContent struct {
 func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
 	version := re.rawVersion[1:]
 	isBeta := strings.Contains(version, "beta")
+	var rt ReleaseType
+	if isBeta {
+		rt = BETA
+	}
 
 	builds := []build{}
 	for _, ba := range re.artifactConfigurations {
-		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", ba.getUrl(baseArchiveUrl, version, isBeta)))
+		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", ba.getUrl(baseArchiveUrl, version, rt)))
 		if err != nil {
 			return nil, err
 		}
-		builds = append(builds, newBuild(baseArchiveUrl, ba, version, isBeta, sha256))
+		builds = append(builds, newBuild(baseArchiveUrl, ba, version, rt, sha256))
 	}
 
 	r := release{
