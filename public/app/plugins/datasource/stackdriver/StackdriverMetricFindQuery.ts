@@ -1,4 +1,3 @@
-import has from 'lodash/has';
 import isString from 'lodash/isString';
 import { alignmentPeriods } from './constants';
 import { MetricFindQueryTypes } from './types';
@@ -12,9 +11,10 @@ export default class StackdriverMetricFindQuery {
       switch (query.selectedQueryType) {
         case MetricFindQueryTypes.MetricTypes:
           return this.handleMetricTypesQuery(query);
-        case MetricFindQueryTypes.MetricLabels:
-        case MetricFindQueryTypes.ResourceLabels:
-          return this.handleLabelQuery(query);
+        case MetricFindQueryTypes.LabelKeys:
+          return this.handleLabelKeysQuery(query);
+        case MetricFindQueryTypes.LabelValues:
+          return this.handleLabelValuesQuery(query);
         case MetricFindQueryTypes.ResourceTypes:
           return this.handleResourceTypeQuery(query);
         case MetricFindQueryTypes.Aligners:
@@ -44,16 +44,33 @@ export default class StackdriverMetricFindQuery {
     }));
   }
 
-  async handleLabelQuery({ selectedQueryType, selectedMetricType, labelKey }) {
+  async handleLabelKeysQuery({ selectedQueryType, selectedMetricType, labelKey }) {
     if (!selectedMetricType) {
       return [];
     }
-    const refId = 'handleLabelsQueryType';
+    const refId = 'handleLabelKeysQuery';
     const response = await this.datasource.getLabels(selectedMetricType, refId);
-    if (!has(response, `meta.${selectedQueryType}.${labelKey}`)) {
+    const labelKeys = response.meta
+      ? [...Object.keys(response.meta.resourceLabels), ...Object.keys(response.meta.metricLabels)]
+      : [];
+    return labelKeys.map(this.toFindQueryResult);
+  }
+
+  async handleLabelValuesQuery({ selectedQueryType, selectedMetricType, labelKey }) {
+    if (!selectedMetricType) {
       return [];
     }
-    return response.meta[selectedQueryType][labelKey].map(this.toFindQueryResult);
+    const refId = 'handleLabelValuesQuery';
+    const response = await this.datasource.getLabels(selectedMetricType, refId);
+
+    let values = [];
+    if (response.meta && response.meta.metricLabels && response.meta.metricLabels.hasOwnProperty(labelKey)) {
+      values = response.meta.metricLabels[labelKey];
+    } else if (response.meta && response.meta.resourceLabels && response.meta.resourceLabels.hasOwnProperty(labelKey)) {
+      values = response.meta.resourceLabels[labelKey];
+    }
+
+    return values.map(this.toFindQueryResult);
   }
 
   async handleResourceTypeQuery({ selectedMetricType }) {
@@ -62,7 +79,7 @@ export default class StackdriverMetricFindQuery {
     }
     const refId = 'handleResourceTypeQueryQueryType';
     const response = await this.datasource.getLabels(selectedMetricType, refId);
-    return response.meta.resourceTypes.map(this.toFindQueryResult);
+    return response.meta.resourceTypes ? response.meta.resourceTypes.map(this.toFindQueryResult) : [];
   }
 
   async handleAlignersQuery({ selectedMetricType }) {

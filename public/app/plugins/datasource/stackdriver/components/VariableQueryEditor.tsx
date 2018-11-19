@@ -8,8 +8,8 @@ import { MetricFindQueryTypes, VariableQueryData } from '../types';
 export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryProps, VariableQueryData> {
   queryTypes: Array<{ value: string; name: string }> = [
     { value: MetricFindQueryTypes.MetricTypes, name: 'Metric Types' },
-    { value: MetricFindQueryTypes.MetricLabels, name: 'Metric Labels' },
-    { value: MetricFindQueryTypes.ResourceLabels, name: 'Resource Labels' },
+    { value: MetricFindQueryTypes.LabelKeys, name: 'Label Keys' },
+    { value: MetricFindQueryTypes.LabelValues, name: 'Label Values' },
     { value: MetricFindQueryTypes.ResourceTypes, name: 'Resource Types' },
     { value: MetricFindQueryTypes.Aggregations, name: 'Aggregations' },
     { value: MetricFindQueryTypes.Aligners, name: 'Aligners' },
@@ -57,7 +57,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       metricTypes,
       selectedMetricType,
       metricDescriptors,
-      ...await this.getLabels(selectedMetricType),
+      ...await this.getLabelValues(selectedMetricType),
     };
     this.setState(state);
   }
@@ -65,7 +65,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   async handleQueryTypeChange(event) {
     const state: any = {
       selectedQueryType: event.target.value,
-      ...await this.getLabels(this.state.selectedMetricType, event.target.value),
+      ...await this.getLabelValues(this.state.selectedMetricType, event.target.value),
     };
     this.setState(state);
   }
@@ -80,13 +80,13 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       selectedService: event.target.value,
       metricTypes,
       selectedMetricType,
-      ...await this.getLabels(selectedMetricType),
+      ...await this.getLabelValues(selectedMetricType),
     };
     this.setState(state);
   }
 
   async onMetricTypeChange(event) {
-    const state: any = { selectedMetricType: event.target.value, ...await this.getLabels(event.target.value) };
+    const state: any = { selectedMetricType: event.target.value, ...await this.getLabelValues(event.target.value) };
     this.setState(state);
   }
 
@@ -100,16 +100,12 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
   }
 
-  isLabelQuery(queryType) {
-    return [MetricFindQueryTypes.MetricLabels, MetricFindQueryTypes.ResourceLabels].indexOf(queryType) !== -1;
-  }
-
-  async getLabels(selectedMetricType, selectedQueryType = this.state.selectedQueryType) {
+  async getLabelValues(selectedMetricType, selectedQueryType = this.state.selectedQueryType) {
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
-    if (selectedMetricType && this.isLabelQuery(selectedQueryType)) {
+    if (selectedMetricType && selectedQueryType === MetricFindQueryTypes.LabelValues) {
       const refId = 'StackdriverVariableQueryEditor';
       const response = await this.props.datasource.getLabels(selectedMetricType, refId);
-      const labels = Object.keys(response.meta[selectedQueryType]);
+      const labels = [...Object.keys(response.meta.resourceLabels), ...Object.keys(response.meta.metricLabels)];
       const labelKey = labels.some(l => l === this.state.labelKey) ? this.state.labelKey : labels[0];
       result = { labels, labelKey };
     }
@@ -127,8 +123,8 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
             label="Services"
           />
         );
-      case MetricFindQueryTypes.MetricLabels:
-      case MetricFindQueryTypes.ResourceLabels:
+      case MetricFindQueryTypes.LabelKeys:
+      case MetricFindQueryTypes.LabelValues:
       case MetricFindQueryTypes.ResourceTypes:
         return (
           <React.Fragment>
@@ -144,16 +140,12 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
               onValueChange={e => this.onMetricTypeChange(e)}
               label="Metric Types"
             />
-            {queryType !== MetricFindQueryTypes.ResourceTypes && (
+            {queryType === MetricFindQueryTypes.LabelValues && (
               <SimpleSelect
                 value={this.state.labelKey}
                 options={this.state.labels.map(l => ({ value: l, name: l }))}
                 onValueChange={e => this.onLabelKeyChange(e)}
-                label={
-                  this.state.selectedQueryType === MetricFindQueryTypes.ResourceLabels
-                    ? 'Resource Label Key'
-                    : 'Metric Label Key'
-                }
+                label="Label Keys"
               />
             )}
           </React.Fragment>

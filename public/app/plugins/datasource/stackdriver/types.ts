@@ -1,7 +1,7 @@
 export enum MetricFindQueryTypes {
   MetricTypes = 'metricTypes',
-  MetricLabels = 'metricLabels',
-  ResourceLabels = 'resourceLabels',
+  LabelKeys = 'labelKeys',
+  LabelValues = 'labelValues',
   ResourceTypes = 'resourceTypes',
   Aggregations = 'aggregations',
   Aligners = 'aligners',

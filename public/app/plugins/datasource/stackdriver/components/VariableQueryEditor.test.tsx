@@ -34,9 +34,9 @@ describe('VariableQueryEditor', () => {
 
   describe('and an existing variable is edited', () => {
     it('should trigger new query using the saved query type', done => {
-      props.query = { selectedQueryType: MetricFindQueryTypes.MetricLabels };
+      props.query = { selectedQueryType: MetricFindQueryTypes.LabelKeys };
       props.onChange = (query, definition) => {
-        expect(definition).toBe('Stackdriver - Metric Labels');
+        expect(definition).toBe('Stackdriver - Labels Keys');
         done();
       };
       renderer.create(<StackdriverVariableQueryEditor {...props} />).toJSON();
