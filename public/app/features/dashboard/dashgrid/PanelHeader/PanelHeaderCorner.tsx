@@ -43,7 +43,7 @@ export class PanelHeaderCorner extends PureComponent<Props> {
         <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
         {panel.links &&
           panel.links.length > 0 && (
-            <ul>
+            <ul className="text-left">
               {panel.links.map((link, idx) => {
                 const info = linkSrv.getPanelLinkAnchorInfo(link, panel.scopedVars);
                 return (
@@ -74,7 +74,7 @@ export class PanelHeaderCorner extends PureComponent<Props> {
         {infoMode === InfoModes.Info || infoMode === InfoModes.Links ? (
           <Tooltip
             content={this.getInfoContent}
-            className="absolute"
+            className="popper__manager--block"
             refClassName={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}
           >
             <i className="fa" />
