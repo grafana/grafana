@@ -37,6 +37,7 @@ export interface PluginMeta {
   logs?: boolean;
   explore?: boolean;
   annotations?: boolean;
+  mixed?: boolean;
 }
 
 export interface PluginInclude {

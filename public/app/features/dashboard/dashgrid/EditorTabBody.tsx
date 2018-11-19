@@ -12,7 +12,7 @@ export interface EditorToolBarView {
   title: string;
   imgSrc?: string;
   icon?: string;
-  render: () => JSX.Element;
+  render: (closeFunction: any) => JSX.Element;
 }
 
 interface State {
@@ -64,7 +64,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
         <button className="toolbar-subview__close" onClick={this.onCloseOpenView}>
           <i className="fa fa-chevron-up" />
         </button>
-        {view.render()}
+        {view.render(this.onCloseOpenView)}
       </div>
     );
   }
@@ -72,7 +72,6 @@ export class EditorTabBody extends PureComponent<Props, State> {
   render() {
     const { children, toolbarItems, main } = this.props;
     const { openView } = this.state;
-
     return (
       <>
         {main && (

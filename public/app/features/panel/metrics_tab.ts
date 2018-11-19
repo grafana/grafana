@@ -41,7 +41,7 @@ export class MetricsTabCtrl {
     this.datasources = datasourceSrv.getMetricSources();
     this.panelDsValue = this.panelCtrl.panel.datasource;
 
-    // addded here as old query controller expects this on panelCtrl but
+    // added here as old query controller expects this on panelCtrl but
     // they are getting MetricsTabCtrl instead
     this.events = this.panel.events;
 

@@ -2,13 +2,14 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
 
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DataSourceSelectItem } from 'app/types';
 
-interface Props {}
+interface Props {
+  onChangeDataSource: (ds: any) => void;
+  datasources: DataSourceSelectItem[];
+}
 
 interface State {
-  datasources: DataSourceSelectItem[];
   searchQuery: string;
 }
 
@@ -17,31 +18,32 @@ export class DataSourcePicker extends PureComponent<Props, State> {
 
   constructor(props) {
     super(props);
-
     this.state = {
-      datasources: getDatasourceSrv().getMetricSources(),
       searchQuery: '',
     };
   }
 
   getDataSources() {
-    const { datasources, searchQuery } = this.state;
+    const { searchQuery } = this.state;
     const regex = new RegExp(searchQuery, 'i');
+    const { datasources } = this.props;
 
     const filtered = datasources.filter(item => {
       return regex.test(item.name) || regex.test(item.meta.name);
     });
 
-    return _.sortBy(filtered, 'sort');
+    return filtered;
   }
 
-  renderDataSource = (ds: DataSourceSelectItem, index) => {
+  renderDataSource = (ds: DataSourceSelectItem, index: number) => {
+    const { onChangeDataSource } = this.props;
+    const onClick = () => onChangeDataSource(ds);
     const cssClass = classNames({
       'ds-picker-list__item': true,
     });
 
     return (
-      <div key={index} className={cssClass} title={ds.name}>
+      <div key={index} className={cssClass} title={ds.name} onClick={onClick}>
         <img className="ds-picker-list__img" src={ds.meta.info.logos.small} />
         <div className="ds-picker-list__name">{ds.name}</div>
       </div>
@@ -54,7 +56,16 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     }, 300);
   }
 
+  onSearchQueryChange = evt => {
+    const value = evt.target.value;
+    this.setState(prevState => ({
+      ...prevState,
+      searchQuery: value,
+    }));
+  };
+
   renderFilters() {
+    const { searchQuery } = this.state;
     return (
       <>
         <label className="gf-form--has-input-icon">
@@ -63,6 +74,8 @@ export class DataSourcePicker extends PureComponent<Props, State> {
             className="gf-form-input width-13"
             placeholder=""
             ref={elem => (this.searchInput = elem)}
+            onChange={this.onSearchQueryChange}
+            value={searchQuery}
           />
           <i className="gf-form-input-icon fa fa-search" />
         </label>

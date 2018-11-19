@@ -7,18 +7,33 @@ import { DataSourcePicker } from './DataSourcePicker';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import './../../panel/metrics_tab';
+import config from 'app/core/config';
+
+// Services
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DataSourceSelectItem } from 'app/types';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
 }
 
-export class QueriesTab extends PureComponent<Props> {
+interface State {
+  currentDatasource: DataSourceSelectItem;
+}
+
+export class QueriesTab extends PureComponent<Props, State> {
   element: any;
   component: AngularComponent;
+  datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
 
   constructor(props) {
     super(props);
+    const { panel } = props;
+
+    this.state = {
+      currentDatasource: this.datasources.find(datasource => datasource.value === panel.datasource),
+    };
   }
 
   componentDidMount() {
@@ -47,11 +62,47 @@ export class QueriesTab extends PureComponent<Props> {
     }
   }
 
+  onChangeDataSource = datasource => {
+    const { panel } = this.props;
+    const { currentDatasource } = this.state;
+    // switching to mixed
+    if (datasource.meta.mixed) {
+      panel.targets.forEach(target => {
+        target.datasource = panel.datasource;
+        if (!target.datasource) {
+          target.datasource = config.defaultDatasource;
+        }
+      });
+    } else if (currentDatasource && currentDatasource.meta.mixed) {
+      panel.targets.forEach(target => {
+        delete target.datasource;
+      });
+    }
+
+    panel.datasource = datasource.value;
+    panel.refresh();
+
+    this.setState(prevState => ({
+      ...prevState,
+      currentDatasource: datasource,
+    }));
+    // this.component.digest();
+  };
+
   render() {
-    const currentDataSource = {
-      title: 'ProductionDB',
-      imgSrc: 'public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
-      render: () => <DataSourcePicker />,
+    const { currentDatasource } = this.state;
+    const dsInformation = {
+      title: currentDatasource.name,
+      imgSrc: currentDatasource.meta.info.logos.small,
+      render: closeOpenView => (
+        <DataSourcePicker
+          datasources={this.datasources}
+          onChangeDataSource={ds => {
+            closeOpenView();
+            this.onChangeDataSource(ds);
+          }}
+        />
+      ),
     };
 
     const queryInspector = {
@@ -66,7 +117,7 @@ export class QueriesTab extends PureComponent<Props> {
     };
 
     return (
-      <EditorTabBody main={currentDataSource} toolbarItems={[queryInspector, dsHelp]}>
+      <EditorTabBody main={dsInformation} toolbarItems={[queryInspector, dsHelp]}>
         <div ref={element => (this.element = element)} style={{ width: '100%' }} />
       </EditorTabBody>
     );
