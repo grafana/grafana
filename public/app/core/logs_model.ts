@@ -31,6 +31,7 @@ export interface LogSearchMatch {
 }
 
 export interface LogRow {
+  duplicates?: number;
   entry: string;
   key: string; // timestamp + labels
   labels: string;
@@ -69,6 +70,53 @@ export interface LogsStreamEntry {
 
 export interface LogsStreamLabels {
   [key: string]: string;
+}
+
+export enum LogsDedupStrategy {
+  none = 'none',
+  exact = 'exact',
+  numbers = 'numbers',
+  signature = 'signature',
+}
+
+const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
+function isDuplicateRow(row: LogRow, other: LogRow, strategy: LogsDedupStrategy): boolean {
+  switch (strategy) {
+    case LogsDedupStrategy.exact:
+      // Exact still strips dates
+      return row.entry.replace(isoDateRegexp, '') === other.entry.replace(isoDateRegexp, '');
+
+    case LogsDedupStrategy.numbers:
+      return row.entry.replace(/\d/g, '') === other.entry.replace(/\d/g, '');
+
+    case LogsDedupStrategy.signature:
+      return row.entry.replace(/\w/g, '') === other.entry.replace(/\w/g, '');
+
+    default:
+      return false;
+  }
+}
+
+export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): LogsModel {
+  if (strategy === LogsDedupStrategy.none) {
+    return logs;
+  }
+
+  const dedupedRows = logs.rows.reduce((result: LogRow[], row: LogRow, index, list) => {
+    const previous = result[result.length - 1];
+    if (index > 0 && isDuplicateRow(row, previous, strategy)) {
+      previous.duplicates++;
+    } else {
+      row.duplicates = 0;
+      result.push(row);
+    }
+    return result;
+  }, []);
+
+  return {
+    ...logs,
+    rows: dedupedRows,
+  };
 }
 
 export function makeSeriesForLogs(rows: LogRow[], intervalMs: number): TimeSeries[] {

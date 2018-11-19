@@ -2,7 +2,7 @@ import React, { Fragment, PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { RawTimeRange } from 'app/types/series';
-import { LogsModel } from 'app/core/logs_model';
+import { LogsDedupStrategy, LogsModel, dedupLogRows } from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { Switch } from 'app/core/components/Switch/Switch';
 
@@ -32,6 +32,7 @@ interface LogsProps {
 }
 
 interface LogsState {
+  dedup: LogsDedupStrategy;
   showLabels: boolean;
   showLocalTime: boolean;
   showUtc: boolean;
@@ -39,9 +40,19 @@ interface LogsState {
 
 export default class Logs extends PureComponent<LogsProps, LogsState> {
   state = {
+    dedup: LogsDedupStrategy.none,
     showLabels: true,
     showLocalTime: true,
     showUtc: false,
+  };
+
+  onChangeDedup = (dedup: LogsDedupStrategy) => {
+    this.setState(prevState => {
+      if (prevState.dedup === dedup) {
+        return { dedup: LogsDedupStrategy.none };
+      }
+      return { dedup };
+    });
   };
 
   onChangeLabels = (event: React.SyntheticEvent) => {
@@ -67,9 +78,18 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
   render() {
     const { className = '', data, loading = false, position, range } = this.props;
-    const { showLabels, showLocalTime, showUtc } = this.state;
+    const { dedup, showLabels, showLocalTime, showUtc } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
-    const cssColumnSizes = ['4px'];
+    const dedupedData = dedupLogRows(data, dedup);
+    const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
+    const meta = [...data.meta];
+    if (dedup !== LogsDedupStrategy.none) {
+      meta.push({
+        label: 'Dedup count',
+        value: String(dedupCount),
+      });
+    }
+    const cssColumnSizes = ['3px']; // Log-level indicator line
     if (showUtc) {
       cssColumnSizes.push('minmax(100px, max-content)');
     }
@@ -102,10 +122,34 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
             <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} small />
+            <Switch
+              label="Dedup: off"
+              checked={dedup === LogsDedupStrategy.none}
+              onChange={() => this.onChangeDedup(LogsDedupStrategy.none)}
+              small
+            />
+            <Switch
+              label="Dedup: exact"
+              checked={dedup === LogsDedupStrategy.exact}
+              onChange={() => this.onChangeDedup(LogsDedupStrategy.exact)}
+              small
+            />
+            <Switch
+              label="Dedup: numbers"
+              checked={dedup === LogsDedupStrategy.numbers}
+              onChange={() => this.onChangeDedup(LogsDedupStrategy.numbers)}
+              small
+            />
+            <Switch
+              label="Dedup: signature"
+              checked={dedup === LogsDedupStrategy.signature}
+              onChange={() => this.onChangeDedup(LogsDedupStrategy.signature)}
+              small
+            />
             {hasData &&
-              data.meta && (
+              meta && (
                 <div className="logs-meta">
-                  {data.meta.map(item => (
+                  {meta.map(item => (
                     <div className="logs-meta-item" key={item.label}>
                       <span className="logs-meta-item__label">{item.label}:</span>
                       <span className="logs-meta-item__value">{item.value}</span>
@@ -118,9 +162,17 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
         <div className="logs-entries" style={logEntriesStyle}>
           {hasData &&
-            data.rows.map(row => (
+            dedupedData.rows.map(row => (
               <Fragment key={row.key}>
-                <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
+                <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
+                  {row.duplicates > 0 && (
+                    <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
+                      {Array.apply(null, { length: row.duplicates }).map(index => (
+                        <div className="logs-row-level__duplicate" key={`${index}`} />
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {showUtc && <div title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>{row.timestamp}</div>}
                 {showLocalTime && <div title={`${row.timestamp} (${row.timeFromNow})`}>{row.timeLocal}</div>}
                 {showLabels && (
