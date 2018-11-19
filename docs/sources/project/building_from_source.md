@@ -50,6 +50,10 @@ The Grafana backend includes Sqlite3 which requires GCC to compile. So in order 
 npm --add-python-to-path='true' --debug install --global windows-build-tools
 ```
 
+#### Building on arm
+
+There is no `phantomjs-prebuilt` for arm, unfortunately that means that the frontend build will fail on arm. To fix this on arm, remove the `phantomjs-prebuilt` dependency (the whole line) from `package.json`. This also means that you won't be able to generate images of your graphs when running Grafana on arm.  
+
 ## Build the Frontend Assets
 
 For this you need nodejs (v.6+).
