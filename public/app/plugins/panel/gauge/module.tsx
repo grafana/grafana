@@ -58,7 +58,7 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
             <Label width={5}>Stat</Label>
             <SimplePicker
               defaultValue={statOptions.find(option => option.value === this.props.options.stat.value)}
-              width={11}
+              width={12}
               options={statOptions}
               getOptionLabel={i => i.text}
               getOptionValue={i => i.value}

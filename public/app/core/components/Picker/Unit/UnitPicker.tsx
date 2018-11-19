@@ -8,11 +8,16 @@ import kbn from '../../../utils/kbn';
 interface Props {
   onSelected: (item: any) => {} | void;
   defaultValue?: string;
+  width?: number;
 }
 
 export default class UnitPicker extends PureComponent<Props> {
+  static defaultProps = {
+    width: 12,
+  };
+
   render() {
-    const { defaultValue, onSelected } = this.props;
+    const { defaultValue, onSelected, width } = this.props;
 
     const unitGroups = kbn.getUnitFormats();
 
@@ -42,6 +47,13 @@ export default class UnitPicker extends PureComponent<Props> {
           overflowY: 'auto',
           position: 'relative',
         } as React.CSSProperties),
+      valueContainer: () =>
+        ({
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: '90px',
+          whiteSpace: 'nowrap',
+        } as React.CSSProperties),
     };
 
     const value = groupOptions.map(group => {
@@ -51,7 +63,7 @@ export default class UnitPicker extends PureComponent<Props> {
     return (
       <Select
         classNamePrefix="gf-form-select-box"
-        className="width-20 gf-form-input--form-dropdown"
+        className={`width-${width} gf-form-input--form-dropdown`}
         defaultValue={value}
         isSearchable={true}
         options={groupOptions}
