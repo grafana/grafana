@@ -17,7 +17,7 @@ interface Props {
   height: number;
   stat?: string;
   prefix: string;
-  suffix: string;
+  sufix: string;
 }
 
 const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
@@ -32,7 +32,7 @@ export class Gauge extends PureComponent<Props> {
     prefix: '',
     showThresholdMarkers: true,
     showThresholdLables: false,
-    suffix: '',
+    sufix: '',
     thresholds: [0, 100],
   };
 
@@ -45,10 +45,10 @@ export class Gauge extends PureComponent<Props> {
   }
 
   formatValue(value) {
-    const { decimals, prefix, suffix, unit } = this.props;
+    const { decimals, prefix, sufix, unit } = this.props;
 
     const formatFunc = kbn.valueFormats[unit];
-    return `${prefix} ${formatFunc(value, decimals)} ${suffix}`;
+    return `${prefix} ${formatFunc(value, decimals)} ${sufix}`;
   }
 
   draw() {

@@ -10,7 +10,7 @@ export interface Options {
   decimals: number;
   prefix: string;
   stat: string;
-  suffix: string;
+  sufix: string;
   unit: string;
 }
 
@@ -56,10 +56,10 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
 
   onPrefixChange = event => this.props.onChange({ ...this.props.options, prefix: event.target.value });
 
-  onSuffixChange = event => this.props.onChange({ ...this.props.options, suffix: event.target.value });
+  onSufixChange = event => this.props.onChange({ ...this.props.options, sufix: event.target.value });
 
   render() {
-    const { stat, unit, decimals, prefix, suffix } = this.props.options;
+    const { stat, unit, decimals, prefix, sufix } = this.props.options;
     return (
       <div>
         <div className="section gf-form-group">
@@ -94,8 +94,8 @@ class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
             <input className="gf-form-input width-12" type="text" value={prefix || ''} onChange={this.onPrefixChange} />
           </div>
           <div className="gf-form-inline">
-            <Label width={5}>Suffix</Label>
-            <input className="gf-form-input width-12" type="text" value={suffix || ''} onChange={this.onSuffixChange} />
+            <Label width={5}>Sufix</Label>
+            <input className="gf-form-input width-12" type="text" value={sufix || ''} onChange={this.onSufixChange} />
           </div>
         </div>
       </div>
