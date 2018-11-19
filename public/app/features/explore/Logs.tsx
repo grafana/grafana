@@ -97,7 +97,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           />
         </div>
 
-        <div className="panel-container logs-options">
+        <div className="logs-options">
           <div className="logs-controls">
             <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
             <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
@@ -116,33 +116,30 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           </div>
         </div>
 
-        <div className="panel-container">
-          {loading && <div className="explore-panel__loader" />}
-          <div className="logs-entries" style={logEntriesStyle}>
-            {hasData &&
-              data.rows.map(row => (
-                <Fragment key={row.key}>
-                  <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
-                  {showUtc && <div title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>{row.timestamp}</div>}
-                  {showLocalTime && <div title={`${row.timestamp} (${row.timeFromNow})`}>{row.timeLocal}</div>}
-                  {showLabels && (
-                    <div className="max-width" title={row.labels}>
-                      {row.labels}
-                    </div>
-                  )}
-                  <div>
-                    <Highlighter
-                      textToHighlight={row.entry}
-                      searchWords={row.searchWords}
-                      findChunks={findHighlightChunksInText}
-                      highlightClassName="logs-row-match-highlight"
-                    />
+        <div className="logs-entries" style={logEntriesStyle}>
+          {hasData &&
+            data.rows.map(row => (
+              <Fragment key={row.key}>
+                <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
+                {showUtc && <div title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>{row.timestamp}</div>}
+                {showLocalTime && <div title={`${row.timestamp} (${row.timeFromNow})`}>{row.timeLocal}</div>}
+                {showLabels && (
+                  <div className="max-width" title={row.labels}>
+                    {row.labels}
                   </div>
-                </Fragment>
-              ))}
-          </div>
-          {!loading && !hasData && 'No data was returned.'}
+                )}
+                <div>
+                  <Highlighter
+                    textToHighlight={row.entry}
+                    searchWords={row.searchWords}
+                    findChunks={findHighlightChunksInText}
+                    highlightClassName="logs-row-match-highlight"
+                  />
+                </div>
+              </Fragment>
+            ))}
         </div>
+        {!loading && !hasData && 'No data was returned.'}
       </div>
     );
   }
