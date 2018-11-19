@@ -99,6 +99,13 @@ function getStateDisplayModel(state) {
         stateClass: 'alert-state-warning',
       };
     }
+    case 'unknown': {
+      return {
+        text: 'UNKNOWN',
+        iconClass: 'fa fa-question',
+        stateClass: 'alert-state-paused',
+      };
+    }
   }
 
   throw { message: 'Unknown alert state' };

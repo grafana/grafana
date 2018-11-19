@@ -193,7 +193,8 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 			if alertToUpdate.ContainsUpdates(alert) {
 				alert.Updated = timeNow()
 				alert.State = alertToUpdate.State
-				sess.MustCols("message")
+				sess.MustCols("message", "for")
+
 				_, err := sess.ID(alert.Id).Update(alert)
 				if err != nil {
 					return err
@@ -204,7 +205,7 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 		} else {
 			alert.Updated = timeNow()
 			alert.Created = timeNow()
-			alert.State = m.AlertStatePending
+			alert.State = m.AlertStateUnknown
 			alert.NewStateDate = timeNow()
 
 			_, err := sess.Insert(alert)
@@ -299,7 +300,7 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 			params = append(params, string(m.AlertStatePaused))
 			params = append(params, timeNow())
 		} else {
-			params = append(params, string(m.AlertStatePending))
+			params = append(params, string(m.AlertStateUnknown))
 			params = append(params, timeNow())
 		}
 
@@ -323,7 +324,7 @@ func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
 		if cmd.Paused {
 			newState = string(m.AlertStatePaused)
 		} else {
-			newState = string(m.AlertStatePending)
+			newState = string(m.AlertStateUnknown)
 		}
 
 		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow())

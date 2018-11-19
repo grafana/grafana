@@ -68,8 +68,13 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#D63232",
 			Text:  "Alerting",
 		}
+	case m.AlertStateUnknown:
+		return &StateDescription{
+			Color: "#888888",
+			Text:  "Unknown",
+		}
 	default:
-		panic("Unknown rule state " + c.Rule.State)
+		panic("Unknown rule state for alert " + c.Rule.State)
 	}
 }
 
@@ -113,7 +118,26 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 }
 
+// GetNewState returns the new state from the alert rule evaluation
 func (c *EvalContext) GetNewState() m.AlertStateType {
+	ns := getNewStateInternal(c)
+	if ns != m.AlertStateAlerting || c.Rule.For == 0 {
+		return ns
+	}
+
+	since := time.Now().Sub(c.Rule.LastStateChange)
+	if c.PrevAlertState == m.AlertStatePending && since > c.Rule.For {
+		return m.AlertStateAlerting
+	}
+
+	if c.PrevAlertState == m.AlertStateAlerting {
+		return m.AlertStateAlerting
+	}
+
+	return m.AlertStatePending
+}
+
+func getNewStateInternal(c *EvalContext) m.AlertStateType {
 	if c.Error != nil {
 		c.log.Error("Alert Rule Result Error",
 			"ruleId", c.Rule.Id,
@@ -125,11 +149,13 @@ func (c *EvalContext) GetNewState() m.AlertStateType {
 			return c.PrevAlertState
 		}
 		return c.Rule.ExecutionErrorState.ToAlertState()
+	}
 
-	} else if c.Firing {
+	if c.Firing {
 		return m.AlertStateAlerting
+	}
 
-	} else if c.NoDataFound {
+	if c.NoDataFound {
 		c.log.Info("Alert Rule returned no data",
 			"ruleId", c.Rule.Id,
 			"name", c.Rule.Name,
