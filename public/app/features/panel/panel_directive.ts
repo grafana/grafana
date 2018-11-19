@@ -140,6 +140,19 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         });
       });
 
+      ctrl.events.on('view-mode-changed', () => {
+        // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
+        setTimeout(() => {
+          // then recalc style
+          ctrl.calculatePanelHeight();
+          // then wait another cycle (this might not be needed)
+          $timeout(() => {
+            ctrl.render();
+            resizeScrollableContent();
+          });
+        });
+      });
+
       // set initial height
       ctrl.calculatePanelHeight();
 
