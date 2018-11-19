@@ -115,7 +115,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	testDataPath := "testdata"
 	builder = releaseLocalSources{
 		path:                   testDataPath,
-		artifactConfigurations: buildArtifactConfigurations,
+		artifactConfigurations: completeBuildArtifactConfigurations,
 	}
 
 	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl, true)
@@ -175,4 +175,28 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	if err == nil {
 		t.Error("Error was nil, but expected an error as the local releaser only supports nightly builds.")
 	}
+}
+
+func TestFilterBuildArtifacts(t *testing.T) {
+	buildArtifacts, _ := filterBuildArtifacts([]artifactFilter{
+		{os: "deb", arch: "amd64"},
+		{os: "rhel", arch: "amd64"},
+		{os: "linux", arch: "amd64"},
+		{os: "win", arch: "amd64"},
+	})
+
+	if len(buildArtifacts) != 4 {
+		t.Errorf("Expected 4 build artifacts after filtering, but was %v", len(buildArtifacts))
+	}
+
+	_, err := filterBuildArtifacts([]artifactFilter{
+		{os: "foobar", arch: "amd64"},
+	})
+
+
+
+	if err == nil {
+		t.Errorf("Expected an error as a we tried to filter on a nonexiststant os.")
+	}
+
 }

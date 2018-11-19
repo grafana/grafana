@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -103,7 +104,7 @@ func (t buildArtifact) getUrl(baseArchiveUrl, version string, releaseType Releas
 	return url
 }
 
-var buildArtifactConfigurations = []buildArtifact{
+var completeBuildArtifactConfigurations = []buildArtifact{
 	{
 		os:         "deb",
 		arch:       "arm64",
@@ -159,6 +160,31 @@ var buildArtifactConfigurations = []buildArtifact{
 		arch:       "amd64",
 		urlPostfix: ".windows-amd64.zip",
 	},
+}
+
+type artifactFilter struct {
+	os   string
+	arch string
+}
+
+func filterBuildArtifacts(filters []artifactFilter) ([]buildArtifact, error) {
+	var artifacts []buildArtifact
+	for _, f := range filters {
+		matched := false
+
+		for _, a := range completeBuildArtifactConfigurations {
+			if f.os == a.os && f.arch == a.arch {
+				artifacts = append(artifacts, a)
+				matched = true
+				break
+			}
+		}
+
+		if !matched {
+			return nil, errors.New(fmt.Sprintf("No buildArtifact for os=%v, arch=%v", f.os, f.arch))
+		}
+	}
+	return artifacts, nil
 }
 
 func newBuild(baseArchiveUrl string, ba buildArtifact, version string, rt ReleaseType, sha256 string) build {
