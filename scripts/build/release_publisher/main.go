@@ -50,9 +50,9 @@ func main() {
 		var err error
 		buildArtifacts, err = filterBuildArtifacts([]artifactFilter{
 			{os: "deb", arch: "amd64"},
-			{os: "rpm", arch: "amd64"},
+			{os: "rhel", arch: "amd64"},
 			{os: "linux", arch: "amd64"},
-			{os: "windows", arch: "amd64"},
+			{os: "win", arch: "amd64"},
 		})
 
 		if err != nil {
