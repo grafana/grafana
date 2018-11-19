@@ -124,7 +124,11 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               </button>
               <div className="empty-list-cta__pro-tip">
                 <i className="fa fa-rocket" /> {headerTooltip}
-                <a className="text-link empty-list-cta__pro-tip-link" href="asd" target="_blank">
+                <a
+                  className="text-link empty-list-cta__pro-tip-link"
+                  href="http://docs.grafana.org/auth/enhanced_ldap/"
+                  target="_blank"
+                >
                   Learn more
                 </a>
               </div>
