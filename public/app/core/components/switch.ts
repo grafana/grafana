@@ -15,6 +15,15 @@ const template = `
 </label>
 `;
 
+const checkboxTemplate = `
+<label for="check-{{ctrl.id}}" class="gf-form-check-container">
+  <div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
+    <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
+    <span class="gf-form-switch__checkbox"></span>
+  </div>
+</label>
+`;
+
 export class SwitchCtrl {
   onChange: any;
   checked: any;
@@ -53,4 +62,23 @@ export function switchDirective() {
   };
 }
 
+export function checkboxDirective() {
+  return {
+    restrict: 'E',
+    controller: SwitchCtrl,
+    controllerAs: 'ctrl',
+    bindToController: true,
+    scope: {
+      checked: '=',
+      label: '@',
+      labelClass: '@',
+      tooltip: '@',
+      switchClass: '@',
+      onChange: '&',
+    },
+    template: checkboxTemplate,
+  };
+}
+
 coreModule.directive('gfFormSwitch', switchDirective);
+coreModule.directive('gfFormCheckbox', checkboxDirective);

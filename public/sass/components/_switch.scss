@@ -2,109 +2,65 @@
   SWITCH 3 - YES NO
 ============================================================ */
 
-.gf-form-switch {
-  &--small {
-    max-width: 2rem;
-    min-width: 1.5rem;
-
-    input + label {
-      height: 25px;
-    }
-
-    input + label::before,
-    input + label::after {
-      font-size: $font-size-sm;
-    }
-  }
-
-  &--table-cell {
-    margin-bottom: 0;
-    margin-right: 0;
-
-    input + label {
-      height: 3.6rem;
-    }
-  }
-}
-
-.gf-form-switch--transparent {
-  input + label {
-    background: transparent;
-    border: none;
-  }
-
-  input + label::before,
-  input + label::after {
-    background: transparent;
-    border: none;
-  }
-
-  &:hover {
-    input + label::before {
-      background: transparent;
-    }
-
-    input + label::after {
-      background: transparent;
-    }
-  }
-}
-
-.gf-form-switch--search-result__section {
-  min-width: 3.05rem;
-  margin-right: -0.3rem;
-
-  input + label {
-    height: 1.7rem;
-  }
-}
-
-.gf-form-switch--search-result__item {
-  min-width: 2.7rem;
-
-  input + label {
-    height: 2.7rem;
-  }
-}
-
-.gf-form-switch--search-result-filter-row__checkbox {
-  min-width: 3.75rem;
-
-  input + label {
-    height: 2.5rem;
-  }
-}
-
 gf-form-switch[disabled] {
-  .gf-form-label,
-  .gf-form-switch input + label {
+  .gf-form-switch,
+  .gf-form-switch-container {
     cursor: default;
     pointer-events: none !important;
-    &::before,
-    &::after {
-      color: $text-color-faint;
-      text-shadow: none;
+    .gf-form-label {
+      color: $text-color-weak;
     }
   }
 }
 
 .gf-form-switch-container {
   display: flex;
+  cursor: pointer;
 }
 
 .gf-form-switch {
   position: relative;
   display: inline-block;
   width: 60px;
-  height: 34px;
+  height: $gf-form-input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
   border-left: none;
+  border-radius: $input-border-radius;
 
   input {
     opacity: 0;
     width: 0;
     height: 0;
+  }
+
+  &--transparent {
+    background: transparent;
+    border: none;
+  }
+
+  &--search-result__section {
+    width: 3.05rem;
+    height: auto;
+    position: relative;
+    top: -5px;
+    left: 3px;
+  }
+
+  &--search-result__item {
+    width: 2.7rem;
+    height: auto;
+    position: relative;
+    top: 3px;
+  }
+
+  &--table-cell {
+    width: 40px;
+    background: transparent;
+    height: auto;
+    border: none;
+    position: relative;
+    top: -5px;
   }
 }
 
@@ -118,6 +74,7 @@ gf-form-switch[disabled] {
   background: $switch-slider-off-bg;
   border-radius: 8px;
   height: 16px;
+  width: 29px;
 
   &::before {
     position: absolute;
@@ -137,15 +94,9 @@ input:checked + .gf-form-switch__slider {
   background: $switch-slider-on-bg;
 }
 
-/* input:focus + .gf-form-switch__slider { */
-/*   box-shadow: 0 0 1px #2196f3; */
-/* } */
-
 input:checked + .gf-form-switch__slider::before {
   transform: translateX(14px);
 }
-
-/* The Checkbox */
 
 .gf-form-switch__checkbox {
   position: absolute;
@@ -160,6 +111,7 @@ input:checked + .gf-form-switch__slider::before {
   justify-content: center;
   align-items: center;
 }
+
 input:checked + .gf-form-switch__checkbox::before {
   font-family: 'FontAwesome';
   content: '\f00c';

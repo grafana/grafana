@@ -36,17 +36,13 @@ export class Switch extends PureComponent<Props, State> {
     }
 
     return (
-      <div className="gf-form">
-        {label && (
-          <label htmlFor={labelId} className={labelClassName}>
-            {label}
-          </label>
-        )}
+      <label htmlFor={labelId} className="gf-form-switch-container">
+        {label && <label className={labelClassName}>{label}</label>}
         <div className={switchClassName}>
           <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
           <span className="gf-form-switch__slider" />
         </div>
-      </div>
+      </label>
     );
   }
 }
