@@ -32,7 +32,7 @@ func (s *SocialGoogle) IsSignupAllowed() bool {
 
 func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
-		Id    int    `json:"id"`
+		Id    string `json:"id"`
 		Name  string `json:"name"`
 		Email string `json:"email"`
 	}
@@ -48,7 +48,7 @@ func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	return &BasicUserInfo{
-		Id:    fmt.Sprintf("%d", data.Id),
+		Id:    data.Id,
 		Name:  data.Name,
 		Email: data.Email,
 		Login: data.Email,
