@@ -5,13 +5,14 @@ import config from '../core/config';
 
 interface Props {
   timeSeries: TimeSeriesVMs;
-  minValue: number;
-  maxValue: number;
+  minValue?: number;
+  maxValue?: number;
   showThresholdMarkers?: boolean;
   thresholds?: number[];
   showThresholdLables?: boolean;
   width: number;
   height: number;
+  stat?: { value: string; text: string };
 }
 
 const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
@@ -25,7 +26,7 @@ export class Gauge extends PureComponent<Props> {
     maxValue: 100,
     showThresholdMarkers: true,
     showThresholdLables: false,
-    thresholds: [],
+    thresholds: [0, 100],
   };
 
   componentDidMount() {
@@ -38,15 +39,18 @@ export class Gauge extends PureComponent<Props> {
 
   draw() {
     const {
+      timeSeries,
       maxValue,
       minValue,
       showThresholdLables,
       showThresholdMarkers,
-      timeSeries,
       thresholds,
       width,
       height,
+      stat,
     } = this.props;
+
+    console.log(stat);
 
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
@@ -57,13 +61,11 @@ export class Gauge extends PureComponent<Props> {
     const thresholdMarkersWidth = gaugeWidth / 5;
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    const formattedThresholds = [];
-
-    thresholds.forEach((threshold, index) => {
-      formattedThresholds.push({
+    const formattedThresholds = thresholds.map((threshold, index) => {
+      return {
         value: threshold,
         color: colors[index],
-      });
+      };
     });
 
     const options = {
@@ -94,7 +96,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: fontColor,
             formatter: () => {
-              return Math.round(timeSeries[0].stats.avg);
+              return Math.round(timeSeries[0].stats[stat.value]);
             },
             font: {
               size: fontSize,
