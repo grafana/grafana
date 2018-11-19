@@ -96,7 +96,7 @@ exports[`Render should render component 1`] = `
       Sync LDAP or OAuth groups with your Grafana teams.
       <a
         className="text-link empty-list-cta__pro-tip-link"
-        href="asd"
+        href="http://docs.grafana.org/auth/enhanced_ldap/"
         target="_blank"
       >
         Learn more
