@@ -127,7 +127,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
             value={this.state.selectedService}
             options={this.insertTemplateVariables(this.state.services)}
             onValueChange={e => this.onServiceChange(e)}
-            label="Services"
+            label="Service"
           />
         );
       case MetricFindQueryTypes.LabelKeys:
@@ -139,20 +139,20 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
               onValueChange={e => this.onServiceChange(e)}
-              label="Services"
+              label="Service"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
               onValueChange={e => this.onMetricTypeChange(e)}
-              label="Metric Types"
+              label="Metric Type"
             />
             {queryType === MetricFindQueryTypes.LabelValues && (
               <SimpleSelect
                 value={this.state.labelKey}
                 options={this.insertTemplateVariables(this.state.labels.map(l => ({ value: l, name: l })))}
                 onValueChange={e => this.onLabelKeyChange(e)}
-                label="Label Keys"
+                label="Label Key"
               />
             )}
           </React.Fragment>
@@ -165,13 +165,13 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
               onValueChange={e => this.onServiceChange(e)}
-              label="Services"
+              label="Service"
             />
             <SimpleSelect
               value={this.state.selectedMetricType}
               options={this.insertTemplateVariables(this.state.metricTypes)}
               onValueChange={e => this.onMetricTypeChange(e)}
-              label="Metric Types"
+              label="Metric Type"
             />
           </React.Fragment>
         );
@@ -187,7 +187,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
           value={this.state.selectedQueryType}
           options={this.queryTypes}
           onValueChange={e => this.handleQueryTypeChange(e)}
-          label="Query Types"
+          label="Query Type"
         />
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}
       </React.Fragment>
