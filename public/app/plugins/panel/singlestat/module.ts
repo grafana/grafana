@@ -67,6 +67,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     sparkline: {
       show: false,
       full: false,
+      zeroScale: true,
       lineColor: 'rgb(31, 120, 193)',
       fillColor: 'rgba(31, 118, 189, 0.18)',
     },
@@ -548,7 +549,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           lines: {
             show: true,
             fill: 1,
-            zero: false,
+            zero: panel.sparkline.zeroScale,
             lineWidth: 1,
             fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
           },
