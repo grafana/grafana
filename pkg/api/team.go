@@ -96,3 +96,13 @@ func GetTeamByID(c *m.ReqContext) Response {
 	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
 	return JSON(200, &query.Result)
 }
+
+// GET /api/teams/:teamId/preferences
+func GetTeamPreferences(c *m.ReqContext) Response {
+	return getPreferencesFor(c.OrgId, 0, c.ParamsInt64(":teamId"))
+}
+
+// PUT /api/teams/:teamId/preferences
+func UpdateTeamPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
+	return updatePreferencesFor(c.OrgId, 0, c.ParamsInt64(":teamId"), &dtoCmd)
+}

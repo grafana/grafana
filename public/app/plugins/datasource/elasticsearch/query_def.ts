@@ -228,3 +228,11 @@ export function describeOrderBy(orderBy, target) {
     return 'metric not found';
   }
 }
+
+export function defaultMetricAgg() {
+  return { type: 'count', id: '1' };
+}
+
+export function defaultBucketAgg() {
+  return { type: 'date_histogram', id: '2', settings: { interval: 'auto' } };
+}

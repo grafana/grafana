@@ -14,9 +14,9 @@
     "@types/enzyme": "^3.1.13",
     "@types/jest": "^23.3.2",
     "@types/node": "^8.0.31",
-    "@types/react": "^16.4.14",
+    "@types/react": "^16.7.6",
     "@types/react-custom-scrollbars": "^4.0.5",
-    "@types/react-dom": "^16.0.7",
+    "@types/react-dom": "^16.0.9",
     "@types/react-select": "^2.0.4",
     "angular-mocks": "1.6.6",
     "autoprefixer": "^6.4.0",
@@ -152,12 +152,12 @@
     "prismjs": "^1.6.0",
     "prop-types": "^15.6.2",
     "rc-cascader": "^0.14.0",
-    "react": "^16.5.0",
+    "react": "^16.6.3",
     "react-custom-scrollbars": "^4.2.1",
-    "react-dom": "^16.5.0",
+    "react-dom": "^16.6.3",
     "react-grid-layout": "0.16.6",
     "react-highlight-words": "^0.10.0",
-    "react-popper": "^0.7.5",
+    "react-popper": "^1.3.0",
     "react-redux": "^5.0.7",
     "react-select": "2.1.0",
     "react-sizeme": "^2.3.6",
@@ -180,6 +180,7 @@
     "tslint-react": "^3.6.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772"
+    "caniuse-db": "1.0.30000772",
+    "**/@types/react": "16.7.6"
   }
 }

@@ -1,12 +1,8 @@
 .popper {
   position: absolute;
   z-index: $zindex-tooltip;
-  background: $tooltipBackground;
   color: $tooltipColor;
   max-width: 400px;
-  border-radius: 3px;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  padding: 10px;
   text-align: center;
 }
 
@@ -35,10 +31,18 @@
   left: calc(50% - 5px);
   margin-top: 0;
   margin-bottom: 0;
+  padding-top: 5px;
 }
 
 .popper[data-placement^='bottom'] {
-  margin-top: 5px;
+  padding-top: 5px;
+}
+
+.popper__background {
+  background: $tooltipBackground;
+  border-radius: 3px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  padding: 10px;
 }
 
 .popper[data-placement^='bottom'] .popper__arrow {
@@ -46,21 +50,21 @@
   border-left-color: transparent;
   border-right-color: transparent;
   border-top-color: transparent;
-  top: -5px;
-  left: calc(50% - 5px);
+  top: 0;
+  left: calc(50% - 8px);
   margin-top: 0;
   margin-bottom: 0;
 }
 .popper[data-placement^='right'] {
-  margin-left: 5px;
+  padding-left: 5px;
 }
 .popper[data-placement^='right'] .popper__arrow {
   border-width: 5px 5px 5px 0;
   border-left-color: transparent;
   border-top-color: transparent;
   border-bottom-color: transparent;
-  left: -5px;
-  top: calc(50% - 5px);
+  left: 0;
+  top: calc(50% - 8px);
   margin-left: 0;
   margin-right: 0;
 }
@@ -83,4 +87,8 @@
 .popper__target,
 .popper__manager {
   display: inline-block;
+}
+
+.popper__manager--block {
+  display: block;
 }
