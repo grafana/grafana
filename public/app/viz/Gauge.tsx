@@ -7,15 +7,15 @@ import kbn from '../core/utils/kbn';
 interface Props {
   decimals: number;
   timeSeries: TimeSeriesVMs;
-  minValue?: number;
-  maxValue?: number;
-  showThresholdMarkers?: boolean;
-  thresholds?: number[];
-  showThresholdLables?: boolean;
+  minValue: number;
+  maxValue: number;
+  showThresholdMarkers: boolean;
+  thresholds: number[];
+  showThresholdLabels: boolean;
   unit: string;
   width: number;
   height: number;
-  stat?: string;
+  stat: string;
   prefix: string;
   suffix: string;
 }
@@ -23,7 +23,6 @@ interface Props {
 const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
 
 export class Gauge extends PureComponent<Props> {
-  parentElement: any;
   canvasElement: any;
 
   static defaultProps = {
@@ -31,7 +30,7 @@ export class Gauge extends PureComponent<Props> {
     maxValue: 100,
     prefix: '',
     showThresholdMarkers: true,
-    showThresholdLables: false,
+    showThresholdLabels: false,
     suffix: '',
     thresholds: [0, 100],
   };
@@ -56,13 +55,17 @@ export class Gauge extends PureComponent<Props> {
       timeSeries,
       maxValue,
       minValue,
-      showThresholdLables,
+      showThresholdLabels,
       showThresholdMarkers,
       thresholds,
       width,
       height,
       stat,
     } = this.props;
+
+    console.log('-------------------');
+    console.log('showThresholdMarkers', showThresholdMarkers);
+    console.log('showThresholdLabels', showThresholdLabels);
 
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
@@ -98,7 +101,7 @@ export class Gauge extends PureComponent<Props> {
           threshold: {
             values: formattedThresholds,
             label: {
-              show: showThresholdLables,
+              show: showThresholdLabels,
               margin: thresholdMarkersWidth + 1,
               font: { size: thresholdLabelFontSize },
             },
@@ -144,7 +147,7 @@ export class Gauge extends PureComponent<Props> {
     const { height, width } = this.props;
 
     return (
-      <div className="singlestat-panel" ref={element => (this.parentElement = element)}>
+      <div className="singlestat-panel">
         <div
           style={{
             height: `${height * 0.9}px`,
