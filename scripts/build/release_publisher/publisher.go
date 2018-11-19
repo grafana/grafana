@@ -61,13 +61,33 @@ func (p *publisher) postRelease(r *release) error {
 	return nil
 }
 
+type ReleaseType int
+
+const (
+	STABLE ReleaseType = iota + 1
+	BETA
+	NIGHTLY
+)
+
+func (rt ReleaseType) beta() bool {
+	return rt == BETA
+}
+
+func (rt ReleaseType) stable() bool {
+	return rt == STABLE
+}
+
+func (rt ReleaseType) nightly() bool {
+	return rt == NIGHTLY
+}
+
 type buildArtifact struct {
 	os         string
 	arch       string
 	urlPostfix string
 }
 
-func (t buildArtifact) getUrl(baseArchiveUrl, version string, isBeta bool) string {
+func (t buildArtifact) getUrl(baseArchiveUrl, version string, releaseType ReleaseType) string {
 	prefix := "-"
 	rhelReleaseExtra := ""
 
@@ -75,7 +95,7 @@ func (t buildArtifact) getUrl(baseArchiveUrl, version string, isBeta bool) strin
 		prefix = "_"
 	}
 
-	if !isBeta && t.os == "rhel" {
+	if releaseType.stable() && t.os == "rhel" {
 		rhelReleaseExtra = "-1"
 	}
 
@@ -141,10 +161,10 @@ var buildArtifactConfigurations = []buildArtifact{
 	},
 }
 
-func newBuild(baseArchiveUrl string, ba buildArtifact, version string, isBeta bool, sha256 string) build {
+func newBuild(baseArchiveUrl string, ba buildArtifact, version string, rt ReleaseType, sha256 string) build {
 	return build{
 		Os:     ba.os,
-		Url:    ba.getUrl(baseArchiveUrl, version, isBeta),
+		Url:    ba.getUrl(baseArchiveUrl, version, rt),
 		Sha256: sha256,
 		Arch:   ba.arch,
 	}
