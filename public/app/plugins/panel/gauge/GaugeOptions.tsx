@@ -30,7 +30,7 @@ export default class GaugeOptions extends PureComponent<Props> {
         </div>
         <div className="gf-form-inline">
           <Switch
-            label="Threshold labels"
+            label="Threshold markers"
             labelClass="width-10"
             checked={showThresholdMarkers}
             onChange={this.toggleThresholdMarkers}

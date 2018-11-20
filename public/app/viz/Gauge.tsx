@@ -40,6 +40,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
+    console.log('did update');
     this.draw();
   }
 
@@ -62,10 +63,6 @@ export class Gauge extends PureComponent<Props> {
       height,
       stat,
     } = this.props;
-
-    console.log('-------------------');
-    console.log('showThresholdMarkers', showThresholdMarkers);
-    console.log('showThresholdLabels', showThresholdLabels);
 
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
