@@ -77,7 +77,6 @@ interface GraphProps {
   data: any[];
   height?: string; // e.g., '200px'
   id?: string;
-  loading?: boolean;
   range: RawTimeRange;
   split?: boolean;
   size?: { width: number; height: number };
@@ -188,12 +187,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   render() {
-    const { height = '100px', id = 'graph', loading = false } = this.props;
+    const { height = '100px', id = 'graph' } = this.props;
     const data = this.getGraphData();
 
     return (
-      <div className="panel-container">
-        {loading && <div className="explore-panel__loader" />}
+      <>
         {this.props.data &&
           this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
           !this.state.showAllTimeSeries && (
@@ -207,7 +205,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           )}
         <div id={id} className="explore-graph" style={{ height }} />
         <Legend data={data} />
-      </div>
+      </>
     );
   }
 }

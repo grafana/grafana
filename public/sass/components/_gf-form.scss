@@ -102,6 +102,7 @@ $input-border: 1px solid $input-border-color;
 
   background-color: $input-label-bg;
   display: block;
+  height: $gf-form-input-height;
 
   border: $input-btn-border-width solid $input-label-border-color;
   border-right: none;
@@ -160,6 +161,7 @@ $input-border: 1px solid $input-border-color;
 .gf-form-input {
   display: block;
   width: 100%;
+  height: $gf-form-input-height;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
   font-size: $font-size-md;
@@ -345,9 +347,6 @@ $input-border: 1px solid $input-border-color;
 .gf-form-dropdown-typeahead {
   margin-right: $gf-form-margin;
   position: relative;
-  background-color: $input-bg;
-  border: $input-border;
-  border-radius: $input-border-radius;
 
   &::after {
     position: absolute;
@@ -359,10 +358,6 @@ $input-border: 1px solid $input-border-color;
     content: '\f0d7';
     pointer-events: none;
     font-size: 11px;
-  }
-
-  .gf-form-input {
-    border: none;
   }
 }
 

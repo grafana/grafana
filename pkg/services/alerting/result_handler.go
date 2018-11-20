@@ -73,6 +73,9 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			// when two servers are raising. This makes sure that the server
 			// with the last state change always sends a notification.
 			evalContext.Rule.StateChanges = cmd.Result.StateChanges
+
+			// Update the last state change of the alert rule in memory
+			evalContext.Rule.LastStateChange = time.Now()
 		}
 
 		// save annotation

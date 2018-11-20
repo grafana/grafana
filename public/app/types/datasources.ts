@@ -21,8 +21,6 @@ export interface DataSource {
   withCredentials: boolean;
   meta?: PluginMeta;
   pluginExports?: PluginExports;
-  init?: () => void;
-  testDatasource?: () => Promise<any>;
 }
 
 export interface DataSourceSelectItem {

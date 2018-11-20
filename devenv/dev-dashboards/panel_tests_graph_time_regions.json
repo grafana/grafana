@@ -18,52 +18,19 @@
   "links": [],
   "panels": [
     {
-      "alert": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                60
-              ],
-              "type": "gt"
-            },
-            "query": {
-              "params": [
-                "A",
-                "5m",
-                "now"
-              ]
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg"
-            },
-            "type": "query"
-          }
-        ],
-        "enabled": true,
-        "frequency": "60s",
-        "handler": 1,
-        "name": "TestData - Always OK",
-        "noDataState": "no_data",
-        "notifications": []
-      },
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "gdev-testdata",
-      "editable": true,
-      "error": false,
-      "fill": 1,
+      "fill": 2,
       "gridPos": {
-        "h": 7,
-        "w": 12,
+        "h": 8,
+        "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 3,
-      "isNew": true,
+      "id": 2,
       "legend": {
         "avg": false,
         "current": false,
@@ -76,7 +43,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "connected",
+      "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -88,29 +55,32 @@
       "targets": [
         {
           "refId": "A",
-          "scenario": "random_walk",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,0",
+          "scenarioId": "random_walk",
           "target": ""
         }
       ],
-      "thresholds": [
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [
         {
-          "colorMode": "critical",
+          "colorMode": "gray",
           "fill": true,
-          "line": true,
-          "op": "gt",
-          "value": 60
+          "fillColor": "rgba(255, 255, 255, 0.03)",
+          "from": "08:30",
+          "fromDayOfWeek": 1,
+          "line": false,
+          "lineColor": "rgba(255, 255, 255, 0.2)",
+          "op": "time",
+          "to": "16:45",
+          "toDayOfWeek": 5
         }
       ],
-      "timeFrom": null,
       "timeShift": null,
-      "title": "Always OK",
+      "title": "Business Hours",
       "tooltip": {
-        "msResolution": false,
         "shared": true,
         "sort": 0,
-        "value_type": "cumulative"
+        "value_type": "individual"
       },
       "type": "graph",
       "xaxis": {
@@ -123,10 +93,10 @@
       "yaxes": [
         {
           "format": "short",
-          "label": "",
+          "label": null,
           "logBase": 1,
-          "max": "125",
-          "min": "0",
+          "max": null,
+          "min": null,
           "show": true
         },
         {
@@ -144,54 +114,19 @@
       }
     },
     {
-      "alert": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                177
-              ],
-              "type": "gt"
-            },
-            "query": {
-              "params": [
-                "A",
-                "5m",
-                "now"
-              ]
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg"
-            },
-            "type": "query"
-          }
-        ],
-        "enabled": true,
-        "executionErrorState": "alerting",
-        "for": "0m",
-        "frequency": "60s",
-        "handler": 1,
-        "name": "TestData - Always Alerting",
-        "noDataState": "no_data",
-        "notifications": []
-      },
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "gdev-testdata",
-      "editable": true,
-      "error": false,
-      "fill": 1,
+      "fill": 2,
       "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 0
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
       },
       "id": 4,
-      "isNew": true,
       "legend": {
         "avg": false,
         "current": false,
@@ -204,7 +139,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "connected",
+      "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -215,30 +150,36 @@
       "steppedLine": false,
       "targets": [
         {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
           "refId": "A",
-          "scenario": "random_walk",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "200,445,100,150,200,220,190",
+          "scenarioId": "random_walk",
           "target": ""
         }
       ],
-      "thresholds": [
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [
         {
-          "colorMode": "critical",
+          "colorMode": "red",
           "fill": true,
-          "line": true,
-          "op": "gt",
-          "value": 177
+          "fillColor": "rgba(255, 255, 255, 0.03)",
+          "from": "20:00",
+          "fromDayOfWeek": 7,
+          "line": false,
+          "lineColor": "rgba(255, 255, 255, 0.2)",
+          "op": "time",
+          "to": "23:00",
+          "toDayOfWeek": 7
         }
       ],
-      "timeFrom": null,
       "timeShift": null,
-      "title": "Always Alerting",
+      "title": "Sunday's 20-23",
       "tooltip": {
-        "msResolution": false,
         "shared": true,
         "sort": 0,
-        "value_type": "cumulative"
+        "value_type": "individual"
       },
       "type": "graph",
       "xaxis": {
@@ -251,15 +192,15 @@
       "yaxes": [
         {
           "format": "short",
-          "label": "",
+          "label": null,
           "logBase": 1,
           "max": null,
-          "min": "0",
+          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": "",
+          "label": null,
           "logBase": 1,
           "max": null,
           "min": null,
@@ -272,56 +213,177 @@
       }
     },
     {
-      "alert": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                1
-              ],
-              "type": "gt"
-            },
-            "operator": {
-              "type": "and"
-            },
-            "query": {
-              "params": [
-                "A",
-                "15m",
-                "now"
-              ]
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg"
-            },
-            "type": "query"
-          }
-        ],
-        "executionErrorState": "alerting",
-        "for": "5m",
-        "frequency": "1m",
-        "handler": 1,
-        "name": "TestData - No data",
-        "noDataState": "no_data",
-        "notifications": []
+      "aliasColors": {
+        "A-series": "#d683ce"
       },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-testdata",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 3,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 0.5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "target": ""
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "rgba(255, 0, 0, 0.22)",
+          "from": "",
+          "fromDayOfWeek": 1,
+          "line": true,
+          "lineColor": "rgba(255, 0, 0, 0.32)",
+          "op": "time",
+          "to": "",
+          "toDayOfWeek": 1
+        },
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "rgba(255, 127, 0, 0.22)",
+          "fromDayOfWeek": 2,
+          "line": true,
+          "lineColor": "rgba(255, 127, 0, 0.32)",
+          "op": "time",
+          "toDayOfWeek": 2
+        },
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "rgba(255, 255, 0, 0.22)",
+          "fromDayOfWeek": 3,
+          "line": true,
+          "lineColor": "rgba(255, 255, 0, 0.22)",
+          "op": "time",
+          "toDayOfWeek": 3
+        },
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "rgba(0, 255, 0, 0.22)",
+          "fromDayOfWeek": 4,
+          "line": true,
+          "lineColor": "rgba(0, 255, 0, 0.32)",
+          "op": "time",
+          "toDayOfWeek": 4
+        },
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "rgba(0, 0, 255, 0.22)",
+          "fromDayOfWeek": 5,
+          "line": true,
+          "lineColor": "rgba(0, 0, 255, 0.32)",
+          "op": "time",
+          "toDayOfWeek": 5
+        },
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "rgba(75, 0, 130, 0.22)",
+          "fromDayOfWeek": 6,
+          "line": true,
+          "lineColor": "rgba(75, 0, 130, 0.32)",
+          "op": "time",
+          "toDayOfWeek": 6
+        },
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "rgba(148, 0, 211, 0.22)",
+          "fromDayOfWeek": 7,
+          "line": true,
+          "lineColor": "rgba(148, 0, 211, 0.32)",
+          "op": "time",
+          "toDayOfWeek": 7
+        }
+      ],
+      "timeShift": null,
+      "title": "Each day of week",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "gdev-testdata",
-      "editable": true,
-      "error": false,
-      "fill": 1,
+      "fill": 2,
       "gridPos": {
-        "h": 7,
-        "w": 12,
+        "h": 8,
+        "w": 24,
         "x": 0,
-        "y": 7
+        "y": 24
       },
       "id": 5,
-      "isNew": true,
       "legend": {
         "avg": false,
         "current": false,
@@ -334,7 +396,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "connected",
+      "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -345,30 +407,31 @@
       "steppedLine": false,
       "targets": [
         {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 1,
           "refId": "A",
-          "scenario": "random_walk",
-          "scenarioId": "no_data_points",
-          "stringInput": "",
+          "scenarioId": "random_walk",
           "target": ""
         }
       ],
-      "thresholds": [
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [
         {
-          "colorMode": "critical",
-          "fill": true,
+          "colorMode": "red",
+          "fill": false,
+          "from": "05:00",
           "line": true,
-          "op": "gt",
-          "value": 1
+          "op": "time"
         }
       ],
-      "timeFrom": null,
       "timeShift": null,
-      "title": "No data",
+      "title": "05:00",
       "tooltip": {
-        "msResolution": false,
         "shared": true,
         "sort": 0,
-        "value_type": "cumulative"
+        "value_type": "individual"
       },
       "type": "graph",
       "xaxis": {
@@ -381,145 +444,15 @@
       "yaxes": [
         {
           "format": "short",
-          "label": "",
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": "",
+          "label": null,
           "logBase": 1,
           "max": null,
           "min": null,
           "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "alert": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                177
-              ],
-              "type": "gt"
-            },
-            "operator": {
-              "type": "and"
-            },
-            "query": {
-              "params": [
-                "A",
-                "15m",
-                "now"
-              ]
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg"
-            },
-            "type": "query"
-          }
-        ],
-        "executionErrorState": "alerting",
-        "for": "1m",
-        "frequency": "1m",
-        "handler": 1,
-        "name": "TestData - Always Alerting with For",
-        "noDataState": "no_data",
-        "notifications": []
-      },
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "gdev-testdata",
-      "editable": true,
-      "error": false,
-      "fill": 1,
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 7
-      },
-      "id": 6,
-      "isNew": true,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "connected",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "refId": "A",
-          "scenario": "random_walk",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "200,445,100,150,200,220,190",
-          "target": ""
-        }
-      ],
-      "thresholds": [
-        {
-          "colorMode": "critical",
-          "fill": true,
-          "line": true,
-          "op": "gt",
-          "value": 177
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Always Alerting with For",
-      "tooltip": {
-        "msResolution": false,
-        "shared": true,
-        "sort": 0,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": "",
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
         },
         {
           "format": "short",
-          "label": "",
+          "label": null,
           "logBase": 1,
           "max": null,
           "min": null,
@@ -532,17 +465,18 @@
       }
     }
   ],
-  "revision": 2,
+  "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
   "tags": [
-    "grafana-test"
+    "gdev",
+    "panel-tests"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-30d",
     "to": "now"
   },
   "timepicker": {
@@ -571,7 +505,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "Alerting with TestData",
-  "uid": "7MeksYbmk",
+  "title": "Panel Tests - Graph (Time Regions)",
+  "uid": "XMjIZPmik",
   "version": 1
 }

@@ -1,147 +1,159 @@
 <div class="edit-tab-with-sidemenu" ng-if="ctrl.alert">
-	<aside class="edit-sidemenu-aside">
-		<ul class="edit-sidemenu">
-			<li ng-class="{active: ctrl.subTabIndex === 0}">
-				<a ng-click="ctrl.changeTabIndex(0)">Alert Config</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 1}">
-				<a ng-click="ctrl.changeTabIndex(1)">
-					Notifications <span class="muted">({{ctrl.alertNotifications.length}})</span>
-				</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 2}">
-				<a ng-click="ctrl.changeTabIndex(2)">State history</a>
-			</li>
+  <aside class="edit-sidemenu-aside">
+    <ul class="edit-sidemenu">
+      <li ng-class="{active: ctrl.subTabIndex === 0}">
+        <a ng-click="ctrl.changeTabIndex(0)">Alert Config</a>
+      </li>
+      <li ng-class="{active: ctrl.subTabIndex === 1}">
+        <a ng-click="ctrl.changeTabIndex(1)">
+          Notifications <span class="muted">({{ctrl.alertNotifications.length}})</span>
+        </a>
+      </li>
+      <li ng-class="{active: ctrl.subTabIndex === 2}">
+        <a ng-click="ctrl.changeTabIndex(2)">State history</a>
+      </li>
       <li>
-				<a ng-click="ctrl.delete()">Delete</a>
-			</li>
-		</ul>
-	</aside>
+        <a ng-click="ctrl.delete()">Delete</a>
+      </li>
+    </ul>
+  </aside>
 
-	<div class="edit-tab-content">
-		<div ng-if="ctrl.subTabIndex === 0">
-			<div class="alert alert-error m-b-2" ng-show="ctrl.error">
-				<i class="fa fa-warning"></i> {{ctrl.error}}
-			</div>
+  <div class="edit-tab-content">
+    <div ng-if="ctrl.subTabIndex === 0">
+      <div class="alert alert-error m-b-2" ng-show="ctrl.error">
+        <i class="fa fa-warning"></i> {{ctrl.error}}
+      </div>
 
-			<div class="gf-form-group">
-				<h5 class="section-heading">Alert Config</h5>
-				<div class="gf-form">
-					<span class="gf-form-label width-6">Name</span>
-					<input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name">
-					<span class="gf-form-label">Evaluate every</span>
-					<input class="gf-form-input max-width-5" type="text" ng-model="ctrl.alert.frequency"></input>
-				</div>
-			</div>
+      <div class="gf-form-group">
+        <h5 class="section-heading">Alert Config</h5>
+        <div class="gf-form">
+          <span class="gf-form-label width-6">Name</span>
+          <input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name">
+        </div>
+        <div class="gf-form-inline">
+          <div class="gf-form">
+            <span class="gf-form-label width-9">Evaluate every</span>
+            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alert.frequency">
+          </div>
+          <div class="gf-form max-width-11">
+            <label class="gf-form-label width-5">For</label>
+            <input type="text" class="gf-form-input max-width-6" ng-model="ctrl.alert.for" spellcheck='false' placeholder="5m">
+            <info-popover mode="right-absolute">
+                If an alert rule has a configured For and the query violates the configured threshold it will first go from OK to Pending. 
+                Going from OK to Pending Grafana will not send any notifications. Once the alert rule has been firing for more than For duration, it will change to Alerting and send alert notifications. 
+            </info-popover>
+          </div>
+        </div>
+      </div>
 
-			<div class="gf-form-group">
-				<h5 class="section-heading">Conditions</h5>
-				<div class="gf-form-inline" ng-repeat="conditionModel in ctrl.conditionModels">
-					<div class="gf-form">
-						<metric-segment-model css-class="query-keyword width-5" ng-if="$index" property="conditionModel.operator.type" options="ctrl.evalOperators" custom="false"></metric-segment-model>
-						<span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
-					</div>
-          			<div class="gf-form">
-						<query-part-editor class="gf-form-label query-part width-9" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
-						</query-part-editor>
-            			<span class="gf-form-label query-keyword">OF</span>
-					</div>
-					<div class="gf-form">
-						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
-						</query-part-editor>
-					</div>
-					<div class="gf-form">
-						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
-						<input class="gf-form-input max-width-9" type="number" step="any" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
-            			<label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
-            			<input class="gf-form-input max-width-9" type="number" step="any" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
-					</div>
-					<div class="gf-form">
-						<label class="gf-form-label">
-							<a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">
-								<i class="fa fa-trash"></i>
-							</a>
-						</label>
-					</div>
-				</div>
+      <div class="gf-form-group">
+        <h5 class="section-heading">Conditions</h5>
+        <div class="gf-form-inline" ng-repeat="conditionModel in ctrl.conditionModels">
+          <div class="gf-form">
+            <metric-segment-model css-class="query-keyword width-5" ng-if="$index" property="conditionModel.operator.type" options="ctrl.evalOperators" custom="false"></metric-segment-model>
+            <span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
+          </div>
+                <div class="gf-form">
+            <query-part-editor class="gf-form-label query-part width-9" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
+            </query-part-editor>
+                  <span class="gf-form-label query-keyword">OF</span>
+          </div>
+          <div class="gf-form">
+            <query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
+            </query-part-editor>
+          </div>
+          <div class="gf-form">
+            <metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
+            <input class="gf-form-input max-width-9" type="number" step="any" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
+                  <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
+                  <input class="gf-form-input max-width-9" type="number" step="any" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
+          </div>
+          <div class="gf-form">
+            <label class="gf-form-label">
+              <a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">
+                <i class="fa fa-trash"></i>
+              </a>
+            </label>
+          </div>
+        </div>
 
-				<div class="gf-form">
-					<label class="gf-form-label dropdown">
-						<a class="pointer dropdown-toggle" data-toggle="dropdown">
-							<i class="fa fa-plus"></i>
-						</a>
-						<ul class="dropdown-menu" role="menu">
-							<li ng-repeat="ct in ctrl.conditionTypes" role="menuitem">
-								<a ng-click="ctrl.addCondition(ct.value);">{{ct.text}}</a>
-							</li>
-						</ul>
-					</label>
-				</div>
-			</div>
+        <div class="gf-form">
+          <label class="gf-form-label dropdown">
+            <a class="pointer dropdown-toggle" data-toggle="dropdown">
+              <i class="fa fa-plus"></i>
+            </a>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="ct in ctrl.conditionTypes" role="menuitem">
+                <a ng-click="ctrl.addCondition(ct.value);">{{ct.text}}</a>
+              </li>
+            </ul>
+          </label>
+        </div>
+      </div>
 
-			<div class="gf-form-group">
-				<div class="gf-form">
-          			<span class="gf-form-label width-18">If no data or all values are null</span>
-          			<span class="gf-form-label query-keyword">SET STATE TO</span>
-					<div class="gf-form-select-wrapper">
-						<select class="gf-form-input" ng-model="ctrl.alert.noDataState" ng-options="f.value as f.text for f in ctrl.noDataModes">
-						</select>
-					</div>
-				</div>
+      <div class="gf-form-group">
+        <div class="gf-form">
+                <span class="gf-form-label width-18">If no data or all values are null</span>
+                <span class="gf-form-label query-keyword">SET STATE TO</span>
+          <div class="gf-form-select-wrapper">
+            <select class="gf-form-input" ng-model="ctrl.alert.noDataState" ng-options="f.value as f.text for f in ctrl.noDataModes">
+            </select>
+          </div>
+        </div>
 
-				<div class="gf-form">
-          			<span class="gf-form-label width-18">If execution error or timeout</span>
-          			<span class="gf-form-label query-keyword">SET STATE TO</span>
-					<div class="gf-form-select-wrapper">
-						<select class="gf-form-input" ng-model="ctrl.alert.executionErrorState" ng-options="f.value as f.text for f in ctrl.executionErrorModes">
-						</select>
-					</div>
-				</div>
+        <div class="gf-form">
+                <span class="gf-form-label width-18">If execution error or timeout</span>
+                <span class="gf-form-label query-keyword">SET STATE TO</span>
+          <div class="gf-form-select-wrapper">
+            <select class="gf-form-input" ng-model="ctrl.alert.executionErrorState" ng-options="f.value as f.text for f in ctrl.executionErrorModes">
+            </select>
+          </div>
+        </div>
 
-				<div class="gf-form-button-row">
-					<button class="btn btn-inverse" ng-click="ctrl.test()">
-						Test Rule
-					</button>
-				</div>
-			</div>
+        <div class="gf-form-button-row">
+          <button class="btn btn-inverse" ng-click="ctrl.test()">
+            Test Rule
+          </button>
+        </div>
+      </div>
 
-			<div class="gf-form-group" ng-if="ctrl.testing">
-				Evaluating rule <i class="fa fa-spinner fa-spin"></i>
-			</div>
+      <div class="gf-form-group" ng-if="ctrl.testing">
+        Evaluating rule <i class="fa fa-spinner fa-spin"></i>
+      </div>
 
-			<div class="gf-form-group" ng-if="ctrl.testResult">
-				<json-tree root-name="result" object="ctrl.testResult" start-expanded="true"></json-tree>
-			</div>
-		</div>
+      <div class="gf-form-group" ng-if="ctrl.testResult">
+        <json-tree root-name="result" object="ctrl.testResult" start-expanded="true"></json-tree>
+      </div>
+    </div>
 
-		<div class="gf-form-group" ng-if="ctrl.subTabIndex === 1">
-			<h5 class="section-heading">Notifications</h5>
-			<div class="gf-form-inline">
-				<div class="gf-form max-width-30">
-					<span class="gf-form-label width-8">Send to</span>
-					<span class="gf-form-label" ng-repeat="nc in ctrl.alertNotifications" ng-style="{'background-color': nc.bgColor }">
-						<i class="{{nc.iconClass}}"></i>&nbsp;{{nc.name}}&nbsp;
-						<i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification($index)" ng-if="nc.isDefault === false"></i>
-					</span>
-					<metric-segment segment="ctrl.addNotificationSegment" get-options="ctrl.getNotifications()" on-change="ctrl.notificationAdded()"></metric-segment>
-				</div>
-			</div>
-			<div class="gf-form gf-form--v-stretch">
-				<span class="gf-form-label width-8">Message</span>
-				<textarea class="gf-form-input" rows="10" ng-model="ctrl.alert.message"  placeholder="Notification message details..."></textarea>
-			</div>
-		</div>
+    <div class="gf-form-group" ng-if="ctrl.subTabIndex === 1">
+      <h5 class="section-heading">Notifications</h5>
+      <div class="gf-form-inline">
+        <div class="gf-form max-width-30">
+          <span class="gf-form-label width-8">Send to</span>
+          <span class="gf-form-label" ng-repeat="nc in ctrl.alertNotifications" ng-style="{'background-color': nc.bgColor }">
+            <i class="{{nc.iconClass}}"></i>&nbsp;{{nc.name}}&nbsp;
+            <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification($index)" ng-if="nc.isDefault === false"></i>
+          </span>
+          <metric-segment segment="ctrl.addNotificationSegment" get-options="ctrl.getNotifications()" on-change="ctrl.notificationAdded()"></metric-segment>
+        </div>
+      </div>
+      <div class="gf-form gf-form--v-stretch">
+        <span class="gf-form-label width-8">Message</span>
+        <textarea class="gf-form-input" rows="10" ng-model="ctrl.alert.message"  placeholder="Notification message details..."></textarea>
+      </div>
+    </div>
 
-		<div class="gf-form-group" style="max-width: 720px;" ng-if="ctrl.subTabIndex === 2">
-			<button class="btn btn-mini btn-danger pull-right" ng-click="ctrl.clearHistory()"><i class="fa fa-trash"></i>&nbsp;Clear history</button>
-      		<h5 class="section-heading" style="whitespace: nowrap">
-				State history <span class="muted small">(last 50 state changes)</span>
-			</h5>
+    <div class="gf-form-group" style="max-width: 720px;" ng-if="ctrl.subTabIndex === 2">
+      <button class="btn btn-mini btn-danger pull-right" ng-click="ctrl.clearHistory()"><i class="fa fa-trash"></i>&nbsp;Clear history</button>
+          <h5 class="section-heading" style="whitespace: nowrap">
+        State history <span class="muted small">(last 50 state changes)</span>
+      </h5>
 
-			<div ng-show="ctrl.alertHistory.length === 0">
-				<br>
-				<i>No state changes recorded</i>
-			</div>
+      <div ng-show="ctrl.alertHistory.length === 0">
+        <br>
+        <i>No state changes recorded</i>
+      </div>
 
       <ol class="alert-rule-list" >
         <li class="alert-rule-item" ng-repeat="al in ctrl.alertHistory">

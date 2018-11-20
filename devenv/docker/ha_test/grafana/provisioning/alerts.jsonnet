@@ -39,6 +39,7 @@ local alertDashboardTemplate = {
         "executionErrorState": "alerting",
         "frequency": "10s",
         "handler": 1,
+        "for": "1m",
         "name": "bulk alerting",
         "noDataState": "no_data",
         "notifications": [

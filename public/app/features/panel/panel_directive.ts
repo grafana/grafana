@@ -48,6 +48,16 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       let lastAlertState;
       let hasAlertRule;
 
+      function mouseEnter() {
+        panelContainer.toggleClass('panel-hover-highlight', true);
+        ctrl.dashboard.setPanelFocus(ctrl.panel.id);
+      }
+
+      function mouseLeave() {
+        panelContainer.toggleClass('panel-hover-highlight', false);
+        ctrl.dashboard.setPanelFocus(0);
+      }
+
       function resizeScrollableContent() {
         if (panelScrollbar) {
           panelScrollbar.update();
@@ -98,6 +108,19 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         });
       });
 
+      ctrl.events.on('view-mode-changed', () => {
+        // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
+        setTimeout(() => {
+          // then recalc style
+          ctrl.calculatePanelHeight();
+          // then wait another cycle (this might not be needed)
+          $timeout(() => {
+            ctrl.render();
+            resizeScrollableContent();
+          });
+        });
+      });
+
       // set initial height
       ctrl.calculatePanelHeight();
 
@@ -119,7 +142,11 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
             panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           }
 
-          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
+          if (
+            ctrl.alertState.state === 'ok' ||
+            ctrl.alertState.state === 'alerting' ||
+            ctrl.alertState.state === 'pending'
+          ) {
             panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
           }
 
@@ -169,6 +196,9 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         infoDrop.close();
         scope.$apply(ctrl.openInspector.bind(ctrl));
       });
+
+      elem.on('mouseenter', mouseEnter);
+      elem.on('mouseleave', mouseLeave);
 
       scope.$on('$destroy', () => {
         elem.off();

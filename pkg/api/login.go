@@ -39,6 +39,10 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 		viewData.Settings["loginError"] = loginError
 	}
 
+	if tryOAuthAutoLogin(c) {
+		return
+	}
+
 	if !tryLoginUsingRememberCookie(c) {
 		c.HTML(200, ViewIndex, viewData)
 		return
@@ -51,6 +55,24 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 	}
 
 	c.Redirect(setting.AppSubUrl + "/")
+}
+
+func tryOAuthAutoLogin(c *m.ReqContext) bool {
+	if !setting.OAuthAutoLogin {
+		return false
+	}
+	oauthInfos := setting.OAuthService.OAuthInfos
+	if len(oauthInfos) != 1 {
+		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured.")
+		return false
+	}
+	for key := range setting.OAuthService.OAuthInfos {
+		redirectUrl := setting.AppSubUrl + "/login/" + key
+		log.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+		c.Redirect(redirectUrl, 307)
+		return true
+	}
+	return false
 }
 
 func tryLoginUsingRememberCookie(c *m.ReqContext) bool {

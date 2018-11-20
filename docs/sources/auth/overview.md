@@ -73,7 +73,18 @@ You can hide the Grafana login form using the below configuration settings.
 
 ```bash
 [auth]
-disable_login_form ⁼ true
+disable_login_form = true
+```
+
+### Automatic OAuth login
+
+Set to true to attempt login with OAuth automatically, skipping the login screen. 
+This setting is ignored if multiple OAuth providers are configured. 
+Defaults to `false`.
+
+```bash
+[auth]
+oauth_auto_login = true
 ```
 
 ### Hide sign-out menu

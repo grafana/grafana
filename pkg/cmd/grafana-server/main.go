@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	extensions "github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
@@ -39,6 +39,7 @@ var buildstamp string
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 var pidFile = flag.String("pidfile", "", "path to pid file")
+var packaging = flag.String("packaging", "unknown", "describes the way Grafana was installed")
 
 func main() {
 	v := flag.Bool("v", false, "prints current version and exits")
@@ -79,6 +80,7 @@ func main() {
 	setting.BuildStamp = buildstampInt64
 	setting.BuildBranch = buildBranch
 	setting.IsEnterprise = extensions.IsEnterprise
+	setting.Packaging = validPackaging(*packaging)
 
 	metrics.SetBuildInformation(version, commit, buildBranch)
 
@@ -93,6 +95,16 @@ func main() {
 	log.Close()
 
 	os.Exit(code)
+}
+
+func validPackaging(packaging string) string {
+	validTypes := []string{"dev", "deb", "rpm", "docker", "brew", "hosted", "unknown"}
+	for _, vt := range validTypes {
+		if packaging == vt {
+			return packaging
+		}
+	}
+	return "unknown"
 }
 
 func listenToSystemSignals(server *GrafanaServerImpl) {
