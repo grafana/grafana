@@ -12,7 +12,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
       updateLocation({
         query: {
           panelId: panel.id,
-          edit: false,
+          edit: null,
           fullscreen: true,
         },
         partial: true,
