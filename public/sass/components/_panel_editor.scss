@@ -206,3 +206,18 @@
   font-size: $font-size-md;
   margin-bottom: 20px;
 }
+
+.form-section {
+  margin-bottom: 10px;
+}
+
+.form-section__header {
+  border-bottom: 2px solid $dark-4;
+  padding: 5px 0px;
+  font-size: $font-size-h5;
+  margin-bottom: 20px;
+}
+
+.form-section__body {
+  background: $dark-1;
+}

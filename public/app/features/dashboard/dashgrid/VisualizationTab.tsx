@@ -81,7 +81,14 @@ export class VisualizationTab extends PureComponent<Props> {
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
-      template += '<panel-editor-tab editor-tab="ctrl.editorTabs[' + i + ']" ctrl="ctrl"></panel-editor-tab>';
+      template += `
+      <div class="form-section" ng-cloak>
+        <div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>
+        <div class="form-section__body">
+          <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
+        </div>
+      </div>
+      `;
     }
 
     const loader = getAngularLoader();
