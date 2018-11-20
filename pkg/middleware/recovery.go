@@ -115,6 +115,7 @@ func Recovery() macaron.Handler {
 
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
+				c.Data["Theme"] = setting.DefaultTheme
 
 				if setting.Env == setting.DEV {
 					if theErr, ok := err.(error); ok {
