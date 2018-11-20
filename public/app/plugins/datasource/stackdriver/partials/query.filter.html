@@ -1,17 +1,12 @@
 <div class="gf-form-inline">
   <div class="gf-form">
     <span class="gf-form-label width-9 query-keyword">Service</span>
-    <gf-form-dropdown
-      model="ctrl.service"
-      get-options="ctrl.services"
-      class="min-width-20"
-      disabled
-      type="text"
-      allow-custom="true"
-      lookup-text="true"
-      css-class="min-width-12"
-      on-change="ctrl.onServiceChange(ctrl.service)"
-    ></gf-form-dropdown>
+    <select
+      class="gf-form-input width-12"
+      ng-model="ctrl.service"
+      ng-options="f.value as f.text for f in ctrl.services"
+      ng-change="ctrl.onServiceChange(ctrl.service)"
+    ></select>
   </div>
   <div class="gf-form">
     <span class="gf-form-label width-9 query-keyword">Metric</span>
