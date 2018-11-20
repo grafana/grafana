@@ -23,6 +23,7 @@
           "message": "desc1",
           "handler": 1,
           "frequency": "60s",
+          "for": "2m",
           "conditions": [
           {
             "type": "query",

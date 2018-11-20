@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div
-  className="panel-container"
->
+<Fragment>
   <div
     className="explore-graph"
     id="graph"
@@ -456,13 +454,11 @@ exports[`Render should render component 1`] = `
       ]
     }
   />
-</div>
+</Fragment>
 `;
 
 exports[`Render should render component with disclaimer 1`] = `
-<div
-  className="panel-container"
->
+<Fragment>
   <div
     className="time-series-disclaimer"
   >
@@ -952,13 +948,11 @@ exports[`Render should render component with disclaimer 1`] = `
       ]
     }
   />
-</div>
+</Fragment>
 `;
 
 exports[`Render should show query return no time series 1`] = `
-<div
-  className="panel-container"
->
+<Fragment>
   <div
     className="explore-graph"
     id="graph"
@@ -971,5 +965,5 @@ exports[`Render should show query return no time series 1`] = `
   <Legend
     data={Array []}
   />
-</div>
+</Fragment>
 `;

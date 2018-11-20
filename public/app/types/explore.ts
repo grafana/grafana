@@ -173,6 +173,7 @@ export interface ExploreState {
   range: RawTimeRange;
   showingGraph: boolean;
   showingLogs: boolean;
+  showingStartPage?: boolean;
   showingTable: boolean;
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;

@@ -1,4 +1,4 @@
-import { parseSelector } from '../language_utils';
+import { expandRecordingRules, parseSelector } from '../language_utils';
 
 describe('parseSelector()', () => {
   let parsed;
@@ -60,5 +60,27 @@ describe('parseSelector()', () => {
 
     parsed = parseSelector('bar:metric:1m{}', 14);
     expect(parsed.selector).toBe('{__name__="bar:metric:1m"}');
+  });
+});
+
+describe('expandRecordingRules()', () => {
+  it('returns query w/o recording rules as is', () => {
+    expect(expandRecordingRules('metric', {})).toBe('metric');
+    expect(expandRecordingRules('metric + metric', {})).toBe('metric + metric');
+    expect(expandRecordingRules('metric{}', {})).toBe('metric{}');
+  });
+
+  it('does not modify recording rules name in label values', () => {
+    expect(expandRecordingRules('{__name__="metric"} + bar', { metric: 'foo', bar: 'super' })).toBe(
+      '{__name__="metric"} + super'
+    );
+  });
+
+  it('returns query with expanded recording rules', () => {
+    expect(expandRecordingRules('metric', { metric: 'foo' })).toBe('foo');
+    expect(expandRecordingRules('metric + metric', { metric: 'foo' })).toBe('foo + foo');
+    expect(expandRecordingRules('metric{}', { metric: 'foo' })).toBe('foo{}');
+    expect(expandRecordingRules('metric[]', { metric: 'foo' })).toBe('foo[]');
+    expect(expandRecordingRules('metric + foo', { metric: 'foo', foo: 'bar' })).toBe('foo + bar');
   });
 });

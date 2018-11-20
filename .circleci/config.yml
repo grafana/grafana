@@ -127,7 +127,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -175,7 +175,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -241,7 +241,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -273,7 +273,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.0
+    - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -359,6 +359,9 @@ jobs:
       - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/release'
+      - run:
+          name: Deploy to Grafana.com
+          command: './scripts/build/publish.sh --enterprise'
 
   deploy-master:
     docker:
