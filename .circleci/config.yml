@@ -510,6 +510,7 @@ workflows:
       - grafana-docker-release:
           requires:
             - build-all
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell
