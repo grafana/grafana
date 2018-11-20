@@ -26,6 +26,12 @@ export interface PanelPlugin {
   exports?: PluginExports;
 }
 
+interface PluginMetaQueryOptions {
+  cacheTimeout?: boolean;
+  maxDataPoints?: boolean;
+  minInterval?: boolean;
+}
+
 export interface PluginMeta {
   id: string;
   name: string;
@@ -38,6 +44,8 @@ export interface PluginMeta {
   explore?: boolean;
   annotations?: boolean;
   mixed?: boolean;
+  hasQueryHelp?: boolean;
+  queryOptions?: PluginMetaQueryOptions;
 }
 
 export interface PluginInclude {

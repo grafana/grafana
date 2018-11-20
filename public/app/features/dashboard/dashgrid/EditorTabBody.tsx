@@ -12,6 +12,8 @@ export interface EditorToolBarView {
   title: string;
   imgSrc?: string;
   icon?: string;
+  disabled?: boolean;
+  onClick?: () => void;
   render: (closeFunction: any) => JSX.Element;
 }
 
@@ -38,6 +40,19 @@ export class EditorTabBody extends PureComponent<Props, State> {
     this.setState({ openView: null });
   };
 
+  static getDerivedStateFromProps(props, state) {
+    if (state.openView) {
+      const activeToolbarItem = props.toolbarItems.find(item => item.title === state.openView.title);
+      if (activeToolbarItem) {
+        return {
+          ...state,
+          openView: activeToolbarItem,
+        };
+      }
+    }
+    return state;
+  }
+
   renderMainSelection(view: EditorToolBarView) {
     return (
       <div className="toolbar__main" onClick={() => this.onToggleToolBarView(view)} key={view.title}>
@@ -49,9 +64,16 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   renderButton(view: EditorToolBarView) {
+    const onClick = () => {
+      if (view.onClick) {
+        view.onClick();
+      }
+      this.onToggleToolBarView(view);
+    };
+
     return (
       <div className="nav-buttons" key={view.title}>
-        <button className="btn navbar-button" onClick={() => this.onToggleToolBarView(view)}>
+        <button className="btn navbar-button" onClick={onClick} disabled={view.disabled}>
           {view.icon && <i className={view.icon} />} {view.title}
         </button>
       </div>
