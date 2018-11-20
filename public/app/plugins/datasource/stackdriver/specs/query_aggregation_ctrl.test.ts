@@ -6,10 +6,19 @@ describe('StackdriverAggregationCtrl', () => {
     describe('when new query result is returned from the server', () => {
       describe('and result is double and gauge and no group by is used', () => {
         beforeEach(async () => {
-          ctrl = new StackdriverAggregationCtrl({
-            $on: () => {},
-            target: { valueType: 'DOUBLE', metricKind: 'GAUGE', aggregation: { crossSeriesReducer: '', groupBys: [] } },
-          });
+          ctrl = new StackdriverAggregationCtrl(
+            {
+              $on: () => {},
+              target: {
+                valueType: 'DOUBLE',
+                metricKind: 'GAUGE',
+                aggregation: { crossSeriesReducer: '', groupBys: [] },
+              },
+            },
+            {
+              replace: s => s,
+            }
+          );
         });
 
         it('should populate all aggregate options except two', () => {
@@ -31,14 +40,19 @@ describe('StackdriverAggregationCtrl', () => {
 
       describe('and result is double and gauge and a group by is used', () => {
         beforeEach(async () => {
-          ctrl = new StackdriverAggregationCtrl({
-            $on: () => {},
-            target: {
-              valueType: 'DOUBLE',
-              metricKind: 'GAUGE',
-              aggregation: { crossSeriesReducer: 'REDUCE_NONE', groupBys: ['resource.label.projectid'] },
+          ctrl = new StackdriverAggregationCtrl(
+            {
+              $on: () => {},
+              target: {
+                valueType: 'DOUBLE',
+                metricKind: 'GAUGE',
+                aggregation: { crossSeriesReducer: 'REDUCE_NONE', groupBys: ['resource.label.projectid'] },
+              },
             },
-          });
+            {
+              replace: s => s,
+            }
+          );
         });
 
         it('should populate all aggregate options except three', () => {

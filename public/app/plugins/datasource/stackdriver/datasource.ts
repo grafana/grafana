@@ -1,6 +1,7 @@
 import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
+import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
 
 export default class StackdriverDatasource {
   id: number;
@@ -9,6 +10,7 @@ export default class StackdriverDatasource {
   projectName: string;
   authenticationType: string;
   queryPromise: Promise<any>;
+  metricTypes: any[];
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
@@ -18,6 +20,7 @@ export default class StackdriverDatasource {
     this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
+    this.metricTypes = [];
   }
 
   async getTimeSeries(options) {
@@ -67,7 +70,7 @@ export default class StackdriverDatasource {
   }
 
   async getLabels(metricType, refId) {
-    return await this.getTimeSeries({
+    const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
@@ -81,6 +84,8 @@ export default class StackdriverDatasource {
       ],
       range: this.timeSrv.timeRange(),
     });
+
+    return response.results[refId];
   }
 
   interpolateGroupBys(groupBys: string[], scopedVars): string[] {
@@ -177,8 +182,9 @@ export default class StackdriverDatasource {
     return results;
   }
 
-  metricFindQuery(query) {
-    throw new Error('Template variables support is not yet imlemented');
+  async metricFindQuery(query) {
+    const stackdriverMetricFindQuery = new StackdriverMetricFindQuery(this);
+    return stackdriverMetricFindQuery.execute(query);
   }
 
   async testDatasource() {
@@ -258,19 +264,21 @@ export default class StackdriverDatasource {
 
   async getMetricTypes(projectName: string) {
     try {
-      const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
-      const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
+      if (this.metricTypes.length === 0) {
+        const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
+        const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
 
-      const metrics = data.metricDescriptors.map(m => {
-        const [service] = m.type.split('/');
-        const [serviceShortName] = service.split('.');
-        m.service = service;
-        m.serviceShortName = serviceShortName;
-        m.displayName = m.displayName || m.type;
-        return m;
-      });
+        this.metricTypes = data.metricDescriptors.map(m => {
+          const [service] = m.type.split('/');
+          const [serviceShortName] = service.split('.');
+          m.service = service;
+          m.serviceShortName = serviceShortName;
+          m.displayName = m.displayName || m.type;
+          return m;
+        });
+      }
 
-      return metrics;
+      return this.metricTypes;
     } catch (error) {
       appEvents.emit('ds-request-error', this.formatStackdriverError(error));
       return [];

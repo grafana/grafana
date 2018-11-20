@@ -1,6 +1,7 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as options from './constants';
+import { getAlignmentOptionsByMetric, getAggregationOptionsByMetric } from './functions';
 import kbn from 'app/core/utils/kbn';
 
 export class StackdriverAggregation {
@@ -25,7 +26,7 @@ export class StackdriverAggregationCtrl {
   target: any;
 
   /** @ngInject */
-  constructor(private $scope) {
+  constructor(private $scope, private templateSrv) {
     this.$scope.ctrl = this;
     this.target = $scope.target;
     this.alignmentPeriods = options.alignmentPeriods;
@@ -41,28 +42,16 @@ export class StackdriverAggregationCtrl {
   }
 
   setAlignOptions() {
-    this.alignOptions = !this.target.valueType
-      ? []
-      : options.alignOptions.filter(i => {
-          return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
-          );
-        });
-    if (!this.alignOptions.find(o => o.value === this.target.aggregation.perSeriesAligner)) {
+    this.alignOptions = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind);
+    if (!this.alignOptions.find(o => o.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner))) {
       this.target.aggregation.perSeriesAligner = this.alignOptions.length > 0 ? this.alignOptions[0].value : '';
     }
   }
 
   setAggOptions() {
-    this.aggOptions = !this.target.metricKind
-      ? []
-      : options.aggOptions.filter(i => {
-          return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
-          );
-        });
+    this.aggOptions = getAggregationOptionsByMetric(this.target.valueType, this.target.metricKind);
 
-    if (!this.aggOptions.find(o => o.value === this.target.aggregation.crossSeriesReducer)) {
+    if (!this.aggOptions.find(o => o.value === this.templateSrv.replace(this.target.aggregation.crossSeriesReducer))) {
       this.deselectAggregationOption('REDUCE_NONE');
     }
 
@@ -73,8 +62,12 @@ export class StackdriverAggregationCtrl {
   }
 
   formatAlignmentText() {
-    const selectedAlignment = this.alignOptions.find(ap => ap.value === this.target.aggregation.perSeriesAligner);
-    return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${selectedAlignment.text})`;
+    const selectedAlignment = this.alignOptions.find(
+      ap => ap.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner)
+    );
+    return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${
+      selectedAlignment ? selectedAlignment.text : ''
+    })`;
   }
 
   deselectAggregationOption(notValidOptionValue: string) {
