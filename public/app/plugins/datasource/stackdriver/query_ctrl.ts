@@ -52,7 +52,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     metricKind: '',
     valueType: '',
   };
-  projects: any;
 
   showHelp: boolean;
   showLastQuery: boolean;
