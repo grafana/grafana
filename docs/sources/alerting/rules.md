@@ -54,7 +54,12 @@ Here you can specify the name of the alert rule and how often the scheduler shou
 
 If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications. 
 
-Typically, it's always a good idea to use this setting since its often worse to get false positive than wait a few minutes before the alert notification triggers.
+Typically, it's always a good idea to use this setting since its often worse to get false positive than wait a few minutes before the alert notification triggers. Looking at the `Alert list` or `Alert list panels` you will be able to see alert in pending state. 
+
+Example timeline of an alert.
+{{< imgbox max-width="80%" img="/img/docs/v54/alerting-for-dark-theme.png" caption="Alerting For" >}}
+
+In the previous image you can see how an alert rule transition over time. 
 
 {{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
