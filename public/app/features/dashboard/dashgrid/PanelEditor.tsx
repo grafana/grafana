@@ -50,15 +50,6 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     this.forceUpdate();
   };
 
-  onClose = () => {
-    store.dispatch(
-      updateLocation({
-        query: { tab: null, fullscreen: null, edit: null },
-        partial: true,
-      })
-    );
-  };
-
   render() {
     const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
     const { location } = store.getState();
@@ -78,10 +69,6 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
               return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
             })}
           </ul>
-
-          <button className="panel-editor-tabs__close" onClick={this.onClose}>
-            <i className="fa fa-reply" />
-          </button>
         </div>
 
         {activeTab === 'general' && <GeneralTab panel={panel} />}

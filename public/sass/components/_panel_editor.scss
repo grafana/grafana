@@ -4,8 +4,19 @@
   height: 100%;
 }
 
-.panel-editor-container__panel {
-  flex: 1 1 0;
+.panel-wrapper {
+  height: 100%;
+
+  &--edit {
+    flex: 1 1 0;
+    height: unset;
+  }
+
+  &--view {
+    flex: 1 1 0;
+    height: 80%;
+    padding: $dashboard-padding;
+  }
 }
 
 .panel-editor-container__editor {
