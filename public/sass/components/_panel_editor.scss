@@ -20,11 +20,10 @@
   flex-grow: 1;
   min-width: 0;
   display: flex;
-  padding: 0 5px;
 }
 
 .panel-editor__content {
-  padding: 40px 15px;
+  padding: 40px 20px;
 }
 
 .panel-in-fullscreen {
@@ -212,12 +211,13 @@
 }
 
 .form-section__header {
-  border-bottom: 2px solid $dark-4;
-  padding: 5px 0px;
+  padding: 5px 10px;
   font-size: $font-size-h5;
   margin-bottom: 20px;
+  background: $input-label-bg;
+  border-radius: 3px;
 }
 
 .form-section__body {
-  background: $dark-1;
+  padding: 0 10px;
 }
