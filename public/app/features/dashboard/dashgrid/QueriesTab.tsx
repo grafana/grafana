@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-
+import DataSourceOption from './DataSourceOption';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 import { DataSourcePicker } from './DataSourcePicker';
@@ -139,11 +139,71 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
   };
 
+  renderOptions = close => {
+    const { currentDatasource } = this.state;
+    const { queryOptions } = currentDatasource.meta;
+    const { panel } = this.props;
+
+    const onChangeFn = (panelKey: string) => {
+      return (value: string | number) => {
+        panel[panelKey] = value;
+        panel.refresh();
+      };
+    };
+
+    const allOptions = {
+      cacheTimeout: {
+        label: 'Cache timeout',
+        placeholder: '60',
+        name: 'cacheTimeout',
+        value: panel.cacheTimeout,
+        tooltipInfo: (
+          <>
+            If your time series store has a query cache this option can override the default cache timeout. Specify a
+            numeric value in seconds.
+          </>
+        ),
+      },
+      maxDataPoints: {
+        label: 'Max data points',
+        placeholder: 'auto',
+        name: 'maxDataPoints',
+        value: panel.maxDataPoints,
+        tooltipInfo: (
+          <>
+            The maximum data points the query should return. For graphs this is automatically set to one data point per
+            pixel.
+          </>
+        ),
+      },
+      minInterval: {
+        label: 'Min time interval',
+        placeholder: '0',
+        name: 'minInterval',
+        value: panel.interval,
+        panelKey: 'interval',
+        tooltipInfo: (
+          <>
+            A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
+            <code>1m</code> if your data is written every minute. Access auto interval via variable{' '}
+            <code>$__interval</code> for time range string and <code>$__interval_ms</code> for numeric variable that can
+            be used in math expressions.
+          </>
+        ),
+      },
+    };
+
+    return Object.keys(queryOptions).map(key => {
+      const options = allOptions[key];
+      return <DataSourceOption key={key} {...options} onChange={onChangeFn(allOptions[key].panelKey || key)} />;
+    });
+  };
+
   render() {
     const { currentDatasource } = this.state;
     const { helpHtml } = this.state.help;
-    const { hasQueryHelp } = currentDatasource.meta;
-
+    const { hasQueryHelp, queryOptions } = currentDatasource.meta;
+    const hasQueryOptions = !!queryOptions;
     const dsInformation = {
       title: currentDatasource.name,
       imgSrc: currentDatasource.meta.info.logos.small,
@@ -171,8 +231,14 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: () => helpHtml,
     };
 
+    const options = {
+      title: 'Options',
+      disabled: !hasQueryOptions,
+      render: this.renderOptions,
+    };
+
     return (
-      <EditorTabBody main={dsInformation} toolbarItems={[queryInspector, dsHelp]}>
+      <EditorTabBody main={dsInformation} toolbarItems={[queryInspector, dsHelp, options]}>
         <div ref={element => (this.element = element)} style={{ width: '100%' }} />
       </EditorTabBody>
     );

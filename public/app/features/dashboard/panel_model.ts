@@ -94,6 +94,7 @@ export class PanelModel {
   isEditing: boolean;
   hasRefreshed: boolean;
   events: Emitter;
+  cacheTimeout?: any;
 
   constructor(model) {
     this.events = new Emitter();
