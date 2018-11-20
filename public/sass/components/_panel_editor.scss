@@ -10,12 +10,14 @@
   &--edit {
     flex: 1 1 0;
     height: unset;
+    margin: 0 $dashboard-padding;
   }
 
   &--view {
     flex: 1 1 0;
     height: 80%;
-    padding: $dashboard-padding;
+    margin: 0 $dashboard-padding;
+    padding-top: $dashboard-padding;
   }
 }
 
