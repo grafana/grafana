@@ -14,7 +14,7 @@ export interface EditorToolBarView {
   icon?: string;
   disabled?: boolean;
   onClick?: () => void;
-  render: (closeFunction: any) => JSX.Element;
+  render: (closeFunction: any) => JSX.Element | JSX.Element[];
 }
 
 interface State {
@@ -42,7 +42,9 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   static getDerivedStateFromProps(props, state) {
     if (state.openView) {
-      const activeToolbarItem = props.toolbarItems.find(item => item.title === state.openView.title);
+      const activeToolbarItem = props.toolbarItems.find(
+        item => item.title === state.openView.title && item.icon === state.openView.icon
+      );
       if (activeToolbarItem) {
         return {
           ...state,
