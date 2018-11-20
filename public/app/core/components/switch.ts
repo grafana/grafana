@@ -1,7 +1,7 @@
 import coreModule from 'app/core/core_module';
 
 const template = `
-<label for="check-{{ctrl.id}}" class="gf-form-switch-container pointer">
+<label for="check-{{ctrl.id}}" class="gf-form-switch-container">
   <div class="gf-form-label {{ctrl.labelClass}}" ng-show="ctrl.label">
     {{ctrl.label}}
     <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
@@ -16,8 +16,14 @@ const template = `
 `;
 
 const checkboxTemplate = `
-<label for="check-{{ctrl.id}}" class="gf-form-check-container">
-  <div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
+<label for="check-{{ctrl.id}}" class="gf-form-switch-container">
+   <div class="gf-form-label {{ctrl.labelClass}}" ng-show="ctrl.label">
+    {{ctrl.label}}
+    <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
+      {{ctrl.tooltip}}
+    </info-popover>
+  </div>
+  <div class="gf-form-checkbox {{ctrl.switchClass}}" ng-if="ctrl.show">
     <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
     <span class="gf-form-switch__checkbox"></span>
   </div>
