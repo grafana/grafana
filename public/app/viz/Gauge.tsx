@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { TimeSeriesVMs } from 'app/types';
+import { Threshold, TimeSeriesVMs } from 'app/types';
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
 
@@ -10,7 +10,7 @@ interface Props {
   minValue: number;
   maxValue: number;
   showThresholdMarkers: boolean;
-  thresholds: number[];
+  thresholds: Threshold[];
   showThresholdLabels: boolean;
   unit: string;
   width: number;
@@ -32,7 +32,7 @@ export class Gauge extends PureComponent<Props> {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
-    thresholds: [0, 100],
+    thresholds: [{ label: 'Min', value: 0 }, { label: 'Max', value: 100 }],
   };
 
   componentDidMount() {
@@ -75,7 +75,7 @@ export class Gauge extends PureComponent<Props> {
 
     const formattedThresholds = thresholds.map((threshold, index) => {
       return {
-        value: threshold,
+        value: threshold.value,
         color: colors[index],
       };
     });

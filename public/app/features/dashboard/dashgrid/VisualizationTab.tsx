@@ -24,7 +24,9 @@ export class VisualizationTab extends PureComponent<Props> {
     const { PanelOptions } = plugin.exports;
 
     if (PanelOptions) {
-      return <PanelOptions options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
+      return (
+        <PanelOptions options={panel.getOptions(plugin.exports.PanelDefaults)} onChange={this.onPanelOptionsChanged} />
+      );
     } else {
       return <p>Visualization has no options</p>;
     }

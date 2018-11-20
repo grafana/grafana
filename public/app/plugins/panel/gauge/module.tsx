@@ -1,8 +1,34 @@
 import React, { PureComponent } from 'react';
 import Gauge from 'app/viz/Gauge';
-import Options, { OptionsProps } from './Options';
-import { NullValueMode, PanelProps } from 'app/types';
+import { NullValueMode, PanelOptionsProps, PanelProps, Threshold } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
+import ValueOptions from './ValueOptions';
+import GaugeOptions from './GaugeOptions';
+import Thresholds from './Thresholds';
+
+export interface OptionsProps {
+  decimals: number;
+  prefix: string;
+  showThresholdLabels: boolean;
+  showThresholdMarkers: boolean;
+  stat: string;
+  suffix: string;
+  unit: string;
+  thresholds: Threshold[];
+  minValue: number;
+  maxValue: number;
+}
+
+export const defaultProps = {
+  options: {
+    minValue: 0,
+    maxValue: 100,
+    prefix: '',
+    showThresholdMarkers: true,
+    showThresholdLabels: false,
+    suffix: '',
+  },
+};
 
 interface Props extends PanelProps<OptionsProps> {}
 
@@ -19,4 +45,18 @@ class GaugePanel extends PureComponent<Props> {
   }
 }
 
-export { GaugePanel as Panel, Options as PanelOptions };
+class Options extends PureComponent<PanelOptionsProps<OptionsProps>> {
+  static defaultProps = defaultProps;
+
+  render() {
+    return (
+      <div>
+        <ValueOptions onChange={this.props.onChange} options={this.props.options} />
+        <GaugeOptions onChange={this.props.onChange} options={this.props.options} />
+        <Thresholds onChange={this.props.onChange} options={this.props.options} />
+      </div>
+    );
+  }
+}
+
+export { GaugePanel as Panel, Options as PanelOptions, defaultProps as PanelDefaults };

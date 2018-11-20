@@ -136,7 +136,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return (
       <div className={containerClass}>
         <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-          <PanelChrome component={plugin.exports.Panel} panel={panel} dashboard={dashboard} />
+          <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} />
         </div>
         {panel.isEditing && (
           <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} onTypeChanged={this.onPluginTypeChanged} />

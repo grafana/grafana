@@ -13,6 +13,7 @@ export interface PluginExports {
   PanelCtrl?;
   Panel?: ComponentClass<PanelProps>;
   PanelOptions?: ComponentClass<PanelOptionsProps>;
+  PanelDefaults?: any;
 }
 
 export interface PanelPlugin {
