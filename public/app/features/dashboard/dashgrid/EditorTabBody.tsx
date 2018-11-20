@@ -57,7 +57,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderMainSelection(view: EditorToolBarView) {
     return (
-      <div className="toolbar__main" onClick={() => this.onToggleToolBarView(view)} key={view.title}>
+      <div className="toolbar__main" onClick={() => this.onToggleToolBarView(view)} key={view.title + view.icon}>
         <img className="toolbar__main-image" src={view.imgSrc} />
         <div className="toolbar__main-name">{view.title}</div>
         <i className="fa fa-caret-down" />
@@ -74,7 +74,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     };
 
     return (
-      <div className="nav-buttons" key={view.title}>
+      <div className="nav-buttons" key={view.title + view.icon}>
         <button className="btn navbar-button" onClick={onClick} disabled={view.disabled}>
           {view.icon && <i className={view.icon} />} {view.title}
         </button>
