@@ -75,15 +75,15 @@ module.exports = merge(common, {
     }),
     new ngAnnotatePlugin(),
     new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/error.html'),
+      template: path.resolve(__dirname, '../../public/views/error-template.html'),
+      inject: false,
+    }),
+    new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
       inject: 'body',
       chunks: ['vendor', 'app'],
-    }),
-    new HtmlWebpackPlugin({
-      filename: path.resolve(__dirname, '../../public/views/error.html'),
-      template: path.resolve(__dirname, '../../public/views/error-template.html'),
-      inject: false,
     }),
     function () {
       this.hooks.done.tap('Done', function (stats) {
