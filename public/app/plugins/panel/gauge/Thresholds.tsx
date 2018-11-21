@@ -8,13 +8,67 @@ interface State {
 }
 
 export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsProps>, State> {
-  state = {
-    thresholds: [{ label: 'Min', value: 0 }, { label: 'Max', value: 100 }],
-  };
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      thresholds: this.props.options.thresholds || [
+        { label: 'Min', value: 0, canRemove: false },
+        { label: 'Max', value: 100, canRemove: false },
+      ],
+    };
+  }
 
   onAddThreshold = () => {
     this.setState(prevState => ({
-      thresholds: [prevState.thresholds[0], { label: '', value: 0 }, { label: 'Max', value: 100 }],
+      thresholds: [...prevState.thresholds, { label: 'T1', value: 0, canRemove: true }],
+    }));
+  };
+
+  onRemoveThreshold = threshold => {
+    this.setState(prevState => ({
+      thresholds: prevState.thresholds.filter(t => t !== threshold),
+    }));
+  };
+
+  onChangeThresholdValue = (event, threshold) => {
+    const newThresholds = this.state.thresholds.map(currentThreshold => {
+      if (currentThreshold === threshold) {
+        currentThreshold = { ...currentThreshold, value: event.target.value };
+      }
+
+      return currentThreshold;
+    });
+
+    this.setState({
+      thresholds: newThresholds,
+    });
+  };
+
+  onChangeThresholdLabel = (event, threshold) => {
+    const newThresholds = this.state.thresholds.map(currentThreshold => {
+      if (currentThreshold === threshold) {
+        currentThreshold = { ...currentThreshold, label: event.target.value };
+      }
+
+      return currentThreshold;
+    });
+
+    this.setState({
+      thresholds: newThresholds,
+    });
+  };
+
+  onBlur = () => {
+    this.sortThresholds();
+
+    this.props.onChange({ ...this.props.options, thresholds: this.state.thresholds });
+  };
+
+  sortThresholds = () => {
+    console.log('sort');
+    this.setState(prevState => ({
+      thresholds: prevState.thresholds.sort((t1, t2) => t1.value - t2.value),
     }));
   };
 
@@ -37,8 +91,28 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
             {thresholds.map((threshold, index) => {
               return (
                 <div className="gf-form" key={`${threshold}-${index}`}>
-                  <Label width={5}>{threshold.label}</Label>
-                  <input className="gf-form-input" type="text" value={threshold.value} />
+                  {!threshold.canRemove ? (
+                    <Label width={5}>{threshold.label}</Label>
+                  ) : (
+                    <input
+                      className="gf-form-input width-7"
+                      onBlur={this.onBlur}
+                      onChange={event => this.onChangeThresholdLabel(event, threshold)}
+                      value={threshold.label}
+                    />
+                  )}
+                  <input
+                    className="gf-form-input"
+                    type="text"
+                    value={threshold.value}
+                    onChange={event => this.onChangeThresholdValue(event, threshold)}
+                    onBlur={this.onBlur}
+                  />
+                  {threshold.canRemove && (
+                    <span onClick={() => this.onRemoveThreshold(threshold)}>
+                      <i className="fa fa-remove" />
+                    </span>
+                  )}
                 </div>
               );
             })}

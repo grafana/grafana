@@ -33,4 +33,5 @@ export interface Threshold {
   label: string;
   value: number;
   color?: string;
+  canRemove: boolean;
 }
