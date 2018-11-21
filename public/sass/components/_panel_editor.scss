@@ -4,8 +4,21 @@
   height: 100%;
 }
 
-.panel-editor-container__panel {
-  flex: 1 1 0;
+.panel-wrapper {
+  height: 100%;
+
+  &--edit {
+    flex: 1 1 0;
+    height: unset;
+    margin: 0 $dashboard-padding;
+  }
+
+  &--view {
+    flex: 1 1 0;
+    height: 80%;
+    margin: 0 $dashboard-padding;
+    padding-top: $dashboard-padding;
+  }
 }
 
 .panel-editor-container__editor {

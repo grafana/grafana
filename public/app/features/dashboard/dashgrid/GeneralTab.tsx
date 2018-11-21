@@ -51,7 +51,7 @@ export class GeneralTab extends PureComponent<Props> {
 
     return (
       <EditorTabBody main={currentDataSource} toolbarItems={[]}>
-        <div ref={element => (this.element = element)} style={{ width: '100%' }} />
+        <div ref={element => (this.element = element)} />
       </EditorTabBody>
     );
   }

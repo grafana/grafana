@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
+import classNames from 'classnames';
 
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
@@ -136,7 +137,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, isFullscreen, isEditing } = this.props;
     const { plugin, angularPanel } = this.state;
 
     if (this.isSpecial()) {
@@ -148,8 +149,12 @@ export class DashboardPanel extends PureComponent<Props, State> {
       return null;
     }
 
-    const containerClass = this.props.isEditing ? 'panel-editor-container' : 'panel-height-helper';
-    const panelWrapperClass = this.props.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
+    const containerClass = classNames({ 'panel-editor-container': isEditing, 'panel-height-helper': !isEditing });
+    const panelWrapperClass = classNames({
+      'panel-wrapper': true,
+      'panel-wrapper--edit': isEditing,
+      'panel-wrapper--view': isFullscreen && !isEditing,
+    });
 
     return (
       <div className={containerClass}>

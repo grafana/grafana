@@ -4,7 +4,9 @@ import classNames from 'classnames';
 import { QueriesTab } from './QueriesTab';
 import { VisualizationTab } from './VisualizationTab';
 import { GeneralTab } from './GeneralTab';
+import { AlertTab } from './AlertTab';
 
+import config from 'app/core/config';
 import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
 import { AngularComponent } from 'app/core/services/AngularLoader';
@@ -28,16 +30,8 @@ interface PanelEditorTab {
 }
 
 export class PanelEditor extends PureComponent<PanelEditorProps> {
-  tabs: PanelEditorTab[];
-
   constructor(props) {
     super(props);
-
-    this.tabs = [
-      { id: 'general', text: 'General', icon: 'gicon gicon-preferences' },
-      { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
-      { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
-    ];
   }
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -50,19 +44,48 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     this.forceUpdate();
   };
 
-  onClose = () => {
-    store.dispatch(
-      updateLocation({
-        query: { tab: null, fullscreen: null, edit: null },
-        partial: true,
-      })
-    );
-  };
+  renderCurrentTab(activeTab: string) {
+    const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
+
+    switch (activeTab) {
+      case 'general':
+        return <GeneralTab panel={panel} />;
+      case 'queries':
+        return <QueriesTab panel={panel} dashboard={dashboard} />;
+      case 'alert':
+        return <AlertTab angularPanel={angularPanel} />;
+      case 'visualization':
+        return (
+          <VisualizationTab
+            panel={panel}
+            dashboard={dashboard}
+            plugin={plugin}
+            onTypeChanged={onTypeChanged}
+            angularPanel={angularPanel}
+          />
+        );
+      default:
+        return null;
+    }
+  }
 
   render() {
-    const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
-    const { location } = store.getState();
-    const activeTab = location.query.tab || 'queries';
+    const { plugin } = this.props;
+    const activeTab = store.getState().location.query.tab || 'queries';
+
+    const tabs = [
+      { id: 'general', text: 'General', icon: 'gicon gicon-preferences' },
+      { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
+      { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
+    ];
+
+    if (config.alertingEnabled && plugin.id === 'graph') {
+      tabs.push({
+        id: 'alert',
+        text: 'Alert',
+        icon: 'gicon gicon-alert',
+      });
+    }
 
     return (
       <div className="panel-editor-container__editor">
@@ -74,27 +97,12 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
 
         <div className="panel-editor-tabs">
           <ul className="gf-tabs">
-            {this.tabs.map(tab => {
+            {tabs.map(tab => {
               return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
             })}
           </ul>
-
-          <button className="panel-editor-tabs__close" onClick={this.onClose}>
-            <i className="fa fa-reply" />
-          </button>
         </div>
-
-        {activeTab === 'general' && <GeneralTab panel={panel} />}
-        {activeTab === 'queries' && <QueriesTab panel={panel} dashboard={dashboard} />}
-        {activeTab === 'visualization' && (
-          <VisualizationTab
-            panel={panel}
-            dashboard={dashboard}
-            plugin={plugin}
-            onTypeChanged={onTypeChanged}
-            angularPanel={angularPanel}
-          />
-        )}
+        {this.renderCurrentTab(activeTab)}
       </div>
     );
   }
