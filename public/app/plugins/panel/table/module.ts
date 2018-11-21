@@ -276,8 +276,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     function formatDetails(e,doc) {
       const prettyPrint = e.currentTarget.dataset.lookuppp;
       const colorize = e.currentTarget.dataset.lookupcolor;
+      const sortdoc = e.currentTarget.dataset.lookupsort;
       if (typeof doc === 'string') {
         doc = JSON.parse(doc);
+      }
+      if (sortdoc) {
+        doc = Object.keys(doc).sort().reduce((r, k) => (r[k] = doc[k], r), {});
       }
       if (prettyPrint) {
         doc = JSON.stringify(doc, undefined, 4);

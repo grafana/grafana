@@ -268,6 +268,7 @@ export class TableRenderer {
       scopedVars['__cell'] = { value: value };
       const cellDetailURL = this.templateSrv.replace(column.style.detailURL, scopedVars, encodeURIComponent);
       const cellDetailPrettyPrint = column.style.detailsprint || '';
+      const cellDetailSort = column.style.detailssort || '';
       const cellDetailColor = column.style.detailscolor || '';
       const cellDetailTooltip = this.templateSrv.replace(column.style.detailTooltip, scopedVars) || '';
 
@@ -276,6 +277,7 @@ export class TableRenderer {
           data-lookupURL="${cellDetailURL}"
           data-lookupPP="${cellDetailPrettyPrint}"
           data-lookupColor="${cellDetailColor}"
+          data-lookupSort="${cellDetailSort}"
           data-lookupValue="${value}"
           data-link-tooltip data-original-title="${cellDetailTooltip}"
           data-placement="right" ${textStyle}>`;
