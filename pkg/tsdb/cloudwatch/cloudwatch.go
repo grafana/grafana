@@ -211,8 +211,8 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, query *CloudWatch
 		return nil, err
 	}
 
-	if endTime.Before(startTime) {
-		return nil, fmt.Errorf("Invalid time range: End time can't be before start time")
+	if !startTime.Before(endTime) {
+		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
 	}
 
 	params := &cloudwatch.GetMetricStatisticsInput{
