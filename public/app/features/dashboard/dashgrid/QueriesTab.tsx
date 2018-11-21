@@ -13,6 +13,7 @@ import config from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 import { DataSourceSelectItem } from 'app/types';
+import appEvents from 'app/core/app_events';
 
 import Remarkable from 'remarkable';
 
@@ -29,6 +30,7 @@ interface Help {
 interface State {
   currentDatasource: DataSourceSelectItem;
   help: Help;
+  dsQuery: {};
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
@@ -42,12 +44,14 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = props;
 
     this.state = {
+      dsQuery: {},
       currentDatasource: this.datasources.find(datasource => datasource.value === panel.datasource),
       help: {
         isLoading: false,
         helpHtml: null,
       },
     };
+    appEvents.on('ds-request-response', this.onDataSourceResponse);
   }
 
   componentDidMount() {
@@ -70,10 +74,67 @@ export class QueriesTab extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    appEvents.off('ds-request-response', this.onDataSourceResponse);
+
     if (this.component) {
       this.component.destroy();
     }
   }
+
+  onDataSourceResponse = (response: any = {}) => {
+    // ignore if closed
+    // if (!this.isOpen) {
+    //   return;
+    // }
+
+    // if (this.isMocking) {
+    //   this.handleMocking(data);
+    //   return;
+    // }
+
+    // this.isLoading = false;
+    // data = _.cloneDeep(data);
+
+    if (response.headers) {
+      delete response.headers;
+    }
+
+    if (response.config) {
+      response.request = response.config;
+      delete response.config;
+      delete response.request.transformRequest;
+      delete response.request.transformResponse;
+      delete response.request.paramSerializer;
+      delete response.request.jsonpCallbackParam;
+      delete response.request.headers;
+      delete response.request.requestId;
+      delete response.request.inspect;
+      delete response.request.retry;
+      delete response.request.timeout;
+    }
+
+    if (response.data) {
+      response.response = response.data;
+
+      // if (response.status === 200) {
+      //   // if we are in error state, assume we automatically opened
+      //   // and auto close it again
+      //   if (this.hasError) {
+      //     this.hasError = false;
+      //     this.isOpen = false;
+      //   }
+      // }
+
+      delete response.data;
+      delete response.status;
+      delete response.statusText;
+      delete response.$$config;
+    }
+    this.setState(prevState => ({
+      ...prevState,
+      dsQuery: response,
+    }));
+  };
 
   onChangeDataSource = datasource => {
     const { panel } = this.props;
@@ -200,8 +261,8 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderQueryInspector = () => {
-    const queryInspectorJson = { hello: 'world' }; // TODO
-    return <JSONFormatter json={queryInspectorJson} />;
+    const { dsQuery } = this.state;
+    return <JSONFormatter json={dsQuery} />;
   };
 
   render() {

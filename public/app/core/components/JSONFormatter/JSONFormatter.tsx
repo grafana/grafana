@@ -4,7 +4,8 @@ import JSONFormatterJS from 'json-formatter-js';
 interface Props {
   className?: string;
   json: any;
-  options?: any;
+  config?: any;
+  open?: number;
 }
 
 export class JSONFormatter extends PureComponent<Props> {
@@ -12,9 +13,16 @@ export class JSONFormatter extends PureComponent<Props> {
   jsonEl: HTMLElement;
   formatter: any;
 
+  static defaultProps = {
+    open: 3,
+    config: {
+      animateOpen: true,
+    },
+  };
+
   componentDidMount() {
-    const { json, options } = this.props;
-    this.formatter = new JSONFormatterJS(json, options);
+    const { json, config, open } = this.props;
+    this.formatter = new JSONFormatterJS(json, open, config);
     this.jsonEl = this.wrapperEl.current.appendChild(this.formatter.render());
   }
 
