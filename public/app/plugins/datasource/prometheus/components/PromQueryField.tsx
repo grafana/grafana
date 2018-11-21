@@ -85,7 +85,7 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-type PromQueryFieldProps = {
+interface PromQueryFieldProps {
   datasource: any;
   error?: string | JSX.Element;
   initialQuery: DataQuery;
@@ -95,7 +95,7 @@ type PromQueryFieldProps = {
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
   onQueryChange?: (value: DataQuery, override?: boolean) => void;
-};
+}
 
 interface PromQueryFieldState {
   metricsOptions: any[];
