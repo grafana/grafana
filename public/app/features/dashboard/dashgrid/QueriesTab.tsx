@@ -3,7 +3,7 @@ import DataSourceOption from './DataSourceOption';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 import { DataSourcePicker } from './DataSourcePicker';
-
+import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import './../../panel/metrics_tab';
@@ -199,6 +199,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
+  renderQueryInspector = () => {
+    const queryInspectorJson = { hello: 'world' }; // TODO
+    return <JSONFormatter json={queryInspectorJson} />;
+  };
+
   render() {
     const { currentDatasource } = this.state;
     const { helpHtml } = this.state.help;
@@ -220,7 +225,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     const queryInspector = {
       title: 'Query Inspector',
-      render: () => <h2>hello</h2>,
+      render: this.renderQueryInspector,
     };
 
     const dsHelp = {
@@ -232,7 +237,8 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     const options = {
-      title: 'Options',
+      title: '',
+      icon: 'fa fa-cog',
       disabled: !hasQueryOptions,
       render: this.renderOptions,
     };
