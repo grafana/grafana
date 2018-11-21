@@ -10,7 +10,8 @@ import { TypeaheadOutput } from 'app/types/explore';
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import TypeaheadField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import { DataQuery } from 'app/types';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -53,10 +54,10 @@ interface LoggingQueryFieldProps {
   error?: string | JSX.Element;
   hint?: any;
   history?: any[];
-  initialQuery?: string | null;
+  initialTarget?: DataQuery;
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
-  onQueryChange?: (value: string, override?: boolean) => void;
+  onQueryChange?: (value: DataQuery, override?: boolean) => void;
 }
 
 interface LoggingQueryFieldState {
@@ -134,9 +135,13 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { onQueryChange } = this.props;
+    const { initialTarget, onQueryChange } = this.props;
     if (onQueryChange) {
-      onQueryChange(value, override);
+      const target = {
+        ...initialTarget,
+        expr: value,
+      };
+      onQueryChange(target, override);
     }
   };
 
@@ -181,7 +186,7 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
   };
 
   render() {
-    const { error, hint, initialQuery } = this.props;
+    const { error, hint, initialTarget } = this.props;
     const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = syntaxLoaded ? 'Log labels' : 'Loading labels...';
@@ -196,15 +201,15 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
           </Cascader>
         </div>
         <div className="prom-query-field-wrapper">
-          <TypeaheadField
+          <QueryField
             additionalPlugins={this.plugins}
             cleanText={cleanText}
-            initialValue={initialQuery}
+            initialQuery={initialTarget.expr}
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}
-            placeholder="Enter a PromQL query"
-            portalOrigin="prometheus"
+            placeholder="Enter a Logging query"
+            portalOrigin="logging"
             syntaxLoaded={syntaxLoaded}
           />
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}

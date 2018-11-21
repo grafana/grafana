@@ -4,14 +4,26 @@ import Select from 'react-select';
 import _ from 'lodash';
 
 import { DataSource } from 'app/types/datasources';
-import { ExploreState, ExploreUrlState, HistoryItem, Query, QueryTransaction, ResultType } from 'app/types/explore';
+import {
+  ExploreState,
+  ExploreUrlState,
+  QueryTransaction,
+  ResultType,
+  QueryHintGetter,
+  QueryHint,
+} from 'app/types/explore';
 import { RawTimeRange, DataQuery } from 'app/types/series';
-import kbn from 'app/core/utils/kbn';
-import colors from 'app/core/utils/colors';
 import store from 'app/core/store';
-import TimeSeries from 'app/core/time_series2';
-import { parse as parseDate } from 'app/core/utils/datemath';
-import { DEFAULT_RANGE } from 'app/core/utils/explore';
+import {
+  DEFAULT_RANGE,
+  ensureTargets,
+  getIntervals,
+  generateKey,
+  generateTargetKeys,
+  hasNonEmptyTarget,
+  makeTimeSeriesList,
+  updateHistory,
+} from 'app/core/utils/explore';
 import ResetStyles from 'app/core/components/Picker/ResetStyles';
 import PickerOption from 'app/core/components/Picker/PickerOption';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
@@ -26,57 +38,6 @@ import Logs from './Logs';
 import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
-import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
-
-const MAX_HISTORY_ITEMS = 100;
-
-function getIntervals(range: RawTimeRange, datasource, resolution: number): { interval: string; intervalMs: number } {
-  if (!datasource || !resolution) {
-    return { interval: '1s', intervalMs: 1000 };
-  }
-  const absoluteRange: RawTimeRange = {
-    from: parseDate(range.from, false),
-    to: parseDate(range.to, true),
-  };
-  return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
-}
-
-function makeTimeSeriesList(dataList, options) {
-  return dataList.map((seriesData, index) => {
-    const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
-    const colorIndex = index % colors.length;
-    const color = colors[colorIndex];
-
-    const series = new TimeSeries({
-      datapoints,
-      alias,
-      color,
-      unit: seriesData.unit,
-    });
-
-    return series;
-  });
-}
-
-/**
- * Update the query history. Side-effect: store history in local storage
- */
-function updateHistory(history: HistoryItem[], datasourceId: string, queries: string[]): HistoryItem[] {
-  const ts = Date.now();
-  queries.forEach(query => {
-    history = [{ query, ts }, ...history];
-  });
-
-  if (history.length > MAX_HISTORY_ITEMS) {
-    history = history.slice(0, MAX_HISTORY_ITEMS);
-  }
-
-  // Combine all queries of a datasource type into one history
-  const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.setObject(historyKey, history);
-  return history;
-}
 
 interface ExploreProps {
   datasourceSrv: DatasourceSrv;
@@ -89,14 +50,20 @@ interface ExploreProps {
   urlState: ExploreUrlState;
 }
 
+/**
+ * Explore provides an area for quick query iteration for a given datasource.
+ * Once a datasource is selected it populates the query section at the top.
+ * When queries are run, their results are being displayed in the main section.
+ * The datasource determines what kind of query editor it brings, and what kind
+ * of results viewers it supports.
+ */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
   /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
-   * TODO: make this generic (other datasources might not have string representations of current query state)
    */
-  queryExpressions: string[];
+  modifiedTargets: DataQuery[];
   /**
    * Local ID cache to compare requested vs selected datasource
    */
@@ -105,14 +72,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   constructor(props) {
     super(props);
     const splitState: ExploreState = props.splitState;
-    let initialQueries: Query[];
+    let initialTargets: DataQuery[];
     if (splitState) {
       // Split state overrides everything
       this.state = splitState;
-      initialQueries = splitState.queries;
+      initialTargets = splitState.initialTargets;
     } else {
-      const { datasource, queries, range } = props.urlState as ExploreUrlState;
-      initialQueries = ensureQueries(queries);
+      const { datasource, targets, range } = props.urlState as ExploreUrlState;
+      initialTargets = ensureTargets(targets);
       const initialRange = range || { ...DEFAULT_RANGE };
       this.state = {
         datasource: null,
@@ -122,8 +89,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceName: datasource,
         exploreDatasources: [],
         graphRange: initialRange,
+        initialTargets,
         history: [],
-        queries: initialQueries,
         queryTransactions: [],
         range: initialRange,
         showingGraph: true,
@@ -135,7 +102,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         supportsTable: null,
       };
     }
-    this.queryExpressions = initialQueries.map(q => q.query);
+    this.modifiedTargets = initialTargets.slice();
   }
 
   async componentDidMount() {
@@ -198,32 +165,26 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     // Check if queries can be imported from previously selected datasource
-    let queryExpressions = this.queryExpressions;
+    let modifiedTargets = this.modifiedTargets;
     if (origin) {
       if (origin.meta.id === datasource.meta.id) {
         // Keep same queries if same type of datasource
-        queryExpressions = [...this.queryExpressions];
+        modifiedTargets = [...this.modifiedTargets];
       } else if (datasource.importQueries) {
-        // Datasource-specific importers, wrapping to satisfy interface
-        const wrappedQueries: DataQuery[] = this.queryExpressions.map((query, index) => ({
-          refId: String(index),
-          expr: query,
-        }));
-        const modifiedQueries: DataQuery[] = await datasource.importQueries(wrappedQueries, origin.meta);
-        queryExpressions = modifiedQueries.map(({ expr }) => expr);
+        // Datasource-specific importers
+        modifiedTargets = await datasource.importQueries(this.modifiedTargets, origin.meta);
       } else {
         // Default is blank queries
-        queryExpressions = this.queryExpressions.map(() => '');
+        modifiedTargets = ensureTargets();
       }
     }
 
     // Reset edit state with new queries
-    const nextQueries = this.state.queries.map((q, i) => ({
-      ...q,
-      key: generateQueryKey(i),
-      query: queryExpressions[i],
+    const nextTargets = this.state.initialTargets.map((q, i) => ({
+      ...modifiedTargets[i],
+      ...generateTargetKeys(i),
     }));
-    this.queryExpressions = queryExpressions;
+    this.modifiedTargets = modifiedTargets;
 
     // Custom components
     const StartPage = datasource.pluginExports.ExploreStartPage;
@@ -239,7 +200,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         supportsTable,
         datasourceLoading: false,
         datasourceName: datasource.name,
-        queries: nextQueries,
+        initialTargets: nextTargets,
         showingStartPage: Boolean(StartPage),
       },
       () => {
@@ -256,16 +217,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   onAddQueryRow = index => {
     // Local cache
-    this.queryExpressions[index + 1] = '';
+    this.modifiedTargets[index + 1] = { ...generateTargetKeys(index + 1) };
 
     this.setState(state => {
-      const { queries, queryTransactions } = state;
+      const { initialTargets, queryTransactions } = state;
 
-      // Add row by generating new react key
-      const nextQueries = [
-        ...queries.slice(0, index + 1),
-        { query: '', key: generateQueryKey() },
-        ...queries.slice(index + 1),
+      const nextTargets = [
+        ...initialTargets.slice(0, index + 1),
+        { ...this.modifiedTargets[index + 1] },
+        ...initialTargets.slice(index + 1),
       ];
 
       // Ongoing transactions need to update their row indices
@@ -279,7 +239,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
-      return { queries: nextQueries, queryTransactions: nextQueryTransactions };
+      return { initialTargets: nextTargets, queryTransactions: nextQueryTransactions };
     });
   };
 
@@ -296,26 +256,26 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.setDatasource(datasource as any, origin);
   };
 
-  onChangeQuery = (value: string, index: number, override?: boolean) => {
+  onChangeQuery = (value: DataQuery, index: number, override?: boolean) => {
     // Keep current value in local cache
-    this.queryExpressions[index] = value;
+    this.modifiedTargets[index] = value;
 
     if (override) {
       this.setState(state => {
         // Replace query row
-        const { queries, queryTransactions } = state;
-        const nextQuery: Query = {
-          key: generateQueryKey(index),
-          query: value,
+        const { initialTargets, queryTransactions } = state;
+        const target: DataQuery = {
+          ...value,
+          ...generateTargetKeys(index),
         };
-        const nextQueries = [...queries];
-        nextQueries[index] = nextQuery;
+        const nextTargets = [...initialTargets];
+        nextTargets[index] = target;
 
         // Discard ongoing transaction related to row query
         const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
 
         return {
-          queries: nextQueries,
+          initialTargets: nextTargets,
           queryTransactions: nextQueryTransactions,
         };
       }, this.onSubmit);
@@ -330,10 +290,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onClickClear = () => {
-    this.queryExpressions = [''];
+    this.modifiedTargets = ensureTargets();
     this.setState(
       prevState => ({
-        queries: ensureQueries(),
+        initialTargets: [...this.modifiedTargets],
         queryTransactions: [],
         showingStartPage: Boolean(prevState.StartPage),
       }),
@@ -387,10 +347,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   // Use this in help pages to set page to a single query
-  onClickQuery = query => {
-    const nextQueries = [{ query, key: generateQueryKey() }];
-    this.queryExpressions = nextQueries.map(q => q.query);
-    this.setState({ queries: nextQueries }, this.onSubmit);
+  onClickExample = (target: DataQuery) => {
+    const nextTargets = [{ ...target, ...generateTargetKeys() }];
+    this.modifiedTargets = [...nextTargets];
+    this.setState({ initialTargets: nextTargets }, this.onSubmit);
   };
 
   onClickSplit = () => {
@@ -430,28 +390,28 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const preventSubmit = action.preventSubmit;
       this.setState(
         state => {
-          const { queries, queryTransactions } = state;
-          let nextQueries;
+          const { initialTargets, queryTransactions } = state;
+          let nextTargets: DataQuery[];
           let nextQueryTransactions;
           if (index === undefined) {
             // Modify all queries
-            nextQueries = queries.map((q, i) => ({
-              key: generateQueryKey(i),
-              query: datasource.modifyQuery(this.queryExpressions[i], action),
+            nextTargets = initialTargets.map((target, i) => ({
+              ...datasource.modifyQuery(this.modifiedTargets[i], action),
+              ...generateTargetKeys(i),
             }));
             // Discard all ongoing transactions
             nextQueryTransactions = [];
           } else {
             // Modify query only at index
-            nextQueries = queries.map((q, i) => {
+            nextTargets = initialTargets.map((target, i) => {
               // Synchronise all queries with local query cache to ensure consistency
-              q.query = this.queryExpressions[i];
+              // TODO still needed?
               return i === index
                 ? {
-                    key: generateQueryKey(index),
-                    query: datasource.modifyQuery(q.query, action),
+                    ...datasource.modifyQuery(this.modifiedTargets[i], action),
+                    ...generateTargetKeys(i),
                   }
-                : q;
+                : target;
             });
             nextQueryTransactions = queryTransactions
               // Consume the hint corresponding to the action
@@ -464,9 +424,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               // Preserve previous row query transaction to keep results visible if next query is incomplete
               .filter(qt => preventSubmit || qt.rowIndex !== index);
           }
-          this.queryExpressions = nextQueries.map(q => q.query);
+          this.modifiedTargets = [...nextTargets];
           return {
-            queries: nextQueries,
+            initialTargets: nextTargets,
             queryTransactions: nextQueryTransactions,
           };
         },
@@ -478,22 +438,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   onRemoveQueryRow = index => {
     // Remove from local cache
-    this.queryExpressions = [...this.queryExpressions.slice(0, index), ...this.queryExpressions.slice(index + 1)];
+    this.modifiedTargets = [...this.modifiedTargets.slice(0, index), ...this.modifiedTargets.slice(index + 1)];
 
     this.setState(
       state => {
-        const { queries, queryTransactions } = state;
-        if (queries.length <= 1) {
+        const { initialTargets, queryTransactions } = state;
+        if (initialTargets.length <= 1) {
           return null;
         }
         // Remove row from react state
-        const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
+        const nextTargets = [...initialTargets.slice(0, index), ...initialTargets.slice(index + 1)];
 
         // Discard transactions related to row query
         const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
 
         return {
-          queries: nextQueries,
+          initialTargets: nextTargets,
           queryTransactions: nextQueryTransactions,
         };
       },
@@ -515,40 +475,39 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.saveState();
   };
 
-  buildQueryOptions(
-    query: string,
-    rowIndex: number,
-    targetOptions: { format: string; hinting?: boolean; instant?: boolean }
-  ) {
+  buildQueryOptions(target: DataQuery, targetOptions: { format: string; hinting?: boolean; instant?: boolean }) {
     const { datasource, range } = this.state;
     const { interval, intervalMs } = getIntervals(range, datasource, this.el.offsetWidth);
     const targets = [
       {
         ...targetOptions,
-        // Target identifier is needed for table transformations
-        refId: rowIndex + 1,
-        expr: query,
+        ...target,
       },
     ];
 
     // Clone range for query request
     const queryRange: RawTimeRange = { ...range };
 
+    // Datasource is using `panelId + target.refId` for cancellation logic.
+    // Using `format` here because it relates to the view panel that the request is for.
+    const panelId = targetOptions.format;
+
     return {
       interval,
       intervalMs,
+      panelId,
       targets,
       range: queryRange,
     };
   }
 
-  startQueryTransaction(query: string, rowIndex: number, resultType: ResultType, options: any): QueryTransaction {
-    const queryOptions = this.buildQueryOptions(query, rowIndex, options);
+  startQueryTransaction(target: DataQuery, rowIndex: number, resultType: ResultType, options: any): QueryTransaction {
+    const queryOptions = this.buildQueryOptions(target, options);
     const transaction: QueryTransaction = {
-      query,
+      target,
       resultType,
       rowIndex,
-      id: generateQueryKey(),
+      id: generateKey(), // reusing for unique ID
       done: false,
       latency: 0,
       options: queryOptions,
@@ -578,7 +537,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     transactionId: string,
     result: any,
     latency: number,
-    queries: string[],
+    targets: DataQuery[],
     datasourceId: string
   ) {
     const { datasource } = this.state;
@@ -597,9 +556,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       }
 
       // Get query hints
-      let hints;
-      if (datasource.getQueryHints) {
-        hints = datasource.getQueryHints(transaction.query, result);
+      let hints: QueryHint[];
+      if (datasource.getQueryHints as QueryHintGetter) {
+        hints = datasource.getQueryHints(transaction.target, result);
       }
 
       // Mark transactions as complete
@@ -616,7 +575,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
-      const nextHistory = updateHistory(history, datasourceId, queries);
+      const nextHistory = updateHistory(history, datasourceId, targets);
 
       return {
         history: nextHistory,
@@ -634,7 +593,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   failQueryTransaction(transactionId: string, response: any, datasourceId: string) {
     const { datasource } = this.state;
-    if (datasource.meta.id !== datasourceId) {
+    if (datasource.meta.id !== datasourceId || response.cancelled) {
       // Navigated away, queries did not matter
       return;
     }
@@ -679,87 +638,75 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   async runGraphQueries() {
-    const queries = [...this.queryExpressions];
-    if (!hasQuery(queries)) {
+    const targets = [...this.modifiedTargets];
+    if (!hasNonEmptyTarget(targets)) {
       return;
     }
     const { datasource } = this.state;
     const datasourceId = datasource.meta.id;
     // Run all queries concurrently
-    queries.forEach(async (query, rowIndex) => {
-      if (query) {
-        const transaction = this.startQueryTransaction(query, rowIndex, 'Graph', {
-          format: 'time_series',
-          instant: false,
-        });
-        try {
-          const now = Date.now();
-          const res = await datasource.query(transaction.options);
-          const latency = Date.now() - now;
-          const results = makeTimeSeriesList(res.data, transaction.options);
-          this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
-          this.setState({ graphRange: transaction.options.range });
-        } catch (response) {
-          this.failQueryTransaction(transaction.id, response, datasourceId);
-        }
-      } else {
-        this.discardTransactions(rowIndex);
+    targets.forEach(async (target, rowIndex) => {
+      const transaction = this.startQueryTransaction(target, rowIndex, 'Graph', {
+        format: 'time_series',
+        instant: false,
+      });
+      try {
+        const now = Date.now();
+        const res = await datasource.query(transaction.options);
+        const latency = Date.now() - now;
+        const results = makeTimeSeriesList(res.data, transaction.options);
+        this.completeQueryTransaction(transaction.id, results, latency, targets, datasourceId);
+        this.setState({ graphRange: transaction.options.range });
+      } catch (response) {
+        this.failQueryTransaction(transaction.id, response, datasourceId);
       }
     });
   }
 
   async runTableQuery() {
-    const queries = [...this.queryExpressions];
-    if (!hasQuery(queries)) {
+    const targets = [...this.modifiedTargets];
+    if (!hasNonEmptyTarget(targets)) {
       return;
     }
     const { datasource } = this.state;
     const datasourceId = datasource.meta.id;
     // Run all queries concurrently
-    queries.forEach(async (query, rowIndex) => {
-      if (query) {
-        const transaction = this.startQueryTransaction(query, rowIndex, 'Table', {
-          format: 'table',
-          instant: true,
-          valueWithRefId: true,
-        });
-        try {
-          const now = Date.now();
-          const res = await datasource.query(transaction.options);
-          const latency = Date.now() - now;
-          const results = res.data[0];
-          this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
-        } catch (response) {
-          this.failQueryTransaction(transaction.id, response, datasourceId);
-        }
-      } else {
-        this.discardTransactions(rowIndex);
+    targets.forEach(async (target, rowIndex) => {
+      const transaction = this.startQueryTransaction(target, rowIndex, 'Table', {
+        format: 'table',
+        instant: true,
+        valueWithRefId: true,
+      });
+      try {
+        const now = Date.now();
+        const res = await datasource.query(transaction.options);
+        const latency = Date.now() - now;
+        const results = res.data[0];
+        this.completeQueryTransaction(transaction.id, results, latency, targets, datasourceId);
+      } catch (response) {
+        this.failQueryTransaction(transaction.id, response, datasourceId);
       }
     });
   }
 
   async runLogsQuery() {
-    const queries = [...this.queryExpressions];
-    if (!hasQuery(queries)) {
+    const targets = [...this.modifiedTargets];
+    if (!hasNonEmptyTarget(targets)) {
       return;
     }
     const { datasource } = this.state;
     const datasourceId = datasource.meta.id;
     // Run all queries concurrently
-    queries.forEach(async (query, rowIndex) => {
-      if (query) {
-        const transaction = this.startQueryTransaction(query, rowIndex, 'Logs', { format: 'logs' });
-        try {
-          const now = Date.now();
-          const res = await datasource.query(transaction.options);
-          const latency = Date.now() - now;
-          const results = res.data;
-          this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
-        } catch (response) {
-          this.failQueryTransaction(transaction.id, response, datasourceId);
-        }
-      } else {
-        this.discardTransactions(rowIndex);
+    targets.forEach(async (target, rowIndex) => {
+      const transaction = this.startQueryTransaction(target, rowIndex, 'Logs', { format: 'logs' });
+      try {
+        const now = Date.now();
+        const res = await datasource.query(transaction.options);
+        const latency = Date.now() - now;
+        const results = res.data;
+        this.completeQueryTransaction(transaction.id, results, latency, targets, datasourceId);
+      } catch (response) {
+        this.failQueryTransaction(transaction.id, response, datasourceId);
       }
     });
   }
@@ -769,7 +716,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     return {
       ...this.state,
       queryTransactions: [],
-      queries: ensureQueries(this.queryExpressions.map(query => ({ query }))),
+      initialTargets: [...this.modifiedTargets],
     };
   }
 
@@ -789,7 +736,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       exploreDatasources,
       graphRange,
       history,
-      queries,
+      initialTargets,
       queryTransactions,
       range,
       showingGraph,
@@ -903,7 +850,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             <QueryRows
               datasource={datasource}
               history={history}
-              queries={queries}
+              initialTargets={initialTargets}
               onAddQueryRow={this.onAddQueryRow}
               onChangeQuery={this.onChangeQuery}
               onClickHintFix={this.onModifyQueries}
@@ -913,7 +860,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             />
             <main className="m-t-2">
               <ErrorBoundary>
-                {showingStartPage && <StartPage onClickQuery={this.onClickQuery} />}
+                {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                 {!showingStartPage && (
                   <>
                     {supportsGraph && (

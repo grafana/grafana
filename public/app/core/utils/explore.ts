@@ -1,10 +1,19 @@
 import { renderUrl } from 'app/core/utils/url';
-import { ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreState, ExploreUrlState, HistoryItem } from 'app/types/explore';
+import { DataQuery, RawTimeRange } from 'app/types/series';
+
+import kbn from 'app/core/utils/kbn';
+import colors from 'app/core/utils/colors';
+import TimeSeries from 'app/core/time_series2';
+import { parse as parseDate } from 'app/core/utils/datemath';
+import store from 'app/core/store';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
 };
+
+const MAX_HISTORY_ITEMS = 100;
 
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
@@ -70,30 +79,106 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           to: parsed[1],
         };
         const datasource = parsed[2];
-        const queries = parsed.slice(3).map(query => ({ query }));
-        return { datasource, queries, range };
+        const targets = parsed.slice(3);
+        return { datasource, targets, range };
       }
       return parsed;
     } catch (e) {
       console.error(e);
     }
   }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE };
+  return { datasource: null, targets: [], range: DEFAULT_RANGE };
 }
 
 export function serializeStateToUrlParam(state: ExploreState, compact?: boolean): string {
   const urlState: ExploreUrlState = {
     datasource: state.datasourceName,
-    queries: state.queries.map(q => ({ query: q.query })),
+    targets: state.initialTargets.map(({ key, refId, ...rest }) => rest),
     range: state.range,
   };
   if (compact) {
-    return JSON.stringify([
-      urlState.range.from,
-      urlState.range.to,
-      urlState.datasource,
-      ...urlState.queries.map(q => q.query),
-    ]);
+    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.targets]);
   }
   return JSON.stringify(urlState);
+}
+
+export function generateKey(index = 0): string {
+  return `Q-${Date.now()}-${Math.random()}-${index}`;
+}
+
+export function generateRefId(index = 0): string {
+  return `${index + 1}`;
+}
+
+export function generateTargetKeys(index = 0): { refId: string; key: string } {
+  return { refId: generateRefId(index), key: generateKey(index) };
+}
+
+/**
+ * Ensure at least one target exists and that targets have the necessary keys
+ */
+export function ensureTargets(targets?: DataQuery[]): DataQuery[] {
+  if (targets && typeof targets === 'object' && targets.length > 0) {
+    return targets.map((target, i) => ({ ...target, ...generateTargetKeys(i) }));
+  }
+  return [{ ...generateTargetKeys() }];
+}
+
+/**
+ * A target is non-empty when it has keys other than refId and key.
+ */
+export function hasNonEmptyTarget(targets: DataQuery[]): boolean {
+  return targets.some(target => Object.keys(target).length > 2);
+}
+
+export function getIntervals(
+  range: RawTimeRange,
+  datasource,
+  resolution: number
+): { interval: string; intervalMs: number } {
+  if (!datasource || !resolution) {
+    return { interval: '1s', intervalMs: 1000 };
+  }
+  const absoluteRange: RawTimeRange = {
+    from: parseDate(range.from, false),
+    to: parseDate(range.to, true),
+  };
+  return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+}
+
+export function makeTimeSeriesList(dataList, options) {
+  return dataList.map((seriesData, index) => {
+    const datapoints = seriesData.datapoints || [];
+    const alias = seriesData.target;
+    const colorIndex = index % colors.length;
+    const color = colors[colorIndex];
+
+    const series = new TimeSeries({
+      datapoints,
+      alias,
+      color,
+      unit: seriesData.unit,
+    });
+
+    return series;
+  });
+}
+
+/**
+ * Update the query history. Side-effect: store history in local storage
+ */
+export function updateHistory(history: HistoryItem[], datasourceId: string, targets: DataQuery[]): HistoryItem[] {
+  const ts = Date.now();
+  targets.forEach(target => {
+    history = [{ target, ts }, ...history];
+  });
+
+  if (history.length > MAX_HISTORY_ITEMS) {
+    history = history.slice(0, MAX_HISTORY_ITEMS);
+  }
+
+  // Combine all queries of a datasource type into one history
+  const historyKey = `grafana.explore.history.${datasourceId}`;
+  store.setObject(historyKey, history);
+  return history;
 }

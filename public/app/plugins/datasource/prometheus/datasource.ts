@@ -11,6 +11,8 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
+import { DataQuery } from 'app/types';
+import { ExploreUrlState } from 'app/types/explore';
 
 export function alignRange(start, end, step) {
   const alignedEnd = Math.ceil(end / step) * step;
@@ -419,24 +421,23 @@ export class PrometheusDatasource {
     });
   }
 
-  getExploreState(targets: any[]) {
-    let state = {};
+  getExploreState(targets: DataQuery[]): Partial<ExploreUrlState> {
+    let state: Partial<ExploreUrlState> = { datasource: this.name };
     if (targets && targets.length > 0) {
-      const queries = targets.map(t => ({
-        query: this.templateSrv.replace(t.expr, {}, this.interpolateQueryExpr),
-        format: t.format,
+      const expandedTargets = targets.map(target => ({
+        ...target,
+        expr: this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr),
       }));
       state = {
         ...state,
-        queries,
-        datasource: this.name,
+        targets: expandedTargets,
       };
     }
     return state;
   }
 
-  getQueryHints(query: string, result: any[]) {
-    return getQueryHints(query, result, this);
+  getQueryHints(target: DataQuery, result: any[]) {
+    return getQueryHints(target.expr, result, this);
   }
 
   loadRules() {
@@ -454,28 +455,35 @@ export class PrometheusDatasource {
       });
   }
 
-  modifyQuery(query: string, action: any): string {
+  modifyQuery(target: DataQuery, action: any): DataQuery {
+    let query = target.expr;
     switch (action.type) {
       case 'ADD_FILTER': {
-        return addLabelToQuery(query, action.key, action.value);
+        query = addLabelToQuery(query, action.key, action.value);
+        break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
-        return `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+        query = `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+        break;
       }
       case 'ADD_RATE': {
-        return `rate(${query}[5m])`;
+        query = `rate(${query}[5m])`;
+        break;
       }
       case 'ADD_SUM': {
-        return `sum(${query.trim()}) by ($1)`;
+        query = `sum(${query.trim()}) by ($1)`;
+        break;
       }
       case 'EXPAND_RULES': {
         if (action.mapping) {
-          return expandRecordingRules(query, action.mapping);
+          query = expandRecordingRules(query, action.mapping);
         }
+        break;
       }
       default:
-        return query;
+        break;
     }
+    return { ...target, expr: query };
   }
 
   getPrometheusTime(date, roundUp) {

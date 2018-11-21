@@ -158,25 +158,29 @@ export default class LoggingLanguageProvider extends LanguageProvider {
     return { context, refresher, suggestions };
   }
 
-  async importQueries(queries: DataQuery[], datasourceType: string): Promise<DataQuery[]> {
+  async importQueries(targets: DataQuery[], datasourceType: string): Promise<DataQuery[]> {
     if (datasourceType === 'prometheus') {
       return Promise.all(
-        queries.map(async query => {
-          const expr = await this.importPrometheusQuery(query.expr);
+        targets.map(async target => {
+          const expr = await this.importPrometheusQuery(target.expr);
           return {
-            ...query,
+            ...target,
             expr,
           };
         })
       );
     }
-    return queries.map(query => ({
-      ...query,
+    return targets.map(target => ({
+      ...target,
       expr: '',
     }));
   }
 
   async importPrometheusQuery(query: string): Promise<string> {
+    if (!query) {
+      return '';
+    }
+
     // Consider only first selector in query
     const selectorMatch = query.match(selectorRegexp);
     if (selectorMatch) {
@@ -192,7 +196,7 @@ export default class LoggingLanguageProvider extends LanguageProvider {
       const commonLabels = {};
       for (const key in labels) {
         const existingKeys = this.labelKeys[EMPTY_SELECTOR];
-        if (existingKeys.indexOf(key) > -1) {
+        if (existingKeys && existingKeys.indexOf(key) > -1) {
           // Should we check for label value equality here?
           commonLabels[key] = labels[key];
         }

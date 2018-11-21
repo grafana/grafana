@@ -10,7 +10,7 @@ const DEFAULT_EXPLORE_STATE: ExploreState = {
   exploreDatasources: [],
   graphRange: DEFAULT_RANGE,
   history: [],
-  queries: [],
+  initialTargets: [],
   queryTransactions: [],
   range: DEFAULT_RANGE,
   showingGraph: true,
@@ -26,17 +26,17 @@ describe('state functions', () => {
     it('returns default state on empty string', () => {
       expect(parseUrlState('')).toMatchObject({
         datasource: null,
-        queries: [],
+        targets: [],
         range: DEFAULT_RANGE,
       });
     });
 
     it('returns a valid Explore state from URL parameter', () => {
       const paramValue =
-        '%7B"datasource":"Local","queries":%5B%7B"query":"metric"%7D%5D,"range":%7B"from":"now-1h","to":"now"%7D%7D';
+        '%7B"datasource":"Local","targets":%5B%7B"expr":"metric"%7D%5D,"range":%7B"from":"now-1h","to":"now"%7D%7D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
-        queries: [{ query: 'metric' }],
+        targets: [{ expr: 'metric' }],
         range: {
           from: 'now-1h',
           to: 'now',
@@ -45,10 +45,10 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from a compact URL parameter', () => {
-      const paramValue = '%5B"now-1h","now","Local","metric"%5D';
+      const paramValue = '%5B"now-1h","now","Local",%7B"expr":"metric"%7D%5D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
-        queries: [{ query: 'metric' }],
+        targets: [{ expr: 'metric' }],
         range: {
           from: 'now-1h',
           to: 'now',
@@ -66,18 +66,20 @@ describe('state functions', () => {
           from: 'now-5h',
           to: 'now',
         },
-        queries: [
+        initialTargets: [
           {
-            query: 'metric{test="a/b"}',
+            refId: '1',
+            expr: 'metric{test="a/b"}',
           },
           {
-            query: 'super{foo="x/z"}',
+            refId: '2',
+            expr: 'super{foo="x/z"}',
           },
         ],
       };
       expect(serializeStateToUrlParam(state)).toBe(
-        '{"datasource":"foo","queries":[{"query":"metric{test=\\"a/b\\"}"},' +
-          '{"query":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
+        '{"datasource":"foo","targets":[{"expr":"metric{test=\\"a/b\\"}"},' +
+          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
 
@@ -89,17 +91,19 @@ describe('state functions', () => {
           from: 'now-5h',
           to: 'now',
         },
-        queries: [
+        initialTargets: [
           {
-            query: 'metric{test="a/b"}',
+            refId: '1',
+            expr: 'metric{test="a/b"}',
           },
           {
-            query: 'super{foo="x/z"}',
+            refId: '2',
+            expr: 'super{foo="x/z"}',
           },
         ],
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo","metric{test=\\"a/b\\"}","super{foo=\\"x/z\\"}"]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"}]'
       );
     });
   });
@@ -113,12 +117,14 @@ describe('state functions', () => {
           from: 'now - 5h',
           to: 'now',
         },
-        queries: [
+        initialTargets: [
           {
-            query: 'metric{test="a/b"}',
+            refId: '1',
+            expr: 'metric{test="a/b"}',
           },
           {
-            query: 'super{foo="x/z"}',
+            refId: '2',
+            expr: 'super{foo="x/z"}',
           },
         ],
       };
@@ -126,14 +132,15 @@ describe('state functions', () => {
       const parsed = parseUrlState(serialized);
 
       // Account for datasource vs datasourceName
-      const { datasource, ...rest } = parsed;
-      const sameState = {
+      const { datasource, targets, ...rest } = parsed;
+      const resultState = {
         ...rest,
         datasource: DEFAULT_EXPLORE_STATE.datasource,
         datasourceName: datasource,
+        initialTargets: targets,
       };
 
-      expect(state).toMatchObject(sameState);
+      expect(state).toMatchObject(resultState);
     });
   });
 });

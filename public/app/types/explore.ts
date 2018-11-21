@@ -1,6 +1,6 @@
 import { Value } from 'slate';
 
-import { RawTimeRange } from './series';
+import { DataQuery, RawTimeRange } from './series';
 
 export interface CompletionItem {
   /**
@@ -79,7 +79,7 @@ interface ExploreDatasource {
 
 export interface HistoryItem {
   ts: number;
-  query: string;
+  target: DataQuery;
 }
 
 export abstract class LanguageProvider {
@@ -107,11 +107,6 @@ export interface TypeaheadOutput {
   suggestions: CompletionItemGroup[];
 }
 
-export interface Query {
-  query: string;
-  key?: string;
-}
-
 export interface QueryFix {
   type: string;
   label: string;
@@ -130,6 +125,10 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+export interface QueryHintGetter {
+  (target: DataQuery, results: any[], ...rest: any): QueryHint[];
+}
+
 export interface QueryTransaction {
   id: string;
   done: boolean;
@@ -137,10 +136,10 @@ export interface QueryTransaction {
   hints?: QueryHint[];
   latency: number;
   options: any;
-  query: string;
   result?: any; // Table model / Timeseries[] / Logs
   resultType: ResultType;
   rowIndex: number;
+  target: DataQuery;
 }
 
 export interface TextMatch {
@@ -160,15 +159,7 @@ export interface ExploreState {
   exploreDatasources: ExploreDatasource[];
   graphRange: RawTimeRange;
   history: HistoryItem[];
-  /**
-   * Initial rows of queries to push down the tree.
-   * Modifications do not end up here, but in `this.queryExpressions`.
-   * The only way to reset a query is to change its `key`.
-   */
-  queries: Query[];
-  /**
-   * Hints gathered for the query row.
-   */
+  initialTargets: DataQuery[];
   queryTransactions: QueryTransaction[];
   range: RawTimeRange;
   showingGraph: boolean;
@@ -182,7 +173,7 @@ export interface ExploreState {
 
 export interface ExploreUrlState {
   datasource: string;
-  queries: Query[];
+  targets: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
   range: RawTimeRange;
 }
 
