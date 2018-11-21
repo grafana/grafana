@@ -1,5 +1,9 @@
 # 5.4.0 (unreleased)
 
+* **Cloudwatch**: Fix invalid time range causes segmentation fault [#14150](https://github.com/grafana/grafana/issues/14150)
+
+# 5.4.0-beta1 (2018-11-20)
+
 ### New Features
 
 * **Alerting**: Introduce alert debouncing with the `FOR` setting. [#7886](https://github.com/grafana/grafana/issues/7886) & [#6202](https://github.com/grafana/grafana/issues/6202)
