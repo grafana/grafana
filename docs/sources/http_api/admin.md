@@ -228,6 +228,22 @@ Content-Type: application/json
 }
 ```
 
+If you wish to create a user with no password just for thirdpart LDAP/SSO login, you can provide the shouldGenPassword parameter. Here is an example:
+```json
+
+POST /api/admin/users HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name":"User",
+  "email":"user@graf.com",
+  "login":"user",
+  "shouldGenPassword":true
+}
+```
+This request will create a user with a random generated password, and the user can only login through thirdpart LDAP/SSO.
+
 **Example Response**:
 
 ```json
