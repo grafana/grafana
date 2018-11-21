@@ -421,23 +421,23 @@ export class PrometheusDatasource {
     });
   }
 
-  getExploreState(targets: DataQuery[]): Partial<ExploreUrlState> {
+  getExploreState(queries: DataQuery[]): Partial<ExploreUrlState> {
     let state: Partial<ExploreUrlState> = { datasource: this.name };
-    if (targets && targets.length > 0) {
-      const expandedTargets = targets.map(target => ({
-        ...target,
-        expr: this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr),
+    if (queries && queries.length > 0) {
+      const expandedQueries = queries.map(query => ({
+        ...query,
+        expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
       }));
       state = {
         ...state,
-        targets: expandedTargets,
+        queries: expandedQueries,
       };
     }
     return state;
   }
 
-  getQueryHints(target: DataQuery, result: any[]) {
-    return getQueryHints(target.expr, result, this);
+  getQueryHints(query: DataQuery, result: any[]) {
+    return getQueryHints(query.expr, result, this);
   }
 
   loadRules() {
@@ -455,35 +455,35 @@ export class PrometheusDatasource {
       });
   }
 
-  modifyQuery(target: DataQuery, action: any): DataQuery {
-    let query = target.expr;
+  modifyQuery(query: DataQuery, action: any): DataQuery {
+    let expression = query.expr || '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        query = addLabelToQuery(query, action.key, action.value);
+        expression = addLabelToQuery(expression, action.key, action.value);
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
-        query = `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+        expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
         break;
       }
       case 'ADD_RATE': {
-        query = `rate(${query}[5m])`;
+        expression = `rate(${expression}[5m])`;
         break;
       }
       case 'ADD_SUM': {
-        query = `sum(${query.trim()}) by ($1)`;
+        expression = `sum(${expression.trim()}) by ($1)`;
         break;
       }
       case 'EXPAND_RULES': {
         if (action.mapping) {
-          query = expandRecordingRules(query, action.mapping);
+          expression = expandRecordingRules(expression, action.mapping);
         }
         break;
       }
       default:
         break;
     }
-    return { ...target, expr: query };
+    return { ...query, expr: expression };
   }
 
   getPrometheusTime(date, roundUp) {

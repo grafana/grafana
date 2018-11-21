@@ -79,7 +79,7 @@ interface ExploreDatasource {
 
 export interface HistoryItem {
   ts: number;
-  target: DataQuery;
+  query: DataQuery;
 }
 
 export abstract class LanguageProvider {
@@ -126,7 +126,7 @@ export interface QueryHint {
 }
 
 export interface QueryHintGetter {
-  (target: DataQuery, results: any[], ...rest: any): QueryHint[];
+  (query: DataQuery, results: any[], ...rest: any): QueryHint[];
 }
 
 export interface QueryTransaction {
@@ -136,10 +136,10 @@ export interface QueryTransaction {
   hints?: QueryHint[];
   latency: number;
   options: any;
+  query: DataQuery;
   result?: any; // Table model / Timeseries[] / Logs
   resultType: ResultType;
   rowIndex: number;
-  target: DataQuery;
 }
 
 export interface TextMatch {
@@ -159,7 +159,7 @@ export interface ExploreState {
   exploreDatasources: ExploreDatasource[];
   graphRange: RawTimeRange;
   history: HistoryItem[];
-  initialTargets: DataQuery[];
+  initialQueries: DataQuery[];
   queryTransactions: QueryTransaction[];
   range: RawTimeRange;
   showingGraph: boolean;
@@ -173,7 +173,7 @@ export interface ExploreState {
 
 export interface ExploreUrlState {
   datasource: string;
-  targets: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
+  queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
   range: RawTimeRange;
 }
 

@@ -112,8 +112,8 @@ export default class LoggingDatasource {
     });
   }
 
-  async importQueries(targets: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]> {
-    return this.languageProvider.importQueries(targets, originMeta.id);
+  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]> {
+    return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
   metadataRequest(url) {

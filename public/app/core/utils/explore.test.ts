@@ -10,7 +10,7 @@ const DEFAULT_EXPLORE_STATE: ExploreState = {
   exploreDatasources: [],
   graphRange: DEFAULT_RANGE,
   history: [],
-  initialTargets: [],
+  initialQueries: [],
   queryTransactions: [],
   range: DEFAULT_RANGE,
   showingGraph: true,
@@ -26,17 +26,17 @@ describe('state functions', () => {
     it('returns default state on empty string', () => {
       expect(parseUrlState('')).toMatchObject({
         datasource: null,
-        targets: [],
+        queries: [],
         range: DEFAULT_RANGE,
       });
     });
 
     it('returns a valid Explore state from URL parameter', () => {
       const paramValue =
-        '%7B"datasource":"Local","targets":%5B%7B"expr":"metric"%7D%5D,"range":%7B"from":"now-1h","to":"now"%7D%7D';
+        '%7B"datasource":"Local","queries":%5B%7B"expr":"metric"%7D%5D,"range":%7B"from":"now-1h","to":"now"%7D%7D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
-        targets: [{ expr: 'metric' }],
+        queries: [{ expr: 'metric' }],
         range: {
           from: 'now-1h',
           to: 'now',
@@ -48,7 +48,7 @@ describe('state functions', () => {
       const paramValue = '%5B"now-1h","now","Local",%7B"expr":"metric"%7D%5D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
-        targets: [{ expr: 'metric' }],
+        queries: [{ expr: 'metric' }],
         range: {
           from: 'now-1h',
           to: 'now',
@@ -66,7 +66,7 @@ describe('state functions', () => {
           from: 'now-5h',
           to: 'now',
         },
-        initialTargets: [
+        initialQueries: [
           {
             refId: '1',
             expr: 'metric{test="a/b"}',
@@ -78,7 +78,7 @@ describe('state functions', () => {
         ],
       };
       expect(serializeStateToUrlParam(state)).toBe(
-        '{"datasource":"foo","targets":[{"expr":"metric{test=\\"a/b\\"}"},' +
+        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
           '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
@@ -91,7 +91,7 @@ describe('state functions', () => {
           from: 'now-5h',
           to: 'now',
         },
-        initialTargets: [
+        initialQueries: [
           {
             refId: '1',
             expr: 'metric{test="a/b"}',
@@ -117,7 +117,7 @@ describe('state functions', () => {
           from: 'now - 5h',
           to: 'now',
         },
-        initialTargets: [
+        initialQueries: [
           {
             refId: '1',
             expr: 'metric{test="a/b"}',
@@ -132,12 +132,12 @@ describe('state functions', () => {
       const parsed = parseUrlState(serialized);
 
       // Account for datasource vs datasourceName
-      const { datasource, targets, ...rest } = parsed;
+      const { datasource, queries, ...rest } = parsed;
       const resultState = {
         ...rest,
         datasource: DEFAULT_EXPLORE_STATE.datasource,
         datasourceName: datasource,
-        initialTargets: targets,
+        initialQueries: queries,
       };
 
       expect(state).toMatchObject(resultState);

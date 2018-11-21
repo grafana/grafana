@@ -32,7 +32,7 @@ export async function getExploreUrl(
   timeSrv: any
 ) {
   let exploreDatasource = panelDatasource;
-  let exploreTargets = panelTargets;
+  let exploreTargets: DataQuery[] = panelTargets;
   let url;
 
   // Mixed datasources need to choose only one datasource
@@ -79,25 +79,25 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           to: parsed[1],
         };
         const datasource = parsed[2];
-        const targets = parsed.slice(3);
-        return { datasource, targets, range };
+        const queries = parsed.slice(3);
+        return { datasource, queries, range };
       }
       return parsed;
     } catch (e) {
       console.error(e);
     }
   }
-  return { datasource: null, targets: [], range: DEFAULT_RANGE };
+  return { datasource: null, queries: [], range: DEFAULT_RANGE };
 }
 
 export function serializeStateToUrlParam(state: ExploreState, compact?: boolean): string {
   const urlState: ExploreUrlState = {
     datasource: state.datasourceName,
-    targets: state.initialTargets.map(({ key, refId, ...rest }) => rest),
+    queries: state.initialQueries.map(({ key, refId, ...rest }) => rest),
     range: state.range,
   };
   if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.targets]);
+    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
   }
   return JSON.stringify(urlState);
 }
@@ -110,25 +110,25 @@ export function generateRefId(index = 0): string {
   return `${index + 1}`;
 }
 
-export function generateTargetKeys(index = 0): { refId: string; key: string } {
+export function generateQueryKeys(index = 0): { refId: string; key: string } {
   return { refId: generateRefId(index), key: generateKey(index) };
 }
 
 /**
  * Ensure at least one target exists and that targets have the necessary keys
  */
-export function ensureTargets(targets?: DataQuery[]): DataQuery[] {
-  if (targets && typeof targets === 'object' && targets.length > 0) {
-    return targets.map((target, i) => ({ ...target, ...generateTargetKeys(i) }));
+export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
+  if (queries && typeof queries === 'object' && queries.length > 0) {
+    return queries.map((query, i) => ({ ...query, ...generateQueryKeys(i) }));
   }
-  return [{ ...generateTargetKeys() }];
+  return [{ ...generateQueryKeys() }];
 }
 
 /**
  * A target is non-empty when it has keys other than refId and key.
  */
-export function hasNonEmptyTarget(targets: DataQuery[]): boolean {
-  return targets.some(target => Object.keys(target).length > 2);
+export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
+  return queries.some(query => Object.keys(query).length > 2);
 }
 
 export function getIntervals(
@@ -146,7 +146,7 @@ export function getIntervals(
   return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
 }
 
-export function makeTimeSeriesList(dataList, options) {
+export function makeTimeSeriesList(dataList) {
   return dataList.map((seriesData, index) => {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
@@ -167,10 +167,10 @@ export function makeTimeSeriesList(dataList, options) {
 /**
  * Update the query history. Side-effect: store history in local storage
  */
-export function updateHistory(history: HistoryItem[], datasourceId: string, targets: DataQuery[]): HistoryItem[] {
+export function updateHistory(history: HistoryItem[], datasourceId: string, queries: DataQuery[]): HistoryItem[] {
   const ts = Date.now();
-  targets.forEach(target => {
-    history = [{ target, ts }, ...history];
+  queries.forEach(query => {
+    history = [{ query, ts }, ...history];
   });
 
   if (history.length > MAX_HISTORY_ITEMS) {

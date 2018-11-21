@@ -54,7 +54,7 @@ interface LoggingQueryFieldProps {
   error?: string | JSX.Element;
   hint?: any;
   history?: any[];
-  initialTarget?: DataQuery;
+  initialQuery?: DataQuery;
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
   onQueryChange?: (value: DataQuery, override?: boolean) => void;
@@ -135,13 +135,13 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialTarget, onQueryChange } = this.props;
+    const { initialQuery, onQueryChange } = this.props;
     if (onQueryChange) {
-      const target = {
-        ...initialTarget,
+      const query = {
+        ...initialQuery,
         expr: value,
       };
-      onQueryChange(target, override);
+      onQueryChange(query, override);
     }
   };
 
@@ -186,7 +186,7 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
   };
 
   render() {
-    const { error, hint, initialTarget } = this.props;
+    const { error, hint, initialQuery } = this.props;
     const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = syntaxLoaded ? 'Log labels' : 'Loading labels...';
@@ -204,7 +204,7 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
           <QueryField
             additionalPlugins={this.plugins}
             cleanText={cleanText}
-            initialQuery={initialTarget.expr}
+            initialQuery={initialQuery.expr}
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}

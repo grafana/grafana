@@ -158,20 +158,20 @@ export default class LoggingLanguageProvider extends LanguageProvider {
     return { context, refresher, suggestions };
   }
 
-  async importQueries(targets: DataQuery[], datasourceType: string): Promise<DataQuery[]> {
+  async importQueries(queries: DataQuery[], datasourceType: string): Promise<DataQuery[]> {
     if (datasourceType === 'prometheus') {
       return Promise.all(
-        targets.map(async target => {
-          const expr = await this.importPrometheusQuery(target.expr);
+        queries.map(async query => {
+          const expr = await this.importPrometheusQuery(query.expr);
           return {
-            ...target,
+            ...query,
             expr,
           };
         })
       );
     }
-    return targets.map(target => ({
-      ...target,
+    return queries.map(query => ({
+      ...query,
       expr: '',
     }));
   }

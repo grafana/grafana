@@ -32,7 +32,7 @@ interface QueryRowCommonProps {
 type QueryRowProps = QueryRowCommonProps &
   QueryRowEventHandlers & {
     index: number;
-    initialTarget: DataQuery;
+    initialQuery: DataQuery;
   };
 
 class QueryRow extends PureComponent<QueryRowProps> {
@@ -76,7 +76,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { datasource, history, initialTarget, transactions } = this.props;
+    const { datasource, history, initialQuery, transactions } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
@@ -91,7 +91,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
             datasource={datasource}
             error={queryError}
             hint={hint}
-            initialTarget={initialTarget}
+            initialQuery={initialQuery}
             history={history}
             onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
@@ -116,19 +116,19 @@ class QueryRow extends PureComponent<QueryRowProps> {
 
 type QueryRowsProps = QueryRowCommonProps &
   QueryRowEventHandlers & {
-    initialTargets: DataQuery[];
+    initialQueries: DataQuery[];
   };
 
 export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', initialTargets, transactions, ...handlers } = this.props;
+    const { className = '', initialQueries, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
-        {initialTargets.map((target, index) => (
+        {initialQueries.map((query, index) => (
           <QueryRow
-            key={target.key}
+            key={query.key}
             index={index}
-            initialTarget={target}
+            initialQuery={query}
             transactions={transactions.filter(t => t.rowIndex === index)}
             {...handlers}
           />

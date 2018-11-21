@@ -88,7 +88,7 @@ interface CascaderOption {
 type PromQueryFieldProps = {
   datasource: any;
   error?: string | JSX.Element;
-  initialTarget: DataQuery;
+  initialQuery: DataQuery;
   hint?: any;
   history?: any[];
   metricsByPrefix?: CascaderOption[];
@@ -162,15 +162,15 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     this.onChangeQuery(query, true);
   };
 
-  onChangeQuery = (query: string, override?: boolean) => {
+  onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialTarget, onQueryChange } = this.props;
+    const { initialQuery, onQueryChange } = this.props;
     if (onQueryChange) {
-      const target: DataQuery = {
-        ...initialTarget,
-        expr: query,
+      const query: DataQuery = {
+        ...initialQuery,
+        expr: value,
       };
-      onQueryChange(target, override);
+      onQueryChange(query, override);
     }
   };
 
@@ -232,7 +232,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, initialTarget } = this.props;
+    const { error, hint, initialQuery } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
@@ -250,7 +250,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           <QueryField
             additionalPlugins={this.plugins}
             cleanText={cleanText}
-            initialQuery={initialTarget.expr}
+            initialQuery={initialQuery.expr}
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}
