@@ -127,7 +127,7 @@ export class VisualizationTab extends PureComponent<Props> {
     };
 
     return (
-      <EditorTabBody main={panelSelection} toolbarItems={[]}>
+      <EditorTabBody heading="Visualization" main={panelSelection} toolbarItems={[]}>
         {this.renderPanelOptions()}
       </EditorTabBody>
     );

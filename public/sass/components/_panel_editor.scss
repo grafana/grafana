@@ -24,9 +24,15 @@
 .panel-editor-container__editor {
   margin-top: $panel-margin*2;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 65%;
   position: relative;
+}
+
+.panel-editor__right {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .panel-editor__scroll {
@@ -37,6 +43,7 @@
 
 .panel-editor__content {
   padding: 40px 20px;
+  background: $input-label-bg;
 }
 
 .panel-in-fullscreen {
@@ -149,22 +156,13 @@
 .panel-editor-tabs {
   position: relative;
   z-index: 2;
-  box-shadow: $page-header-shadow;
-  border-bottom: 1px solid $page-header-border-color;
-  padding: 0 $dashboard-padding;
-
-  @include clearfix();
-
-  .active.gf-tabs-link {
-    background: $toolbar-tab-bg;
-  }
+  display: flex;
+  flex-direction: column;
+  padding: 40px 10px 10px 10px;
 }
 
-.panel-editor-tabs__close {
-  padding: 5px 9px;
-  border-radius: $border-radius;
-  float: right;
-  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+.panel-editor-tabs__item {
+  margin-bottom: 25px;
 }
 
 .ds-picker-list {

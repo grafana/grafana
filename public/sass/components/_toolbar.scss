@@ -2,12 +2,15 @@
   display: flex;
   align-content: center;
   align-items: center;
-  background: $toolbar-bg;
-  box-shadow: $toolbar-shadow;
-  padding: 7px 20px 7px 20px;
+  padding: 3px 20px 3px 20px;
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
+}
+
+.toolbar__heading {
+  font-size: $font-size-lg;
+  padding-right: 10px;
 }
 
 .toolbar__main {

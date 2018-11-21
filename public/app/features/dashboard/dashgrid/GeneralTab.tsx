@@ -50,7 +50,7 @@ export class GeneralTab extends PureComponent<Props> {
     };
 
     return (
-      <EditorTabBody main={currentDataSource} toolbarItems={[]}>
+      <EditorTabBody toolbarItems={[]}>
         <div ref={element => (this.element = element)} />
       </EditorTabBody>
     );

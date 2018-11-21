@@ -4,6 +4,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface Props {
   children: JSX.Element;
+  heading: string;
   main?: EditorToolBarView;
   toolbarItems: EditorToolBarView[];
 }
@@ -94,17 +95,16 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   render() {
-    const { children, toolbarItems, main } = this.props;
+    const { children, toolbarItems, main, heading } = this.props;
     const { openView } = this.state;
     return (
-      <>
-        {main && (
-          <div className="toolbar">
-            {this.renderMainSelection(main)}
-            <div className="gf-form--grow" />
-            {toolbarItems.map(item => this.renderButton(item))}
-          </div>
-        )}
+      <div className="panel-editor__right">
+        <div className="toolbar">
+          <div className="toolbar__heading">{heading}</div>
+          {main && this.renderMainSelection(main)}
+          <div className="gf-form--grow" />
+          {toolbarItems.map(item => this.renderButton(item))}
+        </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false}>
             <div className="panel-editor__content">
@@ -115,7 +115,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
             </div>
           </CustomScrollbar>
         </div>
-      </>
+      </div>
     );
   }
 }
