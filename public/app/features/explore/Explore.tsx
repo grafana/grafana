@@ -56,6 +56,35 @@ interface ExploreProps {
  * When queries are run, their results are being displayed in the main section.
  * The datasource determines what kind of query editor it brings, and what kind
  * of results viewers it supports.
+ *
+ * QUERY HANDLING
+ *
+ * TLDR: to not re-render Explore during edits, query editing is not "controlled"
+ * in a React sense: values need to be pushed down via `initialQueries`, while
+ * edits travel up via `this.modifiedQueries`.
+ *
+ * By default the query rows start without prior state: `initialQueries` will
+ * contain one empty DataQuery. While the user modifies the DataQuery, the
+ * modifications are being tracked in `this.modifiedQueries`, which need to be
+ * used whenever a query is sent to the datasource to reflect what the user sees
+ * on the screen. Query rows can be initialized or reset using `initialQueries`,
+ * by giving the respective row a new key. This wipes the old row and its state.
+ * This property is also used to govern how many query rows there are (minimum 1).
+ *
+ * This flow makes sure that a query row can be arbitrarily complex without the
+ * fear of being wiped or re-initialized via props. The query row is free to keep
+ * its own state while the user edits or builds a query. Valid queries can be sent
+ * up to Explore via the `onChangeQuery` prop.
+ *
+ * DATASOURCE REQUESTS
+ *
+ * A click on Run Query creates transactions for all DataQueries for all expanded
+ * result viewers. New runs are discarding previous runs. Upon completion a transaction
+ * saves the result. The result viewers construct their data from the currently existing
+ * transactions.
+ *
+ * The result viewers determine some of the query options sent to the datasource, e.g.,
+ * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
