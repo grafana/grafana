@@ -20,7 +20,7 @@ import {
   getIntervals,
   generateKey,
   generateQueryKeys,
-  hasNonEmptyQuery,
+  // hasNonEmptyQuery,
   makeTimeSeriesList,
   updateHistory,
 } from 'app/core/utils/explore';
@@ -30,6 +30,7 @@ import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer'
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTimeSrv } from 'app/features/dashboard/time_srv';
 
 import Panel from './Panel';
 import QueryRows from './QueryRows';
@@ -132,6 +133,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       };
     }
     this.modifiedQueries = initialQueries.slice();
+    const timeSrv = getTimeSrv();
+    timeSrv.init({
+      time: { from: 'now-6h', to: 'now' },
+      refresh: false,
+      getTimezone: () => 'utc',
+      timeRangeUpdated: () => console.log('refreshDashboard!'),
+    });
   }
 
   async componentDidMount() {
@@ -691,9 +699,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   async runQueries(resultType: ResultType, queryOptions: any, resultGetter?: any) {
     const queries = [...this.modifiedQueries];
-    if (!hasNonEmptyQuery(queries)) {
-      return;
-    }
+    // if (!hasNonEmptyQuery(queries)) {
+    //   return;
+    // }
     const { datasource } = this.state;
     const datasourceId = datasource.meta.id;
     // Run all queries concurrently
