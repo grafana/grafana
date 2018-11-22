@@ -429,8 +429,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
-  onClickTableCell = (columnKey: string, rowValue: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', key: columnKey, value: rowValue });
+  onClickTableCell = (columnKey: string, rowValue: string, options: {}) => {
+    this.onModifyQueries({
+      key: columnKey,
+      options,
+      type: 'ADD_FILTER',
+      value: rowValue,
+    });
   };
 
   onModifyQueries = (action, index?: number) => {

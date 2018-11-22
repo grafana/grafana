@@ -11,7 +11,7 @@ const VALUE_REGEX = /^[Vv]alue #\d+/;
 interface TableProps {
   data: TableModel;
   loading: boolean;
-  onClickCell?: (columnKey: string, rowValue: string) => void;
+  onClickCell?: (columnKey: string, rowValue: string, options: {}) => void;
 }
 
 function prepareRows(rows, columnNames) {
@@ -25,10 +25,17 @@ export default class Table extends PureComponent<TableProps> {
         // Only handle click on link, not the cell
         if (e.target) {
           const link = e.target as HTMLElement;
-          if (link.className === 'link') {
+          if (
+            link.className === 'table-panel-filter-link' ||
+            (link.parentElement && link.parentElement.className === 'table-panel-filter-link')
+          ) {
             const columnKey = column.Header;
             const rowValue = rowInfo.row[columnKey];
-            this.props.onClickCell(columnKey, rowValue);
+            const filter = link.attributes.getNamedItem('data-filter');
+            const options = {
+              filter: filter && filter.value,
+            };
+            this.props.onClickCell(columnKey, rowValue, options);
           }
         }
       },
@@ -42,9 +49,23 @@ export default class Table extends PureComponent<TableProps> {
     const columns = tableModel.columns.map(({ filterable, text }) => ({
       Header: text,
       accessor: text,
-      className: VALUE_REGEX.test(text) ? 'text-right' : '',
+      className: `table-panel-cell-filterable ${VALUE_REGEX.test(text) ? 'text-right' : ''}`,
       show: text !== 'Time',
-      Cell: row => <span className={filterable ? 'link' : ''}>{row.value}</span>,
+      Cell: row => (
+        <div>
+          {row.value}
+          {filterable && (
+            <span>
+              <a className="table-panel-filter-link" data-filter="INCLUDE" title="Filter for value">
+                <i className="fa fa-search-plus" />
+              </a>
+              <a className="table-panel-filter-link" data-filter="EXCLUDE" title="Filter out value">
+                <i className="fa fa-search-minus" />
+              </a>
+            </span>
+          )}
+        </div>
+      ),
     }));
     const noDataText = data ? 'The queries returned no data for a table.' : '';
 

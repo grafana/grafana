@@ -54,5 +54,8 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery(addLabelToQuery('avg(foo) + sum(xx_yy)', 'bar', 'baz'), 'bar', 'baz')).toBe(
       'avg(foo{bar="baz"}) + sum(xx_yy{bar="baz"})'
     );
+    expect(addLabelToQuery(addLabelToQuery('metric', 'label', 'value', '!='), 'label', 'value', '=')).toBe(
+      'metric{label="value"}'
+    );
   });
 });

@@ -94,11 +94,13 @@
     &.cell-highlighted:hover {
       background-color: $tight-form-func-bg;
     }
+  }
+}
 
-    &:hover {
-      .table-panel-filter-link {
-        visibility: visible;
-      }
+.table-panel-cell-filterable {
+  &:hover {
+    .table-panel-filter-link {
+      visibility: visible;
     }
   }
 }

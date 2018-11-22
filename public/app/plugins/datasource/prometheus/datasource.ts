@@ -459,7 +459,14 @@ export class PrometheusDatasource {
     let expression = query.expr || '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        let operator: string;
+        const filter = action.options.filter;
+        if (filter === 'INCLUDE') {
+          operator = '=';
+        } else if (filter === 'EXCLUDE') {
+          operator = '!=';
+        }
+        expression = addLabelToQuery(expression, action.key, action.value, operator);
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {

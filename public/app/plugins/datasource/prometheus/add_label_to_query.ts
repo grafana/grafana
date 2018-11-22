@@ -66,7 +66,11 @@ function addLabelToSelector(selector: string, labelKey: string, labelValue: stri
   if (selector) {
     let match = labelRegexp.exec(selector);
     while (match) {
-      parsedLabels.push({ key: match[1], operator: match[2], value: match[3] });
+      const key = match[1];
+      // Ignore existing label selector when the incoming one should replace it
+      if (key !== labelKey) {
+        parsedLabels.push({ key, operator: match[2], value: match[3] });
+      }
       match = labelRegexp.exec(selector);
     }
   }
