@@ -96,7 +96,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
             return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
           })}
         </div>
-        {this.renderCurrentTab(activeTab)}
+        <div className="panel-editor__right">{this.renderCurrentTab(activeTab)}</div>
       </div>
     );
   }

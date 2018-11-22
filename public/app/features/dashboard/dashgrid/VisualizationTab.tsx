@@ -126,8 +126,14 @@ export class VisualizationTab extends PureComponent<Props> {
       },
     };
 
+    const panelHelp = {
+      title: '',
+      icon: 'fa fa-question',
+      render: () => <h2>Help</h2>,
+    };
+
     return (
-      <EditorTabBody heading="Visualization" main={panelSelection} toolbarItems={[]}>
+      <EditorTabBody heading="Visualization" main={panelSelection} toolbarItems={[panelHelp]}>
         {this.renderPanelOptions()}
       </EditorTabBody>
     );

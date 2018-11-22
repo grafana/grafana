@@ -6,7 +6,7 @@
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  background: $input-label-bg;
+  background: $black;
   border-bottom: 1px solid $black;
   border-radius: 3px;
 }
@@ -44,10 +44,7 @@
 
 .toolbar-subview {
   position: relative;
-  padding: 20px 20px;
-  background-color: $empty-list-cta-bg;
-  top: -45px;
-  margin: 0 30px 20px 0px;
+  top: -23px;
 }
 
 .toolbar-subview__close {
@@ -56,7 +53,7 @@
   border: none;
   position: absolute;
   right: 15px;
-  top: 20px;
+  top: 0px;
   font-size: $font-size-md;
 
   &:hover {

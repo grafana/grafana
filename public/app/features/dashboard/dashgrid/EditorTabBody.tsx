@@ -98,7 +98,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     const { children, toolbarItems, main, heading } = this.props;
     const { openView } = this.state;
     return (
-      <div className="panel-editor__right">
+      <>
         <div className="toolbar">
           <div className="toolbar__heading">{heading}</div>
           {main && this.renderMainSelection(main)}
@@ -115,7 +115,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
             </div>
           </CustomScrollbar>
         </div>
-      </div>
+      </>
     );
   }
 }
