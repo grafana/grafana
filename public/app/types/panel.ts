@@ -30,6 +30,7 @@ export interface PanelMenuItem {
 }
 
 export interface Threshold {
+  index: number;
   label: string;
   value: number;
   color?: string;
