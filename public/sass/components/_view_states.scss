@@ -6,6 +6,11 @@
   .scroll-canvas--dashboard {
     height: 100%;
   }
+  .panel-menu-container,
+  .panel-info-corner--info,
+  .panel-info-corner--links {
+    display: none;
+  }
 }
 
 .playlist-active,
