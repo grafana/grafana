@@ -42,18 +42,13 @@
   height: 20px;
 }
 
-.toolbar-subview {
-  position: relative;
-  top: -23px;
-}
-
 .toolbar-subview__close {
   background: transparent;
   padding: 4px 8px 4px 9px;
   border: none;
   position: absolute;
-  right: 15px;
-  top: 0px;
+  right: 25px;
+  top: 20px;
   font-size: $font-size-md;
 
   &:hover {

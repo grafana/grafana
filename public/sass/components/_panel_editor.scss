@@ -49,6 +49,11 @@
   padding: 40px 20px;
 }
 
+.panel-editor__toolbar-view {
+  background: $black;
+  padding: 20px;
+}
+
 .panel-in-fullscreen {
   .sidemenu {
     display: none;
@@ -116,9 +121,8 @@
 }
 
 .viz-picker__item {
-  background: $card-background;
-  box-shadow: $card-shadow;
-
+  background: $panel-bg;
+  border: $panel-border;
   border-radius: 3px;
   height: 90px;
   width: 150px;
@@ -210,9 +214,8 @@
 }
 
 .ds-picker-list__item {
-  background: $card-background;
-  box-shadow: $card-shadow;
-
+  background: $panel-bg;
+  border: $panel-border;
   border-radius: 3px;
   display: flex;
   cursor: pointer;
