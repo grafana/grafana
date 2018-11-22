@@ -43,14 +43,8 @@ export class GeneralTab extends PureComponent<Props> {
   }
 
   render() {
-    const currentDataSource = {
-      title: 'ProductionDB',
-      imgSrc: 'public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
-      render: () => <h2>hello</h2>,
-    };
-
     return (
-      <EditorTabBody toolbarItems={[]}>
+      <EditorTabBody heading="General" toolbarItems={[]}>
         <div ref={element => (this.element = element)} />
       </EditorTabBody>
     );

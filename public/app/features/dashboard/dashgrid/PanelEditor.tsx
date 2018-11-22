@@ -72,10 +72,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     const { plugin } = this.props;
     const activeTab = store.getState().location.query.tab || 'queries';
 
-    const tabs = [
-      { id: 'queries', text: 'Queries' },
-      { id: 'visualization', text: 'Visualization' },
-    ];
+    const tabs = [{ id: 'queries', text: 'Queries' }, { id: 'visualization', text: 'Visualization' }];
 
     if (config.alertingEnabled && plugin.id === 'graph') {
       tabs.push({
@@ -86,16 +83,18 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
 
     return (
       <div className="panel-editor-container__editor">
-        <div className="panel-editor-resizer">
-          <div className="panel-editor-resizer__handle">
-            <div className="panel-editor-resizer__handle-dots" />
-          </div>
-        </div>
+        {
+          // <div className="panel-editor-resizer">
+          //   <div className="panel-editor-resizer__handle">
+          //     <div className="panel-editor-resizer__handle-dots" />
+          //   </div>
+          // </div>
+        }
 
         <div className="panel-editor-tabs">
-            {tabs.map(tab => {
-              return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
-            })}
+          {tabs.map(tab => {
+            return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
+          })}
         </div>
         {this.renderCurrentTab(activeTab)}
       </div>

@@ -14,6 +14,12 @@
   background: $page-gradient;
 }
 
+.panel-in-fullscreen {
+  .main-view {
+    background: linear-gradient(180deg, #222426 10px, #090909 200px);
+  }
+}
+
 .page-container {
   margin-left: auto;
   margin-right: auto;

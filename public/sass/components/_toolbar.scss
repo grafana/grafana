@@ -6,6 +6,9 @@
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
+  background: $input-label-bg;
+  border-bottom: 1px solid $black;
+  border-radius: 3px;
 }
 
 .toolbar__heading {

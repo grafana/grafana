@@ -64,7 +64,7 @@ export class AlertTab extends PureComponent<Props> {
 
   render() {
     return (
-      <EditorTabBody toolbarItems={[]}>
+      <EditorTabBody heading="Alert" toolbarItems={[]}>
         <div ref={element => (this.element = element)} />
       </EditorTabBody>
     );
