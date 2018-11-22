@@ -1,38 +1,52 @@
-﻿import React, { PureComponent } from 'react';
-import JSONFormatterJS from 'json-formatter-js';
+﻿import React, { PureComponent, createRef } from 'react';
+import JSONFormatterJS, { JSONFormatterConfiguration } from 'json-formatter-js';
 
 interface Props {
   className?: string;
-  json: any;
-  config?: any;
+  json: {};
+  config?: JSONFormatterConfiguration;
   open?: number;
 }
 
 export class JSONFormatter extends PureComponent<Props> {
-  wrapperEl: any = React.createRef();
-  jsonEl: HTMLElement;
-  formatter: any;
+  private wrapperRef = createRef<HTMLDivElement>();
+  private formatter: any;
 
   static defaultProps = {
     open: 3,
     config: {
       animateOpen: true,
+      theme: 'dark',
     },
   };
 
   componentDidMount() {
+    this.renderJson();
+  }
+
+  componentDidUpdate() {
+    this.renderJson();
+  }
+
+  renderJson = () => {
     const { json, config, open } = this.props;
     this.formatter = new JSONFormatterJS(json, open, config);
-    this.jsonEl = this.wrapperEl.current.appendChild(this.formatter.render());
-  }
+    const wrapperEl = this.wrapperRef.current;
+    const newJsonHtml = this.formatter.render();
+    const hasChildren: boolean = wrapperEl.hasChildNodes();
+    if (hasChildren) {
+      wrapperEl.replaceChild(newJsonHtml, wrapperEl.lastChild);
+    } else {
+      wrapperEl.appendChild(newJsonHtml);
+    }
+  };
 
   componentWillUnmount() {
     this.formatter = null;
-    this.jsonEl = null;
   }
 
   render() {
     const { className } = this.props;
-    return <div className={className} ref={this.wrapperEl} />;
+    return <div className={className} ref={this.wrapperRef} />;
   }
 }
