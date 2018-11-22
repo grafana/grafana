@@ -1,0 +1,19 @@
+{
+  "id": "grafana-graph-alternative",
+  "type": "panel",
+  "name": "Graph Alternative",
+  "info": {
+    "author": {
+      "name": "nmaniwa",
+      "url": "https://github.com/nmaniwa/grafana-graph-alternative"
+    },
+    "logos": {
+      "small": "img/triangles.svg",
+      "large": "img/triangles.svg"
+    }
+  },
+  "dependencies": {
+    "grafanaVersion": "5.0.1"
+  }
+}
+

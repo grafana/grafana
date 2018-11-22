@@ -32,8 +32,10 @@ public/css/*.min.css
 .DS_Store
 .vscode/
 
-/data/*
 /bin/*
+/data/log/*
+/data/sessions/*
+/data/grafana.db
 
 conf/custom.ini
 fig.yml
