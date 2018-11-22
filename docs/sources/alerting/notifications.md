@@ -55,6 +55,10 @@ Alert rule evaluation interval | Send reminders every | Reminder sent every (aft
 
 <div class="clearfix"></div>
 
+### Disable resolve message
+
+When checked, this option will disable resolve message [OK] that is sent when alerting state returns to false.
+
 ## Supported Notification Types
 
 Grafana ships with the following set of notification types:
