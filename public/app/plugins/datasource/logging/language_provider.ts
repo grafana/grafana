@@ -7,6 +7,7 @@ import {
   LanguageProvider,
   TypeaheadInput,
   TypeaheadOutput,
+  HistoryItem,
 } from 'app/types/explore';
 import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
 import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';
@@ -19,9 +20,9 @@ const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
 const wrapLabel = (label: string) => ({ label });
 
-export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
+export function addHistoryMetadata(item: CompletionItem, history: HistoryItem[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter(h => h.ts > cutoffTs && h.query === item.label);
+  const historyForItem = history.filter(h => h.ts > cutoffTs && (h.query.expr as string) === item.label);
   const count = historyForItem.length;
   const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
@@ -96,9 +97,9 @@ export default class LoggingLanguageProvider extends LanguageProvider {
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .uniqBy('query')
+        .uniqBy('query.expr')
         .take(HISTORY_ITEM_COUNT)
-        .map(h => h.query)
+        .map(h => h.query.expr)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
         .value();
@@ -177,6 +178,10 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   }
 
   async importPrometheusQuery(query: string): Promise<string> {
+    if (!query) {
+      return '';
+    }
+
     // Consider only first selector in query
     const selectorMatch = query.match(selectorRegexp);
     if (selectorMatch) {
@@ -192,7 +197,7 @@ export default class LoggingLanguageProvider extends LanguageProvider {
       const commonLabels = {};
       for (const key in labels) {
         const existingKeys = this.labelKeys[EMPTY_SELECTOR];
-        if (existingKeys.indexOf(key) > -1) {
+        if (existingKeys && existingKeys.indexOf(key) > -1) {
           // Should we check for label value equality here?
           commonLabels[key] = labels[key];
         }

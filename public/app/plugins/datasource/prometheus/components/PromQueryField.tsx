@@ -10,7 +10,8 @@ import { TypeaheadOutput } from 'app/types/explore';
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import TypeaheadField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import { DataQuery } from 'app/types';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -87,13 +88,13 @@ interface CascaderOption {
 interface PromQueryFieldProps {
   datasource: any;
   error?: string | JSX.Element;
+  initialQuery: DataQuery;
   hint?: any;
   history?: any[];
-  initialQuery?: string | null;
   metricsByPrefix?: CascaderOption[];
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
-  onQueryChange?: (value: string, override?: boolean) => void;
+  onQueryChange?: (value: DataQuery, override?: boolean) => void;
 }
 
 interface PromQueryFieldState {
@@ -163,9 +164,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { onQueryChange } = this.props;
+    const { initialQuery, onQueryChange } = this.props;
     if (onQueryChange) {
-      onQueryChange(value, override);
+      const query: DataQuery = {
+        ...initialQuery,
+        expr: value,
+      };
+      onQueryChange(query, override);
     }
   };
 
@@ -230,7 +235,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { error, hint, initialQuery } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading matrics...';
+    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
 
     return (
       <div className="prom-query-field">
@@ -242,10 +247,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           </Cascader>
         </div>
         <div className="prom-query-field-wrapper">
-          <TypeaheadField
+          <QueryField
             additionalPlugins={this.plugins}
             cleanText={cleanText}
-            initialValue={initialQuery}
+            initialQuery={initialQuery.expr}
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}

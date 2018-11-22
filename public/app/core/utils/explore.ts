@@ -1,10 +1,19 @@
 import { renderUrl } from 'app/core/utils/url';
-import { ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreState, ExploreUrlState, HistoryItem } from 'app/types/explore';
+import { DataQuery, RawTimeRange } from 'app/types/series';
+
+import kbn from 'app/core/utils/kbn';
+import colors from 'app/core/utils/colors';
+import TimeSeries from 'app/core/time_series2';
+import { parse as parseDate } from 'app/core/utils/datemath';
+import store from 'app/core/store';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
 };
+
+const MAX_HISTORY_ITEMS = 100;
 
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
@@ -23,7 +32,7 @@ export async function getExploreUrl(
   timeSrv: any
 ) {
   let exploreDatasource = panelDatasource;
-  let exploreTargets = panelTargets;
+  let exploreTargets: DataQuery[] = panelTargets;
   let url;
 
   // Mixed datasources need to choose only one datasource
@@ -57,6 +66,8 @@ export async function getExploreUrl(
   return url;
 }
 
+const clearQueryKeys: ((query: DataQuery) => object) = ({ key, refId, ...rest }) => rest;
+
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   if (initial) {
     try {
@@ -70,7 +81,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           to: parsed[1],
         };
         const datasource = parsed[2];
-        const queries = parsed.slice(3).map(query => ({ query }));
+        const queries = parsed.slice(3);
         return { datasource, queries, range };
       }
       return parsed;
@@ -84,16 +95,97 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 export function serializeStateToUrlParam(state: ExploreState, compact?: boolean): string {
   const urlState: ExploreUrlState = {
     datasource: state.datasourceName,
-    queries: state.queries.map(q => ({ query: q.query })),
+    queries: state.initialQueries.map(clearQueryKeys),
     range: state.range,
   };
   if (compact) {
-    return JSON.stringify([
-      urlState.range.from,
-      urlState.range.to,
-      urlState.datasource,
-      ...urlState.queries.map(q => q.query),
-    ]);
+    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
   }
   return JSON.stringify(urlState);
+}
+
+export function generateKey(index = 0): string {
+  return `Q-${Date.now()}-${Math.random()}-${index}`;
+}
+
+export function generateRefId(index = 0): string {
+  return `${index + 1}`;
+}
+
+export function generateQueryKeys(index = 0): { refId: string; key: string } {
+  return { refId: generateRefId(index), key: generateKey(index) };
+}
+
+/**
+ * Ensure at least one target exists and that targets have the necessary keys
+ */
+export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
+  if (queries && typeof queries === 'object' && queries.length > 0) {
+    return queries.map((query, i) => ({ ...query, ...generateQueryKeys(i) }));
+  }
+  return [{ ...generateQueryKeys() }];
+}
+
+/**
+ * A target is non-empty when it has keys other than refId and key.
+ */
+export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
+  return queries.some(query => Object.keys(query).length > 2);
+}
+
+export function getIntervals(
+  range: RawTimeRange,
+  datasource,
+  resolution: number
+): { interval: string; intervalMs: number } {
+  if (!datasource || !resolution) {
+    return { interval: '1s', intervalMs: 1000 };
+  }
+  const absoluteRange: RawTimeRange = {
+    from: parseDate(range.from, false),
+    to: parseDate(range.to, true),
+  };
+  return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+}
+
+export function makeTimeSeriesList(dataList) {
+  return dataList.map((seriesData, index) => {
+    const datapoints = seriesData.datapoints || [];
+    const alias = seriesData.target;
+    const colorIndex = index % colors.length;
+    const color = colors[colorIndex];
+
+    const series = new TimeSeries({
+      datapoints,
+      alias,
+      color,
+      unit: seriesData.unit,
+    });
+
+    return series;
+  });
+}
+
+/**
+ * Update the query history. Side-effect: store history in local storage
+ */
+export function updateHistory(history: HistoryItem[], datasourceId: string, queries: DataQuery[]): HistoryItem[] {
+  const ts = Date.now();
+  queries.forEach(query => {
+    history = [{ query, ts }, ...history];
+  });
+
+  if (history.length > MAX_HISTORY_ITEMS) {
+    history = history.slice(0, MAX_HISTORY_ITEMS);
+  }
+
+  // Combine all queries of a datasource type into one history
+  const historyKey = `grafana.explore.history.${datasourceId}`;
+  store.setObject(historyKey, history);
+  return history;
+}
+
+export function clearHistory(datasourceId: string) {
+  const historyKey = `grafana.explore.history.${datasourceId}`;
+  store.delete(historyKey);
 }
