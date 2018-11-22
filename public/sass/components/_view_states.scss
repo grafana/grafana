@@ -6,6 +6,12 @@
   .scroll-canvas--dashboard {
     height: 100%;
   }
+  // remove panel dropdown option
+  .panel-menu-container,
+  .panel-info-corner--info,
+  .panel-info-corner--links {
+    display: none;
+  }
 }
 
 .playlist-active,
