@@ -23,6 +23,10 @@ describe('VariableSrv init', function(this: any) {
     $on: () => {},
   };
 
+  const backendSrv = {
+    get: () => Promise.resolve({}),
+  };
+
   let ctx = {} as any;
 
   function describeInitScenario(desc, fn) {
@@ -47,7 +51,7 @@ describe('VariableSrv init', function(this: any) {
           templateSrv,
         };
 
-        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv);
+        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv, backendSrv);
 
         $injector.instantiate = (variable, model) => {
           return getVarMockConstructor(variable, model, ctx);

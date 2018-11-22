@@ -30,6 +30,9 @@ describe('VariableSrv', function(this: any) {
     $location: {
       search: () => {},
     },
+    backendSrv: {
+      get: () => Promise.resolve({}),
+    },
   } as any;
 
   function describeUpdateVariable(desc, fn) {
@@ -45,7 +48,14 @@ describe('VariableSrv', function(this: any) {
         const ds: any = {};
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
-        ctx.variableSrv = new VariableSrv(ctx.$rootScope, $q, ctx.$location, ctx.$injector, ctx.templateSrv);
+        ctx.variableSrv = new VariableSrv(
+          ctx.$rootScope,
+          $q,
+          ctx.$location,
+          ctx.$injector,
+          ctx.templateSrv,
+          ctx.backendSrv
+        );
 
         ctx.variableSrv.timeSrv = ctx.timeSrv;
         ctx.datasourceSrv = {
@@ -57,7 +67,7 @@ describe('VariableSrv', function(this: any) {
           return getVarMockConstructor(ctr, model, ctx);
         };
 
-        ctx.variableSrv.init(
+        await ctx.variableSrv.init(
           new DashboardModel({
             templating: { list: [] },
             updateSubmenuVisibility: () => {},

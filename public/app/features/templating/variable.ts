@@ -24,6 +24,15 @@ export interface Variable {
   getSaveModel();
 }
 
+export abstract class VariableBase {
+  name: string;
+  type: string;
+  current: any;
+  globalVariable = false;
+  options = [];
+  tags = [];
+}
+
 export let variableTypes = {};
 export { assignModelProperties };
 

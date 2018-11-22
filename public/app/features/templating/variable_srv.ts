@@ -12,7 +12,14 @@ export class VariableSrv {
   variables: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
+  constructor(
+    private $rootScope,
+    private $q,
+    private $location,
+    private $injector,
+    private templateSrv,
+    private backendSrv
+  ) {
     $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
   }
 
@@ -20,24 +27,42 @@ export class VariableSrv {
     this.dashboard = dashboard;
     this.dashboard.events.on('time-range-updated', this.onTimeRangeUpdated.bind(this));
 
-    // create working class models representing variables
-    this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
-    this.templateSrv.init(this.variables);
+    const uids = dashboard.templating.list.filter(t => t.type === 'global').map(t => t.uid);
 
-    // init variables
-    for (const variable of this.variables) {
-      variable.initLock = this.$q.defer();
-    }
+    return this.backendSrv
+      .get('/api/variables', { uids: uids })
+      .then(globalVars => {
+        return this.dashboard.templating.list.map(variable => {
+          if (variable.type === 'global') {
+            const copy = _.cloneDeep(variable);
 
-    const queryParams = this.$location.search();
-    return this.$q
-      .all(
-        this.variables.map(variable => {
-          return this.processVariable(variable, queryParams);
-        })
-      )
-      .then(() => {
-        this.templateSrv.updateTemplateData();
+            variable = globalVars[copy.uid];
+            variable.globalModel = copy;
+            variable.current = copy.current;
+          }
+
+          return this.createVariableFromModel(variable);
+        });
+      })
+      .then(variables => {
+        this.variables = dashboard.templating.list = variables;
+        this.templateSrv.init(this.variables);
+
+        // init variables
+        for (const variable of this.variables) {
+          variable.initLock = this.$q.defer();
+        }
+
+        const queryParams = this.$location.search();
+        return this.$q
+          .all(
+            this.variables.map(variable => {
+              return this.processVariable(variable, queryParams);
+            })
+          )
+          .then(() => {
+            this.templateSrv.updateTemplateData();
+          });
       });
   }
 
@@ -73,7 +98,6 @@ export class VariableSrv {
         if (urlValue !== void 0) {
           return variable.setValueFromUrl(urlValue).then(variable.initLock.resolve);
         }
-
         if (variable.refresh === 1 || variable.refresh === 2) {
           return variable.updateOptions().then(variable.initLock.resolve);
         }

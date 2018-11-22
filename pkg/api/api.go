@@ -276,6 +276,11 @@ func (hs *HTTPServer) registerRoutes() {
 			})
 		})
 
+		// Variables
+		apiRoute.Group("/variables", func(vr routing.RouteRegister) {
+			vr.Get("/", Wrap(GetGlobalVariables))
+		})
+
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", Wrap(GetDashboard))
