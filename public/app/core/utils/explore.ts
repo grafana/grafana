@@ -66,6 +66,8 @@ export async function getExploreUrl(
   return url;
 }
 
+const clearQueryKeys: ((query: DataQuery) => object) = ({ key, refId, ...rest }) => rest;
+
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   if (initial) {
     try {
@@ -93,7 +95,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 export function serializeStateToUrlParam(state: ExploreState, compact?: boolean): string {
   const urlState: ExploreUrlState = {
     datasource: state.datasourceName,
-    queries: state.initialQueries.map(({ key, refId, ...rest }) => rest),
+    queries: state.initialQueries.map(clearQueryKeys),
     range: state.range,
   };
   if (compact) {
@@ -181,4 +183,9 @@ export function updateHistory(history: HistoryItem[], datasourceId: string, quer
   const historyKey = `grafana.explore.history.${datasourceId}`;
   store.setObject(historyKey, history);
   return history;
+}
+
+export function clearHistory(datasourceId: string) {
+  const historyKey = `grafana.explore.history.${datasourceId}`;
+  store.delete(historyKey);
 }

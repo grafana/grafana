@@ -7,12 +7,37 @@ describe('Language completion provider', () => {
     metadataRequest: () => ({ data: { data: [] } }),
   };
 
-  it('returns default suggestions on emtpty context', () => {
-    const instance = new LanguageProvider(datasource);
-    const result = instance.provideCompletionItems({ text: '', prefix: '', wrapperClasses: [] });
-    expect(result.context).toBeUndefined();
-    expect(result.refresher).toBeUndefined();
-    expect(result.suggestions.length).toEqual(0);
+  describe('empty query suggestions', () => {
+    it('returns default suggestions on emtpty context', () => {
+      const instance = new LanguageProvider(datasource);
+      const result = instance.provideCompletionItems({ text: '', prefix: '', wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions.length).toEqual(0);
+    });
+
+    it('returns default suggestions with history on emtpty context when history was provided', () => {
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('');
+      const history = [
+        {
+          query: { refId: '1', expr: '{app="foo"}' },
+        },
+      ];
+      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] }, { history });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'History',
+          items: [
+            {
+              label: '{app="foo"}',
+            },
+          ],
+        },
+      ]);
+    });
   });
 
   describe('label suggestions', () => {

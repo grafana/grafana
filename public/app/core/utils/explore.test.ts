@@ -1,5 +1,13 @@
-import { DEFAULT_RANGE, serializeStateToUrlParam, parseUrlState } from './explore';
+import {
+  DEFAULT_RANGE,
+  serializeStateToUrlParam,
+  parseUrlState,
+  updateHistory,
+  clearHistory,
+  hasNonEmptyQuery,
+} from './explore';
 import { ExploreState } from 'app/types/explore';
+import store from 'app/core/store';
 
 const DEFAULT_EXPLORE_STATE: ExploreState = {
   datasource: null,
@@ -142,5 +150,40 @@ describe('state functions', () => {
 
       expect(state).toMatchObject(resultState);
     });
+  });
+});
+
+describe('updateHistory()', () => {
+  const datasourceId = 'myDatasource';
+  const key = `grafana.explore.history.${datasourceId}`;
+
+  beforeEach(() => {
+    clearHistory(datasourceId);
+    expect(store.exists(key)).toBeFalsy();
+  });
+
+  test('should save history item to localStorage', () => {
+    const expected = [
+      {
+        query: { refId: '1', expr: 'metric' },
+      },
+    ];
+    expect(updateHistory([], datasourceId, [{ refId: '1', expr: 'metric' }])).toMatchObject(expected);
+    expect(store.exists(key)).toBeTruthy();
+    expect(store.getObject(key)).toMatchObject(expected);
+  });
+});
+
+describe('hasNonEmptyQuery', () => {
+  test('should return true if one query is non-empty', () => {
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', expr: 'foo' }])).toBeTruthy();
+  });
+
+  test('should return false if query is empty', () => {
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2' }])).toBeFalsy();
+  });
+
+  test('should return false if no queries exist', () => {
+    expect(hasNonEmptyQuery([])).toBeFalsy();
   });
 });
