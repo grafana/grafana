@@ -257,6 +257,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onChangeQuery = (value: DataQuery, index: number, override?: boolean) => {
+    // Null value means reset
+    if (value === null) {
+      value = { ...generateQueryKeys(index) };
+    }
+
+    // Keep current value in local cache
+    this.modifiedQueries[index] = value;
+
     if (override) {
       this.setState(state => {
         // Replace query row by injecting new key
@@ -277,9 +285,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           queryTransactions: nextQueryTransactions,
         };
       }, this.onSubmit);
-    } else if (value) {
-      // Keep current value in local cache
-      this.modifiedQueries[index] = value;
     }
   };
 
