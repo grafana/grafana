@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { SFC, PureComponent } from 'react';
 import DataSourceOption from './DataSourceOption';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
@@ -27,11 +27,22 @@ interface Help {
   helpHtml: any;
 }
 
+interface DsQuery {
+  isLoading: boolean;
+  response: {};
+}
+
 interface State {
   currentDatasource: DataSourceSelectItem;
   help: Help;
-  dsQuery: {};
+  dsQuery: DsQuery;
 }
+
+interface LoadingPlaceholderProps {
+  text: string;
+}
+
+const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => <h2>{text}</h2>;
 
 export class QueriesTab extends PureComponent<Props, State> {
   element: any;
@@ -44,14 +55,18 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = props;
 
     this.state = {
-      dsQuery: {},
       currentDatasource: this.datasources.find(datasource => datasource.value === panel.datasource),
       help: {
         isLoading: false,
         helpHtml: null,
       },
+      dsQuery: {
+        isLoading: false,
+        response: {},
+      },
     };
     appEvents.on('ds-request-response', this.onDataSourceResponse);
+    panel.events.on('refresh', this.onPanelRefresh);
   }
 
   componentDidMount() {
@@ -74,12 +89,24 @@ export class QueriesTab extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    const { panel } = this.props;
     appEvents.off('ds-request-response', this.onDataSourceResponse);
+    panel.events.off('refresh', this.onPanelRefresh);
 
     if (this.component) {
       this.component.destroy();
     }
   }
+
+  onPanelRefresh = () => {
+    this.setState(prevState => ({
+      ...prevState,
+      dsQuery: {
+        isLoading: true,
+        response: {},
+      },
+    }));
+  };
 
   onDataSourceResponse = (response: any = {}) => {
     // ignore if closed
@@ -94,6 +121,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     // this.isLoading = false;
     // data = _.cloneDeep(data);
+    response = { ...response }; // clone
 
     if (response.headers) {
       delete response.headers;
@@ -132,7 +160,10 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
     this.setState(prevState => ({
       ...prevState,
-      dsQuery: response,
+      dsQuery: {
+        isLoading: false,
+        response: response,
+      },
     }));
   };
 
@@ -260,14 +291,24 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
+  loadQueryInspector = () => {
+    const { panel } = this.props;
+    panel.refresh();
+  };
+
   renderQueryInspector = () => {
-    const { dsQuery } = this.state;
-    return <JSONFormatter json={dsQuery} />;
+    const { response, isLoading } = this.state.dsQuery;
+    return isLoading ? <LoadingPlaceholder text="Loading query inspector..." /> : <JSONFormatter json={response} />;
+  };
+
+  renderHelp = () => {
+    const { helpHtml, isLoading } = this.state.help;
+    return isLoading ? <LoadingPlaceholder text="Loading help..." /> : helpHtml;
   };
 
   render() {
     const { currentDatasource } = this.state;
-    const { helpHtml } = this.state.help;
+
     const { hasQueryHelp, queryOptions } = currentDatasource.meta;
     const hasQueryOptions = !!queryOptions;
     const dsInformation = {
@@ -286,6 +327,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     const queryInspector = {
       title: 'Query Inspector',
+      onClick: this.loadQueryInspector,
       render: this.renderQueryInspector,
     };
 
@@ -294,7 +336,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       icon: 'fa fa-question',
       disabled: !hasQueryHelp,
       onClick: this.loadHelp,
-      render: () => helpHtml,
+      render: this.renderHelp,
     };
 
     const options = {
