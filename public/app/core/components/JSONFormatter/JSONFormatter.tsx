@@ -1,16 +1,16 @@
 ﻿import React, { PureComponent, createRef } from 'react';
-import JSONFormatterJS, { JSONFormatterConfiguration } from 'json-formatter-js';
+// import JSONFormatterJS, { JSONFormatterConfiguration } from 'json-formatter-js';
+import { JsonExplorer } from 'app/core/core'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
 
 interface Props {
   className?: string;
   json: {};
-  config?: JSONFormatterConfiguration;
+  config?: any;
   open?: number;
 }
 
 export class JSONFormatter extends PureComponent<Props> {
   private wrapperRef = createRef<HTMLDivElement>();
-  private formatter: any;
 
   static defaultProps = {
     open: 3,
@@ -30,20 +30,15 @@ export class JSONFormatter extends PureComponent<Props> {
 
   renderJson = () => {
     const { json, config, open } = this.props;
-    this.formatter = new JSONFormatterJS(json, open, config);
     const wrapperEl = this.wrapperRef.current;
-    const newJsonHtml = this.formatter.render();
+    const formatter = new JsonExplorer(json, open, config);
     const hasChildren: boolean = wrapperEl.hasChildNodes();
     if (hasChildren) {
-      wrapperEl.replaceChild(newJsonHtml, wrapperEl.lastChild);
+      wrapperEl.replaceChild(formatter.render(), wrapperEl.lastChild);
     } else {
-      wrapperEl.appendChild(newJsonHtml);
+      wrapperEl.appendChild(formatter.render());
     }
   };
-
-  componentWillUnmount() {
-    this.formatter = null;
-  }
 
   render() {
     const { className } = this.props;
