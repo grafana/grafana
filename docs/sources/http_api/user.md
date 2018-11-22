@@ -226,6 +226,40 @@ Content-Type: application/json
 ]
 ```
 
+## Get Teams for user
+
+`GET /api/users/:id/teams`
+
+**Example Request**:
+
+```http
+GET /api/users/1/teams HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id":1,
+    "orgId":1,
+    "name":"team1",
+    "email":"",
+    "avatarUrl":"/avatar/3fcfe295eae3bcb67a49349377428a66",
+    "memberCount":1
+  }
+]
+```
+
+
 ## User
 
 ## Actual User

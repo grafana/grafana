@@ -35,7 +35,9 @@ export default class QueryTransactionStatus extends PureComponent<QueryTransacti
     const { transactions } = this.props;
     return (
       <div className="query-transactions">
-        {transactions.map((t, i) => <QueryTransactionStatusItem key={`${t.query}:${t.resultType}`} transaction={t} />)}
+        {transactions.map((t, i) => (
+          <QueryTransactionStatusItem key={`${t.rowIndex}:${t.resultType}`} transaction={t} />
+        ))}
       </div>
     );
   }

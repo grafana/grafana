@@ -19,7 +19,10 @@ export default (props: any) => (
     {CHEAT_SHEET_ITEMS.map(item => (
       <div className="cheat-sheet-item" key={item.expression}>
         <div className="cheat-sheet-item__title">{item.title}</div>
-        <div className="cheat-sheet-item__expression" onClick={e => props.onClickQuery(item.expression)}>
+        <div
+          className="cheat-sheet-item__expression"
+          onClick={e => props.onClickExample({ refId: '1', expr: item.expression })}
+        >
           <code>{item.expression}</code>
         </div>
         <div className="cheat-sheet-item__label">{item.label}</div>

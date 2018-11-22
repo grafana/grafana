@@ -453,6 +453,8 @@ exports[`Render should render component 1`] = `
         },
       ]
     }
+    hiddenSeries={Set {}}
+    onToggleSeries={[Function]}
   />
 </Fragment>
 `;
@@ -947,6 +949,8 @@ exports[`Render should render component with disclaimer 1`] = `
         },
       ]
     }
+    hiddenSeries={Set {}}
+    onToggleSeries={[Function]}
   />
 </Fragment>
 `;
@@ -964,6 +968,8 @@ exports[`Render should show query return no time series 1`] = `
   />
   <Legend
     data={Array []}
+    hiddenSeries={Set {}}
+    onToggleSeries={[Function]}
   />
 </Fragment>
 `;

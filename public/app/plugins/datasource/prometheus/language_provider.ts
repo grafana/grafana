@@ -125,9 +125,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .uniqBy('query')
+        .uniqBy('query.expr')
         .take(HISTORY_ITEM_COUNT)
-        .map(h => h.query)
+        .map(h => h.query.expr)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
         .value();

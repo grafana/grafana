@@ -6,6 +6,7 @@ export interface PluginExports {
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
+  VariableQueryEditor?: any;
   ExploreQueryField?: any;
   ExploreStartPage?: any;
 
@@ -106,4 +107,11 @@ export interface PluginsState {
   layoutMode: string;
   hasFetched: boolean;
   dashboards: PluginDashboard[];
+}
+
+export interface VariableQueryProps {
+  query: any;
+  onChange: (query: any, definition: string) => void;
+  datasource: any;
+  templateSrv: any;
 }
