@@ -6,14 +6,13 @@
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  background: $black;
-  border-bottom: 1px solid $black;
+  background: $toolbar-bg;
   border-radius: 3px;
 }
 
 .toolbar__heading {
   font-size: $font-size-lg;
-  padding-right: 10px;
+  padding-right: 20px;
 }
 
 .toolbar__main {

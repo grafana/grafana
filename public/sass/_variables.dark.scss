@@ -79,6 +79,7 @@ $brand-gradient: linear-gradient(
 );
 
 $page-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 100px);
+$edit-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 00px, #090909 50%);
 
 // Links
 // -------------------------
@@ -268,9 +269,7 @@ $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 $tab-border-color: $dark-4;
 
 // Toolbar
-$toolbar-bg: $page-header-bg;
-$toolbar-shadow: 0 0 20px black;
-$toolbar-tab-bg: $gray-blue;
+$toolbar-bg: $black;
 
 // Pagination
 // -------------------------
