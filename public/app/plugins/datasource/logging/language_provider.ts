@@ -97,9 +97,10 @@ export default class LoggingLanguageProvider extends LanguageProvider {
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .uniqBy('query.expr')
-        .take(HISTORY_ITEM_COUNT)
         .map(h => h.query.expr)
+        .filter()
+        .uniq()
+        .take(HISTORY_ITEM_COUNT)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
         .value();
