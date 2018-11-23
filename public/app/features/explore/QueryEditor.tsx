@@ -1,13 +1,16 @@
 import React, { PureComponent } from 'react';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import 'app/features/panel/metrics_wrapper';
+import { Emitter } from 'app/core/utils/emitter';
 import { DataQuery } from 'app/types';
+import 'app/features/plugins/plugin_loader';
 
 interface QueryEditorProps {
   datasource: any;
   error?: string | JSX.Element;
   onExecuteQuery?: () => void;
   onQueryChange?: (value: DataQuery, override?: boolean) => void;
+  initialQuery: DataQuery;
+  exploreEvents: Emitter;
 }
 
 export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
@@ -19,27 +22,26 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
       return;
     }
 
-    const { datasource } = this.props;
+    const { datasource, initialQuery, exploreEvents } = this.props;
     const loader = getAngularLoader();
-    const template = '<metrics-wrapper />';
+    const template = '<plugin-component type="query-ctrl"> </plugin-component>';
     const target = { datasource: datasource.name };
-    // const changeableTarget = onChange(target, () => console.log(target));
-    // const changeable = onChange(target, () => console.log(target));
     const scopeProps = {
-      target, //: changeable,
+      target,
       ctrl: {
         refresh: () => {
-          this.props.onQueryChange({ refId: 'TEST', ...target }, false);
+          this.props.onQueryChange({ refId: initialQuery.refId, ...target }, false);
           this.props.onExecuteQuery();
         },
         events: {
-          on: () => {},
+          on: () => exploreEvents,
         },
         panel: {
           datasource,
+          targets: [{}],
         },
         dashboard: {
-          getNextQueryLetter: x => 'TEST',
+          getNextQueryLetter: x => '',
         },
       },
     };
