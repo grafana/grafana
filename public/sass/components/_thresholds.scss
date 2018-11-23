@@ -1,1 +1,57 @@
+.thresholds {
+  display: flex;
+  margin-top: 30px;
+}
 
+.threshold-rows {
+  flex: 1 0 auto;
+  margin-left: 10px;
+}
+
+.threshold-row {
+  &::before {
+    font-family: 'FontAwesome';
+    content: '\f0d9';
+    color: $input-label-border-color;
+  }
+}
+
+.threshold-row-min {
+  margin-top: -17px;
+}
+
+.threshold-row-max {
+  margin-bottom: -17px;
+}
+
+.threshold-row-add {
+  border: $border-width solid $input-label-border-color;
+  border-radius: $border-radius 0 0 $border-radius;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: $green;
+}
+
+.threshold-row-label {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.indicator-section {
+  width: 100%;
+  border-top: 1px solid black;
+  cursor: pointer;
+
+  :first-of-type {
+    border-top: none;
+  }
+}
+
+.color-indicators {
+  width: 20px;
+  min-height: 40px;
+  flex: 0 1 auto;
+}

@@ -74,11 +74,11 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   };
 
   getIndicatorColor(index) {
-    const { userAddedThresholds } = this.state;
+    const { thresholds } = this.state;
 
     if (index === 0) {
       return 'green';
-    } else if (index < userAddedThresholds) {
+    } else if (index < thresholds.length) {
       return 'yellow';
     }
 
@@ -89,7 +89,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const { thresholds } = this.state;
 
     return [
-      <div className="gf-form" key="min">
+      <div className="gf-form threshold-row threshold-row-min" key="min">
         <input
           className="gf-form-input"
           onBlur={this.onBlur}
@@ -98,23 +98,15 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
         />
         <Label width={3}>{thresholds[0].label}</Label>
       </div>,
-      <div className="gf-form" key="add">
-        <div
-          onClick={() => this.onAddThreshold(1)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '36px',
-            height: '36px',
-            backgroundColor: 'green',
-          }}
-        >
+      <div className="gf-form threshold-row" key="add">
+        <div onClick={() => this.onAddThreshold(1)} className="threshold-row-add">
           <i className="fa fa-plus" />
         </div>
-        <Label width={18}>Add new threshold by clicking the line</Label>
+        <Label className="threshold-row-label" width={18}>
+          Add new threshold by clicking the line
+        </Label>
       </div>,
-      <div className="gf-form" key="max">
+      <div className="gf-form threshold-row threshold-row-max" key="max">
         <input
           className="gf-form-input"
           onBlur={this.onBlur}
@@ -130,7 +122,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const { thresholds } = this.state;
     return thresholds.map((threshold, index) => {
       return (
-        <div className="gf-form" key={`${threshold}-${index}`}>
+        <div
+          className={`gf-form threshold-row ${index === 0 ? 'threshold-row-min' : ''} ${
+            index === thresholds.length ? 'threshold-row-max' : ''
+          } `}
+          key={`${threshold}-${index}`}
+        >
           <input
             className="gf-form-input"
             type="text"
@@ -164,13 +161,71 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
     if (userAddedThresholds === 0) {
       return 1;
-    } else if (index === userAddedThresholds) {
+    } else if (userAddedThresholds > 1 && index === this.state.thresholds.length) {
       return index - 1;
+    } else if (index === 0) {
+      return 1;
     } else if (index > 0) {
-      return index + 1;
+      return index;
     }
 
+    // SAD
     return -1;
+  }
+
+  renderIndicatorSection(index) {
+    const { userAddedThresholds } = this.state;
+    const indicators = userAddedThresholds + 1;
+
+    if (index === 0 || index === indicators) {
+      return (
+        <div
+          key={index}
+          className="indicator-section"
+          style={{
+            height: `calc(100%/${indicators})`,
+          }}
+        >
+          <div
+            onClick={() => this.onAddThreshold(this.insertAtIndex(index - 1))}
+            style={{
+              height: '100%',
+              background: this.getIndicatorColor(index),
+            }}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div
+        key={index}
+        className="indicator-section"
+        style={{
+          height: `calc(100%/${indicators})`,
+        }}
+      >
+        <div
+          onClick={() => this.onAddThreshold(this.insertAtIndex(index - 1))}
+          style={{
+            height: '50%',
+            background: this.getIndicatorColor(index),
+          }}
+        >
+          {index}
+        </div>
+        <div
+          onClick={() => this.onAddThreshold(this.insertAtIndex(index))}
+          style={{
+            height: `50%`,
+            cursor: 'pointer',
+            background: this.getIndicatorColor(index),
+          }}
+        >
+          {index}
+        </div>
+      </div>
+    );
   }
 
   renderIndicator() {
@@ -181,18 +236,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const sections = [];
 
     for (let i = 0; i < indicators; i++) {
-      sections.push(
-        <div
-          key={`${i}`}
-          onClick={() => this.onAddThreshold(this.insertAtIndex(i))}
-          style={{
-            width: '100%',
-            height: `calc(100%/${indicators})`,
-            cursor: 'pointer',
-            background: this.getIndicatorColor(i),
-          }}
-        />
-      );
+      sections.push(this.renderIndicatorSection(i));
     }
 
     return sections;
@@ -204,17 +248,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     return (
       <div className="section gf-form-group">
         <h5 className="page-heading">Thresholds</h5>
-        <div style={{ display: 'flex', alignItems: 'flexStart' }}>
-          <div
-            style={{
-              width: '20px',
-              minHeight: '40px',
-              flex: '0 1 auto',
-            }}
-          >
-            {this.renderIndicator()}
-          </div>
-          <div style={{ flex: '1 0 auto', marginLeft: '10px' }}>
+        <div className="thresholds">
+          <div className="color-indicators">{this.renderIndicator()}</div>
+          <div className="threshold-rows">
             {userAddedThresholds === 0 ? this.renderNoThresholds() : this.renderThresholds()}
           </div>
         </div>
