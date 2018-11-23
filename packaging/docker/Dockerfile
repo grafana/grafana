@@ -1,40 +1,15 @@
-# Golang build container
-FROM golang:1.10
+FROM debian:stretch-slim
 
-WORKDIR $GOPATH/src/github.com/grafana/grafana
+ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 
-COPY Gopkg.toml Gopkg.lock ./
-COPY vendor vendor
+RUN apt-get update && apt-get install -qq -y tar && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
-ARG DEP_ENSURE=""
-RUN if [ ! -z "${DEP_ENSURE}" ]; then \
-      go get -u github.com/golang/dep/cmd/dep && \
-      dep ensure --vendor-only; \
-    fi
+COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
-COPY pkg pkg
-COPY build.go build.go
-COPY package.json package.json
+RUN mkdir /tmp/grafana && tar xfvz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
-RUN go run build.go build
-
-# Node build container
-FROM node:8
-
-WORKDIR /usr/src/app/
-
-COPY package.json yarn.lock ./
-RUN yarn install --pure-lockfile --no-progress
-
-COPY Gruntfile.js tsconfig.json tslint.json ./
-COPY public public
-COPY scripts scripts
-COPY emails emails
-
-ENV NODE_ENV production
-RUN ./node_modules/.bin/grunt build
-
-# Final container
 FROM debian:stretch-slim
 
 ARG GF_UID="472"
@@ -50,11 +25,11 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apt-get update && apt-get install -qq -y libfontconfig ca-certificates && \
+RUN apt-get update && apt-get install -qq -y libfontconfig ca-certificates curl && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-COPY conf ./conf
+COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     groupadd -r -g $GF_GID grafana && \
@@ -69,14 +44,9 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" && \
     chmod 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS"
 
-COPY --from=0 /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-server /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-cli ./bin/
-COPY --from=1 /usr/src/app/public ./public
-COPY --from=1 /usr/src/app/tools ./tools
-COPY tools/phantomjs/render.js ./tools/phantomjs/render.js
-
 EXPOSE 3000
 
-COPY ./packaging/docker/run.sh /run.sh
+COPY ./run.sh /run.sh
 
 USER grafana
 ENTRYPOINT [ "/run.sh" ]
