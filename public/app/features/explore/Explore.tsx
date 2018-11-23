@@ -20,7 +20,7 @@ import {
   getIntervals,
   generateKey,
   generateQueryKeys,
-  // hasNonEmptyQuery,
+  hasNonEmptyQuery,
   makeTimeSeriesList,
   updateHistory,
 } from 'app/core/utils/explore';
@@ -31,6 +31,7 @@ import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeSrv } from 'app/features/dashboard/time_srv';
+import { Emitter } from 'app/core/utils/emitter';
 
 import Panel from './Panel';
 import QueryRows from './QueryRows';
@@ -89,6 +90,7 @@ interface ExploreProps {
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
+  exploreEvents: Emitter;
   /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
@@ -140,6 +142,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       getTimezone: () => 'utc',
       timeRangeUpdated: () => console.log('refreshDashboard!'),
     });
+    this.exploreEvents = new Emitter();
   }
 
   async componentDidMount() {
@@ -699,22 +702,24 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   async runQueries(resultType: ResultType, queryOptions: any, resultGetter?: any) {
     const queries = [...this.modifiedQueries];
-    // if (!hasNonEmptyQuery(queries)) {
-    //   return;
-    // }
+    if (!hasNonEmptyQuery(queries)) {
+      return;
+    }
     const { datasource } = this.state;
     const datasourceId = datasource.meta.id;
-    // Run all queries concurrently
+    // Run all queries concurrentlyso
     queries.forEach(async (query, rowIndex) => {
       const transaction = this.startQueryTransaction(query, rowIndex, resultType, queryOptions);
       try {
         const now = Date.now();
         const res = await datasource.query(transaction.options);
+        this.exploreEvents.emit('data-received', res);
         const latency = Date.now() - now;
         const results = resultGetter ? resultGetter(res.data) : res.data;
         this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
         this.setState({ graphRange: transaction.options.range });
       } catch (response) {
+        this.exploreEvents.emit('data-error', response);
         this.failQueryTransaction(transaction.id, response, datasourceId);
       }
     });
@@ -767,10 +772,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const graphResult = _.flatten(
       queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
     );
-    const tableResult = mergeTablesIntoModel(
-      new TableModel(),
-      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
-    );
+
+    //Temp solution... How do detect if ds supports table format?
+    let tableResult;
+    try {
+      tableResult = mergeTablesIntoModel(
+        new TableModel(),
+        ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
+      );
+    } catch (error) {
+      console.log(error);
+    }
     const logsResult =
       datasource && datasource.mergeStreams
         ? datasource.mergeStreams(
@@ -866,6 +878,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               onExecuteQuery={this.onSubmit}
               onRemoveQueryRow={this.onRemoveQueryRow}
               transactions={queryTransactions}
+              exploreEvents={this.exploreEvents}
             />
             <main className="m-t-2">
               <ErrorBoundary>

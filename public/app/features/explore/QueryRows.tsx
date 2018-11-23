@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { QueryTransaction, HistoryItem, QueryHint } from 'app/types/explore';
+import { Emitter } from 'app/core/utils/emitter';
 
 // import DefaultQueryField from './QueryField';
 import QueryEditor from './QueryEditor';
@@ -28,6 +29,7 @@ interface QueryRowCommonProps {
   datasource: DataSource;
   history: HistoryItem[];
   transactions: QueryTransaction[];
+  exploreEvents: Emitter;
 }
 
 type QueryRowProps = QueryRowCommonProps &
@@ -82,7 +84,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { datasource, history, initialQuery, transactions } = this.props;
+    const { datasource, history, initialQuery, transactions, exploreEvents } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
@@ -112,6 +114,8 @@ class QueryRow extends PureComponent<QueryRowProps> {
               error={queryError}
               onQueryChange={this.onChangeQuery}
               onExecuteQuery={this.onExecuteQuery}
+              initialQuery={initialQuery}
+              exploreEvents={exploreEvents}
               // hint={hint}
               // initialQuery={initialQuery}
               // history={history}

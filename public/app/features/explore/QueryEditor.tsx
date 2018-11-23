@@ -33,9 +33,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
           this.props.onQueryChange({ refId: initialQuery.refId, ...target }, false);
           this.props.onExecuteQuery();
         },
-        events: {
-          on: () => exploreEvents,
-        },
+        events: exploreEvents,
         panel: {
           datasource,
           targets: [{}],
@@ -43,6 +41,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         dashboard: {
           getNextQueryLetter: x => '',
         },
+        hideRowButtons: true,
       },
     };
 
