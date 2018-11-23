@@ -140,6 +140,7 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Get("/", Wrap(SearchUsers))
 			usersRoute.Get("/search", Wrap(SearchUsersWithPaging))
 			usersRoute.Get("/:id", Wrap(GetUserByID))
+			usersRoute.Get("/:id/teams", Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", Wrap(GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
 			usersRoute.Get("/lookup", Wrap(GetUserByLoginOrEmail))

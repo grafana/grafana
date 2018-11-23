@@ -54,7 +54,10 @@ func main() {
 	if *profile {
 		runtime.SetBlockProfileRate(1)
 		go func() {
-			http.ListenAndServe(fmt.Sprintf("localhost:%d", *profilePort), nil)
+			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *profilePort), nil)
+			if err != nil {
+				panic(err)
+			}
 		}()
 
 		f, err := os.Create("trace.out")

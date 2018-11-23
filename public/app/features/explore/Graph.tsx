@@ -13,6 +13,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
 import Legend from './Legend';
+import { equal, intersect } from './utils/set';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -85,13 +86,20 @@ interface GraphProps {
 }
 
 interface GraphState {
+  /**
+   * Type parameter refers to the `alias` property of a `TimeSeries`.
+   * Consequently, all series sharing the same alias will share visibility state.
+   */
+  hiddenSeries: Set<string>;
   showAllTimeSeries: boolean;
 }
 
 export class Graph extends PureComponent<GraphProps, GraphState> {
   $el: any;
+  dynamicOptions = null;
 
   state = {
+    hiddenSeries: new Set(),
     showAllTimeSeries: false,
   };
 
@@ -107,13 +115,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     this.$el.bind('plotselected', this.onPlotSelected);
   }
 
-  componentDidUpdate(prevProps: GraphProps) {
+  componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
     if (
       prevProps.data !== this.props.data ||
       prevProps.range !== this.props.range ||
       prevProps.split !== this.props.split ||
       prevProps.height !== this.props.height ||
-      (prevProps.size && prevProps.size.width !== this.props.size.width)
+      (prevProps.size && prevProps.size.width !== this.props.size.width) ||
+      !equal(prevState.hiddenSeries, this.state.hiddenSeries)
     ) {
       this.draw();
     }
@@ -133,30 +142,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
   };
 
-  onShowAllTimeSeries = () => {
-    this.setState(
-      {
-        showAllTimeSeries: true,
-      },
-      this.draw
-    );
-  };
-
-  draw() {
-    const { range, size, userOptions = {} } = this.props;
-    const data = this.getGraphData();
-
-    const $el = $(`#${this.props.id}`);
-    let series = [{ data: [[0, 0]] }];
-
-    if (data && data.length > 0) {
-      series = data.map((ts: TimeSeries) => ({
-        color: ts.color,
-        label: ts.label,
-        data: ts.getFlotPairs('null'),
-      }));
-    }
-
+  getDynamicOptions() {
+    const { range, size } = this.props;
     const ticks = (size.width || 0) / 100;
     let { from, to } = range;
     if (!moment.isMoment(from)) {
@@ -167,7 +154,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
     const min = from.valueOf();
     const max = to.valueOf();
-    const dynamicOptions = {
+    return {
       xaxis: {
         mode: 'time',
         min: min,
@@ -178,16 +165,76 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         timeformat: time_format(ticks, min, max),
       },
     };
+  }
+
+  onShowAllTimeSeries = () => {
+    this.setState(
+      {
+        showAllTimeSeries: true,
+      },
+      this.draw
+    );
+  };
+
+  onToggleSeries = (series: TimeSeries, exclusive: boolean) => {
+    this.setState((state, props) => {
+      const { data } = props;
+      const { hiddenSeries } = state;
+      const hidden = hiddenSeries.has(series.alias);
+      // Deduplicate series as visibility tracks the alias property
+      const oneSeriesVisible = hiddenSeries.size === new Set(data.map(d => d.alias)).size - 1;
+      if (exclusive) {
+        return {
+          hiddenSeries:
+            !hidden && oneSeriesVisible
+              ? new Set()
+              : new Set(data.filter(d => d.alias !== series.alias).map(d => d.alias)),
+        };
+      }
+      // Prune hidden series no longer part of those available from the most recent query
+      const availableSeries = new Set(data.map(d => d.alias));
+      const nextHiddenSeries = intersect(new Set(hiddenSeries), availableSeries);
+      if (nextHiddenSeries.has(series.alias)) {
+        nextHiddenSeries.delete(series.alias);
+      } else {
+        nextHiddenSeries.add(series.alias);
+      }
+      return {
+        hiddenSeries: nextHiddenSeries,
+      };
+    }, this.draw);
+  };
+
+  draw() {
+    const { userOptions = {} } = this.props;
+    const { hiddenSeries } = this.state;
+    const data = this.getGraphData();
+
+    const $el = $(`#${this.props.id}`);
+    let series = [{ data: [[0, 0]] }];
+
+    if (data && data.length > 0) {
+      series = data.filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias)).map((ts: TimeSeries) => ({
+        color: ts.color,
+        label: ts.label,
+        data: ts.getFlotPairs('null'),
+      }));
+    }
+
+    this.dynamicOptions = this.getDynamicOptions();
+
     const options = {
       ...FLOT_OPTIONS,
-      ...dynamicOptions,
+      ...this.dynamicOptions,
       ...userOptions,
     };
+
     $.plot($el, series, options);
   }
 
   render() {
     const { height = '100px', id = 'graph' } = this.props;
+    const { hiddenSeries } = this.state;
     const data = this.getGraphData();
 
     return (
@@ -204,7 +251,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
             </div>
           )}
         <div id={id} className="explore-graph" style={{ height }} />
-        <Legend data={data} />
+        <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} />
       </>
     );
   }
