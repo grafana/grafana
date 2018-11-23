@@ -95,5 +95,14 @@ describe('Query imports', () => {
       const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
       expect(result).toEqual('{foo="bar"}');
     });
+
+    it('returns selector query from selector query with all labels if logging label list is empty', async () => {
+      const datasourceWithLabels = {
+        metadataRequest: url => (url === '/api/prom/label' ? { data: { data: [] } } : { data: { data: [] } }),
+      };
+      const instance = new LanguageProvider(datasourceWithLabels);
+      const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
+      expect(result).toEqual('{baz="42",foo="bar"}');
+    });
   });
 });
