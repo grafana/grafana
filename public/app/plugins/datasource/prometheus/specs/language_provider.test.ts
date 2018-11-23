@@ -76,9 +76,16 @@ describe('Language completion provider', () => {
       });
       expect(result.context).toBe('context-range');
       expect(result.refresher).toBeUndefined();
-      expect(result.suggestions).toEqual([
+      expect(result.suggestions).toMatchObject([
         {
-          items: [{ label: '1m' }, { label: '5m' }, { label: '10m' }, { label: '30m' }, { label: '1h' }],
+          items: [
+            { label: '1m' },
+            { label: '5m' },
+            { label: '10m' },
+            { label: '30m' },
+            { label: '1h' },
+            { label: '1d' },
+          ],
           label: 'Range vector',
         },
       ]);
