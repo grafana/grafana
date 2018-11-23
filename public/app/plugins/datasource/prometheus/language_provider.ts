@@ -9,8 +9,8 @@ import {
   TypeaheadOutput,
 } from 'app/types/explore';
 
-import { parseSelector, processLabels, RATE_RANGES } from './language_utils';
-import PromqlSyntax, { FUNCTIONS } from './promql';
+import { parseSelector, processLabels } from './language_utils';
+import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -171,7 +171,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions: [
         {
           label: 'Range vector',
-          items: [...RATE_RANGES].map(wrapLabel),
+          items: [...RATE_RANGES],
         },
       ],
     };
