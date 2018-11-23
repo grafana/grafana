@@ -94,7 +94,7 @@ var pluginCommands = []cli.Command{
 var adminCommands = []cli.Command{
 	{
 		Name:   "reset-admin-password",
-		Usage:  "reset-admin-password <new password>",
+		Usage:  "reset-admin-password",
 		Action: runDbCommand(resetPasswordCommand),
 		Flags: []cli.Flag{
 			cli.StringFlag{

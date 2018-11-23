@@ -2,18 +2,26 @@ package commands
 
 import (
 	"fmt"
+	"syscall"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const AdminUserId = 1
 
 func resetPasswordCommand(c CommandLine) error {
-	newPassword := c.Args().First()
+
+	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		fmt.Printf("Failed to read password: %v", err)
+	}
+	newPassword = string(bytePassword)
+	fmt.Println()
 
 	password := models.Password(newPassword)
 	if password.IsWeak() {
