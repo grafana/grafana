@@ -2,6 +2,10 @@
 
 * **Cloudwatch**: Fix invalid time range causes segmentation fault [#14150](https://github.com/grafana/grafana/issues/14150)
 
+### 5.4.0-beta1 fixes
+* **Graph**: Fix legend always visible even if configured to be hidden [#14144](https://github.com/grafana/grafana/issues/14144)
+* **Elasticsearch**: Fix regression when using datasource version 6.0+ and alerting [#14175](https://github.com/grafana/grafana/pull/14175)
+
 # 5.4.0-beta1 (2018-11-20)
 
 ### New Features
