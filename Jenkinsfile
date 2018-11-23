@@ -43,8 +43,8 @@ pipeline {
 		        docker.withRegistry('https://registry.hub.docker.com', 'ddc3fdf7-5611-4d47-a8ab-d0ea7624671a') {
                             if (env.BRANCH_NAME == 'staging-mo-grafana' || env.BRANCH_NAME == 'mo-grafana' || env.BRANCH_NAME.startsWith('alpha-r')) {
 		                echo "Pushing the image with the tag..."
-                                
-				DOCKER_IMAGE.push()
+                                sh "docker login --username=mayadata --password=MayaDocker@123 && docker push ${ORG}/${REPO}:${BRANCH_NAME}-${GIT_SHA}"
+				//DOCKER_IMAGE.push()
                             } else {
 			        echo "WARNING: Not pushing ks"
                             }
