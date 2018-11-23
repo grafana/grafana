@@ -42,6 +42,8 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
           getNextQueryLetter: x => '',
         },
         hideEditorRowActions: true,
+        interval: '1m',
+        intervalMs: 60000,
       },
     };
 
