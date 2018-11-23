@@ -91,7 +91,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     return [
       <div className="gf-form threshold-row threshold-row-min" key="min">
         <input
-          className="gf-form-input"
+          className="gf-form-input threshold-row-input"
           onBlur={this.onBlur}
           onChange={event => this.onChangeThresholdValue(event, thresholds[0])}
           value={thresholds[0].value}
@@ -108,7 +108,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       </div>,
       <div className="gf-form threshold-row threshold-row-max" key="max">
         <input
-          className="gf-form-input"
+          className="gf-form-input threshold-row-input"
           onBlur={this.onBlur}
           onChange={event => this.onChangeThresholdValue(event, thresholds[1])}
           value={thresholds[1].value}
@@ -129,7 +129,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
           key={`${threshold}-${index}`}
         >
           <input
-            className="gf-form-input"
+            className="gf-form-input threshold-row-input"
             type="text"
             onChange={event => this.onChangeThresholdValue(event, threshold)}
             value={threshold.value}
@@ -177,7 +177,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const { userAddedThresholds } = this.state;
     const indicators = userAddedThresholds + 1;
 
-    if (index === 0 || index === indicators) {
+    if (index === 0 || index === this.state.thresholds.length) {
       return (
         <div
           key={index}
@@ -212,7 +212,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
             background: this.getIndicatorColor(index),
           }}
         >
-          {index}
+          d
         </div>
         <div
           onClick={() => this.onAddThreshold(this.insertAtIndex(index))}
@@ -222,7 +222,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
             background: this.getIndicatorColor(index),
           }}
         >
-          {index}
+          i
         </div>
       </div>
     );
