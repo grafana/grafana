@@ -15,7 +15,13 @@ describe('getLoglevel()', () => {
   });
 
   it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('this is a warning')).toBe(LogLevel.unkown);
+    expect(getLogLevel('this is information')).toBe(LogLevel.unkown);
+  });
+
+  it('returns same log level for long and short version', () => {
+    expect(getLogLevel('[Warn]')).toBe(LogLevel.warning);
+    expect(getLogLevel('[Warning]')).toBe(LogLevel.warning);
+    expect(getLogLevel('[Warn]')).toBe('warning');
   });
 
   it('returns log level on line contains a log level', () => {
@@ -102,7 +108,7 @@ describe('mergeStreamsToLogs()', () => {
         entry: 'WARN boooo',
         labels: '{foo="bar"}',
         key: 'EK1970-01-01T00:00:00Z{foo="bar"}',
-        logLevel: 'warn',
+        logLevel: 'warning',
         uniqueLabels: '',
       },
     ]);
@@ -141,7 +147,7 @@ describe('mergeStreamsToLogs()', () => {
       {
         entry: 'WARN boooo',
         labels: '{foo="bar", baz="1"}',
-        logLevel: 'warn',
+        logLevel: 'warning',
         uniqueLabels: '{baz="1"}',
       },
       {
