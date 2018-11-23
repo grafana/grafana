@@ -1,4 +1,5 @@
 import React from 'react';
+import { hot } from 'react-hot-loader';
 import ReactGridLayout from 'react-grid-layout';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
@@ -213,3 +214,5 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     );
   }
 }
+
+export default hot(module)(DashboardGrid);

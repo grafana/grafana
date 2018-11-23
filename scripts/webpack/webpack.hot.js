@@ -69,6 +69,12 @@ module.exports = merge(common, {
         use: [
           'style-loader', // creates style nodes from JS strings
           'css-loader', // translates CSS into CommonJS
+          {
+            loader: 'postcss-loader',
+            options: {
+              config: { path: __dirname + '/postcss.config.js' },
+            },
+          },
           'sass-loader', // compiles Sass to CSS
         ],
       },
