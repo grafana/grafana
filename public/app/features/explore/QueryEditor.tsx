@@ -41,7 +41,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         dashboard: {
           getNextQueryLetter: x => '',
         },
-        hideRowButtons: true,
+        hideEditorRowActions: true,
       },
     };
 
