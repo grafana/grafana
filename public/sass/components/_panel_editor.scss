@@ -40,6 +40,24 @@
   box-shadow: $popover-shadow;
 }
 
+.panel-editor__close {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
+  position: absolute;
+  left: 11px;
+  top: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+
+  i {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 20px;
+  }
+}
+
 .panel-editor__scroll {
   flex-grow: 1;
   min-width: 0;
