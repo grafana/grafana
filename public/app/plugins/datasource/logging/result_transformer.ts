@@ -14,13 +14,13 @@ import { DEFAULT_LIMIT } from './datasource';
 
 /**
  * Returns the log level of a log line.
- * Parse the line for level words. If no level is found, it returns `LogLevel.none`.
+ * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
  */
 export function getLogLevel(line: string): LogLevel {
   if (!line) {
-    return LogLevel.none;
+    return LogLevel.unkown;
   }
   let level: LogLevel;
   Object.keys(LogLevel).forEach(key => {
@@ -32,7 +32,7 @@ export function getLogLevel(line: string): LogLevel {
     }
   });
   if (!level) {
-    level = LogLevel.none;
+    level = LogLevel.unkown;
   }
   return level;
 }

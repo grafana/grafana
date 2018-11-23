@@ -305,6 +305,7 @@
       opacity: 0.8;
     }
 
+    .logs-row-level-critical,
     .logs-row-level-crit {
       background-color: #705da0;
     }
@@ -314,6 +315,7 @@
       background-color: #e24d42;
     }
 
+    .logs-row-level-warning,
     .logs-row-level-warn {
       background-color: #eab839;
     }
@@ -322,9 +324,12 @@
       background-color: #7eb26d;
     }
 
-    .logs-row-level-trace,
     .logs-row-level-debug {
       background-color: #1f78c1;
+    }
+
+    .logs-row-level-trace {
+      background-color: #6ed0e0;
     }
 
     .logs-row-level__duplicates {

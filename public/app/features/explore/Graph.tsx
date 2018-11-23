@@ -83,6 +83,7 @@ interface GraphProps {
   size?: { width: number; height: number };
   userOptions?: any;
   onChangeTime?: (range: RawTimeRange) => void;
+  onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
 }
 
 interface GraphState {
@@ -178,26 +179,29 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   onToggleSeries = (series: TimeSeries, exclusive: boolean) => {
     this.setState((state, props) => {
-      const { data } = props;
+      const { data, onToggleSeries } = props;
       const { hiddenSeries } = state;
-      const hidden = hiddenSeries.has(series.alias);
+
       // Deduplicate series as visibility tracks the alias property
       const oneSeriesVisible = hiddenSeries.size === new Set(data.map(d => d.alias)).size - 1;
+
+      let nextHiddenSeries = new Set();
       if (exclusive) {
-        return {
-          hiddenSeries:
-            !hidden && oneSeriesVisible
-              ? new Set()
-              : new Set(data.filter(d => d.alias !== series.alias).map(d => d.alias)),
-        };
-      }
-      // Prune hidden series no longer part of those available from the most recent query
-      const availableSeries = new Set(data.map(d => d.alias));
-      const nextHiddenSeries = intersect(new Set(hiddenSeries), availableSeries);
-      if (nextHiddenSeries.has(series.alias)) {
-        nextHiddenSeries.delete(series.alias);
+        if (hiddenSeries.has(series.alias) || !oneSeriesVisible) {
+          nextHiddenSeries = new Set(data.filter(d => d.alias !== series.alias).map(d => d.alias));
+        }
       } else {
-        nextHiddenSeries.add(series.alias);
+        // Prune hidden series no longer part of those available from the most recent query
+        const availableSeries = new Set(data.map(d => d.alias));
+        nextHiddenSeries = intersect(new Set(hiddenSeries), availableSeries);
+        if (nextHiddenSeries.has(series.alias)) {
+          nextHiddenSeries.delete(series.alias);
+        } else {
+          nextHiddenSeries.add(series.alias);
+        }
+      }
+      if (onToggleSeries) {
+        onToggleSeries(series.alias, nextHiddenSeries);
       }
       return {
         hiddenSeries: nextHiddenSeries,

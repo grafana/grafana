@@ -11,11 +11,11 @@ import {
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
-    expect(getLogLevel('')).toBe(LogLevel.none);
+    expect(getLogLevel('')).toBe(LogLevel.unkown);
   });
 
   it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('this is a warning')).toBe(LogLevel.none);
+    expect(getLogLevel('this is a warning')).toBe(LogLevel.unkown);
   });
 
   it('returns log level on line contains a log level', () => {
