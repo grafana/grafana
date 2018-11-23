@@ -126,8 +126,7 @@ export class DashboardViewState {
 
       if (!panel.fullscreen) {
         this.enterFullscreen(panel);
-      } else {
-        // already in fullscreen view just update the view mode
+      } else if (this.dashboard.meta.isEditing !== this.state.edit) {
         this.dashboard.setViewMode(panel, this.state.fullscreen, this.state.edit);
       }
     } else if (this.fullscreenPanel) {

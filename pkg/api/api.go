@@ -140,6 +140,7 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Get("/", Wrap(SearchUsers))
 			usersRoute.Get("/search", Wrap(SearchUsersWithPaging))
 			usersRoute.Get("/:id", Wrap(GetUserByID))
+			usersRoute.Get("/:id/teams", Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", Wrap(GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
 			usersRoute.Get("/lookup", Wrap(GetUserByLoginOrEmail))
@@ -155,6 +156,8 @@ func (hs *HTTPServer) registerRoutes() {
 			teamsRoute.Get("/:teamId/members", Wrap(GetTeamMembers))
 			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), Wrap(AddTeamMember))
 			teamsRoute.Delete("/:teamId/members/:userId", Wrap(RemoveTeamMember))
+			teamsRoute.Get("/:teamId/preferences", Wrap(GetTeamPreferences))
+			teamsRoute.Put("/:teamId/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(UpdateTeamPreferences))
 		}, reqOrgAdmin)
 
 		// team without requirement of user to be org admin
@@ -242,7 +245,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/datasources/id/:name", Wrap(GetDataSourceIdByName), reqSignedIn)
 
-		apiRoute.Get("/plugins", Wrap(GetPluginList))
+		apiRoute.Get("/plugins", Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
 

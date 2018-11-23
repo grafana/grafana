@@ -2,8 +2,8 @@ package alerting
 
 import (
 	"errors"
-
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -13,14 +13,16 @@ import (
 
 // DashAlertExtractor extracts alerts from the dashboard json
 type DashAlertExtractor struct {
+	User  *m.SignedInUser
 	Dash  *m.Dashboard
 	OrgID int64
 	log   log.Logger
 }
 
 // NewDashAlertExtractor returns a new DashAlertExtractor
-func NewDashAlertExtractor(dash *m.Dashboard, orgID int64) *DashAlertExtractor {
+func NewDashAlertExtractor(dash *m.Dashboard, orgID int64, user *m.SignedInUser) *DashAlertExtractor {
 	return &DashAlertExtractor{
+		User:  user,
 		Dash:  dash,
 		OrgID: orgID,
 		log:   log.New("alerting.extractor"),
@@ -113,6 +115,15 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			return nil, ValidationError{Reason: "Could not parse frequency"}
 		}
 
+		rawFor := jsonAlert.Get("for").MustString()
+		var forValue time.Duration
+		if rawFor != "" {
+			forValue, err = time.ParseDuration(rawFor)
+			if err != nil {
+				return nil, ValidationError{Reason: "Could not parse for"}
+			}
+		}
+
 		alert := &m.Alert{
 			DashboardId: e.Dash.Id,
 			OrgId:       e.OrgID,
@@ -122,6 +133,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			Handler:     jsonAlert.Get("handler").MustInt64(),
 			Message:     jsonAlert.Get("message").MustString(),
 			Frequency:   frequency,
+			For:         forValue,
 		}
 
 		for _, condition := range jsonAlert.Get("conditions").MustArray() {
@@ -147,6 +159,21 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			if err != nil {
 				e.log.Debug("Error looking up datasource", "error", err)
 				return nil, ValidationError{Reason: fmt.Sprintf("Data source used by alert rule not found, alertName=%v, datasource=%s", alert.Name, dsName)}
+			}
+
+			dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+				User:        e.User,
+				Datasources: []*m.DataSource{datasource},
+			}
+
+			if err := bus.Dispatch(&dsFilterQuery); err != nil {
+				if err != bus.ErrHandlerNotFound {
+					return nil, err
+				}
+			} else {
+				if len(dsFilterQuery.Result) == 0 {
+					return nil, m.ErrDataSourceAccessDenied
+				}
 			}
 
 			jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)

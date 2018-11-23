@@ -16,10 +16,14 @@ import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
+import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
 
@@ -35,6 +39,8 @@ class GraphElement {
   panelWidth: number;
   eventManager: EventManager;
   thresholdManager: ThresholdManager;
+  timeRegionManager: TimeRegionManager;
+  legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
@@ -45,31 +51,25 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
+    this.timeRegionManager = new TimeRegionManager(this.ctrl);
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
 
     // panel events
-    this.ctrl.events.on('panel-teardown', this.onPanelteardown.bind(this));
-
-    /**
-     * Split graph rendering into two parts.
-     * First, calculate series stats in buildFlotPairs() function. Then legend rendering started
-     * (see ctrl.events.on('render') in legend.ts).
-     * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
-     */
+    this.ctrl.events.on('panel-teardown', this.onPanelTeardown.bind(this));
     this.ctrl.events.on('render', this.onRender.bind(this));
-    this.ctrl.events.on('legend-rendering-complete', this.onLegendRenderingComplete.bind(this));
 
     // global events
     appEvents.on('graph-hover', this.onGraphHover.bind(this), scope);
-
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
-
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
-
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
-    scope.$on('$destroy', this.onScopeDestroy.bind(this));
+
+    // get graph legend element
+    if (this.elem && this.elem.parent) {
+      this.legendElem = this.elem.parent().find('.graph-legend')[0];
+    }
   }
 
   onRender(renderData) {
@@ -77,12 +77,37 @@ class GraphElement {
     if (!this.data) {
       return;
     }
+
     this.annotations = this.ctrl.annotations || [];
     this.buildFlotPairs(this.data);
     const graphHeight = this.elem.height();
     updateLegendValues(this.data, this.panel, graphHeight);
 
-    this.ctrl.events.emit('render-legend');
+    if (!this.panel.legend.show) {
+      if (this.legendElem.hasChildNodes()) {
+        ReactDOM.unmountComponentAtNode(this.legendElem);
+      }
+      this.renderPanel();
+      return;
+    }
+
+    const { values, min, max, avg, current, total } = this.panel.legend;
+    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+    const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
+    const valueOptions = { values, min, max, avg, current, total };
+    const legendProps: GraphLegendProps = {
+      seriesList: this.data,
+      hiddenSeries: this.ctrl.hiddenSeries,
+      ...legendOptions,
+      ...valueOptions,
+      onToggleSeries: this.ctrl.onToggleSeries,
+      onToggleSort: this.ctrl.onToggleSort,
+      onColorChange: this.ctrl.onColorChange,
+      onToggleAxis: this.ctrl.onToggleAxis,
+    };
+
+    const legendReactElem = React.createElement(Legend, legendProps);
+    ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
   onGraphHover(evt) {
@@ -99,17 +124,20 @@ class GraphElement {
     this.tooltip.show(evt.pos);
   }
 
-  onPanelteardown() {
+  onPanelTeardown() {
     this.thresholdManager = null;
+    this.timeRegionManager = null;
 
     if (this.plot) {
       this.plot.destroy();
       this.plot = null;
     }
-  }
 
-  onLegendRenderingComplete() {
-    this.render_panel();
+    this.tooltip.destroy();
+    this.elem.off();
+    this.elem.remove();
+
+    ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
   onGraphHoverClear(event, info) {
@@ -157,12 +185,6 @@ class GraphElement {
     }
   }
 
-  onScopeDestroy() {
-    this.tooltip.destroy();
-    this.elem.off();
-    this.elem.remove();
-  }
-
   shouldAbortRender() {
     if (!this.data) {
       return true;
@@ -195,6 +217,7 @@ class GraphElement {
     }
 
     this.thresholdManager.draw(plot);
+    this.timeRegionManager.draw(plot);
   }
 
   processOffsetHook(plot, gridMargin) {
@@ -256,7 +279,7 @@ class GraphElement {
   }
 
   // Function for rendering panel
-  render_panel() {
+  renderPanel() {
     this.panelWidth = this.elem.width();
     if (this.shouldAbortRender()) {
       return;
@@ -273,6 +296,7 @@ class GraphElement {
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
     this.thresholdManager.addFlotOptions(options, this.panel);
+    this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
 
     this.sortedSeries = this.sortSeries(this.data, this.panel);

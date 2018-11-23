@@ -20,12 +20,21 @@ export class ElasticConfigCtrl {
     { name: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
   ];
 
-  esVersions = [{ name: '2.x', value: 2 }, { name: '5.x', value: 5 }, { name: '5.6+', value: 56 }];
+  esVersions = [
+    { name: '2.x', value: 2 },
+    { name: '5.x', value: 5 },
+    { name: '5.6+', value: 56 },
+    { name: '6.0+', value: 60 },
+  ];
 
   indexPatternTypeChanged() {
-    const def = _.find(this.indexPatternTypes, {
-      value: this.current.jsonData.interval,
-    });
-    this.current.database = def.example || 'es-index-name';
+    if (!this.current.database ||
+        this.current.database.length === 0 ||
+        this.current.database.startsWith('[logstash-]')) {
+        const def = _.find(this.indexPatternTypes, {
+          value: this.current.jsonData.interval,
+        });
+        this.current.database = def.example || 'es-index-name';
+    }
   }
 }

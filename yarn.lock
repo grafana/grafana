@@ -6674,6 +6674,14 @@ grunt-legacy-util@~1.0.0:
     underscore.string "~3.2.3"
     which "~1.2.1"
 
+grunt-newer@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/grunt-newer/-/grunt-newer-1.3.0.tgz#83ccb7a1dda7cbd8ab23b059024ebe614ad2f342"
+  integrity sha1-g8y3od2ny9irI7BZAk6+YUrS80I=
+  dependencies:
+    async "^1.5.2"
+    rimraf "^2.5.2"
+
 grunt-notify@^0.4.5:
   version "0.4.5"
   resolved "https://registry.yarnpkg.com/grunt-notify/-/grunt-notify-0.4.5.tgz#05293990616110db6bc0ad15e6c0592ffe18ac31"

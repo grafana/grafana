@@ -12,19 +12,19 @@ import (
 	"time"
 
 	"github.com/facebookgo/inject"
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/social"
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/social"
 
 	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
@@ -67,6 +67,7 @@ type GrafanaServerImpl struct {
 }
 
 func (g *GrafanaServerImpl) Run() error {
+	var err error
 	g.loadConfiguration()
 	g.writePIDFile()
 
@@ -74,19 +75,38 @@ func (g *GrafanaServerImpl) Run() error {
 	social.NewOAuthService()
 
 	serviceGraph := inject.Graph{}
-	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
-	serviceGraph.Provide(&inject.Object{Value: g.cfg})
-	serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	err = serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
+	err = serviceGraph.Provide(&inject.Object{Value: g.cfg})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
+	err = serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
+	err = serviceGraph.Provide(&inject.Object{Value: cache.New(5*time.Minute, 10*time.Minute)})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
 
 	// self registered services
 	services := registry.GetServices()
 
 	// Add all services to dependency graph
 	for _, service := range services {
-		serviceGraph.Provide(&inject.Object{Value: service.Instance})
+		err = serviceGraph.Provide(&inject.Object{Value: service.Instance})
+		if err != nil {
+			return fmt.Errorf("Failed to provide object to the graph: %v", err)
+		}
 	}
 
-	serviceGraph.Provide(&inject.Object{Value: g})
+	err = serviceGraph.Provide(&inject.Object{Value: g})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
 
 	// Inject dependencies to services
 	if err := serviceGraph.Populate(); err != nil {
@@ -159,7 +179,7 @@ func (g *GrafanaServerImpl) loadConfiguration() {
 		os.Exit(1)
 	}
 
-	g.log.Info("Starting "+setting.ApplicationName, "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
+	g.log.Info("Starting "+setting.ApplicationName, "version", version, "commit", commit, "branch", buildBranch, "compiled", time.Unix(setting.BuildStamp, 0))
 	g.cfg.LogConfigSources()
 }
 

@@ -160,6 +160,12 @@ export class ElasticMetricAggCtrl {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
       $scope.showOptions = false;
+
+      // reset back to metric/group by query
+      if ($scope.target.bucketAggs.length === 0 && $scope.agg.type !== 'raw_document') {
+        $scope.target.bucketAggs = [queryDef.defaultBucketAgg()];
+      }
+
       $scope.updatePipelineAggOptions();
       $scope.onChange();
     };

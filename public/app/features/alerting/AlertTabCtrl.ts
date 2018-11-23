@@ -166,9 +166,10 @@ export class AlertTabCtrl {
 
     alert.noDataState = alert.noDataState || config.alertingNoDataOrNullValues;
     alert.executionErrorState = alert.executionErrorState || config.alertingErrorOrTimeout;
-    alert.frequency = alert.frequency || '60s';
+    alert.frequency = alert.frequency || '1m';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
+    alert.for = alert.for || '0m';
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
@@ -354,6 +355,7 @@ export class AlertTabCtrl {
   enable() {
     this.panel.alert = {};
     this.initModel();
+    this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
   }
 
   evaluatorParamsChanged() {

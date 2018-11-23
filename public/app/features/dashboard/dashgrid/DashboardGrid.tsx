@@ -83,7 +83,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     dashboard.on('view-mode-changed', this.onViewModeChanged.bind(this));
     dashboard.on('row-collapsed', this.triggerForceUpdate.bind(this));
     dashboard.on('row-expanded', this.triggerForceUpdate.bind(this));
-    dashboard.on('panel-type-changed', this.triggerForceUpdate.bind(this));
   }
 
   buildLayout() {
@@ -176,7 +175,12 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses} id={`panel-${panel.id}`}>
-          <DashboardPanel panel={panel} dashboard={this.props.dashboard} panelType={panel.type} />
+          <DashboardPanel
+            panel={panel}
+            dashboard={this.props.dashboard}
+            isEditing={panel.isEditing}
+            isFullscreen={panel.fullscreen}
+          />
         </div>
       );
     }

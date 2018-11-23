@@ -77,15 +77,16 @@ export class DashboardSrv {
   postSave(clone, data) {
     this.dash.version = data.version;
 
+    // important that these happens before location redirect below
+    this.$rootScope.appEvent('dashboard-saved', this.dash);
+    this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
+
     const newUrl = locationUtil.stripBaseFromUrl(data.url);
     const currentPath = this.$location.path();
 
     if (newUrl !== currentPath) {
       this.$location.url(newUrl).replace();
     }
-
-    this.$rootScope.appEvent('dashboard-saved', this.dash);
-    this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
 
     return this.dash;
   }

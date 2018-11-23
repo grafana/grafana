@@ -27,22 +27,22 @@ function hasSuggestions(suggestions: CompletionItemGroup[]): boolean {
   return suggestions && suggestions.length > 0;
 }
 
-interface TypeaheadFieldProps {
+export interface QueryFieldProps {
   additionalPlugins?: any[];
   cleanText?: (text: string) => string;
-  initialValue: string | null;
+  initialQuery: string | null;
   onBlur?: () => void;
   onFocus?: () => void;
   onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
-  onValueChanged?: (value: Value) => void;
-  onWillApplySuggestion?: (suggestion: string, state: TypeaheadFieldState) => string;
+  onValueChanged?: (value: string) => void;
+  onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
   placeholder?: string;
   portalOrigin?: string;
   syntax?: string;
   syntaxLoaded?: boolean;
 }
 
-export interface TypeaheadFieldState {
+export interface QueryFieldState {
   suggestions: CompletionItemGroup[];
   typeaheadContext: string | null;
   typeaheadIndex: number;
@@ -60,19 +60,25 @@ export interface TypeaheadInput {
   wrapperNode: Element;
 }
 
-class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadFieldState> {
+/**
+ * Renders an editor field.
+ * Pass initial value as initialQuery and listen to changes in props.onValueChanged.
+ * This component can only process strings. Internally it uses Slate Value.
+ * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
+ */
+export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
   menuEl: HTMLElement | null;
   placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
   resetTimer: any;
 
-  constructor(props, context) {
+  constructor(props: QueryFieldProps, context) {
     super(props, context);
 
-    this.placeholdersBuffer = new PlaceholdersBuffer(props.initialValue || '');
+    this.placeholdersBuffer = new PlaceholdersBuffer(props.initialQuery || '');
 
     // Base plugins
-    this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
+    this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins].filter(p => p);
 
     this.state = {
       suggestions: [],
@@ -92,7 +98,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     clearTimeout(this.resetTimer);
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
     // Only update menu location when suggestion existence or text/selection changed
     if (
       this.state.value !== prevState.value ||
@@ -102,7 +108,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     }
   }
 
-  componentWillReceiveProps(nextProps: TypeaheadFieldProps) {
+  componentWillReceiveProps(nextProps: QueryFieldProps) {
     if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
       // Need a bogus edit to re-render the editor after syntax has fully loaded
       const change = this.state.value
@@ -229,6 +235,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     const { cleanText, onWillApplySuggestion, syntax } = this.props;
     const { typeaheadPrefix, typeaheadText } = this.state;
     let suggestionText = suggestion.insertText || suggestion.label;
+    const preserveSuffix = suggestion.kind === 'function';
     const move = suggestion.move || 0;
 
     if (onWillApplySuggestion) {
@@ -243,7 +250,7 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
     const suffixLength = text.length - typeaheadPrefix.length;
     const offset = typeaheadText.indexOf(typeaheadPrefix);
     const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
-    const forward = midWord ? suffixLength + offset : 0;
+    const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
 
     // If new-lines, apply suggestion as block
     if (suggestionText.match(/\n/)) {
@@ -434,19 +441,21 @@ class QueryField extends React.PureComponent<TypeaheadFieldProps, TypeaheadField
 
   render() {
     return (
-      <div className="slate-query-field">
-        {this.renderMenu()}
-        <Editor
-          autoCorrect={false}
-          onBlur={this.handleBlur}
-          onKeyDown={this.onKeyDown}
-          onChange={this.onChange}
-          onFocus={this.handleFocus}
-          placeholder={this.props.placeholder}
-          plugins={this.plugins}
-          spellCheck={false}
-          value={this.state.value}
-        />
+      <div className="slate-query-field-wrapper">
+        <div className="slate-query-field">
+          {this.renderMenu()}
+          <Editor
+            autoCorrect={false}
+            onBlur={this.handleBlur}
+            onKeyDown={this.onKeyDown}
+            onChange={this.onChange}
+            onFocus={this.handleFocus}
+            placeholder={this.props.placeholder}
+            plugins={this.plugins}
+            spellCheck={false}
+            value={this.state.value}
+          />
+        </div>
       </div>
     );
   }

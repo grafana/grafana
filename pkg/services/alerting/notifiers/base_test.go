@@ -29,7 +29,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStatePending,
 			sendReminder: false,
-			state:        &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -38,7 +37,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateAlerting,
 			prevState:    m.AlertStateOK,
 			sendReminder: false,
-			state:        &m.AlertNotificationState{},
 
 			expect: true,
 		},
@@ -47,7 +45,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStatePending,
 			prevState:    m.AlertStateOK,
 			sendReminder: false,
-			state:        &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -56,7 +53,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
 			sendReminder: false,
-			state:        &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -65,7 +61,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
 			sendReminder: true,
-			state:        &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -74,7 +69,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateAlerting,
 			sendReminder: false,
-			state:        &m.AlertNotificationState{},
 
 			expect: true,
 		},
@@ -94,7 +88,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    m.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			state:        &m.AlertNotificationState{},
 
 			expect: true,
 		},
@@ -134,12 +127,37 @@ func TestShouldSendAlertNotification(t *testing.T) {
 
 			expect: true,
 		},
+		{
+			name:      "unknown -> ok",
+			prevState: m.AlertStateUnknown,
+			newState:  m.AlertStateOK,
+
+			expect: false,
+		},
+		{
+			name:      "unknown -> pending",
+			prevState: m.AlertStateUnknown,
+			newState:  m.AlertStatePending,
+
+			expect: false,
+		},
+		{
+			name:      "unknown -> alerting",
+			prevState: m.AlertStateUnknown,
+			newState:  m.AlertStateAlerting,
+
+			expect: true,
+		},
 	}
 
 	for _, tc := range tcs {
 		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{
 			State: tc.prevState,
 		})
+
+		if tc.state == nil {
+			tc.state = &m.AlertNotificationState{}
+		}
 
 		evalContext.Rule.State = tc.newState
 		nb := &NotifierBase{SendReminder: tc.sendReminder, Frequency: tc.frequency}

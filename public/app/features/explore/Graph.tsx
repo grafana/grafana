@@ -5,12 +5,15 @@ import { withSize } from 'react-sizeme';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.stack';
 
-import { Range } from 'app/types/explore';
+import { RawTimeRange } from 'app/types/series';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
 import Legend from './Legend';
+import { equal, intersect } from './utils/set';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -62,10 +65,10 @@ const FLOT_OPTIONS = {
     margin: { left: 0, right: 0 },
     labelMarginX: 0,
   },
-  // selection: {
-  //   mode: 'x',
-  //   color: '#666',
-  // },
+  selection: {
+    mode: 'x',
+    color: '#666',
+  },
   // crosshair: {
   //   mode: 'x',
   // },
@@ -75,18 +78,28 @@ interface GraphProps {
   data: any[];
   height?: string; // e.g., '200px'
   id?: string;
-  loading?: boolean;
-  range: Range;
+  range: RawTimeRange;
   split?: boolean;
   size?: { width: number; height: number };
+  userOptions?: any;
+  onChangeTime?: (range: RawTimeRange) => void;
 }
 
 interface GraphState {
+  /**
+   * Type parameter refers to the `alias` property of a `TimeSeries`.
+   * Consequently, all series sharing the same alias will share visibility state.
+   */
+  hiddenSeries: Set<string>;
   showAllTimeSeries: boolean;
 }
 
 export class Graph extends PureComponent<GraphProps, GraphState> {
+  $el: any;
+  dynamicOptions = null;
+
   state = {
+    hiddenSeries: new Set(),
     showAllTimeSeries: false,
   };
 
@@ -98,18 +111,60 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   componentDidMount() {
     this.draw();
+    this.$el = $(`#${this.props.id}`);
+    this.$el.bind('plotselected', this.onPlotSelected);
   }
 
-  componentDidUpdate(prevProps: GraphProps) {
+  componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
     if (
       prevProps.data !== this.props.data ||
       prevProps.range !== this.props.range ||
       prevProps.split !== this.props.split ||
       prevProps.height !== this.props.height ||
-      (prevProps.size && prevProps.size.width !== this.props.size.width)
+      (prevProps.size && prevProps.size.width !== this.props.size.width) ||
+      !equal(prevState.hiddenSeries, this.state.hiddenSeries)
     ) {
       this.draw();
     }
+  }
+
+  componentWillUnmount() {
+    this.$el.unbind('plotselected', this.onPlotSelected);
+  }
+
+  onPlotSelected = (event, ranges) => {
+    if (this.props.onChangeTime) {
+      const range = {
+        from: moment(ranges.xaxis.from),
+        to: moment(ranges.xaxis.to),
+      };
+      this.props.onChangeTime(range);
+    }
+  };
+
+  getDynamicOptions() {
+    const { range, size } = this.props;
+    const ticks = (size.width || 0) / 100;
+    let { from, to } = range;
+    if (!moment.isMoment(from)) {
+      from = dateMath.parse(from, false);
+    }
+    if (!moment.isMoment(to)) {
+      to = dateMath.parse(to, true);
+    }
+    const min = from.valueOf();
+    const max = to.valueOf();
+    return {
+      xaxis: {
+        mode: 'time',
+        min: min,
+        max: max,
+        label: 'Datetime',
+        ticks: ticks,
+        timezone: 'browser',
+        timeformat: time_format(ticks, min, max),
+      },
+    };
   }
 
   onShowAllTimeSeries = () => {
@@ -121,55 +176,69 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     );
   };
 
+  onToggleSeries = (series: TimeSeries, exclusive: boolean) => {
+    this.setState((state, props) => {
+      const { data } = props;
+      const { hiddenSeries } = state;
+      const hidden = hiddenSeries.has(series.alias);
+      // Deduplicate series as visibility tracks the alias property
+      const oneSeriesVisible = hiddenSeries.size === new Set(data.map(d => d.alias)).size - 1;
+      if (exclusive) {
+        return {
+          hiddenSeries:
+            !hidden && oneSeriesVisible
+              ? new Set()
+              : new Set(data.filter(d => d.alias !== series.alias).map(d => d.alias)),
+        };
+      }
+      // Prune hidden series no longer part of those available from the most recent query
+      const availableSeries = new Set(data.map(d => d.alias));
+      const nextHiddenSeries = intersect(new Set(hiddenSeries), availableSeries);
+      if (nextHiddenSeries.has(series.alias)) {
+        nextHiddenSeries.delete(series.alias);
+      } else {
+        nextHiddenSeries.add(series.alias);
+      }
+      return {
+        hiddenSeries: nextHiddenSeries,
+      };
+    }, this.draw);
+  };
+
   draw() {
-    const { range, size } = this.props;
+    const { userOptions = {} } = this.props;
+    const { hiddenSeries } = this.state;
     const data = this.getGraphData();
 
     const $el = $(`#${this.props.id}`);
     let series = [{ data: [[0, 0]] }];
 
     if (data && data.length > 0) {
-      series = data.map((ts: TimeSeries) => ({
+      series = data.filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias)).map((ts: TimeSeries) => ({
         color: ts.color,
         label: ts.label,
         data: ts.getFlotPairs('null'),
       }));
     }
 
-    const ticks = (size.width || 0) / 100;
-    let { from, to } = range;
-    if (!moment.isMoment(from)) {
-      from = dateMath.parse(from, false);
-    }
-    if (!moment.isMoment(to)) {
-      to = dateMath.parse(to, true);
-    }
-    const min = from.valueOf();
-    const max = to.valueOf();
-    const dynamicOptions = {
-      xaxis: {
-        mode: 'time',
-        min: min,
-        max: max,
-        label: 'Datetime',
-        ticks: ticks,
-        timeformat: time_format(ticks, min, max),
-      },
-    };
+    this.dynamicOptions = this.getDynamicOptions();
+
     const options = {
       ...FLOT_OPTIONS,
-      ...dynamicOptions,
+      ...this.dynamicOptions,
+      ...userOptions,
     };
+
     $.plot($el, series, options);
   }
 
   render() {
-    const { height = '100px', id = 'graph', loading = false } = this.props;
+    const { height = '100px', id = 'graph' } = this.props;
+    const { hiddenSeries } = this.state;
     const data = this.getGraphData();
 
     return (
-      <div className="panel-container">
-        {loading && <div className="explore-graph__loader" />}
+      <>
         {this.props.data &&
           this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
           !this.state.showAllTimeSeries && (
@@ -182,8 +251,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
             </div>
           )}
         <div id={id} className="explore-graph" style={{ height }} />
-        <Legend data={data} />
-      </div>
+        <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} />
+      </>
     );
   }
 }

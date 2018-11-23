@@ -20,8 +20,8 @@ const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
 const wrapLabel = (label: string) => ({ label });
 
-const setFunctionMove = (suggestion: CompletionItem): CompletionItem => {
-  suggestion.move = -1;
+const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
+  suggestion.kind = 'function';
   return suggestion;
 };
 
@@ -46,9 +46,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics?: string[];
-  logLabelOptions: any[];
-  supportsLogs?: boolean;
-  started: boolean;
+  startTask: Promise<any>;
 
   constructor(datasource: any, initialValues?: any) {
     super();
@@ -58,8 +56,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.labelKeys = {};
     this.labelValues = {};
     this.metrics = [];
-    this.supportsLogs = false;
-    this.started = false;
 
     Object.assign(this, initialValues);
   }
@@ -75,17 +71,31 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   start = () => {
-    if (!this.started) {
-      this.started = true;
-      return Promise.all([this.fetchMetricNames(), this.fetchHistogramMetrics()]);
+    if (!this.startTask) {
+      this.startTask = this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
     }
-    return Promise.resolve([]);
+    return this.startTask;
   };
 
   // Keep this DOM-free for testing
-  provideCompletionItems({ prefix, wrapperClasses, text }: TypeaheadInput, context?: any): TypeaheadOutput {
+  provideCompletionItems({ prefix, wrapperClasses, text, value }: TypeaheadInput, context?: any): TypeaheadOutput {
+    // Local text properties
+    const empty = value.document.text.length === 0;
+    const selectedLines = value.document.getTextsAtRangeAsArray(value.selection);
+    const currentLine = selectedLines.length === 1 ? selectedLines[0] : null;
+    const nextCharacter = currentLine ? currentLine.text[value.selection.anchorOffset] : null;
+
     // Syntax spans have 3 classes by default. More indicate a recognized token
     const tokenRecognized = wrapperClasses.length > 3;
+    // Non-empty prefix, but not inside known token
+    const prefixUnrecognized = prefix && !tokenRecognized;
+    // Prevent suggestions in `function(|suffix)`
+    const noSuffix = !nextCharacter || nextCharacter === ')';
+    // Empty prefix is safe if it does not immediately folllow a complete expression and has no text after it
+    const safeEmptyPrefix = prefix === '' && !text.match(/^[\]})\s]+$/) && noSuffix;
+    // About to type next operand if preceded by binary operator
+    const isNextOperand = text.match(/[+\-*/^%]/);
+
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-range')) {
       // Suggestions for metric[|]
@@ -94,14 +104,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
       return this.getLabelCompletionItems.apply(this, arguments);
     } else if (_.includes(wrapperClasses, 'context-aggregation')) {
+      // Suggestions for sum(metric) by (|)
       return this.getAggregationCompletionItems.apply(this, arguments);
-    } else if (
-      // Show default suggestions in a couple of scenarios
-      (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
-      (prefix === '' && !text.match(/^[\]})\s]+$/)) || // Empty prefix, but not following a closing brace
-      text.match(/[+\-*/^%]/) // Anything after binary operator
-    ) {
+    } else if (empty) {
+      // Suggestions for empty query field
       return this.getEmptyCompletionItems(context || {});
+    } else if (prefixUnrecognized || safeEmptyPrefix || isNextOperand) {
+      // Show term suggestions in a couple of scenarios
+      return this.getTermCompletionItems();
     }
 
     return {
@@ -111,14 +121,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getEmptyCompletionItems(context: any): TypeaheadOutput {
     const { history } = context;
-    const { metrics } = this;
-    const suggestions: CompletionItemGroup[] = [];
+    let suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .uniqBy('query')
+        .uniqBy('query.expr')
         .take(HISTORY_ITEM_COUNT)
-        .map(h => h.query)
+        .map(h => h.query.expr)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
         .value();
@@ -131,13 +140,23 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       });
     }
 
+    const termCompletionItems = this.getTermCompletionItems();
+    suggestions = [...suggestions, ...termCompletionItems.suggestions];
+
+    return { suggestions };
+  }
+
+  getTermCompletionItems(): TypeaheadOutput {
+    const { metrics } = this;
+    const suggestions: CompletionItemGroup[] = [];
+
     suggestions.push({
       prefixMatch: true,
       label: 'Functions',
-      items: FUNCTIONS.map(setFunctionMove),
+      items: FUNCTIONS.map(setFunctionKind),
     });
 
-    if (metrics) {
+    if (metrics && metrics.length > 0) {
       suggestions.push({
         label: 'Metrics',
         items: metrics.map(wrapLabel),
@@ -159,7 +178,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getAggregationCompletionItems({ value }: TypeaheadInput): TypeaheadOutput {
-    let refresher: Promise<any> = null;
+    const refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
@@ -175,12 +194,30 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return text;
     }, '');
 
-    const leftSide = queryText.slice(0, queryOffset);
-    const openParensAggregationIndex = leftSide.lastIndexOf('(');
-    const openParensSelectorIndex = leftSide.slice(0, openParensAggregationIndex).lastIndexOf('(');
-    const closeParensSelectorIndex = leftSide.slice(openParensSelectorIndex).indexOf(')') + openParensSelectorIndex;
+    // Try search for selector part on the left-hand side, such as `sum (m) by (l)`
+    const openParensAggregationIndex = queryText.lastIndexOf('(', queryOffset);
+    let openParensSelectorIndex = queryText.lastIndexOf('(', openParensAggregationIndex - 1);
+    let closeParensSelectorIndex = queryText.indexOf(')', openParensSelectorIndex);
 
-    let selectorString = leftSide.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
+    // Try search for selector part of an alternate aggregation clause, such as `sum by (l) (m)`
+    if (openParensSelectorIndex === -1) {
+      const closeParensAggregationIndex = queryText.indexOf(')', queryOffset);
+      closeParensSelectorIndex = queryText.indexOf(')', closeParensAggregationIndex + 1);
+      openParensSelectorIndex = queryText.lastIndexOf('(', closeParensSelectorIndex);
+    }
+
+    const result = {
+      refresher,
+      suggestions,
+      context: 'context-aggregation',
+    };
+
+    // Suggestions are useless for alternative aggregation clauses without a selector in context
+    if (openParensSelectorIndex === -1) {
+      return result;
+    }
+
+    let selectorString = queryText.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
 
     // Range vector syntax not accounted for by subsequent parse so discard it if present
     selectorString = selectorString.replace(/\[[^\]]+\]$/, '');
@@ -191,14 +228,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (labelKeys) {
       suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
     } else {
-      refresher = this.fetchSeriesLabels(selector);
+      result.refresher = this.fetchSeriesLabels(selector);
     }
 
-    return {
-      refresher,
-      suggestions,
-      context: 'context-aggregation',
-    };
+    return result;
   }
 
   getLabelCompletionItems({ text, wrapperClasses, labelKey, value }: TypeaheadInput): TypeaheadOutput {
@@ -243,8 +276,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     // Query labels for selector
-    // Temporarily add skip for logging
-    if (selector && !this.labelValues[selector] && !this.supportsLogs) {
+    if (selector && !this.labelValues[selector]) {
       if (selector === EMPTY_SELECTOR) {
         // Query label values for default labels
         refresher = Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
@@ -272,38 +304,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const histogramSeries = this.labelValues[HISTOGRAM_SELECTOR];
     if (histogramSeries && histogramSeries['__name__']) {
       this.histogramMetrics = histogramSeries['__name__'].slice().sort();
-    }
-  }
-
-  // Temporarily here while reusing this field for logging
-  async fetchLogLabels() {
-    const url = '/api/prom/label';
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const labelKeys = body.data.slice().sort();
-      const labelKeysBySelector = {
-        ...this.labelKeys,
-        [EMPTY_SELECTOR]: labelKeys,
-      };
-      const labelValuesByKey = {};
-      this.logLabelOptions = [];
-      for (const key of labelKeys) {
-        const valuesUrl = `/api/prom/label/${key}/values`;
-        const res = await this.request(valuesUrl);
-        const body = await (res.data || res.json());
-        const values = body.data.slice().sort();
-        labelValuesByKey[key] = values;
-        this.logLabelOptions.push({
-          label: key,
-          value: key,
-          children: values.map(value => ({ label: value, value })),
-        });
-      }
-      this.labelValues = { [EMPTY_SELECTOR]: labelValuesByKey };
-      this.labelKeys = labelKeysBySelector;
-    } catch (e) {
-      console.error(e);
     }
   }
 

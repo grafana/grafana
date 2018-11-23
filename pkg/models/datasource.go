@@ -207,11 +207,6 @@ func (p DsPermissionType) String() string {
 	return names[int(p)]
 }
 
-type GetDataSourcePermissionsForUserQuery struct {
-	User   *SignedInUser
-	Result map[int64]DsPermissionType
-}
-
 type DatasourcesPermissionFilterQuery struct {
 	User        *SignedInUser
 	Datasources []*DataSource

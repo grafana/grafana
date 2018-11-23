@@ -41,8 +41,8 @@ var (
 	race                  bool
 	phjsToRelease         string
 	workingDir            string
-	includeBuildNumber    bool     = true
-	buildNumber           int      = 0
+	includeBuildId        bool     = true
+	buildId               string   = "0"
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
 	enterprise            bool     = false
@@ -54,6 +54,8 @@ func main() {
 
 	ensureGoPath()
 
+	var buildIdRaw string
+
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
@@ -61,11 +63,13 @@ func main() {
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
-	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
+	flag.BoolVar(&includeBuildId, "includeBuildId", includeBuildId, "IncludeBuildId in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
-	flag.IntVar(&buildNumber, "buildNumber", 0, "Build number from CI system")
+	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
 	flag.Parse()
+
+	buildId = shortenBuildId(buildIdRaw)
 
 	readVersionFromPackageJson()
 
@@ -124,6 +128,8 @@ func main() {
 			if goos == linux {
 				createLinuxPackages()
 			}
+		case "pkg-archive":
+			grunt(gruntBuildArg("package")...)
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
@@ -197,9 +203,9 @@ func readVersionFromPackageJson() {
 	}
 
 	// add timestamp to iteration
-	if includeBuildNumber {
-		if buildNumber != 0 {
-			linuxPackageIteration = fmt.Sprintf("%d%s", buildNumber, linuxPackageIteration)
+	if includeBuildId {
+		if buildId != "0" {
+			linuxPackageIteration = fmt.Sprintf("%s%s", buildId, linuxPackageIteration)
 		} else {
 			linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
 		}
@@ -392,7 +398,7 @@ func grunt(params ...string) {
 
 func gruntBuildArg(task string) []string {
 	args := []string{task}
-	if includeBuildNumber {
+	if includeBuildId {
 		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
 	} else {
 		args = append(args, fmt.Sprintf("--pkgVer=%v", version))
@@ -471,6 +477,7 @@ func ldflags() string {
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
+	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", getGitBranch()))
 	return b.String()
 }
 
@@ -516,6 +523,14 @@ func setBuildEnv() {
 	if gocc != "" {
 		os.Setenv("CC", gocc)
 	}
+}
+
+func getGitBranch() string {
+	v, err := runError("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return "master"
+	}
+	return string(v)
 }
 
 func getGitSha() string {
@@ -622,4 +637,12 @@ func shaFile(file string) error {
 	}
 
 	return out.Close()
+}
+
+func shortenBuildId(buildId string) string {
+	buildId = strings.Replace(buildId, "-", "", -1)
+	if len(buildId) < 9 {
+		return buildId
+	}
+	return buildId[0:8]
 }

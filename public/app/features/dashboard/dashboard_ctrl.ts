@@ -2,13 +2,13 @@
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import coreModule from 'app/core/core_module';
+import { removePanel } from 'app/features/dashboard/utils/panel';
 
 // Services
 import { AnnotationsSrv } from '../annotations/annotations_srv';
 
 // Types
 import { DashboardModel } from './dashboard_model';
-import { PanelModel } from './panel_model';
 
 export class DashboardCtrl {
   dashboard: DashboardModel;
@@ -19,7 +19,6 @@ export class DashboardCtrl {
   /** @ngInject */
   constructor(
     private $scope,
-    private $rootScope,
     private keybindingSrv,
     private timeSrv,
     private variableSrv,
@@ -112,12 +111,14 @@ export class DashboardCtrl {
   }
 
   showJsonEditor(evt, options) {
-    const editScope = this.$rootScope.$new();
-    editScope.object = options.object;
-    editScope.updateHandler = options.updateHandler;
+    const model = {
+      object: options.object,
+      updateHandler: options.updateHandler,
+    };
+
     this.$scope.appEvent('show-dash-editor', {
       src: 'public/app/partials/edit_json.html',
-      scope: editScope,
+      model: model,
     });
   }
 
@@ -136,34 +137,7 @@ export class DashboardCtrl {
     }
 
     const panelInfo = this.dashboard.getPanelInfoById(options.panelId);
-    this.removePanel(panelInfo.panel, true);
-  }
-
-  removePanel(panel: PanelModel, ask: boolean) {
-    // confirm deletion
-    if (ask !== false) {
-      let text2, confirmText;
-
-      if (panel.alert) {
-        text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
-        confirmText = 'YES';
-      }
-
-      this.$scope.appEvent('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => {
-          this.removePanel(panel, false);
-        },
-      });
-      return;
-    }
-
-    this.dashboard.removePanel(panel);
+    removePanel(this.dashboard, panelInfo.panel, true);
   }
 
   onDestroy() {

@@ -5,7 +5,7 @@ import React, { ComponentClass, PureComponent } from 'react';
 import { getTimeSrv } from '../time_srv';
 
 // Components
-import { PanelHeader } from './PanelHeader';
+import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
 
 // Types
@@ -21,6 +21,7 @@ export interface Props {
 
 export interface State {
   refreshCounter: number;
+  renderCounter: number;
   timeRange?: TimeRange;
 }
 
@@ -30,11 +31,13 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     this.state = {
       refreshCounter: 0,
+      renderCounter: 0,
     };
   }
 
   componentDidMount() {
     this.props.panel.events.on('refresh', this.onRefresh);
+    this.props.panel.events.on('render', this.onRender);
     this.props.dashboard.panelInitialized(this.props.panel);
   }
 
@@ -46,10 +49,19 @@ export class PanelChrome extends PureComponent<Props, State> {
     const timeSrv = getTimeSrv();
     const timeRange = timeSrv.timeRange();
 
-    this.setState({
+    this.setState(prevState => ({
+      ...prevState,
       refreshCounter: this.state.refreshCounter + 1,
       timeRange: timeRange,
-    });
+    }));
+  };
+
+  onRender = () => {
+    console.log('onRender');
+    this.setState(prevState => ({
+      ...prevState,
+      renderCounter: this.state.renderCounter + 1,
+    }));
   };
 
   get isVisible() {
@@ -58,10 +70,12 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard } = this.props;
+    const { refreshCounter, timeRange, renderCounter } = this.state;
+
     const { datasource, targets } = panel;
-    const { refreshCounter, timeRange } = this.state;
     const PanelComponent = this.props.component;
 
+    console.log('panelChrome render');
     return (
       <div className="panel-container">
         <PanelHeader panel={panel} dashboard={dashboard} />
@@ -74,7 +88,16 @@ export class PanelChrome extends PureComponent<Props, State> {
             refreshCounter={refreshCounter}
           >
             {({ loading, timeSeries }) => {
-              return <PanelComponent loading={loading} timeSeries={timeSeries} timeRange={timeRange} />;
+              console.log('panelcrome inner render');
+              return (
+                <PanelComponent
+                  loading={loading}
+                  timeSeries={timeSeries}
+                  timeRange={timeRange}
+                  options={panel.getOptions()}
+                  renderCounter={renderCounter}
+                />
+              );
             }}
           </DataPanel>
         </div>

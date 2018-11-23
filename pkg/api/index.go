@@ -23,7 +23,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		return nil, err
 	}
 
-	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
+	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return nil, err
 	}
@@ -83,6 +83,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
 		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
+		AppNameBodyClass:        getAppNameBodyClass(setting.ApplicationName),
 	}
 
 	if setting.DisableGravatar {
@@ -376,4 +377,15 @@ func (hs *HTTPServer) NotFoundHandler(c *m.ReqContext) {
 	}
 
 	c.HTML(404, "index", data)
+}
+
+func getAppNameBodyClass(name string) string {
+	switch name {
+	case setting.APP_NAME:
+		return "app-grafana"
+	case setting.APP_NAME_ENTERPRISE:
+		return "app-enterprise"
+	default:
+		return ""
+	}
 }

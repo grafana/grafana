@@ -1,10 +1,13 @@
 import _ from 'lodash';
 
 import * as dateMath from 'app/core/utils/datemath';
+import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
+import { PluginMeta, DataQuery } from 'app/types';
 
-import { processStreams } from './result_transformer';
+import LanguageProvider from './language_provider';
+import { mergeStreamsToLogs } from './result_transformer';
 
-const DEFAULT_LIMIT = 100;
+export const DEFAULT_LIMIT = 1000;
 
 const DEFAULT_QUERY_PARAMS = {
   direction: 'BACKWARD',
@@ -48,8 +51,12 @@ function serializeParams(data: any) {
 }
 
 export default class LoggingDatasource {
+  languageProvider: LanguageProvider;
+
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv, private templateSrv) {}
+  constructor(private instanceSettings, private backendSrv, private templateSrv) {
+    this.languageProvider = new LanguageProvider(this);
+  }
 
   _request(apiUrl: string, data?, options?: any) {
     const baseUrl = this.instanceSettings.url;
@@ -60,6 +67,12 @@ export default class LoggingDatasource {
       url,
     };
     return this.backendSrv.datasourceRequest(req);
+  }
+
+  mergeStreams(streams: LogsStream[], intervalMs: number): LogsModel {
+    const logs = mergeStreamsToLogs(streams);
+    logs.series = makeSeriesForLogs(logs.rows, intervalMs);
+    return logs;
   }
 
   prepareQueryTarget(target, options) {
@@ -74,7 +87,7 @@ export default class LoggingDatasource {
     };
   }
 
-  query(options) {
+  query(options): Promise<{ data: LogsStream[] }> {
     const queryTargets = options.targets
       .filter(target => target.expr)
       .map(target => this.prepareQueryTarget(target, options));
@@ -86,18 +99,21 @@ export default class LoggingDatasource {
 
     return Promise.all(queries).then((results: any[]) => {
       // Flatten streams from multiple queries
-      const allStreams = results.reduce((acc, response, i) => {
-        const streams = response.data.streams || [];
+      const allStreams: LogsStream[] = results.reduce((acc, response, i) => {
+        const streams: LogsStream[] = response.data.streams || [];
         // Inject search for match highlighting
-        const search = queryTargets[i].regexp;
+        const search: string = queryTargets[i].regexp;
         streams.forEach(s => {
           s.search = search;
         });
         return [...acc, ...streams];
       }, []);
-      const model = processStreams(allStreams, DEFAULT_LIMIT);
-      return { data: model };
+      return { data: allStreams };
     });
+  }
+
+  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]> {
+    return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
   metadataRequest(url) {

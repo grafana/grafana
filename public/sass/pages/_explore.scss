@@ -18,10 +18,39 @@
     margin-left: 15px;
   }
 
-  // Graph panel needs a bit extra padding at top
-  .panel-container {
+  .explore-panel {
+    margin-top: $panel-margin;
+  }
+
+  .explore-panel__body {
     padding: $panel-padding;
-    padding-top: 10px;
+  }
+
+  .explore-panel__header {
+    padding: $panel-padding;
+    padding-top: 5px;
+    padding-bottom: 0;
+    display: flex;
+    cursor: pointer;
+    margin-bottom: 5px;
+    transition: all 0.1s linear;
+  }
+
+  .explore-panel__header:hover {
+    transform: translateY(-1px);
+  }
+
+  .explore-panel__header-label {
+    font-weight: 500;
+    margin-right: $panel-margin;
+    font-size: $font-size-h6;
+    box-shadow: $text-shadow-faint;
+  }
+
+  .explore-panel__header-buttons {
+    margin-right: $panel-margin;
+    font-size: $font-size-lg;
+    line-height: $font-size-h6;
   }
 
   // Make sure wrap buttons around on small screens
@@ -52,7 +81,7 @@
   }
 
   .result-options {
-    margin-top: 2 * $panel-margin;
+    margin: 2 * $panel-margin 0;
   }
 
   .time-series-disclaimer {
@@ -87,15 +116,20 @@
     flex-wrap: wrap;
   }
 
-  .explore-graph__loader {
+  .explore-panel__loader {
     height: 2px;
     position: relative;
     overflow: hidden;
-    background: $text-color-faint;
+    background: none;
     margin: $panel-margin / 2;
+    transition: background-color 1s ease;
   }
 
-  .explore-graph__loader:after {
+  .explore-panel__loader--active {
+    background: $text-color-faint;
+  }
+
+  .explore-panel__loader--active:after {
     content: ' ';
     display: block;
     width: 25%;
@@ -165,7 +199,7 @@
   position: absolute;
   top: 0;
   right: 90px;
-  z-index: 1024;
+  z-index: 1015;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -214,33 +248,102 @@
       display: grid;
       grid-column-gap: 1rem;
       grid-row-gap: 0.1rem;
-      grid-template-columns: 4px minmax(100px, max-content) 1fr;
+      grid-template-columns: 4px minmax(100px, max-content) minmax(100px, 25%) 1fr;
+      font-family: $font-family-monospace;
+      font-size: 12px;
+    }
+
+    .logs-controls {
+      display: flex;
+      background-color: $page-bg;
+      padding: $panel-padding;
+      padding-top: 10px;
+      border-radius: $border-radius;
+      margin: 2*$panel-margin 0;
+      border: $panel-border;
+
+      > * {
+        margin-right: 1em;
+      }
+    }
+
+    .logs-meta {
+      flex: 1;
+      color: $text-color-weak;
+      padding: 2px 0;
+    }
+
+    .logs-meta-item {
+      display: inline-block;
+      margin-right: 1em;
+    }
+
+    .logs-meta-item__label {
+      margin-right: 0.5em;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .logs-meta-item__value {
       font-family: $font-family-monospace;
     }
 
     .logs-row-match-highlight {
-      background-color: lighten($blue, 20%);
+      // Undoing mark styling
+      background: inherit;
+      padding: inherit;
+
+      color: $typeahead-selected-color;
+      border-bottom: 1px solid $typeahead-selected-color;
+      background-color: lighten($typeahead-selected-color, 60%);
     }
 
     .logs-row-level {
       background-color: transparent;
-      margin: 6px 0;
-      border-radius: 2px;
+      margin: 2px 0;
+      position: relative;
       opacity: 0.8;
     }
 
-    .logs-row-level-crit,
+    .logs-row-level-crit {
+      background-color: #705da0;
+    }
+
     .logs-row-level-error,
     .logs-row-level-err {
-      background-color: $red;
+      background-color: #e24d42;
     }
 
     .logs-row-level-warn {
-      background-color: $orange;
+      background-color: #eab839;
     }
 
     .logs-row-level-info {
-      background-color: $green;
+      background-color: #7eb26d;
+    }
+
+    .logs-row-level-trace,
+    .logs-row-level-debug {
+      background-color: #1f78c1;
+    }
+
+    .logs-row-level__duplicates {
+      position: absolute;
+      width: 9px;
+      height: 100%;
+      top: 0;
+      left: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      align-content: flex-start;
+    }
+
+    .logs-row-level__duplicate {
+      width: 2px;
+      height: 3px;
+      background-color: #1f78c1;
+      margin: 0 1px 1px 0;
     }
   }
 }
@@ -258,6 +361,11 @@
 
   .prom-query-field-info {
     margin: 0.25em 0.5em 0.5em;
+    display: flex;
+
+    details {
+      margin-left: 1em;
+    }
   }
 }
 
@@ -266,8 +374,11 @@
 
 .ReactTable {
   border: none;
+}
+
+.ReactTable .rt-table {
   // Allow some space for the no-data text
-  min-height: 120px;
+  min-height: 90px;
 }
 
 .ReactTable .rt-thead.-header {
@@ -296,6 +407,11 @@
 .ReactTable .rt-tbody .rt-td:last-child {
   border-right: none;
 }
+.ReactTable .-pagination {
+  border-top: none;
+  box-shadow: none;
+  margin-top: $panel-margin;
+}
 .ReactTable .-pagination .-btn {
   color: $blue;
   background: $list-item-bg;
@@ -316,4 +432,34 @@
 }
 .ReactTable .rt-tr .rt-td:last-child {
   text-align: right;
+}
+.ReactTable .rt-noData {
+  top: 60px;
+  z-index: inherit;
+}
+
+// React-component cascade fix: show "loading" even though item can expand
+
+.rc-cascader-menu-item-loading:after {
+  position: absolute;
+  right: 12px;
+  content: 'loading';
+  color: #767980;
+  font-style: italic;
+}
+
+// TODO Experimental
+
+.cheat-sheet-item {
+  margin: 2*$panel-margin 0;
+  width: 50%;
+}
+
+.cheat-sheet-item__title {
+  font-size: $font-size-h3;
+}
+
+.cheat-sheet-item__expression {
+  margin: $panel-margin/2 0;
+  cursor: pointer;
 }

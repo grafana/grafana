@@ -1,7 +1,7 @@
 import './graph';
-import './legend';
 import './series_overrides_ctrl';
 import './thresholds_form';
+import './time_regions_form';
 
 import template from './template';
 import _ from 'lodash';
@@ -112,6 +112,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     thresholds: [],
+    timeRegions: [],
   };
 
   /** @ngInject */
@@ -134,9 +135,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
     this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
       this.addEditorTab('Alert', alertTab, 5);
@@ -244,67 +245,32 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  changeSeriesColor(series, color) {
+  onColorChange = (series, color) => {
     series.setColor(color);
     this.panel.aliasColors[series.alias] = series.color;
     this.render();
-  }
+  };
 
-  toggleSeries(serie, event) {
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      if (this.hiddenSeries[serie.alias]) {
-        delete this.hiddenSeries[serie.alias];
-      } else {
-        this.hiddenSeries[serie.alias] = true;
-      }
-    } else {
-      this.toggleSeriesExclusiveMode(serie);
-    }
+  onToggleSeries = hiddenSeries => {
+    this.hiddenSeries = hiddenSeries;
     this.render();
-  }
+  };
 
-  toggleSeriesExclusiveMode(serie) {
-    const hidden = this.hiddenSeries;
+  onToggleSort = (sortBy, sortDesc) => {
+    this.panel.legend.sort = sortBy;
+    this.panel.legend.sortDesc = sortDesc;
+    this.render();
+  };
 
-    if (hidden[serie.alias]) {
-      delete hidden[serie.alias];
-    }
-
-    // check if every other series is hidden
-    const alreadyExclusive = _.every(this.seriesList, value => {
-      if (value.alias === serie.alias) {
-        return true;
-      }
-
-      return hidden[value.alias];
-    });
-
-    if (alreadyExclusive) {
-      // remove all hidden series
-      _.each(this.seriesList, value => {
-        delete this.hiddenSeries[value.alias];
-      });
-    } else {
-      // hide all but this serie
-      _.each(this.seriesList, value => {
-        if (value.alias === serie.alias) {
-          return;
-        }
-
-        this.hiddenSeries[value.alias] = true;
-      });
-    }
-  }
-
-  toggleAxis(info) {
+  onToggleAxis = info => {
     let override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
     }
-    info.yaxis = override.yaxis = info.yaxis === 2 ? 1 : 2;
+    override.yaxis = info.yaxis;
     this.render();
-  }
+  };
 
   addSeriesOverride(override) {
     this.panel.seriesOverrides.push(override || {});

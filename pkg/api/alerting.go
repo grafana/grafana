@@ -134,11 +134,15 @@ func AlertTest(c *m.ReqContext, dto dtos.AlertTestCommand) Response {
 		OrgId:     c.OrgId,
 		Dashboard: dto.Dashboard,
 		PanelId:   dto.PanelId,
+		User:      c.SignedInUser,
 	}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {
 		if validationErr, ok := err.(alerting.ValidationError); ok {
 			return Error(422, validationErr.Error(), nil)
+		}
+		if err == m.ErrDataSourceAccessDenied {
+			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Failed to test rule", err)
 	}
@@ -291,7 +295,7 @@ func PauseAlert(c *m.ReqContext, dto dtos.PauseAlertCommand) Response {
 		return Error(500, "", err)
 	}
 
-	var response m.AlertStateType = m.AlertStatePending
+	var response m.AlertStateType = m.AlertStateUnknown
 	pausedState := "un-paused"
 	if cmd.Paused {
 		response = m.AlertStatePaused

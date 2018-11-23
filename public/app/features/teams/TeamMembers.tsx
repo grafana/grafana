@@ -74,7 +74,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
-        {syncEnabled ? this.renderLabels(member.labels) : ''}
+        {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
           <DeleteButton onConfirmDelete={() => this.onRemoveMember(member)} />
         </td>
@@ -132,7 +132,7 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
-                {syncEnabled ? <th /> : ''}
+                {syncEnabled && <th />}
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
