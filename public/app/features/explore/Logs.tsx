@@ -28,7 +28,9 @@ interface LogsProps {
   loading: boolean;
   position: string;
   range?: RawTimeRange;
+  scanning?: boolean;
   onChangeTime?: (range: RawTimeRange) => void;
+  onStartScanOlder?: () => void;
 }
 
 interface LogsState {
@@ -83,8 +85,13 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     this.setState({ hiddenLogLevels });
   };
 
+  onClickScanOlder = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    this.props.onStartScanOlder();
+  };
+
   render() {
-    const { className = '', data, loading = false, position, range } = this.props;
+    const { className = '', data, loading = false, position, range, scanning } = this.props;
     const { dedup, hiddenLogLevels, showLabels, showLocalTime, showUtc } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
     const filteredData = filterLogLevels(data, hiddenLogLevels);
@@ -200,7 +207,19 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
               </Fragment>
             ))}
         </div>
-        {!loading && !hasData && 'No data was returned.'}
+        {!loading &&
+          !hasData && (
+            <div>
+              No logs found.
+              {scanning ? (
+                'Scanning...'
+              ) : (
+                <a className="link" onClick={this.onClickScanOlder}>
+                  Scan for older logs
+                </a>
+              )}
+            </div>
+          )}
       </div>
     );
   }

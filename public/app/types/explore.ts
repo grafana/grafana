@@ -140,6 +140,7 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   resultType: ResultType;
   rowIndex: number;
+  scanning?: boolean;
 }
 
 export interface TextMatch {
@@ -162,6 +163,7 @@ export interface ExploreState {
   initialQueries: DataQuery[];
   queryTransactions: QueryTransaction[];
   range: RawTimeRange;
+  scanning?: boolean;
   showingGraph: boolean;
   showingLogs: boolean;
   showingStartPage?: boolean;
