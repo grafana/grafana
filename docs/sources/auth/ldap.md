@@ -3,6 +3,7 @@ title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
 type = "docs"
+aliases = ["/installation/ldap/"]
 [menu.docs]
 name = "LDAP"
 identifier = "ldap"
