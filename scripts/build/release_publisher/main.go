@@ -41,12 +41,12 @@ func main() {
 	var builder releaseBuilder
 	var product string
 
-	archiveProviderRoot := "https://s3-us-west-2.amazonaws.com"
+	archiveProviderRoot := "https://dl.grafana.com"
 	buildArtifacts := completeBuildArtifactConfigurations
 
 	if enterprise {
 		product = "grafana-enterprise"
-		baseUrl = createBaseUrl(archiveProviderRoot, "grafana-enterprise-releases", product, nightly)
+		baseUrl = createBaseUrl(archiveProviderRoot, "enterprise", product, nightly)
 		var err error
 		buildArtifacts, err = filterBuildArtifacts([]artifactFilter{
 			{os: "deb", arch: "amd64"},
@@ -61,7 +61,7 @@ func main() {
 
 	} else {
 		product = "grafana"
-		baseUrl = createBaseUrl(archiveProviderRoot, "grafana-releases", product, nightly)
+		baseUrl = createBaseUrl(archiveProviderRoot, "oss", product, nightly)
 	}
 
 	if fromLocal {
