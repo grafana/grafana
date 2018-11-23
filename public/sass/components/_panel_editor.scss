@@ -37,6 +37,7 @@
   margin: 0 62px;
   border-left: 2px solid #ac5224;
   border-radius: 3px;
+  box-shadow: $popover-shadow;
 }
 
 .panel-editor__scroll {
@@ -167,8 +168,8 @@
   flex-direction: column;
   position: absolute;
   top: 79px;
-  left: 5px;
-  align-items: center;
+  left: 9px;
+  align-items: flex-start;
 
   &::before {
     content: '';
@@ -176,7 +177,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 25px;
+    left: 21px;
     width: 2px;
     background: #8e8e8e;
   }
@@ -198,7 +199,6 @@
 
   &.active {
     position: relative;
-    left: 4px;
   }
 
   img {

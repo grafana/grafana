@@ -79,7 +79,7 @@ $brand-gradient: linear-gradient(
 );
 
 $page-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 100px);
-$edit-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 00px, #090909 50%);
+$edit-gradient: linear-gradient(180deg, rgb(22, 23, 25) 00px, #090909 60%);
 
 // Links
 // -------------------------
@@ -366,6 +366,6 @@ $switch-slider-shadow: 0 0 3px black;
 //Checkbox
 // -------------------------
 $checkbox-bg: $dark-1;
-$checkbox-border: 1px solid $gray-2;
+$checkbox-border: 1px solid $gray-1;
 $checkbox-checked-bg: linear-gradient(0deg, $orange, $red);
 $checkbox-color: $dark-1;

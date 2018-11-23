@@ -72,7 +72,11 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     const { plugin } = this.props;
     const activeTab = store.getState().location.query.tab || 'queries';
 
-    const tabs = [{ id: 'queries', text: 'Queries' }, { id: 'visualization', text: 'Visualization' }];
+    const tabs = [
+      { id: 'queries', text: 'Queries' },
+      { id: 'visualization', text: 'Visualization' },
+      { id: 'general', text: 'General' },
+    ];
 
     if (config.alertingEnabled && plugin.id === 'graph') {
       tabs.push({
