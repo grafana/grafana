@@ -14,17 +14,17 @@ weight = -10
 
 Grafana v5.4 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
-- [Alerting]({{< relref "#alerting" >}}) Remove false positive alerts with the new `For` setting
+- [Alerting]({{< relref "#alerting" >}}) Limit false positives with the new `For` setting
 - [Google Stackdriver]({{< relref "#google-stackdriver" >}}) Now with support for templating queries
 - [MySQL]({{< relref "#mysql-query-builder" >}}) gets a new query builder!
 - [Graph Panel]({{< relref "#graph-panel-enhancements" >}}) Highlight time regions and more
-- [Team Preferences]({{< relref "#team-preferences" >}}) Assign different home dashboards for teams
+- [Team Preferences]({{< relref "#team-preferences" >}}) Give your teams their own home dashboard
 
 ## Alerting
 
 {{< docs-imagebox img="/img/docs/v54/alerting-for-dark-theme.png" max-width="600px" class="docs-image--right" >}}
 
-Grafana v5.4 ships with a new alert rule setting named `For` which is great for removing false positive alerts. If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications. Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers.
+Grafana v5.4 ships with a new alert rule setting named `For` which is great for removing false positives. If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications. Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers.
 
 In the screenshot you can see an example timeline of an alert using the `For` setting. At ~16:04 the alert state changes to `Pending` and after 4 minutes it changes to `Alerting` which is when alert notifications are sent. Once the series falls back to normal the alert rule goes back to `OK`. [Learn more](/alerting/rules/#for).
 
@@ -36,9 +36,8 @@ Additionally, there's now support for disable the sending of `OK` alert notifica
 
 {{< docs-imagebox img="/img/docs/v54/stackdriver_template_query.png" max-width="600px" class="docs-image--right" >}}
 
-Grafana v5.4 included built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) which enables you to visualize your Stackdriver metrics in Grafana.
-One important feature missing was support for templating queries. Grafana v5.4 includes support for templating queries and introduces a brand new templating query editor
-for Stackdriver.
+Grafana v5.3 included built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) which enables you to visualize your Stackdriver metrics in Grafana.
+One important feature missing was support for templating queries. This is now included together with a brand new templating query editor for Stackdriver.
 
 The Stackdriver templating query editor lets you choose from a set of different Query Types. This will in turn reveal additional drop downs to help you
 find, filter and select the templating values you're interested in, see screenshot for details. The templating query editor also supports chaining multiple variables
@@ -66,7 +65,7 @@ Grafana v5.4 adds support for highlighting weekdays and/or certain timespans in 
 
 {{< docs-imagebox img="/img/docs/v54/graph_time_regions.png" max-width= "800px" >}}
 
-Additionally, now when rendering series as lines in the graph panel, should there be only one data point available for one series so that a connecting line cannot be established, a point will
+Additionally, when rendering series as lines in the graph panel, should there be only one data point available for one series so that a connecting line cannot be established, a point will
 automatically be rendered for that data point. This should make it easier to understand what's going on when only receiving a single data point.
 
 {{< docs-imagebox img="/img/docs/v54/graph_dot_single_point.png" max-width= "800px" >}}
