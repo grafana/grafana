@@ -82,7 +82,7 @@ $input-border: 1px solid $input-border-color;
   align-content: flex-start;
 
   .gf-form + .gf-form {
-    margin-right: $gf-form-margin;
+    margin-left: $gf-form-margin;
   }
 }
 
@@ -163,7 +163,6 @@ $input-border: 1px solid $input-border-color;
   width: 100%;
   height: $gf-form-input-height;
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
