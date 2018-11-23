@@ -55,7 +55,7 @@ module.exports = merge(common, {
             cacheDirectory: true,
             babelrc: false,
             plugins: [
-              ["@babel/plugin-proposal-class-properties", { loose: true }],
+              [require("@rtsao/plugin-proposal-class-properties"), { loose: true }],
               'angularjs-annotate',
               'syntax-dynamic-import', // needed for `() => import()` in routes.ts
               'react-hot-loader/babel'
