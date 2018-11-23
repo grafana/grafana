@@ -78,8 +78,8 @@ disable_login_form = true
 
 ### Automatic OAuth login
 
-Set to true to attempt login with OAuth automatically, skipping the login screen. 
-This setting is ignored if multiple OAuth providers are configured. 
+Set to true to attempt login with OAuth automatically, skipping the login screen.
+This setting is ignored if multiple OAuth providers are configured.
 Defaults to `false`.
 
 ```bash
@@ -94,4 +94,13 @@ Set to the option detailed below to true to hide sign-out menu link. Useful if y
 ```bash
 [auth]
 disable_signout_menu = true
+```
+
+### URL redirect after signing out
+
+URL to redirect the user to after signing out from Grafana. This can for example be used to enable signout from oauth provider.
+
+```bash
+[auth]
+signout_redirect_url =
 ```
