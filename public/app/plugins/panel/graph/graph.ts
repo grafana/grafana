@@ -24,6 +24,8 @@ import config from 'app/core/config';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
+// import { TimeSeriesTooltip, TimeSeriesTooltipProps } from 'app/core/components/TimeSeriesTooltip/TimeSeriesTooltip';
+import GraphTooltipReact, { GraphTooltipProps } from 'app/core/components/TimeSeriesTooltip/GraphTooltip';
 
 import { GraphCtrl } from './module';
 
@@ -41,6 +43,7 @@ class GraphElement {
   thresholdManager: ThresholdManager;
   timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
+  tooltipElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
@@ -69,6 +72,7 @@ class GraphElement {
     // get graph legend element
     if (this.elem && this.elem.parent) {
       this.legendElem = this.elem.parent().find('.graph-legend')[0];
+      this.tooltipElem = this.elem.parent().find('.graph-tooltip')[0];
     }
   }
 
@@ -121,7 +125,7 @@ class GraphElement {
       return;
     }
 
-    this.tooltip.show(evt.pos);
+    // this.tooltip.show(evt.pos);
   }
 
   onPanelTeardown() {
@@ -138,6 +142,7 @@ class GraphElement {
     this.elem.remove();
 
     ReactDOM.unmountComponentAtNode(this.legendElem);
+    ReactDOM.unmountComponentAtNode(this.tooltipElem);
   }
 
   onGraphHoverClear(event, info) {
@@ -301,6 +306,17 @@ class GraphElement {
 
     this.sortedSeries = this.sortSeries(this.data, this.panel);
     this.callPlot(options, true);
+    this.renderTooltip();
+  }
+
+  renderTooltip() {
+    const tooltipProps: GraphTooltipProps = {
+      series: this.sortedSeries,
+      chartElem: this.elem,
+      dateFormat: this.ctrl.dashboard.formatDate.bind(this.ctrl.dashboard),
+    };
+    const tooltipReactElem = React.createElement(GraphTooltipReact, tooltipProps);
+    ReactDOM.render(tooltipReactElem, this.tooltipElem);
   }
 
   buildFlotPairs(data) {

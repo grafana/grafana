@@ -6,6 +6,9 @@ const template = `
   <div class="graph-legend">
     <div class="graph-legend-content" graph-legend></div>
   </div>
+
+  <div class="graph-tooltip">
+  </div>
 </div>
 `;
 

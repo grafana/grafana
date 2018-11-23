@@ -460,3 +460,14 @@
 .thresholds-form-disabled {
   filter: blur(3px);
 }
+
+.graph-tooltip-container {
+  position: fixed;
+  z-index: 100;
+}
+
+.timeseries-tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}

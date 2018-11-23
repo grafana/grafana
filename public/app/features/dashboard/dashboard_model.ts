@@ -576,6 +576,8 @@ export class DashboardModel {
   removePanel(panel: PanelModel) {
     const index = _.indexOf(this.panels, panel);
     this.panels.splice(index, 1);
+    // This should be invoked in order to emit 'panel-teardown', remove panel listeners and execute onPanelTeardown()
+    panel.destroy();
     this.events.emit('panel-removed', panel);
   }
 
