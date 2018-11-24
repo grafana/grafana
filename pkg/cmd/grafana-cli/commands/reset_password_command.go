@@ -15,12 +15,12 @@ import (
 const AdminUserId = 1
 
 func resetPasswordCommand(c CommandLine) error {
-
+	fmt.Print("New password: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		fmt.Printf("Failed to read password: %v", err)
 	}
-	newPassword = string(bytePassword)
+	newPassword := string(bytePassword)
 	fmt.Println()
 
 	password := models.Password(newPassword)

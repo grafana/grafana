@@ -211,3 +211,7 @@ ignored = [
 [[constraint]]
   name = "gopkg.in/square/go-jose.v2"
   version = "2.1.9"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
