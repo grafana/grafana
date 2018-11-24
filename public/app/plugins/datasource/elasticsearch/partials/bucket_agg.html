@@ -70,6 +70,16 @@
 			</label>
 			<input class="gf-form-input max-width-12" type="number" ng-model="agg.settings.trimEdges" ng-change="onChangeInternal()">
 		</div>
+		<div class="gf-form offset-width-7">
+			<label class="gf-form-label width-10">
+				Offset
+				<info-popover mode="right-normal">
+					Interval Offset
+				</info-popover>
+			</label>
+			<input class="gf-form-input max-width-12" type="text" ng-model="agg.settings.offset" ng-change="onChangeInternal()">
+		</div>
+
 	</div>
 
 	<div ng-if="agg.type === 'histogram'">
