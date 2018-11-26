@@ -5,7 +5,7 @@
 
 .threshold-rows {
   flex: 1 0 auto;
-  margin-left: 10px;
+  margin-left: 5px;
 }
 
 .threshold-row {
@@ -55,7 +55,8 @@
 }
 
 .color-indicators {
-  width: 20px;
+  width: 15px;
   min-height: 40px;
   flex: 0 1 auto;
+  border-radius: $border-radius;
 }
