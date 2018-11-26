@@ -71,7 +71,10 @@ export class ElasticQueryBuilder {
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
     esAgg.format = 'epoch_millis';
-    esAgg.offset = settings.offset || '0';
+
+    if (settings.offset !== '') {
+      esAgg.offset = settings.offset;
+    }
 
     if (esAgg.interval === 'auto') {
       esAgg.interval = '$__interval';
