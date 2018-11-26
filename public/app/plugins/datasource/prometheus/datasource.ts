@@ -437,7 +437,7 @@ export class PrometheusDatasource {
   }
 
   getQueryHints(query: DataQuery, result: any[]) {
-    return getQueryHints(query.expr, result, this);
+    return getQueryHints(query.expr || '', result, this);
   }
 
   loadRules() {

@@ -96,7 +96,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
     }
   }
 
-  if (series.length >= SUM_HINT_THRESHOLD_COUNT) {
+  if (series && series.length >= SUM_HINT_THRESHOLD_COUNT) {
     const simpleMetric = query.trim().match(/^\w+$/);
     if (simpleMetric) {
       hints.push({
