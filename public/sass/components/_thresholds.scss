@@ -9,6 +9,11 @@
 }
 
 .threshold-row {
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+  padding: 5px;
+
   &::before {
     font-family: 'FontAwesome';
     content: '\f0d9';
@@ -16,8 +21,37 @@
   }
 }
 
+.threshold-row-inner {
+  border: 1px solid $input-label-border-color;
+  border-radius: $border-radius;
+  display: flex;
+  overflow: hidden;
+  width: 300px;
+  height: 37px;
+}
+
+.threshold-row-color {
+  width: 36px;
+  border-right: 1px solid $input-label-border-color;
+}
+
 .threshold-row-input {
-  border-radius: $border-radius 0 0 $border-radius;
+  padding: 8px 10px;
+  width: 230px;
+}
+
+.threshold-row-label {
+  background-color: $input-label-bg;
+  padding: 5px;
+  width: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.threshold-row-add-label {
+  align-items: center;
+  display: flex;
+  padding: 5px 8px;
 }
 
 .threshold-row-min {
@@ -28,14 +62,20 @@
   margin-bottom: -17px;
 }
 
-.threshold-row-add {
-  border: $border-width solid $input-label-border-color;
-  border-radius: $border-radius 0 0 $border-radius;
+.threshold-row-remove {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
-  height: 36px;
+  cursor: pointer;
+}
+
+.threshold-row-add {
+  border-right: $border-width solid $input-label-border-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
   background-color: $green;
 }
 

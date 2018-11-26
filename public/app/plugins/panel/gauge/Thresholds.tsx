@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
+import classNames from 'classnames/bind';
 import { PanelOptionsProps, Threshold } from 'app/types';
 import { OptionsProps } from './module';
-import { Label } from '../../../core/components/Label/Label';
 
 interface State {
   thresholds: Threshold[];
@@ -22,6 +22,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   }
 
   onAddThreshold = index => {
+    console.log('add at index', index);
     const newThresholds = this.state.thresholds.map(threshold => {
       if (threshold.index >= index) {
         threshold = { ...threshold, index: threshold.index + 1 };
@@ -89,68 +90,70 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const { thresholds } = this.state;
 
     return [
-      <div className="gf-form threshold-row threshold-row-min" key="min">
-        <input
-          className="gf-form-input threshold-row-input"
-          onBlur={this.onBlur}
-          onChange={event => this.onChangeThresholdValue(event, thresholds[0])}
-          value={thresholds[0].value}
-        />
-        <Label width={3}>{thresholds[0].label}</Label>
-      </div>,
-      <div className="gf-form threshold-row" key="add">
-        <div onClick={() => this.onAddThreshold(1)} className="threshold-row-add">
-          <i className="fa fa-plus" />
+      <div className="threshold-row threshold-row-min" key="min">
+        <div className="threshold-row-inner">
+          <div className="threshold-row-color" />
+          <input
+            className="threshold-row-input"
+            onBlur={this.onBlur}
+            onChange={event => this.onChangeThresholdValue(event, thresholds[0])}
+            value={thresholds[0].value}
+          />
+          <div className="threshold-row-label">{thresholds[0].label}</div>
         </div>
-        <Label className="threshold-row-label" width={18}>
-          Add new threshold by clicking the line
-        </Label>
       </div>,
-      <div className="gf-form threshold-row threshold-row-max" key="max">
-        <input
-          className="gf-form-input threshold-row-input"
-          onBlur={this.onBlur}
-          onChange={event => this.onChangeThresholdValue(event, thresholds[1])}
-          value={thresholds[1].value}
-        />
-        <Label width={3}>{thresholds[0].label}</Label>
+      <div className="threshold-row" key="add">
+        <div className="threshold-row-inner">
+          <div onClick={() => this.onAddThreshold(1)} className="threshold-row-add">
+            <i className="fa fa-plus" />
+          </div>
+          <div className="threshold-row-add-label">Add new threshold by clicking the line.</div>
+        </div>
+      </div>,
+      <div className="threshold-row threshold-row-max" key="max">
+        <div className="threshold-row-inner">
+          <div className="threshold-row-color" />
+          <input
+            className="threshold-row-input"
+            onBlur={this.onBlur}
+            onChange={event => this.onChangeThresholdValue(event, thresholds[1])}
+            value={thresholds[1].value}
+          />
+          <div className="threshold-row-label">{thresholds[0].label}</div>
+        </div>
       </div>,
     ];
   }
 
   renderThresholds() {
     const { thresholds } = this.state;
+
     return thresholds.map((threshold, index) => {
+      const rowStyle = classNames({
+        'threshold-row': true,
+        'threshold-row-min': index === 0,
+        'threshold-row-max': index === thresholds.length,
+      });
+
       return (
-        <div
-          className={`gf-form threshold-row ${index === 0 ? 'threshold-row-min' : ''} ${
-            index === thresholds.length ? 'threshold-row-max' : ''
-          } `}
-          key={`${threshold}-${index}`}
-        >
-          <input
-            className="gf-form-input threshold-row-input"
-            type="text"
-            onChange={event => this.onChangeThresholdValue(event, threshold)}
-            value={threshold.value}
-            onBlur={this.onBlur}
-          />
-          {threshold.canRemove ? (
-            <div
-              onClick={() => this.onRemoveThreshold(threshold)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '36px',
-                height: '36px',
-              }}
-            >
-              <i className="fa fa-times" />
-            </div>
-          ) : (
-            <Label width={3}>{threshold.label}</Label>
-          )}
+        <div className={rowStyle} key={`${threshold.index}-${index}`}>
+          <div className="threshold-row-inner">
+            <div className="threshold-row-color" />
+            <input
+              className="threshold-row-input"
+              type="text"
+              onChange={event => this.onChangeThresholdValue(event, threshold)}
+              value={threshold.value}
+              onBlur={this.onBlur}
+            />
+            {threshold.canRemove ? (
+              <div onClick={() => this.onRemoveThreshold(threshold)} className="threshold-row-remove">
+                <i className="fa fa-times" />
+              </div>
+            ) : (
+              <div className="threshold-row-label">{threshold.label}</div>
+            )}
+          </div>
         </div>
       );
     });
@@ -161,16 +164,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
     if (userAddedThresholds === 0) {
       return 1;
-    } else if (userAddedThresholds > 1 && index === this.state.thresholds.length) {
-      return index - 1;
-    } else if (index === 0) {
-      return 1;
-    } else if (index > 0) {
-      return index;
     }
 
-    // SAD
-    return -1;
+    return index;
   }
 
   renderIndicatorSection(index) {
@@ -206,24 +202,20 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
         }}
       >
         <div
-          onClick={() => this.onAddThreshold(this.insertAtIndex(index - 1))}
+          onClick={() => this.onAddThreshold(this.insertAtIndex(index))}
           style={{
             height: '50%',
             background: this.getIndicatorColor(index),
           }}
-        >
-          d
-        </div>
+        />
         <div
-          onClick={() => this.onAddThreshold(this.insertAtIndex(index))}
+          onClick={() => this.onAddThreshold(this.insertAtIndex(index + 1))}
           style={{
             height: `50%`,
             cursor: 'pointer',
             background: this.getIndicatorColor(index),
           }}
-        >
-          i
-        </div>
+        />
       </div>
     );
   }
