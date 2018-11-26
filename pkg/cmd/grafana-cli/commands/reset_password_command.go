@@ -16,7 +16,7 @@ const AdminUserId = 1
 
 func resetPasswordCommand(c CommandLine) error {
 	fmt.Print("New password: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := terminal.ReadPassword(syscall.Stdin)
 	if err != nil {
 		fmt.Printf("Failed to read password: %v", err)
 	}
