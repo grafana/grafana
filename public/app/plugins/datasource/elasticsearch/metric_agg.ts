@@ -18,6 +18,7 @@ export function elasticMetricAgg() {
 }
 
 export class ElasticMetricAggCtrl {
+  /** @nginject */
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
     const metricAggs = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
