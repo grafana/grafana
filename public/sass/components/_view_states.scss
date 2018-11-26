@@ -1,8 +1,5 @@
 .page-kiosk-mode {
   .sidemenu,
-  .navbar {
-    display: none;
-  }
   .scroll-canvas--dashboard {
     height: 100%;
   }
@@ -10,6 +7,16 @@
   .panel-menu-container,
   .panel-info-corner--info,
   .panel-info-corner--links {
+    display: none;
+  }
+
+  // remove nav-bar except the zoom and refresh button
+  .navbar-button--add-panel,
+  .navbar-button--star,
+  .navbar-button--save,
+  .navbar-button--share,
+  .navbar-button--settings,
+  .navbar-page-btn {
     display: none;
   }
 }
