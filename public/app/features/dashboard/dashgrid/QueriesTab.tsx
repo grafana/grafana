@@ -238,7 +238,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody main={dsInformation} toolbarItems={[queryInspector, dsHelp, options]}>
+      <EditorTabBody heading="Queries" main={dsInformation} toolbarItems={[options, queryInspector, dsHelp]}>
         <div ref={element => (this.element = element)} style={{ width: '100%' }} />
       </EditorTabBody>
     );

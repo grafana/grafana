@@ -2,12 +2,18 @@
   display: flex;
   align-content: center;
   align-items: center;
-  background: $toolbar-bg;
-  box-shadow: $toolbar-shadow;
-  padding: 7px 20px 7px 20px;
+  padding: 3px 20px 3px 20px;
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
+  background: $toolbar-bg;
+  border-radius: 3px;
+  height: 44px;
+}
+
+.toolbar__heading {
+  font-size: $font-size-lg;
+  padding-right: 20px;
 }
 
 .toolbar__main {
@@ -36,20 +42,12 @@
   height: 20px;
 }
 
-.toolbar-subview {
-  position: relative;
-  padding: 20px 20px;
-  background-color: $empty-list-cta-bg;
-  top: -45px;
-  margin: 0 30px 20px 0px;
-}
-
 .toolbar-subview__close {
   background: transparent;
   padding: 4px 8px 4px 9px;
   border: none;
   position: absolute;
-  right: 15px;
+  right: 25px;
   top: 20px;
   font-size: $font-size-md;
 

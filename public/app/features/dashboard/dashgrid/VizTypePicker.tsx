@@ -67,10 +67,6 @@ export class VizTypePicker extends PureComponent<Props, State> {
           />
           <i className="gf-form-input-icon fa fa-search" />
         </label>
-        <div className="p-l-1">
-          <button className="btn toggle-btn gf-form-btn active">Basic Types</button>
-          <button className="btn toggle-btn gf-form-btn">Master Types</button>
-        </div>
       </>
     );
   }

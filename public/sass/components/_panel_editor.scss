@@ -24,9 +24,38 @@
 .panel-editor-container__editor {
   margin-top: $panel-margin*2;
   display: flex;
-  flex-direction: column;
-  height: 65%;
+  flex-direction: row;
+  height: 60%;
   position: relative;
+}
+
+.panel-editor__right {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  background: $page-bg;
+  margin: 0 62px;
+  border-left: 2px solid #ac5224;
+  border-radius: 3px;
+  box-shadow: $popover-shadow;
+}
+
+.panel-editor__close {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
+  position: absolute;
+  left: 11px;
+  top: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+
+  i {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 20px;
+  }
 }
 
 .panel-editor__scroll {
@@ -37,6 +66,11 @@
 
 .panel-editor__content {
   padding: 40px 20px;
+}
+
+.panel-editor__toolbar-view {
+  background: $black;
+  padding: 20px;
 }
 
 .panel-in-fullscreen {
@@ -106,9 +140,8 @@
 }
 
 .viz-picker__item {
-  background: $card-background;
-  box-shadow: $card-shadow;
-
+  background: $panel-bg;
+  border: $panel-border;
   border-radius: 3px;
   height: 90px;
   width: 150px;
@@ -149,22 +182,46 @@
 .panel-editor-tabs {
   position: relative;
   z-index: 2;
-  box-shadow: $page-header-shadow;
-  border-bottom: 1px solid $page-header-border-color;
-  padding: 0 $dashboard-padding;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 79px;
+  left: 9px;
+  align-items: flex-start;
 
-  @include clearfix();
-
-  .active.gf-tabs-link {
-    background: $toolbar-tab-bg;
+  &::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 21px;
+    width: 2px;
+    background: #8e8e8e;
   }
 }
 
-.panel-editor-tabs__close {
-  padding: 5px 9px;
-  border-radius: $border-radius;
-  float: right;
-  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+.panel-editor-tabs__item {
+  margin-bottom: 25px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.panel-editor-tabs__link {
+  display: inline-block;
+
+  &.active {
+    position: relative;
+  }
+
+  img {
+    height: 44px;
+  }
 }
 
 .ds-picker-list {
@@ -175,9 +232,8 @@
 }
 
 .ds-picker-list__item {
-  background: $card-background;
-  box-shadow: $card-shadow;
-
+  background: $panel-bg;
+  border: $panel-border;
   border-radius: 3px;
   display: flex;
   cursor: pointer;

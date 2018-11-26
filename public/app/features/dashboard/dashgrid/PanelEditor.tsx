@@ -26,7 +26,6 @@ interface PanelEditorProps {
 interface PanelEditorTab {
   id: string;
   text: string;
-  icon: string;
 }
 
 export class PanelEditor extends PureComponent<PanelEditorProps> {
@@ -74,35 +73,37 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     const activeTab = store.getState().location.query.tab || 'queries';
 
     const tabs = [
-      { id: 'general', text: 'General', icon: 'gicon gicon-preferences' },
-      { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
-      { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
+      { id: 'queries', text: 'Queries' },
+      { id: 'visualization', text: 'Visualization' },
+      { id: 'general', text: 'General' },
     ];
 
     if (config.alertingEnabled && plugin.id === 'graph') {
       tabs.push({
         id: 'alert',
         text: 'Alert',
-        icon: 'gicon gicon-alert',
       });
     }
 
     return (
       <div className="panel-editor-container__editor">
-        <div className="panel-editor-resizer">
-          <div className="panel-editor-resizer__handle">
-            <div className="panel-editor-resizer__handle-dots" />
-          </div>
+        <div className="panel-editor__close">
+          <i className="fa fa-arrow-left" />
         </div>
+        {
+          // <div className="panel-editor-resizer">
+          //   <div className="panel-editor-resizer__handle">
+          //     <div className="panel-editor-resizer__handle-dots" />
+          //   </div>
+          // </div>
+        }
 
         <div className="panel-editor-tabs">
-          <ul className="gf-tabs">
-            {tabs.map(tab => {
-              return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
-            })}
-          </ul>
+          {tabs.map(tab => {
+            return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
+          })}
         </div>
-        {this.renderCurrentTab(activeTab)}
+        <div className="panel-editor__right">{this.renderCurrentTab(activeTab)}</div>
       </div>
     );
   }
@@ -116,15 +117,15 @@ interface TabItemParams {
 
 function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   const tabClasses = classNames({
-    'gf-tabs-link': true,
+    'panel-editor-tabs__link': true,
     active: activeTab === tab.id,
   });
 
   return (
-    <li className="gf-tabs-item" onClick={() => onClick(tab)}>
+    <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
       <a className={tabClasses}>
-        <i className={tab.icon} /> {tab.text}
+        <img src={`public/img/panel-tabs/${tab.id}${activeTab === tab.id ? '-selected' : ''}.svg`} />
       </a>
-    </li>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface Props {
   children: JSX.Element;
+  heading: string;
   main?: EditorToolBarView;
   toolbarItems: EditorToolBarView[];
 }
@@ -19,6 +20,7 @@ export interface EditorToolBarView {
 
 interface State {
   openView?: EditorToolBarView;
+  fadeIn: boolean;
 }
 
 export class EditorTabBody extends PureComponent<Props, State> {
@@ -27,7 +29,12 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
     this.state = {
       openView: null,
+      fadeIn: false,
     };
+  }
+
+  componentDidMount() {
+    this.setState({ fadeIn: true });
   }
 
   onToggleToolBarView = (item: EditorToolBarView) => {
@@ -94,24 +101,26 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   render() {
-    const { children, toolbarItems, main } = this.props;
-    const { openView } = this.state;
+    const { children, toolbarItems, main, heading } = this.props;
+    const { openView, fadeIn } = this.state;
+
     return (
       <>
-        {main && (
-          <div className="toolbar">
-            {this.renderMainSelection(main)}
-            <div className="gf-form--grow" />
-            {toolbarItems.map(item => this.renderButton(item))}
-          </div>
-        )}
+        <div className="toolbar">
+          <div className="toolbar__heading">{heading}</div>
+          {main && this.renderMainSelection(main)}
+          <div className="gf-form--grow" />
+          {toolbarItems.map(item => this.renderButton(item))}
+        </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false}>
+            <FadeIn in={openView !== null} duration={200}>
+              <div className="panel-editor__toolbar-view">{openView && this.renderOpenView(openView)}</div>
+            </FadeIn>
             <div className="panel-editor__content">
-              <FadeIn in={openView !== null} duration={200}>
-                {openView && this.renderOpenView(openView)}
+              <FadeIn in={fadeIn} duration={50}>
+                {children}
               </FadeIn>
-              {children}
             </div>
           </CustomScrollbar>
         </div>
