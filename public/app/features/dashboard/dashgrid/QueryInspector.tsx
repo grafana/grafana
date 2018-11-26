@@ -7,12 +7,20 @@ interface Props {
   response: any;
 }
 
-export class QueryInspector extends PureComponent<Props> {
+interface State {
+  allNodesExpanded: boolean;
+}
+
+export class QueryInspector extends PureComponent<Props, State> {
   formattedJson: any;
   clipboard: any;
 
   constructor(props) {
     super(props);
+
+    this.state = {
+      allNodesExpanded: null,
+    };
   }
 
   setFormattedJson = formattedJson => {
@@ -27,8 +35,26 @@ export class QueryInspector extends PureComponent<Props> {
     appEvents.emit('alert-success', ['Content copied to clipboard']);
   };
 
+  onToggleExpand = () => {
+    this.setState(prevState => ({
+      ...prevState,
+      allNodesExpanded: !this.state.allNodesExpanded,
+    }));
+  };
+
+  getNrOfOpenNodes = () => {
+    if (this.state.allNodesExpanded === null) {
+      return 3;
+    } else if (this.state.allNodesExpanded) {
+      return 20;
+    }
+    return 1;
+  };
+
   render() {
     const { response } = this.props;
+    const { allNodesExpanded } = this.state;
+    const openNodes = this.getNrOfOpenNodes();
     return (
       <>
         {/* <div className="query-troubleshooter__header">
@@ -44,6 +70,17 @@ export class QueryInspector extends PureComponent<Props> {
         </div> */}
         {/* <button onClick={this.copyToClipboard}>Copy</button>
         <button ref={this.copyButtonRef}>Copy2</button> */}
+        <button className="btn btn-transparent" onClick={this.onToggleExpand}>
+          {allNodesExpanded ? (
+            <>
+              <i className="fa fa-minus-square-o" /> Collapse All
+            </>
+          ) : (
+            <>
+              <i className="fa fa-plus-square-o" /> Expand All
+            </>
+          )}
+        </button>
 
         <CopyToClipboard
           className="btn btn-transparent"
@@ -54,7 +91,7 @@ export class QueryInspector extends PureComponent<Props> {
             <i className="fa fa-clipboard" /> Copy to Clipboard
           </>
         </CopyToClipboard>
-        <JSONFormatter json={response} onDidRender={this.setFormattedJson} />
+        <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
       </>
     );
   }
