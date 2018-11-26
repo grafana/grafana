@@ -119,7 +119,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
             onChange={event => this.onChangeThresholdValue(event, thresholds[1])}
             value={thresholds[1].value}
           />
-          <div className="threshold-row-label">{thresholds[0].label}</div>
+          <div className="threshold-row-label">{thresholds[1].label}</div>
         </div>
       </div>,
     ];
@@ -162,7 +162,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   insertAtIndex(index) {
     const { userAddedThresholds } = this.state;
 
-    if (userAddedThresholds === 0) {
+    if (userAddedThresholds === 0 || index < 0) {
       return 1;
     }
 
