@@ -297,6 +297,85 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:34dc6c4313c8fdffac49491543141e0710f8dbe7d4aa720937a92dd8416bd3f5"
+  name = "github.com/grafana/grafana"
+  packages = [
+    "pkg/api",
+    "pkg/api/avatar",
+    "pkg/api/dtos",
+    "pkg/api/live",
+    "pkg/api/pluginproxy",
+    "pkg/api/routing",
+    "pkg/api/static",
+    "pkg/bus",
+    "pkg/cmd/grafana-cli/commands",
+    "pkg/cmd/grafana-cli/commands/commandstest",
+    "pkg/cmd/grafana-cli/logger",
+    "pkg/cmd/grafana-cli/models",
+    "pkg/cmd/grafana-cli/services",
+    "pkg/cmd/grafana-cli/utils",
+    "pkg/components/apikeygen",
+    "pkg/components/dashdiffs",
+    "pkg/components/imguploader",
+    "pkg/components/null",
+    "pkg/components/securejsondata",
+    "pkg/components/simplejson",
+    "pkg/events",
+    "pkg/extensions",
+    "pkg/log",
+    "pkg/login",
+    "pkg/metrics",
+    "pkg/metrics/graphitebridge",
+    "pkg/middleware",
+    "pkg/models",
+    "pkg/plugins",
+    "pkg/plugins/datasource/wrapper",
+    "pkg/registry",
+    "pkg/services/alerting",
+    "pkg/services/alerting/conditions",
+    "pkg/services/alerting/notifiers",
+    "pkg/services/annotations",
+    "pkg/services/cache",
+    "pkg/services/cleanup",
+    "pkg/services/dashboards",
+    "pkg/services/datasources",
+    "pkg/services/guardian",
+    "pkg/services/hooks",
+    "pkg/services/notifications",
+    "pkg/services/provisioning",
+    "pkg/services/provisioning/dashboards",
+    "pkg/services/provisioning/datasources",
+    "pkg/services/quota",
+    "pkg/services/rendering",
+    "pkg/services/search",
+    "pkg/services/session",
+    "pkg/services/sqlstore",
+    "pkg/services/sqlstore/migrations",
+    "pkg/services/sqlstore/migrator",
+    "pkg/services/sqlstore/sqlutil",
+    "pkg/setting",
+    "pkg/social",
+    "pkg/tracing",
+    "pkg/tsdb",
+    "pkg/tsdb/cloudwatch",
+    "pkg/tsdb/elasticsearch",
+    "pkg/tsdb/elasticsearch/client",
+    "pkg/tsdb/graphite",
+    "pkg/tsdb/influxdb",
+    "pkg/tsdb/mssql",
+    "pkg/tsdb/mysql",
+    "pkg/tsdb/opentsdb",
+    "pkg/tsdb/postgres",
+    "pkg/tsdb/prometheus",
+    "pkg/tsdb/stackdriver",
+    "pkg/tsdb/testdata",
+    "pkg/util",
+  ]
+  pruneopts = "NUT"
+  revision = "9df26af3db69895e2ca108a7a3cd184463071549"
+  version = "v5.4.0-beta1"
+
+[[projects]]
   branch = "master"
   digest = "1:08e53c69cd267ef7d71eeae5d953153d0d2bc1b8e0b498731fe9acaead7001b6"
   name = "github.com/grafana/grafana-plugin-model"
@@ -639,13 +718,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:758f363e0dff33cf00b234be2efb12f919d79b42d5ae3909ff9eb69ef2c3cca5"
+  digest = "1:f29a6df540b13690dd16910c34eeb591b314800264e77fa9a0ce067d953b4fd2"
   name = "golang.org/x/crypto"
   packages = [
     "ed25519",
     "ed25519/internal/edwards25519",
     "md4",
     "pbkdf2",
+    "ssh/terminal",
   ]
   pruneopts = "NUT"
   revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
@@ -691,9 +771,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ec21c5bf0572488865b93e30ffd9132afbf85bec0b20c2d6cbcf349cf2031ed5"
+  digest = "1:b1c4038b351ff911bc53fa724ff7a8f71c31f39b171500ad3561255e677a5709"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   pruneopts = "NUT"
   revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
 
@@ -903,6 +986,76 @@
     "github.com/gosimple/slug",
     "github.com/grafana/grafana-plugin-model/go/datasource",
     "github.com/grafana/grafana-plugin-model/go/renderer",
+    "github.com/grafana/grafana/pkg/api",
+    "github.com/grafana/grafana/pkg/api/avatar",
+    "github.com/grafana/grafana/pkg/api/dtos",
+    "github.com/grafana/grafana/pkg/api/live",
+    "github.com/grafana/grafana/pkg/api/pluginproxy",
+    "github.com/grafana/grafana/pkg/api/routing",
+    "github.com/grafana/grafana/pkg/api/static",
+    "github.com/grafana/grafana/pkg/bus",
+    "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands",
+    "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest",
+    "github.com/grafana/grafana/pkg/cmd/grafana-cli/logger",
+    "github.com/grafana/grafana/pkg/cmd/grafana-cli/models",
+    "github.com/grafana/grafana/pkg/cmd/grafana-cli/services",
+    "github.com/grafana/grafana/pkg/cmd/grafana-cli/utils",
+    "github.com/grafana/grafana/pkg/components/apikeygen",
+    "github.com/grafana/grafana/pkg/components/dashdiffs",
+    "github.com/grafana/grafana/pkg/components/imguploader",
+    "github.com/grafana/grafana/pkg/components/null",
+    "github.com/grafana/grafana/pkg/components/securejsondata",
+    "github.com/grafana/grafana/pkg/components/simplejson",
+    "github.com/grafana/grafana/pkg/events",
+    "github.com/grafana/grafana/pkg/extensions",
+    "github.com/grafana/grafana/pkg/log",
+    "github.com/grafana/grafana/pkg/login",
+    "github.com/grafana/grafana/pkg/metrics",
+    "github.com/grafana/grafana/pkg/metrics/graphitebridge",
+    "github.com/grafana/grafana/pkg/middleware",
+    "github.com/grafana/grafana/pkg/models",
+    "github.com/grafana/grafana/pkg/plugins",
+    "github.com/grafana/grafana/pkg/plugins/datasource/wrapper",
+    "github.com/grafana/grafana/pkg/registry",
+    "github.com/grafana/grafana/pkg/services/alerting",
+    "github.com/grafana/grafana/pkg/services/alerting/conditions",
+    "github.com/grafana/grafana/pkg/services/alerting/notifiers",
+    "github.com/grafana/grafana/pkg/services/annotations",
+    "github.com/grafana/grafana/pkg/services/cache",
+    "github.com/grafana/grafana/pkg/services/cleanup",
+    "github.com/grafana/grafana/pkg/services/dashboards",
+    "github.com/grafana/grafana/pkg/services/datasources",
+    "github.com/grafana/grafana/pkg/services/guardian",
+    "github.com/grafana/grafana/pkg/services/hooks",
+    "github.com/grafana/grafana/pkg/services/notifications",
+    "github.com/grafana/grafana/pkg/services/provisioning",
+    "github.com/grafana/grafana/pkg/services/provisioning/dashboards",
+    "github.com/grafana/grafana/pkg/services/provisioning/datasources",
+    "github.com/grafana/grafana/pkg/services/quota",
+    "github.com/grafana/grafana/pkg/services/rendering",
+    "github.com/grafana/grafana/pkg/services/search",
+    "github.com/grafana/grafana/pkg/services/session",
+    "github.com/grafana/grafana/pkg/services/sqlstore",
+    "github.com/grafana/grafana/pkg/services/sqlstore/migrations",
+    "github.com/grafana/grafana/pkg/services/sqlstore/migrator",
+    "github.com/grafana/grafana/pkg/services/sqlstore/sqlutil",
+    "github.com/grafana/grafana/pkg/setting",
+    "github.com/grafana/grafana/pkg/social",
+    "github.com/grafana/grafana/pkg/tracing",
+    "github.com/grafana/grafana/pkg/tsdb",
+    "github.com/grafana/grafana/pkg/tsdb/cloudwatch",
+    "github.com/grafana/grafana/pkg/tsdb/elasticsearch",
+    "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client",
+    "github.com/grafana/grafana/pkg/tsdb/graphite",
+    "github.com/grafana/grafana/pkg/tsdb/influxdb",
+    "github.com/grafana/grafana/pkg/tsdb/mssql",
+    "github.com/grafana/grafana/pkg/tsdb/mysql",
+    "github.com/grafana/grafana/pkg/tsdb/opentsdb",
+    "github.com/grafana/grafana/pkg/tsdb/postgres",
+    "github.com/grafana/grafana/pkg/tsdb/prometheus",
+    "github.com/grafana/grafana/pkg/tsdb/stackdriver",
+    "github.com/grafana/grafana/pkg/tsdb/testdata",
+    "github.com/grafana/grafana/pkg/util",
     "github.com/hashicorp/go-hclog",
     "github.com/hashicorp/go-plugin",
     "github.com/hashicorp/go-version",
@@ -927,6 +1080,7 @@
     "github.com/uber/jaeger-client-go/config",
     "github.com/yudai/gojsondiff",
     "github.com/yudai/gojsondiff/formatter",
+    "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/net/context/ctxhttp",
     "golang.org/x/oauth2",
     "golang.org/x/oauth2/google",
