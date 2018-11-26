@@ -60,9 +60,9 @@ aliases = ["v1.1", "guides/reference/admin"]
         <h4>Provisioning</h4>
         <p>A guide to help you automate your Grafana setup & configuration.</p>
     </a>
-    <a href="{{< relref "guides/whats-new-in-v5-3.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v5.3</h4>
-        <p>Article on all the new cool features and enhancements in v5.3</p>
+    <a href="{{< relref "guides/whats-new-in-v5-4.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v5.4</h4>
+        <p>Article on all the new cool features and enhancements in v5.4</p>
     </a>
     <a href="{{< relref "tutorials/screencasts.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Screencasts</h4>
