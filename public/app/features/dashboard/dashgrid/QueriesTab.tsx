@@ -3,11 +3,11 @@ import DataSourceOption from './DataSourceOption';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 import { DataSourcePicker } from './DataSourcePicker';
-import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import './../../panel/metrics_tab';
 import config from 'app/core/config';
+import { QueryInspector } from './QueryInspector';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -298,7 +298,11 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderQueryInspector = () => {
     const { response, isLoading } = this.state.dsQuery;
-    return isLoading ? <LoadingPlaceholder text="Loading query inspector..." /> : <JSONFormatter json={response} />;
+    return isLoading ? (
+      <LoadingPlaceholder text="Loading query inspector..." />
+    ) : (
+      <QueryInspector response={response} />
+    );
   };
 
   renderHelp = () => {

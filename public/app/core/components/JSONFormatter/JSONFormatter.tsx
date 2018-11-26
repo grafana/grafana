@@ -7,6 +7,7 @@ interface Props {
   json: {};
   config?: any;
   open?: number;
+  onDidRender?: (formattedJson: any) => void;
 }
 
 export class JSONFormatter extends PureComponent<Props> {
@@ -16,7 +17,6 @@ export class JSONFormatter extends PureComponent<Props> {
     open: 3,
     config: {
       animateOpen: true,
-      theme: 'dark',
     },
   };
 
@@ -29,7 +29,7 @@ export class JSONFormatter extends PureComponent<Props> {
   }
 
   renderJson = () => {
-    const { json, config, open } = this.props;
+    const { json, config, open, onDidRender } = this.props;
     const wrapperEl = this.wrapperRef.current;
     const formatter = new JsonExplorer(json, open, config);
     const hasChildren: boolean = wrapperEl.hasChildNodes();
@@ -37,6 +37,10 @@ export class JSONFormatter extends PureComponent<Props> {
       wrapperEl.replaceChild(formatter.render(), wrapperEl.lastChild);
     } else {
       wrapperEl.appendChild(formatter.render());
+    }
+
+    if (onDidRender) {
+      onDidRender(formatter.json);
     }
   };
 
