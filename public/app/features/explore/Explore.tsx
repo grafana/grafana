@@ -12,7 +12,7 @@ import {
   QueryHintGetter,
   QueryHint,
 } from 'app/types/explore';
-import { RawTimeRange, DataQuery } from 'app/types/series';
+import { TimeRange, DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
@@ -32,6 +32,7 @@ import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeSrv } from 'app/features/dashboard/time_srv';
 import { Emitter } from 'app/core/utils/emitter';
+import * as dateMath from 'app/core/utils/datemath';
 
 import Panel from './Panel';
 import QueryRows from './QueryRows';
@@ -91,6 +92,7 @@ interface ExploreProps {
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
   exploreEvents: Emitter;
+  timeSrv: any;
   /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
@@ -135,8 +137,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       };
     }
     this.modifiedQueries = initialQueries.slice();
-    const timeSrv = getTimeSrv();
-    timeSrv.init({
+    this.timeSrv = getTimeSrv();
+    this.timeSrv.init({
       time: { from: 'now-6h', to: 'now' },
       refresh: false,
       getTimezone: () => 'utc',
@@ -328,8 +330,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   };
 
-  onChangeTime = (nextRange: RawTimeRange) => {
-    const range: RawTimeRange = {
+  // onChangeTime = (nextRange: RawTimeRange) => {
+  //   const range: RawTimeRange = {
+  //     ...nextRange,
+  //   };
+  //   this.setState({ range }, () => this.onSubmit());
+  // };
+  onChangeTime = (nextRange: TimeRange) => {
+    const range: TimeRange = {
       ...nextRange,
     };
     this.setState({ range }, () => this.onSubmit());
@@ -549,8 +557,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     ];
 
     // Clone range for query request
-    const queryRange: RawTimeRange = { ...range };
-
+    // const queryRange: RawTimeRange = { ...range };
+    // const { from, to, raw } = this.timeSrv.timeRange();
     // Datasource is using `panelId + query.refId` for cancellation logic.
     // Using `format` here because it relates to the view panel that the request is for.
     const panelId = queryOptions.format;
@@ -560,7 +568,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       intervalMs,
       panelId,
       targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
-      range: queryRange,
+      range: {
+        from: dateMath.parse(range.from, false),
+        to: dateMath.parse(range.to, true),
+        raw: range,
+      },
+      rangeRaw: range,
     };
   }
 
