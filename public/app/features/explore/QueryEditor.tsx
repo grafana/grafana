@@ -4,8 +4,8 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getIntervals } from 'app/core/utils/explore';
 import { DataQuery } from 'app/types';
 import { RawTimeRange } from 'app/types/series';
-import 'app/features/plugins/plugin_loader';
 import { getTimeSrv } from 'app/features/dashboard/time_srv';
+import 'app/features/plugins/plugin_loader';
 
 interface QueryEditorProps {
   datasource: any;
