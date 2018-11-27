@@ -188,9 +188,11 @@ export class QueryInspector extends PureComponent<Props, State> {
     return (
       <>
         <div>
+          {/*
           <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleMocking}>
             Mock response
           </button>
+          */}
           <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleExpand}>
             {this.renderExpandCollapse()}
           </button>
@@ -215,12 +217,6 @@ export class QueryInspector extends PureComponent<Props, State> {
                 onInput={this.setMockedResponse}
                 placeholder="JSON"
               />
-              {/* <textarea
-                className="gf-form-input"
-                style={{width: '95%'}}
-                rows={10}
-                ng-model="ctrl.mockedResponse"
-                placeholder="JSON"></textarea> */}
             </div>
           </div>
         )}
