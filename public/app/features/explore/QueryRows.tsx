@@ -7,6 +7,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import QueryEditor from './QueryEditor';
 import QueryTransactionStatus from './QueryTransactionStatus';
 import { DataSource, DataQuery } from 'app/types';
+import { RawTimeRange } from 'app/types/series';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
@@ -30,6 +31,7 @@ interface QueryRowCommonProps {
   history: HistoryItem[];
   transactions: QueryTransaction[];
   exploreEvents: Emitter;
+  range: RawTimeRange;
 }
 
 type QueryRowProps = QueryRowCommonProps &
@@ -84,7 +86,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { datasource, history, initialQuery, transactions, exploreEvents } = this.props;
+    const { datasource, history, initialQuery, transactions, exploreEvents, range } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
@@ -116,6 +118,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
               onExecuteQuery={this.onExecuteQuery}
               initialQuery={initialQuery}
               exploreEvents={exploreEvents}
+              range={range}
             />
           )}
         </div>

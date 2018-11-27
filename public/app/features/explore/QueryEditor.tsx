@@ -1,8 +1,11 @@
 import React, { PureComponent } from 'react';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { Emitter } from 'app/core/utils/emitter';
+import { getIntervals } from 'app/core/utils/explore';
 import { DataQuery } from 'app/types';
+import { RawTimeRange } from 'app/types/series';
 import 'app/features/plugins/plugin_loader';
+import { getTimeSrv } from 'app/features/dashboard/time_srv';
 
 interface QueryEditorProps {
   datasource: any;
@@ -11,6 +14,7 @@ interface QueryEditorProps {
   onQueryChange?: (value: DataQuery, override?: boolean) => void;
   initialQuery: DataQuery;
   exploreEvents: Emitter;
+  range: RawTimeRange;
 }
 
 export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
@@ -22,7 +26,9 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
       return;
     }
 
-    const { datasource, initialQuery, exploreEvents } = this.props;
+    const { datasource, initialQuery, exploreEvents, range } = this.props;
+    this.initTimeSrv(range);
+
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
     const target = { datasource: datasource.name, ...initialQuery };
@@ -42,8 +48,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
           getNextQueryLetter: x => '',
         },
         hideEditorRowActions: true,
-        interval: '1m',
-        intervalMs: 60000,
+        ...getIntervals(range, datasource, null), // Possible to get resolution?
       },
     };
 
@@ -54,6 +59,16 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     if (this.component) {
       this.component.destroy();
     }
+  }
+
+  initTimeSrv(range) {
+    const timeSrv = getTimeSrv();
+    timeSrv.init({
+      time: range,
+      refresh: false,
+      getTimezone: () => 'utc',
+      timeRangeUpdated: () => console.log('refreshDashboard!'),
+    });
   }
 
   render() {

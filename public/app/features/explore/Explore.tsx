@@ -897,6 +897,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               onRemoveQueryRow={this.onRemoveQueryRow}
               transactions={queryTransactions}
               exploreEvents={this.exploreEvents}
+              range={range}
             />
             <main className="m-t-2">
               <ErrorBoundary>
