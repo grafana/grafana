@@ -116,12 +116,6 @@ class QueryRow extends PureComponent<QueryRowProps> {
               onExecuteQuery={this.onExecuteQuery}
               initialQuery={initialQuery}
               exploreEvents={exploreEvents}
-              // hint={hint}
-              // initialQuery={initialQuery}
-              // history={history}
-              // onClickHintFix={this.onClickHintFix}
-              // onPressEnter={this.onPressEnter}
-              // onQueryChange={this.onChangeQuery}
             />
           )}
         </div>
