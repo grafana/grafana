@@ -3,25 +3,26 @@ import { TimeSeries } from 'app/core/core';
 import colors from 'app/core/utils/colors';
 
 export enum LogLevel {
-  crit = 'crit',
-  warn = 'warn',
+  crit = 'critical',
+  critical = 'critical',
+  warn = 'warning',
+  warning = 'warning',
   err = 'error',
   error = 'error',
   info = 'info',
   debug = 'debug',
   trace = 'trace',
-  none = 'none',
+  unkown = 'unkown',
 }
 
 export const LogLevelColor = {
-  [LogLevel.crit]: colors[7],
-  [LogLevel.warn]: colors[1],
-  [LogLevel.err]: colors[4],
+  [LogLevel.critical]: colors[7],
+  [LogLevel.warning]: colors[1],
   [LogLevel.error]: colors[4],
   [LogLevel.info]: colors[0],
-  [LogLevel.debug]: colors[3],
-  [LogLevel.trace]: colors[3],
-  [LogLevel.none]: '#eee',
+  [LogLevel.debug]: colors[5],
+  [LogLevel.trace]: colors[2],
+  [LogLevel.unkown]: '#ddd',
 };
 
 export interface LogSearchMatch {
@@ -116,6 +117,24 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
   return {
     ...logs,
     rows: dedupedRows,
+  };
+}
+
+export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
+  if (hiddenLogLevels.size === 0) {
+    return logs;
+  }
+
+  const filteredRows = logs.rows.reduce((result: LogRow[], row: LogRow, index, list) => {
+    if (!hiddenLogLevels.has(row.logLevel)) {
+      result.push(row);
+    }
+    return result;
+  }, []);
+
+  return {
+    ...logs,
+    rows: filteredRows,
   };
 }
 

@@ -2,7 +2,7 @@ import React, { Fragment, PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { RawTimeRange } from 'app/types/series';
-import { LogsDedupStrategy, LogsModel, dedupLogRows } from 'app/core/logs_model';
+import { LogsDedupStrategy, LogsModel, dedupLogRows, filterLogLevels, LogLevel } from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { Switch } from 'app/core/components/Switch/Switch';
 
@@ -33,6 +33,7 @@ interface LogsProps {
 
 interface LogsState {
   dedup: LogsDedupStrategy;
+  hiddenLogLevels: Set<LogLevel>;
   showLabels: boolean;
   showLocalTime: boolean;
   showUtc: boolean;
@@ -41,6 +42,7 @@ interface LogsState {
 export default class Logs extends PureComponent<LogsProps, LogsState> {
   state = {
     dedup: LogsDedupStrategy.none,
+    hiddenLogLevels: new Set(),
     showLabels: true,
     showLocalTime: true,
     showUtc: false,
@@ -76,11 +78,17 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     });
   };
 
+  onToggleLogLevel = (rawLevel: string, hiddenRawLevels: Set<string>) => {
+    const hiddenLogLevels: Set<LogLevel> = new Set(Array.from(hiddenRawLevels).map(level => LogLevel[level]));
+    this.setState({ hiddenLogLevels });
+  };
+
   render() {
     const { className = '', data, loading = false, position, range } = this.props;
-    const { dedup, showLabels, showLocalTime, showUtc } = this.state;
+    const { dedup, hiddenLogLevels, showLabels, showLocalTime, showUtc } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
-    const dedupedData = dedupLogRows(data, dedup);
+    const filteredData = filterLogLevels(data, hiddenLogLevels);
+    const dedupedData = dedupLogRows(filteredData, dedup);
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
     const meta = [...data.meta];
     if (dedup !== LogsDedupStrategy.none) {
@@ -113,6 +121,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             range={range}
             id={`explore-logs-graph-${position}`}
             onChangeTime={this.props.onChangeTime}
+            onToggleSeries={this.onToggleLogLevel}
             userOptions={graphOptions}
           />
         </div>
@@ -163,11 +172,11 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         <div className="logs-entries" style={logEntriesStyle}>
           {hasData &&
             dedupedData.rows.map(row => (
-              <Fragment key={row.key}>
+              <Fragment key={row.key + row.duplicates}>
                 <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
                   {row.duplicates > 0 && (
                     <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
-                      {Array.apply(null, { length: row.duplicates }).map(index => (
+                      {Array.apply(null, { length: row.duplicates }).map((bogus, index) => (
                         <div className="logs-row-level__duplicate" key={`${index}`} />
                       ))}
                     </div>
