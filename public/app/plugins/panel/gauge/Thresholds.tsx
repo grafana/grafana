@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames/bind';
 import { PanelOptionsProps, Threshold } from 'app/types';
 import { OptionsProps } from './module';
+import { ColorPicker } from '../../../core/components/colorpicker/ColorPicker';
 
 interface State {
   thresholds: Threshold[];
@@ -14,7 +15,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
     this.state = {
       thresholds: this.props.options.thresholds || [
-        { index: 0, label: 'Min', value: 0, canRemove: false },
+        { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
         { index: 1, label: 'Max', value: 100, canRemove: false },
       ],
       userAddedThresholds: 0,
@@ -36,7 +37,10 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
 
     this.setState(prevState => ({
-      thresholds: this.sortThresholds([...newThresholds, { index: index, label: '', value: value, canRemove: true }]),
+      thresholds: this.sortThresholds([
+        ...newThresholds,
+        { index: index, label: '', value: value, canRemove: true, color: '#ff851b' },
+      ]),
       userAddedThresholds: prevState.userAddedThresholds + 1,
     }));
   };
@@ -50,11 +54,26 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
   onChangeThresholdValue = (event, threshold) => {
     const { thresholds } = this.state;
-    const value = event.target.value;
 
     const newThresholds = thresholds.map(currentThreshold => {
       if (currentThreshold === threshold) {
-        currentThreshold = { ...currentThreshold, value: value };
+        currentThreshold = { ...currentThreshold, value: event.target.value };
+      }
+
+      return currentThreshold;
+    });
+
+    this.setState({
+      thresholds: newThresholds,
+    });
+  };
+
+  onChangeThresholdColor = (threshold, color) => {
+    const { thresholds } = this.state;
+
+    const newThresholds = thresholds.map(currentThreshold => {
+      if (currentThreshold === threshold) {
+        currentThreshold = { ...currentThreshold, color: color };
       }
 
       return currentThreshold;
@@ -83,9 +102,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const { thresholds } = this.state;
 
     if (index === 0) {
-      return '#3aa655';
+      return thresholds[0].color;
     } else if (index < thresholds.length) {
-      return '#ff851b';
+      return thresholds[index].color;
     }
 
     return '#d44939';
@@ -94,17 +113,24 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   renderNoThresholds() {
     const { thresholds } = this.state;
 
+    const min = thresholds[0];
+    const max = thresholds[1];
+
     return [
       <div className="threshold-row threshold-row-min" key="min">
         <div className="threshold-row-inner">
-          <div className="threshold-row-color" />
+          <div className="threshold-row-color">
+            <div className="threshold-row-color-inner">
+              <ColorPicker color={min.color} onChange={color => this.onChangeThresholdColor(min, color)} />
+            </div>
+          </div>
           <input
             className="threshold-row-input"
             onBlur={this.onBlur}
-            onChange={event => this.onChangeThresholdValue(event, thresholds[0])}
-            value={thresholds[0].value}
+            onChange={event => this.onChangeThresholdValue(event, min)}
+            value={min.value}
           />
-          <div className="threshold-row-label">{thresholds[0].label}</div>
+          <div className="threshold-row-label">{min.label}</div>
         </div>
       </div>,
       <div className="threshold-row" key="add">
@@ -121,10 +147,10 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
           <input
             className="threshold-row-input"
             onBlur={this.onBlur}
-            onChange={event => this.onChangeThresholdValue(event, thresholds[1])}
-            value={thresholds[1].value}
+            onChange={event => this.onChangeThresholdValue(event, max)}
+            value={max.value}
           />
-          <div className="threshold-row-label">{thresholds[1].label}</div>
+          <div className="threshold-row-label">{max.label}</div>
         </div>
       </div>,
     ];
@@ -143,7 +169,16 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       return (
         <div className={rowStyle} key={`${threshold.index}-${index}`}>
           <div className="threshold-row-inner">
-            <div className="threshold-row-color" />
+            <div className="threshold-row-color">
+              {threshold.color && (
+                <div className="threshold-row-color-inner">
+                  <ColorPicker
+                    color={threshold.color}
+                    onChange={color => this.onChangeThresholdColor(threshold, color)}
+                  />
+                </div>
+              )}
+            </div>
             <input
               className="threshold-row-input"
               type="text"

@@ -33,6 +33,17 @@
 .threshold-row-color {
   width: 36px;
   border-right: 1px solid $input-label-border-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.threshold-row-color-inner {
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 .threshold-row-input {
