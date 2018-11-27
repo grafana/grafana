@@ -74,19 +74,12 @@ export class QueryInspector extends PureComponent<Props, State> {
   };
 
   onDataSourceResponse = (response: any = {}) => {
-    // ignore if closed
-    // if (!this.isOpen) {
-    //   return;
-    // }
-
     if (this.state.isMocking) {
       this.handleMocking(response);
       return;
     }
 
-    // this.isLoading = false;
-    // data = _.cloneDeep(data);
-    response = { ...response }; // clone
+    response = { ...response }; // clone - dont modify the response
 
     if (response.headers) {
       delete response.headers;
@@ -108,15 +101,6 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     if (response.data) {
       response.response = response.data;
-
-      // if (response.status === 200) {
-      //   // if we are in error state, assume we automatically opened
-      //   // and auto close it again
-      //   if (this.hasError) {
-      //     this.hasError = false;
-      //     this.isOpen = false;
-      //   }
-      // }
 
       delete response.data;
       delete response.status;
@@ -175,10 +159,26 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
+  renderExpandCollapse = () => {
+    const { allNodesExpanded } = this.state;
+
+    const collapse = (
+      <>
+        <i className="fa fa-minus-square-o" /> Collapse All
+      </>
+    );
+    const expand = (
+      <>
+        <i className="fa fa-plus-square-o" /> Expand All
+      </>
+    );
+    return allNodesExpanded ? collapse : expand;
+  };
+
   render() {
     const { response, isLoading } = this.state.dsQuery;
     const { LoadingPlaceholder } = this.props;
-    const { allNodesExpanded, isMocking } = this.state;
+    const { isMocking } = this.state;
     const openNodes = this.getNrOfOpenNodes();
 
     if (isLoading) {
@@ -187,23 +187,12 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     return (
       <>
-        {/* <div className="query-troubleshooter__header">
-        <a className="pointer" ng-click="ctrl.toggleMocking()">Mock Response</a>
-        */}
         <div>
           <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleMocking}>
             Mock response
           </button>
           <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleExpand}>
-            {allNodesExpanded ? (
-              <>
-                <i className="fa fa-minus-square-o" /> Collapse All
-              </>
-            ) : (
-              <>
-                <i className="fa fa-plus-square-o" /> Expand All
-              </>
-            )}
+            {this.renderExpandCollapse()}
           </button>
 
           <CopyToClipboard
