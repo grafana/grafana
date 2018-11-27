@@ -23,7 +23,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
   onAddThreshold = index => {
     console.log('add at index', index);
-    const newThresholds = this.state.thresholds.map(threshold => {
+    const { thresholds } = this.state;
+
+    const newThresholds = thresholds.map((threshold, index) => {
       if (threshold.index >= index) {
         threshold = { ...threshold, index: threshold.index + 1 };
       }
@@ -31,12 +33,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       return threshold;
     });
 
-    const userAddedThresholds = this.state.userAddedThresholds + 1;
+    const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
 
-    this.setState({
-      thresholds: this.sortThresholds([...newThresholds, { index: index, label: '', value: 0, canRemove: true }]),
-      userAddedThresholds: userAddedThresholds,
-    });
+    this.setState(prevState => ({
+      thresholds: this.sortThresholds([...newThresholds, { index: index, label: '', value: value, canRemove: true }]),
+      userAddedThresholds: prevState.userAddedThresholds + 1,
+    }));
   };
 
   onRemoveThreshold = threshold => {
@@ -47,9 +49,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   };
 
   onChangeThresholdValue = (event, threshold) => {
-    const newThresholds = this.state.thresholds.map(currentThreshold => {
+    const { thresholds } = this.state;
+    const value = event.target.value;
+
+    const newThresholds = thresholds.map(currentThreshold => {
       if (currentThreshold === threshold) {
-        currentThreshold = { ...currentThreshold, value: event.target.value };
+        currentThreshold = { ...currentThreshold, value: value };
       }
 
       return currentThreshold;
@@ -70,7 +75,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
   sortThresholds = thresholds => {
     return thresholds.sort((t1, t2) => {
-      return t1.index - t2.index;
+      return t1.value - t2.value;
     });
   };
 
@@ -78,12 +83,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const { thresholds } = this.state;
 
     if (index === 0) {
-      return 'green';
+      return '#3aa655';
     } else if (index < thresholds.length) {
-      return 'yellow';
+      return '#ff851b';
     }
 
-    return 'red';
+    return '#d44939';
   }
 
   renderNoThresholds() {
@@ -212,7 +217,6 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
           onClick={() => this.onAddThreshold(this.insertAtIndex(index + 1))}
           style={{
             height: `50%`,
-            cursor: 'pointer',
             background: this.getIndicatorColor(index),
           }}
         />

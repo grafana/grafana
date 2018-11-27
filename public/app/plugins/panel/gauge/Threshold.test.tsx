@@ -16,14 +16,14 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Add threshold', () => {
-  it('should add treshold between min and max', () => {
+  it('should add threshold between min and max', () => {
     const instance = setup();
 
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
       { index: 0, label: 'Min', value: 0, canRemove: false },
-      { index: 1, label: '', value: 0, canRemove: true },
+      { index: 1, label: '', value: 50, canRemove: true },
       { index: 2, label: 'Max', value: 100, canRemove: false },
     ]);
   });
@@ -44,7 +44,7 @@ describe('Add threshold', () => {
 
     expect(instance.state.thresholds).toEqual([
       { index: 0, label: 'Min', value: 0, canRemove: false },
-      { index: 1, label: '', value: 0, canRemove: true },
+      { index: 1, label: '', value: 25, canRemove: true },
       { index: 2, label: '', value: 50, canRemove: true },
       { index: 3, label: 'Max', value: 100, canRemove: false },
     ]);
@@ -107,5 +107,33 @@ describe('Add at index', () => {
     const result = instance.insertAtIndex(2);
 
     expect(result).toEqual(2);
+  });
+});
+
+describe('change threshold value', () => {
+  it('should update value and resort rows', () => {
+    const instance = setup();
+    const mockThresholds = [
+      { index: 0, label: 'Min', value: 0, canRemove: false },
+      { index: 1, label: '', value: 50, canRemove: true },
+      { index: 2, label: '', value: 75, canRemove: true },
+      { index: 3, label: 'Max', value: 100, canRemove: false },
+    ];
+
+    instance.state = {
+      thresholds: mockThresholds,
+      userAddedThresholds: 1,
+    };
+
+    const mockEvent = { target: { value: 78 } };
+
+    instance.onChangeThresholdValue(mockEvent, mockThresholds[1]);
+
+    expect(instance.state.thresholds).toEqual([
+      { index: 0, label: 'Min', value: 0, canRemove: false },
+      { index: 1, label: '', value: 75, canRemove: true },
+      { index: 2, label: '', value: 78, canRemove: true },
+      { index: 3, label: 'Max', value: 100, canRemove: false },
+    ]);
   });
 });
