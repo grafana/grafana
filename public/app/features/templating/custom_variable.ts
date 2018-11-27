@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import { Variable, assignModelProperties, variableTypes, VariableBase } from './variable';
 
-export class CustomVariable implements Variable {
+export class CustomVariable extends VariableBase implements Variable {
   query: string;
   options: any;
   includeAll: boolean;
@@ -24,17 +24,14 @@ export class CustomVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(model, private variableSrv) {
+    super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
   }
 
   setValue(option) {
     return this.variableSrv.setOptionAsCurrent(this, option);
-  }
-
-  getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
-    return this.model;
   }
 
   updateOptions() {

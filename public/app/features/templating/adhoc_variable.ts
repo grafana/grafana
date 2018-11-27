@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import { Variable, VariableBase, assignModelProperties, variableTypes } from './variable';
 
-export class AdhocVariable implements Variable {
+export class AdhocVariable extends VariableBase implements Variable {
   filters: any[];
   skipUrlSync: boolean;
 
@@ -16,17 +16,14 @@ export class AdhocVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model) {
+  constructor(model) {
+    super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
   }
 
   setValue(option) {
     return Promise.resolve();
-  }
-
-  getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
-    return this.model;
   }
 
   updateOptions() {

@@ -1,12 +1,12 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
+import { Variable, VariableBase, containsVariable, variableTypes, assignModelProperties } from './variable';
 
 function getNoneOption() {
   return { text: 'None', value: '', isNone: true };
 }
 
-export class QueryVariable implements Variable {
+export class QueryVariable extends VariableBase implements Variable {
   datasource: any;
   query: any;
   regex: any;
@@ -50,14 +50,16 @@ export class QueryVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
+  constructor(model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
     // copy model properties to this instance
+    super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
   }
 
   getSaveModel() {
     // copy back model properties to model
-    assignModelProperties(this.model, this, this.defaults);
+    this.model = super.getSaveModel();
 
     // remove options
     if (this.refresh !== 0) {

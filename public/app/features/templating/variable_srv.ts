@@ -35,7 +35,6 @@ export class VariableSrv {
         return this.dashboard.templating.list.map(variable => {
           if (variable.type === 'global') {
             const copy = _.cloneDeep(variable);
-
             variable = globalVars[copy.uid];
             variable.globalModel = copy;
             variable.current = copy.current;

@@ -1,6 +1,6 @@
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import { Variable, VariableBase, assignModelProperties, variableTypes } from './variable';
 
-export class TextBoxVariable implements Variable {
+export class TextBoxVariable extends VariableBase implements Variable {
   query: string;
   current: any;
   options: any[];
@@ -18,13 +18,10 @@ export class TextBoxVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(model, private variableSrv) {
+    super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
-  }
-
-  getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
-    return this.model;
   }
 
   setValue(option) {

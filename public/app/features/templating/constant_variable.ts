@@ -1,6 +1,6 @@
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import { Variable, assignModelProperties, variableTypes, VariableBase } from './variable';
 
-export class ConstantVariable implements Variable {
+export class ConstantVariable extends VariableBase implements Variable {
   query: string;
   options: any[];
   current: any;
@@ -18,13 +18,10 @@ export class ConstantVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(model, private variableSrv) {
+    super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
-  }
-
-  getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
-    return this.model;
   }
 
   setValue(option) {

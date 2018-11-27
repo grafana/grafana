@@ -1,7 +1,7 @@
 import kbn from 'app/core/utils/kbn';
-import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
+import { Variable, VariableBase, containsVariable, assignModelProperties, variableTypes } from './variable';
 
-export class DatasourceVariable implements Variable {
+export class DatasourceVariable extends VariableBase implements Variable {
   regex: any;
   query: string;
   options: any;
@@ -23,13 +23,15 @@ export class DatasourceVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
+  constructor(model, private datasourceSrv, private variableSrv, private templateSrv) {
+    super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
   }
 
   getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
+    this.model = super.getSaveModel();
 
     // don't persist options
     this.model.options = [];

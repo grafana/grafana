@@ -163,13 +163,6 @@ export class DashboardModel {
         const current = copy.templating.list[i];
         const original = _.find(this.originalTemplating, { name: current.name, type: current.type });
 
-        // extract global model and set current value
-        if (current.globalModel) {
-          current.globalModel.current = current.current;
-          copy.templating.list[i] = current.globalModel;
-          continue;
-        }
-
         if (!original) {
           continue;
         }
