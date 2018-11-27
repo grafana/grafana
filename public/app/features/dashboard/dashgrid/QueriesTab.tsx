@@ -13,7 +13,6 @@ import { QueryInspector } from './QueryInspector';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 import { DataSourceSelectItem } from 'app/types';
-import appEvents from 'app/core/app_events';
 
 import Remarkable from 'remarkable';
 
@@ -27,15 +26,9 @@ interface Help {
   helpHtml: any;
 }
 
-interface DsQuery {
-  isLoading: boolean;
-  response: {};
-}
-
 interface State {
   currentDatasource: DataSourceSelectItem;
   help: Help;
-  dsQuery: DsQuery;
 }
 
 interface LoadingPlaceholderProps {
@@ -60,13 +53,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         isLoading: false,
         helpHtml: null,
       },
-      dsQuery: {
-        isLoading: false,
-        response: {},
-      },
     };
-    appEvents.on('ds-request-response', this.onDataSourceResponse);
-    panel.events.on('refresh', this.onPanelRefresh);
   }
 
   componentDidMount() {
@@ -89,83 +76,10 @@ export class QueriesTab extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    const { panel } = this.props;
-    appEvents.off('ds-request-response', this.onDataSourceResponse);
-    panel.events.off('refresh', this.onPanelRefresh);
-
     if (this.component) {
       this.component.destroy();
     }
   }
-
-  onPanelRefresh = () => {
-    this.setState(prevState => ({
-      ...prevState,
-      dsQuery: {
-        isLoading: true,
-        response: {},
-      },
-    }));
-  };
-
-  onDataSourceResponse = (response: any = {}) => {
-    // ignore if closed
-    // if (!this.isOpen) {
-    //   return;
-    // }
-
-    // if (this.isMocking) {
-    //   this.handleMocking(data);
-    //   return;
-    // }
-
-    // this.isLoading = false;
-    // data = _.cloneDeep(data);
-    response = { ...response }; // clone
-
-    if (response.headers) {
-      delete response.headers;
-    }
-
-    if (response.config) {
-      response.request = response.config;
-      delete response.config;
-      delete response.request.transformRequest;
-      delete response.request.transformResponse;
-      delete response.request.paramSerializer;
-      delete response.request.jsonpCallbackParam;
-      delete response.request.headers;
-      delete response.request.requestId;
-      delete response.request.inspect;
-      delete response.request.retry;
-      delete response.request.timeout;
-    }
-
-    if (response.data) {
-      response.response = response.data;
-
-      // if (response.status === 200) {
-      //   // if we are in error state, assume we automatically opened
-      //   // and auto close it again
-      //   if (this.hasError) {
-      //     this.hasError = false;
-      //     this.isOpen = false;
-      //   }
-      // }
-
-      delete response.data;
-      delete response.status;
-      delete response.statusText;
-      delete response.$$config;
-    }
-    this.setState(prevState => ({
-      ...prevState,
-      dsQuery: {
-        isLoading: false,
-        response: response,
-      },
-    }));
-  };
 
   onChangeDataSource = datasource => {
     const { panel } = this.props;
@@ -291,18 +205,9 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
-  loadQueryInspector = () => {
-    const { panel } = this.props;
-    panel.refresh();
-  };
-
   renderQueryInspector = () => {
-    const { response, isLoading } = this.state.dsQuery;
-    return isLoading ? (
-      <LoadingPlaceholder text="Loading query inspector..." />
-    ) : (
-      <QueryInspector response={response} />
-    );
+    const { panel } = this.props;
+    return <QueryInspector panel={panel} LoadingPlaceholder={LoadingPlaceholder} />;
   };
 
   renderHelp = () => {
@@ -331,7 +236,6 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     const queryInspector = {
       title: 'Query Inspector',
-      onClick: this.loadQueryInspector,
       render: this.renderQueryInspector,
     };
 
