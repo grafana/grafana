@@ -41,28 +41,41 @@ func main() {
 	var builder releaseBuilder
 	var product string
 
-	if fromLocal {
-		path, _ := os.Getwd()
-		builder = releaseLocalSources{
-			path: path,
-			artifactConfigurations: buildArtifactConfigurations,
-		}
-	} else {
-		builder = releaseFromExternalContent{
-			getter:     getHttpContents{},
-			rawVersion: version,
-			artifactConfigurations: buildArtifactConfigurations,
-		}
-	}
-
-	archiveProviderRoot := "https://s3-us-west-2.amazonaws.com"
+	archiveProviderRoot := "https://dl.grafana.com"
+	buildArtifacts := completeBuildArtifactConfigurations
 
 	if enterprise {
 		product = "grafana-enterprise"
-		baseUrl = createBaseUrl(archiveProviderRoot, "grafana-enterprise-releases", product, nightly)
+		baseUrl = createBaseUrl(archiveProviderRoot, "enterprise", product, nightly)
+		var err error
+		buildArtifacts, err = filterBuildArtifacts([]artifactFilter{
+			{os: "deb", arch: "amd64"},
+			{os: "rhel", arch: "amd64"},
+			{os: "linux", arch: "amd64"},
+			{os: "win", arch: "amd64"},
+		})
+
+		if err != nil {
+			log.Fatalf("Could not filter to the selected build artifacts, err=%v", err)
+		}
+
 	} else {
 		product = "grafana"
-		baseUrl = createBaseUrl(archiveProviderRoot, "grafana-releases", product, nightly)
+		baseUrl = createBaseUrl(archiveProviderRoot, "oss", product, nightly)
+	}
+
+	if fromLocal {
+		path, _ := os.Getwd()
+		builder = releaseLocalSources{
+			path:                   path,
+			artifactConfigurations: buildArtifacts,
+		}
+	} else {
+		builder = releaseFromExternalContent{
+			getter:                 getHttpContents{},
+			rawVersion:             version,
+			artifactConfigurations: buildArtifacts,
+		}
 	}
 
 	p := publisher{

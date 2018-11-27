@@ -29,6 +29,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
     { text: 'Alerting', value: 'alerting' },
     { text: 'No Data', value: 'no_data' },
     { text: 'Paused', value: 'paused' },
+    { text: 'Pending', value: 'pending' },
   ];
 
   componentDidMount() {

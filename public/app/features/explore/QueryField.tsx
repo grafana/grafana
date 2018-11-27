@@ -27,14 +27,14 @@ function hasSuggestions(suggestions: CompletionItemGroup[]): boolean {
   return suggestions && suggestions.length > 0;
 }
 
-interface QueryFieldProps {
+export interface QueryFieldProps {
   additionalPlugins?: any[];
   cleanText?: (text: string) => string;
-  initialValue: string | null;
+  initialQuery: string | null;
   onBlur?: () => void;
   onFocus?: () => void;
   onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
-  onValueChanged?: (value: Value) => void;
+  onValueChanged?: (value: string) => void;
   onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
   placeholder?: string;
   portalOrigin?: string;
@@ -60,16 +60,22 @@ export interface TypeaheadInput {
   wrapperNode: Element;
 }
 
+/**
+ * Renders an editor field.
+ * Pass initial value as initialQuery and listen to changes in props.onValueChanged.
+ * This component can only process strings. Internally it uses Slate Value.
+ * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
+ */
 export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
   menuEl: HTMLElement | null;
   placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
   resetTimer: any;
 
-  constructor(props, context) {
+  constructor(props: QueryFieldProps, context) {
     super(props, context);
 
-    this.placeholdersBuffer = new PlaceholdersBuffer(props.initialValue || '');
+    this.placeholdersBuffer = new PlaceholdersBuffer(props.initialQuery || '');
 
     // Base plugins
     this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins].filter(p => p);
@@ -92,7 +98,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     clearTimeout(this.resetTimer);
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
     // Only update menu location when suggestion existence or text/selection changed
     if (
       this.state.value !== prevState.value ||

@@ -25,7 +25,7 @@ the value, using the dropdown at the top of the dashboard, your panel's metric q
 
 Panel titles and metric queries can refer to variables using two different syntaxes:
 
-- `$<varname>`  Example: apps.frontend.$server.requests.count
+- `$varname`  Example: apps.frontend.$server.requests.count
 - `[[varname]]` Example: apps.frontend.[[server]].requests.count
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use

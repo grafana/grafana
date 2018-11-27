@@ -13,11 +13,14 @@ import (
 )
 
 type releaseLocalSources struct {
-	path string
+	path                   string
 	artifactConfigurations []buildArtifact
 }
 
 func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
+	if !nightly {
+		return nil, errors.New("Local releases only supported for nightly builds.")
+	}
 	buildData := r.findBuilds(baseArchiveUrl)
 
 	rel := release{
@@ -36,7 +39,7 @@ func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, 
 
 type buildData struct {
 	version string
-	builds []build
+	builds  []build
 }
 
 func (r releaseLocalSources) findBuilds(baseArchiveUrl string) buildData {
@@ -70,7 +73,7 @@ func createBuildWalker(path string, data *buildData, archiveTypes []buildArtifac
 				data.version = version
 				data.builds = append(data.builds, build{
 					Os:     archive.os,
-					Url:    archive.getUrl(baseArchiveUrl, version, false),
+					Url:    archive.getUrl(baseArchiveUrl, version, NIGHTLY),
 					Sha256: string(shaBytes),
 					Arch:   archive.arch,
 				})

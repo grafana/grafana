@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -61,13 +62,33 @@ func (p *publisher) postRelease(r *release) error {
 	return nil
 }
 
+type ReleaseType int
+
+const (
+	STABLE ReleaseType = iota + 1
+	BETA
+	NIGHTLY
+)
+
+func (rt ReleaseType) beta() bool {
+	return rt == BETA
+}
+
+func (rt ReleaseType) stable() bool {
+	return rt == STABLE
+}
+
+func (rt ReleaseType) nightly() bool {
+	return rt == NIGHTLY
+}
+
 type buildArtifact struct {
 	os         string
 	arch       string
 	urlPostfix string
 }
 
-func (t buildArtifact) getUrl(baseArchiveUrl, version string, isBeta bool) string {
+func (t buildArtifact) getUrl(baseArchiveUrl, version string, releaseType ReleaseType) string {
 	prefix := "-"
 	rhelReleaseExtra := ""
 
@@ -75,7 +96,7 @@ func (t buildArtifact) getUrl(baseArchiveUrl, version string, isBeta bool) strin
 		prefix = "_"
 	}
 
-	if !isBeta && t.os == "rhel" {
+	if releaseType.stable() && t.os == "rhel" {
 		rhelReleaseExtra = "-1"
 	}
 
@@ -83,7 +104,7 @@ func (t buildArtifact) getUrl(baseArchiveUrl, version string, isBeta bool) strin
 	return url
 }
 
-var buildArtifactConfigurations = []buildArtifact{
+var completeBuildArtifactConfigurations = []buildArtifact{
 	{
 		os:         "deb",
 		arch:       "arm64",
@@ -141,10 +162,35 @@ var buildArtifactConfigurations = []buildArtifact{
 	},
 }
 
-func newBuild(baseArchiveUrl string, ba buildArtifact, version string, isBeta bool, sha256 string) build {
+type artifactFilter struct {
+	os   string
+	arch string
+}
+
+func filterBuildArtifacts(filters []artifactFilter) ([]buildArtifact, error) {
+	var artifacts []buildArtifact
+	for _, f := range filters {
+		matched := false
+
+		for _, a := range completeBuildArtifactConfigurations {
+			if f.os == a.os && f.arch == a.arch {
+				artifacts = append(artifacts, a)
+				matched = true
+				break
+			}
+		}
+
+		if !matched {
+			return nil, errors.New(fmt.Sprintf("No buildArtifact for os=%v, arch=%v", f.os, f.arch))
+		}
+	}
+	return artifacts, nil
+}
+
+func newBuild(baseArchiveUrl string, ba buildArtifact, version string, rt ReleaseType, sha256 string) build {
 	return build{
 		Os:     ba.os,
-		Url:    ba.getUrl(baseArchiveUrl, version, isBeta),
+		Url:    ba.getUrl(baseArchiveUrl, version, rt),
 		Sha256: sha256,
 		Arch:   ba.arch,
 	}

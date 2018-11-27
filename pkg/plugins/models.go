@@ -17,6 +17,13 @@ var (
 	PluginTypeDashboard  = "dashboard"
 )
 
+type PluginState string
+
+var (
+	PluginStateAlpha PluginState = "alpha"
+	PluginStateBeta  PluginState = "beta"
+)
+
 type PluginNotFoundError struct {
 	PluginId string
 }
@@ -39,7 +46,7 @@ type PluginBase struct {
 	Module       string             `json:"module"`
 	BaseUrl      string             `json:"baseUrl"`
 	HideFromList bool               `json:"hideFromList,omitempty"`
-	State        string             `json:"state,omitempty"`
+	State        PluginState        `json:"state,omitempty"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`

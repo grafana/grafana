@@ -7,23 +7,85 @@ describe('Language completion provider', () => {
     metadataRequest: () => ({ data: { data: [] } }),
   };
 
-  it('returns default suggestions on emtpty context', () => {
-    const instance = new LanguageProvider(datasource);
-    const result = instance.provideCompletionItems({ text: '', prefix: '', wrapperClasses: [] });
-    expect(result.context).toBeUndefined();
-    expect(result.refresher).toBeUndefined();
-    expect(result.suggestions.length).toEqual(2);
+  describe('empty query suggestions', () => {
+    it('returns default suggestions on emtpty context', () => {
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('');
+      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'Functions',
+        },
+      ]);
+    });
+
+    it('returns default suggestions with metrics on emtpty context when metrics were provided', () => {
+      const instance = new LanguageProvider(datasource, { metrics: ['foo', 'bar'] });
+      const value = Plain.deserialize('');
+      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'Functions',
+        },
+        {
+          label: 'Metrics',
+        },
+      ]);
+    });
+
+    it('returns default suggestions with history on emtpty context when history was provided', () => {
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('');
+      const history = [
+        {
+          query: { refId: '1', expr: 'metric' },
+        },
+      ];
+      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] }, { history });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'History',
+          items: [
+            {
+              label: 'metric',
+            },
+          ],
+        },
+        {
+          label: 'Functions',
+        },
+      ]);
+    });
   });
 
   describe('range suggestions', () => {
     it('returns range suggestions in range context', () => {
       const instance = new LanguageProvider(datasource);
-      const result = instance.provideCompletionItems({ text: '1', prefix: '1', wrapperClasses: ['context-range'] });
+      const value = Plain.deserialize('1');
+      const result = instance.provideCompletionItems({
+        text: '1',
+        prefix: '1',
+        value,
+        wrapperClasses: ['context-range'],
+      });
       expect(result.context).toBe('context-range');
       expect(result.refresher).toBeUndefined();
-      expect(result.suggestions).toEqual([
+      expect(result.suggestions).toMatchObject([
         {
-          items: [{ label: '1m' }, { label: '5m' }, { label: '10m' }, { label: '30m' }, { label: '1h' }],
+          items: [
+            { label: '1m' },
+            { label: '5m' },
+            { label: '10m' },
+            { label: '30m' },
+            { label: '1h' },
+            { label: '1d' },
+          ],
           label: 'Range vector',
         },
       ]);
@@ -31,20 +93,54 @@ describe('Language completion provider', () => {
   });
 
   describe('metric suggestions', () => {
-    it('returns metrics suggestions by default', () => {
+    it('returns metrics and function suggestions in an unknown context', () => {
       const instance = new LanguageProvider(datasource, { metrics: ['foo', 'bar'] });
-      const result = instance.provideCompletionItems({ text: 'a', prefix: 'a', wrapperClasses: [] });
+      const value = Plain.deserialize('a');
+      const result = instance.provideCompletionItems({ text: 'a', prefix: 'a', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
       expect(result.refresher).toBeUndefined();
-      expect(result.suggestions.length).toEqual(2);
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'Functions',
+        },
+        {
+          label: 'Metrics',
+        },
+      ]);
     });
 
-    it('returns default suggestions after a binary operator', () => {
+    it('returns metrics and function  suggestions after a binary operator', () => {
       const instance = new LanguageProvider(datasource, { metrics: ['foo', 'bar'] });
-      const result = instance.provideCompletionItems({ text: '*', prefix: '', wrapperClasses: [] });
+      const value = Plain.deserialize('*');
+      const result = instance.provideCompletionItems({ text: '*', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
       expect(result.refresher).toBeUndefined();
-      expect(result.suggestions.length).toEqual(2);
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'Functions',
+        },
+        {
+          label: 'Metrics',
+        },
+      ]);
+    });
+
+    it('returns no suggestions at the beginning of a non-empty function', () => {
+      const instance = new LanguageProvider(datasource, { metrics: ['foo', 'bar'] });
+      const value = Plain.deserialize('sum(up)');
+      const range = value.selection.merge({
+        anchorOffset: 4,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.provideCompletionItems({
+        text: '',
+        prefix: '',
+        value: valueWithSelection,
+        wrapperClasses: [],
+      });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions.length).toEqual(0);
     });
   });
 

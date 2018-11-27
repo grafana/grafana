@@ -32,9 +32,7 @@ echo "Build arguments: $OPT"
 
 go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
 go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
-
-# MacOS build is broken atm. See Issue #13763
-#go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
+go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
 
 go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
 CC=${CCX64} go run build.go ${OPT} build

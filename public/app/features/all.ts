@@ -10,5 +10,4 @@ import './alerting/NotificationsEditCtrl';
 import './alerting/NotificationsListCtrl';
 import './manage-dashboards';
 import './teams/CreateTeamCtrl';
-import './profile/ProfileCtrl';
-import './profile/ChangePasswordCtrl';
+import './profile/all';

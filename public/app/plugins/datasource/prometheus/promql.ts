@@ -1,8 +1,19 @@
 /* tslint:disable max-line-length */
 
+import { CompletionItem } from 'app/types/explore';
+
+export const RATE_RANGES: CompletionItem[] = [
+  { label: '1m', sortText: '00:01:00' },
+  { label: '5m', sortText: '00:05:00' },
+  { label: '10m', sortText: '00:10:00' },
+  { label: '30m', sortText: '00:30:00' },
+  { label: '1h', sortText: '01:00:00' },
+  { label: '1d', sortText: '24:00:00' },
+];
+
 export const OPERATORS = ['by', 'group_left', 'group_right', 'ignoring', 'on', 'offset', 'without'];
 
-const AGGREGATION_OPERATORS = [
+const AGGREGATION_OPERATORS: CompletionItem[] = [
   {
     label: 'sum',
     insertText: 'sum',

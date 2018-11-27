@@ -7,6 +7,7 @@ import {
   OK_COLOR,
   ALERTING_COLOR,
   NO_DATA_COLOR,
+  PENDING_COLOR,
   DEFAULT_ANNOTATION_COLOR,
   REGION_FILL_ALPHA,
 } from 'app/core/utils/colors';
@@ -68,6 +69,11 @@ export class EventManager {
       },
       $__no_data: {
         color: NO_DATA_COLOR,
+        position: 'BOTTOM',
+        markerSize: 5,
+      },
+      $__pending: {
+        color: PENDING_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },

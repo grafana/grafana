@@ -18,8 +18,6 @@ export interface DataSource {
   readOnly: boolean;
   meta?: PluginMeta;
   pluginExports?: PluginExports;
-  init?: () => void;
-  testDatasource?: () => Promise<any>;
 }
 
 export interface DataSourcesState {

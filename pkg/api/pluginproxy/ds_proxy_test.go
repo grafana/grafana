@@ -371,12 +371,21 @@ func TestDSRouteRule(t *testing.T) {
 			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/")
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+			req.Header.Add("Origin", "grafana.com")
+			req.Header.Add("Referer", "grafana.com")
+			req.Header.Add("X-Canary", "stillthere")
 			So(err, ShouldBeNil)
 
 			proxy.getDirector()(req)
 
-			Convey("Shoudl keep user request (including trailing slash)", func() {
+			Convey("Should keep user request (including trailing slash)", func() {
 				So(req.URL.String(), ShouldEqual, "http://host/root/path/to/folder/")
+			})
+
+			Convey("Origin and Referer headers should be dropped", func() {
+				So(req.Header.Get("Origin"), ShouldEqual, "")
+				So(req.Header.Get("Referer"), ShouldEqual, "")
+				So(req.Header.Get("X-Canary"), ShouldEqual, "stillthere")
 			})
 		})
 	})

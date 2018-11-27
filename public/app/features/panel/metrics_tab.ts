@@ -76,7 +76,6 @@ export class MetricsTabCtrl {
       return;
     }
 
-    this.datasourceInstance = option.datasource;
     this.setDatasource(option.datasource);
     this.updateDatasourceOptions();
   }
@@ -96,6 +95,7 @@ export class MetricsTabCtrl {
       });
     }
 
+    this.datasourceInstance = datasource;
     this.panel.datasource = datasource.value;
     this.panel.refresh();
   }

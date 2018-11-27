@@ -52,7 +52,7 @@ export default class LoggingStartPage extends PureComponent<any, { active: strin
           </div>
         </div>
         <div className="page-container page-body">
-          {active === 'start' && <LoggingCheatSheet onClickQuery={this.props.onClickQuery} />}
+          {active === 'start' && <LoggingCheatSheet onClickExample={this.props.onClickExample} />}
         </div>
       </div>
     );

@@ -85,12 +85,13 @@ jobs:
       - run: 'go get -u github.com/tsenart/deadcode'
       - run: 'go get -u github.com/jgautheron/goconst/cmd/goconst'
       - run: 'go get -u github.com/gordonklaus/ineffassign'
+      - run: 'go get -u honnef.co/go/tools/cmd/megacheck'
       - run: 'go get -u github.com/opennota/check/cmd/structcheck'
       - run: 'go get -u github.com/mdempsky/unconvert'
       - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
           name: run linters
-          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=goconst --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=goconst --enable=gofmt --enable=ineffassign --enable=megacheck --enable=structcheck --enable=unconvert --enable=varcheck ./...'
       - run:
           name: run go vet
           command: 'go vet ./pkg/...'
@@ -126,7 +127,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -161,8 +162,8 @@ jobs:
           name: Build Grafana.com master publisher
           command: 'go build -o scripts/publish scripts/build/publish.go'
       - run:
-          name: Build Grafana.com release publisher
-          command: 'cd scripts/build/release_publisher && go build -o release_publisher .'
+          name: Test and build Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test . && go build -o release_publisher .'
       - persist_to_workspace:
           root: .
           paths:
@@ -174,7 +175,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -190,6 +191,9 @@ jobs:
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
       - persist_to_workspace:
           root: .
           paths:
@@ -240,7 +244,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -272,7 +276,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.0
+    - image: grafana/build-container:1.2.1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -358,6 +362,9 @@ jobs:
       - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/release'
+      - run:
+          name: Deploy to Grafana.com
+          command: './scripts/build/publish.sh --enterprise'
 
   deploy-master:
     docker:
@@ -506,6 +513,7 @@ workflows:
       - grafana-docker-release:
           requires:
             - build-all
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell

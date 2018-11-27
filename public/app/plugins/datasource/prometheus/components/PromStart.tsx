@@ -52,7 +52,7 @@ export default class PromStart extends PureComponent<any, { active: string }> {
           </div>
         </div>
         <div className="page-container page-body">
-          {active === 'start' && <PromCheatSheet onClickQuery={this.props.onClickQuery} />}
+          {active === 'start' && <PromCheatSheet onClickExample={this.props.onClickExample} />}
         </div>
       </div>
     );

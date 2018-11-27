@@ -67,6 +67,7 @@ type GrafanaServerImpl struct {
 }
 
 func (g *GrafanaServerImpl) Run() error {
+	var err error
 	g.loadConfiguration()
 	g.writePIDFile()
 
@@ -74,20 +75,38 @@ func (g *GrafanaServerImpl) Run() error {
 	social.NewOAuthService()
 
 	serviceGraph := inject.Graph{}
-	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
-	serviceGraph.Provide(&inject.Object{Value: g.cfg})
-	serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
-	serviceGraph.Provide(&inject.Object{Value: cache.New(5*time.Minute, 10*time.Minute)})
+	err = serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
+	err = serviceGraph.Provide(&inject.Object{Value: g.cfg})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
+	err = serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
+	err = serviceGraph.Provide(&inject.Object{Value: cache.New(5*time.Minute, 10*time.Minute)})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
 
 	// self registered services
 	services := registry.GetServices()
 
 	// Add all services to dependency graph
 	for _, service := range services {
-		serviceGraph.Provide(&inject.Object{Value: service.Instance})
+		err = serviceGraph.Provide(&inject.Object{Value: service.Instance})
+		if err != nil {
+			return fmt.Errorf("Failed to provide object to the graph: %v", err)
+		}
 	}
 
-	serviceGraph.Provide(&inject.Object{Value: g})
+	err = serviceGraph.Provide(&inject.Object{Value: g})
+	if err != nil {
+		return fmt.Errorf("Failed to provide object to the graph: %v", err)
+	}
 
 	// Inject dependencies to services
 	if err := serviceGraph.Populate(); err != nil {
@@ -144,6 +163,7 @@ func (g *GrafanaServerImpl) Run() error {
 	}
 
 	sendSystemdNotification("READY=1")
+
 	return g.childRoutines.Wait()
 }
 

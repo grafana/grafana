@@ -62,7 +62,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   constructor($scope, $injector) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
-
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
   }
