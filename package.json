@@ -145,7 +145,6 @@
     "file-saver": "^1.3.3",
     "immutable": "^3.8.2",
     "jquery": "^3.2.1",
-    "json-formatter-js": "^2.2.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
     "mousetrap": "^1.6.0",
