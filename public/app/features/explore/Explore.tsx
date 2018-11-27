@@ -139,7 +139,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.modifiedQueries = initialQueries.slice();
     this.timeSrv = getTimeSrv();
     this.timeSrv.init({
-      time: { from: 'now-6h', to: 'now' },
+      time: DEFAULT_RANGE,
       refresh: false,
       getTimezone: () => 'utc',
       timeRangeUpdated: () => console.log('refreshDashboard!'),
