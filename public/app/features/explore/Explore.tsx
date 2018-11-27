@@ -178,6 +178,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   }
 
+  componentWillUnmount() {
+    this.exploreEvents.removeAllListeners();
+  }
+
   async setDatasource(datasource: any, origin?: DataSource) {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
