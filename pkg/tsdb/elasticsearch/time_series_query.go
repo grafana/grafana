@@ -134,9 +134,10 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 			a.Interval = "$__interval"
 		}
 
-		if bucketAgg.Settings.Get("offset").MustString("") != "" {
-			a.Offset = bucketAgg.Settings.Get("offset").MustString("")
+		if offset, err := bucketAgg.Settings.Get("offset").String(); err == nil {
+			a.Offset = offset
 		}
+
 		if missing, err := bucketAgg.Settings.Get("missing").String(); err == nil {
 			a.Missing = &missing
 		}
