@@ -164,6 +164,7 @@ export interface ExploreState {
   queryTransactions: QueryTransaction[];
   range: RawTimeRange;
   scanning?: boolean;
+  scanRange?: RawTimeRange;
   showingGraph: boolean;
   showingLogs: boolean;
   showingStartPage?: boolean;

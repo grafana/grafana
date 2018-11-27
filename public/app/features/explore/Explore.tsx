@@ -97,6 +97,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
    * Local ID cache to compare requested vs selected datasource
    */
   requestedDatasourceId: string;
+  scanTimer: NodeJS.Timer;
   /**
    * Timepicker to control scanning
    */
@@ -168,6 +169,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } else {
       this.setState({ datasourceMissing: true });
     }
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.scanTimer);
   }
 
   async setDatasource(datasource: any, origin?: DataSource) {
@@ -328,7 +333,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       ...nextRange,
     };
     if (this.state.scanning && !scanning) {
-      this.stopScanOlder();
+      this.onStopScanning();
     }
     this.setState({ range, scanning }, () => this.onSubmit());
   };
@@ -505,16 +510,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
-  onStartScanOlder = () => {
-    this.setState({ scanning: true }, this.scanOlder);
+  onStartScanning = () => {
+    this.setState({ scanning: true }, this.scanPreviousRange);
   };
 
-  scanOlder = () => {
-    this.timepickerRef.current.move(-1, true);
+  scanPreviousRange = () => {
+    const scanRange = this.timepickerRef.current.move(-1, true);
+    this.setState({ scanRange });
   };
 
-  stopScanOlder = () => {
-    // Stop ongoing scan transactions
+  onStopScanning = () => {
+    clearTimeout(this.scanTimer);
+    this.setState(state => {
+      const { queryTransactions } = state;
+      const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
+      return { queryTransactions: nextQueryTransactions, scanning: false, scanRange: undefined };
+    });
   };
 
   onSubmit = () => {
@@ -651,11 +662,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
       const nextHistory = updateHistory(history, datasourceId, queries);
 
+      // Keep scanning for results if this was the last scanning transaction
       if (_.size(result) === 0 && scanning) {
-        // Keep scanning if this was the last scanning transaction
         const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
         if (!other) {
-          setTimeout(this.scanOlder, 1000);
+          this.scanTimer = setTimeout(this.scanPreviousRange, 1000);
         }
       }
 
@@ -771,6 +782,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       queryTransactions,
       range,
       scanning,
+      scanRange,
       showingGraph,
       showingLogs,
       showingStartPage,
@@ -929,9 +941,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           loading={logsLoading}
                           position={position}
                           onChangeTime={this.onChangeTime}
-                          onStartScanOlder={this.onStartScanOlder}
+                          onStartScanning={this.onStartScanning}
+                          onStopScanning={this.onStopScanning}
                           range={range}
                           scanning={scanning}
+                          scanRange={scanRange}
                         />
                       </Panel>
                     )}

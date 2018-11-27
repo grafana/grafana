@@ -92,7 +92,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     };
   }
 
-  move(direction: number, scanning?: boolean) {
+  move(direction: number, scanning?: boolean): RawTimeRange {
     const { onChangeTime } = this.props;
     const { fromRaw, toRaw } = this.state;
     const from = dateMath.parse(fromRaw, false);
@@ -131,6 +131,8 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         onChangeTime(nextRange, scanning);
       }
     );
+
+    return nextRange;
   }
 
   handleChangeFrom = e => {
