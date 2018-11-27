@@ -1,4 +1,4 @@
-﻿import React, { PureComponent } from 'react';
+﻿import React, { PureComponent, ReactNode } from 'react';
 import ClipboardJS from 'clipboard';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   onSuccess?: (evt: any) => void;
   onError?: (evt: any) => void;
   className?: string;
-  children?: JSX.Element | string;
+  children?: ReactNode;
 }
 
 export class CopyToClipboard extends PureComponent<Props> {

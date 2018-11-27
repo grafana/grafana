@@ -211,9 +211,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             text={this.getTextForClipboard}
             onSuccess={this.onClipboardSuccess}
           >
-            <>
-              <i className="fa fa-clipboard" /> Copy to Clipboard
-            </>
+            <i className="fa fa-clipboard" /> Copy to Clipboard
           </CopyToClipboard>
         </div>
 
