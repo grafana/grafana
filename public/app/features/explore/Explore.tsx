@@ -30,7 +30,6 @@ import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer'
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getTimeSrv } from 'app/features/dashboard/time_srv';
 import { Emitter } from 'app/core/utils/emitter';
 import * as dateMath from 'app/core/utils/datemath';
 
@@ -92,7 +91,6 @@ interface ExploreProps {
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
   exploreEvents: Emitter;
-  timeSrv: any;
   /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
@@ -137,13 +135,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       };
     }
     this.modifiedQueries = initialQueries.slice();
-    this.timeSrv = getTimeSrv();
-    this.timeSrv.init({
-      time: DEFAULT_RANGE,
-      refresh: false,
-      getTimezone: () => 'utc',
-      timeRangeUpdated: () => console.log('refreshDashboard!'),
-    });
     this.exploreEvents = new Emitter();
   }
 
