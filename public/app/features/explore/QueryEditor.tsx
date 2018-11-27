@@ -42,7 +42,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         events: exploreEvents,
         panel: {
           datasource,
-          targets: [{}],
+          targets: [target],
         },
         dashboard: {
           getNextQueryLetter: x => '',
