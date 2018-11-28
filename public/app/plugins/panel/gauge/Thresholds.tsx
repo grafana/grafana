@@ -163,7 +163,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       const rowStyle = classNames({
         'threshold-row': true,
         'threshold-row-min': index === 0,
-        'threshold-row-max': index === thresholds.length,
+        'threshold-row-max': index === thresholds.length - 1,
       });
 
       return (
