@@ -15,6 +15,8 @@ import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types/plugins';
 
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
+
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
@@ -47,11 +49,11 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
 
     switch (activeTab) {
-      case 'general':
+      case 'advanced':
         return <GeneralTab panel={panel} />;
       case 'queries':
         return <QueriesTab panel={panel} dashboard={dashboard} />;
-      case 'alert':
+      case 'alerts':
         return <AlertTab angularPanel={angularPanel} />;
       case 'visualization':
         return (
@@ -75,21 +77,18 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     const tabs = [
       { id: 'queries', text: 'Queries' },
       { id: 'visualization', text: 'Visualization' },
-      { id: 'general', text: 'General' },
+      { id: 'advanced', text: 'Advanced' },
     ];
 
     if (config.alertingEnabled && plugin.id === 'graph') {
       tabs.push({
-        id: 'alert',
-        text: 'Alert',
+        id: 'alerts',
+        text: 'Alerts',
       });
     }
 
     return (
       <div className="panel-editor-container__editor">
-        <div className="panel-editor__close">
-          <i className="fa fa-arrow-left" />
-        </div>
         {
           // <div className="panel-editor-resizer">
           //   <div className="panel-editor-resizer__handle">
@@ -124,7 +123,9 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
       <a className={tabClasses}>
-        <img src={`public/img/panel-tabs/${tab.id}${activeTab === tab.id ? '-selected' : ''}.svg`} />
+        <Tooltip content={`${tab.text}`} className="popper__manager--block" placement="auto">
+          <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
+        </Tooltip>
       </a>
     </div>
   );
