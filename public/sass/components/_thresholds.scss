@@ -97,12 +97,7 @@
 
 .indicator-section {
   width: 100%;
-  border-top: 1px solid black;
   cursor: pointer;
-
-  :first-of-type {
-    border-top: none;
-  }
 }
 
 .color-indicators {
