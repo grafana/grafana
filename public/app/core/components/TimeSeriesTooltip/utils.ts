@@ -1,3 +1,5 @@
+import { FlotPosition } from 'app/types/events';
+
 export function findHoverIndexFromDataPoints(posX, series, last) {
   const ps = series.datapoints.pointsize;
   const initial = last * ps;
@@ -35,7 +37,13 @@ export function findHoverIndexFromData(posX, series) {
   }
 }
 
-export function getMultiSeriesPlotHoverInfo(seriesList, pos, panel) {
+interface GetPlotHoverInfoOptions {
+  hideEmpty?: boolean;
+  hideZero?: boolean;
+  tooltipValueType?: 'individual' | string;
+}
+
+export function getMultiSeriesPlotHoverInfo(seriesList: any[], pos: FlotPosition, options: GetPlotHoverInfoOptions) {
   let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
   // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
   let results: any = [[], [], []];
@@ -48,13 +56,13 @@ export function getMultiSeriesPlotHoverInfo(seriesList, pos, panel) {
   for (i = 0; i < seriesList.length; i++) {
     series = seriesList[i];
 
-    if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
+    if (!series.data.length || (options.hideEmpty && series.allIsNull)) {
       // Init value so that it does not brake series sorting
       results[0].push({ hidden: true, value: 0 });
       continue;
     }
 
-    if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
+    if (!series.data.length || (options.hideZero && series.allIsZero)) {
       // Init value so that it does not brake series sorting
       results[0].push({ hidden: true, value: 0 });
       continue;
@@ -80,7 +88,7 @@ export function getMultiSeriesPlotHoverInfo(seriesList, pos, panel) {
     }
 
     if (series.stack) {
-      if (panel.tooltip.value_type === 'individual') {
+      if (options.tooltipValueType === 'individual') {
         value = series.data[hoverIndex][1];
       } else if (!series.stack) {
         value = series.data[hoverIndex][1];

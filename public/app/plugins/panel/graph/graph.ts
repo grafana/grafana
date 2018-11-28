@@ -26,7 +26,6 @@ import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 // import { TimeSeriesTooltip, TimeSeriesTooltipProps } from 'app/core/components/TimeSeriesTooltip/TimeSeriesTooltip';
 import GraphTooltipReact, { GraphTooltipProps } from 'app/core/components/TimeSeriesTooltip/GraphTooltip';
-
 import { GraphCtrl } from './module';
 
 class GraphElement {
@@ -310,13 +309,23 @@ class GraphElement {
   }
 
   renderTooltip() {
+    // console.log(this);
     const tooltipProps: GraphTooltipProps = {
       series: this.sortedSeries,
       chartElem: this.elem,
+      panelId: this.panel.id,
+      showSharedTooltip: this.dashboard.sharedTooltipModeEnabled(),
+      getOffset: x => this.getOffset(x),
       dateFormat: this.ctrl.dashboard.formatDate.bind(this.ctrl.dashboard),
     };
     const tooltipReactElem = React.createElement(GraphTooltipReact, tooltipProps);
     ReactDOM.render(tooltipReactElem, this.tooltipElem);
+  }
+
+  getOffset(x) {
+    // const offset = this.plot.p2c({ x });
+    const offset = this.plot.pointOffset({ x });
+    return offset && offset.left;
   }
 
   buildFlotPairs(data) {

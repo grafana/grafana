@@ -1,14 +1,19 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import { TimeSeriesVM } from 'app/types';
-import { GraphHoverPosition, GraphHoverEvent } from 'app/types/events';
+import { GraphHoverPosition, GraphHoverEvent, FlotPosition } from 'app/types/events';
 import { appEvents } from 'app/core/core';
 import { getMultiSeriesPlotHoverInfo } from './utils';
 
 export interface TimeSeriesTooltipProps {
   series: TimeSeriesVM[];
   chartElem: any;
+  panelId: number;
+  panelOptions?: PanelOptions;
+  showSharedTooltip?: boolean;
   dateFormat: (time, format) => string;
+  /** Function converting timestamp into offset on chart */
+  getOffset: (x) => number;
   hoverEvent?: string;
   useCSSTransforms?: boolean;
 }
@@ -21,11 +26,23 @@ export interface TimeSeriesTooltipState {
 
 const defaultPosition: GraphHoverPosition = {
   pageX: 0,
+  pageY: 0,
   x: 0,
+  y: 0,
 };
 
 export interface InjectedTooltipProps {
   timestamp: number;
+}
+
+interface PanelOptions {
+  legend?: {
+    hideEmpty?: boolean;
+    hideZero?: boolean;
+  };
+  tooltip?: {
+    value_type?: string;
+  };
 }
 
 interface TooltipSize {
@@ -43,6 +60,11 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
     static defaultProps: Partial<TimeSeriesTooltipProps> = {
       hoverEvent: 'plothover',
       useCSSTransforms: true,
+      showSharedTooltip: false,
+      panelOptions: {
+        legend: {},
+        tooltip: {},
+      },
     };
 
     constructor(props) {
@@ -85,12 +107,21 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
       appEvents.off('graph-hover-clear', this.handleMouseleave);
     }
 
-    handleHoverEvent = (event, position: GraphHoverPosition, item) => {
+    handleHoverEvent = (event, position: FlotPosition, item) => {
+      // console.log(position);
       this.show(position);
     };
 
     handleGraphHoverEvent = (event: GraphHoverEvent) => {
-      this.show(event.pos);
+      // ignore if we are the emitter
+      if (!this.props.showSharedTooltip || this.props.panelId === event.panel.id) {
+        return;
+      }
+      const position = { ...event.pos };
+      const elemOffset = this.getElemOffset();
+      position.pageX = this.props.getOffset(position.x) + elemOffset.left;
+      // console.log(event.pos.pageX);
+      this.show(position);
     };
 
     handleMouseleave = () => {
@@ -99,6 +130,9 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
 
     show(position: GraphHoverPosition) {
       const tooltipPosition = this.calculatePosition(this.state.position);
+      if (tooltipPosition.x < 0 || tooltipPosition.y < 0) {
+        this.setState({ show: false });
+      }
       this.setState({
         show: true,
         position: position,
@@ -114,8 +148,11 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
       const elemHeight = this.props.chartElem[0].clientHeight;
       const elemWidth = this.props.chartElem[0].clientWidth;
       const elemOffset = this.getElemOffset();
+      // const positionOffset = this.props.getOffset(hoverEventPos.x);
+      // console.log(hoverEventPos.x, positionOffset);
       const tooltipSize = this.size || this.getTooltipSize();
 
+      // Restrict tooltip position
       let x = hoverEventPos.pageX;
       if (x + tooltipSize.width > elemWidth + elemOffset.left) {
         x = elemWidth + elemOffset.left - tooltipSize.width;
@@ -177,7 +214,11 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
         tooltipStyle.display = 'none';
       }
 
-      const panelOptions = { tooltip: {}, legend: {} };
+      const panelOptions = {
+        hideEmpty: this.props.panelOptions.legend.hideEmpty,
+        hideZero: this.props.panelOptions.legend.hideZero,
+        tooltipValueType: this.props.panelOptions.tooltip.value_type,
+      };
       const seriesHoverInfo = getMultiSeriesPlotHoverInfo(this.props.series, this.state.position, panelOptions);
       // console.log(seriesHoverInfo);
 
