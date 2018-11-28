@@ -8,6 +8,11 @@ import { DashboardModel } from '../dashboard_model';
 import './../../panel/metrics_tab';
 import config from 'app/core/config';
 import { QueryInspector } from './QueryInspector';
+import { Switch } from 'app/core/components/Switch/Switch';
+import { Input } from 'app/core/components/Form';
+import { InputStatus } from 'app/core/components/Form/Input';
+import { isValidTimeSpan } from 'app/core/utils/rangeutil';
+import { ValidationRule } from 'app/types';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -29,6 +34,7 @@ interface Help {
 interface State {
   currentDatasource: DataSourceSelectItem;
   help: Help;
+  hideTimeOverride: boolean;
 }
 
 interface LoadingPlaceholderProps {
@@ -36,6 +42,17 @@ interface LoadingPlaceholderProps {
 }
 
 const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => <h2>{text}</h2>;
+const validationRules: ValidationRule[] = [
+  {
+    rule: value => {
+      if (!value) {
+        return true;
+      }
+      return isValidTimeSpan(value);
+    },
+    errorMessage: 'Not a valid timespan',
+  },
+];
 
 export class QueriesTab extends PureComponent<Props, State> {
   element: any;
@@ -53,6 +70,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         isLoading: false,
         helpHtml: null,
       },
+      hideTimeOverride: false,
     };
   }
 
@@ -215,9 +233,40 @@ export class QueriesTab extends PureComponent<Props, State> {
     return isLoading ? <LoadingPlaceholder text="Loading help..." /> : helpHtml;
   };
 
+  emptyToNull = (value: string) => {
+    return value === '' ? null : value;
+  };
+
+  onOverrideTime = (evt, status: InputStatus) => {
+    const { value } = evt.target;
+    const { panel } = this.props;
+    const emptyToNullValue = this.emptyToNull(value);
+    if (status === InputStatus.Valid && panel.timeFrom !== emptyToNullValue) {
+      panel.timeFrom = emptyToNullValue;
+      panel.refresh();
+    }
+  };
+
+  onTimeShift = (evt, status: InputStatus) => {
+    const { value } = evt.target;
+    const { panel } = this.props;
+    const emptyToNullValue = this.emptyToNull(value);
+    if (status === InputStatus.Valid && panel.timeShift !== emptyToNullValue) {
+      panel.timeShift = emptyToNullValue;
+      panel.refresh();
+    }
+  };
+
+  onToggleTimeOverride = () => {
+    const { panel } = this.props;
+    panel.hideTimeOverride = !panel.hideTimeOverride;
+    panel.refresh();
+  };
+
   render() {
     const { currentDatasource } = this.state;
-
+    const hideTimeOverride = this.props.panel.hideTimeOverride;
+    console.log('hideTimeOverride', hideTimeOverride);
     const { hasQueryHelp, queryOptions } = currentDatasource.meta;
     const hasQueryOptions = !!queryOptions;
     const dsInformation = {
@@ -256,7 +305,55 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody heading="Queries" main={dsInformation} toolbarItems={[options, queryInspector, dsHelp]}>
-        <div ref={element => (this.element = element)} style={{ width: '100%' }} />
+        <>
+          <div ref={element => (this.element = element)} style={{ width: '100%' }} />
+
+          <h5 className="section-heading">Time Range</h5>
+
+          <div className="gf-form-group">
+            <div className="gf-form">
+              <span className="gf-form-label">
+                <i className="fa fa-clock-o" />
+              </span>
+
+              <span className="gf-form-label width-12">Override relative time</span>
+              <span className="gf-form-label width-6">Last</span>
+              <Input
+                type="text"
+                className="gf-form-input max-width-8"
+                placeholder="1h"
+                onBlurWithStatus={this.onOverrideTime}
+                validationRules={validationRules}
+                hideErrorMessage={true}
+              />
+            </div>
+
+            <div className="gf-form">
+              <span className="gf-form-label">
+                <i className="fa fa-clock-o" />
+              </span>
+              <span className="gf-form-label width-12">Add time shift</span>
+              <span className="gf-form-label width-6">Amount</span>
+              <Input
+                type="text"
+                className="gf-form-input max-width-8"
+                placeholder="1h"
+                onBlurWithStatus={this.onTimeShift}
+                validationRules={validationRules}
+                hideErrorMessage={true}
+              />
+            </div>
+
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <span className="gf-form-label">
+                  <i className="fa fa-clock-o" />
+                </span>
+              </div>
+              <Switch label="Hide time override info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
+            </div>
+          </div>
+        </>
       </EditorTabBody>
     );
   }
