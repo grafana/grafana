@@ -97,6 +97,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
    * Local ID cache to compare requested vs selected datasource
    */
   requestedDatasourceId: string;
+  scanTimer: NodeJS.Timer;
+  /**
+   * Timepicker to control scanning
+   */
+  timepickerRef: React.RefObject<TimePicker>;
 
   constructor(props) {
     super(props);
@@ -122,6 +127,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         history: [],
         queryTransactions: [],
         range: initialRange,
+        scanning: false,
         showingGraph: true,
         showingLogs: true,
         showingStartPage: false,
@@ -132,6 +138,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       };
     }
     this.modifiedQueries = initialQueries.slice();
+    this.timepickerRef = React.createRef();
   }
 
   async componentDidMount() {
@@ -162,6 +169,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } else {
       this.setState({ datasourceMissing: true });
     }
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.scanTimer);
   }
 
   async setDatasource(datasource: any, origin?: DataSource) {
@@ -317,11 +328,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   };
 
-  onChangeTime = (nextRange: RawTimeRange) => {
+  onChangeTime = (nextRange: RawTimeRange, scanning?: boolean) => {
     const range: RawTimeRange = {
       ...nextRange,
     };
-    this.setState({ range }, () => this.onSubmit());
+    if (this.state.scanning && !scanning) {
+      this.onStopScanning();
+    }
+    this.setState({ range, scanning }, () => this.onSubmit());
   };
 
   onClickClear = () => {
@@ -496,6 +510,24 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
+  onStartScanning = () => {
+    this.setState({ scanning: true }, this.scanPreviousRange);
+  };
+
+  scanPreviousRange = () => {
+    const scanRange = this.timepickerRef.current.move(-1, true);
+    this.setState({ scanRange });
+  };
+
+  onStopScanning = () => {
+    clearTimeout(this.scanTimer);
+    this.setState(state => {
+      const { queryTransactions } = state;
+      const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
+      return { queryTransactions: nextQueryTransactions, scanning: false, scanRange: undefined };
+    });
+  };
+
   onSubmit = () => {
     const { showingLogs, showingGraph, showingTable, supportsGraph, supportsLogs, supportsTable } = this.state;
     // Keep table queries first since they need to return quickly
@@ -563,6 +595,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       done: false,
       latency: 0,
       options: queryOptions,
+      scanning: this.state.scanning,
     };
 
     // Using updater style because we might be modifying queryTransactions in quick succession
@@ -599,7 +632,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     this.setState(state => {
-      const { history, queryTransactions } = state;
+      const { history, queryTransactions, scanning } = state;
 
       // Transaction might have been discarded
       const transaction = queryTransactions.find(qt => qt.id === transactionId);
@@ -628,6 +661,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       });
 
       const nextHistory = updateHistory(history, datasourceId, queries);
+
+      // Keep scanning for results if this was the last scanning transaction
+      if (_.size(result) === 0 && scanning) {
+        const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
+        if (!other) {
+          this.scanTimer = setTimeout(this.scanPreviousRange, 1000);
+        }
+      }
 
       return {
         history: nextHistory,
@@ -740,6 +781,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       initialQueries,
       queryTransactions,
       range,
+      scanning,
+      scanRange,
       showingGraph,
       showingLogs,
       showingStartPage,
@@ -822,7 +865,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </button>
             </div>
           ) : null}
-          <TimePicker range={range} onChangeTime={this.onChangeTime} />
+          <TimePicker ref={this.timepickerRef} range={range} onChangeTime={this.onChangeTime} />
           <div className="navbar-buttons">
             <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClickClear}>
               Clear All
@@ -898,7 +941,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           loading={logsLoading}
                           position={position}
                           onChangeTime={this.onChangeTime}
+                          onStartScanning={this.onStartScanning}
+                          onStopScanning={this.onStopScanning}
                           range={range}
+                          scanning={scanning}
+                          scanRange={scanRange}
                         />
                       </Panel>
                     )}
