@@ -1,0 +1,3 @@
+alert_notifications:
+  - name: unknown-notifier
+    type: nonexisting

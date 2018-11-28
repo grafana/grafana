@@ -1,0 +1,5 @@
+alert_notifications:
+  - name: channel1
+    type: slack
+  - name: channel2
+    type: email

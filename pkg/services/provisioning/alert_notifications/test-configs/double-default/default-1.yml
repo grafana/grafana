@@ -1,0 +1,4 @@
+alert_notifications:
+  - name: first-default
+    type: slack
+    is_default: true

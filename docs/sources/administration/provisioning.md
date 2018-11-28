@@ -230,4 +230,182 @@ By default Grafana will delete dashboards in the database if the file is removed
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
+<<<<<<< HEAD
 > or `uid` within the same installation as this will cause weird behaviors.
+=======
+> or `uid` within the same installation as this will cause weird behaviours.
+
+## Alert Notification Channels
+
+Alert Notification Channels can be provisionned by adding one or more yaml config files in the [`provisioning/alert_notifications`](/installation/configuration/#provisioning) directory.
+
+Each config file can contain the following top-level fields:
+- `alert_notifications`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
+- `delete_alert_notifications`, a list of alert notifications to be deleted before before inserting/updating those in the `alert_notifications` list.
+
+Provisionning looks up alert notifications by name, and will update any existing notification with the provided name.
+
+By default, exporting a dashboard as JSON will use a sequential identifier to refer to alert notifications. The field `name` can be optionally specified to specify a string identifier for the alert name.
+
+```json
+{
+  ...
+      "alert": {
+        ...,
+        "conditions": [...],
+        "frequency": "24h",
+        "noDataState": "ok",
+        "notifications": [
+           {"name": "notification-channel-1"},
+           {"name": "notification-channel-2"},
+        ]
+      }
+  ...
+}
+```
+
+### Example Alert Notification Channels Config File
+
+```yaml
+alert_notifications:
+  - name: notification-channel-1
+    type: slack
+    org_id: 2
+    is_default: true
+    # See `Supported Settings` section for settings supporter for each
+    # alert notification type.
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true
+
+delete_alert_notifications:
+  - name: notification-channel-1
+    org_id: 2
+  - name: notification-channel-2
+```
+
+### Supported Settings
+
+The following sections detail the supported settings for each alert notification type.
+
+#### Alert notification `pushover`
+
+| Name |
+| ---- |
+| apiToken |
+| userKey |
+| device |
+| retry |
+| expire |
+
+#### Alert notification `slack`
+
+| Name |
+| ---- |
+| url |
+| recipient |
+| username |
+| iconEmoji |
+| iconUrl |
+| uploadImage |
+| mention |
+| token |
+
+#### Alert notification `victorops`
+
+| Name |
+| ---- |
+| url |
+
+#### Alert notification `kafka`
+
+| Name |
+| ---- |
+| kafkaRestProxy |
+| kafkaTopic |
+
+#### Alert notification `LINE`
+
+| Name |
+| ---- |
+| token |
+
+#### Alert notification `pagerduty`
+
+| Name |
+| ---- |
+| integrationKey |
+
+#### Alert notification `sensu`
+
+| Name |
+| ---- |
+| url |
+| source |
+| handler |
+| username |
+| password |
+
+#### Alert notification `prometheus-alertmanager`
+
+| Name |
+| ---- |
+| url |
+
+#### Alert notification `teams`
+
+| Name |
+| ---- |
+| url |
+
+#### Alert notification `dingding`
+
+| Name |
+| ---- |
+| url |
+
+#### Alert notification `email`
+
+| Name |
+| ---- |
+| addresses |
+
+#### Alert notification `hipchat`
+
+| Name |
+| ---- |
+| url |
+| apikey |
+| roomid |
+
+#### Alert notification `opsgenie`
+
+| Name |
+| ---- |
+| apiKey |
+| apiUrl |
+
+#### Alert notification `telegram`
+
+| Name |
+| ---- |
+| bottoken |
+| chatid |
+
+#### Alert notification `threema`
+
+| Name |
+| ---- |
+| gateway_id |
+| recipient_id |
+| api_secret |
+
+#### Alert notification `webhook`
+
+| Name |
+| ---- |
+| url |
+| username |
+| password |
+>>>>>>> Added alert_notification configuration

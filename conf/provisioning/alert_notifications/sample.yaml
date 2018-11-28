@@ -1,0 +1,20 @@
+# # config file version
+apiVersion: 1
+
+# alert_notifications:
+#   - name: default-slack
+#     type: slack
+#     org_id: 1
+#     is_default: true
+#     settings:
+#       recipient: "XXX"
+#       token: "xoxb"
+#       uploadImage: true
+#   - name: default-email
+#     type: email
+#     org_id: 1
+#     is_default: false  
+# delete_alert_notifications:
+#   - name: default-slack
+#     org_id: 1  
+#   - name: default-email

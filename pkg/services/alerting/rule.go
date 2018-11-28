@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -128,9 +130,21 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 		jsonModel := simplejson.NewFromAny(v)
 		id, err := jsonModel.Get("id").Int64()
 		if err != nil {
-			return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			notificationName, notificationNameErr := jsonModel.Get("name").String()
+			if notificationNameErr != nil {
+				return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+			cmd := &m.GetAlertNotificationsQuery{OrgId: ruleDef.OrgId, Name: notificationName}
+			nameErr := bus.Dispatch(cmd)
+			if nameErr != nil || cmd.Result == nil {
+				errorMsg := fmt.Sprintf("Cannot lookup notification by name %s and orgId %d", notificationName, ruleDef.OrgId)
+				return nil, ValidationError{Reason: errorMsg, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+			model.Notifications = append(model.Notifications, cmd.Result.Id)
+		} else {
+			model.Notifications = append(model.Notifications, id)
 		}
-		model.Notifications = append(model.Notifications, id)
+
 	}
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
