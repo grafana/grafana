@@ -15,13 +15,23 @@ export class TextBoxVariable extends VariableBase implements Variable {
     current: {},
     options: [],
     skipUrlSync: false,
+    globalModel: null,
   };
 
   /** @ngInject */
-  constructor(model, private variableSrv) {
+  constructor(private model, private variableSrv) {
     super();
-    this.model = model;
     assignModelProperties(this, model, this.defaults);
+  }
+
+  getSaveModel() {
+    if (this.globalModel) {
+      this.globalModel.current = this.current;
+      return this.globalModel;
+    }
+
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
   }
 
   setValue(option) {

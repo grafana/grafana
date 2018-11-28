@@ -26,14 +26,24 @@ export class IntervalVariable extends VariableBase implements Variable {
     auto_min: '10s',
     auto_count: 30,
     skipUrlSync: false,
+    globalModel: null,
   };
 
   /** @ngInject */
-  constructor(model, private timeSrv, private templateSrv, private variableSrv) {
+  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     super();
-    this.model = model;
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
+  }
+
+  getSaveModel() {
+    if (this.globalModel) {
+      this.globalModel.current = this.current;
+      return this.globalModel;
+    }
+
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
   }
 
   setValue(option) {

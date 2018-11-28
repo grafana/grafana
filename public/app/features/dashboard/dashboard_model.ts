@@ -164,7 +164,7 @@ export class DashboardModel {
         const original = _.find(this.originalTemplating, { name: current.name, type: current.type });
 
         // if its a global variable we should not override the current value
-        if (current.globalModel) {
+        if (current.type === 'global') {
           continue;
         }
 

@@ -50,18 +50,19 @@ export class QueryVariable extends VariableBase implements Variable {
   };
 
   /** @ngInject */
-  constructor(model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
+  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
     // copy model properties to this instance
     super();
-    this.model = model;
     assignModelProperties(this, model, this.defaults);
   }
 
   getSaveModel() {
-    // copy back model properties to model
-    this.model = super.getSaveModel();
+    if (this.globalModel) {
+      this.globalModel.current = this.current;
+      return this.globalModel;
+    }
 
-    // remove options
+    assignModelProperties(this.model, this, this.defaults);
     if (this.refresh !== 0) {
       this.model.options = [];
     }

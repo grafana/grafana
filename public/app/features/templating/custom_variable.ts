@@ -21,13 +21,23 @@ export class CustomVariable extends VariableBase implements Variable {
     multi: false,
     allValue: null,
     skipUrlSync: false,
+    globalModel: null,
   };
 
   /** @ngInject */
-  constructor(model, private variableSrv) {
+  constructor(private model, private variableSrv) {
     super();
-    this.model = model;
     assignModelProperties(this, model, this.defaults);
+  }
+
+  getSaveModel() {
+    if (this.globalModel) {
+      this.globalModel.current = this.current;
+      return this.globalModel;
+    }
+
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
   }
 
   setValue(option) {
