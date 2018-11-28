@@ -429,8 +429,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
-  onClickTableCell = (columnKey: string, rowValue: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', key: columnKey, value: rowValue });
+  onClickLabel = (key: string, value: string) => {
+    this.onModifyQueries({ type: 'ADD_FILTER', key, value });
   };
 
   onModifyQueries = (action, index?: number) => {
@@ -931,7 +931,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         isOpen={showingTable}
                         onToggle={this.onClickTableButton}
                       >
-                        <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
+                        <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickLabel} />
                       </Panel>
                     )}
                     {supportsLogs && (
@@ -941,6 +941,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           loading={logsLoading}
                           position={position}
                           onChangeTime={this.onChangeTime}
+                          onClickLabel={this.onClickLabel}
                           onStartScanning={this.onStartScanning}
                           onStopScanning={this.onStopScanning}
                           range={range}

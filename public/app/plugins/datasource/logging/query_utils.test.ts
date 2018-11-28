@@ -1,4 +1,4 @@
-import { parseQuery } from './datasource';
+import { parseQuery } from './query_utils';
 
 describe('parseQuery', () => {
   it('returns empty for empty string', () => {

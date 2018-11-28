@@ -261,6 +261,8 @@
       border-radius: $border-radius;
       margin: 2*$panel-margin 0;
       border: $panel-border;
+      justify-items: flex-start;
+      align-items: flex-start;
 
       > * {
         margin-right: 1em;
@@ -276,11 +278,11 @@
     .logs-meta {
       flex: 1;
       color: $text-color-weak;
-      padding: 2px 0;
+      // Align first line with controls labels
+      margin-top: -2px;
     }
 
     .logs-meta-item {
-      display: inline-block;
       margin-right: 1em;
     }
 
@@ -292,6 +294,12 @@
 
     .logs-meta-item__value {
       font-family: $font-family-monospace;
+    }
+
+    .logs-meta-item__value-labels {
+      // compensate for the labels padding
+      position: relative;
+      top: 4px;
     }
 
     .logs-row-match-highlight {
@@ -355,6 +363,25 @@
       height: 3px;
       background-color: #1f78c1;
       margin: 0 1px 1px 0;
+    }
+
+    .logs-label {
+      display: inline-block;
+      padding: 0 2px;
+      background-color: $btn-inverse-bg;
+      border-radius: $border-radius;
+      margin-right: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .logs-row-labels {
+      line-height: 1.2;
+
+      .logs-label {
+        cursor: pointer;
+      }
     }
   }
 }

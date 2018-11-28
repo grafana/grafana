@@ -35,19 +35,26 @@ export interface LogRow {
   duplicates?: number;
   entry: string;
   key: string; // timestamp + labels
-  labels: string;
+  labels: LogsStreamLabels;
   logLevel: LogLevel;
   searchWords?: string[];
   timestamp: string; // ISO with nanosec precision
   timeFromNow: string;
   timeEpochMs: number;
   timeLocal: string;
-  uniqueLabels?: string;
+  uniqueLabels?: LogsStreamLabels;
+}
+
+export enum LogsMetaKind {
+  Number,
+  String,
+  LabelsMap,
 }
 
 export interface LogsMetaItem {
   label: string;
-  value: string;
+  value: string | number | LogsStreamLabels;
+  kind: LogsMetaKind;
 }
 
 export interface LogsModel {
@@ -61,7 +68,7 @@ export interface LogsStream {
   entries: LogsStreamEntry[];
   search?: string;
   parsedLabels?: LogsStreamLabels;
-  uniqueLabels?: string;
+  uniqueLabels?: LogsStreamLabels;
 }
 
 export interface LogsStreamEntry {
