@@ -136,7 +136,7 @@ In DingTalk PC Client:
 
 2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
-3. In the  "Robot Manage" panel, select "customised: customised robot with Webhook".
+3. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
 
 4. In the next new panel named "robot detail", click "Add" button.
 
