@@ -16,26 +16,15 @@ const DEFAULT_QUERY_PARAMS = {
   query: '',
 };
 
-const QUERY_REGEXP = /({\w+="[^"]+"})?\s*(\w[^{]+)?\s*({\w+="[^"]+"})?/;
+const selectorRegexp = /{[^{]*}/g;
 export function parseQuery(input: string) {
-  const match = input.match(QUERY_REGEXP);
+  const match = input.match(selectorRegexp);
   let query = '';
-  let regexp = '';
+  let regexp = input;
 
   if (match) {
-    if (match[1]) {
-      query = match[1];
-    }
-    if (match[2]) {
-      regexp = match[2].trim();
-    }
-    if (match[3]) {
-      if (match[1]) {
-        query = `${match[1].slice(0, -1)},${match[3].slice(1)}`;
-      } else {
-        query = match[3];
-      }
-    }
+    query = match[0];
+    regexp = input.replace(selectorRegexp, '').trim();
   }
 
   return { query, regexp };
