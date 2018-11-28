@@ -176,7 +176,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   async setDatasource(datasource: any, origin?: DataSource) {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
-    const supportsTable = datasource.meta.metrics;
+    const supportsTable = datasource.meta.tables;
     const datasourceId = datasource.meta.id;
     let datasourceError = null;
 
