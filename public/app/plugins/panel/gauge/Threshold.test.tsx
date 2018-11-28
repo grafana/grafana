@@ -15,6 +15,12 @@ const setup = (propOverrides?: object) => {
   return shallow(<Thresholds {...props} />).instance() as Thresholds;
 };
 
+const thresholds = [
+  { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
+  { index: 1, label: '', value: 50, canRemove: true, color: '#ff851b' },
+  { index: 2, label: 'Max', value: 100, canRemove: false },
+];
+
 describe('Add threshold', () => {
   it('should add threshold between min and max', () => {
     const instance = setup();
@@ -22,8 +28,8 @@ describe('Add threshold', () => {
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false },
-      { index: 1, label: '', value: 50, canRemove: true },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
+      { index: 1, label: '', value: 50, canRemove: true, color: '#ff851b' },
       { index: 2, label: 'Max', value: 100, canRemove: false },
     ]);
   });
@@ -32,20 +38,16 @@ describe('Add threshold', () => {
     const instance = setup();
 
     instance.state = {
-      thresholds: [
-        { index: 0, label: 'Min', value: 0, canRemove: false },
-        { index: 1, label: '', value: 50, canRemove: true },
-        { index: 2, label: 'Max', value: 100, canRemove: false },
-      ],
+      thresholds: thresholds,
       userAddedThresholds: 1,
     };
 
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false },
-      { index: 1, label: '', value: 25, canRemove: true },
-      { index: 2, label: '', value: 50, canRemove: true },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
+      { index: 1, label: '', value: 25, canRemove: true, color: '#ff851b' },
+      { index: 2, label: '', value: 50, canRemove: true, color: '#ff851b' },
       { index: 3, label: 'Max', value: 100, canRemove: false },
     ]);
   });
@@ -114,9 +116,9 @@ describe('change threshold value', () => {
   it('should update value and resort rows', () => {
     const instance = setup();
     const mockThresholds = [
-      { index: 0, label: 'Min', value: 0, canRemove: false },
-      { index: 1, label: '', value: 50, canRemove: true },
-      { index: 2, label: '', value: 75, canRemove: true },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
+      { index: 1, label: '', value: 50, canRemove: true, color: '#ff851b' },
+      { index: 2, label: '', value: 75, canRemove: true, color: '#ff851b' },
       { index: 3, label: 'Max', value: 100, canRemove: false },
     ];
 
@@ -130,9 +132,9 @@ describe('change threshold value', () => {
     instance.onChangeThresholdValue(mockEvent, mockThresholds[1]);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false },
-      { index: 1, label: '', value: 75, canRemove: true },
-      { index: 2, label: '', value: 78, canRemove: true },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
+      { index: 1, label: '', value: 78, canRemove: true, color: '#ff851b' },
+      { index: 2, label: '', value: 75, canRemove: true, color: '#ff851b' },
       { index: 3, label: 'Max', value: 100, canRemove: false },
     ]);
   });

@@ -23,10 +23,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   }
 
   onAddThreshold = index => {
-    console.log('add at index', index);
     const { thresholds } = this.state;
 
-    const newThresholds = thresholds.map((threshold, index) => {
+    const newThresholds = thresholds.map(threshold => {
       if (threshold.index >= index) {
         threshold = { ...threshold, index: threshold.index + 1 };
       }
