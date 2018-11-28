@@ -784,14 +784,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     //Temp solution... How do detect if ds supports table format?
     let tableResult;
-    try {
-      tableResult = mergeTablesIntoModel(
-        new TableModel(),
-        ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
-      );
-    } catch (error) {
-      console.log(error);
-    }
+    tableResult = mergeTablesIntoModel(
+      new TableModel(),
+      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
+    );
     const logsResult =
       datasource && datasource.mergeStreams
         ? datasource.mergeStreams(
