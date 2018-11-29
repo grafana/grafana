@@ -1,6 +1,7 @@
 import React, { Fragment, PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
+import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange } from 'app/types/series';
 import { LogsDedupStrategy, LogsModel, dedupLogRows, filterLogLevels, LogLevel } from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
@@ -28,7 +29,11 @@ interface LogsProps {
   loading: boolean;
   position: string;
   range?: RawTimeRange;
+  scanning?: boolean;
+  scanRange?: RawTimeRange;
   onChangeTime?: (range: RawTimeRange) => void;
+  onStartScanning?: () => void;
+  onStopScanning?: () => void;
 }
 
 interface LogsState {
@@ -83,8 +88,18 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     this.setState({ hiddenLogLevels });
   };
 
+  onClickScan = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    this.props.onStartScanning();
+  };
+
+  onClickStopScan = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    this.props.onStopScanning();
+  };
+
   render() {
-    const { className = '', data, loading = false, position, range } = this.props;
+    const { className = '', data, loading = false, position, range, scanning, scanRange } = this.props;
     const { dedup, hiddenLogLevels, showLabels, showLocalTime, showUtc } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
     const filteredData = filterLogLevels(data, hiddenLogLevels);
@@ -111,6 +126,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     const logEntriesStyle = {
       gridTemplateColumns: cssColumnSizes.join(' '),
     };
+    const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
     return (
       <div className={`${className} logs`}>
@@ -200,7 +216,25 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
               </Fragment>
             ))}
         </div>
-        {!loading && !hasData && 'No data was returned.'}
+        {!loading &&
+          !hasData &&
+          !scanning && (
+            <div className="logs-nodata">
+              No logs found.
+              <a className="link" onClick={this.onClickScan}>
+                Scan for older logs
+              </a>
+            </div>
+          )}
+
+        {scanning && (
+          <div className="logs-nodata">
+            <span>{scanText}</span>
+            <a className="link" onClick={this.onClickStopScan}>
+              Stop scan
+            </a>
+          </div>
+        )}
       </div>
     );
   }

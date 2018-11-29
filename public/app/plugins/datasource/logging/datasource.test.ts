@@ -35,4 +35,11 @@ describe('parseQuery', () => {
       regexp: 'x|y',
     });
   });
+
+  it('returns query for selector with two labels', () => {
+    expect(parseQuery('{foo="bar", baz="42"}')).toEqual({
+      query: '{foo="bar", baz="42"}',
+      regexp: '',
+    });
+  });
 });

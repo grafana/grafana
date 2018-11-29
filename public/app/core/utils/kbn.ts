@@ -428,10 +428,16 @@ kbn.valueFormats.hex0x = (value, decimals) => {
 };
 
 kbn.valueFormats.sci = (value, decimals) => {
+  if (value == null) {
+    return '';
+  }
   return value.toExponential(decimals);
 };
 
 kbn.valueFormats.locale = (value, decimals) => {
+  if (value == null) {
+    return '';
+  }
   return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
 };
 
