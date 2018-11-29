@@ -4,10 +4,7 @@ import { Variable, VariableBase, containsVariable, assignModelProperties, variab
 export class DatasourceVariable extends VariableBase implements Variable {
   regex: any;
   query: string;
-  options: any;
-  current: any;
   refresh: any;
-  skipUrlSync: boolean;
 
   defaults = {
     type: 'datasource',

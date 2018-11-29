@@ -2,8 +2,6 @@ import { Variable, assignModelProperties, variableTypes, VariableBase } from './
 
 export class ConstantVariable extends VariableBase implements Variable {
   query: string;
-  options: any[];
-  skipUrlSync: boolean;
 
   defaults = {
     type: 'constant',

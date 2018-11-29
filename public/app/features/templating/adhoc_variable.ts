@@ -3,7 +3,6 @@ import { Variable, VariableBase, assignModelProperties, variableTypes } from './
 
 export class AdhocVariable extends VariableBase implements Variable {
   filters: any[];
-  skipUrlSync: boolean;
 
   defaults = {
     type: 'adhoc',

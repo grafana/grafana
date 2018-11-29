@@ -5,11 +5,9 @@ import { Variable, VariableBase, assignModelProperties, variableTypes } from './
 export class IntervalVariable extends VariableBase implements Variable {
   auto_count: number; // tslint:disable-line variable-name
   auto_min: number; // tslint:disable-line variable-name
-  options: any;
   auto: boolean;
   query: string;
   refresh: number;
-  skipUrlSync: boolean;
 
   defaults = {
     type: 'interval',

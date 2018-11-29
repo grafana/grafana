@@ -3,11 +3,8 @@ import { Variable, assignModelProperties, variableTypes, VariableBase } from './
 
 export class CustomVariable extends VariableBase implements Variable {
   query: string;
-  options: any;
   includeAll: boolean;
   multi: boolean;
-  current: any;
-  skipUrlSync: boolean;
 
   defaults = {
     type: 'custom',

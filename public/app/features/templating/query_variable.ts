@@ -11,7 +11,6 @@ export class QueryVariable extends VariableBase implements Variable {
   query: any;
   regex: any;
   sort: any;
-  options: any;
   refresh: number;
   hide: number;
   multi: boolean;
@@ -20,7 +19,6 @@ export class QueryVariable extends VariableBase implements Variable {
   tagsQuery: string;
   tagValuesQuery: string;
   tags: any[];
-  skipUrlSync: boolean;
   definition: string;
 
   defaults = {

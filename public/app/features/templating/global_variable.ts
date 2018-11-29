@@ -2,7 +2,6 @@ import _ from 'lodash';
 import { Variable, assignModelProperties, variableTypes, VariableBase } from './variable';
 
 export class GlobalVariable extends VariableBase implements Variable {
-  options: any;
   uid: string;
 
   defaults = {

@@ -2,8 +2,6 @@ import { Variable, VariableBase, assignModelProperties, variableTypes } from './
 
 export class TextBoxVariable extends VariableBase implements Variable {
   query: string;
-  options: any[];
-  skipUrlSync: boolean;
 
   defaults = {
     type: 'textbox',

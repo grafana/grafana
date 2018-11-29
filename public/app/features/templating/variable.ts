@@ -29,9 +29,10 @@ export abstract class VariableBase {
   type: string;
   current: any;
   options = [];
-  tags = [];
+  tags: any[];
   globalModel: any;
   model: any;
+  skipUrlSync: boolean;
   abstract defaults: any;
 
   getSaveModel() {
