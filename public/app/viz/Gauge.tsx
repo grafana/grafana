@@ -52,8 +52,6 @@ export class Gauge extends PureComponent<Props> {
   draw() {
     const { timeSeries, showThresholdLabels, showThresholdMarkers, thresholds, width, height, stat } = this.props;
 
-    console.log(thresholds);
-
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
     const fontColor = config.bootData.user.lightTheme ? 'rgb(38,38,38)' : 'rgb(230,230,230)';
