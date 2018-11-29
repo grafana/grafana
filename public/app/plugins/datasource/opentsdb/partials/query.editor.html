@@ -2,44 +2,92 @@
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-25">
 			<label class="gf-form-label query-keyword width-8">
-				Metric
-				<label class="gf-form-label" bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
-					<i class="fa fa-warning"></i>
-				</label>
+				Type
 			</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric"
-						 spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
-						ng-blur="ctrl.targetBlur()">
-			</input>
-		</div>
-		<div class="gf-form">
-			<label class="gf-form-label query-keyword">
-				Aggregator
-				<a bs-tooltip="ctrl.errors.aggregator" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.aggregator">
-					<i class="fa fa-warning"></i>
-				</a>
-			</label>
-			<div class="gf-form-select-wrapper max-width-15">
-				<select ng-model="ctrl.target.aggregator" class="gf-form-input"
-								ng-options="agg for agg in ctrl.aggregators"
-								ng-change="ctrl.targetBlur()">
-		 	 </select>
+			<div class="gf-form-select-wrapper max-width-10">
+				<select	ng-model="ctrl.target.queryType" class="gf-form-input"
+						ng-options="queryType for queryType in ctrl.queryTypes"
+						ng-change="ctrl.targetBlur()">
+			 	</select>
 			</div>
 		</div>
-			<div class="gf-form max-width-20">
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div ng-if="ctrl.target.queryType == 'gexp'">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<label class="gf-form-label query-keyword width-8">
+					GExp
+				</label>
+				<input	type="text" class="gf-form-input width-30" ng-model="ctrl.target.gexp"
+						spellcheck='false' placeholder="gexp" ng-blur="ctrl.targetBlur()">
+				</input>
+			</div>
+			<div class="gf-form">
 				<label class="gf-form-label query-keyword width-6">
 					Alias:
 					<info-popover mode="right-normal">
 						Use patterns like $tag_tagname to replace part of the alias for a tag value
 					</info-popover>
 				</label>
-				<input  type="text" class="gf-form-input"
-		   					ng-model="ctrl.target.alias"
-								spellcheck='false'
-								placeholder="series alias"
-								data-min-length=0 data-items=100
-								ng-blur="ctrl.targetBlur()"></input>
+				<input	type="text" class="gf-form-input"
+   						ng-model="ctrl.target.gexpAlias"
+						spellcheck='false'
+						placeholder="gexp alias"
+						ng-blur="ctrl.targetBlur()">
+				</input>
 			</div>
+			<div class="gf-form gf-form--grow">
+				<div class="gf-form-label gf-form-label--grow"></div>
+			</div>
+		</div>
+	</div>
+
+	<div ng-if="ctrl.target.queryType == 'metric'">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<label class="gf-form-label query-keyword width-8">
+					Metric
+					<label class="gf-form-label" bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
+						<i class="fa fa-warning"></i>
+					</label>
+				</label>
+				<input type="text" class="gf-form-input" ng-model="ctrl.target.metric"
+							 spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
+							ng-blur="ctrl.targetBlur()">
+				</input>
+			</div>
+			<div class="gf-form">
+				<label class="gf-form-label query-keyword">
+					Aggregator
+					<a bs-tooltip="ctrl.errors.aggregator" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.aggregator">
+						<i class="fa fa-warning"></i>
+					</a>
+				</label>
+				<div class="gf-form-select-wrapper max-width-15">
+					<select ng-model="ctrl.target.aggregator" class="gf-form-input"
+									ng-options="agg for agg in ctrl.aggregators"
+									ng-change="ctrl.targetBlur()">
+			 	 </select>
+				</div>
+			</div>
+				<div class="gf-form max-width-20">
+					<label class="gf-form-label query-keyword width-6">
+						Alias:
+						<info-popover mode="right-normal">
+							Use patterns like $tag_tagname to replace part of the alias for a tag value
+						</info-popover>
+					</label>
+					<input  type="text" class="gf-form-input"
+			   					ng-model="ctrl.target.alias"
+									spellcheck='false'
+									placeholder="series alias"
+									data-min-length=0 data-items=100
+									ng-blur="ctrl.targetBlur()"></input>
+				</div>
 
 			<div class="gf-form gf-form--grow">
 				<div class="gf-form-label gf-form-label--grow"></div>
@@ -139,7 +187,7 @@
 			</div>
 
       <gf-form-switch class="gf-form"
-                    label="Group by" 
+                    label="Group by"
                     label-class="query-keyword"
                     checked="ctrl.target.currentFilterGroupBy"
                     on-change="ctrl.targetBlur()">
@@ -256,6 +304,7 @@
 
 		<div class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
+			</div>
 		</div>
 	</div>
 </query-editor-row>
