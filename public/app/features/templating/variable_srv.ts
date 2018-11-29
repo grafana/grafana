@@ -33,7 +33,7 @@ export class VariableSrv {
       .get('/api/variables/find', { uids: uids })
       .then(globalVars => {
         return this.dashboard.templating.list.map(variable => {
-          if (variable.type === 'global') {
+          if (variable.type === 'global' && globalVars[variable.uid]) {
             const copy = _.cloneDeep(variable);
             variable = globalVars[copy.uid];
             variable.globalModel = copy;

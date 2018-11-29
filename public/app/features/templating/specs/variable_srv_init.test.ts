@@ -23,10 +23,6 @@ describe('VariableSrv init', function(this: any) {
     $on: () => {},
   };
 
-  const backendSrv = {
-    get: () => Promise.resolve({}),
-  };
-
   let ctx = {} as any;
 
   function describeInitScenario(desc, fn) {
@@ -49,9 +45,12 @@ describe('VariableSrv init', function(this: any) {
             getMetricSources: () => scenario.metricSources,
           },
           templateSrv,
+          backendSrv: {
+            get: () => Promise.resolve(scenario.globalVariables),
+          },
         };
 
-        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv, backendSrv);
+        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, ctx.templateSrv, ctx.backendSrv);
 
         $injector.instantiate = (variable, model) => {
           return getVarMockConstructor(variable, model, ctx);
@@ -93,6 +92,45 @@ describe('VariableSrv init', function(this: any) {
         expect(scenario.variables[0].current.value).toBe('new');
         expect(scenario.variables[0].current.text).toBe('new');
       });
+    });
+  });
+
+  describeInitScenario('when initializing global variable', scenario => {
+    scenario.setup(() => {
+      scenario.variables = [
+        {
+          type: 'global',
+          uid: 'g_query_var',
+          current: { text: 'global_text', value: 'global_value' },
+        },
+      ];
+
+      scenario.globalVariables = {};
+      scenario.globalVariables['g_query_var'] = { uid: 'g_query_var', name: 'GlobalQueryVar', type: 'query' };
+    });
+
+    it('can return global version', () => {
+      expect(scenario.variables[0].type).toBe('query');
+      expect(scenario.variables[0].name).toBe('GlobalQueryVar');
+    });
+  });
+
+  describeInitScenario('when global variable is missing', scenario => {
+    scenario.setup(() => {
+      scenario.variables = [
+        {
+          type: 'global',
+          uid: 'g_query_var',
+          current: { text: 'global_text', value: 'global_value' },
+        },
+      ];
+
+      scenario.globalVariables = {};
+    });
+
+    it('should return local versiob', () => {
+      expect(scenario.variables[0].type).toBe('global');
+      expect(scenario.variables[0].uid).toBe('g_query_var');
     });
   });
 
