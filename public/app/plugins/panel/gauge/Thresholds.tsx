@@ -46,9 +46,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   };
 
   onRemoveThreshold = threshold => {
-    this.setState(prevState => ({
-      thresholds: prevState.thresholds.filter(t => t !== threshold),
-    }));
+    this.setState(
+      prevState => ({
+        thresholds: prevState.thresholds.filter(t => t !== threshold),
+      }),
+      () => this.updateGauge()
+    );
   };
 
   onChangeThresholdValue = (event, threshold) => {
