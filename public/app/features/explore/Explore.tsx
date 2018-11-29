@@ -159,10 +159,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       } else {
         datasource = await datasourceSrv.get();
       }
-      // temporarily remove this
-      // if (!datasource.meta.explore) {
-      //   datasource = await datasourceSrv.get(datasources[0].name);
-      // }
       await this.setDatasource(datasource);
     } else {
       this.setState({ datasourceMissing: true });
