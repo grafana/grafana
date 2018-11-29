@@ -10,12 +10,13 @@ export interface TimeSeriesTooltipProps {
   chartElem: any;
   panelId: number;
   panelOptions?: PanelOptions;
-  showSharedTooltip?: boolean;
-  dateFormat: (time, format) => string;
-  /** Function converting timestamp into offset on chart */
-  getOffset: (x) => number;
+  sharedTooltip?: boolean;
   hoverEvent?: string;
   useCSSTransforms?: boolean;
+  formatDate: (time, format?) => string;
+  /** Function converting timestamp into offset on chart */
+  getOffset: (x) => number;
+  onMouseleave?: (event?) => void;
 }
 
 export interface TimeSeriesTooltipState {
@@ -60,7 +61,7 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
     static defaultProps: Partial<TimeSeriesTooltipProps> = {
       hoverEvent: 'plothover',
       useCSSTransforms: true,
-      showSharedTooltip: false,
+      sharedTooltip: false,
       panelOptions: {
         legend: {},
         tooltip: {},
@@ -97,14 +98,14 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
       this.props.chartElem.on(this.props.hoverEvent, this.handleHoverEvent);
       this.props.chartElem.on('mouseleave', this.handleMouseleave);
       appEvents.on('graph-hover', this.handleGraphHoverEvent);
-      appEvents.on('graph-hover-clear', this.handleMouseleave);
+      appEvents.on('graph-hover-clear', this.handleHoverClear);
     }
 
     unbindEvents() {
       this.props.chartElem.off(this.props.hoverEvent);
       this.props.chartElem.off('mouseleave');
       appEvents.off('graph-hover', this.handleGraphHoverEvent);
-      appEvents.off('graph-hover-clear', this.handleMouseleave);
+      appEvents.off('graph-hover-clear', this.handleHoverClear);
     }
 
     handleHoverEvent = (event, position: FlotPosition, item) => {
@@ -114,7 +115,10 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
 
     handleGraphHoverEvent = (event: GraphHoverEvent) => {
       // ignore if we are the emitter
-      if (!this.props.showSharedTooltip || this.props.panelId === event.panel.id) {
+      if (!this.props.sharedTooltip || this.props.panelId === event.panel.id) {
+        if (this.state.show) {
+          this.hide();
+        }
         return;
       }
       const position = { ...event.pos };
@@ -124,7 +128,12 @@ const withTimeSeriesTooltip = <P extends InjectedTooltipProps>(WrappedComponent:
       this.show(position);
     };
 
-    handleMouseleave = () => {
+    handleMouseleave = event => {
+      this.hide();
+      this.props.onMouseleave(event);
+    };
+
+    handleHoverClear = () => {
       this.hide();
     };
 

@@ -14,7 +14,7 @@ import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
-import GraphTooltip from './graph_tooltip';
+// import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
@@ -54,9 +54,9 @@ class GraphElement {
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
     this.timeRegionManager = new TimeRegionManager(this.ctrl);
-    this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
-      return this.sortedSeries;
-    });
+    // this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
+    //   return this.sortedSeries;
+    // });
 
     // panel events
     this.ctrl.events.on('panel-teardown', this.onPanelTeardown.bind(this));
@@ -67,6 +67,7 @@ class GraphElement {
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
+    this.elem.bind('plothover', this.onPlotHover.bind(this));
 
     // get graph legend element
     if (this.elem && this.elem.parent) {
@@ -113,6 +114,14 @@ class GraphElement {
     ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
+  onPlotHover(event, pos, item) {
+    // self.show(pos, item);
+
+    // broadcast to other graph panels that we are hovering!
+    // pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
+    appEvents.emit('graph-hover', { pos: pos, panel: this.panel });
+  }
+
   onGraphHover(evt) {
     // ignore other graph hover events if shared tooltip is disabled
     if (!this.dashboard.sharedTooltipModeEnabled()) {
@@ -125,6 +134,7 @@ class GraphElement {
     }
 
     // this.tooltip.show(evt.pos);
+    this.plot.setCrosshair(evt.pos);
   }
 
   onPanelTeardown() {
@@ -136,7 +146,7 @@ class GraphElement {
       this.plot = null;
     }
 
-    this.tooltip.destroy();
+    // this.tooltip.destroy();
     this.elem.off();
     this.elem.remove();
 
@@ -144,9 +154,15 @@ class GraphElement {
     ReactDOM.unmountComponentAtNode(this.tooltipElem);
   }
 
-  onGraphHoverClear(event, info) {
+  onTooltipClear() {
+    appEvents.emit('graph-hover-clear');
+  }
+
+  onGraphHoverClear(event?, info?) {
     if (this.plot) {
-      this.tooltip.clear(this.plot);
+      // this.tooltip.clear(this.plot);
+      this.plot.clearCrosshair();
+      this.plot.unhighlight();
     }
   }
 
@@ -310,13 +326,15 @@ class GraphElement {
 
   renderTooltip() {
     // console.log(this);
+    const sharedTooltip = this.dashboard.sharedTooltipModeEnabled() && !this.dashboard.sharedCrosshairModeOnly();
     const tooltipProps: GraphTooltipProps = {
       series: this.sortedSeries,
       chartElem: this.elem,
       panelId: this.panel.id,
-      showSharedTooltip: this.dashboard.sharedTooltipModeEnabled(),
+      sharedTooltip: sharedTooltip,
       getOffset: x => this.getOffset(x),
-      dateFormat: this.ctrl.dashboard.formatDate.bind(this.ctrl.dashboard),
+      formatDate: (time, format) => this.ctrl.dashboard.formatDate(time, format),
+      onMouseleave: () => this.onTooltipClear(),
     };
     const tooltipReactElem = React.createElement(GraphTooltipReact, tooltipProps);
     ReactDOM.render(tooltipReactElem, this.tooltipElem);

@@ -23,7 +23,7 @@ export class GraphTooltip extends PureComponent<GraphTooltipProps & InjectedTool
     const timeFormat = 'YYYY-MM-DD HH:mm:ss';
     // const time = this.props.position.x;
     const time = this.props.timestamp;
-    const absoluteTime = this.props.dateFormat(time, timeFormat);
+    const absoluteTime = this.props.formatDate(time, timeFormat);
     const seriesItems = this.props.series.map((series, index) => <TooltipSeries key={index} {...series} />);
 
     return [
