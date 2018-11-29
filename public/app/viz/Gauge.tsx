@@ -20,8 +20,6 @@ interface Props {
   suffix: string;
 }
 
-const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
-
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
@@ -32,7 +30,10 @@ export class Gauge extends PureComponent<Props> {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
-    thresholds: [{ label: 'Min', value: 0 }, { label: 'Max', value: 100 }],
+    thresholds: [
+      { label: 'Min', value: 0, color: 'rgba(50, 172, 45, 0.97)' },
+      { label: 'Max', value: 100, color: 'rgba(245, 54, 54, 0.9)' },
+    ],
   };
 
   componentDidMount() {
@@ -76,9 +77,12 @@ export class Gauge extends PureComponent<Props> {
     const formattedThresholds = thresholds.map((threshold, index) => {
       return {
         value: threshold.value,
-        color: colors[index],
+        // Hacky way to get correct color for threshold.
+        color: index === 0 ? threshold.color : thresholds[index - 1].color,
       };
     });
+
+    console.log(formattedThresholds);
 
     const options = {
       series: {

@@ -16,8 +16,8 @@ const setup = (propOverrides?: object) => {
 };
 
 const thresholds = [
-  { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
-  { index: 1, label: '', value: 50, canRemove: true, color: '#ff851b' },
+  { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+  { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
   { index: 2, label: 'Max', value: 100, canRemove: false },
 ];
 
@@ -28,8 +28,8 @@ describe('Add threshold', () => {
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
-      { index: 1, label: '', value: 50, canRemove: true, color: '#ff851b' },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+      { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
       { index: 2, label: 'Max', value: 100, canRemove: false },
     ]);
   });
@@ -45,9 +45,9 @@ describe('Add threshold', () => {
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
-      { index: 1, label: '', value: 25, canRemove: true, color: '#ff851b' },
-      { index: 2, label: '', value: 50, canRemove: true, color: '#ff851b' },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+      { index: 1, label: '', value: 25, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
+      { index: 2, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
       { index: 3, label: 'Max', value: 100, canRemove: false },
     ]);
   });
@@ -116,9 +116,9 @@ describe('change threshold value', () => {
   it('should update value and resort rows', () => {
     const instance = setup();
     const mockThresholds = [
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
-      { index: 1, label: '', value: 50, canRemove: true, color: '#ff851b' },
-      { index: 2, label: '', value: 75, canRemove: true, color: '#ff851b' },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+      { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
+      { index: 2, label: '', value: 75, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
       { index: 3, label: 'Max', value: 100, canRemove: false },
     ];
 
@@ -132,9 +132,9 @@ describe('change threshold value', () => {
     instance.onChangeThresholdValue(mockEvent, mockThresholds[1]);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
-      { index: 1, label: '', value: 78, canRemove: true, color: '#ff851b' },
-      { index: 2, label: '', value: 75, canRemove: true, color: '#ff851b' },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+      { index: 1, label: '', value: 78, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
+      { index: 2, label: '', value: 75, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
       { index: 3, label: 'Max', value: 100, canRemove: false },
     ]);
   });

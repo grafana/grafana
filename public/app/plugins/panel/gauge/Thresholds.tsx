@@ -15,7 +15,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
     this.state = {
       thresholds: this.props.options.thresholds || [
-        { index: 0, label: 'Min', value: 0, canRemove: false, color: '#3aa655' },
+        { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
         { index: 1, label: 'Max', value: 100, canRemove: false },
       ],
       userAddedThresholds: 0,
@@ -35,13 +35,16 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
     const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
 
-    this.setState(prevState => ({
-      thresholds: this.sortThresholds([
-        ...newThresholds,
-        { index: index, label: '', value: value, canRemove: true, color: '#ff851b' },
-      ]),
-      userAddedThresholds: prevState.userAddedThresholds + 1,
-    }));
+    this.setState(
+      prevState => ({
+        thresholds: this.sortThresholds([
+          ...newThresholds,
+          { index: index, label: '', value: value, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
+        ]),
+        userAddedThresholds: prevState.userAddedThresholds + 1,
+      }),
+      () => this.updateGauge()
+    );
   };
 
   onRemoveThreshold = threshold => {
@@ -78,9 +81,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       return currentThreshold;
     });
 
-    this.setState({
-      thresholds: newThresholds,
-    });
+    this.setState(
+      {
+        thresholds: newThresholds,
+      },
+      () => this.updateGauge()
+    );
   };
 
   onBlur = () => {
@@ -88,6 +94,10 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       thresholds: this.sortThresholds(prevState.thresholds),
     }));
 
+    this.updateGauge();
+  };
+
+  updateGauge = () => {
     this.props.onChange({ ...this.props.options, thresholds: this.state.thresholds });
   };
 
@@ -106,7 +116,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       return thresholds[index].color;
     }
 
-    return '#d44939';
+    return 'rgb(212, 74, 58)';
   }
 
   renderNoThresholds() {
