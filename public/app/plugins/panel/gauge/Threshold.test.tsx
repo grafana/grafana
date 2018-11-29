@@ -35,12 +35,9 @@ describe('Add threshold', () => {
   });
 
   it('should add threshold between min and added threshold', () => {
-    const instance = setup();
-
-    instance.state = {
-      thresholds: thresholds,
-      userAddedThresholds: 1,
-    };
+    const instance = setup({
+      options: { thresholds: thresholds },
+    });
 
     instance.onAddThreshold(1);
 
@@ -70,7 +67,6 @@ describe('Add at index', () => {
         { index: 1, label: '', value: 50, canRemove: true },
         { index: 2, label: 'Max', value: 100, canRemove: false },
       ],
-      userAddedThresholds: 1,
     };
 
     const result = instance.insertAtIndex(1);
@@ -79,16 +75,16 @@ describe('Add at index', () => {
   });
 
   it('should return 2, two added thresholds', () => {
-    const instance = setup();
-    instance.state = {
-      thresholds: [
-        { index: 0, label: 'Min', value: 0, canRemove: false },
-        { index: 1, label: '', value: 25, canRemove: true },
-        { index: 2, label: '', value: 50, canRemove: true },
-        { index: 3, label: 'Max', value: 100, canRemove: false },
-      ],
-      userAddedThresholds: 2,
-    };
+    const instance = setup({
+      options: {
+        thresholds: [
+          { index: 0, label: 'Min', value: 0, canRemove: false },
+          { index: 1, label: '', value: 25, canRemove: true },
+          { index: 2, label: '', value: 50, canRemove: true },
+          { index: 3, label: 'Max', value: 100, canRemove: false },
+        ],
+      },
+    });
 
     const result = instance.insertAtIndex(2);
 
@@ -103,7 +99,6 @@ describe('Add at index', () => {
         { index: 1, label: '', value: 50, canRemove: true },
         { index: 2, label: 'Max', value: 100, canRemove: false },
       ],
-      userAddedThresholds: 1,
     };
 
     const result = instance.insertAtIndex(2);
@@ -124,7 +119,6 @@ describe('change threshold value', () => {
 
     instance.state = {
       thresholds: mockThresholds,
-      userAddedThresholds: 1,
     };
 
     const mockEvent = { target: { value: 78 } };

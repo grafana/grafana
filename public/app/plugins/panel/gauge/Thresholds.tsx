@@ -6,7 +6,6 @@ import { ColorPicker } from '../../../core/components/colorpicker/ColorPicker';
 
 interface State {
   thresholds: Threshold[];
-  userAddedThresholds: number;
 }
 
 export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsProps>, State> {
@@ -18,7 +17,6 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
         { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
         { index: 1, label: 'Max', value: 100, canRemove: false },
       ],
-      userAddedThresholds: 0,
     };
   }
 
@@ -37,13 +35,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
     const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
 
     this.setState(
-      prevState => ({
+      {
         thresholds: this.sortThresholds([
           ...newThresholds,
           { index: index, label: '', value: value, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
         ]),
-        userAddedThresholds: prevState.userAddedThresholds + 1,
-      }),
+      },
       () => this.updateGauge()
     );
   };
@@ -51,7 +48,6 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   onRemoveThreshold = threshold => {
     this.setState(prevState => ({
       thresholds: prevState.thresholds.filter(t => t !== threshold),
-      userAddedThresholds: prevState.userAddedThresholds - 1,
     }));
   };
 
@@ -208,9 +204,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   }
 
   insertAtIndex(index) {
-    const { userAddedThresholds } = this.state;
+    const { thresholds } = this.state;
 
-    if (userAddedThresholds === 0 || index < 0) {
+    if (thresholds.length < 3 || index < 0) {
       return 1;
     }
 
@@ -218,10 +214,10 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   }
 
   renderIndicatorSection(index) {
-    const { userAddedThresholds } = this.state;
-    const indicators = userAddedThresholds + 1;
+    const { thresholds } = this.state;
+    const indicators = thresholds.length - 1;
 
-    if (index === 0 || index === this.state.thresholds.length) {
+    if (index === 0 || index === thresholds.length) {
       return (
         <div
           key={index}
@@ -268,9 +264,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   }
 
   renderIndicator() {
-    const { userAddedThresholds } = this.state;
+    const { thresholds } = this.state;
 
-    const indicators = userAddedThresholds + 1;
+    const indicators = thresholds.length - 1;
 
     const sections = [];
 
@@ -282,7 +278,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   }
 
   render() {
-    const { userAddedThresholds } = this.state;
+    const { thresholds } = this.state;
 
     return (
       <div className="section gf-form-group">
@@ -290,7 +286,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
         <div className="thresholds">
           <div className="color-indicators">{this.renderIndicator()}</div>
           <div className="threshold-rows">
-            {userAddedThresholds === 0 ? this.renderNoThresholds() : this.renderThresholds()}
+            {thresholds.length > 2 ? this.renderThresholds() : this.renderNoThresholds()}
           </div>
         </div>
       </div>
