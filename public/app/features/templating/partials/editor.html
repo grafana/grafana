@@ -119,9 +119,10 @@
 			<h5 class="section-heading">Global Options</h5>
 
 			<div class="gf-form">
-				<span class="gf-form-label width-9">uids</span>
-				<select class="gf-form-input" ng-model="current.uid" ng-options="f.value as f.text for f in globalVariableOptions"
-						 ng-change=""></select>
+				<span class="gf-form-label width-14">Select global variable</span>
+				<div class="gf-form-select-wrapper max-width-20">
+					<select class="gf-form-input" ng-model="current.uid" ng-options="f.value as f.text for f in globalVariableOptions" ng-change=""></select>
+				</div>
 			</div>
 		</div>
 
