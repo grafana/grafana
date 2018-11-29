@@ -33,6 +33,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       return threshold;
     });
 
+    // Setting value to a value between the new threshold.
     const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
 
     this.setState(
@@ -57,12 +58,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   onChangeThresholdValue = (event, threshold) => {
     const { thresholds } = this.state;
 
-    const newThresholds = thresholds.map(currentThreshold => {
-      if (currentThreshold === threshold) {
-        currentThreshold = { ...currentThreshold, value: event.target.value };
+    const newThresholds = thresholds.map(t => {
+      if (t === threshold) {
+        t = { ...t, value: event.target.value };
       }
 
-      return currentThreshold;
+      return t;
     });
 
     this.setState({
@@ -73,12 +74,12 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   onChangeThresholdColor = (threshold, color) => {
     const { thresholds } = this.state;
 
-    const newThresholds = thresholds.map(currentThreshold => {
-      if (currentThreshold === threshold) {
-        currentThreshold = { ...currentThreshold, color: color };
+    const newThresholds = thresholds.map(t => {
+      if (t === threshold) {
+        t = { ...t, color: color };
       }
 
-      return currentThreshold;
+      return t;
     });
 
     this.setState(
@@ -112,11 +113,9 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
 
     if (index === 0) {
       return thresholds[0].color;
-    } else if (index < thresholds.length) {
-      return thresholds[index].color;
     }
 
-    return 'rgb(212, 74, 58)';
+    return index < thresholds.length ? thresholds[index].color : 'rgb(212, 74, 58)';
   }
 
   renderNoThresholds() {

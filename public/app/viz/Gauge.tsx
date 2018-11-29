@@ -41,7 +41,6 @@ export class Gauge extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    console.log('did update');
     this.draw();
   }
 
@@ -81,8 +80,6 @@ export class Gauge extends PureComponent<Props> {
         color: index === 0 ? threshold.color : thresholds[index - 1].color,
       };
     });
-
-    console.log(formattedThresholds);
 
     const options = {
       series: {
