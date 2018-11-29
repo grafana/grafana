@@ -27,8 +27,8 @@ func GetGlobalVariables(c *models.ReqContext) Response {
       "name": "GlobalQueryVar"
     },
     {
-      "uid": "g_query_var2",
-      "name": "GlobalQueryVar2"
+      "uid": "g_query_vartwo",
+      "name": "GlobalQueryVarTwo"
     }
   ]
   `)
@@ -239,54 +239,25 @@ func FindGlobalVariables(c *models.ReqContext) Response {
       "type": "query",
       "useTags": false
     },
-    "g_query_var2": {
-      "uid": "g_query_var2",
+    "g_query_vartwo": {
+      "uid": "g_query_vartwo",
       "allValue": null,
       "current": {
         "text": "fake-data-gen",
         "value": "fake-data-gen"
       },
       "datasource": "gdev-prometheus",
-      "definition": "label_values(job)",
+      "definition": "label_values(instance)",
       "hide": 0,
       "includeAll": true,
       "label": null,
       "multi": true,
-      "name": "GlobalQueryVar2",
+      "name": "GlobalQueryVarTwo",
       "options": [
-        {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
-        {
-          "selected": true,
-          "text": "fake-data-gen",
-          "value": "fake-data-gen"
-        },
-        {
-          "selected": false,
-          "text": "grafana",
-          "value": "grafana"
-        },
-        {
-          "selected": false,
-          "text": "node_exporter",
-          "value": "node_exporter"
-        },
-        {
-          "selected": false,
-          "text": "prometheus",
-          "value": "prometheus"
-        },
-        {
-          "selected": false,
-          "text": "prometheus-random-data",
-          "value": "prometheus-random-data"
-        }
+        
       ],
-      "query": "label_values(job)",
-      "refresh": 0,
+      "query": "label_values(instance)",
+      "refresh": 2,
       "regex": "",
       "skipUrlSync": false,
       "sort": 0,

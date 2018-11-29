@@ -66,6 +66,10 @@ export class VariableEditorCtrl {
         return false;
       }
 
+      if ($scope.current.type === 'global') {
+        return true;
+      }
+
       if (!$scope.current.name.match(/^\w+$/)) {
         appEvents.emit('alert-warning', ['Validation', 'Only word and digit characters are allowed in variable names']);
         return false;
