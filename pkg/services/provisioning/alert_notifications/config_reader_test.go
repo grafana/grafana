@@ -13,13 +13,14 @@ import (
 var (
 	logger = log.New("fake.log")
 
-	correct_properties        = "./test-configs/correct-properties"
-	brokenYaml                = "./test-configs/broken-yaml"
-	doubleNotificationsConfig = "./test-configs/double-default"
-	emptyFolder               = "./test-configs/empty_folder"
-	emptyFile                 = "./test-configs/empty"
-	twoNotificationsConfig    = "./test-configs/two-notifications"
-	unknownNotifier           = "./test-configs/unknown-notifier"
+	correct_properties              = "./test-configs/correct-properties"
+	correct_properties_with_orgName = "./test-configs/correct-properties-with-orgName"
+	brokenYaml                      = "./test-configs/broken-yaml"
+	doubleNotificationsConfig       = "./test-configs/double-default"
+	emptyFolder                     = "./test-configs/empty_folder"
+	emptyFile                       = "./test-configs/empty"
+	twoNotificationsConfig          = "./test-configs/two-notifications"
+	unknownNotifier                 = "./test-configs/unknown-notifier"
 
 	fakeRepo *fakeRepository
 )
@@ -32,6 +33,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockInsert)
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
+		bus.AddHandler("test", mockGetOrg)
 
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
 			Type: "slack",
@@ -155,6 +157,36 @@ func TestNotificationAsConfig(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("Can read correct properties with orgName instead of orgId", func() {
+			fakeRepo.loadAllOrg = []*models.Org{
+				{Name: "Main Org. 1", Id: 1},
+				{Name: "Main Org. 2", Id: 2},
+			}
+
+			fakeRepo.loadAll = []*models.AlertNotification{
+				{Name: "default-slack-notification", OrgId: 1, Id: 1},
+				{Name: "another-not-default-notification", OrgId: 2, Id: 2},
+			}
+			dc := newNotificationProvisioner(logger)
+			err := dc.applyChanges(correct_properties_with_orgName)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+			So(len(fakeRepo.deleted), ShouldEqual, 2)
+			So(len(fakeRepo.inserted), ShouldEqual, 0)
+			So(len(fakeRepo.updated), ShouldEqual, 2)
+			updated := fakeRepo.updated
+			nt := updated[0]
+			So(nt.Name, ShouldEqual, "default-slack-notification")
+			So(nt.OrgId, ShouldEqual, 1)
+
+			nt = updated[1]
+			So(nt.Name, ShouldEqual, "another-not-default-notification")
+			So(nt.OrgId, ShouldEqual, 2)
+
+		})
+
 		Convey("Empty yaml file", func() {
 			Convey("should have not changed repo", func() {
 				dc := newNotificationProvisioner(logger)
@@ -190,10 +222,11 @@ func TestNotificationAsConfig(t *testing.T) {
 }
 
 type fakeRepository struct {
-	inserted []*models.CreateAlertNotificationCommand
-	deleted  []*models.DeleteAlertNotificationCommand
-	updated  []*models.UpdateAlertNotificationCommand
-	loadAll  []*models.AlertNotification
+	inserted   []*models.CreateAlertNotificationCommand
+	deleted    []*models.DeleteAlertNotificationCommand
+	updated    []*models.UpdateAlertNotificationCommand
+	loadAll    []*models.AlertNotification
+	loadAllOrg []*models.Org
 }
 
 func mockDelete(cmd *models.DeleteAlertNotificationCommand) error {
@@ -211,6 +244,15 @@ func mockInsert(cmd *models.CreateAlertNotificationCommand) error {
 func mockGet(cmd *models.GetAlertNotificationsQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
+			cmd.Result = v
+			return nil
+		}
+	}
+	return nil
+}
+func mockGetOrg(cmd *models.GetOrgByNameQuery) error {
+	for _, v := range fakeRepo.loadAllOrg {
+		if cmd.Name == v.Name {
 			cmd.Result = v
 			return nil
 		}

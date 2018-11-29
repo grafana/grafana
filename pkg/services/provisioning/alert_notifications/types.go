@@ -6,12 +6,14 @@ type notificationsAsConfig struct {
 }
 
 type deleteNotificationConfig struct {
-	Name  string `json:"name" yaml:"name"`
-	OrgId int64  `json:"org_id" yaml:"org_id"`
+	Name    string `json:"name" yaml:"name"`
+	OrgId   int64  `json:"org_id" yaml:"org_id"`
+	OrgName string `json:"org_name" yaml:"org_name"`
 }
 
 type notificationFromConfig struct {
 	OrgId     int64                  `json:"org_id" yaml:"org_id"`
+	OrgName   string                 `json:"org_name" yaml:"org_name"`
 	Name      string                 `json:"name" yaml:"name"`
 	Type      string                 `json:"type" yaml:"type"`
 	IsDefault bool                   `json:"is_default" yaml:"is_default"`

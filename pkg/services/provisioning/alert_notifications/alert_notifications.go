@@ -47,6 +47,15 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 	for _, notification := range notificationToDelete {
 		dc.log.Info("Deleting alert notification", "name", notification.Name)
 
+		if notification.OrgId == 0 && notification.OrgName != "" {
+			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
+			if err := bus.Dispatch(getOrg); err != nil {
+				return err
+			}
+			notification.OrgId = getOrg.Result.Id
+		} else if notification.OrgId < 0 {
+			notification.OrgId = 1
+		}
 		getNotification := &models.GetAlertNotificationsQuery{Name: notification.Name, OrgId: notification.OrgId}
 
 		if err := bus.Dispatch(getNotification); err != nil {
@@ -66,6 +75,17 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 
 func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*notificationFromConfig) error {
 	for _, notification := range notificationToMerge {
+
+		if notification.OrgId == 0 && notification.OrgName != "" {
+			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
+			if err := bus.Dispatch(getOrg); err != nil {
+				return err
+			}
+			notification.OrgId = getOrg.Result.Id
+		} else if notification.OrgId < 0 {
+			notification.OrgId = 1
+		}
+
 		cmd := &models.GetAlertNotificationsQuery{OrgId: notification.OrgId, Name: notification.Name}
 		err := bus.Dispatch(cmd)
 		if err != nil {
@@ -109,6 +129,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 
 	return nil
 }
+
 func (cfg *notificationsAsConfig) mapToNotificationFromConfig() *notificationsAsConfig {
 	r := &notificationsAsConfig{}
 	if cfg == nil {
@@ -118,6 +139,7 @@ func (cfg *notificationsAsConfig) mapToNotificationFromConfig() *notificationsAs
 	for _, notification := range cfg.Notifications {
 		r.Notifications = append(r.Notifications, &notificationFromConfig{
 			OrgId:     notification.OrgId,
+			OrgName:   notification.OrgName,
 			Name:      notification.Name,
 			Type:      notification.Type,
 			IsDefault: notification.IsDefault,
@@ -127,8 +149,9 @@ func (cfg *notificationsAsConfig) mapToNotificationFromConfig() *notificationsAs
 
 	for _, notification := range cfg.DeleteNotifications {
 		r.DeleteNotifications = append(r.DeleteNotifications, &deleteNotificationConfig{
-			OrgId: notification.OrgId,
-			Name:  notification.Name,
+			OrgId:   notification.OrgId,
+			OrgName: notification.OrgName,
+			Name:    notification.Name,
 		})
 	}
 

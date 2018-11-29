@@ -73,13 +73,21 @@ func validateDefaultUniqueness(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
 			if notification.OrgId < 1 {
-				notification.OrgId = 1
+				if notification.OrgName == "" {
+					notification.OrgId = 1
+				} else {
+					notification.OrgId = 0
+				}
 			}
 		}
 
 		for _, notification := range notifications[i].DeleteNotifications {
 			if notification.OrgId < 1 {
-				notification.OrgId = 1
+				if notification.OrgName == "" {
+					notification.OrgId = 1
+				} else {
+					notification.OrgId = 0
+				}
 			}
 		}
 	}
