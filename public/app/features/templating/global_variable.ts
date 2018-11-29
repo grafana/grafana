@@ -2,9 +2,7 @@ import _ from 'lodash';
 import { Variable, assignModelProperties, variableTypes, VariableBase } from './variable';
 
 export class GlobalVariable extends VariableBase implements Variable {
-  query: string;
   options: any;
-  current: any;
   uid: string;
 
   defaults = {
@@ -14,15 +12,14 @@ export class GlobalVariable extends VariableBase implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(model, private variableSrv) {
     super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
   }
 
   getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
-    console.log('globalVariable.getSaveModel', this.uid);
-    console.log('globalVariable.getSaveModel', this.model);
     return this.model;
   }
 

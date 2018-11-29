@@ -3,14 +3,12 @@ import kbn from 'app/core/utils/kbn';
 import { Variable, VariableBase, assignModelProperties, variableTypes } from './variable';
 
 export class IntervalVariable extends VariableBase implements Variable {
-  name: string;
   auto_count: number; // tslint:disable-line variable-name
   auto_min: number; // tslint:disable-line variable-name
   options: any;
   auto: boolean;
   query: string;
   refresh: number;
-  current: any;
   skipUrlSync: boolean;
 
   defaults = {
@@ -30,20 +28,11 @@ export class IntervalVariable extends VariableBase implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
+  constructor(model, private timeSrv, private templateSrv, private variableSrv) {
     super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
-  }
-
-  getSaveModel() {
-    if (this.globalModel) {
-      this.globalModel.current = this.current;
-      return this.globalModel;
-    }
-
-    assignModelProperties(this.model, this, this.defaults);
-    return this.model;
   }
 
   setValue(option) {

@@ -31,6 +31,18 @@ export abstract class VariableBase {
   options = [];
   tags = [];
   globalModel: any;
+  model: any;
+  abstract defaults: any;
+
+  getSaveModel() {
+    if (this.globalModel) {
+      this.globalModel.current = this.current;
+      return this.globalModel;
+    }
+
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
+  }
 }
 
 export let variableTypes = {};

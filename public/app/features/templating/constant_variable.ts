@@ -3,7 +3,6 @@ import { Variable, assignModelProperties, variableTypes, VariableBase } from './
 export class ConstantVariable extends VariableBase implements Variable {
   query: string;
   options: any[];
-  current: any;
   skipUrlSync: boolean;
 
   defaults = {
@@ -19,19 +18,10 @@ export class ConstantVariable extends VariableBase implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(model, private variableSrv) {
     super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
-  }
-
-  getSaveModel() {
-    if (this.globalModel) {
-      this.globalModel.current = this.current;
-      return this.globalModel;
-    }
-
-    assignModelProperties(this.model, this, this.defaults);
-    return this.model;
   }
 
   setValue(option) {

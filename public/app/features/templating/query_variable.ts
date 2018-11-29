@@ -12,10 +12,8 @@ export class QueryVariable extends VariableBase implements Variable {
   regex: any;
   sort: any;
   options: any;
-  current: any;
   refresh: number;
   hide: number;
-  name: string;
   multi: boolean;
   includeAll: boolean;
   useTags: boolean;
@@ -50,20 +48,18 @@ export class QueryVariable extends VariableBase implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
+  constructor(model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
     // copy model properties to this instance
     super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
   }
 
   getSaveModel() {
-    if (this.globalModel) {
-      this.globalModel.current = this.current;
-      return this.globalModel;
-    }
+    this.model = super.getSaveModel();
 
-    assignModelProperties(this.model, this, this.defaults);
-    if (this.refresh !== 0) {
+    // if the savemodel is global we dont want to change options.
+    if (this.type !== 'global' && this.refresh !== 0) {
       this.model.options = [];
     }
 

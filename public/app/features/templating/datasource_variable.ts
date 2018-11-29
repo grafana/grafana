@@ -23,8 +23,9 @@ export class DatasourceVariable extends VariableBase implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
+  constructor(model, private datasourceSrv, private variableSrv, private templateSrv) {
     super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
   }

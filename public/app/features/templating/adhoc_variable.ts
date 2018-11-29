@@ -16,19 +16,10 @@ export class AdhocVariable extends VariableBase implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model) {
+  constructor(model) {
     super();
+    this.model = model;
     assignModelProperties(this, model, this.defaults);
-  }
-
-  getSaveModel() {
-    if (this.globalModel) {
-      this.globalModel.current = this.current;
-      return this.globalModel;
-    }
-
-    assignModelProperties(this.model, this, this.defaults);
-    return this.model;
   }
 
   setValue(option) {
