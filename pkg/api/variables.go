@@ -1,10 +1,44 @@
 package api
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
+)
 
 // GetGlobalVariables returns all available global template variables
 // GET /api/variables
 func GetGlobalVariables(c *models.ReqContext) Response {
+	return JSON(200, `
+  [
+    {
+      "uid": "g_interval_var",
+      "name": "GlobalIntervalVar"
+    },
+    {
+      "uid": "g_constant_var",
+      "name": "GlobalConstantVar"
+    },
+    {
+      "uid": "g_custom_var",
+      "name": "GlobalCustomVar"
+    },
+    {
+      "uid": "g_query_var",
+      "name": "GlobalQueryVar"
+    },
+    {
+      "uid": "g_query_var2",
+      "name": "GlobalQueryVar2"
+    }
+  ]
+  `)
+}
+
+// FindGlobalVariables returns all variables matching the uid query param
+// GET /api/variables/find
+func FindGlobalVariables(c *models.ReqContext) Response {
+	log.Info2("uids: %s", c.QueryStrings("uids"))
+
 	return JSON(200, `{ 
     "g_interval_var": {
       "uid": "g_interval_var",
@@ -17,7 +51,7 @@ func GetGlobalVariables(c *models.ReqContext) Response {
       },
       "hide": 0,
       "label": null,
-      "name": "global interval var",
+      "name": "GlobalIntervalVar",
       "options": [
         {
           "selected": true,
@@ -83,7 +117,7 @@ func GetGlobalVariables(c *models.ReqContext) Response {
       },
       "hide": 0,
       "label": null,
-      "name": "global constant var",
+      "name": "GlobalConstantVar",
       "options": [
         {
           "selected": true,
@@ -106,7 +140,7 @@ func GetGlobalVariables(c *models.ReqContext) Response {
       "includeAll": true,
       "label": null,
       "multi": true,
-      "name": "global custom var",
+      "name": "GlobalCustomVar",
       "options": [
         {
           "selected": false,
@@ -161,7 +195,64 @@ func GetGlobalVariables(c *models.ReqContext) Response {
       "includeAll": true,
       "label": null,
       "multi": true,
-      "name": "global query var",
+      "name": "GlobalQueryVar",
+      "options": [
+        {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        {
+          "selected": true,
+          "text": "fake-data-gen",
+          "value": "fake-data-gen"
+        },
+        {
+          "selected": false,
+          "text": "grafana",
+          "value": "grafana"
+        },
+        {
+          "selected": false,
+          "text": "node_exporter",
+          "value": "node_exporter"
+        },
+        {
+          "selected": false,
+          "text": "prometheus",
+          "value": "prometheus"
+        },
+        {
+          "selected": false,
+          "text": "prometheus-random-data",
+          "value": "prometheus-random-data"
+        }
+      ],
+      "query": "label_values(job)",
+      "refresh": 0,
+      "regex": "",
+      "skipUrlSync": false,
+      "sort": 0,
+      "tagValuesQuery": "",
+      "tags": [],
+      "tagsQuery": "",
+      "type": "query",
+      "useTags": false
+    },
+    "g_query_var2": {
+      "uid": "g_query_var2",
+      "allValue": null,
+      "current": {
+        "text": "fake-data-gen",
+        "value": "fake-data-gen"
+      },
+      "datasource": "gdev-prometheus",
+      "definition": "label_values(job)",
+      "hide": 0,
+      "includeAll": true,
+      "label": null,
+      "multi": true,
+      "name": "GlobalQueryVar2",
       "options": [
         {
           "selected": false,

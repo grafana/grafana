@@ -30,7 +30,7 @@ export class VariableSrv {
     const uids = dashboard.templating.list.filter(t => t.type === 'global').map(t => t.uid);
 
     return this.backendSrv
-      .get('/api/variables', { uids: uids })
+      .get('/api/variables/find', { uids: uids })
       .then(globalVars => {
         return this.dashboard.templating.list.map(variable => {
           if (variable.type === 'global') {

@@ -2,10 +2,11 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
+import { GlobalVariable } from './global_variable';
 
 export class VariableEditorCtrl {
   /** @ngInject */
-  constructor($scope, datasourceSrv, variableSrv, templateSrv) {
+  constructor($scope, datasourceSrv, variableSrv, templateSrv, backendSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -35,6 +36,12 @@ export class VariableEditorCtrl {
 
       $scope.variables = variableSrv.variables;
       $scope.reset();
+
+      backendSrv.get('/api/variables').then(variables => {
+        $scope.globalVariableOptions = _.map(variables, v => {
+          return { text: `${v.name} (${v.uid})`, value: v.uid };
+        });
+      });
 
       $scope.$watch('mode', val => {
         if (val === 'new') {
@@ -114,7 +121,12 @@ export class VariableEditorCtrl {
     };
 
     $scope.edit = variable => {
-      $scope.current = variable;
+      if (variable.globalModel) {
+        $scope.current = new GlobalVariable(variable.globalModel, variableSrv);
+      } else {
+        $scope.current = variable;
+      }
+
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
       $scope.validate();

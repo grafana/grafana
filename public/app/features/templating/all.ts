@@ -9,6 +9,7 @@ import { DatasourceVariable } from './datasource_variable';
 import { CustomVariable } from './custom_variable';
 import { ConstantVariable } from './constant_variable';
 import { AdhocVariable } from './adhoc_variable';
+import { GlobalVariable } from './global_variable';
 import { TextBoxVariable } from './TextBoxVariable';
 
 coreModule.factory('templateSrv', () => {
@@ -24,4 +25,5 @@ export {
   ConstantVariable,
   AdhocVariable,
   TextBoxVariable,
+  GlobalVariable,
 };

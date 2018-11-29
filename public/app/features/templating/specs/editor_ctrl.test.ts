@@ -25,7 +25,7 @@ describe('VariableEditorCtrl', () => {
         },
       };
 
-      return new VariableEditorCtrl(scope, {}, variableSrv, {});
+      return new VariableEditorCtrl(scope, {}, variableSrv, {}, {});
     });
 
     it('should emit an error', () => {

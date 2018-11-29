@@ -279,6 +279,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// Variables
 		apiRoute.Group("/variables", func(vr routing.RouteRegister) {
 			vr.Get("/", Wrap(GetGlobalVariables))
+			vr.Get("/find", Wrap(FindGlobalVariables))
 		})
 
 		// Dashboard

@@ -77,7 +77,7 @@
 		<h5 class="section-heading">General</h5>
 		<div class="gf-form-group">
 			<div class="gf-form-inline">
-				<div class="gf-form max-width-19">
+				<div class="gf-form max-width-19" ng-if="current.type !== 'global'">
 					<span class="gf-form-label width-6">Name</span>
 					<input type="text" class="gf-form-input" name="name" placeholder="name" ng-model='current.name' required
 					 ng-pattern="namePattern"></input>
@@ -101,7 +101,7 @@
 					Grafana's global variables</span>
 			</div>
 
-			<div class="gf-form-inline">
+			<div class="gf-form-inline" ng-if="current.type !== 'global'">
 				<div class="gf-form max-width-19">
 					<span class="gf-form-label width-6">Label</span>
 					<input type="text" class="gf-form-input" ng-model='current.label' placeholder="optional display name"></input>
@@ -112,6 +112,16 @@
 						<select class="gf-form-input" ng-model="current.hide" ng-options="f.value as f.text for f in hideOptions"></select>
 					</div>
 				</div>
+			</div>
+		</div>
+
+		<div ng-if="current.type === 'global'" class="gf-form-group">
+			<h5 class="section-heading">Global Options</h5>
+
+			<div class="gf-form">
+				<span class="gf-form-label width-9">uids</span>
+				<select class="gf-form-input" ng-model="current.uid" ng-options="f.value as f.text for f in globalVariableOptions"
+						 ng-change="runQuery()"></select>
 			</div>
 		</div>
 
