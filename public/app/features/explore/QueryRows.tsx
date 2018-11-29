@@ -1,10 +1,13 @@
 import React, { PureComponent } from 'react';
 
 import { QueryTransaction, HistoryItem, QueryHint } from 'app/types/explore';
+import { Emitter } from 'app/core/utils/emitter';
 
-import DefaultQueryField from './QueryField';
+// import DefaultQueryField from './QueryField';
+import QueryEditor from './QueryEditor';
 import QueryTransactionStatus from './QueryTransactionStatus';
 import { DataSource, DataQuery } from 'app/types';
+import { RawTimeRange } from 'app/types/series';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
@@ -27,6 +30,8 @@ interface QueryRowCommonProps {
   datasource: DataSource;
   history: HistoryItem[];
   transactions: QueryTransaction[];
+  exploreEvents: Emitter;
+  range: RawTimeRange;
 }
 
 type QueryRowProps = QueryRowCommonProps &
@@ -36,6 +41,11 @@ type QueryRowProps = QueryRowCommonProps &
   };
 
 class QueryRow extends PureComponent<QueryRowProps> {
+  onExecuteQuery = () => {
+    const { onExecuteQuery } = this.props;
+    onExecuteQuery();
+  };
+
   onChangeQuery = (value: DataQuery, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
@@ -76,27 +86,41 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { datasource, history, initialQuery, transactions } = this.props;
+    const { datasource, history, initialQuery, transactions, exploreEvents, range } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
-    const QueryField = datasource.pluginExports.ExploreQueryField || DefaultQueryField;
+    // const QueryField = datasource.pluginExports.ExploreQueryField || DefaultQueryField;
+    const QueryField = datasource.pluginExports.ExploreQueryField;
+    // const QueryEditor = datasource.pluginExports.QueryCtrl;
     return (
       <div className="query-row">
         <div className="query-row-status">
           <QueryTransactionStatus transactions={transactions} />
         </div>
         <div className="query-row-field">
-          <QueryField
-            datasource={datasource}
-            error={queryError}
-            hint={hint}
-            initialQuery={initialQuery}
-            history={history}
-            onClickHintFix={this.onClickHintFix}
-            onPressEnter={this.onPressEnter}
-            onQueryChange={this.onChangeQuery}
-          />
+          {QueryField ? (
+            <QueryField
+              datasource={datasource}
+              error={queryError}
+              hint={hint}
+              initialQuery={initialQuery}
+              history={history}
+              onClickHintFix={this.onClickHintFix}
+              onPressEnter={this.onPressEnter}
+              onQueryChange={this.onChangeQuery}
+            />
+          ) : (
+            <QueryEditor
+              datasource={datasource}
+              error={queryError}
+              onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.onExecuteQuery}
+              initialQuery={initialQuery}
+              exploreEvents={exploreEvents}
+              range={range}
+            />
+          )}
         </div>
         <div className="query-row-tools">
           <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>

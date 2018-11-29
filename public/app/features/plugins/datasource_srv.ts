@@ -93,9 +93,7 @@ export class DatasourceSrv {
 
   getExploreSources() {
     const { datasources } = config;
-    const es = Object.keys(datasources)
-      .map(name => datasources[name])
-      .filter(ds => ds.meta && ds.meta.explore);
+    const es = Object.keys(datasources).map(name => datasources[name]);
     return _.sortBy(es, ['name']);
   }
 

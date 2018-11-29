@@ -41,6 +41,7 @@ export interface PluginMeta {
 
   // Datasource-specific
   metrics?: boolean;
+  tables?: boolean;
   logs?: boolean;
   explore?: boolean;
   annotations?: boolean;
