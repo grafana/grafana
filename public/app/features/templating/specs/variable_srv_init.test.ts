@@ -101,17 +101,27 @@ describe('VariableSrv init', function(this: any) {
         {
           type: 'global',
           uid: 'g_query_var',
-          current: { text: 'global_text', value: 'global_value' },
+          current: { text: 'local_text', value: 'local_value' },
         },
       ];
 
       scenario.globalVariables = {};
-      scenario.globalVariables['g_query_var'] = { uid: 'g_query_var', name: 'GlobalQueryVar', type: 'query' };
+      scenario.globalVariables['g_query_var'] = {
+        uid: 'g_query_var',
+        name: 'GlobalQueryVar',
+        type: 'query',
+        current: { text: 'globalText', value: 'globalValue' },
+      };
     });
 
     it('can return global version', () => {
       expect(scenario.variables[0].type).toBe('query');
       expect(scenario.variables[0].name).toBe('GlobalQueryVar');
+    });
+
+    it('should override current with local value', () => {
+      expect(scenario.variables[0].current.text).toBe('local_text');
+      expect(scenario.variables[0].current.value).toBe('local_value');
     });
   });
 
