@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React, { Fragment, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
@@ -12,11 +12,14 @@ import {
   LogLevel,
   LogsStreamLabels,
   LogsMetaKind,
+  LogRow,
 } from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { Switch } from 'app/core/components/Switch/Switch';
 
 import Graph from './Graph';
+
+const RENDER_LIMIT = 100;
 
 const graphOptions = {
   series: {
@@ -77,6 +80,58 @@ class Labels extends PureComponent<{
   }
 }
 
+interface RowProps {
+  row: LogRow;
+  showLabels: boolean | null; // Tristate: null means auto
+  showLocalTime: boolean;
+  showUtc: boolean;
+  onClickLabel?: (label: string, value: string) => void;
+}
+
+function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
+  const needsHighlighter = row.searchWords && row.searchWords.length > 0;
+  return (
+    <div className="logs-row">
+      <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
+        {row.duplicates > 0 && (
+          <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
+            {Array.apply(null, { length: row.duplicates }).map((bogus, index) => (
+              <div className="logs-row-level__duplicate" key={`${index}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      {showUtc && (
+        <div className="logs-row-time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+          {row.timestamp}
+        </div>
+      )}
+      {showLocalTime && (
+        <div className="logs-row-time" title={`${row.timestamp} (${row.timeFromNow})`}>
+          {row.timeLocal}
+        </div>
+      )}
+      {showLabels && (
+        <div className="logs-row-labels">
+          <Labels labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+        </div>
+      )}
+      <div className="logs-row-message">
+        {needsHighlighter ? (
+          <Highlighter
+            textToHighlight={row.entry}
+            searchWords={row.searchWords}
+            findChunks={findHighlightChunksInText}
+            highlightClassName="logs-row-match-highlight"
+          />
+        ) : (
+          row.entry
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface LogsProps {
   className?: string;
   data: LogsModel;
@@ -93,20 +148,50 @@ interface LogsProps {
 
 interface LogsState {
   dedup: LogsDedupStrategy;
+  deferLogs: boolean;
   hiddenLogLevels: Set<LogLevel>;
+  renderAll: boolean;
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
   showUtc: boolean;
 }
 
 export default class Logs extends PureComponent<LogsProps, LogsState> {
+  deferLogsTimer: NodeJS.Timer;
+  renderAllTimer: NodeJS.Timer;
+
   state = {
     dedup: LogsDedupStrategy.none,
+    deferLogs: true,
     hiddenLogLevels: new Set(),
+    renderAll: false,
     showLabels: null,
     showLocalTime: true,
     showUtc: false,
   };
+
+  componentWillReceiveProps(nextProps) {
+    // Reset to render minimal only
+    if (nextProps.data !== this.props.data) {
+      this.setState({ deferLogs: true, renderAll: false });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    // Staged rendering
+    if (prevProps.data !== this.props.data && this.state.deferLogs) {
+      clearTimeout(this.deferLogsTimer);
+      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false }), 1000);
+    } else if (prevState.deferLogs && !this.state.deferLogs) {
+      clearTimeout(this.renderAllTimer);
+      this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
+    }
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.deferLogsTimer);
+    clearTimeout(this.renderAllTimer);
+  }
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
     this.setState(prevState => {
@@ -155,7 +240,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
   render() {
     const { className = '', data, loading = false, onClickLabel, position, range, scanning, scanRange } = this.props;
-    const { dedup, hiddenLogLevels, showLocalTime, showUtc } = this.state;
+    const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
 
@@ -172,26 +257,19 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
       });
     }
 
+    // Staged rendering
+    const firstRows = dedupedData.rows.slice(0, RENDER_LIMIT);
+    const lastRows = dedupedData.rows.slice(RENDER_LIMIT);
+
     // Check for labels
-    if (showLabels === null && hasData) {
-      showLabels = data.rows.some(row => _.size(row.uniqueLabels) > 0);
+    if (showLabels === null) {
+      if (hasData) {
+        showLabels = data.rows.some(row => _.size(row.uniqueLabels) > 0);
+      } else {
+        showLabels = true;
+      }
     }
 
-    // Grid options
-    const cssColumnSizes = ['3px']; // Log-level indicator line
-    if (showUtc) {
-      cssColumnSizes.push('minmax(100px, max-content)');
-    }
-    if (showLocalTime) {
-      cssColumnSizes.push('minmax(100px, max-content)');
-    }
-    if (showLabels) {
-      cssColumnSizes.push('minmax(100px, 25%)');
-    }
-    cssColumnSizes.push('1fr');
-    const logEntriesStyle = {
-      gridTemplateColumns: cssColumnSizes.join(' '),
-    };
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
     return (
@@ -251,36 +329,33 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           </div>
         </div>
 
-        <div className="logs-entries" style={logEntriesStyle}>
+        <div className="logs-entries">
           {hasData &&
-            dedupedData.rows.map(row => (
-              <Fragment key={row.key + row.duplicates}>
-                <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
-                  {row.duplicates > 0 && (
-                    <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
-                      {Array.apply(null, { length: row.duplicates }).map((bogus, index) => (
-                        <div className="logs-row-level__duplicate" key={`${index}`} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {showUtc && <div title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>{row.timestamp}</div>}
-                {showLocalTime && <div title={`${row.timestamp} (${row.timeFromNow})`}>{row.timeLocal}</div>}
-                {showLabels && (
-                  <div className="logs-row-labels">
-                    <Labels labels={row.uniqueLabels} onClickLabel={onClickLabel} />
-                  </div>
-                )}
-                <div>
-                  <Highlighter
-                    textToHighlight={row.entry}
-                    searchWords={row.searchWords}
-                    findChunks={findHighlightChunksInText}
-                    highlightClassName="logs-row-match-highlight"
-                  />
-                </div>
-              </Fragment>
+            !deferLogs &&
+            firstRows.map(row => (
+              <Row
+                key={row.key + row.duplicates}
+                row={row}
+                showLabels={showLabels}
+                showLocalTime={showLocalTime}
+                showUtc={showUtc}
+                onClickLabel={onClickLabel}
+              />
             ))}
+          {hasData &&
+            !deferLogs &&
+            renderAll &&
+            lastRows.map(row => (
+              <Row
+                key={row.key + row.duplicates}
+                row={row}
+                showLabels={showLabels}
+                showLocalTime={showLocalTime}
+                showUtc={showUtc}
+                onClickLabel={onClickLabel}
+              />
+            ))}
+          {hasData && deferLogs && <span>Rendering {dedupedData.rows.length} rows...</span>}
         </div>
         {!loading &&
           !hasData &&
