@@ -7,6 +7,7 @@
   "annotations": false,
   "logs": true,
   "explore": true,
+  "tables": true,
   "info": {
     "description": "Grafana Logging Data Source for Grafana",
     "author": {
