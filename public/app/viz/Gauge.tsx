@@ -7,8 +7,6 @@ import kbn from '../core/utils/kbn';
 interface Props {
   decimals: number;
   timeSeries: TimeSeriesVMs;
-  minValue: number;
-  maxValue: number;
   showThresholdMarkers: boolean;
   thresholds: Threshold[];
   showThresholdLabels: boolean;
@@ -40,7 +38,7 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate() {
     this.draw();
   }
 
@@ -52,17 +50,9 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const {
-      timeSeries,
-      maxValue,
-      minValue,
-      showThresholdLabels,
-      showThresholdMarkers,
-      thresholds,
-      width,
-      height,
-      stat,
-    } = this.props;
+    const { timeSeries, showThresholdLabels, showThresholdMarkers, thresholds, width, height, stat } = this.props;
+
+    console.log(thresholds);
 
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
@@ -85,8 +75,8 @@ export class Gauge extends PureComponent<Props> {
       series: {
         gauges: {
           gauge: {
-            min: minValue,
-            max: maxValue,
+            min: thresholds[0].value,
+            max: thresholds[thresholds.length - 1].value,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },

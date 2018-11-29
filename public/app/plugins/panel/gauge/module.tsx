@@ -15,8 +15,6 @@ export interface OptionsProps {
   suffix: string;
   unit: string;
   thresholds: Threshold[];
-  minValue: number;
-  maxValue: number;
 }
 
 export const defaultProps = {
