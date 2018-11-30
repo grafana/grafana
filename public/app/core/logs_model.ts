@@ -58,6 +58,7 @@ export interface LogsMetaItem {
 }
 
 export interface LogsModel {
+  id: string; // Identify one logs result from another
   meta?: LogsMetaItem[];
   rows: LogRow[];
   series?: TimeSeries[];

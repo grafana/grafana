@@ -140,6 +140,9 @@ export function processEntry(
 }
 
 export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT): LogsModel {
+  // Unique model identifier
+  const id = streams.map(stream => stream.labels).join();
+
   // Find unique labels for each stream
   streams = streams.map(stream => ({
     ...stream,
@@ -184,6 +187,7 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT)
   }
 
   return {
+    id,
     meta,
     rows: sortedRows,
   };

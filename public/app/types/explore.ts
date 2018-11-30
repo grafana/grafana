@@ -1,6 +1,8 @@
 import { Value } from 'slate';
 
 import { DataQuery, RawTimeRange } from './series';
+import TableModel from 'app/core/table_model';
+import { LogsModel } from 'app/core/logs_model';
 
 export interface CompletionItem {
   /**
@@ -158,9 +160,11 @@ export interface ExploreState {
   datasourceMissing: boolean;
   datasourceName?: string;
   exploreDatasources: ExploreDatasource[];
-  graphRange: RawTimeRange;
+  graphInterval: number; // in ms
+  graphResult?: any[];
   history: HistoryItem[];
   initialQueries: DataQuery[];
+  logsResult?: LogsModel;
   queryTransactions: QueryTransaction[];
   range: RawTimeRange;
   scanning?: boolean;
@@ -172,6 +176,7 @@ export interface ExploreState {
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
+  tableResult?: TableModel;
 }
 
 export interface ExploreUrlState {
