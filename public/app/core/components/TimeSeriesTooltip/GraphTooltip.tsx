@@ -1,19 +1,16 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import withTimeSeriesTooltip, {
   TimeSeriesTooltipProps,
-  InjectedTooltipProps,
+  InjectedTimeSeriesTooltipProps,
   TimeSeriesTooltipState,
 } from './TimeSeriesTooltip';
 import { TimeSeriesVM } from 'app/types';
 
-interface GraphTooltipSpecificProps {}
+export interface GraphTooltipProps extends TimeSeriesTooltipProps {}
 
-interface GraphTooltipSpecificState {}
+export interface GraphTooltipState extends TimeSeriesTooltipState {}
 
-export type GraphTooltipProps = TimeSeriesTooltipProps & GraphTooltipSpecificProps;
-export type GraphTooltipState = TimeSeriesTooltipState & GraphTooltipSpecificState;
-
-export class GraphTooltip extends PureComponent<GraphTooltipProps & InjectedTooltipProps, GraphTooltipState> {
+export class GraphTooltip extends PureComponent<GraphTooltipProps & InjectedTimeSeriesTooltipProps, GraphTooltipState> {
   constructor(props) {
     super(props);
   }
