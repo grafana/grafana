@@ -16,6 +16,7 @@ import { RawTimeRange, DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
+  calculcateResultsFromQueryTransactions,
   ensureQueries,
   getIntervals,
   generateKey,
@@ -28,7 +29,7 @@ import ResetStyles from 'app/core/components/Picker/ResetStyles';
 import PickerOption from 'app/core/components/Picker/PickerOption';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import TableModel from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import Panel from './Panel';
@@ -48,35 +49,6 @@ interface ExploreProps {
   splitState?: ExploreState;
   stateKey: string;
   urlState: ExploreUrlState;
-}
-
-function calulcateResultsFromQueryTransactions(
-  queryTransactions: QueryTransaction[],
-  datasource: any,
-  graphInterval: number
-) {
-  const graphResult = _.flatten(
-    queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
-  );
-  const tableResult = mergeTablesIntoModel(
-    new TableModel(),
-    ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
-  );
-  const logsResult =
-    datasource && datasource.mergeStreams
-      ? datasource.mergeStreams(
-          _.flatten(
-            queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-          ),
-          graphInterval
-        )
-      : undefined;
-
-  return {
-    graphResult,
-    tableResult,
-    logsResult,
-  };
 }
 
 /**
@@ -144,6 +116,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
       initialQueries = ensureQueries(queries);
       const initialRange = range || { ...DEFAULT_RANGE };
+      // Millies step for helper bar charts
+      const initialGraphInterval = 15 * 1000;
       this.state = {
         datasource: null,
         datasourceError: null,
@@ -151,7 +125,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceMissing: false,
         datasourceName: datasource,
         exploreDatasources: [],
-        graphInterval: 15 * 1000,
+        graphInterval: initialGraphInterval,
         graphResult: [],
         initialQueries,
         history: [],
@@ -458,7 +432,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
         // Toggle off needs discarding of table queries
         const nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
-        const results = calulcateResultsFromQueryTransactions(
+        const results = calculcateResultsFromQueryTransactions(
           nextQueryTransactions,
           state.datasource,
           state.graphInterval
@@ -545,7 +519,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
         // Discard transactions related to row query
         const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
-        const results = calulcateResultsFromQueryTransactions(
+        const results = calculcateResultsFromQueryTransactions(
           nextQueryTransactions,
           state.datasource,
           state.graphInterval
@@ -660,7 +634,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       // Append new transaction
       const nextQueryTransactions = [...remainingTransactions, transaction];
 
-      const results = calulcateResultsFromQueryTransactions(
+      const results = calculcateResultsFromQueryTransactions(
         nextQueryTransactions,
         state.datasource,
         state.graphInterval
@@ -718,7 +692,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
-      const results = calulcateResultsFromQueryTransactions(
+      const results = calculcateResultsFromQueryTransactions(
         nextQueryTransactions,
         state.datasource,
         state.graphInterval
@@ -979,6 +953,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       <Panel label="Logs" loading={logsLoading} isOpen={showingLogs} onToggle={this.onClickLogsButton}>
                         <Logs
                           data={logsResult}
+                          key={logsResult.id}
                           loading={logsLoading}
                           position={position}
                           onChangeTime={this.onChangeTime}

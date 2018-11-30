@@ -19,7 +19,7 @@ import { Switch } from 'app/core/components/Switch/Switch';
 
 import Graph from './Graph';
 
-const RENDER_LIMIT = 100;
+const PREVIEW_LIMIT = 100;
 
 const graphOptions = {
   series: {
@@ -170,20 +170,20 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     showUtc: false,
   };
 
-  componentWillReceiveProps(nextProps) {
-    // Reset to render minimal only
-    if (nextProps.data !== this.props.data) {
-      this.setState({ deferLogs: true, renderAll: false });
+  componentDidMount() {
+    // Staged rendering
+    if (this.state.deferLogs) {
+      const { data } = this.props;
+      const rowCount = data && data.rows ? data.rows.length : 0;
+      // Render all right away if not too far over the limit
+      const renderAll = rowCount <= PREVIEW_LIMIT * 2;
+      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
     }
   }
 
   componentDidUpdate(prevProps, prevState) {
     // Staged rendering
-    if (prevProps.data !== this.props.data && this.state.deferLogs) {
-      clearTimeout(this.deferLogsTimer);
-      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false }), 1000);
-    } else if (prevState.deferLogs && !this.state.deferLogs) {
-      clearTimeout(this.renderAllTimer);
+    if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
       this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
   }
@@ -258,8 +258,8 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     }
 
     // Staged rendering
-    const firstRows = dedupedData.rows.slice(0, RENDER_LIMIT);
-    const lastRows = dedupedData.rows.slice(RENDER_LIMIT);
+    const firstRows = dedupedData.rows.slice(0, PREVIEW_LIMIT);
+    const lastRows = dedupedData.rows.slice(PREVIEW_LIMIT);
 
     // Check for labels
     if (showLabels === null) {
