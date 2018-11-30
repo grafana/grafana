@@ -40,6 +40,7 @@ import Logs from './Logs';
 import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
 import TimePicker from './TimePicker';
+import { Alert } from './Error';
 
 interface ExploreProps {
   datasourceSrv: DatasourceSrv;
@@ -851,16 +852,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             </button>
           </div>
         </div>
-
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
-
         {datasourceMissing ? (
           <div className="explore-container">Please add a datasource that supports Explore (e.g., Prometheus).</div>
         ) : null}
 
-        {datasourceError ? (
-          <div className="explore-container">Error connecting to datasource. [{datasourceError}]</div>
-        ) : null}
+        {datasourceError && (
+          <div className="explore-container">
+            <Alert message={`Error connecting to datasource: ${datasourceError}`} />
+          </div>
+        )}
 
         {datasource && !datasourceError ? (
           <div className="explore-container">
