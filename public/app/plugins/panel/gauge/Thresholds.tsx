@@ -8,13 +8,19 @@ interface State {
   thresholds: Threshold[];
 }
 
+enum BasicGaugeColor {
+  Green = 'rgba(50, 172, 45, 0.97)',
+  Orange = 'rgba(237, 129, 40, 0.89)',
+  Red = 'rgb(212, 74, 58)',
+}
+
 export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsProps>, State> {
   constructor(props) {
     super(props);
 
     this.state = {
       thresholds: this.props.options.thresholds || [
-        { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+        { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
         { index: 1, label: 'Max', value: 100, canRemove: false },
       ],
     };
@@ -38,7 +44,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       {
         thresholds: this.sortThresholds([
           ...newThresholds,
-          { index: index, label: '', value: value, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
+          { index: index, label: '', value: value, canRemove: true, color: BasicGaugeColor.Orange },
         ]),
       },
       () => this.updateGauge()
@@ -114,7 +120,7 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
       return thresholds[0].color;
     }
 
-    return index < thresholds.length ? thresholds[index].color : 'rgb(212, 74, 58)';
+    return index < thresholds.length ? thresholds[index].color : BasicGaugeColor.Red;
   }
 
   renderNoThresholds() {
@@ -209,6 +215,8 @@ export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsP
   insertAtIndex(index) {
     const { thresholds } = this.state;
 
+    // If thresholds.length is greater or equal to 3
+    // it means a user has added one threshold
     if (thresholds.length < 3 || index < 0) {
       return 1;
     }
