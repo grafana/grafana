@@ -589,8 +589,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     const configuredQueries = [
       {
-        ...queryOptions,
         ...query,
+        ...queryOptions,
       },
     ];
 
