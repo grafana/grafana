@@ -1,9 +1,8 @@
 ﻿import React, { PureComponent } from 'react';
-import { ValidationRule } from 'app/types';
+import { ValidationEvents, ValidationRule } from 'app/types';
+import { validate } from 'app/core/utils/validate';
 
 export enum InputStatus {
-  Default = 'default',
-  Loading = 'loading',
   Invalid = 'invalid',
   Valid = 'valid',
 }
@@ -15,80 +14,71 @@ export enum InputTypes {
   Email = 'email',
 }
 
-interface Props {
-  status?: InputStatus;
-  validationRules: ValidationRule[];
-  hideErrorMessage?: boolean;
-  onBlurWithStatus?: (evt, status: InputStatus) => void;
-  emptyToNull?: boolean;
+export enum EventsWithValidation {
+  onBlur = 'onBlur',
+  onFocus = 'onFocus',
+  onChange = 'onChange',
 }
 
-const validator = (value: string, validationRules: ValidationRule[]) => {
-  const errors = validationRules.reduce((acc, currRule) => {
-    if (!currRule.rule(value)) {
-      return acc.concat(currRule.errorMessage);
-    }
-    return acc;
-  }, []);
-  return errors.length > 0 ? errors : null;
-};
+interface Props extends React.HTMLProps<HTMLInputElement> {
+  validationEvents: ValidationEvents;
+  hideErrorMessage?: boolean;
 
-export class Input extends PureComponent<Props & React.HTMLProps<HTMLInputElement>> {
+  // Override event props and append status as argument
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
+  onFocus?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
+  onChange?: (event: React.FormEvent<HTMLInputElement>, status?: InputStatus) => void;
+}
+
+export class Input extends PureComponent<Props> {
   state = {
     error: null,
   };
 
   get status() {
-    const { error } = this.state;
-    if (error) {
-      return InputStatus.Invalid;
-    }
-    return InputStatus.Valid;
+    return this.state.error ? InputStatus.Invalid : InputStatus.Valid;
   }
 
-  onBlurWithValidation = evt => {
-    const { validationRules, onBlurWithStatus, onBlur } = this.props;
+  get isInvalid() {
+    return this.status === InputStatus.Invalid;
+  }
 
-    let errors = null;
-    if (validationRules) {
-      errors = validator(evt.currentTarget.value, validationRules);
+  validatorAsync = (validationRules: ValidationRule[]) => {
+    return evt => {
+      const errors = validate(evt.currentTarget.value, validationRules);
       this.setState(prevState => {
         return {
           ...prevState,
           error: errors ? errors[0] : null,
         };
       });
-    }
+    };
+  };
 
-    if (onBlurWithStatus) {
-      onBlurWithStatus(evt, errors ? InputStatus.Invalid : InputStatus.Valid);
-    }
-
-    if (onBlur) {
-      onBlur(evt);
-    }
+  populateEventPropsWithStatus = (restProps, validationEvents: ValidationEvents) => {
+    const inputElementProps = { ...restProps };
+    Object.keys(EventsWithValidation).forEach(eventName => {
+      inputElementProps[eventName] = async evt => {
+        if (validationEvents[eventName]) {
+          await this.validatorAsync(validationEvents[eventName]).apply(this, [evt]);
+        }
+        if (restProps[eventName]) {
+          restProps[eventName].apply(null, [evt, this.status]);
+        }
+      };
+    });
+    return inputElementProps;
   };
 
   render() {
-    const {
-      status,
-      validationRules,
-      onBlurWithStatus,
-      onBlur,
-      className,
-      hideErrorMessage,
-      emptyToNull,
-      ...restProps
-    } = this.props;
-
+    const { validationEvents, className, hideErrorMessage, ...restProps } = this.props;
     const { error } = this.state;
-
-    let inputClassName = 'gf-form-input';
-    inputClassName = this.status === InputStatus.Invalid ? inputClassName + ' invalid' : inputClassName;
+    const inputClassName = 'gf-form-input' + (this.isInvalid ? ' invalid' : '');
+    const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
       <div className="our-custom-wrapper-class">
-        <input {...restProps} onBlur={this.onBlurWithValidation} className={inputClassName} />
+        <input {...inputElementProps} className={inputClassName} />
         {error && !hideErrorMessage && <span>{error}</span>}
       </div>
     );

@@ -10,9 +10,9 @@ import config from 'app/core/config';
 import { QueryInspector } from './QueryInspector';
 import { Switch } from 'app/core/components/Switch/Switch';
 import { Input } from 'app/core/components/Form';
-import { InputStatus } from 'app/core/components/Form/Input';
+import { InputStatus, EventsWithValidation } from 'app/core/components/Form/Input';
 import { isValidTimeSpan } from 'app/core/utils/rangeutil';
-import { ValidationRule } from 'app/types';
+import { ValidationEvents } from 'app/types';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -42,17 +42,20 @@ interface LoadingPlaceholderProps {
 }
 
 const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => <h2>{text}</h2>;
-const validationRules: ValidationRule[] = [
-  {
-    rule: value => {
-      if (!value) {
-        return true;
-      }
-      return isValidTimeSpan(value);
+
+const timeRangeValidationEvents: ValidationEvents = {
+  [EventsWithValidation.onBlur]: [
+    {
+      rule: value => {
+        if (!value) {
+          return true;
+        }
+        return isValidTimeSpan(value);
+      },
+      errorMessage: 'Not a valid timespan',
     },
-    errorMessage: 'Not a valid timespan',
-  },
-];
+  ],
+};
 
 export class QueriesTab extends PureComponent<Props, State> {
   element: any;
@@ -322,8 +325,8 @@ export class QueriesTab extends PureComponent<Props, State> {
                 type="text"
                 className="gf-form-input max-width-8"
                 placeholder="1h"
-                onBlurWithStatus={this.onOverrideTime}
-                validationRules={validationRules}
+                onBlur={this.onOverrideTime}
+                validationEvents={timeRangeValidationEvents}
                 hideErrorMessage={true}
               />
             </div>
@@ -338,8 +341,8 @@ export class QueriesTab extends PureComponent<Props, State> {
                 type="text"
                 className="gf-form-input max-width-8"
                 placeholder="1h"
-                onBlurWithStatus={this.onTimeShift}
-                validationRules={validationRules}
+                onBlur={this.onTimeShift}
+                validationEvents={timeRangeValidationEvents}
                 hideErrorMessage={true}
               />
             </div>
