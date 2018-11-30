@@ -16,7 +16,7 @@ import { RawTimeRange, DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
-  calculcateResultsFromQueryTransactions,
+  calculateResultsFromQueryTransactions,
   ensureQueries,
   getIntervals,
   generateKey,
@@ -432,7 +432,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
         // Toggle off needs discarding of table queries
         const nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
-        const results = calculcateResultsFromQueryTransactions(
+        const results = calculateResultsFromQueryTransactions(
           nextQueryTransactions,
           state.datasource,
           state.graphInterval
@@ -519,7 +519,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
         // Discard transactions related to row query
         const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
-        const results = calculcateResultsFromQueryTransactions(
+        const results = calculateResultsFromQueryTransactions(
           nextQueryTransactions,
           state.datasource,
           state.graphInterval
@@ -634,7 +634,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       // Append new transaction
       const nextQueryTransactions = [...remainingTransactions, transaction];
 
-      const results = calculcateResultsFromQueryTransactions(
+      const results = calculateResultsFromQueryTransactions(
         nextQueryTransactions,
         state.datasource,
         state.graphInterval
@@ -692,7 +692,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
-      const results = calculcateResultsFromQueryTransactions(
+      const results = calculateResultsFromQueryTransactions(
         nextQueryTransactions,
         state.datasource,
         state.graphInterval

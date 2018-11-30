@@ -136,7 +136,7 @@ export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
   return queries.some(query => Object.keys(query).length > 2);
 }
 
-export function calculcateResultsFromQueryTransactions(
+export function calculateResultsFromQueryTransactions(
   queryTransactions: QueryTransaction[],
   datasource: any,
   graphInterval: number
