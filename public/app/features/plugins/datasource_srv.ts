@@ -91,12 +91,6 @@ export class DatasourceSrv {
     return sources;
   }
 
-  getExploreSources() {
-    const { datasources } = config;
-    const es = Object.keys(datasources).map(name => datasources[name]);
-    return _.sortBy(es, ['name']);
-  }
-
   getMetricSources(options?) {
     const metricSources: DataSourceSelectItem[] = [];
 

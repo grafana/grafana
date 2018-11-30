@@ -144,7 +144,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
-    const datasources = datasourceSrv.getExploreSources();
+    const datasources = Object['values'](datasourceSrv.getAll());
     const exploreDatasources = datasources.map(ds => ({
       value: ds.name,
       label: ds.name,
