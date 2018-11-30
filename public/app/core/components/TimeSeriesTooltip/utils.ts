@@ -43,7 +43,11 @@ interface GetPlotHoverInfoOptions {
   tooltipValueType?: 'individual' | string;
 }
 
-export function getMultiSeriesPlotHoverInfo(seriesList: any[], pos: FlotPosition, options: GetPlotHoverInfoOptions) {
+interface PlotHoverInfo extends Array<any> {
+  time: number;
+}
+
+export function getMultiSeriesPlotHoverInfo(seriesList: any[], pos: FlotPosition, options: GetPlotHoverInfoOptions): PlotHoverInfo {
   let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
   // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
   let results: any = [[], [], []];
