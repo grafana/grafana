@@ -227,8 +227,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   render() {
     const { currentDatasource } = this.state;
-    const { hasQueryHelp, queryOptions } = currentDatasource.meta;
-    const hasQueryOptions = !!queryOptions;
+    const { hasQueryHelp } = currentDatasource.meta;
     const dsInformation = {
       title: currentDatasource.name,
       imgSrc: currentDatasource.meta.info.logos.small,
@@ -259,7 +258,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const options = {
       title: '',
       icon: 'fa fa-cog',
-      disabled: !hasQueryOptions,
+      disabled: false,
       render: this.renderOptions,
     };
 
