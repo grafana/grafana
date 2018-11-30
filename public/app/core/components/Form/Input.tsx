@@ -45,7 +45,7 @@ export class Input extends PureComponent<Props> {
 
   validatorAsync = (validationRules: ValidationRule[]) => {
     return evt => {
-      const errors = validate(evt.currentTarget.value, validationRules);
+      const errors = validate(evt.target.value, validationRules);
       this.setState(prevState => {
         return {
           ...prevState,
@@ -60,6 +60,7 @@ export class Input extends PureComponent<Props> {
     Object.keys(EventsWithValidation).forEach((eventName: EventsWithValidation) => {
       if (hasValidationEvent(eventName, validationEvents) || restProps[eventName]) {
         inputElementProps[eventName] = async evt => {
+          evt.persist(); // Needed for async. https://reactjs.org/docs/events.html#event-pooling
           if (hasValidationEvent(eventName, validationEvents)) {
             await this.validatorAsync(validationEvents[eventName]).apply(this, [evt]);
           }
