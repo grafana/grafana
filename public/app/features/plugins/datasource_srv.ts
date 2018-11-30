@@ -74,7 +74,8 @@ export class DatasourceSrv {
   }
 
   getAll() {
-    return config.datasources;
+    const { datasources } = config;
+    return Object.keys(datasources).map(name => datasources[name]);
   }
 
   getAnnotationSources() {
