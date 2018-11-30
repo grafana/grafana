@@ -202,10 +202,12 @@ export class QueriesTab extends PureComponent<Props, State> {
       },
     };
 
-    const dsOptions = Object.keys(queryOptions).map(key => {
-      const options = allOptions[key];
-      return <DataSourceOption key={key} {...options} onChange={onChangeFn(allOptions[key].panelKey || key)} />;
-    });
+    const dsOptions = queryOptions
+      ? Object.keys(queryOptions).map(key => {
+          const options = allOptions[key];
+          return <DataSourceOption key={key} {...options} onChange={onChangeFn(allOptions[key].panelKey || key)} />;
+        })
+      : null;
 
     return (
       <>
