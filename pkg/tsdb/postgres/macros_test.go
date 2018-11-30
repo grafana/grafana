@@ -58,6 +58,20 @@ func TestMacroEngine(t *testing.T) {
 				So(sql, ShouldEqual, "select '2018-04-12T18:05:00Z'")
 			})
 
+			Convey("interpolate __timeFrom function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select '2018-04-12T18:00:00Z'")
+			})
+
+			Convey("interpolate __timeTo function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select '2018-04-12T18:05:00Z'")
+			})
+
 			Convey("interpolate __timeGroup function pre 5.3 compatibility", func() {
 
 				sql, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m'), value")
