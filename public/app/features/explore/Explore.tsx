@@ -144,7 +144,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
-    const datasources = datasourceSrv.getExploreSources();
+    const datasources = datasourceSrv.getAll();
     const exploreDatasources = datasources.map(ds => ({
       value: ds.name,
       label: ds.name,
@@ -718,7 +718,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       try {
         const now = Date.now();
         const res = await datasource.query(transaction.options);
-        this.exploreEvents.emit('data-received', res);
+        this.exploreEvents.emit('data-received', res.data || []);
         const latency = Date.now() - now;
         const results = resultGetter ? resultGetter(res.data) : res.data;
         this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);

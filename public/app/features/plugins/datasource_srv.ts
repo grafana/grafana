@@ -74,7 +74,8 @@ export class DatasourceSrv {
   }
 
   getAll() {
-    return config.datasources;
+    const { datasources } = config;
+    return Object.keys(datasources).map(name => datasources[name]);
   }
 
   getAnnotationSources() {
@@ -89,12 +90,6 @@ export class DatasourceSrv {
     });
 
     return sources;
-  }
-
-  getExploreSources() {
-    const { datasources } = config;
-    const es = Object.keys(datasources).map(name => datasources[name]);
-    return _.sortBy(es, ['name']);
   }
 
   getMetricSources(options?) {
