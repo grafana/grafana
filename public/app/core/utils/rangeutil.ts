@@ -159,3 +159,12 @@ export function describeTimeRange(range: RawTimeRange): string {
 
   return range.from.toString() + ' to ' + range.to.toString();
 }
+
+export const isValidTimeSpan = (value: string) => {
+  if (value.indexOf('$') === 0 || value.indexOf('+$') === 0) {
+    return true;
+  }
+
+  const info = describeTextRange(value);
+  return info.invalid !== true;
+};
