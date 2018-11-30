@@ -57,6 +57,13 @@
   }
 }
 
+.react-grid-item.react-grid-placeholder {
+  box-shadow: $panel-grid-placeholder-shadow;
+  background: $panel-grid-placeholder-bg;
+  z-index: 0;
+  opacity: unset;
+}
+
 .theme-dark {
   .react-grid-item > .react-resizable-handle::after {
     border-right: 2px solid $gray-1;

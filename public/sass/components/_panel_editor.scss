@@ -265,10 +265,9 @@
   height: 44px;
 
   &:hover {
-    background: $card-background-hover;
-    box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
+    box-shadow: $panel-editor-viz-item-shadow-hover;
   }
 
   &--selected {
