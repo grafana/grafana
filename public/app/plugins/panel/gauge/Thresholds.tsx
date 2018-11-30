@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames/bind';
+import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { PanelOptionsProps, Threshold } from 'app/types';
 import { OptionsProps } from './module';
-import { ColorPicker } from '../../../core/components/colorpicker/ColorPicker';
 
 interface State {
   thresholds: Threshold[];
