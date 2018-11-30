@@ -61,6 +61,10 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		}
 
 		return fmt.Sprintf("%s BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", args[0], m.timeRange.GetFromAsSecondsEpoch(), m.timeRange.GetToAsSecondsEpoch()), nil
+	case "__timeFrom":
+		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.timeRange.GetFromAsSecondsEpoch()), nil
+	case "__timeTo":
+		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.timeRange.GetToAsSecondsEpoch()), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
