@@ -78,6 +78,9 @@ input:checked + .gf-form-switch__slider::before {
   border: 1px solid $input-border-color;
   border-left: none;
   border-radius: $input-border-radius;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   input {
     opacity: 0;
@@ -88,25 +91,14 @@ input:checked + .gf-form-switch__slider::before {
   &--transparent {
     background: transparent;
     border: none;
-  }
-
-  &--search-result__section {
-    width: 3.05rem;
+    width: 20px;
     height: auto;
     position: relative;
-    top: -5px;
-    left: 3px;
-  }
-
-  &--search-result__item {
-    width: 2.7rem;
-    height: auto;
-    position: relative;
-    top: 3px;
+    padding-left: 7px;
   }
 
   &--table-cell {
-    width: 40px;
+    width: 20px;
     background: transparent;
     height: auto;
     border: none;
@@ -116,17 +108,14 @@ input:checked + .gf-form-switch__slider::before {
 }
 
 .gf-form-switch__checkbox {
-  position: absolute;
-  left: 16px;
   height: 16px;
   width: 16px;
   border-radius: 3px;
   border: $checkbox-border;
   background: $checkbox-bg;
-  top: 8px;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
 input:checked + .gf-form-switch__checkbox::before {
