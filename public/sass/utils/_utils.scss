@@ -82,3 +82,10 @@ button.close {
 .absolute {
   position: absolute;
 }
+
+.center-vh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+}

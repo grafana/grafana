@@ -541,12 +541,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { datasource, range } = this.state;
     const { interval, intervalMs } = getIntervals(range, datasource, this.el.offsetWidth);
 
-    const configuredQueries = [
-      {
-        ...queryOptions,
-        ...query,
-      },
-    ];
+    const configuredQueries = [Object.assign(query, queryOptions)];
 
     // Clone range for query request
     // const queryRange: RawTimeRange = { ...range };

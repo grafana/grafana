@@ -36,7 +36,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
       target,
       ctrl: {
         refresh: () => {
-          this.props.onQueryChange({ refId: initialQuery.refId, ...target }, false);
+          this.props.onQueryChange(target, false);
           this.props.onExecuteQuery();
         },
         events: exploreEvents,

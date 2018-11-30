@@ -1,11 +1,11 @@
 <div ng-repeat="section in ctrl.results" class="search-section">
   <div class="search-section__header pointer" ng-hide="section.hideHeader" ng-class="{'selected': section.selected}" ng-click="ctrl.toggleFolderExpand(section)">
-    <div ng-click="ctrl.toggleSelection(section, $event)">
+    <div ng-click="ctrl.toggleSelection(section, $event)" class="center-vh">
       <gf-form-checkbox
          ng-show="ctrl.editable"
          on-change="ctrl.selectionChanged($event)"
          checked="section.checked"
-         switch-class="gf-form-switch--transparent gf-form-switch--search-result__section">
+         switch-class="gf-form-checkbox--transparent">
       </gf-form-checkbox>
     </div>
     <i class="search-section__header__icon" ng-class="section.icon"></i>
@@ -21,12 +21,12 @@
 
   <div ng-if="section.expanded">
     <a ng-repeat="item in section.items" class="search-item search-item--indent" ng-class="{'selected': item.selected}" ng-href="{{::item.url}}" >
-      <div ng-click="ctrl.toggleSelection(item, $event)">
+      <div ng-click="ctrl.toggleSelection(item, $event)" class="center-vh">
         <gf-form-checkbox
            ng-show="ctrl.editable"
            on-change="ctrl.selectionChanged()"
            checked="item.checked"
-           switch-class="gf-form-switch--transparent gf-form-switch--search-result__item">
+           switch-class="gf-form-checkbox--transparent">
         </gf-form-checkbox>
       </div>
       <span class="search-item__icon">
