@@ -1,6 +1,6 @@
 ﻿import React, { PureComponent } from 'react';
 import { ValidationEvents, ValidationRule } from 'app/types';
-import { validate } from 'app/core/utils/validate';
+import { validate, hasValidationEvent } from 'app/core/utils/validate';
 
 export enum InputStatus {
   Invalid = 'invalid',
@@ -21,7 +21,7 @@ export enum EventsWithValidation {
 }
 
 interface Props extends React.HTMLProps<HTMLInputElement> {
-  validationEvents: ValidationEvents;
+  validationEvents?: ValidationEvents;
   hideErrorMessage?: boolean;
 
   // Override event props and append status as argument
@@ -57,15 +57,17 @@ export class Input extends PureComponent<Props> {
 
   populateEventPropsWithStatus = (restProps, validationEvents: ValidationEvents) => {
     const inputElementProps = { ...restProps };
-    Object.keys(EventsWithValidation).forEach(eventName => {
-      inputElementProps[eventName] = async evt => {
-        if (validationEvents[eventName]) {
-          await this.validatorAsync(validationEvents[eventName]).apply(this, [evt]);
-        }
-        if (restProps[eventName]) {
-          restProps[eventName].apply(null, [evt, this.status]);
-        }
-      };
+    Object.keys(EventsWithValidation).forEach((eventName: EventsWithValidation) => {
+      if (hasValidationEvent(eventName, validationEvents) || restProps[eventName]) {
+        inputElementProps[eventName] = async evt => {
+          if (hasValidationEvent(eventName, validationEvents)) {
+            await this.validatorAsync(validationEvents[eventName]).apply(this, [evt]);
+          }
+          if (restProps[eventName]) {
+            restProps[eventName].apply(null, [evt, this.status]);
+          }
+        };
+      }
     });
     return inputElementProps;
   };
