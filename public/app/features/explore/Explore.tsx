@@ -727,14 +727,20 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     let error: string | JSX.Element = response;
     if (response.data) {
-      error = response.data.error;
-      if (response.data.response) {
-        error = (
-          <>
-            <span>{response.data.error}</span>
-            <details>{response.data.response}</details>
-          </>
-        );
+      if (typeof response.data === 'string') {
+        error = response.data;
+      } else if (response.data.error) {
+        error = response.data.error;
+        if (response.data.response) {
+          error = (
+            <>
+              <span>{response.data.error}</span>
+              <details>{response.data.response}</details>
+            </>
+          );
+        }
+      } else {
+        throw new Error('Could not handle error response');
       }
     }
 
