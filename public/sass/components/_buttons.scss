@@ -172,6 +172,12 @@
   padding-right: 20px;
 }
 
+// No horizontal padding
+.btn-p-x-0 {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 // External services
 // Usage:
 // <div class="btn btn-service btn-service--facebook">Button text</div>
