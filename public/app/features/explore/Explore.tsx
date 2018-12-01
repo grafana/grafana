@@ -253,6 +253,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceLoading: false,
         datasourceName: datasource.name,
         initialQueries: nextQueries,
+        logsHighlighterExpressions: undefined,
         showingStartPage: Boolean(StartPage),
       },
       () => {
@@ -291,7 +292,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
-      return { initialQueries: nextQueries, queryTransactions: nextQueryTransactions };
+      return {
+        initialQueries: nextQueries,
+        logsHighlighterExpressions: undefined,
+        queryTransactions: nextQueryTransactions,
+      };
     });
   };
 
@@ -337,6 +342,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           queryTransactions: nextQueryTransactions,
         };
       }, this.onSubmit);
+    } else if (this.state.datasource.getHighlighterExpression && this.modifiedQueries.length === 1) {
+      // Live preview of log search matches. Can only work on single row query for now
+      this.updateLogsHighlights(value);
     }
   };
 
@@ -529,6 +537,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return {
           ...results,
           initialQueries: nextQueries,
+          logsHighlighterExpressions: undefined,
           queryTransactions: nextQueryTransactions,
         };
       },
@@ -794,6 +803,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   }
 
+  updateLogsHighlights = _.debounce((value: DataQuery, index: number) => {
+    this.setState(state => {
+      const { datasource } = state;
+      if (datasource.getHighlighterExpression) {
+        const logsHighlighterExpressions = [state.datasource.getHighlighterExpression(value)];
+        return { logsHighlighterExpressions };
+      }
+      return null;
+    });
+  }, 500);
+
   cloneState(): ExploreState {
     // Copy state, but copy queries including modifications
     return {
@@ -820,6 +840,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       graphResult,
       history,
       initialQueries,
+      logsHighlighterExpressions,
       logsResult,
       queryTransactions,
       range,
@@ -964,6 +985,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         <Logs
                           data={logsResult}
                           key={logsResult.id}
+                          highlighterExpressions={logsHighlighterExpressions}
                           loading={logsLoading}
                           position={position}
                           onChangeTime={this.onChangeTime}

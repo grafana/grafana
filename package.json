@@ -108,18 +108,9 @@
     "precommit": "lint-staged && grunt precommit"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "prettier --write",
-      "git add"
-    ],
-    "*.scss": [
-      "prettier --write",
-      "git add"
-    ],
-    "*pkg/**/*.go": [
-      "gofmt -w -s",
-      "git add"
-    ]
+    "*.{ts,tsx}": ["prettier --write", "git add"],
+    "*.scss": ["prettier --write", "git add"],
+    "*pkg/**/*.go": ["gofmt -w -s", "git add"]
   },
   "prettier": {
     "trailingComma": "es5",
@@ -156,7 +147,7 @@
     "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.5.0",
     "react-grid-layout": "0.16.6",
-    "react-highlight-words": "^0.10.0",
+    "react-highlight-words": "0.11.0",
     "react-popper": "^0.7.5",
     "react-redux": "^5.0.7",
     "react-select": "2.1.0",

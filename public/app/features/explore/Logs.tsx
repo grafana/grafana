@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
+import classnames from 'classnames';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange } from 'app/types/series';
@@ -37,6 +38,7 @@ const graphOptions = {
 
 interface RowProps {
   allRows: LogRow[];
+  highlighterExpressions?: string[];
   row: LogRow;
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
@@ -44,8 +46,13 @@ interface RowProps {
   onClickLabel?: (label: string, value: string) => void;
 }
 
-function Row({ allRows, onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
-  const needsHighlighter = row.searchWords && row.searchWords.length > 0;
+function Row({ allRows, highlighterExpressions, onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
+  const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
+  const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
+  const needsHighlighter = highlights && highlights.length > 0;
+  const highlightClassName = classnames('logs-row-match-highlight', {
+    'logs-row-match-highlight--preview': previewHighlights,
+  });
   return (
     <>
       <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
@@ -76,9 +83,9 @@ function Row({ allRows, onClickLabel, row, showLabels, showLocalTime, showUtc }:
         {needsHighlighter ? (
           <Highlighter
             textToHighlight={row.entry}
-            searchWords={row.searchWords}
+            searchWords={highlights}
             findChunks={findHighlightChunksInText}
-            highlightClassName="logs-row-match-highlight"
+            highlightClassName={highlightClassName}
           />
         ) : (
           row.entry
@@ -102,6 +109,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 interface LogsProps {
   className?: string;
   data: LogsModel;
+  highlighterExpressions: string[];
   loading: boolean;
   position: string;
   range?: RawTimeRange;
@@ -206,7 +214,17 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
   };
 
   render() {
-    const { className = '', data, loading = false, onClickLabel, position, range, scanning, scanRange } = this.props;
+    const {
+      className = '',
+      data,
+      highlighterExpressions,
+      loading = false,
+      onClickLabel,
+      position,
+      range,
+      scanning,
+      scanRange,
+    } = this.props;
     const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
@@ -316,10 +334,12 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         <div className="logs-entries" style={logEntriesStyle}>
           {hasData &&
             !deferLogs &&
+            // Only inject highlighterExpression in the first set for performance reasons
             firstRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
                 allRows={processedRows}
+                highlighterExpressions={highlighterExpressions}
                 row={row}
                 showLabels={showLabels}
                 showLocalTime={showLocalTime}
