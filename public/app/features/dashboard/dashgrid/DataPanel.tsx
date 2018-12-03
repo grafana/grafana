@@ -134,6 +134,7 @@ export class DataPanel extends Component<Props, State> {
   render() {
     const { queries } = this.props;
     const { response, loading, isFirstLoad } = this.state;
+
     const timeSeries = response.data;
 
     if (isFirstLoad && loading === LoadingState.Loading) {
