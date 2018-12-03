@@ -35,7 +35,7 @@ interface TimePickerProps {
   isOpen?: boolean;
   isUtc?: boolean;
   range?: RawTimeRange;
-  onChangeTime?: (Range) => void;
+  onChangeTime?: (range: RawTimeRange, scanning?: boolean) => void;
 }
 
 interface TimePickerState {
@@ -92,12 +92,13 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     };
   }
 
-  move(direction: number) {
+  move(direction: number, scanning?: boolean): RawTimeRange {
     const { onChangeTime } = this.props;
     const { fromRaw, toRaw } = this.state;
     const from = dateMath.parse(fromRaw, false);
     const to = dateMath.parse(toRaw, true);
-    const timespan = (to.valueOf() - from.valueOf()) / 2;
+    const step = scanning ? 1 : 2;
+    const timespan = (to.valueOf() - from.valueOf()) / step;
 
     let nextTo, nextFrom;
     if (direction === -1) {
@@ -127,9 +128,11 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         toRaw: nextRange.to.format(DATE_FORMAT),
       },
       () => {
-        onChangeTime(nextRange);
+        onChangeTime(nextRange, scanning);
       }
     );
+
+    return nextRange;
   }
 
   handleChangeFrom = e => {

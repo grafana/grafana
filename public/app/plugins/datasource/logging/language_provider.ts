@@ -10,7 +10,7 @@ import {
   HistoryItem,
 } from 'app/types/explore';
 import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
-import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';
+import syntax from './syntax';
 import { DataQuery } from 'app/types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
@@ -55,7 +55,7 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 
   getSyntax() {
-    return PromqlSyntax;
+    return syntax;
   }
 
   request = url => {
@@ -70,19 +70,14 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   };
 
   // Keep this DOM-free for testing
-  provideCompletionItems({ prefix, wrapperClasses, text }: TypeaheadInput, context?: any): TypeaheadOutput {
-    // Syntax spans have 3 classes by default. More indicate a recognized token
-    const tokenRecognized = wrapperClasses.length > 3;
+  provideCompletionItems({ prefix, wrapperClasses, text, value }: TypeaheadInput, context?: any): TypeaheadOutput {
+    // Local text properties
+    const empty = value.document.text.length === 0;
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-labels')) {
-      // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
+      // Suggestions for {|} and {foo=|}
       return this.getLabelCompletionItems.apply(this, arguments);
-    } else if (
-      // Show default suggestions in a couple of scenarios
-      (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
-      (prefix === '' && !text.match(/^[\]})\s]+$/)) || // Empty prefix, but not following a closing brace
-      text.match(/[+\-*/^%]/) // Anything after binary operator
-    ) {
+    } else if (empty) {
       return this.getEmptyCompletionItems(context || {});
     }
 
