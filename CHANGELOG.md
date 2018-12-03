@@ -1,3 +1,9 @@
+# 5.5.0 (unreleased)
+
+### Minor
+
+* **Elasticsearch**: Add support for offset in date histogram aggregation [#12653](https://github.com/grafana/grafana/issues/12653), thx [@mattiarossi](https://github.com/mattiarossi)
+
 # 5.4.0 (2018-12-03)
 
 * **Cloudwatch**: Fix invalid time range causes segmentation fault [#14150](https://github.com/grafana/grafana/issues/14150)
