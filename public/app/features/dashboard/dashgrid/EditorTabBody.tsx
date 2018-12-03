@@ -20,6 +20,7 @@ export interface EditorToolBarView {
 
 interface State {
   openView?: EditorToolBarView;
+  isOpen: boolean;
   fadeIn: boolean;
 }
 
@@ -30,6 +31,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     this.state = {
       openView: null,
       fadeIn: false,
+      isOpen: false,
     };
   }
 
@@ -39,12 +41,13 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   onToggleToolBarView = (item: EditorToolBarView) => {
     this.setState({
-      openView: item === this.state.openView ? null : item,
+      openView: item,
+      isOpen: !this.state.isOpen,
     });
   };
 
   onCloseOpenView = () => {
-    this.setState({ openView: null });
+    this.setState({ isOpen: false });
   };
 
   static getDerivedStateFromProps(props, state) {
@@ -102,7 +105,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   render() {
     const { children, toolbarItems, main, heading } = this.props;
-    const { openView, fadeIn } = this.state;
+    const { openView, fadeIn, isOpen } = this.state;
 
     return (
       <>
@@ -114,7 +117,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false}>
-            <FadeIn in={openView !== null} duration={200}>
+            <FadeIn in={isOpen} duration={200}>
               <div className="panel-editor__toolbar-view">{openView && this.renderOpenView(openView)}</div>
             </FadeIn>
             <div className="panel-editor__content">
