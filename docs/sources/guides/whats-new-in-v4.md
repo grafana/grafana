@@ -134,7 +134,7 @@ continue work on a `build mode` for a future release.
 The new row menu automatically slides out when you mouse over the edge of the row. You no longer need
 to hover over the small green icon and then click it to expand the row menu.
 
-There are some minor improvements to drag and drop behaviour. Now when dragging a panel from one row
+There are some minor improvements to drag and drop behavior. Now when dragging a panel from one row
 to another you will insert the panel and Grafana will automatically make room for it.
 When you drag a panel within a row you will simply reorder the panels.
 
