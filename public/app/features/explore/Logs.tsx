@@ -140,6 +140,7 @@ interface LogsProps {
   range?: RawTimeRange;
   scanning?: boolean;
   scanRange?: RawTimeRange;
+  logExpressionExists?: boolean;
   onChangeTime?: (range: RawTimeRange) => void;
   onClickLabel?: (label: string, value: string) => void;
   onStartScanning?: () => void;
@@ -239,7 +240,17 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
   };
 
   render() {
-    const { className = '', data, loading = false, onClickLabel, position, range, scanning, scanRange } = this.props;
+    const {
+      className = '',
+      data,
+      loading = false,
+      onClickLabel,
+      position,
+      range,
+      scanning,
+      scanRange,
+      logExpressionExists,
+    } = this.props;
     const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
@@ -357,7 +368,8 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             ))}
           {hasData && deferLogs && <span>Rendering {dedupedData.rows.length} rows...</span>}
         </div>
-        {!loading &&
+        {logExpressionExists &&
+          !loading &&
           !hasData &&
           !scanning && (
             <div className="logs-nodata">
