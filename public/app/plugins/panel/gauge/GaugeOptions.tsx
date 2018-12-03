@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { Switch } from 'app/core/components/Switch/Switch';
-import { PanelOptionsProps } from 'app/types';
-import { OptionsProps } from './module';
+import { OptionModuleProps } from './module';
 
-export default class GaugeOptions extends PureComponent<PanelOptionsProps<OptionsProps>> {
+export default class GaugeOptions extends PureComponent<OptionModuleProps> {
   toggleThresholdLabels = () =>
     this.props.onChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
 

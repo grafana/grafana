@@ -2,8 +2,7 @@ import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
 import SimplePicker from 'app/core/components/Picker/SimplePicker';
 import UnitPicker from 'app/core/components/Picker/Unit/UnitPicker';
-import { PanelOptionsProps } from 'app/types';
-import { OptionsProps } from './module';
+import { OptionModuleProps } from './module';
 
 const statOptions = [
   { value: 'min', text: 'Min' },
@@ -21,7 +20,7 @@ const statOptions = [
 
 const labelWidth = 6;
 
-export default class ValueOptions extends PureComponent<PanelOptionsProps<OptionsProps>> {
+export default class ValueOptions extends PureComponent<OptionModuleProps> {
   onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
 
   onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });

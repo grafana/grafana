@@ -17,6 +17,11 @@ export interface OptionsProps {
   thresholds: Threshold[];
 }
 
+export interface OptionModuleProps {
+  onChange: (item: any) => void;
+  options: OptionsProps;
+}
+
 export const defaultProps = {
   options: {
     minValue: 0,

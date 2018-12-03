@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames/bind';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
-import { PanelOptionsProps, Threshold } from 'app/types';
-import { OptionsProps } from './module';
+import { OptionModuleProps } from './module';
+import { Threshold } from 'app/types';
 
 interface State {
   thresholds: Threshold[];
@@ -14,7 +14,7 @@ enum BasicGaugeColor {
   Red = 'rgb(212, 74, 58)',
 }
 
-export default class Thresholds extends PureComponent<PanelOptionsProps<OptionsProps>, State> {
+export default class Thresholds extends PureComponent<OptionModuleProps, State> {
   constructor(props) {
     super(props);
 
