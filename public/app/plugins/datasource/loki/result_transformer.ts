@@ -186,8 +186,11 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT)
     });
   }
 
+  const limited = sortedRows.length === limit;
+
   return {
     id,
+    limited,
     meta,
     rows: sortedRows,
   };

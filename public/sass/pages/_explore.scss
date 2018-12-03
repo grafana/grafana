@@ -112,6 +112,15 @@
     flex-wrap: wrap;
   }
 
+  .graph-markings-label {
+    position: absolute;
+    left: 10px;
+    top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .explore-panel__loader {
     height: 2px;
     position: relative;
@@ -380,6 +389,17 @@
       border-radius: $border-radius;
       justify-content: space-between;
       box-shadow: $popover-shadow;
+    }
+
+    .logs-limit-label {
+      font-size: $font-size-sm;
+      text-align: center;
+      color: $text-color-weak;
+      transition: color 0.5s ease-out;
+
+      &:hover {
+        color: $text-color;
+      }
     }
 
     .logs-row-labels {

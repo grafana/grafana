@@ -66,6 +66,7 @@ export interface LogsMetaItem {
 
 export interface LogsModel {
   id: string; // Identify one logs result from another
+  limited?: boolean; // Result count has reached limit
   meta?: LogsMetaItem[];
   rows: LogRow[];
   series?: TimeSeries[];

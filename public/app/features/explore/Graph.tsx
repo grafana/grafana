@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import moment from 'moment';
 import { withSize } from 'react-sizeme';
 
@@ -78,6 +78,8 @@ interface GraphProps {
   data: any[];
   height?: string; // e.g., '200px'
   id?: string;
+  markings?: any[];
+  markingsLabel?: ReactNode;
   range: RawTimeRange;
   split?: boolean;
   size?: { width: number; height: number };
@@ -98,11 +100,18 @@ interface GraphState {
 export class Graph extends PureComponent<GraphProps, GraphState> {
   $el: any;
   dynamicOptions = null;
+  plot: any; // Result from $.plot()
+  backgroundLabelRef: any;
 
   state = {
     hiddenSeries: new Set(),
     showAllTimeSeries: false,
   };
+
+  constructor(props) {
+    super(props);
+    this.backgroundLabelRef = React.createRef();
+  }
 
   getGraphData() {
     const { data } = this.props;
@@ -144,7 +153,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   getDynamicOptions() {
-    const { range, size } = this.props;
+    const { range, size, markings } = this.props;
     const ticks = (size.width || 0) / 100;
     let { from, to } = range;
     if (!moment.isMoment(from)) {
@@ -155,7 +164,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
     const min = from.valueOf();
     const max = to.valueOf();
-    return {
+    const result = {
       xaxis: {
         mode: 'time',
         min: min,
@@ -166,6 +175,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         timeformat: time_format(ticks, min, max),
       },
     };
+    if (markings) {
+      (result as any).grid = {
+        ...FLOT_OPTIONS.grid,
+        markings,
+      };
+    }
+    return result;
   }
 
   onShowAllTimeSeries = () => {
@@ -210,7 +226,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   draw() {
-    const { userOptions = {} } = this.props;
+    const { height, markings, userOptions = {} } = this.props;
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
 
@@ -233,11 +249,20 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       ...userOptions,
     };
 
-    $.plot($el, series, options);
+    this.plot = $.plot($el, series, options);
+
+    // Adjust background label
+    if (this.backgroundLabelRef.current && markings && markings.length > 0) {
+      const node: HTMLDivElement = this.backgroundLabelRef.current;
+      const range = markings[0].xaxis;
+      const offset = this.plot.pointOffset({ x: range.to, y: 0 });
+      node.style.height = height;
+      node.style.width = `${offset.left}px`;
+    }
   }
 
   render() {
-    const { height = '100px', id = 'graph' } = this.props;
+    const { height = '100px', id = 'graph', markings, markingsLabel } = this.props;
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
 
@@ -256,6 +281,12 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           )}
         <div id={id} className="explore-graph" style={{ height }} />
         <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} />
+        {markings &&
+          markingsLabel && (
+            <div className="graph-markings-label" ref={this.backgroundLabelRef}>
+              {markingsLabel}
+            </div>
+          )}
       </>
     );
   }

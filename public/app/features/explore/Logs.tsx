@@ -4,6 +4,8 @@ import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
+import { parse as parseDate } from 'app/core/utils/datemath';
+import { TimeSeries } from 'app/core/core';
 import { RawTimeRange } from 'app/types/series';
 import {
   LogsDedupStrategy,
@@ -35,6 +37,36 @@ const graphOptions = {
     tickDecimals: 0,
   },
 };
+
+const limitMarkingsLabel = (
+  <div className="logs-limit-label">
+    <div title="To see logs from this range, shift left on the time picker, or try tightening the search parameters">
+      Limit reached
+    </div>
+  </div>
+);
+
+function getLimitMarkings(series: TimeSeries[], range: RawTimeRange): any[] {
+  const firstTimes = series.reduce((acc, s) => {
+    if (s.datapoints.length > 0) {
+      acc.push(s.datapoints[s.datapoints.length - 1][1]);
+    }
+    return acc;
+  }, []);
+  if (firstTimes.length === 0) {
+    return null;
+  }
+
+  const oldestTime = Math.min(...firstTimes);
+  const startTime = parseDate(range.from).valueOf();
+
+  return [
+    {
+      color: 'rgba(254,172,182,0.25)',
+      xaxis: { from: startTime, to: oldestTime },
+    },
+  ];
+}
 
 interface RowProps {
   allRows: LogRow[];
@@ -284,6 +316,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     };
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+    const limitMarkings = data.limited ? getLimitMarkings(data.series, range) : null;
 
     return (
       <div className={`${className} logs`}>
@@ -291,6 +324,8 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           <Graph
             data={data.series}
             height="100px"
+            markings={limitMarkings}
+            markingsLabel={limitMarkingsLabel}
             range={range}
             id={`explore-logs-graph-${position}`}
             onChangeTime={this.props.onChangeTime}
