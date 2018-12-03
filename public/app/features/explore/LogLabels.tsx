@@ -2,32 +2,9 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import classnames from 'classnames';
 
-import { LogsStreamLabels, LogRow } from 'app/core/logs_model';
+import { calculateLogsLabelStats, LogsLabelStat, LogsStreamLabels, LogRow } from 'app/core/logs_model';
 
-interface FieldStat {
-  active?: boolean;
-  value: string;
-  count: number;
-  proportion: number;
-}
-
-function calculateStats(rows: LogRow[], label: string): FieldStat[] {
-  // Consider only rows that have the given label
-  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
-  const rowCount = rowsWithLabel.length;
-
-  // Get label value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRow).labels[label]);
-  const sortedCounts = _.chain(countsByValue)
-    .map((count, value) => ({ count, value, proportion: count / rowCount }))
-    .sortBy('count')
-    .reverse()
-    .value();
-
-  return sortedCounts;
-}
-
-function StatsRow({ active, count, proportion, value }: FieldStat) {
+function StatsRow({ active, count, proportion, value }: LogsLabelStat) {
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };
   const className = classnames('logs-stats-row', { 'logs-stats-row--active': active });
@@ -48,7 +25,7 @@ function StatsRow({ active, count, proportion, value }: FieldStat) {
 
 const STATS_ROW_LIMIT = 5;
 class Stats extends PureComponent<{
-  stats: FieldStat[];
+  stats: LogsLabelStat[];
   label: string;
   value: string;
   rowCount: number;
@@ -92,7 +69,7 @@ class Label extends PureComponent<
     value: string;
     onClickLabel?: (label: string, value: string) => void;
   },
-  { showStats: boolean; stats: FieldStat[] }
+  { showStats: boolean; stats: LogsLabelStat[] }
 > {
   state = {
     stats: null,
@@ -115,7 +92,7 @@ class Label extends PureComponent<
       if (state.showStats) {
         return { showStats: false, stats: null };
       }
-      const stats = calculateStats(this.props.allRows, this.props.label);
+      const stats = calculateLogsLabelStats(this.props.allRows, this.props.label);
       return { showStats: true, stats };
     });
   };
