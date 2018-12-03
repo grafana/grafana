@@ -1,4 +1,4 @@
-# 5.4.0 (unreleased)
+# 5.4.0 (2018-12-03)
 
 * **Cloudwatch**: Fix invalid time range causes segmentation fault [#14150](https://github.com/grafana/grafana/issues/14150)
 * **Cloudwatch**: AWS/CodeBuild metrics and dimensions [#14167](https://github.com/grafana/grafana/issues/14167), thx [@mmcoltman](https://github.com/mmcoltman)
