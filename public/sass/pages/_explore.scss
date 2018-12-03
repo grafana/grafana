@@ -326,7 +326,7 @@
 
       color: $typeahead-selected-color;
       border-bottom: 1px solid $typeahead-selected-color;
-      background-color: lighten($typeahead-selected-color, 60%);
+      background-color: rgba($typeahead-selected-color, 0.1);
     }
 
     .logs-row-level {
