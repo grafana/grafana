@@ -87,6 +87,14 @@ export class TimeRegionManager {
         continue;
       }
 
+      if (timeRegion.from && !timeRegion.to) {
+        timeRegion.to = timeRegion.from;
+      }
+
+      if (!timeRegion.from && timeRegion.to) {
+        timeRegion.from = timeRegion.to;
+      }
+
       hRange = {
         from: this.parseTimeRange(timeRegion.from),
         to: this.parseTimeRange(timeRegion.to),
@@ -108,21 +116,13 @@ export class TimeRegionManager {
         hRange.to.dayOfWeek = Number(timeRegion.toDayOfWeek);
       }
 
-      if (!hRange.from.h && hRange.to.h) {
-        hRange.from = hRange.to;
-      }
-
-      if (hRange.from.h && !hRange.to.h) {
-        hRange.to = hRange.from;
-      }
-
-      if (hRange.from.dayOfWeek && !hRange.from.h && !hRange.from.m) {
+      if (hRange.from.dayOfWeek && hRange.from.h === null && hRange.from.m === null) {
         hRange.from.h = 0;
         hRange.from.m = 0;
         hRange.from.s = 0;
       }
 
-      if (hRange.to.dayOfWeek && !hRange.to.h && !hRange.to.m) {
+      if (hRange.to.dayOfWeek && hRange.to.h === null && hRange.to.m === null) {
         hRange.to.h = 23;
         hRange.to.m = 59;
         hRange.to.s = 59;
