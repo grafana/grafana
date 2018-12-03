@@ -15,11 +15,7 @@ interface Props {
 }
 
 export class VisualizationTab extends PureComponent<Props> {
-  constructor(props) {
-    super(props);
-  }
-
-  getPanelDefaultOptions() {
+  getPanelDefaultOptions = () => {
     const { panel, plugin } = this.props;
 
     if (plugin.exports.PanelDefaults) {
@@ -27,7 +23,7 @@ export class VisualizationTab extends PureComponent<Props> {
     }
 
     return panel.getOptions(plugin.exports.PanelDefaults);
-  }
+  };
 
   renderPanelOptions() {
     const { plugin } = this.props;
