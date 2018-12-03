@@ -27,6 +27,7 @@ import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
+import { TemplateSrvStub } from '../../../../../test/specs/helpers';
 
 const ctx = {} as any;
 let ctrl;
@@ -109,7 +110,13 @@ describe('grafanaGraph', () => {
         $on: () => {},
       },
       {
-        get: () => {},
+        get: type => {
+          if (type === 'templateSrv') {
+            return new TemplateSrvStub();
+          }
+
+          return null;
+        },
       },
       {}
     );

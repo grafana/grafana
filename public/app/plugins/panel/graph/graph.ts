@@ -614,11 +614,11 @@ class GraphElement {
   }
 
   parseNumber(value: any) {
-    if (value === null || typeof value === 'undefined') {
+    if (_.isNil(value)) {
       return null;
     }
 
-    return _.toNumber(value);
+    return _.toNumber(this.ctrl.templateSrv.replace(value, this.ctrl.panel.scopedVars));
   }
 
   applyLogScale(axis, data) {
