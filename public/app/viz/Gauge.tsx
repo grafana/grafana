@@ -57,7 +57,8 @@ export class Gauge extends PureComponent<Props> {
     const fontColor = config.bootData.user.lightTheme ? 'rgb(38,38,38)' : 'rgb(230,230,230)';
     const fontScale = parseInt('80', 10) / 100;
     const fontSize = Math.min(dimension / 5, 100) * fontScale;
-    const gaugeWidth = Math.min(dimension / 6, 60);
+    const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
+    const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const thresholdLabelFontSize = fontSize / 2.5;
 
@@ -115,7 +116,7 @@ export class Gauge extends PureComponent<Props> {
 
     let value: string | number = 'N/A';
     if (timeSeries.length) {
-      value = timeSeries[0].stats.avg;
+      value = timeSeries[0].stats[stat];
     }
 
     const plotSeries = {
