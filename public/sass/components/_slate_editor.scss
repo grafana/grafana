@@ -12,7 +12,7 @@
   width: 100%;
   cursor: text;
   line-height: $line-height-base;
-  color: $text-color-weak;
+  color: $text-color;
   background-color: $panel-bg;
   background-image: none;
   border: $panel-border;
@@ -95,45 +95,45 @@
     color: $text-color-weak;
   }
 
-  .token.punctuation {
-    color: $text-color-weak;
+  .token.variable,
+  .token.entity {
+    color: $text-color;
   }
 
   .token.property,
   .token.tag,
-  .token.boolean,
-  .token.number,
-  .token.function-name,
   .token.constant,
   .token.symbol,
   .token.deleted {
     color: $query-red;
   }
 
+  .token.attr-value,
   .token.selector,
-  .token.attr-name,
   .token.string,
   .token.char,
-  .token.function,
   .token.builtin,
   .token.inserted {
     color: $query-green;
   }
 
+  .token.boolean,
+  .token.number,
   .token.operator,
-  .token.entity,
-  .token.url,
-  .token.variable {
+  .token.url {
     color: $query-purple;
   }
 
+  .token.function,
+  .token.attr-name,
+  .token.function-name,
   .token.atrule,
-  .token.attr-value,
   .token.keyword,
   .token.class-name {
-    color: $blue;
+    color: $query-keyword;
   }
 
+  .token.punctuation,
   .token.regex,
   .token.important {
     color: $query-orange;
