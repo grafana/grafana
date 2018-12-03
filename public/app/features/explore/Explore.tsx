@@ -836,7 +836,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
-    const logExpressionExists = queryTransactions.some(qt => qt.resultType === 'Logs' && qt.query.expr && !qt.error);
     const loading = queryTransactions.some(qt => !qt.done);
 
     return (
@@ -970,7 +969,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           range={range}
                           scanning={scanning}
                           scanRange={scanRange}
-                          logExpressionExists={logExpressionExists}
                         />
                       </Panel>
                     )}
