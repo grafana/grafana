@@ -8,8 +8,7 @@
   height: 100%;
 
   &--edit {
-    flex: 1 1 0;
-    height: unset;
+    height: 40%;
     margin: 0 $dashboard-padding;
   }
 
@@ -25,7 +24,7 @@
   margin-top: $panel-margin*2;
   display: flex;
   flex-direction: row;
-  height: 60%;
+  flex: 1 1 0;
   position: relative;
 }
 
@@ -235,8 +234,8 @@
   .gicon {
     height: 44px;
     width: 53px;
-    transition: transform 0.1s ease;
     margin-right: 5px;
+    transition: transform 0.1s ease 0.1s;
 
     &:hover {
       filter: $panel-editor-side-menu-shadow;
