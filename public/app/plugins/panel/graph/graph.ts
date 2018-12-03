@@ -58,15 +58,7 @@ class GraphElement {
 
     // panel events
     this.ctrl.events.on('panel-teardown', this.onPanelTeardown.bind(this));
-
-    /**
-     * Split graph rendering into two parts.
-     * First, calculate series stats in buildFlotPairs() function. Then legend rendering started
-     * (see ctrl.events.on('render') in legend.ts).
-     * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
-     */
     this.ctrl.events.on('render', this.onRender.bind(this));
-    this.ctrl.events.on('legend-rendering-complete', this.onLegendRenderingComplete.bind(this));
 
     // global events
     appEvents.on('graph-hover', this.onGraphHover.bind(this), scope);
@@ -85,10 +77,19 @@ class GraphElement {
     if (!this.data) {
       return;
     }
+
     this.annotations = this.ctrl.annotations || [];
     this.buildFlotPairs(this.data);
     const graphHeight = this.elem.height();
     updateLegendValues(this.data, this.panel, graphHeight);
+
+    if (!this.panel.legend.show) {
+      if (this.legendElem.hasChildNodes()) {
+        ReactDOM.unmountComponentAtNode(this.legendElem);
+      }
+      this.renderPanel();
+      return;
+    }
 
     const { values, min, max, avg, current, total } = this.panel.legend;
     const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
@@ -104,12 +105,9 @@ class GraphElement {
       onColorChange: this.ctrl.onColorChange,
       onToggleAxis: this.ctrl.onToggleAxis,
     };
-    const legendReactElem = React.createElement(Legend, legendProps);
-    ReactDOM.render(legendReactElem, this.legendElem, () => this.onLegendRenderingComplete());
-  }
 
-  onLegendRenderingComplete() {
-    this.render_panel();
+    const legendReactElem = React.createElement(Legend, legendProps);
+    ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
   onGraphHover(evt) {
@@ -281,7 +279,7 @@ class GraphElement {
   }
 
   // Function for rendering panel
-  render_panel() {
+  renderPanel() {
     this.panelWidth = this.elem.width();
     if (this.shouldAbortRender()) {
       return;
