@@ -141,19 +141,6 @@ $input-border: 1px solid $input-border-color;
   @include border-radius($label-border-radius-sm);
 }
 
-.gf-form-checkbox {
-  flex-shrink: 0;
-  padding: $input-padding-y $input-padding-x;
-  line-height: $input-line-height;
-
-  .checkbox-label {
-    display: inline;
-    cursor: pointer;
-    padding: $input-padding-y 0.4rem;
-    line-height: $input-line-height;
-  }
-}
-
 .gf-form-textarea {
   max-width: 650px;
 }
@@ -180,6 +167,7 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
+    height: auto;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.

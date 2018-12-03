@@ -61,7 +61,7 @@ $critical: #ec2128;
 // -------------------------
 
 $body-bg: $gray-7;
-$page-bg: $gray-7;
+$page-bg: $gray-6;
 $body-color: $gray-1;
 $text-color: $gray-1;
 $text-color-strong: $dark-2;
@@ -76,6 +76,8 @@ $textShadow: none;
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
 $page-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
+//$page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
+$edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
@@ -215,9 +217,7 @@ $menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
 $tab-border-color: $gray-5;
 
 // Toolbar
-$toolbar-bg: linear-gradient(90deg, #ffffff, #e6eef9);
-$toolbar-shadow: 1px 1px 3px #c7d0d8;
-$toolbar-tab-bg: $white;
+$toolbar-bg: white;
 
 // search
 $search-shadow: 0 5px 30px 0 $gray-4;
@@ -379,3 +379,20 @@ $checkbox-bg: $gray-6;
 $checkbox-border: 1px solid $gray-3;
 $checkbox-checked-bg: linear-gradient(0deg, $yellow, $red);
 $checkbox-color: $gray-7;
+
+//Panel Edit
+// -------------------------
+$panel-editor-shadow: 2px 2px 8px $gray-3;
+$panel-editor-side-menu-shadow: drop-shadow(0 0 2px $gray-3);
+$panel-editor-toolbar-view-bg: $white;
+$panel-editor-viz-item-shadow: 0 0 4px $gray-3;
+$panel-editor-viz-item-border: 1px solid $gray-3;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
+$panel-editor-viz-item-bg: $white;
+$panel-editor-tabs-line-color: $dark-5;
+$panel-editor-viz-item-bg-hover: lighten($blue, 62%);
+$panel-editor-viz-item-bg-hover-active: lighten($orange, 34%);
+
+$panel-grid-placeholder-bg: lighten($blue, 62%);
+$panel-grid-placeholder-shadow: 0 0 4px $blue-light;

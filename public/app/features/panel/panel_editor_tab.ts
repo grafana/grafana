@@ -9,7 +9,6 @@ function panelEditorTab(dynamicDirectiveSrv) {
     scope: {
       ctrl: '=',
       editorTab: '=',
-      index: '=',
     },
     directive: scope => {
       const pluginId = scope.ctrl.pluginId;

@@ -14,3 +14,4 @@ export const DASHBOARD_TOP_PADDING = 20;
 
 export const PANEL_HEADER_HEIGHT = 27;
 export const PANEL_BORDER = 2;
+export const PANEL_OPTIONS_KEY_PREFIX = 'options-';

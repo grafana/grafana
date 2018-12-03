@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
+import classNames from 'classnames';
 
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
@@ -23,11 +24,11 @@ export interface Props {
 
 export interface State {
   plugin: PanelPlugin;
+  angularPanel: AngularComponent;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
-  element: any;
-  angularPanel: AngularComponent;
+  element: HTMLElement;
   specialPanels = {};
 
   constructor(props) {
@@ -35,6 +36,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     this.state = {
       plugin: null,
+      angularPanel: null,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -54,11 +56,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   onPluginTypeChanged = (plugin: PanelPlugin) => {
-    this.props.panel.changeType(plugin.id);
-    this.loadPlugin();
-  };
-
-  onAngularPluginTypeChanged = () => {
+    this.props.panel.changeType(plugin.id, this.state.angularPanel !== null);
     this.loadPlugin();
   };
 
@@ -93,28 +91,30 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentDidUpdate() {
-    this.loadPlugin();
-
-    // handle angular plugin loading
-    if (!this.element || this.angularPanel) {
+    if (!this.element || this.state.angularPanel) {
       return;
     }
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
     const scopeProps = { panel: this.props.panel, dashboard: this.props.dashboard };
-    this.angularPanel = loader.load(this.element, scopeProps, template);
+    const angularPanel = loader.load(this.element, scopeProps, template);
+
+    this.setState({ angularPanel });
   }
 
-  cleanUpAngularPanel() {
-    if (this.angularPanel) {
-      this.angularPanel.destroy();
-      this.angularPanel = null;
+  cleanUpAngularPanel(unmounted?: boolean) {
+    if (this.state.angularPanel) {
+      this.state.angularPanel.destroy();
+
+      if (!unmounted) {
+        this.setState({ angularPanel: null });
+      }
     }
   }
 
   componentWillUnmount() {
-    this.cleanUpAngularPanel();
+    this.cleanUpAngularPanel(true);
   }
 
   onMouseEnter = () => {
@@ -129,25 +129,16 @@ export class DashboardPanel extends PureComponent<Props, State> {
     const { dashboard, panel } = this.props;
     const { plugin } = this.state;
 
-    const containerClass = this.props.isEditing ? 'panel-editor-container' : 'panel-height-helper';
-    const panelWrapperClass = this.props.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
-    // this might look strange with these classes that change when edit, but
-    // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
-    return (
-      <div className={containerClass}>
-        <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-          <PanelChrome component={plugin.exports.Panel} panel={panel} dashboard={dashboard} />
-        </div>
-        {panel.isEditing && (
-          <PanelEditor panel={panel} plugin={plugin} dashboard={dashboard} onTypeChanged={this.onPluginTypeChanged} />
-        )}
-      </div>
-    );
+    return <PanelChrome component={plugin.exports.Panel} panel={panel} dashboard={dashboard} />;
+  }
+
+  renderAngularPanel() {
+    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
   }
 
   render() {
-    const { panel } = this.props;
-    const { plugin } = this.state;
+    const { panel, dashboard, isFullscreen, isEditing } = this.props;
+    const { plugin, angularPanel } = this.state;
 
     if (this.isSpecial()) {
       return this.specialPanels[panel.type]();
@@ -158,19 +149,29 @@ export class DashboardPanel extends PureComponent<Props, State> {
       return null;
     }
 
-    // if exporting PanelComponent it must be a react panel
-    if (plugin.exports.Panel) {
-      return this.renderReactPanel();
-    }
+    const containerClass = classNames({ 'panel-editor-container': isEditing, 'panel-height-helper': !isEditing });
+    const panelWrapperClass = classNames({
+      'panel-wrapper': true,
+      'panel-wrapper--edit': isEditing,
+      'panel-wrapper--view': isFullscreen && !isEditing,
+    });
 
-    // legacy angular rendering
     return (
-      <div
-        ref={element => (this.element = element)}
-        className="panel-height-helper"
-        onMouseEnter={this.onMouseEnter}
-        onMouseLeave={this.onMouseLeave}
-      />
+      <div className={containerClass}>
+        <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+          {plugin.exports.Panel && this.renderReactPanel()}
+          {plugin.exports.PanelCtrl && this.renderAngularPanel()}
+        </div>
+        {panel.isEditing && (
+          <PanelEditor
+            panel={panel}
+            plugin={plugin}
+            dashboard={dashboard}
+            angularPanel={angularPanel}
+            onTypeChanged={this.onPluginTypeChanged}
+          />
+        )}
+      </div>
     );
   }
 }

@@ -4,7 +4,8 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface Props {
   children: JSX.Element;
-  main: EditorToolBarView;
+  heading: string;
+  main?: EditorToolBarView;
   toolbarItems: EditorToolBarView[];
 }
 
@@ -12,11 +13,14 @@ export interface EditorToolBarView {
   title: string;
   imgSrc?: string;
   icon?: string;
-  render: () => JSX.Element;
+  disabled?: boolean;
+  onClick?: () => void;
+  render: (closeFunction: any) => JSX.Element | JSX.Element[];
 }
 
 interface State {
   openView?: EditorToolBarView;
+  fadeIn: boolean;
 }
 
 export class EditorTabBody extends PureComponent<Props, State> {
@@ -25,7 +29,12 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
     this.state = {
       openView: null,
+      fadeIn: false,
     };
+  }
+
+  componentDidMount() {
+    this.setState({ fadeIn: true });
   }
 
   onToggleToolBarView = (item: EditorToolBarView) => {
@@ -38,9 +47,24 @@ export class EditorTabBody extends PureComponent<Props, State> {
     this.setState({ openView: null });
   };
 
+  static getDerivedStateFromProps(props, state) {
+    if (state.openView) {
+      const activeToolbarItem = props.toolbarItems.find(
+        item => item.title === state.openView.title && item.icon === state.openView.icon
+      );
+      if (activeToolbarItem) {
+        return {
+          ...state,
+          openView: activeToolbarItem,
+        };
+      }
+    }
+    return state;
+  }
+
   renderMainSelection(view: EditorToolBarView) {
     return (
-      <div className="toolbar__main" onClick={() => this.onToggleToolBarView(view)} key={view.title}>
+      <div className="toolbar__main" onClick={() => this.onToggleToolBarView(view)} key={view.title + view.icon}>
         <img className="toolbar__main-image" src={view.imgSrc} />
         <div className="toolbar__main-name">{view.title}</div>
         <i className="fa fa-caret-down" />
@@ -49,9 +73,16 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   renderButton(view: EditorToolBarView) {
+    const onClick = () => {
+      if (view.onClick) {
+        view.onClick();
+      }
+      this.onToggleToolBarView(view);
+    };
+
     return (
-      <div className="nav-buttons" key={view.title}>
-        <button className="btn navbar-button" onClick={() => this.onToggleToolBarView(view)}>
+      <div className="nav-buttons" key={view.title + view.icon}>
+        <button className="btn navbar-button" onClick={onClick} disabled={view.disabled}>
           {view.icon && <i className={view.icon} />} {view.title}
         </button>
       </div>
@@ -64,29 +95,32 @@ export class EditorTabBody extends PureComponent<Props, State> {
         <button className="toolbar-subview__close" onClick={this.onCloseOpenView}>
           <i className="fa fa-chevron-up" />
         </button>
-        {view.render()}
+        {view.render(this.onCloseOpenView)}
       </div>
     );
   }
 
   render() {
-    const { children, toolbarItems, main } = this.props;
-    const { openView } = this.state;
+    const { children, toolbarItems, main, heading } = this.props;
+    const { openView, fadeIn } = this.state;
 
     return (
       <>
         <div className="toolbar">
-          {this.renderMainSelection(main)}
+          <div className="toolbar__heading">{heading}</div>
+          {main && this.renderMainSelection(main)}
           <div className="gf-form--grow" />
           {toolbarItems.map(item => this.renderButton(item))}
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false}>
+            <FadeIn in={openView !== null} duration={200}>
+              <div className="panel-editor__toolbar-view">{openView && this.renderOpenView(openView)}</div>
+            </FadeIn>
             <div className="panel-editor__content">
-              <FadeIn in={openView !== null} duration={200}>
-                {openView && this.renderOpenView(openView)}
+              <FadeIn in={fadeIn} duration={50}>
+                {children}
               </FadeIn>
-              {children}
             </div>
           </CustomScrollbar>
         </div>

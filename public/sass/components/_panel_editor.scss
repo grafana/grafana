@@ -4,27 +4,73 @@
   height: 100%;
 }
 
-.panel-editor-container__panel {
-  flex: 1 1 0;
+.panel-wrapper {
+  height: 100%;
+
+  &--edit {
+    flex: 1 1 0;
+    height: unset;
+    margin: 0 $dashboard-padding;
+  }
+
+  &--view {
+    flex: 1 1 0;
+    height: 80%;
+    margin: 0 $dashboard-padding;
+    padding-top: $dashboard-padding;
+  }
 }
 
 .panel-editor-container__editor {
   margin-top: $panel-margin*2;
   display: flex;
-  flex-direction: column;
-  height: 65%;
+  flex-direction: row;
+  height: 60%;
   position: relative;
+}
+
+.panel-editor__right {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  background: $page-bg;
+  margin: 0 20px 0 84px;
+  border-left: 2px solid $orange;
+  border-radius: 3px;
+  box-shadow: $panel-editor-shadow;
+}
+
+.panel-editor__close {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
+  position: absolute;
+  left: 11px;
+  top: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+
+  i {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 20px;
+  }
 }
 
 .panel-editor__scroll {
   flex-grow: 1;
   min-width: 0;
   display: flex;
-  padding: 0 5px;
 }
 
 .panel-editor__content {
-  padding: 40px 15px;
+  padding: 40px 20px;
+}
+
+.panel-editor__toolbar-view {
+  background: $panel-editor-toolbar-view-bg;
+  padding: 20px;
 }
 
 .panel-in-fullscreen {
@@ -94,11 +140,10 @@
 }
 
 .viz-picker__item {
-  background: $card-background;
-  box-shadow: $card-shadow;
-
+  background: $panel-editor-viz-item-bg;
+  border: $panel-editor-viz-item-border;
   border-radius: 3px;
-  height: 90px;
+  height: 100px;
   width: 150px;
   flex-shrink: 0;
   flex-direction: column;
@@ -107,15 +152,27 @@
   display: flex;
   margin-right: 10px;
   margin-bottom: 10px;
-  border: 1px solid transparent;
+  //border: 1px solid transparent;
   align-items: center;
+  justify-content: center;
+  padding-bottom: 6px;
+  transition: transform 1 ease;
 
   &:hover {
-    background: $card-background-hover;
+    box-shadow: $panel-editor-viz-item-shadow-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
   }
 
   &--selected {
-    box-shadow: 0 0 12px #ff4d00;
+    box-shadow: 0 0 6px $orange;
+    border: 1px solid $orange;
+
+    &:hover {
+      box-shadow: 0 0 6px $orange;
+      border: 1px solid $orange;
+      background: $panel-editor-viz-item-bg-hover-active;
+    }
   }
 }
 
@@ -128,6 +185,7 @@
   flex-direction: column;
   align-self: center;
   height: 23px;
+  font-weight: 500;
 }
 
 .viz-picker__item-img {
@@ -137,22 +195,55 @@
 .panel-editor-tabs {
   position: relative;
   z-index: 2;
-  box-shadow: $page-header-shadow;
-  border-bottom: 1px solid $page-header-border-color;
-  padding: 0 $dashboard-padding;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 44px;
+  left: 20px;
+  align-items: flex-start;
 
-  @include clearfix();
-
-  .active.gf-tabs-link {
-    background: $toolbar-tab-bg;
+  &::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 21px;
+    width: 2px;
+    background: $panel-editor-tabs-line-color;
   }
 }
 
-.panel-editor-tabs__close {
-  padding: 5px 9px;
-  border-radius: $border-radius;
-  float: right;
-  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+.panel-editor-tabs__item {
+  margin-bottom: 25px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.panel-editor-tabs__link {
+  display: inline-block;
+
+  &.active {
+    position: relative;
+  }
+
+  .gicon {
+    height: 44px;
+    width: 53px;
+    transition: transform 0.1s ease;
+    margin-right: 5px;
+
+    &:hover {
+      filter: $panel-editor-side-menu-shadow;
+      transform: translate(-2px, -2px);
+      transform: scale(1.1);
+    }
+  }
 }
 
 .ds-picker-list {
@@ -163,21 +254,26 @@
 }
 
 .ds-picker-list__item {
-  background: $card-background;
-  box-shadow: $card-shadow;
-
+  background: $panel-editor-viz-item-bg;
+  border: $panel-editor-viz-item-border;
   border-radius: 3px;
   display: flex;
   cursor: pointer;
   margin-bottom: 3px;
   padding: 5px 15px;
   align-items: center;
+  height: 44px;
 
   &:hover {
-    background: $card-background-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
+    box-shadow: $panel-editor-viz-item-shadow-hover;
   }
 
   &--selected {
+    box-shadow: 0 0 6px $orange;
+    border: 1px solid $orange;
+
     .ds-picker-list__name {
       color: $text-color;
     }
@@ -205,4 +301,24 @@
   padding: 5px 0px;
   font-size: $font-size-md;
   margin-bottom: 20px;
+}
+
+.form-section {
+  margin-bottom: 10px;
+}
+
+.form-section__header {
+  padding: 5px 10px;
+  font-size: $font-size-h5;
+  margin-bottom: 20px;
+  background: $input-label-bg;
+  border-radius: 3px;
+}
+
+.form-section__body {
+  padding: 0 10px;
+}
+
+.panel-editor-tabs__item-popover {
+  background: $orange;
 }

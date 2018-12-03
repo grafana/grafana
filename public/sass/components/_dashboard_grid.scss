@@ -9,18 +9,14 @@
   .react-grid-item {
     display: none !important;
     transition-property: none !important;
-  }
 
-  .panel--fullscreen {
-    display: block !important;
-    position: unset !important;
-    width: 100% !important;
-    height: 100% !important;
-    transform: translate(0px, 0px) !important;
-  }
-
-  .panel {
-    margin: 0 !important;
+    &--fullscreen {
+      display: block !important;
+      position: unset !important;
+      width: 100% !important;
+      height: 100% !important;
+      transform: translate(0px, 0px) !important;
+    }
   }
 
   // Disable grid interaction indicators in fullscreen panels
@@ -61,6 +57,13 @@
   }
 }
 
+.react-grid-item.react-grid-placeholder {
+  box-shadow: $panel-grid-placeholder-shadow;
+  background: $panel-grid-placeholder-bg;
+  z-index: 0;
+  opacity: unset;
+}
+
 .theme-dark {
   .react-grid-item > .react-resizable-handle::after {
     border-right: 2px solid $gray-1;
@@ -83,10 +86,10 @@
 }
 
 // Disable animation on initial rendering and enable it when component has been mounted.
-.react-grid-item.cssTransforms.panel {
+.react-grid-item.cssTransforms {
   transition-property: none;
 }
 
-.animated .react-grid-item.cssTransforms.panel {
+.animated .react-grid-item.cssTransforms {
   transition-property: transform;
 }
