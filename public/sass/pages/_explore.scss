@@ -369,17 +369,87 @@
       padding: 0 2px;
       background-color: $btn-inverse-bg;
       border-radius: $border-radius;
-      margin-right: 4px;
-      overflow: hidden;
+      margin: 0 4px 2px 0;
       text-overflow: ellipsis;
       white-space: nowrap;
+      position: relative;
+    }
+
+    .logs-label__icon {
+      border-left: $panel-border;
+      padding: 0 2px;
+      cursor: pointer;
+      margin-left: 2px;
+    }
+
+    .logs-label__stats {
+      position: absolute;
+      top: 1.25em;
+      left: -10px;
+      z-index: 100;
+      background-color: $page-bg;
+      border: $panel-border;
+      padding: 10px;
+      border-radius: $border-radius;
+      justify-content: space-between;
     }
 
     .logs-row-labels {
       line-height: 1.2;
+    }
 
-      .logs-label {
-        cursor: pointer;
+    .logs-stats__info {
+      margin-bottom: $spacer / 2;
+    }
+
+    .logs-stats__icon {
+      margin-left: 0.5em;
+      cursor: pointer;
+    }
+
+    .logs-stats-row {
+      margin: $spacer/1.75 0;
+
+      &--active {
+        color: $blue;
+        position: relative;
+      }
+
+      &--active:after {
+        display: inline;
+        content: '*';
+        position: absolute;
+        top: 0;
+        left: -0.75em;
+      }
+
+      &__label {
+        display: flex;
+      }
+
+      &__value {
+        flex: 1;
+      }
+
+      &__count,
+      &__percent {
+        text-align: right;
+        margin-left: 0.5em;
+      }
+
+      &__percent {
+        width: 3em;
+      }
+
+      &__bar,
+      &__innerbar {
+        height: 4px;
+        overflow: hidden;
+        background: $text-color-faint;
+      }
+
+      &__innerbar {
+        background-color: $blue;
       }
     }
   }
