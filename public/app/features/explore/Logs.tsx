@@ -40,13 +40,23 @@ interface RowProps {
   allRows: LogRow[];
   highlighterExpressions?: string[];
   row: LogRow;
+  showDuplicates: boolean;
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
   showUtc: boolean;
   onClickLabel?: (label: string, value: string) => void;
 }
 
-function Row({ allRows, highlighterExpressions, onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
+function Row({
+  allRows,
+  highlighterExpressions,
+  onClickLabel,
+  row,
+  showDuplicates,
+  showLabels,
+  showLocalTime,
+  showUtc,
+}: RowProps) {
   const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
   const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
   const needsHighlighter = highlights && highlights.length > 0;
@@ -55,15 +65,10 @@ function Row({ allRows, highlighterExpressions, onClickLabel, row, showLabels, s
   });
   return (
     <>
-      <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
-        {row.duplicates > 0 && (
-          <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
-            {Array.apply(null, { length: row.duplicates }).map((bogus, index) => (
-              <div className="logs-row-level__duplicate" key={`${index}`} />
-            ))}
-          </div>
-        )}
-      </div>
+      {showDuplicates && (
+        <div className="logs-row-duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
+      )}
+      <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
       {showUtc && (
         <div className="logs-row-time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
           {row.timestamp}
@@ -228,6 +233,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
+    const showDuplicates = dedup !== LogsDedupStrategy.none;
 
     // Filtering
     const filteredData = filterLogLevels(data, hiddenLogLevels);
@@ -257,7 +263,12 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     }
 
     // Grid options
-    const cssColumnSizes = ['3px']; // Log-level indicator line
+    const cssColumnSizes = [];
+    if (showDuplicates) {
+      cssColumnSizes.push('max-content');
+    }
+    // Log-level indicator line
+    cssColumnSizes.push('3px');
     if (showUtc) {
       cssColumnSizes.push('minmax(100px, max-content)');
     }
@@ -341,6 +352,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
                 allRows={processedRows}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
+                showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
@@ -355,6 +367,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
                 key={row.key + row.duplicates}
                 allRows={processedRows}
                 row={row}
+                showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
