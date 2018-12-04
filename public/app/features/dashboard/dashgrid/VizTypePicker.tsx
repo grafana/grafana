@@ -11,21 +11,22 @@ interface Props {
 }
 
 interface State {
-  pluginList: PanelPlugin[];
+  searchQuery: string;
 }
 
 export class VizTypePicker extends PureComponent<Props, State> {
   searchInput: HTMLElement;
+  pluginList = this.getPanelPlugins('');
 
   constructor(props) {
     super(props);
 
     this.state = {
-      pluginList: this.getPanelPlugins(''),
+      searchQuery: '',
     };
   }
 
-  getPanelPlugins(filter) {
+  getPanelPlugins(filter): PanelPlugin[] {
     const panels = _.chain(config.panels)
       .filter({ hideFromList: false })
       .map(item => item)
@@ -35,7 +36,7 @@ export class VizTypePicker extends PureComponent<Props, State> {
     return _.sortBy(panels, 'sort');
   }
 
-  renderVizPlugin = (plugin, index) => {
+  renderVizPlugin = (plugin: PanelPlugin, index: number) => {
     const cssClass = classNames({
       'viz-picker__item': true,
       'viz-picker__item--selected': plugin.id === this.props.current.id,
@@ -55,7 +56,27 @@ export class VizTypePicker extends PureComponent<Props, State> {
     }, 300);
   }
 
-  renderFilters() {
+  getFilteredPluginList = (): PanelPlugin[] => {
+    const { searchQuery } = this.state;
+    const regex = new RegExp(searchQuery, 'i');
+    const pluginList = this.pluginList;
+
+    const filtered = pluginList.filter(item => {
+      return regex.test(item.name);
+    });
+
+    return filtered;
+  };
+
+  onSearchQueryChange = evt => {
+    const value = evt.target.value;
+    this.setState(prevState => ({
+      ...prevState,
+      searchQuery: value,
+    }));
+  };
+
+  renderFilters = () => {
     return (
       <>
         <label className="gf-form--has-input-icon">
@@ -64,15 +85,16 @@ export class VizTypePicker extends PureComponent<Props, State> {
             className="gf-form-input width-13"
             placeholder=""
             ref={elem => (this.searchInput = elem)}
+            onChange={this.onSearchQueryChange}
           />
           <i className="gf-form-input-icon fa fa-search" />
         </label>
       </>
     );
-  }
+  };
 
   render() {
-    const { pluginList } = this.state;
+    const filteredPluginList = this.getFilteredPluginList();
 
     return (
       <>
@@ -81,7 +103,7 @@ export class VizTypePicker extends PureComponent<Props, State> {
           <div className="gf-form--grow" />
         </div>
 
-        <div className="viz-picker">{pluginList.map(this.renderVizPlugin)}</div>
+        <div className="viz-picker">{filteredPluginList.map(this.renderVizPlugin)}</div>
       </>
     );
   }
