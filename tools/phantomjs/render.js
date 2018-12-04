@@ -12,11 +12,19 @@
       params[parts[1]] = parts[2];
     });
 
-    var usage = "url=<url> png=<filename> width=<width> height=<height> renderKey=<key>";
+    var usage = "url=<url> png=<filename> width=<width> height=<height> renderKey=<key> kiosk=<kioskmode>";
 
     if (!params.url || !params.png ||  !params.renderKey || !params.domain) {
       console.log(usage);
       phantom.exit();
+    }
+
+    if (typeof params.kiosk !== 'undefined') {
+      var param = 'kiosk';
+      if (params.kiosk) {
+        param = param + '=' + params.kiosk;
+      }
+      params.url = params.url + param;
     }
 
     phantom.addCookie({
