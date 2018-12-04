@@ -771,6 +771,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   async runQueries(resultType: ResultType, queryOptions: any, resultGetter?: any) {
     const queries = [...this.modifiedQueries];
     if (!hasNonEmptyQuery(queries)) {
+      this.setState({
+        queryTransactions: [],
+      });
       return;
     }
     const { datasource } = this.state;
@@ -837,6 +840,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
     const loading = queryTransactions.some(qt => !qt.done);
+    const queryEmpty = queryTransactions.some(qt => qt.resultType === 'Logs' && qt.done && qt.result.length === 0);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -969,6 +973,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           range={range}
                           scanning={scanning}
                           scanRange={scanRange}
+                          queryEmpty={queryEmpty}
                         />
                       </Panel>
                     )}
