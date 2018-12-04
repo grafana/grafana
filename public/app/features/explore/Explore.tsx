@@ -220,7 +220,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         modifiedQueries = [...this.modifiedQueries];
       } else if (datasource.importQueries) {
         // Datasource-specific importers
-        modifiedQueries = await datasource.importQueries(this.modifiedQueries, origin.meta);
+        modifiedQueries = await datasource.importQueries(this.modifiedQueries, datasource.meta);
       } else {
         // Default is blank queries
         modifiedQueries = ensureQueries();

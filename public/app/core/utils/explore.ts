@@ -133,7 +133,12 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
  * A target is non-empty when it has keys other than refId and key.
  */
 export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
-  return queries.some(query => Object.keys(query).length > 2);
+  return queries.some(
+    query =>
+      Object.keys(query)
+        .map(k => query[k])
+        .filter(v => v).length > 2
+  );
 }
 
 export function calculateResultsFromQueryTransactions(
@@ -148,15 +153,17 @@ export function calculateResultsFromQueryTransactions(
     new TableModel(),
     ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
   );
-  const logsResult =
-    datasource && datasource.mergeStreams
+  const logsResult = {
+    ...datasource && datasource.mergeStreams
       ? datasource.mergeStreams(
           _.flatten(
             queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
           ),
           graphInterval
         )
-      : undefined;
+      : undefined,
+    queryEmpty: queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done).every(qt => qt.result.length === 0),
+  };
 
   return {
     graphResult,

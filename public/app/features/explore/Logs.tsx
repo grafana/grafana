@@ -358,7 +358,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           {hasData && deferLogs && <span>Rendering {dedupedData.rows.length} rows...</span>}
         </div>
         {!loading &&
-          !hasData &&
+          data.queryEmpty &&
           !scanning && (
             <div className="logs-nodata">
               No logs found.

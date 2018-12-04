@@ -62,6 +62,7 @@ export interface LogsModel {
   meta?: LogsMetaItem[];
   rows: LogRow[];
   series?: TimeSeries[];
+  queryEmpty?: boolean;
 }
 
 export interface LogsStream {
