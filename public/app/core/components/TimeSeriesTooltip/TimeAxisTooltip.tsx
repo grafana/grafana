@@ -4,6 +4,8 @@ import { GraphHoverPosition, GraphHoverEvent, FlotPosition } from 'app/types/eve
 import { Subtract } from 'app/types/utils';
 import { appEvents } from 'app/core/core';
 
+const TOOLTIP_OFFSET = 20;
+
 export interface TimeAxisTooltipProps {
   chartElem: any;
   panelId: number;
@@ -41,7 +43,10 @@ interface TooltipSize {
 }
 
 const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComponent: React.ComponentType<P>) => {
-  return class TimeAxisTooltip extends PureComponent<Subtract<P, InjectedTimeAxisTooltipProps> & TimeAxisTooltipProps, TimeAxisTooltipState> {
+  return class TimeAxisTooltip extends PureComponent<
+    Subtract<P, InjectedTimeAxisTooltipProps> & TimeAxisTooltipProps,
+    TimeAxisTooltipState
+  > {
     appRoot: HTMLElement;
     tooltipContainer: HTMLElement;
     tooltipElem: HTMLElement;
@@ -147,7 +152,7 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       const tooltipSize = this.size || this.getTooltipSize();
 
       // Restrict tooltip position
-      let x = hoverEventPos.pageX;
+      let x = hoverEventPos.pageX + TOOLTIP_OFFSET;
       if (x + tooltipSize.width > elemWidth + elemOffset.left) {
         x = elemWidth + elemOffset.left - tooltipSize.width;
       }
@@ -197,12 +202,12 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       const tooltipPos = this.state.tooltipPosition;
       const tooltipStyle: CSSProperties = this.props.useCSSTransforms
         ? {
-          transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)`,
-        }
+            transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)`,
+          }
         : {
-          left: tooltipPos.x,
-          top: tooltipPos.y,
-        };
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+          };
 
       if (!this.state.show) {
         tooltipStyle.display = 'none';

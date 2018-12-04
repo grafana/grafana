@@ -325,17 +325,20 @@ class GraphElement {
   }
 
   renderTooltip() {
-    // console.log(this);
+    // console.log('renderTooltip', this.ctrl.otherPanelInFullscreenMode());
     const sharedTooltip = this.dashboard.sharedTooltipModeEnabled() && !this.dashboard.sharedCrosshairModeOnly();
     const tooltipProps: GraphTooltipProps = {
-      series: this.sortedSeries,
+      series: this.plot.getData(this.sortedSeries),
       chartElem: this.elem,
       panelId: this.panel.id,
       sharedTooltip: sharedTooltip,
       getOffset: x => this.getOffset(x),
       formatDate: (time, format) => this.ctrl.dashboard.formatDate(time, format),
       onMouseleave: () => this.onTooltipClear(),
+      onHighlight: (series, datapoint) => this.plot.highlight(series, datapoint),
+      onUnhighlight: () => this.plot.unhighlight(),
     };
+    // console.log(this.plot.getData(this.sortedSeries));
     const tooltipReactElem = React.createElement(GraphTooltipReact, tooltipProps);
     ReactDOM.render(tooltipReactElem, this.tooltipElem);
   }

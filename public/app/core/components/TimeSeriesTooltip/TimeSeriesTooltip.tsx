@@ -2,12 +2,14 @@ import React, { PureComponent } from 'react';
 import { TimeSeriesVM } from 'app/types';
 import { Subtract } from 'app/types/utils';
 import { GraphHoverPosition } from 'app/types/events';
-import { getMultiSeriesPlotHoverInfo } from './utils';
+import { getMultiSeriesPlotHoverInfo, PlotHoverInfo } from './utils';
 import withTimeAxisTooltip, { TimeAxisTooltipProps } from './TimeAxisTooltip';
 
 export interface TimeSeriesTooltipProps extends TimeAxisTooltipProps {
   series: TimeSeriesVM[];
   panelOptions?: PanelOptions;
+  onHighlight?: (series, datapoint) => void;
+  onUnhighlight?: () => void;
 }
 
 export interface TimeSeriesTooltipState {
@@ -46,6 +48,15 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
       super(props);
     }
 
+    highlightPoints(seriesHoverInfo: PlotHoverInfo) {
+      const { series } = this.props;
+      this.props.onUnhighlight();
+      for (let i = 0; i < series.length; i++) {
+        const hoverInfo = seriesHoverInfo[i];
+        this.props.onHighlight(hoverInfo.index, hoverInfo.hoverIndex);
+      }
+    }
+
     render() {
       const { position, ...props } = this.props as any;
       const panelOptions = {
@@ -54,6 +65,10 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
         tooltipValueType: this.props.panelOptions.tooltip.value_type,
       };
       const seriesHoverInfo = getMultiSeriesPlotHoverInfo(props.series, position, panelOptions);
+      // console.log(props.series);
+      if (this.props.onHighlight && this.props.onUnhighlight) {
+        this.highlightPoints(seriesHoverInfo);
+      }
       return <WrappedComponent position={position} timestamp={seriesHoverInfo.time} {...props} />;
     }
   }

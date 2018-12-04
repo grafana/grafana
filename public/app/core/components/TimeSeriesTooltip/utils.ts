@@ -18,7 +18,7 @@ export function findHoverIndexFromDataPoints(posX, series, last) {
   return j / ps - 1;
 }
 
-export function findHoverIndexFromData(posX, series) {
+export function findHoverIndexFromData(posX, series): number {
   let lower = 0;
   let upper = series.data.length - 1;
   let middle;
@@ -43,11 +43,26 @@ interface GetPlotHoverInfoOptions {
   tooltipValueType?: 'individual' | string;
 }
 
-interface PlotHoverInfo extends Array<any> {
+interface PlotHoverInfoItem {
+  value: number;
+  hidden?: boolean;
+  hoverIndex?: number;
+  color?: string;
+  label?: string;
+  time?: number;
+  distance?: number;
+  index: number;
+}
+
+export interface PlotHoverInfo extends Array<PlotHoverInfoItem> {
   time: number;
 }
 
-export function getMultiSeriesPlotHoverInfo(seriesList: any[], pos: FlotPosition, options: GetPlotHoverInfoOptions): PlotHoverInfo {
+export function getMultiSeriesPlotHoverInfo(
+  seriesList: any[],
+  pos: FlotPosition,
+  options: GetPlotHoverInfoOptions
+): PlotHoverInfo {
   let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
   // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
   let results: any = [[], [], []];
