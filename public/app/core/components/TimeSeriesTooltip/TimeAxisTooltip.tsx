@@ -106,9 +106,6 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
     handleGraphHoverEvent = (event: GraphHoverEvent) => {
       // ignore if we are the emitter
       if (!this.props.sharedTooltip || this.props.panelId === event.panel.id) {
-        if (this.state.show) {
-          this.hide();
-        }
         return;
       }
       const position = { ...event.pos };
@@ -148,7 +145,6 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       const elemWidth = this.props.chartElem[0].clientWidth;
       const elemOffset = this.getElemOffset();
       // const positionOffset = this.props.getOffset(hoverEventPos.x);
-      // console.log(hoverEventPos.x, positionOffset);
       const tooltipSize = this.size || this.getTooltipSize();
 
       // Restrict tooltip position
@@ -163,7 +159,7 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       let y = elemHeight + elemOffset.top;
       const appRootHeight = this.getAppRootHeight();
       if (y + tooltipSize.height > appRootHeight) {
-        y = appRootHeight - tooltipSize.height;
+        y = tooltipSize.height ? appRootHeight - tooltipSize.height : 0;
       }
 
       // Make some CPU throttling
@@ -211,6 +207,10 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
 
       if (!this.state.show) {
         tooltipStyle.display = 'none';
+      }
+      if (!this.size) {
+        // Hide tooltip on its initial position (it cannot be calculated properly due to tooltip size equals 0)
+        tooltipStyle.opacity = 0;
       }
 
       const tooltipNode = (
