@@ -10,7 +10,6 @@ import {
   dedupLogRows,
   filterLogLevels,
   LogLevel,
-  LogsStreamLabels,
   LogsMetaKind,
   LogRow,
 } from 'app/core/logs_model';
@@ -18,6 +17,7 @@ import { findHighlightChunksInText } from 'app/core/utils/text';
 import { Switch } from 'app/core/components/Switch/Switch';
 
 import Graph from './Graph';
+import LogLabels from './LogLabels';
 
 const PREVIEW_LIMIT = 100;
 
@@ -35,52 +35,8 @@ const graphOptions = {
   },
 };
 
-function renderMetaItem(value: any, kind: LogsMetaKind) {
-  if (kind === LogsMetaKind.LabelsMap) {
-    return (
-      <span className="logs-meta-item__value-labels">
-        <Labels labels={value} />
-      </span>
-    );
-  }
-  return value;
-}
-
-class Label extends PureComponent<{
-  label: string;
-  value: string;
-  onClickLabel?: (label: string, value: string) => void;
-}> {
-  onClickLabel = () => {
-    const { onClickLabel, label, value } = this.props;
-    if (onClickLabel) {
-      onClickLabel(label, value);
-    }
-  };
-
-  render() {
-    const { label, value } = this.props;
-    const tooltip = `${label}: ${value}`;
-    return (
-      <span className="logs-label" title={tooltip} onClick={this.onClickLabel}>
-        {value}
-      </span>
-    );
-  }
-}
-class Labels extends PureComponent<{
-  labels: LogsStreamLabels;
-  onClickLabel?: (label: string, value: string) => void;
-}> {
-  render() {
-    const { labels, onClickLabel } = this.props;
-    return Object.keys(labels).map(key => (
-      <Label key={key} label={key} value={labels[key]} onClickLabel={onClickLabel} />
-    ));
-  }
-}
-
 interface RowProps {
+  allRows: LogRow[];
   row: LogRow;
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
@@ -88,7 +44,7 @@ interface RowProps {
   onClickLabel?: (label: string, value: string) => void;
 }
 
-function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
+function Row({ allRows, onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
   const needsHighlighter = row.searchWords && row.searchWords.length > 0;
   return (
     <>
@@ -113,7 +69,7 @@ function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps
       )}
       {showLabels && (
         <div className="logs-row-labels">
-          <Labels labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+          <LogLabels allRows={allRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
         </div>
       )}
       <div className="logs-row-message">
@@ -130,6 +86,17 @@ function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps
       </div>
     </>
   );
+}
+
+function renderMetaItem(value: any, kind: LogsMetaKind) {
+  if (kind === LogsMetaKind.LabelsMap) {
+    return (
+      <span className="logs-meta-item__value-labels">
+        <LogLabels labels={value} plain />
+      </span>
+    );
+  }
+  return value;
 }
 
 interface LogsProps {
@@ -258,8 +225,9 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     }
 
     // Staged rendering
-    const firstRows = dedupedData.rows.slice(0, PREVIEW_LIMIT);
-    const lastRows = dedupedData.rows.slice(PREVIEW_LIMIT);
+    const processedRows = dedupedData.rows;
+    const firstRows = processedRows.slice(0, PREVIEW_LIMIT);
+    const lastRows = processedRows.slice(PREVIEW_LIMIT);
 
     // Check for labels
     if (showLabels === null) {
@@ -351,6 +319,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             firstRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
+                allRows={processedRows}
                 row={row}
                 showLabels={showLabels}
                 showLocalTime={showLocalTime}
@@ -364,6 +333,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             lastRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
+                allRows={processedRows}
                 row={row}
                 showLabels={showLabels}
                 showLocalTime={showLocalTime}
