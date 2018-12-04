@@ -130,7 +130,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys other than refId and key.
+ * A target is non-empty when it has keys (with non-empty values) other than refId and key.
  */
 export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
   return queries.some(
