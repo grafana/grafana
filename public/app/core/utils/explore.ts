@@ -153,16 +153,15 @@ export function calculateResultsFromQueryTransactions(
     new TableModel(),
     ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
   );
-  const logsResult = {
-    ...datasource && datasource.mergeStreams
+  const logsResult =
+    datasource && datasource.mergeStreams
       ? datasource.mergeStreams(
           _.flatten(
             queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
           ),
           graphInterval
         )
-      : undefined,
-  };
+      : undefined;
 
   return {
     graphResult,
