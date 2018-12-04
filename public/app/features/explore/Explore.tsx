@@ -351,6 +351,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onClickClear = () => {
+    this.onStopScanning();
     this.modifiedQueries = ensureQueries();
     this.setState(
       prevState => ({
