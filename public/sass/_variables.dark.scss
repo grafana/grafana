@@ -79,6 +79,7 @@ $brand-gradient: linear-gradient(
 );
 
 $page-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 100px);
+$edit-gradient: linear-gradient(180deg, rgb(22, 23, 25) 50%, #090909);
 
 // Links
 // -------------------------
@@ -268,9 +269,7 @@ $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 $tab-border-color: $dark-4;
 
 // Toolbar
-$toolbar-bg: $page-header-bg;
-$toolbar-shadow: 0 0 20px black;
-$toolbar-tab-bg: $gray-blue;
+$toolbar-bg: $black;
 
 // Pagination
 // -------------------------
@@ -355,3 +354,35 @@ $diff-json-icon: $gray-7;
 
 //Submenu
 $variable-option-bg: $blue-dark;
+
+//Switch Slider
+// -------------------------
+$switch-bg: $input-bg;
+$switch-slider-color: $dark-2;
+$switch-slider-off-bg: $gray-1;
+$switch-slider-on-bg: linear-gradient(90deg, $orange, $red);
+$switch-slider-shadow: 0 0 3px black;
+
+//Checkbox
+// -------------------------
+$checkbox-bg: $dark-1;
+$checkbox-border: 1px solid $gray-1;
+$checkbox-checked-bg: linear-gradient(0deg, $orange, $red);
+$checkbox-color: $dark-1;
+
+//Panel Edit
+// -------------------------
+$panel-editor-shadow: 0 0 20px black;
+$panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
+$panel-editor-toolbar-view-bg: $black;
+$panel-editor-viz-item-shadow: 0 0 8px $dark-5;
+$panel-editor-viz-item-border: 1px solid $dark-5;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue;
+$panel-editor-viz-item-border-hover: 1px solid $blue;
+$panel-editor-viz-item-bg: $black;
+$panel-editor-tabs-line-color: #e3e3e3;
+$panel-editor-viz-item-bg-hover: darken($blue, 47%);
+$panel-editor-viz-item-bg-hover-active: darken($orange, 45%);
+
+$panel-grid-placeholder-bg: darken($blue, 47%);
+$panel-grid-placeholder-shadow: 0 0 4px $blue;

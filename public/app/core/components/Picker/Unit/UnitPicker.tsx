@@ -39,7 +39,7 @@ export default class UnitPicker extends PureComponent<Props> {
     const styles = {
       ...ResetStyles,
       menu: () => ({
-        maxHeight: '500px',
+        maxHeight: '75%',
         overflow: 'scroll',
       }),
       menuList: () =>
@@ -66,6 +66,7 @@ export default class UnitPicker extends PureComponent<Props> {
         className={`width-${width} gf-form-input--form-dropdown`}
         defaultValue={value}
         isSearchable={true}
+        menuShouldScrollIntoView={false}
         options={groupOptions}
         placeholder="Choose"
         onChange={onSelected}

@@ -118,7 +118,7 @@ export class DataSourceEditCtrl {
   }
 
   testDatasource() {
-    this.datasourceSrv.get(this.current.name).then(datasource => {
+    return this.datasourceSrv.get(this.current.name).then(datasource => {
       if (!datasource.testDatasource) {
         return;
       }
@@ -126,7 +126,7 @@ export class DataSourceEditCtrl {
       this.testing = { done: false, status: 'error' };
 
       // make test call in no backend cache context
-      this.backendSrv
+      return this.backendSrv
         .withNoBackendCache(() => {
           return datasource
             .testDatasource()
@@ -161,8 +161,8 @@ export class DataSourceEditCtrl {
       return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
         this.current = result.datasource;
         this.updateNav();
-        this.updateFrontendSettings().then(() => {
-          this.testDatasource();
+        return this.updateFrontendSettings().then(() => {
+          return this.testDatasource();
         });
       });
     } else {

@@ -139,7 +139,7 @@ export class StackdriverFilterCtrl {
       result = metrics.filter(m => m.service === this.target.service);
     }
 
-    if (result.find(m => m.value === this.target.metricType)) {
+    if (result.find(m => m.value === this.templateSrv.replace(this.target.metricType))) {
       this.metricType = this.target.metricType;
     } else if (result.length > 0) {
       this.metricType = this.target.metricType = result[0].value;
@@ -150,10 +150,10 @@ export class StackdriverFilterCtrl {
   async getLabels() {
     this.loadLabelsPromise = new Promise(async resolve => {
       try {
-        const data = await this.datasource.getLabels(this.target.metricType, this.target.refId);
-        this.metricLabels = data.results[this.target.refId].meta.metricLabels;
-        this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
-        this.resourceTypes = data.results[this.target.refId].meta.resourceTypes;
+        const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
+        this.metricLabels = meta.metricLabels;
+        this.resourceLabels = meta.resourceLabels;
+        this.resourceTypes = meta.resourceTypes;
         resolve();
       } catch (error) {
         if (error.data && error.data.message) {
@@ -187,7 +187,9 @@ export class StackdriverFilterCtrl {
 
   setMetricType() {
     this.target.metricType = this.metricType;
-    const { valueType, metricKind, unit } = this.metricDescriptors.find(m => m.type === this.target.metricType);
+    const { valueType, metricKind, unit } = this.metricDescriptors.find(
+      m => m.type === this.templateSrv.replace(this.metricType)
+    );
     this.target.unit = unit;
     this.target.valueType = valueType;
     this.target.metricKind = metricKind;

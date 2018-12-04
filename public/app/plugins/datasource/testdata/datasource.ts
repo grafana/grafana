@@ -84,6 +84,13 @@ class TestDataDatasource {
     }
     return this.$q.when(events);
   }
+
+  testDatasource() {
+    return Promise.resolve({
+      status: 'success',
+      message: 'Data source is working',
+    });
+  }
 }
 
 export { TestDataDatasource };

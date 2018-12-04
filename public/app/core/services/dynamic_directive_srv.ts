@@ -21,7 +21,6 @@ class DynamicDirectiveSrv {
     }
 
     if (!directiveInfo.fn.registered) {
-      console.log('register panel tab');
       coreModule.directive(attrs.$normalize(directiveInfo.name), directiveInfo.fn);
       directiveInfo.fn.registered = true;
     }

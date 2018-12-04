@@ -3,7 +3,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange, TimeRange } from 'app/types/series';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_RANGE = {
@@ -120,6 +120,12 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
       to: moment(nextTo),
     };
 
+    const nextTimeRange: TimeRange = {
+      raw: nextRange,
+      from,
+      to,
+    };
+
     this.setState(
       {
         rangeString: rangeUtil.describeTimeRange(nextRange),
@@ -127,7 +133,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         toRaw: nextRange.to.format(DATE_FORMAT),
       },
       () => {
-        onChangeTime(nextRange);
+        onChangeTime(nextTimeRange);
       }
     );
   }

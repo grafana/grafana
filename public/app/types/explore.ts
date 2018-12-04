@@ -1,6 +1,6 @@
 import { Value } from 'slate';
 
-import { RawTimeRange } from './series';
+import { DataQuery, RawTimeRange } from './series';
 
 export interface CompletionItem {
   /**
@@ -79,7 +79,7 @@ interface ExploreDatasource {
 
 export interface HistoryItem {
   ts: number;
-  query: string;
+  query: DataQuery;
 }
 
 export abstract class LanguageProvider {
@@ -107,11 +107,6 @@ export interface TypeaheadOutput {
   suggestions: CompletionItemGroup[];
 }
 
-export interface Query {
-  query: string;
-  key?: string;
-}
-
 export interface QueryFix {
   type: string;
   label: string;
@@ -130,6 +125,10 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+export interface QueryHintGetter {
+  (query: DataQuery, results: any[], ...rest: any): QueryHint[];
+}
+
 export interface QueryTransaction {
   id: string;
   done: boolean;
@@ -137,7 +136,7 @@ export interface QueryTransaction {
   hints?: QueryHint[];
   latency: number;
   options: any;
-  query: string;
+  query: DataQuery;
   result?: any; // Table model / Timeseries[] / Logs
   resultType: ResultType;
   rowIndex: number;
@@ -160,19 +159,12 @@ export interface ExploreState {
   exploreDatasources: ExploreDatasource[];
   graphRange: RawTimeRange;
   history: HistoryItem[];
-  /**
-   * Initial rows of queries to push down the tree.
-   * Modifications do not end up here, but in `this.queryExpressions`.
-   * The only way to reset a query is to change its `key`.
-   */
-  queries: Query[];
-  /**
-   * Hints gathered for the query row.
-   */
+  initialQueries: DataQuery[];
   queryTransactions: QueryTransaction[];
   range: RawTimeRange;
   showingGraph: boolean;
   showingLogs: boolean;
+  showingStartPage?: boolean;
   showingTable: boolean;
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
@@ -181,7 +173,7 @@ export interface ExploreState {
 
 export interface ExploreUrlState {
   datasource: string;
-  queries: Query[];
+  queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
   range: RawTimeRange;
 }
 

@@ -3,38 +3,36 @@ import classNames from 'classnames';
 
 import { QueriesTab } from './QueriesTab';
 import { VisualizationTab } from './VisualizationTab';
+import { GeneralTab } from './GeneralTab';
+import { AlertTab } from './AlertTab';
 
+import config from 'app/core/config';
 import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
+import { AngularComponent } from 'app/core/services/AngularLoader';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types/plugins';
 
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
+
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
+  angularPanel?: AngularComponent;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
 interface PanelEditorTab {
   id: string;
   text: string;
-  icon: string;
 }
 
 export class PanelEditor extends PureComponent<PanelEditorProps> {
-  tabs: PanelEditorTab[];
-
   constructor(props) {
     super(props);
-
-    this.tabs = [
-      { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
-      { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
-      { id: 'alert', text: 'Alert', icon: 'gicon gicon-alert' },
-    ];
   }
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -47,44 +45,67 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     this.forceUpdate();
   };
 
-  onClose = () => {
-    store.dispatch(
-      updateLocation({
-        query: { tab: null, fullscreen: null, edit: null },
-        partial: true,
-      })
-    );
-  };
+  renderCurrentTab(activeTab: string) {
+    const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
+
+    switch (activeTab) {
+      case 'advanced':
+        return <GeneralTab panel={panel} />;
+      case 'queries':
+        return <QueriesTab panel={panel} dashboard={dashboard} />;
+      case 'alerts':
+        return <AlertTab angularPanel={angularPanel} />;
+      case 'visualization':
+        return (
+          <VisualizationTab
+            panel={panel}
+            dashboard={dashboard}
+            plugin={plugin}
+            onTypeChanged={onTypeChanged}
+            angularPanel={angularPanel}
+          />
+        );
+      default:
+        return null;
+    }
+  }
 
   render() {
-    const { panel, dashboard, onTypeChanged, plugin } = this.props;
-    const { location } = store.getState();
-    const activeTab = location.query.tab || 'queries';
+    const { plugin } = this.props;
+    const activeTab = store.getState().location.query.tab || 'queries';
+
+    const tabs = [
+      { id: 'queries', text: 'Queries' },
+      { id: 'visualization', text: 'Visualization' },
+      { id: 'advanced', text: 'Advanced' },
+    ];
+
+    if (config.alertingEnabled && plugin.id === 'graph') {
+      tabs.push({
+        id: 'alerts',
+        text: 'Alerts',
+      });
+    }
 
     return (
       <div className="panel-editor-container__editor">
-        <div className="panel-editor-resizer">
-          <div className="panel-editor-resizer__handle">
-            <div className="panel-editor-resizer__handle-dots" />
-          </div>
-        </div>
+        {
+          // <div className="panel-editor__close">
+          //   <i className="fa fa-arrow-left" />
+          // </div>
+          // <div className="panel-editor-resizer">
+          //   <div className="panel-editor-resizer__handle">
+          //     <div className="panel-editor-resizer__handle-dots" />
+          //   </div>
+          // </div>
+        }
 
         <div className="panel-editor-tabs">
-          <ul className="gf-tabs">
-            {this.tabs.map(tab => {
-              return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
-            })}
-          </ul>
-
-          <button className="panel-editor-tabs__close" onClick={this.onClose}>
-            <i className="fa fa-reply" />
-          </button>
+          {tabs.map(tab => {
+            return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
+          })}
         </div>
-
-        {activeTab === 'queries' && <QueriesTab panel={panel} dashboard={dashboard} />}
-        {activeTab === 'visualization' && (
-          <VisualizationTab panel={panel} dashboard={dashboard} plugin={plugin} onTypeChanged={onTypeChanged} />
-        )}
+        <div className="panel-editor__right">{this.renderCurrentTab(activeTab)}</div>
       </div>
     );
   }
@@ -98,15 +119,17 @@ interface TabItemParams {
 
 function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   const tabClasses = classNames({
-    'gf-tabs-link': true,
+    'panel-editor-tabs__link': true,
     active: activeTab === tab.id,
   });
 
   return (
-    <li className="gf-tabs-item" onClick={() => onClick(tab)}>
+    <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
       <a className={tabClasses}>
-        <i className={tab.icon} /> {tab.text}
+        <Tooltip content={`${tab.text}`} className="popper__manager--block" placement="auto">
+          <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
+        </Tooltip>
       </a>
-    </li>
+    </div>
   );
 }

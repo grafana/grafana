@@ -82,7 +82,7 @@ $input-border: 1px solid $input-border-color;
   align-content: flex-start;
 
   .gf-form + .gf-form {
-    margin-right: $gf-form-margin;
+    margin-left: $gf-form-margin;
   }
 }
 
@@ -102,6 +102,7 @@ $input-border: 1px solid $input-border-color;
 
   background-color: $input-label-bg;
   display: block;
+  height: $gf-form-input-height;
 
   border: $input-btn-border-width solid $input-label-border-color;
   border-right: none;
@@ -140,19 +141,6 @@ $input-border: 1px solid $input-border-color;
   @include border-radius($label-border-radius-sm);
 }
 
-.gf-form-checkbox {
-  flex-shrink: 0;
-  padding: $input-padding-y $input-padding-x;
-  line-height: $input-line-height;
-
-  .checkbox-label {
-    display: inline;
-    cursor: pointer;
-    padding: $input-padding-y 0.4rem;
-    line-height: $input-line-height;
-  }
-}
-
 .gf-form-textarea {
   max-width: 650px;
 }
@@ -160,8 +148,8 @@ $input-border: 1px solid $input-border-color;
 .gf-form-input {
   display: block;
   width: 100%;
+  height: $gf-form-input-height;
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
@@ -179,6 +167,7 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
+    height: auto;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.
@@ -345,9 +334,6 @@ $input-border: 1px solid $input-border-color;
 .gf-form-dropdown-typeahead {
   margin-right: $gf-form-margin;
   position: relative;
-  background-color: $input-bg;
-  border: $input-border;
-  border-radius: $input-border-radius;
 
   &::after {
     position: absolute;
@@ -359,10 +345,6 @@ $input-border: 1px solid $input-border-color;
     content: '\f0d7';
     pointer-events: none;
     font-size: 11px;
-  }
-
-  .gf-form-input {
-    border: none;
   }
 }
 

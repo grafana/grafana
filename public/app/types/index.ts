@@ -30,7 +30,7 @@ import {
   AppNotificationTimeout,
 } from './appNotifications';
 import { DashboardSearchHit } from './search';
-
+import { ValidationEvents, ValidationRule } from './form';
 export {
   Team,
   TeamsState,
@@ -90,6 +90,8 @@ export {
   DashboardSearchHit,
   UserState,
   Threshold,
+  ValidationEvents,
+  ValidationRule,
 };
 
 export interface StoreState {

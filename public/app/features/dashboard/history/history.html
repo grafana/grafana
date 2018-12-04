@@ -30,8 +30,8 @@
         <tbody>
           <tr ng-repeat="revision in ctrl.revisions">
             <td class="filter-table__switch-cell" bs-tooltip="!revision.checked && ctrl.canCompare ? 'You can only compare 2 versions at a time' : ''" data-placement="right">
-              <gf-form-switch switch-class="gf-form-switch--table-cell" checked="revision.checked" on-change="ctrl.revisionSelectionChanged()" ng-disabled="!revision.checked && ctrl.canCompare">
-              </gf-form-switch>
+              <gf-form-checkbox switch-class="gf-form-switch--table-cell" checked="revision.checked" on-change="ctrl.revisionSelectionChanged()" ng-disabled="!revision.checked && ctrl.canCompare">
+              </gf-form-checkbox>
             </td>
             <td class="text-center">{{revision.version}}</td>
             <td>{{revision.createdDateString}}</td>

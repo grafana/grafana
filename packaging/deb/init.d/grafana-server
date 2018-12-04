@@ -56,7 +56,7 @@ if [ -f "$DEFAULT" ]; then
 	. "$DEFAULT"
 fi
 
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} --packaging=deb cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
 
 function checkUser() {
   if [ `id -u` -ne 0 ]; then

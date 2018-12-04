@@ -11,11 +11,13 @@ export class QueryRowCtrl {
   panelCtrl: any;
   panel: any;
   collapsed: any;
+  hideEditorRowActions: boolean;
 
   constructor() {
     this.panelCtrl = this.queryCtrl.panelCtrl;
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;
+    this.hideEditorRowActions = this.panelCtrl.hideEditorRowActions;
 
     if (!this.target.refId) {
       this.target.refId = this.panelCtrl.dashboard.getNextQueryLetter(this.panel);

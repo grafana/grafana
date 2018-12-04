@@ -78,9 +78,24 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   // Keep this DOM-free for testing
-  provideCompletionItems({ prefix, wrapperClasses, text }: TypeaheadInput, context?: any): TypeaheadOutput {
+  provideCompletionItems({ prefix, wrapperClasses, text, value }: TypeaheadInput, context?: any): TypeaheadOutput {
+    // Local text properties
+    const empty = value.document.text.length === 0;
+    const selectedLines = value.document.getTextsAtRangeAsArray(value.selection);
+    const currentLine = selectedLines.length === 1 ? selectedLines[0] : null;
+    const nextCharacter = currentLine ? currentLine.text[value.selection.anchorOffset] : null;
+
     // Syntax spans have 3 classes by default. More indicate a recognized token
     const tokenRecognized = wrapperClasses.length > 3;
+    // Non-empty prefix, but not inside known token
+    const prefixUnrecognized = prefix && !tokenRecognized;
+    // Prevent suggestions in `function(|suffix)`
+    const noSuffix = !nextCharacter || nextCharacter === ')';
+    // Empty prefix is safe if it does not immediately folllow a complete expression and has no text after it
+    const safeEmptyPrefix = prefix === '' && !text.match(/^[\]})\s]+$/) && noSuffix;
+    // About to type next operand if preceded by binary operator
+    const isNextOperand = text.match(/[+\-*/^%]/);
+
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-range')) {
       // Suggestions for metric[|]
@@ -89,14 +104,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
       return this.getLabelCompletionItems.apply(this, arguments);
     } else if (_.includes(wrapperClasses, 'context-aggregation')) {
+      // Suggestions for sum(metric) by (|)
       return this.getAggregationCompletionItems.apply(this, arguments);
-    } else if (
-      // Show default suggestions in a couple of scenarios
-      (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
-      (prefix === '' && !text.match(/^[\]})\s]+$/)) || // Empty prefix, but not following a closing brace
-      text.match(/[+\-*/^%]/) // Anything after binary operator
-    ) {
+    } else if (empty) {
+      // Suggestions for empty query field
       return this.getEmptyCompletionItems(context || {});
+    } else if (prefixUnrecognized || safeEmptyPrefix || isNextOperand) {
+      // Show term suggestions in a couple of scenarios
+      return this.getTermCompletionItems();
     }
 
     return {
@@ -106,14 +121,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getEmptyCompletionItems(context: any): TypeaheadOutput {
     const { history } = context;
-    const { metrics } = this;
-    const suggestions: CompletionItemGroup[] = [];
+    let suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .uniqBy('query')
+        .map(h => h.query.expr)
+        .filter()
+        .uniq()
         .take(HISTORY_ITEM_COUNT)
-        .map(h => h.query)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
         .value();
@@ -126,13 +141,23 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       });
     }
 
+    const termCompletionItems = this.getTermCompletionItems();
+    suggestions = [...suggestions, ...termCompletionItems.suggestions];
+
+    return { suggestions };
+  }
+
+  getTermCompletionItems(): TypeaheadOutput {
+    const { metrics } = this;
+    const suggestions: CompletionItemGroup[] = [];
+
     suggestions.push({
       prefixMatch: true,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
 
-    if (metrics) {
+    if (metrics && metrics.length > 0) {
       suggestions.push({
         label: 'Metrics',
         items: metrics.map(wrapLabel),

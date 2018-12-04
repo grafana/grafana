@@ -6,6 +6,7 @@ export interface PluginExports {
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
+  VariableQueryEditor?: any;
   ExploreQueryField?: any;
   ExploreStartPage?: any;
 
@@ -27,6 +28,12 @@ export interface PanelPlugin {
   exports?: PluginExports;
 }
 
+interface PluginMetaQueryOptions {
+  cacheTimeout?: boolean;
+  maxDataPoints?: boolean;
+  minInterval?: boolean;
+}
+
 export interface PluginMeta {
   id: string;
   name: string;
@@ -35,9 +42,13 @@ export interface PluginMeta {
 
   // Datasource-specific
   metrics?: boolean;
+  tables?: boolean;
   logs?: boolean;
   explore?: boolean;
   annotations?: boolean;
+  mixed?: boolean;
+  hasQueryHelp?: boolean;
+  queryOptions?: PluginMetaQueryOptions;
 }
 
 export interface PluginInclude {
@@ -98,4 +109,11 @@ export interface PluginsState {
   layoutMode: string;
   hasFetched: boolean;
   dashboards: PluginDashboard[];
+}
+
+export interface VariableQueryProps {
+  query: any;
+  onChange: (query: any, definition: string) => void;
+  datasource: any;
+  templateSrv: any;
 }

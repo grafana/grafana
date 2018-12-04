@@ -19,7 +19,7 @@ export class DatasourceSrv {
     this.datasources = {};
   }
 
-  get(name?): Promise<DataSourceApi> {
+  get(name?: string): Promise<DataSourceApi> {
     if (!name) {
       return this.get(config.defaultDatasource);
     }
@@ -37,7 +37,7 @@ export class DatasourceSrv {
     return this.loadDatasource(name);
   }
 
-  loadDatasource(name) {
+  loadDatasource(name: string): Promise<DataSourceApi> {
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
@@ -74,7 +74,8 @@ export class DatasourceSrv {
   }
 
   getAll() {
-    return config.datasources;
+    const { datasources } = config;
+    return Object.keys(datasources).map(name => datasources[name]);
   }
 
   getAnnotationSources() {
@@ -89,14 +90,6 @@ export class DatasourceSrv {
     });
 
     return sources;
-  }
-
-  getExploreSources() {
-    const { datasources } = config;
-    const es = Object.keys(datasources)
-      .map(name => datasources[name])
-      .filter(ds => ds.meta && ds.meta.explore);
-    return _.sortBy(es, ['name']);
   }
 
   getMetricSources(options?) {

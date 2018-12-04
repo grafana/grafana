@@ -128,6 +128,8 @@ func main() {
 			if goos == linux {
 				createLinuxPackages()
 			}
+		case "pkg-archive":
+			grunt(gruntBuildArg("package")...)
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)

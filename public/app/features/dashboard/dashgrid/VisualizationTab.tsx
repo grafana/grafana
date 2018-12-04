@@ -1,8 +1,14 @@
+// Libraries
 import React, { PureComponent } from 'react';
 
+// Utils & Services
+import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+
+// Components
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 
+// Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types/plugins';
@@ -11,10 +17,14 @@ interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
+  angularPanel?: AngularComponent;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
 export class VisualizationTab extends PureComponent<Props> {
+  element: HTMLElement;
+  angularOptions: AngularComponent;
+
   getPanelDefaultOptions = () => {
     const { panel, plugin } = this.props;
 
@@ -26,13 +36,81 @@ export class VisualizationTab extends PureComponent<Props> {
   };
 
   renderPanelOptions() {
-    const { plugin } = this.props;
+    const { plugin, angularPanel } = this.props;
     const { PanelOptions } = plugin.exports;
+
+    if (angularPanel) {
+      return <div ref={element => (this.element = element)} />;
+    }
 
     if (PanelOptions) {
       return <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />;
     } else {
       return <p>Visualization has no options</p>;
+    }
+  }
+
+  componentDidMount() {
+    if (this.shouldLoadAngularOptions()) {
+      this.loadAngularOptions();
+    }
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.props.plugin !== prevProps.plugin) {
+      this.cleanUpAngularOptions();
+    }
+
+    if (this.shouldLoadAngularOptions()) {
+      this.loadAngularOptions();
+    }
+  }
+
+  shouldLoadAngularOptions() {
+    return this.props.angularPanel && this.element && !this.angularOptions;
+  }
+
+  loadAngularOptions() {
+    const { angularPanel } = this.props;
+
+    const scope = angularPanel.getScope();
+
+    // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
+    if (!scope.$$childHead) {
+      setTimeout(() => {
+        this.forceUpdate();
+      });
+      return;
+    }
+
+    const panelCtrl = scope.$$childHead.ctrl;
+
+    let template = '';
+    for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
+      template += `
+      <div class="form-section" ng-cloak>
+        <div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>
+        <div class="form-section__body">
+          <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
+        </div>
+      </div>
+      `;
+    }
+
+    const loader = getAngularLoader();
+    const scopeProps = { ctrl: panelCtrl };
+
+    this.angularOptions = loader.load(this.element, scopeProps, template);
+  }
+
+  componentWillUnmount() {
+    this.cleanUpAngularOptions();
+  }
+
+  cleanUpAngularOptions() {
+    if (this.angularOptions) {
+      this.angularOptions.destroy();
+      this.angularOptions = null;
     }
   }
 
@@ -54,8 +132,14 @@ export class VisualizationTab extends PureComponent<Props> {
       },
     };
 
+    const panelHelp = {
+      title: '',
+      icon: 'fa fa-question',
+      render: () => <h2>Help</h2>,
+    };
+
     return (
-      <EditorTabBody main={panelSelection} toolbarItems={[]}>
+      <EditorTabBody heading="Visualization" main={panelSelection} toolbarItems={[panelHelp]}>
         {this.renderPanelOptions()}
       </EditorTabBody>
     );

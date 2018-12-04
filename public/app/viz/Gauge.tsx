@@ -28,6 +28,7 @@ export class Gauge extends PureComponent<Props> {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
+    unit: 'none',
     thresholds: [
       { label: 'Min', value: 0, color: 'rgba(50, 172, 45, 0.97)' },
       { label: 'Max', value: 100, color: 'rgba(245, 54, 54, 0.9)' },
@@ -46,6 +47,11 @@ export class Gauge extends PureComponent<Props> {
     const { decimals, prefix, suffix, unit } = this.props;
 
     const formatFunc = kbn.valueFormats[unit];
+
+    if (isNaN(value)) {
+      return '-';
+    }
+
     return `${prefix} ${formatFunc(value, decimals)} ${suffix}`;
   }
 
