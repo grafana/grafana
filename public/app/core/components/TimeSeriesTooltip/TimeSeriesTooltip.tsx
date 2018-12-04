@@ -31,7 +31,7 @@ interface PanelOptions {
     hideZero?: boolean;
   };
   tooltip?: {
-    value_type?: string;
+    value_type?: 'individual' | 'cumulative';
     shared?: boolean;
   };
 }
@@ -57,7 +57,9 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
       this.props.onUnhighlight();
       for (let i = 0; i < series.length; i++) {
         const hoverInfo = seriesHoverInfo[i];
-        this.props.onHighlight(hoverInfo.index, hoverInfo.hoverIndex);
+        if (!hoverInfo.hidden) {
+          this.props.onHighlight(hoverInfo.index, hoverInfo.hoverIndex);
+        }
       }
     }
 

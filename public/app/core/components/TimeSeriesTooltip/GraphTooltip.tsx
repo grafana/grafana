@@ -22,11 +22,12 @@ export class GraphTooltip extends PureComponent<GraphTooltipProps & InjectedGrap
 
   render() {
     // console.log('render <GraphTooltip />');
-    const { series, item, timestamp } = this.props;
+    const { series, hoverInfo, item, timestamp } = this.props;
     const timeFormat = 'YYYY-MM-DD HH:mm:ss';
     // const time = this.props.position.x;
     const absoluteTime = this.props.formatDate(timestamp, timeFormat);
-    const seriesItems = this.props.hoverInfo.map((hoverItem, index) => (
+    const hoverInfoFiltered = hoverInfo.filter(hoverItem => !hoverItem.hidden);
+    const seriesItems = hoverInfoFiltered.map((hoverItem, index) => (
       <TooltipSeries key={index} hoverItem={hoverItem} seriesList={series} item={item} />
     ));
 

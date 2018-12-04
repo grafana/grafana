@@ -31,7 +31,7 @@ export interface GraphHoverEvent {
   panel: PanelModel;
 }
 
-export type FlotPoint = [number, number];
+export type FlotPoint = [number, number, number];
 
 export interface FlotHoverItem {
   /** The point with format [ts, value], e.g. [0, 2] */

@@ -138,7 +138,7 @@ export function getMultiSeriesPlotHoverInfo(
       value: value,
       hoverIndex: hoverIndex,
       color: series.color,
-      label: series.aliasEscaped,
+      label: series.alias,
       time: pointTime,
       distance: hoverDistance,
       index: i,

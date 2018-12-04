@@ -334,6 +334,15 @@ class GraphElement {
       sharedTooltip: sharedTooltip,
       allSeriesMode: this.panel.tooltip.shared,
       sort: this.panel.tooltip.sort,
+      panelOptions: {
+        tooltip: {
+          value_type: this.panel.tooltip.value_type,
+        },
+        legend: {
+          hideEmpty: this.panel.legend.hideEmpty,
+          hideZero: this.panel.legend.hideZero,
+        },
+      },
       getOffset: x => this.getOffset(x),
       formatDate: (time, format) => this.ctrl.dashboard.formatDate(time, format),
       onMouseleave: () => this.onTooltipClear(),
