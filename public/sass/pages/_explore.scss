@@ -387,12 +387,13 @@
       top: 1.25em;
       left: -10px;
       z-index: 100;
-      background-color: $page-bg;
-      border: $panel-border;
+      background-color: $popover-bg;
+      color: $popover-color;
+      border: 1px solid $popover-border-color;
       padding: 10px;
       border-radius: $border-radius;
       justify-content: space-between;
-      box-shadow: $card-shadow;
+      box-shadow: $popover-shadow;
     }
 
     .logs-row-labels {
