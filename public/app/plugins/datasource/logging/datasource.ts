@@ -117,6 +117,10 @@ export default class LoggingDatasource {
     return { ...query, expr: expression };
   }
 
+  getHighlighterExpression(query: DataQuery): string {
+    return parseQuery(query.expr).regexp;
+  }
+
   getTime(date, roundUp) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);

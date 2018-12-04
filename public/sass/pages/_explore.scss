@@ -307,6 +307,11 @@
       background-color: rgba($typeahead-selected-color, 0.1);
     }
 
+    .logs-row-match-highlight--preview {
+      background-color: rgba($typeahead-selected-color, 0.2);
+      border-bottom-style: dotted;
+    }
+
     .logs-row-level {
       background-color: transparent;
       margin: 2px 0;

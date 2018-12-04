@@ -164,6 +164,7 @@ export interface ExploreState {
   graphResult?: any[];
   history: HistoryItem[];
   initialQueries: DataQuery[];
+  logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   queryTransactions: QueryTransaction[];
   range: RawTimeRange;

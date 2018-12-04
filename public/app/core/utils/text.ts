@@ -8,6 +8,10 @@ export function findHighlightChunksInText({ searchWords, textToHighlight }) {
   return findMatchesInText(textToHighlight, searchWords.join(' '));
 }
 
+const cleanNeedle = (needle: string): string => {
+  return needle.replace(/[[{(][\w,.-?:*+]+$/, '');
+};
+
 /**
  * Returns a list of substring regexp matches.
  */
@@ -16,17 +20,25 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
   if (!haystack || !needle) {
     return [];
   }
-  const regexp = new RegExp(`(?:${needle})`, 'g');
   const matches = [];
-  let match = regexp.exec(haystack);
-  while (match) {
-    matches.push({
-      text: match[0],
-      start: match.index,
-      length: match[0].length,
-      end: match.index + match[0].length,
-    });
-    match = regexp.exec(haystack);
+  const cleaned = cleanNeedle(needle);
+  let regexp;
+  try {
+    regexp = new RegExp(`(?:${cleaned})`, 'g');
+  } catch (error) {
+    return matches;
   }
+  haystack.replace(regexp, (substring, ...rest) => {
+    if (substring) {
+      const offset = rest[rest.length - 2];
+      matches.push({
+        text: substring,
+        start: offset,
+        length: substring.length,
+        end: offset + substring.length,
+      });
+    }
+    return '';
+  });
   return matches;
 }
