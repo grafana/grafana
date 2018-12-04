@@ -8,7 +8,7 @@ interface Props {
 export default class LoggingStartPage extends PureComponent<Props> {
   render() {
     return (
-      <div className="grafana-info-box">
+      <div className="grafana-info-box grafana-info-box--max-lg">
         <LoggingCheatSheet onClickExample={this.props.onClickExample} />
       </div>
     );
