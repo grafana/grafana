@@ -25,12 +25,18 @@ export class VisualizationTab extends PureComponent<Props> {
   element: HTMLElement;
   angularOptions: AngularComponent;
 
-  constructor(props) {
-    super(props);
-  }
+  getPanelDefaultOptions = () => {
+    const { panel, plugin } = this.props;
+
+    if (plugin.exports.PanelDefaults) {
+      return panel.getOptions(plugin.exports.PanelDefaults.options);
+    }
+
+    return panel.getOptions(plugin.exports.PanelDefaults);
+  };
 
   renderPanelOptions() {
-    const { plugin, panel, angularPanel } = this.props;
+    const { plugin, angularPanel } = this.props;
     const { PanelOptions } = plugin.exports;
 
     if (angularPanel) {
@@ -38,7 +44,7 @@ export class VisualizationTab extends PureComponent<Props> {
     }
 
     if (PanelOptions) {
-      return <PanelOptions options={panel.getOptions()} onChange={this.onPanelOptionsChanged} />;
+      return <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />;
     } else {
       return <p>Visualization has no options</p>;
     }

@@ -108,8 +108,8 @@ export class PanelModel {
     _.defaultsDeep(this, _.cloneDeep(defaults));
   }
 
-  getOptions() {
-    return this[this.getOptionsKey()] || {};
+  getOptions(panelDefaults) {
+    return _.defaultsDeep(this[this.getOptionsKey()] || {}, panelDefaults);
   }
 
   updateOptions(options: object) {

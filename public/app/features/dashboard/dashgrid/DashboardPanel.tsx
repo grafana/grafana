@@ -129,7 +129,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     const { dashboard, panel } = this.props;
     const { plugin } = this.state;
 
-    return <PanelChrome component={plugin.exports.Panel} panel={panel} dashboard={dashboard} />;
+    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} />;
   }
 
   renderAngularPanel() {

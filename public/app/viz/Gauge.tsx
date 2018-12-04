@@ -1,86 +1,87 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { TimeSeriesVMs } from 'app/types';
+import { Threshold, TimeSeriesVMs } from 'app/types';
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
 
 interface Props {
+  decimals: number;
   timeSeries: TimeSeriesVMs;
-  minValue: number;
-  maxValue: number;
-  showThresholdMarkers?: boolean;
-  thresholds?: number[];
-  showThresholdLables?: boolean;
-  unit: { label: string; value: string };
+  showThresholdMarkers: boolean;
+  thresholds: Threshold[];
+  showThresholdLabels: boolean;
+  unit: string;
   width: number;
   height: number;
+  stat: string;
+  prefix: string;
+  suffix: string;
 }
 
-const colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
-
 export class Gauge extends PureComponent<Props> {
-  parentElement: any;
   canvasElement: any;
 
   static defaultProps = {
     minValue: 0,
     maxValue: 100,
+    prefix: '',
     showThresholdMarkers: true,
-    showThresholdLables: false,
-    thresholds: [],
+    showThresholdLabels: false,
+    suffix: '',
+    unit: 'none',
+    thresholds: [
+      { label: 'Min', value: 0, color: 'rgba(50, 172, 45, 0.97)' },
+      { label: 'Max', value: 100, color: 'rgba(245, 54, 54, 0.9)' },
+    ],
   };
 
   componentDidMount() {
     this.draw();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate() {
     this.draw();
   }
 
   formatValue(value) {
-    const { unit } = this.props;
+    const { decimals, prefix, suffix, unit } = this.props;
 
-    const formatFunc = kbn.valueFormats[unit.value];
-    return formatFunc(value);
+    const formatFunc = kbn.valueFormats[unit];
+
+    if (isNaN(value)) {
+      return '-';
+    }
+
+    return `${prefix} ${formatFunc(value, decimals)} ${suffix}`;
   }
 
   draw() {
-    const {
-      maxValue,
-      minValue,
-      showThresholdLables,
-      showThresholdMarkers,
-      timeSeries,
-      thresholds,
-      width,
-      height,
-    } = this.props;
+    const { timeSeries, showThresholdLabels, showThresholdMarkers, thresholds, width, height, stat } = this.props;
 
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
     const fontColor = config.bootData.user.lightTheme ? 'rgb(38,38,38)' : 'rgb(230,230,230)';
     const fontScale = parseInt('80', 10) / 100;
     const fontSize = Math.min(dimension / 5, 100) * fontScale;
-    const gaugeWidth = Math.min(dimension / 6, 60);
+    const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
+    const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    const formattedThresholds = [];
-
-    thresholds.forEach((threshold, index) => {
-      formattedThresholds.push({
-        value: threshold,
-        color: colors[index],
-      });
+    const formattedThresholds = thresholds.map((threshold, index) => {
+      return {
+        value: threshold.value,
+        // Hacky way to get correct color for threshold.
+        color: index === 0 ? threshold.color : thresholds[index - 1].color,
+      };
     });
 
     const options = {
       series: {
         gauges: {
           gauge: {
-            min: minValue,
-            max: maxValue,
+            min: thresholds[0].value,
+            max: thresholds[thresholds.length - 1].value,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },
@@ -93,7 +94,7 @@ export class Gauge extends PureComponent<Props> {
           threshold: {
             values: formattedThresholds,
             label: {
-              show: showThresholdLables,
+              show: showThresholdLabels,
               margin: thresholdMarkersWidth + 1,
               font: { size: thresholdLabelFontSize },
             },
@@ -103,7 +104,11 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: fontColor,
             formatter: () => {
-              return this.formatValue(timeSeries[0].stats.avg);
+              if (timeSeries[0]) {
+                return this.formatValue(timeSeries[0].stats[stat]);
+              }
+
+              return '';
             },
             font: {
               size: fontSize,
@@ -117,7 +122,7 @@ export class Gauge extends PureComponent<Props> {
 
     let value: string | number = 'N/A';
     if (timeSeries.length) {
-      value = timeSeries[0].stats.avg;
+      value = timeSeries[0].stats[stat];
     }
 
     const plotSeries = {
@@ -135,7 +140,7 @@ export class Gauge extends PureComponent<Props> {
     const { height, width } = this.props;
 
     return (
-      <div className="singlestat-panel" ref={element => (this.parentElement = element)}>
+      <div className="singlestat-panel">
         <div
           style={{
             height: `${height * 0.9}px`,

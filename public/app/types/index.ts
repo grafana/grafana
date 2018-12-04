@@ -20,7 +20,7 @@ import {
   DataQueryResponse,
   DataQueryOptions,
 } from './series';
-import { PanelProps, PanelOptionsProps } from './panel';
+import { PanelProps, PanelOptionsProps, Threshold } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
 import { Organization, OrganizationState } from './organization';
 import {
@@ -89,6 +89,7 @@ export {
   AppNotificationTimeout,
   DashboardSearchHit,
   UserState,
+  Threshold,
   ValidationEvents,
   ValidationRule,
 };

@@ -28,3 +28,11 @@ export interface PanelMenuItem {
   shortcut?: string;
   subMenu?: PanelMenuItem[];
 }
+
+export interface Threshold {
+  index: number;
+  label: string;
+  value: number;
+  color?: string;
+  canRemove: boolean;
+}

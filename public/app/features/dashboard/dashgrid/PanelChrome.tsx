@@ -1,5 +1,5 @@
 // Libraries
-import React, { ComponentClass, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { AutoSizer } from 'react-virtualized';
 
 // Services
@@ -16,12 +16,12 @@ import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 // Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { TimeRange, PanelProps } from 'app/types';
+import { PanelPlugin, TimeRange } from 'app/types';
 
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  component: ComponentClass<PanelProps>;
+  plugin: PanelPlugin;
 }
 
 export interface State {
@@ -80,11 +80,11 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, plugin } = this.props;
     const { refreshCounter, timeRange, timeInfo, renderCounter } = this.state;
 
     const { datasource, targets } = panel;
-    const PanelComponent = this.props.component;
+    const PanelComponent = plugin.exports.Panel;
 
     return (
       <AutoSizer>
@@ -111,7 +111,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                         loading={loading}
                         timeSeries={timeSeries}
                         timeRange={timeRange}
-                        options={panel.getOptions()}
+                        options={panel.getOptions(plugin.exports.PanelDefaults)}
                         width={width}
                         height={height - PANEL_HEADER_HEIGHT}
                         renderCounter={renderCounter}
