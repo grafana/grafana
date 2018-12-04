@@ -15,7 +15,7 @@ const CHEAT_SHEET_ITEMS = [
 
 export default (props: any) => (
   <div>
-    <h1>Logging Cheat Sheet</h1>
+    <h2>Logging Cheat Sheet</h2>
     {CHEAT_SHEET_ITEMS.map(item => (
       <div className="cheat-sheet-item" key={item.expression}>
         <div className="cheat-sheet-item__title">{item.title}</div>
