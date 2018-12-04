@@ -113,7 +113,7 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     });
   };
 
-  getIndicatorColor(index) {
+  getIndicatorColor = index => {
     const { thresholds } = this.state;
 
     if (index === 0) {
@@ -121,7 +121,7 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     }
 
     return index < thresholds.length ? thresholds[index].color : BasicGaugeColor.Red;
-  }
+  };
 
   renderNoThresholds() {
     const { thresholds } = this.state;
@@ -277,15 +277,13 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
   renderIndicator() {
     const { thresholds } = this.state;
 
-    const indicators = thresholds.length - 1;
+    return thresholds.map((t, i) => {
+      if (i <= thresholds.length - 1) {
+        return this.renderIndicatorSection(i);
+      }
 
-    const sections = [];
-
-    for (let i = 0; i < indicators; i++) {
-      sections.push(this.renderIndicatorSection(i));
-    }
-
-    return sections;
+      return null;
+    });
   }
 
   render() {
