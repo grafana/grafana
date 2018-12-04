@@ -1,4 +1,5 @@
 import { FlotPosition } from 'app/types/events';
+// import { TimeSeriesVM } from 'app/types';
 
 export function findHoverIndexFromDataPoints(posX, series, last) {
   const ps = series.datapoints.pointsize;
@@ -43,7 +44,7 @@ interface GetPlotHoverInfoOptions {
   tooltipValueType?: 'individual' | string;
 }
 
-interface PlotHoverInfoItem {
+export interface PlotHoverInfoItem {
   value: number;
   hidden?: boolean;
   hoverIndex?: number;

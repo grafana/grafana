@@ -8,6 +8,8 @@ import withTimeAxisTooltip, { TimeAxisTooltipProps } from './TimeAxisTooltip';
 export interface TimeSeriesTooltipProps extends TimeAxisTooltipProps {
   series: TimeSeriesVM[];
   panelOptions?: PanelOptions;
+  allSeriesMode?: boolean;
+  sort?: 1 | 2 | null;
   onHighlight?: (series, datapoint) => void;
   onUnhighlight?: () => void;
 }
@@ -20,6 +22,7 @@ export interface TimeSeriesTooltipState {
 
 export interface InjectedTimeSeriesTooltipProps {
   timestamp: number;
+  hoverInfo: PlotHoverInfo;
 }
 
 interface PanelOptions {
@@ -29,6 +32,7 @@ interface PanelOptions {
   };
   tooltip?: {
     value_type?: string;
+    shared?: boolean;
   };
 }
 
@@ -57,19 +61,36 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
       }
     }
 
+    sortHoverInfo(seriesHoverInfo) {
+      // Dynamically reorder the hovercard for the current time point if the
+      // option is enabled.
+      if (this.props.sort === 2) {
+        seriesHoverInfo.sort((a, b) => {
+          return b.value - a.value;
+        });
+      } else if (this.props.sort === 1) {
+        seriesHoverInfo.sort((a, b) => {
+          return a.value - b.value;
+        });
+      }
+    }
+
     render() {
       const { position, ...props } = this.props as any;
-      const panelOptions = {
-        hideEmpty: this.props.panelOptions.legend.hideEmpty,
-        hideZero: this.props.panelOptions.legend.hideZero,
-        tooltipValueType: this.props.panelOptions.tooltip.value_type,
+      const { panelOptions, allSeriesMode } = props as TimeSeriesTooltipProps;
+      const getHoverOptions = {
+        hideEmpty: panelOptions.legend.hideEmpty,
+        hideZero: panelOptions.legend.hideZero,
+        tooltipValueType: panelOptions.tooltip.value_type,
       };
-      const seriesHoverInfo = getMultiSeriesPlotHoverInfo(props.series, position, panelOptions);
-      // console.log(props.series);
-      if (this.props.onHighlight && this.props.onUnhighlight) {
+      const seriesHoverInfo = getMultiSeriesPlotHoverInfo(props.series, position, getHoverOptions);
+      this.sortHoverInfo(seriesHoverInfo);
+      if (allSeriesMode && this.props.onHighlight && this.props.onUnhighlight) {
         this.highlightPoints(seriesHoverInfo);
       }
-      return <WrappedComponent position={position} timestamp={seriesHoverInfo.time} {...props} />;
+      return (
+        <WrappedComponent position={position} timestamp={seriesHoverInfo.time} hoverInfo={seriesHoverInfo} {...props} />
+      );
     }
   }
 

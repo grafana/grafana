@@ -30,3 +30,20 @@ export interface GraphHoverEvent {
   pos: GraphHoverPosition;
   panel: PanelModel;
 }
+
+export type FlotPoint = [number, number];
+
+export interface FlotHoverItem {
+  /** The point with format [ts, value], e.g. [0, 2] */
+  datapoint: FlotPoint;
+  /** The index of the point in the data array */
+  dataIndex: number;
+  /** The series object */
+  series: any;
+  /** The index of the series */
+  seriesIndex: number;
+  /** The global screen coordinates of the point */
+  pageX: number;
+  /** The global screen coordinates of the point */
+  pageY: number;
+}

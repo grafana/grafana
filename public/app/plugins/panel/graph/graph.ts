@@ -332,6 +332,8 @@ class GraphElement {
       chartElem: this.elem,
       panelId: this.panel.id,
       sharedTooltip: sharedTooltip,
+      allSeriesMode: this.panel.tooltip.shared,
+      sort: this.panel.tooltip.sort,
       getOffset: x => this.getOffset(x),
       formatDate: (time, format) => this.ctrl.dashboard.formatDate(time, format),
       onMouseleave: () => this.onTooltipClear(),

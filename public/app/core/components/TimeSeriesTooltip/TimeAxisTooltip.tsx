@@ -1,6 +1,6 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
-import { GraphHoverPosition, GraphHoverEvent, FlotPosition } from 'app/types/events';
+import { GraphHoverPosition, GraphHoverEvent, FlotPosition, FlotHoverItem } from 'app/types/events';
 import { Subtract } from 'app/types/utils';
 import { appEvents } from 'app/core/core';
 
@@ -24,6 +24,7 @@ export interface TimeAxisTooltipState {
   show: boolean;
   position?: GraphHoverPosition;
   tooltipPosition?: { x: number; y: number };
+  item?: FlotHoverItem;
 }
 
 const defaultPosition: GraphHoverPosition = {
@@ -35,6 +36,7 @@ const defaultPosition: GraphHoverPosition = {
 
 export interface InjectedTimeAxisTooltipProps {
   position: GraphHoverPosition;
+  item?: FlotHoverItem;
 }
 
 interface TooltipSize {
@@ -98,9 +100,8 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       appEvents.off('graph-hover-clear', this.handleHoverClear);
     }
 
-    handleHoverEvent = (event, position: FlotPosition, item) => {
-      // console.log(position);
-      this.show(position);
+    handleHoverEvent = (event, position: FlotPosition, item: FlotHoverItem) => {
+      this.show(position, item);
     };
 
     handleGraphHoverEvent = (event: GraphHoverEvent) => {
@@ -124,7 +125,7 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       this.hide();
     };
 
-    show(position: GraphHoverPosition) {
+    show(position: GraphHoverPosition, item?: FlotHoverItem) {
       const tooltipPosition = this.calculatePosition(this.state.position);
       if (tooltipPosition.x < 0 || tooltipPosition.y < 0) {
         this.setState({ show: false });
@@ -133,6 +134,7 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
         show: true,
         position: position,
         tooltipPosition: tooltipPosition,
+        item: item,
       });
     }
 
@@ -215,7 +217,7 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
 
       const tooltipNode = (
         <div className="graph-tooltip grafana-tooltip timeseries-tooltip" style={tooltipStyle} ref={this.getTooltipRef}>
-          <WrappedComponent position={this.state.position} {...this.props} />
+          <WrappedComponent position={this.state.position} item={this.state.item} {...this.props} />
         </div>
       );
       return ReactDOM.createPortal(tooltipNode, this.tooltipContainer);
