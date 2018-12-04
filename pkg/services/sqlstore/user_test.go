@@ -155,6 +155,32 @@ func TestUserDataAccess(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("Given one grafana admin user", func() {
+			var err error
+			createUserCmd := &m.CreateUserCommand{
+				Email:   fmt.Sprint("admin", "@test.com"),
+				Name:    fmt.Sprint("admin"),
+				Login:   fmt.Sprint("admin"),
+				IsAdmin: true,
+			}
+			err = CreateUser(context.Background(), createUserCmd)
+			So(err, ShouldBeNil)
+
+			Convey("Cannot make themselves a non-admin", func() {
+				updateUserPermsCmd := m.UpdateUserPermissionsCommand{IsGrafanaAdmin: false, UserId: 1}
+				updatePermsError := UpdateUserPermissions(&updateUserPermsCmd)
+
+				So(updatePermsError, ShouldEqual, m.ErrLastGrafanaAdmin)
+
+				query := m.GetUserByIdQuery{Id: createUserCmd.Result.Id}
+				getUserError := GetUserById(&query)
+
+				So(getUserError, ShouldBeNil)
+
+				So(query.Result.IsAdmin, ShouldEqual, true)
+			})
+		})
 	})
 }
 

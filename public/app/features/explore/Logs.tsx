@@ -91,7 +91,7 @@ interface RowProps {
 function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
   const needsHighlighter = row.searchWords && row.searchWords.length > 0;
   return (
-    <div className="logs-row">
+    <>
       <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
         {row.duplicates > 0 && (
           <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
@@ -128,7 +128,7 @@ function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps
           row.entry
         )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -270,6 +270,22 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
       }
     }
 
+    // Grid options
+    const cssColumnSizes = ['3px']; // Log-level indicator line
+    if (showUtc) {
+      cssColumnSizes.push('minmax(100px, max-content)');
+    }
+    if (showLocalTime) {
+      cssColumnSizes.push('minmax(100px, max-content)');
+    }
+    if (showLabels) {
+      cssColumnSizes.push('fit-content(20%)');
+    }
+    cssColumnSizes.push('1fr');
+    const logEntriesStyle = {
+      gridTemplateColumns: cssColumnSizes.join(' '),
+    };
+
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
     return (
@@ -329,7 +345,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           </div>
         </div>
 
-        <div className="logs-entries">
+        <div className="logs-entries" style={logEntriesStyle}>
           {hasData &&
             !deferLogs &&
             firstRows.map(row => (
