@@ -15,6 +15,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   hasRefreshed: true,
+  cachedPluginOptions: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -51,12 +52,14 @@ const mustKeepProps: { [str: string]: boolean } = {
   events: true,
   cacheTimeout: true,
   nullPointMode: true,
+  cachedPluginOptions: true,
 };
 
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   datasource: null,
   targets: [{}],
+  cachedPluginOptions: {},
 };
 
 export class PanelModel {
@@ -95,6 +98,9 @@ export class PanelModel {
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
+
+  // cache props between plugins
+  cachedPluginOptions?: any;
 
   constructor(model) {
     this.events = new Emitter();
@@ -184,7 +190,40 @@ export class PanelModel {
     this.events.emit('panel-initialized');
   }
 
+  getPanelOptions() {
+    return Object.keys(this).reduce((acc, property) => {
+      if (notPersistedProperties[property]) {
+        return acc;
+      }
+      return {
+        ...acc,
+        [property]: this[property],
+      };
+    }, {});
+  }
+
+  saveCurrentPanelOptions() {
+    const currentOptions = this.getPanelOptions();
+    this.cachedPluginOptions[this.type] = currentOptions;
+  }
+
+  restorePanelOptions(pluginId: string) {
+    const currentOptions = this.getPanelOptions();
+    const prevOptions = this.cachedPluginOptions[pluginId];
+    const newOptions = Object.keys(prevOptions).reduce((acc, currKey: string) => {
+      return {
+        ...acc,
+        [currKey]: currentOptions[currKey] || prevOptions[currKey],
+      };
+    }, {});
+
+    Object.keys(newOptions).map(property => {
+      this[property] = newOptions[property];
+    });
+  }
+
   changeType(pluginId: string, fromAngularPanel: boolean) {
+    this.saveCurrentPanelOptions();
     this.type = pluginId;
 
     // for now we need to remove alert rules when changing type
@@ -202,6 +241,8 @@ export class PanelModel {
         delete this[key];
       }
     }
+
+    this.restorePanelOptions(pluginId);
   }
 
   destroy() {
