@@ -23,6 +23,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 		{mode: "alias", params: []string{"test"}, input: "mean(value)", expected: `mean(value) AS "test"`},
 		{mode: "count", params: []string{}, input: "distinct(value)", expected: `count(distinct(value))`},
 		{mode: "mode", params: []string{}, input: "value", expected: `mode(value)`},
+		{mode: "cumulative_sum", params: []string{}, input: "mean(value)", expected: `cumulative_sum(mean(value))`},
 	}
 
 	queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("5m", "now")}
