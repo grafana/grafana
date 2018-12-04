@@ -230,10 +230,7 @@ By default Grafana will delete dashboards in the database if the file is removed
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
-<<<<<<< HEAD
 > or `uid` within the same installation as this will cause weird behaviors.
-=======
-> or `uid` within the same installation as this will cause weird behaviours.
 
 ## Alert Notification Channels
 
@@ -270,7 +267,10 @@ By default, exporting a dashboard as JSON will use a sequential identifier to re
 alert_notifications:
   - name: notification-channel-1
     type: slack
+    # either
     org_id: 2
+    # or
+    org_name: Main Org.
     is_default: true
     # See `Supported Settings` section for settings supporter for each
     # alert notification type.
@@ -281,8 +281,12 @@ alert_notifications:
 
 delete_alert_notifications:
   - name: notification-channel-1
+    # either
     org_id: 2
+    # or 
+    org_name: Main Org.
   - name: notification-channel-2
+    # default org_id: 1
 ```
 
 ### Supported Settings
@@ -408,4 +412,3 @@ The following sections detail the supported settings for each alert notification
 | url |
 | username |
 | password |
->>>>>>> Added alert_notification configuration
