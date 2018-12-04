@@ -25,7 +25,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Dependencies
 
 - Go (Latest Stable)
-- NodeJS LTS
+- Node.js LTS
 
 ### Building the backend
 ```bash
@@ -37,7 +37,7 @@ go run build.go build
 
 ### Building frontend assets
 
-For this you need nodejs (v.6+).
+For this you need Node.js (version 6+).
 
 To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
