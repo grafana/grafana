@@ -307,6 +307,12 @@
       }
     }
 
+    .logs-entries--striping {
+      .logs-row:nth-child(even) {
+        background: $table-bg-odd;
+      }
+    }
+
     .logs-row-level {
       width: 3px;
     }

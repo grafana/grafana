@@ -154,6 +154,7 @@ interface LogsState {
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
   showUtc: boolean;
+  striping: boolean;
 }
 
 export default class Logs extends PureComponent<LogsProps, LogsState> {
@@ -168,6 +169,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     showLabels: null,
     showLocalTime: true,
     showUtc: false,
+    striping: false,
   };
 
   componentDidMount() {
@@ -216,6 +218,10 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     });
   };
 
+  onToggleStriping = () => {
+    this.setState(state => ({ striping: !state.striping }));
+  };
+
   onChangeUtc = (event: React.SyntheticEvent) => {
     const target = event.target as HTMLInputElement;
     this.setState({
@@ -240,7 +246,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
   render() {
     const { className = '', data, loading = false, onClickLabel, position, range, scanning, scanRange } = this.props;
-    const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
+    const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc, striping } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
 
@@ -271,6 +277,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     }
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+    const entriesClassName = striping ? 'logs-entries logs-entries--striping' : 'logs-entries';
 
     return (
       <div className={`${className} logs`}>
@@ -315,6 +322,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
               onChange={() => this.onChangeDedup(LogsDedupStrategy.signature)}
               small
             />
+            <Switch label="Zebra striping" checked={striping} onChange={this.onToggleStriping} small />
             {hasData &&
               meta && (
                 <div className="logs-meta">
@@ -329,7 +337,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           </div>
         </div>
 
-        <div className="logs-entries">
+        <div className={entriesClassName}>
           {hasData &&
             !deferLogs &&
             firstRows.map(row => (
