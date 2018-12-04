@@ -308,7 +308,7 @@
     }
 
     .logs-row-match-highlight--preview {
-      background-color: lighten($typeahead-selected-color, 70%);
+      background-color: rgba($typeahead-selected-color, 0.2);
       border-bottom-style: dotted;
     }
 
