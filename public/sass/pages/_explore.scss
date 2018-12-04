@@ -36,10 +36,6 @@
     transition: all 0.1s linear;
   }
 
-  .explore-panel__header:hover {
-    transform: translateY(-1px);
-  }
-
   .explore-panel__header-label {
     font-weight: 500;
     margin-right: $panel-margin;
