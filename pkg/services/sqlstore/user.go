@@ -504,8 +504,18 @@ func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 
 		user.IsAdmin = cmd.IsGrafanaAdmin
 		sess.UseBool("is_admin")
+
 		_, err := sess.ID(user.Id).Update(&user)
-		return err
+		if err != nil {
+			return err
+		}
+
+		// validate that after update there is at least one server admin
+		if err := validateOneAdminLeft(sess); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 
@@ -521,4 +531,18 @@ func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
 		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
 		return err
 	})
+}
+
+func validateOneAdminLeft(sess *DBSession) error {
+	// validate that there is an admin user left
+	count, err := sess.Where("is_admin=?", true).Count(&m.User{})
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return m.ErrLastGrafanaAdmin
+	}
+
+	return nil
 }
