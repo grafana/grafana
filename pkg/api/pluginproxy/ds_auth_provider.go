@@ -51,7 +51,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		if token, err := tokenProvider.getAccessToken(data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
 
@@ -60,7 +60,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
 
@@ -73,7 +73,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 			if err != nil {
 				logger.Error("Failed to get default access token from meta data server", "error", err)
 			} else {
-				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 			}
 		}
 	}

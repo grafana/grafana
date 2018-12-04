@@ -1,13 +1,25 @@
-import React, { Fragment, PureComponent } from 'react';
+import _ from 'lodash';
+import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange } from 'app/types/series';
-import { LogsDedupStrategy, LogsModel, dedupLogRows, filterLogLevels, LogLevel } from 'app/core/logs_model';
+import {
+  LogsDedupStrategy,
+  LogsModel,
+  dedupLogRows,
+  filterLogLevels,
+  LogLevel,
+  LogsStreamLabels,
+  LogsMetaKind,
+  LogRow,
+} from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { Switch } from 'app/core/components/Switch/Switch';
 
 import Graph from './Graph';
+
+const PREVIEW_LIMIT = 100;
 
 const graphOptions = {
   series: {
@@ -23,6 +35,103 @@ const graphOptions = {
   },
 };
 
+function renderMetaItem(value: any, kind: LogsMetaKind) {
+  if (kind === LogsMetaKind.LabelsMap) {
+    return (
+      <span className="logs-meta-item__value-labels">
+        <Labels labels={value} />
+      </span>
+    );
+  }
+  return value;
+}
+
+class Label extends PureComponent<{
+  label: string;
+  value: string;
+  onClickLabel?: (label: string, value: string) => void;
+}> {
+  onClickLabel = () => {
+    const { onClickLabel, label, value } = this.props;
+    if (onClickLabel) {
+      onClickLabel(label, value);
+    }
+  };
+
+  render() {
+    const { label, value } = this.props;
+    const tooltip = `${label}: ${value}`;
+    return (
+      <span className="logs-label" title={tooltip} onClick={this.onClickLabel}>
+        {value}
+      </span>
+    );
+  }
+}
+class Labels extends PureComponent<{
+  labels: LogsStreamLabels;
+  onClickLabel?: (label: string, value: string) => void;
+}> {
+  render() {
+    const { labels, onClickLabel } = this.props;
+    return Object.keys(labels).map(key => (
+      <Label key={key} label={key} value={labels[key]} onClickLabel={onClickLabel} />
+    ));
+  }
+}
+
+interface RowProps {
+  row: LogRow;
+  showLabels: boolean | null; // Tristate: null means auto
+  showLocalTime: boolean;
+  showUtc: boolean;
+  onClickLabel?: (label: string, value: string) => void;
+}
+
+function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
+  const needsHighlighter = row.searchWords && row.searchWords.length > 0;
+  return (
+    <div className="logs-row">
+      <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
+        {row.duplicates > 0 && (
+          <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
+            {Array.apply(null, { length: row.duplicates }).map((bogus, index) => (
+              <div className="logs-row-level__duplicate" key={`${index}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      {showUtc && (
+        <div className="logs-row-time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+          {row.timestamp}
+        </div>
+      )}
+      {showLocalTime && (
+        <div className="logs-row-time" title={`${row.timestamp} (${row.timeFromNow})`}>
+          {row.timeLocal}
+        </div>
+      )}
+      {showLabels && (
+        <div className="logs-row-labels">
+          <Labels labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+        </div>
+      )}
+      <div className="logs-row-message">
+        {needsHighlighter ? (
+          <Highlighter
+            textToHighlight={row.entry}
+            searchWords={row.searchWords}
+            findChunks={findHighlightChunksInText}
+            highlightClassName="logs-row-match-highlight"
+          />
+        ) : (
+          row.entry
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface LogsProps {
   className?: string;
   data: LogsModel;
@@ -32,26 +141,57 @@ interface LogsProps {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   onChangeTime?: (range: RawTimeRange) => void;
+  onClickLabel?: (label: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
 }
 
 interface LogsState {
   dedup: LogsDedupStrategy;
+  deferLogs: boolean;
   hiddenLogLevels: Set<LogLevel>;
-  showLabels: boolean;
+  renderAll: boolean;
+  showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
   showUtc: boolean;
 }
 
 export default class Logs extends PureComponent<LogsProps, LogsState> {
+  deferLogsTimer: NodeJS.Timer;
+  renderAllTimer: NodeJS.Timer;
+
   state = {
     dedup: LogsDedupStrategy.none,
+    deferLogs: true,
     hiddenLogLevels: new Set(),
-    showLabels: true,
+    renderAll: false,
+    showLabels: null,
     showLocalTime: true,
     showUtc: false,
   };
+
+  componentDidMount() {
+    // Staged rendering
+    if (this.state.deferLogs) {
+      const { data } = this.props;
+      const rowCount = data && data.rows ? data.rows.length : 0;
+      // Render all right away if not too far over the limit
+      const renderAll = rowCount <= PREVIEW_LIMIT * 2;
+      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    // Staged rendering
+    if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
+      this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
+    }
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.deferLogsTimer);
+    clearTimeout(this.renderAllTimer);
+  }
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
     this.setState(prevState => {
@@ -99,9 +239,12 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
   };
 
   render() {
-    const { className = '', data, loading = false, position, range, scanning, scanRange } = this.props;
-    const { dedup, hiddenLogLevels, showLabels, showLocalTime, showUtc } = this.state;
+    const { className = '', data, loading = false, onClickLabel, position, range, scanning, scanRange } = this.props;
+    const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
+    let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
+
+    // Filtering
     const filteredData = filterLogLevels(data, hiddenLogLevels);
     const dedupedData = dedupLogRows(filteredData, dedup);
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
@@ -109,23 +252,24 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     if (dedup !== LogsDedupStrategy.none) {
       meta.push({
         label: 'Dedup count',
-        value: String(dedupCount),
+        value: dedupCount,
+        kind: LogsMetaKind.Number,
       });
     }
-    const cssColumnSizes = ['3px']; // Log-level indicator line
-    if (showUtc) {
-      cssColumnSizes.push('minmax(100px, max-content)');
+
+    // Staged rendering
+    const firstRows = dedupedData.rows.slice(0, PREVIEW_LIMIT);
+    const lastRows = dedupedData.rows.slice(PREVIEW_LIMIT);
+
+    // Check for labels
+    if (showLabels === null) {
+      if (hasData) {
+        showLabels = data.rows.some(row => _.size(row.uniqueLabels) > 0);
+      } else {
+        showLabels = true;
+      }
     }
-    if (showLocalTime) {
-      cssColumnSizes.push('minmax(100px, max-content)');
-    }
-    if (showLabels) {
-      cssColumnSizes.push('minmax(100px, 25%)');
-    }
-    cssColumnSizes.push('1fr');
-    const logEntriesStyle = {
-      gridTemplateColumns: cssColumnSizes.join(' '),
-    };
+
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
     return (
@@ -177,7 +321,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
                   {meta.map(item => (
                     <div className="logs-meta-item" key={item.label}>
                       <span className="logs-meta-item__label">{item.label}:</span>
-                      <span className="logs-meta-item__value">{item.value}</span>
+                      <span className="logs-meta-item__value">{renderMetaItem(item.value, item.kind)}</span>
                     </div>
                   ))}
                 </div>
@@ -185,36 +329,33 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           </div>
         </div>
 
-        <div className="logs-entries" style={logEntriesStyle}>
+        <div className="logs-entries">
           {hasData &&
-            dedupedData.rows.map(row => (
-              <Fragment key={row.key + row.duplicates}>
-                <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
-                  {row.duplicates > 0 && (
-                    <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
-                      {Array.apply(null, { length: row.duplicates }).map((bogus, index) => (
-                        <div className="logs-row-level__duplicate" key={`${index}`} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {showUtc && <div title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>{row.timestamp}</div>}
-                {showLocalTime && <div title={`${row.timestamp} (${row.timeFromNow})`}>{row.timeLocal}</div>}
-                {showLabels && (
-                  <div className="max-width" title={row.labels}>
-                    {row.labels}
-                  </div>
-                )}
-                <div>
-                  <Highlighter
-                    textToHighlight={row.entry}
-                    searchWords={row.searchWords}
-                    findChunks={findHighlightChunksInText}
-                    highlightClassName="logs-row-match-highlight"
-                  />
-                </div>
-              </Fragment>
+            !deferLogs &&
+            firstRows.map(row => (
+              <Row
+                key={row.key + row.duplicates}
+                row={row}
+                showLabels={showLabels}
+                showLocalTime={showLocalTime}
+                showUtc={showUtc}
+                onClickLabel={onClickLabel}
+              />
             ))}
+          {hasData &&
+            !deferLogs &&
+            renderAll &&
+            lastRows.map(row => (
+              <Row
+                key={row.key + row.duplicates}
+                row={row}
+                showLabels={showLabels}
+                showLocalTime={showLocalTime}
+                showUtc={showUtc}
+                onClickLabel={onClickLabel}
+              />
+            ))}
+          {hasData && deferLogs && <span>Rendering {dedupedData.rows.length} rows...</span>}
         </div>
         {!loading &&
           !hasData &&

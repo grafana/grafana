@@ -3,9 +3,11 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
 import { PluginMeta, DataQuery } from 'app/types';
+import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 
 import LanguageProvider from './language_provider';
 import { mergeStreamsToLogs } from './result_transformer';
+import { formatQuery, parseQuery } from './query_utils';
 
 export const DEFAULT_LIMIT = 1000;
 
@@ -15,20 +17,6 @@ const DEFAULT_QUERY_PARAMS = {
   regexp: '',
   query: '',
 };
-
-const selectorRegexp = /{[^{]*}/g;
-export function parseQuery(input: string) {
-  const match = input.match(selectorRegexp);
-  let query = '';
-  let regexp = input;
-
-  if (match) {
-    query = match[0];
-    regexp = input.replace(selectorRegexp, '').trim();
-  }
-
-  return { query, regexp };
-}
 
 function serializeParams(data: any) {
   return Object.keys(data)
@@ -112,6 +100,21 @@ export default class LoggingDatasource {
       const data = { data: { data: res.data.values || [] } };
       return data;
     });
+  }
+
+  modifyQuery(query: DataQuery, action: any): DataQuery {
+    const parsed = parseQuery(query.expr || '');
+    let selector = parsed.query;
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        selector = addLabelToSelector(selector, action.key, action.value);
+        break;
+      }
+      default:
+        break;
+    }
+    const expression = formatQuery(selector, parsed.regexp);
+    return { ...query, expr: expression };
   }
 
   getTime(date, roundUp) {

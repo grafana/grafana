@@ -1,4 +1,4 @@
-import { parseQuery } from './datasource';
+import { parseQuery } from './query_utils';
 
 describe('parseQuery', () => {
   it('returns empty for empty string', () => {
@@ -40,6 +40,17 @@ describe('parseQuery', () => {
     expect(parseQuery('{foo="bar", baz="42"}')).toEqual({
       query: '{foo="bar", baz="42"}',
       regexp: '',
+    });
+  });
+
+  it('returns query and regexp with quantifiers', () => {
+    expect(parseQuery('{foo="bar"} \\.java:[0-9]{1,5}')).toEqual({
+      query: '{foo="bar"}',
+      regexp: '\\.java:[0-9]{1,5}',
+    });
+    expect(parseQuery('\\.java:[0-9]{1,5} {foo="bar"}')).toEqual({
+      query: '{foo="bar"}',
+      regexp: '\\.java:[0-9]{1,5}',
     });
   });
 });
