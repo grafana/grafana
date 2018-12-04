@@ -162,7 +162,6 @@ export function calculateResultsFromQueryTransactions(
           graphInterval
         )
       : undefined,
-    queryEmpty: queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done).every(qt => qt.result.length === 0),
   };
 
   return {
