@@ -55,6 +55,12 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
 };
 
+// Keep current option value when switching visualization
+const keepLatestProps: { [str: string]: boolean } = {
+  title: true,
+  description: true,
+};
+
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   datasource: null,
@@ -209,11 +215,11 @@ export class PanelModel {
 
   restorePanelOptions(pluginId: string) {
     const currentOptions = this.getPanelOptions();
-    const prevOptions = this.cachedPluginOptions[pluginId];
+    const prevOptions = this.cachedPluginOptions[pluginId] || {};
     const newOptions = Object.keys(prevOptions).reduce((acc, currKey: string) => {
       return {
         ...acc,
-        [currKey]: currentOptions[currKey] || prevOptions[currKey],
+        [currKey]: keepLatestProps[currKey] ? currentOptions[currKey] : prevOptions[currKey],
       };
     }, {});
 
