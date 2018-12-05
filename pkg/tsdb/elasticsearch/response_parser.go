@@ -541,7 +541,7 @@ func getErrorFromElasticResponse(response *es.SearchResponse) *tsdb.QueryResult 
 	} else if reason != "" {
 		result.ErrorString = reason
 	} else {
-		result.ErrorString = "Unkown elasticsearch error response"
+		result.ErrorString = "Unknown elasticsearch error response"
 	}
 
 	return result
