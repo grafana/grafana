@@ -895,6 +895,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               <Select
                 classNamePrefix={`gf-form-select-box`}
                 isMulti={false}
+                menuShouldScrollIntoView={false}
                 isLoading={datasourceLoading}
                 isClearable={false}
                 className="gf-form-input gf-form-input--form-dropdown datasource-picker"

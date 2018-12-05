@@ -37,6 +37,7 @@ const SimplePicker: SFC<Props> = ({
       value={value}
       getOptionLabel={getOptionLabel}
       getOptionValue={getOptionValue}
+      menuShouldScrollIntoView={false}
       isSearchable={false}
       onChange={onSelected}
       options={options}
