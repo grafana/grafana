@@ -200,5 +200,36 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(query.Result.Limit, ShouldEqual, 10)
 		})
+
+		Convey("Should user quota updating is successful even if it called multiple time", func() {
+			userQuotaCmd := m.UpdateUserQuotaCmd{
+				UserId: userId,
+				Target: "org_user",
+				Limit:  5,
+			}
+			err := UpdateUserQuota(&userQuotaCmd)
+			So(err, ShouldBeNil)
+
+			query := m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
+			err = GetUserQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+			So(query.Result.Limit, ShouldEqual, 5)
+
+			// XXX: resolution of `Updated` column is 1sec, so this makes delay
+			time.Sleep(1 * time.Second)
+
+			userQuotaCmd = m.UpdateUserQuotaCmd{
+				UserId: userId,
+				Target: "org_user",
+				Limit:  10,
+			}
+			err = UpdateUserQuota(&userQuotaCmd)
+			So(err, ShouldBeNil)
+
+			query = m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
+			err = GetUserQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+			So(query.Result.Limit, ShouldEqual, 10)
+		})
 	})
 }
