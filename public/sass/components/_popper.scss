@@ -1,3 +1,5 @@
+$popper-margin-from-ref: 5px;
+
 .popper {
   position: absolute;
   z-index: $zindex-tooltip;
@@ -20,14 +22,14 @@
 
 .popper__background {
   background: $tooltipBackground;
-  border-radius: 3px;
+  border-radius: $border-radius;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   padding: 10px;
 }
 
 // Top
 .popper[data-placement^='top'] {
-  padding-bottom: 5px;
+  padding-bottom: $popper-margin-from-ref;
 }
 .popper[data-placement^='top'] .popper__arrow {
   border-width: 5px 5px 0 5px;
@@ -41,7 +43,7 @@
 
 // Bottom
 .popper[data-placement^='bottom'] {
-  padding-top: 5px;
+  padding-top: $popper-margin-from-ref;
 }
 .popper[data-placement^='bottom'] .popper__arrow {
   border-width: 0 5px 5px 5px;
@@ -53,7 +55,7 @@
 }
 
 .popper[data-placement^='bottom-start'] {
-  padding-top: 5px;
+  padding-top: $popper-margin-from-ref;
 }
 .popper[data-placement^='bottom-start'] .popper__arrow {
   border-width: 0 5px 5px 5px;
@@ -65,7 +67,7 @@
 }
 
 .popper[data-placement^='bottom-end'] {
-  padding-top: 5px;
+  padding-top: $popper-margin-from-ref;
 }
 .popper[data-placement^='bottom-end'] .popper__arrow {
   border-width: 0 5px 5px 5px;
@@ -78,7 +80,7 @@
 
 // Right
 .popper[data-placement^='right'] {
-  padding-left: 5px;
+  padding-left: $popper-margin-from-ref;
 }
 .popper[data-placement^='right'] .popper__arrow {
   border-width: 5px 5px 5px 0;
@@ -91,7 +93,7 @@
 
 // Left
 .popper[data-placement^='left'] {
-  padding-right: 5px;
+  padding-right: $popper-margin-from-ref;
 }
 .popper[data-placement^='left'] .popper__arrow {
   border-width: 5px 0 5px 5px;
