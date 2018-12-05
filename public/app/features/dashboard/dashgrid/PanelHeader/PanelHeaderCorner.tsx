@@ -76,6 +76,7 @@ export class PanelHeaderCorner extends PureComponent<Props> {
             content={this.getInfoContent}
             className="popper__manager--block"
             refClassName={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}
+            placement="bottom-start"
           >
             <i className="fa" />
             <span className="panel-info-corner-inner" />

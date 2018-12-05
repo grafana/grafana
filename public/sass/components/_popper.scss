@@ -1,3 +1,5 @@
+$popper-margin-from-ref: 5px;
+
 .popper {
   position: absolute;
   z-index: $zindex-tooltip;
@@ -11,17 +13,24 @@
   height: 0;
   border-style: solid;
   position: absolute;
-  margin: 5px;
+  margin: 0px;
 }
 
 .popper .popper__arrow {
   border-color: $tooltipBackground;
 }
 
-.popper[data-placement^='top'] {
-  margin-bottom: 5px;
+.popper__background {
+  background: $tooltipBackground;
+  border-radius: $border-radius;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  padding: 10px;
 }
 
+// Top
+.popper[data-placement^='top'] {
+  padding-bottom: $popper-margin-from-ref;
+}
 .popper[data-placement^='top'] .popper__arrow {
   border-width: 5px 5px 0 5px;
   border-left-color: transparent;
@@ -29,34 +38,49 @@
   border-bottom-color: transparent;
   bottom: -5px;
   left: calc(50% - 5px);
-  margin-top: 0;
-  margin-bottom: 0;
   padding-top: 5px;
 }
 
+// Bottom
 .popper[data-placement^='bottom'] {
-  padding-top: 5px;
+  padding-top: $popper-margin-from-ref;
 }
-
-.popper__background {
-  background: $tooltipBackground;
-  border-radius: 3px;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  padding: 10px;
-}
-
 .popper[data-placement^='bottom'] .popper__arrow {
   border-width: 0 5px 5px 5px;
   border-left-color: transparent;
   border-right-color: transparent;
   border-top-color: transparent;
   top: 0;
-  left: calc(50% - 8px);
-  margin-top: 0;
-  margin-bottom: 0;
+  left: calc(50% - 5px);
 }
+
+.popper[data-placement^='bottom-start'] {
+  padding-top: $popper-margin-from-ref;
+}
+.popper[data-placement^='bottom-start'] .popper__arrow {
+  border-width: 0 5px 5px 5px;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-top-color: transparent;
+  top: 0;
+  left: 5px;
+}
+
+.popper[data-placement^='bottom-end'] {
+  padding-top: $popper-margin-from-ref;
+}
+.popper[data-placement^='bottom-end'] .popper__arrow {
+  border-width: 0 5px 5px 5px;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-top-color: transparent;
+  top: 0;
+  left: calc(100% - 5px);
+}
+
+// Right
 .popper[data-placement^='right'] {
-  padding-left: 5px;
+  padding-left: $popper-margin-from-ref;
 }
 .popper[data-placement^='right'] .popper__arrow {
   border-width: 5px 5px 5px 0;
@@ -64,15 +88,13 @@
   border-top-color: transparent;
   border-bottom-color: transparent;
   left: 0;
-  top: calc(50% - 8px);
-  margin-left: 0;
-  margin-right: 0;
+  top: calc(50% - 5px);
 }
 
+// Left
 .popper[data-placement^='left'] {
-  margin-right: 5px;
+  padding-right: $popper-margin-from-ref;
 }
-
 .popper[data-placement^='left'] .popper__arrow {
   border-width: 5px 0 5px 5px;
   border-top-color: transparent;
@@ -80,8 +102,6 @@
   border-bottom-color: transparent;
   right: -5px;
   top: calc(50% - 5px);
-  margin-left: 0;
-  margin-right: 0;
 }
 
 .popper__target,
