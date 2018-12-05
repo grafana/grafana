@@ -218,15 +218,6 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
-<<<<<<< HEAD
-"@babel/runtime@^7.1.2":
-  version "7.1.5"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.1.5.tgz#4170907641cf1f61508f563ece3725150cc6fe39"
-  dependencies:
-    regenerator-runtime "^0.12.0"
-
-||||||| merged common ancestors
-=======
 "@babel/parser@^7.1.2", "@babel/parser@^7.1.3":
   version "7.1.3"
   resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.1.3.tgz#2c92469bac2b7fbff810b67fca07bd138b48af77"
@@ -659,6 +650,12 @@
     "@babel/helper-plugin-utils" "^7.0.0"
     "@babel/plugin-transform-typescript" "^7.1.0"
 
+"@babel/runtime@^7.1.2":
+  version "7.1.5"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.1.5.tgz#4170907641cf1f61508f563ece3725150cc6fe39"
+  dependencies:
+    regenerator-runtime "^0.12.0"
+
 "@babel/template@^7.1.0", "@babel/template@^7.1.2":
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/@babel/template/-/template-7.1.2.tgz#090484a574fef5a2d2d7726a674eceda5c5b5644"
@@ -683,7 +680,6 @@
     globals "^11.1.0"
     lodash "^4.17.10"
 
->>>>>>> master
 "@babel/types@^7.0.0":
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/@babel/types/-/types-7.1.2.tgz#183e7952cf6691628afdc2e2b90d03240bac80c0"
@@ -1845,21 +1841,10 @@ babel-jest@^23.6.0:
     babel-plugin-istanbul "^4.1.6"
     babel-preset-jest "^23.2.0"
 
-<<<<<<< HEAD
-babel-loader@^7.1.4:
-  version "7.1.5"
-  resolved "https://registry.yarnpkg.com/babel-loader/-/babel-loader-7.1.5.tgz#e3ee0cd7394aa557e013b02d3e492bfd07aa6d68"
-||||||| merged common ancestors
-babel-loader@^7.1.4:
-  version "7.1.5"
-  resolved "https://registry.yarnpkg.com/babel-loader/-/babel-loader-7.1.5.tgz#e3ee0cd7394aa557e013b02d3e492bfd07aa6d68"
-  integrity sha512-iCHfbieL5d1LfOQeeVJEUyD9rTwBcP/fcEbRCfempxTDuqrKpu0AZjLAQHEQa3Yqyj9ORKe2iHfoj4rHLf7xpw==
-=======
 babel-loader@^8.0.4:
   version "8.0.4"
   resolved "https://registry.yarnpkg.com/babel-loader/-/babel-loader-8.0.4.tgz#7bbf20cbe4560629e2e41534147692d3fecbdce6"
   integrity sha512-fhBhNkUToJcW9nV46v8w87AJOwAJDz84c1CL57n3Stj73FANM/b9TbCUK4YhdOwEyZ+OxhYpdeZDNzSI29Firw==
->>>>>>> master
   dependencies:
     find-cache-dir "^1.0.0"
     loader-utils "^1.0.2"
@@ -2225,30 +2210,7 @@ babel-plugin-transform-strict-mode@^6.24.1:
     babel-runtime "^6.22.0"
     babel-types "^6.24.1"
 
-<<<<<<< HEAD
-babel-polyfill@^6.26.0:
-  version "6.26.0"
-  resolved "https://registry.yarnpkg.com/babel-polyfill/-/babel-polyfill-6.26.0.tgz#379937abc67d7895970adc621f284cd966cf2153"
-  dependencies:
-    babel-runtime "^6.26.0"
-    core-js "^2.5.0"
-    regenerator-runtime "^0.10.5"
-
-babel-preset-es2015@^6.24.1, babel-preset-es2015@^6.9.0:
-||||||| merged common ancestors
-babel-polyfill@^6.26.0:
-  version "6.26.0"
-  resolved "https://registry.yarnpkg.com/babel-polyfill/-/babel-polyfill-6.26.0.tgz#379937abc67d7895970adc621f284cd966cf2153"
-  integrity sha1-N5k3q8Z9eJWXCtxiHyhM2WbPIVM=
-  dependencies:
-    babel-runtime "^6.26.0"
-    core-js "^2.5.0"
-    regenerator-runtime "^0.10.5"
-
-babel-preset-es2015@^6.24.1, babel-preset-es2015@^6.9.0:
-=======
 babel-preset-es2015@^6.9.0:
->>>>>>> master
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-preset-es2015/-/babel-preset-es2015-6.24.1.tgz#d44050d6bc2c9feea702aaf38d727a0210538939"
   dependencies:
@@ -6184,21 +6146,10 @@ header-case@^1.0.0:
     no-case "^2.2.0"
     upper-case "^1.1.3"
 
-<<<<<<< HEAD
-highlight-words-core@^1.1.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/highlight-words-core/-/highlight-words-core-1.2.0.tgz#232bec301cbf2a4943d335dc748ce70e9024f3b1"
-||||||| merged common ancestors
-highlight-words-core@^1.1.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/highlight-words-core/-/highlight-words-core-1.2.0.tgz#232bec301cbf2a4943d335dc748ce70e9024f3b1"
-  integrity sha512-nu5bMsWIgpsrlXEMNKSvbJMeUPhFxCOVT28DnI8UCVfhm3e98LC8oeyMNrc7E18+QQ4l/PvbeN7ojyN4XsmBdA==
-=======
 highlight-words-core@^1.2.0:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/highlight-words-core/-/highlight-words-core-1.2.2.tgz#1eff6d7d9f0a22f155042a00791237791b1eeaaa"
   integrity sha512-BXUKIkUuh6cmmxzi5OIbUJxrG8OAk2MqoL1DtO3Wo9D2faJg2ph5ntyuQeLqaHJmzER6H5tllCDA9ZnNe9BVGg==
->>>>>>> master
 
 hmac-drbg@^1.0.0:
   version "1.0.1"
@@ -10639,21 +10590,10 @@ react-grid-layout@0.16.6:
     react-draggable "3.x"
     react-resizable "1.x"
 
-<<<<<<< HEAD
-react-highlight-words@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/react-highlight-words/-/react-highlight-words-0.10.0.tgz#2e905c76c11635237f848ecad00600f1b6f6f4a8"
-||||||| merged common ancestors
-react-highlight-words@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/react-highlight-words/-/react-highlight-words-0.10.0.tgz#2e905c76c11635237f848ecad00600f1b6f6f4a8"
-  integrity sha512-/5jh6a8pir3baCOMC5j88MBmNciSwG5bXWNAAtbtDb3WYJoGn82e2zLCQFnghIBWod1h5y6/LRO8TS6ERbN5aQ==
-=======
 react-highlight-words@0.11.0:
   version "0.11.0"
   resolved "https://registry.yarnpkg.com/react-highlight-words/-/react-highlight-words-0.11.0.tgz#4f3c2039a8fd275f3ab795e59946b0324d8e6bee"
   integrity sha512-b+fgdQXNjX6RwHfiBYn6qH2D2mJEDNLuxdsqRseIiQffoCAoj7naMQ5EktUkmo9Bh1mXq/aMpJbdx7Lf2PytcQ==
->>>>>>> master
   dependencies:
     highlight-words-core "^1.2.0"
     prop-types "^15.5.8"
@@ -11020,22 +10960,7 @@ regenerate@^1.2.1, regenerate@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/regenerate/-/regenerate-1.4.0.tgz#4a856ec4b56e4077c557589cae85e7a4c8869a11"
 
-<<<<<<< HEAD
-regenerator-runtime@^0.10.5:
-  version "0.10.5"
-  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.10.5.tgz#336c3efc1220adcedda2c9fab67b5a7955a33658"
-
-regenerator-runtime@^0.11.0:
-||||||| merged common ancestors
-regenerator-runtime@^0.10.5:
-  version "0.10.5"
-  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.10.5.tgz#336c3efc1220adcedda2c9fab67b5a7955a33658"
-  integrity sha1-M2w+/BIgrc7dosn6tntaeVWjNlg=
-
-regenerator-runtime@^0.11.0:
-=======
 regenerator-runtime@^0.11.0, regenerator-runtime@^0.11.1:
->>>>>>> master
   version "0.11.1"
   resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.11.1.tgz#be05ad7f9bf7d22e056f9726cee5017fbf19e2e9"
 

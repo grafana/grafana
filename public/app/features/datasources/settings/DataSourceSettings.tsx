@@ -13,7 +13,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import { deleteDataSource, loadDataSource, setDataSourceName, updateDataSource } from '../state/actions';
+import { deleteDataSource, loadDataSource, setDataSourceName, setIsDefault, updateDataSource } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
@@ -29,6 +29,7 @@ export interface Props {
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
+  setIsDefault: typeof setIsDefault;
 }
 
 interface State {
@@ -164,7 +165,7 @@ export class DataSourceSettings extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dataSource, dataSourceMeta, navModel } = this.props;
+    const { dataSource, dataSourceMeta, navModel, setDataSourceName, setIsDefault } = this.props;
     const { testingMessage, testingStatus } = this.state;
 
     return (
@@ -177,8 +178,10 @@ export class DataSourceSettings extends PureComponent<Props, State> {
             <div>
               <form onSubmit={this.onSubmit}>
                 <BasicSettings
-                  dataSourceName={this.props.dataSource.name}
-                  onChange={name => this.props.setDataSourceName(name)}
+                  dataSourceName={dataSource.name}
+                  isDefault={dataSource.isDefault}
+                  onDefaultChange={state => setIsDefault(state)}
+                  onNameChange={name => setDataSourceName(name)}
                 />
 
                 {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
@@ -240,6 +243,7 @@ const mapDispatchToProps = {
   loadDataSource,
   setDataSourceName,
   updateDataSource,
+  setIsDefault,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettings));

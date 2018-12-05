@@ -15,6 +15,7 @@ const setup = (propOverrides?: object) => {
     loadDataSource: jest.fn(),
     setDataSourceName: jest.fn(),
     updateDataSource: jest.fn(),
+    setIsDefault: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

@@ -17,6 +17,7 @@ export enum ActionTypes {
   SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
   SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
   SetDataSourceName = 'SET_DATA_SOURCE_NAME',
+  SetIsDefault = 'SET_IS_DEFAULT',
 }
 
 interface LoadDataSourcesAction {
@@ -59,6 +60,11 @@ interface SetDataSourceNameAction {
   payload: string;
 }
 
+interface SetIsDefaultAction {
+  type: ActionTypes.SetIsDefault;
+  payload: boolean;
+}
+
 const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
   type: ActionTypes.LoadDataSources,
   payload: dataSources,
@@ -99,6 +105,11 @@ export const setDataSourceName = (name: string) => ({
   payload: name,
 });
 
+export const setIsDefault = (state: boolean) => ({
+  type: ActionTypes.SetIsDefault,
+  payload: state,
+});
+
 export type Action =
   | LoadDataSourcesAction
   | SetDataSourcesSearchQueryAction
@@ -109,7 +120,8 @@ export type Action =
   | LoadDataSourceAction
   | UpdateNavIndexAction
   | LoadDataSourceMetaAction
-  | SetDataSourceNameAction;
+  | SetDataSourceNameAction
+  | SetIsDefaultAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
