@@ -88,7 +88,7 @@ func (this *OneSignalNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending onesignal result")
 	messageUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
-		this.log.Error("Failed to get messageUrl", "error", err, "dingding", this.Name)
+		this.log.Error("Failed to get messageUrl", "error", err, "onesignal", this.Name)
 		messageUrl = ""
 	}
 	this.log.Info("messageUrl:" + messageUrl)
@@ -96,7 +96,11 @@ func (this *OneSignalNotifier) Notify(evalContext *alerting.EvalContext) error {
 	message := evalContext.Rule.Message
 	picUrl := evalContext.ImagePublicUrl
 	title := evalContext.GetNotificationTitle()
-	//bodyJSON := simplejson.New()
+
+	if message == "" {
+		message = title
+	}
+
 	bodyJSON, err := simplejson.NewJson([]byte(`{
 		"msgtype": "push",
 		"contents": {
@@ -106,6 +110,10 @@ func (this *OneSignalNotifier) Notify(evalContext *alerting.EvalContext) error {
 			"messageUrl": "` + messageUrl + `"
 		}
 	}`))
+	if err != nil {
+		this.log.Error("Failed to create Json data", "error", err, "onesignal", this.Name)
+	}
+
 	bodyJSON.Set("ruleId", evalContext.Rule.Id)
 	// onesignal alerts cannot have spaces in them
 	bodyJSON.Set("name", strings.Replace(evalContext.Rule.Name, " ", "_", -1))
