@@ -223,6 +223,8 @@ export class DashboardModel {
   }
 
   panelInitialized(panel: PanelModel) {
+    panel.initialized();
+
     if (!this.otherPanelInFullscreen(panel)) {
       panel.refresh();
     }
