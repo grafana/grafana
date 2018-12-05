@@ -14,7 +14,9 @@ exports[`Render should render alpha info text 1`] = `
       >
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
-          onChange={[Function]}
+          isDefault={false}
+          onDefaultChange={[Function]}
+          onNameChange={[Function]}
         />
         <div
           className="grafana-info-box"
@@ -111,7 +113,9 @@ exports[`Render should render beta info text 1`] = `
       >
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
-          onChange={[Function]}
+          isDefault={false}
+          onDefaultChange={[Function]}
+          onNameChange={[Function]}
         />
         <div
           className="grafana-info-box"
@@ -208,7 +212,9 @@ exports[`Render should render component 1`] = `
       >
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
-          onChange={[Function]}
+          isDefault={false}
+          onDefaultChange={[Function]}
+          onNameChange={[Function]}
         />
         <PluginSettings
           dataSource={
@@ -300,7 +306,9 @@ exports[`Render should render is ready only message 1`] = `
       >
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
-          onChange={[Function]}
+          isDefault={false}
+          onDefaultChange={[Function]}
+          onNameChange={[Function]}
         />
         <div
           className="grafana-info-box span8"

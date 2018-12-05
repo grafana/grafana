@@ -39,6 +39,9 @@ export const dataSourcesReducer = (state = initialState, action: Action): DataSo
 
     case ActionTypes.SetDataSourceName:
       return { ...state, dataSource: { ...state.dataSource, name: action.payload } };
+
+    case ActionTypes.SetIsDefault:
+      return { ...state, dataSource: { ...state.dataSource, isDefault: action.payload } };
   }
 
   return state;
