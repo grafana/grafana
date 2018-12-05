@@ -55,12 +55,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
 };
 
-// Keep current option value when switching visualization
-const keepLatestProps: { [str: string]: boolean } = {
-  title: true,
-  description: true,
-};
-
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   datasource: null,
@@ -132,7 +126,7 @@ export class PanelModel {
   }
 
   private getOptionsKey() {
-    return 'options-' + this.type;
+    return PANEL_OPTIONS_KEY_PREFIX + this.type;
   }
 
   getSaveModel() {
@@ -196,9 +190,9 @@ export class PanelModel {
     this.events.emit('panel-initialized');
   }
 
-  getPanelOptions() {
+  private getOptionsToRemember() {
     return Object.keys(this).reduce((acc, property) => {
-      if (notPersistedProperties[property]) {
+      if (notPersistedProperties[property] || mustKeepProps[property]) {
         return acc;
       }
       return {
@@ -208,23 +202,15 @@ export class PanelModel {
     }, {});
   }
 
-  saveCurrentPanelOptions() {
-    const currentOptions = this.getPanelOptions();
-    this.cachedPluginOptions[this.type] = currentOptions;
+  private saveCurrentPanelOptions() {
+    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
   }
 
-  restorePanelOptions(pluginId: string) {
-    const currentOptions = this.getPanelOptions();
+  private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
-    const newOptions = Object.keys(prevOptions).reduce((acc, currKey: string) => {
-      return {
-        ...acc,
-        [currKey]: keepLatestProps[currKey] ? currentOptions[currKey] : prevOptions[currKey],
-      };
-    }, {});
 
-    Object.keys(newOptions).map(property => {
-      this[property] = newOptions[property];
+    Object.keys(prevOptions).map(property => {
+      this[property] = prevOptions[property];
     });
   }
 
@@ -232,15 +218,12 @@ export class PanelModel {
     this.saveCurrentPanelOptions();
     this.type = pluginId;
 
-    // for now we need to remove alert rules when changing type
-    delete this.alert;
-
     // for angular panels only we need to remove all events and let angular panels do some cleanup
     if (fromAngularPanel) {
       this.destroy();
 
       for (const key of _.keys(this)) {
-        if (mustKeepProps[key] || key.indexOf(PANEL_OPTIONS_KEY_PREFIX) === 0) {
+        if (mustKeepProps[key]) {
           continue;
         }
 
