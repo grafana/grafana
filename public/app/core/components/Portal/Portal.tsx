@@ -3,18 +3,25 @@ import ReactDOM from 'react-dom';
 
 interface Props {
   className?: string;
+  root?: HTMLElement;
 }
 
 export default class BodyPortal extends PureComponent<Props> {
   node: HTMLElement = document.createElement('div');
-  portalRoot = document.body;
+  portalRoot: HTMLElement;
 
   constructor(props) {
     super(props);
-    const { className } = this.props;
+    const {
+      className,
+      root = document.body
+    } = this.props;
+
     if (className) {
-      this.node.classList.add();
+      this.node.classList.add(className);
     }
+
+    this.portalRoot = root;
     this.portalRoot.appendChild(this.node);
   }
 

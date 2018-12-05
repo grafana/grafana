@@ -1,5 +1,5 @@
 ﻿import React, { PureComponent } from 'react';
-import BodyPortal from 'app/core/components/Portal/BodyPortal';
+import Portal from 'app/core/components/Portal/Portal';
 import { Manager, Popper as ReactPopper, Reference } from 'react-popper';
 import Transition from 'react-transition-group/Transition';
 
@@ -39,7 +39,7 @@ class Popper extends PureComponent<Props> {
         </Reference>
         <Transition in={show} timeout={100} mountOnEnter={true} unmountOnExit={true}>
           {transitionState => (
-            <BodyPortal className="hej">
+            <Portal>
               <ReactPopper placement={placement}>
                 {({ ref, style, placement, arrowProps }) => {
                   return (
@@ -61,7 +61,7 @@ class Popper extends PureComponent<Props> {
                   );
                 }}
               </ReactPopper>
-            </BodyPortal>
+            </Portal>
           )}
         </Transition>
       </Manager>
