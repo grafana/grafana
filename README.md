@@ -90,7 +90,7 @@ Choose this option to build on platforms other than linux/amd64 and/or not have 
 
 The resulting image will be tagged as `grafana/grafana:dev`
 
-Notice: If you are using Docker for MacOS, be sure to let limit of Memory bigger than 2 GiB (at docker -> Perferences -> Advanced), otherwize you may faild at `grunt build`
+Notice: If you are using Docker for MacOS, be sure to let limit of Memory bigger than 2 GiB (at docker -> Preferences -> Advanced), otherwize you may faild at `grunt build`
 
 ### Dev config
 
