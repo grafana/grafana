@@ -24,7 +24,7 @@ function StatsRow({ active, count, proportion, value }: LogsLabelStat) {
 }
 
 const STATS_ROW_LIMIT = 5;
-class Stats extends PureComponent<{
+export class Stats extends PureComponent<{
   stats: LogsLabelStat[];
   label: string;
   value: string;
@@ -54,7 +54,7 @@ class Stats extends PureComponent<{
           <span className="logs-stats__icon fa fa-window-close" onClick={onClickClose} />
         </div>
         {topRows.map(stat => <StatsRow key={stat.value} {...stat} active={stat.value === value} />)}
-        {insertActiveRow && <StatsRow key={activeRow.value} {...activeRow} active />}
+        {insertActiveRow && activeRow && <StatsRow key={activeRow.value} {...activeRow} active />}
         {otherCount > 0 && <StatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />}
       </>
     );
