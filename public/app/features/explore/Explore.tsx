@@ -481,7 +481,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           } else {
             // Modify query only at index
             nextQueries = initialQueries.map((query, i) => {
-              // Synchronise all queries with local query cache to ensure consistency
+              // Synchronize all queries with local query cache to ensure consistency
               // TODO still needed?
               return i === index
                 ? {
