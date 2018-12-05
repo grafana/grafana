@@ -37,7 +37,7 @@ go run build.go build
 
 ### Building frontend assets
 
-For this you need Node.js (version 6+).
+For this you need Node.js (LTS version).
 
 To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
