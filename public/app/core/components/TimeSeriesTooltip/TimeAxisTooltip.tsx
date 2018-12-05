@@ -108,13 +108,12 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
 
     handleGraphHoverEvent = (event: GraphHoverEvent) => {
       // ignore if we are the emitter
-      if (!this.props.sharedTooltip || this.props.panelId === event.panel.id) {
+      if (!this.props.sharedTooltip || this.props.panelId === event.panel.id || this.isElemHidden()) {
         return;
       }
       const position = { ...event.pos };
       const elemOffset = this.getElemOffset();
       position.pageX = this.props.getOffset(position.x) + elemOffset.left;
-      // console.log(event.pos.pageX);
       this.show(position);
     };
 
@@ -198,6 +197,14 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       return offset;
     }
 
+    isElemHidden(): boolean {
+      const { chartElem } = this.props;
+      if (chartElem && chartElem[0]) {
+        return chartElem[0].clientWidth === 0 || chartElem[0].clientHeight === 0;
+      }
+      return false;
+    }
+
     render() {
       // Cut the own component props and pass through the rest.
       const {
@@ -212,15 +219,12 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       } = this.props as TimeAxisTooltipProps;
 
       const tooltipPos = this.state.tooltipPosition;
-      const tooltipStyle: CSSProperties = this.props.useCSSTransforms
-        ? {
-            transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)`,
-          }
-        : {
-            left: tooltipPos.x,
-            top: tooltipPos.y,
-          };
-
+      let tooltipStyle: CSSProperties;
+      if (this.props.useCSSTransforms) {
+        tooltipStyle = { transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)` };
+      } else {
+        tooltipStyle = { left: tooltipPos.x, top: tooltipPos.y };
+      }
       if (!this.state.show) {
         tooltipStyle.display = 'none';
       }

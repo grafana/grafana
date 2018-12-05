@@ -325,7 +325,6 @@ class GraphElement {
   }
 
   renderTooltip() {
-    // console.log('renderTooltip', this.ctrl.otherPanelInFullscreenMode());
     const sharedTooltip = this.dashboard.sharedTooltipModeEnabled() && !this.dashboard.sharedCrosshairModeOnly();
     const tooltipProps = {
       series: this.plot.getData(this.sortedSeries),
@@ -343,7 +342,6 @@ class GraphElement {
       onHighlight: (series, datapoint) => this.plot.highlight(series, datapoint),
       onUnhighlight: () => this.plot.unhighlight(),
     };
-    // console.log(this.plot.getData(this.sortedSeries));
     const tooltipReactElem = React.createElement(GraphTooltipReact, tooltipProps);
     ReactDOM.render(tooltipReactElem, this.tooltipElem);
   }
