@@ -301,32 +301,28 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
         <div className="logs-options">
           <div className="logs-controls">
-            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
-            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} small />
+            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} />
+            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} />
+            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} />
             <Switch
               label="Dedup: off"
               checked={dedup === LogsDedupStrategy.none}
               onChange={() => this.onChangeDedup(LogsDedupStrategy.none)}
-              small
             />
             <Switch
               label="Dedup: exact"
               checked={dedup === LogsDedupStrategy.exact}
               onChange={() => this.onChangeDedup(LogsDedupStrategy.exact)}
-              small
             />
             <Switch
               label="Dedup: numbers"
               checked={dedup === LogsDedupStrategy.numbers}
               onChange={() => this.onChangeDedup(LogsDedupStrategy.numbers)}
-              small
             />
             <Switch
               label="Dedup: signature"
               checked={dedup === LogsDedupStrategy.signature}
               onChange={() => this.onChangeDedup(LogsDedupStrategy.signature)}
-              small
             />
             {hasData &&
               meta && (
