@@ -1,4 +1,5 @@
 ﻿import React, { PureComponent } from 'react';
+import BodyPortal from 'app/core/components/Portal/BodyPortal';
 import { Manager, Popper as ReactPopper, Reference } from 'react-popper';
 import Transition from 'react-transition-group/Transition';
 
@@ -38,27 +39,29 @@ class Popper extends PureComponent<Props> {
         </Reference>
         <Transition in={show} timeout={100} mountOnEnter={true} unmountOnExit={true}>
           {transitionState => (
-            <ReactPopper placement={placement}>
-              {({ ref, style, placement, arrowProps }) => {
-                return (
-                  <div
-                    ref={ref}
-                    style={{
-                      ...style,
-                      ...defaultTransitionStyles,
-                      ...transitionStyles[transitionState],
-                    }}
-                    data-placement={placement}
-                    className="popper"
-                  >
-                    <div className="popper__background">
-                      {renderContent(content)}
-                      <div ref={arrowProps.ref} data-placement={placement} className="popper__arrow" />
+            <BodyPortal className="hej">
+              <ReactPopper placement={placement}>
+                {({ ref, style, placement, arrowProps }) => {
+                  return (
+                    <div
+                      ref={ref}
+                      style={{
+                        ...style,
+                        ...defaultTransitionStyles,
+                        ...transitionStyles[transitionState],
+                      }}
+                      data-placement={placement}
+                      className="popper"
+                    >
+                      <div className="popper__background">
+                        {renderContent(content)}
+                        <div ref={arrowProps.ref} data-placement={placement} className="popper__arrow" />
+                      </div>
                     </div>
-                  </div>
-                );
-              }}
-            </ReactPopper>
+                  );
+                }}
+              </ReactPopper>
+            </BodyPortal>
           )}
         </Transition>
       </Manager>
