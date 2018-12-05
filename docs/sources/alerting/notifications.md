@@ -176,7 +176,7 @@ Telegram | `telegram` | no | yes
 Line | `line` | no | yes
 Microsoft Teams | `teams` | yes | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | no | no
-
+Google Hangouts Chat | `hangoutschat` | yes | yes
 
 
 # Enable images in notifications {#external-image-store}
