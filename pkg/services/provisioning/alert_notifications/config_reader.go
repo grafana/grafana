@@ -41,12 +41,9 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 	}
 
 	cr.log.Debug("Validating alert notifications")
-	err = validateDefaultUniqueness(notifications)
-	if err != nil {
-		return nil, err
-	}
+	validateOrgIdAndSet(notifications)
 
-	err = validateType(notifications)
+	err = validateNotifications(notifications)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +67,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	return cfg.mapToNotificationFromConfig(), nil
 }
 
-func validateDefaultUniqueness(notifications []*notificationsAsConfig) error {
+func validateOrgIdAndSet(notifications []*notificationsAsConfig) {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
 			if notification.OrgId < 1 {
@@ -93,10 +90,9 @@ func validateDefaultUniqueness(notifications []*notificationsAsConfig) error {
 		}
 	}
 
-	return nil
 }
 
-func validateType(notifications []*notificationsAsConfig) error {
+func validateNotifications(notifications []*notificationsAsConfig) error {
 	notifierTypes := alerting.GetNotifiers()
 
 	for i := range notifications {
