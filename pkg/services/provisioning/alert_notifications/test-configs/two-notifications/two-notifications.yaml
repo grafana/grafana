@@ -1,5 +1,9 @@
 alert_notifications:
   - name: channel1
     type: slack
+    settings:
+      url: http://slack.com
   - name: channel2
     type: email
+    settings:
+      addresses: example@example.com

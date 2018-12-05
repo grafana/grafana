@@ -7,8 +7,11 @@ alert_notifications:
       recipient: "XXX"
       token: "xoxb"
       uploadImage: true
+      url: https://slack.com
   - name: another-not-default-notification
     type: email
+    settings:
+      addresses: example@example.com
     org_name: Main Org. 2
     is_default: false  
 delete_alert_notifications:

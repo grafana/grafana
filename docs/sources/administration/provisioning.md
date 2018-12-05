@@ -278,6 +278,7 @@ alert_notifications:
       recipient: "XXX"
       token: "xoxb"
       uploadImage: true
+      url: https://slack.com
 
 delete_alert_notifications:
   - name: notification-channel-1

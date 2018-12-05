@@ -7,16 +7,23 @@ alert_notifications:
       recipient: "XXX"
       token: "xoxb"
       uploadImage: true
+      url: https://slack.com
   - name: another-not-default-notification
     type: email
+    settings:
+      addresses: example@exmaple.com
     org_id: 3
     is_default: false
   - name: check-unset-is_default-is-false
     type: slack
     org_id: 3
+    settings:
+      url: https://slack.com
   - name: Added notification with whitespaces in name
     type: email
     org_id: 3
+    settings:
+      addresses: example@exmaple.com
 delete_alert_notifications:
   - name: default-slack-notification
     org_id: 2

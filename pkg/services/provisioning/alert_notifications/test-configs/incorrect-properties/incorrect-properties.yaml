@@ -1,0 +1,9 @@
+alert_notifications:
+  - name: slack-notification-without-url-in-settings
+    type: slack
+    org_id: 2
+    is_default: true
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true

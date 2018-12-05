@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -92,20 +91,13 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 			return err
 		}
 
-		settings := simplejson.New()
-		if len(notification.Settings) > 0 {
-			for k, v := range notification.Settings {
-				settings.Set(k, v)
-			}
-		}
-
 		if cmd.Result == nil {
 			dc.log.Info("Inserting alert notification from configuration ", "name", notification.Name)
 			insertCmd := &models.CreateAlertNotificationCommand{
 				Name:      notification.Name,
 				Type:      notification.Type,
 				IsDefault: notification.IsDefault,
-				Settings:  settings,
+				Settings:  notification.SettingsToJson(),
 				OrgId:     notification.OrgId,
 			}
 			if err := bus.Dispatch(insertCmd); err != nil {
@@ -118,7 +110,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				Name:      notification.Name,
 				Type:      notification.Type,
 				IsDefault: notification.IsDefault,
-				Settings:  settings,
+				Settings:  notification.SettingsToJson(),
 				OrgId:     notification.OrgId,
 			}
 			if err := bus.Dispatch(updateCmd); err != nil {

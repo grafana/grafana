@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,6 +15,7 @@ var (
 	logger = log.New("fake.log")
 
 	correct_properties              = "./test-configs/correct-properties"
+	incorrect_properties            = "./test-configs/incorrect-properties"
 	correct_properties_with_orgName = "./test-configs/correct-properties-with-orgName"
 	brokenYaml                      = "./test-configs/broken-yaml"
 	doubleNotificationsConfig       = "./test-configs/double-default"
@@ -36,12 +38,14 @@ func TestNotificationAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockGetOrg)
 
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
-			Type: "slack",
-			Name: "slack",
+			Type:    "slack",
+			Name:    "slack",
+			Factory: notifiers.NewSlackNotifier,
 		})
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
-			Type: "email",
-			Name: "email",
+			Type:    "email",
+			Name:    "email",
+			Factory: notifiers.NewEmailNotifier,
 		})
 		Convey("Can read correct properties", func() {
 			cfgProvifer := &configReader{log: log.New("test logger")}
@@ -61,7 +65,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(nt.OrgId, ShouldEqual, 2)
 			So(nt.IsDefault, ShouldBeTrue)
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
-				"recipient": "XXX", "token": "xoxb", "uploadImage": true,
+				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
 			})
 
 			nt = nts[1]
@@ -216,6 +220,13 @@ func TestNotificationAsConfig(t *testing.T) {
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			_, err := cfgProvifer.readConfig(unknownNotifier)
 			So(err, ShouldEqual, ErrInvalidNotifierType)
+		})
+
+		Convey("Read incorrect properties", func() {
+			cfgProvifer := &configReader{log: log.New("test logger")}
+			_, err := cfgProvifer.readConfig(incorrect_properties)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "Alert validation error: Could not find url property in settings")
 		})
 
 	})

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"gopkg.in/yaml.v2"
 )
@@ -109,10 +110,17 @@ func validateType(notifications []*notificationsAsConfig) error {
 			for _, notifier := range notifierTypes {
 				if notifier.Type == notification.Type {
 					foundNotifier = true
+					_, notifierError := notifier.Factory(&m.AlertNotification{
+						Name:     notification.Name,
+						Settings: notification.SettingsToJson(),
+						Type:     notification.Type,
+					})
+					if notifierError != nil {
+						return notifierError
+					}
 					break
 				}
 			}
-
 			if !foundNotifier {
 				return ErrInvalidNotifierType
 			}

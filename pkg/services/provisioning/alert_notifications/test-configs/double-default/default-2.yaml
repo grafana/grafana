@@ -2,3 +2,5 @@ alert_notifications:
   - name: second-default
     type: email
     is_default: true
+    settings:
+      addresses: example@example.com
