@@ -36,7 +36,7 @@ export function addHistoryMetadata(item: CompletionItem, history: HistoryItem[])
   };
 }
 
-export default class LoggingLanguageProvider extends LanguageProvider {
+export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   logLabelOptions: any[];

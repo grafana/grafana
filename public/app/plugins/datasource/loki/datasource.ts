@@ -27,7 +27,7 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export default class LoggingDatasource {
+export default class LokiDatasource {
   languageProvider: LanguageProvider;
 
   /** @ngInject */
@@ -94,7 +94,7 @@ export default class LoggingDatasource {
   }
 
   metadataRequest(url) {
-    // HACK to get label values for {job=|}, will be replaced when implementing LoggingQueryField
+    // HACK to get label values for {job=|}, will be replaced when implementing LokiQueryField
     const apiUrl = url.replace('v1', 'prom');
     return this._request(apiUrl, { silent: true }).then(res => {
       const data = { data: { data: res.data.values || [] } };
@@ -136,7 +136,7 @@ export default class LoggingDatasource {
         }
         return {
           status: 'error',
-          message: 'Data source connected, but no labels received. Verify that logging is configured properly.',
+          message: 'Data source connected, but no labels received. Verify that Loki is configured properly.',
         };
       })
       .catch(err => {
