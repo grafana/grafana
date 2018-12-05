@@ -4,6 +4,7 @@ import { Subtract } from 'app/types/utils';
 import { getMultiSeriesPlotHoverInfo, PlotHoverInfo } from './utils';
 import withTimeAxisTooltip, { InjectedTimeAxisTooltipProps } from './TimeAxisTooltip';
 import { FlotHoverItem } from 'app/types/events';
+import _ from 'lodash';
 
 export interface TimeSeriesTooltipProps extends InjectedTimeAxisTooltipProps {
   series: TimeSeriesVM[];
@@ -12,6 +13,12 @@ export interface TimeSeriesTooltipProps extends InjectedTimeAxisTooltipProps {
   hideZero?: boolean;
   valueType?: 'individual' | 'cumulative';
   sort?: 1 | 2 | null;
+  /**
+   * Throttle series hover info calculation. Due to high execution cost of this function, it may
+   * improve tooltip rendering performance, especially on large dashboards with shared tooltip enabled.
+   */
+  throttle?: boolean;
+  throttleInterval?: number;
   onHighlight?: (series, datapoint) => void;
   onUnhighlight?: () => void;
 }
@@ -31,15 +38,27 @@ export type WithTimeSeriesTooltipProps<P> = Subtract<P, InjectedTimeSeriesToolti
 
 const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(WrappedComponent: React.ComponentType<P>) => {
   class TimeSeriesTooltip extends PureComponent<WithTimeSeriesTooltipProps<P>> {
+    seriesHoverInfo: PlotHoverInfo | null;
+    calculateHoverInfo: () => void;
+
     static defaultProps: Partial<TimeSeriesTooltipProps> = {
       sort: null,
       valueType: 'individual',
+      throttle: true,
+      throttleInterval: 100,
       onHighlight: () => {},
       onUnhighlight: () => {},
     };
 
     constructor(props) {
       super(props);
+
+      // Series hover info calculation has excessive cost so it makes sense to throttle function execution.
+      if (this.props.throttle) {
+        this.calculateHoverInfo = _.throttle(() => this.getHoverInfo(), this.props.throttleInterval, { leading: true });
+      } else {
+        this.calculateHoverInfo = () => this.getHoverInfo();
+      }
     }
 
     highlightPoints(seriesHoverInfo: PlotHoverInfo) {
@@ -67,6 +86,17 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
       }
     }
 
+    getHoverInfo() {
+      const { series, position, allSeriesMode, hideEmpty, hideZero, valueType } = this.props;
+      const getHoverOptions = { hideEmpty, hideZero, valueType };
+      const seriesHoverInfo = getMultiSeriesPlotHoverInfo(series, position, getHoverOptions);
+      this.sortHoverInfo(seriesHoverInfo);
+      this.seriesHoverInfo = seriesHoverInfo;
+      if (allSeriesMode && this.props.onHighlight && this.props.onUnhighlight) {
+        this.highlightPoints(seriesHoverInfo);
+      }
+    }
+
     render() {
       // Cut the own component props and pass through the rest.
       const {
@@ -83,12 +113,8 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
         ...passThroughProps
       } = this.props as TimeSeriesTooltipProps;
 
-      const getHoverOptions = { hideEmpty, hideZero, valueType };
-      const seriesHoverInfo = getMultiSeriesPlotHoverInfo(series, position, getHoverOptions);
-      this.sortHoverInfo(seriesHoverInfo);
-      if (allSeriesMode && this.props.onHighlight && this.props.onUnhighlight) {
-        this.highlightPoints(seriesHoverInfo);
-      }
+      this.calculateHoverInfo();
+      const seriesHoverInfo = this.seriesHoverInfo;
 
       return (
         <WrappedComponent
