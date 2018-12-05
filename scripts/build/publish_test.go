@@ -105,6 +105,6 @@ func TestFileWalker(t *testing.T) {
 	incorrectPackageName := "grafana_5.2.0-474pre1_armfoo.deb"
 	_, err := mapPackage(incorrectPackageName, incorrectPackageName, []byte{})
 	if err == nil {
-		t.Errorf("Testing (%v), expected to fail due to an unrecognized arch, but signalled no error.", incorrectPackageName)
+		t.Errorf("Testing (%v), expected to fail due to an unrecognized arch, but signaled no error.", incorrectPackageName)
 	}
 }

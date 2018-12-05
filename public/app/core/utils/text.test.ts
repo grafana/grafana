@@ -16,9 +16,20 @@ describe('findMatchesInText()', () => {
     expect(findMatchesInText(' foo ', 'foo')).toEqual([{ length: 3, start: 1, text: 'foo', end: 4 }]);
   });
 
-  expect(findMatchesInText(' foo foo bar ', 'foo|bar')).toEqual([
-    { length: 3, start: 1, text: 'foo', end: 4 },
-    { length: 3, start: 5, text: 'foo', end: 8 },
-    { length: 3, start: 9, text: 'bar', end: 12 },
-  ]);
+  test('should find all matches for a complete regex', () => {
+    expect(findMatchesInText(' foo foo bar ', 'foo|bar')).toEqual([
+      { length: 3, start: 1, text: 'foo', end: 4 },
+      { length: 3, start: 5, text: 'foo', end: 8 },
+      { length: 3, start: 9, text: 'bar', end: 12 },
+    ]);
+  });
+
+  test('not fail on incomplete regex', () => {
+    expect(findMatchesInText(' foo foo bar ', 'foo|')).toEqual([
+      { length: 3, start: 1, text: 'foo', end: 4 },
+      { length: 3, start: 5, text: 'foo', end: 8 },
+    ]);
+    expect(findMatchesInText('foo foo bar', '(')).toEqual([]);
+    expect(findMatchesInText('foo foo bar', '(foo|')).toEqual([]);
+  });
 });

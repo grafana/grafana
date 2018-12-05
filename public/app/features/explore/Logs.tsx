@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
+import classnames from 'classnames';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange } from 'app/types/series';
@@ -10,7 +11,6 @@ import {
   dedupLogRows,
   filterLogLevels,
   LogLevel,
-  LogsStreamLabels,
   LogsMetaKind,
   LogRow,
 } from 'app/core/logs_model';
@@ -18,6 +18,7 @@ import { findHighlightChunksInText } from 'app/core/utils/text';
 import { Switch } from 'app/core/components/Switch/Switch';
 
 import Graph from './Graph';
+import LogLabels from './LogLabels';
 
 const PREVIEW_LIMIT = 100;
 
@@ -35,72 +36,39 @@ const graphOptions = {
   },
 };
 
-function renderMetaItem(value: any, kind: LogsMetaKind) {
-  if (kind === LogsMetaKind.LabelsMap) {
-    return (
-      <span className="logs-meta-item__value-labels">
-        <Labels labels={value} />
-      </span>
-    );
-  }
-  return value;
-}
-
-class Label extends PureComponent<{
-  label: string;
-  value: string;
-  onClickLabel?: (label: string, value: string) => void;
-}> {
-  onClickLabel = () => {
-    const { onClickLabel, label, value } = this.props;
-    if (onClickLabel) {
-      onClickLabel(label, value);
-    }
-  };
-
-  render() {
-    const { label, value } = this.props;
-    const tooltip = `${label}: ${value}`;
-    return (
-      <span className="logs-label" title={tooltip} onClick={this.onClickLabel}>
-        {value}
-      </span>
-    );
-  }
-}
-class Labels extends PureComponent<{
-  labels: LogsStreamLabels;
-  onClickLabel?: (label: string, value: string) => void;
-}> {
-  render() {
-    const { labels, onClickLabel } = this.props;
-    return Object.keys(labels).map(key => (
-      <Label key={key} label={key} value={labels[key]} onClickLabel={onClickLabel} />
-    ));
-  }
-}
-
 interface RowProps {
+  allRows: LogRow[];
+  highlighterExpressions?: string[];
   row: LogRow;
+  showDuplicates: boolean;
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
   showUtc: boolean;
   onClickLabel?: (label: string, value: string) => void;
 }
 
-function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps) {
-  const needsHighlighter = row.searchWords && row.searchWords.length > 0;
+function Row({
+  allRows,
+  highlighterExpressions,
+  onClickLabel,
+  row,
+  showDuplicates,
+  showLabels,
+  showLocalTime,
+  showUtc,
+}: RowProps) {
+  const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
+  const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
+  const needsHighlighter = highlights && highlights.length > 0;
+  const highlightClassName = classnames('logs-row-match-highlight', {
+    'logs-row-match-highlight--preview': previewHighlights,
+  });
   return (
-    <div className="logs-row">
-      <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''}>
-        {row.duplicates > 0 && (
-          <div className="logs-row-level__duplicates" title={`${row.duplicates} duplicates`}>
-            {Array.apply(null, { length: row.duplicates }).map((bogus, index) => (
-              <div className="logs-row-level__duplicate" key={`${index}`} />
-            ))}
-          </div>
-        )}
-      </div>
+    <>
+      {showDuplicates && (
+        <div className="logs-row-duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
+      )}
+      <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
       {showUtc && (
         <div className="logs-row-time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
           {row.timestamp}
@@ -113,28 +81,40 @@ function Row({ onClickLabel, row, showLabels, showLocalTime, showUtc }: RowProps
       )}
       {showLabels && (
         <div className="logs-row-labels">
-          <Labels labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+          <LogLabels allRows={allRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
         </div>
       )}
       <div className="logs-row-message">
         {needsHighlighter ? (
           <Highlighter
             textToHighlight={row.entry}
-            searchWords={row.searchWords}
+            searchWords={highlights}
             findChunks={findHighlightChunksInText}
-            highlightClassName="logs-row-match-highlight"
+            highlightClassName={highlightClassName}
           />
         ) : (
           row.entry
         )}
       </div>
-    </div>
+    </>
   );
+}
+
+function renderMetaItem(value: any, kind: LogsMetaKind) {
+  if (kind === LogsMetaKind.LabelsMap) {
+    return (
+      <span className="logs-meta-item__value-labels">
+        <LogLabels labels={value} plain />
+      </span>
+    );
+  }
+  return value;
 }
 
 interface LogsProps {
   className?: string;
   data: LogsModel;
+  highlighterExpressions: string[];
   loading: boolean;
   position: string;
   range?: RawTimeRange;
@@ -239,10 +219,21 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
   };
 
   render() {
-    const { className = '', data, loading = false, onClickLabel, position, range, scanning, scanRange } = this.props;
+    const {
+      className = '',
+      data,
+      highlighterExpressions,
+      loading = false,
+      onClickLabel,
+      position,
+      range,
+      scanning,
+      scanRange,
+    } = this.props;
     const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
+    const showDuplicates = dedup !== LogsDedupStrategy.none;
 
     // Filtering
     const filteredData = filterLogLevels(data, hiddenLogLevels);
@@ -258,8 +249,9 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     }
 
     // Staged rendering
-    const firstRows = dedupedData.rows.slice(0, PREVIEW_LIMIT);
-    const lastRows = dedupedData.rows.slice(PREVIEW_LIMIT);
+    const processedRows = dedupedData.rows;
+    const firstRows = processedRows.slice(0, PREVIEW_LIMIT);
+    const lastRows = processedRows.slice(PREVIEW_LIMIT);
 
     // Check for labels
     if (showLabels === null) {
@@ -269,6 +261,27 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         showLabels = true;
       }
     }
+
+    // Grid options
+    const cssColumnSizes = [];
+    if (showDuplicates) {
+      cssColumnSizes.push('max-content');
+    }
+    // Log-level indicator line
+    cssColumnSizes.push('3px');
+    if (showUtc) {
+      cssColumnSizes.push('minmax(100px, max-content)');
+    }
+    if (showLocalTime) {
+      cssColumnSizes.push('minmax(100px, max-content)');
+    }
+    if (showLabels) {
+      cssColumnSizes.push('fit-content(20%)');
+    }
+    cssColumnSizes.push('1fr');
+    const logEntriesStyle = {
+      gridTemplateColumns: cssColumnSizes.join(' '),
+    };
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -329,13 +342,17 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           </div>
         </div>
 
-        <div className="logs-entries">
+        <div className="logs-entries" style={logEntriesStyle}>
           {hasData &&
             !deferLogs &&
+            // Only inject highlighterExpression in the first set for performance reasons
             firstRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
+                allRows={processedRows}
+                highlighterExpressions={highlighterExpressions}
                 row={row}
+                showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
@@ -348,7 +365,9 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             lastRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
+                allRows={processedRows}
                 row={row}
+                showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}

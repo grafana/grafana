@@ -19,16 +19,23 @@ div.flot-text {
 
 .panel {
   height: 100%;
+}
 
-  &--solo {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    margin: 0;
-    .panel-container {
-      border: none;
-      z-index: $zindex-sidemenu + 1;
-    }
+.panel-solo {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 0;
+  left: 0;
+  top: 0;
+
+  .panel-container {
+    border: none;
+  }
+
+  .panel-menu-toggle,
+  .panel-menu {
+    display: none;
   }
 }
 
