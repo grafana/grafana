@@ -1,51 +1,41 @@
 import React, { PureComponent } from 'react';
 import { TimeSeriesVM } from 'app/types';
 import { Subtract } from 'app/types/utils';
-import { GraphHoverPosition } from 'app/types/events';
 import { getMultiSeriesPlotHoverInfo, PlotHoverInfo } from './utils';
-import withTimeAxisTooltip, { TimeAxisTooltipProps } from './TimeAxisTooltip';
+import withTimeAxisTooltip, { InjectedTimeAxisTooltipProps } from './TimeAxisTooltip';
+import { FlotHoverItem } from 'app/types/events';
 
-export interface TimeSeriesTooltipProps extends TimeAxisTooltipProps {
+export interface TimeSeriesTooltipProps extends InjectedTimeAxisTooltipProps {
   series: TimeSeriesVM[];
-  panelOptions?: PanelOptions;
   allSeriesMode?: boolean;
+  hideEmpty?: boolean;
+  hideZero?: boolean;
+  valueType?: 'individual' | 'cumulative';
   sort?: 1 | 2 | null;
   onHighlight?: (series, datapoint) => void;
   onUnhighlight?: () => void;
 }
 
-export interface TimeSeriesTooltipState {
-  show: boolean;
-  position?: GraphHoverPosition;
-  tooltipPosition?: { x: number; y: number };
-}
-
 export interface InjectedTimeSeriesTooltipProps {
+  series: TimeSeriesVM[];
+  item: FlotHoverItem;
   timestamp: number;
   hoverInfo: PlotHoverInfo;
 }
 
-interface PanelOptions {
-  legend?: {
-    hideEmpty?: boolean;
-    hideZero?: boolean;
-  };
-  tooltip?: {
-    value_type?: 'individual' | 'cumulative';
-    shared?: boolean;
-  };
-}
+/**
+ * withTimeSeriesTooltip(WrappedComponent) should have all props that TimeSeriesTooltip has and props passed into
+ * WrappedComponent, but without injected props.
+ */
+export type WithTimeSeriesTooltipProps<P> = Subtract<P, InjectedTimeSeriesTooltipProps> & TimeSeriesTooltipProps;
 
 const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(WrappedComponent: React.ComponentType<P>) => {
-  class TimeSeriesTooltip extends PureComponent<
-    Subtract<P, InjectedTimeSeriesTooltipProps> & TimeSeriesTooltipProps,
-    TimeSeriesTooltipState
-  > {
+  class TimeSeriesTooltip extends PureComponent<WithTimeSeriesTooltipProps<P>> {
     static defaultProps: Partial<TimeSeriesTooltipProps> = {
-      panelOptions: {
-        legend: {},
-        tooltip: {},
-      },
+      sort: null,
+      valueType: 'individual',
+      onHighlight: () => {},
+      onUnhighlight: () => {},
     };
 
     constructor(props) {
@@ -78,20 +68,36 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
     }
 
     render() {
-      const { position, ...props } = this.props as any;
-      const { panelOptions, allSeriesMode } = props as TimeSeriesTooltipProps;
-      const getHoverOptions = {
-        hideEmpty: panelOptions.legend.hideEmpty,
-        hideZero: panelOptions.legend.hideZero,
-        tooltipValueType: panelOptions.tooltip.value_type,
-      };
-      const seriesHoverInfo = getMultiSeriesPlotHoverInfo(props.series, position, getHoverOptions);
+      // Cut the own component props and pass through the rest.
+      const {
+        position,
+        allSeriesMode,
+        sort,
+        valueType,
+        hideEmpty,
+        hideZero,
+        onHighlight,
+        onUnhighlight,
+        item,
+        series,
+        ...passThroughProps
+      } = this.props as TimeSeriesTooltipProps;
+
+      const getHoverOptions = { hideEmpty, hideZero, valueType };
+      const seriesHoverInfo = getMultiSeriesPlotHoverInfo(series, position, getHoverOptions);
       this.sortHoverInfo(seriesHoverInfo);
       if (allSeriesMode && this.props.onHighlight && this.props.onUnhighlight) {
         this.highlightPoints(seriesHoverInfo);
       }
+
       return (
-        <WrappedComponent position={position} timestamp={seriesHoverInfo.time} hoverInfo={seriesHoverInfo} {...props} />
+        <WrappedComponent
+          series={series}
+          item={item}
+          timestamp={seriesHoverInfo.time}
+          hoverInfo={seriesHoverInfo}
+          {...passThroughProps}
+        />
       );
     }
   }

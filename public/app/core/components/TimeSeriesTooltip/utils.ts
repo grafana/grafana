@@ -41,7 +41,7 @@ export function findHoverIndexFromData(posX, series): number {
 interface GetPlotHoverInfoOptions {
   hideEmpty?: boolean;
   hideZero?: boolean;
-  tooltipValueType?: 'individual' | string;
+  valueType?: 'individual' | 'cumulative';
 }
 
 export interface PlotHoverInfoItem {
@@ -108,7 +108,7 @@ export function getMultiSeriesPlotHoverInfo(
     }
 
     if (series.stack) {
-      if (options.tooltipValueType === 'individual') {
+      if (options.valueType === 'individual') {
         value = series.data[hoverIndex][1];
       } else if (!series.stack) {
         value = series.data[hoverIndex][1];

@@ -1,31 +1,18 @@
 import React, { PureComponent, CSSProperties } from 'react';
-import withTimeSeriesTooltip, {
-  TimeSeriesTooltipProps,
-  InjectedTimeSeriesTooltipProps,
-  TimeSeriesTooltipState,
-} from './TimeSeriesTooltip';
+import withTimeSeriesTooltip, { InjectedTimeSeriesTooltipProps } from './TimeSeriesTooltip';
 import { TimeSeriesVM } from 'app/types';
 import { PlotHoverInfoItem } from './utils';
 import { FlotHoverItem } from 'app/types/events';
-import { InjectedTimeAxisTooltipProps } from './TimeAxisTooltip';
 
-export interface GraphTooltipProps extends TimeSeriesTooltipProps {}
+export interface GraphTooltipProps extends InjectedTimeSeriesTooltipProps {
+  formatDate: (time, format?) => string;
+}
 
-export interface GraphTooltipState extends TimeSeriesTooltipState {}
-
-type InjectedGraphTooltipProps = InjectedTimeSeriesTooltipProps & InjectedTimeAxisTooltipProps;
-
-export class GraphTooltip extends PureComponent<GraphTooltipProps & InjectedGraphTooltipProps, GraphTooltipState> {
-  constructor(props) {
-    super(props);
-  }
-
+export class GraphTooltip extends PureComponent<GraphTooltipProps> {
   render() {
-    // console.log('render <GraphTooltip />');
-    const { series, hoverInfo, item, timestamp } = this.props;
+    const { series, hoverInfo, item, timestamp, formatDate } = this.props;
     const timeFormat = 'YYYY-MM-DD HH:mm:ss';
-    // const time = this.props.position.x;
-    const absoluteTime = this.props.formatDate(timestamp, timeFormat);
+    const absoluteTime = formatDate(timestamp, timeFormat);
     const hoverInfoFiltered = hoverInfo.filter(hoverItem => !hoverItem.hidden);
     const seriesItems = hoverInfoFiltered.map((hoverItem, index) => (
       <TooltipSeries key={index} hoverItem={hoverItem} seriesList={series} item={item} />
@@ -48,7 +35,6 @@ interface TooltipSeriesProps {
 
 class TooltipSeries extends PureComponent<TooltipSeriesProps> {
   render() {
-    // console.log(this.props);
     const { seriesList, hoverItem, item } = this.props;
     const series = seriesList[hoverItem.index];
     const value = series.formatValue(hoverItem.value);

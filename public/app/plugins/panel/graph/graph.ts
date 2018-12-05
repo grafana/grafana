@@ -25,7 +25,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 // import { TimeSeriesTooltip, TimeSeriesTooltipProps } from 'app/core/components/TimeSeriesTooltip/TimeSeriesTooltip';
-import GraphTooltipReact, { GraphTooltipProps } from 'app/core/components/TimeSeriesTooltip/GraphTooltip';
+import GraphTooltipReact from 'app/core/components/TimeSeriesTooltip/GraphTooltip';
 import { GraphCtrl } from './module';
 
 class GraphElement {
@@ -327,22 +327,16 @@ class GraphElement {
   renderTooltip() {
     // console.log('renderTooltip', this.ctrl.otherPanelInFullscreenMode());
     const sharedTooltip = this.dashboard.sharedTooltipModeEnabled() && !this.dashboard.sharedCrosshairModeOnly();
-    const tooltipProps: GraphTooltipProps = {
+    const tooltipProps = {
       series: this.plot.getData(this.sortedSeries),
       chartElem: this.elem,
       panelId: this.panel.id,
       sharedTooltip: sharedTooltip,
       allSeriesMode: this.panel.tooltip.shared,
       sort: this.panel.tooltip.sort,
-      panelOptions: {
-        tooltip: {
-          value_type: this.panel.tooltip.value_type,
-        },
-        legend: {
-          hideEmpty: this.panel.legend.hideEmpty,
-          hideZero: this.panel.legend.hideZero,
-        },
-      },
+      valueType: this.panel.tooltip.value_type,
+      hideEmpty: this.panel.legend.hideEmpty,
+      hideZero: this.panel.legend.hideZero,
       getOffset: x => this.getOffset(x),
       formatDate: (time, format) => this.ctrl.dashboard.formatDate(time, format),
       onMouseleave: () => this.onTooltipClear(),

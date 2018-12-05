@@ -14,7 +14,6 @@ export interface TimeAxisTooltipProps {
   hoverEvent?: string;
   /** Use CSS transform: translate() for positioning tooltip. If false, top/left will be used instead. */
   useCSSTransforms?: boolean;
-  formatDate: (time, format?) => string;
   /** Function converting timestamp into offset on chart */
   getOffset: (x) => number;
   onMouseleave?: (event?) => void;
@@ -36,7 +35,7 @@ const defaultPosition: GraphHoverPosition = {
 
 export interface InjectedTimeAxisTooltipProps {
   position: GraphHoverPosition;
-  item?: FlotHoverItem;
+  item: FlotHoverItem;
 }
 
 interface TooltipSize {
@@ -44,11 +43,14 @@ interface TooltipSize {
   height: number;
 }
 
+/**
+ * Finally, withTimeAxisTooltip(WrappedComponent) should have all props that TimeAxisTooltip has and props passed into
+ * WrappedComponent, but without injected props.
+ */
+export type WithTimeAxisTooltipProps<P> = Subtract<P, InjectedTimeAxisTooltipProps> & TimeAxisTooltipProps;
+
 const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComponent: React.ComponentType<P>) => {
-  return class TimeAxisTooltip extends PureComponent<
-    Subtract<P, InjectedTimeAxisTooltipProps> & TimeAxisTooltipProps,
-    TimeAxisTooltipState
-  > {
+  return class TimeAxisTooltip extends PureComponent<WithTimeAxisTooltipProps<P>, TimeAxisTooltipState> {
     appRoot: HTMLElement;
     tooltipContainer: HTMLElement;
     tooltipElem: HTMLElement;
@@ -100,7 +102,7 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       appEvents.off('graph-hover-clear', this.handleHoverClear);
     }
 
-    handleHoverEvent = (event, position: FlotPosition, item: FlotHoverItem) => {
+    handleHoverEvent = (event, position: FlotPosition, item?: FlotHoverItem) => {
       this.show(position, item);
     };
 
@@ -197,6 +199,18 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
     }
 
     render() {
+      // Cut the own component props and pass through the rest.
+      const {
+        chartElem,
+        getOffset,
+        hoverEvent,
+        onMouseleave,
+        panelId,
+        sharedTooltip,
+        useCSSTransforms,
+        ...passThroughProps
+      } = this.props as TimeAxisTooltipProps;
+
       const tooltipPos = this.state.tooltipPosition;
       const tooltipStyle: CSSProperties = this.props.useCSSTransforms
         ? {
@@ -217,7 +231,7 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
 
       const tooltipNode = (
         <div className="graph-tooltip grafana-tooltip timeseries-tooltip" style={tooltipStyle} ref={this.getTooltipRef}>
-          <WrappedComponent position={this.state.position} item={this.state.item} {...this.props} />
+          <WrappedComponent position={this.state.position} item={this.state.item} {...passThroughProps} />
         </div>
       );
       return ReactDOM.createPortal(tooltipNode, this.tooltipContainer);
