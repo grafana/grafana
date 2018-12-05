@@ -16,6 +16,7 @@ import { TimeRange, DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
+  calculateResultsFromQueryTransactions,
   ensureQueries,
   getIntervals,
   generateKey,
@@ -28,7 +29,7 @@ import ResetStyles from 'app/core/components/Picker/ResetStyles';
 import PickerOption from 'app/core/components/Picker/PickerOption';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
 import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import TableModel from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/utils/emitter';
 import * as dateMath from 'app/core/utils/datemath';
@@ -70,9 +71,9 @@ interface ExploreProps {
  * contain one empty DataQuery. While the user modifies the DataQuery, the
  * modifications are being tracked in `this.modifiedQueries`, which need to be
  * used whenever a query is sent to the datasource to reflect what the user sees
- * on the screen. Query rows can be initialized or reset using `initialQueries`,
- * by giving the respective row a new key. This wipes the old row and its state.
- * This property is also used to govern how many query rows there are (minimum 1).
+ * on the screen. Query"react-popper": "^0.7.5", rows can be initialized or reset using `initialQueries`,
+ * by giving the respec"react-popper": "^0.7.5",tive row a new key. This wipes the old row and its state.
+ * This property is als"react-popper": "^0.7.5",o used to govern how many query rows there are (minimum 1).
  *
  * This flow makes sure that a query row can be arbitrarily complex without the
  * fear of being wiped or re-initialized via props. The query row is free to keep
@@ -101,6 +102,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
    * Local ID cache to compare requested vs selected datasource
    */
   requestedDatasourceId: string;
+  scanTimer: NodeJS.Timer;
+  /**
+   * Timepicker to control scanning
+   */
+  timepickerRef: React.RefObject<TimePicker>;
 
   constructor(props) {
     super(props);
@@ -114,6 +120,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
       initialQueries = ensureQueries(queries);
       const initialRange = range || { ...DEFAULT_RANGE };
+      // Millies step for helper bar charts
+      const initialGraphInterval = 15 * 1000;
       this.state = {
         datasource: null,
         datasourceError: null,
@@ -121,11 +129,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceMissing: false,
         datasourceName: datasource,
         exploreDatasources: [],
-        graphRange: initialRange,
+        graphInterval: initialGraphInterval,
+        graphResult: [],
         initialQueries,
         history: [],
+        logsResult: null,
         queryTransactions: [],
         range: initialRange,
+        scanning: false,
         showingGraph: true,
         showingLogs: true,
         showingStartPage: false,
@@ -133,10 +144,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         supportsGraph: null,
         supportsLogs: null,
         supportsTable: null,
+        tableResult: new TableModel(),
       };
     }
     this.modifiedQueries = initialQueries.slice();
     this.exploreEvents = new Emitter();
+    this.timepickerRef = React.createRef();
   }
 
   async componentDidMount() {
@@ -168,9 +181,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   componentWillUnmount() {
     this.exploreEvents.removeAllListeners();
+    clearTimeout(this.scanTimer);
   }
 
   async setDatasource(datasource: any, origin?: DataSource) {
+    const { initialQueries, range } = this.state;
+
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
     const supportsTable = datasource.meta.tables;
@@ -215,7 +231,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     // Reset edit state with new queries
-    const nextQueries = this.state.initialQueries.map((q, i) => ({
+    const nextQueries = initialQueries.map((q, i) => ({
       ...modifiedQueries[i],
       ...generateQueryKeys(i),
     }));
@@ -224,11 +240,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // Custom components
     const StartPage = datasource.pluginExports.ExploreStartPage;
 
+    // Calculate graph bucketing interval
+    const graphInterval = getIntervals(range, datasource, this.el ? this.el.offsetWidth : 0).intervalMs;
+
     this.setState(
       {
         StartPage,
         datasource,
         datasourceError,
+        graphInterval,
         history,
         supportsGraph,
         supportsLogs,
@@ -236,6 +256,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceLoading: false,
         datasourceName: datasource.name,
         initialQueries: nextQueries,
+        logsHighlighterExpressions: undefined,
         showingStartPage: Boolean(StartPage),
       },
       () => {
@@ -274,7 +295,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
-      return { initialQueries: nextQueries, queryTransactions: nextQueryTransactions };
+      return {
+        initialQueries: nextQueries,
+        logsHighlighterExpressions: undefined,
+        queryTransactions: nextQueryTransactions,
+      };
     });
   };
 
@@ -320,23 +345,24 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           queryTransactions: nextQueryTransactions,
         };
       }, this.onSubmit);
+    } else if (this.state.datasource.getHighlighterExpression && this.modifiedQueries.length === 1) {
+      // Live preview of log search matches. Can only work on single row query for now
+      this.updateLogsHighlights(value);
     }
   };
 
-  // onChangeTime = (nextRange: RawTimeRange) => {
-  //   const range: RawTimeRange = {
-  //     ...nextRange,
-  //   };
-  //   this.setState({ range }, () => this.onSubmit());
-  // };
-  onChangeTime = (nextRange: TimeRange) => {
+  onChangeTime = (nextRange: TimeRange, scanning?: boolean) => {
     const range: TimeRange = {
       ...nextRange,
     };
-    this.setState({ range }, () => this.onSubmit());
+    if (this.state.scanning && !scanning) {
+      this.onStopScanning();
+    }
+    this.setState({ range, scanning }, () => this.onSubmit());
   };
 
   onClickClear = () => {
+    this.onStopScanning();
     this.modifiedQueries = ensureQueries();
     this.setState(
       prevState => ({
@@ -412,12 +438,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.setState(
       state => {
         const showingTable = !state.showingTable;
-        let nextQueryTransactions = state.queryTransactions;
-        if (!showingTable) {
-          // Discard transactions related to Table query
-          nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
+        if (showingTable) {
+          return { showingTable, queryTransactions: state.queryTransactions };
         }
-        return { queryTransactions: nextQueryTransactions, showingTable };
+
+        // Toggle off needs discarding of table queries
+        const nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
+        const results = calculateResultsFromQueryTransactions(
+          nextQueryTransactions,
+          state.datasource,
+          state.graphInterval
+        );
+
+        return { ...results, queryTransactions: nextQueryTransactions, showingTable };
       },
       () => {
         if (this.state.showingTable) {
@@ -427,8 +460,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
-  onClickTableCell = (columnKey: string, rowValue: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', key: columnKey, value: rowValue });
+  onClickLabel = (key: string, value: string) => {
+    this.onModifyQueries({ type: 'ADD_FILTER', key, value });
   };
 
   onModifyQueries = (action, index?: number) => {
@@ -498,14 +531,39 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
         // Discard transactions related to row query
         const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+        const results = calculateResultsFromQueryTransactions(
+          nextQueryTransactions,
+          state.datasource,
+          state.graphInterval
+        );
 
         return {
+          ...results,
           initialQueries: nextQueries,
+          logsHighlighterExpressions: undefined,
           queryTransactions: nextQueryTransactions,
         };
       },
       () => this.onSubmit()
     );
+  };
+
+  onStartScanning = () => {
+    this.setState({ scanning: true }, this.scanPreviousRange);
+  };
+
+  scanPreviousRange = () => {
+    const scanRange = this.timepickerRef.current.move(-1, true);
+    this.setState({ scanRange });
+  };
+
+  onStopScanning = () => {
+    clearTimeout(this.scanTimer);
+    this.setState(state => {
+      const { queryTransactions } = state;
+      const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
+      return { queryTransactions: nextQueryTransactions, scanning: false, scanRange: undefined };
+    });
   };
 
   onSubmit = () => {
@@ -542,7 +600,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { datasource, range } = this.state;
     const { interval, intervalMs } = getIntervals(range, datasource, this.el.offsetWidth);
 
-    const configuredQueries = [Object.assign(query, queryOptions)];
+    const configuredQueries = [
+      {
+        ...query,
+        ...queryOptions,
+      },
+    ];
 
     // Clone range for query request
     // const queryRange: RawTimeRange = { ...range };
@@ -575,6 +638,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       done: false,
       latency: 0,
       options: queryOptions,
+      scanning: this.state.scanning,
     };
 
     // Using updater style because we might be modifying queryTransactions in quick succession
@@ -588,7 +652,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       // Append new transaction
       const nextQueryTransactions = [...remainingTransactions, transaction];
 
+      const results = calculateResultsFromQueryTransactions(
+        nextQueryTransactions,
+        state.datasource,
+        state.graphInterval
+      );
+
       return {
+        ...results,
         queryTransactions: nextQueryTransactions,
         showingStartPage: false,
       };
@@ -611,7 +682,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     this.setState(state => {
-      const { history, queryTransactions } = state;
+      const { history, queryTransactions, scanning } = state;
 
       // Transaction might have been discarded
       const transaction = queryTransactions.find(qt => qt.id === transactionId);
@@ -639,19 +710,27 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
+      const results = calculateResultsFromQueryTransactions(
+        nextQueryTransactions,
+        state.datasource,
+        state.graphInterval
+      );
+
       const nextHistory = updateHistory(history, datasourceId, queries);
 
+      // Keep scanning for results if this was the last scanning transaction
+      if (_.size(result) === 0 && scanning) {
+        const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
+        if (!other) {
+          this.scanTimer = setTimeout(this.scanPreviousRange, 1000);
+        }
+      }
+
       return {
+        ...results,
         history: nextHistory,
         queryTransactions: nextQueryTransactions,
       };
-    });
-  }
-
-  discardTransactions(rowIndex: number) {
-    this.setState(state => {
-      const remainingTransactions = state.queryTransactions.filter(qt => qt.rowIndex !== rowIndex);
-      return { queryTransactions: remainingTransactions };
     });
   }
 
@@ -666,14 +745,20 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     let error: string | JSX.Element = response;
     if (response.data) {
-      error = response.data.error;
-      if (response.data.response) {
-        error = (
-          <>
-            <span>{response.data.error}</span>
-            <details>{response.data.response}</details>
-          </>
-        );
+      if (typeof response.data === 'string') {
+        error = response.data;
+      } else if (response.data.error) {
+        error = response.data.error;
+        if (response.data.response) {
+          error = (
+            <>
+              <span>{response.data.error}</span>
+              <details>{response.data.response}</details>
+            </>
+          );
+        }
+      } else {
+        throw new Error('Could not handle error response');
       }
     }
 
@@ -704,6 +789,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   async runQueries(resultType: ResultType, queryOptions: any, resultGetter?: any) {
     const queries = [...this.modifiedQueries];
     if (!hasNonEmptyQuery(queries)) {
+      this.setState({
+        queryTransactions: [],
+      });
       return;
     }
     const { datasource } = this.state;
@@ -718,13 +806,23 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         const latency = Date.now() - now;
         const results = resultGetter ? resultGetter(res.data) : res.data;
         this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
-        this.setState({ graphRange: transaction.options.range });
       } catch (response) {
         this.exploreEvents.emit('data-error', response);
         this.failQueryTransaction(transaction.id, response, datasourceId);
       }
     });
   }
+
+  updateLogsHighlights = _.debounce((value: DataQuery, index: number) => {
+    this.setState(state => {
+      const { datasource } = state;
+      if (datasource.getHighlighterExpression) {
+        const logsHighlighterExpressions = [state.datasource.getHighlighterExpression(value)];
+        return { logsHighlighterExpressions };
+      }
+      return null;
+    });
+  }, 500);
 
   cloneState(): ExploreState {
     // Copy state, but copy queries including modifications
@@ -749,11 +847,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasourceLoading,
       datasourceMissing,
       exploreDatasources,
-      graphRange,
+      graphResult,
       history,
       initialQueries,
+      logsHighlighterExpressions,
+      logsResult,
       queryTransactions,
       range,
+      scanning,
+      scanRange,
       showingGraph,
       showingLogs,
       showingStartPage,
@@ -761,34 +863,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       supportsGraph,
       supportsLogs,
       supportsTable,
+      tableResult,
     } = this.state;
     const graphHeight = showingGraph && showingTable ? '200px' : '400px';
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
-    const graphRangeIntervals = getIntervals(graphRange, datasource, this.el ? this.el.offsetWidth : 0);
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
-    // TODO don't recreate those on each re-render
-    const graphResult = _.flatten(
-      queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
-    );
-
-    //Temp solution... How do detect if ds supports table format?
-    let tableResult;
-    tableResult = mergeTablesIntoModel(
-      new TableModel(),
-      ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
-    );
-    const logsResult =
-      datasource && datasource.mergeStreams
-        ? datasource.mergeStreams(
-            _.flatten(
-              queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-            ),
-            graphRangeIntervals.intervalMs
-          )
-        : undefined;
     const loading = queryTransactions.some(qt => !qt.done);
 
     return (
@@ -839,7 +921,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               </button>
             </div>
           ) : null}
-          <TimePicker range={range} onChangeTime={this.onChangeTime} />
+          <TimePicker ref={this.timepickerRef} range={range} onChangeTime={this.onChangeTime} />
           <div className="navbar-buttons">
             <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClickClear}>
               Clear All
@@ -895,7 +977,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           height={graphHeight}
                           id={`explore-graph-${position}`}
                           onChangeTime={this.onChangeTime}
-                          range={graphRange}
+                          range={range}
                           split={split}
                         />
                       </Panel>
@@ -907,17 +989,24 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         isOpen={showingTable}
                         onToggle={this.onClickTableButton}
                       >
-                        <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickTableCell} />
+                        <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickLabel} />
                       </Panel>
                     )}
                     {supportsLogs && (
                       <Panel label="Logs" loading={logsLoading} isOpen={showingLogs} onToggle={this.onClickLogsButton}>
                         <Logs
                           data={logsResult}
+                          key={logsResult.id}
+                          highlighterExpressions={logsHighlighterExpressions}
                           loading={logsLoading}
                           position={position}
                           onChangeTime={this.onChangeTime}
+                          onClickLabel={this.onClickLabel}
+                          onStartScanning={this.onStartScanning}
+                          onStopScanning={this.onStopScanning}
                           range={range}
+                          scanning={scanning}
+                          scanRange={scanRange}
                         />
                       </Panel>
                     )}

@@ -16,7 +16,7 @@ const DEFAULT_EXPLORE_STATE: ExploreState = {
   datasourceMissing: false,
   datasourceName: '',
   exploreDatasources: [],
-  graphRange: DEFAULT_RANGE,
+  graphInterval: 1000,
   history: [],
   initialQueries: [],
   queryTransactions: [],

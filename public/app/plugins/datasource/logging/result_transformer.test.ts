@@ -11,11 +11,17 @@ import {
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
-    expect(getLogLevel('')).toBe(LogLevel.none);
+    expect(getLogLevel('')).toBe(LogLevel.unkown);
   });
 
   it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('this is a warning')).toBe(LogLevel.none);
+    expect(getLogLevel('this is information')).toBe(LogLevel.unkown);
+  });
+
+  it('returns same log level for long and short version', () => {
+    expect(getLogLevel('[Warn]')).toBe(LogLevel.warning);
+    expect(getLogLevel('[Warning]')).toBe(LogLevel.warning);
+    expect(getLogLevel('[Warn]')).toBe('warning');
   });
 
   it('returns log level on line contains a log level', () => {
@@ -35,7 +41,7 @@ describe('parseLabels()', () => {
   });
 
   it('returns labels on labels string', () => {
-    expect(parseLabels('{foo="bar", baz="42"}')).toEqual({ foo: '"bar"', baz: '"42"' });
+    expect(parseLabels('{foo="bar", baz="42"}')).toEqual({ foo: 'bar', baz: '42' });
   });
 });
 
@@ -46,7 +52,7 @@ describe('formatLabels()', () => {
   });
 
   it('returns label string on label set', () => {
-    expect(formatLabels({ foo: '"bar"', baz: '"42"' })).toEqual('{baz="42", foo="bar"}');
+    expect(formatLabels({ foo: 'bar', baz: '42' })).toEqual('{baz="42", foo="bar"}');
   });
 });
 
@@ -57,14 +63,14 @@ describe('findCommonLabels()', () => {
   });
 
   it('returns no common labels on differing sets', () => {
-    expect(findCommonLabels([{ foo: '"bar"' }, {}])).toEqual({});
-    expect(findCommonLabels([{}, { foo: '"bar"' }])).toEqual({});
-    expect(findCommonLabels([{ baz: '42' }, { foo: '"bar"' }])).toEqual({});
-    expect(findCommonLabels([{ foo: '42', baz: '"bar"' }, { foo: '"bar"' }])).toEqual({});
+    expect(findCommonLabels([{ foo: 'bar' }, {}])).toEqual({});
+    expect(findCommonLabels([{}, { foo: 'bar' }])).toEqual({});
+    expect(findCommonLabels([{ baz: '42' }, { foo: 'bar' }])).toEqual({});
+    expect(findCommonLabels([{ foo: '42', baz: 'bar' }, { foo: 'bar' }])).toEqual({});
   });
 
   it('returns the single labels set as common labels', () => {
-    expect(findCommonLabels([{ foo: '"bar"' }])).toEqual({ foo: '"bar"' });
+    expect(findCommonLabels([{ foo: 'bar' }])).toEqual({ foo: 'bar' });
   });
 });
 
@@ -100,10 +106,10 @@ describe('mergeStreamsToLogs()', () => {
     expect(mergeStreamsToLogs([stream1]).rows).toMatchObject([
       {
         entry: 'WARN boooo',
-        labels: '{foo="bar"}',
+        labels: { foo: 'bar' },
         key: 'EK1970-01-01T00:00:00Z{foo="bar"}',
-        logLevel: 'warn',
-        uniqueLabels: '',
+        logLevel: 'warning',
+        uniqueLabels: {},
       },
     ]);
   });
@@ -134,21 +140,21 @@ describe('mergeStreamsToLogs()', () => {
     expect(mergeStreamsToLogs([stream1, stream2]).rows).toMatchObject([
       {
         entry: 'INFO 2',
-        labels: '{foo="bar", baz="2"}',
+        labels: { foo: 'bar', baz: '2' },
         logLevel: 'info',
-        uniqueLabels: '{baz="2"}',
+        uniqueLabels: { baz: '2' },
       },
       {
         entry: 'WARN boooo',
-        labels: '{foo="bar", baz="1"}',
-        logLevel: 'warn',
-        uniqueLabels: '{baz="1"}',
+        labels: { foo: 'bar', baz: '1' },
+        logLevel: 'warning',
+        uniqueLabels: { baz: '1' },
       },
       {
         entry: 'INFO 1',
-        labels: '{foo="bar", baz="2"}',
+        labels: { foo: 'bar', baz: '2' },
         logLevel: 'info',
-        uniqueLabels: '{baz="2"}',
+        uniqueLabels: { baz: '2' },
       },
     ]);
   });

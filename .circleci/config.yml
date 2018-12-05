@@ -162,8 +162,8 @@ jobs:
           name: Build Grafana.com master publisher
           command: 'go build -o scripts/publish scripts/build/publish.go'
       - run:
-          name: Build Grafana.com release publisher
-          command: 'cd scripts/build/release_publisher && go build -o release_publisher .'
+          name: Test and build Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test . && go build -o release_publisher .'
       - persist_to_workspace:
           root: .
           paths:
@@ -191,6 +191,9 @@ jobs:
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
       - persist_to_workspace:
           root: .
           paths:

@@ -1,7 +1,10 @@
+import _ from 'lodash';
+
 import { renderUrl } from 'app/core/utils/url';
-import { ExploreState, ExploreUrlState, HistoryItem } from 'app/types/explore';
+import { ExploreState, ExploreUrlState, HistoryItem, QueryTransaction } from 'app/types/explore';
 import { DataQuery, RawTimeRange } from 'app/types/series';
 
+import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import TimeSeries from 'app/core/time_series2';
@@ -127,10 +130,44 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys other than refId and key.
+ * A target is non-empty when it has keys (with non-empty values) other than refId and key.
  */
 export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
-  return queries.some(query => Object.keys(query).length > 2);
+  return queries.some(
+    query =>
+      Object.keys(query)
+        .map(k => query[k])
+        .filter(v => v).length > 2
+  );
+}
+
+export function calculateResultsFromQueryTransactions(
+  queryTransactions: QueryTransaction[],
+  datasource: any,
+  graphInterval: number
+) {
+  const graphResult = _.flatten(
+    queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
+  );
+  const tableResult = mergeTablesIntoModel(
+    new TableModel(),
+    ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
+  );
+  const logsResult =
+    datasource && datasource.mergeStreams
+      ? datasource.mergeStreams(
+          _.flatten(
+            queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
+          ),
+          graphInterval
+        )
+      : undefined;
+
+  return {
+    graphResult,
+    tableResult,
+    logsResult,
+  };
 }
 
 export function getIntervals(

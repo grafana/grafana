@@ -3,25 +3,26 @@ import { TimeSeries } from 'app/core/core';
 import colors from 'app/core/utils/colors';
 
 export enum LogLevel {
-  crit = 'crit',
-  warn = 'warn',
+  crit = 'critical',
+  critical = 'critical',
+  warn = 'warning',
+  warning = 'warning',
   err = 'error',
   error = 'error',
   info = 'info',
   debug = 'debug',
   trace = 'trace',
-  none = 'none',
+  unkown = 'unkown',
 }
 
 export const LogLevelColor = {
-  [LogLevel.crit]: colors[7],
-  [LogLevel.warn]: colors[1],
-  [LogLevel.err]: colors[4],
+  [LogLevel.critical]: colors[7],
+  [LogLevel.warning]: colors[1],
   [LogLevel.error]: colors[4],
   [LogLevel.info]: colors[0],
-  [LogLevel.debug]: colors[3],
-  [LogLevel.trace]: colors[3],
-  [LogLevel.none]: '#eee',
+  [LogLevel.debug]: colors[5],
+  [LogLevel.trace]: colors[2],
+  [LogLevel.unkown]: '#ddd',
 };
 
 export interface LogSearchMatch {
@@ -34,22 +35,37 @@ export interface LogRow {
   duplicates?: number;
   entry: string;
   key: string; // timestamp + labels
-  labels: string;
+  labels: LogsStreamLabels;
   logLevel: LogLevel;
   searchWords?: string[];
   timestamp: string; // ISO with nanosec precision
   timeFromNow: string;
   timeEpochMs: number;
   timeLocal: string;
-  uniqueLabels?: string;
+  uniqueLabels?: LogsStreamLabels;
+}
+
+export interface LogsLabelStat {
+  active?: boolean;
+  count: number;
+  proportion: number;
+  value: string;
+}
+
+export enum LogsMetaKind {
+  Number,
+  String,
+  LabelsMap,
 }
 
 export interface LogsMetaItem {
   label: string;
-  value: string;
+  value: string | number | LogsStreamLabels;
+  kind: LogsMetaKind;
 }
 
 export interface LogsModel {
+  id: string; // Identify one logs result from another
   meta?: LogsMetaItem[];
   rows: LogRow[];
   series?: TimeSeries[];
@@ -60,7 +76,7 @@ export interface LogsStream {
   entries: LogsStreamEntry[];
   search?: string;
   parsedLabels?: LogsStreamLabels;
-  uniqueLabels?: string;
+  uniqueLabels?: LogsStreamLabels;
 }
 
 export interface LogsStreamEntry {
@@ -77,6 +93,22 @@ export enum LogsDedupStrategy {
   exact = 'exact',
   numbers = 'numbers',
   signature = 'signature',
+}
+
+export function calculateLogsLabelStats(rows: LogRow[], label: string): LogsLabelStat[] {
+  // Consider only rows that have the given label
+  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
+  const rowCount = rowsWithLabel.length;
+
+  // Get label value counts for eligible rows
+  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRow).labels[label]);
+  const sortedCounts = _.chain(countsByValue)
+    .map((count, value) => ({ count, value, proportion: count / rowCount }))
+    .sortBy('count')
+    .reverse()
+    .value();
+
+  return sortedCounts;
 }
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
@@ -116,6 +148,24 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
   return {
     ...logs,
     rows: dedupedRows,
+  };
+}
+
+export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
+  if (hiddenLogLevels.size === 0) {
+    return logs;
+  }
+
+  const filteredRows = logs.rows.reduce((result: LogRow[], row: LogRow, index, list) => {
+    if (!hiddenLogLevels.has(row.logLevel)) {
+      result.push(row);
+    }
+    return result;
+  }, []);
+
+  return {
+    ...logs,
+    rows: filteredRows,
   };
 }
 

@@ -4,12 +4,18 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.4.0-pre1",
+  "version": "5.5.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.1.0",
     "@types/d3": "^4.10.1",
     "@types/enzyme": "^3.1.13",
     "@types/jest": "^23.3.2",
@@ -21,10 +27,10 @@
     "angular-mocks": "1.6.6",
     "autoprefixer": "^6.4.0",
     "axios": "^0.17.1",
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.4",
-    "babel-plugin-syntax-dynamic-import": "^6.18.0",
-    "babel-preset-es2015": "^6.24.1",
+    "babel-core": "^7.0.0-bridge",
+    "babel-jest": "^23.6.0",
+    "babel-loader": "^8.0.4",
+    "babel-plugin-angularjs-annotate": "^0.9.0",
     "clean-webpack-plugin": "^0.1.19",
     "css-loader": "^0.28.7",
     "enzyme": "^3.6.0",
@@ -108,18 +114,9 @@
     "precommit": "lint-staged && grunt precommit"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "prettier --write",
-      "git add"
-    ],
-    "*.scss": [
-      "prettier --write",
-      "git add"
-    ],
-    "*pkg/**/*.go": [
-      "gofmt -w -s",
-      "git add"
-    ]
+    "*.{ts,tsx}": ["prettier --write", "git add"],
+    "*.scss": ["prettier --write", "git add"],
+    "*pkg/**/*.go": ["gofmt -w -s", "git add"]
   },
   "prettier": {
     "trailingComma": "es5",
@@ -128,13 +125,12 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@babel/polyfill": "^7.0.0",
     "angular": "1.6.6",
     "angular-bindonce": "0.3.1",
     "angular-native-dragdrop": "1.2.2",
     "angular-route": "1.6.6",
     "angular-sanitize": "1.6.6",
-    "babel-jest": "^23.6.0",
-    "babel-polyfill": "^6.26.0",
     "baron": "^3.0.3",
     "brace": "^0.10.0",
     "classnames": "^2.2.5",
@@ -156,8 +152,8 @@
     "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.6.3",
     "react-grid-layout": "0.16.6",
-    "react-highlight-words": "^0.10.0",
     "react-popper": "^1.3.0",
+    "react-highlight-words": "0.11.0",
     "react-redux": "^5.0.7",
     "react-select": "2.1.0",
     "react-sizeme": "^2.3.6",

@@ -49,7 +49,7 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
     const selectorWithLabel = addLabelToSelector(selector, key, value, operator);
     lastIndex = match.index + match[1].length + 2;
     suffix = query.slice(match.index + match[0].length);
-    parts.push(prefix, '{', selectorWithLabel, '}');
+    parts.push(prefix, selectorWithLabel);
     match = selectorRegexp.exec(query);
   }
 
@@ -59,7 +59,7 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
 
 const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
 
-function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
+export function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
   const parsedLabels = [];
 
   // Split selector into labels
@@ -76,13 +76,15 @@ function addLabelToSelector(selector: string, labelKey: string, labelValue: stri
   parsedLabels.push({ key: labelKey, operator: operatorForLabelKey, value: `"${labelValue}"` });
 
   // Sort labels by key and put them together
-  return _.chain(parsedLabels)
+  const formatted = _.chain(parsedLabels)
     .uniqWith(_.isEqual)
     .compact()
     .sortBy('key')
     .map(({ key, operator, value }) => `${key}${operator}${value}`)
     .value()
     .join(',');
+
+  return `{${formatted}}`;
 }
 
 function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {

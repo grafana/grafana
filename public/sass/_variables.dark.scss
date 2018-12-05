@@ -44,9 +44,10 @@ $brand-success: $green;
 $brand-warning: $brand-primary;
 $brand-danger: $red;
 
-$query-red: $red;
-$query-green: $green;
-$query-purple: $purple;
+$query-red: #e24d42;
+$query-green: #74e680;
+$query-purple: #fe85fc;
+$query-keyword: #66d9ef;
 $query-orange: $orange;
 
 // Status colors
@@ -205,7 +206,7 @@ $search-filter-box-bg: $gray-blue;
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $black;
 $typeahead-selected-bg: $dark-4;
-$typeahead-selected-color: $blue;
+$typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------

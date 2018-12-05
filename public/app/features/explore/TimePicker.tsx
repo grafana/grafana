@@ -35,7 +35,7 @@ interface TimePickerProps {
   isOpen?: boolean;
   isUtc?: boolean;
   range?: RawTimeRange;
-  onChangeTime?: (Range) => void;
+  onChangeTime?: (range: RawTimeRange, scanning?: boolean) => void;
 }
 
 interface TimePickerState {
@@ -65,7 +65,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
       initialRange: DEFAULT_RANGE,
       refreshInterval: '',
     };
-  }
+  } //Temp solution... How do detect if ds supports table format?
 
   static getDerivedStateFromProps(props, state) {
     if (state.initialRange && state.initialRange === props.range) {
@@ -92,12 +92,13 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     };
   }
 
-  move(direction: number) {
+  move(direction: number, scanning?: boolean): RawTimeRange {
     const { onChangeTime } = this.props;
     const { fromRaw, toRaw } = this.state;
     const from = dateMath.parse(fromRaw, false);
     const to = dateMath.parse(toRaw, true);
-    const timespan = (to.valueOf() - from.valueOf()) / 2;
+    const step = scanning ? 1 : 2;
+    const timespan = (to.valueOf() - from.valueOf()) / step;
 
     let nextTo, nextFrom;
     if (direction === -1) {
@@ -122,8 +123,8 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
 
     const nextTimeRange: TimeRange = {
       raw: nextRange,
-      from,
-      to,
+      from: nextRange.from,
+      to: nextRange.to,
     };
 
     this.setState(
@@ -133,9 +134,11 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         toRaw: nextRange.to.format(DATE_FORMAT),
       },
       () => {
-        onChangeTime(nextTimeRange);
+        onChangeTime(nextTimeRange, scanning);
       }
     );
+
+    return nextRange;
   }
 
   handleChangeFrom = e => {
