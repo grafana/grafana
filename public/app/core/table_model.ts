@@ -40,7 +40,7 @@ export default class TableModel {
     this.rows.sort((a, b) => {
       a = a[options.col];
       b = b[options.col];
-      // Sort null or undefined seperately from comparable values
+      // Sort null or undefined separately from comparable values
       return +(a == null) - +(b == null) || +(a > b) || -(a < b);
     });
 

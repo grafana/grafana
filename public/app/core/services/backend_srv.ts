@@ -5,7 +5,7 @@ import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 
 export class BackendSrv {
   private inFlightRequests = {};
-  private HTTP_REQUEST_CANCELLED = -1;
+  private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
 
   /** @ngInject */
@@ -178,7 +178,7 @@ export class BackendSrv {
         return response;
       })
       .catch(err => {
-        if (err.status === this.HTTP_REQUEST_CANCELLED) {
+        if (err.status === this.HTTP_REQUEST_CANCELED) {
           throw { err, cancelled: true };
         }
 
