@@ -95,7 +95,16 @@ export class PanelChrome extends PureComponent<Props, State> {
 
           return (
             <div className="panel-container panel-container--absolute">
-              <PanelHeader panel={panel} dashboard={dashboard} timeInfo={timeInfo} />
+              <PanelHeader
+                panel={panel}
+                dashboard={dashboard}
+                timeInfo={timeInfo}
+                title={panel.title}
+                description={panel.description}
+                scopedVars={panel.scopedVars}
+                links={panel.links}
+              />
+
               <DataPanel
                 datasource={datasource}
                 queries={targets}

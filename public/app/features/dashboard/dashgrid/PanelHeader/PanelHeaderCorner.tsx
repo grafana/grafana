@@ -14,6 +14,10 @@ enum InfoModes {
 
 interface Props {
   panel: PanelModel;
+  title?: string;
+  description?: string;
+  scopedVars?: string;
+  links?: [];
 }
 
 export class PanelHeaderCorner extends PureComponent<Props> {
