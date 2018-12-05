@@ -42,4 +42,15 @@ describe('parseQuery', () => {
       regexp: '',
     });
   });
+
+  it('returns query and regexp with quantifiers', () => {
+    expect(parseQuery('{foo="bar"} \\.java:[0-9]{1,5}')).toEqual({
+      query: '{foo="bar"}',
+      regexp: '\\.java:[0-9]{1,5}',
+    });
+    expect(parseQuery('\\.java:[0-9]{1,5} {foo="bar"}')).toEqual({
+      query: '{foo="bar"}',
+      regexp: '\\.java:[0-9]{1,5}',
+    });
+  });
 });

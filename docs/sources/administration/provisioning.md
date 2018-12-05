@@ -230,4 +230,4 @@ By default Grafana will delete dashboards in the database if the file is removed
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
-> or `uid` within the same installation as this will cause weird behaviours.
+> or `uid` within the same installation as this will cause weird behaviors.

@@ -18,3 +18,8 @@ docker build \
   .
 
 docker push "${_docker_repo}:${_grafana_tag}"
+
+if echo "$_raw_grafana_tag" | grep -q "^v" && echo "$_raw_grafana_tag" | grep -qv "beta"; then
+  docker tag "${_docker_repo}:${_grafana_tag}" "${_docker_repo}:latest"
+  docker push "${_docker_repo}:latest"
+fi

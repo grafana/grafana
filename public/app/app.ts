@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+import '@babel/polyfill';
 import 'file-saver';
 import 'lodash';
 import 'jquery';
