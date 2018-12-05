@@ -16,6 +16,7 @@ import {
 } from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { Switch } from 'app/core/components/Switch/Switch';
+import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';
 import LogLabels from './LogLabels';
@@ -304,30 +305,13 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
             <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} small />
-            <Switch
-              label="Dedup: off"
-              checked={dedup === LogsDedupStrategy.none}
-              onChange={() => this.onChangeDedup(LogsDedupStrategy.none)}
-              small
-            />
-            <Switch
-              label="Dedup: exact"
-              checked={dedup === LogsDedupStrategy.exact}
-              onChange={() => this.onChangeDedup(LogsDedupStrategy.exact)}
-              small
-            />
-            <Switch
-              label="Dedup: numbers"
-              checked={dedup === LogsDedupStrategy.numbers}
-              onChange={() => this.onChangeDedup(LogsDedupStrategy.numbers)}
-              small
-            />
-            <Switch
-              label="Dedup: signature"
-              checked={dedup === LogsDedupStrategy.signature}
-              onChange={() => this.onChangeDedup(LogsDedupStrategy.signature)}
-              small
-            />
+            <ToggleButtonGroup label="Dedup" onChange={this.onChangeDedup} value={dedup}>
+              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+                <ToggleButton className="btn-small" key={i} value={dedupType}>
+                  {dedupType}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
             {hasData &&
               meta && (
                 <div className="logs-meta">
