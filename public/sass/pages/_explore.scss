@@ -289,14 +289,6 @@
       top: 4px;
     }
 
-    .logs-entries {
-      display: grid;
-      grid-column-gap: 1rem;
-      grid-row-gap: 0.1rem;
-      font-family: $font-family-monospace;
-      font-size: 12px;
-    }
-
     .logs-row-match-highlight {
       // Undoing mark styling
       background: inherit;
@@ -317,6 +309,9 @@
       margin: 2px 0;
       position: relative;
       opacity: 0.8;
+    }
+
+    .logs-row__time {
     }
 
     .logs-row-level-critical,

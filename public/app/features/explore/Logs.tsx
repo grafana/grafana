@@ -64,18 +64,18 @@ function Row({
     'logs-row-match-highlight--preview': previewHighlights,
   });
   return (
-    <>
+    <div className="logs-row">
       {showDuplicates && (
         <div className="logs-row-duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
       )}
       <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
       {showUtc && (
-        <div className="logs-row-time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+        <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
           {row.timestamp}
         </div>
       )}
       {showLocalTime && (
-        <div className="logs-row-time" title={`${row.timestamp} (${row.timeFromNow})`}>
+        <div className="logs-row__time" title={`${row.timestamp} (${row.timeFromNow})`}>
           {row.timeLocal}
         </div>
       )}
@@ -96,7 +96,7 @@ function Row({
           row.entry
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -263,25 +263,25 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     }
 
     // Grid options
-    const cssColumnSizes = [];
-    if (showDuplicates) {
-      cssColumnSizes.push('max-content');
-    }
-    // Log-level indicator line
-    cssColumnSizes.push('3px');
-    if (showUtc) {
-      cssColumnSizes.push('minmax(100px, max-content)');
-    }
-    if (showLocalTime) {
-      cssColumnSizes.push('minmax(100px, max-content)');
-    }
-    if (showLabels) {
-      cssColumnSizes.push('fit-content(20%)');
-    }
-    cssColumnSizes.push('1fr');
-    const logEntriesStyle = {
-      gridTemplateColumns: cssColumnSizes.join(' '),
-    };
+    // const cssColumnSizes = [];
+    // if (showDuplicates) {
+    //   cssColumnSizes.push('max-content');
+    // }
+    // // Log-level indicator line
+    // cssColumnSizes.push('3px');
+    // if (showUtc) {
+    //   cssColumnSizes.push('minmax(220px, max-content)');
+    // }
+    // if (showLocalTime) {
+    //   cssColumnSizes.push('minmax(140px, max-content)');
+    // }
+    // if (showLabels) {
+    //   cssColumnSizes.push('fit-content(20%)');
+    // }
+    // cssColumnSizes.push('1fr');
+    // const logEntriesStyle = {
+    //   gridTemplateColumns: cssColumnSizes.join(' '),
+    // };
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -342,7 +342,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           </div>
         </div>
 
-        <div className="logs-entries" style={logEntriesStyle}>
+        <div className="logs-rows">
           {hasData &&
             !deferLogs &&
             // Only inject highlighterExpression in the first set for performance reasons
