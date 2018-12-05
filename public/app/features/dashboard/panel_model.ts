@@ -15,6 +15,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   hasRefreshed: true,
+  cachedPluginOptions: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -51,12 +52,14 @@ const mustKeepProps: { [str: string]: boolean } = {
   events: true,
   cacheTimeout: true,
   nullPointMode: true,
+  cachedPluginOptions: true,
 };
 
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   datasource: null,
   targets: [{}],
+  cachedPluginOptions: {},
 };
 
 export class PanelModel {
@@ -96,6 +99,9 @@ export class PanelModel {
   events: Emitter;
   cacheTimeout?: any;
 
+  // cache props between plugins
+  cachedPluginOptions?: any;
+
   constructor(model) {
     this.events = new Emitter();
 
@@ -120,7 +126,7 @@ export class PanelModel {
   }
 
   private getOptionsKey() {
-    return 'options-' + this.type;
+    return PANEL_OPTIONS_KEY_PREFIX + this.type;
   }
 
   getSaveModel() {
@@ -184,24 +190,48 @@ export class PanelModel {
     this.events.emit('panel-initialized');
   }
 
-  changeType(pluginId: string, fromAngularPanel: boolean) {
-    this.type = pluginId;
+  private getOptionsToRemember() {
+    return Object.keys(this).reduce((acc, property) => {
+      if (notPersistedProperties[property] || mustKeepProps[property]) {
+        return acc;
+      }
+      return {
+        ...acc,
+        [property]: this[property],
+      };
+    }, {});
+  }
 
-    // for now we need to remove alert rules when changing type
-    delete this.alert;
+  private saveCurrentPanelOptions() {
+    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
+  }
+
+  private restorePanelOptions(pluginId: string) {
+    const prevOptions = this.cachedPluginOptions[pluginId] || {};
+
+    Object.keys(prevOptions).map(property => {
+      this[property] = prevOptions[property];
+    });
+  }
+
+  changeType(pluginId: string, fromAngularPanel: boolean) {
+    this.saveCurrentPanelOptions();
+    this.type = pluginId;
 
     // for angular panels only we need to remove all events and let angular panels do some cleanup
     if (fromAngularPanel) {
       this.destroy();
 
       for (const key of _.keys(this)) {
-        if (mustKeepProps[key] || key.indexOf(PANEL_OPTIONS_KEY_PREFIX) === 0) {
+        if (mustKeepProps[key]) {
           continue;
         }
 
         delete this[key];
       }
     }
+
+    this.restorePanelOptions(pluginId);
   }
 
   destroy() {
