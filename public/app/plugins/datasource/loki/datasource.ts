@@ -140,7 +140,23 @@ export default class LokiDatasource {
         };
       })
       .catch(err => {
-        return { status: 'error', message: err.message };
+        let message = 'Loki: ';
+        if (err.statusText) {
+          message += err.statusText;
+        } else {
+          message += 'Cannot connect to Loki';
+        }
+
+        if (err.status) {
+          message += `. ${err.status}`;
+        }
+
+        if (err.data && err.data.message) {
+          message += `. ${err.data.message}`;
+        } else if (err.data) {
+          message += `. ${err.data}`;
+        }
+        return { status: 'error', message: message };
       });
   }
 }
