@@ -5,20 +5,34 @@ exports[`Render should render component 1`] = `
   className="gf-form-group"
 >
   <div
-    className="gf-form max-width-30"
+    className="gf-form-inline"
   >
-    <Component
-      tooltip="The name is used when you select the data source in panels. The Default data source ispreselected in new panels."
+    <div
+      className="gf-form max-width-30"
+      style={
+        Object {
+          "marginRight": "3px",
+        }
+      }
     >
-      Name
-    </Component>
-    <input
-      className="gf-form-input max-width-23"
+      <Component
+        tooltip="The name is used when you select the data source in panels. The Default data source ispreselected in new panels."
+      >
+        Name
+      </Component>
+      <input
+        className="gf-form-input max-width-23"
+        onChange={[Function]}
+        placeholder="Name"
+        required={true}
+        type="text"
+        value="Graphite"
+      />
+    </div>
+    <Switch
+      checked={false}
+      label="Default"
       onChange={[Function]}
-      placeholder="Name"
-      required={true}
-      type="text"
-      value="Graphite"
     />
   </div>
 </div>
