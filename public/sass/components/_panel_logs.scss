@@ -64,10 +64,11 @@ $column-horizontal-spacing: 10px;
     display: table-cell;
     padding-right: $column-horizontal-spacing;
     vertical-align: middle;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
 
     &:first-child {
       padding-left: $column-horizontal-spacing - 2px;
-      // border-left: 2px solid transparent;
     }
 
     &:last-child {
@@ -76,14 +77,7 @@ $column-horizontal-spacing: 10px;
   }
 
   &:hover {
-    > div {
-      // border-left: 2px solid $blue;
-      background: $page-bg;
-    }
-  }
-
-  &:nth-child(odd) {
-    // background: $page-bg;
+    background: $page-bg;
   }
 }
 
