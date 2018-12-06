@@ -22,7 +22,7 @@ export class GeneralTabCtrl {
       const { panel } = scope.ctrl;
       const panelPropsToTrack = ['title', 'description', 'transparent', 'repeat', 'repeatDirection', 'minSpan'];
       const panelPropsString = panelPropsToTrack
-        .map(prop => (panel[prop] && panel[prop].toString ? panel[prop].toString() : panel[prop]))
+        .map(prop => prop + '=' + (panel[prop] && panel[prop].toString ? panel[prop].toString() : panel[prop]))
         .join();
       const panelLinks = panel.links;
       const panelLinksString = panelLinks.map(obj2string).join();
