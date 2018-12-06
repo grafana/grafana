@@ -735,7 +735,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     console.error(response);
 
-    let error: string | JSX.Element = response;
+    let error: string | JSX.Element;
     if (response.data) {
       if (typeof response.data === 'string') {
         error = response.data;
@@ -752,6 +752,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       } else {
         throw new Error('Could not handle error response');
       }
+    } else if (response.message) {
+      error = response.message;
+    } else if (typeof response === 'string') {
+      error = response;
+    } else {
+      error = 'Unknown error during query transaction. Please check JS console logs.';
     }
 
     this.setState(state => {
