@@ -1,15 +1,15 @@
 import _ from 'lodash';
 
 import { renderUrl } from 'app/core/utils/url';
-import { ExploreState, ExploreUrlState, HistoryItem, QueryTransaction } from 'app/types/explore';
-import { DataQuery, RawTimeRange } from 'app/types/series';
-
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import kbn from 'app/core/utils/kbn';
-import colors from 'app/core/utils/colors';
-import TimeSeries from 'app/core/time_series2';
-import { parse as parseDate } from 'app/core/utils/datemath';
 import store from 'app/core/store';
+import colors from 'app/core/utils/colors';
+import { parse as parseDate } from 'app/core/utils/datemath';
+
+import TimeSeries from 'app/core/time_series2';
+import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { ExploreState, ExploreUrlState, HistoryItem, QueryTransaction } from 'app/types/explore';
+import { DataQuery, RawTimeRange, IntervalValues, DataSourceApi } from 'app/types/series';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -170,18 +170,16 @@ export function calculateResultsFromQueryTransactions(
   };
 }
 
-export function getIntervals(
-  range: RawTimeRange,
-  datasource,
-  resolution: number
-): { interval: string; intervalMs: number } {
+export function getIntervals(range: RawTimeRange, datasource: DataSourceApi, resolution: number): IntervalValues {
   if (!datasource || !resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }
+
   const absoluteRange: RawTimeRange = {
     from: parseDate(range.from, false),
     to: parseDate(range.to, true),
   };
+
   return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
 }
 
