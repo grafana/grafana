@@ -136,7 +136,8 @@ export default class LokiDatasource {
         }
         return {
           status: 'error',
-          message: 'Data source connected, but no labels received. Verify that Loki is configured properly.',
+          message:
+            'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
         };
       })
       .catch(err => {
