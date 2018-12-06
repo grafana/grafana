@@ -115,7 +115,7 @@ export class TeamMembers extends PureComponent<Props, State> {
             </button>
             <h5>Add Team Member</h5>
             <div className="gf-form-inline">
-              <UserPicker onSelected={this.onUserSelected} className="width-30" />
+              <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
                 <button className="btn btn-success gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
                   Add to team
