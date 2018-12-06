@@ -67,7 +67,7 @@ $column-horizontal-spacing: 10px;
 
     &:first-child {
       padding-left: $column-horizontal-spacing - 2px;
-      border-left: 2px solid transparent;
+      // border-left: 2px solid transparent;
     }
 
     &:last-child {
@@ -76,13 +76,14 @@ $column-horizontal-spacing: 10px;
   }
 
   &:hover {
-    > div:first-child {
-      border-left: 2px solid $blue;
+    > div {
+      // border-left: 2px solid $blue;
+      background: $page-bg;
     }
   }
 
   &:nth-child(odd) {
-    background: $page-bg;
+    // background: $page-bg;
   }
 }
 
@@ -116,15 +117,16 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__level {
   position: relative;
-  width: 12px;
+  // width: 12px;
 
   &::after {
     content: '';
     display: block;
-    width: 12px;
-    height: 12px;
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    width: 3px;
     background-color: $gray-2;
-    border-radius: 50%;
   }
 
   &--critical,
