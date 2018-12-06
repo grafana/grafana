@@ -1,6 +1,6 @@
 {
   "type": "datasource",
-  "name": "Grafana Logging",
+  "name": "Grafana Loki",
   "id": "logging",
   "metrics": false,
   "alerting": false,
@@ -19,7 +19,7 @@
     },
     "links": [
       {
-        "name": "Grafana Logging",
+        "name": "Grafana Loki",
         "url": "https://grafana.com/"
       }
     ],
