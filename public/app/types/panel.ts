@@ -36,3 +36,17 @@ export interface Threshold {
   color?: string;
   canRemove: boolean;
 }
+
+interface BaseMap {
+  op: string;
+  text: string;
+}
+
+export interface ValueMap extends BaseMap {
+  value: string;
+}
+
+export interface RangeMap extends BaseMap {
+  from: string;
+  to: string;
+}

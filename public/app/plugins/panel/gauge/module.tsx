@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
 import Gauge from 'app/viz/Gauge';
-import { NullValueMode, PanelOptionsProps, PanelProps, Threshold } from 'app/types';
+import { NullValueMode, PanelOptionsProps, PanelProps, RangeMap, Threshold, ValueMap } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 import ValueOptions from './ValueOptions';
 import GaugeOptions from './GaugeOptions';
 import Thresholds from './Thresholds';
+import ValueMappings from './ValueMappings';
 
 export interface OptionsProps {
   decimals: number;
@@ -15,6 +16,9 @@ export interface OptionsProps {
   suffix: string;
   unit: string;
   thresholds: Threshold[];
+  valueMaps: ValueMap[];
+  rangeMaps: RangeMap[];
+  mappingType: number;
 }
 
 export interface OptionModuleProps {
@@ -52,11 +56,19 @@ class Options extends PureComponent<PanelOptionsProps<OptionsProps>> {
   static defaultProps = defaultProps;
 
   render() {
+    const { onChange, options } = this.props;
     return (
       <div>
-        <ValueOptions onChange={this.props.onChange} options={this.props.options} />
-        <GaugeOptions onChange={this.props.onChange} options={this.props.options} />
-        <Thresholds onChange={this.props.onChange} options={this.props.options} />
+        <div className="form-section">
+          <div className="form-section__header">Options</div>
+          <ValueOptions onChange={onChange} options={options} />
+          <GaugeOptions onChange={onChange} options={options} />
+          <Thresholds onChange={onChange} options={options} />
+        </div>
+        <div className="form-section">
+          <div className="form-section__header">Value mappings</div>
+          <ValueMappings onChange={onChange} options={options} />
+        </div>
       </div>
     );
   }

@@ -6,8 +6,8 @@ import ResetStyles from './ResetStyles';
 interface Props {
   className?: string;
   defaultValue?: any;
-  getOptionLabel: (item: any) => string;
-  getOptionValue: (item: any) => string;
+  getOptionLabel?: (item: any) => string;
+  getOptionValue?: (item: any) => string;
   onSelected: (item: any) => {} | void;
   options: any[];
   placeholder?: string;
