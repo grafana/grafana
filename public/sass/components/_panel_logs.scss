@@ -66,11 +66,18 @@ $column-horizontal-spacing: 10px;
     vertical-align: middle;
 
     &:first-child {
-      padding-left: $column-horizontal-spacing;
+      padding-left: $column-horizontal-spacing - 2px;
+      border-left: 2px solid transparent;
     }
 
     &:last-child {
       padding-left: $column-horizontal-spacing;
+    }
+  }
+
+  &:hover {
+    > div:first-child {
+      border-left: 2px solid $blue;
     }
   }
 
@@ -137,7 +144,7 @@ $column-horizontal-spacing: 10px;
   &--warning,
   &--warn {
     &::after {
-      background-color: #eab839;
+      background-color: $warn;
     }
   }
 
