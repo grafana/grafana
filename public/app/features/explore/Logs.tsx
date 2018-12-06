@@ -24,6 +24,7 @@ const PREVIEW_LIMIT = 100;
 
 const graphOptions = {
   series: {
+    stack: true,
     bars: {
       show: true,
       lineWidth: 5,
