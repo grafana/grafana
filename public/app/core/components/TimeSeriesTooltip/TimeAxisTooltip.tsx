@@ -1,8 +1,8 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
+import { appEvents } from 'app/core/core';
 import { GraphHoverPosition, GraphHoverEvent, FlotPosition, FlotHoverItem } from 'app/types/events';
 import { Subtract } from 'app/types/utils';
-import { appEvents } from 'app/core/core';
 
 const TOOLTIP_OFFSET = 20;
 
@@ -164,11 +164,6 @@ const withTimeAxisTooltip = <P extends InjectedTimeAxisTooltipProps>(WrappedComp
       if (y + tooltipSize.height > appRootHeight) {
         y = tooltipSize.height ? appRootHeight - tooltipSize.height : 0;
       }
-
-      // Make some CPU throttling
-      // for (let index = 0; index < 5000000; index++) {
-      //   Math.sqrt(Math.random());
-      // }
 
       return { x, y };
     }

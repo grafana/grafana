@@ -1,10 +1,10 @@
+import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import { TimeSeriesVM } from 'app/types';
+import { FlotHoverItem } from 'app/types/events';
 import { Subtract } from 'app/types/utils';
 import { getMultiSeriesPlotHoverInfo, PlotHoverInfo } from './utils';
 import withTimeAxisTooltip, { InjectedTimeAxisTooltipProps } from './TimeAxisTooltip';
-import { FlotHoverItem } from 'app/types/events';
-import _ from 'lodash';
 
 export interface TimeSeriesTooltipProps extends InjectedTimeAxisTooltipProps {
   series: TimeSeriesVM[];
@@ -73,8 +73,7 @@ const withTimeSeriesTooltip = <P extends InjectedTimeSeriesTooltipProps>(Wrapped
     }
 
     sortHoverInfo(seriesHoverInfo) {
-      // Dynamically reorder the hovercard for the current time point if the
-      // option is enabled.
+      // Dynamically reorder the hovercard for the current time point if the option is enabled.
       if (this.props.sort === 2) {
         seriesHoverInfo.sort((a, b) => {
           return b.value - a.value;
