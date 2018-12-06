@@ -54,6 +54,7 @@
   // font-family: $font-family-monospace;
   // font-size: 12px;
   display: table;
+  table-layout: fixed;
 }
 
 .logs-row {
@@ -69,8 +70,13 @@
   white-space: nowrap;
 }
 
+.logs-row__labels {
+  max-width: 20%;
+}
+
 .logs-row__message {
   word-break: break-all;
+  width: 80%;
 }
 
 .logs-row__match-highlight {
@@ -121,9 +127,6 @@
   &--trace {
     background-color: #6ed0e0;
   }
-}
-
-.logs-row__time {
 }
 
 .logs-row__duplicates {
@@ -183,7 +186,7 @@
     position: relative;
   }
 
-  &--active:after {
+  &--active::after {
     display: inline;
     content: '*';
     position: absolute;
