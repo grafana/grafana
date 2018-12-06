@@ -1,3 +1,5 @@
+$column-horizontal-spacing: 10px;
+
 .logs-panel-controls {
   display: flex;
   background-color: $page-bg;
@@ -59,8 +61,14 @@
 
   > div {
     display: table-cell;
-    padding-left: 10px;
-    border: 1px solid transparent;
+    padding-right: $column-horizontal-spacing;
+    vertical-align: middle;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+  }
+
+  &:hover {
+    background: $page-bg;
   }
 }
 
@@ -70,6 +78,7 @@
 
 .logs-row__labels {
   max-width: 20%;
+  line-height: 1.2;
 }
 
 .logs-row__message {
@@ -93,36 +102,55 @@
 }
 
 .logs-row__level {
-  background-color: transparent;
   position: relative;
-  width: 3px;
-  padding: 0 !important;
+
+  &::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    width: 3px;
+    background-color: $logs-color-unkown;
+  }
 
   &--critical,
   &--crit {
-    background-color: #705da0;
+    &::after {
+      background-color: #705da0;
+    }
   }
 
   &--error,
   &--err {
-    background-color: #e24d42;
+    &::after {
+      background-color: #e24d42;
+    }
   }
 
   &--warning,
   &--warn {
-    background-color: #eab839;
+    &::after {
+      background-color: $warn;
+    }
   }
 
   &--info {
-    background-color: #7eb26d;
+    &::after {
+      background-color: #7eb26d;
+    }
   }
 
   &--debug {
-    background-color: #1f78c1;
+    &::after {
+      background-color: #1f78c1;
+    }
   }
 
   &--trace {
-    background-color: #6ed0e0;
+    &::after {
+      background-color: #6ed0e0;
+    }
   }
 }
 
@@ -160,10 +188,6 @@
   border-radius: $border-radius;
   justify-content: space-between;
   box-shadow: $popover-shadow;
-}
-
-.logs-row__labels {
-  line-height: 1.2;
 }
 
 .logs-stats__info {

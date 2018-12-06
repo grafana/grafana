@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { TimeSeries } from 'app/core/core';
-import colors from 'app/core/utils/colors';
+import colors, { getThemeColor } from 'app/core/utils/colors';
 
 export enum LogLevel {
   crit = 'critical',
@@ -22,7 +22,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unkown]: '#ddd',
+  [LogLevel.unkown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
 export interface LogSearchMatch {
