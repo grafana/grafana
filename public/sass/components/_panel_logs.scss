@@ -54,7 +54,6 @@ $column-horizontal-spacing: 10px;
   font-size: 12px;
   display: table;
   table-layout: fixed;
-  margin: 0 -(nth($panel-padding, 2));
 }
 
 .logs-row {
@@ -66,14 +65,6 @@ $column-horizontal-spacing: 10px;
     vertical-align: middle;
     border-top: 1px solid transparent;
     border-bottom: 1px solid transparent;
-
-    &:first-child {
-      padding-left: $column-horizontal-spacing - 2px;
-    }
-
-    &:last-child {
-      padding-left: $column-horizontal-spacing;
-    }
   }
 
   &:hover {
@@ -111,7 +102,6 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__level {
   position: relative;
-  // width: 12px;
 
   &::after {
     content: '';
@@ -120,7 +110,7 @@ $column-horizontal-spacing: 10px;
     top: 1px;
     bottom: 1px;
     width: 3px;
-    background-color: $gray-2;
+    background-color: $logs-color-unkown;
   }
 
   &--critical,
