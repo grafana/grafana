@@ -52,6 +52,7 @@ export interface TimeSeriesStats {
   count: number;
   allIsNull: boolean;
   allIsZero: boolean;
+  hasMsResolution: boolean;
 }
 
 export enum NullValueMode {

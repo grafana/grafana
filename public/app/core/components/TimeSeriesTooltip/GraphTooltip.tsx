@@ -1,8 +1,8 @@
 import React, { PureComponent, CSSProperties } from 'react';
-import withTimeSeriesTooltip, { InjectedTimeSeriesTooltipProps } from './TimeSeriesTooltip';
 import { TimeSeriesVM } from 'app/types';
-import { PlotHoverInfoItem } from './utils';
 import { FlotHoverItem } from 'app/types/events';
+import withTimeSeriesTooltip, { InjectedTimeSeriesTooltipProps } from './TimeSeriesTooltip';
+import { PlotHoverInfoItem } from './utils';
 
 export interface GraphTooltipProps extends InjectedTimeSeriesTooltipProps {
   formatDate: (time, format?) => string;
@@ -11,7 +11,10 @@ export interface GraphTooltipProps extends InjectedTimeSeriesTooltipProps {
 export class GraphTooltip extends PureComponent<GraphTooltipProps> {
   render() {
     const { series, hoverInfo, item, timestamp, formatDate } = this.props;
-    const timeFormat = 'YYYY-MM-DD HH:mm:ss';
+    let timeFormat = 'YYYY-MM-DD HH:mm:ss';
+    if (series && series.length && series[0].stats.hasMsResolution) {
+      timeFormat += '.SSS';
+    }
     const absoluteTime = formatDate(timestamp, timeFormat);
     const hoverInfoFiltered = hoverInfo.filter(hoverItem => !hoverItem.hidden);
     const seriesItems = hoverInfoFiltered.map((hoverItem, index) => (

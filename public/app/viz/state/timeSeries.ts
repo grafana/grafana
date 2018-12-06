@@ -32,6 +32,7 @@ export function getTimeSeriesVMs({ timeSeries, nullValueMode }: Options): TimeSe
     let timeStep = Number.MAX_VALUE;
     let allIsNull = true;
     let allIsZero = true;
+    let hasMsResolution = false;
 
     const ignoreNulls = nullValueMode === NullValueMode.Ignore;
     const nullAsZero = nullValueMode === NullValueMode.AsZero;
@@ -53,6 +54,13 @@ export function getTimeSeriesVMs({ timeSeries, nullValueMode }: Options): TimeSe
         const currentStep = currentTime - previousTime;
         if (currentStep < timeStep) {
           timeStep = currentStep;
+        }
+      }
+
+      if (currentTime !== null) {
+        const timestamp = currentTime.toString();
+        if (timestamp.length === 13 && timestamp % 1000 !== 0) {
+          hasMsResolution = true;
         }
       }
 
@@ -160,6 +168,7 @@ export function getTimeSeriesVMs({ timeSeries, nullValueMode }: Options): TimeSe
         first,
         allIsZero,
         allIsNull,
+        hasMsResolution,
       },
     };
   });
