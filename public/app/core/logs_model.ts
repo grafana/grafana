@@ -170,16 +170,25 @@ export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>)
 }
 
 export function makeSeriesForLogs(rows: LogRow[], intervalMs: number): TimeSeries[] {
+  // currently interval is rangeMs / resolution, which is too low for showing series as bars.
+  // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
+  // when executing queries & interval calculated and not here but this is a temporary fix.
+  // intervalMs = intervalMs * 10;
+
   // Graph time series by log level
   const seriesByLevel = {};
-  rows.forEach(row => {
+  const bucketSize = intervalMs * 10;
+
+  for (const row of rows) {
     if (!seriesByLevel[row.logLevel]) {
       seriesByLevel[row.logLevel] = { lastTs: null, datapoints: [], alias: row.logLevel };
     }
+
     const levelSeries = seriesByLevel[row.logLevel];
 
     // Bucket to nearest minute
-    const time = Math.round(row.timeEpochMs / intervalMs / 10) * intervalMs * 10;
+    const time = Math.round(row.timeEpochMs / bucketSize) * bucketSize;
+
     // Entry for time
     if (time === levelSeries.lastTs) {
       levelSeries.datapoints[levelSeries.datapoints.length - 1][0]++;
@@ -187,7 +196,7 @@ export function makeSeriesForLogs(rows: LogRow[], intervalMs: number): TimeSerie
       levelSeries.datapoints.push([1, time]);
       levelSeries.lastTs = time;
     }
-  });
+  }
 
   return Object.keys(seriesByLevel).reduce((acc, level) => {
     if (seriesByLevel[level]) {
