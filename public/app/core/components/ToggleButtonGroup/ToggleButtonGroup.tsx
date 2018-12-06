@@ -4,6 +4,7 @@ interface ToggleButtonGroupProps {
   onChange: (value) => void;
   value?: any;
   label?: string;
+  render: (props) => void;
 }
 
 export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
@@ -26,25 +27,16 @@ export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupPr
   }
 
   render() {
-    const { children, value, label } = this.props;
+    const { value, label } = this.props;
     const values = this.getValues();
     const selectedValue = value || values[0];
     const labelClassName = `gf-form-label ${this.smallChildren() ? 'small' : ''}`;
-
-    const childClones = React.Children.map(children, (child: ReactElement<any>) => {
-      const { value: buttonValue } = child.props;
-
-      return React.cloneElement(child, {
-        selected: buttonValue === selectedValue,
-        onChange: this.handleToggle.bind(this),
-      });
-    });
 
     return (
       <div className="gf-form">
         <div className="toggle-button-group">
           {label && <label className={labelClassName}>{label}</label>}
-          {childClones}
+          {this.props.render({ selectedValue, onChange: this.handleToggle.bind(this) })}
         </div>
       </div>
     );

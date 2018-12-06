@@ -305,13 +305,24 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
             <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} small />
-            <ToggleButtonGroup label="Dedup" onChange={this.onChangeDedup} value={dedup}>
-              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
-                <ToggleButton className="btn-small" key={i} value={dedupType}>
-                  {dedupType}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
+            <ToggleButtonGroup
+              label="Dedup"
+              onChange={this.onChangeDedup}
+              value={dedup}
+              render={({ selectedValue, onChange }) =>
+                Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+                  <ToggleButton
+                    className="btn-small"
+                    key={i}
+                    value={dedupType}
+                    onChange={onChange}
+                    selected={selectedValue === dedupType}
+                  >
+                    {dedupType}
+                  </ToggleButton>
+                ))
+              }
+            />
             {hasData &&
               meta && (
                 <div className="logs-meta">
