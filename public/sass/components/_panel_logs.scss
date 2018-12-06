@@ -48,11 +48,8 @@
 }
 
 .logs-rows {
-  // display: grid;
-  // grid-column-gap: 1rem;
-  // grid-row-gap: 0.1rem;
-  // font-family: $font-family-monospace;
-  // font-size: 12px;
+  font-family: $font-family-monospace;
+  font-size: 12px;
   display: table;
   table-layout: fixed;
 }
@@ -63,6 +60,7 @@
   > div {
     display: table-cell;
     padding-left: 10px;
+    border: 1px solid transparent;
   }
 }
 
@@ -76,7 +74,7 @@
 
 .logs-row__message {
   word-break: break-all;
-  width: 80%;
+  min-width: 80%;
 }
 
 .logs-row__match-highlight {
@@ -96,10 +94,9 @@
 
 .logs-row__level {
   background-color: transparent;
-  margin: 2px 0;
   position: relative;
-  opacity: 0.8;
-  padding: 0 3px 0 0 !important;
+  width: 3px;
+  padding: 0 !important;
 
   &--critical,
   &--crit {
