@@ -60,15 +60,15 @@ function Row({
   const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
   const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
   const needsHighlighter = highlights && highlights.length > 0;
-  const highlightClassName = classnames('logs-row-match-highlight', {
-    'logs-row-match-highlight--preview': previewHighlights,
+  const highlightClassName = classnames('logs-row__match-highlight', {
+    'logs-row__match-highlight--preview': previewHighlights,
   });
   return (
     <div className="logs-row">
       {showDuplicates && (
-        <div className="logs-row-duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
+        <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
       )}
-      <div className={row.logLevel ? `logs-row-level logs-row-level-${row.logLevel}` : ''} />
+      <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
       {showUtc && (
         <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
           {row.timestamp}
@@ -80,11 +80,11 @@ function Row({
         </div>
       )}
       {showLabels && (
-        <div className="logs-row-labels">
+        <div className="logs-row__labels">
           <LogLabels allRows={allRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
         </div>
       )}
-      <div className="logs-row-message">
+      <div className="logs-row__message">
         {needsHighlighter ? (
           <Highlighter
             textToHighlight={row.entry}
@@ -103,7 +103,7 @@ function Row({
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
     return (
-      <span className="logs-meta-item__value-labels">
+      <span className="logs-meta-item__labels">
         <LogLabels labels={value} plain />
       </span>
     );
@@ -112,7 +112,6 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface LogsProps {
-  className?: string;
   data: LogsModel;
   highlighterExpressions: string[];
   loading: boolean;
@@ -220,7 +219,6 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
   render() {
     const {
-      className = '',
       data,
       highlighterExpressions,
       loading = false,
@@ -286,8 +284,8 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
     return (
-      <div className={`${className} logs`}>
-        <div className="logs-graph">
+      <div className="logs-panel">
+        <div className="logs-panel-graph">
           <Graph
             data={data.series}
             height="100px"
@@ -298,9 +296,8 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             userOptions={graphOptions}
           />
         </div>
-
-        <div className="logs-options">
-          <div className="logs-controls">
+        <div className="logs-panel-options">
+          <div className="logs-panel-controls">
             <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
             <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} small />
@@ -330,11 +327,11 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             />
             {hasData &&
               meta && (
-                <div className="logs-meta">
+                <div className="logs-panel-meta">
                   {meta.map(item => (
-                    <div className="logs-meta-item" key={item.label}>
-                      <span className="logs-meta-item__label">{item.label}:</span>
-                      <span className="logs-meta-item__value">{renderMetaItem(item.value, item.kind)}</span>
+                    <div className="logs-panel-meta__item" key={item.label}>
+                      <span className="logs-panel-meta__label">{item.label}:</span>
+                      <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
                     </div>
                   ))}
                 </div>
@@ -379,7 +376,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         {!loading &&
           !hasData &&
           !scanning && (
-            <div className="logs-nodata">
+            <div className="logs-panel-nodata">
               No logs found.
               <a className="link" onClick={this.onClickScan}>
                 Scan for older logs
@@ -388,7 +385,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
           )}
 
         {scanning && (
-          <div className="logs-nodata">
+          <div className="logs-panel-nodata">
             <span>{scanText}</span>
             <a className="link" onClick={this.onClickStopScan}>
               Stop scan

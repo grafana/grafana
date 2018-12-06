@@ -59,6 +59,7 @@
 @import 'components/panel_text';
 @import 'components/panel_heatmap';
 @import 'components/panel_add_panel';
+@import 'components/panel_logs';
 @import 'components/settings_permissions';
 @import 'components/tagsinput';
 @import 'components/tables_lists';
@@ -101,7 +102,6 @@
 @import 'components/delete_button';
 @import 'components/add_data_source.scss';
 @import 'components/page_loader';
-@import 'components/logs-rows';
 
 // PAGES
 @import 'pages/login';

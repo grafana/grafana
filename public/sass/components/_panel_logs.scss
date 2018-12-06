@@ -1,0 +1,223 @@
+.logs-panel-controls {
+  display: flex;
+  background-color: $page-bg;
+  padding: $panel-padding;
+  padding-top: 10px;
+  border-radius: $border-radius;
+  margin: 2*$panel-margin 0;
+  border: $panel-border;
+  justify-items: flex-start;
+  align-items: flex-start;
+
+  > * {
+    margin-right: 1em;
+  }
+}
+
+.logs-panel-nodata {
+  > * {
+    margin-left: 0.5em;
+  }
+}
+
+.logs-panel-meta {
+  flex: 1;
+  color: $text-color-weak;
+  // Align first line with controls labels
+  margin-top: -2px;
+}
+
+.logs-panel-meta__item {
+  margin-right: 1em;
+}
+
+.logs-panel-meta__label {
+  margin-right: 0.5em;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.logs-panel-meta__value {
+  font-family: $font-family-monospace;
+}
+
+.logs-panel-meta-item__labels {
+  // compensate for the labels padding
+  position: relative;
+  top: 4px;
+}
+
+.logs-rows {
+  // display: grid;
+  // grid-column-gap: 1rem;
+  // grid-row-gap: 0.1rem;
+  // font-family: $font-family-monospace;
+  // font-size: 12px;
+  display: table;
+}
+
+.logs-row {
+  display: table-row;
+
+  > div {
+    display: table-cell;
+    padding-left: 10px;
+  }
+}
+
+.logs-row__time {
+  white-space: nowrap;
+}
+
+.logs-row__message {
+  word-break: break-all;
+}
+
+.logs-row__match-highlight {
+  // Undoing mark styling
+  background: inherit;
+  padding: inherit;
+
+  color: $typeahead-selected-color;
+  border-bottom: 1px solid $typeahead-selected-color;
+  background-color: rgba($typeahead-selected-color, 0.1);
+
+  &--preview {
+    background-color: rgba($typeahead-selected-color, 0.2);
+    border-bottom-style: dotted;
+  }
+}
+
+.logs-row__level {
+  background-color: transparent;
+  margin: 2px 0;
+  position: relative;
+  opacity: 0.8;
+  padding: 0 3px 0 0 !important;
+
+  &--critical,
+  &--crit {
+    background-color: #705da0;
+  }
+
+  &--error,
+  &--err {
+    background-color: #e24d42;
+  }
+
+  &--warning,
+  &--warn {
+    background-color: #eab839;
+  }
+
+  &--info {
+    background-color: #7eb26d;
+  }
+
+  &--debug {
+    background-color: #1f78c1;
+  }
+
+  &--trace {
+    background-color: #6ed0e0;
+  }
+}
+
+.logs-row__time {
+}
+
+.logs-row__duplicates {
+  text-align: right;
+}
+
+.logs-label {
+  display: inline-block;
+  padding: 0 2px;
+  background-color: $btn-inverse-bg;
+  border-radius: $border-radius;
+  margin: 0 4px 2px 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+}
+
+.logs-label__icon {
+  border-left: $panel-border;
+  padding: 0 2px;
+  cursor: pointer;
+  margin-left: 2px;
+}
+
+.logs-label__stats {
+  position: absolute;
+  top: 1.25em;
+  left: -10px;
+  z-index: 100;
+  background-color: $popover-bg;
+  color: $popover-color;
+  border: 1px solid $popover-border-color;
+  padding: 10px;
+  border-radius: $border-radius;
+  justify-content: space-between;
+  box-shadow: $popover-shadow;
+}
+
+.logs-row__labels {
+  line-height: 1.2;
+}
+
+.logs-stats__info {
+  margin-bottom: $spacer / 2;
+}
+
+.logs-stats__icon {
+  margin-left: 0.5em;
+  cursor: pointer;
+}
+
+.logs-stats-row {
+  margin: $spacer/1.75 0;
+
+  &--active {
+    color: $blue;
+    position: relative;
+  }
+
+  &--active:after {
+    display: inline;
+    content: '*';
+    position: absolute;
+    top: 0;
+    left: -8px;
+  }
+
+  &__label {
+    display: flex;
+    margin-bottom: 1px;
+  }
+
+  &__value {
+    flex: 1;
+  }
+
+  &__count,
+  &__percent {
+    text-align: right;
+    margin-left: 0.5em;
+  }
+
+  &__percent {
+    width: 3em;
+  }
+
+  &__bar,
+  &__innerbar {
+    height: 4px;
+    overflow: hidden;
+    background: $text-color-faint;
+  }
+
+  &__innerbar {
+    background-color: $blue;
+  }
+}
