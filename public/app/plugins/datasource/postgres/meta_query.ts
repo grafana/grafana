@@ -151,8 +151,7 @@ table_schema IN (
 
   buildDatatypeQuery(column: string) {
     let query = 'SELECT udt_name FROM information_schema.columns WHERE ';
-    query += this.buildSchemaConstraint();
-    query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
+    query += this.buildTableConstraint(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
     return query;
   }
