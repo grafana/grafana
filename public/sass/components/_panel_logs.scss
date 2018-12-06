@@ -78,6 +78,7 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__labels {
   max-width: 20%;
+  line-height: 1.2;
 }
 
 .logs-row__message {
@@ -187,10 +188,6 @@ $column-horizontal-spacing: 10px;
   border-radius: $border-radius;
   justify-content: space-between;
   box-shadow: $popover-shadow;
-}
-
-.logs-row__labels {
-  line-height: 1.2;
 }
 
 .logs-stats__info {
