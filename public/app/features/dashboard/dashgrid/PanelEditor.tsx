@@ -77,7 +77,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     const tabs = [
       { id: 'queries', text: 'Queries' },
       { id: 'visualization', text: 'Visualization' },
-      { id: 'advanced', text: 'Advanced' },
+      { id: 'advanced', text: 'Panel Options' },
     ];
 
     if (config.alertingEnabled && plugin.id === 'graph') {
