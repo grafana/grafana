@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
@@ -31,7 +32,7 @@ export class SearchSrv {
   }
 
   private queryForRecentDashboards() {
-    const dashIds = _.take(impressionSrv.getDashboardOpened(), 5);
+    const dashIds = _.take(impressionSrv.getDashboardOpened(), config.searchPanelOptions.recentCount);
     if (dashIds.length === 0) {
       return Promise.resolve([]);
     }
@@ -70,7 +71,7 @@ export class SearchSrv {
       return Promise.resolve();
     }
 
-    return this.backendSrv.search({ starred: true, limit: 5 }).then(result => {
+    return this.backendSrv.search({ starred: true, limit: config.searchPanelOptions.starredCount }).then(result => {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',

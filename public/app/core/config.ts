@@ -8,6 +8,11 @@ export interface BuildInfo {
   env: string;
 }
 
+export interface SearchPanelOptions {
+  starredCount: number;
+  recentCount: number;
+}
+
 export class Settings {
   datasources: any;
   panels: PanelPlugin[];
@@ -32,6 +37,7 @@ export class Settings {
   disableUserSignUp: boolean;
   loginHint: any;
   loginError: any;
+  searchPanelOptions: SearchPanelOptions;
 
   constructor(options) {
     const defaults = {
@@ -47,6 +53,10 @@ export class Settings {
         commit: '1',
         env: 'production',
         isEnterprise: false,
+      },
+      searchPanelOptions: {
+        recentCount: 5,
+        starredCount: 5,
       },
     };
 
