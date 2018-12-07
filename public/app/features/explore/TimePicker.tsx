@@ -15,7 +15,7 @@ export const DEFAULT_RANGE = {
  * Return a human-editable string of either relative (inludes "now") or absolute local time (in the shape of DATE_FORMAT).
  * @param value Epoch or relative time
  */
-export function parseTime(value: string, isUtc = false): string {
+export function parseTime(value: string | moment.Moment, isUtc = false): string | moment.Moment {
   if (moment.isMoment(value)) {
     return value;
   }

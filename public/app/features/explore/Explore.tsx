@@ -38,7 +38,7 @@ import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
-import TimePicker from './TimePicker';
+import TimePicker, { parseTime } from './TimePicker';
 
 interface ExploreProps {
   datasourceSrv: DatasourceSrv;
@@ -115,7 +115,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } else {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
       initialQueries = ensureQueries(queries);
-      const initialRange = range || { ...DEFAULT_RANGE };
+      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) } || { ...DEFAULT_RANGE };
       // Millies step for helper bar charts
       const initialGraphInterval = 15 * 1000;
       this.state = {
