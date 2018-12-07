@@ -44,9 +44,8 @@ func NewGoogleChatNotifier(model *m.AlertNotification) (alerting.Notifier, error
 
 type GoogleChatNotifier struct {
 	NotifierBase
-	Url    string
-	method string
-	log    log.Logger
+	Url string
+	log log.Logger
 }
 
 /**
