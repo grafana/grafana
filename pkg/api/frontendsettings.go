@@ -174,6 +174,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"env":           setting.Env,
 			"isEnterprise":  setting.IsEnterprise,
 		},
+		"searchPanelOptions": map[string]interface{}{
+			"starredCount": setting.StarredCount,
+			"recentCount":  setting.RecentCount,
+		},
 	}
 
 	return jsonObj, nil

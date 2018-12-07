@@ -100,6 +100,12 @@ var (
 	// Dashboard history
 	DashboardVersionsToKeep int
 
+	// Search Panel Starred Dashboards Count
+	StarredCount int
+
+	// Search Panel Recent Dashboards Count
+	RecentCount int
+
 	// User settings
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
@@ -603,6 +609,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+
+	// search panel options (number of dashboars to show)
+	searchPanel := iniFile.Section("search_panel")
+	StarredCount = searchPanel.Key("starred_dashboards_count").MustInt()
+	RecentCount = searchPanel.Key("recent_dashboards_count").MustInt()
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
