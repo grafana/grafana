@@ -158,7 +158,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
-    const datasources = datasourceSrv.getAll();
+    const datasources = datasourceSrv.getExternal();
     const exploreDatasources = datasources.map(ds => ({
       value: ds.name,
       label: ds.name,
@@ -574,6 +574,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         'Table',
         {
           format: 'table',
+          resultFormat: 'table',
           instant: true,
           valueWithRefId: true,
         },
@@ -585,6 +586,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         'Graph',
         {
           format: 'time_series',
+          resultFormat: 'time_series',
           instant: false,
         },
         makeTimeSeriesList
