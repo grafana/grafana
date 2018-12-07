@@ -10,6 +10,31 @@ describe('Prometheus Result Transformer', () => {
     ctx.resultTransformer = new ResultTransformer(ctx.templateSrv);
   });
 
+  describe('When nothing is returned', () => {
+    test('should return empty series', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: '',
+          result: null,
+        },
+      };
+      const series = ctx.resultTransformer.transform({ data: response }, {});
+      expect(series).toEqual([]);
+    });
+    test('should return empty table', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: '',
+          result: null,
+        },
+      };
+      const table = ctx.resultTransformer.transform({ data: response }, { format: 'table' });
+      expect(table).toMatchObject([{ type: 'table', rows: [] }]);
+    });
+  });
+
   describe('When resultFormat is table', () => {
     const response = {
       status: 'success',
