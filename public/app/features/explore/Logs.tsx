@@ -441,20 +441,20 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
-
-            {hasData &&
-              meta && (
-                <div className="logs-panel-meta">
-                  {meta.map(item => (
-                    <div className="logs-panel-meta__item" key={item.label}>
-                      <span className="logs-panel-meta__label">{item.label}:</span>
-                      <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
           </div>
         </div>
+
+        {hasData &&
+          meta && (
+            <div className="logs-panel-meta">
+              {meta.map(item => (
+                <div className="logs-panel-meta__item" key={item.label}>
+                  <span className="logs-panel-meta__label">{item.label}:</span>
+                  <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
         <div className="logs-rows">
           {hasData &&

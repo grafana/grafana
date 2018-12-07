@@ -6,7 +6,7 @@ $column-horizontal-spacing: 10px;
   padding: $panel-padding;
   padding-top: 10px;
   border-radius: $border-radius;
-  margin: 2*$panel-margin 0;
+  margin: 2*$panel-margin 0 $panel-margin;
   border: $panel-border;
   flex-direction: column;
 }
@@ -31,8 +31,7 @@ $column-horizontal-spacing: 10px;
 .logs-panel-meta {
   flex: 1;
   color: $text-color-weak;
-  // Align first line with controls labels
-  margin-top: -2px;
+  margin-bottom: 10px;
   min-width: 30%;
   display: flex;
 }
@@ -40,7 +39,6 @@ $column-horizontal-spacing: 10px;
 .logs-panel-meta__item {
   margin-right: 1em;
   display: flex;
-  flex-direction: column;
 }
 
 .logs-panel-meta__label {
