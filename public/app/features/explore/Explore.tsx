@@ -625,6 +625,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         raw: range,
       },
       rangeRaw: range,
+      scopedVars: {
+        __interval: { text: interval, value: interval },
+        __interval_ms: { text: intervalMs, value: intervalMs },
+      },
     };
   }
 
