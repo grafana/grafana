@@ -10,7 +10,8 @@ import { TypeaheadOutput } from 'app/types/explore';
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import TypeaheadField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import { DataQuery } from 'app/types';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -48,27 +49,27 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface LoggingQueryFieldProps {
+interface LokiQueryFieldProps {
   datasource: any;
   error?: string | JSX.Element;
   hint?: any;
   history?: any[];
-  initialQuery?: string | null;
+  initialQuery?: DataQuery;
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
-  onQueryChange?: (value: string, override?: boolean) => void;
+  onQueryChange?: (value: DataQuery, override?: boolean) => void;
 }
 
-interface LoggingQueryFieldState {
+interface LokiQueryFieldState {
   logLabelOptions: any[];
   syntaxLoaded: boolean;
 }
 
-class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, LoggingQueryFieldState> {
+class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: any[];
   languageProvider: any;
 
-  constructor(props: LoggingQueryFieldProps, context) {
+  constructor(props: LokiQueryFieldProps, context) {
     super(props, context);
 
     if (props.datasource.languageProvider) {
@@ -134,9 +135,13 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { onQueryChange } = this.props;
+    const { initialQuery, onQueryChange } = this.props;
     if (onQueryChange) {
-      onQueryChange(value, override);
+      const query = {
+        ...initialQuery,
+        expr: value,
+      };
+      onQueryChange(query, override);
     }
   };
 
@@ -196,15 +201,15 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
           </Cascader>
         </div>
         <div className="prom-query-field-wrapper">
-          <TypeaheadField
+          <QueryField
             additionalPlugins={this.plugins}
             cleanText={cleanText}
-            initialValue={initialQuery}
+            initialQuery={initialQuery.expr}
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}
-            placeholder="Enter a PromQL query"
-            portalOrigin="prometheus"
+            placeholder="Enter a Loki Log query"
+            portalOrigin="loki"
             syntaxLoaded={syntaxLoaded}
           />
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
@@ -224,4 +229,4 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
   }
 }
 
-export default LoggingQueryField;
+export default LokiQueryField;

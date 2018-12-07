@@ -36,6 +36,32 @@ describe('Language completion provider', () => {
         },
       ]);
     });
+
+    it('returns default suggestions with history on emtpty context when history was provided', () => {
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('');
+      const history = [
+        {
+          query: { refId: '1', expr: 'metric' },
+        },
+      ];
+      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] }, { history });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'History',
+          items: [
+            {
+              label: 'metric',
+            },
+          ],
+        },
+        {
+          label: 'Functions',
+        },
+      ]);
+    });
   });
 
   describe('range suggestions', () => {
@@ -50,9 +76,16 @@ describe('Language completion provider', () => {
       });
       expect(result.context).toBe('context-range');
       expect(result.refresher).toBeUndefined();
-      expect(result.suggestions).toEqual([
+      expect(result.suggestions).toMatchObject([
         {
-          items: [{ label: '1m' }, { label: '5m' }, { label: '10m' }, { label: '30m' }, { label: '1h' }],
+          items: [
+            { label: '1m' },
+            { label: '5m' },
+            { label: '10m' },
+            { label: '30m' },
+            { label: '1h' },
+            { label: '1d' },
+          ],
           label: 'Range vector',
         },
       ]);

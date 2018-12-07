@@ -9,18 +9,19 @@ import {
   LogsStream,
   LogsStreamEntry,
   LogsStreamLabels,
+  LogsMetaKind,
 } from 'app/core/logs_model';
 import { DEFAULT_LIMIT } from './datasource';
 
 /**
  * Returns the log level of a log line.
- * Parse the line for level words. If no level is found, it returns `LogLevel.none`.
+ * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
  */
 export function getLogLevel(line: string): LogLevel {
   if (!line) {
-    return LogLevel.none;
+    return LogLevel.unkown;
   }
   let level: LogLevel;
   Object.keys(LogLevel).forEach(key => {
@@ -32,7 +33,7 @@ export function getLogLevel(line: string): LogLevel {
     }
   });
   if (!level) {
-    level = LogLevel.none;
+    level = LogLevel.unkown;
   }
   return level;
 }
@@ -40,7 +41,7 @@ export function getLogLevel(line: string): LogLevel {
 /**
  * Regexp to extract Prometheus-style labels
  */
-const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
+const labelRegexp = /\b(\w+)(!?=~?)"([^"\n]*?)"/g;
 
 /**
  * Returns a map of label keys to value from an input selector string.
@@ -104,11 +105,17 @@ export function formatLabels(labels: LogsStreamLabels, defaultValue = ''): strin
     return defaultValue;
   }
   const labelKeys = Object.keys(labels).sort();
-  const cleanSelector = labelKeys.map(key => `${key}=${labels[key]}`).join(', ');
+  const cleanSelector = labelKeys.map(key => `${key}="${labels[key]}"`).join(', ');
   return ['{', cleanSelector, '}'].join('');
 }
 
-export function processEntry(entry: LogsStreamEntry, labels: string, uniqueLabels: string, search: string): LogRow {
+export function processEntry(
+  entry: LogsStreamEntry,
+  labels: string,
+  parsedLabels: LogsStreamLabels,
+  uniqueLabels: LogsStreamLabels,
+  search: string
+): LogRow {
   const { line, timestamp } = entry;
   // Assumes unique-ness, needs nanosec precision for timestamp
   const key = `EK${timestamp}${labels}`;
@@ -120,19 +127,22 @@ export function processEntry(entry: LogsStreamEntry, labels: string, uniqueLabel
 
   return {
     key,
-    labels,
     logLevel,
     timeFromNow,
     timeEpochMs,
     timeLocal,
     uniqueLabels,
     entry: line,
+    labels: parsedLabels,
     searchWords: search ? [search] : [],
     timestamp: timestamp,
   };
 }
 
 export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT): LogsModel {
+  // Unique model identifier
+  const id = streams.map(stream => stream.labels).join();
+
   // Find unique labels for each stream
   streams = streams.map(stream => ({
     ...stream,
@@ -141,7 +151,7 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT)
   const commonLabels = findCommonLabels(streams.map(model => model.parsedLabels));
   streams = streams.map(stream => ({
     ...stream,
-    uniqueLabels: formatLabels(findUniqueLabels(stream.parsedLabels, commonLabels)),
+    uniqueLabels: findUniqueLabels(stream.parsedLabels, commonLabels),
   }));
 
   // Merge stream entries into single list of log rows
@@ -149,7 +159,9 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT)
     .reduce(
       (acc: LogRow[], stream: LogsStream) => [
         ...acc,
-        ...stream.entries.map(entry => processEntry(entry, stream.labels, stream.uniqueLabels, stream.search)),
+        ...stream.entries.map(entry =>
+          processEntry(entry, stream.labels, stream.parsedLabels, stream.uniqueLabels, stream.search)
+        ),
       ],
       []
     )
@@ -162,17 +174,20 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT)
   if (_.size(commonLabels) > 0) {
     meta.push({
       label: 'Common labels',
-      value: formatLabels(commonLabels),
+      value: commonLabels,
+      kind: LogsMetaKind.LabelsMap,
     });
   }
   if (limit) {
     meta.push({
       label: 'Limit',
       value: `${limit} (${sortedRows.length} returned)`,
+      kind: LogsMetaKind.String,
     });
   }
 
   return {
+    id,
     meta,
     rows: sortedRows,
   };

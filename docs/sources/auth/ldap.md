@@ -3,6 +3,7 @@ title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
 type = "docs"
+aliases = ["/installation/ldap/"]
 [menu.docs]
 name = "LDAP"
 identifier = "ldap"
@@ -162,9 +163,9 @@ org_role = "Viewer"
 Setting | Required | Description | Default
 ------------ | ------------ | ------------- | -------------
 `group_dn` | Yes | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`) |
-`org_role` | Yes | Assign users of `group_dn` the organisation role `"Admin"`, `"Editor"` or `"Viewer"` |
+`org_role` | Yes | Assign users of `group_dn` the organization role `"Admin"`, `"Editor"` or `"Viewer"` |
 `org_id` | No | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs | `1` (default org id)
-`grafana_admin` | No | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organisations and users. Available in Grafana v5.3 and above | `false`
+`grafana_admin` | No | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`
 
 ### Nested/recursive group membership
 

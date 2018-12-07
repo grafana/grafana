@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
+import config from 'app/core/config';
 
 export const PALETTE_ROWS = 4;
 export const PALETTE_COLUMNS = 14;
@@ -7,6 +8,7 @@ export const DEFAULT_ANNOTATION_COLOR = 'rgba(0, 211, 255, 1)';
 export const OK_COLOR = 'rgba(11, 237, 50, 1)';
 export const ALERTING_COLOR = 'rgba(237, 46, 24, 1)';
 export const NO_DATA_COLOR = 'rgba(150, 150, 150, 1)';
+export const PENDING_COLOR = 'rgba(247, 149, 32, 1)';
 export const REGION_FILL_ALPHA = 0.09;
 
 const colors = [
@@ -87,6 +89,10 @@ export function hexToHsl(color) {
 
 export function hslToHex(color) {
   return tinycolor(color).toHexString();
+}
+
+export function getThemeColor(dark: string, light: string): string {
+  return config.bootData.user.lightTheme ? light : dark;
 }
 
 export let sortedColors = sortColorsByHue(colors);

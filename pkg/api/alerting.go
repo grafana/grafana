@@ -295,7 +295,7 @@ func PauseAlert(c *m.ReqContext, dto dtos.PauseAlertCommand) Response {
 		return Error(500, "", err)
 	}
 
-	var response m.AlertStateType = m.AlertStatePending
+	var response m.AlertStateType = m.AlertStateUnknown
 	pausedState := "un-paused"
 	if cmd.Paused {
 		response = m.AlertStatePaused

@@ -2,22 +2,8 @@ import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 
-export function elasticMetricAgg() {
-  return {
-    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/metric_agg.html',
-    controller: 'ElasticMetricAggCtrl',
-    restrict: 'E',
-    scope: {
-      target: '=',
-      index: '=',
-      onChange: '&',
-      getFields: '&',
-      esVersion: '=',
-    },
-  };
-}
-
 export class ElasticMetricAggCtrl {
+  /** @ngInject */
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
     const metricAggs = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
@@ -209,5 +195,19 @@ export class ElasticMetricAggCtrl {
   }
 }
 
+export function elasticMetricAgg() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/metric_agg.html',
+    controller: ElasticMetricAggCtrl,
+    restrict: 'E',
+    scope: {
+      target: '=',
+      index: '=',
+      onChange: '&',
+      getFields: '&',
+      esVersion: '=',
+    },
+  };
+}
+
 coreModule.directive('elasticMetricAgg', elasticMetricAgg);
-coreModule.controller('ElasticMetricAggCtrl', ElasticMetricAggCtrl);

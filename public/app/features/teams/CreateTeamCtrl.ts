@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 
-export default class CreateTeamCtrl {
+export class CreateTeamCtrl {
   name: string;
   email: string;
   navModel: any;

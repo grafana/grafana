@@ -1,6 +1,6 @@
 +++
-title = "Contributor Licence Agreement (CLA)"
-description = "Contributor Licence Agreement (CLA)"
+title = "Contributor License Agreement (CLA)"
+description = "Contributor License Agreement (CLA)"
 type = "docs"
 aliases = ["/project/cla", "docs/contributing/cla.html"]
 [menu.docs]

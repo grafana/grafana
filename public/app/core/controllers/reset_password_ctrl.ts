@@ -1,4 +1,5 @@
 import coreModule from '../core_module';
+import config from 'app/core/config';
 
 export class ResetPasswordCtrl {
   /** @ngInject */
@@ -6,6 +7,9 @@ export class ResetPasswordCtrl {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
     $scope.mode = 'send';
+    $scope.ldapEnabled = config.ldapEnabled;
+    $scope.authProxyEnabled = config.authProxyEnabled;
+    $scope.disableLoginForm = config.disableLoginForm;
 
     const params = $location.search();
     if (params.code) {

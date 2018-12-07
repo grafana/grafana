@@ -160,11 +160,14 @@ Content-Type: application/json
 
 `POST /api/admin/pause-all-alerts`
 
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
 ```http
 POST /api/admin/pause-all-alerts HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "paused": true

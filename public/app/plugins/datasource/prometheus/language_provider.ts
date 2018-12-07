@@ -9,8 +9,8 @@ import {
   TypeaheadOutput,
 } from 'app/types/explore';
 
-import { parseSelector, processLabels, RATE_RANGES } from './language_utils';
-import PromqlSyntax, { FUNCTIONS } from './promql';
+import { parseSelector, processLabels } from './language_utils';
+import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -125,9 +125,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .uniqBy('query')
+        .map(h => h.query.expr)
+        .filter()
+        .uniq()
         .take(HISTORY_ITEM_COUNT)
-        .map(h => h.query)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
         .value();
@@ -171,7 +172,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions: [
         {
           label: 'Range vector',
-          items: [...RATE_RANGES].map(wrapLabel),
+          items: [...RATE_RANGES],
         },
       ],
     };

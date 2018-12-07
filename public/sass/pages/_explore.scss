@@ -2,7 +2,7 @@
   width: 100%;
 
   &-container {
-    padding: 2rem;
+    padding: $dashboard-padding;
   }
 
   &-wrapper {
@@ -18,10 +18,35 @@
     margin-left: 15px;
   }
 
-  // Graph panel needs a bit extra padding at top
-  .panel-container {
+  .explore-panel {
+    margin-top: $panel-margin;
+  }
+
+  .explore-panel__body {
     padding: $panel-padding;
-    padding-top: 10px;
+  }
+
+  .explore-panel__header {
+    padding: $panel-padding;
+    padding-top: 5px;
+    padding-bottom: 0;
+    display: flex;
+    cursor: pointer;
+    margin-bottom: 5px;
+    transition: all 0.1s linear;
+  }
+
+  .explore-panel__header-label {
+    font-weight: 500;
+    margin-right: $panel-margin;
+    font-size: $font-size-h6;
+    box-shadow: $text-shadow-faint;
+  }
+
+  .explore-panel__header-buttons {
+    margin-right: $panel-margin;
+    font-size: $font-size-lg;
+    line-height: $font-size-h6;
   }
 
   // Make sure wrap buttons around on small screens
@@ -91,11 +116,16 @@
     height: 2px;
     position: relative;
     overflow: hidden;
-    background: $text-color-faint;
+    background: none;
     margin: $panel-margin / 2;
+    transition: background-color 1s ease;
   }
 
-  .explore-panel__loader:after {
+  .explore-panel__loader--active {
+    background: $text-color-faint;
+  }
+
+  .explore-panel__loader--active:after {
     content: ' ';
     display: block;
     width: 25%;
@@ -206,92 +236,6 @@
   font-size: $font-size-xs;
   text-align: right;
   padding-right: 0.25em;
-}
-
-.explore {
-  .logs {
-    .logs-entries {
-      display: grid;
-      grid-column-gap: 1rem;
-      grid-row-gap: 0.1rem;
-      grid-template-columns: 4px minmax(100px, max-content) minmax(100px, 25%) 1fr;
-      font-family: $font-family-monospace;
-      font-size: 12px;
-    }
-
-    .logs-controls {
-      display: flex;
-
-      > * {
-        margin-right: 1em;
-      }
-    }
-
-    .logs-options,
-    .logs-graph {
-      margin-bottom: $panel-margin;
-    }
-
-    .logs-meta {
-      flex: 1;
-      color: $text-color-weak;
-      padding: 2px 0;
-    }
-
-    .logs-meta-item {
-      display: inline-block;
-      margin-right: 1em;
-    }
-
-    .logs-meta-item__label {
-      margin-right: 0.5em;
-      font-size: 0.9em;
-      font-weight: 500;
-    }
-
-    .logs-meta-item__value {
-      font-family: $font-family-monospace;
-    }
-
-    .logs-row-match-highlight {
-      // Undoing mark styling
-      background: inherit;
-      padding: inherit;
-
-      color: $typeahead-selected-color;
-      border-bottom: 1px solid $typeahead-selected-color;
-      background-color: lighten($typeahead-selected-color, 60%);
-    }
-
-    .logs-row-level {
-      background-color: transparent;
-      margin: 6px 0;
-      border-radius: 2px;
-      opacity: 0.8;
-    }
-
-    .logs-row-level-crit {
-      background-color: #705da0;
-    }
-
-    .logs-row-level-error,
-    .logs-row-level-err {
-      background-color: #e24d42;
-    }
-
-    .logs-row-level-warn {
-      background-color: #eab839;
-    }
-
-    .logs-row-level-info {
-      background-color: #7eb26d;
-    }
-
-    .logs-row-level-trace,
-    .logs-row-level-debug {
-      background-color: #1f78c1;
-    }
-  }
 }
 
 // Prometheus-specifics, to be extracted to datasource soon

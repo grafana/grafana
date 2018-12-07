@@ -19,6 +19,7 @@ const (
 	AlertStateAlerting AlertStateType = "alerting"
 	AlertStateOK       AlertStateType = "ok"
 	AlertStatePending  AlertStateType = "pending"
+	AlertStateUnknown  AlertStateType = "unknown"
 )
 
 const (
@@ -39,7 +40,12 @@ var (
 )
 
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStateOK || s == AlertStateNoData || s == AlertStatePaused || s == AlertStatePending
+	return s == AlertStateOK ||
+		s == AlertStateNoData ||
+		s == AlertStatePaused ||
+		s == AlertStatePending ||
+		s == AlertStateAlerting ||
+		s == AlertStateUnknown
 }
 
 func (s NoDataOption) IsValid() bool {
@@ -66,12 +72,13 @@ type Alert struct {
 	PanelId        int64
 	Name           string
 	Message        string
-	Severity       string
+	Severity       string //Unused
 	State          AlertStateType
-	Handler        int64
+	Handler        int64 //Unused
 	Silenced       bool
 	ExecutionError string
 	Frequency      int64
+	For            time.Duration
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time

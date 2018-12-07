@@ -7,12 +7,64 @@ describe('Language completion provider', () => {
     metadataRequest: () => ({ data: { data: [] } }),
   };
 
-  it('returns default suggestions on emtpty context', () => {
-    const instance = new LanguageProvider(datasource);
-    const result = instance.provideCompletionItems({ text: '', prefix: '', wrapperClasses: [] });
-    expect(result.context).toBeUndefined();
-    expect(result.refresher).toBeUndefined();
-    expect(result.suggestions.length).toEqual(0);
+  describe('empty query suggestions', () => {
+    it('returns no suggestions on emtpty context', () => {
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('');
+      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions.length).toEqual(0);
+    });
+
+    it('returns default suggestions with history on emtpty context when history was provided', () => {
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('');
+      const history = [
+        {
+          query: { refId: '1', expr: '{app="foo"}' },
+        },
+      ];
+      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] }, { history });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions).toMatchObject([
+        {
+          label: 'History',
+          items: [
+            {
+              label: '{app="foo"}',
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('returns no suggestions within regexp', () => {
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('{} ()');
+      const range = value.selection.merge({
+        anchorOffset: 4,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const history = [
+        {
+          query: { refId: '1', expr: '{app="foo"}' },
+        },
+      ];
+      const result = instance.provideCompletionItems(
+        {
+          text: '',
+          prefix: '',
+          value: valueWithSelection,
+          wrapperClasses: [],
+        },
+        { history }
+      );
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions.length).toEqual(0);
+    });
   });
 
   describe('label suggestions', () => {
@@ -69,6 +121,15 @@ describe('Query imports', () => {
       const instance = new LanguageProvider(datasourceWithLabels);
       const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
       expect(result).toEqual('{foo="bar"}');
+    });
+
+    it('returns selector query from selector query with all labels if logging label list is empty', async () => {
+      const datasourceWithLabels = {
+        metadataRequest: url => (url === '/api/prom/label' ? { data: { data: [] } } : { data: { data: [] } }),
+      };
+      const instance = new LanguageProvider(datasourceWithLabels);
+      const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
+      expect(result).toEqual('{baz="42",foo="bar"}');
     });
   });
 });

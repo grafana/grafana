@@ -31,7 +31,7 @@ Datasource permissions allow you to restrict query access to only specific Teams
 
 ### Premium Plugins
 
-With a Grafana Enterprise licence you will get access to premium plugins, including:
+With a Grafana Enterprise license you will get access to premium plugins, including:
 
 * [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
 * [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)

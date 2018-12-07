@@ -169,6 +169,7 @@ export class AlertTabCtrl {
     alert.frequency = alert.frequency || '1m';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
+    alert.for = alert.for || '0m';
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
@@ -217,7 +218,7 @@ export class AlertTabCtrl {
   buildDefaultCondition() {
     return {
       type: 'query',
-      query: { params: ['A', '15m', 'now'] },
+      query: { params: ['A', '5m', 'now'] },
       reducer: { type: 'avg', params: [] },
       evaluator: { type: 'gt', params: [null] },
       operator: { type: 'and' },
@@ -354,6 +355,7 @@ export class AlertTabCtrl {
   enable() {
     this.panel.alert = {};
     this.initModel();
+    this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
   }
 
   evaluatorParamsChanged() {

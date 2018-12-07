@@ -428,10 +428,16 @@ kbn.valueFormats.hex0x = (value, decimals) => {
 };
 
 kbn.valueFormats.sci = (value, decimals) => {
+  if (value == null) {
+    return '';
+  }
   return value.toExponential(decimals);
 };
 
 kbn.valueFormats.locale = (value, decimals) => {
+  if (value == null) {
+    return '';
+  }
   return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
 };
 
@@ -584,8 +590,8 @@ kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
 kbn.valueFormats.litreh = kbn.formatBuilders.fixedUnit('l/h');
-kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
-kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
+kbn.valueFormats.flowlpm = kbn.formatBuilders.fixedUnit('l/min');
+kbn.valueFormats.flowmlpm = kbn.formatBuilders.fixedUnit('mL/min');
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');

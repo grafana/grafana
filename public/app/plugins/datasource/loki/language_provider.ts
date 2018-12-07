@@ -7,9 +7,10 @@ import {
   LanguageProvider,
   TypeaheadInput,
   TypeaheadOutput,
+  HistoryItem,
 } from 'app/types/explore';
 import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
-import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';
+import syntax from './syntax';
 import { DataQuery } from 'app/types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
@@ -19,9 +20,9 @@ const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
 const wrapLabel = (label: string) => ({ label });
 
-export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
+export function addHistoryMetadata(item: CompletionItem, history: HistoryItem[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter(h => h.ts > cutoffTs && h.query === item.label);
+  const historyForItem = history.filter(h => h.ts > cutoffTs && (h.query.expr as string) === item.label);
   const count = historyForItem.length;
   const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
@@ -35,7 +36,7 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   };
 }
 
-export default class LoggingLanguageProvider extends LanguageProvider {
+export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   logLabelOptions: any[];
@@ -54,7 +55,7 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 
   getSyntax() {
-    return PromqlSyntax;
+    return syntax;
   }
 
   request = url => {
@@ -69,19 +70,14 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   };
 
   // Keep this DOM-free for testing
-  provideCompletionItems({ prefix, wrapperClasses, text }: TypeaheadInput, context?: any): TypeaheadOutput {
-    // Syntax spans have 3 classes by default. More indicate a recognized token
-    const tokenRecognized = wrapperClasses.length > 3;
+  provideCompletionItems({ prefix, wrapperClasses, text, value }: TypeaheadInput, context?: any): TypeaheadOutput {
+    // Local text properties
+    const empty = value.document.text.length === 0;
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-labels')) {
-      // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
+      // Suggestions for {|} and {foo=|}
       return this.getLabelCompletionItems.apply(this, arguments);
-    } else if (
-      // Show default suggestions in a couple of scenarios
-      (prefix && !tokenRecognized) || // Non-empty prefix, but not inside known token
-      (prefix === '' && !text.match(/^[\]})\s]+$/)) || // Empty prefix, but not following a closing brace
-      text.match(/[+\-*/^%]/) // Anything after binary operator
-    ) {
+    } else if (empty) {
       return this.getEmptyCompletionItems(context || {});
     }
 
@@ -96,9 +92,10 @@ export default class LoggingLanguageProvider extends LanguageProvider {
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .uniqBy('query')
+        .map(h => h.query.expr)
+        .filter()
+        .uniq()
         .take(HISTORY_ITEM_COUNT)
-        .map(h => h.query)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
         .value();
@@ -177,6 +174,10 @@ export default class LoggingLanguageProvider extends LanguageProvider {
   }
 
   async importPrometheusQuery(query: string): Promise<string> {
+    if (!query) {
+      return '';
+    }
+
     // Consider only first selector in query
     const selectorMatch = query.match(selectorRegexp);
     if (selectorMatch) {
@@ -189,17 +190,24 @@ export default class LoggingLanguageProvider extends LanguageProvider {
 
       // Keep only labels that exist on origin and target datasource
       await this.start(); // fetches all existing label keys
-      const commonLabels = {};
-      for (const key in labels) {
-        const existingKeys = this.labelKeys[EMPTY_SELECTOR];
-        if (existingKeys.indexOf(key) > -1) {
-          // Should we check for label value equality here?
-          commonLabels[key] = labels[key];
+      const existingKeys = this.labelKeys[EMPTY_SELECTOR];
+      let labelsToKeep = {};
+      if (existingKeys && existingKeys.length > 0) {
+        // Check for common labels
+        for (const key in labels) {
+          if (existingKeys && existingKeys.indexOf(key) > -1) {
+            // Should we check for label value equality here?
+            labelsToKeep[key] = labels[key];
+          }
         }
+      } else {
+        // Keep all labels by default
+        labelsToKeep = labels;
       }
-      const labelKeys = Object.keys(commonLabels).sort();
+
+      const labelKeys = Object.keys(labelsToKeep).sort();
       const cleanSelector = labelKeys
-        .map(key => `${key}${commonLabels[key].operator}${commonLabels[key].value}`)
+        .map(key => `${key}${labelsToKeep[key].operator}${labelsToKeep[key].value}`)
         .join(',');
 
       return ['{', cleanSelector, '}'].join('');

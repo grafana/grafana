@@ -8,9 +8,9 @@ const alertQueryDef = new QueryPartDef({
     {
       name: 'from',
       type: 'string',
-      options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h', '24h', '48h'],
+      options: ['10s', '1m', '5m', '10m', '15m', '1h', '24h', '48h'],
     },
-    { name: 'to', type: 'string', options: ['now'] },
+    { name: 'to', type: 'string', options: ['now', 'now-1m', 'now-5m', 'now-10m', 'now-1h'] },
   ],
   defaultParams: ['#A', '15m', 'now', 'avg'],
 });
@@ -97,6 +97,13 @@ function getStateDisplayModel(state) {
         text: 'PENDING',
         iconClass: 'fa fa-exclamation',
         stateClass: 'alert-state-warning',
+      };
+    }
+    case 'unknown': {
+      return {
+        text: 'UNKNOWN',
+        iconClass: 'fa fa-question',
+        stateClass: 'alert-state-paused',
       };
     }
   }

@@ -95,7 +95,7 @@ export class PanelModel {
   setViewMode(fullscreen: boolean, isEditing: boolean) {
     this.fullscreen = fullscreen;
     this.isEditing = isEditing;
-    this.events.emit('panel-size-changed');
+    this.events.emit('view-mode-changed');
   }
 
   updateGridPos(newPos: GridPos) {
@@ -132,7 +132,7 @@ export class PanelModel {
     }
   }
 
-  panelInitialized() {
+  initialized() {
     this.events.emit('panel-initialized');
   }
 

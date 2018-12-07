@@ -84,7 +84,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   render() {
     const { onCancel } = this.props;
     const newItem = this.state;
-    const pickerClassName = 'width-20';
+    const pickerClassName = 'min-width-20';
     const isValid = this.isValid();
     return (
       <div className="gf-form-inline cta-form">

@@ -26,7 +26,7 @@ export class Analytics {
 
   init() {
     this.$rootScope.$on('$viewContentLoaded', () => {
-      const track = { location: this.$location.url() };
+      const track = { page: this.$location.url() };
       const ga = (window as any).ga || this.gaInit();
       ga('set', track);
       ga('send', 'pageview');
