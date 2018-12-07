@@ -173,10 +173,6 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__stats {
   margin: 5px 0;
-  background-color: $popover-bg;
-  color: $popover-color;
-  border: 1px solid $popover-border-color;
-  padding: 10px;
 }
 
 .logs-row__field-highlight:hover {
@@ -211,21 +207,42 @@ $column-horizontal-spacing: 10px;
   top: 1.25em;
   left: -10px;
   z-index: 100;
-  background-color: $popover-bg;
-  color: $popover-color;
-  border: 1px solid $popover-border-color;
-  padding: 10px;
-  border-radius: $border-radius;
   justify-content: space-between;
   box-shadow: $popover-shadow;
 }
 
-.logs-stats__info {
-  margin-bottom: $spacer / 2;
+/*
+* Stats popover & message stats box
+*/
+.logs-stats {
+  background-color: $popover-bg;
+  color: $popover-color;
+  border: 1px solid $popover-border-color;
+  border-radius: $border-radius;
+  max-width: 500px;
 }
 
-.logs-stats__icon {
-  margin-left: 0.5em;
+.logs-stats__header {
+  background-color: $popover-border-color;
+  padding: 6px 10px;
+  display: flex;
+}
+
+.logs-stats__title {
+  font-weight: $font-weight-semi-bold;
+  padding-right: $spacer;
+  overflow: hidden;
+  display: inline-block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+.logs-stats__body {
+  padding: 20px 10px 10px 10px;
+}
+
+.logs-stats__close {
   cursor: pointer;
 }
 
@@ -272,6 +289,6 @@ $column-horizontal-spacing: 10px;
   }
 
   &__innerbar {
-    background-color: $blue;
+    background: $blue;
   }
 }

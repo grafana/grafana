@@ -48,15 +48,21 @@ export class Stats extends PureComponent<{
     const otherProportion = otherCount / total;
 
     return (
-      <>
-        <div className="logs-stats__info">
-          {label}: {total} of {rowCount} rows have that label
-          <span className="logs-stats__icon fa fa-window-close" onClick={onClickClose} />
+      <div className="logs-stats">
+        <div className="logs-stats__header">
+          <span className="logs-stats__title">
+            {label}: {total} of {rowCount} rows have that label
+          </span>
+          <span className="logs-stats__close fa fa-remove" onClick={onClickClose} />
         </div>
-        {topRows.map(stat => <StatsRow key={stat.value} {...stat} active={stat.value === value} />)}
-        {insertActiveRow && activeRow && <StatsRow key={activeRow.value} {...activeRow} active />}
-        {otherCount > 0 && <StatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />}
-      </>
+        <div className="logs-stats__body">
+          {topRows.map(stat => <StatsRow key={stat.value} {...stat} active={stat.value === value} />)}
+          {insertActiveRow && activeRow && <StatsRow key={activeRow.value} {...activeRow} active />}
+          {otherCount > 0 && (
+            <StatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
+          )}
+        </div>
+      </div>
     );
   }
 }
