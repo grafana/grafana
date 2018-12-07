@@ -12,7 +12,12 @@ function panelEditorTab(dynamicDirectiveSrv) {
     },
     directive: scope => {
       const pluginId = scope.ctrl.pluginId;
-      const tabName = scope.editorTab.title.toLowerCase().replace(' ', '-');
+      const tabName = scope.editorTab.title
+        .toLowerCase()
+        .replace(' ', '-')
+        .replace('&', '')
+        .replace(' ', '')
+        .replace(' ', '-');
 
       if (directiveCache[pluginId]) {
         if (directiveCache[pluginId][tabName]) {
