@@ -654,6 +654,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         ...results,
         queryTransactions: nextQueryTransactions,
         showingStartPage: false,
+        graphInterval: queryOptions.intervalMs,
       };
     });
 
