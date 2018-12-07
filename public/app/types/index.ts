@@ -19,6 +19,7 @@ import {
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,
+  IntervalValues,
 } from './series';
 import { PanelProps, PanelOptionsProps, Threshold } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
@@ -92,6 +93,7 @@ export {
   Threshold,
   ValidationEvents,
   ValidationRule,
+  IntervalValues,
 };
 
 export interface StoreState {

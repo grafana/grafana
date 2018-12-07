@@ -19,6 +19,11 @@ export interface TimeRange {
   raw: RawTimeRange;
 }
 
+export interface IntervalValues {
+  interval: string; // 10s,5m
+  intervalMs: number;
+}
+
 export type TimeSeriesValue = string | number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
@@ -90,6 +95,9 @@ export interface DataQueryOptions {
 }
 
 export interface DataSourceApi {
+  /**
+   *  min interval range
+   */
   interval?: string;
 
   /**

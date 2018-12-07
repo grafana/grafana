@@ -237,6 +237,7 @@ $horizontalComponentOffset: 180px;
 // -------------------------
 
 $navbarHeight: 55px;
+
 $navbarBackground: $panel-bg;
 $navbarBorder: 1px solid $dark-3;
 $navbarShadow: 0 0 20px black;
@@ -387,3 +388,6 @@ $panel-editor-viz-item-bg-hover-active: darken($orange, 45%);
 
 $panel-grid-placeholder-bg: darken($blue, 47%);
 $panel-grid-placeholder-shadow: 0 0 4px $blue;
+
+// logs
+$logs-color-unkown: $gray-2;
