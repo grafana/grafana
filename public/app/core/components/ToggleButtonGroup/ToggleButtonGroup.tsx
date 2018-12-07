@@ -1,43 +1,19 @@
-import React, { SFC, ReactNode, PureComponent, ReactElement } from 'react';
+import React, { SFC, ReactNode, PureComponent } from 'react';
 
 interface ToggleButtonGroupProps {
-  onChange: (value) => void;
-  value?: any;
   label?: string;
-  render: (props) => void;
+  children: JSX.Element[];
+  transparent?: boolean;
 }
 
 export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
-  getValues() {
-    const { children } = this.props;
-    return React.Children.toArray(children).map((c: ReactElement<any>) => c.props.value);
-  }
-
-  smallChildren() {
-    const { children } = this.props;
-    return React.Children.toArray(children).every((c: ReactElement<any>) => c.props.className.includes('small'));
-  }
-
-  handleToggle(toggleValue) {
-    const { value, onChange } = this.props;
-    if (value && value === toggleValue) {
-      return;
-    }
-    onChange(toggleValue);
-  }
-
   render() {
-    const { value, label } = this.props;
-    const values = this.getValues();
-    const selectedValue = value || values[0];
-    const labelClassName = `gf-form-label ${this.smallChildren() ? 'small' : ''}`;
+    const { children, label, transparent } = this.props;
 
     return (
       <div className="gf-form">
-        <div className="toggle-button-group">
-          {label && <label className={labelClassName}>{label}</label>}
-          {this.props.render({ selectedValue, onChange: this.handleToggle.bind(this) })}
-        </div>
+        {label && <label className={`gf-form-label ${transparent ? 'gf-form-label--transparent' : ''}`}>{label}</label>}
+        <div className={`toggle-button-group ${transparent ? 'toggle-button-group--transparent' : ''}`}>{children}</div>
       </div>
     );
   }

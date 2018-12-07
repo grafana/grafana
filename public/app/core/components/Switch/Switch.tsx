@@ -6,6 +6,7 @@ export interface Props {
   checked: boolean;
   labelClass?: string;
   switchClass?: string;
+  transparent?: boolean;
   onChange: (event) => any;
 }
 
@@ -24,11 +25,11 @@ export class Switch extends PureComponent<Props, State> {
   };
 
   render() {
-    const { labelClass = '', switchClass = '', label, checked } = this.props;
+    const { labelClass = '', switchClass = '', label, checked, transparent } = this.props;
 
     const labelId = `check-${this.state.id}`;
-    const labelClassName = `gf-form-label ${labelClass} pointer`;
-    const switchClassName = `gf-form-switch ${switchClass}`;
+    const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
+    const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
 
     return (
       <label htmlFor={labelId} className="gf-form-switch-container">

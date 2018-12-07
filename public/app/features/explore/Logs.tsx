@@ -431,27 +431,17 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} />
-            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} />
-            <ToggleButtonGroup
-              label="Dedup"
-              onChange={this.onChangeDedup}
-              value={dedup}
-              render={({ selectedValue, onChange }) =>
-                Object.keys(LogsDedupStrategy).map((dedupType, i) => (
-                  <ToggleButton
-                    className="btn-small"
-                    key={i}
-                    value={dedupType}
-                    onChange={onChange}
-                    selected={selectedValue === dedupType}
-                  >
-                    {dedupType}
-                  </ToggleButton>
-                ))
-              }
-            />
+            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} transparent />
+            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} transparent />
+            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <ToggleButtonGroup label="Dedup" transparent={true}>
+              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+                <ToggleButton key={i} value={dedupType} onChange={this.onChangeDedup} selected={dedup === dedupType}>
+                  {dedupType}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+
             {hasData &&
               meta && (
                 <div className="logs-panel-meta">

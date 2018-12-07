@@ -117,9 +117,11 @@ $input-border: 1px solid $input-border-color;
     color: $critical;
   }
 
-  &--small {
-    padding: ($input-padding-y / 2) ($input-padding-x / 2);
-    font-size: $font-size-xs;
+  &--transparent {
+    background-color: transparent;
+    border: 0;
+    text-align: right;
+    padding-left: 0px;
   }
 
   &:disabled {
