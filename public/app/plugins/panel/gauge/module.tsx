@@ -34,6 +34,8 @@ export const defaultProps = {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
+    valueMaps: [],
+    rangeMaps: [],
   },
 };
 
