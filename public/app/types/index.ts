@@ -19,6 +19,7 @@ import {
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,
+  IntervalValues,
 } from './series';
 import { PanelProps, PanelOptionsProps, RangeMap, Threshold, ValueMap } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
@@ -94,6 +95,7 @@ export {
   ValidationRule,
   ValueMap,
   RangeMap,
+  IntervalValues,
 };
 
 export interface StoreState {

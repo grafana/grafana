@@ -189,7 +189,7 @@ export class PanelModel {
     }
   }
 
-  panelInitialized() {
+  initialized() {
     this.events.emit('panel-initialized');
   }
 

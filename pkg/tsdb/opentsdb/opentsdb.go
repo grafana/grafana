@@ -84,7 +84,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 
 	postData, err := json.Marshal(data)
 	if err != nil {
-		plog.Info("Failed marshalling data", "error", err)
+		plog.Info("Failed marshaling data", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
 	}
 

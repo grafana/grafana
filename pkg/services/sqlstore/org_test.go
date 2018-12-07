@@ -187,7 +187,7 @@ func TestAccountDataAccess(t *testing.T) {
 					err := DeleteOrg(&m.DeleteOrgCommand{Id: ac2.OrgId})
 					So(err, ShouldBeNil)
 
-					// remove frome ac2 from ac1 org
+					// remove ac2 user from ac1 org
 					remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, ShouldDeleteOrphanedUser: true}
 					err = RemoveOrgUser(&remCmd)
 					So(err, ShouldBeNil)

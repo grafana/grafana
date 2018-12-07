@@ -74,6 +74,11 @@ export class DashNavCtrl {
   }
 
   showSearch() {
+    if (this.dashboard.meta.fullscreen) {
+      this.close();
+      return;
+    }
+
     appEvents.emit('show-dash-search');
   }
 

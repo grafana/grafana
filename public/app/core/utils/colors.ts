@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
+import config from 'app/core/config';
 
 export const PALETTE_ROWS = 4;
 export const PALETTE_COLUMNS = 14;
@@ -88,6 +89,10 @@ export function hexToHsl(color) {
 
 export function hslToHex(color) {
   return tinycolor(color).toHexString();
+}
+
+export function getThemeColor(dark: string, light: string): string {
+  return config.bootData.user.lightTheme ? light : dark;
 }
 
 export let sortedColors = sortColorsByHue(colors);

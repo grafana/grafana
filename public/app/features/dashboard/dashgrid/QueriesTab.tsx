@@ -258,8 +258,8 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     const options = {
-      title: '',
-      icon: 'fa fa-cog',
+      title: 'Time Range',
+      icon: '',
       disabled: false,
       render: this.renderOptions,
     };
