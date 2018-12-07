@@ -53,6 +53,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cacheTimeout: true,
   nullPointMode: true,
   cachedPluginOptions: true,
+  transparent: true,
 };
 
 const defaults: any = {
@@ -60,6 +61,7 @@ const defaults: any = {
   datasource: null,
   targets: [{}],
   cachedPluginOptions: {},
+  transparent: false,
 };
 
 export class PanelModel {
@@ -91,6 +93,7 @@ export class PanelModel {
   interval?: string;
   description?: string;
   links?: [];
+  transparent: boolean;
 
   // non persisted
   fullscreen: boolean;

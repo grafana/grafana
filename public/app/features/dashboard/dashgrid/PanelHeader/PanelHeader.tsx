@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import classNames from 'classnames';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
@@ -12,13 +12,17 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   timeInfo: string;
+  title?: string;
+  description?: string;
+  scopedVars?: string;
+  links?: [];
 }
 
 interface State {
   panelMenuOpen: boolean;
 }
 
-export class PanelHeader extends PureComponent<Props, State> {
+export class PanelHeader extends Component<Props, State> {
   state = {
     panelMenuOpen: false,
   };
@@ -44,7 +48,13 @@ export class PanelHeader extends PureComponent<Props, State> {
     const { panel, dashboard, timeInfo } = this.props;
     return (
       <>
-        <PanelHeaderCorner panel={panel} />
+        <PanelHeaderCorner
+          panel={panel}
+          title={panel.title}
+          description={panel.description}
+          scopedVars={panel.scopedVars}
+          links={panel.links}
+        />
         <div className={panelHeaderClass}>
           {isLoading && (
             <span className="panel-loading">

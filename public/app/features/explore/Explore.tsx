@@ -158,7 +158,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
-    const datasources = datasourceSrv.getAll();
+    const datasources = datasourceSrv.getExternal();
     const exploreDatasources = datasources.map(ds => ({
       value: ds.name,
       label: ds.name,
@@ -625,6 +625,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         raw: range,
       },
       rangeRaw: range,
+      scopedVars: {
+        __interval: { text: interval, value: interval },
+        __interval_ms: { text: intervalMs, value: intervalMs },
+      },
     };
   }
 

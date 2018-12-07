@@ -78,6 +78,11 @@ export class DatasourceSrv {
     return Object.keys(datasources).map(name => datasources[name]);
   }
 
+  getExternal() {
+    const datasources = this.getAll().filter(ds => !ds.meta.builtIn);
+    return _.sortBy(datasources, ['name']);
+  }
+
   getAnnotationSources() {
     const sources = [];
 
