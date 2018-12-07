@@ -3,11 +3,11 @@
 		<h5 class="section-heading">Info</h5>
 		<div class="gf-form">
 			<span class="gf-form-label width-7">Title</span>
-			<input type="text" class="gf-form-input width-25" ng-model='ctrl.panel.title'></input>
+			<input type="text" class="gf-form-input width-25" ng-model='ctrl.panel.title' ng-model-onblur></input>
 		</div>
 		<div class="gf-form gf-form--v-stretch">
 			<span class="gf-form-label width-7">Description</span>
-			<textarea class="gf-form-input width-25" rows="3" ng-model="ctrl.panel.description"  placeholder="Panel description, supports markdown & links"></textarea>
+			<textarea class="gf-form-input width-25" rows="3" ng-model="ctrl.panel.description" ng-model-onblur placeholder="Panel description, supports markdown & links"></textarea>
 		</div>
     <gf-form-switch class="gf-form" label-class="width-7" switch-class="max-width-6" label="Transparent" checked="ctrl.panel.transparent" on-change="ctrl.render()"></gf-form-switch>
 	</div>
