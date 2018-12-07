@@ -95,6 +95,57 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
+export interface LogsParser {
+  /**
+   * Value-agnostic matcher for a field label.
+   * Used to filter rows, and first capture group contains the value.
+   */
+  buildMatcher: (label: string) => RegExp;
+  /**
+   * Regex to find a field in the log line.
+   * First capture group contains the label value, second capture group the value.
+   */
+  fieldRegex: RegExp;
+  /**
+   * Function to verify if this is a valid parser for the given line.
+   * The parser accepts the line unless it returns undefined.
+   */
+  test: (line: string) => any;
+}
+
+export const LogsParsers: { [name: string]: LogsParser } = {
+  JSON: {
+    buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"([^"]*)"`),
+    fieldRegex: /"(\w+)"\s*:\s*"([^"]*)"/,
+    test: line => {
+      try {
+        return JSON.parse(line);
+      } catch (error) {}
+    },
+  },
+  logfmt: {
+    buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
+    fieldRegex: /(?:^|\s)(\w+)=("[^"]*"|\S+)/,
+    test: line => LogsParsers.logfmt.fieldRegex.test(line),
+  },
+};
+
+export function calculateFieldStats(rows: LogRow[], extractor: RegExp): LogsLabelStat[] {
+  // Consider only rows that satisfy the matcher
+  const rowsWithField = rows.filter(row => extractor.test(row.entry));
+  const rowCount = rowsWithField.length;
+
+  // Get field value counts for eligible rows
+  const countsByValue = _.countBy(rowsWithField, row => (row as LogRow).entry.match(extractor)[1]);
+  const sortedCounts = _.chain(countsByValue)
+    .map((count, value) => ({ count, value, proportion: count / rowCount }))
+    .sortBy('count')
+    .reverse()
+    .value();
+
+  return sortedCounts;
+}
+
 export function calculateLogsLabelStats(rows: LogRow[], label: string): LogsLabelStat[] {
   // Consider only rows that have the given label
   const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
@@ -149,6 +200,19 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
     ...logs,
     rows: dedupedRows,
   };
+}
+
+export function getParser(line: string): LogsParser {
+  let parser;
+  try {
+    if (LogsParsers.JSON.test(line)) {
+      parser = LogsParsers.JSON;
+    }
+  } catch (error) {}
+  if (!parser && LogsParsers.logfmt.test(line)) {
+    parser = LogsParsers.logfmt;
+  }
+  return parser;
 }
 
 export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
