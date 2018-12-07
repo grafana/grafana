@@ -88,7 +88,7 @@ export default class MappingRow extends PureComponent<Props, State> {
     const valueMap = mapping as ValueMap;
 
     return (
-      <div className="gf-form-inline">
+      <div className="gf-form">
         <div className="gf-form-inline">
           <Label width={4}>Value</Label>
           <input className="gf-form-input" onChange={this.onMappingValueChange} value={valueMap.value} />
@@ -105,36 +105,34 @@ export default class MappingRow extends PureComponent<Props, State> {
     const { mappingType } = this.state;
 
     return (
-      <div>
-        <div className="gf-form-inline">
-          <ToggleButtonGroup
-            label="Mapping type"
-            onChange={mappingType => this.onMappingTypeChange(mappingType)}
-            render={({ selectedValue, onChange }) => {
-              return [
-                <ToggleButton
-                  className="btn-small"
-                  key="value"
-                  onChange={onChange}
-                  selected={selectedValue === mappingType}
-                  value="Value"
-                >
-                  Value
-                </ToggleButton>,
-                <ToggleButton
-                  className="btn-small"
-                  key="range"
-                  onChange={onChange}
-                  selected={selectedValue === mappingType}
-                  value="Range"
-                >
-                  Range
-                </ToggleButton>,
-              ];
-            }}
-          />
-          <div>{this.renderRow()}</div>
-        </div>
+      <div className="gf-form-inline">
+        <ToggleButtonGroup
+          onChange={mappingType => this.onMappingTypeChange(mappingType)}
+          value={mappingType}
+          render={({ selectedValue, onChange }) => {
+            return [
+              <ToggleButton
+                className="btn-small"
+                key="value"
+                onChange={onChange}
+                selected={selectedValue === MappingType.ValueToText}
+                value={MappingType.ValueToText}
+              >
+                Value
+              </ToggleButton>,
+              <ToggleButton
+                className="btn-small"
+                key="range"
+                onChange={onChange}
+                selected={selectedValue === MappingType.RangeToText}
+                value={MappingType.RangeToText}
+              >
+                Range
+              </ToggleButton>,
+            ];
+          }}
+        />
+        <div>{this.renderRow()}</div>
       </div>
     );
   }
