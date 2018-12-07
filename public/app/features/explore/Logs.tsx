@@ -180,7 +180,7 @@ class Row extends PureComponent<RowProps, RowState> {
         {showDuplicates && (
           <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
         )}
-        <div className={row.logLevel ? `logs-row__level logs__row-level-${row.logLevel}` : ''} />
+        <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
         {showUtc && (
           <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
             {row.timestamp}
@@ -217,13 +217,15 @@ class Row extends PureComponent<RowProps, RowState> {
             )}
           {!parsed && !needsHighlighter && row.entry}
           {showFieldStats && (
-            <Stats
-              stats={fieldStats}
-              label={fieldLabel}
-              value={fieldValue}
-              onClickClose={this.onClickClose}
-              rowCount={fieldCount}
-            />
+            <div className="logs-row__stats">
+              <Stats
+                stats={fieldStats}
+                label={fieldLabel}
+                value={fieldValue}
+                onClickClose={this.onClickClose}
+                rowCount={fieldCount}
+              />
+            </div>
           )}
         </div>
       </div>

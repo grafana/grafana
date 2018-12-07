@@ -171,6 +171,14 @@ $column-horizontal-spacing: 10px;
   }
 }
 
+.logs-row__stats {
+  margin: 5px 0;
+  background-color: $popover-bg;
+  color: $popover-color;
+  border: 1px solid $popover-border-color;
+  padding: 10px;
+}
+
 .logs-row__field-highlight:hover {
   color: $typeahead-selected-color;
   border-bottom-style: solid;
