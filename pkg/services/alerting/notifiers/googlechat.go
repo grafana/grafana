@@ -3,12 +3,13 @@ package notifiers
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
-	"time"
 )
 
 func init() {
@@ -35,7 +36,7 @@ func NewGoogleChatNotifier(model *m.AlertNotification) (alerting.Notifier, error
 	}
 
 	return &GoogleChatNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		log:          log.New("alerting.notifier.googlechat"),
 	}, nil
