@@ -18,6 +18,32 @@ const templateSrv = {
 describe('datasource_srv', () => {
   const _datasourceSrv = new DatasourceSrv({}, {}, {}, templateSrv);
 
+  describe('when loading external datasources', () => {
+    beforeEach(() => {
+      config.datasources = {
+        buildInDs: {
+          name: 'buildIn',
+          meta: { builtIn: true },
+        },
+        nonBuildIn: {
+          name: 'external1',
+          meta: { builtIn: false },
+        },
+        nonExplore: {
+          name: 'external2',
+          meta: {},
+        },
+      };
+    });
+
+    it('should return list of explore sources', () => {
+      const externalSources = _datasourceSrv.getExternal();
+      expect(externalSources.length).toBe(2);
+      expect(externalSources[0].name).toBe('external1');
+      expect(externalSources[1].name).toBe('external2');
+    });
+  });
+
   describe('when loading metric sources', () => {
     let metricSources;
     const unsortedDatasources = {
