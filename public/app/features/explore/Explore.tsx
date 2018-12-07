@@ -574,7 +574,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         'Table',
         {
           format: 'table',
-          resultFormat: 'table',
           instant: true,
           valueWithRefId: true,
         },
@@ -586,7 +585,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         'Graph',
         {
           format: 'time_series',
-          resultFormat: 'time_series',
           instant: false,
         },
         makeTimeSeriesList
