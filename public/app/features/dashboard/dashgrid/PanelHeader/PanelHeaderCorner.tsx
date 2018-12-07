@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import templateSrv from 'app/features/templating/template_srv';
@@ -14,9 +14,13 @@ enum InfoModes {
 
 interface Props {
   panel: PanelModel;
+  title?: string;
+  description?: string;
+  scopedVars?: string;
+  links?: [];
 }
 
-export class PanelHeaderCorner extends PureComponent<Props> {
+export class PanelHeaderCorner extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
 
   getInfoMode = () => {

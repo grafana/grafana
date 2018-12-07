@@ -73,6 +73,7 @@ export class LinkSrv {
 
   getPanelLinkAnchorInfo(link, scopedVars) {
     const info: any = {};
+    info.target = link.targetBlank ? '_blank' : '';
     if (link.type === 'absolute') {
       info.target = link.targetBlank ? '_blank' : '_self';
       info.href = this.templateSrv.replace(link.url || '', scopedVars);
@@ -80,11 +81,9 @@ export class LinkSrv {
     } else if (link.url) {
       info.href = link.url;
       info.title = this.templateSrv.replace(link.title || '', scopedVars);
-      info.target = link.targetBlank ? '_blank' : '';
     } else if (link.dashUri) {
       info.href = 'dashboard/' + link.dashUri + '?';
       info.title = this.templateSrv.replace(link.title || '', scopedVars);
-      info.target = link.targetBlank ? '_blank' : '';
     } else {
       info.title = this.templateSrv.replace(link.title || '', scopedVars);
       const slug = kbn.slugifyForUrl(link.dashboard || '');
