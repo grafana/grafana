@@ -1,4 +1,4 @@
-﻿import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { Switch } from 'app/core/components/Switch/Switch';
 import { Input } from 'app/core/components/Form';
 import { isValidTimeSpan } from 'app/core/utils/rangeutil';
@@ -64,12 +64,7 @@ export class TimeRangeOptions extends PureComponent<Props> {
 
         <div className="gf-form-group">
           <div className="gf-form">
-            <span className="gf-form-label">
-              <i className="fa fa-clock-o" />
-            </span>
-
             <span className="gf-form-label width-12">Override relative time</span>
-            <span className="gf-form-label width-6">Last</span>
             <Input
               type="text"
               className="gf-form-input max-width-8"
@@ -81,11 +76,7 @@ export class TimeRangeOptions extends PureComponent<Props> {
           </div>
 
           <div className="gf-form">
-            <span className="gf-form-label">
-              <i className="fa fa-clock-o" />
-            </span>
             <span className="gf-form-label width-12">Add time shift</span>
-            <span className="gf-form-label width-6">Amount</span>
             <Input
               type="text"
               className="gf-form-input max-width-8"
@@ -97,11 +88,6 @@ export class TimeRangeOptions extends PureComponent<Props> {
           </div>
 
           <div className="gf-form-inline">
-            <div className="gf-form">
-              <span className="gf-form-label">
-                <i className="fa fa-clock-o" />
-              </span>
-            </div>
             <Switch label="Hide time override info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
           </div>
         </div>
