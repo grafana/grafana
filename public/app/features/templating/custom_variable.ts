@@ -38,8 +38,9 @@ export class CustomVariable implements Variable {
   }
 
   updateOptions() {
-    // extract options in comma separated string
-    this.options = _.map(this.query.split(/[,]+/), text => {
+    // extract options in comma separated string (use backslash to escape wanted commas)
+    this.options = _.map(this.query.split(/(?<!\\),+/), text => {
+      text = text.replace('\\,', ',');
       return { text: text.trim(), value: text.trim() };
     });
 
