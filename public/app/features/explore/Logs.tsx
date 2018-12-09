@@ -56,13 +56,13 @@ const FieldHighlight = onClick => props => {
 };
 
 interface RowProps {
-  allRows: LogRow[];
   highlighterExpressions?: string[];
   row: LogRow;
   showDuplicates: boolean;
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
   showUtc: boolean;
+  getRows: () => LogRow[];
   onClickLabel?: (label: string, value: string) => void;
 }
 
@@ -107,11 +107,12 @@ class Row extends PureComponent<RowProps, RowState> {
   };
 
   onClickHighlight = (fieldText: string) => {
-    const { allRows } = this.props;
+    const { getRows } = this.props;
     const { parser } = this.state;
 
     const fieldMatch = fieldText.match(parser.fieldRegex);
     if (fieldMatch) {
+      const allRows = getRows();
       // Build value-agnostic row matcher based on the field label
       const fieldLabel = fieldMatch[1];
       const fieldValue = fieldMatch[2];
@@ -151,7 +152,7 @@ class Row extends PureComponent<RowProps, RowState> {
 
   render() {
     const {
-      allRows,
+      getRows,
       highlighterExpressions,
       onClickLabel,
       row,
@@ -193,7 +194,7 @@ class Row extends PureComponent<RowProps, RowState> {
         )}
         {showLabels && (
           <div className="logs-row__labels">
-            <LogLabels allRows={allRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+            <LogLabels getRows={getRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
           </div>
         )}
         <div className="logs-row__message" onMouseEnter={this.onMouseOverMessage} onMouseLeave={this.onMouseOutMessage}>
@@ -416,6 +417,9 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
+    // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
+    const getRows = () => processedRows;
+
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
@@ -473,7 +477,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             firstRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
-                allRows={processedRows}
+                getRows={getRows}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
@@ -489,7 +493,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             lastRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
-                allRows={processedRows}
+                getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
