@@ -10,6 +10,7 @@ $column-horizontal-spacing: 10px;
   border: $panel-border;
   justify-items: flex-start;
   align-items: flex-start;
+  flex-wrap: wrap;
 
   > * {
     margin-right: 1em;
@@ -25,8 +26,6 @@ $column-horizontal-spacing: 10px;
 .logs-panel-meta {
   flex: 1;
   color: $text-color-weak;
-  // Align first line with controls labels
-  margin-top: -2px;
 }
 
 .logs-panel-meta__item {
