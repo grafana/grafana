@@ -6,6 +6,7 @@ import classnames from 'classnames';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange } from 'app/types/series';
 import {
+  LogsDedupDescription,
   LogsDedupStrategy,
   LogsModel,
   dedupLogRows,
@@ -449,6 +450,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
                     key={i}
                     value={dedupType}
                     onChange={onChange}
+                    title={LogsDedupDescription[dedupType] || null}
                     selected={selectedValue === dedupType}
                   >
                     {dedupType}
