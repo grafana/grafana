@@ -49,9 +49,17 @@ interface ToggleButtonProps {
   value: any;
   className?: string;
   children: ReactNode;
+  title?: string;
 }
 
-export const ToggleButton: SFC<ToggleButtonProps> = ({ children, selected, className = '', value, onChange }) => {
+export const ToggleButton: SFC<ToggleButtonProps> = ({
+  children,
+  selected,
+  className = '',
+  title = null,
+  value,
+  onChange,
+}) => {
   const handleChange = event => {
     event.stopPropagation();
     if (onChange) {
@@ -61,7 +69,7 @@ export const ToggleButton: SFC<ToggleButtonProps> = ({ children, selected, class
 
   const btnClassName = `btn ${className} ${selected ? 'active' : ''}`;
   return (
-    <button className={btnClassName} onClick={handleChange}>
+    <button className={btnClassName} onClick={handleChange} title={title}>
       <span>{children}</span>
     </button>
   );
