@@ -16,6 +16,11 @@ import { parseQuery, formatQuery } from '../query_utils';
 
 const PRISM_SYNTAX = 'promql';
 
+const SEARCH_FIELD_STYLES = {
+  width: '66%',
+  marginLeft: 3,
+};
+
 export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
@@ -256,7 +261,7 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
             </div>
           ) : null}
         </div>
-        <div className="prom-query-field-wrapper">
+        <div className="prom-query-field-wrapper" style={SEARCH_FIELD_STYLES}>
           <QueryField
             additionalPlugins={this.pluginsSearch}
             disabled={searchDisabled}
