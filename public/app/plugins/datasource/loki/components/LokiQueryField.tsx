@@ -12,6 +12,7 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { DataQuery } from 'app/types';
+import { parseQuery, formatQuery } from '../query_utils';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -67,7 +68,10 @@ interface LokiQueryFieldState {
 
 class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: any[];
+  pluginsSearch: any[];
   languageProvider: any;
+  modifiedSearch: string;
+  modifiedQuery: string;
 
   constructor(props: LokiQueryFieldProps, context) {
     super(props, context);
@@ -84,6 +88,8 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
         getSyntax: node => 'promql',
       }),
     ];
+
+    this.pluginsSearch = [RunnerPlugin({ handler: props.onPressEnter })];
 
     this.state = {
       logLabelOptions: [],
@@ -134,12 +140,35 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
   };
 
   onChangeQuery = (value: string, override?: boolean) => {
+    const firstModified = this.modifiedQuery === undefined;
+    this.modifiedQuery = value;
     // Send text change to parent
     const { initialQuery, onQueryChange } = this.props;
     if (onQueryChange) {
+      const search = this.modifiedSearch || parseQuery(initialQuery.expr).regexp;
+      const expr = formatQuery(value, search);
       const query = {
         ...initialQuery,
-        expr: value,
+        expr,
+      };
+      onQueryChange(query, override);
+    }
+    // Enable the search field if we have a selector query
+    if (firstModified) {
+      this.forceUpdate();
+    }
+  };
+
+  onChangeSearch = (value: string, override?: boolean) => {
+    this.modifiedSearch = value;
+    // Send text change to parent
+    const { initialQuery, onQueryChange } = this.props;
+    if (onQueryChange) {
+      const selector = this.modifiedQuery || parseQuery(initialQuery.expr).query;
+      const expr = formatQuery(selector, value);
+      const query = {
+        ...initialQuery,
+        expr,
       };
       onQueryChange(query, override);
     }
@@ -190,6 +219,9 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
     const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = syntaxLoaded ? 'Log labels' : 'Loading labels...';
+    const parsedInitialQuery = parseQuery(initialQuery.expr);
+    // Disable search field to make clear that we need a selector query first
+    const searchDisabled = !parsedInitialQuery.query && !this.modifiedQuery;
 
     return (
       <div className="prom-query-field">
@@ -204,11 +236,11 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
           <QueryField
             additionalPlugins={this.plugins}
             cleanText={cleanText}
-            initialQuery={initialQuery.expr}
+            initialQuery={parsedInitialQuery.query}
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}
-            placeholder="Enter a Loki Log query"
+            placeholder="Start with a Loki stream selector"
             portalOrigin="loki"
             syntaxLoaded={syntaxLoaded}
           />
@@ -223,6 +255,16 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
               ) : null}
             </div>
           ) : null}
+        </div>
+        <div className="prom-query-field-wrapper">
+          <QueryField
+            additionalPlugins={this.pluginsSearch}
+            disabled={searchDisabled}
+            initialQuery={parsedInitialQuery.regexp}
+            onValueChanged={this.onChangeSearch}
+            placeholder="Search by regular expression"
+            portalOrigin="loki"
+          />
         </div>
       </div>
     );
