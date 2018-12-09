@@ -140,7 +140,7 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
   };
 
   onChangeQuery = (value: string, override?: boolean) => {
-    const firstModified = this.modifiedQuery === undefined;
+    const enableSearchField = !this.modifiedQuery && value;
     this.modifiedQuery = value;
     // Send text change to parent
     const { initialQuery, onQueryChange } = this.props;
@@ -154,7 +154,7 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
       onQueryChange(query, override);
     }
     // Enable the search field if we have a selector query
-    if (firstModified) {
+    if (enableSearchField) {
       this.forceUpdate();
     }
   };
