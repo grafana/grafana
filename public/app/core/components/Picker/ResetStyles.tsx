@@ -1,4 +1,4 @@
-﻿export default {
+export default {
   clearIndicator: () => ({}),
   container: () => ({}),
   control: () => ({}),
@@ -11,7 +11,9 @@
   loadingIndicator: () => ({}),
   loadingMessage: () => ({}),
   menu: () => ({}),
-  menuList: () => ({}),
+  menuList: ({ maxHeight }: { maxHeight: number }) => ({
+    maxHeight,
+  }),
   multiValue: () => ({}),
   multiValueLabel: () => ({}),
   multiValueRemove: () => ({}),

@@ -913,6 +913,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onChange={this.onChangeDatasource}
                 options={exploreDatasources}
                 styles={ResetStyles}
+                maxMenuHeight={500}
                 placeholder="Select datasource"
                 loadingMessage={() => 'Loading datasources...'}
                 noOptionsMessage={() => 'No datasources found'}

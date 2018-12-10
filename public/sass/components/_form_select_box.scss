@@ -55,6 +55,11 @@ $select-input-bg-disabled: $input-bg-disabled;
   z-index: 2;
 }
 
+.gf-form-select-box__menu-list {
+  overflow-y: auto;
+  max-height: 300px;
+}
+
 .tag-filter .gf-form-select-box__menu {
   width: 100%;
 }
