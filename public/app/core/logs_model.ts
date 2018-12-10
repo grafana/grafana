@@ -249,32 +249,47 @@ export function makeSeriesForLogs(rows: LogRow[], intervalMs: number): TimeSerie
   // Graph time series by log level
   const seriesByLevel = {};
   const bucketSize = intervalMs * 10;
+  const seriesList = [];
 
   for (const row of rows) {
-    if (!seriesByLevel[row.logLevel]) {
-      seriesByLevel[row.logLevel] = { lastTs: null, datapoints: [], alias: row.logLevel };
+    let series = seriesByLevel[row.logLevel];
+
+    if (!series) {
+      seriesByLevel[row.logLevel] = series = {
+        lastTs: null,
+        datapoints: [],
+        alias: row.logLevel,
+        color: LogLevelColor[row.logLevel],
+      };
+
+      seriesList.push(series);
     }
 
-    const levelSeries = seriesByLevel[row.logLevel];
-
-    // Bucket to nearest minute
+    // align time to bucket size
     const time = Math.round(row.timeEpochMs / bucketSize) * bucketSize;
 
     // Entry for time
-    if (time === levelSeries.lastTs) {
-      levelSeries.datapoints[levelSeries.datapoints.length - 1][0]++;
+    if (time === series.lastTs) {
+      series.datapoints[series.datapoints.length - 1][0]++;
     } else {
-      levelSeries.datapoints.push([1, time]);
-      levelSeries.lastTs = time;
+      series.datapoints.push([1, time]);
+      series.lastTs = time;
+    }
+
+    // add zero to other levels to aid stacking so each level series has same number of points
+    for (const other of seriesList) {
+      if (other !== series && other.lastTs !== time) {
+        other.datapoints.push([0, time]);
+        other.lastTs = time;
+      }
     }
   }
 
-  return Object.keys(seriesByLevel).reduce((acc, level) => {
-    if (seriesByLevel[level]) {
-      const gs = new TimeSeries(seriesByLevel[level]);
-      gs.setColor(LogLevelColor[level]);
-      acc.push(gs);
-    }
-    return acc;
-  }, []);
+  return seriesList.map(series => {
+    series.datapoints.sort((a, b) => {
+      return a[1] - b[1];
+    });
+
+    return new TimeSeries(series);
+  });
 }
