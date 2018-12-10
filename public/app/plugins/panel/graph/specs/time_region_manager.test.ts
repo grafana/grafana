@@ -238,6 +238,42 @@ describe('TimeRegionManager', () => {
       });
     });
 
+    plotOptionsScenario('for day of week from/to time region', ctx => {
+      const regions = [{ fromDayOfWeek: 7, from: '23:00', toDayOfWeek: 1, to: '01:40', fill: true, colorMode: 'red' }];
+      const from = moment('2018-12-07T12:51:19+01:00');
+      const to = moment('2018-12-10T13:51:29+01:00');
+      ctx.setup(regions, from, to);
+
+      it('should add 1 marking', () => {
+        expect(ctx.options.grid.markings.length).toBe(1);
+      });
+
+      it('should add one fill between sunday 23:00 and monday 01:40', () => {
+        const markings = ctx.options.grid.markings;
+
+        expect(moment(markings[0].xaxis.from).format()).toBe(moment('2018-12-10T00:00:00+01:00').format());
+        expect(moment(markings[0].xaxis.to).format()).toBe(moment('2018-12-10T02:40:00+01:00').format());
+      });
+    });
+
+    plotOptionsScenario('for day of week from/to time region', ctx => {
+      const regions = [{ fromDayOfWeek: 6, from: '03:00', toDayOfWeek: 7, to: '02:00', fill: true, colorMode: 'red' }];
+      const from = moment('2018-12-07T12:51:19+01:00');
+      const to = moment('2018-12-10T13:51:29+01:00');
+      ctx.setup(regions, from, to);
+
+      it('should add 1 marking', () => {
+        expect(ctx.options.grid.markings.length).toBe(1);
+      });
+
+      it('should add one fill between saturday 03:00 and sunday 02:00', () => {
+        const markings = ctx.options.grid.markings;
+
+        expect(moment(markings[0].xaxis.from).format()).toBe(moment('2018-12-08T04:00:00+01:00').format());
+        expect(moment(markings[0].xaxis.to).format()).toBe(moment('2018-12-09T03:00:00+01:00').format());
+      });
+    });
+
     plotOptionsScenario('for day of week from/to time region with daylight saving time', ctx => {
       const regions = [{ fromDayOfWeek: 7, from: '20:00', toDayOfWeek: 7, to: '23:00', fill: true, colorMode: 'red' }];
       const from = moment('2018-03-17T06:00:00+01:00');
