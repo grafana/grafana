@@ -28,22 +28,20 @@ export class VizTypePicker extends PureComponent<Props, State> {
     };
   }
 
-  get filteredPluginListCount() {
+  get maxSelectedIndex() {
     const filteredPluginList = this.getFilteredPluginList();
-    return filteredPluginList.length;
+    return filteredPluginList.length - 1;
   }
 
   goRight = () => {
-    const maxArray = this.filteredPluginListCount - 1;
-    const nextIndex = this.state.selected >= maxArray ? 0 : this.state.selected + 1;
+    const nextIndex = this.state.selected >= this.maxSelectedIndex ? 0 : this.state.selected + 1;
     this.setState({
       selected: nextIndex,
     });
   };
 
   goLeft = () => {
-    const maxArray = this.filteredPluginListCount - 1;
-    const nextIndex = this.state.selected <= 0 ? maxArray : this.state.selected - 1;
+    const nextIndex = this.state.selected <= 0 ? this.maxSelectedIndex : this.state.selected - 1;
     this.setState({
       selected: nextIndex,
     });
