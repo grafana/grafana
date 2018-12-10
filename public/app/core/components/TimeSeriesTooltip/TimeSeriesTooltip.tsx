@@ -24,7 +24,7 @@ export interface TimeSeriesTooltipProps extends TimeAxisTooltipProps {
 }
 
 interface TimeSeriesTooltipRenderProps {
-  render: (series: TimeSeriesVM[], item: FlotHoverItem, timestamp: number, hoverInfo: PlotHoverInfo) => ReactNode;
+  children: (series: TimeSeriesVM[], item: FlotHoverItem, timestamp: number, hoverInfo: PlotHoverInfo) => ReactNode;
 }
 
 export interface InjectedTimeSeriesTooltipProps {
@@ -105,17 +105,16 @@ class TimeSeriesTooltip extends PureComponent<
     const { series, item } = this.props;
     this.calculateHoverInfo();
     const seriesHoverInfo = this.seriesHoverInfo;
-    return this.props.render(series, item, seriesHoverInfo.time, seriesHoverInfo);
+    return this.props.children(series, item, seriesHoverInfo.time, seriesHoverInfo);
   }
 }
 
 class WithTimeSeriesTooltip extends PureComponent<TimeSeriesTooltipProps & TimeSeriesTooltipRenderProps> {
   render() {
     return (
-      <TimeAxisTooltip
-        {...this.props}
-        render={(position, item) => <TimeSeriesTooltip {...this.props} position={position} item={item} />}
-      />
+      <TimeAxisTooltip {...this.props}>
+        {(position, item) => <TimeSeriesTooltip {...this.props} position={position} item={item} />}
+      </TimeAxisTooltip>
     );
   }
 }

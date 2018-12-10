@@ -20,7 +20,7 @@ export interface TimeAxisTooltipProps {
 }
 
 interface TimeAxisTooltipRenderProps {
-  render: (position: GraphHoverPosition, item: FlotHoverItem) => ReactNode;
+  children: (position: GraphHoverPosition, item: FlotHoverItem) => ReactNode;
 }
 
 export interface TimeAxisTooltipState {
@@ -221,7 +221,7 @@ class TimeAxisTooltip extends PureComponent<TimeAxisTooltipProps & TimeAxisToolt
 
     const tooltipNode = (
       <div className="graph-tooltip grafana-tooltip timeseries-tooltip" style={tooltipStyle} ref={this.getTooltipRef}>
-        {this.props.render(this.state.position, this.state.item)}
+        {this.props.children(this.state.position, this.state.item)}
       </div>
     );
     return ReactDOM.createPortal(tooltipNode, this.tooltipContainer);

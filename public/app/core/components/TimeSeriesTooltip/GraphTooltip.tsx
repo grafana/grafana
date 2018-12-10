@@ -62,9 +62,8 @@ class TooltipSeries extends PureComponent<TooltipSeriesProps> {
 export class GraphTooltip extends PureComponent<GraphTooltipProps> {
   render() {
     return (
-      <TimeSeriesTooltip
-        {...this.props}
-        render={(series, item, timestamp, hoverInfo) => (
+      <TimeSeriesTooltip {...this.props}>
+        {(series, item, timestamp, hoverInfo) => (
           <GraphTooltipContent
             {...this.props}
             series={series}
@@ -73,7 +72,7 @@ export class GraphTooltip extends PureComponent<GraphTooltipProps> {
             hoverInfo={hoverInfo}
           />
         )}
-      />
+      </TimeSeriesTooltip>
     );
   }
 }
