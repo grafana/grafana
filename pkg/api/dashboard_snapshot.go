@@ -157,6 +157,37 @@ func GetDashboardSnapshot(c *m.ReqContext) {
 	c.JSON(200, dto)
 }
 
+func deleteExternalDashboardSnapshot(externalUrl string) error {
+	response, err := client.Get(externalUrl)
+
+	if response != nil {
+		defer response.Body.Close()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode == 200 {
+		return nil
+	}
+
+	// Gracefully ignore "snapshot not found" errors as they could have already
+	// been removed either via the cleanup script or by request.
+	if response.StatusCode == 500 {
+		var respJson map[string]interface{}
+		if err := json.NewDecoder(response.Body).Decode(&respJson); err != nil {
+			return err
+		}
+
+		if respJson["message"] == "Failed to get dashboard snapshot" {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Unexpected response when deleting external snapshot. Status code: %d", response.StatusCode)
+}
+
 // GET /api/snapshots-delete/:deleteKey
 func DeleteDashboardSnapshotByDeleteKey(c *m.ReqContext) Response {
 	key := c.Params(":deleteKey")
@@ -166,6 +197,13 @@ func DeleteDashboardSnapshotByDeleteKey(c *m.ReqContext) Response {
 	err := bus.Dispatch(query)
 	if err != nil {
 		return Error(500, "Failed to get dashboard snapshot", err)
+	}
+
+	if query.Result.External {
+		err := deleteExternalDashboardSnapshot(query.Result.ExternalDeleteUrl)
+		if err != nil {
+			return Error(500, "Failed to delete external dashboard", err)
+		}
 	}
 
 	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
@@ -202,6 +240,13 @@ func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 
 	if !canEdit && query.Result.UserId != c.SignedInUser.UserId {
 		return Error(403, "Access denied to this snapshot", nil)
+	}
+
+	if query.Result.External {
+		err := deleteExternalDashboardSnapshot(query.Result.ExternalDeleteUrl)
+		if err != nil {
+			return Error(500, "Failed to delete external dashboard", err)
+		}
 	}
 
 	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
