@@ -42,14 +42,18 @@ export default class ValueMappings extends PureComponent<OptionModuleProps, Stat
 
     return (
       <div className="section gf-form-group">
-        <div className="gf-form">
-          <div className="mappings">
-            {combinedMappings.length > 0 &&
-              combinedMappings.map((mapping, index) => {
-                return <MappingRow key={index} mapping={mapping} updateMapping={this.updateGauge} />;
-              })}
+        <h5 className="page-heading">Value mappings</h5>
+        <div>
+          {combinedMappings.length > 0 &&
+            combinedMappings.map((mapping, index) => {
+              return <MappingRow key={index} mapping={mapping} updateMapping={this.updateGauge} />;
+            })}
+        </div>
+        <div className="add-mapping-row" onClick={this.addMapping}>
+          <div className="add-mapping-row-icon">
+            <i className="fa fa-plus" />
           </div>
-          <div onClick={this.addMapping}>Add mapping</div>
+          <div className="add-mapping-row-label">Add mapping</div>
         </div>
       </div>
     );

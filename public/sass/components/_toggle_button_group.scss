@@ -13,6 +13,10 @@
     }
   }
 
+  &.stacked {
+    flex-direction: column;
+  }
+
   .btn {
     background-color: $typeahead-selected-bg;
     border-radius: 0;

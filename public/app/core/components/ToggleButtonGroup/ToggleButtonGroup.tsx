@@ -5,9 +5,14 @@ interface ToggleButtonGroupProps {
   value?: any;
   label?: string;
   render: (props) => void;
+  stackedButtons?: boolean;
 }
 
 export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
+  static defaultProps = {
+    stackedButtons: false,
+  };
+
   getValues() {
     const { children } = this.props;
     return React.Children.toArray(children).map((c: ReactElement<any>) => c.props.value);
@@ -27,14 +32,14 @@ export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupPr
   }
 
   render() {
-    const { value, label } = this.props;
+    const { value, label, stackedButtons } = this.props;
     const values = this.getValues();
     const selectedValue = value || values[0];
     const labelClassName = `gf-form-label ${this.smallChildren() ? 'small' : ''}`;
 
     return (
       <div className="gf-form">
-        <div className="toggle-button-group">
+        <div className={`toggle-button-group ${stackedButtons ? 'stacked' : ''}`}>
           {label && <label className={labelClassName}>{label}</label>}
           {this.props.render({ selectedValue, onChange: this.handleToggle.bind(this) })}
         </div>

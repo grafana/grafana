@@ -1,0 +1,30 @@
+.mapping-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.mapping-row-type {
+  margin-right: 5px;
+}
+
+.add-mapping-row {
+  display: flex;
+  overflow: hidden;
+  height: 37px;
+  cursor: pointer;
+}
+
+.add-mapping-row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  background-color: $green;
+}
+
+.add-mapping-row-label {
+  align-items: center;
+  display: flex;
+  padding: 5px 8px;
+}

@@ -62,13 +62,11 @@ class Options extends PureComponent<PanelOptionsProps<OptionsProps>> {
     return (
       <div>
         <div className="form-section">
-          <div className="form-section__header">Options</div>
           <ValueOptions onChange={onChange} options={options} />
           <GaugeOptions onChange={onChange} options={options} />
           <Thresholds onChange={onChange} options={options} />
         </div>
         <div className="form-section">
-          <div className="form-section__header">Value mappings</div>
           <ValueMappings onChange={onChange} options={options} />
         </div>
       </div>
