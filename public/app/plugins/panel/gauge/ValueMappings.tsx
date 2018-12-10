@@ -1,12 +1,10 @@
 import React, { PureComponent } from 'react';
 import MappingRow from './MappingRow';
 import { OptionModuleProps } from './module';
-import { RangeMap, ValueMap } from 'app/types';
+import { MappingType, RangeMap, ValueMap } from 'app/types';
 
 interface State {
-  combinedMappings: any[];
-  valueMaps: ValueMap[];
-  rangeMaps: RangeMap[];
+  mappings: Array<ValueMap | RangeMap>;
 }
 
 export default class ValueMappings extends PureComponent<OptionModuleProps, State> {
@@ -14,39 +12,57 @@ export default class ValueMappings extends PureComponent<OptionModuleProps, Stat
     super(props);
 
     this.state = {
-      combinedMappings: props.options.valueMaps.concat(props.options.rangeMaps),
-      rangeMaps: props.options.rangeMaps,
-      valueMaps: props.options.valueMaps,
+      mappings: props.mappings || [],
     };
   }
 
   addMapping = () =>
     this.setState(prevState => ({
-      combinedMappings: [...prevState.combinedMappings, { op: '', value: '', text: '' }],
+      mappings: [
+        ...prevState.mappings,
+        { op: '', value: '', text: '', type: MappingType.ValueToText, from: '', to: '' },
+      ],
+    }));
+
+  onRemoveMapping = index =>
+    this.setState(prevState => ({
+      mappings: prevState.mappings.filter((m, i) => i !== index),
     }));
 
   updateGauge = mapping => {
-    this.setState(prevState => ({
-      combinedMappings: prevState.combinedMappings.map(m => {
-        if (m === mapping) {
-          return { ...mapping };
-        }
+    this.setState(
+      prevState => ({
+        mappings: prevState.mappings.map(m => {
+          if (m === mapping) {
+            return { ...mapping };
+          }
 
-        return m;
+          return m;
+        }),
       }),
-    }));
+      () => {
+        this.props.onChange({ ...this.props.options, mappings: this.state.mappings });
+      }
+    );
   };
 
   render() {
-    const { combinedMappings } = this.state;
+    const { mappings } = this.state;
 
     return (
       <div className="section gf-form-group">
         <h5 className="page-heading">Value mappings</h5>
         <div>
-          {combinedMappings.length > 0 &&
-            combinedMappings.map((mapping, index) => {
-              return <MappingRow key={index} mapping={mapping} updateMapping={this.updateGauge} />;
+          {mappings.length > 0 &&
+            mappings.map((mapping, index) => {
+              return (
+                <MappingRow
+                  key={index}
+                  mapping={mapping}
+                  updateMapping={this.updateGauge}
+                  removeMapping={() => this.onRemoveMapping(index)}
+                />
+              );
             })}
         </div>
         <div className="add-mapping-row" onClick={this.addMapping}>

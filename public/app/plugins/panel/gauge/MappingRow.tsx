@@ -1,21 +1,16 @@
 import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
-import { RangeMap, ValueMap } from 'app/types';
-
-enum MappingType {
-  ValueToText = 1,
-  RangeToText = 2,
-}
+import { MappingType, RangeMap, ValueMap } from 'app/types';
 
 interface Props {
   mapping: ValueMap | RangeMap;
   updateMapping: (mapping) => void;
+  removeMapping: () => void;
 }
 
 interface State {
   mapping: ValueMap | RangeMap;
-  mappingType: MappingType;
 }
 
 export default class MappingRow extends PureComponent<Props, State> {
@@ -23,7 +18,6 @@ export default class MappingRow extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      mappingType: MappingType.ValueToText,
       mapping: props.mapping,
     };
   }
@@ -59,12 +53,23 @@ export default class MappingRow extends PureComponent<Props, State> {
     this.setState({ mapping: updatedMapping });
   };
 
-  onMappingTypeChange = mappingType => this.setState({ mappingType });
+  updateMapping = () => {
+    const { mapping } = this.state;
+
+    this.props.updateMapping(mapping);
+  };
+
+  onMappingTypeChange = mappingType => {
+    const { mapping } = this.state;
+
+    const updatedMapping = { ...mapping, type: mappingType };
+    this.setState({ mapping: updatedMapping });
+  };
 
   renderRow() {
-    const { mapping, mappingType } = this.state;
+    const { mapping } = this.state;
 
-    if (mappingType === MappingType.RangeToText) {
+    if (mapping.type === MappingType.RangeToText) {
       const rangeMap = mapping as RangeMap;
 
       return (
@@ -72,19 +77,34 @@ export default class MappingRow extends PureComponent<Props, State> {
           <div className="gf-form-inline">
             <Label width={4}>From</Label>
             <div>
-              <input className="gf-form-input" value={rangeMap.from} onChange={this.onMappingFromChange} />
+              <input
+                className="gf-form-input"
+                value={rangeMap.from}
+                onBlur={this.updateMapping}
+                onChange={this.onMappingFromChange}
+              />
             </div>
           </div>
           <div className="gf-form-inline">
             <Label width={4}>To</Label>
             <div>
-              <input className="gf-form-input" value={rangeMap.to} onChange={this.onMappingToChange} />
+              <input
+                className="gf-form-input"
+                value={rangeMap.to}
+                onBlur={this.updateMapping}
+                onChange={this.onMappingToChange}
+              />
             </div>
           </div>
           <div className="gf-form-inline">
             <Label width={4}>Text</Label>
             <div>
-              <input className="gf-form-input" value={rangeMap.text} onChange={this.onMappingTextChange} />
+              <input
+                className="gf-form-input"
+                value={rangeMap.text}
+                onBlur={this.updateMapping}
+                onChange={this.onMappingTextChange}
+              />
             </div>
           </div>
         </div>
@@ -98,13 +118,23 @@ export default class MappingRow extends PureComponent<Props, State> {
         <div className="gf-form-inline">
           <Label width={4}>Value</Label>
           <div>
-            <input className="gf-form-input" onChange={this.onMappingValueChange} value={valueMap.value} />
+            <input
+              className="gf-form-input"
+              onBlur={this.updateMapping}
+              onChange={this.onMappingValueChange}
+              value={valueMap.value}
+            />
           </div>
         </div>
         <div className="gf-form-inline">
           <Label width={4}>Text</Label>
           <div>
-            <input className="gf-form-input" value={valueMap.text} onChange={this.onMappingTextChange} />
+            <input
+              className="gf-form-input"
+              onBlur={this.updateMapping}
+              value={valueMap.text}
+              onChange={this.onMappingTextChange}
+            />
           </div>
         </div>
       </div>
@@ -112,14 +142,14 @@ export default class MappingRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { mappingType } = this.state;
+    const { mapping } = this.state;
 
     return (
       <div className="mapping-row">
         <div className="mapping-row-type">
           <ToggleButtonGroup
             onChange={mappingType => this.onMappingTypeChange(mappingType)}
-            value={mappingType}
+            value={mapping.type}
             stackedButtons={true}
             render={({ selectedValue, onChange }) => {
               return [
@@ -146,6 +176,9 @@ export default class MappingRow extends PureComponent<Props, State> {
           />
         </div>
         <div>{this.renderRow()}</div>
+        <div onClick={this.props.removeMapping} className="threshold-row-remove">
+          <i className="fa fa-times" />
+        </div>
       </div>
     );
   }

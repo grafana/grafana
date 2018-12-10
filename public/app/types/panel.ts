@@ -37,9 +37,15 @@ export interface Threshold {
   canRemove: boolean;
 }
 
+export enum MappingType {
+  ValueToText = 1,
+  RangeToText = 2,
+}
+
 interface BaseMap {
   op: string;
   text: string;
+  type: MappingType;
 }
 
 export interface ValueMap extends BaseMap {

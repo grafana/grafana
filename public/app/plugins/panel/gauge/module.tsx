@@ -16,8 +16,7 @@ export interface OptionsProps {
   suffix: string;
   unit: string;
   thresholds: Threshold[];
-  valueMaps: ValueMap[];
-  rangeMaps: RangeMap[];
+  mappings: Array<ValueMap | RangeMap>;
   mappingType: number;
 }
 
