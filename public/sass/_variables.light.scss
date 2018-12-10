@@ -62,7 +62,7 @@ $critical: #ec2128;
 // -------------------------
 
 $body-bg: $gray-7;
-$page-bg: $gray-6;
+$page-bg: $gray-7;
 $body-color: $gray-1;
 $text-color: $gray-1;
 $text-color-strong: $dark-2;
@@ -402,6 +402,6 @@ $panel-grid-placeholder-shadow: 0 0 4px $blue-light;
 $logs-color-unkown: $gray-5;
 
 // toggle-group
-$button-toggle-group-btn-active-bg: linear-gradient(90deg, $yellow, $red);
-$button-toggle-group-btn-active-shadow: inset 0 0 4px $black;
+$button-toggle-group-btn-active-bg: $brand-primary;
+$button-toggle-group-btn-active-shadow: inset 0 0 4px $white;
 $button-toggle-group-btn-seperator-border: 1px solid $gray-6;

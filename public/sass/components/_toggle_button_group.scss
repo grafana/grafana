@@ -8,13 +8,13 @@
     font-weight: $font-weight-semi-bold;
     font-size: $font-size-sm;
     border-radius: 0;
-    color: $text-color;
     border-right: $button-toggle-group-btn-seperator-border;
 
     &.active {
       background: $button-toggle-group-btn-active-bg;
       box-shadow: $button-toggle-group-btn-active-shadow;
       border-right: 0;
+      color: $white;
 
       &:hover {
         cursor: default;
