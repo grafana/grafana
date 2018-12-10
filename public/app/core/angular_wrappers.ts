@@ -16,7 +16,7 @@ export function registerAngularDirectives() {
   react2AngularDirective('searchResult', SearchResult, []);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
-    ['onSelect', { watchDepth: 'reference' }],
+    ['onChange', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
 }
