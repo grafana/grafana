@@ -1,15 +1,17 @@
 ﻿import React from 'react';
 import classNames from 'classnames';
+import { PanelPlugin } from 'app/types/plugins';
 
 interface Props {
   isSelected: boolean;
   isCurrent: boolean;
-  plugin: any;
+  plugin: PanelPlugin;
   onClick: () => void;
+  onMouseEnter: () => void;
 }
 
 const VizTypePickerPlugin = React.memo(
-  ({ isSelected, isCurrent, plugin, onClick }: Props) => {
+  ({ isSelected, isCurrent, plugin, onClick, onMouseEnter }: Props) => {
     const cssClass = classNames({
       'viz-picker__item': true,
       'viz-picker__item--selected': isSelected,
@@ -17,7 +19,7 @@ const VizTypePickerPlugin = React.memo(
     });
 
     return (
-      <div className={cssClass} onClick={onClick} title={plugin.name}>
+      <div className={cssClass} onClick={onClick} title={plugin.name} onMouseEnter={onMouseEnter}>
         <div className="viz-picker__item-name">{plugin.name}</div>
         <img className="viz-picker__item-img" src={plugin.info.logos.small} />
       </div>

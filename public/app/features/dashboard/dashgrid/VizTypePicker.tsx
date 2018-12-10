@@ -50,10 +50,12 @@ export class VizTypePicker extends PureComponent<Props, State> {
   };
 
   onKeydown = (evt: KeyboardEvent) => {
-    if (evt.key === 'ArrowRight' || evt.key === 'ArrowDown') {
+    if (evt.key === 'ArrowDown') {
+      evt.preventDefault();
       this.goRight();
     }
-    if (evt.key === 'ArrowLeft' || evt.key === 'ArrowUp') {
+    if (evt.key === 'ArrowUp') {
+      evt.preventDefault();
       this.goLeft();
     }
     if (evt.key === 'Enter') {
@@ -84,6 +86,12 @@ export class VizTypePicker extends PureComponent<Props, State> {
     return _.sortBy(panels, 'sort');
   }
 
+  onMouseEnter = (mouseEnterIndex: number) => {
+    this.setState({
+      selected: mouseEnterIndex,
+    });
+  };
+
   renderVizPlugin = (plugin: PanelPlugin, index: number) => {
     const isSelected = this.state.selected === index;
     const isCurrent = plugin.id === this.props.current.id;
@@ -93,6 +101,9 @@ export class VizTypePicker extends PureComponent<Props, State> {
         isSelected={isSelected}
         isCurrent={isCurrent}
         plugin={plugin}
+        onMouseEnter={() => {
+          this.onMouseEnter(index);
+        }}
         onClick={() => this.props.onTypeChanged(plugin)}
       />
     );
