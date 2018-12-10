@@ -3,7 +3,7 @@ import React, { PureComponent, ReactNode } from 'react';
 import { TimeSeriesVM } from 'app/types';
 import { FlotHoverItem } from 'app/types/events';
 import { getMultiSeriesPlotHoverInfo, PlotHoverInfo } from './utils';
-import TimeAxisTooltip, { TimeAxisTooltipProps, InjectedTimeAxisTooltipProps } from './TimeAxisTooltip';
+import TimeAxisTooltip from './TimeAxisTooltip';
 
 export interface TimeSeriesTooltipProps {
   series: TimeSeriesVM[];
@@ -33,11 +33,11 @@ export interface InjectedTimeSeriesTooltipProps {
   hoverInfo: PlotHoverInfo;
 }
 
-type ComponentProps = TimeSeriesTooltipProps & TimeSeriesTooltipRenderProps & InjectedTimeAxisTooltipProps;
+type ComponentProps = TimeSeriesTooltipProps & TimeSeriesTooltipRenderProps;
 
-class TimeSeriesTooltip extends PureComponent<ComponentProps> {
+export class TimeSeriesTooltip extends PureComponent<ComponentProps> {
   seriesHoverInfo: PlotHoverInfo | null;
-  calculateHoverInfo: () => void;
+  calculateHoverInfo: (position) => void;
 
   static defaultProps: Partial<TimeSeriesTooltipProps> = {
     sort: null,
@@ -53,9 +53,11 @@ class TimeSeriesTooltip extends PureComponent<ComponentProps> {
 
     // Series hover info calculation has excessive cost so it makes sense to throttle function execution.
     if (this.props.throttle) {
-      this.calculateHoverInfo = _.throttle(() => this.getHoverInfo(), this.props.throttleInterval, { leading: true });
+      this.calculateHoverInfo = _.throttle(position => this.getHoverInfo(position), this.props.throttleInterval, {
+        leading: true,
+      });
     } else {
-      this.calculateHoverInfo = () => this.getHoverInfo();
+      this.calculateHoverInfo = position => this.getHoverInfo(position);
     }
   }
 
@@ -83,8 +85,8 @@ class TimeSeriesTooltip extends PureComponent<ComponentProps> {
     }
   }
 
-  getHoverInfo() {
-    const { series, position, allSeriesMode, hideEmpty, hideZero, valueType } = this.props;
+  getHoverInfo(position) {
+    const { series, allSeriesMode, hideEmpty, hideZero, valueType } = this.props;
     const getHoverOptions = { hideEmpty, hideZero, valueType };
     const seriesHoverInfo = getMultiSeriesPlotHoverInfo(series, position, getHoverOptions);
     this.sortHoverInfo(seriesHoverInfo);
@@ -95,23 +97,16 @@ class TimeSeriesTooltip extends PureComponent<ComponentProps> {
   }
 
   render() {
-    const { series, item } = this.props;
-    this.calculateHoverInfo();
-    const seriesHoverInfo = this.seriesHoverInfo;
-    return this.props.children(series, item, seriesHoverInfo.time, seriesHoverInfo);
-  }
-}
-
-type WithTimeSeriesTooltipProps = TimeSeriesTooltipProps & TimeSeriesTooltipRenderProps & TimeAxisTooltipProps;
-
-class WithTimeSeriesTooltip extends PureComponent<WithTimeSeriesTooltipProps> {
-  render() {
     return (
       <TimeAxisTooltip {...this.props}>
-        {(position, item) => <TimeSeriesTooltip {...this.props} position={position} item={item} />}
+        {(position, item) => {
+          this.calculateHoverInfo(position);
+          const seriesHoverInfo = this.seriesHoverInfo;
+          return this.props.children(this.props.series, item, seriesHoverInfo.time, seriesHoverInfo);
+        }}
       </TimeAxisTooltip>
     );
   }
 }
 
-export default WithTimeSeriesTooltip;
+export default TimeSeriesTooltip;

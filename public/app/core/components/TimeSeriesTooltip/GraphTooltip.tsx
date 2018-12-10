@@ -3,33 +3,39 @@ import { TimeSeriesVM } from 'app/types';
 import { FlotHoverItem } from 'app/types/events';
 import { PlotHoverInfoItem } from './utils';
 import { TimeAxisTooltipProps } from './TimeAxisTooltip';
-import TimeSeriesTooltip, { InjectedTimeSeriesTooltipProps, TimeSeriesTooltipProps } from './TimeSeriesTooltip';
+import TimeSeriesTooltip, { TimeSeriesTooltipProps } from './TimeSeriesTooltip';
 
 export interface GraphTooltipContentProps {
   formatDate: (time, format?) => string;
 }
 
-type ComponentProps = GraphTooltipContentProps & InjectedTimeSeriesTooltipProps;
+export type GraphTooltipProps = GraphTooltipContentProps & TimeSeriesTooltipProps & TimeAxisTooltipProps;
 
-export class GraphTooltipContent extends PureComponent<ComponentProps> {
+export class GraphTooltip extends PureComponent<GraphTooltipProps> {
   render() {
-    const { series, hoverInfo, item, timestamp, formatDate } = this.props;
-    let timeFormat = 'YYYY-MM-DD HH:mm:ss';
-    if (series && series.length && series[0].stats.hasMsResolution) {
-      timeFormat += '.SSS';
-    }
-    const absoluteTime = formatDate(timestamp, timeFormat);
-    const hoverInfoFiltered = hoverInfo.filter(hoverItem => !hoverItem.hidden);
-    const seriesItems = hoverInfoFiltered.map((hoverItem, index) => (
-      <TooltipSeries key={index} hoverItem={hoverItem} seriesList={series} item={item} />
-    ));
+    return (
+      <TimeSeriesTooltip {...this.props}>
+        {(series, item, timestamp, hoverInfo) => {
+          let timeFormat = 'YYYY-MM-DD HH:mm:ss';
+          if (series && series.length && series[0].stats.hasMsResolution) {
+            timeFormat += '.SSS';
+          }
+          const absoluteTime = this.props.formatDate(timestamp, timeFormat);
 
-    return [
-      <div className="graph-tooltip-time timeseries-tooltip-time" key="time">
-        {absoluteTime}
-      </div>,
-      ...seriesItems,
-    ];
+          const hoverInfoFiltered = hoverInfo.filter(hoverItem => !hoverItem.hidden);
+          const seriesItems = hoverInfoFiltered.map((hoverItem, index) => (
+            <TooltipSeries key={index} hoverItem={hoverItem} seriesList={series} item={item} />
+          ));
+
+          return [
+            <div className="graph-tooltip-time timeseries-tooltip-time" key="time">
+              {absoluteTime}
+            </div>,
+            ...seriesItems,
+          ];
+        }}
+      </TimeSeriesTooltip>
+    );
   }
 }
 
@@ -58,26 +64,6 @@ class TooltipSeries extends PureComponent<TooltipSeriesProps> {
         </div>
         <div className="graph-tooltip-value">{value}</div>
       </div>
-    );
-  }
-}
-
-export type GraphTooltipProps = GraphTooltipContentProps & TimeSeriesTooltipProps & TimeAxisTooltipProps;
-
-export class GraphTooltip extends PureComponent<GraphTooltipProps> {
-  render() {
-    return (
-      <TimeSeriesTooltip {...this.props}>
-        {(series, item, timestamp, hoverInfo) => (
-          <GraphTooltipContent
-            {...this.props}
-            series={series}
-            item={item}
-            timestamp={timestamp}
-            hoverInfo={hoverInfo}
-          />
-        )}
-      </TimeSeriesTooltip>
     );
   }
 }
