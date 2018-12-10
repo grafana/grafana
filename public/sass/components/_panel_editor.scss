@@ -257,13 +257,13 @@
   align-items: center;
   height: 44px;
 
-  &:hover {
+  &--selected {
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
     box-shadow: $panel-editor-viz-item-shadow-hover;
   }
 
-  &--selected {
+  &--active {
     box-shadow: 0 0 6px $orange;
     border: 1px solid $orange;
 
