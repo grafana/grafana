@@ -73,7 +73,7 @@ interface RowState {
   fieldStats: LogsLabelStat[];
   fieldValue: string;
   parsed: boolean;
-  parser: LogsParser;
+  parser?: LogsParser;
   parsedFieldHighlights: string[];
   showFieldStats: boolean;
 }
@@ -94,7 +94,7 @@ class Row extends PureComponent<RowProps, RowState> {
     fieldStats: null,
     fieldValue: null,
     parsed: false,
-    parser: null,
+    parser: undefined,
     parsedFieldHighlights: [],
     showFieldStats: false,
   };
@@ -110,19 +110,16 @@ class Row extends PureComponent<RowProps, RowState> {
   onClickHighlight = (fieldText: string) => {
     const { getRows } = this.props;
     const { parser } = this.state;
+    const allRows = getRows();
 
-    const fieldMatch = fieldText.match(parser.fieldRegex);
-    if (fieldMatch) {
-      const allRows = getRows();
-      // Build value-agnostic row matcher based on the field label
-      const fieldLabel = fieldMatch[1];
-      const fieldValue = fieldMatch[2];
-      const matcher = parser.buildMatcher(fieldLabel);
-      const fieldStats = calculateFieldStats(allRows, matcher);
-      const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
+    // Build value-agnostic row matcher based on the field label
+    const fieldLabel = parser.getLabelFromField(fieldText);
+    const fieldValue = parser.getValueFromField(fieldText);
+    const matcher = parser.buildMatcher(fieldLabel);
+    const fieldStats = calculateFieldStats(allRows, matcher);
+    const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
 
-      this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue, showFieldStats: true });
-    }
+    this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue, showFieldStats: true });
   };
 
   onMouseOverMessage = () => {
@@ -141,11 +138,7 @@ class Row extends PureComponent<RowProps, RowState> {
       const parser = getParser(row.entry);
       if (parser) {
         // Use parser to highlight detected fields
-        const parsedFieldHighlights = [];
-        this.props.row.entry.replace(new RegExp(parser.fieldRegex, 'g'), substring => {
-          parsedFieldHighlights.push(substring.trim());
-          return '';
-        });
+        const parsedFieldHighlights = parser.getFields(this.props.row.entry);
         this.setState({ parsedFieldHighlights, parsed: true, parser });
       }
     }

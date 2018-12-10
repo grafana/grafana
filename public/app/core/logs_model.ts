@@ -108,11 +108,21 @@ export interface LogsParser {
    * Used to filter rows, and first capture group contains the value.
    */
   buildMatcher: (label: string) => RegExp;
+
   /**
-   * Regex to find a field in the log line.
-   * First capture group contains the label value, second capture group the value.
+   * Returns all parsable substrings from a line, used for highlighting
    */
-  fieldRegex: RegExp;
+  getFields: (line: string) => string[];
+
+  /**
+   * Gets the label name from a parsable substring of a line
+   */
+  getLabelFromField: (field: string) => string;
+
+  /**
+   * Gets the label value from a parsable substring of a line
+   */
+  getValueFromField: (field: string) => string;
   /**
    * Function to verify if this is a valid parser for the given line.
    * The parser accepts the line unless it returns undefined.
@@ -120,20 +130,48 @@ export interface LogsParser {
   test: (line: string) => any;
 }
 
+const LOGFMT_REGEXP = /(?:^|\s)(\w+)=("[^"]*"|\S+)/;
+
 export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
-    buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"([^"]*)"`),
-    fieldRegex: /"(\w+)"\s*:\s*"([^"]*)"/,
+    buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
+    getFields: line => {
+      const fields = [];
+      try {
+        const parsed = JSON.parse(line);
+        _.map(parsed, (value, key) => {
+          const fieldMatcher = new RegExp(`"${key}"\\s*:\\s*"?${_.escapeRegExp(JSON.stringify(value))}"?`);
+
+          const match = line.match(fieldMatcher);
+          if (match) {
+            fields.push(match[0]);
+          }
+        });
+      } catch {}
+      return fields;
+    },
+    getLabelFromField: field => (field.match(/^"(\w+)"\s*:/) || [])[1],
+    getValueFromField: field => (field.match(/:\s*(.*)$/) || [])[1],
     test: line => {
       try {
         return JSON.parse(line);
       } catch (error) {}
     },
   },
+
   logfmt: {
     buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
-    fieldRegex: /(?:^|\s)(\w+)=("[^"]*"|\S+)/,
-    test: line => LogsParsers.logfmt.fieldRegex.test(line),
+    getFields: line => {
+      const fields = [];
+      line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
+        fields.push(substring.trim());
+        return '';
+      });
+      return fields;
+    },
+    getLabelFromField: field => (field.match(LOGFMT_REGEXP) || [])[1],
+    getValueFromField: field => (field.match(LOGFMT_REGEXP) || [])[2],
+    test: line => LOGFMT_REGEXP.test(line),
   },
 };
 
