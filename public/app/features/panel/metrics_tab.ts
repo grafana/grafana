@@ -89,10 +89,17 @@ export class MetricsTabCtrl {
           target.datasource = config.defaultDatasource;
         }
       });
-    } else if (this.datasourceInstance && this.datasourceInstance.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        delete target.datasource;
-      });
+    } else if (this.datasourceInstance) {
+      // if switching from mixed
+      if (this.datasourceInstance.meta.mixed) {
+        _.each(this.panel.targets, target => {
+          delete target.datasource;
+        });
+      } else if (this.datasourceInstance.meta.id !== datasource.meta.id) {
+        // we are changing data source type, clear queries
+        this.panel.targets = [{ refId: 'A' }];
+        this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+      }
     }
 
     this.datasourceInstance = datasource;
