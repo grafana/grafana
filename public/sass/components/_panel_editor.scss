@@ -163,13 +163,24 @@
     border: $panel-editor-viz-item-border-hover;
   }
 
-  &--selected {
+  &--current {
     box-shadow: 0 0 6px $orange;
     border: 1px solid $orange;
 
     &:hover {
       box-shadow: 0 0 6px $orange;
       border: 1px solid $orange;
+      background: $panel-editor-viz-item-bg-hover-active;
+    }
+  }
+
+  &--selected {
+    box-shadow: 0 0 6px $purple;
+    border: 1px solid $purple;
+
+    &:hover {
+      box-shadow: 0 0 6px $purple;
+      border: 1px solid $purple;
       background: $panel-editor-viz-item-bg-hover-active;
     }
   }
