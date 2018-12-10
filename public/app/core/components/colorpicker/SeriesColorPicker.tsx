@@ -44,7 +44,7 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
     const drop = new Drop({
       target: this.pickerElem,
       content: dropContentElem,
-      position: 'top center',
+      position: 'bottom center',
       classes: 'drop-popover',
       openOn: 'hover',
       hoverCloseDelay: 200,
