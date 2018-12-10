@@ -169,8 +169,16 @@ export class TimeRegionManager {
             fromEnd.add(hRange.to.h - hRange.from.h, 'hours');
           } else if (hRange.from.h + hRange.to.h < 23) {
             fromEnd.add(hRange.to.h, 'hours');
+
+            while (fromEnd.hour() !== hRange.to.h) {
+              fromEnd.add(-1, 'hours');
+            }
           } else {
             fromEnd.add(24 - hRange.from.h, 'hours');
+
+            while (fromEnd.hour() !== hRange.to.h) {
+              fromEnd.add(1, 'hours');
+            }
           }
 
           fromEnd.set('minute', hRange.to.m);
