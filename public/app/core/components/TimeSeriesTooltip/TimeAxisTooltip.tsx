@@ -2,7 +2,6 @@ import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import { appEvents } from 'app/core/core';
 import { GraphHoverPosition, GraphHoverEvent, FlotPosition, FlotHoverItem } from 'app/types/events';
-// import { Subtract } from 'app/types/utils';
 
 const TOOLTIP_OFFSET = 20;
 
@@ -30,13 +29,6 @@ export interface TimeAxisTooltipState {
   item?: FlotHoverItem;
 }
 
-const defaultPosition: GraphHoverPosition = {
-  pageX: 0,
-  pageY: 0,
-  x: 0,
-  y: 0,
-};
-
 export interface InjectedTimeAxisTooltipProps {
   position: GraphHoverPosition;
   item: FlotHoverItem;
@@ -47,13 +39,16 @@ interface TooltipSize {
   height: number;
 }
 
-/**
- * Finally, withTimeAxisTooltip(WrappedComponent) should have all props that TimeAxisTooltip has and props passed into
- * WrappedComponent, but without injected props.
- */
-// export type WithTimeAxisTooltipProps<P> = Subtract<P, InjectedTimeAxisTooltipProps> & TimeAxisTooltipProps;
+const defaultPosition: GraphHoverPosition = {
+  pageX: 0,
+  pageY: 0,
+  x: 0,
+  y: 0,
+};
 
-class TimeAxisTooltip extends PureComponent<TimeAxisTooltipProps & TimeAxisTooltipRenderProps, TimeAxisTooltipState> {
+type ComponentProps = TimeAxisTooltipProps & TimeAxisTooltipRenderProps;
+
+export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisTooltipState> {
   appRoot: HTMLElement;
   tooltipContainer: HTMLElement;
   tooltipElem: HTMLElement;

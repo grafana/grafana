@@ -2,11 +2,10 @@ import _ from 'lodash';
 import React, { PureComponent, ReactNode } from 'react';
 import { TimeSeriesVM } from 'app/types';
 import { FlotHoverItem } from 'app/types/events';
-// import { Subtract } from 'app/types/utils';
 import { getMultiSeriesPlotHoverInfo, PlotHoverInfo } from './utils';
 import TimeAxisTooltip, { TimeAxisTooltipProps, InjectedTimeAxisTooltipProps } from './TimeAxisTooltip';
 
-export interface TimeSeriesTooltipProps extends TimeAxisTooltipProps {
+export interface TimeSeriesTooltipProps {
   series: TimeSeriesVM[];
   allSeriesMode?: boolean;
   hideEmpty?: boolean;
@@ -34,15 +33,9 @@ export interface InjectedTimeSeriesTooltipProps {
   hoverInfo: PlotHoverInfo;
 }
 
-/**
- * withTimeSeriesTooltip(WrappedComponent) should have all props that TimeSeriesTooltip has and props passed into
- * WrappedComponent, but without injected props.
- */
-// export type WithTimeSeriesTooltipProps = InjectedTimeSeriesTooltipProps & TimeSeriesTooltipProps;
+type ComponentProps = TimeSeriesTooltipProps & TimeSeriesTooltipRenderProps & InjectedTimeAxisTooltipProps;
 
-class TimeSeriesTooltip extends PureComponent<
-  TimeSeriesTooltipProps & InjectedTimeAxisTooltipProps & TimeSeriesTooltipRenderProps
-> {
+class TimeSeriesTooltip extends PureComponent<ComponentProps> {
   seriesHoverInfo: PlotHoverInfo | null;
   calculateHoverInfo: () => void;
 
@@ -109,7 +102,9 @@ class TimeSeriesTooltip extends PureComponent<
   }
 }
 
-class WithTimeSeriesTooltip extends PureComponent<TimeSeriesTooltipProps & TimeSeriesTooltipRenderProps> {
+type WithTimeSeriesTooltipProps = TimeSeriesTooltipProps & TimeSeriesTooltipRenderProps & TimeAxisTooltipProps;
+
+class WithTimeSeriesTooltip extends PureComponent<WithTimeSeriesTooltipProps> {
   render() {
     return (
       <TimeAxisTooltip {...this.props}>

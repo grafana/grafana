@@ -1,14 +1,17 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import { TimeSeriesVM } from 'app/types';
 import { FlotHoverItem } from 'app/types/events';
-import TimeSeriesTooltip, { TimeSeriesTooltipProps, InjectedTimeSeriesTooltipProps } from './TimeSeriesTooltip';
 import { PlotHoverInfoItem } from './utils';
+import { TimeAxisTooltipProps } from './TimeAxisTooltip';
+import TimeSeriesTooltip, { InjectedTimeSeriesTooltipProps, TimeSeriesTooltipProps } from './TimeSeriesTooltip';
 
-export interface GraphTooltipProps extends TimeSeriesTooltipProps {
+export interface GraphTooltipContentProps {
   formatDate: (time, format?) => string;
 }
 
-export class GraphTooltipContent extends PureComponent<GraphTooltipProps & InjectedTimeSeriesTooltipProps> {
+type ComponentProps = GraphTooltipContentProps & InjectedTimeSeriesTooltipProps;
+
+export class GraphTooltipContent extends PureComponent<ComponentProps> {
   render() {
     const { series, hoverInfo, item, timestamp, formatDate } = this.props;
     let timeFormat = 'YYYY-MM-DD HH:mm:ss';
@@ -58,6 +61,8 @@ class TooltipSeries extends PureComponent<TooltipSeriesProps> {
     );
   }
 }
+
+export type GraphTooltipProps = GraphTooltipContentProps & TimeSeriesTooltipProps & TimeAxisTooltipProps;
 
 export class GraphTooltip extends PureComponent<GraphTooltipProps> {
   render() {
