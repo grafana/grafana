@@ -47,7 +47,7 @@ export class VizTypePicker extends PureComponent<Props, State> {
     });
   };
 
-  onKeydown = (evt: KeyboardEvent) => {
+  onKeyDown = evt => {
     if (evt.key === 'ArrowDown') {
       evt.preventDefault();
       this.goRight();
@@ -66,12 +66,6 @@ export class VizTypePicker extends PureComponent<Props, State> {
     setTimeout(() => {
       this.searchInput.focus();
     }, 300);
-
-    document.addEventListener('keydown', this.onKeydown);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.onKeydown);
   }
 
   getPanelPlugins(filter): PanelPlugin[] {
@@ -138,6 +132,7 @@ export class VizTypePicker extends PureComponent<Props, State> {
             placeholder=""
             ref={elem => (this.searchInput = elem)}
             onChange={this.onSearchQueryChange}
+            onKeyDown={this.onKeyDown}
           />
           <i className="gf-form-input-icon fa fa-search" />
         </label>
