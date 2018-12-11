@@ -1,8 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { defaultProps, OptionModuleProps } from './module';
-import { MappingType } from '../../../types';
 import ValueMappings from './ValueMappings';
+import { defaultProps, OptionModuleProps } from './module';
+import { MappingType } from 'app/types';
 
 const setup = (propOverrides?: object) => {
   const props: OptionModuleProps = {
@@ -20,12 +20,25 @@ const setup = (propOverrides?: object) => {
 
   const wrapper = shallow(<ValueMappings {...props} />);
 
-  return wrapper.instance() as ValueMappings;
+  const instance = wrapper.instance() as ValueMappings;
+
+  return {
+    instance,
+    wrapper,
+  };
 };
+
+describe('Render', () => {
+  it('should render component', () => {
+    const { wrapper } = setup();
+
+    expect(wrapper).toMatchSnapshot();
+  });
+});
 
 describe('On remove mapping', () => {
   it('Should remove mapping with id 0', () => {
-    const instance = setup();
+    const { instance } = setup();
     instance.onRemoveMapping(1);
 
     expect(instance.state.mappings).toEqual([
@@ -34,7 +47,7 @@ describe('On remove mapping', () => {
   });
 
   it('should remove mapping with id 1', () => {
-    const instance = setup();
+    const { instance } = setup();
     instance.onRemoveMapping(2);
 
     expect(instance.state.mappings).toEqual([
@@ -45,7 +58,7 @@ describe('On remove mapping', () => {
 
 describe('Next id to add', () => {
   it('should be 4', () => {
-    const instance = setup();
+    const { instance } = setup();
 
     instance.addMapping();
 
@@ -53,7 +66,7 @@ describe('Next id to add', () => {
   });
 
   it('should default to 1', () => {
-    const instance = setup({ options: { ...defaultProps.options } });
+    const { instance } = setup({ options: { ...defaultProps.options } });
 
     expect(instance.state.nextIdToAdd).toEqual(1);
   });

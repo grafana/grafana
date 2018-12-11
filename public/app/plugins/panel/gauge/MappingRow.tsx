@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
-import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
+import SimplePicker from 'app/core/components/Picker/SimplePicker';
 import { MappingType, RangeMap, ValueMap } from 'app/types';
 
 interface Props {
@@ -12,6 +12,11 @@ interface Props {
 interface State {
   mapping: ValueMap | RangeMap;
 }
+
+const mappingOptions = [
+  { value: MappingType.ValueToText, label: 'Value' },
+  { value: MappingType.RangeToText, label: 'Range' },
+];
 
 export default class MappingRow extends PureComponent<Props, State> {
   constructor(props) {
@@ -147,34 +152,13 @@ export default class MappingRow extends PureComponent<Props, State> {
     return (
       <div className="mapping-row">
         <div className="mapping-row-type">
-          <ToggleButtonGroup
-            onChange={mappingType => this.onMappingTypeChange(mappingType)}
-            value={mapping.type}
-            stackedButtons={true}
-            render={({ selectedValue, onChange, stackedButtons }) => {
-              return [
-                <ToggleButton
-                  className="btn-small"
-                  key="value"
-                  onChange={onChange}
-                  selected={selectedValue === MappingType.ValueToText}
-                  value={MappingType.ValueToText}
-                  stackedButtons={stackedButtons}
-                >
-                  Value
-                </ToggleButton>,
-                <ToggleButton
-                  className="btn-small"
-                  key="range"
-                  onChange={onChange}
-                  selected={selectedValue === MappingType.RangeToText}
-                  value={MappingType.RangeToText}
-                  stackedButtons={stackedButtons}
-                >
-                  Range
-                </ToggleButton>,
-              ];
-            }}
+          <SimplePicker
+            placeholder="Choose type"
+            options={mappingOptions}
+            value={mappingOptions.find(o => o.value === mapping.type)}
+            getOptionLabel={i => i.label}
+            getOptionValue={i => i.value}
+            onSelected={type => this.onMappingTypeChange(type)}
           />
         </div>
         <div>{this.renderRow()}</div>
