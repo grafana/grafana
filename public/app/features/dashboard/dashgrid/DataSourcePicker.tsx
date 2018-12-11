@@ -1,15 +1,12 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
-import withKeyboardNavigation from './withKeyboardNavigation';
+import withKeyboardNavigation, { KeyboardNavigationProps } from './withKeyboardNavigation';
 import { DataSourceSelectItem } from 'app/types';
 
 export interface Props {
-  onChangeDataSource: (ds: any) => void;
+  onChangeDataSource: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
-  selected?: number;
-  onKeyDown?: (evt: any, maxSelectedIndex: number, onEnterAction: () => void) => void;
-  onMouseEnter?: (select: number) => void;
 }
 
 interface State {
@@ -17,7 +14,7 @@ interface State {
 }
 
 export const DataSourcePicker = withKeyboardNavigation(
-  class DataSourcePicker extends PureComponent<Props, State> {
+  class DataSourcePicker extends PureComponent<Props & KeyboardNavigationProps, State> {
     searchInput: HTMLElement;
 
     constructor(props) {
