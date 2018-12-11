@@ -50,9 +50,10 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select-box__menu {
-  background: $dropdownBackground;
+  background: $input-bg;
   position: absolute;
   z-index: 2;
+  min-width: 100%;
 }
 
 .gf-form-select-box__menu-list {
@@ -64,12 +65,16 @@ $select-input-bg-disabled: $input-bg-disabled;
   width: 100%;
 }
 
+/* .gf-form-select-box__single-value { */
+/* } */
+
 .gf-form-select-box__multi-value {
   display: inline;
 }
 
 .gf-form-select-box__option {
   border-left: 2px solid transparent;
+  white-space: nowrap;
 
   &.gf-form-select-box__option--is-focused {
     color: $dropdownLinkColorHover;
@@ -86,6 +91,9 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__control--is-focused .gf-form-select-box__placeholder {
   display: none;
+}
+
+.gf-form-select-box__option {
 }
 
 .gf-form-select-box__value-container {
@@ -119,10 +127,12 @@ $select-input-bg-disabled: $input-bg-disabled;
     border-width: 0 5px 5px;
   }
 }
+
 .gf-form-input--form-dropdown {
   padding: 0;
   border: 0;
   overflow: visible;
+  position: relative;
 }
 
 .gf-form--has-input-icon {

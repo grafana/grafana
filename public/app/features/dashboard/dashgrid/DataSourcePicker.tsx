@@ -1,7 +1,14 @@
+// Libraries
 import React, { PureComponent } from 'react';
-import classNames from 'classnames';
 import _ from 'lodash';
-import KeyboardNavigation, { KeyboardNavigationProps } from './KeyboardNavigation';
+
+// Components
+import ResetStyles from 'app/core/components/Picker/ResetStyles';
+import PickerOption from 'app/core/components/Picker/PickerOption';
+import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
+import Select from 'react-select';
+
+// Types
 import { DataSourceSelectItem } from 'app/types';
 
 export interface Props {
@@ -10,127 +17,50 @@ export interface Props {
   current: DataSourceSelectItem;
 }
 
-interface State {
-  searchQuery: string;
-  isOpen: boolean;
-}
-
-export class DataSourcePicker extends PureComponent<Props, State> {
+export class DataSourcePicker extends PureComponent<Props> {
   searchInput: HTMLElement;
 
   constructor(props) {
     super(props);
-
-    this.state = {
-      searchQuery: '',
-      isOpen: false,
-    };
   }
 
-  getDataSources() {
-    const { searchQuery } = this.state;
-    const regex = new RegExp(searchQuery, 'i');
-    const { datasources } = this.props;
-
-    const filtered = datasources.filter(item => {
-      return regex.test(item.name) || regex.test(item.meta.name);
-    });
-
-    return filtered;
-  }
-
-  get maxSelectedIndex() {
-    const filtered = this.getDataSources();
-    return filtered.length - 1;
-  }
-
-  renderDataSource = (ds: DataSourceSelectItem, index: number, keyNavProps: KeyboardNavigationProps) => {
-    const { onChangeDataSource } = this.props;
-    const { selected, onMouseEnter } = keyNavProps;
-    const onClick = () => onChangeDataSource(ds);
-    const isSelected = selected === index;
-    const cssClass = classNames({
-      'ds-picker-list__item': true,
-      'ds-picker-list__item--selected': isSelected,
-    });
-    return (
-      <div key={index} className={cssClass} title={ds.name} onClick={onClick} onMouseEnter={() => onMouseEnter(index)}>
-        <img className="ds-picker-list__img" src={ds.meta.info.logos.small} />
-        <div className="ds-picker-list__name">{ds.name}</div>
-      </div>
-    );
-  };
-
-  componentDidMount() {
-    setTimeout(() => {
-      this.searchInput.focus();
-    }, 300);
-  }
-
-  onSearchQueryChange = evt => {
-    const value = evt.target.value;
-    this.setState(prevState => ({
-      ...prevState,
-      searchQuery: value,
-    }));
-  };
-
-  renderFilters({ onKeyDown, selected }: KeyboardNavigationProps) {
-    const { searchQuery } = this.state;
-    return (
-      <label className="gf-form--has-input-icon">
-        <input
-          type="text"
-          className="gf-form-input width-13"
-          placeholder=""
-          ref={elem => (this.searchInput = elem)}
-          onChange={this.onSearchQueryChange}
-          value={searchQuery}
-          onKeyDown={evt => {
-            onKeyDown(evt, this.maxSelectedIndex, () => {
-              const { onChangeDataSource } = this.props;
-              const ds = this.getDataSources()[selected];
-              onChangeDataSource(ds);
-            });
-          }}
-        />
-        <i className="gf-form-input-icon fa fa-search" />
-      </label>
-    );
-  }
-
-  onOpen = () => {
-    this.setState({ isOpen: true });
+  onChange = item => {
+    const ds = this.props.datasources.find(ds => ds.name === item.value);
+    this.props.onChangeDataSource(ds);
   };
 
   render() {
-    const { current } = this.props;
-    const { isOpen } = this.state;
+    const { datasources, current, onChangeDatasource } = this.props;
+
+    const options = datasources.map(ds => ({
+      value: ds.name,
+      label: ds.name,
+      avatarUrl: ds.meta.info.logos.small,
+    }));
+
+    const value = { label: current.name, label: current.name };
 
     return (
-      <div className="ds-picker">
-        {!isOpen && (
-          <div className="toolbar__main" onClick={this.onOpen}>
-            <img className="toolbar__main-image" src={current.meta.info.logos.small} />
-            <div className="toolbar__main-name">{current.name}</div>
-            <i className="fa fa-caret-down" />
-          </div>
-        )}
-        {isOpen && (
-          <KeyboardNavigation
-            render={(keyNavProps: KeyboardNavigationProps) => (
-              <div className="ds-picker-menu">
-                <div className="cta-form__bar">
-                  {this.renderFilters(keyNavProps)}
-                  <div className="gf-form--grow" />
-                </div>
-                <div className="ds-picker-list">
-                  {this.getDataSources().map((ds, index) => this.renderDataSource(ds, index, keyNavProps))}
-                </div>
-              </div>
-            )}
-          />
-        )}
+      <div className="gf-form-inline">
+        <Select
+          classNamePrefix={`gf-form-select-box`}
+          isMulti={false}
+          menuShouldScrollIntoView={false}
+          isClearable={false}
+          className="gf-form-input gf-form-input--form-dropdown ds-picker"
+          onChange={item => this.onChange(item)}
+          options={options}
+          styles={ResetStyles}
+          maxMenuHeight={500}
+          placeholder="Select datasource"
+          loadingMessage={() => 'Loading datasources...'}
+          noOptionsMessage={() => 'No datasources found'}
+          value={value}
+          components={{
+            Option: PickerOption,
+            IndicatorsContainer,
+          }}
+        />
       </div>
     );
   }

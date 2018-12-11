@@ -9,3 +9,27 @@
     padding-left: 2px;
   }
 }
+
+.gf-form-select-box__desc-option {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-items: center;
+  cursor: pointer;
+  padding: 7px 10px;
+  width: 100%;
+}
+
+.gf-form-select-box__desc-option__body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding-right: 10px;
+  font-weight: 500;
+}
+
+.gf-form-select-box__desc-option__desc {
+  font-weight: normal;
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
