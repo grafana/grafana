@@ -1,28 +1,5 @@
-<div class="edit-tab-with-sidemenu">
-	<aside class="edit-sidemenu-aside">
-		<ul class="edit-sidemenu">
-			<li ng-class="{active: ctrl.subTabIndex === 0}">
-				<a ng-click="ctrl.subTabIndex = 0">Draw options</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 1}">
-				<a ng-click="ctrl.subTabIndex = 1">
-					Series overrides <span class="muted">({{ctrl.panel.seriesOverrides.length}})</span>
-				</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 2}">
-				<a ng-click="ctrl.subTabIndex = 2">
-					Thresholds <span class="muted">({{ctrl.panel.thresholds.length}})</span>
-				</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 3}">
-				<a ng-click="ctrl.subTabIndex = 3">
-					Time regions <span class="muted">({{ctrl.panel.timeRegions.length}})</span>
-				</a>
-			</li>
-		</ul>
-	</aside>
 
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 0">
+	<div class="editor-row">
 		<div class="section gf-form-group">
 			<h5 class="section-heading">Draw Modes</h5>
 			<gf-form-switch class="gf-form" label="Bars" label-class="width-5" checked="ctrl.panel.bars" on-change="ctrl.render()"></gf-form-switch>
@@ -89,9 +66,7 @@
 		</div>
 	</div>
 
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 1">
 		<div class="gf-form-group">
-			<h5>Series specific overrides <tip>Regex match example: /server[0-3]/i </tip></h5>
 			<div class="gf-form-inline" ng-repeat="override in ctrl.panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
 				<div class="gf-form">
 					<label class="gf-form-label">alias or regex</label>
@@ -110,35 +85,26 @@
 						</span>
 					</label>
 				</div>
-
+	
 				<div class="gf-form">
 					<span class="dropdown" dropdown-typeahead="overrideMenu" dropdown-typeahead-on-select="setOverride($item, $subItem)">
 					</span>
 				</div>
-
+	
 				<div class="gf-form gf-form--grow">
 					<div class="gf-form-label gf-form-label--grow"></div>
 				</div>
-
+	
 				<div class="gf-form">
 					<label class="gf-form-label">
 						<i class="fa fa-trash pointer" ng-click="ctrl.removeSeriesOverride(override)"></i>
 					</label>
 				</div>
 			</div>
+			<div class="gf-form-button-row">
+				<button class="btn btn-inverse" ng-click="ctrl.addSeriesOverride()">
+					<i class="fa fa-plus"></i>&nbsp;Add series override<tip>Regex match example: /server[0-3]/i </tip>
+				</button>
+			</div>
 		</div>
 
-		<button class="btn btn-inverse" ng-click="ctrl.addSeriesOverride()">
-			<i class="fa fa-plus"></i>&nbsp;Add override
-		</button>
-	</div>
-
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 2">
-		<graph-threshold-form panel-ctrl="ctrl"></graph-threshold-form>
-	</div>
-
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 3">
-		<graph-time-region-form panel-ctrl="ctrl"></graph-time-region-form>
-	</div>
-
-</div>

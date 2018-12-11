@@ -40,8 +40,8 @@ import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
-import TimePicker from './TimePicker';
 import { Alert } from './Error';
+import TimePicker, { parseTime } from './TimePicker';
 
 interface ExploreProps {
   datasourceSrv: DatasourceSrv;
@@ -119,7 +119,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } else {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
       initialQueries = ensureQueries(queries);
-      const initialRange = range || { ...DEFAULT_RANGE };
+      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) } || { ...DEFAULT_RANGE };
       // Millies step for helper bar charts
       const initialGraphInterval = 15 * 1000;
       this.state = {
@@ -687,7 +687,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     this.setState(state => {
-      const { history, queryTransactions, scanning } = state;
+      const { history, queryTransactions } = state;
+      let { scanning } = state;
 
       // Transaction might have been discarded
       const transaction = queryTransactions.find(qt => qt.id === transactionId);
@@ -724,15 +725,21 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const nextHistory = updateHistory(history, datasourceId, queries);
 
       // Keep scanning for results if this was the last scanning transaction
-      if (_.size(result) === 0 && scanning) {
-        const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
-        if (!other) {
-          this.scanTimer = setTimeout(this.scanPreviousRange, 1000);
+      if (scanning) {
+        if (_.size(result) === 0) {
+          const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
+          if (!other) {
+            this.scanTimer = setTimeout(this.scanPreviousRange, 1000);
+          }
+        } else {
+          // We can stop scanning if we have a result
+          scanning = false;
         }
       }
 
       return {
         ...results,
+        scanning,
         history: nextHistory,
         queryTransactions: nextQueryTransactions,
       };
@@ -913,6 +920,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onChange={this.onChangeDatasource}
                 options={exploreDatasources}
                 styles={ResetStyles}
+                maxMenuHeight={500}
                 placeholder="Select datasource"
                 loadingMessage={() => 'Loading datasources...'}
                 noOptionsMessage={() => 'No datasources found'}

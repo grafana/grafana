@@ -1,48 +1,20 @@
-import React, { SFC, ReactNode, PureComponent, ReactElement } from 'react';
+import React, { SFC, ReactNode, PureComponent } from 'react';
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
 
 interface ToggleButtonGroupProps {
-  onChange: (value) => void;
-  value?: any;
   label?: string;
-  render: (props) => void;
-  stackedButtons?: boolean;
+  children: JSX.Element[];
+  transparent?: boolean;
 }
 
 export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
-  static defaultProps = {
-    stackedButtons: false,
-  };
-
-  getValues() {
-    const { children } = this.props;
-    return React.Children.toArray(children).map((c: ReactElement<any>) => c.props.value);
-  }
-
-  smallChildren() {
-    const { children } = this.props;
-    return React.Children.toArray(children).every((c: ReactElement<any>) => c.props.className.includes('small'));
-  }
-
-  handleToggle(toggleValue) {
-    const { value, onChange } = this.props;
-    if (value && value === toggleValue) {
-      return;
-    }
-    onChange(toggleValue);
-  }
-
   render() {
-    const { value, label, stackedButtons } = this.props;
-    const values = this.getValues();
-    const selectedValue = value || values[0];
-    const labelClassName = `gf-form-label ${this.smallChildren() ? 'small' : ''}`;
+    const { children, label, transparent } = this.props;
 
     return (
       <div className="gf-form">
-        <div className={`toggle-button-group ${stackedButtons ? 'stacked' : ''}`}>
-          {label && <label className={labelClassName}>{label}</label>}
-          {this.props.render({ selectedValue, onChange: this.handleToggle.bind(this), stackedButtons: stackedButtons })}
-        </div>
+        {label && <label className={`gf-form-label ${transparent ? 'gf-form-label--transparent' : ''}`}>{label}</label>}
+        <div className={`toggle-button-group ${transparent ? 'toggle-button-group--transparent' : ''}`}>{children}</div>
       </div>
     );
   }
@@ -54,16 +26,16 @@ interface ToggleButtonProps {
   value: any;
   className?: string;
   children: ReactNode;
-  stackedButtons?: boolean;
+  tooltip?: string;
 }
 
 export const ToggleButton: SFC<ToggleButtonProps> = ({
   children,
   selected,
   className = '',
-  value,
+  value = null,
+  tooltip,
   onChange,
-  stackedButtons,
 }) => {
   const handleChange = event => {
     event.stopPropagation();
@@ -72,10 +44,16 @@ export const ToggleButton: SFC<ToggleButtonProps> = ({
     }
   };
 
-  const btnClassName = `btn ${className} ${selected ? 'active' : ''} ${stackedButtons ? 'stacked' : ''}`;
-  return (
+  const btnClassName = `btn ${className} ${selected ? 'active' : ''}`;
+  const button = (
     <button className={btnClassName} onClick={handleChange}>
       <span>{children}</span>
     </button>
   );
+
+  if (tooltip) {
+    return <Tooltip content={tooltip}>{button}</Tooltip>;
+  } else {
+    return button;
+  }
 };

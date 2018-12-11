@@ -1,5 +1,4 @@
 <div class="gf-form-group">
-  <h5>Time regions <tip>All configured time regions refers to UTC time</tip></h5>
   <div class="gf-form-inline" ng-repeat="timeRegion in ctrl.panel.timeRegions">
     <div class="gf-form">
       <label class="gf-form-label">T{{$index+1}}</label>
@@ -58,7 +57,7 @@
 
   <div class="gf-form-button-row">
     <button class="btn btn-inverse" ng-click="ctrl.addTimeRegion()">
-      <i class="fa fa-plus"></i>&nbsp;Add time region
+      <i class="fa fa-plus"></i>&nbsp;Add time region<tip>All configured time regions refers to UTC time</tip>
     </button>
   </div>
 </div>

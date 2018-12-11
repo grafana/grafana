@@ -391,3 +391,8 @@ $panel-grid-placeholder-shadow: 0 0 4px $blue;
 
 // logs
 $logs-color-unkown: $gray-2;
+
+// toggle-group
+$button-toggle-group-btn-active-bg: linear-gradient(90deg, $orange, $red);
+$button-toggle-group-btn-active-shadow: inset 0 0 4px $black;
+$button-toggle-group-btn-seperator-border: 1px solid $page-bg;

@@ -6,6 +6,7 @@ import classnames from 'classnames';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange } from 'app/types/series';
 import {
+  LogsDedupDescription,
   LogsDedupStrategy,
   LogsModel,
   dedupLogRows,
@@ -56,13 +57,13 @@ const FieldHighlight = onClick => props => {
 };
 
 interface RowProps {
-  allRows: LogRow[];
   highlighterExpressions?: string[];
   row: LogRow;
   showDuplicates: boolean;
   showLabels: boolean | null; // Tristate: null means auto
   showLocalTime: boolean;
   showUtc: boolean;
+  getRows: () => LogRow[];
   onClickLabel?: (label: string, value: string) => void;
 }
 
@@ -107,11 +108,12 @@ class Row extends PureComponent<RowProps, RowState> {
   };
 
   onClickHighlight = (fieldText: string) => {
-    const { allRows } = this.props;
+    const { getRows } = this.props;
     const { parser } = this.state;
 
     const fieldMatch = fieldText.match(parser.fieldRegex);
     if (fieldMatch) {
+      const allRows = getRows();
       // Build value-agnostic row matcher based on the field label
       const fieldLabel = fieldMatch[1];
       const fieldValue = fieldMatch[2];
@@ -151,7 +153,7 @@ class Row extends PureComponent<RowProps, RowState> {
 
   render() {
     const {
-      allRows,
+      getRows,
       highlighterExpressions,
       onClickLabel,
       row,
@@ -193,7 +195,7 @@ class Row extends PureComponent<RowProps, RowState> {
         )}
         {showLabels && (
           <div className="logs-row__labels">
-            <LogLabels allRows={allRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+            <LogLabels getRows={getRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
           </div>
         )}
         <div className="logs-row__message" onMouseEnter={this.onMouseOverMessage} onMouseLeave={this.onMouseOutMessage}>
@@ -393,28 +395,10 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
       }
     }
 
-    // Grid options
-    // const cssColumnSizes = [];
-    // if (showDuplicates) {
-    //   cssColumnSizes.push('max-content');
-    // }
-    // // Log-level indicator line
-    // cssColumnSizes.push('3px');
-    // if (showUtc) {
-    //   cssColumnSizes.push('minmax(220px, max-content)');
-    // }
-    // if (showLocalTime) {
-    //   cssColumnSizes.push('minmax(140px, max-content)');
-    // }
-    // if (showLabels) {
-    //   cssColumnSizes.push('fit-content(20%)');
-    // }
-    // cssColumnSizes.push('1fr');
-    // const logEntriesStyle = {
-    //   gridTemplateColumns: cssColumnSizes.join(' '),
-    // };
-
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+
+    // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
+    const getRows = () => processedRows;
 
     return (
       <div className="logs-panel">
@@ -431,40 +415,36 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} />
-            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} />
-            <ToggleButtonGroup
-              label="Dedup"
-              onChange={this.onChangeDedup}
-              value={dedup}
-              render={({ selectedValue, onChange }) =>
-                Object.keys(LogsDedupStrategy).map((dedupType, i) => (
-                  <ToggleButton
-                    className="btn-small"
-                    key={i}
-                    value={dedupType}
-                    onChange={onChange}
-                    selected={selectedValue === dedupType}
-                  >
-                    {dedupType}
-                  </ToggleButton>
-                ))
-              }
-            />
-            {hasData &&
-              meta && (
-                <div className="logs-panel-meta">
-                  {meta.map(item => (
-                    <div className="logs-panel-meta__item" key={item.label}>
-                      <span className="logs-panel-meta__label">{item.label}:</span>
-                      <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} transparent />
+            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} transparent />
+            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <ToggleButtonGroup label="Dedup" transparent={true}>
+              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+                <ToggleButton
+                  key={i}
+                  value={dedupType}
+                  onChange={this.onChangeDedup}
+                  selected={dedup === dedupType}
+                  tooltip={LogsDedupDescription[dedupType]}
+                >
+                  {dedupType}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </div>
         </div>
+
+        {hasData &&
+          meta && (
+            <div className="logs-panel-meta">
+              {meta.map(item => (
+                <div className="logs-panel-meta__item" key={item.label}>
+                  <span className="logs-panel-meta__label">{item.label}:</span>
+                  <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
         <div className="logs-rows">
           {hasData &&
@@ -473,7 +453,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             firstRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
-                allRows={processedRows}
+                getRows={getRows}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
@@ -489,7 +469,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             lastRows.map(row => (
               <Row
                 key={row.key + row.duplicates}
-                allRows={processedRows}
+                getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}

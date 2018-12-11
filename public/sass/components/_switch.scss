@@ -27,33 +27,39 @@ gf-form-switch[disabled] {
   border: 1px solid $input-border-color;
   border-left: none;
   border-radius: $input-border-radius;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   input {
     opacity: 0;
     width: 0;
     height: 0;
   }
+
+  &--transparent {
+    background: transparent;
+    border: 0;
+    width: 40px;
+  }
 }
 
 /* The slider */
 .gf-form-switch__slider {
-  position: absolute;
-  top: 8px;
-  left: 16px;
-  right: 14px;
-  bottom: 10px;
   background: $switch-slider-off-bg;
   border-radius: 8px;
   height: 16px;
   width: 29px;
+  display: block;
+  position: relative;
 
   &::before {
     position: absolute;
     content: '';
     height: 12px;
     width: 12px;
-    left: 2px;
-    bottom: 2px;
+    left: 1px;
+    top: 2px;
     background: $switch-slider-color;
     transition: 0.4s;
     border-radius: 50%;
