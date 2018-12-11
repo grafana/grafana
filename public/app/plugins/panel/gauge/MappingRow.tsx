@@ -151,7 +151,8 @@ export default class MappingRow extends PureComponent<Props, State> {
 
     return (
       <div className="mapping-row">
-        <div className="mapping-row-type">
+        <div className="gf-form-inline mapping-row-type">
+          <Label width={5}>Type</Label>
           <SimplePicker
             placeholder="Choose type"
             options={mappingOptions}
@@ -159,6 +160,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             getOptionLabel={i => i.label}
             getOptionValue={i => i.value}
             onSelected={type => this.onMappingTypeChange(type)}
+            width={7}
           />
         </div>
         <div>{this.renderRow()}</div>
