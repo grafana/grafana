@@ -1,4 +1,5 @@
 import React, { SFC, ReactNode, PureComponent } from 'react';
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
 
 interface ToggleButtonGroupProps {
   label?: string;
@@ -25,9 +26,17 @@ interface ToggleButtonProps {
   value: any;
   className?: string;
   children: ReactNode;
+  tooltip?: string;
 }
 
-export const ToggleButton: SFC<ToggleButtonProps> = ({ children, selected, className = '', value, onChange }) => {
+export const ToggleButton: SFC<ToggleButtonProps> = ({
+  children,
+  selected,
+  className = '',
+  value = null,
+  tooltip,
+  onChange,
+}) => {
   const handleChange = event => {
     event.stopPropagation();
     if (onChange) {
@@ -36,9 +45,15 @@ export const ToggleButton: SFC<ToggleButtonProps> = ({ children, selected, class
   };
 
   const btnClassName = `btn ${className} ${selected ? 'active' : ''}`;
-  return (
+  const button = (
     <button className={btnClassName} onClick={handleChange}>
       <span>{children}</span>
     </button>
   );
+
+  if (tooltip) {
+    return <Tooltip content={tooltip}>{button}</Tooltip>;
+  } else {
+    return button;
+  }
 };

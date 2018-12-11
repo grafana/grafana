@@ -139,7 +139,7 @@ $column-horizontal-spacing: 10px;
   &--warning,
   &--warn {
     &::after {
-      background-color: $warn;
+      background-color: $yellow;
     }
   }
 

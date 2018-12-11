@@ -15,11 +15,14 @@ export const DEFAULT_RANGE = {
  * Return a human-editable string of either relative (inludes "now") or absolute local time (in the shape of DATE_FORMAT).
  * @param value Epoch or relative time
  */
-export function parseTime(value: string, isUtc = false): string {
+export function parseTime(value: string | moment.Moment, isUtc = false, ensureString = false): string | moment.Moment {
   if (moment.isMoment(value)) {
+    if (ensureString) {
+      return value.format(DATE_FORMAT);
+    }
     return value;
   }
-  if (value.indexOf('now') !== -1) {
+  if ((value as string).indexOf('now') !== -1) {
     return value;
   }
   let time: any = value;
@@ -50,6 +53,16 @@ interface TimePickerState {
   toRaw: string;
 }
 
+/**
+ * TimePicker with dropdown menu for relative dates.
+ *
+ * Initialize with a range that is either based on relative time strings,
+ * or on Moment objects.
+ * Internally the component needs to keep a string representation in `fromRaw`
+ * and `toRaw` for the controlled inputs.
+ * When a time is picked, `onChangeTime` is called with the new range that
+ * is again based on relative time strings or Moment objects.
+ */
 export default class TimePicker extends PureComponent<TimePickerProps, TimePickerState> {
   dropdownEl: any;
 
@@ -75,9 +88,9 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     const from = props.range ? props.range.from : DEFAULT_RANGE.from;
     const to = props.range ? props.range.to : DEFAULT_RANGE.to;
 
-    // Ensure internal format
-    const fromRaw = parseTime(from, props.isUtc);
-    const toRaw = parseTime(to, props.isUtc);
+    // Ensure internal string format
+    const fromRaw = parseTime(from, props.isUtc, true);
+    const toRaw = parseTime(to, props.isUtc, true);
     const range = {
       from: fromRaw,
       to: toRaw,
