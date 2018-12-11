@@ -5,8 +5,9 @@
       onChange="ctrl.handleServiceChange"
       selected="ctrl.service"
       options="ctrl.services"
-      placeholder="ctrl.defaultDropdownValue"
-      className="width-12"
+      searchable="false"
+      placeholder="ctrl.defaultServiceValue"
+      className="&quot;width-15&quot;"
     ></option-picker>
   </div>
   <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
@@ -14,13 +15,14 @@
 <div class="gf-form-inline">
   <div class="gf-form">
     <span class="gf-form-label width-9 query-keyword">Metric</span>
-    <option-picker
+    <option-group-picker
       onChange="ctrl.handleMetricTypeChange"
       selected="ctrl.metricType"
-      options="ctrl.metrics"
+      groups="ctrl.insertTemplateVariables(ctrl.defaultServiceValue !== ctrl.service ? ctrl.metrics : ctrl.metricGroups)"
+      searchable="true"
       placeholder="ctrl.defaultDropdownValue"
-      className="width-12"
-    ></option-picker>
+      className="&quot;width-15&quot;"
+    ></option-group-picker>
   </div>
   <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
 </div>

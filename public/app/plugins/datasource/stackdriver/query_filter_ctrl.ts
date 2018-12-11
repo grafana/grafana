@@ -36,6 +36,7 @@ export class StackdriverFilterCtrl {
   metricType: string;
   metricDescriptors: any[];
   metrics: any[];
+  metricGroups: any[];
   services: any[];
   groupBySegments: any[];
   filterSegments: FilterSegments;
@@ -52,6 +53,7 @@ export class StackdriverFilterCtrl {
 
     this.metricDescriptors = [];
     this.metrics = [];
+    this.metricGroups = [];
     this.services = [];
 
     this.getCurrentProject()
@@ -106,6 +108,7 @@ export class StackdriverFilterCtrl {
       this.metricDescriptors = await this.datasource.getMetricTypes(this.target.defaultProject);
       this.services = this.getServicesList();
       this.metrics = this.getMetricsList();
+      this.metricGroups = this.getMetricGroups();
       return this.metricDescriptors;
     } else {
       return [];
@@ -113,11 +116,11 @@ export class StackdriverFilterCtrl {
   }
 
   getServicesList() {
-    const defaultValue = { value: this.$scope.defaultServiceValue, text: this.$scope.defaultServiceValue };
+    const defaultValue = { value: this.$scope.defaultServiceValue, label: this.$scope.defaultServiceValue };
     const services = this.metricDescriptors.map(m => {
       return {
         value: m.service,
-        label: m.serviceShortName,
+        label: _.startCase(m.serviceShortName),
       };
     });
 
@@ -126,6 +129,37 @@ export class StackdriverFilterCtrl {
     }
 
     return services.length > 0 ? [defaultValue, ..._.uniqBy(services, 'value')] : [];
+  }
+
+  getMetricGroups() {
+    return this.metrics.reduce((acc, curr) => {
+      const group = acc.find(group => group.service === curr.service);
+      if (group) {
+        group.options = [...group.options, { value: curr.value, label: curr.label }];
+      } else {
+        acc = [
+          ...acc,
+          {
+            label: _.startCase(curr.serviceShortName),
+            service: curr.service,
+            options: [{ value: curr.value, label: curr.label }],
+          },
+        ];
+      }
+      return acc;
+    }, []);
+  }
+
+  insertTemplateVariables(options) {
+    const templateVariables = {
+      label: 'Template Variables',
+      options: this.templateSrv.variables.map(v => ({
+        label: `$${v.name}`,
+        value: `$${v.name}`,
+        description: `$${v.definition}`,
+      })),
+    };
+    return [templateVariables, { label: 'Metrics', options }];
   }
 
   getMetricsList() {
@@ -178,6 +212,7 @@ export class StackdriverFilterCtrl {
   handleServiceChange(service) {
     this.target.service = this.service = service;
     this.metrics = this.getMetricsList();
+    this.metricGroups = this.getMetricGroups();
     this.setMetricType();
     this.getLabels();
     if (!this.metrics.find(m => m.value === this.target.metricType)) {
