@@ -325,6 +325,10 @@ class GraphElement {
   }
 
   renderTooltip() {
+    if (!this.plot) {
+      return;
+    }
+
     const sharedTooltip = this.dashboard.sharedTooltipModeEnabled() && !this.dashboard.sharedCrosshairModeOnly();
     const tooltipProps = {
       series: this.plot.getData(this.sortedSeries),
