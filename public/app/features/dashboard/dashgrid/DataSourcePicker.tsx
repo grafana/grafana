@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 // Components
 import ResetStyles from 'app/core/components/Picker/ResetStyles';
-import PickerOption from 'app/core/components/Picker/PickerOption';
+import { Option, SingleValue } from 'app/core/components/Picker/PickerOption';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
 import Select from 'react-select';
 
@@ -35,10 +35,14 @@ export class DataSourcePicker extends PureComponent<Props> {
     const options = datasources.map(ds => ({
       value: ds.name,
       label: ds.name,
-      avatarUrl: ds.meta.info.logos.small,
+      imgUrl: ds.meta.info.logos.small,
     }));
 
-    const value = { label: current.name, label: current.name };
+    const value = {
+      label: current.name,
+      value: current.name,
+      imgUrl: current.meta.info.logos.small,
+    };
 
     return (
       <div className="gf-form-inline">
@@ -57,7 +61,8 @@ export class DataSourcePicker extends PureComponent<Props> {
           noOptionsMessage={() => 'No datasources found'}
           value={value}
           components={{
-            Option: PickerOption,
+            Option,
+            SingleValue,
             IndicatorsContainer,
           }}
         />

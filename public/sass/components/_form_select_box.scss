@@ -47,6 +47,9 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__input {
   padding-left: 5px;
+  input {
+    line-height: inherit;
+  }
 }
 
 .gf-form-select-box__menu {
@@ -139,4 +142,33 @@ $select-input-bg-disabled: $input-bg-disabled;
   .gf-form-select-box__value-container {
     padding-left: 30px;
   }
+}
+
+.gf-form-select-box__desc-option {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-items: center;
+  cursor: pointer;
+  padding: 7px 10px;
+  width: 100%;
+}
+
+.gf-form-select-box__desc-option__body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding-right: 10px;
+  font-weight: 500;
+}
+
+.gf-form-select-box__desc-option__desc {
+  font-weight: normal;
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.gf-form-select-box__desc-option__img {
+  width: 20px;
+  margin-right: 10px;
 }

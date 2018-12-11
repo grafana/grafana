@@ -4,19 +4,40 @@ import { OptionProps } from 'react-select/lib/components/Option';
 
 // https://github.com/JedWatson/react-select/issues/3038
 interface ExtendedOptionProps extends OptionProps<any> {
-  data: any;
+  data: {
+    description?: string;
+    imgUrl?: string;
+  };
 }
 
-export const PickerOption = (props: ExtendedOptionProps) => {
-  const { children, data, className } = props;
+export const Option = (props: ExtendedOptionProps) => {
+  const { children, isSelected, data } = props;
+
   return (
     <components.Option {...props}>
-      <div className={`description-picker-option__button btn btn-link ${className}`}>
-        {data.avatarUrl && <img src={data.avatarUrl} alt={data.label} className="user-picker-option__avatar" />}
-        {children}
+      <div className="gf-form-select-box__desc-option">
+        {data.imgUrl && <img className="gf-form-select-box__desc-option__img" src={data.imgUrl} />}
+        <div className="gf-form-select-box__desc-option__body">
+          <div>{children}</div>
+          {data.description && <div className="gf-form-select-box__desc-option__desc">{data.description}</div>}
+        </div>
+        {isSelected && <i className="fa fa-check" aria-hidden="true" />}
       </div>
     </components.Option>
   );
 };
 
-export default PickerOption;
+export const SingleValue = (props: ExtendedOptionProps) => {
+  const { children, data } = props;
+
+  return (
+    <components.SingleValue {...props}>
+      <div className="gf-form-select-box__img-value">
+        {data.imgUrl && <img className="gf-form-select-box__desc-option__img" src={data.imgUrl} />}
+        {children}
+      </div>
+    </components.SingleValue>
+  );
+};
+
+export default Option;

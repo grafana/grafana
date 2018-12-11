@@ -47,7 +47,7 @@ export class TeamPicker extends Component<Props, State> {
           id: team.id,
           label: team.name,
           name: team.name,
-          avatarUrl: team.avatarUrl,
+          imgUrl: team.avatarUrl,
         };
       });
 
