@@ -8,7 +8,7 @@ func (sl *ServerLockService) AddMigration(mg *migrator.Migrator) {
 		Name: "server_lock",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "operation_uid", Type: migrator.DB_Text},
+			{Name: "operation_uid", Type: migrator.DB_NVarchar, Length: 100},
 			{Name: "version", Type: migrator.DB_BigInt},
 			{Name: "last_execution", Type: migrator.DB_BigInt, Nullable: false},
 		},

@@ -21,6 +21,7 @@ type ServerLockService struct {
 
 // Init this service
 func (sl *ServerLockService) Init() error {
+	sl.log = log.New("infra.lockservice")
 	return nil
 }
 
