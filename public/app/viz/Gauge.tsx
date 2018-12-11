@@ -1,38 +1,42 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { Threshold, TimeSeriesVMs } from 'app/types';
+import { RangeMap, Threshold, TimeSeriesVMs, ValueMap } from 'app/types';
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
 
 interface Props {
   decimals: number;
+  height: number;
+  mappings: Array<RangeMap | ValueMap>;
+  maxValue: number;
+  minValue: number;
+  prefix: string;
   timeSeries: TimeSeriesVMs;
-  showThresholdMarkers: boolean;
   thresholds: Threshold[];
+  showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
+  stat: string;
+  suffix: string;
   unit: string;
   width: number;
-  height: number;
-  stat: string;
-  prefix: string;
-  suffix: string;
 }
 
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
   static defaultProps = {
-    minValue: 0,
     maxValue: 100,
+    mappings: [],
+    minValue: 0,
     prefix: '',
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
-    unit: 'none',
     thresholds: [
       { label: 'Min', value: 0, color: 'rgba(50, 172, 45, 0.97)' },
       { label: 'Max', value: 100, color: 'rgba(245, 54, 54, 0.9)' },
     ],
+    unit: 'none',
   };
 
   componentDidMount() {

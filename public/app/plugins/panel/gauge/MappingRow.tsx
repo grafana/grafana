@@ -159,7 +159,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             value={mappingOptions.find(o => o.value === mapping.type)}
             getOptionLabel={i => i.label}
             getOptionValue={i => i.value}
-            onSelected={type => this.onMappingTypeChange(type)}
+            onSelected={type => this.onMappingTypeChange(type.value)}
             width={7}
           />
         </div>
