@@ -89,7 +89,9 @@ Click on the filter button <span title="Filter for label" class="logs-label__ico
 
 ## Logs Integration - Loki-specific Features
 
-For Grafana 6.0, the first log integration is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Loki [here]((https://github.com/grafana/loki)) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
+For Grafana 6.0, the first log integration is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
+
+### Switching from Metrics to Logs
 
 If you switch from a Prometheus query to a logs query (you can do a split first to have your metrics and logs side by side) then it will keep the labels from your query that exist in the logs and use those to query the log streams. For example, the following Prometheus query:
 
