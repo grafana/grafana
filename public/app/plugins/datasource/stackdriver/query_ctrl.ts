@@ -3,6 +3,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import './query_aggregation_ctrl';
 import './query_filter_ctrl';
 import { OptionPicker } from './components/OptionPicker';
+import { OptionGroupPicker } from './components/OptionGroupPicker';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 export interface QueryMeta {
@@ -70,6 +71,15 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       'options',
       'onChange',
       'selected',
+      'searchable',
+      'className',
+      'placeholder',
+    ]);
+    react2AngularDirective('optionGroupPicker', OptionGroupPicker, [
+      'groups',
+      'onChange',
+      'selected',
+      'searchable',
       'className',
       'placeholder',
     ]);
