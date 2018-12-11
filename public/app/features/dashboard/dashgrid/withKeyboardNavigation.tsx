@@ -1,19 +1,17 @@
-﻿import React from 'react';
-import { Props as DataSourceProps } from './DataSourcePicker';
-import { Props as VizTypeProps } from './VizTypePicker';
+﻿import React, { KeyboardEvent, ComponentType, Component } from 'react';
 
 interface State {
   selected: number;
 }
 
 export interface KeyboardNavigationProps {
-  selected?: number;
-  onKeyDown?: (evt: React.KeyboardEvent<EventTarget>, maxSelectedIndex: number, onEnterAction: () => void) => void;
-  onMouseEnter?: (select: number) => void;
+  onKeyDown: (evt: KeyboardEvent<EventTarget>, maxSelectedIndex: number, onEnterAction: () => void) => void;
+  onMouseEnter: (select: number) => void;
+  selected: number;
 }
 
-const withKeyboardNavigation = WrappedComponent => {
-  return class extends React.Component<DataSourceProps | VizTypeProps, State> {
+const withKeyboardNavigation = <P extends object>(WrappedComponent: ComponentType<P & KeyboardNavigationProps>) => {
+  return class WithKeyboardNavigation extends Component<P, State> {
     constructor(props) {
       super(props);
 
@@ -58,12 +56,7 @@ const withKeyboardNavigation = WrappedComponent => {
 
     render() {
       return (
-        <WrappedComponent
-          selected={this.state.selected}
-          onKeyDown={this.onKeyDown}
-          onMouseEnter={this.onMouseEnter}
-          {...this.props}
-        />
+        <WrappedComponent {...this.state} {...this.props} onKeyDown={this.onKeyDown} onMouseEnter={this.onMouseEnter} />
       );
     }
   };
