@@ -2,6 +2,7 @@ import React from 'react';
 import Select from 'react-select';
 import _ from 'lodash';
 
+import GroupHeading from 'app/core/components/Picker/GroupHeading';
 import DescriptionOption from 'app/core/components/Picker/DescriptionOption';
 import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
 import ResetStyles from 'app/core/components/Picker/ResetStyles';
@@ -9,21 +10,21 @@ import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
 
 export interface Props {
   onChange: (value: string) => void;
-  options: any[];
+  groups: any[];
   searchable: boolean;
   selected: string;
   placeholder?: string;
   className?: string;
-  groups?: boolean;
 }
 
-export class OptionPicker extends React.Component<Props, any> {
+export class OptionGroupPicker extends React.Component<Props, any> {
   constructor(props) {
     super(props);
   }
 
   render() {
-    const { onChange, options, selected, placeholder, className, searchable } = this.props;
+    const { onChange, groups, selected, placeholder, className, searchable } = this.props;
+    const options = _.flatten(groups.map(o => o.options));
     const selectedOption = options.find(option => option.value === selected);
 
     return (
@@ -31,8 +32,9 @@ export class OptionPicker extends React.Component<Props, any> {
         placeholder={placeholder}
         classNamePrefix={`gf-form-select-box`}
         className={className}
-        options={options}
+        options={groups}
         components={{
+          GroupHeading,
           Option: DescriptionOption,
           IndicatorsContainer,
           NoOptionsMessage,
