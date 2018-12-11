@@ -12,12 +12,6 @@ export interface TimeSeriesTooltipProps {
   hideZero?: boolean;
   valueType?: 'individual' | 'cumulative';
   sort?: 1 | 2 | null;
-  /**
-   * Throttle series hover info calculation. Due to high execution cost of this function, it may
-   * improve tooltip rendering performance, especially on large dashboards with shared tooltip enabled.
-   */
-  throttle?: boolean;
-  throttleInterval?: number;
   onHighlight?: (series, datapoint) => void;
   onUnhighlight?: () => void;
 }
@@ -42,23 +36,12 @@ export class TimeSeriesTooltip extends PureComponent<ComponentProps> {
   static defaultProps: Partial<TimeSeriesTooltipProps> = {
     sort: null,
     valueType: 'individual',
-    throttle: true,
-    throttleInterval: 100,
     onHighlight: () => {},
     onUnhighlight: () => {},
   };
 
   constructor(props) {
     super(props);
-
-    // Series hover info calculation has excessive cost so it makes sense to throttle function execution.
-    if (this.props.throttle) {
-      this.calculateHoverInfo = _.throttle(position => this.getHoverInfo(position), this.props.throttleInterval, {
-        leading: true,
-      });
-    } else {
-      this.calculateHoverInfo = position => this.getHoverInfo(position);
-    }
   }
 
   highlightPoints(seriesHoverInfo: PlotHoverInfo) {
@@ -86,19 +69,19 @@ export class TimeSeriesTooltip extends PureComponent<ComponentProps> {
   }
 
   getHoverInfo(position) {
-    const { series, allSeriesMode, hideEmpty, hideZero, valueType } = this.props;
+    const { series, hideEmpty, hideZero, valueType } = this.props;
     const getHoverOptions = { hideEmpty, hideZero, valueType };
     const seriesHoverInfo = getMultiSeriesPlotHoverInfo(series, position, getHoverOptions);
     this.sortHoverInfo(seriesHoverInfo);
-    this.seriesHoverInfo = seriesHoverInfo;
-    if (allSeriesMode && this.props.onHighlight && this.props.onUnhighlight) {
-      this.highlightPoints(seriesHoverInfo);
-    }
+    return seriesHoverInfo;
   }
 
   renderChildren = (position, item) => {
-    this.calculateHoverInfo(position);
-    const seriesHoverInfo = this.seriesHoverInfo;
+    const { allSeriesMode, onHighlight, onUnhighlight } = this.props;
+    const seriesHoverInfo = this.getHoverInfo(position);
+    if (allSeriesMode && onHighlight && onUnhighlight) {
+      this.highlightPoints(seriesHoverInfo);
+    }
     return this.props.children(this.props.series, item, seriesHoverInfo.time, seriesHoverInfo);
   };
 

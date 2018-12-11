@@ -9,7 +9,7 @@ const TOOLTIP_OFFSET = 20;
  * Since component render is expensive operation, it makes sense to call it only with a reasonable interval.
  * Inside this interval, tooltip is only moving and do not re-renders content.
  */
-const TOOLTIP_UPDATE_INTERVAL = 100;
+const TOOLTIP_RENDER_INTERVAL = 50;
 
 export interface TimeAxisTooltipProps {
   chartElem: any;
@@ -19,6 +19,7 @@ export interface TimeAxisTooltipProps {
   hoverEvent?: string;
   /** Use CSS transform: translate() for positioning tooltip. If false, top/left will be used instead. */
   useCSSTransforms?: boolean;
+  renderInterval?: number;
   /** Function converting timestamp into offset on chart */
   getOffset: (x) => number;
   onMouseleave?: (event?) => void;
@@ -65,6 +66,7 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
     hoverEvent: 'plothover',
     useCSSTransforms: true,
     sharedTooltip: false,
+    renderInterval: TOOLTIP_RENDER_INTERVAL,
   };
 
   constructor(props) {
@@ -142,7 +144,7 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
     // interval by changing CSS styles directly. This makes tooltip movement smoother, especially on
     // large dashboards with shared tooltip enabled.
     const interval = performance.now() - this.lastRenderTS;
-    if (interval > TOOLTIP_UPDATE_INTERVAL || !this.state.show) {
+    if (interval > this.props.renderInterval || !this.state.show) {
       this.lastRenderTS = performance.now();
       this.setState({
         show: true,
