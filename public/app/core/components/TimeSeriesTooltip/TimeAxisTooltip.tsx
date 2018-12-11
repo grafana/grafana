@@ -4,6 +4,12 @@ import { appEvents } from 'app/core/core';
 import { GraphHoverPosition, GraphHoverEvent, FlotPosition, FlotHoverItem } from 'app/types/events';
 
 const TOOLTIP_OFFSET = 20;
+/**
+ * Interval which determines how often tooltip fires content rendering.
+ * Since component render is expensive operation, it makes sense to call it only with a reasonable interval.
+ * Inside this interval, tooltip is only moving and do not re-renders content.
+ */
+const TOOLTIP_UPDATE_INTERVAL = 100;
 
 export interface TimeAxisTooltipProps {
   chartElem: any;
@@ -53,6 +59,7 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
   tooltipContainer: HTMLElement;
   tooltipElem: HTMLElement;
   size: TooltipSize;
+  lastRenderTS: number;
 
   static defaultProps: Partial<TimeAxisTooltipProps> = {
     hoverEvent: 'plothover',
@@ -71,6 +78,7 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
 
     this.appRoot = document.body;
     this.tooltipContainer = document.body;
+    this.lastRenderTS = performance.now();
   }
 
   getTooltipRef = ref => {
@@ -125,16 +133,28 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
   };
 
   show(position: GraphHoverPosition, item?: FlotHoverItem) {
-    const tooltipPosition = this.calculatePosition(this.state.position);
+    const tooltipPosition = this.calculatePosition(position);
     if (tooltipPosition.x < 0 || tooltipPosition.y < 0) {
       this.setState({ show: false });
     }
-    this.setState({
-      show: true,
-      position: position,
-      tooltipPosition: tooltipPosition,
-      item: item,
-    });
+    // Calling setState() causes component render. So it makes sense to do not re-render component
+    // on every mousemove event, but limit it to TOOLTIP_UPDATE_INTERVAL and move tooltip inside this
+    // interval by changing CSS styles directly. This makes tooltip movement smoother, especially on
+    // large dashboards with shared tooltip enabled.
+    const interval = performance.now() - this.lastRenderTS;
+    if (interval > TOOLTIP_UPDATE_INTERVAL || !this.state.show) {
+      this.lastRenderTS = performance.now();
+      this.setState({
+        show: true,
+        position: position,
+        tooltipPosition: tooltipPosition,
+        item: item,
+      });
+    } else {
+      requestAnimationFrame(() => {
+        this.tooltipElem.style.transform = `translate(${tooltipPosition.x}px, ${tooltipPosition.y}px)`;
+      });
+    }
   }
 
   hide() {
