@@ -49,6 +49,7 @@ $query-red: $red;
 $query-green: $green;
 $query-purple: $purple;
 $query-orange: $orange;
+$query-keyword: $blue;
 
 // Status colors
 // -------------------------
@@ -219,8 +220,8 @@ $search-filter-box-bg: $gray-7;
 
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $gray-5;
-$typeahead-selected-bg: lighten($blue, 57%);
-$typeahead-selected-color: $blue;
+$typeahead-selected-bg: $gray-6;
+$typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
@@ -358,3 +359,6 @@ $diff-json-icon: $gray-4;
 
 //Submenu
 $variable-option-bg: $blue-light;
+
+// logs
+$logs-color-unkown: $gray-5;

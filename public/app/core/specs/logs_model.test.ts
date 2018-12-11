@@ -1,4 +1,12 @@
-import { dedupLogRows, LogsDedupStrategy, LogsModel } from '../logs_model';
+import {
+  calculateFieldStats,
+  calculateLogsLabelStats,
+  dedupLogRows,
+  getParser,
+  LogsDedupStrategy,
+  LogsModel,
+  LogsParsers,
+} from '../logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -104,5 +112,169 @@ describe('dedupLogRows()', () => {
         entry: 'WARN test 1.2323423 on [xxx]',
       },
     ]);
+  });
+});
+
+describe('calculateFieldStats()', () => {
+  test('should return no stats for empty rows', () => {
+    expect(calculateFieldStats([], /foo=(.*)/)).toEqual([]);
+  });
+
+  test('should return no stats if extractor does not match', () => {
+    const rows = [
+      {
+        entry: 'foo=bar',
+      },
+    ];
+
+    expect(calculateFieldStats(rows as any, /baz=(.*)/)).toEqual([]);
+  });
+
+  test('should return stats for found field', () => {
+    const rows = [
+      {
+        entry: 'foo="42 + 1"',
+      },
+      {
+        entry: 'foo=503 baz=foo',
+      },
+      {
+        entry: 'foo="42 + 1"',
+      },
+      {
+        entry: 't=2018-12-05T07:44:59+0000 foo=503',
+      },
+    ];
+
+    expect(calculateFieldStats(rows as any, /foo=("[^"]*"|\S+)/)).toMatchObject([
+      {
+        value: '"42 + 1"',
+        count: 2,
+      },
+      {
+        value: '503',
+        count: 2,
+      },
+    ]);
+  });
+});
+
+describe('calculateLogsLabelStats()', () => {
+  test('should return no stats for empty rows', () => {
+    expect(calculateLogsLabelStats([], '')).toEqual([]);
+  });
+
+  test('should return no stats of label is not found', () => {
+    const rows = [
+      {
+        entry: 'foo 1',
+        labels: {
+          foo: 'bar',
+        },
+      },
+    ];
+
+    expect(calculateLogsLabelStats(rows as any, 'baz')).toEqual([]);
+  });
+
+  test('should return stats for found labels', () => {
+    const rows = [
+      {
+        entry: 'foo 1',
+        labels: {
+          foo: 'bar',
+        },
+      },
+      {
+        entry: 'foo 0',
+        labels: {
+          foo: 'xxx',
+        },
+      },
+      {
+        entry: 'foo 2',
+        labels: {
+          foo: 'bar',
+        },
+      },
+    ];
+
+    expect(calculateLogsLabelStats(rows as any, 'foo')).toMatchObject([
+      {
+        value: 'bar',
+        count: 2,
+      },
+      {
+        value: 'xxx',
+        count: 1,
+      },
+    ]);
+  });
+});
+
+describe('getParser()', () => {
+  test('should return no parser on empty line', () => {
+    expect(getParser('')).toBeUndefined();
+  });
+
+  test('should return no parser on unknown line pattern', () => {
+    expect(getParser('To Be or not to be')).toBeUndefined();
+  });
+
+  test('should return logfmt parser on key value patterns', () => {
+    expect(getParser('foo=bar baz="41 + 1')).toEqual(LogsParsers.logfmt);
+  });
+
+  test('should return JSON parser on JSON log lines', () => {
+    // TODO implement other JSON value types than string
+    expect(getParser('{"foo": "bar", "baz": "41 + 1"}')).toEqual(LogsParsers.JSON);
+  });
+});
+
+describe('LogsParsers', () => {
+  describe('logfmt', () => {
+    const parser = LogsParsers.logfmt;
+
+    test('should detect format', () => {
+      expect(parser.test('foo')).toBeFalsy();
+      expect(parser.test('foo=bar')).toBeTruthy();
+    });
+
+    test('should have a valid fieldRegex', () => {
+      const match = 'foo=bar'.match(parser.fieldRegex);
+      expect(match).toBeDefined();
+      expect(match[1]).toBe('foo');
+      expect(match[2]).toBe('bar');
+    });
+
+    test('should build a valid value matcher', () => {
+      const matcher = parser.buildMatcher('foo');
+      const match = 'foo=bar'.match(matcher);
+      expect(match).toBeDefined();
+      expect(match[1]).toBe('bar');
+    });
+  });
+
+  describe('JSON', () => {
+    const parser = LogsParsers.JSON;
+
+    test('should detect format', () => {
+      expect(parser.test('foo')).toBeFalsy();
+      expect(parser.test('{"foo":"bar"}')).toBeTruthy();
+    });
+
+    test('should have a valid fieldRegex', () => {
+      const match = '{"foo":"bar"}'.match(parser.fieldRegex);
+      expect(match).toBeDefined();
+      expect(match[1]).toBe('foo');
+      expect(match[2]).toBe('bar');
+    });
+
+    test('should build a valid value matcher', () => {
+      const matcher = parser.buildMatcher('foo');
+      const match = '{"foo":"bar"}'.match(matcher);
+      expect(match).toBeDefined();
+      expect(match[1]).toBe('bar');
+    });
   });
 });

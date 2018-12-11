@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { TimeSeries } from 'app/core/core';
-import colors from 'app/core/utils/colors';
+import colors, { getThemeColor } from 'app/core/utils/colors';
 
 export enum LogLevel {
   crit = 'critical',
@@ -22,7 +22,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unkown]: '#ddd',
+  [LogLevel.unkown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
 export interface LogSearchMatch {
@@ -43,6 +43,13 @@ export interface LogRow {
   timeEpochMs: number;
   timeLocal: string;
   uniqueLabels?: LogsStreamLabels;
+}
+
+export interface LogsLabelStat {
+  active?: boolean;
+  count: number;
+  proportion: number;
+  value: string;
 }
 
 export enum LogsMetaKind {
@@ -81,11 +88,85 @@ export interface LogsStreamLabels {
   [key: string]: string;
 }
 
+export enum LogsDedupDescription {
+  none = 'No de-duplication',
+  exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
+  numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
+  signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
+}
+
 export enum LogsDedupStrategy {
   none = 'none',
   exact = 'exact',
   numbers = 'numbers',
   signature = 'signature',
+}
+
+export interface LogsParser {
+  /**
+   * Value-agnostic matcher for a field label.
+   * Used to filter rows, and first capture group contains the value.
+   */
+  buildMatcher: (label: string) => RegExp;
+  /**
+   * Regex to find a field in the log line.
+   * First capture group contains the label value, second capture group the value.
+   */
+  fieldRegex: RegExp;
+  /**
+   * Function to verify if this is a valid parser for the given line.
+   * The parser accepts the line unless it returns undefined.
+   */
+  test: (line: string) => any;
+}
+
+export const LogsParsers: { [name: string]: LogsParser } = {
+  JSON: {
+    buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"([^"]*)"`),
+    fieldRegex: /"(\w+)"\s*:\s*"([^"]*)"/,
+    test: line => {
+      try {
+        return JSON.parse(line);
+      } catch (error) {}
+    },
+  },
+  logfmt: {
+    buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
+    fieldRegex: /(?:^|\s)(\w+)=("[^"]*"|\S+)/,
+    test: line => LogsParsers.logfmt.fieldRegex.test(line),
+  },
+};
+
+export function calculateFieldStats(rows: LogRow[], extractor: RegExp): LogsLabelStat[] {
+  // Consider only rows that satisfy the matcher
+  const rowsWithField = rows.filter(row => extractor.test(row.entry));
+  const rowCount = rowsWithField.length;
+
+  // Get field value counts for eligible rows
+  const countsByValue = _.countBy(rowsWithField, row => (row as LogRow).entry.match(extractor)[1]);
+  const sortedCounts = _.chain(countsByValue)
+    .map((count, value) => ({ count, value, proportion: count / rowCount }))
+    .sortBy('count')
+    .reverse()
+    .value();
+
+  return sortedCounts;
+}
+
+export function calculateLogsLabelStats(rows: LogRow[], label: string): LogsLabelStat[] {
+  // Consider only rows that have the given label
+  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
+  const rowCount = rowsWithLabel.length;
+
+  // Get label value counts for eligible rows
+  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRow).labels[label]);
+  const sortedCounts = _.chain(countsByValue)
+    .map((count, value) => ({ count, value, proportion: count / rowCount }))
+    .sortBy('count')
+    .reverse()
+    .value();
+
+  return sortedCounts;
 }
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
@@ -128,6 +209,19 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
   };
 }
 
+export function getParser(line: string): LogsParser {
+  let parser;
+  try {
+    if (LogsParsers.JSON.test(line)) {
+      parser = LogsParsers.JSON;
+    }
+  } catch (error) {}
+  if (!parser && LogsParsers.logfmt.test(line)) {
+    parser = LogsParsers.logfmt;
+  }
+  return parser;
+}
+
 export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
   if (hiddenLogLevels.size === 0) {
     return logs;
@@ -147,31 +241,55 @@ export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>)
 }
 
 export function makeSeriesForLogs(rows: LogRow[], intervalMs: number): TimeSeries[] {
+  // currently interval is rangeMs / resolution, which is too low for showing series as bars.
+  // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
+  // when executing queries & interval calculated and not here but this is a temporary fix.
+  // intervalMs = intervalMs * 10;
+
   // Graph time series by log level
   const seriesByLevel = {};
-  rows.forEach(row => {
-    if (!seriesByLevel[row.logLevel]) {
-      seriesByLevel[row.logLevel] = { lastTs: null, datapoints: [], alias: row.logLevel };
-    }
-    const levelSeries = seriesByLevel[row.logLevel];
+  const bucketSize = intervalMs * 10;
+  const seriesList = [];
 
-    // Bucket to nearest minute
-    const time = Math.round(row.timeEpochMs / intervalMs / 10) * intervalMs * 10;
+  for (const row of rows) {
+    let series = seriesByLevel[row.logLevel];
+
+    if (!series) {
+      seriesByLevel[row.logLevel] = series = {
+        lastTs: null,
+        datapoints: [],
+        alias: row.logLevel,
+        color: LogLevelColor[row.logLevel],
+      };
+
+      seriesList.push(series);
+    }
+
+    // align time to bucket size
+    const time = Math.round(row.timeEpochMs / bucketSize) * bucketSize;
+
     // Entry for time
-    if (time === levelSeries.lastTs) {
-      levelSeries.datapoints[levelSeries.datapoints.length - 1][0]++;
+    if (time === series.lastTs) {
+      series.datapoints[series.datapoints.length - 1][0]++;
     } else {
-      levelSeries.datapoints.push([1, time]);
-      levelSeries.lastTs = time;
+      series.datapoints.push([1, time]);
+      series.lastTs = time;
     }
-  });
 
-  return Object.keys(seriesByLevel).reduce((acc, level) => {
-    if (seriesByLevel[level]) {
-      const gs = new TimeSeries(seriesByLevel[level]);
-      gs.setColor(LogLevelColor[level]);
-      acc.push(gs);
+    // add zero to other levels to aid stacking so each level series has same number of points
+    for (const other of seriesList) {
+      if (other !== series && other.lastTs !== time) {
+        other.datapoints.push([0, time]);
+        other.lastTs = time;
+      }
     }
-    return acc;
-  }, []);
+  }
+
+  return seriesList.map(series => {
+    series.datapoints.sort((a, b) => {
+      return a[1] - b[1];
+    });
+
+    return new TimeSeries(series);
+  });
 }

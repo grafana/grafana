@@ -1,10 +1,32 @@
 # 5.5.0 (unreleased)
 
+### New Features
+* **Alerting**: Adds support for Google Hangouts Chat notifications [#11221](https://github.com/grafana/grafana/issues/11221), thx [@PatrickSchuster](https://github.com/PatrickSchuster)
+
 ### Minor
 
 * **Elasticsearch**: Add support for offset in date histogram aggregation [#12653](https://github.com/grafana/grafana/issues/12653), thx [@mattiarossi](https://github.com/mattiarossi)
 * **Auth**: Prevent password reset when login form is disabled or either LDAP or Auth Proxy is enabled [#14246](https://github.com/grafana/grafana/issues/14246), thx [@SilverFire](https://github.com/SilverFire)
 * **Dataproxy**: Override incoming Authorization header [#13815](https://github.com/grafana/grafana/issues/13815), thx [@kornholi](https://github.com/kornholi)
+* **Admin**: Fix prevent removing last grafana admin permissions [#11067](https://github.com/grafana/grafana/issues/11067), thx [@danielbh](https://github.com/danielbh)
+
+# 5.4.1 (2018-12-10)
+
+* **Stackdriver**: Fixes issue with data proxy and Authorization header [#14262](https://github.com/grafana/grafana/issues/14262)
+* **Units**: fixedUnit for Flow:l/min and mL/min [#14294](https://github.com/grafana/grafana/issues/14294), thx [@flopp999](https://github.com/flopp999). 
+* **Logging**: Fix for issue where data proxy logged a secret when debug logging was enabled, now redacted. [#14319](https://github.com/grafana/grafana/issues/14319)
+* **InfluxDB**: Add support for alerting on InfluxDB queries that use the cumulative_sum function. [#14314](https://github.com/grafana/grafana/pull/14314), thx [@nitti](https://github.com/nitti)
+* **Plugins**: Panel plugins should no receive the panel-initialized event again as usual. 
+* **Embedded Graphs**: Iframe graph panels should now work as usual. [#14284](https://github.com/grafana/grafana/issues/14284)
+* **Postgres**: Improve PostgreSQL Query Editor if using different Schemas, [#14313](
+https://github.com/grafana/grafana/pull/14313)
+* **Quotas**: Fixed for updating org & user quotas. [#14347](https://github.com/grafana/grafana/pull/14347), thx [#moznion](https://github.com/moznion)
+* **Cloudwatch**: Add the AWS/SES Cloudwatch metrics of BounceRate and ComplaintRate to auto complete list. [#14401](https://github.com/grafana/grafana/pull/14401), thx [@sglajchEG](https://github.com/sglajchEG)
+* **Dashboard Search**: Fixed filtering by tag issues. 
+* **Graph**: Fixed time region issues, [#14425](https://github.com/grafana/grafana/issues/14425), [#14280](https://github.com/grafana/grafana/issues/14280)
+* **Graph**: Fixed issue with series color picker popover being placed outside window. 
+
+ 
 
 # 5.4.0 (2018-12-03)
 

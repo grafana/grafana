@@ -130,6 +130,33 @@ describe('TimeRegionManager', () => {
       });
     });
 
+    plotOptionsScenario('for time from/to region', ctx => {
+      const regions = [{ from: '00:00', to: '05:00', fill: true, colorMode: 'red' }];
+      const from = moment('2018-12-01T00:00+01:00');
+      const to = moment('2018-12-03T23:59+01:00');
+      ctx.setup(regions, from, to);
+
+      it('should add 3 markings', () => {
+        expect(ctx.options.grid.markings.length).toBe(3);
+      });
+
+      it('should add one fill between 00:00 and 05:00 each day', () => {
+        const markings = ctx.options.grid.markings;
+
+        expect(moment(markings[0].xaxis.from).format()).toBe(moment('2018-12-01T01:00:00+01:00').format());
+        expect(moment(markings[0].xaxis.to).format()).toBe(moment('2018-12-01T06:00:00+01:00').format());
+        expect(markings[0].color).toBe(colorModes.red.color.fill);
+
+        expect(moment(markings[1].xaxis.from).format()).toBe(moment('2018-12-02T01:00:00+01:00').format());
+        expect(moment(markings[1].xaxis.to).format()).toBe(moment('2018-12-02T06:00:00+01:00').format());
+        expect(markings[1].color).toBe(colorModes.red.color.fill);
+
+        expect(moment(markings[2].xaxis.from).format()).toBe(moment('2018-12-03T01:00:00+01:00').format());
+        expect(moment(markings[2].xaxis.to).format()).toBe(moment('2018-12-03T06:00:00+01:00').format());
+        expect(markings[2].color).toBe(colorModes.red.color.fill);
+      });
+    });
+
     plotOptionsScenario('for day of week from/to region', ctx => {
       const regions = [{ fromDayOfWeek: 7, toDayOfWeek: 7, fill: true, colorMode: 'red' }];
       const from = moment('2018-01-01T18:45:05+01:00');
@@ -208,6 +235,42 @@ describe('TimeRegionManager', () => {
         expect(moment(markings[2].xaxis.from).format()).toBe(moment('2018-01-21T01:00:00+01:00').format());
         expect(moment(markings[2].xaxis.to).format()).toBe(moment('2018-01-22T00:59:59+01:00').format());
         expect(markings[2].color).toBe(colorModes.red.color.fill);
+      });
+    });
+
+    plotOptionsScenario('for day of week from/to time region', ctx => {
+      const regions = [{ fromDayOfWeek: 7, from: '23:00', toDayOfWeek: 1, to: '01:40', fill: true, colorMode: 'red' }];
+      const from = moment('2018-12-07T12:51:19+01:00');
+      const to = moment('2018-12-10T13:51:29+01:00');
+      ctx.setup(regions, from, to);
+
+      it('should add 1 marking', () => {
+        expect(ctx.options.grid.markings.length).toBe(1);
+      });
+
+      it('should add one fill between sunday 23:00 and monday 01:40', () => {
+        const markings = ctx.options.grid.markings;
+
+        expect(moment(markings[0].xaxis.from).format()).toBe(moment('2018-12-10T00:00:00+01:00').format());
+        expect(moment(markings[0].xaxis.to).format()).toBe(moment('2018-12-10T02:40:00+01:00').format());
+      });
+    });
+
+    plotOptionsScenario('for day of week from/to time region', ctx => {
+      const regions = [{ fromDayOfWeek: 6, from: '03:00', toDayOfWeek: 7, to: '02:00', fill: true, colorMode: 'red' }];
+      const from = moment('2018-12-07T12:51:19+01:00');
+      const to = moment('2018-12-10T13:51:29+01:00');
+      ctx.setup(regions, from, to);
+
+      it('should add 1 marking', () => {
+        expect(ctx.options.grid.markings.length).toBe(1);
+      });
+
+      it('should add one fill between saturday 03:00 and sunday 02:00', () => {
+        const markings = ctx.options.grid.markings;
+
+        expect(moment(markings[0].xaxis.from).format()).toBe(moment('2018-12-08T04:00:00+01:00').format());
+        expect(moment(markings[0].xaxis.to).format()).toBe(moment('2018-12-09T03:00:00+01:00').format());
       });
     });
 
