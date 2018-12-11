@@ -157,21 +157,15 @@
   padding-bottom: 6px;
   transition: transform 1 ease;
 
-  &:hover {
-    box-shadow: $panel-editor-viz-item-shadow-hover;
-    background: $panel-editor-viz-item-bg-hover;
-    border: $panel-editor-viz-item-border-hover;
+  &--current {
+    box-shadow: 0 0 6px $orange;
+    border: 1px solid $orange;
   }
 
   &--selected {
-    box-shadow: 0 0 6px $orange;
-    border: 1px solid $orange;
-
-    &:hover {
-      box-shadow: 0 0 6px $orange;
-      border: 1px solid $orange;
-      background: $panel-editor-viz-item-bg-hover-active;
-    }
+    box-shadow: $panel-editor-viz-item-shadow-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
   }
 }
 
@@ -263,13 +257,13 @@
   align-items: center;
   height: 44px;
 
-  &:hover {
+  &--selected {
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
     box-shadow: $panel-editor-viz-item-shadow-hover;
   }
 
-  &--selected {
+  &--active {
     box-shadow: 0 0 6px $orange;
     border: 1px solid $orange;
 
