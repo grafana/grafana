@@ -59,6 +59,13 @@ export class StackdriverFilterCtrl {
       .then(this.getLabels.bind(this));
 
     this.initSegments($scope.hideGroupBys);
+    this.handleMetricTypeChange = this.handleMetricTypeChange.bind(this);
+    this.handleServiceChange = this.handleServiceChange.bind(this);
+  }
+
+  handleMetricTypeChange(value) {
+    this.metricType = value;
+    this.onMetricTypeChange();
   }
 
   initSegments(hideGroupBys: boolean) {
@@ -110,7 +117,7 @@ export class StackdriverFilterCtrl {
     const services = this.metricDescriptors.map(m => {
       return {
         value: m.service,
-        text: m.serviceShortName,
+        label: m.serviceShortName,
       };
     });
 
@@ -128,7 +135,8 @@ export class StackdriverFilterCtrl {
         value: m.type,
         serviceShortName: m.serviceShortName,
         text: m.displayName,
-        title: m.description,
+        label: m.displayName,
+        description: m.description,
       };
     });
 
@@ -167,8 +175,8 @@ export class StackdriverFilterCtrl {
     });
   }
 
-  onServiceChange() {
-    this.target.service = this.service;
+  handleServiceChange(service) {
+    this.target.service = this.service = service;
     this.metrics = this.getMetricsList();
     this.setMetricType();
     this.getLabels();
