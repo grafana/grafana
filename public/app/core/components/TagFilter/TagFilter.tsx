@@ -51,6 +51,10 @@ export class TagFilter extends React.Component<Props, any> {
       getOptionLabel: i => i.label,
       value: tags,
       styles: ResetStyles,
+      filterOption: (option, searchQuery) => {
+        const regex = RegExp(searchQuery, 'i');
+        return regex.test(option.value);
+      },
       components: {
         Option: TagOption,
         IndicatorsContainer,
