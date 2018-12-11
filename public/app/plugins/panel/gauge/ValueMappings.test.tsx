@@ -51,4 +51,10 @@ describe('Next id to add', () => {
 
     expect(instance.state.nextIdToAdd).toEqual(4);
   });
+
+  it('should default to 1', () => {
+    const instance = setup({ options: { ...defaultProps.options } });
+
+    expect(instance.state.nextIdToAdd).toEqual(1);
+  });
 });

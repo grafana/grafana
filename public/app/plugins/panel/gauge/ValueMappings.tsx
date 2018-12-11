@@ -16,7 +16,7 @@ export default class ValueMappings extends PureComponent<OptionModuleProps, Stat
 
     this.state = {
       mappings: mappings || [],
-      nextIdToAdd: mappings ? this.getMaxIdFromMappings(mappings) : 1,
+      nextIdToAdd: mappings.length > 0 ? this.getMaxIdFromMappings(mappings) : 1,
     };
   }
 
