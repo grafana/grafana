@@ -9,7 +9,7 @@ const TOOLTIP_OFFSET = 20;
  * Since component render is expensive operation, it makes sense to call it only with a reasonable interval.
  * Inside this interval, tooltip is only moving and do not re-renders content.
  */
-const TOOLTIP_RENDER_INTERVAL = 50;
+const TOOLTIP_RENDER_INTERVAL = 60;
 
 export interface TimeAxisTooltipProps {
   chartElem: any;
@@ -46,6 +46,11 @@ interface TooltipSize {
   height: number;
 }
 
+interface ElementOffset {
+  left: number;
+  top: number;
+}
+
 const defaultPosition: GraphHoverPosition = {
   pageX: 0,
   pageY: 0,
@@ -60,6 +65,9 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
   tooltipContainer: HTMLElement;
   tooltipElem: HTMLElement;
   size: TooltipSize;
+  elemHeight: number;
+  elemWidth: number;
+  elemOffset: ElementOffset;
   lastRenderTS: number;
 
   static defaultProps: Partial<TimeAxisTooltipProps> = {
@@ -135,26 +143,26 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
   };
 
   show(position: GraphHoverPosition, item?: FlotHoverItem) {
-    const tooltipPosition = this.calculatePosition(position);
+    const interval = performance.now() - this.lastRenderTS;
+    const shouldUpdate = interval > this.props.renderInterval;
+    const tooltipPosition = this.calculatePosition(position, shouldUpdate);
     if (tooltipPosition.x < 0 || tooltipPosition.y < 0) {
-      this.setState({ show: false });
+      return this.setState({ show: false });
     }
+    requestAnimationFrame(() => {
+      this.tooltipElem.style.transform = `translate(${tooltipPosition.x}px, ${tooltipPosition.y}px)`;
+    });
     // Calling setState() causes component render. So it makes sense to do not re-render component
-    // on every mousemove event, but limit it to TOOLTIP_UPDATE_INTERVAL and move tooltip inside this
+    // on every mousemove event, but limit it to TOOLTIP_RENDER_INTERVAL and move tooltip inside this
     // interval by changing CSS styles directly. This makes tooltip movement smoother, especially on
     // large dashboards with shared tooltip enabled.
-    const interval = performance.now() - this.lastRenderTS;
-    if (interval > this.props.renderInterval || !this.state.show) {
+    if (shouldUpdate || !this.state.show) {
       this.lastRenderTS = performance.now();
       this.setState({
         show: true,
         position: position,
         tooltipPosition: tooltipPosition,
         item: item,
-      });
-    } else {
-      requestAnimationFrame(() => {
-        this.tooltipElem.style.transform = `translate(${tooltipPosition.x}px, ${tooltipPosition.y}px)`;
       });
     }
   }
@@ -163,10 +171,10 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
     this.setState({ show: false });
   }
 
-  calculatePosition(hoverEventPos: GraphHoverPosition): { x: number; y: number } {
-    const elemHeight = this.props.chartElem[0].clientHeight;
-    const elemWidth = this.props.chartElem[0].clientWidth;
-    const elemOffset = this.getElemOffset();
+  calculatePosition(hoverEventPos: GraphHoverPosition, update = false): { x: number; y: number } {
+    const elemHeight = this.getElemHeight(update);
+    const elemWidth = this.getElemWidth(update);
+    const elemOffset = this.getElemOffset(update);
     // const positionOffset = this.props.getOffset(hoverEventPos.x);
     const tooltipSize = this.size || this.getTooltipSize();
 
@@ -206,10 +214,26 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
     return (this.appRoot && this.appRoot.clientHeight) || 0;
   }
 
-  getElemOffset(): { left: number; top: number } {
+  getElemWidth(update = false) {
+    if (!this.elemWidth || update) {
+      this.elemWidth = (this.props.chartElem && this.props.chartElem[0].clientWidth) || 0;
+    }
+    return this.elemWidth;
+  }
+
+  getElemHeight(update = false) {
+    if (!this.elemHeight || update) {
+      this.elemHeight = (this.props.chartElem && this.props.chartElem[0].clientHeight) || 0;
+    }
+    return this.elemHeight;
+  }
+
+  getElemOffset(update = false): ElementOffset {
     // TODO: make it working for both JQuery and HTML elements
-    const offset = this.props.chartElem.offset();
-    return offset;
+    if (!this.elemOffset || update) {
+      this.elemOffset = (this.props.chartElem && this.props.chartElem.offset()) || { left: 0, top: 0 };
+    }
+    return this.elemOffset;
   }
 
   isElemHidden(): boolean {
@@ -221,13 +245,7 @@ export class TimeAxisTooltip extends PureComponent<ComponentProps, TimeAxisToolt
   }
 
   render() {
-    const tooltipPos = this.state.tooltipPosition;
-    let tooltipStyle: CSSProperties;
-    if (this.props.useCSSTransforms) {
-      tooltipStyle = { transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)` };
-    } else {
-      tooltipStyle = { left: tooltipPos.x, top: tooltipPos.y };
-    }
+    const tooltipStyle: CSSProperties = {};
     if (!this.state.show) {
       tooltipStyle.display = 'none';
     }
