@@ -273,6 +273,19 @@
   }
 }
 
+.ds-picker {
+  position: relative;
+}
+
+.ds-picker-menu {
+  min-width: 400px;
+  max-width: 500px;
+  position: absolute;
+  background: $panel-editor-toolbar-view-bg;
+  padding: 5px;
+  overflow: auto;
+}
+
 .ds-picker-list__name {
   text-overflow: ellipsis;
   overflow: hidden;

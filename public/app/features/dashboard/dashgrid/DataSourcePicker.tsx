@@ -7,10 +7,12 @@ import { DataSourceSelectItem } from 'app/types';
 export interface Props {
   onChangeDataSource: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
+  current: DataSourceSelectItem;
 }
 
 interface State {
   searchQuery: string;
+  isOpen: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props, State> {
@@ -18,8 +20,10 @@ export class DataSourcePicker extends PureComponent<Props, State> {
 
   constructor(props) {
     super(props);
+
     this.state = {
       searchQuery: '',
+      isOpen: false,
     };
   }
 
@@ -95,21 +99,39 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     );
   }
 
+  onOpen = () => {
+    this.setState({ isOpen: true });
+  };
+
   render() {
+    const { current } = this.props;
+    const { isOpen } = this.state;
+
     return (
-      <KeyboardNavigation
-        render={(keyNavProps: KeyboardNavigationProps) => (
-          <>
-            <div className="cta-form__bar">
-              {this.renderFilters(keyNavProps)}
-              <div className="gf-form--grow" />
-            </div>
-            <div className="ds-picker-list">
-              {this.getDataSources().map((ds, index) => this.renderDataSource(ds, index, keyNavProps))}
-            </div>
-          </>
+      <div className="ds-picker">
+        {!isOpen && (
+          <div className="toolbar__main" onClick={this.onOpen}>
+            <img className="toolbar__main-image" src={current.meta.info.logos.small} />
+            <div className="toolbar__main-name">{current.name}</div>
+            <i className="fa fa-caret-down" />
+          </div>
         )}
-      />
+        {isOpen && (
+          <KeyboardNavigation
+            render={(keyNavProps: KeyboardNavigationProps) => (
+              <div className="ds-picker-menu">
+                <div className="cta-form__bar">
+                  {this.renderFilters(keyNavProps)}
+                  <div className="gf-form--grow" />
+                </div>
+                <div className="ds-picker-list">
+                  {this.getDataSources().map((ds, index) => this.renderDataSource(ds, index, keyNavProps))}
+                </div>
+              </div>
+            )}
+          />
+        )}
+      </div>
     );
   }
 }
