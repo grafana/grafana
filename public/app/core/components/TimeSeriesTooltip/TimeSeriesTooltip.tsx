@@ -96,16 +96,14 @@ export class TimeSeriesTooltip extends PureComponent<ComponentProps> {
     }
   }
 
+  renderChildren = (position, item) => {
+    this.calculateHoverInfo(position);
+    const seriesHoverInfo = this.seriesHoverInfo;
+    return this.props.children(this.props.series, item, seriesHoverInfo.time, seriesHoverInfo);
+  };
+
   render() {
-    return (
-      <TimeAxisTooltip {...this.props}>
-        {(position, item) => {
-          this.calculateHoverInfo(position);
-          const seriesHoverInfo = this.seriesHoverInfo;
-          return this.props.children(this.props.series, item, seriesHoverInfo.time, seriesHoverInfo);
-        }}
-      </TimeAxisTooltip>
-    );
+    return <TimeAxisTooltip {...this.props}>{this.renderChildren}</TimeAxisTooltip>;
   }
 }
 
