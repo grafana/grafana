@@ -1,21 +1,27 @@
+// Libraries
 import React, { SFC, PureComponent } from 'react';
+import Remarkable from 'remarkable';
+import _ from 'lodash';
+
+// Components
 import DataSourceOption from './DataSourceOption';
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 import { DataSourcePicker } from './DataSourcePicker';
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
-import './../../panel/metrics_tab';
-import config from 'app/core/config';
 import { QueryInspector } from './QueryInspector';
 import { TimeRangeOptions } from './TimeRangeOptions';
+import './../../panel/metrics_tab';
+import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
-import { DataSourceSelectItem } from 'app/types';
+import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import config from 'app/core/config';
 
-import Remarkable from 'remarkable';
+// Types
+import { PanelModel } from '../panel_model';
+import { DashboardModel } from '../dashboard_model';
+import { DataSourceSelectItem, DataQuery } from 'app/types';
 
 interface Props {
   panel: PanelModel;
@@ -40,7 +46,7 @@ interface LoadingPlaceholderProps {
 const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => <h2>{text}</h2>;
 
 export class QueriesTab extends PureComponent<Props, State> {
-  element: any;
+  element: HTMLElement;
   component: AngularComponent;
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv: BackendSrv = getBackendSrv();
@@ -59,20 +65,30 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
   }
 
+  getAngularQueryComponentScope(): AngularQueryComponentScope {
+    const { panel, dashboard } = this.props;
+
+    return {
+      panel: panel,
+      dashboard: dashboard,
+      refresh: () => panel.refresh(),
+      render: () => panel.render,
+      addQuery: this.onAddQuery,
+      moveQuery: this.onMoveQuery,
+      removeQuery: this.onRemoveQuery,
+      events: panel.events,
+    };
+  }
+
   componentDidMount() {
     if (!this.element) {
       return;
     }
 
-    const { panel, dashboard } = this.props;
     const loader = getAngularLoader();
     const template = '<metrics-tab />';
     const scopeProps = {
-      ctrl: {
-        panel: panel,
-        dashboard: dashboard,
-        refresh: () => panel.refresh(),
-      },
+      ctrl: this.getAngularQueryComponentScope(),
     };
 
     this.component = loader.load(this.element, scopeProps, template);
@@ -87,6 +103,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   onChangeDataSource = datasource => {
     const { panel } = this.props;
     const { currentDatasource } = this.state;
+
     // switching to mixed
     if (datasource.meta.mixed) {
       panel.targets.forEach(target => {
@@ -95,10 +112,16 @@ export class QueriesTab extends PureComponent<Props, State> {
           target.datasource = config.defaultDatasource;
         }
       });
-    } else if (currentDatasource && currentDatasource.meta.mixed) {
-      panel.targets.forEach(target => {
-        delete target.datasource;
-      });
+    } else if (currentDatasource) {
+      // if switching from mixed
+      if (currentDatasource.meta.mixed) {
+        for (const target of panel.targets) {
+          delete target.datasource;
+        }
+      } else if (currentDatasource.meta.id !== datasource.meta.id) {
+        // we are changing data source type, clear queries
+        panel.targets = [{ refId: 'A' }];
+      }
     }
 
     panel.datasource = datasource.value;
@@ -227,9 +250,41 @@ export class QueriesTab extends PureComponent<Props, State> {
     return isLoading ? <LoadingPlaceholder text="Loading help..." /> : helpHtml;
   };
 
+  onAddQuery = (query?: DataQuery) => {
+    this.props.panel.addQuery(query);
+    this.forceUpdate();
+  };
+
+  onAddQueryClick = () => {
+    this.props.panel.addQuery();
+    this.component.digest();
+    this.forceUpdate();
+  };
+
+  onRemoveQuery = (query: DataQuery) => {
+    const { panel } = this.props;
+
+    const index = _.indexOf(panel.targets, query);
+    panel.targets.splice(index, 1);
+    panel.refresh();
+
+    this.forceUpdate();
+  };
+
+  onMoveQuery = (query: DataQuery, direction: number) => {
+    const { panel } = this.props;
+
+    const index = _.indexOf(panel.targets, query);
+    _.move(panel.targets, index, index + direction);
+
+    this.forceUpdate();
+  };
+
   render() {
+    const { panel } = this.props;
     const { currentDatasource } = this.state;
     const { hasQueryHelp } = currentDatasource.meta;
+
     const dsInformation = {
       title: currentDatasource.name,
       imgSrc: currentDatasource.meta.info.logos.small,
@@ -266,9 +321,23 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody heading="Queries" main={dsInformation} toolbarItems={[options, queryInspector, dsHelp]}>
-        <>
-          <div ref={element => (this.element = element)} style={{ width: '100%' }} />
-        </>
+        <div className="query-editor-rows gf-form-group">
+          <div ref={element => (this.element = element)} />
+
+          <div className="gf-form-query">
+            <div className="gf-form gf-form-query-letter-cell">
+              <label className="gf-form-label">
+                <span className="gf-form-query-letter-cell-carret muted">
+                  <i className="fa fa-caret-down" />
+                </span>
+                <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
+              </label>
+              <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
+                Add Query
+              </button>
+            </div>
+          </div>
+        </div>
       </EditorTabBody>
     );
   }

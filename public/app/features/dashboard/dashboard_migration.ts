@@ -143,7 +143,7 @@ export class DashboardMigrator {
       panelUpgrades.push(panel => {
         _.each(panel.targets, target => {
           if (!target.refId) {
-            target.refId = this.dashboard.getNextQueryLetter(panel);
+            target.refId = panel.getNextQueryLetter();
           }
         });
       });

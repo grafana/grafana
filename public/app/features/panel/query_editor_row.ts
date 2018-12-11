@@ -20,7 +20,7 @@ export class QueryRowCtrl {
     this.hideEditorRowActions = this.panelCtrl.hideEditorRowActions;
 
     if (!this.target.refId) {
-      this.target.refId = this.panelCtrl.dashboard.getNextQueryLetter(this.panel);
+      this.target.refId = this.panel.getNextQueryLetter();
     }
 
     this.toggleCollapse(true);
