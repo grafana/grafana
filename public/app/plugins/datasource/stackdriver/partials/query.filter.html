@@ -1,26 +1,26 @@
 <div class="gf-form-inline">
   <div class="gf-form">
     <span class="gf-form-label width-9 query-keyword">Service</span>
-    <select
-      class="gf-form-input width-12"
-      ng-model="ctrl.service"
-      ng-options="f.value as f.text for f in ctrl.services"
-      ng-change="ctrl.onServiceChange(ctrl.service)"
-    ></select>
+    <option-picker
+      onChange="ctrl.handleServiceChange"
+      selected="ctrl.service"
+      options="ctrl.services"
+      placeholder="ctrl.defaultDropdownValue"
+      className="width-12"
+    ></option-picker>
   </div>
+  <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
+</div>
+<div class="gf-form-inline">
   <div class="gf-form">
     <span class="gf-form-label width-9 query-keyword">Metric</span>
-    <gf-form-dropdown
-      model="ctrl.metricType"
-      get-options="ctrl.metrics"
-      class="min-width-20"
-      disabled
-      type="text"
-      allow-custom="true"
-      lookup-text="true"
-      css-class="min-width-12"
-      on-change="ctrl.onMetricTypeChange()"
-    ></gf-form-dropdown>
+    <option-picker
+      onChange="ctrl.handleMetricTypeChange"
+      selected="ctrl.metricType"
+      options="ctrl.metrics"
+      placeholder="ctrl.defaultDropdownValue"
+      className="width-12"
+    ></option-picker>
   </div>
   <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
 </div>
