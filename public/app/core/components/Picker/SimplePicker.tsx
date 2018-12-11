@@ -6,8 +6,8 @@ import ResetStyles from './ResetStyles';
 interface Props {
   className?: string;
   defaultValue?: any;
-  getOptionLabel?: (item: any) => string;
-  getOptionValue?: (item: any) => string;
+  getOptionLabel: (item: any) => string;
+  getOptionValue: (item: any) => string;
   onSelected: (item: any) => {} | void;
   options: any[];
   placeholder?: string;
@@ -28,7 +28,7 @@ const SimplePicker: SFC<Props> = ({
 }) => {
   return (
     <Select
-      classNamePrefix={`gf-form-select-box`}
+      classNamePrefix="gf-form-select-box"
       className={`${width ? 'width-' + width : ''} gf-form-input gf-form-input--form-dropdown ${className || ''}`}
       components={{
         Option: DescriptionOption,
