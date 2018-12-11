@@ -1,11 +1,19 @@
 import React, { PureComponent } from 'react';
 import Gauge from 'app/viz/Gauge';
-import { NullValueMode, PanelOptionsProps, PanelProps, RangeMap, Threshold, ValueMap } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 import ValueOptions from './ValueOptions';
 import GaugeOptions from './GaugeOptions';
 import Thresholds from './Thresholds';
 import ValueMappings from './ValueMappings';
+import {
+  BasicGaugeColor,
+  NullValueMode,
+  PanelOptionsProps,
+  PanelProps,
+  RangeMap,
+  Threshold,
+  ValueMap,
+} from 'app/types';
 
 export interface OptionsProps {
   decimals: number;
@@ -16,8 +24,7 @@ export interface OptionsProps {
   suffix: string;
   unit: string;
   thresholds: Threshold[];
-  mappings: Array<ValueMap | RangeMap>;
-  mappingType: number;
+  mappings: Array<RangeMap | ValueMap>;
 }
 
 export interface OptionModuleProps {
@@ -33,8 +40,14 @@ export const defaultProps = {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
-    valueMaps: [],
-    rangeMaps: [],
+    decimals: 0,
+    stat: '',
+    unit: '',
+    mappings: [],
+    thresholds: [
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
+      { index: 1, label: 'Max', value: 100, canRemove: false },
+    ],
   },
 };
 

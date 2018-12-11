@@ -42,8 +42,15 @@ export enum MappingType {
   RangeToText = 2,
 }
 
+export enum BasicGaugeColor {
+  Green = 'rgba(50, 172, 45, 0.97)',
+  Orange = 'rgba(237, 129, 40, 0.89)',
+  Red = 'rgb(212, 74, 58)',
+}
+
 interface BaseMap {
-  op: string;
+  id: number;
+  operator: string;
   text: string;
   type: MappingType;
 }

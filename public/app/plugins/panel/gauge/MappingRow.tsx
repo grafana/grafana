@@ -53,17 +53,17 @@ export default class MappingRow extends PureComponent<Props, State> {
     this.setState({ mapping: updatedMapping });
   };
 
-  updateMapping = () => {
-    const { mapping } = this.state;
-
-    this.props.updateMapping(mapping);
-  };
-
   onMappingTypeChange = mappingType => {
     const { mapping } = this.state;
 
     const updatedMapping = { ...mapping, type: mappingType };
     this.setState({ mapping: updatedMapping });
+  };
+
+  updateMapping = () => {
+    const { mapping } = this.state;
+
+    this.props.updateMapping(mapping);
   };
 
   renderRow() {
@@ -74,7 +74,7 @@ export default class MappingRow extends PureComponent<Props, State> {
 
       return (
         <div className="gf-form">
-          <div className="gf-form-inline">
+          <div className="gf-form-inline mapping-row-input">
             <Label width={4}>From</Label>
             <div>
               <input
@@ -85,7 +85,7 @@ export default class MappingRow extends PureComponent<Props, State> {
               />
             </div>
           </div>
-          <div className="gf-form-inline">
+          <div className="gf-form-inline mapping-row-input">
             <Label width={4}>To</Label>
             <div>
               <input
@@ -96,7 +96,7 @@ export default class MappingRow extends PureComponent<Props, State> {
               />
             </div>
           </div>
-          <div className="gf-form-inline">
+          <div className="gf-form-inline mapping-row-input">
             <Label width={4}>Text</Label>
             <div>
               <input
@@ -115,7 +115,7 @@ export default class MappingRow extends PureComponent<Props, State> {
 
     return (
       <div className="gf-form">
-        <div className="gf-form-inline">
+        <div className="gf-form-inline mapping-row-input">
           <Label width={4}>Value</Label>
           <div>
             <input
@@ -126,7 +126,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             />
           </div>
         </div>
-        <div className="gf-form-inline">
+        <div className="gf-form-inline mapping-row-input">
           <Label width={4}>Text</Label>
           <div>
             <input
@@ -151,7 +151,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             onChange={mappingType => this.onMappingTypeChange(mappingType)}
             value={mapping.type}
             stackedButtons={true}
-            render={({ selectedValue, onChange }) => {
+            render={({ selectedValue, onChange, stackedButtons }) => {
               return [
                 <ToggleButton
                   className="btn-small"
@@ -159,6 +159,7 @@ export default class MappingRow extends PureComponent<Props, State> {
                   onChange={onChange}
                   selected={selectedValue === MappingType.ValueToText}
                   value={MappingType.ValueToText}
+                  stackedButtons={stackedButtons}
                 >
                   Value
                 </ToggleButton>,
@@ -168,6 +169,7 @@ export default class MappingRow extends PureComponent<Props, State> {
                   onChange={onChange}
                   selected={selectedValue === MappingType.RangeToText}
                   value={MappingType.RangeToText}
+                  stackedButtons={stackedButtons}
                 >
                   Range
                 </ToggleButton>,

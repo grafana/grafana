@@ -41,7 +41,7 @@ export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupPr
       <div className="gf-form">
         <div className={`toggle-button-group ${stackedButtons ? 'stacked' : ''}`}>
           {label && <label className={labelClassName}>{label}</label>}
-          {this.props.render({ selectedValue, onChange: this.handleToggle.bind(this) })}
+          {this.props.render({ selectedValue, onChange: this.handleToggle.bind(this), stackedButtons: stackedButtons })}
         </div>
       </div>
     );
@@ -54,9 +54,17 @@ interface ToggleButtonProps {
   value: any;
   className?: string;
   children: ReactNode;
+  stackedButtons?: boolean;
 }
 
-export const ToggleButton: SFC<ToggleButtonProps> = ({ children, selected, className = '', value, onChange }) => {
+export const ToggleButton: SFC<ToggleButtonProps> = ({
+  children,
+  selected,
+  className = '',
+  value,
+  onChange,
+  stackedButtons,
+}) => {
   const handleChange = event => {
     event.stopPropagation();
     if (onChange) {
@@ -64,7 +72,7 @@ export const ToggleButton: SFC<ToggleButtonProps> = ({ children, selected, class
     }
   };
 
-  const btnClassName = `btn ${className} ${selected ? 'active' : ''}`;
+  const btnClassName = `btn ${className} ${selected ? 'active' : ''} ${stackedButtons ? 'stacked' : ''}`;
   return (
     <button className={btnClassName} onClick={handleChange}>
       <span>{children}</span>

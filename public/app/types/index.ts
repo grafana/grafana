@@ -21,7 +21,7 @@ import {
   DataQueryOptions,
   IntervalValues,
 } from './series';
-import { MappingType, PanelProps, PanelOptionsProps, RangeMap, Threshold, ValueMap } from './panel';
+import { BasicGaugeColor, MappingType, PanelProps, PanelOptionsProps, RangeMap, Threshold, ValueMap } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
 import { Organization, OrganizationState } from './organization';
 import {
@@ -97,6 +97,7 @@ export {
   RangeMap,
   IntervalValues,
   MappingType,
+  BasicGaugeColor,
 };
 
 export interface StoreState {

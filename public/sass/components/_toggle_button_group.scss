@@ -37,5 +37,9 @@
       border-radius: 0 $border-radius $border-radius 0;
       margin-left: 0;
     }
+
+    &.stacked {
+      border-radius: $border-radius;
+    }
   }
 }
