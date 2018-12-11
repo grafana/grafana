@@ -5,6 +5,7 @@ interface Props {
   duration: number;
   children: JSX.Element;
   in: boolean;
+  unmountOnExit?: boolean;
 }
 
 export const FadeIn: SFC<Props> = props => {
@@ -21,7 +22,7 @@ export const FadeIn: SFC<Props> = props => {
   };
 
   return (
-    <Transition in={props.in} timeout={props.duration}>
+    <Transition in={props.in} timeout={props.duration} unmountOnExit={props.unmountOnExit || false}>
       {state => (
         <div
           style={{
