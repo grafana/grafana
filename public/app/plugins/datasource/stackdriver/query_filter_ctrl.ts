@@ -60,7 +60,9 @@ export class StackdriverFilterCtrl {
 
   handleMetricTypeChange(value) {
     this.target.metricType = value;
-    this.onMetricTypeChange();
+    this.setMetricType();
+    this.$scope.refresh();
+    this.getLabels();
   }
 
   initSegments(hideGroupBys: boolean) {
@@ -189,12 +191,6 @@ export class StackdriverFilterCtrl {
     } else {
       this.$scope.refresh();
     }
-  }
-
-  async onMetricTypeChange() {
-    this.setMetricType();
-    this.$scope.refresh();
-    this.getLabels();
   }
 
   setMetricType() {
