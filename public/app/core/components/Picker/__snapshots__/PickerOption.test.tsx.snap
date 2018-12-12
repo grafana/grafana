@@ -3,15 +3,19 @@
 exports[`PickerOption renders correctly 1`] = `
 <div>
   <div
-    className="description-picker-option__button btn btn-link class-for-user-picker"
+    className="gf-form-select-box__desc-option"
   >
     <img
-      alt="User picker label"
-      className="user-picker-option__avatar"
+      className="gf-form-select-box__desc-option__img"
       src="url/to/avatar"
     />
-    Model title
+    <div
+      className="gf-form-select-box__desc-option__body"
+    >
+      <div>
+        Model title
+      </div>
+    </div>
   </div>
 </div>
 `;
-  
