@@ -7,6 +7,7 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 // Components
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
+import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -105,7 +106,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       template +=
         `
       <div class="form-section" ng-cloak>` +
-        (i > 0 ? `<div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
+        (i > -1 ? `<div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
         `<div class="form-section__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
@@ -139,6 +140,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.setState({ isVizPickerOpen: true });
   };
 
+  onCloseVizPicker = () => {
+    this.setState({ isVizPickerOpen: false });
+  };
+
   onSearchQueryChange = evt => {
     const value = evt.target.value;
     this.setState({
@@ -152,17 +157,19 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     if (this.state.isVizPickerOpen) {
       return (
-        <label className="gf-form--has-input-icon">
-          <input
-            type="text"
-            className="gf-form-input width-13"
-            placeholder=""
-            onChange={this.onSearchQueryChange}
-            value={searchQuery}
-            ref={elem => elem && elem.focus()}
-          />
-          <i className="gf-form-input-icon fa fa-search" />
-        </label>
+        <>
+          <label className="gf-form--has-input-icon">
+            <input
+              type="text"
+              className="gf-form-input width-13"
+              placeholder=""
+              onChange={this.onSearchQueryChange}
+              value={searchQuery}
+              ref={elem => elem && elem.focus()}
+            />
+            <i className="gf-form-input-icon fa fa-search" />
+          </label>
+        </>
       );
     } else {
       return (
@@ -193,9 +200,14 @@ export class VisualizationTab extends PureComponent<Props, State> {
     return (
       <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[panelHelp]}>
         <>
-          {isVizPickerOpen && (
-            <VizTypePicker current={plugin} onTypeChanged={this.onTypeChanged} searchQuery={searchQuery} />
-          )}
+          <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
+            <VizTypePicker
+              current={plugin}
+              onTypeChanged={this.onTypeChanged}
+              searchQuery={searchQuery}
+              onClose={this.onCloseVizPicker}
+            />
+          </FadeIn>
           {this.renderPanelOptions()}
         </>
       </EditorTabBody>

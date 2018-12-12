@@ -9,6 +9,7 @@ export interface Props {
   current: PanelPlugin;
   onTypeChanged: (newType: PanelPlugin) => void;
   searchQuery: string;
+  onClose: () => void;
 }
 
 export class VizTypePicker extends PureComponent<Props> {
@@ -61,10 +62,23 @@ export class VizTypePicker extends PureComponent<Props> {
   };
 
   render() {
+    const { onClose } = this.props;
     const filteredPluginList = this.getFilteredPluginList();
 
     return (
-      <div className="viz-picker">{filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index))}</div>
+      <div className="form-section">
+        <div className="form-section__header">
+          <span>Type selection</span>
+          <button className="btn btn-link" onClick={onClose}>
+            <i className="fa fa-remove" />
+          </button>
+        </div>
+        <div className="form-section__body">
+          <div className="viz-picker">
+            {filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index))}
+          </div>
+        </div>
+      </div>
     );
   }
 }

@@ -34,8 +34,8 @@
   flex-grow: 1;
   background: $page-bg;
   margin: 0 20px 0 84px;
-  border-left: 2px solid $orange;
   border-radius: 3px;
+  border: $panel-editor-border;
   box-shadow: $panel-editor-shadow;
 }
 
@@ -133,17 +133,14 @@
 }
 
 .viz-picker {
-  background: $panel-editor-toolbar-view-bg;
   display: flex;
   flex-wrap: wrap;
-  margin: -40px -20px;
-  margin-bottom: 13px;
-  padding: 20px;
+  margin-bottom: 40px;
 }
 
 .viz-picker__item {
-  background: $panel-editor-viz-item-bg;
-  border: $panel-editor-viz-item-border;
+  background: $panel-bg;
+  border: $panel-border;
   border-radius: 3px;
   height: 100px;
   width: 150px;
@@ -323,6 +320,13 @@
   margin-bottom: 20px;
   background: $input-label-bg;
   border-radius: 3px;
+  position: relative;
+
+  .btn {
+    position: absolute;
+    right: 0;
+    top: 2px;
+  }
 }
 
 .form-section__body {

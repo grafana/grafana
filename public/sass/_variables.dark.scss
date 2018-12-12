@@ -271,7 +271,7 @@ $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 $tab-border-color: $dark-4;
 
 // Toolbar
-$toolbar-bg: $black;
+$toolbar-bg: $input-bg;
 
 // Pagination
 // -------------------------
@@ -375,6 +375,7 @@ $checkbox-color: $dark-1;
 //Panel Edit
 // -------------------------
 $panel-editor-shadow: 0 0 20px black;
+$panel-editor-border: 1px solid $dark-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
 $panel-editor-toolbar-view-bg: $black;
 $panel-editor-viz-item-shadow: 0 0 8px $dark-5;
