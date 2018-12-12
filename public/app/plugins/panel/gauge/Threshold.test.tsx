@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import Thresholds from './Thresholds';
+import Thresholds, { BasicGaugeColor } from './Thresholds';
 import { OptionsProps } from './module';
 import { PanelOptionsProps } from '../../../types';
 
@@ -16,9 +16,9 @@ const setup = (propOverrides?: object) => {
 };
 
 const thresholds = [
-  { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+  { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
   { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-  { index: 2, label: 'Max', value: 100, canRemove: false },
+  { index: 2, label: 'Max', value: 100, canRemove: false, color: BasicGaugeColor.Red },
 ];
 
 describe('Add threshold', () => {
@@ -28,9 +28,9 @@ describe('Add threshold', () => {
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
-      { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-      { index: 2, label: 'Max', value: 100, canRemove: false },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
+      { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(131, 123, 52, 0.99)' },
+      { index: 2, label: 'Max', value: 100, canRemove: false, color: BasicGaugeColor.Red },
     ]);
   });
 
@@ -42,10 +42,10 @@ describe('Add threshold', () => {
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
-      { index: 1, label: '', value: 25, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
+      { index: 1, label: '', value: 25, canRemove: true, color: 'rgba(144, 151, 43, 0.93)' },
       { index: 2, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-      { index: 3, label: 'Max', value: 100, canRemove: false },
+      { index: 3, label: 'Max', value: 100, canRemove: false, color: BasicGaugeColor.Red },
     ]);
   });
 });

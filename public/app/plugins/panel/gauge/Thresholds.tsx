@@ -9,7 +9,7 @@ interface State {
   thresholds: Threshold[];
 }
 
-enum BasicGaugeColor {
+export enum BasicGaugeColor {
   Green = 'rgba(50, 172, 45, 0.97)',
   Orange = 'rgba(237, 129, 40, 0.89)',
   Red = 'rgb(212, 74, 58)',
