@@ -15,9 +15,15 @@ export interface Props {
   onChangeDataSource: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
   current: DataSourceSelectItem;
+  onBlur?: () => void;
+  autoFocus?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
+  static defaultProps = {
+    autoFocus: false,
+  };
+
   searchInput: HTMLElement;
 
   constructor(props) {
@@ -30,7 +36,7 @@ export class DataSourcePicker extends PureComponent<Props> {
   };
 
   render() {
-    const { datasources, current, onChangeDatasource } = this.props;
+    const { datasources, current, autoFocus, onBlur } = this.props;
 
     const options = datasources.map(ds => ({
       value: ds.name,
@@ -38,7 +44,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       imgUrl: ds.meta.info.logos.small,
     }));
 
-    const value = {
+    const value = current && {
       label: current.name,
       value: current.name,
       imgUrl: current.meta.info.logos.small,
@@ -55,6 +61,9 @@ export class DataSourcePicker extends PureComponent<Props> {
           onChange={item => this.onChange(item)}
           options={options}
           styles={ResetStyles}
+          autoFocus={autoFocus}
+          onBlur={onBlur}
+          openMenuOnFocus={true}
           maxMenuHeight={500}
           placeholder="Select datasource"
           loadingMessage={() => 'Loading datasources...'}

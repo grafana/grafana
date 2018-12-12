@@ -30,9 +30,10 @@ interface Props {
 
 interface State {
   currentDS: DataSourceSelectItem;
-  helpContent: JSX.Element | string;
+  helpContent: JSX.Element;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
+  isAddingMixed: boolean;
 }
 
 interface LoadingPlaceholderProps {
@@ -56,6 +57,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       isLoadingHelp: false,
       helpContent: null,
       isPickerOpen: false,
+      isAddingMixed: false,
     };
   }
 
@@ -132,7 +134,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     if (hasHelp) {
       this.setState({
-        helpContent: <h2>Loading help...</h2>,
+        helpContent: <h3>Loading help...</h3>,
         isLoadingHelp: true,
       });
 
@@ -148,7 +150,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         })
         .catch(() => {
           this.setState({
-            helpContent: 'Error occured when loading help',
+            helpContent: <h3>'Error occured when loading help'</h3>,
             isLoadingHelp: false,
           });
         });
@@ -240,6 +242,11 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   onAddQueryClick = () => {
+    if (this.state.currentDS.meta.mixed) {
+      this.setState({ isAddingMixed: true })
+      return;
+    }
+
     this.props.panel.addQuery();
     this.component.digest();
     this.forceUpdate();
@@ -276,9 +283,32 @@ export class QueriesTab extends PureComponent<Props, State> {
     );
   };
 
+  renderMixedPicker = () => {
+    const { currentDS } = this.state;
+
+    return (
+      <DataSourcePicker
+        datasources={this.datasources}
+        onChangeDataSource={this.onAddMixedQuery}
+        current={null}
+        autoFocus={true}
+        onBlur={this.onMixedPickerBlur}
+      />
+    );
+  };
+
+  onAddMixedQuery = datasource => {
+    this.onAddQuery({ datasource: datasource.name });
+    this.setState({ isAddingMixed: false });
+  };
+
+  onMixedPickerBlur = () => {
+    this.setState({ isAddingMixed: false });
+  };
+
   render() {
     const { panel } = this.props;
-    const { currentDS } = this.state;
+    const { currentDS, isAddingMixed } = this.state;
     const { hasQueryHelp } = currentDS.meta;
 
     const queryInspector = {
@@ -318,9 +348,8 @@ export class QueriesTab extends PureComponent<Props, State> {
                 </span>
                 <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
               </label>
-              <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
-                Add Query
-              </button>
+              {!isAddingMixed && <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>Add Query</button>}
+              {isAddingMixed && this.renderMixedPicker()}
             </div>
           </div>
         </div>

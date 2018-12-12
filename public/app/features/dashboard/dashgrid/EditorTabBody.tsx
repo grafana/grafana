@@ -15,7 +15,7 @@ export interface EditorToolBarView {
   icon?: string;
   disabled?: boolean;
   onClick?: () => void;
-  render: (closeFunction: any) => JSX.Element | JSX.Element[];
+  render: (closeFunction?: any) => JSX.Element | JSX.Element[];
 }
 
 interface State {
