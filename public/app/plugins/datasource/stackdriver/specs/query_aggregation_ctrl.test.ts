@@ -17,23 +17,64 @@ describe('StackdriverAggregationCtrl', () => {
             },
             {
               replace: s => s,
+              variables: [{ name: 'someVariable1' }, { name: 'someVariable2' }],
             }
           );
         });
 
         it('should populate all aggregate options except two', () => {
           ctrl.setAggOptions();
-          expect(ctrl.aggOptions.length).toBe(11);
-          expect(ctrl.aggOptions.map(o => o.value)).toEqual(
+          expect(ctrl.aggOptions.length).toBe(2);
+          const [templateVariableGroup, aggOptionsGroup] = ctrl.aggOptions;
+          expect(templateVariableGroup.options.length).toBe(2);
+          expect(aggOptionsGroup.options.length).toBe(11);
+          expect(aggOptionsGroup.options.map(o => o.value)).toEqual(
             expect['not'].arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
           );
         });
 
         it('should populate all alignment options except two', () => {
           ctrl.setAlignOptions();
-          expect(ctrl.alignOptions.length).toBe(9);
-          expect(ctrl.alignOptions.map(o => o.value)).toEqual(
+          const [templateVariableGroup, alignOptionGroup] = ctrl.aggOptions;
+          expect(templateVariableGroup.options.length).toBe(2);
+          expect(alignOptionGroup.options.length).toBe(11);
+          expect(alignOptionGroup.options.map(o => o.value)).toEqual(
             expect['not'].arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
+          );
+        });
+      });
+
+      describe('and result is double and delta and no group by is used', () => {
+        beforeEach(async () => {
+          ctrl = new StackdriverAggregationCtrl(
+            {
+              $on: () => {},
+              target: {
+                valueType: 'DOUBLE',
+                metricKind: 'DELTA',
+                aggregation: { crossSeriesReducer: '', groupBys: [] },
+              },
+            },
+            {
+              replace: s => s,
+              variables: [{ name: 'someVariable1' }, { name: 'someVariable2' }],
+            }
+          );
+        });
+
+        it('should populate all alignment options except four', () => {
+          ctrl.setAlignOptions();
+          const [templateVariableGroup, alignOptionGroup] = ctrl.alignOptions;
+          expect(templateVariableGroup.options.length).toBe(2);
+          expect(alignOptionGroup.options.length).toBe(9);
+          expect(alignOptionGroup.options.map(o => o.value)).toEqual(
+            expect['not'].arrayContaining([
+              'ALIGN_NEXT_OLDER',
+              'ALIGN_INTERPOLATE',
+              'ALIGN_COUNT_TRUE',
+              'ALIGN_COUNT_FALSE',
+              'ALIGN_FRACTION_TRUE',
+            ])
           );
         });
       });
@@ -51,14 +92,18 @@ describe('StackdriverAggregationCtrl', () => {
             },
             {
               replace: s => s,
+              variables: [{ name: 'someVariable1' }],
             }
           );
         });
 
         it('should populate all aggregate options except three', () => {
           ctrl.setAggOptions();
-          expect(ctrl.aggOptions.length).toBe(10);
-          expect(ctrl.aggOptions.map(o => o.value)).toEqual(
+          const [templateVariableGroup, aggOptionsGroup] = ctrl.aggOptions;
+          expect(ctrl.aggOptions.length).toBe(2);
+          expect(templateVariableGroup.options.length).toBe(1);
+          expect(aggOptionsGroup.options.length).toBe(10);
+          expect(aggOptionsGroup.options.map(o => o.value)).toEqual(
             expect['not'].arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE', 'REDUCE_NONE'])
           );
         });
