@@ -160,21 +160,9 @@ export class StackdriverFilterCtrl {
       options: this.templateSrv.variables.map(v => ({
         label: `$${v.name}`,
         value: `$${v.name}`,
-        description: `$${v.definition}`,
+        // description: `$${v.definition}`,
       })),
     };
-  }
-
-  insertTemplateVariables(options) {
-    const templateVariables = {
-      label: 'Template Variables',
-      options: this.templateSrv.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-        description: `$${v.definition}`,
-      })),
-    };
-    return [templateVariables, { label: 'Metrics', options }];
   }
 
   getMetricsList() {

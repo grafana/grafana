@@ -52,6 +52,7 @@ export class StackdriverAggregationCtrl {
   }
 
   setAlignOptions() {
+    console.log('this.target.metricKind', this.target.metricKind);
     const alignments = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
       ...a,
       label: a.text,
@@ -78,7 +79,7 @@ export class StackdriverAggregationCtrl {
     }
 
     if (this.target.aggregation.groupBys.length > 0) {
-      aggregations = this.aggOptions.filter(o => o.value !== 'REDUCE_NONE');
+      aggregations = aggregations.filter(o => o.value !== 'REDUCE_NONE');
       this.deselectAggregationOption('REDUCE_NONE');
     }
     this.aggOptions = [
@@ -116,7 +117,8 @@ export class StackdriverAggregationCtrl {
   }
 
   deselectAggregationOption(notValidOptionValue: string) {
-    const newValue = this.aggOptions.find(o => o.value !== notValidOptionValue);
+    const aggregations = getAggregationOptionsByMetric(this.target.valueType, this.target.metricKind);
+    const newValue = aggregations.find(o => o.value !== notValidOptionValue);
     this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
   }
 
