@@ -34,13 +34,10 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     valueType: any;
   };
 
-  defaultDropdownValue = 'Select Metric';
-  defaultServiceValue = 'All Services';
-
   defaults = {
     defaultProject: 'loading project...',
-    metricType: this.defaultDropdownValue,
-    service: this.defaultServiceValue,
+    metricType: '',
+    service: '',
     metric: '',
     unit: '',
     aggregation: {

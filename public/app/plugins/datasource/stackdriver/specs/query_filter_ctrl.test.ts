@@ -409,8 +409,6 @@ function createCtrlWithFakes(existingFilters?: string[]) {
         return 'project';
       },
     },
-    defaultDropdownValue: 'Select Metric',
-    defaultServiceValue: 'All Services',
     refresh: () => {},
   };
 
