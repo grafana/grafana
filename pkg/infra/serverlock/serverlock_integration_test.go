@@ -21,19 +21,19 @@ func TestServerLok(t *testing.T) {
 		ctx := context.Background()
 
 		//this time `fn` should be executed
-		So(sl.OncePerServerGroup(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
+		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
 
 		//this should not execute `fn`
-		So(sl.OncePerServerGroup(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
-		So(sl.OncePerServerGroup(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
-		So(sl.OncePerServerGroup(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
-		So(sl.OncePerServerGroup(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
+		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
+		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
+		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
+		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
 
 		// wait 5 second.
 		<-time.After(atInterval * 2)
 
 		// now `fn` should be executed again
-		err = sl.OncePerServerGroup(ctx, "test-operation", atInterval, incCounter)
+		err = sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter)
 		So(err, ShouldBeNil)
 		So(counter, ShouldEqual, 2)
 	})
