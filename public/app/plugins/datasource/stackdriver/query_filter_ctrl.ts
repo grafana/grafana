@@ -252,8 +252,10 @@ export class StackdriverFilterCtrl {
       return [];
     }
 
-    this.removeSegment.value = removeText;
-    return [...elements, this.removeSegment];
+    return [
+      ...elements,
+      this.uiSegmentSrv.newSegment({ fake: true, value: removeText || this.defaultRemoveGroupByValue }),
+    ];
   }
 
   async getGroupBys(segment) {
