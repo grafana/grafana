@@ -35,7 +35,7 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 
-  - name: gdev-elasticsearch-metrics
+  - name: gdev-elasticsearch-v2-metrics
     type: elasticsearch
     access: proxy
     database: "[metrics-]YYYY.MM.DD"
@@ -43,6 +43,57 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
+      esVersion: 2
+
+  - name: gdev-elasticsearch-v2-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 2
+
+  - name: gdev-elasticsearch-v5-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:10200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 5
+
+  - name: gdev-elasticsearch-v5-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:10200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 5
+
+  - name: gdev-elasticsearch-v6-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:11200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 60
+
+  - name: gdev-elasticsearch-v6-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:11200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 60
 
   - name: gdev-mysql
     type: mysql
