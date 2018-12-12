@@ -367,12 +367,12 @@ describe('StackdriverQueryFilterCtrl', () => {
 });
 
 function createCtrlWithFakes(existingFilters?: string[]) {
-  StackdriverFilterCtrl.prototype.loadMetricDescriptors = () => {
-    return Promise.resolve([]);
-  };
-  StackdriverFilterCtrl.prototype.getLabels = () => {
-    return Promise.resolve();
-  };
+  // StackdriverFilterCtrl.prototype.loadMetricDescriptors = () => {
+  //   return Promise.resolve([]);
+  // };
+  // StackdriverFilterCtrl.prototype.getLabels = () => {
+  //   return Promise.resolve();
+  // };
 
   const fakeSegmentServer = {
     newKey: val => {

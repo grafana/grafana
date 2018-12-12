@@ -1,7 +1,11 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
-  <stackdriver-filter target="ctrl.target" refresh="ctrl.refresh()" datasource="ctrl.datasource"
+  <metric-picker target="ctrl.target" default-project="ctrl.target.defaultProject"  metric-type="ctrl.target.metricType" template-srv="ctrl.templateSrv" datasource="ctrl.datasource" on-change="ctrl.handleMetricTypeChange"></metric-picker>
+  <stackdriver-filter target="ctrl.target" refresh="ctrl.refresh()" loading="ctrl.loadLabelsPromise" label-data="ctrl.labelData"
     ></stackdriver-filter>
   <stackdriver-aggregation target="ctrl.target" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()"></stackdriver-aggregation>
+  <!-- <stackdriver-filter target="ctrl.target" refresh="ctrl.refresh()" datasource="ctrl.datasource"
+    ></stackdriver-filter>
+  <stackdriver-aggregation target="ctrl.target" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()"></stackdriver-aggregation> -->
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label query-keyword width-9">Alias By</span>

@@ -1,7 +1,9 @@
 import _ from 'lodash';
+import appEvents from 'app/core/app_events';
 import { QueryCtrl } from 'app/plugins/sdk';
 import './query_aggregation_ctrl';
 import './query_filter_ctrl';
+import { MetricPicker } from './components/MetricPicker';
 import { OptionPicker } from './components/OptionPicker';
 import { OptionGroupPicker } from './components/OptionGroupPicker';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
@@ -57,13 +59,19 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   showLastQuery: boolean;
   lastQueryMeta: QueryMeta;
   lastQueryError?: string;
+  labelData: QueryMeta;
+
+  loadLabelsPromise: Promise<any>;
+  templateSrv: any;
 
   /** @ngInject */
-  constructor($scope, $injector) {
+  constructor($scope, $injector, templateSrv, private $rootScope) {
     super($scope, $injector);
+    this.templateSrv = templateSrv;
     _.defaultsDeep(this.target, this.defaults);
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+    this.handleMetricTypeChange = this.handleMetricTypeChange.bind(this);
     react2AngularDirective('optionPicker', OptionPicker, [
       'options',
       'onChange',
@@ -80,6 +88,43 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       'className',
       'placeholder',
     ]);
+    react2AngularDirective('metricPicker', MetricPicker, [
+      'target',
+      ['onChange', { watchDepth: 'reference' }],
+      'defaultProject',
+      'metricType',
+      ['templateSrv', { watchDepth: 'reference' }],
+      ['datasource', { watchDepth: 'reference' }],
+    ]);
+    this.getLabels();
+  }
+
+  handleMetricTypeChange({ valueType, metricKind, type, unit }) {
+    this.target.metricType = type;
+    this.target.unit = unit;
+    this.target.valueType = valueType;
+    this.target.metricKind = metricKind;
+    this.$rootScope.$broadcast('metricTypeChanged');
+    this.getLabels();
+    this.refresh();
+  }
+
+  async getLabels() {
+    this.loadLabelsPromise = new Promise(async resolve => {
+      try {
+        const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
+        this.labelData = meta;
+        resolve();
+      } catch (error) {
+        if (error.data && error.data.message) {
+          console.log(error.data.message);
+        } else {
+          console.log(error);
+        }
+        appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
+        resolve();
+      }
+    });
   }
 
   onDataReceived(dataList) {
