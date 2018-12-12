@@ -133,14 +133,20 @@
 }
 
 .viz-picker {
+  background: $toolbar-bg;
+  margin: -40px -20px 40px 106px;
+  padding: 20px;
+  position: relative;
+}
+
+.viz-picker-list {
   display: flex;
   flex-wrap: wrap;
-  margin-bottom: 40px;
 }
 
 .viz-picker__item {
-  background: $panel-bg;
-  border: $panel-border;
+  background: $panel-editor-viz-item-bg;
+  border: $panel-editor-viz-item-border;
   border-radius: 3px;
   height: 100px;
   width: 150px;

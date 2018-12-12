@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
 // Components
-import { EditorTabBody } from './EditorTabBody';
+import { EditorTabBody, EditorToolBarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
@@ -155,23 +155,23 @@ export class VisualizationTab extends PureComponent<Props, State> {
     const { plugin } = this.props;
     const { searchQuery } = this.state;
 
-    // if (this.state.isVizPickerOpen) {
-    //   return (
-    //     <>
-    //     <label className="gf-form--has-input-icon">
-    //       <input
-    //         type="text"
-    //         className="gf-form-input width-13"
-    //         placeholder=""
-    //         onChange={this.onSearchQueryChange}
-    //         value={searchQuery}
-    //         ref={elem => elem && elem.focus()}
-    //       />
-    //       <i className="gf-form-input-icon fa fa-search" />
-    //     </label>
-    //     </>
-    //   );
-    // } else {
+    if (this.state.isVizPickerOpen) {
+      return (
+        <>
+          <label className="gf-form--has-input-icon">
+            <input
+              type="text"
+              className="gf-form-input width-13"
+              placeholder=""
+              onChange={this.onSearchQueryChange}
+              value={searchQuery}
+              ref={elem => elem && elem.focus()}
+            />
+            <i className="gf-form-input-icon fa fa-search" />
+          </label>
+        </>
+      );
+    } else {
       return (
         <div className="toolbar__main" onClick={this.onOpenVizPicker}>
           <img className="toolbar__main-image" src={plugin.info.logos.small} />
@@ -179,7 +179,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           <i className="fa fa-caret-down" />
         </div>
       );
-    // }
+    }
   };
 
   onTypeChanged = (plugin: PanelPlugin) => {
@@ -190,18 +190,26 @@ export class VisualizationTab extends PureComponent<Props, State> {
   render() {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
+    const toolbarItems: EditorToolBarView = [];
 
-    const panelHelp = {
-      title: '',
-      icon: 'fa fa-question',
-      render: () => <h2>Help</h2>,
-    };
+    if (!isVizPickerOpen) {
+      toolbarItems.push({
+        title: '',
+        icon: 'fa fa-question',
+        render: () => <h2>Help</h2>,
+      });
+    }
 
     return (
-      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[panelHelp]}>
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={toolbarItems}>
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
-            <VizTypePicker current={plugin} onTypeChanged={this.onTypeChanged} searchQuery={searchQuery} onClose={this.onCloseVizPicker} />
+            <VizTypePicker
+              current={plugin}
+              onTypeChanged={this.onTypeChanged}
+              searchQuery={searchQuery}
+              onClose={this.onCloseVizPicker}
+            />
           </FadeIn>
           {this.renderPanelOptions()}
         </>
