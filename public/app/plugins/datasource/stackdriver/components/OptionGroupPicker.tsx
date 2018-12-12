@@ -41,7 +41,6 @@ export class OptionGroupPicker extends React.Component<Props, any> {
         }}
         styles={ResetStyles}
         isSearchable={searchable}
-        maxMenuHeight={50}
         onChange={option => onChange(option.value)}
         getOptionValue={i => i.value}
         getOptionLabel={i => i.label}
