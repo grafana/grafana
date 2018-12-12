@@ -21,9 +21,23 @@ interface Props {
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
-export class VisualizationTab extends PureComponent<Props> {
+interface State {
+  isVizPickerOpen: boolean;
+  searchQuery: string;
+}
+
+export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
+  searchInput: HTMLElement;
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      isVizPickerOpen: false,
+    };
+  }
 
   getPanelDefaultOptions = () => {
     const { panel, plugin } = this.props;
@@ -120,18 +134,39 @@ export class VisualizationTab extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  render() {
+  onOpenVizPicker = () => {
+    this.setState({ isVizPickerOpen: true });
+  };
+
+  renderToolbar = () => {
     const { plugin } = this.props;
 
-    const panelSelection = {
-      title: plugin.name,
-      imgSrc: plugin.info.logos.small,
-      render: () => {
-        // the needs to be scoped inside this closure
-        const { plugin, onTypeChanged } = this.props;
-        return <VizTypePicker current={plugin} onTypeChanged={onTypeChanged} />;
-      },
-    };
+    if (this.state.isVizPickerOpen) {
+      return (
+        <label className="gf-form--has-input-icon">
+          <input
+            type="text"
+            className="gf-form-input width-13"
+            placeholder=""
+            ref={elem => (this.searchInput = elem)}
+          />
+          <i className="gf-form-input-icon fa fa-search" />
+        </label>
+      );
+    } else {
+      return (
+        <div className="toolbar__main" onClick={this.onOpenVizPicker}>
+          <img className="toolbar__main-image" src={plugin.info.logos.small} />
+          <div className="toolbar__main-name">{plugin.name}</div>
+          <i className="fa fa-caret-down" />
+        </div>
+      );
+    }
+  };
+
+  render() {
+    const { plugin, onTypeChanged } = this.props;
+    const { isVizPickerOpen } = this.state;
 
     const panelHelp = {
       title: '',
@@ -140,7 +175,8 @@ export class VisualizationTab extends PureComponent<Props> {
     };
 
     return (
-      <EditorTabBody heading="Visualization" main={panelSelection} toolbarItems={[panelHelp]}>
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[panelHelp]}>
+        {isVizPickerOpen && <VizTypePicker current={plugin} onTypeChanged={onTypeChanged} />}
         {this.renderPanelOptions()}
       </EditorTabBody>
     );

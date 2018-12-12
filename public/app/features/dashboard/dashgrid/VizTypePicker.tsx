@@ -9,9 +9,6 @@ import KeyboardNavigation, { KeyboardNavigationProps } from './KeyboardNavigatio
 export interface Props {
   current: PanelPlugin;
   onTypeChanged: (newType: PanelPlugin) => void;
-}
-
-interface State {
   searchQuery: string;
 }
 
