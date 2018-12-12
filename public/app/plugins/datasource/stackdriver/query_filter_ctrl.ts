@@ -15,8 +15,6 @@ export class StackdriverFilter {
         target: '=',
         datasource: '=',
         refresh: '&',
-        defaultDropdownValue: '<',
-        defaultServiceValue: '<',
         hideGroupBys: '<',
       },
     };
@@ -48,9 +46,6 @@ export class StackdriverFilterCtrl {
   constructor(private $scope, private uiSegmentSrv, private templateSrv, private $rootScope) {
     this.datasource = $scope.datasource;
     this.target = $scope.target;
-    this.metricType = $scope.defaultDropdownValue;
-    this.service = $scope.defaultServiceValue;
-
     this.metricDescriptors = [];
     this.metrics = [];
     this.metricGroups = [];
@@ -66,7 +61,7 @@ export class StackdriverFilterCtrl {
   }
 
   handleMetricTypeChange(value) {
-    this.metricType = value;
+    this.target.metricType = value;
     this.onMetricTypeChange();
   }
 
@@ -116,7 +111,6 @@ export class StackdriverFilterCtrl {
   }
 
   getServicesList() {
-    const defaultValue = { value: this.$scope.defaultServiceValue, label: this.$scope.defaultServiceValue };
     const services = this.metricDescriptors.map(m => {
       return {
         value: m.service,
@@ -128,10 +122,10 @@ export class StackdriverFilterCtrl {
       this.service = this.target.service;
     }
 
-    return services.length > 0 ? [defaultValue, ..._.uniqBy(services, 'value')] : [];
+    return services.length > 0 ? _.uniqBy(services, 'value') : [];
   }
 
-  getMetricGroups() {
+  getMetricGroupsOld() {
     return this.metrics.reduce((acc, curr) => {
       const group = acc.find(group => group.service === curr.service);
       if (group) {
@@ -148,6 +142,27 @@ export class StackdriverFilterCtrl {
       }
       return acc;
     }, []);
+  }
+
+  getMetricGroups() {
+    return [
+      this.getTemplateVariablesGroup(),
+      {
+        label: 'Metrics',
+        options: this.metrics,
+      },
+    ];
+  }
+
+  getTemplateVariablesGroup() {
+    return {
+      label: 'Template Variables',
+      options: this.templateSrv.variables.map(v => ({
+        label: `$${v.name}`,
+        value: `$${v.name}`,
+        description: `$${v.definition}`,
+      })),
+    };
   }
 
   insertTemplateVariables(options) {
@@ -174,29 +189,28 @@ export class StackdriverFilterCtrl {
       };
     });
 
-    let result;
-    if (this.target.service === this.$scope.defaultServiceValue) {
-      result = metrics.map(m => ({ ...m, text: `${m.service} - ${m.text}` }));
-    } else {
-      result = metrics.filter(m => m.service === this.target.service);
+    const metricsByService = metrics.filter(m => m.service === this.target.service);
+    if (
+      metricsByService.length > 0 &&
+      !metricsByService.some(m => m.value === this.templateSrv.replace(this.target.metricType))
+    ) {
+      this.target.metricType = metricsByService[0].value;
     }
-
-    if (result.find(m => m.value === this.templateSrv.replace(this.target.metricType))) {
-      this.metricType = this.target.metricType;
-    } else if (result.length > 0) {
-      this.metricType = this.target.metricType = result[0].value;
-    }
-    return result;
+    return metricsByService;
   }
 
   async getLabels() {
     this.loadLabelsPromise = new Promise(async resolve => {
       try {
-        const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
-        this.metricLabels = meta.metricLabels;
-        this.resourceLabels = meta.resourceLabels;
-        this.resourceTypes = meta.resourceTypes;
-        resolve();
+        if (this.target.metricType) {
+          const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
+          this.metricLabels = meta.metricLabels;
+          this.resourceLabels = meta.resourceLabels;
+          this.resourceTypes = meta.resourceTypes;
+          resolve();
+        } else {
+          resolve();
+        }
       } catch (error) {
         if (error.data && error.data.message) {
           console.log(error.data.message);
@@ -216,7 +230,7 @@ export class StackdriverFilterCtrl {
     this.setMetricType();
     this.getLabels();
     if (!this.metrics.find(m => m.value === this.target.metricType)) {
-      this.target.metricType = this.$scope.defaultDropdownValue;
+      this.target.metricType = '';
     } else {
       this.$scope.refresh();
     }
@@ -229,9 +243,9 @@ export class StackdriverFilterCtrl {
   }
 
   setMetricType() {
-    this.target.metricType = this.metricType;
+    // this.target.metricType = this.metricType;
     const { valueType, metricKind, unit } = this.metricDescriptors.find(
-      m => m.type === this.templateSrv.replace(this.metricType)
+      m => m.type === this.templateSrv.replace(this.target.metricType)
     );
     this.target.unit = unit;
     this.target.valueType = valueType;
