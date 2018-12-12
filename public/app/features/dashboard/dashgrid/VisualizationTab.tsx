@@ -36,6 +36,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     this.state = {
       isVizPickerOpen: false,
+      searchQuery: '',
     };
   }
 
@@ -138,8 +139,16 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.setState({ isVizPickerOpen: true });
   };
 
-  renderToolbar = () => {
+  onSearchQueryChange = evt => {
+    const value = evt.target.value;
+    this.setState({
+      searchQuery: value,
+    });
+  };
+
+  renderToolbar = (): JSX.Element => {
     const { plugin } = this.props;
+    const { searchQuery } = this.state;
 
     if (this.state.isVizPickerOpen) {
       return (
@@ -148,6 +157,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
             type="text"
             className="gf-form-input width-13"
             placeholder=""
+            onChange={this.onSearchQueryChange}
+            value={searchQuery}
             ref={elem => (this.searchInput = elem)}
           />
           <i className="gf-form-input-icon fa fa-search" />
@@ -164,9 +175,14 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
+  onTypeChanged = (plugin: PanelPlugin) => {
+    // this.setState({ isVizPickerOpen: false });
+    this.props.onTypeChanged(plugin);
+  };
+
   render() {
-    const { plugin, onTypeChanged } = this.props;
-    const { isVizPickerOpen } = this.state;
+    const { plugin } = this.props;
+    const { isVizPickerOpen, searchQuery } = this.state;
 
     const panelHelp = {
       title: '',
@@ -176,7 +192,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[panelHelp]}>
-        {isVizPickerOpen && <VizTypePicker current={plugin} onTypeChanged={onTypeChanged} />}
+        {isVizPickerOpen && <VizTypePicker current={plugin} onTypeChanged={this.onTypeChanged} searchQuery={searchQuery} />}
         {this.renderPanelOptions()}
       </EditorTabBody>
     );

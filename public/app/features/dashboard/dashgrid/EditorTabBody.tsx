@@ -5,7 +5,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 interface Props {
   children: JSX.Element;
   heading: string;
-  renderToolbar?: () => JSX.Element;
+  renderToolbar?: () => JSX.Element | JSX.Element[];
   toolbarItems?: EditorToolBarView[];
 }
 

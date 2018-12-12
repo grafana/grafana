@@ -4,7 +4,6 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import { PanelPlugin } from 'app/types/plugins';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
-import KeyboardNavigation, { KeyboardNavigationProps } from './KeyboardNavigation';
 
 export interface Props {
   current: PanelPlugin;
@@ -12,27 +11,17 @@ export interface Props {
   searchQuery: string;
 }
 
-export class VizTypePicker extends PureComponent<Props, State> {
+export class VizTypePicker extends PureComponent<Props> {
   searchInput: HTMLElement;
   pluginList = this.getPanelPlugins('');
 
   constructor(props) {
     super(props);
-
-    this.state = {
-      searchQuery: '',
-    };
   }
 
   get maxSelectedIndex() {
     const filteredPluginList = this.getFilteredPluginList();
     return filteredPluginList.length - 1;
-  }
-
-  componentDidMount() {
-    setTimeout(() => {
-      this.searchInput.focus();
-    }, 300);
   }
 
   getPanelPlugins(filter): PanelPlugin[] {
@@ -45,27 +34,23 @@ export class VizTypePicker extends PureComponent<Props, State> {
     return _.sortBy(panels, 'sort');
   }
 
-  renderVizPlugin = (plugin: PanelPlugin, index: number, keyNavProps: KeyboardNavigationProps) => {
+  renderVizPlugin = (plugin: PanelPlugin, index: number) => {
     const { onTypeChanged } = this.props;
-    const { selected, onMouseEnter } = keyNavProps;
-    const isSelected = selected === index;
     const isCurrent = plugin.id === this.props.current.id;
+
     return (
       <VizTypePickerPlugin
         key={plugin.id}
-        isSelected={isSelected}
         isCurrent={isCurrent}
         plugin={plugin}
-        onMouseEnter={() => {
-          onMouseEnter(index);
-        }}
+        isSelected={false}
         onClick={() => onTypeChanged(plugin)}
       />
     );
   };
 
   getFilteredPluginList = (): PanelPlugin[] => {
-    const { searchQuery } = this.state;
+    const { searchQuery } = this.props;
     const regex = new RegExp(searchQuery, 'i');
     const pluginList = this.pluginList;
 
@@ -76,57 +61,11 @@ export class VizTypePicker extends PureComponent<Props, State> {
     return filtered;
   };
 
-  onSearchQueryChange = evt => {
-    const value = evt.target.value;
-    this.setState(prevState => ({
-      ...prevState,
-      searchQuery: value,
-    }));
-  };
-
-  renderFilters = ({ onKeyDown, selected }: KeyboardNavigationProps) => {
-    const { searchQuery } = this.state;
-    return (
-      <>
-        <label className="gf-form--has-input-icon">
-          <input
-            type="text"
-            className="gf-form-input width-13"
-            placeholder=""
-            ref={elem => (this.searchInput = elem)}
-            onChange={this.onSearchQueryChange}
-            value={searchQuery}
-            onKeyDown={evt => {
-              onKeyDown(evt, this.maxSelectedIndex, () => {
-                const { onTypeChanged } = this.props;
-                const vizType = this.getFilteredPluginList()[selected];
-                onTypeChanged(vizType);
-              });
-            }}
-          />
-          <i className="gf-form-input-icon fa fa-search" />
-        </label>
-      </>
-    );
-  };
-
   render() {
     const filteredPluginList = this.getFilteredPluginList();
 
     return (
-      <KeyboardNavigation
-        render={(keyNavProps: KeyboardNavigationProps) => (
-          <>
-            <div className="cta-form__bar">
-              {this.renderFilters(keyNavProps)}
-              <div className="gf-form--grow" />
-            </div>
-            <div className="viz-picker">
-              {filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index, keyNavProps))}
-            </div>
-          </>
-        )}
-      />
+      <div className="viz-picker">{filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index))}</div>
     );
   }
 }
