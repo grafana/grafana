@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames/bind';
+import tinycolor from 'tinycolor2';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { OptionModuleProps } from './module';
 import { Threshold } from 'app/types';
@@ -21,7 +22,7 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     this.state = {
       thresholds: this.props.options.thresholds || [
         { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
-        { index: 1, label: 'Max', value: 100, canRemove: false },
+        { index: 1, label: 'Max', value: 100, canRemove: false, color: BasicGaugeColor.Red },
       ],
     };
   }
@@ -39,12 +40,13 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
 
     // Setting value to a value between the new threshold.
     const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
+    const color = tinycolor.mix(thresholds[index - 1].color, thresholds[index].color, 50).toRgbString();
 
     this.setState(
       {
         thresholds: this.sortThresholds([
           ...newThresholds,
-          { index: index, label: '', value: value, canRemove: true, color: BasicGaugeColor.Orange },
+          { index: index, label: '', value: value, canRemove: true, color: color },
         ]),
       },
       () => this.updateGauge()
@@ -127,7 +129,6 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     const { thresholds } = this.state;
 
     const min = thresholds[0];
-    const max = thresholds[1];
 
     return [
       <div className="threshold-row threshold-row-min" key="min">
@@ -154,18 +155,6 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
           <div className="threshold-row-add-label">Add new threshold by clicking the line.</div>
         </div>
       </div>,
-      <div className="threshold-row threshold-row-max" key="max">
-        <div className="threshold-row-inner">
-          <div className="threshold-row-color" />
-          <input
-            className="threshold-row-input"
-            onBlur={this.onBlur}
-            onChange={event => this.onChangeThresholdValue(event, max)}
-            value={max.value}
-          />
-          <div className="threshold-row-label">{max.label}</div>
-        </div>
-      </div>,
     ];
   }
 
@@ -173,6 +162,10 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     const { thresholds } = this.state;
 
     return thresholds.map((threshold, index) => {
+      if (index === thresholds.length - 1) {
+        return null;
+      }
+
       const rowStyle = classNames({
         'threshold-row': true,
         'threshold-row-min': index === 0,
@@ -183,14 +176,15 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
         <div className={rowStyle} key={`${threshold.index}-${index}`}>
           <div className="threshold-row-inner">
             <div className="threshold-row-color">
-              {threshold.color && (
-                <div className="threshold-row-color-inner">
-                  <ColorPicker
-                    color={threshold.color}
-                    onChange={color => this.onChangeThresholdColor(threshold, color)}
-                  />
-                </div>
-              )}
+              {threshold.color &&
+                index !== thresholds.length - 1 && (
+                  <div className="threshold-row-color-inner">
+                    <ColorPicker
+                      color={threshold.color}
+                      onChange={color => this.onChangeThresholdColor(threshold, color)}
+                    />
+                  </div>
+                )}
             </div>
             <input
               className="threshold-row-input"
@@ -288,6 +282,7 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
 
   render() {
     const { thresholds } = this.state;
+    const max = thresholds[thresholds.length - 1];
 
     return (
       <div className="section gf-form-group">
@@ -296,6 +291,18 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
           <div className="color-indicators">{this.renderIndicator()}</div>
           <div className="threshold-rows">
             {thresholds.length > 2 ? this.renderThresholds() : this.renderNoThresholds()}
+            <div className="threshold-row threshold-row-max">
+              <div className="threshold-row-inner">
+                <div className="threshold-row-color" />
+                <input
+                  className="threshold-row-input"
+                  onBlur={this.onBlur}
+                  onChange={event => this.onChangeThresholdValue(event, max)}
+                  value={max.value}
+                />
+                <div className="threshold-row-label">{max.label}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
