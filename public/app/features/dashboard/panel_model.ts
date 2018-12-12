@@ -238,9 +238,10 @@ export class PanelModel {
     this.restorePanelOptions(pluginId);
   }
 
-  addQuery(query?: DataQuery) {
+  addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
-    (query.refId = this.getNextQueryLetter()), (query.isNew = true);
+    query.refId = this.getNextQueryLetter();
+    query.isNew = true;
 
     this.targets.push(query);
   }

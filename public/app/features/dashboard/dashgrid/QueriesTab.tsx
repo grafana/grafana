@@ -236,14 +236,14 @@ export class QueriesTab extends PureComponent<Props, State> {
     return isLoadingHelp ? <LoadingPlaceholder text="Loading help..." /> : helpContent;
   };
 
-  onAddQuery = (query?: DataQuery) => {
+  onAddQuery = (query?: Partial<DataQuery>) => {
     this.props.panel.addQuery(query);
     this.forceUpdate();
   };
 
   onAddQueryClick = () => {
     if (this.state.currentDS.meta.mixed) {
-      this.setState({ isAddingMixed: true })
+      this.setState({ isAddingMixed: true });
       return;
     }
 
@@ -284,8 +284,6 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderMixedPicker = () => {
-    const { currentDS } = this.state;
-
     return (
       <DataSourcePicker
         datasources={this.datasources}
@@ -299,6 +297,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onAddMixedQuery = datasource => {
     this.onAddQuery({ datasource: datasource.name });
+    this.component.digest();
     this.setState({ isAddingMixed: false });
   };
 
@@ -348,7 +347,11 @@ export class QueriesTab extends PureComponent<Props, State> {
                 </span>
                 <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
               </label>
-              {!isAddingMixed && <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>Add Query</button>}
+              {!isAddingMixed && (
+                <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
+                  Add Query
+                </button>
+              )}
               {isAddingMixed && this.renderMixedPicker()}
             </div>
           </div>
