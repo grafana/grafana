@@ -165,7 +165,7 @@
     border: 1px solid $orange;
   }
 
-  &--selected {
+  &:hover {
     box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;

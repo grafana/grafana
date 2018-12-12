@@ -43,7 +43,6 @@ export class VizTypePicker extends PureComponent<Props> {
         key={plugin.id}
         isCurrent={isCurrent}
         plugin={plugin}
-        isSelected={false}
         onClick={() => onTypeChanged(plugin)}
       />
     );

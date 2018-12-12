@@ -159,7 +159,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
             placeholder=""
             onChange={this.onSearchQueryChange}
             value={searchQuery}
-            ref={elem => (this.searchInput = elem)}
+            ref={elem => elem && elem.focus()}
           />
           <i className="gf-form-input-icon fa fa-search" />
         </label>
@@ -192,8 +192,12 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[panelHelp]}>
-        {isVizPickerOpen && <VizTypePicker current={plugin} onTypeChanged={this.onTypeChanged} searchQuery={searchQuery} />}
-        {this.renderPanelOptions()}
+        <>
+          {isVizPickerOpen && (
+            <VizTypePicker current={plugin} onTypeChanged={this.onTypeChanged} searchQuery={searchQuery} />
+          )}
+          {this.renderPanelOptions()}
+        </>
       </EditorTabBody>
     );
   }
