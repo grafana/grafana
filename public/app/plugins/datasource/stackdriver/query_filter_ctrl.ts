@@ -30,8 +30,6 @@ export class StackdriverFilterCtrl {
   resourceTypeValue = 'resource.type';
   loadLabelsPromise: Promise<any>;
 
-  service: string;
-  metricType: string;
   metricDescriptors: any[];
   metrics: any[];
   metricGroups: any[];
@@ -111,37 +109,12 @@ export class StackdriverFilterCtrl {
   }
 
   getServicesList() {
-    const services = this.metricDescriptors.map(m => {
-      return {
-        value: m.service,
-        label: _.startCase(m.serviceShortName),
-      };
-    });
+    const services = this.metricDescriptors.map(m => ({
+      value: m.service,
+      label: _.startCase(m.serviceShortName),
+    }));
 
-    if (services.find(m => m.value === this.target.service)) {
-      this.service = this.target.service;
-    }
-
-    return services.length > 0 ? _.uniqBy(services, 'value') : [];
-  }
-
-  getMetricGroupsOld() {
-    return this.metrics.reduce((acc, curr) => {
-      const group = acc.find(group => group.service === curr.service);
-      if (group) {
-        group.options = [...group.options, { value: curr.value, label: curr.label }];
-      } else {
-        acc = [
-          ...acc,
-          {
-            label: _.startCase(curr.serviceShortName),
-            service: curr.service,
-            options: [{ value: curr.value, label: curr.label }],
-          },
-        ];
-      }
-      return acc;
-    }, []);
+    return services.length > 0 ? _.uniqBy(services, s => s.value) : [];
   }
 
   getMetricGroups() {
@@ -149,7 +122,7 @@ export class StackdriverFilterCtrl {
       this.getTemplateVariablesGroup(),
       {
         label: 'Metrics',
-        options: this.metrics,
+        options: this.getMetricsList(),
       },
     ];
   }
@@ -160,24 +133,18 @@ export class StackdriverFilterCtrl {
       options: this.templateSrv.variables.map(v => ({
         label: `$${v.name}`,
         value: `$${v.name}`,
-        // description: `$${v.definition}`,
       })),
     };
   }
 
   getMetricsList() {
-    const metrics = this.metricDescriptors.map(m => {
-      return {
-        service: m.service,
-        value: m.type,
-        serviceShortName: m.serviceShortName,
-        text: m.displayName,
-        label: m.displayName,
-        description: m.description,
-      };
-    });
+    const metricsByService = this.metricDescriptors.filter(m => m.service === this.target.service).map(m => ({
+      service: m.service,
+      value: m.type,
+      label: m.displayName,
+      description: m.description,
+    }));
 
-    const metricsByService = metrics.filter(m => m.service === this.target.service);
     if (
       metricsByService.length > 0 &&
       !metricsByService.some(m => m.value === this.templateSrv.replace(this.target.metricType))
@@ -212,12 +179,12 @@ export class StackdriverFilterCtrl {
   }
 
   handleServiceChange(service) {
-    this.target.service = this.service = service;
+    this.target.service = service;
     this.metrics = this.getMetricsList();
     this.metricGroups = this.getMetricGroups();
     this.setMetricType();
     this.getLabels();
-    if (!this.metrics.find(m => m.value === this.target.metricType)) {
+    if (!this.metrics.some(m => m.value === this.target.metricType)) {
       this.target.metricType = '';
     } else {
       this.$scope.refresh();
@@ -231,7 +198,6 @@ export class StackdriverFilterCtrl {
   }
 
   setMetricType() {
-    // this.target.metricType = this.metricType;
     const { valueType, metricKind, unit } = this.metricDescriptors.find(
       m => m.type === this.templateSrv.replace(this.target.metricType)
     );
