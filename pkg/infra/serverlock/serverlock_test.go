@@ -3,10 +3,8 @@ package serverlock
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/log"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -45,11 +43,11 @@ func TestServerLock(t *testing.T) {
 		})
 
 		Convey("Should be able to create lock on first row", func() {
-			gotLock, err := sl.acquireLock(context.Background(), first, time.Second*1)
+			gotLock, err := sl.acquireLock(context.Background(), first)
 			So(err, ShouldBeNil)
 			So(gotLock, ShouldBeTrue)
 
-			gotLock, err = sl.acquireLock(context.Background(), first, time.Second*1)
+			gotLock, err = sl.acquireLock(context.Background(), first)
 			So(err, ShouldBeNil)
 			So(gotLock, ShouldBeFalse)
 		})

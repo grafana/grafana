@@ -28,20 +28,23 @@ func (sl *ServerLockService) Init() error {
 // OncePerServerGroup try to create a lock for this server and only executes the
 // `fn` function when successful. This should not be used at low internal. But services
 // that needs to be run once every ex 10m.
-func (sl *ServerLockService) OncePerServerGroup(ctx context.Context, actionName string, maxEvery time.Duration, fn func()) error {
+func (sl *ServerLockService) OncePerServerGroup(ctx context.Context, actionName string, maxInterval time.Duration, fn func()) error {
+	// gets or creates a lockable row
 	rowLock, err := sl.getOrCreate(ctx, actionName)
 	if err != nil {
 		return err
 	}
 
+	// avoid execution if last lock happened less than `matInterval` ago
 	if rowLock.LastExecution != 0 {
 		lastExeuctionTime := time.Unix(rowLock.LastExecution, 0)
-		if lastExeuctionTime.Unix() > time.Now().Add(-maxEvery).Unix() {
+		if lastExeuctionTime.Unix() > time.Now().Add(-maxInterval).Unix() {
 			return nil
 		}
 	}
 
-	acquiredLock, err := sl.acquireLock(ctx, rowLock, maxEvery)
+	// try to get lock based on rowLow version
+	acquiredLock, err := sl.acquireLock(ctx, rowLock)
 	if err != nil {
 		return err
 	}
@@ -53,7 +56,7 @@ func (sl *ServerLockService) OncePerServerGroup(ctx context.Context, actionName 
 	return nil
 }
 
-func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *serverLock, maxEvery time.Duration) (bool, error) {
+func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *serverLock) (bool, error) {
 	var result bool
 
 	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
