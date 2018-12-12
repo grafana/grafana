@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { RangeMap, Threshold, TimeSeriesVMs, ValueMap } from 'app/types';
+import { MappingType, RangeMap, Threshold, TimeSeriesVMs, ValueMap } from 'app/types';
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
 
@@ -47,16 +47,49 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
+  formatWithMappings(mappings, value) {
+    const valueMaps = mappings.filter(m => m.type === MappingType.ValueToText);
+    const rangeMaps = mappings.filter(m => m.type === MappingType.RangeToText);
+
+    const valueMap = valueMaps.map(mapping => {
+      if (mapping.value && value === mapping.value) {
+        return mapping.text;
+      }
+    })[0];
+
+    const rangeMap = rangeMaps.map(mapping => {
+      if (mapping.from && mapping.to && value > mapping.from && value < mapping.to) {
+        return mapping.text;
+      }
+    })[0];
+
+    return {
+      rangeMap,
+      valueMap,
+    };
+  }
+
   formatValue(value) {
-    const { decimals, prefix, suffix, unit } = this.props;
+    const { decimals, mappings, prefix, suffix, unit } = this.props;
 
     const formatFunc = kbn.valueFormats[unit];
+    const formattedValue = formatFunc(value, decimals);
+
+    if (mappings.length > 0) {
+      const { rangeMap, valueMap } = this.formatWithMappings(mappings, formattedValue);
+
+      if (valueMap) {
+        return valueMap;
+      } else if (rangeMap) {
+        return rangeMap;
+      }
+    }
 
     if (isNaN(value)) {
       return '-';
     }
 
-    return `${prefix} ${formatFunc(value, decimals)} ${suffix}`;
+    return `${prefix} ${formattedValue} ${suffix}`;
   }
 
   draw() {
