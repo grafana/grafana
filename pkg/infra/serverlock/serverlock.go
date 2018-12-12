@@ -13,8 +13,6 @@ func init() {
 	registry.RegisterService(&ServerLockService{})
 }
 
-// DistributedLockService
-
 // ServerLockService allows servers in HA mode to claim a lock
 // and execute an function if the server was granted the lock
 type ServerLockService struct {
