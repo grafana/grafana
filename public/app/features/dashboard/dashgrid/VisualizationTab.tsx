@@ -106,7 +106,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       template +=
         `
       <div class="form-section" ng-cloak>` +
-        (i > -1 ? `<div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
+        (i > 0 ? `<div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
         `<div class="form-section__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
@@ -155,23 +155,23 @@ export class VisualizationTab extends PureComponent<Props, State> {
     const { plugin } = this.props;
     const { searchQuery } = this.state;
 
-    if (this.state.isVizPickerOpen) {
-      return (
-        <>
-          <label className="gf-form--has-input-icon">
-            <input
-              type="text"
-              className="gf-form-input width-13"
-              placeholder=""
-              onChange={this.onSearchQueryChange}
-              value={searchQuery}
-              ref={elem => elem && elem.focus()}
-            />
-            <i className="gf-form-input-icon fa fa-search" />
-          </label>
-        </>
-      );
-    } else {
+    // if (this.state.isVizPickerOpen) {
+    //   return (
+    //     <>
+    //     <label className="gf-form--has-input-icon">
+    //       <input
+    //         type="text"
+    //         className="gf-form-input width-13"
+    //         placeholder=""
+    //         onChange={this.onSearchQueryChange}
+    //         value={searchQuery}
+    //         ref={elem => elem && elem.focus()}
+    //       />
+    //       <i className="gf-form-input-icon fa fa-search" />
+    //     </label>
+    //     </>
+    //   );
+    // } else {
       return (
         <div className="toolbar__main" onClick={this.onOpenVizPicker}>
           <img className="toolbar__main-image" src={plugin.info.logos.small} />
@@ -179,7 +179,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           <i className="fa fa-caret-down" />
         </div>
       );
-    }
+    // }
   };
 
   onTypeChanged = (plugin: PanelPlugin) => {
@@ -201,12 +201,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[panelHelp]}>
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
-            <VizTypePicker
-              current={plugin}
-              onTypeChanged={this.onTypeChanged}
-              searchQuery={searchQuery}
-              onClose={this.onCloseVizPicker}
-            />
+            <VizTypePicker current={plugin} onTypeChanged={this.onTypeChanged} searchQuery={searchQuery} onClose={this.onCloseVizPicker} />
           </FadeIn>
           {this.renderPanelOptions()}
         </>
