@@ -39,10 +39,16 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 
 func generateConnectionString(datasource *models.DataSource) string {
 	password := ""
+	tlssettings := ""
 	for key, value := range datasource.SecureJsonData.Decrypt() {
 		if key == "password" {
 			password = value
-			break
+		} else if key == "tlsClientCert" {
+			tlssettings += " sslcert=" + value
+		} else if key == "tlsClientKey" {
+			tlssettings += " sslkey=" + value
+		} else if key == "tlsCACert" {
+			tlssettings += " sslrootcert=" + value
 		}
 	}
 
@@ -51,7 +57,7 @@ func generateConnectionString(datasource *models.DataSource) string {
 		Scheme: "postgres",
 		User:   url.UserPassword(datasource.User, password),
 		Host:   datasource.Url, Path: datasource.Database,
-		RawQuery: "sslmode=" + url.QueryEscape(sslmode),
+		RawQuery: "sslmode=" + url.QueryEscape(sslmode) + tlssettings,
 	}
 
 	return u.String()
