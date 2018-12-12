@@ -10,7 +10,13 @@ interface Props {
 }
 
 interface State {
-  mapping: ValueMap | RangeMap;
+  from: string;
+  id: number;
+  operator: string;
+  text: string;
+  to: string;
+  type: MappingType;
+  value: string;
 }
 
 const mappingOptions = [
@@ -23,60 +29,38 @@ export default class MappingRow extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      mapping: props.mapping,
+      ...props.mapping,
     };
   }
 
   onMappingValueChange = event => {
-    const { mapping } = this.state;
-
-    const updatedMapping = { ...mapping, value: event.target.value };
-
-    this.setState({ mapping: updatedMapping });
+    this.setState({ value: event.target.value });
   };
 
   onMappingFromChange = event => {
-    const { mapping } = this.state;
-
-    const updatedMapping = { ...mapping, from: event.target.value };
-
-    this.setState({ mapping: updatedMapping });
+    this.setState({ from: event.target.value });
   };
 
   onMappingToChange = event => {
-    const { mapping } = this.state;
-
-    const updatedMapping = { ...mapping, to: event.target.value };
-
-    this.setState({ mapping: updatedMapping });
+    this.setState({ to: event.target.value });
   };
 
   onMappingTextChange = event => {
-    const { mapping } = this.state;
-
-    const updatedMapping = { ...mapping, text: event.target.value };
-    this.setState({ mapping: updatedMapping });
+    this.setState({ text: event.target.value });
   };
 
   onMappingTypeChange = mappingType => {
-    const { mapping } = this.state;
-
-    const updatedMapping = { ...mapping, type: mappingType };
-    this.setState({ mapping: updatedMapping });
+    this.setState({ type: mappingType });
   };
 
   updateMapping = () => {
-    const { mapping } = this.state;
-
-    this.props.updateMapping(mapping);
+    this.props.updateMapping({ ...this.state });
   };
 
   renderRow() {
-    const { mapping } = this.state;
+    const { from, text, to, type, value } = this.state;
 
-    if (mapping.type === MappingType.RangeToText) {
-      const rangeMap = mapping as RangeMap;
-
+    if (type === MappingType.RangeToText) {
       return (
         <div className="gf-form">
           <div className="gf-form-inline mapping-row-input">
@@ -84,7 +68,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             <div>
               <input
                 className="gf-form-input"
-                value={rangeMap.from}
+                value={from}
                 onBlur={this.updateMapping}
                 onChange={this.onMappingFromChange}
               />
@@ -95,7 +79,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             <div>
               <input
                 className="gf-form-input"
-                value={rangeMap.to}
+                value={to}
                 onBlur={this.updateMapping}
                 onChange={this.onMappingToChange}
               />
@@ -106,7 +90,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             <div>
               <input
                 className="gf-form-input"
-                value={rangeMap.text}
+                value={text}
                 onBlur={this.updateMapping}
                 onChange={this.onMappingTextChange}
               />
@@ -115,8 +99,6 @@ export default class MappingRow extends PureComponent<Props, State> {
         </div>
       );
     }
-
-    const valueMap = mapping as ValueMap;
 
     return (
       <div className="gf-form">
@@ -127,7 +109,7 @@ export default class MappingRow extends PureComponent<Props, State> {
               className="gf-form-input"
               onBlur={this.updateMapping}
               onChange={this.onMappingValueChange}
-              value={valueMap.value}
+              value={value}
             />
           </div>
         </div>
@@ -137,7 +119,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             <input
               className="gf-form-input"
               onBlur={this.updateMapping}
-              value={valueMap.text}
+              value={text}
               onChange={this.onMappingTextChange}
             />
           </div>
@@ -147,7 +129,7 @@ export default class MappingRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { mapping } = this.state;
+    const { type } = this.state;
 
     return (
       <div className="mapping-row">
@@ -156,7 +138,7 @@ export default class MappingRow extends PureComponent<Props, State> {
           <SimplePicker
             placeholder="Choose type"
             options={mappingOptions}
-            value={mappingOptions.find(o => o.value === mapping.type)}
+            value={mappingOptions.find(o => o.value === type)}
             getOptionLabel={i => i.label}
             getOptionValue={i => i.value}
             onSelected={type => this.onMappingTypeChange(type.value)}
