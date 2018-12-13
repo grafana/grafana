@@ -1,10 +1,19 @@
 import React, { PureComponent } from 'react';
 import Gauge from 'app/viz/Gauge';
-import { NullValueMode, PanelOptionsProps, PanelProps, Threshold } from 'app/types';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 import ValueOptions from './ValueOptions';
 import GaugeOptions from './GaugeOptions';
 import Thresholds from './Thresholds';
+import ValueMappings from './ValueMappings';
+import {
+  BasicGaugeColor,
+  NullValueMode,
+  PanelOptionsProps,
+  PanelProps,
+  RangeMap,
+  Threshold,
+  ValueMap,
+} from 'app/types';
 
 export interface OptionsProps {
   decimals: number;
@@ -15,6 +24,7 @@ export interface OptionsProps {
   suffix: string;
   unit: string;
   thresholds: Threshold[];
+  mappings: Array<RangeMap | ValueMap>;
 }
 
 export interface OptionModuleProps {
@@ -30,6 +40,14 @@ export const defaultProps = {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
+    decimals: 0,
+    stat: '',
+    unit: '',
+    mappings: [],
+    thresholds: [
+      { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
+      { index: 1, label: 'Max', value: 100, canRemove: false },
+    ],
   },
 };
 
@@ -52,11 +70,17 @@ class Options extends PureComponent<PanelOptionsProps<OptionsProps>> {
   static defaultProps = defaultProps;
 
   render() {
+    const { onChange, options } = this.props;
     return (
       <div>
-        <ValueOptions onChange={this.props.onChange} options={this.props.options} />
-        <GaugeOptions onChange={this.props.onChange} options={this.props.options} />
-        <Thresholds onChange={this.props.onChange} options={this.props.options} />
+        <div className="form-section">
+          <ValueOptions onChange={onChange} options={options} />
+          <GaugeOptions onChange={onChange} options={options} />
+          <Thresholds onChange={onChange} options={options} />
+        </div>
+        <div className="form-section">
+          <ValueMappings onChange={onChange} options={options} />
+        </div>
       </div>
     );
   }

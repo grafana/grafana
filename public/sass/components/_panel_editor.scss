@@ -34,7 +34,6 @@
   flex-grow: 1;
   background: $page-bg;
   margin: 0 20px 0 84px;
-  border-left: 2px solid $orange;
   border-radius: 3px;
   box-shadow: $panel-editor-shadow;
 }
@@ -133,14 +132,19 @@
 }
 
 .viz-picker {
+  margin-top: -40px;
+  padding: 20px;
+  position: relative;
+}
+
+.viz-picker-list {
   display: flex;
   flex-wrap: wrap;
-  margin-bottom: 13px;
 }
 
 .viz-picker__item {
-  background: $panel-editor-viz-item-bg;
-  border: $panel-editor-viz-item-border;
+  background: $panel-bg;
+  border: $panel-border;
   border-radius: 3px;
   height: 100px;
   width: 150px;
@@ -162,7 +166,7 @@
     border: 1px solid $orange;
   }
 
-  &--selected {
+  &:hover {
     box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
@@ -273,6 +277,20 @@
   }
 }
 
+.ds-picker {
+  position: relative;
+  min-width: 200px;
+}
+
+.ds-picker-menu {
+  min-width: 400px;
+  max-width: 500px;
+  position: absolute;
+  background: $panel-editor-toolbar-view-bg;
+  padding: 5px;
+  overflow: auto;
+}
+
 .ds-picker-list__name {
   text-overflow: ellipsis;
   overflow: hidden;
@@ -306,6 +324,13 @@
   margin-bottom: 20px;
   background: $input-label-bg;
   border-radius: 3px;
+  position: relative;
+
+  .btn {
+    position: absolute;
+    right: 0;
+    top: 2px;
+  }
 }
 
 .form-section__body {

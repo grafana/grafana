@@ -63,7 +63,7 @@ export default class UnitPicker extends PureComponent<Props> {
     return (
       <Select
         classNamePrefix="gf-form-select-box"
-        className={`width-${width} gf-form-input--form-dropdown`}
+        className={`width-${width} gf-form-input gf-form-input--form-dropdown`}
         defaultValue={value}
         isSearchable={true}
         menuShouldScrollIntoView={false}

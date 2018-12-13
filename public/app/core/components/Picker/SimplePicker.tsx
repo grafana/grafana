@@ -1,6 +1,7 @@
 import React, { SFC } from 'react';
 import Select from 'react-select';
 import DescriptionOption from './DescriptionOption';
+import IndicatorsContainer from './IndicatorsContainer';
 import ResetStyles from './ResetStyles';
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
   onSelected: (item: any) => {} | void;
   options: any[];
   placeholder?: string;
-  width: number;
+  width?: number;
   value: any;
 }
 
@@ -28,10 +29,11 @@ const SimplePicker: SFC<Props> = ({
 }) => {
   return (
     <Select
-      classNamePrefix={`gf-form-select-box`}
-      className={`width-${width} gf-form-input gf-form-input--form-dropdown ${className || ''}`}
+      classNamePrefix="gf-form-select-box"
+      className={`${width ? 'width-' + width : ''} gf-form-input gf-form-input--form-dropdown ${className || ''}`}
       components={{
         Option: DescriptionOption,
+        IndicatorsContainer,
       }}
       defaultValue={defaultValue}
       value={value}

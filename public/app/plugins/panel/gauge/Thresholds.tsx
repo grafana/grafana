@@ -3,16 +3,10 @@ import classNames from 'classnames/bind';
 import tinycolor from 'tinycolor2';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { OptionModuleProps } from './module';
-import { Threshold } from 'app/types';
+import { BasicGaugeColor, Threshold } from 'app/types';
 
 interface State {
   thresholds: Threshold[];
-}
-
-export enum BasicGaugeColor {
-  Green = 'rgba(50, 172, 45, 0.97)',
-  Orange = 'rgba(237, 129, 40, 0.89)',
-  Red = 'rgb(212, 74, 58)',
 }
 
 export default class Thresholds extends PureComponent<OptionModuleProps, State> {
@@ -20,10 +14,7 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     super(props);
 
     this.state = {
-      thresholds: this.props.options.thresholds || [
-        { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
-        { index: 1, label: 'Max', value: 100, canRemove: false, color: BasicGaugeColor.Red },
-      ],
+      thresholds: props.options.thresholds,
     };
   }
 

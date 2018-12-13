@@ -1,0 +1,61 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="section gf-form-group"
+>
+  <h5
+    className="page-heading"
+  >
+    Value mappings
+  </h5>
+  <div>
+    <MappingRow
+      key="Ok-0"
+      mapping={
+        Object {
+          "id": 1,
+          "operator": "",
+          "text": "Ok",
+          "type": 1,
+          "value": "20",
+        }
+      }
+      removeMapping={[Function]}
+      updateMapping={[Function]}
+    />
+    <MappingRow
+      key="Meh-1"
+      mapping={
+        Object {
+          "from": "21",
+          "id": 2,
+          "operator": "",
+          "text": "Meh",
+          "to": "30",
+          "type": 2,
+        }
+      }
+      removeMapping={[Function]}
+      updateMapping={[Function]}
+    />
+  </div>
+  <div
+    className="add-mapping-row"
+    onClick={[Function]}
+  >
+    <div
+      className="add-mapping-row-icon"
+    >
+      <i
+        className="fa fa-plus"
+      />
+    </div>
+    <div
+      className="add-mapping-row-label"
+    >
+      Add mapping
+    </div>
+  </div>
+</div>
+`;

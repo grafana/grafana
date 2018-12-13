@@ -5,8 +5,8 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 interface Props {
   children: JSX.Element;
   heading: string;
-  main?: EditorToolBarView;
-  toolbarItems: EditorToolBarView[];
+  renderToolbar?: () => JSX.Element;
+  toolbarItems?: EditorToolBarView[];
 }
 
 export interface EditorToolBarView {
@@ -15,7 +15,7 @@ export interface EditorToolBarView {
   icon?: string;
   disabled?: boolean;
   onClick?: () => void;
-  render: (closeFunction: any) => JSX.Element | JSX.Element[];
+  render: (closeFunction?: any) => JSX.Element | JSX.Element[];
 }
 
 interface State {
@@ -25,6 +25,10 @@ interface State {
 }
 
 export class EditorTabBody extends PureComponent<Props, State> {
+  static defaultProps = {
+    toolbarItems: [],
+  };
+
   constructor(props) {
     super(props);
 
@@ -65,16 +69,6 @@ export class EditorTabBody extends PureComponent<Props, State> {
     return state;
   }
 
-  renderMainSelection(view: EditorToolBarView) {
-    return (
-      <div className="toolbar__main" onClick={() => this.onToggleToolBarView(view)} key={view.title + view.icon}>
-        <img className="toolbar__main-image" src={view.imgSrc} />
-        <div className="toolbar__main-name">{view.title}</div>
-        <i className="fa fa-caret-down" />
-      </div>
-    );
-  }
-
   renderButton(view: EditorToolBarView) {
     const onClick = () => {
       if (view.onClick) {
@@ -104,16 +98,20 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   render() {
-    const { children, toolbarItems, main, heading } = this.props;
+    const { children, renderToolbar, heading, toolbarItems } = this.props;
     const { openView, fadeIn, isOpen } = this.state;
 
     return (
       <>
         <div className="toolbar">
           <div className="toolbar__heading">{heading}</div>
-          {main && this.renderMainSelection(main)}
-          <div className="gf-form--grow" />
-          {toolbarItems.map(item => this.renderButton(item))}
+          {renderToolbar && renderToolbar()}
+          {toolbarItems.length > 0 && (
+            <>
+              <div className="gf-form--grow" />
+              {toolbarItems.map(item => this.renderButton(item))}
+            </>
+          )}
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false}>

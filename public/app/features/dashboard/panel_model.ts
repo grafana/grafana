@@ -1,6 +1,7 @@
 import { Emitter } from 'app/core/utils/emitter';
 import _ from 'lodash';
 import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
+import { DataQuery } from 'app/types';
 
 export interface GridPos {
   x: number;
@@ -235,6 +236,24 @@ export class PanelModel {
     }
 
     this.restorePanelOptions(pluginId);
+  }
+
+  addQuery(query?: Partial<DataQuery>) {
+    query = query || { refId: 'A' };
+    query.refId = this.getNextQueryLetter();
+    query.isNew = true;
+
+    this.targets.push(query);
+  }
+
+  getNextQueryLetter(): string {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    return _.find(letters, refId => {
+      return _.every(this.targets, other => {
+        return other.refId !== refId;
+      });
+    });
   }
 
   destroy() {

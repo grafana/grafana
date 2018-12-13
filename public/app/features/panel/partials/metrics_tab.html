@@ -1,5 +1,3 @@
-
-<div class="query-editor-rows gf-form-group" ng-if="ctrl.datasourceInstance">
 	<div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
 		<rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
 			<plugin-component type="query-ctrl">
@@ -7,21 +5,20 @@
 		</rebuild-on-change>
 	</div>
 
-	<div class="gf-form-query">
-		<div class="gf-form gf-form-query-letter-cell">
-			<label class="gf-form-label">
-				<span class="gf-form-query-letter-cell-carret">
-					<i class="fa fa-caret-down"></i>
-				</span>
-				<span class="gf-form-query-letter-cell-letter">{{ctrl.nextRefId}}</span>
-			</label>
-			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.datasourceInstance.meta.mixed">
-				Add Query
-			</button>
-			<div class="dropdown" ng-if="ctrl.datasourceInstance.meta.mixed">
-				<gf-form-dropdown model="ctrl.addQueryDropdown" get-options="ctrl.getOptions(false)" on-change="ctrl.addMixedQuery($option)">
-				</gf-form-dropdown>
-			</div>
-		</div>
-	</div>
-</div>
+	<!-- <div class="gf&#45;form&#45;query"> -->
+	<!-- 	<div class="gf&#45;form gf&#45;form&#45;query&#45;letter&#45;cell"> -->
+	<!-- 		<label class="gf&#45;form&#45;label"> -->
+	<!-- 			<span class="gf&#45;form&#45;query&#45;letter&#45;cell&#45;carret"> -->
+	<!-- 				<i class="fa fa&#45;caret&#45;down"></i> -->
+	<!-- 			</span> -->
+	<!-- 			<span class="gf&#45;form&#45;query&#45;letter&#45;cell&#45;letter">{{ctrl.nextRefId}}</span> -->
+	<!-- 		</label> -->
+	<!-- 		<button class="btn btn&#45;secondary gf&#45;form&#45;btn" ng&#45;click="ctrl.addQuery()" ng&#45;hide="ctrl.datasourceInstance.meta.mixed"> -->
+	<!-- 			Add Query -->
+	<!-- 		</button> -->
+	<!-- 		<div class="dropdown" ng&#45;if="ctrl.datasourceInstance.meta.mixed"> -->
+	<!-- 			<gf&#45;form&#45;dropdown model="ctrl.addQueryDropdown" get&#45;options="ctrl.getOptions(false)" on&#45;change="ctrl.addMixedQuery($option)"> -->
+	<!-- 			</gf&#45;form&#45;dropdown> -->
+	<!-- 		</div> -->
+	<!-- 	</div> -->
+	<!-- </div> -->
