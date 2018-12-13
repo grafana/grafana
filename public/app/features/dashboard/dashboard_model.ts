@@ -806,16 +806,6 @@ export class DashboardModel {
     return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
   }
 
-  getNextQueryLetter(panel) {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(panel.targets, other => {
-        return other.refId !== refId;
-      });
-    });
-  }
-
   isTimezoneUtc() {
     return this.getTimezone() === 'utc';
   }

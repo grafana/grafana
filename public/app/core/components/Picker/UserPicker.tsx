@@ -41,7 +41,7 @@ export class UserPicker extends Component<Props, State> {
         return result.map(user => ({
           id: user.userId,
           label: user.login === user.email ? user.login : `${user.login} - ${user.email}`,
-          avatarUrl: user.avatarUrl,
+          imgUrl: user.avatarUrl,
           login: user.login,
         }));
       })

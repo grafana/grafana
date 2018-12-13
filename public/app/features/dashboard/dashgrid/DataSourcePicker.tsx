@@ -1,115 +1,81 @@
+// Libraries
 import React, { PureComponent } from 'react';
-import classNames from 'classnames';
 import _ from 'lodash';
-import KeyboardNavigation, { KeyboardNavigationProps } from './KeyboardNavigation';
+
+// Components
+import ResetStyles from 'app/core/components/Picker/ResetStyles';
+import { Option, SingleValue } from 'app/core/components/Picker/PickerOption';
+import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
+import Select from 'react-select';
+
+// Types
 import { DataSourceSelectItem } from 'app/types';
 
 export interface Props {
   onChangeDataSource: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
+  current: DataSourceSelectItem;
+  onBlur?: () => void;
+  autoFocus?: boolean;
 }
 
-interface State {
-  searchQuery: string;
-}
+export class DataSourcePicker extends PureComponent<Props> {
+  static defaultProps = {
+    autoFocus: false,
+  };
 
-export class DataSourcePicker extends PureComponent<Props, State> {
   searchInput: HTMLElement;
 
   constructor(props) {
     super(props);
-    this.state = {
-      searchQuery: '',
-    };
   }
 
-  getDataSources() {
-    const { searchQuery } = this.state;
-    const regex = new RegExp(searchQuery, 'i');
-    const { datasources } = this.props;
-
-    const filtered = datasources.filter(item => {
-      return regex.test(item.name) || regex.test(item.meta.name);
-    });
-
-    return filtered;
-  }
-
-  get maxSelectedIndex() {
-    const filtered = this.getDataSources();
-    return filtered.length - 1;
-  }
-
-  renderDataSource = (ds: DataSourceSelectItem, index: number, keyNavProps: KeyboardNavigationProps) => {
-    const { onChangeDataSource } = this.props;
-    const { selected, onMouseEnter } = keyNavProps;
-    const onClick = () => onChangeDataSource(ds);
-    const isSelected = selected === index;
-    const cssClass = classNames({
-      'ds-picker-list__item': true,
-      'ds-picker-list__item--selected': isSelected,
-    });
-    return (
-      <div key={index} className={cssClass} title={ds.name} onClick={onClick} onMouseEnter={() => onMouseEnter(index)}>
-        <img className="ds-picker-list__img" src={ds.meta.info.logos.small} />
-        <div className="ds-picker-list__name">{ds.name}</div>
-      </div>
-    );
+  onChange = item => {
+    const ds = this.props.datasources.find(ds => ds.name === item.value);
+    this.props.onChangeDataSource(ds);
   };
-
-  componentDidMount() {
-    setTimeout(() => {
-      this.searchInput.focus();
-    }, 300);
-  }
-
-  onSearchQueryChange = evt => {
-    const value = evt.target.value;
-    this.setState(prevState => ({
-      ...prevState,
-      searchQuery: value,
-    }));
-  };
-
-  renderFilters({ onKeyDown, selected }: KeyboardNavigationProps) {
-    const { searchQuery } = this.state;
-    return (
-      <label className="gf-form--has-input-icon">
-        <input
-          type="text"
-          className="gf-form-input width-13"
-          placeholder=""
-          ref={elem => (this.searchInput = elem)}
-          onChange={this.onSearchQueryChange}
-          value={searchQuery}
-          onKeyDown={evt => {
-            onKeyDown(evt, this.maxSelectedIndex, () => {
-              const { onChangeDataSource } = this.props;
-              const ds = this.getDataSources()[selected];
-              onChangeDataSource(ds);
-            });
-          }}
-        />
-        <i className="gf-form-input-icon fa fa-search" />
-      </label>
-    );
-  }
 
   render() {
+    const { datasources, current, autoFocus, onBlur } = this.props;
+
+    const options = datasources.map(ds => ({
+      value: ds.name,
+      label: ds.name,
+      imgUrl: ds.meta.info.logos.small,
+    }));
+
+    const value = current && {
+      label: current.name,
+      value: current.name,
+      imgUrl: current.meta.info.logos.small,
+    };
+
     return (
-      <KeyboardNavigation
-        render={(keyNavProps: KeyboardNavigationProps) => (
-          <>
-            <div className="cta-form__bar">
-              {this.renderFilters(keyNavProps)}
-              <div className="gf-form--grow" />
-            </div>
-            <div className="ds-picker-list">
-              {this.getDataSources().map((ds, index) => this.renderDataSource(ds, index, keyNavProps))}
-            </div>
-          </>
-        )}
-      />
+      <div className="gf-form-inline">
+        <Select
+          classNamePrefix={`gf-form-select-box`}
+          isMulti={false}
+          menuShouldScrollIntoView={false}
+          isClearable={false}
+          className="gf-form-input gf-form-input--form-dropdown ds-picker"
+          onChange={item => this.onChange(item)}
+          options={options}
+          styles={ResetStyles}
+          autoFocus={autoFocus}
+          onBlur={onBlur}
+          openMenuOnFocus={true}
+          maxMenuHeight={500}
+          placeholder="Select datasource"
+          loadingMessage={() => 'Loading datasources...'}
+          noOptionsMessage={() => 'No datasources found'}
+          value={value}
+          components={{
+            Option,
+            SingleValue,
+            IndicatorsContainer,
+          }}
+        />
+      </div>
     );
   }
 }

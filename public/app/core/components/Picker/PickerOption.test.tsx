@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import renderer from 'react-test-renderer';
 import PickerOption from './PickerOption';
 
@@ -24,7 +24,7 @@ const model = {
   children: 'Model title',
   data: {
     title: 'Model title',
-    avatarUrl: 'url/to/avatar',
+    imgUrl: 'url/to/avatar',
     label: 'User picker label',
   },
   className: 'class-for-user-picker',

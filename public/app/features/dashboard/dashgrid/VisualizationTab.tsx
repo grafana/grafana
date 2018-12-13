@@ -7,6 +7,7 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 // Components
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
+import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -21,9 +22,24 @@ interface Props {
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
-export class VisualizationTab extends PureComponent<Props> {
+interface State {
+  isVizPickerOpen: boolean;
+  searchQuery: string;
+}
+
+export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
+  searchInput: HTMLElement;
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      isVizPickerOpen: false,
+      searchQuery: '',
+    };
+  }
 
   getPanelDefaultOptions = () => {
     const { panel, plugin } = this.props;
@@ -87,10 +103,11 @@ export class VisualizationTab extends PureComponent<Props> {
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
-      template += `
-      <div class="form-section" ng-cloak>
-        <div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>
-        <div class="form-section__body">
+      template +=
+        `
+      <div class="form-section" ng-cloak>` +
+        (i > 0 ? `<div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
+        `<div class="form-section__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
       </div>
@@ -119,28 +136,81 @@ export class VisualizationTab extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  onOpenVizPicker = () => {
+    this.setState({ isVizPickerOpen: true });
+  };
+
+  onCloseVizPicker = () => {
+    this.setState({ isVizPickerOpen: false });
+  };
+
+  onSearchQueryChange = evt => {
+    const value = evt.target.value;
+    this.setState({
+      searchQuery: value,
+    });
+  };
+
+  renderToolbar = (): JSX.Element => {
+    const { plugin } = this.props;
+    const { searchQuery } = this.state;
+
+    if (this.state.isVizPickerOpen) {
+      return (
+        <>
+          <label className="gf-form--has-input-icon">
+            <input
+              type="text"
+              className="gf-form-input width-13"
+              placeholder=""
+              onChange={this.onSearchQueryChange}
+              value={searchQuery}
+              ref={elem => elem && elem.focus()}
+            />
+            <i className="gf-form-input-icon fa fa-search" />
+          </label>
+          <div className="flex-grow" />
+          <button className="btn btn-link" onClick={this.onCloseVizPicker}>
+            <i className="fa fa-chevron-up" />
+          </button>
+        </>
+      );
+    } else {
+      return (
+        <div className="toolbar__main" onClick={this.onOpenVizPicker}>
+          <img className="toolbar__main-image" src={plugin.info.logos.small} />
+          <div className="toolbar__main-name">{plugin.name}</div>
+          <i className="fa fa-caret-down" />
+        </div>
+      );
+    }
+  };
+
+  onTypeChanged = (plugin: PanelPlugin) => {
+    if (plugin.id === this.props.plugin.id) {
+      this.setState({ isVizPickerOpen: false });
+    } else {
+      this.props.onTypeChanged(plugin);
+    }
+  };
+
   render() {
     const { plugin } = this.props;
-
-    const panelSelection = {
-      title: plugin.name,
-      imgSrc: plugin.info.logos.small,
-      render: () => {
-        // the needs to be scoped inside this closure
-        const { plugin, onTypeChanged } = this.props;
-        return <VizTypePicker current={plugin} onTypeChanged={onTypeChanged} />;
-      },
-    };
-
-    const panelHelp = {
-      title: '',
-      icon: 'fa fa-question',
-      render: () => <h2>Help</h2>,
-    };
+    const { isVizPickerOpen, searchQuery } = this.state;
 
     return (
-      <EditorTabBody heading="Visualization" main={panelSelection} toolbarItems={[panelHelp]}>
-        {this.renderPanelOptions()}
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar}>
+        <>
+          <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
+            <VizTypePicker
+              current={plugin}
+              onTypeChanged={this.onTypeChanged}
+              searchQuery={searchQuery}
+              onClose={this.onCloseVizPicker}
+            />
+          </FadeIn>
+          {this.renderPanelOptions()}
+        </>
       </EditorTabBody>
     );
   }

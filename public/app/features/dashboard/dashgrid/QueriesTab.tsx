@@ -1,36 +1,39 @@
+// Libraries
 import React, { SFC, PureComponent } from 'react';
+import Remarkable from 'remarkable';
+import _ from 'lodash';
+
+// Components
 import DataSourceOption from './DataSourceOption';
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 import { DataSourcePicker } from './DataSourcePicker';
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
-import './../../panel/metrics_tab';
-import config from 'app/core/config';
 import { QueryInspector } from './QueryInspector';
 import { TimeRangeOptions } from './TimeRangeOptions';
+import './../../panel/metrics_tab';
+import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
-import { DataSourceSelectItem } from 'app/types';
+import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import config from 'app/core/config';
 
-import Remarkable from 'remarkable';
+// Types
+import { PanelModel } from '../panel_model';
+import { DashboardModel } from '../dashboard_model';
+import { DataSourceSelectItem, DataQuery } from 'app/types';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
 }
 
-interface Help {
-  isLoading: boolean;
-  helpHtml: any;
-}
-
 interface State {
-  currentDatasource: DataSourceSelectItem;
-  help: Help;
-  hideTimeOverride: boolean;
+  currentDS: DataSourceSelectItem;
+  helpContent: JSX.Element;
+  isLoadingHelp: boolean;
+  isPickerOpen: boolean;
+  isAddingMixed: boolean;
 }
 
 interface LoadingPlaceholderProps {
@@ -40,7 +43,7 @@ interface LoadingPlaceholderProps {
 const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => <h2>{text}</h2>;
 
 export class QueriesTab extends PureComponent<Props, State> {
-  element: any;
+  element: HTMLElement;
   component: AngularComponent;
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv: BackendSrv = getBackendSrv();
@@ -50,12 +53,26 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = props;
 
     this.state = {
-      currentDatasource: this.datasources.find(datasource => datasource.value === panel.datasource),
-      help: {
-        isLoading: false,
-        helpHtml: null,
-      },
-      hideTimeOverride: false,
+      currentDS: this.datasources.find(datasource => datasource.value === panel.datasource),
+      isLoadingHelp: false,
+      helpContent: null,
+      isPickerOpen: false,
+      isAddingMixed: false,
+    };
+  }
+
+  getAngularQueryComponentScope(): AngularQueryComponentScope {
+    const { panel, dashboard } = this.props;
+
+    return {
+      panel: panel,
+      dashboard: dashboard,
+      refresh: () => panel.refresh(),
+      render: () => panel.render,
+      addQuery: this.onAddQuery,
+      moveQuery: this.onMoveQuery,
+      removeQuery: this.onRemoveQuery,
+      events: panel.events,
     };
   }
 
@@ -64,15 +81,10 @@ export class QueriesTab extends PureComponent<Props, State> {
       return;
     }
 
-    const { panel, dashboard } = this.props;
     const loader = getAngularLoader();
     const template = '<metrics-tab />';
     const scopeProps = {
-      ctrl: {
-        panel: panel,
-        dashboard: dashboard,
-        refresh: () => panel.refresh(),
-      },
+      ctrl: this.getAngularQueryComponentScope(),
     };
 
     this.component = loader.load(this.element, scopeProps, template);
@@ -86,7 +98,8 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onChangeDataSource = datasource => {
     const { panel } = this.props;
-    const { currentDatasource } = this.state;
+    const { currentDS } = this.state;
+
     // switching to mixed
     if (datasource.meta.mixed) {
       panel.targets.forEach(target => {
@@ -95,62 +108,58 @@ export class QueriesTab extends PureComponent<Props, State> {
           target.datasource = config.defaultDatasource;
         }
       });
-    } else if (currentDatasource && currentDatasource.meta.mixed) {
-      panel.targets.forEach(target => {
-        delete target.datasource;
-      });
+    } else if (currentDS) {
+      // if switching from mixed
+      if (currentDS.meta.mixed) {
+        for (const target of panel.targets) {
+          delete target.datasource;
+        }
+      } else if (currentDS.meta.id !== datasource.meta.id) {
+        // we are changing data source type, clear queries
+        panel.targets = [{ refId: 'A' }];
+      }
     }
 
     panel.datasource = datasource.value;
     panel.refresh();
 
-    this.setState(prevState => ({
-      ...prevState,
-      currentDatasource: datasource,
-    }));
+    this.setState({
+      currentDS: datasource,
+    });
   };
 
   loadHelp = () => {
-    const { currentDatasource } = this.state;
-    const hasHelp = currentDatasource.meta.hasQueryHelp;
+    const { currentDS } = this.state;
+    const hasHelp = currentDS.meta.hasQueryHelp;
 
     if (hasHelp) {
-      this.setState(prevState => ({
-        ...prevState,
-        help: {
-          helpHtml: <h2>Loading help...</h2>,
-          isLoading: true,
-        },
-      }));
+      this.setState({
+        helpContent: <h3>Loading help...</h3>,
+        isLoadingHelp: true,
+      });
 
       this.backendSrv
-        .get(`/api/plugins/${currentDatasource.meta.id}/markdown/query_help`)
+        .get(`/api/plugins/${currentDS.meta.id}/markdown/query_help`)
         .then(res => {
           const md = new Remarkable();
-          const helpHtml = md.render(res); // TODO: Clean out dangerous code? Previous: this.helpHtml = this.$sce.trustAsHtml(md.render(res));
-          this.setState(prevState => ({
-            ...prevState,
-            help: {
-              helpHtml: <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />,
-              isLoading: false,
-            },
-          }));
+          const helpHtml = md.render(res);
+          this.setState({
+            helpContent: <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />,
+            isLoadingHelp: false,
+          });
         })
         .catch(() => {
-          this.setState(prevState => ({
-            ...prevState,
-            help: {
-              helpHtml: 'Error occured when loading help',
-              isLoading: false,
-            },
-          }));
+          this.setState({
+            helpContent: <h3>'Error occured when loading help'</h3>,
+            isLoadingHelp: false,
+          });
         });
     }
   };
 
   renderOptions = close => {
-    const { currentDatasource } = this.state;
-    const { queryOptions } = currentDatasource.meta;
+    const { currentDS } = this.state;
+    const { queryOptions } = currentDS.meta;
     const { panel } = this.props;
 
     const onChangeFn = (panelKey: string) => {
@@ -223,26 +232,83 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderHelp = () => {
-    const { helpHtml, isLoading } = this.state.help;
-    return isLoading ? <LoadingPlaceholder text="Loading help..." /> : helpHtml;
+    const { helpContent, isLoadingHelp } = this.state;
+    return isLoadingHelp ? <LoadingPlaceholder text="Loading help..." /> : helpContent;
+  };
+
+  onAddQuery = (query?: Partial<DataQuery>) => {
+    this.props.panel.addQuery(query);
+    this.forceUpdate();
+  };
+
+  onAddQueryClick = () => {
+    if (this.state.currentDS.meta.mixed) {
+      this.setState({ isAddingMixed: true });
+      return;
+    }
+
+    this.props.panel.addQuery();
+    this.component.digest();
+    this.forceUpdate();
+  };
+
+  onRemoveQuery = (query: DataQuery) => {
+    const { panel } = this.props;
+
+    const index = _.indexOf(panel.targets, query);
+    panel.targets.splice(index, 1);
+    panel.refresh();
+
+    this.forceUpdate();
+  };
+
+  onMoveQuery = (query: DataQuery, direction: number) => {
+    const { panel } = this.props;
+
+    const index = _.indexOf(panel.targets, query);
+    _.move(panel.targets, index, index + direction);
+
+    this.forceUpdate();
+  };
+
+  renderToolbar = () => {
+    const { currentDS } = this.state;
+
+    return (
+      <DataSourcePicker
+        datasources={this.datasources}
+        onChangeDataSource={this.onChangeDataSource}
+        current={currentDS}
+      />
+    );
+  };
+
+  renderMixedPicker = () => {
+    return (
+      <DataSourcePicker
+        datasources={this.datasources}
+        onChangeDataSource={this.onAddMixedQuery}
+        current={null}
+        autoFocus={true}
+        onBlur={this.onMixedPickerBlur}
+      />
+    );
+  };
+
+  onAddMixedQuery = datasource => {
+    this.onAddQuery({ datasource: datasource.name });
+    this.component.digest();
+    this.setState({ isAddingMixed: false });
+  };
+
+  onMixedPickerBlur = () => {
+    this.setState({ isAddingMixed: false });
   };
 
   render() {
-    const { currentDatasource } = this.state;
-    const { hasQueryHelp } = currentDatasource.meta;
-    const dsInformation = {
-      title: currentDatasource.name,
-      imgSrc: currentDatasource.meta.info.logos.small,
-      render: closeOpenView => (
-        <DataSourcePicker
-          datasources={this.datasources}
-          onChangeDataSource={ds => {
-            closeOpenView();
-            this.onChangeDataSource(ds);
-          }}
-        />
-      ),
-    };
+    const { panel } = this.props;
+    const { currentDS, isAddingMixed } = this.state;
+    const { hasQueryHelp } = currentDS.meta;
 
     const queryInspector = {
       title: 'Query Inspector',
@@ -265,10 +331,31 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Queries" main={dsInformation} toolbarItems={[options, queryInspector, dsHelp]}>
-        <>
-          <div ref={element => (this.element = element)} style={{ width: '100%' }} />
-        </>
+      <EditorTabBody
+        heading="Queries"
+        renderToolbar={this.renderToolbar}
+        toolbarItems={[options, queryInspector, dsHelp]}
+      >
+        <div className="query-editor-rows gf-form-group">
+          <div ref={element => (this.element = element)} />
+
+          <div className="gf-form-query">
+            <div className="gf-form gf-form-query-letter-cell">
+              <label className="gf-form-label">
+                <span className="gf-form-query-letter-cell-carret muted">
+                  <i className="fa fa-caret-down" />
+                </span>
+                <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
+              </label>
+              {!isAddingMixed && (
+                <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
+                  Add Query
+                </button>
+              )}
+              {isAddingMixed && this.renderMixedPicker()}
+            </div>
+          </div>
+        </div>
       </EditorTabBody>
     );
   }

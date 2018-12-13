@@ -1,181 +1,24 @@
 // Libraries
 import _ from 'lodash';
-import Remarkable from 'remarkable';
 
 // Services & utils
 import coreModule from 'app/core/core_module';
-import config from 'app/core/config';
 import { Emitter } from 'app/core/utils/emitter';
 
 // Types
 import { DashboardModel } from '../dashboard/dashboard_model';
+import { PanelModel } from '../dashboard/panel_model';
+import { DataQuery } from 'app/types';
 
-export class MetricsTabCtrl {
-  dsName: string;
-  panel: any;
-  panelCtrl: any;
-  datasources: any[];
-  datasourceInstance: any;
-  nextRefId: string;
+export interface AngularQueryComponentScope {
+  panel: PanelModel;
   dashboard: DashboardModel;
-  panelDsValue: any;
-  addQueryDropdown: any;
-  queryTroubleshooterOpen: boolean;
-  helpOpen: boolean;
-  optionsOpen: boolean;
-  hasQueryHelp: boolean;
-  helpHtml: string;
-  queryOptions: any;
   events: Emitter;
-
-  /** @ngInject */
-  constructor($scope, private $sce, datasourceSrv, private backendSrv) {
-    this.panelCtrl = $scope.ctrl;
-    $scope.ctrl = this;
-
-    this.panel = this.panelCtrl.panel;
-    this.panel.datasource = this.panel.datasource || null;
-    this.panel.targets = this.panel.targets || [{}];
-
-    this.dashboard = this.panelCtrl.dashboard;
-    this.datasources = datasourceSrv.getMetricSources();
-    this.panelDsValue = this.panelCtrl.panel.datasource;
-
-    // added here as old query controller expects this on panelCtrl but
-    // they are getting MetricsTabCtrl instead
-    this.events = this.panel.events;
-
-    for (const ds of this.datasources) {
-      if (ds.value === this.panelDsValue) {
-        this.datasourceInstance = ds;
-      }
-    }
-
-    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
-
-    // update next ref id
-    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
-    this.updateDatasourceOptions();
-  }
-
-  updateDatasourceOptions() {
-    if (this.datasourceInstance) {
-      this.hasQueryHelp = this.datasourceInstance.meta.hasQueryHelp;
-      this.queryOptions = this.datasourceInstance.meta.queryOptions;
-    }
-  }
-
-  getOptions(includeBuiltin) {
-    return Promise.resolve(
-      this.datasources
-        .filter(value => {
-          return includeBuiltin || !value.meta.builtIn;
-        })
-        .map(ds => {
-          return { value: ds.value, text: ds.name, datasource: ds };
-        })
-    );
-  }
-
-  datasourceChanged(option) {
-    if (!option) {
-      return;
-    }
-
-    this.setDatasource(option.datasource);
-    this.updateDatasourceOptions();
-  }
-
-  setDatasource(datasource) {
-    // switching to mixed
-    if (datasource.meta.mixed) {
-      _.each(this.panel.targets, target => {
-        target.datasource = this.panel.datasource;
-        if (!target.datasource) {
-          target.datasource = config.defaultDatasource;
-        }
-      });
-    } else if (this.datasourceInstance) {
-      // if switching from mixed
-      if (this.datasourceInstance.meta.mixed) {
-        _.each(this.panel.targets, target => {
-          delete target.datasource;
-        });
-      } else if (this.datasourceInstance.meta.id !== datasource.meta.id) {
-        // we are changing data source type, clear queries
-        this.panel.targets = [{ refId: 'A' }];
-        this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
-      }
-    }
-
-    this.datasourceInstance = datasource;
-    this.panel.datasource = datasource.value;
-    this.panel.refresh();
-  }
-
-  addMixedQuery(option) {
-    if (!option) {
-      return;
-    }
-
-    this.panelCtrl.addQuery({
-      isNew: true,
-      datasource: option.datasource.name,
-    });
-    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
-  }
-
-  toggleHelp() {
-    this.optionsOpen = false;
-    this.queryTroubleshooterOpen = false;
-    this.helpOpen = !this.helpOpen;
-
-    this.backendSrv.get(`/api/plugins/${this.datasourceInstance.meta.id}/markdown/query_help`).then(res => {
-      const md = new Remarkable();
-      this.helpHtml = this.$sce.trustAsHtml(md.render(res));
-    });
-  }
-
-  toggleOptions() {
-    this.helpOpen = false;
-    this.queryTroubleshooterOpen = false;
-    this.optionsOpen = !this.optionsOpen;
-  }
-
-  toggleQueryTroubleshooter() {
-    this.helpOpen = false;
-    this.optionsOpen = false;
-    this.queryTroubleshooterOpen = !this.queryTroubleshooterOpen;
-  }
-
-  addQuery(query?) {
-    query = query || {};
-    query.refId = this.dashboard.getNextQueryLetter(this.panel);
-    query.isNew = true;
-
-    this.panel.targets.push(query);
-    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
-  }
-
-  refresh() {
-    this.panel.refresh();
-  }
-
-  render() {
-    this.panel.render();
-  }
-
-  removeQuery(target) {
-    const index = _.indexOf(this.panel.targets, target);
-    this.panel.targets.splice(index, 1);
-    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
-    this.panel.refresh();
-  }
-
-  moveQuery(target, direction) {
-    const index = _.indexOf(this.panel.targets, target);
-    _.move(this.panel.targets, index, index + direction);
-  }
+  refresh: () => void;
+  render: () => void;
+  removeQuery: (query: DataQuery) => void;
+  addQuery: (query?: DataQuery) => void;
+  moveQuery: (query: DataQuery, direction: number) => void;
 }
 
 /** @ngInject */
@@ -185,7 +28,6 @@ export function metricsTabDirective() {
     restrict: 'E',
     scope: true,
     templateUrl: 'public/app/features/panel/partials/metrics_tab.html',
-    controller: MetricsTabCtrl,
   };
 }
 
