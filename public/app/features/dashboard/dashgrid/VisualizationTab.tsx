@@ -169,6 +169,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
             />
             <i className="gf-form-input-icon fa fa-search" />
           </label>
+          <div className="flex-grow" />
+          <button className="btn btn-link" onClick={this.onCloseVizPicker}>
+            <i className="fa fa-chevron-up" />
+          </button>
         </>
       );
     } else {
@@ -183,14 +187,17 @@ export class VisualizationTab extends PureComponent<Props, State> {
   };
 
   onTypeChanged = (plugin: PanelPlugin) => {
-    // this.setState({ isVizPickerOpen: false });
-    this.props.onTypeChanged(plugin);
+    if (plugin.id === this.props.plugin.id) {
+      this.setState({ isVizPickerOpen: false });
+    } else {
+      this.props.onTypeChanged(plugin);
+    }
   };
 
   render() {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
-    const toolbarItems: EditorToolBarView = [];
+    const toolbarItems: EditorToolBarView[] = [];
 
     if (!isVizPickerOpen) {
       toolbarItems.push({

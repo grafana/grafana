@@ -271,7 +271,7 @@ $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 $tab-border-color: $dark-4;
 
 // Toolbar
-$toolbar-bg: $input-bg;
+$toolbar-bg: $input-black;
 
 // Pagination
 // -------------------------
@@ -377,12 +377,12 @@ $checkbox-color: $dark-1;
 $panel-editor-shadow: 0 0 20px black;
 $panel-editor-border: 1px solid $dark-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
-$panel-editor-toolbar-view-bg: $black;
+$panel-editor-toolbar-view-bg: $input-black;
 $panel-editor-viz-item-shadow: 0 0 8px $dark-5;
 $panel-editor-viz-item-border: 1px solid $dark-5;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue;
 $panel-editor-viz-item-border-hover: 1px solid $blue;
-$panel-editor-viz-item-bg: $black;
+$panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue, 47%);
 $panel-editor-viz-item-bg-hover-active: darken($orange, 45%);

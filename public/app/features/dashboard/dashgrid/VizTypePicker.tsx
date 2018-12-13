@@ -62,7 +62,6 @@ export class VizTypePicker extends PureComponent<Props> {
   };
 
   render() {
-    const { onClose } = this.props;
     const filteredPluginList = this.getFilteredPluginList();
 
     return (

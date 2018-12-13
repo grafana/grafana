@@ -35,7 +35,6 @@
   background: $page-bg;
   margin: 0 20px 0 84px;
   border-radius: 3px;
-  border: $panel-editor-border;
   box-shadow: $panel-editor-shadow;
 }
 
@@ -134,7 +133,7 @@
 
 .viz-picker {
   background: $toolbar-bg;
-  margin: -40px -20px 40px 106px;
+  margin: -40px -20px 40px -20px;
   padding: 20px;
   position: relative;
 }
