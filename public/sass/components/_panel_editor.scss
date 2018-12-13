@@ -244,12 +244,14 @@
 
 .panel-option-section {
   margin-bottom: 10px;
+  border: $panel-option-section-border;
+  border-radius: $border-radius;
 }
 
 .panel-option-section__header {
-  padding: 5px 20px;
-  font-size: $font-size-h5;
-  background: $input-label-bg;
+  padding: 4px 20px;
+  font-size: 1.1rem;
+  background: $panel-option-section-header-bg;
   position: relative;
 
   .btn {
