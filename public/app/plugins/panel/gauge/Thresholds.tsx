@@ -169,22 +169,20 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
       const rowStyle = classNames({
         'threshold-row': true,
         'threshold-row-min': index === 0,
-        'threshold-row-max': index === thresholds.length - 1,
       });
 
       return (
         <div className={rowStyle} key={`${threshold.index}-${index}`}>
           <div className="threshold-row-inner">
             <div className="threshold-row-color">
-              {threshold.color &&
-                index !== thresholds.length - 1 && (
-                  <div className="threshold-row-color-inner">
-                    <ColorPicker
-                      color={threshold.color}
-                      onChange={color => this.onChangeThresholdColor(threshold, color)}
-                    />
-                  </div>
-                )}
+              {threshold.color && (
+                <div className="threshold-row-color-inner">
+                  <ColorPicker
+                    color={threshold.color}
+                    onChange={color => this.onChangeThresholdColor(threshold, color)}
+                  />
+                </div>
+              )}
             </div>
             <input
               className="threshold-row-input"
