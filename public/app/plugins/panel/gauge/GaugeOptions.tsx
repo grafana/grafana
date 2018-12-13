@@ -15,7 +15,7 @@ export default class GaugeOptions extends PureComponent<OptionModuleProps> {
   onMaxValueChange = ({ target }) => this.props.onChange({ ...this.props.options, maxValue: target.value });
 
   render() {
-    const { showThresholdLabels, showThresholdMarkers } = this.props.options;
+    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers } = this.props.options;
 
     return (
       <div className="section gf-form-group">
@@ -38,11 +38,11 @@ export default class GaugeOptions extends PureComponent<OptionModuleProps> {
         </div>
         <div className="gf-form-inline">
           <Label width={6}>Min value</Label>
-          <input type="text" className="gf-form-input width-12" onChange={this.onMinValueChange} />
+          <input type="text" className="gf-form-input width-12" onChange={this.onMinValueChange} value={minValue} />
         </div>
         <div className="gf-form-inline">
           <Label width={6}>Max value</Label>
-          <input type="text" className="gf-form-input width-12" onChange={this.onMaxValueChange} />
+          <input type="text" className="gf-form-input width-12" onChange={this.onMaxValueChange} value={maxValue} />
         </div>
       </div>
     );

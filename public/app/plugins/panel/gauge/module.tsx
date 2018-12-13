@@ -16,15 +16,18 @@ import {
 } from 'app/types';
 
 export interface OptionsProps {
+  baseColor: string;
   decimals: number;
+  mappings: Array<RangeMap | ValueMap>;
+  maxValue: number;
+  minValue: number;
   prefix: string;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
   stat: string;
   suffix: string;
-  unit: string;
   thresholds: Threshold[];
-  mappings: Array<RangeMap | ValueMap>;
+  unit: string;
 }
 
 export interface OptionModuleProps {
@@ -34,6 +37,7 @@ export interface OptionModuleProps {
 
 export const defaultProps = {
   options: {
+    baseColor: BasicGaugeColor.Green,
     minValue: 0,
     maxValue: 100,
     prefix: '',
@@ -45,8 +49,8 @@ export const defaultProps = {
     unit: '',
     mappings: [],
     thresholds: [
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
-      { index: 1, label: 'Max', value: 100, canRemove: false },
+      { index: 0, value: 0, color: BasicGaugeColor.Green, label: 'Min', canRemove: false },
+      { index: 1, value: 100, color: BasicGaugeColor.Red, label: 'Max', canRemove: false },
     ],
   },
 };
