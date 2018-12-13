@@ -1,38 +1,42 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { Threshold, TimeSeriesVMs } from 'app/types';
+import { MappingType, RangeMap, Threshold, TimeSeriesVMs, ValueMap } from 'app/types';
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
 
 interface Props {
   decimals: number;
+  height: number;
+  mappings: Array<RangeMap | ValueMap>;
+  maxValue: number;
+  minValue: number;
+  prefix: string;
   timeSeries: TimeSeriesVMs;
-  showThresholdMarkers: boolean;
   thresholds: Threshold[];
+  showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
+  stat: string;
+  suffix: string;
   unit: string;
   width: number;
-  height: number;
-  stat: string;
-  prefix: string;
-  suffix: string;
 }
 
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
   static defaultProps = {
-    minValue: 0,
     maxValue: 100,
+    mappings: [],
+    minValue: 0,
     prefix: '',
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
-    unit: 'none',
     thresholds: [
       { label: 'Min', value: 0, color: 'rgba(50, 172, 45, 0.97)' },
       { label: 'Max', value: 100, color: 'rgba(245, 54, 54, 0.9)' },
     ],
+    unit: 'none',
   };
 
   componentDidMount() {
@@ -43,16 +47,49 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
+  formatWithMappings(mappings, value) {
+    const valueMaps = mappings.filter(m => m.type === MappingType.ValueToText);
+    const rangeMaps = mappings.filter(m => m.type === MappingType.RangeToText);
+
+    const valueMap = valueMaps.map(mapping => {
+      if (mapping.value && value === mapping.value) {
+        return mapping.text;
+      }
+    })[0];
+
+    const rangeMap = rangeMaps.map(mapping => {
+      if (mapping.from && mapping.to && value > mapping.from && value < mapping.to) {
+        return mapping.text;
+      }
+    })[0];
+
+    return {
+      rangeMap,
+      valueMap,
+    };
+  }
+
   formatValue(value) {
-    const { decimals, prefix, suffix, unit } = this.props;
+    const { decimals, mappings, prefix, suffix, unit } = this.props;
 
     const formatFunc = kbn.valueFormats[unit];
+    const formattedValue = formatFunc(value, decimals);
+
+    if (mappings.length > 0) {
+      const { rangeMap, valueMap } = this.formatWithMappings(mappings, formattedValue);
+
+      if (valueMap) {
+        return valueMap;
+      } else if (rangeMap) {
+        return rangeMap;
+      }
+    }
 
     if (isNaN(value)) {
       return '-';
     }
 
-    return `${prefix} ${formatFunc(value, decimals)} ${suffix}`;
+    return `${prefix} ${formattedValue} ${suffix}`;
   }
 
   draw() {

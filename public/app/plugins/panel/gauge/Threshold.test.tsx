@@ -1,25 +1,25 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import Thresholds from './Thresholds';
-import { OptionsProps } from './module';
+import { defaultProps, OptionsProps } from './module';
 import { PanelOptionsProps } from '../../../types';
 
 const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<OptionsProps> = {
     onChange: jest.fn(),
-    options: {} as OptionsProps,
+    options: {
+      ...defaultProps.options,
+      thresholds: [
+        { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+        { index: 1, label: 'Max', value: 100, canRemove: false },
+      ],
+    },
   };
 
   Object.assign(props, propOverrides);
 
   return shallow(<Thresholds {...props} />).instance() as Thresholds;
 };
-
-const thresholds = [
-  { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
-  { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-  { index: 2, label: 'Max', value: 100, canRemove: false },
-];
 
 describe('Add threshold', () => {
   it('should add threshold between min and max', () => {
@@ -36,7 +36,14 @@ describe('Add threshold', () => {
 
   it('should add threshold between min and added threshold', () => {
     const instance = setup({
-      options: { thresholds: thresholds },
+      options: {
+        ...defaultProps.options,
+        thresholds: [
+          { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
+          { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
+          { index: 2, label: 'Max', value: 100, canRemove: false },
+        ],
+      },
     });
 
     instance.onAddThreshold(1);
