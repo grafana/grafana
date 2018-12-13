@@ -246,7 +246,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     const dsHelp = {
-      title: '',
+      heading: 'Help',
       icon: 'fa fa-question',
       disabled: !hasQueryHelp,
       onClick: this.loadHelp,
@@ -254,11 +254,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Data" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
+      <EditorTabBody heading="Queries" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
         <>
           <div className="panel-option-section">
-            <div className="panel-option-section__header">Queries</div>
-            <div className="panel-option-section__body panel-option-section__body--queries">
+          {/*<div className="panel-option-section__header">Queries</div>*/}
+            <div className="panel-option-section__body">
               <div className="query-editor-rows gf-form-group">
                 <div ref={element => (this.element = element)} />
 
@@ -282,7 +282,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             </div>
           </div>
           <div className="panel-option-section">
-            <div className="panel-option-section__header">Options</div>
+          {/*<div className="panel-option-section__header">Options</div>*/}
             <div className="panel-option-section__body">
               <QueryOptions panel={panel} datasource={currentDS} />
             </div>

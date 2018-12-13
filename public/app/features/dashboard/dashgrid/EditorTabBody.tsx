@@ -10,7 +10,8 @@ interface Props {
 }
 
 export interface EditorToolBarView {
-  title: string;
+  title?: string;
+  heading?: string;
   imgSrc?: string;
   icon?: string;
   disabled?: boolean;
@@ -90,7 +91,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     return (
       <div className="panel-option-section">
         <div className="panel-option-section__header">
-          {view.title}
+          {view.title || view.heading}
           <button className="btn btn-link" onClick={this.onCloseOpenView}>
             <i className="fa fa-remove" />
           </button>

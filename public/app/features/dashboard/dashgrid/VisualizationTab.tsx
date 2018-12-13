@@ -106,7 +106,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       template +=
         `
       <div class="panel-option-section" ng-cloak>` +
-        (i > -1 ? `<div class="panel-option-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
+        (i > 0 ? `<div class="panel-option-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
         `<div class="panel-option-section__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>

@@ -127,7 +127,7 @@
 }
 
 .viz-picker {
-  padding: 20px;
+  padding: 0px 20px;
   position: relative;
 }
 
@@ -141,7 +141,7 @@
   border: $panel-editor-viz-item-border;
   border-radius: 3px;
   height: 100px;
-  width: 150px;
+  width: 145px;
   flex-shrink: 0;
   flex-direction: column;
   text-align: center;
@@ -266,6 +266,6 @@
   background: $page-bg;
 
   &--queries {
-    min-height: 300px;
+    min-height: 200px;
   }
 }
