@@ -19,3 +19,30 @@ export interface VariableQueryData {
   metricTypes: Array<{ value: string; name: string }>;
   services: Array<{ value: string; name: string }>;
 }
+
+export interface Target {
+  defaultProject: string;
+  unit: string;
+  metricType: string;
+  service: string;
+  refId: string;
+  aggregation: {
+    crossSeriesReducer: string;
+    alignmentPeriod: string;
+    perSeriesAligner: string;
+    groupBys: string[];
+  };
+  filters: string[];
+  aliasBy: string;
+  metricKind: any;
+  valueType: any;
+}
+
+export interface QueryMeta {
+  alignmentPeriod: string;
+  rawQuery: string;
+  rawQueryString: string;
+  metricLabels: { [key: string]: string[] };
+  resourceLabels: { [key: string]: string[] };
+  resourceTypes: string[];
+}

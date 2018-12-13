@@ -1,7 +1,7 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import { FilterSegments } from './filter_segments';
-import { QueryMeta } from './query_ctrl';
+import { QueryMeta } from './types';
 // import appEvents from 'app/core/app_events';
 
 export class StackdriverFilter {
@@ -62,13 +62,13 @@ export class StackdriverFilterCtrl {
 
     this.removeSegment = this.uiSegmentSrv.newSegment({ fake: true, value: '-- remove group by --' });
 
-    this.filterSegments = new FilterSegments(
-      this.uiSegmentSrv,
-      this.target,
-      this.getFilterKeys.bind(this),
-      this.getFilterValues.bind(this)
-    );
-    this.filterSegments.buildSegmentModel();
+    // this.filterSegments = new FilterSegments(
+    //   this.uiSegmentSrv,
+    //   this.target,
+    //   this.getFilterKeys.bind(this),
+    //   this.getFilterValues.bind(this)
+    // );
+    // this.filterSegments.buildSegmentModel();
   }
 
   // async getLabels() {

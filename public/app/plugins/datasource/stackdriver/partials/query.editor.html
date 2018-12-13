@@ -1,8 +1,11 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
-  <metric-picker target="ctrl.target" default-project="ctrl.target.defaultProject"  metric-type="ctrl.target.metricType" template-srv="ctrl.templateSrv" datasource="ctrl.datasource" on-change="ctrl.handleMetricTypeChange"></metric-picker>
+    <query-editor target="ctrl.target" template-srv="ctrl.templateSrv" datasource="ctrl.datasource" on-change="ctrl.handleTargetChange" ui-segment-srv=ctrl.uiSegmentSrv></query-editor>
+  <!-- <metric-picker target="ctrl.target" default-project="ctrl.target.defaultProject"  metric-type="ctrl.target.metricType" template-srv="ctrl.templateSrv" datasource="ctrl.datasource" on-change="ctrl.handleMetricTypeChange"></metric-picker>
   <stackdriver-filter target="ctrl.target" refresh="ctrl.refresh()" loading="ctrl.loadLabelsPromise" label-data="ctrl.labelData"
     ></stackdriver-filter>
-  <stackdriver-aggregation target="ctrl.target" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()"></stackdriver-aggregation>
+    <aggregation-picker value-type="ctrl.target.valueType" metric-kind="ctrl.target.metricKind" aggregation="ctrl.target.aggregation" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()" template-srv="ctrl.templateSrv" datasource="ctrl.datasource" on-change="ctrl.handleAggregationChange"></aggregation-picker>
+
+  <stackdriver-aggregation target="ctrl.target" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()"></stackdriver-aggregation> -->
   <!-- <stackdriver-filter target="ctrl.target" refresh="ctrl.refresh()" datasource="ctrl.datasource"
     ></stackdriver-filter>
   <stackdriver-aggregation target="ctrl.target" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()"></stackdriver-aggregation> -->
