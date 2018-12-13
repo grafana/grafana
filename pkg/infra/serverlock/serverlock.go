@@ -36,7 +36,7 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 		return err
 	}
 
-	// avoid execution if last lock happened less than `matInterval` ago
+	// avoid execution if last lock happened less than `maxInterval` ago
 	if rowLock.LastExecution != 0 {
 		lastExeuctionTime := time.Unix(rowLock.LastExecution, 0)
 		if lastExeuctionTime.Unix() > time.Now().Add(-maxInterval).Unix() {

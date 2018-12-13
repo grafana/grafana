@@ -1,9 +1,8 @@
-package serverlock
+package migrations
 
 import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-// AddMigration create database migrations for server lock
-func (sl *ServerLockService) AddMigration(mg *migrator.Migrator) {
+func addServerlockMigrations(mg *migrator.Migrator) {
 	serverLock := migrator.Table{
 		Name: "server_lock",
 		Columns: []*migrator.Column{
