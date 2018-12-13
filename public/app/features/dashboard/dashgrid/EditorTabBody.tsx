@@ -88,11 +88,14 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderOpenView(view: EditorToolBarView) {
     return (
-      <div className="toolbar-subview">
-        <button className="toolbar-subview__close" onClick={this.onCloseOpenView}>
-          <i className="fa fa-chevron-up" />
-        </button>
-        {view.render(this.onCloseOpenView)}
+      <div className="panel-option-section">
+        <div className="panel-option-section__header">
+          {view.title}
+          <button className="btn btn-link" onClick={this.onCloseOpenView}>
+            <i className="fa fa-remove" />
+          </button>
+        </div>
+        <div className="panel-option-section__body">{view.render(this.onCloseOpenView)}</div>
       </div>
     );
   }
@@ -115,10 +118,10 @@ export class EditorTabBody extends PureComponent<Props, State> {
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false}>
-            <FadeIn in={isOpen} duration={200} unmountOnExit={true}>
-              <div className="panel-editor__toolbar-view">{openView && this.renderOpenView(openView)}</div>
-            </FadeIn>
             <div className="panel-editor__content">
+              <FadeIn in={isOpen} duration={200} unmountOnExit={true}>
+                {openView && this.renderOpenView(openView)}
+              </FadeIn>
               <FadeIn in={fadeIn} duration={50}>
                 {children}
               </FadeIn>

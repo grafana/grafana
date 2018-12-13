@@ -63,7 +63,7 @@
 }
 
 .panel-editor__content {
-  padding: 40px 20px;
+  padding: 0;
 }
 
 .panel-editor__toolbar-view {
@@ -132,7 +132,6 @@
 }
 
 .viz-picker {
-  margin-top: -40px;
   padding: 20px;
   position: relative;
 }
@@ -303,27 +302,10 @@
   width: 30px;
 }
 
-.form-option-box {
-  margin-bottom: 20px;
-}
-
-.form-option-box__header {
-  border-bottom: 2px solid $dark-4;
-  padding: 5px 0px;
-  font-size: $font-size-md;
-  margin-bottom: 20px;
-}
-
-.form-section {
-  margin-bottom: 10px;
-}
-
-.form-section__header {
-  padding: 5px 10px;
+.panel-option-section__header {
+  padding: 5px 20px;
   font-size: $font-size-h5;
-  margin-bottom: 20px;
   background: $input-label-bg;
-  border-radius: 3px;
   position: relative;
 
   .btn {
@@ -333,10 +315,6 @@
   }
 }
 
-.form-section__body {
-  padding: 0 10px;
-}
-
-.panel-editor-tabs__item-popover {
-  background: $orange;
+.panel-option-section__body {
+  padding: 20px;
 }

@@ -336,23 +336,27 @@ export class QueriesTab extends PureComponent<Props, State> {
         renderToolbar={this.renderToolbar}
         toolbarItems={[options, queryInspector, dsHelp]}
       >
-        <div className="query-editor-rows gf-form-group">
-          <div ref={element => (this.element = element)} />
+        <div className="panel-option-section">
+          <div className="panel-option-section__body">
+            <div className="query-editor-rows gf-form-group">
+              <div ref={element => (this.element = element)} />
 
-          <div className="gf-form-query">
-            <div className="gf-form gf-form-query-letter-cell">
-              <label className="gf-form-label">
-                <span className="gf-form-query-letter-cell-carret muted">
-                  <i className="fa fa-caret-down" />
-                </span>
-                <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
-              </label>
-              {!isAddingMixed && (
-                <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
-                  Add Query
-                </button>
-              )}
-              {isAddingMixed && this.renderMixedPicker()}
+              <div className="gf-form-query">
+                <div className="gf-form gf-form-query-letter-cell">
+                  <label className="gf-form-label">
+                    <span className="gf-form-query-letter-cell-carret muted">
+                      <i className="fa fa-caret-down" />
+                    </span>
+                    <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
+                  </label>
+                  {!isAddingMixed && (
+                    <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
+                      Add Query
+                    </button>
+                  )}
+                  {isAddingMixed && this.renderMixedPicker()}
+                </div>
+              </div>
             </div>
           </div>
         </div>
