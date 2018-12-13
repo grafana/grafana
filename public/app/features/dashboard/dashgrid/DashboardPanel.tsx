@@ -39,11 +39,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels = {};
   debouncedUpdatePanelDimensions: () => void;
+  debouncedResizeDone: () => void;
   angularLoader: AngularLoader = getAngularLoader();
 
   constructor(props) {
     super(props);
-
     this.state = {
       plugin: null,
       angularPanel: null,
@@ -53,6 +53,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
     this.debouncedUpdatePanelDimensions = debounce(this.updatePanelDimensions, 100);
+    this.debouncedResizeDone = debounce(() => {
+      this.props.panel.resizeDone();
+    }, 100);
   }
 
   isSpecial(pluginId: string) {
@@ -172,18 +175,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
   );
 
   renderResizableBox = (panelContent: any, panelWrapperClass: string) => {
-    const { panel } = this.props;
     const { x, y } = this.state.panelDimensions;
     return (
-      <ResizableBox
-        height={y}
-        width={x}
-        axis="y"
-        onResize={() => {
-          console.log('resize');
-          panel.resizeDone();
-        }}
-      >
+      <ResizableBox height={y} width={x} axis="y" onResize={this.debouncedResizeDone}>
         <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
           {panelContent}
         </div>
