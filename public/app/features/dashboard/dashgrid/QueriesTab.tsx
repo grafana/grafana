@@ -331,12 +331,9 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody
-        heading="Queries"
-        renderToolbar={this.renderToolbar}
-        toolbarItems={[options, queryInspector, dsHelp]}
-      >
+      <EditorTabBody heading="Data" renderToolbar={this.renderToolbar} toolbarItems={[options, queryInspector, dsHelp]}>
         <div className="panel-option-section">
+          <div className="panel-option-section__header">Queries</div>
           <div className="panel-option-section__body">
             <div className="query-editor-rows gf-form-group">
               <div ref={element => (this.element = element)} />

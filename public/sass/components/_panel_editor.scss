@@ -32,7 +32,7 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  background: $page-bg;
+  background: $input-bg;
   margin: 0 20px 0 84px;
   border-radius: 3px;
   box-shadow: $panel-editor-shadow;
@@ -63,12 +63,7 @@
 }
 
 .panel-editor__content {
-  padding: 0;
-}
-
-.panel-editor__toolbar-view {
-  background: $panel-editor-toolbar-view-bg;
-  padding: 20px;
+  padding: 10px;
 }
 
 .panel-in-fullscreen {
@@ -142,8 +137,8 @@
 }
 
 .viz-picker__item {
-  background: $panel-bg;
-  border: $panel-border;
+  background: $panel-editor-viz-item-bg;
+  border: $panel-editor-viz-item-border;
   border-radius: 3px;
   height: 100px;
   width: 150px;
@@ -242,64 +237,13 @@
   }
 }
 
-.ds-picker-list {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 13px;
-  flex-direction: column;
-}
-
-.ds-picker-list__item {
-  background: $panel-editor-viz-item-bg;
-  border: $panel-editor-viz-item-border;
-  border-radius: 3px;
-  display: flex;
-  cursor: pointer;
-  margin-bottom: 3px;
-  padding: 5px 15px;
-  align-items: center;
-  height: 44px;
-
-  &--selected {
-    background: $panel-editor-viz-item-bg-hover;
-    border: $panel-editor-viz-item-border-hover;
-    box-shadow: $panel-editor-viz-item-shadow-hover;
-  }
-
-  &--active {
-    box-shadow: 0 0 6px $orange;
-    border: 1px solid $orange;
-
-    .ds-picker-list__name {
-      color: $text-color;
-    }
-  }
-}
-
 .ds-picker {
   position: relative;
   min-width: 200px;
 }
 
-.ds-picker-menu {
-  min-width: 400px;
-  max-width: 500px;
-  position: absolute;
-  background: $panel-editor-toolbar-view-bg;
-  padding: 5px;
-  overflow: auto;
-}
-
-.ds-picker-list__name {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: $font-size-md;
-  padding-left: 15px;
-}
-
-.ds-picker-list__img {
-  width: 30px;
+.panel-option-section {
+  margin-bottom: 10px;
 }
 
 .panel-option-section__header {
@@ -317,4 +261,5 @@
 
 .panel-option-section__body {
   padding: 20px;
+  background: $page-bg;
 }
