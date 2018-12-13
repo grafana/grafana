@@ -121,10 +121,12 @@ export class PanelCtrl {
       };
     }
 
-    if (index) {
+    if (this.editorTabs && index) {
       this.editorTabs.splice(index, 0, editorTab);
-    } else {
+    } else if (this.editorTabs) {
       this.editorTabs.push(editorTab);
+    } else {
+      this.editorTabs = [editorTab];
     }
   }
 

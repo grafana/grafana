@@ -38,6 +38,24 @@
     display: none;
   }
 
+  .panel-wrapper {
+    margin: 0 auto;
+  }
+
+  .react-grid-item--fullscreen {
+    .panel-editor-container .react-resizable-handle {
+      display: block;
+      background: $dark-4;
+      bottom: -3px;
+      left: 50%;
+      width: 150px;
+      margin-left: -75px;
+      border-radius: 3px;
+      height: 6px;
+      cursor: ns-resize;
+    }
+  }
+
   // the react-grid has a height transition
   .react-grid-layout {
     transition-property: none;
