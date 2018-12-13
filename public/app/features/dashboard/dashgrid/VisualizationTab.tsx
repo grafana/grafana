@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
 // Components
-import { EditorTabBody, EditorToolBarView } from './EditorTabBody';
+import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
@@ -197,18 +197,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
   render() {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
-    const toolbarItems: EditorToolBarView[] = [];
-
-    if (!isVizPickerOpen) {
-      toolbarItems.push({
-        title: '',
-        icon: 'fa fa-question',
-        render: () => <h2>Help</h2>,
-      });
-    }
 
     return (
-      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={toolbarItems}>
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar}>
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
             <VizTypePicker
