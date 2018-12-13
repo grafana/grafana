@@ -262,4 +262,8 @@
 .panel-option-section__body {
   padding: 20px;
   background: $page-bg;
+
+  &--queries {
+    min-height: 300px;
+  }
 }
