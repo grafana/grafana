@@ -34,7 +34,7 @@ export class Gauge extends PureComponent<Props> {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
-    thresholds: [{ value: 0, color: BasicGaugeColor.Green }, { value: 100, color: BasicGaugeColor.Red }],
+    thresholds: [],
     unit: 'none',
     stat: 'avg',
   };
@@ -136,13 +136,20 @@ export class Gauge extends PureComponent<Props> {
     const thresholdMarkersWidth = gaugeWidth / 5;
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    const formattedThresholds = thresholds.map((threshold, index) => {
-      return {
-        value: threshold.value,
-        // Hacky way to get correct color for threshold.
-        color: index === 0 ? threshold.color : thresholds[index - 1].color,
-      };
-    });
+    const formattedThresholds = [
+      { value: minValue, color: BasicGaugeColor.Green },
+      ...thresholds.map((threshold, index) => {
+        return {
+          value: threshold.value,
+          // Hacky way to get correct color for threshold.
+          color: index === 0 ? threshold.color : thresholds[index - 1].color,
+        };
+      }),
+      {
+        value: maxValue,
+        color: BasicGaugeColor.Red,
+      },
+    ];
 
     console.log(formattedThresholds);
 
@@ -174,11 +181,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: this.getFontColor(value),
             formatter: () => {
-              if (timeSeries[0]) {
-                return this.formatValue(value);
-              }
-
-              return '';
+              return this.formatValue(value);
             },
             font: {
               size: fontSize,

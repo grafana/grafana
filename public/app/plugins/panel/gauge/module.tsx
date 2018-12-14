@@ -48,10 +48,7 @@ export const defaultProps = {
     stat: '',
     unit: '',
     mappings: [],
-    thresholds: [
-      { index: 0, value: 0, color: BasicGaugeColor.Green, label: 'Min', canRemove: false },
-      { index: 1, value: 100, color: BasicGaugeColor.Red, label: 'Max', canRemove: false },
-    ],
+    thresholds: [],
   },
 };
 

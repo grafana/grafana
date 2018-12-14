@@ -29,8 +29,10 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
       return threshold;
     });
 
-    // Setting value to a value between the new threshold.
+    // Setting value to a value between the previous thresholds
     const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
+
+    // Set a color that lies between the previous thresholds
     const color = tinycolor.mix(thresholds[index - 1].color, thresholds[index].color, 50).toRgbString();
 
     this.setState(
