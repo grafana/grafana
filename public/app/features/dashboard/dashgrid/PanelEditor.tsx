@@ -53,7 +53,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
         return <GeneralTab panel={panel} />;
       case 'queries':
         return <QueriesTab panel={panel} dashboard={dashboard} />;
-      case 'alerts':
+      case 'alert':
         return <AlertTab angularPanel={angularPanel} />;
       case 'visualization':
         return (
