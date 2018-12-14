@@ -84,7 +84,7 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  (codeEditor.renderer as any).setScrollMargin(15, 15);
+  (codeEditor.renderer as any).setScrollMargin(10, 10);
   codeEditor.renderer.setPadding(10);
 
   setThemeMode();
