@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import classNames from 'classnames/bind';
 import tinycolor from 'tinycolor2';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { OptionModuleProps } from './module';
@@ -7,6 +6,7 @@ import { BasicGaugeColor, Threshold } from 'app/types';
 
 interface State {
   thresholds: Threshold[];
+  baseColor: string;
 }
 
 export default class Thresholds extends PureComponent<OptionModuleProps, State> {
@@ -14,7 +14,8 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     super(props);
 
     this.state = {
-      thresholds: props.options.thresholds,
+      thresholds: [{ value: 50, canRemove: true, color: '#f2f2f2', index: 0, label: '' }],
+      baseColor: props.options.baseColor,
     };
   }
 
@@ -119,17 +120,24 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     return index < thresholds.length ? thresholds[index].color : BasicGaugeColor.Red;
   };
 
+  insertAtIndex(index) {
+    const { thresholds } = this.state;
+
+    // If thresholds.length is greater or equal to 3
+    // it means a user has added one threshold
+    if (thresholds.length < 3 || index < 0) {
+      return 1;
+    }
+
+    return index;
+  }
+
   renderThresholds() {
     const { thresholds } = this.state;
 
     return thresholds.map((threshold, index) => {
-      const rowStyle = classNames({
-        'threshold-row': true,
-        'threshold-row-min': index === 0,
-      });
-
       return (
-        <div className={rowStyle} key={`${threshold.index}-${index}`}>
+        <div className="threshold-row" key={`${threshold.index}-${index}`}>
           <div className="threshold-row-inner">
             <div className="threshold-row-color">
               {threshold.color && (
@@ -157,112 +165,71 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     });
   }
 
-  insertAtIndex(index) {
+  renderIndicator() {
     const { thresholds } = this.state;
 
-    // If thresholds.length is greater or equal to 3
-    // it means a user has added one threshold
-    if (thresholds.length < 3 || index < 0) {
-      return 1;
-    }
-
-    return index;
-  }
-
-  renderIndicatorSection(index) {
-    const { thresholds } = this.state;
-    const indicators = thresholds.length - 1;
-
-    if (index === 0 || index === thresholds.length) {
+    return thresholds.map((t, i) => {
       return (
         <div
-          key={index}
+          key={`${t.value}-${i}`}
           className="indicator-section"
           style={{
-            height: `calc(100%/${indicators})`,
+            height: '50%',
           }}
         >
           <div
-            onClick={() => this.onAddThreshold(this.insertAtIndex(index - 1))}
+            onClick={() => this.onAddThreshold(this.insertAtIndex(1))}
             style={{
               height: '100%',
-              background: this.getIndicatorColor(index),
+              background: this.getIndicatorColor(i),
             }}
           />
         </div>
       );
-    }
+    });
+  }
 
+  renderBaseIndicator() {
     return (
-      <div
-        key={index}
-        className="indicator-section"
-        style={{
-          height: `calc(100%/${indicators})`,
-        }}
-      >
+      <div className="indicator-section" style={{ height: '100%' }}>
         <div
-          onClick={() => this.onAddThreshold(this.insertAtIndex(index))}
-          style={{
-            height: '50%',
-            background: this.getIndicatorColor(index),
-          }}
-        />
-        <div
-          onClick={() => this.onAddThreshold(this.insertAtIndex(index + 1))}
-          style={{
-            height: `50%`,
-            background: this.getIndicatorColor(index),
-          }}
+          onClick={() => this.onAddThreshold(1)}
+          style={{ height: '50px', backgroundColor: this.props.options.baseColor }}
         />
       </div>
     );
   }
 
-  renderIndicator() {
-    const { thresholds } = this.state;
-
-    if (thresholds.length > 0) {
-      return thresholds.map((t, i) => {
-        if (i <= thresholds.length - 1) {
-          return this.renderIndicatorSection(i);
-        }
-
-        return null;
-      });
-    }
+  renderBase() {
+    const { baseColor } = this.props.options;
 
     return (
-      <div className="indicator-section" style={{ height: '100%' }}>
-        <div
-          onClick={() => this.onAddThreshold(0)}
-          style={{ height: '100%', backgroundColor: this.props.options.baseColor }}
-        />
+      <div className="threshold-row threshold-row-base">
+        <div className="threshold-row-inner threshold-row-inner--base">
+          <div className="threshold-row-color">
+            <div className="threshold-row-color-inner">
+              <ColorPicker color={baseColor} onChange={color => this.onChangeBaseColor(color)} />
+            </div>
+          </div>
+          <div className="threshold-row-label">Base</div>
+        </div>
       </div>
     );
   }
 
   render() {
-    const { thresholds } = this.state;
-
     return (
       <div className="section gf-form-group">
         <h5 className="page-heading">Thresholds</h5>
         <span>Click the colored line to add a threshold</span>
         <div className="thresholds">
-          <div className="color-indicators">{this.renderIndicator()}</div>
+          <div className="color-indicators">
+            {this.renderIndicator()}
+            {this.renderBaseIndicator()}
+          </div>
           <div className="threshold-rows">
-            <div className="threshold-row threshold-row-base">
-              <div className="threshold-row-inner">
-                <div className="threshold-row-color">
-                  <div className="threshold-row-color-inner">
-                    <ColorPicker color={BasicGaugeColor.Green} onChange={color => this.onChangeBaseColor(color)} />
-                  </div>
-                </div>
-                <div className="threshold-row-label">Base</div>
-              </div>
-            </div>
-            {thresholds.length > 0 && this.renderThresholds()}
+            {this.renderThresholds()}
+            {this.renderBase()}
           </div>
         </div>
       </div>

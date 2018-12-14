@@ -25,8 +25,11 @@
   border-radius: $border-radius;
   display: flex;
   overflow: hidden;
-  width: 300px;
   height: 37px;
+
+  &--base {
+    width: auto;
+  }
 }
 
 .threshold-row-color {
@@ -48,13 +51,12 @@
 
 .threshold-row-input {
   padding: 8px 10px;
-  width: 230px;
+  width: 150px;
 }
 
 .threshold-row-label {
   background-color: $input-label-bg;
   padding: 5px;
-  width: 36px;
   display: flex;
   align-items: center;
 }
@@ -66,11 +68,6 @@
 }
 
 .threshold-row-base {
-  margin-top: -22px;
-}
-
-.threshold-row-max {
-  margin-bottom: -22px;
 }
 
 .threshold-row-remove {
@@ -103,6 +100,7 @@
 
 .color-indicators {
   width: 15px;
-  border-radius: $border-radius;
+  border-bottom-left-radius: $border-radius;
+  border-bottom-right-radius: $border-radius;
   overflow: hidden;
 }

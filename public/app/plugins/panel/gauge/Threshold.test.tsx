@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import Thresholds from './Thresholds';
 import { defaultProps, OptionsProps } from './module';
-import { PanelOptionsProps } from '../../../types';
+import { BasicGaugeColor, PanelOptionsProps } from '../../../types';
 
 const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<OptionsProps> = {
@@ -69,6 +69,7 @@ describe('Add at index', () => {
   it('should return 1, one added threshold', () => {
     const instance = setup();
     instance.state = {
+      baseColor: BasicGaugeColor.Green,
       thresholds: [
         { index: 0, label: 'Min', value: 0, canRemove: false },
         { index: 1, label: '', value: 50, canRemove: true },
@@ -101,6 +102,7 @@ describe('Add at index', () => {
   it('should return 2, one added threshold', () => {
     const instance = setup();
     instance.state = {
+      baseColor: BasicGaugeColor.Green,
       thresholds: [
         { index: 0, label: 'Min', value: 0, canRemove: false },
         { index: 1, label: '', value: 50, canRemove: true },
@@ -125,6 +127,7 @@ describe('change threshold value', () => {
     ];
 
     instance.state = {
+      baseColor: BasicGaugeColor.Green,
       thresholds: mockThresholds,
     };
 
