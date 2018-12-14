@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { Label } from 'app/core/components/Label/Label';
-import Select from 'app/core/components/Picker/Select';
+import Select from 'app/core/components/Select/Select';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit } from 'app/types';
@@ -92,6 +92,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
         <div className="gf-form">
           <span className="gf-form-label width-11">UI Theme</span>
           <Select
+            isSearchable={false}
             value={themes.find(item => item.value === theme)}
             options={themes}
             onChange={theme => this.onThemeChanged(theme.value)}
@@ -118,6 +119,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
         <div className="gf-form">
           <label className="gf-form-label width-11">Timezone</label>
           <Select
+            isSearchable={false}
             value={timezones.find(item => item.value === timezone)}
             onChange={timezone => this.onTimeZoneChanged(timezone.value)}
             options={timezones}

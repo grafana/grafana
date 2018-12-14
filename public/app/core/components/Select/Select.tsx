@@ -12,7 +12,7 @@ import ResetStyles from './ResetStyles';
 
 export interface SelectOptionItem {
   label?: string;
-  value?: string;
+  value?: any;
   imgUrl?: string;
   description?: string;
   [key: string]: any;
@@ -25,9 +25,11 @@ interface CommonProps {
   onChange: (item: SelectOptionItem) => {} | void;
   placeholder?: string;
   width?: number;
-  value?: SelectOptionItem;
+  value?: any;
   className?: string;
   components: object;
+  isDisabled?: boolean;
+  isSearchable: boolean;
 }
 
 interface SelectProps {
@@ -47,6 +49,8 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
     width: null,
     className: '',
     components: {},
+    isDisabled: false,
+    isSearchable: true,
   };
 
   render() {
@@ -60,6 +64,8 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
       width,
       value,
       className,
+      isDisabled,
+      isSearchable
     } = this.props;
 
     let widthClass = '';
@@ -83,11 +89,12 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         getOptionLabel={getOptionLabel}
         getOptionValue={getOptionValue}
         menuShouldScrollIntoView={false}
-        isSearchable={false}
+        isSearchable={isSearchable}
         onChange={onChange}
         options={options}
         placeholder={placeholder || 'Choose'}
         styles={ResetStyles}
+        isDisabled={isDisabled}
       />
     );
   }
@@ -99,6 +106,8 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
     className: '',
     components: {},
     loadingMessage: () => 'Loading...',
+    isDisabled: false,
+    isSearchable: true,
   };
 
   render() {
@@ -116,6 +125,8 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
       isLoading,
       loadingMessage,
       noOptionsMessage,
+      isDisabled,
+      isSearchable,
     } = this.props;
 
     let widthClass = '';
@@ -140,7 +151,6 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
         getOptionLabel={getOptionLabel}
         getOptionValue={getOptionValue}
         menuShouldScrollIntoView={false}
-        isSearchable={false}
         onChange={onChange}
         loadOptions={loadOptions}
         isLoading={isLoading}
@@ -149,6 +159,8 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
         styles={ResetStyles}
         loadingMessage={loadingMessage}
         noOptionsMessage={noOptionsMessage}
+        isDisabled={isDisabled}
+        isSearchable={isSearchable}
       />
     );
   }

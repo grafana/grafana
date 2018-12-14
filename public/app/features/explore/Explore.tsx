@@ -25,10 +25,10 @@ import {
   makeTimeSeriesList,
   updateHistory,
 } from 'app/core/utils/explore';
-import ResetStyles from 'app/core/components/Picker/ResetStyles';
-import PickerOption from 'app/core/components/Picker/PickerOption';
-import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
-import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
+import ResetStyles from 'app/core/components/Select/ResetStyles';
+import PickerOption from 'app/core/components/Select/PickerOption';
+import IndicatorsContainer from 'app/core/components/Select/IndicatorsContainer';
+import NoOptionsMessage from 'app/core/components/Select/NoOptionsMessage';
 import TableModel from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/utils/emitter';

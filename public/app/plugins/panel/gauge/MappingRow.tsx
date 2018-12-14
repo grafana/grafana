@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
-import SimplePicker from 'app/core/components/Picker/SimplePicker';
+import { Select } from 'app/core/components/Select/Select';
 import { MappingType, RangeMap, ValueMap } from 'app/types';
 
 interface Props {
@@ -135,13 +135,12 @@ export default class MappingRow extends PureComponent<Props, State> {
       <div className="mapping-row">
         <div className="gf-form-inline mapping-row-type">
           <Label width={5}>Type</Label>
-          <SimplePicker
+          <Select
             placeholder="Choose type"
+            isSearchable={false}
             options={mappingOptions}
             value={mappingOptions.find(o => o.value === type)}
-            getOptionLabel={i => i.label}
-            getOptionValue={i => i.value}
-            onSelected={type => this.onMappingTypeChange(type.value)}
+            onChange={type => this.onMappingTypeChange(type.value)}
             width={7}
           />
         </div>

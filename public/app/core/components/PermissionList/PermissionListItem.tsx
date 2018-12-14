@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
+import { Select } from 'app/core/components/Select/Select';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
 
@@ -74,11 +74,11 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td className="query-keyword">Can</td>
         <td>
           <div className="gf-form">
-            <DescriptionPicker
-              optionsWithDesc={dashboardPermissionLevels}
-              onSelected={this.onPermissionChanged}
-              disabled={item.inherited}
-              className={'gf-form-select-box__control--menu-right'}
+            <Select
+              options={dashboardPermissionLevels}
+              onChange={this.onPermissionChanged}
+              isDisabled={item.inherited}
+              className="gf-form-select-box__control--menu-right"
               value={item.permission}
             />
           </div>

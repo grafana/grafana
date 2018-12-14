@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
-import Select from 'app/core/components/Picker/Select';
-import UnitPicker from 'app/core/components/Picker/Unit/UnitPicker';
+import Select from 'app/core/components/Select/Select';
+import UnitPicker from 'app/core/components/Select/Unit/UnitPicker';
 import { OptionModuleProps } from './module';
 
 const statOptions = [

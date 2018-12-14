@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
+import Select from 'app/core/components/Select/Select';
 import { dashboardPermissionLevels } from 'app/types/acl';
 
 export interface Props {
@@ -23,11 +23,11 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
         <td className="query-keyword">Can</td>
         <td>
           <div className="gf-form">
-            <DescriptionPicker
-              optionsWithDesc={dashboardPermissionLevels}
-              onSelected={() => {}}
-              disabled={true}
-              className={'gf-form-select-box__control--menu-right'}
+            <Select
+              options={dashboardPermissionLevels}
+              onChange={() => {}}
+              isDisabled={true}
+              className="gf-form-select-box__control--menu-right"
               value={item.permission}
             />
           </div>

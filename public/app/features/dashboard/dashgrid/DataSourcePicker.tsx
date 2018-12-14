@@ -3,9 +3,9 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Components
-import ResetStyles from 'app/core/components/Picker/ResetStyles';
-import { Option, SingleValue } from 'app/core/components/Picker/PickerOption';
-import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
+import ResetStyles from 'app/core/components/Select/ResetStyles';
+import { Option, SingleValue } from 'app/core/components/Select/PickerOption';
+import IndicatorsContainer from 'app/core/components/Select/IndicatorsContainer';
 import Select from 'react-select';
 
 // Types

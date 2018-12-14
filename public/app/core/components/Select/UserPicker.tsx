@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 
 // Components
-import { AsyncSelect } from 'app/core/components/Picker/Select';
+import { AsyncSelect } from './Select';
 
 // Utils & Services
 import { debounce } from 'lodash';
