@@ -75,6 +75,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td>
           <div className="gf-form">
             <Select
+              isSearchable={false}
               options={dashboardPermissionLevels}
               onChange={this.onPermissionChanged}
               isDisabled={item.inherited}

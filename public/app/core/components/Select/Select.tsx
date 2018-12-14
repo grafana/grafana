@@ -29,7 +29,16 @@ interface CommonProps {
   className?: string;
   components: object;
   isDisabled?: boolean;
-  isSearchable: boolean;
+  isSearchable?: boolean;
+  isClearable?: boolean;
+  autoFocus?: boolean;
+  openMenuOnFocus?: boolean;
+  onBlur?: () => void;
+  maxMenuHeight?: number;
+  isLoading: boolean;
+  noOptionsMessage?: () => string;
+  isMulti?: boolean;
+  backspaceRemovesValue: boolean;
 }
 
 interface SelectProps {
@@ -39,9 +48,7 @@ interface SelectProps {
 interface AsyncProps {
   defaultOptions: boolean;
   loadOptions: (query: string) => Promise<SelectOptionItem[]>;
-  isLoading: boolean;
   loadingMessage?: () => string;
-  noOptionsMessage?: () => string;
 }
 
 export class Select extends PureComponent<CommonProps & SelectProps> {
@@ -51,6 +58,13 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
     components: {},
     isDisabled: false,
     isSearchable: true,
+    isClearable: false,
+    isMulti: false,
+    openMenuOnFocus: false,
+    autoFocus: false,
+    isLoading: false,
+    backspaceRemovesValue: true,
+    maxMenuHeight: 300,
   };
 
   render() {
@@ -65,7 +79,16 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
       value,
       className,
       isDisabled,
-      isSearchable
+      isLoading,
+      isSearchable,
+      isClearable,
+      backspaceRemovesValue,
+      isMulti,
+      autoFocus,
+      openMenuOnFocus,
+      onBlur,
+      maxMenuHeight,
+      noOptionsMessage,
     } = this.props;
 
     let widthClass = '';
@@ -95,6 +118,15 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         placeholder={placeholder || 'Choose'}
         styles={ResetStyles}
         isDisabled={isDisabled}
+        isLoading={isLoading}
+        isClearable={isClearable}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
+        openMenuOnFocus={openMenuOnFocus}
+        maxMenuHeight={maxMenuHeight}
+        noOptionsMessage={noOptionsMessage}
+        isMulti={isMulti}
+        backspaceRemovesValue={backspaceRemovesValue}
       />
     );
   }
@@ -107,7 +139,13 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
     components: {},
     loadingMessage: () => 'Loading...',
     isDisabled: false,
+    isClearable: false,
+    isMulti: false,
     isSearchable: true,
+    backspaceRemovesValue: true,
+    autoFocus: false,
+    openMenuOnFocus: false,
+    maxMenuHeight: 300,
   };
 
   render() {
@@ -127,6 +165,13 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
       noOptionsMessage,
       isDisabled,
       isSearchable,
+      isClearable,
+      backspaceRemovesValue,
+      autoFocus,
+      onBlur,
+      openMenuOnFocus,
+      maxMenuHeight,
+      isMulti,
     } = this.props;
 
     let widthClass = '';
@@ -161,6 +206,13 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
         noOptionsMessage={noOptionsMessage}
         isDisabled={isDisabled}
         isSearchable={isSearchable}
+        isClearable={isClearable}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
+        openMenuOnFocus={openMenuOnFocus}
+        maxMenuHeight={maxMenuHeight}
+        isMulti={isMulti}
+        backspaceRemovesValue={backspaceRemovesValue}
       />
     );
   }

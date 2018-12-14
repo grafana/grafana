@@ -6,7 +6,7 @@ import _ from 'lodash';
 // Components
 import './../../panel/metrics_tab';
 import { EditorTabBody } from './EditorTabBody';
-import { DataSourcePicker } from './DataSourcePicker';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
@@ -205,20 +205,14 @@ export class QueriesTab extends PureComponent<Props, State> {
   renderToolbar = () => {
     const { currentDS } = this.state;
 
-    return (
-      <DataSourcePicker
-        datasources={this.datasources}
-        onChangeDataSource={this.onChangeDataSource}
-        current={currentDS}
-      />
-    );
+    return <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />;
   };
 
   renderMixedPicker = () => {
     return (
       <DataSourcePicker
         datasources={this.datasources}
-        onChangeDataSource={this.onAddMixedQuery}
+        onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}
         onBlur={this.onMixedPickerBlur}

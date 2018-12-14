@@ -1,6 +1,5 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import Select from 'react-select';
 import _ from 'lodash';
 
 import { DataSource } from 'app/types/datasources';
@@ -25,10 +24,7 @@ import {
   makeTimeSeriesList,
   updateHistory,
 } from 'app/core/utils/explore';
-import ResetStyles from 'app/core/components/Select/ResetStyles';
-import PickerOption from 'app/core/components/Select/PickerOption';
-import IndicatorsContainer from 'app/core/components/Select/IndicatorsContainer';
-import NoOptionsMessage from 'app/core/components/Select/NoOptionsMessage';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import TableModel from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/utils/emitter';
@@ -158,10 +154,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
+
     const datasources = datasourceSrv.getExternal();
     const exploreDatasources = datasources.map(ds => ({
       value: ds.name,
-      label: ds.name,
+      name: ds.name,
+      meta: ds.meta,
     }));
 
     if (datasources.length > 0) {
@@ -885,7 +883,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } = this.state;
     const graphHeight = showingGraph && showingTable ? '200px' : '400px';
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
+    const selectedDatasource = datasource ? exploreDatasources.find(d => d.name === datasource.name) : undefined;
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
@@ -910,26 +908,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
-              <Select
-                classNamePrefix={`gf-form-select-box`}
-                isMulti={false}
-                menuShouldScrollIntoView={false}
-                isLoading={datasourceLoading}
-                isClearable={false}
-                className="gf-form-input gf-form-input--form-dropdown datasource-picker"
+              <DataSourcePicker
                 onChange={this.onChangeDatasource}
-                options={exploreDatasources}
-                styles={ResetStyles}
-                maxMenuHeight={500}
-                placeholder="Select datasource"
-                loadingMessage={() => 'Loading datasources...'}
-                noOptionsMessage={() => 'No datasources found'}
-                value={selectedDatasource}
-                components={{
-                  Option: PickerOption,
-                  IndicatorsContainer,
-                  NoOptionsMessage,
-                }}
+                datasources={exploreDatasources}
+                current={selectedDatasource}
               />
             </div>
           ) : null}

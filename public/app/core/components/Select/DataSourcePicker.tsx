@@ -3,16 +3,13 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Components
-import ResetStyles from 'app/core/components/Select/ResetStyles';
-import { Option, SingleValue } from 'app/core/components/Select/PickerOption';
-import IndicatorsContainer from 'app/core/components/Select/IndicatorsContainer';
-import Select from 'react-select';
+import Select from './Select';
 
 // Types
 import { DataSourceSelectItem } from 'app/types';
 
 export interface Props {
-  onChangeDataSource: (ds: DataSourceSelectItem) => void;
+  onChange: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
   current: DataSourceSelectItem;
   onBlur?: () => void;
@@ -32,7 +29,7 @@ export class DataSourcePicker extends PureComponent<Props> {
 
   onChange = item => {
     const ds = this.props.datasources.find(ds => ds.name === item.value);
-    this.props.onChangeDataSource(ds);
+    this.props.onChange(ds);
   };
 
   render() {
@@ -53,27 +50,18 @@ export class DataSourcePicker extends PureComponent<Props> {
     return (
       <div className="gf-form-inline">
         <Select
-          classNamePrefix={`gf-form-select-box`}
           isMulti={false}
-          menuShouldScrollIntoView={false}
+          backspaceRemovesValue={false}
           isClearable={false}
-          className="gf-form-input gf-form-input--form-dropdown ds-picker"
-          onChange={item => this.onChange(item)}
+          onChange={this.onChange}
           options={options}
-          styles={ResetStyles}
           autoFocus={autoFocus}
           onBlur={onBlur}
           openMenuOnFocus={true}
           maxMenuHeight={500}
           placeholder="Select datasource"
-          loadingMessage={() => 'Loading datasources...'}
           noOptionsMessage={() => 'No datasources found'}
           value={value}
-          components={{
-            Option,
-            SingleValue,
-            IndicatorsContainer,
-          }}
         />
       </div>
     );

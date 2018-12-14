@@ -116,7 +116,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 .gf-form-select-box__select-arrow {
   border-color: $input-color-select-arrow transparent transparent;
   border-style: solid;
-  border-width: 5px 5px 2.5px;
+  border-width: 4px 4px 2.5px;
   display: inline-block;
   height: 0;
   width: 0;
@@ -125,7 +125,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   &.gf-form-select-box__select-arrow--reversed {
     border-color: transparent transparent $input-color-select-arrow;
     top: -2px;
-    border-width: 0 5px 5px;
+    border-width: 0 4px 4px;
   }
 }
 
