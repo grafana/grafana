@@ -317,8 +317,8 @@
 		</div>
 
 		<div class="gf-form-button-row p-y-0">
-			<button type="submit" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
-			<button type="submit" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
+			<button type="submit" class="btn btn-success" ng-if="mode === 'edit'" ng-click="update();">Update</button>
+			<button type="submit" class="btn btn-success" ng-if="mode === 'new'" ng-click="add();">Add</button>
 		</div>
 
 	</form>
