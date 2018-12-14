@@ -81,10 +81,10 @@ export class DashboardPanel extends PureComponent<Props, State> {
       }
 
       if (plugin.exports) {
-        this.setState({ plugin: plugin });
+        this.setState({ plugin: plugin, angularPanel: null });
       } else {
         plugin.exports = await importPluginModule(plugin.module);
-        this.setState({ plugin: plugin });
+        this.setState({ plugin: plugin, angularPanel: null });
       }
     }
   }
@@ -106,18 +106,15 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.setState({ angularPanel });
   }
 
-  cleanUpAngularPanel(unmounted?: boolean) {
+  cleanUpAngularPanel() {
     if (this.state.angularPanel) {
       this.state.angularPanel.destroy();
-
-      if (!unmounted) {
-        this.setState({ angularPanel: null });
-      }
+      this.element = null;
     }
   }
 
   componentWillUnmount() {
-    this.cleanUpAngularPanel(true);
+    this.cleanUpAngularPanel();
   }
 
   onMouseEnter = () => {

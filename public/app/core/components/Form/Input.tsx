@@ -31,6 +31,10 @@ interface Props extends React.HTMLProps<HTMLInputElement> {
 }
 
 export class Input extends PureComponent<Props> {
+  static defaultProps = {
+    className: '',
+  };
+
   state = {
     error: null,
   };
