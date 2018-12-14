@@ -398,8 +398,9 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.0.0
+      - image: xlson/aptly-ci:0.1
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run:
@@ -417,6 +418,15 @@ jobs:
       - run:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh'
+      - run:
+          name: Load GPG private key
+          comand: './scripts/build/load-signing-key.sh'
+      - run:
+          name: Update Debian repository
+          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD"'
+      - run:
+          name: Update RPM repository
+          command: 'ls'
 
 workflows:
   version: 2
