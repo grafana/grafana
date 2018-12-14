@@ -9,6 +9,7 @@ export interface Props {
 export default class DisabledPermissionListItem extends Component<Props, any> {
   render() {
     const { item } = this.props;
+    const currentPermissionLevel = dashboardPermissionLevels.find(dp => dp.value === item.permission);
 
     return (
       <tr className="gf-form-disabled">
@@ -28,7 +29,7 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
               onChange={() => {}}
               isDisabled={true}
               className="gf-form-select-box__control--menu-right"
-              value={item.permission}
+              value={currentPermissionLevel}
             />
           </div>
         </td>

@@ -122,6 +122,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
 
             <div className="gf-form">
               <Select
+                isSearchable={false}
                 options={dashboardPermissionLevels}
                 onChange={this.onPermissionChanged}
                 className="gf-form-select-box__control--menu-right"

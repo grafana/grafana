@@ -50,6 +50,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
   render() {
     const { item, folderInfo } = this.props;
     const inheritedFromRoot = item.dashboardId === -1 && !item.inherited;
+    const currentPermissionLevel = dashboardPermissionLevels.find(dp => dp.value === item.permission);
 
     return (
       <tr className={setClassNameHelper(item.inherited)}>
@@ -80,7 +81,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
               onChange={this.onPermissionChanged}
               isDisabled={item.inherited}
               className="gf-form-select-box__control--menu-right"
-              value={item.permission}
+              value={currentPermissionLevel}
             />
           </div>
         </td>

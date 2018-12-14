@@ -51,8 +51,8 @@ export class DataSourcePicker extends PureComponent<Props> {
       <div className="gf-form-inline">
         <Select
           isMulti={false}
-          backspaceRemovesValue={false}
           isClearable={false}
+          backspaceRemovesValue={false}
           onChange={this.onChange}
           options={options}
           autoFocus={autoFocus}

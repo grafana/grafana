@@ -25,7 +25,7 @@ interface CommonProps {
   onChange: (item: SelectOptionItem) => {} | void;
   placeholder?: string;
   width?: number;
-  value?: any;
+  value?: SelectOptionItem;
   className?: string;
   components: object;
   isDisabled?: boolean;
