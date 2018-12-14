@@ -171,3 +171,19 @@ $select-input-bg-disabled: $input-bg-disabled;
   width: 16px;
   margin-right: 10px;
 }
+
+.gf-form-select-box__option-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-items: center;
+  cursor: pointer;
+  padding: 7px 10px;
+  width: 100%;
+  border-bottom: 1px solid $hr-border-color;
+  text-transform: capitalize;
+
+  .fa {
+    padding-right: 2px;
+  }
+}

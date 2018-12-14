@@ -7,6 +7,7 @@ import { components } from 'react-select';
 
 // Components
 import { Option, SingleValue } from './PickerOption';
+import OptionGroup from './OptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import ResetStyles from './ResetStyles';
@@ -29,7 +30,6 @@ interface CommonProps {
   width?: number;
   value?: SelectOptionItem;
   className?: string;
-  components: object;
   isDisabled?: boolean;
   isSearchable?: boolean;
   isClearable?: boolean;
@@ -65,7 +65,6 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
   static defaultProps = {
     width: null,
     className: '',
-    components: {},
     isDisabled: false,
     isSearchable: true,
     isClearable: false,
@@ -117,6 +116,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
           SingleValue,
           IndicatorsContainer,
           MenuList,
+          Group: OptionGroup,
         }}
         defaultValue={defaultValue}
         value={value}

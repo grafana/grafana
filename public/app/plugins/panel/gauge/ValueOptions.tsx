@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
 import Select from 'app/core/components/Select/Select';
-import UnitPicker from 'app/core/components/Select/Unit/UnitPicker';
+import UnitPicker from 'app/core/components/Select/UnitPicker';
 import { OptionModuleProps } from './module';
 
 const statOptions = [
@@ -52,7 +52,7 @@ export default class ValueOptions extends PureComponent<OptionModuleProps> {
         </div>
         <div className="gf-form-inline">
           <Label width={labelWidth}>Unit</Label>
-          <UnitPicker defaultValue={unit} onSelected={value => this.onUnitChange(value)} />
+          <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
         </div>
         <div className="gf-form-inline">
           <Label width={labelWidth}>Decimals</Label>

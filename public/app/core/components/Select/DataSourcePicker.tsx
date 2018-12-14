@@ -50,6 +50,7 @@ export class DataSourcePicker extends PureComponent<Props> {
     return (
       <div className="gf-form-inline">
         <Select
+          className="ds-picker"
           isMulti={false}
           isClearable={false}
           backspaceRemovesValue={false}
