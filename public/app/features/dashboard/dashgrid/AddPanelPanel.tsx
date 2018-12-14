@@ -203,22 +203,24 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     return (
       <div className="panel-container add-panel-container">
         <div className="add-panel">
-          <div className="add-panel__header">
+          <div className="add-panel__header grid-drag-handle">
             <i className="gicon gicon-add-panel" />
             <button className="add-panel__close" onClick={this.handleCloseAddPanel}>
               <i className="fa fa-close" />
             </button>
           </div>
           <div className="add-panel-btn-container">
-            <div className="gf-form-button-row">
-              <button className="btn-success btn" onClick={() => this.onCreateNewPanel(panel)} title={panel.name}>
-                Create new Panel
-              </button>
-              {addCopyButton}
-              <button className="btn-inverse btn" onClick={() => this.onCreateNewRow(row)} title={row.name}>
-                Add new Row
-              </button>
-            </div>
+            <button
+              className="btn-success btn btn-large"
+              onClick={() => this.onCreateNewPanel(panel)}
+              title={panel.name}
+            >
+              Edit Panel
+            </button>
+            {addCopyButton}
+            <button className="btn-inverse btn" onClick={() => this.onCreateNewRow(row)} title={row.name}>
+              Add Row
+            </button>
           </div>
         </div>
       </div>
