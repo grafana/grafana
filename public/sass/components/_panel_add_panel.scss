@@ -4,20 +4,17 @@
 
 .add-panel {
   height: 100%;
-
-  .baron__root {
-    height: calc(100% - 43px);
-  }
+  //display: flex;
+  //flex-direction: column;
 }
 
 .add-panel__header {
+  top: 0;
+  position: absolute;
   padding: 0 15px;
   display: flex;
   align-items: center;
-  background: $page-header-bg;
-  box-shadow: $page-header-shadow;
-  border-bottom: 1px solid $page-header-border-color;
-
+  width: 100%;
   .gicon {
     font-size: 30px;
     margin-right: $spacer;
@@ -30,18 +27,6 @@
   border: 0;
   font-size: 16px;
   margin-right: -10px;
-}
-
-.add-panel__title {
-  font-size: $font-size-md;
-  margin-right: $spacer*2;
-}
-
-.add-panel__sub-title {
-  font-style: italic;
-  color: $text-muted;
-  position: relative;
-  top: 1px;
 }
 
 .add-panel__items {
@@ -96,4 +81,11 @@
   font-style: italic;
   width: 100%;
   padding: 3px 8px;
+}
+
+.add-panel-btn-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }

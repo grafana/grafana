@@ -32,11 +32,6 @@ describe('AddPanelPanel', () => {
     wrapper = shallow(<AddPanelPanel panel={panel} dashboard={dashboardMock} />);
   });
 
-  it('should fetch all panels sorted with core plugins first', () => {
-    expect(wrapper.find('.add-panel__item').get(1).props.title).toBe('singlestat');
-    expect(wrapper.find('.add-panel__item').get(4).props.title).toBe('piechart');
-  });
-
   it('should filter', () => {
     wrapper.find('input').simulate('change', { target: { value: 'p' } });
 
