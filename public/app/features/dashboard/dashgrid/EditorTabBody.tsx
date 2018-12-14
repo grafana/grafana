@@ -1,6 +1,10 @@
+// Libraries
 import React, { PureComponent } from 'react';
+
+// Components
 import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
+import { PanelOptionSection } from './PanelOptionSection';
 
 interface Props {
   children: JSX.Element;
@@ -89,15 +93,9 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderOpenView(view: EditorToolBarView) {
     return (
-      <div className="panel-option-section">
-        <div className="panel-option-section__header">
-          {view.title || view.heading}
-          <button className="btn btn-link" onClick={this.onCloseOpenView}>
-            <i className="fa fa-remove" />
-          </button>
-        </div>
-        <div className="panel-option-section__body">{view.render(this.onCloseOpenView)}</div>
-      </div>
+      <PanelOptionSection title={view.title || view.heading} onClose={this.onCloseOpenView}>
+        {view.render()}
+      </PanelOptionSection>
     );
   }
 

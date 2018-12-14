@@ -10,6 +10,7 @@ import { DataSourcePicker } from './DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
+import { PanelOptionSection } from './PanelOptionSection';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -256,37 +257,31 @@ export class QueriesTab extends PureComponent<Props, State> {
     return (
       <EditorTabBody heading="Queries" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
         <>
-          <div className="panel-option-section">
-          {/*<div className="panel-option-section__header">Queries</div>*/}
-            <div className="panel-option-section__body">
-              <div className="query-editor-rows gf-form-group">
-                <div ref={element => (this.element = element)} />
+          <PanelOptionSection>
+            <div className="query-editor-rows gf-form-group">
+              <div ref={element => (this.element = element)} />
 
-                <div className="gf-form-query">
-                  <div className="gf-form gf-form-query-letter-cell">
-                    <label className="gf-form-label">
-                      <span className="gf-form-query-letter-cell-carret muted">
-                        <i className="fa fa-caret-down" />
-                      </span>
-                      <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
-                    </label>
-                    {!isAddingMixed && (
-                      <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
-                        Add Query
-                      </button>
-                    )}
-                    {isAddingMixed && this.renderMixedPicker()}
-                  </div>
+              <div className="gf-form-query">
+                <div className="gf-form gf-form-query-letter-cell">
+                  <label className="gf-form-label">
+                    <span className="gf-form-query-letter-cell-carret muted">
+                      <i className="fa fa-caret-down" />
+                    </span>
+                    <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
+                  </label>
+                  {!isAddingMixed && (
+                    <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
+                      Add Query
+                    </button>
+                  )}
+                  {isAddingMixed && this.renderMixedPicker()}
                 </div>
               </div>
             </div>
-          </div>
-          <div className="panel-option-section">
-          {/*<div className="panel-option-section__header">Options</div>*/}
-            <div className="panel-option-section__body">
-              <QueryOptions panel={panel} datasource={currentDS} />
-            </div>
-          </div>
+          </PanelOptionSection>
+          <PanelOptionSection>
+            <QueryOptions panel={panel} datasource={currentDS} />
+          </PanelOptionSection>
         </>
       </EditorTabBody>
     );
