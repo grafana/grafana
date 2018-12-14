@@ -16,7 +16,6 @@ const setup = (propOverrides?: object) => {
     invitees: [] as Invitee[],
     searchQuery: '',
     externalUserMngInfo: '',
-    revokeInvite: jest.fn(),
     loadInvitees: jest.fn(),
     loadUsers: jest.fn(),
     updateUser: jest.fn(),
