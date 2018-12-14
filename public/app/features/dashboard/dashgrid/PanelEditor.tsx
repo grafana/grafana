@@ -82,8 +82,8 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
 
     if (config.alertingEnabled && plugin.id === 'graph') {
       tabs.push({
-        id: 'alerts',
-        text: 'Alerts',
+        id: 'alert',
+        text: 'Alert',
       });
     }
 
