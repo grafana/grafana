@@ -3,10 +3,8 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import Highlighter from 'react-highlight-words';
 import { updateLocation } from 'app/core/actions';
 import { store as reduxStore } from 'app/store/store';
 
@@ -16,59 +14,17 @@ export interface AddPanelPanelProps {
 }
 
 export interface AddPanelPanelState {
-  filter: string;
-  panelPlugins: any[];
   copiedPanelPlugins: any[];
-  tab: string;
 }
 
 export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelPanelState> {
-  private scrollbar: ScrollBar;
-
   constructor(props) {
     super(props);
     this.handleCloseAddPanel = this.handleCloseAddPanel.bind(this);
-    this.panelSizeChanged = this.panelSizeChanged.bind(this);
 
     this.state = {
-      panelPlugins: this.getPanelPlugins(),
       copiedPanelPlugins: this.getCopiedPanelPlugins(),
-      filter: '',
-      tab: 'Add',
     };
-  }
-
-  componentDidMount() {
-    this.props.panel.events.on('panel-size-changed', this.panelSizeChanged);
-  }
-
-  componentWillUnmount() {
-    this.props.panel.events.off('panel-size-changed', this.panelSizeChanged);
-  }
-
-  panelSizeChanged() {
-    setTimeout(() => {
-      this.scrollbar.update();
-    });
-  }
-
-  getPanelPlugins() {
-    const panelsList = _.chain(config.panels)
-      .filter({ hideFromList: false })
-      .map(item => item)
-      .value();
-
-    const panels = [];
-
-    for (let i = 0; i < panelsList.length; i++) {
-      if (panelsList[i].id === 'graph') {
-        panels.push(panelsList[i]);
-      }
-    }
-    // add special row type
-    panels.push({ id: 'row', name: 'Row', sort: 8, info: { logos: { small: 'public/img/icn-row.svg' } } });
-    // add sort by sort property
-    return panels;
   }
 
   getCopiedPanelPlugins() {
@@ -98,15 +54,6 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
   }
 
-  renderText(text: string) {
-    const searchWords = this.state.filter.split('');
-    return <Highlighter highlightClassName="highlight-search-match" textToHighlight={text} searchWords={searchWords} />;
-  }
-
-  noCopiedPanelPlugins() {
-    return <div className="add-panel__no-panels">No copied panels yet.</div>;
-  }
-
   copyButton(panel) {
     return (
       <button className="btn-inverse btn" onClick={() => this.onPasteCopiedPanel(panel)} title={panel.name}>
@@ -128,29 +75,20 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     );
   }
 
-  onCreateNewPanel = panelPluginInfo => {
+  onCreateNewPanel = () => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
     const newPanel: any = {
-      type: panelPluginInfo.id,
+      type: 'graph',
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
 
-    // apply panel template / defaults
-    if (panelPluginInfo.defaults) {
-      _.defaults(newPanel, panelPluginInfo.defaults);
-      newPanel.gridPos.w = panelPluginInfo.defaults.gridPos.w;
-      newPanel.gridPos.h = panelPluginInfo.defaults.gridPos.h;
-      newPanel.title = panelPluginInfo.defaults.title;
-      store.delete(LS_PANEL_COPY_KEY);
-    }
-
     dashboard.addPanel(newPanel);
-    this.moveToEdit(newPanel);
-
     dashboard.removePanel(this.props.panel);
+
+    this.moveToEdit(newPanel);
   };
 
   onPasteCopiedPanel = panelPluginInfo => {
@@ -166,22 +104,19 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     // apply panel template / defaults
     if (panelPluginInfo.defaults) {
       _.defaults(newPanel, panelPluginInfo.defaults);
-      newPanel.gridPos.w = panelPluginInfo.defaults.gridPos.w;
-      newPanel.gridPos.h = panelPluginInfo.defaults.gridPos.h;
       newPanel.title = panelPluginInfo.defaults.title;
       store.delete(LS_PANEL_COPY_KEY);
     }
 
     dashboard.addPanel(newPanel);
-
     dashboard.removePanel(this.props.panel);
   };
 
-  onCreateNewRow = panelPluginInfo => {
+  onCreateNewRow = () => {
     const dashboard = this.props.dashboard;
 
     const newRow: any = {
-      type: panelPluginInfo.id,
+      type: 'row',
       title: 'Row title',
       gridPos: { x: 0, y: 0 },
     };
@@ -191,9 +126,6 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   };
 
   render() {
-    const panel = this.state.panelPlugins[0];
-    const row = this.state.panelPlugins[1];
-
     let addCopyButton;
 
     if (this.state.copiedPanelPlugins.length === 1) {
@@ -210,15 +142,11 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
             </button>
           </div>
           <div className="add-panel-btn-container">
-            <button
-              className="btn-success btn btn-large"
-              onClick={() => this.onCreateNewPanel(panel)}
-              title={panel.name}
-            >
+            <button className="btn-success btn btn-large" onClick={this.onCreateNewPanel}>
               Edit Panel
             </button>
             {addCopyButton}
-            <button className="btn-inverse btn" onClick={() => this.onCreateNewRow(row)} title={row.name}>
+            <button className="btn-inverse btn" onClick={this.onCreateNewRow}>
               Add Row
             </button>
           </div>
