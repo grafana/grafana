@@ -43,8 +43,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
   }
 
-  isSpecial() {
-    return this.specialPanels[this.props.panel.type];
+  isSpecial(pluginId: string) {
+    return this.specialPanels[pluginId];
   }
 
   renderRow() {
@@ -56,38 +56,41 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   onPluginTypeChanged = (plugin: PanelPlugin) => {
-    this.props.panel.changeType(plugin.id, this.state.angularPanel !== null);
-    this.loadPlugin();
+    this.loadPlugin(plugin.id);
   };
 
-  loadPlugin() {
-    if (this.isSpecial()) {
+  async loadPlugin(pluginId: string) {
+    if (this.isSpecial(pluginId)) {
       return;
     }
 
     const { panel } = this.props;
 
     // handle plugin loading & changing of plugin type
-    if (!this.state.plugin || this.state.plugin.id !== panel.type) {
-      const plugin = config.panels[panel.type] || getPanelPluginNotFound(panel.type);
+    if (!this.state.plugin || this.state.plugin.id !== pluginId) {
+      const plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
+
+      // remember if this is from an angular panel
+      const fromAngularPanel = this.state.angularPanel != null;
+
+      // unmount angular panel
+      this.cleanUpAngularPanel();
+
+      if (panel.type !== pluginId) {
+        this.props.panel.changeType(pluginId, fromAngularPanel);
+      }
 
       if (plugin.exports) {
-        this.cleanUpAngularPanel();
-        this.setState({ plugin: plugin });
+        this.setState({ plugin: plugin, angularPanel: null });
       } else {
-        importPluginModule(plugin.module).then(pluginExports => {
-          this.cleanUpAngularPanel();
-          // cache plugin exports (saves a promise async cycle next time)
-          plugin.exports = pluginExports;
-          // update panel state
-          this.setState({ plugin: plugin });
-        });
+        plugin.exports = await importPluginModule(plugin.module);
+        this.setState({ plugin: plugin, angularPanel: null });
       }
     }
   }
 
   componentDidMount() {
-    this.loadPlugin();
+    this.loadPlugin(this.props.panel.type);
   }
 
   componentDidUpdate() {
@@ -103,18 +106,15 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.setState({ angularPanel });
   }
 
-  cleanUpAngularPanel(unmounted?: boolean) {
+  cleanUpAngularPanel() {
     if (this.state.angularPanel) {
       this.state.angularPanel.destroy();
-
-      if (!unmounted) {
-        this.setState({ angularPanel: null });
-      }
+      this.element = null;
     }
   }
 
   componentWillUnmount() {
-    this.cleanUpAngularPanel(true);
+    this.cleanUpAngularPanel();
   }
 
   onMouseEnter = () => {
@@ -140,7 +140,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
     const { plugin, angularPanel } = this.state;
 
-    if (this.isSpecial()) {
+    if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
     }
 

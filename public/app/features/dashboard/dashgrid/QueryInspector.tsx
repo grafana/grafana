@@ -1,4 +1,4 @@
-﻿import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
@@ -187,16 +187,10 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     return (
       <>
-        <div>
-          {/*
-          <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleMocking}>
-            Mock response
-          </button>
-          */}
+        <div className="pull-right">
           <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleExpand}>
             {this.renderExpandCollapse()}
           </button>
-
           <CopyToClipboard
             className="btn btn-transparent btn-p-x-0"
             text={this.getTextForClipboard}

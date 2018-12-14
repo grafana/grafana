@@ -56,7 +56,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   background: $input-bg;
   box-shadow: $menu-dropdown-shadow;
   position: absolute;
-  z-index: 2;
+  z-index: $zindex-dropdown;
   min-width: 100%;
 }
 

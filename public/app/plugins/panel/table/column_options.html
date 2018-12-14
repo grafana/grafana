@@ -1,5 +1,4 @@
 <div class="edit-tab-content" ng-repeat="style in editor.panel.styles">
-  <p class="column-styles-heading">{{style.pattern || 'New rule'}}</p>
   <div class="section gf-form-group">
     <h5 class="section-heading">Options</h5>
     <div class="gf-form-inline">
@@ -182,9 +181,13 @@
       <i class="fa fa-trash"></i> Remove Rule
     </button>
   </div>
+
+  <hr>
 </div>
+
 <div class="gf-form-button-row">
   <button class="btn btn-inverse" ng-click="editor.addColumnStyle()">
     <i class="fa fa-plus"></i>&nbsp;Add column style
   </button>
 </div>
+

@@ -177,6 +177,9 @@ export class DataSourceSettings extends PureComponent<Props, State> {
           <div className="page-container page-body">
             <div>
               <form onSubmit={this.onSubmit}>
+                {this.isReadOnly() && this.renderIsReadOnlyMessage()}
+                {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
+
                 <BasicSettings
                   dataSourceName={dataSource.name}
                   isDefault={dataSource.isDefault}
@@ -184,9 +187,6 @@ export class DataSourceSettings extends PureComponent<Props, State> {
                   onNameChange={name => setDataSourceName(name)}
                 />
 
-                {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
-
-                {this.isReadOnly() && this.renderIsReadOnlyMessage()}
                 {dataSourceMeta.module && (
                   <PluginSettings
                     dataSource={dataSource}

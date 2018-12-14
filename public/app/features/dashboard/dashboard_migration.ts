@@ -141,7 +141,6 @@ export class DashboardMigrator {
 
       // ensure query refIds
       panelUpgrades.push(panel => {
-        console.log('asdasd', panel);
         _.each(panel.targets, target => {
           if (!target.refId) {
             target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();

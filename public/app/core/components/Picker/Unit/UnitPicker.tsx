@@ -36,25 +36,25 @@ export default class UnitPicker extends PureComponent<Props> {
       };
     });
 
-    const styles = {
-      ...ResetStyles,
-      menu: () => ({
-        maxHeight: '75%',
-        overflow: 'scroll',
-      }),
-      menuList: () =>
-        ({
-          overflowY: 'auto',
-          position: 'relative',
-        } as React.CSSProperties),
-      valueContainer: () =>
-        ({
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          maxWidth: '90px',
-          whiteSpace: 'nowrap',
-        } as React.CSSProperties),
-    };
+    // const styles = {
+    //   ...ResetStyles,
+    //   menu: () => ({
+    //     maxHeight: '75%',
+    //     overflow: 'scroll',
+    //   }),
+    //   menuList: () =>
+    //     ({
+    //       overflowY: 'auto',
+    //       position: 'relative',
+    //     } as React.CSSProperties),
+    //   valueContainer: () =>
+    //     ({
+    //       overflow: 'hidden',
+    //       textOverflow: 'ellipsis',
+    //       maxWidth: '90px',
+    //       whiteSpace: 'nowrap',
+    //     } as React.CSSProperties),
+    // };
 
     const value = groupOptions.map(group => {
       return group.options.find(option => option.value === defaultValue);
@@ -74,7 +74,7 @@ export default class UnitPicker extends PureComponent<Props> {
           Group: UnitGroup,
           Option: UnitOption,
         }}
-        styles={styles}
+        styles={ResetStyles}
       />
     );
   }
