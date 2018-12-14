@@ -253,8 +253,8 @@ By default, exporting a dashboard as JSON will use a sequential identifier to re
         "frequency": "24h",
         "noDataState": "ok",
         "notifications": [
-           {"name": "notification-channel-1"},
-           {"name": "notification-channel-2"},
+           {"uid": "notifier1"},
+           {"uid": "notifier2"},
         ]
       }
   ...
@@ -267,6 +267,7 @@ By default, exporting a dashboard as JSON will use a sequential identifier to re
 alert_notifications:
   - name: notification-channel-1
     type: slack
+    uid: notifier1
     # either
     org_id: 2
     # or
@@ -282,6 +283,7 @@ alert_notifications:
 
 delete_alert_notifications:
   - name: notification-channel-1
+    uid: notifier1
     # either
     org_id: 2
     # or 

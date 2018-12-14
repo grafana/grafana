@@ -1,6 +1,7 @@
 package alert_notifications
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -41,7 +42,11 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 	}
 
 	cr.log.Debug("Validating alert notifications")
-	validateOrgIdAndSet(notifications)
+	if err = validateRequiredField(notifications); err != nil {
+		return nil, err
+	}
+
+	checkOrgIdAndOrgName(notifications)
 
 	err = validateNotifications(notifications)
 	if err != nil {
@@ -67,7 +72,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	return cfg.mapToNotificationFromConfig(), nil
 }
 
-func validateOrgIdAndSet(notifications []*notificationsAsConfig) {
+func checkOrgIdAndOrgName(notifications []*notificationsAsConfig) {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
 			if notification.OrgId < 1 {
@@ -90,6 +95,44 @@ func validateOrgIdAndSet(notifications []*notificationsAsConfig) {
 		}
 	}
 
+}
+func validateRequiredField(notifications []*notificationsAsConfig) error {
+	for i := range notifications {
+		var errStrings []string
+		for index, notification := range notifications[i].Notifications {
+			if notification.Name == "" {
+				errStrings = append(
+					errStrings,
+					fmt.Sprintf("Added alert notification item %d in configuration doesn't contain required field name", index+1),
+				)
+			}
+			if notification.Uid == "" {
+				errStrings = append(
+					errStrings,
+					fmt.Sprintf("Added alert notification item %d in configuration doesn't contain required field uid", index+1),
+				)
+			}
+		}
+
+		for index, notification := range notifications[i].DeleteNotifications {
+			if notification.Name == "" {
+				errStrings = append(
+					errStrings,
+					fmt.Sprintf("Deleted alert notification item %d in configuration doesn't contain required field name", index+1),
+				)
+			}
+			if notification.Uid == "" {
+				errStrings = append(
+					errStrings,
+					fmt.Sprintf("Deleted alert notification item %d in configuration doesn't contain required field uid", index+1),
+				)
+			}
+		}
+		if len(errStrings) != 0 {
+			return fmt.Errorf(strings.Join(errStrings, "\n"))
+		}
+	}
+	return nil
 }
 
 func validateNotifications(notifications []*notificationsAsConfig) error {

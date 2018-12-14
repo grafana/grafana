@@ -44,7 +44,7 @@ func (dc *NotificationProvisioner) apply(cfg *notificationsAsConfig) error {
 
 func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*deleteNotificationConfig) error {
 	for _, notification := range notificationToDelete {
-		dc.log.Info("Deleting alert notification", "name", notification.Name)
+		dc.log.Info("Deleting alert notification", "name", notification.Name, "uid", notification.Uid)
 
 		if notification.OrgId == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
@@ -55,14 +55,14 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 		} else if notification.OrgId < 0 {
 			notification.OrgId = 1
 		}
-		getNotification := &models.GetAlertNotificationsQuery{Name: notification.Name, OrgId: notification.OrgId}
+		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.Uid, OrgId: notification.OrgId}
 
 		if err := bus.Dispatch(getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
-			cmd := &models.DeleteAlertNotificationCommand{Id: getNotification.Result.Id, OrgId: getNotification.OrgId}
+			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
 			if err := bus.Dispatch(cmd); err != nil {
 				return err
 			}
@@ -85,33 +85,40 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 			notification.OrgId = 1
 		}
 
-		cmd := &models.GetAlertNotificationsQuery{OrgId: notification.OrgId, Name: notification.Name}
+		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgId, Uid: notification.Uid}
 		err := bus.Dispatch(cmd)
 		if err != nil {
 			return err
 		}
 
 		if cmd.Result == nil {
-			dc.log.Info("Inserting alert notification from configuration ", "name", notification.Name)
+			dc.log.Info("Inserting alert notification from configuration ", "name", notification.Name, "uid", notification.Uid)
 			insertCmd := &models.CreateAlertNotificationCommand{
-				Name:      notification.Name,
-				Type:      notification.Type,
-				IsDefault: notification.IsDefault,
-				Settings:  notification.SettingsToJson(),
-				OrgId:     notification.OrgId,
+				Uid:                   notification.Uid,
+				Name:                  notification.Name,
+				Type:                  notification.Type,
+				IsDefault:             notification.IsDefault,
+				Settings:              notification.SettingsToJson(),
+				OrgId:                 notification.OrgId,
+				DisableResolveMessage: notification.DisableResolveMessage,
+				Frequency:             notification.Frequency,
+				SendReminder:          notification.SendReminder,
 			}
 			if err := bus.Dispatch(insertCmd); err != nil {
 				return err
 			}
 		} else {
 			dc.log.Info("Updating alert notification from configuration", "name", notification.Name)
-			updateCmd := &models.UpdateAlertNotificationCommand{
-				Id:        cmd.Result.Id,
-				Name:      notification.Name,
-				Type:      notification.Type,
-				IsDefault: notification.IsDefault,
-				Settings:  notification.SettingsToJson(),
-				OrgId:     notification.OrgId,
+			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
+				Uid:                   notification.Uid,
+				Name:                  notification.Name,
+				Type:                  notification.Type,
+				IsDefault:             notification.IsDefault,
+				Settings:              notification.SettingsToJson(),
+				OrgId:                 notification.OrgId,
+				DisableResolveMessage: notification.DisableResolveMessage,
+				Frequency:             notification.Frequency,
+				SendReminder:          notification.SendReminder,
 			}
 			if err := bus.Dispatch(updateCmd); err != nil {
 				return err
@@ -130,17 +137,22 @@ func (cfg *notificationsAsConfig) mapToNotificationFromConfig() *notificationsAs
 
 	for _, notification := range cfg.Notifications {
 		r.Notifications = append(r.Notifications, &notificationFromConfig{
-			OrgId:     notification.OrgId,
-			OrgName:   notification.OrgName,
-			Name:      notification.Name,
-			Type:      notification.Type,
-			IsDefault: notification.IsDefault,
-			Settings:  notification.Settings,
+			Uid:                   notification.Uid,
+			OrgId:                 notification.OrgId,
+			OrgName:               notification.OrgName,
+			Name:                  notification.Name,
+			Type:                  notification.Type,
+			IsDefault:             notification.IsDefault,
+			Settings:              notification.Settings,
+			DisableResolveMessage: notification.DisableResolveMessage,
+			Frequency:             notification.Frequency,
+			SendReminder:          notification.SendReminder,
 		})
 	}
 
 	for _, notification := range cfg.DeleteNotifications {
 		r.DeleteNotifications = append(r.DeleteNotifications, &deleteNotificationConfig{
+			Uid:     notification.Uid,
 			OrgId:   notification.OrgId,
 			OrgName: notification.OrgName,
 			Name:    notification.Name,

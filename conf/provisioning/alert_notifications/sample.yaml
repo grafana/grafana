@@ -2,10 +2,11 @@
 apiVersion: 1
 
 # alert_notifications:
-#   - name: default-slack
+#   - name: default-slack-temp
 #     type: slack
-#     org_id: 1
+#     org_name: Main Org.
 #     is_default: true
+#     uid: notifier1
 #     settings:
 #       recipient: "XXX"
 #       token: "xoxb"
@@ -14,10 +15,11 @@ apiVersion: 1
 #   - name: default-email
 #     type: email
 #     org_id: 1
+#     uid: notifier2
 #     is_default: false  
 #     settings:
-#       addresses: example@example.com
+#       addresses: example11111@example.com
 # delete_alert_notifications:
-#   - name: default-slack
-#     org_id: 1  
-#   - name: default-email
+#   - name: default-slack-temp
+#     org_name: Main Org.
+#     uid: notifier1

@@ -1,21 +1,12 @@
 alert_notifications:
-  - name: default-slack-notification
-    type: slack
-    org_name: Main Org. 1
-    is_default: true
-    settings:
-      recipient: "XXX"
-      token: "xoxb"
-      uploadImage: true
-      url: https://slack.com
-  - name: another-not-default-notification
+  - name: default-notification-create
     type: email
+    uid: notifier2
     settings:
       addresses: example@example.com
     org_name: Main Org. 2
     is_default: false  
 delete_alert_notifications:
-  - name: default-slack-notification
-    org_name: Main Org. 1
-  - name: another-not-default-notification
+  - name: default-notification-delete
     org_name: Main Org. 2
+    uid: notifier2
