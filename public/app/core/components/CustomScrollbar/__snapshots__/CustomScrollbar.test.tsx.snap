@@ -6,8 +6,8 @@ exports[`CustomScrollbar renders correctly 1`] = `
   style={
     Object {
       "height": "auto",
-      "maxHeight": "100%",
-      "minHeight": "100%",
+      "maxHeight": "inherit",
+      "minHeight": "inherit",
       "overflow": "hidden",
       "position": "relative",
       "width": "100%",
@@ -23,8 +23,8 @@ exports[`CustomScrollbar renders correctly 1`] = `
         "left": undefined,
         "marginBottom": 0,
         "marginRight": 0,
-        "maxHeight": "calc(100% + 0px)",
-        "minHeight": "calc(100% + 0px)",
+        "maxHeight": "calc(inherit + 0px)",
+        "minHeight": "calc(inherit + 0px)",
         "overflow": "scroll",
         "position": "relative",
         "right": undefined,

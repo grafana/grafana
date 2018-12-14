@@ -59,6 +59,8 @@
 }
 
 .gf-form-query-letter-cell {
+  flex-shrink: 0;
+
   .gf-form-query-letter-cell-carret {
     display: inline-block;
     width: 0.7rem;

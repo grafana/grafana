@@ -111,11 +111,11 @@ function panelHeader($compile) {
        */
       function togglePanelStackPosition() {
         const menuOpenClass = 'dropdown-menu-open';
-        const panelGridClass = '.react-grid-item.panel';
+        const panelGridClass = '.react-grid-item';
 
         let panelElem = elem
           .find('[data-toggle=dropdown]')
-          .parentsUntil('.panel')
+          .parentsUntil(panelGridClass)
           .parent();
         const menuElem = elem.find('[data-toggle=dropdown]').parent();
         panelElem = panelElem && panelElem.length ? panelElem[0] : undefined;
