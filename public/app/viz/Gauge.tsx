@@ -108,6 +108,7 @@ export class Gauge extends PureComponent<Props> {
 
   draw() {
     const {
+      baseColor,
       maxValue,
       minValue,
       timeSeries,
@@ -147,11 +148,9 @@ export class Gauge extends PureComponent<Props> {
       }),
       {
         value: maxValue,
-        color: BasicGaugeColor.Red,
+        color: thresholds.length > 0 ? BasicGaugeColor.Red : baseColor,
       },
     ];
-
-    console.log(formattedThresholds);
 
     const options = {
       series: {
