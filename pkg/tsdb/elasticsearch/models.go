@@ -73,5 +73,8 @@ func isPipelineAgg(metricType string) bool {
 
 func describeMetric(metricType, field string) string {
 	text := metricAggType[metricType]
+	if metricType == countType {
+		return text
+	}
 	return text + " " + field
 }

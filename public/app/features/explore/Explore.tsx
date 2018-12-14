@@ -38,7 +38,7 @@ import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
-import TimePicker from './TimePicker';
+import TimePicker, { parseTime } from './TimePicker';
 
 interface ExploreProps {
   datasourceSrv: DatasourceSrv;
@@ -115,7 +115,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } else {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
       initialQueries = ensureQueries(queries);
-      const initialRange = range || { ...DEFAULT_RANGE };
+      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) } || { ...DEFAULT_RANGE };
       // Millies step for helper bar charts
       const initialGraphInterval = 15 * 1000;
       this.state = {
@@ -253,6 +253,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceLoading: false,
         datasourceName: datasource.name,
         initialQueries: nextQueries,
+        logsHighlighterExpressions: undefined,
         showingStartPage: Boolean(StartPage),
       },
       () => {
@@ -291,7 +292,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return qt;
       });
 
-      return { initialQueries: nextQueries, queryTransactions: nextQueryTransactions };
+      return {
+        initialQueries: nextQueries,
+        logsHighlighterExpressions: undefined,
+        queryTransactions: nextQueryTransactions,
+      };
     });
   };
 
@@ -337,6 +342,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           queryTransactions: nextQueryTransactions,
         };
       }, this.onSubmit);
+    } else if (this.state.datasource.getHighlighterExpression && this.modifiedQueries.length === 1) {
+      // Live preview of log search matches. Can only work on single row query for now
+      this.updateLogsHighlights(value);
     }
   };
 
@@ -351,6 +359,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   };
 
   onClickClear = () => {
+    this.onStopScanning();
     this.modifiedQueries = ensureQueries();
     this.setState(
       prevState => ({
@@ -528,6 +537,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         return {
           ...results,
           initialQueries: nextQueries,
+          logsHighlighterExpressions: undefined,
           queryTransactions: nextQueryTransactions,
         };
       },
@@ -644,6 +654,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         ...results,
         queryTransactions: nextQueryTransactions,
         showingStartPage: false,
+        graphInterval: queryOptions.intervalMs,
       };
     });
 
@@ -664,7 +675,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
 
     this.setState(state => {
-      const { history, queryTransactions, scanning } = state;
+      const { history, queryTransactions } = state;
+      let { scanning } = state;
 
       // Transaction might have been discarded
       const transaction = queryTransactions.find(qt => qt.id === transactionId);
@@ -701,15 +713,21 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       const nextHistory = updateHistory(history, datasourceId, queries);
 
       // Keep scanning for results if this was the last scanning transaction
-      if (_.size(result) === 0 && scanning) {
-        const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
-        if (!other) {
-          this.scanTimer = setTimeout(this.scanPreviousRange, 1000);
+      if (scanning) {
+        if (_.size(result) === 0) {
+          const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
+          if (!other) {
+            this.scanTimer = setTimeout(this.scanPreviousRange, 1000);
+          }
+        } else {
+          // We can stop scanning if we have a result
+          scanning = false;
         }
       }
 
       return {
         ...results,
+        scanning,
         history: nextHistory,
         queryTransactions: nextQueryTransactions,
       };
@@ -725,7 +743,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     console.error(response);
 
-    let error: string | JSX.Element = response;
+    let error: string | JSX.Element;
     if (response.data) {
       if (typeof response.data === 'string') {
         error = response.data;
@@ -742,6 +760,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       } else {
         throw new Error('Could not handle error response');
       }
+    } else if (response.message) {
+      error = response.message;
+    } else if (typeof response === 'string') {
+      error = response;
+    } else {
+      error = 'Unknown error during query transaction. Please check JS console logs.';
     }
 
     this.setState(state => {
@@ -771,6 +795,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   async runQueries(resultType: ResultType, queryOptions: any, resultGetter?: any) {
     const queries = [...this.modifiedQueries];
     if (!hasNonEmptyQuery(queries)) {
+      this.setState({
+        queryTransactions: [],
+      });
       return;
     }
     const { datasource } = this.state;
@@ -789,6 +816,17 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       }
     });
   }
+
+  updateLogsHighlights = _.debounce((value: DataQuery, index: number) => {
+    this.setState(state => {
+      const { datasource } = state;
+      if (datasource.getHighlighterExpression) {
+        const logsHighlighterExpressions = [state.datasource.getHighlighterExpression(value)];
+        return { logsHighlighterExpressions };
+      }
+      return null;
+    });
+  }, 500);
 
   cloneState(): ExploreState {
     // Copy state, but copy queries including modifications
@@ -816,6 +854,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       graphResult,
       history,
       initialQueries,
+      logsHighlighterExpressions,
       logsResult,
       queryTransactions,
       range,
@@ -960,6 +999,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         <Logs
                           data={logsResult}
                           key={logsResult.id}
+                          highlighterExpressions={logsHighlighterExpressions}
                           loading={logsLoading}
                           position={position}
                           onChangeTime={this.onChangeTime}

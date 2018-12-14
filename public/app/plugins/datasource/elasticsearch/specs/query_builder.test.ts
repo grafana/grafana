@@ -250,6 +250,31 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.aggs['2'].moving_avg.buckets_path).toBe('3');
   });
 
+  it('with moving average doc count', () => {
+    const query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'count',
+          field: 'select field',
+        },
+        {
+          id: '2',
+          type: 'moving_avg',
+          field: '3',
+          pipelineAgg: '3',
+        },
+      ],
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '4' }],
+    });
+
+    const firstLevel = query.aggs['4'];
+
+    expect(firstLevel.aggs['2']).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].moving_avg).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].moving_avg.buckets_path).toBe('_count');
+  });
+
   it('with broken moving average', () => {
     const query = builder.build({
       metrics: [
@@ -302,6 +327,30 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.aggs['2']).not.toBe(undefined);
     expect(firstLevel.aggs['2'].derivative).not.toBe(undefined);
     expect(firstLevel.aggs['2'].derivative.buckets_path).toBe('3');
+  });
+
+  it('with derivative doc count', () => {
+    const query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'count',
+          field: 'select field',
+        },
+        {
+          id: '2',
+          type: 'derivative',
+          pipelineAgg: '3',
+        },
+      ],
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '4' }],
+    });
+
+    const firstLevel = query.aggs['4'];
+
+    expect(firstLevel.aggs['2']).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].derivative).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].derivative.buckets_path).toBe('_count');
   });
 
   it('with histogram', () => {

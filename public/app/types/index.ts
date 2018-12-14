@@ -19,6 +19,7 @@ import {
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,
+  IntervalValues,
 } from './series';
 import { PanelProps, PanelOptionsProps } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
@@ -87,6 +88,7 @@ export {
   AppNotificationTimeout,
   DashboardSearchHit,
   UserState,
+  IntervalValues,
 };
 
 export interface StoreState {

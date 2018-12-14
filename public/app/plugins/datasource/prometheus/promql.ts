@@ -386,9 +386,10 @@ const tokenizer = {
     lookbehind: true,
     inside: {
       'label-key': {
-        pattern: /[^,\s][^,]*[^,\s]*/,
+        pattern: /[^(),\s][^,)]*[^),\s]*/,
         alias: 'attr-name',
       },
+      punctuation: /[()]/,
     },
   },
   'context-labels': {
@@ -403,6 +404,7 @@ const tokenizer = {
         greedy: true,
         alias: 'attr-value',
       },
+      punctuation: /[{]/,
     },
   },
   function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),

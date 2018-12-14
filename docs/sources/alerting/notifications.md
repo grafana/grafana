@@ -157,27 +157,29 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
-### All supported notifiers
+### Google Hangouts Chat
 
-Name | Type |Support images | Support reminders
------|------------ | ------ | ------ |
-Slack | `slack` | yes | yes
-Pagerduty | `pagerduty` | yes | yes
-Email | `email` | yes | yes
-Webhook | `webhook` | link | yes
-Kafka | `kafka` | no | yes
-Hipchat | `hipchat` | yes | yes
-VictorOps | `victorops` | yes | yes
-Sensu | `sensu` | yes | yes
-OpsGenie | `opsgenie` | yes | yes
-Threema | `threema` | yes | yes
-Pushover | `pushover` | no | yes
-Telegram | `telegram` | no | yes
-Line | `line` | no | yes
-Microsoft Teams | `teams` | yes | yes
-Prometheus Alertmanager | `prometheus-alertmanager` | no | no
+Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
+### All supported notifier
 
+Name | Type |Support images
+-----|------------ | ------
+Slack | `slack` | yes
+Pagerduty | `pagerduty` | yes
+Email | `email` | yes
+Webhook | `webhook` | link
+Kafka | `kafka` | no
+Google Hangouts Chat | `googlechat` | yes
+Hipchat | `hipchat` | yes
+VictorOps | `victorops` | yes
+Sensu | `sensu` | yes
+OpsGenie | `opsgenie` | yes
+Threema | `threema` | yes
+Pushover | `pushover` | no
+Telegram | `telegram` | no
+Line | `line` | no
+Prometheus Alertmanager | `prometheus-alertmanager` | no
 
 # Enable images in notifications {#external-image-store}
 

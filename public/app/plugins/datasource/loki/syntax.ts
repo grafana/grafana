@@ -18,6 +18,7 @@ const tokenizer = {
         greedy: true,
         alias: 'attr-value',
       },
+      punctuation: /[{]/,
     },
   },
   // number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,

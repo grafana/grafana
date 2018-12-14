@@ -27,7 +27,7 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export default class LoggingDatasource {
+export default class LokiDatasource {
   languageProvider: LanguageProvider;
 
   /** @ngInject */
@@ -94,7 +94,7 @@ export default class LoggingDatasource {
   }
 
   metadataRequest(url) {
-    // HACK to get label values for {job=|}, will be replaced when implementing LoggingQueryField
+    // HACK to get label values for {job=|}, will be replaced when implementing LokiQueryField
     const apiUrl = url.replace('v1', 'prom');
     return this._request(apiUrl, { silent: true }).then(res => {
       const data = { data: { data: res.data.values || [] } };
@@ -117,6 +117,10 @@ export default class LoggingDatasource {
     return { ...query, expr: expression };
   }
 
+  getHighlighterExpression(query: DataQuery): string {
+    return parseQuery(query.expr).regexp;
+  }
+
   getTime(date, roundUp) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
@@ -132,11 +136,28 @@ export default class LoggingDatasource {
         }
         return {
           status: 'error',
-          message: 'Data source connected, but no labels received. Verify that logging is configured properly.',
+          message:
+            'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
         };
       })
       .catch(err => {
-        return { status: 'error', message: err.message };
+        let message = 'Loki: ';
+        if (err.statusText) {
+          message += err.statusText;
+        } else {
+          message += 'Cannot connect to Loki';
+        }
+
+        if (err.status) {
+          message += `. ${err.status}`;
+        }
+
+        if (err.data && err.data.message) {
+          message += `. ${err.data.message}`;
+        } else if (err.data) {
+          message += `. ${err.data}`;
+        }
+        return { status: 'error', message: message };
       });
   }
 }

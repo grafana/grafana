@@ -107,7 +107,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
-    const data: any = {};
+    const data: any = {
+      scopedVars: _.extend({}, this.panel.scopedVars),
+    };
+
     if (dataList.length > 0 && dataList[0].type === 'table') {
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
@@ -117,6 +120,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.series = dataList.map(this.seriesHandler.bind(this));
       this.setValues(data);
     }
+
     this.data = data;
     this.render();
   }
@@ -320,7 +324,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       // Add $__name variable for using in prefix or postfix
-      data.scopedVars = _.extend({}, this.panel.scopedVars);
       data.scopedVars['__name'] = { value: this.series[0].label };
     }
     this.setValueMapping(data);

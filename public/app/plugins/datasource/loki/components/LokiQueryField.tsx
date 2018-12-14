@@ -49,7 +49,7 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface LoggingQueryFieldProps {
+interface LokiQueryFieldProps {
   datasource: any;
   error?: string | JSX.Element;
   hint?: any;
@@ -60,16 +60,16 @@ interface LoggingQueryFieldProps {
   onQueryChange?: (value: DataQuery, override?: boolean) => void;
 }
 
-interface LoggingQueryFieldState {
+interface LokiQueryFieldState {
   logLabelOptions: any[];
   syntaxLoaded: boolean;
 }
 
-class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, LoggingQueryFieldState> {
+class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: any[];
   languageProvider: any;
 
-  constructor(props: LoggingQueryFieldProps, context) {
+  constructor(props: LokiQueryFieldProps, context) {
     super(props, context);
 
     if (props.datasource.languageProvider) {
@@ -208,8 +208,8 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}
-            placeholder="Enter a Logging query"
-            portalOrigin="logging"
+            placeholder="Enter a Loki Log query"
+            portalOrigin="loki"
             syntaxLoaded={syntaxLoaded}
           />
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
@@ -229,4 +229,4 @@ class LoggingQueryField extends React.PureComponent<LoggingQueryFieldProps, Logg
   }
 }
 
-export default LoggingQueryField;
+export default LokiQueryField;

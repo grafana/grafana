@@ -13,5 +13,8 @@ exports[`Render should render component 1`] = `
       <i />
     </span>
   </a>
+  <SideMenuDropDown
+    link={Object {}}
+  />
 </div>
 `;

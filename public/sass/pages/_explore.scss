@@ -2,7 +2,7 @@
   width: 100%;
 
   &-container {
-    padding: 2rem;
+    padding: $dashboard-padding;
   }
 
   &-wrapper {
@@ -34,10 +34,6 @@
     cursor: pointer;
     margin-bottom: 5px;
     transition: all 0.1s linear;
-  }
-
-  .explore-panel__header:hover {
-    transform: translateY(-1px);
   }
 
   .explore-panel__header-label {
@@ -240,167 +236,6 @@
   font-size: $font-size-xs;
   text-align: right;
   padding-right: 0.25em;
-}
-
-.explore {
-  .logs {
-    .logs-controls {
-      display: flex;
-      background-color: $page-bg;
-      padding: $panel-padding;
-      padding-top: 10px;
-      border-radius: $border-radius;
-      margin: 2*$panel-margin 0;
-      border: $panel-border;
-      justify-items: flex-start;
-      align-items: flex-start;
-
-      > * {
-        margin-right: 1em;
-      }
-    }
-
-    .logs-nodata {
-      > * {
-        margin-left: 0.5em;
-      }
-    }
-
-    .logs-meta {
-      flex: 1;
-      color: $text-color-weak;
-      // Align first line with controls labels
-      margin-top: -2px;
-    }
-
-    .logs-meta-item {
-      margin-right: 1em;
-    }
-
-    .logs-meta-item__label {
-      margin-right: 0.5em;
-      font-size: 0.9em;
-      font-weight: 500;
-    }
-
-    .logs-meta-item__value {
-      font-family: $font-family-monospace;
-    }
-
-    .logs-meta-item__value-labels {
-      // compensate for the labels padding
-      position: relative;
-      top: 4px;
-    }
-
-    .logs-entries {
-      font-family: $font-family-monospace;
-      font-size: 12px;
-    }
-
-    .logs-row {
-      display: flex;
-      flex-direction: row;
-
-      > div + div {
-        margin-left: 0.5rem;
-      }
-    }
-
-    .logs-row-level {
-      width: 3px;
-    }
-
-    .logs-row-labels {
-      flex: 0 0 25%;
-    }
-
-    .logs-row-message {
-      flex: 1;
-    }
-
-    .logs-row-match-highlight {
-      // Undoing mark styling
-      background: inherit;
-      padding: inherit;
-
-      color: $typeahead-selected-color;
-      border-bottom: 1px solid $typeahead-selected-color;
-      background-color: lighten($typeahead-selected-color, 60%);
-    }
-
-    .logs-row-level {
-      background-color: transparent;
-      margin: 2px 0;
-      position: relative;
-      opacity: 0.8;
-    }
-
-    .logs-row-level-critical,
-    .logs-row-level-crit {
-      background-color: #705da0;
-    }
-
-    .logs-row-level-error,
-    .logs-row-level-err {
-      background-color: #e24d42;
-    }
-
-    .logs-row-level-warning,
-    .logs-row-level-warn {
-      background-color: #eab839;
-    }
-
-    .logs-row-level-info {
-      background-color: #7eb26d;
-    }
-
-    .logs-row-level-debug {
-      background-color: #1f78c1;
-    }
-
-    .logs-row-level-trace {
-      background-color: #6ed0e0;
-    }
-
-    .logs-row-level__duplicates {
-      position: absolute;
-      width: 9px;
-      height: 100%;
-      top: 0;
-      left: 5px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      align-content: flex-start;
-    }
-
-    .logs-row-level__duplicate {
-      width: 2px;
-      height: 3px;
-      background-color: #1f78c1;
-      margin: 0 1px 1px 0;
-    }
-
-    .logs-label {
-      display: inline-block;
-      padding: 0 2px;
-      background-color: $btn-inverse-bg;
-      border-radius: $border-radius;
-      margin-right: 4px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .logs-row-labels {
-      line-height: 1.2;
-
-      .logs-label {
-        cursor: pointer;
-      }
-    }
-  }
 }
 
 // Prometheus-specifics, to be extracted to datasource soon
