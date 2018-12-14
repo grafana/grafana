@@ -1,21 +1,21 @@
 import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
-import SimplePicker from 'app/core/components/Picker/SimplePicker';
+import Select from 'app/core/components/Picker/Select';
 import UnitPicker from 'app/core/components/Picker/Unit/UnitPicker';
 import { OptionModuleProps } from './module';
 
 const statOptions = [
-  { value: 'min', text: 'Min' },
-  { value: 'max', text: 'Max' },
-  { value: 'avg', text: 'Average' },
-  { value: 'current', text: 'Current' },
-  { value: 'total', text: 'Total' },
-  { value: 'name', text: 'Name' },
-  { value: 'first', text: 'First' },
-  { value: 'delta', text: 'Delta' },
-  { value: 'diff', text: 'Difference' },
-  { value: 'range', text: 'Range' },
-  { value: 'last_time', text: 'Time of last point' },
+  { value: 'min', label: 'Min' },
+  { value: 'max', label: 'Max' },
+  { value: 'avg', label: 'Average' },
+  { value: 'current', label: 'Current' },
+  { value: 'total', label: 'Total' },
+  { value: 'name', label: 'Name' },
+  { value: 'first', label: 'First' },
+  { value: 'delta', label: 'Delta' },
+  { value: 'diff', label: 'Difference' },
+  { value: 'range', label: 'Range' },
+  { value: 'last_time', label: 'Time of last point' },
 ];
 
 const labelWidth = 6;
@@ -43,12 +43,10 @@ export default class ValueOptions extends PureComponent<OptionModuleProps> {
         <h5 className="page-heading">Value</h5>
         <div className="gf-form-inline">
           <Label width={labelWidth}>Stat</Label>
-          <SimplePicker
+          <Select
             width={12}
             options={statOptions}
-            getOptionLabel={i => i.text}
-            getOptionValue={i => i.value}
-            onSelected={this.onStatChange}
+            onChange={this.onStatChange}
             value={statOptions.find(option => option.value === stat)}
           />
         </div>

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { Label } from 'app/core/components/Label/Label';
-import SimplePicker from 'app/core/components/Picker/SimplePicker';
+import Select from 'app/core/components/Picker/Select';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit } from 'app/types';
@@ -17,12 +17,12 @@ export interface State {
   dashboards: DashboardSearchHit[];
 }
 
-const themes = [{ value: '', text: 'Default' }, { value: 'dark', text: 'Dark' }, { value: 'light', text: 'Light' }];
+const themes = [{ value: '', label: 'Default' }, { value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }];
 
 const timezones = [
-  { value: '', text: 'Default' },
-  { value: 'browser', text: 'Local browser time' },
-  { value: 'utc', text: 'UTC' },
+  { value: '', label: 'Default' },
+  { value: 'browser', label: 'Local browser time' },
+  { value: 'utc', label: 'UTC' },
 ];
 
 export class SharedPreferences extends PureComponent<Props, State> {
@@ -91,12 +91,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
         <h3 className="page-heading">Preferences</h3>
         <div className="gf-form">
           <span className="gf-form-label width-11">UI Theme</span>
-          <SimplePicker
+          <Select
             value={themes.find(item => item.value === theme)}
             options={themes}
-            getOptionValue={i => i.value}
-            getOptionLabel={i => i.text}
-            onSelected={theme => this.onThemeChanged(theme.value)}
+            onChange={theme => this.onThemeChanged(theme.value)}
             width={20}
           />
         </div>
@@ -107,11 +105,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
           >
             Home Dashboard
           </Label>
-          <SimplePicker
+          <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}
             getOptionLabel={i => i.title}
-            onSelected={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
+            onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
             options={dashboards}
             placeholder="Chose default dashboard"
             width={20}
@@ -119,11 +117,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
         </div>
         <div className="gf-form">
           <label className="gf-form-label width-11">Timezone</label>
-          <SimplePicker
+          <Select
             value={timezones.find(item => item.value === timezone)}
-            getOptionValue={i => i.value}
-            getOptionLabel={i => i.text}
-            onSelected={timezone => this.onTimeZoneChanged(timezone.value)}
+            onChange={timezone => this.onTimeZoneChanged(timezone.value)}
             options={timezones}
             width={20}
           />
