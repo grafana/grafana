@@ -13,13 +13,18 @@
 }
 
 .gf-timepicker-dropdown {
-  position: absolute;
-  top: $navbarHeight;
-  right: 0;
-  padding: 10px 20px;
   background-color: $page-bg;
   border-radius: 0 0 0 4px;
   box-shadow: $search-shadow;
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 10px 20px;
+  position: absolute;
+  right: 0;
+  top: $navbarHeight;
+  @include media-breakpoint-up(md) {
+    flex-direction: column;
+  }
 }
 
 .gf-timepicker-absolute-section {
