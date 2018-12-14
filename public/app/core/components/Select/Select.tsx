@@ -3,12 +3,14 @@ import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { default as ReactSelect } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/lib/Async';
+import { components } from 'react-select';
 
 // Components
 import { Option, SingleValue } from './PickerOption';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import ResetStyles from './ResetStyles';
+import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 export interface SelectOptionItem {
   label?: string;
@@ -50,6 +52,14 @@ interface AsyncProps {
   loadOptions: (query: string) => Promise<SelectOptionItem[]>;
   loadingMessage?: () => string;
 }
+
+export const MenuList = props => {
+  return (
+    <components.MenuList {...props}>
+      <CustomScrollbar autoHide={false}>{props.children}</CustomScrollbar>
+    </components.MenuList>
+  );
+};
 
 export class Select extends PureComponent<CommonProps & SelectProps> {
   static defaultProps = {
@@ -106,6 +116,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
           Option,
           SingleValue,
           IndicatorsContainer,
+          MenuList,
         }}
         defaultValue={defaultValue}
         value={value}

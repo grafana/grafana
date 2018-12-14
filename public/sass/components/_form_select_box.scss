@@ -79,6 +79,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 .gf-form-select-box__option {
   border-left: 2px solid transparent;
   white-space: nowrap;
+  background-color: $input-bg;
 
   &.gf-form-select-box__option--is-focused {
     color: $dropdownLinkColorHover;
