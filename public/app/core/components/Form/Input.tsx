@@ -1,4 +1,5 @@
-﻿import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
+import classNames from 'classnames';
 import { ValidationEvents, ValidationRule } from 'app/types';
 import { validate, hasValidationEvent } from 'app/core/utils/validate';
 
@@ -31,6 +32,10 @@ interface Props extends React.HTMLProps<HTMLInputElement> {
 }
 
 export class Input extends PureComponent<Props> {
+  static defaultProps = {
+    className: '',
+  };
+
   state = {
     error: null,
   };
@@ -76,7 +81,7 @@ export class Input extends PureComponent<Props> {
   render() {
     const { validationEvents, className, hideErrorMessage, ...restProps } = this.props;
     const { error } = this.state;
-    const inputClassName = 'gf-form-input' + (this.isInvalid ? ' invalid' : '');
+    const inputClassName = classNames('gf-form-input', { invalid: this.isInvalid }, className);
     const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
