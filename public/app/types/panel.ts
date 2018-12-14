@@ -43,8 +43,8 @@ export enum MappingType {
 }
 
 export enum BasicGaugeColor {
-  Green = 'lightgreen',
-  Red = 'red',
+  Green = '#299c46',
+  Red = '#d44a3a',
 }
 
 interface BaseMap {
