@@ -252,7 +252,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       <EditorTabBody heading="Queries" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
         <>
           <PanelOptionSection>
-            <div className="query-editor-rows gf-form-group">
+            <div className="query-editor-rows">
               <div ref={element => (this.element = element)} />
 
               <div className="gf-form-query">
@@ -260,9 +260,11 @@ export class QueriesTab extends PureComponent<Props, State> {
                   <label className="gf-form-label">
                     <span className="gf-form-query-letter-cell-carret muted">
                       <i className="fa fa-caret-down" />
-                    </span>
+                    </span>{' '}
                     <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
                   </label>
+                </div>
+                <div className="gf-form">
                   {!isAddingMixed && (
                     <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
                       Add Query
