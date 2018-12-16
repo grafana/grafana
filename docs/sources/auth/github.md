@@ -1,5 +1,5 @@
 +++
-title = "Google OAuth2 Authentication"
+title = "GitHub OAuth2 Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
 type = "docs"
