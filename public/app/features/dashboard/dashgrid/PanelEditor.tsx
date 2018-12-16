@@ -72,13 +72,25 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
 
   render() {
     const { plugin } = this.props;
-    const activeTab = store.getState().location.query.tab || 'queries';
+    let activeTab = store.getState().location.query.tab || 'queries';
 
-    const tabs = [
+    const tabs: PanelEditorTab[] = [
       { id: 'queries', text: 'Queries' },
       { id: 'visualization', text: 'Visualization' },
       { id: 'advanced', text: 'Panel Options' },
     ];
+
+    // handle panels that do not have queries tab
+    if (plugin.exports.PanelCtrl) {
+      if (!plugin.exports.PanelCtrl.prototype.onDataReceived) {
+        // remove queries tab
+        tabs.shift();
+        // switch tab
+        if (activeTab === 'queries') {
+          activeTab = 'visualization';
+        }
+      }
+    }
 
     if (config.alertingEnabled && plugin.id === 'graph') {
       tabs.push({

@@ -7,6 +7,8 @@ const defaultContent = `
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
 
+
+
 `;
 
 export class TextPanelCtrl extends PanelCtrl {

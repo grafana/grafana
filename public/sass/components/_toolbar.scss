@@ -17,11 +17,12 @@
 }
 
 .toolbar__main {
-  padding: $input-padding-y $input-padding-x;
+  padding: 0 $input-padding-x;
   font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
+  height: $gf-form-input-height;
   border: $input-border;
   border-radius: $input-border-radius;
   display: flex;
