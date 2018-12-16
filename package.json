@@ -155,7 +155,7 @@
     "react-popper": "^1.3.0",
     "react-highlight-words": "0.11.0",
     "react-redux": "^5.0.7",
-    "react-select": "2.1.0",
+    "@torkelo/react-select": "2.1.1",
     "react-sizeme": "^2.3.6",
     "react-table": "^6.8.6",
     "react-transition-group": "^2.2.1",

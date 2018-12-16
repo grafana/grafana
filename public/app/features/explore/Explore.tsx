@@ -930,7 +930,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             </button>
           </div>
           <div className="navbar-buttons relative">
-            <button className="btn navbar-button--primary" onClick={this.onSubmit}>
+            <button className="btn navbar-button navbar-button--primary" onClick={this.onSubmit}>
               Run Query{' '}
               {loading ? <i className="fa fa-spinner fa-spin run-icon" /> : <i className="fa fa-level-down run-icon" />}
             </button>

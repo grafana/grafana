@@ -1,9 +1,9 @@
 // Libraries
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
-import { default as ReactSelect } from 'react-select';
-import { default as ReactAsyncSelect } from 'react-select/lib/Async';
-import { components } from 'react-select';
+import { default as ReactSelect } from '@torkelo/react-select';
+import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
+import { components } from '@torkelo/react-select';
 
 // Components
 import { Option, SingleValue } from './PickerOption';

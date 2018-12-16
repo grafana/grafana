@@ -1,6 +1,6 @@
 import React from 'react';
-import { components } from 'react-select';
-import { OptionProps } from 'react-select/lib/components/Option';
+import { components } from '@torkelo/react-select';
+import { OptionProps } from '@torkelo/react-select/lib/components/Option';
 
 export interface Props {
   children: Element;
