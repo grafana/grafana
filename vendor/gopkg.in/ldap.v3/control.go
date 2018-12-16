@@ -1,7 +1,3 @@
-// Copyright 2011 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package ldap
 
 import (
@@ -22,13 +18,20 @@ const (
 	ControlTypeVChuPasswordWarning = "2.16.840.1.113730.3.4.5"
 	// ControlTypeManageDsaIT - https://tools.ietf.org/html/rfc3296
 	ControlTypeManageDsaIT = "2.16.840.1.113730.3.4.2"
+
+	// ControlTypeMicrosoftNotification - https://msdn.microsoft.com/en-us/library/aa366983(v=vs.85).aspx
+	ControlTypeMicrosoftNotification = "1.2.840.113556.1.4.528"
+	// ControlTypeMicrosoftShowDeleted - https://msdn.microsoft.com/en-us/library/aa366989(v=vs.85).aspx
+	ControlTypeMicrosoftShowDeleted = "1.2.840.113556.1.4.417"
 )
 
 // ControlTypeMap maps controls to text descriptions
 var ControlTypeMap = map[string]string{
-	ControlTypePaging:               "Paging",
-	ControlTypeBeheraPasswordPolicy: "Password Policy - Behera Draft",
-	ControlTypeManageDsaIT:          "Manage DSA IT",
+	ControlTypePaging:                "Paging",
+	ControlTypeBeheraPasswordPolicy:  "Password Policy - Behera Draft",
+	ControlTypeManageDsaIT:           "Manage DSA IT",
+	ControlTypeMicrosoftNotification: "Change Notification - Microsoft",
+	ControlTypeMicrosoftShowDeleted:  "Show Deleted Objects - Microsoft",
 }
 
 // Control defines an interface controls provide to encode and describe themselves
@@ -242,6 +245,64 @@ func NewControlManageDsaIT(Criticality bool) *ControlManageDsaIT {
 	return &ControlManageDsaIT{Criticality: Criticality}
 }
 
+// ControlMicrosoftNotification implements the control described in https://msdn.microsoft.com/en-us/library/aa366983(v=vs.85).aspx
+type ControlMicrosoftNotification struct{}
+
+// GetControlType returns the OID
+func (c *ControlMicrosoftNotification) GetControlType() string {
+	return ControlTypeMicrosoftNotification
+}
+
+// Encode returns the ber packet representation
+func (c *ControlMicrosoftNotification) Encode() *ber.Packet {
+	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Control")
+	packet.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, ControlTypeMicrosoftNotification, "Control Type ("+ControlTypeMap[ControlTypeMicrosoftNotification]+")"))
+
+	return packet
+}
+
+// String returns a human-readable description
+func (c *ControlMicrosoftNotification) String() string {
+	return fmt.Sprintf(
+		"Control Type: %s (%q)",
+		ControlTypeMap[ControlTypeMicrosoftNotification],
+		ControlTypeMicrosoftNotification)
+}
+
+// NewControlMicrosoftNotification returns a ControlMicrosoftNotification control
+func NewControlMicrosoftNotification() *ControlMicrosoftNotification {
+	return &ControlMicrosoftNotification{}
+}
+
+// ControlMicrosoftShowDeleted implements the control described in https://msdn.microsoft.com/en-us/library/aa366989(v=vs.85).aspx
+type ControlMicrosoftShowDeleted struct{}
+
+// GetControlType returns the OID
+func (c *ControlMicrosoftShowDeleted) GetControlType() string {
+	return ControlTypeMicrosoftShowDeleted
+}
+
+// Encode returns the ber packet representation
+func (c *ControlMicrosoftShowDeleted) Encode() *ber.Packet {
+	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Control")
+	packet.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, ControlTypeMicrosoftShowDeleted, "Control Type ("+ControlTypeMap[ControlTypeMicrosoftShowDeleted]+")"))
+
+	return packet
+}
+
+// String returns a human-readable description
+func (c *ControlMicrosoftShowDeleted) String() string {
+	return fmt.Sprintf(
+		"Control Type: %s (%q)",
+		ControlTypeMap[ControlTypeMicrosoftShowDeleted],
+		ControlTypeMicrosoftShowDeleted)
+}
+
+// NewControlMicrosoftShowDeleted returns a ControlMicrosoftShowDeleted control
+func NewControlMicrosoftShowDeleted() *ControlMicrosoftShowDeleted {
+	return &ControlMicrosoftShowDeleted{}
+}
+
 // FindControl returns the first control of the given type in the list, or nil
 func FindControl(controls []Control, controlType string) Control {
 	for _, c := range controls {
@@ -253,7 +314,7 @@ func FindControl(controls []Control, controlType string) Control {
 }
 
 // DecodeControl returns a control read from the given packet, or nil if no recognized control can be made
-func DecodeControl(packet *ber.Packet) Control {
+func DecodeControl(packet *ber.Packet) (Control, error) {
 	var (
 		ControlType = ""
 		Criticality = false
@@ -263,7 +324,7 @@ func DecodeControl(packet *ber.Packet) Control {
 	switch len(packet.Children) {
 	case 0:
 		// at least one child is required for control type
-		return nil
+		return nil, fmt.Errorf("at least one child is required for control type")
 
 	case 1:
 		// just type, no criticality or value
@@ -296,17 +357,20 @@ func DecodeControl(packet *ber.Packet) Control {
 
 	default:
 		// more than 3 children is invalid
-		return nil
+		return nil, fmt.Errorf("more than 3 children is invalid for controls")
 	}
 
 	switch ControlType {
 	case ControlTypeManageDsaIT:
-		return NewControlManageDsaIT(Criticality)
+		return NewControlManageDsaIT(Criticality), nil
 	case ControlTypePaging:
 		value.Description += " (Paging)"
 		c := new(ControlPaging)
 		if value.Value != nil {
-			valueChildren := ber.DecodePacket(value.Data.Bytes())
+			valueChildren, err := ber.DecodePacketErr(value.Data.Bytes())
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode data bytes: %s", err)
+			}
 			value.Data.Truncate(0)
 			value.Value = nil
 			value.AppendChild(valueChildren)
@@ -318,12 +382,15 @@ func DecodeControl(packet *ber.Packet) Control {
 		c.PagingSize = uint32(value.Children[0].Value.(int64))
 		c.Cookie = value.Children[1].Data.Bytes()
 		value.Children[1].Value = c.Cookie
-		return c
+		return c, nil
 	case ControlTypeBeheraPasswordPolicy:
 		value.Description += " (Password Policy - Behera)"
 		c := NewControlBeheraPasswordPolicy()
 		if value.Value != nil {
-			valueChildren := ber.DecodePacket(value.Data.Bytes())
+			valueChildren, err := ber.DecodePacketErr(value.Data.Bytes())
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode data bytes: %s", err)
+			}
 			value.Data.Truncate(0)
 			value.Value = nil
 			value.AppendChild(valueChildren)
@@ -335,7 +402,10 @@ func DecodeControl(packet *ber.Packet) Control {
 			if child.Tag == 0 {
 				//Warning
 				warningPacket := child.Children[0]
-				packet := ber.DecodePacket(warningPacket.Data.Bytes())
+				packet, err := ber.DecodePacketErr(warningPacket.Data.Bytes())
+				if err != nil {
+					return nil, fmt.Errorf("failed to decode data bytes: %s", err)
+				}
 				val, ok := packet.Value.(int64)
 				if ok {
 					if warningPacket.Tag == 0 {
@@ -350,7 +420,10 @@ func DecodeControl(packet *ber.Packet) Control {
 				}
 			} else if child.Tag == 1 {
 				// Error
-				packet := ber.DecodePacket(child.Data.Bytes())
+				packet, err := ber.DecodePacketErr(child.Data.Bytes())
+				if err != nil {
+					return nil, fmt.Errorf("failed to decode data bytes: %s", err)
+				}
 				val, ok := packet.Value.(int8)
 				if !ok {
 					// what to do?
@@ -361,22 +434,26 @@ func DecodeControl(packet *ber.Packet) Control {
 				c.ErrorString = BeheraPasswordPolicyErrorMap[c.Error]
 			}
 		}
-		return c
+		return c, nil
 	case ControlTypeVChuPasswordMustChange:
 		c := &ControlVChuPasswordMustChange{MustChange: true}
-		return c
+		return c, nil
 	case ControlTypeVChuPasswordWarning:
 		c := &ControlVChuPasswordWarning{Expire: -1}
 		expireStr := ber.DecodeString(value.Data.Bytes())
 
 		expire, err := strconv.ParseInt(expireStr, 10, 64)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("failed to parse value as int: %s", err)
 		}
 		c.Expire = expire
 		value.Value = c.Expire
 
-		return c
+		return c, nil
+	case ControlTypeMicrosoftNotification:
+		return NewControlMicrosoftNotification(), nil
+	case ControlTypeMicrosoftShowDeleted:
+		return NewControlMicrosoftShowDeleted(), nil
 	default:
 		c := new(ControlString)
 		c.ControlType = ControlType
@@ -384,7 +461,7 @@ func DecodeControl(packet *ber.Packet) Control {
 		if value != nil {
 			c.ControlValue = value.Value.(string)
 		}
-		return c
+		return c, nil
 	}
 }
 

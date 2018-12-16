@@ -40,7 +40,7 @@ func (l *Conn) Del(delRequest *DelRequest) error {
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
 	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, l.nextMessageID(), "MessageID"))
 	packet.AppendChild(delRequest.encode())
-	if delRequest.Controls != nil {
+	if len(delRequest.Controls) > 0 {
 		packet.AppendChild(encodeControls(delRequest.Controls))
 	}
 
@@ -71,9 +71,9 @@ func (l *Conn) Del(delRequest *DelRequest) error {
 	}
 
 	if packet.Children[1].Tag == ApplicationDelResponse {
-		resultCode, resultDescription := getLDAPResultCode(packet)
-		if resultCode != 0 {
-			return NewError(resultCode, errors.New(resultDescription))
+		err := GetLDAPError(packet)
+		if err != nil {
+			return err
 		}
 	} else {
 		log.Printf("Unexpected Response: %d", packet.Children[1].Tag)

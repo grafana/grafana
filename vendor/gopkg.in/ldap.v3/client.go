@@ -18,6 +18,7 @@ type Client interface {
 	Add(addRequest *AddRequest) error
 	Del(delRequest *DelRequest) error
 	Modify(modifyRequest *ModifyRequest) error
+	ModifyDN(modifyDNRequest *ModifyDNRequest) error
 
 	Compare(dn, attribute, value string) (bool, error)
 	PasswordModify(passwordModifyRequest *PasswordModifyRequest) (*PasswordModifyResult, error)

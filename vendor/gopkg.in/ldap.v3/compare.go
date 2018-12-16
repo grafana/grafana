@@ -1,7 +1,3 @@
-// Copyright 2014 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-//
 // File contains Compare functionality
 //
 // https://tools.ietf.org/html/rfc4511
@@ -41,7 +37,7 @@ func (l *Conn) Compare(dn, attribute, value string) (bool, error) {
 
 	ava := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "AttributeValueAssertion")
 	ava.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, attribute, "AttributeDesc"))
-	ava.AppendChild(ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagOctetString, value, "AssertionValue"))
+	ava.AppendChild(ber.Encode(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, value, "AssertionValue"))
 	request.AppendChild(ava)
 	packet.AppendChild(request)
 
@@ -72,14 +68,16 @@ func (l *Conn) Compare(dn, attribute, value string) (bool, error) {
 	}
 
 	if packet.Children[1].Tag == ApplicationCompareResponse {
-		resultCode, resultDescription := getLDAPResultCode(packet)
-		if resultCode == LDAPResultCompareTrue {
+		err := GetLDAPError(packet)
+
+		switch {
+		case IsErrorWithCode(err, LDAPResultCompareTrue):
 			return true, nil
-		} else if resultCode == LDAPResultCompareFalse {
+		case IsErrorWithCode(err, LDAPResultCompareFalse):
 			return false, nil
-		} else {
-			return false, NewError(resultCode, errors.New(resultDescription))
+		default:
+			return false, err
 		}
 	}
-	return false, fmt.Errorf("Unexpected Response: %d", packet.Children[1].Tag)
+	return false, fmt.Errorf("unexpected Response: %d", packet.Children[1].Tag)
 }
