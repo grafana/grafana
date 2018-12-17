@@ -60,7 +60,11 @@
         left: 10px;
         right: 10px;
         top: 2px;
-        border-top: 2px dotted $gray-2;
+        border-top: 2px dotted $gray-1;
+      }
+
+      &:hover::before {
+        border-color: $gray-2;
       }
     }
   }
