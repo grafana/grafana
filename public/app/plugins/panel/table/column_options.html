@@ -3,51 +3,51 @@
     <h5 class="section-heading">Options</h5>
     <div class="gf-form-inline">
       <div class="gf-form">
-        <label class="gf-form-label width-13">Apply to columns named</label>
+        <label class="gf-form-label width-12">Apply to columns named</label>
         <input type="text" placeholder="Name or regex" class="gf-form-input width-13" ng-model="style.pattern" bs-tooltip="'Specify regex using /my.*regex/ syntax'"
             bs-typeahead="editor.getColumnNames" ng-blur="editor.render()" data-min-length=0 data-items=100 ng-model-onblur
             data-placement="right">
       </div>
     </div>
     <div class="gf-form" ng-if="style.type !== 'hidden'">
-      <label class="gf-form-label width-13">Column Header</label>
-      <input type="text" class="gf-form-input width-13" ng-model="style.alias" ng-change="editor.render()" ng-model-onblur placeholder="Override header label">
+      <label class="gf-form-label width-12">Column Header</label>
+      <input type="text" class="gf-form-input width-12" ng-model="style.alias" ng-change="editor.render()" ng-model-onblur placeholder="Override header label">
     </div>
-    <gf-form-switch class="gf-form" label-class="width-13" label="Render value as link" checked="style.link" change="editor.render()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label-class="width-12" label="Render value as link" checked="style.link" change="editor.render()"></gf-form-switch>
   </div>
 
   <div class="section gf-form-group">
     <h5 class="section-heading">Type</h5>
 
     <div class="gf-form">
-      <label class="gf-form-label width-11">Type</label>
+      <label class="gf-form-label width-10">Type</label>
       <div class="gf-form-select-wrapper width-16">
         <select class="gf-form-input" ng-model="style.type" ng-options="c.value as c.text for c in editor.columnTypes" ng-change="editor.render()"></select>
       </div>
     </div>
     <div class="gf-form" ng-if="style.type === 'date'">
-      <label class="gf-form-label width-11">Date Format</label>
+      <label class="gf-form-label width-10">Date Format</label>
       <gf-form-dropdown model="style.dateFormat" css-class="gf-form-input width-16" lookup-text="true"
         	get-options="editor.dateFormats" on-change="editor.render()" allow-custom="true">
       </gf-form-dropdown>
     </div>
 
     <div ng-if="style.type === 'string'">
-      <gf-form-switch class="gf-form" label-class="width-11" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize"
+      <gf-form-switch class="gf-form" label-class="width-10" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize"
           change="editor.render()"></gf-form-switch>
     </div>
     <div ng-if="style.type === 'string'">
-      <gf-form-switch class="gf-form" label-class="width-11" ng-if="style.type === 'string'" label="Preserve Formatting" checked="style.preserveFormat"
+      <gf-form-switch class="gf-form" label-class="width-10" ng-if="style.type === 'string'" label="Preserve Formatting" checked="style.preserveFormat"
           change="editor.render()"></gf-form-switch>
     </div>
 
     <div ng-if="style.type === 'number'">
       <div class="gf-form">
-        <label class="gf-form-label width-11">Unit</label>
+        <label class="gf-form-label width-10">Unit</label>
         <div class="gf-form-dropdown-typeahead width-16" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label width-11">Decimals</label>
+        <label class="gf-form-label width-10">Decimals</label>
         <input type="number" class="gf-form-input width-4" data-placement="right" ng-model="style.decimals" ng-change="editor.render()"
             ng-model-onblur>
       </div>

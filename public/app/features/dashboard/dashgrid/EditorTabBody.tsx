@@ -1,6 +1,10 @@
+// Libraries
 import React, { PureComponent } from 'react';
+
+// Components
 import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
+import { PanelOptionSection } from './PanelOptionSection';
 
 interface Props {
   children: JSX.Element;
@@ -10,7 +14,8 @@ interface Props {
 }
 
 export interface EditorToolBarView {
-  title: string;
+  title?: string;
+  heading?: string;
   imgSrc?: string;
   icon?: string;
   disabled?: boolean;
@@ -88,12 +93,9 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderOpenView(view: EditorToolBarView) {
     return (
-      <div className="toolbar-subview">
-        <button className="toolbar-subview__close" onClick={this.onCloseOpenView}>
-          <i className="fa fa-chevron-up" />
-        </button>
-        {view.render(this.onCloseOpenView)}
-      </div>
+      <PanelOptionSection title={view.title || view.heading} onClose={this.onCloseOpenView}>
+        {view.render()}
+      </PanelOptionSection>
     );
   }
 
@@ -115,10 +117,10 @@ export class EditorTabBody extends PureComponent<Props, State> {
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false}>
-            <FadeIn in={isOpen} duration={200} unmountOnExit={true}>
-              <div className="panel-editor__toolbar-view">{openView && this.renderOpenView(openView)}</div>
-            </FadeIn>
             <div className="panel-editor__content">
+              <FadeIn in={isOpen} duration={200} unmountOnExit={true}>
+                {openView && this.renderOpenView(openView)}
+              </FadeIn>
               <FadeIn in={fadeIn} duration={50}>
                 {children}
               </FadeIn>

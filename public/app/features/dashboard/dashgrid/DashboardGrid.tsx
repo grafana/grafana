@@ -45,7 +45,7 @@ function GridWrapper({
       isResizable={isResizable}
       measureBeforeMount={false}
       containerPadding={[0, 0]}
-      useCSSTransforms={true}
+      useCSSTransforms={false}
       margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
       cols={GRID_COLUMN_COUNT}
       rowHeight={GRID_CELL_HEIGHT}
@@ -67,7 +67,7 @@ export interface DashboardGridProps {
   dashboard: DashboardModel;
 }
 
-export class DashboardGrid extends React.Component<DashboardGridProps, any> {
+export class DashboardGrid extends React.Component<DashboardGridProps> {
   gridToPanelMap: any;
   panelMap: { [id: string]: PanelModel };
 
@@ -78,8 +78,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onResizeStop = this.onResizeStop.bind(this);
     this.onDragStop = this.onDragStop.bind(this);
     this.onWidthChange = this.onWidthChange.bind(this);
-
-    this.state = { animated: false };
 
     // subscribe to dashboard events
     const dashboard = this.props.dashboard;
@@ -145,7 +143,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
   onViewModeChanged(payload) {
     ignoreNextWidthChange = true;
-    this.setState({ animated: !payload.fullscreen });
+    this.forceUpdate();
   }
 
   updateGridPos(item, layout) {
@@ -167,12 +165,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
   onDragStop(layout, oldItem, newItem) {
     this.updateGridPos(newItem, layout);
-  }
-
-  componentDidMount() {
-    setTimeout(() => {
-      this.setState({ animated: true });
-    });
   }
 
   renderPanels() {
@@ -198,7 +190,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   render() {
     return (
       <SizedReactLayoutGrid
-        className={classNames({ layout: true, animated: this.state.animated })}
+        className={classNames({ layout: true })}
         layout={this.buildLayout()}
         isResizable={this.props.dashboard.meta.canEdit}
         isDraggable={this.props.dashboard.meta.canEdit}

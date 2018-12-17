@@ -8,6 +8,7 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
+import { PanelOptionSection } from './PanelOptionSection';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -59,11 +60,15 @@ export class VisualizationTab extends PureComponent<Props, State> {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (PanelOptions) {
-      return <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />;
-    } else {
-      return <p>Visualization has no options</p>;
-    }
+    return (
+      <PanelOptionSection>
+        {PanelOptions ? (
+          <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />
+        ) : (
+          <p>Visualization has no options</p>
+        )}
+      </PanelOptionSection>
+    );
   }
 
   componentDidMount() {
@@ -105,9 +110,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
       template +=
         `
-      <div class="form-section" ng-cloak>` +
-        (i > -1 ? `<div class="form-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
-        `<div class="form-section__body">
+      <div class="panel-option-section" ng-cloak>` +
+        (i > 0 ? `<div class="panel-option-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
+        `<div class="panel-option-section__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
       </div>

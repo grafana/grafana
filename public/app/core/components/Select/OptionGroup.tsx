@@ -9,7 +9,7 @@ interface State {
   expanded: boolean;
 }
 
-export default class UnitGroup extends PureComponent<ExtendedGroupProps, State> {
+export default class OptionGroup extends PureComponent<ExtendedGroupProps, State> {
   state = {
     expanded: false,
   };
@@ -41,10 +41,10 @@ export default class UnitGroup extends PureComponent<ExtendedGroupProps, State> 
     const { expanded } = this.state;
 
     return (
-      <div className="width-21 unit-picker-group" style={{ marginBottom: '5px' }}>
-        <div className="unit-picker-group-item" onClick={this.onToggleChildren}>
-          <span style={{ textTransform: 'capitalize' }}>{label}</span>
-          <i className={`fa ${expanded ? 'fa-minus' : 'fa-plus'}`} />{' '}
+      <div className="gf-form-select-box__option-group">
+        <div className="gf-form-select-box__option-group__header" onClick={this.onToggleChildren}>
+          <span className="flex-grow">{label}</span>
+          <i className={`fa ${expanded ? 'fa-caret-left' : 'fa-caret-down'}`} />{' '}
         </div>
         {expanded && children}
       </div>
