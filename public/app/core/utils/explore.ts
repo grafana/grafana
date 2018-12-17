@@ -57,12 +57,19 @@ export async function getExploreUrl(
     }
   }
 
-  if (exploreDatasource && exploreDatasource.meta.explore) {
+  if (panelDatasource) {
     const range = timeSrv.timeRangeForUrl();
-    const state = {
-      ...exploreDatasource.getExploreState(exploreTargets),
-      range,
-    };
+    let state: Partial<ExploreUrlState> = { range };
+    if (exploreDatasource.getExploreState) {
+      state = { ...state, ...exploreDatasource.getExploreState(exploreTargets) };
+    } else {
+      state = {
+        ...state,
+        datasource: panelDatasource.name,
+        queries: exploreTargets.map(t => ({ ...t, datasource: panelDatasource.name })),
+      };
+    }
+
     const exploreState = JSON.stringify(state);
     url = renderUrl('/explore', { state: exploreState });
   }
