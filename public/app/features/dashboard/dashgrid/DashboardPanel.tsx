@@ -104,7 +104,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
   }
 
-  // TODO: Util
   get screenDimensions(): DimensionsXY {
     return {
       x: document.documentElement.scrollWidth,
