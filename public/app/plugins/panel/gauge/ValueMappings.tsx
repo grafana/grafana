@@ -76,7 +76,7 @@ export default class ValueMappings extends PureComponent<OptionModuleProps, Stat
 
     return (
       <div className="section gf-form-group">
-        <h5 className="page-heading">Value mappings</h5>
+        <h5 className="section-heading">Value mappings</h5>
         <div>
           {mappings.length > 0 &&
             mappings.map((mapping, index) => (

@@ -19,31 +19,27 @@ export default class GaugeOptions extends PureComponent<OptionModuleProps> {
 
     return (
       <div className="section gf-form-group">
-        <h5 className="page-heading">Gauge</h5>
-        <div className="gf-form-inline">
-          <Switch
-            label="Threshold labels"
-            labelClass="width-10"
-            checked={showThresholdLabels}
-            onChange={this.onToggleThresholdLabels}
-          />
-        </div>
-        <div className="gf-form-inline">
-          <Switch
-            label="Threshold markers"
-            labelClass="width-10"
-            checked={showThresholdMarkers}
-            onChange={this.onToggleThresholdMarkers}
-          />
-        </div>
-        <div className="gf-form-inline">
-          <Label width={6}>Min value</Label>
+        <h5 className="section-heading">Gauge</h5>
+        <div className="gf-form">
+          <Label width={8}>Min value</Label>
           <input type="text" className="gf-form-input width-12" onChange={this.onMinValueChange} value={minValue} />
         </div>
-        <div className="gf-form-inline">
-          <Label width={6}>Max value</Label>
+        <div className="gf-form">
+          <Label width={8}>Max value</Label>
           <input type="text" className="gf-form-input width-12" onChange={this.onMaxValueChange} value={maxValue} />
         </div>
+        <Switch
+          label="Show labels"
+          labelClass="width-8"
+          checked={showThresholdLabels}
+          onChange={this.onToggleThresholdLabels}
+        />
+        <Switch
+          label="Show markers"
+          labelClass="width-8"
+          checked={showThresholdMarkers}
+          onChange={this.onToggleThresholdMarkers}
+        />
       </div>
     );
   }

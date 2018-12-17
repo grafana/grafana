@@ -123,6 +123,15 @@ $input-border: 1px solid $input-border-color;
     padding-left: 0px;
   }
 
+  &--btn {
+    border-right: $input-btn-border-width solid $input-label-border-color;
+    border-radius: $border-radius;
+
+    &:hover {
+      background: $list-item-hover-bg;
+    }
+  }
+
   &:disabled {
     color: $text-color-weak;
   }
