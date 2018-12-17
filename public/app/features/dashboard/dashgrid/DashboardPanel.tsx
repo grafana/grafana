@@ -145,7 +145,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.cleanUpAngularPanel(true);
+    this.cleanUpAngularPanel();
     window.removeEventListener('resize', this.debouncedUpdatePanelDimensions);
   }
 
