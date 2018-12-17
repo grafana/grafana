@@ -93,14 +93,14 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getFontColor(value) {
-    const { baseColor, thresholds } = this.props;
+    const { baseColor, maxValue, thresholds } = this.props;
 
-    if (thresholds.length > 0) {
-      const foo = thresholds.filter(t => value <= t.value);
+    const atThreshold = thresholds.filter(threshold => value <= threshold.value);
 
-      if (foo.length > 0) {
-        return foo[0].color;
-      }
+    if (atThreshold.length > 0) {
+      return atThreshold[0].color;
+    } else if (value <= maxValue) {
+      return BasicGaugeColor.Red;
     }
 
     return baseColor;
@@ -142,8 +142,7 @@ export class Gauge extends PureComponent<Props> {
       ...thresholds.map((threshold, index) => {
         return {
           value: threshold.value,
-          // Hacky way to get correct color for threshold.
-          color: index === 0 ? threshold.color : thresholds[index - 1].color,
+          color: index === 0 ? threshold.color : thresholds[index].color,
         };
       }),
       {
