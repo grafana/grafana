@@ -4,6 +4,7 @@ RELEASE_TYPE="${1:-}"
 GPG_PASS="${2:-}"
 
 if [ -z "$RELEASE_TYPE" -o -z "$GPG_PASS" ]; then
+    echo "Both RELEASE_TYPE (arg 1) and GPG_PASS (arg 2) has to be set"
     exit 1
 fi
 
@@ -36,3 +37,6 @@ gsutil -m rsync -r -d /deb-repo/repo/grafana "gs://grafana-repo/$RELEASE_TYPE/de
 
 # usage:
 # deb https://grafana-repo.storage.googleapis.com/oss/deb squeeze main
+#
+# later:
+# deb https://repo.grafana.com/oss/deb squeeze main
