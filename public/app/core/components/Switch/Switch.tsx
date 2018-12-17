@@ -32,7 +32,7 @@ export class Switch extends PureComponent<Props, State> {
     const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
 
     return (
-      <label htmlFor={labelId} className="gf-form-switch-container">
+      <label htmlFor={labelId} className="gf-form gf-form-switch-container">
         {label && <div className={labelClassName}>{label}</div>}
         <div className={switchClassName}>
           <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />

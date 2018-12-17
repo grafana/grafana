@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import _ from 'lodash';
 import { AsyncSelect } from './Select';
 import { debounce } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -36,6 +37,10 @@ export class TeamPicker extends Component<Props, State> {
   search(query?: string) {
     const backendSrv = getBackendSrv();
     this.setState({ isLoading: true });
+
+    if (_.isNil(query)) {
+      query = '';
+    }
 
     return backendSrv.get(`/api/teams/search?perpage=10&page=1&query=${query}`).then(result => {
       const teams = result.teams.map(team => {
