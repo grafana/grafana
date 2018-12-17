@@ -405,7 +405,8 @@ kbn.valueFormats.percentunit = (size, decimals) => {
 };
 
 /* Formats the value to hex. Uses float if specified decimals are not 0.
- * There are two options, one with 0x, and one without */
+ * There are two submenu
+ * , one with 0x, and one without */
 
 kbn.valueFormats.hex = (value, decimals) => {
   if (value == null) {

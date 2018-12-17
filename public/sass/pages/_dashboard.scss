@@ -3,10 +3,6 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-
-  &--has-submenu {
-    height: calc(100% - 50px);
-  }
 }
 
 .template-variable {
@@ -44,26 +40,13 @@ div.flot-text {
   height: 100%;
 }
 
-.panel-editor-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.panel-editor-container__panel {
-  height: 35%;
-}
-
-.panel-editor-container__editor {
-  height: 65%;
-}
-
 .panel-container {
   background-color: $panel-bg;
   border: $panel-border;
   position: relative;
   border-radius: 3px;
   height: 100%;
+  width: 100%;
 
   &.panel-transparent {
     background-color: transparent;
@@ -80,6 +63,10 @@ div.flot-text {
 
   &--is-editing {
     height: auto;
+  }
+
+  &--absolute {
+    position: absolute;
   }
 }
 
@@ -162,6 +149,20 @@ div.flot-text {
   z-index: 800;
   font-size: $font-size-sm;
   color: $text-color-weak;
+}
+
+.panel-empty {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+
+  p {
+    text-align: center;
+    color: $text-muted;
+    font-size: $font-size-lg;
+    width: 100%;
+  }
 }
 
 .panel-header {

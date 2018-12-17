@@ -20,7 +20,7 @@ export class TimeSrv {
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
-  constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
+  constructor($rootScope, private $timeout, private $location, private timer, private contextSrv) {
     // default time
     this.time = { from: '6h', to: 'now' };
 
@@ -189,7 +189,6 @@ export class TimeSrv {
       this.$location.search(urlParams);
     }
 
-    this.$rootScope.appEvent('time-range-changed', this.time);
     this.$timeout(this.refreshDashboard.bind(this), 0);
   }
 

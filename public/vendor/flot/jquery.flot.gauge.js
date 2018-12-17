@@ -588,6 +588,7 @@
             if (!exists) {
                 span = $("<span></span>")
                 span.attr("id", id);
+                span.attr("class", "flot-temp-elem");
                 placeholder.append(span);
             }
 

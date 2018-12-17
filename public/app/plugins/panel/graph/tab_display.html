@@ -1,28 +1,5 @@
-<div class="edit-tab-with-sidemenu">
-	<aside class="edit-sidemenu-aside">
-		<ul class="edit-sidemenu">
-			<li ng-class="{active: ctrl.subTabIndex === 0}">
-				<a ng-click="ctrl.subTabIndex = 0">Draw options</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 1}">
-				<a ng-click="ctrl.subTabIndex = 1">
-					Series overrides <span class="muted">({{ctrl.panel.seriesOverrides.length}})</span>
-				</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 2}">
-				<a ng-click="ctrl.subTabIndex = 2">
-					Thresholds <span class="muted">({{ctrl.panel.thresholds.length}})</span>
-				</a>
-			</li>
-			<li ng-class="{active: ctrl.subTabIndex === 3}">
-				<a ng-click="ctrl.subTabIndex = 3">
-					Time regions <span class="muted">({{ctrl.panel.timeRegions.length}})</span>
-				</a>
-			</li>
-		</ul>
-	</aside>
 
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 0">
+	<div class="editor-row">
 		<div class="section gf-form-group">
 			<h5 class="section-heading">Draw Modes</h5>
 			<gf-form-switch class="gf-form" label="Bars" label-class="width-5" checked="ctrl.panel.bars" on-change="ctrl.render()"></gf-form-switch>
@@ -45,10 +22,10 @@
 			</div>
 			<gf-form-switch ng-disabled="!ctrl.panel.lines" class="gf-form" label="Staircase" label-class="width-8" checked="ctrl.panel.steppedLine" on-change="ctrl.render()">
 			</gf-form-switch>
-			<div class="gf-form">
+			<div class="gf-form" ng-if="ctrl.panel.points">
 				<label class="gf-form-label width-8">Point Radius</label>
 				<div class="gf-form-select-wrapper max-width-5">
-					<select class="gf-form-input" ng-model="ctrl.panel.pointradius" ng-options="f for f in [0.5,1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()" ng-disabled="!ctrl.panel.points"></select>
+					<select class="gf-form-input" ng-model="ctrl.panel.pointradius" ng-options="f for f in [0.5,1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()"></select>
 				</div>
 			</div>
 		</div>
@@ -89,9 +66,7 @@
 		</div>
 	</div>
 
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 1">
-		<div class="gf-form-group">
-			<h5>Series specific overrides <tip>Regex match example: /server[0-3]/i </tip></h5>
+		<div>
 			<div class="gf-form-inline" ng-repeat="override in ctrl.panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
 				<div class="gf-form">
 					<label class="gf-form-label">alias or regex</label>
@@ -126,19 +101,10 @@
 					</label>
 				</div>
 			</div>
+			<div class="gf-form-button-row">
+				<button class="btn btn-inverse" ng-click="ctrl.addSeriesOverride()">
+					<i class="fa fa-plus"></i>&nbsp;Add series override<tip>Regex match example: /server[0-3]/i </tip>
+				</button>
+			</div>
 		</div>
 
-		<button class="btn btn-inverse" ng-click="ctrl.addSeriesOverride()">
-			<i class="fa fa-plus"></i>&nbsp;Add override
-		</button>
-	</div>
-
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 2">
-		<graph-threshold-form panel-ctrl="ctrl"></graph-threshold-form>
-	</div>
-
-	<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 3">
-		<graph-time-region-form panel-ctrl="ctrl"></graph-time-region-form>
-	</div>
-
-</div>

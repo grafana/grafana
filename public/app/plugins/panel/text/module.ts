@@ -2,6 +2,15 @@ import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
 import Remarkable from 'remarkable';
 
+const defaultContent = `
+# Title
+
+For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
+
+
+
+`;
+
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
   static scrollable = true;
@@ -11,7 +20,7 @@ export class TextPanelCtrl extends PanelCtrl {
   // Set and populate defaults
   panelDefaults = {
     mode: 'markdown', // 'html', 'markdown', 'text'
-    content: '# title',
+    content: defaultContent,
   };
 
   /** @ngInject */

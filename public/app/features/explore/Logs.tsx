@@ -408,41 +408,36 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
-            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} small />
-            <ToggleButtonGroup
-              label="Dedup"
-              onChange={this.onChangeDedup}
-              value={dedup}
-              render={({ selectedValue, onChange }) =>
-                Object.keys(LogsDedupStrategy).map((dedupType, i) => (
-                  <ToggleButton
-                    className="btn-small"
-                    key={i}
-                    value={dedupType}
-                    onChange={onChange}
-                    title={LogsDedupDescription[dedupType] || null}
-                    selected={selectedValue === dedupType}
-                  >
-                    {dedupType}
-                  </ToggleButton>
-                ))
-              }
-            />
-            {hasData &&
-              meta && (
-                <div className="logs-panel-meta">
-                  {meta.map(item => (
-                    <div className="logs-panel-meta__item" key={item.label}>
-                      <span className="logs-panel-meta__label">{item.label}:</span>
-                      <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} transparent />
+            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} transparent />
+            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <ToggleButtonGroup label="Dedup" transparent={true}>
+              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+                <ToggleButton
+                  key={i}
+                  value={dedupType}
+                  onChange={this.onChangeDedup}
+                  selected={dedup === dedupType}
+                  tooltip={LogsDedupDescription[dedupType]}
+                >
+                  {dedupType}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </div>
         </div>
+
+        {hasData &&
+          meta && (
+            <div className="logs-panel-meta">
+              {meta.map(item => (
+                <div className="logs-panel-meta__item" key={item.label}>
+                  <span className="logs-panel-meta__label">{item.label}:</span>
+                  <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
         <div className="logs-rows">
           {hasData &&

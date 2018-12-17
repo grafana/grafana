@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
+import { Select } from 'app/core/components/Select/Select';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
 
@@ -50,6 +50,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
   render() {
     const { item, folderInfo } = this.props;
     const inheritedFromRoot = item.dashboardId === -1 && !item.inherited;
+    const currentPermissionLevel = dashboardPermissionLevels.find(dp => dp.value === item.permission);
 
     return (
       <tr className={setClassNameHelper(item.inherited)}>
@@ -74,12 +75,13 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td className="query-keyword">Can</td>
         <td>
           <div className="gf-form">
-            <DescriptionPicker
-              optionsWithDesc={dashboardPermissionLevels}
-              onSelected={this.onPermissionChanged}
-              disabled={item.inherited}
-              className={'gf-form-select-box__control--menu-right'}
-              value={item.permission}
+            <Select
+              isSearchable={false}
+              options={dashboardPermissionLevels}
+              onChange={this.onPermissionChanged}
+              isDisabled={item.inherited}
+              className="gf-form-select-box__control--menu-right"
+              value={currentPermissionLevel}
             />
           </div>
         </td>

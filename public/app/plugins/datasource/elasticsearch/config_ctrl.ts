@@ -28,13 +28,15 @@ export class ElasticConfigCtrl {
   ];
 
   indexPatternTypeChanged() {
-    if (!this.current.database ||
-        this.current.database.length === 0 ||
-        this.current.database.startsWith('[logstash-]')) {
-        const def = _.find(this.indexPatternTypes, {
-          value: this.current.jsonData.interval,
-        });
-        this.current.database = def.example || 'es-index-name';
+    if (
+      !this.current.database ||
+      this.current.database.length === 0 ||
+      this.current.database.startsWith('[logstash-]')
+    ) {
+      const def = _.find(this.indexPatternTypes, {
+        value: this.current.jsonData.interval,
+      });
+      this.current.database = def.example || 'es-index-name';
     }
   }
 }
