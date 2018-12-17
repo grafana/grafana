@@ -29,7 +29,7 @@ aptly repo add grafana ./dist
 echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
 echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
 
-./scripts/build/update_repo/sign-repo.sh "$GPG_PASS"
+./scripts/build/update_repo/sign-deb-repo.sh "$GPG_PASS"
 
 # Update the repo and db on gcp
 gsutil -m rsync -r -d /deb-repo/db gs://grafana-aptly-db/repo-db

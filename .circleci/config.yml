@@ -426,7 +426,7 @@ jobs:
           command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD"'
       - run:
           name: Update RPM repository
-          command: 'ls'
+          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD"'
 
 workflows:
   version: 2
