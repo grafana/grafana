@@ -1,5 +1,6 @@
 // Libraries
 import React, { Component } from 'react';
+import _ from 'lodash';
 
 // Components
 import { AsyncSelect } from './Select';
@@ -37,6 +38,10 @@ export class UserPicker extends Component<Props, State> {
   search(query?: string) {
     const backendSrv = getBackendSrv();
     this.setState({ isLoading: true });
+
+    if (_.isNil(query)) {
+      query = '';
+    }
 
     return backendSrv
       .get(`/api/org/users?query=${query}&limit=10`)
