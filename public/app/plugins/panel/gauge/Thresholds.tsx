@@ -166,18 +166,14 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
               height: '50%',
               backgroundColor: t.color,
             }}
-          >
-            {t.index}
-          </div>
+          />
           <div
             onClick={() => this.onAddThreshold(t.index)}
             style={{
               height: '50%',
               backgroundColor: t.color,
             }}
-          >
-            {t.index}
-          </div>
+          />
         </div>
       );
     });
