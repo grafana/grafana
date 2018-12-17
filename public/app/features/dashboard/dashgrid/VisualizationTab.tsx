@@ -174,8 +174,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
             />
             <i className="gf-form-input-icon fa fa-search" />
           </label>
-          <div className="flex-grow" />
-          <button className="btn btn-link" onClick={this.onCloseVizPicker}>
+          <button className="btn btn-link toolbar__close" onClick={this.onCloseVizPicker}>
             <i className="fa fa-chevron-up" />
           </button>
         </>
