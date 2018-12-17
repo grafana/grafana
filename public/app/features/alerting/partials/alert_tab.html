@@ -1,5 +1,5 @@
-<div class="panel-option-section__body">
-	<div class="edit-tab-with-sidemenu" ng-if="ctrl.alert">
+<div class="panel-option-section__body" ng-if="ctrl.alert">
+	<div class="edit-tab-with-sidemenu">
 		<aside class="edit-sidemenu-aside">
 			<ul class="edit-sidemenu">
 				<li ng-class="{active: ctrl.subTabIndex === 0}">
@@ -177,10 +177,12 @@
 			</div>
 		</div>
 	</div>
+</div>
 
-	<div class="gf-form-group" ng-if="!ctrl.alert">
-		<div class="gf-form-button-row">
-			<button class="btn btn-inverse" ng-click="ctrl.enable()">
+<div class="gf-form-group p-t-4 p-b-4" ng-if="!ctrl.alert">
+	<div class="empty-list-cta">
+		<div class="empty-list-cta__title">Panel has no alert rule defined</div>
+			<button class="empty-list-cta__button btn btn-xlarge btn-success" ng-click="ctrl.enable()">
 				<i class="icon-gf icon-gf-alert"></i>
 				Create Alert
 			</button>

@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { components } from 'react-select';
+import React from 'react';
+import { components } from '@torkelo/react-select';
 
 export const IndicatorsContainer = props => {
   const isOpen = props.selectProps.menuIsOpen;

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
-import { UserPicker } from 'app/core/components/Picker/UserPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';

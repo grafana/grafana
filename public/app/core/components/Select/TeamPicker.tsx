@@ -1,11 +1,7 @@
 import React, { Component } from 'react';
-import AsyncSelect from 'react-select/lib/Async';
-import PickerOption from './PickerOption';
+import { AsyncSelect } from './Select';
 import { debounce } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import ResetStyles from './ResetStyles';
-import IndicatorsContainer from './IndicatorsContainer';
-import NoOptionsMessage from './NoOptionsMessage';
 
 export interface Team {
   id: number;
@@ -45,6 +41,7 @@ export class TeamPicker extends Component<Props, State> {
       const teams = result.teams.map(team => {
         return {
           id: team.id,
+          value: team.id,
           label: team.name,
           name: team.name,
           imgUrl: team.avatarUrl,
@@ -62,24 +59,13 @@ export class TeamPicker extends Component<Props, State> {
     return (
       <div className="user-picker">
         <AsyncSelect
-          classNamePrefix={`gf-form-select-box`}
-          isMulti={false}
           isLoading={isLoading}
           defaultOptions={true}
           loadOptions={this.debouncedSearch}
           onChange={onSelected}
-          className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
-          styles={ResetStyles}
-          components={{
-            Option: PickerOption,
-            IndicatorsContainer,
-            NoOptionsMessage,
-          }}
+          className={className}
           placeholder="Select a team"
-          loadingMessage={() => 'Loading...'}
           noOptionsMessage={() => 'No teams found'}
-          getOptionValue={i => i.id}
-          getOptionLabel={i => i.label}
         />
       </div>
     );

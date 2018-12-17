@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { UserPicker } from 'app/core/components/Picker/UserPicker';
-import { TeamPicker, Team } from 'app/core/components/Picker/TeamPicker';
-import DescriptionPicker, { OptionWithDescription } from 'app/core/components/Picker/DescriptionPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
+import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
+import { Select, SelectOptionItem } from 'app/core/components/Select/Select';
 import { User } from 'app/types';
 import {
   dashboardPermissionLevels,
@@ -61,7 +61,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     this.setState({ teamId: team && !Array.isArray(team) ? team.id : 0 });
   };
 
-  onPermissionChanged = (permission: OptionWithDescription) => {
+  onPermissionChanged = (permission: SelectOptionItem) => {
     this.setState({ permission: permission.value });
   };
 
@@ -121,11 +121,11 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
             ) : null}
 
             <div className="gf-form">
-              <DescriptionPicker
-                optionsWithDesc={dashboardPermissionLevels}
-                onSelected={this.onPermissionChanged}
-                disabled={false}
-                className={'gf-form-select-box__control--menu-right'}
+              <Select
+                isSearchable={false}
+                options={dashboardPermissionLevels}
+                onChange={this.onPermissionChanged}
+                className="gf-form-select-box__control--menu-right"
               />
             </div>
 

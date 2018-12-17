@@ -191,7 +191,7 @@ export function deleteDataSource(): ThunkResult<void> {
 export function nameExits(dataSources, name) {
   return (
     dataSources.filter(dataSource => {
-      return dataSource.name === name;
+      return dataSource.name.toLowerCase() === name.toLowerCase();
     }).length > 0
   );
 }

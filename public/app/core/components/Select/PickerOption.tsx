@@ -1,5 +1,5 @@
 import React from 'react';
-import { components } from 'react-select';
+import { components } from '@torkelo/react-select';
 import { OptionProps } from 'react-select/lib/components/Option';
 
 // https://github.com/JedWatson/react-select/issues/3038

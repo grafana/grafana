@@ -97,10 +97,10 @@ input:checked + .gf-form-switch__slider::before {
   &--transparent {
     background: transparent;
     border: none;
-    width: 20px;
+    width: 23px;
     height: auto;
     position: relative;
-    padding-left: 7px;
+    padding-left: 8px;
   }
 
   &--table-cell {

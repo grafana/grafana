@@ -127,4 +127,7 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add read_only data column", NewAddColumnMigration(tableV2, &Column{
 		Name: "read_only", Type: DB_Bool, Nullable: true,
 	}))
+
+	const migrateLoggingToLoki = `UPDATE data_source SET type = 'loki' WHERE type = 'logging'`
+	mg.AddMigration("Migrate logging ds to loki ds", NewRawSqlMigration(migrateLoggingToLoki))
 }

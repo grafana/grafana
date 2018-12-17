@@ -14,7 +14,7 @@
 }
 
 .query-editor-rows {
-  margin-top: 20px;
+  margin: 20px 0;
 }
 
 .gf-form-query {
@@ -59,6 +59,8 @@
 }
 
 .gf-form-query-letter-cell {
+  flex-shrink: 0;
+
   .gf-form-query-letter-cell-carret {
     display: inline-block;
     width: 0.7rem;
