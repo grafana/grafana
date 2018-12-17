@@ -53,6 +53,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     };
 
     this.component = loader.load(this.element, scopeProps, template);
+    this.props.onQueryChange(target, false);
   }
 
   componentWillUnmount() {
