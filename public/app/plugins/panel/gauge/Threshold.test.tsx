@@ -38,8 +38,8 @@ describe('Add threshold', () => {
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: 50, color: 'rgb(127, 115, 64)' },
       { index: 1, value: 75, color: 'rgb(170, 95, 61)' },
+      { index: 0, value: 50, color: 'rgb(127, 115, 64)' },
     ]);
   });
 });

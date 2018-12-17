@@ -23,8 +23,6 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     const { maxValue, minValue } = this.props.options;
     const { thresholds } = this.state;
 
-    console.log('add at index:', index);
-
     const newThresholds = thresholds.map(threshold => {
       if (threshold.index >= index) {
         threshold = { ...threshold, index: threshold.index + 1 };
