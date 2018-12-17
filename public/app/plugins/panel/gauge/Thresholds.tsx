@@ -14,13 +14,16 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     super(props);
 
     this.state = {
-      thresholds: [{ value: 50, canRemove: true, color: '#f2f2f2', index: 0, label: '' }],
+      thresholds: props.options.thresholds,
       baseColor: props.options.baseColor,
     };
   }
 
   onAddThreshold = index => {
+    const { maxValue, minValue } = this.props.options;
     const { thresholds } = this.state;
+
+    console.log('add at index:', index);
 
     const newThresholds = thresholds.map(threshold => {
       if (threshold.index >= index) {
@@ -31,17 +34,27 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     });
 
     // Setting value to a value between the previous thresholds
-    const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
+    let value;
+
+    if (index === 0 && thresholds.length === 0) {
+      value = maxValue - (maxValue - minValue) / 2;
+    } else if (index === 0 && thresholds.length > 0) {
+      value = newThresholds[index + 1].value - (newThresholds[index + 1].value - minValue) / 2;
+    } else if (index > newThresholds[newThresholds.length - 1].index) {
+      value = maxValue - (maxValue - newThresholds[index - 1].value) / 2;
+    }
 
     // Set a color that lies between the previous thresholds
-    const color = tinycolor.mix(thresholds[index - 1].color, thresholds[index].color, 50).toRgbString();
+    let color;
+    if (index === 0 && thresholds.length === 0) {
+      color = tinycolor.mix(BasicGaugeColor.Green, BasicGaugeColor.Red, 50).toRgbString();
+    } else {
+      color = tinycolor.mix(thresholds[index - 1].color, BasicGaugeColor.Red, 50).toRgbString();
+    }
 
     this.setState(
       {
-        thresholds: this.sortThresholds([
-          ...newThresholds,
-          { index: index, label: '', value: value, canRemove: true, color: color },
-        ]),
+        thresholds: this.sortThresholds([...newThresholds, { index: index, value: value, color: color }]),
       },
       () => this.updateGauge()
     );
@@ -106,31 +119,9 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
 
   sortThresholds = thresholds => {
     return thresholds.sort((t1, t2) => {
-      return t1.value - t2.value;
+      return t2.value - t1.value;
     });
   };
-
-  getIndicatorColor = index => {
-    const { thresholds } = this.state;
-
-    if (index === 0) {
-      return thresholds[0].color;
-    }
-
-    return index < thresholds.length ? thresholds[index].color : BasicGaugeColor.Red;
-  };
-
-  insertAtIndex(index) {
-    const { thresholds } = this.state;
-
-    // If thresholds.length is greater or equal to 3
-    // it means a user has added one threshold
-    if (thresholds.length < 3 || index < 0) {
-      return 1;
-    }
-
-    return index;
-  }
 
   renderThresholds() {
     const { thresholds } = this.state;
@@ -170,20 +161,25 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
 
     return thresholds.map((t, i) => {
       return (
-        <div
-          key={`${t.value}-${i}`}
-          className="indicator-section"
-          style={{
-            height: '50%',
-          }}
-        >
+        <div key={`${t.value}-${i}`} className="indicator-section">
           <div
-            onClick={() => this.onAddThreshold(this.insertAtIndex(1))}
+            onClick={() => this.onAddThreshold(t.index + 1)}
             style={{
-              height: '100%',
-              background: this.getIndicatorColor(i),
+              height: '50%',
+              backgroundColor: t.color,
             }}
-          />
+          >
+            {t.index}
+          </div>
+          <div
+            onClick={() => this.onAddThreshold(t.index)}
+            style={{
+              height: '50%',
+              backgroundColor: t.color,
+            }}
+          >
+            {t.index}
+          </div>
         </div>
       );
     });
@@ -193,8 +189,8 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     return (
       <div className="indicator-section" style={{ height: '100%' }}>
         <div
-          onClick={() => this.onAddThreshold(1)}
-          style={{ height: '50px', backgroundColor: this.props.options.baseColor }}
+          onClick={() => this.onAddThreshold(0)}
+          style={{ height: '100%', backgroundColor: this.props.options.baseColor }}
         />
       </div>
     );
