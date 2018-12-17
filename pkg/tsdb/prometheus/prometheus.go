@@ -137,11 +137,19 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 		labelName := strings.Replace(string(in), "{{", "", 1)
 		labelName = strings.Replace(labelName, "}}", "", 1)
 		labelName = strings.TrimSpace(labelName)
-		if val, exists := metric[model.LabelName(labelName)]; exists {
-			return []byte(val)
-		}
+		if strings.Contains(labelName, "||") {
+			parts := strings.SplitN(labelName, "||", 2)
+			if val, exists := metric[model.LabelName(parts[1])]; exists {
+				return []byte(parts[0] + string(val))
+			}
+			return []byte("")
+		} else {
+			if val, exists := metric[model.LabelName(labelName)]; exists {
+				return []byte(val)
+			}
 
-		return in
+			return in
+		}
 	})
 
 	return string(result)
