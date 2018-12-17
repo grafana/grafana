@@ -75,6 +75,11 @@ Name | Description
 
 For details of *metric names*, *label names* and *label values* are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
+### Legend format
+
+If you have mixed cardinality in a panel, you can use the '||' operator in your legend format pattern to ignore labels that aren't available on the metric.
+Here's a sample of an optional label `{{ - || hostname }}` it takes the format `{{ <separator token if desired> || <label name> }}`
+
 
 #### Using interval and range variables
 

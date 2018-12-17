@@ -157,8 +157,17 @@ export class ResultTransformer {
   renderTemplate(aliasPattern, aliasData) {
     const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
     return aliasPattern.replace(aliasRegex, (match, g1) => {
-      if (aliasData[g1]) {
-        return aliasData[g1];
+      if (g1.includes('||')) {
+        const parts = g1.split('||');
+        if (aliasData[parts[1]]) {
+          return parts[0] + aliasData[parts[1]];
+        } else {
+          return '';
+        }
+      } else {
+        if (aliasData[g1]) {
+          return aliasData[g1];
+        }
       }
       return g1;
     });
