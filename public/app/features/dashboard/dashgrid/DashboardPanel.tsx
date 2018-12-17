@@ -24,7 +24,7 @@ export interface Props {
   isFullscreen: boolean;
 }
 
-interface XY {
+interface DimensionsXY {
   x: number;
   y: number;
 }
@@ -32,7 +32,7 @@ interface XY {
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
-  panelDimensions: XY;
+  panelDimensions: DimensionsXY;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -105,7 +105,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   // TODO: Util
-  get screenDimensions(): XY {
+  get screenDimensions(): DimensionsXY {
     return {
       x: document.documentElement.scrollWidth,
       y: Math.floor(document.documentElement.scrollHeight * 0.4),
@@ -174,18 +174,17 @@ export class DashboardPanel extends PureComponent<Props, State> {
     </>
   );
 
-  renderResizableBox = (panelContent: any, panelWrapperClass: string) => {
+  renderEditingPanelBox = (panelContent: JSX.Element, panelWrapperClass: string) => {
     const { x, y } = this.state.panelDimensions;
+    const panelBox = this.renderPanelBox(panelContent, panelWrapperClass);
     return (
       <ResizableBox height={y} width={x} axis="y" onResize={this.debouncedResizeDone}>
-        <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-          {panelContent}
-        </div>
+        {panelBox}
       </ResizableBox>
     );
   };
 
-  renderRegularBox = (panelContent: any, panelWrapperClass: string) => {
+  renderPanelBox = (panelContent: JSX.Element, panelWrapperClass: string) => {
     return (
       <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
         {panelContent}
@@ -218,15 +217,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return (
       <div className={containerClass}>
         {isEditing
-          ? this.renderResizableBox(panelContent, panelWrapperClass)
-          : this.renderRegularBox(panelContent, panelWrapperClass)}
+          ? this.renderEditingPanelBox(panelContent, panelWrapperClass)
+          : this.renderPanelBox(panelContent, panelWrapperClass)}
 
-        {/* <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}> */}
-        {/* <ResizableBox className={panelWrapperClass} height={dimensions.y} width={dimensions.x} axis="y">
-          {plugin.exports.Panel && this.renderReactPanel()}
-          {plugin.exports.PanelCtrl && this.renderAngularPanel()}
-        </ResizableBox> */}
-        {/* </div> */}
         {panel.isEditing && (
           <PanelEditor
             panel={panel}
