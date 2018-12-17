@@ -158,7 +158,9 @@ export function calculateResultsFromQueryTransactions(
   );
   const tableResult = mergeTablesIntoModel(
     new TableModel(),
-    ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
+    ...queryTransactions
+      .filter(qt => qt.resultType === 'Table' && qt.done && qt.result && qt.result.columns && qt.result.rows)
+      .map(qt => qt.result)
   );
   const logsResult =
     datasource && datasource.mergeStreams
