@@ -203,7 +203,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     const { isVizPickerOpen, searchQuery } = this.state;
 
     return (
-      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar}>
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[]}>
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
             <VizTypePicker
