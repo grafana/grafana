@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import Thresholds from './Thresholds';
 import { defaultProps, OptionsProps } from './module';
-import { PanelOptionsProps } from 'app/types';
+import { BasicGaugeColor, PanelOptionsProps } from 'app/types';
 
 const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<OptionsProps> = {
@@ -44,30 +44,26 @@ describe('Add threshold', () => {
   });
 });
 
-// describe('change threshold value', () => {
-//   it('should update value and resort rows', () => {
-//     const instance = setup();
-//     const mockThresholds = [
-//       { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
-//       { index: 1, label: '', value: 50, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-//       { index: 2, label: '', value: 75, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-//       { index: 3, label: 'Max', value: 100, canRemove: false },
-//     ];
-//
-//     instance.state = {
-//       baseColor: BasicGaugeColor.Green,
-//       thresholds: mockThresholds,
-//     };
-//
-//     const mockEvent = { target: { value: 78 } };
-//
-//     instance.onChangeThresholdValue(mockEvent, mockThresholds[1]);
-//
-//     expect(instance.state.thresholds).toEqual([
-//       { index: 0, label: 'Min', value: 0, canRemove: false, color: 'rgba(50, 172, 45, 0.97)' },
-//       { index: 1, label: '', value: 78, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-//       { index: 2, label: '', value: 75, canRemove: true, color: 'rgba(237, 129, 40, 0.89)' },
-//       { index: 3, label: 'Max', value: 100, canRemove: false },
-//     ]);
-//   });
-// });
+describe('change threshold value', () => {
+  it('should update value and resort rows', () => {
+    const instance = setup();
+    const mockThresholds = [
+      { index: 0, value: 50, color: 'rgba(237, 129, 40, 0.89)' },
+      { index: 1, value: 75, color: 'rgba(237, 129, 40, 0.89)' },
+    ];
+
+    instance.state = {
+      baseColor: BasicGaugeColor.Green,
+      thresholds: mockThresholds,
+    };
+
+    const mockEvent = { target: { value: 78 } };
+
+    instance.onChangeThresholdValue(mockEvent, mockThresholds[0]);
+
+    expect(instance.state.thresholds).toEqual([
+      { index: 0, value: 78, color: 'rgba(237, 129, 40, 0.89)' },
+      { index: 1, value: 75, color: 'rgba(237, 129, 40, 0.89)' },
+    ]);
+  });
+});
