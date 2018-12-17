@@ -45,14 +45,23 @@
   .react-grid-item--fullscreen {
     .panel-editor-container .react-resizable-handle {
       display: block;
-      background: $dark-4;
+      background: $dark-5;
       bottom: -3px;
       left: 50%;
       width: 150px;
       margin-left: -75px;
-      border-radius: 3px;
       height: 6px;
       cursor: ns-resize;
+      border-radius: 3px;
+
+      &::before {
+        content: ' ';
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        top: 2px;
+        border-top: 2px dotted $gray-2;
+      }
     }
   }
 
