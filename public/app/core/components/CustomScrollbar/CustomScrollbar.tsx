@@ -28,8 +28,8 @@ class CustomScrollbar extends PureComponent<Props> {
       <Scrollbars
         className={customClassName}
         autoHeight={true}
-        autoHeightMin={'100%'}
-        autoHeightMax={'100%'}
+        autoHeightMin={'inherit'}
+        autoHeightMax={'inherit'}
         renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
         renderTrackVertical={props => <div {...props} className="track-vertical" />}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}

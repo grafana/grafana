@@ -12,7 +12,7 @@ export function dropdownTypeahead($compile) {
   const buttonTemplate =
     '<a class="gf-form-label tight-form-func dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="menuItems" data-toggle="dropdown"' +
-    ' data-placement="top"><i class="fa fa-plus"></i></a>';
+    ' ><i class="fa fa-plus"></i></a>';
 
   return {
     scope: {
@@ -130,7 +130,7 @@ export function dropdownTypeahead2($compile) {
   const buttonTemplate =
     '<a class="gf-form-input dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="menuItems" data-toggle="dropdown"' +
-    ' data-placement="top"><i class="fa fa-plus"></i></a>';
+    ' ><i class="fa fa-plus"></i></a>';
 
   return {
     scope: {

@@ -154,11 +154,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  moveQuery(target, direction) {
-    super.moveQuery(target, direction);
-    super.refresh();
-  }
-
   exportCsv() {
     const scope = this.$scope.$new(true);
     scope.tableData = this.renderer.render_values();

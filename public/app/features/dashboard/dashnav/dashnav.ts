@@ -74,6 +74,11 @@ export class DashNavCtrl {
   }
 
   showSearch() {
+    if (this.dashboard.meta.fullscreen) {
+      this.close();
+      return;
+    }
+
     appEvents.emit('show-dash-search');
   }
 
@@ -86,7 +91,7 @@ export class DashNavCtrl {
 
     this.dashboard.addPanel({
       type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: 9 },
+      gridPos: { x: 0, y: 0, w: 12, h: 8 },
       title: 'Panel Title',
     });
   }

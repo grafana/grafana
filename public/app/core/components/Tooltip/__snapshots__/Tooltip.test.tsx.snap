@@ -3,11 +3,11 @@
 exports[`Tooltip renders correctly 1`] = `
 <div
   className="popper__manager test-class"
+  onMouseEnter={[Function]}
+  onMouseLeave={[Function]}
 >
   <div
-    className="popper__target"
-    onMouseOut={[Function]}
-    onMouseOver={[Function]}
+    className="popper_ref "
   >
     <a
       href="http://www.grafana.com"

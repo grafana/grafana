@@ -1,20 +1,18 @@
-import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
+import Remarkable from 'remarkable';
+
+import config from 'app/core/config';
 import { profiler } from 'app/core/core';
+import { Emitter } from 'app/core/core';
 import {
   duplicatePanel,
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
-import Remarkable from 'remarkable';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-const TITLE_HEIGHT = 27;
-const PANEL_BORDER = 2;
-
-import { Emitter } from 'app/core/core';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
@@ -93,26 +91,9 @@ export class PanelCtrl {
 
   initEditMode() {
     this.editorTabs = [];
-    this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
 
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
-
-    const urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
-    if (urlTab) {
-      this.editorTabs.forEach((tab, i) => {
-        if (tab.title.toLowerCase() === urlTab) {
-          this.editorTabIndex = i;
-        }
-      });
-    }
-  }
-
-  changeTab(newIndex) {
-    this.editorTabIndex = newIndex;
-    const route = this.$injector.get('$route');
-    route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
-    route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?, icon?) {
@@ -236,7 +217,7 @@ export class PanelCtrl {
       this.initEditMode();
     }
 
-    this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
+    this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);
   }
 
   render(payload?) {

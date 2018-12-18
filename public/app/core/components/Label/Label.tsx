@@ -6,6 +6,7 @@ interface Props {
   for?: string;
   children: ReactNode;
   width?: number;
+  className?: string;
 }
 
 export const Label: SFC<Props> = props => {

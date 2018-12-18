@@ -1,5 +1,7 @@
 import { Emitter } from 'app/core/utils/emitter';
 import _ from 'lodash';
+import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
+import { DataQuery } from 'app/types';
 
 export interface GridPos {
   x: number;
@@ -14,12 +16,53 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   hasRefreshed: true,
+  cachedPluginOptions: true,
+};
+
+// For angular panels we need to clean up properties when changing type
+// To make sure the change happens without strange bugs happening when panels use same
+// named property with different type / value expectations
+// This is not required for react panels
+
+const mustKeepProps: { [str: string]: boolean } = {
+  id: true,
+  gridPos: true,
+  type: true,
+  title: true,
+  scopedVars: true,
+  repeat: true,
+  repeatIteration: true,
+  repeatPanelId: true,
+  repeatDirection: true,
+  repeatedByRow: true,
+  minSpan: true,
+  collapsed: true,
+  panels: true,
+  targets: true,
+  datasource: true,
+  timeFrom: true,
+  timeShift: true,
+  hideTimeOverride: true,
+  maxDataPoints: true,
+  interval: true,
+  description: true,
+  links: true,
+  fullscreen: true,
+  isEditing: true,
+  hasRefreshed: true,
+  events: true,
+  cacheTimeout: true,
+  nullPointMode: true,
+  cachedPluginOptions: true,
+  transparent: true,
 };
 
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   datasource: null,
   targets: [{}],
+  cachedPluginOptions: {},
+  transparent: false,
 };
 
 export class PanelModel {
@@ -42,11 +85,26 @@ export class PanelModel {
   datasource: string;
   thresholds?: any;
 
+  snapshotData?: any;
+  timeFrom?: any;
+  timeShift?: any;
+  hideTimeOverride?: any;
+
+  maxDataPoints?: number;
+  interval?: string;
+  description?: string;
+  links?: [];
+  transparent: boolean;
+
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
   hasRefreshed: boolean;
   events: Emitter;
+  cacheTimeout?: any;
+
+  // cache props between plugins
+  cachedPluginOptions?: any;
 
   constructor(model) {
     this.events = new Emitter();
@@ -60,8 +118,8 @@ export class PanelModel {
     _.defaultsDeep(this, _.cloneDeep(defaults));
   }
 
-  getOptions() {
-    return this[this.getOptionsKey()] || {};
+  getOptions(panelDefaults) {
+    return _.defaultsDeep(this[this.getOptionsKey()] || {}, panelDefaults);
   }
 
   updateOptions(options: object) {
@@ -72,7 +130,7 @@ export class PanelModel {
   }
 
   private getOptionsKey() {
-    return this.type + 'Options';
+    return PANEL_OPTIONS_KEY_PREFIX + this.type;
   }
 
   getSaveModel() {
@@ -136,11 +194,66 @@ export class PanelModel {
     this.events.emit('panel-initialized');
   }
 
-  changeType(pluginId: string) {
+  private getOptionsToRemember() {
+    return Object.keys(this).reduce((acc, property) => {
+      if (notPersistedProperties[property] || mustKeepProps[property]) {
+        return acc;
+      }
+      return {
+        ...acc,
+        [property]: this[property],
+      };
+    }, {});
+  }
+
+  private saveCurrentPanelOptions() {
+    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
+  }
+
+  private restorePanelOptions(pluginId: string) {
+    const prevOptions = this.cachedPluginOptions[pluginId] || {};
+
+    Object.keys(prevOptions).map(property => {
+      this[property] = prevOptions[property];
+    });
+  }
+
+  changeType(pluginId: string, fromAngularPanel: boolean) {
+    this.saveCurrentPanelOptions();
     this.type = pluginId;
 
-    delete this.thresholds;
-    delete this.alert;
+    // for angular panels only we need to remove all events and let angular panels do some cleanup
+    if (fromAngularPanel) {
+      this.destroy();
+
+      for (const key of _.keys(this)) {
+        if (mustKeepProps[key]) {
+          continue;
+        }
+
+        delete this[key];
+      }
+    }
+
+    this.restorePanelOptions(pluginId);
+  }
+
+  addQuery(query?: Partial<DataQuery>) {
+    query = query || { refId: 'A' };
+    query.refId = this.getNextQueryLetter();
+    query.isNew = true;
+
+    this.targets.push(query);
+  }
+
+  getNextQueryLetter(): string {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    return _.find(letters, refId => {
+      return _.every(this.targets, other => {
+        return other.refId !== refId;
+      });
+    });
   }
 
   destroy() {

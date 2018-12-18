@@ -240,11 +240,16 @@ describe('LogsParsers', () => {
       expect(parser.test('foo=bar')).toBeTruthy();
     });
 
-    test('should have a valid fieldRegex', () => {
-      const match = 'foo=bar'.match(parser.fieldRegex);
-      expect(match).toBeDefined();
-      expect(match[1]).toBe('foo');
-      expect(match[2]).toBe('bar');
+    test('should return parsed fields', () => {
+      expect(parser.getFields('foo=bar baz="42 + 1"')).toEqual(['foo=bar', 'baz="42 + 1"']);
+    });
+
+    test('should return label for field', () => {
+      expect(parser.getLabelFromField('foo=bar')).toBe('foo');
+    });
+
+    test('should return value for field', () => {
+      expect(parser.getValueFromField('foo=bar')).toBe('bar');
     });
 
     test('should build a valid value matcher', () => {
@@ -263,18 +268,36 @@ describe('LogsParsers', () => {
       expect(parser.test('{"foo":"bar"}')).toBeTruthy();
     });
 
-    test('should have a valid fieldRegex', () => {
-      const match = '{"foo":"bar"}'.match(parser.fieldRegex);
-      expect(match).toBeDefined();
-      expect(match[1]).toBe('foo');
-      expect(match[2]).toBe('bar');
+    test('should return parsed fields', () => {
+      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo" : "bar"', '"baz" : 42']);
     });
 
-    test('should build a valid value matcher', () => {
+    test('should return parsed fields for nested quotes', () => {
+      expect(parser.getFields(`{"foo":"bar: '[value=\\"42\\"]'"}`)).toEqual([`"foo":"bar: '[value=\\"42\\"]'"`]);
+    });
+
+    test('should return label for field', () => {
+      expect(parser.getLabelFromField('"foo" : "bar"')).toBe('foo');
+    });
+
+    test('should return value for field', () => {
+      expect(parser.getValueFromField('"foo" : "bar"')).toBe('"bar"');
+      expect(parser.getValueFromField('"foo" : 42')).toBe('42');
+      expect(parser.getValueFromField('"foo" : 42.1')).toBe('42.1');
+    });
+
+    test('should build a valid value matcher for strings', () => {
       const matcher = parser.buildMatcher('foo');
       const match = '{"foo":"bar"}'.match(matcher);
       expect(match).toBeDefined();
       expect(match[1]).toBe('bar');
+    });
+
+    test('should build a valid value matcher for integers', () => {
+      const matcher = parser.buildMatcher('foo');
+      const match = '{"foo":42.1}'.match(matcher);
+      expect(match).toBeDefined();
+      expect(match[1]).toBe('42.1');
     });
   });
 });

@@ -31,6 +31,7 @@ $white: #fff;
 // Accent colors
 // -------------------------
 $blue: #0083b3;
+$blue-dark: #005f81;
 $blue-light: #00a8e6;
 $green: #3aa655;
 $red: #d44939;
@@ -76,6 +77,8 @@ $textShadow: none;
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
 $page-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
+//$page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
+$edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
@@ -213,6 +216,9 @@ $menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
 // Tabs
 // -------------------------
 $tab-border-color: $gray-5;
+
+// Toolbar
+$toolbar-bg: white;
 
 // search
 $search-shadow: 0 5px 30px 0 $gray-4;
@@ -360,5 +366,46 @@ $diff-json-icon: $gray-4;
 //Submenu
 $variable-option-bg: $blue-light;
 
+//Switch Slider
+// -------------------------
+$switch-bg: $white;
+$switch-slider-color: $gray-7;
+$switch-slider-off-bg: $gray-5;
+$switch-slider-on-bg: linear-gradient(90deg, $yellow, $red);
+$switch-slider-shadow: 0 0 3px $dark-5;
+
+//Checkbox
+// -------------------------
+$checkbox-bg: $gray-6;
+$checkbox-border: 1px solid $gray-3;
+$checkbox-checked-bg: linear-gradient(0deg, $yellow, $red);
+$checkbox-color: $gray-7;
+
+//Panel Edit
+// -------------------------
+$panel-editor-shadow: 0px 0px 8px $gray-3;
+$panel-editor-border: 1px solid $dark-4;
+$panel-editor-side-menu-shadow: drop-shadow(0 0 2px $gray-3);
+$panel-editor-toolbar-view-bg: $white;
+$panel-editor-viz-item-shadow: 0 0 4px $gray-3;
+$panel-editor-viz-item-border: 1px solid $gray-3;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
+$panel-editor-viz-item-bg: $white;
+$panel-editor-tabs-line-color: $dark-5;
+$panel-editor-viz-item-bg-hover: lighten($blue, 62%);
+$panel-editor-viz-item-bg-hover-active: lighten($orange, 34%);
+
+$panel-option-section-border: 1px solid $gray-6;
+$panel-option-section-header-bg: linear-gradient(0deg, $gray-6, $gray-7);
+
+$panel-grid-placeholder-bg: lighten($blue, 62%);
+$panel-grid-placeholder-shadow: 0 0 4px $blue-light;
+
 // logs
 $logs-color-unkown: $gray-5;
+
+// toggle-group
+$button-toggle-group-btn-active-bg: $brand-primary;
+$button-toggle-group-btn-active-shadow: inset 0 0 4px $white;
+$button-toggle-group-btn-seperator-border: 1px solid $gray-6;

@@ -91,7 +91,14 @@ export class TableRenderer {
         if (_.isArray(v)) {
           v = v[0];
         }
+
+        // if is an epoch (numeric string and len > 12)
+        if (_.isString(v) && !isNaN(v) && v.length > 12) {
+          v = parseInt(v, 10);
+        }
+
         let date = moment(v);
+
         if (this.isUtc) {
           date = date.utc();
         }

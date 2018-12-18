@@ -59,10 +59,6 @@ ignored = [
   version = "1.5.0"
 
 [[constraint]]
-  name = "github.com/go-ldap/ldap"
-  version = "2.5.1"
-
-[[constraint]]
   branch = "master"
   name = "github.com/go-macaron/binding"
 
@@ -211,3 +207,7 @@ ignored = [
 [[constraint]]
   name = "gopkg.in/square/go-jose.v2"
   version = "2.1.9"
+
+[[constraint]]
+  name = "gopkg.in/ldap.v3"
+  version = "3.0.0"

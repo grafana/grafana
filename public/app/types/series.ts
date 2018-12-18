@@ -68,6 +68,7 @@ export enum NullValueMode {
 /** View model projection of many time series */
 export interface TimeSeriesVMs {
   [index: number]: TimeSeriesVM;
+  length: number;
 }
 
 export interface DataQueryResponse {
@@ -103,18 +104,19 @@ export interface DataSourceApi {
    * Imports queries from a different datasource
    */
   importQueries?(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]>;
+
   /**
    * Initializes a datasource after instantiation
    */
   init?: () => void;
 
   /**
-   *  Main data query method
+   * Main metrics / data query action
    */
   query(options: DataQueryOptions): Promise<DataQueryResponse>;
 
   /**
-   *  test data source
+   * Test & verify datasource settings & connection details
    */
-  testDatasource?: () => Promise<any>;
+  testDatasource(): Promise<any>;
 }

@@ -11,8 +11,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-
+      "small": "img/icon_gauge.svg",
+      "large": "img/icon_gauge.svg"
     }
   }
 }
-
