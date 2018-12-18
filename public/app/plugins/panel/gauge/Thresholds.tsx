@@ -211,7 +211,6 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     return (
       <div className="section gf-form-group">
         <h5 className="section-heading">Thresholds</h5>
-        <span>Click the colored line to add a threshold</span>
         <div className="thresholds">
           <div className="color-indicators">
             {this.renderIndicator()}
