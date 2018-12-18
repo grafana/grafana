@@ -32,7 +32,6 @@ export class StackdriverFilterCtrl {
 
   metricDescriptors: any[];
   metrics: any[];
-  metricGroups: any[];
   services: any[];
   groupBySegments: any[];
   filterSegments: FilterSegments;
@@ -46,7 +45,6 @@ export class StackdriverFilterCtrl {
     this.target = $scope.target;
     this.metricDescriptors = [];
     this.metrics = [];
-    this.metricGroups = [];
     this.services = [];
 
     this.getCurrentProject()
@@ -103,7 +101,6 @@ export class StackdriverFilterCtrl {
       this.metricDescriptors = await this.datasource.getMetricTypes(this.target.defaultProject);
       this.services = this.getServicesList();
       this.metrics = this.getMetricsList();
-      this.metricGroups = this.getMetricGroups();
       return this.metricDescriptors;
     } else {
       return [];
@@ -117,26 +114,6 @@ export class StackdriverFilterCtrl {
     }));
 
     return services.length > 0 ? _.uniqBy(services, s => s.value) : [];
-  }
-
-  getMetricGroups() {
-    return [
-      this.getTemplateVariablesGroup(),
-      {
-        label: 'Metrics',
-        options: this.getMetricsList(),
-      },
-    ];
-  }
-
-  getTemplateVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.templateSrv.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
   }
 
   getMetricsList() {
@@ -183,7 +160,6 @@ export class StackdriverFilterCtrl {
   handleServiceChange(service) {
     this.target.service = service;
     this.metrics = this.getMetricsList();
-    this.metricGroups = this.getMetricGroups();
     this.setMetricType();
     this.getLabels();
     if (!this.metrics.some(m => m.value === this.target.metricType)) {
@@ -194,13 +170,14 @@ export class StackdriverFilterCtrl {
   }
 
   setMetricType() {
-    const { valueType, metricKind, unit } = this.metricDescriptors.find(
-      m => m.type === this.templateSrv.replace(this.target.metricType)
-    );
-    this.target.unit = unit;
-    this.target.valueType = valueType;
-    this.target.metricKind = metricKind;
-    this.$rootScope.$broadcast('metricTypeChanged');
+    const metric = this.metricDescriptors.find(m => m.type === this.templateSrv.replace(this.target.metricType));
+    if (metric) {
+      const { valueType, metricKind, unit } = metric;
+      this.target.unit = unit;
+      this.target.valueType = valueType;
+      this.target.metricKind = metricKind;
+      this.$rootScope.$broadcast('metricTypeChanged');
+    }
   }
 
   async createLabelKeyElements() {
