@@ -69,6 +69,7 @@
     "load-grunt-tasks": "3.5.2",
     "mini-css-extract-plugin": "^0.4.0",
     "mocha": "^4.0.1",
+    "monaco-editor": "^0.15.6",
     "ng-annotate-loader": "^0.6.1",
     "ng-annotate-webpack-plugin": "^0.3.0",
     "ngtemplate-loader": "^2.0.1",
