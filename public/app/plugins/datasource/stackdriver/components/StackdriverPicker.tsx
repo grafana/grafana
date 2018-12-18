@@ -33,14 +33,15 @@ export class StackdriverPicker extends React.Component<Props, State> {
     this.setState({ options: this.buildOptions(this.props) });
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps: Props) {
     if (nextProps.options.length > 0 || nextProps.templateVariables.length) {
       this.setState({ options: this.buildOptions(nextProps) });
     }
   }
 
-  shouldComponentUpdate(nextProps) {
+  shouldComponentUpdate(nextProps: Props) {
     return (
+      nextProps.selected !== this.props.selected ||
       !_.isEqual(nextProps.options, this.props.options) ||
       !_.isEqual(nextProps.templateVariables, this.props.templateVariables)
     );
