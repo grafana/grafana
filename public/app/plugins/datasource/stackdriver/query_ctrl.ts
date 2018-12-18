@@ -70,6 +70,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       'searchable',
       'className',
       'placeholder',
+      'groupName',
+      ['templateVariables', { watchDepth: 'reference' }],
     ]);
   }
 

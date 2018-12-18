@@ -9,28 +9,76 @@ export interface Props {
   selected: string;
   placeholder?: string;
   className?: string;
-  groups?: boolean;
+  groupName?: string;
+  templateVariables?: any[];
 }
 
-export class StackdriverPicker extends React.Component<Props, any> {
-  constructor(props) {
-    super(props);
-  }
+interface State {
+  options: any[];
+}
 
-  extractOptions(options) {
-    return options.length > 0 && options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
-  }
-
-  onChange = item => {
-    const extractedOptions = this.extractOptions(this.props.options);
-    const option = extractedOptions.find(option => option.value === item.value);
-    this.props.onChange(option.value);
+export class StackdriverPicker extends React.Component<Props, State> {
+  static defaultProps = {
+    templateVariables: [],
+    options: [],
+    groupName: 'Options',
   };
 
+  constructor(props) {
+    super(props);
+    this.state = { options: [] };
+  }
+
+  componentDidMount() {
+    this.setState({ options: this.buildOptions(this.props) });
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.options.length > 0 || nextProps.templateVariables.length) {
+      this.setState({ options: this.buildOptions(nextProps) });
+    }
+  }
+
+  shouldComponentUpdate(nextProps) {
+    return (
+      !_.isEqual(nextProps.options, this.props.options) ||
+      !_.isEqual(nextProps.templateVariables, this.props.templateVariables)
+    );
+  }
+
+  buildOptions({ templateVariables = [], groupName = '', options }) {
+    return templateVariables.length > 0
+      ? [
+          this.getTemplateVariablesGroup(),
+          {
+            label: groupName,
+            expanded: true,
+            options,
+          },
+        ]
+      : options;
+  }
+
+  getTemplateVariablesGroup() {
+    return {
+      label: 'Template Variables',
+      options: this.props.templateVariables.map(v => ({
+        label: `$${v.name}`,
+        value: `$${v.name}`,
+      })),
+    };
+  }
+
+  getSelectedOption() {
+    const { options } = this.state;
+    const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
+    return allOptions.find(option => option.value === this.props.selected);
+  }
+
   render() {
-    const { options, selected, placeholder, className, searchable } = this.props;
-    const extractedOptions = this.extractOptions(options);
-    const selectedOption = extractedOptions.find(option => option.value === selected);
+    const { placeholder, className, searchable, onChange } = this.props;
+    const { options } = this.state;
+    const selectedOption = this.getSelectedOption();
 
     return (
       <Select
@@ -38,7 +86,7 @@ export class StackdriverPicker extends React.Component<Props, any> {
         isMulti={false}
         isClearable={false}
         backspaceRemovesValue={false}
-        onChange={this.onChange}
+        onChange={item => onChange(item.value)}
         options={options}
         autoFocus={false}
         isSearchable={searchable}

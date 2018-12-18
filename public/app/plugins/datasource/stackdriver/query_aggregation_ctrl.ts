@@ -29,16 +29,10 @@ export class StackdriverAggregationCtrl {
   constructor(private $scope, private templateSrv) {
     this.$scope.ctrl = this;
     this.target = $scope.target;
-    this.alignmentPeriods = [
-      this.getTemplateVariablesGroup(),
-      {
-        label: 'Alignment Periods',
-        options: alignmentPeriods.map(ap => ({
-          ...ap,
-          label: ap.text,
-        })),
-      },
-    ];
+    this.alignmentPeriods = alignmentPeriods.map(ap => ({
+      ...ap,
+      label: ap.text,
+    }));
     this.setAggOptions();
     this.setAlignOptions();
     const self = this;
@@ -52,42 +46,28 @@ export class StackdriverAggregationCtrl {
   }
 
   setAlignOptions() {
-    const alignments = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
+    this.alignOptions = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
       ...a,
       label: a.text,
     }));
-    this.alignOptions = [
-      this.getTemplateVariablesGroup(),
-      {
-        label: 'Alignment Options',
-        options: alignments,
-      },
-    ];
-    if (!alignments.find(o => o.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner))) {
-      this.target.aggregation.perSeriesAligner = alignments.length > 0 ? alignments[0].value : '';
+    if (!this.alignOptions.find(o => o.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner))) {
+      this.target.aggregation.perSeriesAligner = this.alignOptions.length > 0 ? this.alignOptions[0].value : '';
     }
   }
 
   setAggOptions() {
-    let aggregations = getAggregationOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
+    this.aggOptions = getAggregationOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
       ...a,
       label: a.text,
     }));
-    if (!aggregations.find(o => o.value === this.templateSrv.replace(this.target.aggregation.crossSeriesReducer))) {
+    if (!this.aggOptions.find(o => o.value === this.templateSrv.replace(this.target.aggregation.crossSeriesReducer))) {
       this.deselectAggregationOption('REDUCE_NONE');
     }
 
     if (this.target.aggregation.groupBys.length > 0) {
-      aggregations = aggregations.filter(o => o.value !== 'REDUCE_NONE');
+      this.aggOptions = this.aggOptions.filter(o => o.value !== 'REDUCE_NONE');
       this.deselectAggregationOption('REDUCE_NONE');
     }
-    this.aggOptions = [
-      this.getTemplateVariablesGroup(),
-      {
-        label: 'Aggregations',
-        options: aggregations,
-      },
-    ];
   }
 
   handleAlignmentChange(value) {
@@ -119,16 +99,6 @@ export class StackdriverAggregationCtrl {
     const aggregations = getAggregationOptionsByMetric(this.target.valueType, this.target.metricKind);
     const newValue = aggregations.find(o => o.value !== notValidOptionValue);
     this.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
-  }
-
-  getTemplateVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.templateSrv.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
   }
 }
 
