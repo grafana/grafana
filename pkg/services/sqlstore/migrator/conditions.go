@@ -8,7 +8,7 @@ type MigrationCondition interface {
 type ExistsMigrationCondition struct{}
 
 func (c *ExistsMigrationCondition) IsFulfilled(results []map[string][]byte) bool {
-	return len(results) == 1
+	return len(results) >= 1
 }
 
 type NotExistsMigrationCondition struct{}
