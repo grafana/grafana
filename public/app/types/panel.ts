@@ -31,10 +31,8 @@ export interface PanelMenuItem {
 
 export interface Threshold {
   index: number;
-  label: string;
   value: number;
   color?: string;
-  canRemove: boolean;
 }
 
 export enum MappingType {
@@ -43,9 +41,8 @@ export enum MappingType {
 }
 
 export enum BasicGaugeColor {
-  Green = 'rgba(50, 172, 45, 0.97)',
-  Orange = 'rgba(237, 129, 40, 0.89)',
-  Red = 'rgb(212, 74, 58)',
+  Green = '#299c46',
+  Red = '#d44a3a',
 }
 
 interface BaseMap {

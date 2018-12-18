@@ -3,7 +3,7 @@ import Select from './Select';
 import kbn from 'app/core/utils/kbn';
 
 interface Props {
-  onChange: (item: any) => {} | void;
+  onChange: (item: any) => void;
   defaultValue?: string;
   width?: number;
 }

@@ -40,8 +40,8 @@ export default class ValueOptions extends PureComponent<OptionModuleProps> {
 
     return (
       <div className="section gf-form-group">
-        <h5 className="page-heading">Value</h5>
-        <div className="gf-form-inline">
+        <h5 className="section-heading">Value</h5>
+        <div className="gf-form">
           <Label width={labelWidth}>Stat</Label>
           <Select
             width={12}
@@ -50,11 +50,11 @@ export default class ValueOptions extends PureComponent<OptionModuleProps> {
             value={statOptions.find(option => option.value === stat)}
           />
         </div>
-        <div className="gf-form-inline">
+        <div className="gf-form">
           <Label width={labelWidth}>Unit</Label>
           <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
         </div>
-        <div className="gf-form-inline">
+        <div className="gf-form">
           <Label width={labelWidth}>Decimals</Label>
           <input
             className="gf-form-input width-12"
@@ -64,11 +64,11 @@ export default class ValueOptions extends PureComponent<OptionModuleProps> {
             onChange={this.onDecimalChange}
           />
         </div>
-        <div className="gf-form-inline">
+        <div className="gf-form">
           <Label width={labelWidth}>Prefix</Label>
           <input className="gf-form-input width-12" type="text" value={prefix || ''} onChange={this.onPrefixChange} />
         </div>
-        <div className="gf-form-inline">
+        <div className="gf-form">
           <Label width={labelWidth}>Suffix</Label>
           <input className="gf-form-input width-12" type="text" value={suffix || ''} onChange={this.onSuffixChange} />
         </div>

@@ -62,69 +62,59 @@ export default class MappingRow extends PureComponent<Props, State> {
 
     if (type === MappingType.RangeToText) {
       return (
-        <div className="gf-form">
-          <div className="gf-form-inline mapping-row-input">
+        <>
+          <div className="gf-form">
             <Label width={4}>From</Label>
-            <div>
-              <input
-                className="gf-form-input"
-                value={from}
-                onBlur={this.updateMapping}
-                onChange={this.onMappingFromChange}
-              />
-            </div>
+            <input
+              className="gf-form-input width-8"
+              value={from}
+              onBlur={this.updateMapping}
+              onChange={this.onMappingFromChange}
+            />
           </div>
-          <div className="gf-form-inline mapping-row-input">
+          <div className="gf-form">
             <Label width={4}>To</Label>
-            <div>
-              <input
-                className="gf-form-input"
-                value={to}
-                onBlur={this.updateMapping}
-                onChange={this.onMappingToChange}
-              />
-            </div>
+            <input
+              className="gf-form-input width-8"
+              value={to}
+              onBlur={this.updateMapping}
+              onChange={this.onMappingToChange}
+            />
           </div>
-          <div className="gf-form-inline mapping-row-input">
+          <div className="gf-form">
             <Label width={4}>Text</Label>
-            <div>
-              <input
-                className="gf-form-input"
-                value={text}
-                onBlur={this.updateMapping}
-                onChange={this.onMappingTextChange}
-              />
-            </div>
+            <input
+              className="gf-form-input width-10"
+              value={text}
+              onBlur={this.updateMapping}
+              onChange={this.onMappingTextChange}
+            />
           </div>
-        </div>
+        </>
       );
     }
 
     return (
-      <div className="gf-form">
-        <div className="gf-form-inline mapping-row-input">
+      <>
+        <div className="gf-form">
           <Label width={4}>Value</Label>
-          <div>
-            <input
-              className="gf-form-input"
-              onBlur={this.updateMapping}
-              onChange={this.onMappingValueChange}
-              value={value}
-            />
-          </div>
+          <input
+            className="gf-form-input width-8"
+            onBlur={this.updateMapping}
+            onChange={this.onMappingValueChange}
+            value={value}
+          />
         </div>
-        <div className="gf-form-inline mapping-row-input">
+        <div className="gf-form gf-form--grow">
           <Label width={4}>Text</Label>
-          <div>
-            <input
-              className="gf-form-input"
-              onBlur={this.updateMapping}
-              value={text}
-              onChange={this.onMappingTextChange}
-            />
-          </div>
+          <input
+            className="gf-form-input"
+            onBlur={this.updateMapping}
+            value={text}
+            onChange={this.onMappingTextChange}
+          />
         </div>
-      </div>
+      </>
     );
   }
 
@@ -132,8 +122,8 @@ export default class MappingRow extends PureComponent<Props, State> {
     const { type } = this.state;
 
     return (
-      <div className="mapping-row">
-        <div className="gf-form-inline mapping-row-type">
+      <div className="gf-form-inline">
+        <div className="gf-form">
           <Label width={5}>Type</Label>
           <Select
             placeholder="Choose type"
@@ -144,9 +134,11 @@ export default class MappingRow extends PureComponent<Props, State> {
             width={7}
           />
         </div>
-        <div>{this.renderRow()}</div>
-        <div onClick={this.props.removeMapping} className="threshold-row-remove">
-          <i className="fa fa-times" />
+        {this.renderRow()}
+        <div className="gf-form">
+          <button onClick={this.props.removeMapping} className="gf-form-label gf-form-label--btn">
+            <i className="fa fa-times" />
+          </button>
         </div>
       </div>
     );
