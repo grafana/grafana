@@ -25,18 +25,24 @@ export default class PluginHelp extends PureComponent<Props, State> {
     this.loadHelp();
   }
 
-  constructPlaceholderInfo() {
+  constructPlaceholderInfo = () => {
     const { plugin } = this.props;
     const markdown = new Remarkable();
 
-    return markdown.render(
+    const fallBack = markdown.render(
       `## ${plugin.name} \n by _${plugin.info.author.name} (<${plugin.info.author.url}>)_\n\n${
         plugin.info.description
-      }\n\n### Links \n ${plugin.info.links.map(link => {
-        return `${link.name}: <${link.url}>\n`;
-      })}`
+      }\n\n${
+        plugin.info.links
+          ? `### Links \n ${plugin.info.links.map(link => {
+              return `${link.name}: <${link.url}>\n`;
+            })}`
+          : ''
+      }`
     );
-  }
+
+    return fallBack;
+  };
 
   loadHelp = () => {
     const { plugin, type } = this.props;
@@ -48,7 +54,7 @@ export default class PluginHelp extends PureComponent<Props, State> {
         const markdown = new Remarkable();
         const helpHtml = markdown.render(response);
 
-        if (response === '' && this.props.type === 'help') {
+        if (response === '' && type === 'help') {
           this.setState({
             isError: false,
             isLoading: false,

@@ -205,7 +205,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
-  renderHelp = () => <PluginHelp plugin={this.state.currentDataSource.meta} type="panel_help" />;
+  renderHelp = () => <PluginHelp plugin={this.state.currentDataSource.meta} type="help" />;
 
   render() {
     const { plugin } = this.props;
