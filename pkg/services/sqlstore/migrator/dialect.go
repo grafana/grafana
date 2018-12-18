@@ -29,9 +29,10 @@ type Dialect interface {
 	DropTable(tableName string) string
 	DropIndexSql(tableName string, index *Index) string
 
-	TableCheckSql(tableName string) (string, []interface{})
 	RenameTable(oldName string, newName string) string
 	UpdateTableSql(tableName string, columns []*Column) string
+
+	IndexCheckSql(tableName, indexName string) (string, []interface{})
 
 	ColString(*Column) string
 	ColStringNoPk(*Column) string
