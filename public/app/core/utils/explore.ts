@@ -57,12 +57,19 @@ export async function getExploreUrl(
     }
   }
 
-  if (exploreDatasource && exploreDatasource.meta.explore) {
+  if (panelDatasource) {
     const range = timeSrv.timeRangeForUrl();
-    const state = {
-      ...exploreDatasource.getExploreState(exploreTargets),
-      range,
-    };
+    let state: Partial<ExploreUrlState> = { range };
+    if (exploreDatasource.getExploreState) {
+      state = { ...state, ...exploreDatasource.getExploreState(exploreTargets) };
+    } else {
+      state = {
+        ...state,
+        datasource: panelDatasource.name,
+        queries: exploreTargets.map(t => ({ ...t, datasource: panelDatasource.name })),
+      };
+    }
+
     const exploreState = JSON.stringify(state);
     url = renderUrl('/explore', { state: exploreState });
   }
@@ -151,7 +158,9 @@ export function calculateResultsFromQueryTransactions(
   );
   const tableResult = mergeTablesIntoModel(
     new TableModel(),
-    ...queryTransactions.filter(qt => qt.resultType === 'Table' && qt.done && qt.result).map(qt => qt.result)
+    ...queryTransactions
+      .filter(qt => qt.resultType === 'Table' && qt.done && qt.result && qt.result.columns && qt.result.rows)
+      .map(qt => qt.result)
   );
   const logsResult =
     datasource && datasource.mergeStreams
