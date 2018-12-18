@@ -63,7 +63,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     _.defaultsDeep(this.target, this.defaults);
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
-    react2AngularDirective('optionPicker', StackdriverPicker, [
+    react2AngularDirective('stackdriverPicker', StackdriverPicker, [
       'options',
       'onChange',
       'selected',
