@@ -274,7 +274,6 @@ export default class StackdriverDatasource {
           m.service = service;
           m.serviceShortName = serviceShortName;
           m.displayName = m.displayName || m.type;
-
           return m;
         });
       }
