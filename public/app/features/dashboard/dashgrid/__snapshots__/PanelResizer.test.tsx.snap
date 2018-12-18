@@ -1,0 +1,57 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CustomScrollbar renders correctly 1`] = `
+<div
+  className="react-resizable"
+  style={
+    Object {
+      "height": "0px",
+      "width": "0px",
+    }
+  }
+>
+  <p>
+    PanelResizer
+  </p>
+  <span
+    className="react-resizable-handle"
+    onMouseDown={[Function]}
+    onMouseUp={[Function]}
+    onTouchEnd={[Function]}
+    onTouchStart={[Function]}
+    style={
+      Object {
+        "touchAction": "none",
+      }
+    }
+  />
+</div>
+`;
+
+exports[`PanelResizer renders correctly 1`] = `
+<div
+  className="react-resizable"
+  style={
+    Object {
+      "height": "0px",
+      "width": "0px",
+    }
+  }
+>
+  <p>
+    PanelResizer
+  </p>
+  <span
+    className="react-resizable-handle"
+    onMouseDown={[Function]}
+    onMouseUp={[Function]}
+    onTouchEnd={[Function]}
+    onTouchStart={[Function]}
+    style={
+      Object {
+        "touchAction": "none",
+      }
+    }
+  />
+</div>
+`;

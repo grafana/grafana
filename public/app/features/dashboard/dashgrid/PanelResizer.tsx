@@ -10,7 +10,6 @@ interface DimensionsXY {
 
 export interface Props {
   isEditing: boolean;
-  className?: string;
   panel: PanelModel;
 }
 
