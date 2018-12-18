@@ -146,11 +146,6 @@ export class StackdriverFilterCtrl {
           resolve();
         }
       } catch (error) {
-        if (error.data && error.data.message) {
-          console.log(error.data.message);
-        } else {
-          console.log(error);
-        }
         appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
         resolve();
       }
