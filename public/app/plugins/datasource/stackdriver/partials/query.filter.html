@@ -18,7 +18,9 @@
     <stackdriver-picker
       onChange="ctrl.handleMetricTypeChange"
       selected="ctrl.target.metricType"
-      options="ctrl.getMetricGroups()"
+      options="ctrl.getMetricsList()"
+      template-variables="ctrl.templateSrv.variables"
+      group-name="'Metric Types'"
       searchable="true"
       placeholder="'Select Metric'"
       className="'width-15'"
