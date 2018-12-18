@@ -5,7 +5,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label query-keyword width-9">Alias By</span>
-      <input type="text" class="gf-form-input width-30" ng-model="ctrl.target.aliasBy" ng-change="ctrl.refresh()"
+      <input type="text" class="gf-form-input width-24" ng-model="ctrl.target.aliasBy" ng-change="ctrl.refresh()"
         ng-model-options="{ debounce: 500 }" />
     </div>
     <div class="gf-form gf-form--grow">
@@ -15,7 +15,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9 query-keyword">Project</span>
-      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.defaultProject' css-class="min-width-12" />
+      <input class="gf-form-input width-15" disabled type="text" ng-model='ctrl.target.defaultProject' />
     </div>
     <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
