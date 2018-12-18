@@ -2,14 +2,14 @@
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Aggregation</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <option-picker
+      <stackdriver-picker
         onChange="ctrl.handleAggregationChange"
         selected="ctrl.target.aggregation.crossSeriesReducer"
         options="ctrl.aggOptions"
         searchable="true"
         placeholder="'Select Aggregation'"
         className="'width-15'"
-      ></option-group-picker>
+      ></stackdriver-picker>
     </div>
   </div>
   <div class="gf-form gf-form--grow">
@@ -25,14 +25,14 @@
   <div class="gf-form offset-width-9">
     <label class="gf-form-label query-keyword width-12">Aligner</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <option-picker
+      <stackdriver-picker
         onChange="ctrl.handleAlignmentChange"
         selected="ctrl.target.aggregation.perSeriesAligner"
         options="ctrl.alignOptions"
         searchable="true"
         placeholder="'Select Alignment'"
         className="'width-15'"
-      ></option-picker>
+      ></stackdriver-picker>
     </div>
 
     <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
@@ -42,14 +42,14 @@
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Alignment Period</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <option-picker
+      <stackdriver-picker
         onChange="ctrl.handleAlignmentPeriodChange"
         selected="ctrl.target.aggregation.alignmentPeriod"
         options="ctrl.alignmentPeriods"
         searchable="true"
         placeholder="'Select Alignment'"
         className="'width-15'"
-      ></option-picker>
+      ></stackdriver-picker>
     </div>
   </div>
 
