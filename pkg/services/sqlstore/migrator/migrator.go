@@ -121,16 +121,19 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	condition := m.GetCondition()
 	if condition != nil {
 		sql, args := condition.Sql(mg.Dialect)
-		mg.Logger.Debug("Executing migration condition sql", "id", m.Id(), "sql", sql, "args", args)
-		results, err := sess.SQL(sql, args...).Query()
-		if err != nil {
-			mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
-			return err
-		}
 
-		if !condition.IsFulfilled(results) {
-			mg.Logger.Warn("Skipping migration: Already executed, but not recorded in migration log", "id", m.Id())
-			return nil
+		if sql != "" {
+			mg.Logger.Debug("Executing migration condition sql", "id", m.Id(), "sql", sql, "args", args)
+			results, err := sess.SQL(sql, args...).Query()
+			if err != nil {
+				mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
+				return err
+			}
+
+			if !condition.IsFulfilled(results) {
+				mg.Logger.Warn("Skipping migration: Already executed, but not recorded in migration log", "id", m.Id())
+				return nil
+			}
 		}
 	}
 

@@ -85,7 +85,9 @@ type AddColumnMigration struct {
 }
 
 func NewAddColumnMigration(table Table, col *Column) *AddColumnMigration {
-	return &AddColumnMigration{tableName: table.Name, column: col}
+	m := &AddColumnMigration{tableName: table.Name, column: col}
+	m.Condition = &IfColumnNotExistsCondition{TableName: table.Name, ColumnName: col.Name}
+	return m
 }
 
 func (m *AddColumnMigration) Table(tableName string) *AddColumnMigration {
