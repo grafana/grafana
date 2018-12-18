@@ -13,7 +13,7 @@ import (
 func TestUserDataAccess(t *testing.T) {
 
 	Convey("Testing DB", t, func() {
-		InitTestDB(t)
+		ss := InitTestDB(t)
 
 		Convey("Creating a user", func() {
 			cmd := &m.CreateUserCommand{
@@ -152,6 +152,27 @@ func TestUserDataAccess(t *testing.T) {
 						So(prefsQuery.Result.OrgId, ShouldEqual, 0)
 						So(prefsQuery.Result.UserId, ShouldEqual, 0)
 					})
+				})
+
+				Convey("when retreiving signed in user for orgId=0 result should return active org id", func() {
+					ss.CacheService.Flush()
+
+					query := &m.GetSignedInUserQuery{OrgId: users[1].OrgId, UserId: users[1].Id}
+					err := ss.GetSignedInUserWithCache(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldNotBeNil)
+					So(query.OrgId, ShouldEqual, users[1].OrgId)
+					err = SetUsingOrg(&m.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
+					So(err, ShouldBeNil)
+					query = &m.GetSignedInUserQuery{OrgId: 0, UserId: users[1].Id}
+					err = ss.GetSignedInUserWithCache(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldNotBeNil)
+					So(query.Result.OrgId, ShouldEqual, users[0].OrgId)
+
+					cacheKey := newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
+					_, found := ss.CacheService.Get(cacheKey)
+					So(found, ShouldBeTrue)
 				})
 			})
 		})
