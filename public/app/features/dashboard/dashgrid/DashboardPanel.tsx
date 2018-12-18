@@ -137,13 +137,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return <div ref={element => (this.element = element)} className="panel-height-helper" />;
   }
 
-  renderPanel = (plugin: PanelPlugin) => (
-    <>
-      {plugin.exports.Panel && this.renderReactPanel()}
-      {plugin.exports.PanelCtrl && this.renderAngularPanel()}
-    </>
-  );
-
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
     const { plugin, angularPanel } = this.state;
@@ -164,13 +157,12 @@ export class DashboardPanel extends PureComponent<Props, State> {
       'panel-wrapper--view': isFullscreen && !isEditing,
     });
 
-    const panelContent = this.renderPanel(plugin);
-    console.log('DashboardPanel:render');
     return (
       <div className={containerClass}>
         <PanelResizer isEditing={isEditing} panel={panel}>
           <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-            {panelContent}
+            {plugin.exports.Panel && this.renderReactPanel()}
+            {plugin.exports.PanelCtrl && this.renderAngularPanel()}
           </div>
         </PanelResizer>
 
