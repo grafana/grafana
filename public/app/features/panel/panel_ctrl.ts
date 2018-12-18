@@ -94,22 +94,6 @@ export class PanelCtrl {
 
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
-
-    const urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
-    if (urlTab) {
-      this.editorTabs.forEach((tab, i) => {
-        if (tab.title.toLowerCase() === urlTab) {
-          this.editorTabIndex = i;
-        }
-      });
-    }
-  }
-
-  changeTab(newIndex) {
-    this.editorTabIndex = newIndex;
-    const route = this.$injector.get('$route');
-    route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
-    route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?, icon?) {
