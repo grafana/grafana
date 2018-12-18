@@ -52,7 +52,6 @@ export class StackdriverAggregationCtrl {
   }
 
   setAlignOptions() {
-    console.log('this.target.metricKind', this.target.metricKind);
     const alignments = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
       ...a,
       label: a.text,
