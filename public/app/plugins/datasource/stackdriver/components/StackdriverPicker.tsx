@@ -40,11 +40,8 @@ export class StackdriverPicker extends React.Component<Props, State> {
   }
 
   shouldComponentUpdate(nextProps: Props) {
-    return (
-      nextProps.selected !== this.props.selected ||
-      !_.isEqual(nextProps.options, this.props.options) ||
-      !_.isEqual(nextProps.templateVariables, this.props.templateVariables)
-    );
+    const nextOptions = this.buildOptions(nextProps);
+    return nextProps.selected !== this.props.selected || !_.isEqual(nextOptions, this.state.options);
   }
 
   buildOptions({ templateVariables = [], groupName = '', options }) {
@@ -89,9 +86,7 @@ export class StackdriverPicker extends React.Component<Props, State> {
         backspaceRemovesValue={false}
         onChange={item => onChange(item.value)}
         options={options}
-        autoFocus={false}
         isSearchable={searchable}
-        openMenuOnFocus={true}
         maxMenuHeight={500}
         placeholder={placeholder}
         noOptionsMessage={() => 'No options found'}
