@@ -1,7 +1,3 @@
-// Copyright 2011 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package ldap
 
 import (
@@ -10,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/url"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -28,6 +25,13 @@ const (
 	MessageFinish = 3
 	// MessageTimeout indicates the client-specified timeout for a particular message ID has been reached
 	MessageTimeout = 4
+)
+
+const (
+	// DefaultLdapPort default ldap port for pure TCP connection
+	DefaultLdapPort = "389"
+	// DefaultLdapsPort default ldap port for SSL connection
+	DefaultLdapsPort = "636"
 )
 
 // PacketResponse contains the packet or error encountered reading a response
@@ -84,7 +88,7 @@ type Conn struct {
 	conn                net.Conn
 	isTLS               bool
 	closing             uint32
-	closeErr            atomicValue
+	closeErr            atomic.Value
 	isStartingTLS       bool
 	Debug               debugging
 	chanConfirm         chan struct{}
@@ -121,20 +125,49 @@ func Dial(network, addr string) (*Conn, error) {
 // DialTLS connects to the given address on the given network using tls.Dial
 // and then returns a new Conn for the connection.
 func DialTLS(network, addr string, config *tls.Config) (*Conn, error) {
-	dc, err := net.DialTimeout(network, addr, DefaultTimeout)
+	c, err := tls.DialWithDialer(&net.Dialer{Timeout: DefaultTimeout}, network, addr, config)
 	if err != nil {
-		return nil, NewError(ErrorNetwork, err)
-	}
-	c := tls.Client(dc, config)
-	err = c.Handshake()
-	if err != nil {
-		// Handshake error, close the established connection before we return an error
-		dc.Close()
 		return nil, NewError(ErrorNetwork, err)
 	}
 	conn := NewConn(c, true)
 	conn.Start()
 	return conn, nil
+}
+
+// DialURL connects to the given ldap URL vie TCP using tls.Dial or net.Dial if ldaps://
+// or ldap:// specified as protocol. On success a new Conn for the connection
+// is returned.
+func DialURL(addr string) (*Conn, error) {
+
+	lurl, err := url.Parse(addr)
+	if err != nil {
+		return nil, NewError(ErrorNetwork, err)
+	}
+
+	host, port, err := net.SplitHostPort(lurl.Host)
+	if err != nil {
+		// we asume that error is due to missing port
+		host = lurl.Host
+		port = ""
+	}
+
+	switch lurl.Scheme {
+	case "ldap":
+		if port == "" {
+			port = DefaultLdapPort
+		}
+		return Dial("tcp", net.JoinHostPort(host, port))
+	case "ldaps":
+		if port == "" {
+			port = DefaultLdapsPort
+		}
+		tlsConf := &tls.Config{
+			ServerName: host,
+		}
+		return DialTLS("tcp", net.JoinHostPort(host, port), tlsConf)
+	}
+
+	return nil, NewError(ErrorNetwork, fmt.Errorf("Unknown scheme '%s'", lurl.Scheme))
 }
 
 // NewConn returns a new Conn using conn for network I/O.
@@ -242,18 +275,18 @@ func (l *Conn) StartTLS(config *tls.Config) error {
 		ber.PrintPacket(packet)
 	}
 
-	if resultCode, message := getLDAPResultCode(packet); resultCode == LDAPResultSuccess {
+	if err := GetLDAPError(packet); err == nil {
 		conn := tls.Client(l.conn, config)
 
-		if err := conn.Handshake(); err != nil {
+		if connErr := conn.Handshake(); connErr != nil {
 			l.Close()
-			return NewError(ErrorNetwork, fmt.Errorf("TLS handshake failed (%v)", err))
+			return NewError(ErrorNetwork, fmt.Errorf("TLS handshake failed (%v)", connErr))
 		}
 
 		l.isTLS = true
 		l.conn = conn
 	} else {
-		return NewError(resultCode, fmt.Errorf("ldap: cannot StartTLS (%s)", message))
+		return err
 	}
 	go l.reader()
 
