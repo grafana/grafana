@@ -51,13 +51,10 @@ func createExternalDashboardSnapshot(cmd m.CreateDashboardSnapshotCommand) (*Cre
 	}
 
 	response, err := client.Post(setting.ExternalSnapshotUrl+"/api/snapshots", "application/json", bytes.NewBuffer(messageBytes))
-	if response != nil {
-		defer response.Body.Close()
-	}
-
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
 		return nil, fmt.Errorf("Create external snapshot response status code %d", response.StatusCode)
@@ -159,14 +156,10 @@ func GetDashboardSnapshot(c *m.ReqContext) {
 
 func deleteExternalDashboardSnapshot(externalUrl string) error {
 	response, err := client.Get(externalUrl)
-
-	if response != nil {
-		defer response.Body.Close()
-	}
-
 	if err != nil {
 		return err
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode == 200 {
 		return nil
