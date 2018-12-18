@@ -2,10 +2,10 @@
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Aggregation</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <option-group-picker
+      <option-picker
         onChange="ctrl.handleAggregationChange"
         selected="ctrl.target.aggregation.crossSeriesReducer"
-        groups="ctrl.aggOptions"
+        options="ctrl.aggOptions"
         searchable="true"
         placeholder="'Select Aggregation'"
         className="'width-15'"
@@ -25,14 +25,14 @@
   <div class="gf-form offset-width-9">
     <label class="gf-form-label query-keyword width-12">Aligner</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <option-group-picker
+      <option-picker
         onChange="ctrl.handleAlignmentChange"
         selected="ctrl.target.aggregation.perSeriesAligner"
-        groups="ctrl.alignOptions"
+        options="ctrl.alignOptions"
         searchable="true"
         placeholder="'Select Alignment'"
         className="'width-15'"
-      ></option-group-picker>
+      ></option-picker>
     </div>
 
     <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
@@ -42,14 +42,14 @@
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Alignment Period</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <option-group-picker
+      <option-picker
         onChange="ctrl.handleAlignmentPeriodChange"
         selected="ctrl.target.aggregation.alignmentPeriod"
-        groups="ctrl.alignmentPeriods"
+        options="ctrl.alignmentPeriods"
         searchable="true"
         placeholder="'Select Alignment'"
         className="'width-15'"
-      ></option-group-picker>
+      ></option-picker>
     </div>
   </div>
 
