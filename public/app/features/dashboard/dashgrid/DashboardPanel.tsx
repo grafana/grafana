@@ -14,8 +14,7 @@ import { PanelEditor } from './PanelEditor';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types';
-import { ResizableBox } from 'react-resizable';
-import { debounce } from 'lodash';
+import { PanelResizer } from './PanelResizer';
 
 export interface Props {
   panel: PanelModel;
@@ -24,22 +23,14 @@ export interface Props {
   isFullscreen: boolean;
 }
 
-interface DimensionsXY {
-  x: number;
-  y: number;
-}
-
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
-  panelDimensions: DimensionsXY;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels = {};
-  debouncedUpdatePanelDimensions: () => void;
-  debouncedResizeDone: () => void;
   angularLoader: AngularLoader = getAngularLoader();
 
   constructor(props) {
@@ -47,15 +38,10 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
-      panelDimensions: this.screenDimensions,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
-    this.debouncedUpdatePanelDimensions = debounce(this.updatePanelDimensions, 100);
-    this.debouncedResizeDone = debounce(() => {
-      this.props.panel.resizeDone();
-    }, 100);
   }
 
   isSpecial(pluginId: string) {
@@ -104,22 +90,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
   }
 
-  get screenDimensions(): DimensionsXY {
-    return {
-      x: document.documentElement.scrollWidth,
-      y: Math.floor(document.documentElement.scrollHeight * 0.4),
-    };
-  }
-
-  updatePanelDimensions = () => {
-    this.setState({
-      panelDimensions: this.screenDimensions,
-    });
-  };
-
   componentDidMount() {
     this.loadPlugin(this.props.panel.type);
-    window.addEventListener('resize', this.debouncedUpdatePanelDimensions);
   }
 
   componentDidUpdate() {
@@ -145,7 +117,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.cleanUpAngularPanel();
-    window.removeEventListener('resize', this.debouncedUpdatePanelDimensions);
   }
 
   onMouseEnter = () => {
@@ -173,24 +144,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     </>
   );
 
-  renderEditingPanelBox = (panelContent: JSX.Element, panelWrapperClass: string) => {
-    const { x, y } = this.state.panelDimensions;
-    const panelBox = this.renderPanelBox(panelContent, panelWrapperClass);
-    return (
-      <ResizableBox height={y} width={x} axis="y" onResize={this.debouncedResizeDone}>
-        {panelBox}
-      </ResizableBox>
-    );
-  };
-
-  renderPanelBox = (panelContent: JSX.Element, panelWrapperClass: string) => {
-    return (
-      <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-        {panelContent}
-      </div>
-    );
-  };
-
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
     const { plugin, angularPanel } = this.state;
@@ -215,9 +168,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
     console.log('DashboardPanel:render');
     return (
       <div className={containerClass}>
-        {isEditing
-          ? this.renderEditingPanelBox(panelContent, panelWrapperClass)
-          : this.renderPanelBox(panelContent, panelWrapperClass)}
+        <PanelResizer isEditing={isEditing} panel={panel}>
+          <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            {panelContent}
+          </div>
+        </PanelResizer>
 
         {panel.isEditing && (
           <PanelEditor
