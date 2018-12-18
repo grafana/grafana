@@ -1,28 +1,28 @@
 <div class="gf-form-inline">
   <div class="gf-form">
     <span class="gf-form-label width-9 query-keyword">Service</span>
-    <option-picker
+    <stackdriver-picker
       onChange="ctrl.handleServiceChange"
       selected="ctrl.target.service"
       options="ctrl.services"
       searchable="false"
       placeholder="'Select Services'"
       className="'width-15'"
-    ></option-picker>
+    ></stackdriver-picker>
   </div>
   <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
 </div>
 <div class="gf-form-inline">
   <div class="gf-form">
     <span class="gf-form-label width-9 query-keyword">Metric</span>
-    <option-picker
+    <stackdriver-picker
       onChange="ctrl.handleMetricTypeChange"
       selected="ctrl.target.metricType"
       options="ctrl.getMetricGroups()"
       searchable="true"
       placeholder="'Select Metric'"
       className="'width-15'"
-    ></option-picker>
+    ></stackdriver-picker>
   </div>
   <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
 </div>
