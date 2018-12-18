@@ -18,6 +18,7 @@ gsutil -m rsync -r "gs://grafana-repo/$RELEASE_TYPE/rpm" /rpm-repo
 
 # Add the new release to the repo
 cp ./dist/*.rpm /rpm-repo
+rm /rpm-repo/grafana-latest-1*.rpm || true
 cd /rpm-repo
 createrepo .
 

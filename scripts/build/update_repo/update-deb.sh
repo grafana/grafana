@@ -14,14 +14,15 @@ set -e
 cp scripts/build/update_repo/aptly.conf /etc/aptly.conf
 mkdir -p /deb-repo/db
 mkdir -p /deb-repo/repo
+mkdir -p /deb-repo/tmp
 
 # Download the database
 gsutil -m rsync -r gs://grafana-aptly-db/repo-db /deb-repo/db
 
 # Add the new release to the repo
-set +e
-aptly publish drop squeeze filesystem:repo:grafana
-set -e
+aptly publish drop squeeze filesystem:repo:grafana || true
+cp ./dist/*.deb /deb-repo/tmp
+rm /deb-repo/tmp/grafana_latest*.deb || true
 aptly repo add grafana ./dist
 
 # Setup signing and sign the repo
