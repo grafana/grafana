@@ -3,10 +3,12 @@ import React, { PureComponent } from 'react';
 
 // Utils & Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 // Components
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
+import PanelHelp from 'app/core/components/PanelHelp/PanelHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelOptionSection } from './PanelOptionSection';
 
@@ -14,6 +16,7 @@ import { PanelOptionSection } from './PanelOptionSection';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types/plugins';
+import { DataSourceSelectItem } from 'app/types';
 
 interface Props {
   panel: PanelModel;
@@ -24,6 +27,7 @@ interface Props {
 }
 
 interface State {
+  currentDataSource: DataSourceSelectItem;
   isVizPickerOpen: boolean;
   searchQuery: string;
 }
@@ -32,13 +36,16 @@ export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
   searchInput: HTMLElement;
+  dataSources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
 
   constructor(props) {
     super(props);
+    const { panel } = props;
 
     this.state = {
       isVizPickerOpen: false,
       searchQuery: '',
+      currentDataSource: this.dataSources.find(datasource => datasource.value === panel.datasource),
     };
   }
 
@@ -198,12 +205,20 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
+  renderHelp = () => <PanelHelp plugin={this.state.currentDataSource.meta} type="panel_help" />;
+
   render() {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
 
+    const pluginHelp = {
+      heading: 'Help',
+      icon: 'fa fa-question',
+      render: this.renderHelp,
+    };
+
     return (
-      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[]}>
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[pluginHelp]}>
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
             <VizTypePicker

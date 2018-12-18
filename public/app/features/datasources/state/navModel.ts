@@ -73,7 +73,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
           url: '',
         },
         description: '',
-        links: [''],
+        links: [{ name: '', url: '' }],
         logos: {
           large: '',
           small: '',
