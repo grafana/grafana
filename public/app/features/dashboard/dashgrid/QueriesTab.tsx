@@ -21,7 +21,7 @@ import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { DataSourceSelectItem, DataQuery } from 'app/types';
-import PanelHelp from '../../../core/components/PanelHelp/PanelHelp';
+import PluginHelp from '../../../core/components/PanelHelp/PluginHelp';
 
 interface Props {
   panel: PanelModel;
@@ -134,7 +134,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderHelp = () => {
-    return <PanelHelp plugin={this.state.currentDS.meta} type="query_help" />;
+    return <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />;
   };
 
   onAddQuery = (query?: Partial<DataQuery>) => {

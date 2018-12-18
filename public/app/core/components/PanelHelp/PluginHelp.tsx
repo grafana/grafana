@@ -14,7 +14,7 @@ interface State {
   help: string;
 }
 
-export default class PanelHelp extends PureComponent<Props, State> {
+export default class PluginHelp extends PureComponent<Props, State> {
   state = {
     isError: false,
     isLoading: false,
@@ -48,7 +48,7 @@ export default class PanelHelp extends PureComponent<Props, State> {
         const markdown = new Remarkable();
         const helpHtml = markdown.render(response);
 
-        if (response === '' && this.props.type) {
+        if (response === '' && this.props.type === 'help') {
           this.setState({
             isError: false,
             isLoading: false,

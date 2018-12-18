@@ -8,7 +8,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 // Components
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
-import PanelHelp from 'app/core/components/PanelHelp/PanelHelp';
+import PluginHelp from 'app/core/components/PanelHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelOptionSection } from './PanelOptionSection';
 
@@ -205,7 +205,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
-  renderHelp = () => <PanelHelp plugin={this.state.currentDataSource.meta} type="panel_help" />;
+  renderHelp = () => <PluginHelp plugin={this.state.currentDataSource.meta} type="panel_help" />;
 
   render() {
     const { plugin } = this.props;
