@@ -1,5 +1,5 @@
 ﻿import React, { PureComponent } from 'react';
-import { debounce, throttle } from 'lodash';
+import { throttle } from 'lodash';
 import Draggable from 'react-draggable';
 
 import { PanelModel } from '../panel_model';
@@ -17,8 +17,8 @@ interface State {
 export class PanelResizer extends PureComponent<Props, State> {
   initialHeight: number = Math.floor(document.documentElement.scrollHeight * 0.4);
   prevEditorHeight: number;
-  debouncedChangeHeight: (height: number) => void;
-  debouncedResizeDone: () => void;
+  throttledChangeHeight: (height: number) => void;
+  throttledResizeDone: () => void;
 
   constructor(props) {
     super(props);
@@ -28,13 +28,25 @@ export class PanelResizer extends PureComponent<Props, State> {
       editorHeight: this.initialHeight,
     };
 
-    this.debouncedChangeHeight = throttle(this.changeHeight, 20, { trailing: true });
-    this.debouncedResizeDone = debounce(() => {
+    this.throttledChangeHeight = throttle(this.changeHeight, 20, { trailing: true });
+    this.throttledResizeDone = throttle(() => {
       panel.resizeDone();
-    }, 200);
+    }, 50);
+  }
+
+  get largestHeight() {
+    return document.documentElement.scrollHeight * 0.9;
+  }
+  get smallestHeight() {
+    return 100;
   }
 
   changeHeight = height => {
+    const sh = this.smallestHeight;
+    const lh = this.largestHeight;
+    height = height < sh ? sh : height;
+    height = height > lh ? lh : height;
+
     this.prevEditorHeight = this.state.editorHeight;
     this.setState({
       editorHeight: height,
@@ -43,8 +55,8 @@ export class PanelResizer extends PureComponent<Props, State> {
 
   onDrag = (evt, data) => {
     const newHeight = this.state.editorHeight + data.y;
-    this.debouncedChangeHeight(newHeight);
-    this.debouncedResizeDone();
+    this.throttledChangeHeight(newHeight);
+    this.throttledResizeDone();
   };
 
   render() {
