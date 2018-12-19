@@ -4,21 +4,14 @@ export const DefaultFilterValue = 'select value';
 export class FilterSegments {
   filterSegments: any[];
   removeSegment: any;
-  uiSegmentSrv: any;
 
-  constructor(private getFilterKeysFunc, private getFilterValuesFunc) {
-    this.filterSegments = [];
-  }
+  constructor(private uiSegmentSrv, private target, private getFilterKeysFunc, private getFilterValuesFunc) {}
 
-  init(uiSegmentSrv) {
-    this.uiSegmentSrv = uiSegmentSrv;
-  }
-
-  buildSegmentModel(filters) {
+  buildSegmentModel() {
     this.removeSegment = this.uiSegmentSrv.newSegment({ fake: true, value: DefaultRemoveFilterValue });
 
     this.filterSegments = [];
-    filters.forEach((f, index) => {
+    this.target.filters.forEach((f, index) => {
       switch (index % 4) {
         case 0:
           this.filterSegments.push(this.uiSegmentSrv.newKey(f));

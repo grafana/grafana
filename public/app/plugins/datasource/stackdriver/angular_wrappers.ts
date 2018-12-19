@@ -4,7 +4,8 @@ import { QueryEditor } from './components/QueryEditor';
 export function registerAngularDirectives() {
   react2AngularDirective('queryEditor', QueryEditor, [
     'target',
-    'onChange',
+    'onQueryChange',
+    'onExecuteQuery',
     ['uiSegmentSrv', { watchDepth: 'reference' }],
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],

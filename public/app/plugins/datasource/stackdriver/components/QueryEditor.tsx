@@ -4,11 +4,12 @@ import appEvents from 'app/core/app_events';
 
 import { MetricPicker } from './MetricPicker';
 import { Filter } from './Filter';
-// import { AggregationPicker } from './AggregationPicker';
+import { AggregationPicker } from './AggregationPicker';
 import { Target, QueryMeta } from '../types';
 
 export interface Props {
-  onChange: (target: Target) => void;
+  onQueryChange: (target: Target) => void;
+  onExecuteQuery?: () => void;
   target: Target;
   datasource: any;
   templateSrv: any;
@@ -24,6 +25,8 @@ interface State {
 const DefaultTarget: Target = {
   defaultProject: 'loading project...',
   metricType: '',
+  metricKind: '',
+  valueType: '',
   refId: '',
   service: '',
   unit: '',
@@ -35,22 +38,14 @@ const DefaultTarget: Target = {
   },
   filters: [],
   aliasBy: '',
-  metricKind: '',
-  valueType: '',
 };
 
 export class QueryEditor extends React.Component<Props, State> {
-  state: State = { labelData: null, loadLabelsPromise: null, target: DefaultTarget };
-
-  constructor(props) {
-    super(props);
-    this.handleMetricTypeChange = this.handleMetricTypeChange.bind(this);
-    this.handleAggregationChange = this.handleAggregationChange.bind(this);
-  }
+  state: State = { labelData: null, loadLabelsPromise: new Promise(() => {}), target: DefaultTarget };
 
   componentDidMount() {
-    this.setState({ target: this.props.target });
     this.getLabels();
+    this.setState({ target: this.props.target });
   }
 
   async getLabels() {
@@ -81,18 +76,50 @@ export class QueryEditor extends React.Component<Props, State> {
     });
 
     // this.$rootScope.$broadcast('metricTypeChanged');
-    // this.getLabels();
-    // this.refresh();
+    this.getLabels();
+    this.props.onQueryChange(this.state.target);
+    this.props.onExecuteQuery();
   }
 
-  handleAggregationChange(crossSeriesReducer) {
-    // this.target.aggregation.crossSeriesReducer = crossSeriesReducer;
-    // this.refresh();
+  handleFilterChange(value) {
+    this.setState({
+      target: {
+        ...this.state.target,
+        filters: value,
+      },
+    });
+    this.props.onQueryChange(this.state.target);
+    this.props.onExecuteQuery();
+  }
+
+  handleGroupBysChange(value) {
+    this.setState({
+      target: {
+        ...this.state.target,
+        groupBys: value,
+      },
+    });
+    this.props.onQueryChange(this.state.target);
+    this.props.onExecuteQuery();
+  }
+
+  handleAggregationChange(value) {
+    this.setState({
+      target: {
+        ...this.state.target,
+        aggregation: {
+          ...this.state.target.aggregation,
+          crossSeriesReducer: value,
+        },
+      },
+    });
+    this.props.onQueryChange(this.state.target);
+    this.props.onExecuteQuery();
   }
 
   render() {
     const { labelData, loadLabelsPromise, target } = this.state;
-    const { defaultProject, metricType } = target;
+    const { defaultProject, metricType, valueType, metricKind, aggregation } = target;
     const { templateSrv, datasource, uiSegmentSrv } = this.props;
 
     return (
@@ -105,12 +132,20 @@ export class QueryEditor extends React.Component<Props, State> {
           onChange={value => this.handleMetricTypeChange(value)}
         />
         <Filter
-          onChange={() => console.log('change filter')}
+          filtersChanged={value => this.handleFilterChange(value)}
+          groupBysChanged={value => this.handleGroupBysChange(value)}
           target={target}
           uiSegmentSrv={uiSegmentSrv}
           labelData={labelData}
           templateSrv={templateSrv}
           loading={loadLabelsPromise}
+        />
+        <AggregationPicker
+          valueType={valueType}
+          metricKind={metricKind}
+          templateSrv={templateSrv}
+          aggregation={aggregation}
+          onChange={value => this.handleAggregationChange(value)}
         />
         {/* target="ctrl.target" refresh="ctrl.refresh()" loading="ctrl.loadLabelsPromise" label-data="ctrl.labelData" */}
         {/* <stackdriver-filter

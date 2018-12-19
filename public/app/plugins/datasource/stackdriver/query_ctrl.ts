@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import appEvents from 'app/core/app_events';
 import { QueryCtrl } from 'app/plugins/sdk';
 import './query_aggregation_ctrl';
 import './query_filter_ctrl';
@@ -80,42 +79,17 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       'groupName',
       ['templateVariables', { watchDepth: 'reference' }],
     ]);
-    // this.handleMetricTypeChange = this.handleMetricTypeChange.bind(this);
-    // this.handleAggregationChange = this.handleAggregationChange.bind(this);
-    this.handleTargetChange = this.handleTargetChange.bind(this);
     registerAngularDirectives();
-    // this.getLabels();
+    this.handleQueryChange = this.handleQueryChange.bind(this);
+    this.handleExecuteQuery = this.handleExecuteQuery.bind(this);
   }
 
-  // handleMetricTypeChange({ valueType, metricKind, type, unit }) {
-  //   this.target.metricType = type;
-  //   this.target.unit = unit;
-  //   this.target.valueType = valueType;
-  //   this.target.metricKind = metricKind;
-  //   this.$rootScope.$broadcast('metricTypeChanged');
-  //   this.getLabels();
-  //   this.refresh();
-  // }
-
-  // handleAggregationChange(crossSeriesReducer) {
-  //   this.target.aggregation.crossSeriesReducer = crossSeriesReducer;
-  //   this.refresh();
-  // }
-  handleTargetChange(target: Target) {
-    console.log(target);
+  handleQueryChange(target: Target) {
+    Object.assign(this.target, target);
   }
 
-  async getLabels() {
-    this.loadLabelsPromise = new Promise(async resolve => {
-      try {
-        const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
-        this.labelData = meta;
-        resolve();
-      } catch (error) {
-        appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
-        resolve();
-      }
-    });
+  handleExecuteQuery() {
+    this.$scope.ctrl.refresh();
   }
 
   onDataReceived(dataList) {

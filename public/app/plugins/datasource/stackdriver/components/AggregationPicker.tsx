@@ -39,7 +39,7 @@ export class AggregationPicker extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.setAggOptions();
+    this.setAggOptions(this.props);
   }
 
   componentWillReceiveProps(nextProps: Props) {
@@ -49,17 +49,21 @@ export class AggregationPicker extends React.Component<Props, State> {
       nextProps.metricKind !== metricKind ||
       nextProps.aggregation.groupBys !== aggregation.groupBys
     ) {
-      this.setAggOptions();
+      this.setAggOptions(nextProps);
     }
   }
 
-  setAggOptions() {
-    const { valueType, metricKind, aggregation, templateSrv } = this.props;
+  setAggOptions({ valueType, metricKind, aggregation }) {
+    const { templateSrv } = this.props;
     let aggregations = getAggregationOptionsByMetric(valueType, metricKind).map(a => ({
       ...a,
       label: a.text,
     }));
-    if (!aggregations.find(o => o.value === templateSrv.replace(aggregation.crossSeriesReducer))) {
+
+    if (
+      aggregations.length > 0 &&
+      !aggregations.find(o => o.value === templateSrv.replace(aggregation.crossSeriesReducer))
+    ) {
       this.deselectAggregationOption('REDUCE_NONE');
     }
 
@@ -67,15 +71,7 @@ export class AggregationPicker extends React.Component<Props, State> {
       aggregations = aggregations.filter(o => o.value !== 'REDUCE_NONE');
       this.deselectAggregationOption('REDUCE_NONE');
     }
-    this.setState({
-      aggOptions: [
-        this.getTemplateVariablesGroup(),
-        {
-          label: 'Aggregations',
-          options: aggregations,
-        },
-      ],
-    });
+    this.setState({ aggOptions: aggregations });
   }
 
   deselectAggregationOption(notValidOptionValue: string) {
@@ -86,17 +82,6 @@ export class AggregationPicker extends React.Component<Props, State> {
 
   handleAggregationChange(value) {
     this.props.onChange(value);
-    // this.$scope.refresh();
-  }
-
-  getTemplateVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.props.templateSrv.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
   }
 
   render() {
@@ -108,16 +93,15 @@ export class AggregationPicker extends React.Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Aggregation</label>
-            <div className="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-              <StackdriverPicker
-                onChange={value => this.handleAggregationChange(value)}
-                selected={aggregation.crossSeriesReducer}
-                options={aggOptions}
-                searchable={true}
-                placeholder="Select Aggregation"
-                className="width-15"
-              />
-            </div>
+            <StackdriverPicker
+              onChange={value => this.handleAggregationChange(value)}
+              selected={aggregation.crossSeriesReducer}
+              options={aggOptions}
+              searchable={true}
+              placeholder="Select Aggregation"
+              className="width-15"
+              groupName="Aggregations"
+            />
           </div>
           <div className="gf-form gf-form--grow">
             <label className="gf-form-label gf-form-label--grow">
