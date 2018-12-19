@@ -13,24 +13,18 @@ export interface Props {
   };
   aggregation: {
     crossSeriesReducer: string;
-    alignmentPeriod: string;
-    perSeriesAligner: string;
     groupBys: string[];
   };
   children?: (renderProps: any) => JSX.Element;
 }
 
 interface State {
-  alignmentPeriods: any[];
-  alignOptions: any[];
   aggOptions: any[];
   displayAdvancedOptions: boolean;
 }
 
 export class Aggregations extends React.Component<Props, State> {
   state: State = {
-    alignmentPeriods: [],
-    alignOptions: [],
     aggOptions: [],
     displayAdvancedOptions: false,
   };
@@ -80,11 +74,7 @@ export class Aggregations extends React.Component<Props, State> {
       this.props.metricDescriptor.metricKind
     );
     const newValue = aggregations.find(o => o.value !== notValidOptionValue);
-    this.handleAggregationChange(newValue ? newValue.value : '');
-  }
-
-  handleAggregationChange(value) {
-    this.props.onChange(value);
+    this.props.onChange(newValue ? newValue.value : '');
   }
 
   handleToggleDisplayAdvanced() {
@@ -95,7 +85,7 @@ export class Aggregations extends React.Component<Props, State> {
 
   render() {
     const { aggOptions, displayAdvancedOptions } = this.state;
-    const { aggregation, templateSrv } = this.props;
+    const { aggregation, templateSrv, onChange } = this.props;
 
     return (
       <React.Fragment>
@@ -103,7 +93,7 @@ export class Aggregations extends React.Component<Props, State> {
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Aggregation</label>
             <StackdriverPicker
-              onChange={value => this.handleAggregationChange(value)}
+              onChange={value => onChange(value)}
               selected={aggregation.crossSeriesReducer}
               templateVariables={templateSrv.variables}
               options={aggOptions}

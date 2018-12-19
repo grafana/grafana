@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { Metrics } from './Metrics';
 import { Filter } from './Filter';
 import { Aggregations } from './Aggregations';
+import { Alignments } from './Alignments';
 import { Target } from '../types';
 
 export interface Props {
@@ -58,7 +59,7 @@ export class QueryEditor extends React.Component<Props, State> {
         },
       },
       () => {
-        this.props.onQueryChange(this.state.target);
+        // this.props.onQueryChange(this.state.target);
         this.props.onExecuteQuery();
       }
     );
@@ -84,7 +85,10 @@ export class QueryEditor extends React.Component<Props, State> {
       {
         target: {
           ...this.state.target,
-          groupBys: value,
+          aggregation: {
+            ...this.state.target.aggregation,
+            groupBys: value,
+          },
         },
       },
       () => {
@@ -100,6 +104,20 @@ export class QueryEditor extends React.Component<Props, State> {
       aggregation: {
         ...this.state.target.aggregation,
         crossSeriesReducer: value,
+      },
+    };
+    this.setState({ target }, () => {
+      this.props.onQueryChange(target);
+      this.props.onExecuteQuery();
+    });
+  }
+
+  handleAlignmentChange(value) {
+    const target = {
+      ...this.state.target,
+      aggregation: {
+        ...this.state.target.aggregation,
+        perSeriesAligner: value,
       },
     };
     this.setState({ target }, () => {
@@ -139,7 +157,16 @@ export class QueryEditor extends React.Component<Props, State> {
                 aggregation={aggregation}
                 onChange={value => this.handleAggregationChange(value)}
               >
-                {displayAdvancedOptions => displayAdvancedOptions && <p>RÖV</p>}
+                {displayAdvancedOptions =>
+                  displayAdvancedOptions && (
+                    <Alignments
+                      metricDescriptor={metric}
+                      templateSrv={templateSrv}
+                      perSeriesAligner={aggregation.perSeriesAligner}
+                      onChange={value => this.handleAlignmentChange(value)}
+                    />
+                  )
+                }
               </Aggregations>
             </React.Fragment>
           )}
