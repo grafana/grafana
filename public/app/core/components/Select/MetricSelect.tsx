@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 
-import Select from 'app/core/components/Select/Select';
+import Select from './Select';
 import { Variable } from 'app/types/templates';
 
 export interface Props {
@@ -19,7 +19,7 @@ interface State {
   options: any[];
 }
 
-export class StackdriverPicker extends React.Component<Props, State> {
+export class MetricSelect extends React.Component<Props, State> {
   static defaultProps = {
     variables: [],
     options: [],

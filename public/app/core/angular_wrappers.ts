@@ -5,6 +5,7 @@ import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { SearchResult } from './components/search/SearchResult';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
+import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 
 export function registerAngularDirectives() {
@@ -18,5 +19,15 @@ export function registerAngularDirectives() {
     'tags',
     ['onChange', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('metricSelect', MetricSelect, [
+    'options',
+    'onChange',
+    'value',
+    'isSearchable',
+    'className',
+    'placeholder',
+    'groupName',
+    ['variables', { watchDepth: 'reference' }],
   ]);
 }

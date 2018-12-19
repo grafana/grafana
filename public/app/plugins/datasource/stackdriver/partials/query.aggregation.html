@@ -1,7 +1,7 @@
 <div class="gf-form-inline">
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Aggregation</label>
-    <stackdriver-picker
+    <metric-select
       onChange="ctrl.handleAggregationChange"
       value="ctrl.target.aggregation.crossSeriesReducer"
       options="ctrl.aggOptions"
@@ -10,7 +10,7 @@
       className="'width-15'"
       variables="ctrl.templateSrv.variables"
       group-name="'Aggregations'"
-    ></stackdriver-picker>
+    ></metric-select>
   </div>
   <div class="gf-form gf-form--grow">
     <label class="gf-form-label gf-form-label--grow">
@@ -24,7 +24,7 @@
 <div class="gf-form-group" ng-if="ctrl.target.showAggregationOptions">
   <div class="gf-form offset-width-9">
     <label class="gf-form-label query-keyword width-15">Aligner</label>
-    <stackdriver-picker
+    <metric-select
       onChange="ctrl.handleAlignmentChange"
       value="ctrl.target.aggregation.perSeriesAligner"
       options="ctrl.alignOptions"
@@ -33,7 +33,7 @@
       className="'width-15'"
       variables="ctrl.templateSrv.variables"
       group-name="'Alignment Options'"
-    ></stackdriver-picker>
+    ></metric-select>
 
     <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
   </div>
@@ -41,7 +41,7 @@
 <div class="gf-form-inline">
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Alignment Period</label>
-    <stackdriver-picker
+    <metric-select
       onChange="ctrl.handleAlignmentPeriodChange"
       value="ctrl.target.aggregation.alignmentPeriod"
       options="ctrl.alignmentPeriods"
@@ -50,7 +50,7 @@
       className="'width-15'"
       variables="ctrl.templateSrv.variables"
       group-name="'Alignment Periods'"
-    ></stackdriver-picker>
+    ></metric-select>
   </div>
 
   <div class="gf-form gf-form--grow">
