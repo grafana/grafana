@@ -2,8 +2,6 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import './query_aggregation_ctrl';
 import './query_filter_ctrl';
-import { StackdriverPicker } from './components/StackdriverPicker';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 export interface QueryMeta {
   alignmentPeriod: string;
@@ -63,16 +61,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     _.defaultsDeep(this.target, this.defaults);
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
-    react2AngularDirective('stackdriverPicker', StackdriverPicker, [
-      'options',
-      'onChange',
-      'value',
-      'isSearchable',
-      'className',
-      'placeholder',
-      'groupName',
-      ['variables', { watchDepth: 'reference' }],
-    ]);
   }
 
   onDataReceived(dataList) {
