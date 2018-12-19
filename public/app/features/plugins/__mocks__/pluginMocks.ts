@@ -70,7 +70,7 @@ export const getMockPlugin = () => {
         url: 'url/to/GrafanaLabs',
       },
       description: 'pretty decent plugin',
-      links: ['one link'],
+      links: [{ name: 'project', url: 'one link' }],
       logos: { small: 'small/logo', large: 'large/logo' },
       screenshots: [{ path: `screenshot` }],
       updated: '2018-09-26',
