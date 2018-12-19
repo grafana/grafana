@@ -67,7 +67,7 @@ export function updateDashboardPermission(
 
       const updated = toUpdateItem(item);
 
-      // if this is the item we want to update, update it's permisssion
+      // if this is the item we want to update, update it's permission
       if (itemToUpdate === item) {
         updated.permission = level;
       }

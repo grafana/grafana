@@ -198,17 +198,31 @@ func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error 
 	}
 
 	proxies := strings.Split(setting.AuthProxyWhitelist, ",")
-	sourceIP, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		return err
+	var proxyObjs []*net.IPNet
+	for _, proxy := range proxies {
+		proxyObjs = append(proxyObjs, coerceProxyAddress(proxy))
 	}
 
-	// Compare allowed IP addresses to actual address
-	for _, proxyIP := range proxies {
-		if sourceIP == strings.TrimSpace(proxyIP) {
+	sourceIP, _, _ := net.SplitHostPort(remoteAddr)
+	sourceObj := net.ParseIP(sourceIP)
+
+	for _, proxyObj := range proxyObjs {
+		if proxyObj.Contains(sourceObj) {
 			return nil
 		}
 	}
-
 	return fmt.Errorf("Request for user (%s) from %s is not from the authentication proxy", proxyHeaderValue, sourceIP)
+}
+
+func coerceProxyAddress(proxyAddr string) *net.IPNet {
+	proxyAddr = strings.TrimSpace(proxyAddr)
+	if !strings.Contains(proxyAddr, "/") {
+		proxyAddr = strings.Join([]string{proxyAddr, "32"}, "/")
+	}
+
+	_, network, err := net.ParseCIDR(proxyAddr)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return network
 }

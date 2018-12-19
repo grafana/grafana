@@ -5,7 +5,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 
 export enum ActionTypes {
-  LoadOrganization = 'LOAD_ORGANISATION',
+  LoadOrganization = 'LOAD_ORGANIZATION',
   SetOrganizationName = 'SET_ORGANIZATION_NAME',
 }
 
@@ -19,9 +19,9 @@ interface SetOrganizationNameAction {
   payload: string;
 }
 
-const organisationLoaded = (organisation: Organization) => ({
+const organizationLoaded = (organization: Organization) => ({
   type: ActionTypes.LoadOrganization,
-  payload: organisation,
+  payload: organization,
 });
 
 export const setOrganizationName = (orgName: string) => ({
@@ -33,10 +33,10 @@ export type Action = LoadOrganizationAction | SetOrganizationNameAction;
 
 export function loadOrganization(): ThunkResult<void> {
   return async dispatch => {
-    const organisationResponse = await getBackendSrv().get('/api/org');
-    dispatch(organisationLoaded(organisationResponse));
+    const organizationResponse = await getBackendSrv().get('/api/org');
+    dispatch(organizationLoaded(organizationResponse));
 
-    return organisationResponse;
+    return organizationResponse;
   };
 }
 
