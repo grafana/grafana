@@ -345,8 +345,12 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 	return err
 }
 
+func newSignedInUserCacheKey(orgID, userID int64) string {
+	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
+}
+
 func (ss *SqlStore) GetSignedInUserWithCache(query *m.GetSignedInUserQuery) error {
-	cacheKey := fmt.Sprintf("signed-in-user-%d-%d", query.UserId, query.OrgId)
+	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		query.Result = cached.(*m.SignedInUser)
 		return nil
@@ -357,6 +361,7 @@ func (ss *SqlStore) GetSignedInUserWithCache(query *m.GetSignedInUserQuery) erro
 		return err
 	}
 
+	cacheKey = newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
 	ss.CacheService.Set(cacheKey, query.Result, time.Second*5)
 	return nil
 }
