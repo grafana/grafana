@@ -3,12 +3,11 @@ import React, { PureComponent } from 'react';
 
 // Utils & Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 // Components
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
-import PluginHelp from 'app/core/components/PanelHelp/PluginHelp';
+import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelOptionSection } from './PanelOptionSection';
 
@@ -16,7 +15,6 @@ import { PanelOptionSection } from './PanelOptionSection';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types/plugins';
-import { DataSourceSelectItem } from 'app/types';
 
 interface Props {
   panel: PanelModel;
@@ -27,7 +25,6 @@ interface Props {
 }
 
 interface State {
-  currentDataSource: DataSourceSelectItem;
   isVizPickerOpen: boolean;
   searchQuery: string;
 }
@@ -36,16 +33,13 @@ export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
   searchInput: HTMLElement;
-  dataSources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
 
   constructor(props) {
     super(props);
-    const { panel } = props;
 
     this.state = {
       isVizPickerOpen: false,
       searchQuery: '',
-      currentDataSource: this.dataSources.find(datasource => datasource.value === panel.datasource),
     };
   }
 
@@ -205,7 +199,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
-  renderHelp = () => <PluginHelp plugin={this.state.currentDataSource.meta} type="help" />;
+  renderHelp = () => <PluginHelp plugin={this.props.plugin} type="help" />;
 
   render() {
     const { plugin } = this.props;

@@ -21,7 +21,7 @@ import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { DataSourceSelectItem, DataQuery } from 'app/types';
-import PluginHelp from '../../../core/components/PanelHelp/PluginHelp';
+import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 
 interface Props {
   panel: PanelModel;
@@ -203,7 +203,6 @@ export class QueriesTab extends PureComponent<Props, State> {
   render() {
     const { panel } = this.props;
     const { currentDS, isAddingMixed } = this.state;
-    const { hasQueryHelp } = currentDS.meta;
 
     const queryInspector = {
       title: 'Query Inspector',
@@ -213,7 +212,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     const dsHelp = {
       heading: 'Help',
       icon: 'fa fa-question',
-      disabled: !hasQueryHelp,
       render: this.renderHelp,
     };
 
