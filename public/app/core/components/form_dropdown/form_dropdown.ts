@@ -88,7 +88,7 @@ export class FormDropdownCtrl {
       if (evt.keyCode === 13) {
         setTimeout(() => {
           this.inputElement.blur();
-        }, 100);
+        }, 300);
       }
     });
 

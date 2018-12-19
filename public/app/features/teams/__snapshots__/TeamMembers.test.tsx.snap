@@ -1,0 +1,616 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <label
+        className="gf-form--has-input-icon gf-form--grow"
+      >
+        <input
+          className="gf-form-input"
+          onChange={[Function]}
+          placeholder="Search members"
+          type="text"
+          value=""
+        />
+        <i
+          className="gf-form-input-icon fa fa-search"
+        />
+      </label>
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-success pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      <i
+        className="fa fa-plus"
+      />
+       Add a member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add Team Member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+  </div>
+</div>
+`;
+
+exports[`Render should render team members 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <label
+        className="gf-form--has-input-icon gf-form--grow"
+      >
+        <input
+          className="gf-form-input"
+          onChange={[Function]}
+          placeholder="Search members"
+          type="text"
+          value=""
+        />
+        <i
+          className="gf-form-input-icon fa fa-search"
+        />
+      </label>
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-success pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      <i
+        className="fa fa-plus"
+      />
+       Add a member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add Team Member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="1"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-1
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="2"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-2
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="3"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-3
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="4"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-4
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="5"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-5
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+
+exports[`Render should render team members when sync enabled 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <label
+        className="gf-form--has-input-icon gf-form--grow"
+      >
+        <input
+          className="gf-form-input"
+          onChange={[Function]}
+          placeholder="Search members"
+          type="text"
+          value=""
+        />
+        <i
+          className="gf-form-input-icon fa fa-search"
+        />
+      </label>
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-success pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      <i
+        className="fa fa-plus"
+      />
+       Add a member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add Team Member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <th />
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="1"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-1
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td>
+            <TagBadge
+              count={0}
+              key="label 1"
+              label="label 1"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+            <TagBadge
+              count={0}
+              key="label 2"
+              label="label 2"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="2"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-2
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td>
+            <TagBadge
+              count={0}
+              key="label 1"
+              label="label 1"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+            <TagBadge
+              count={0}
+              key="label 2"
+              label="label 2"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="3"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-3
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td>
+            <TagBadge
+              count={0}
+              key="label 1"
+              label="label 1"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+            <TagBadge
+              count={0}
+              key="label 2"
+              label="label 2"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="4"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-4
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td>
+            <TagBadge
+              count={0}
+              key="label 1"
+              label="label 1"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+            <TagBadge
+              count={0}
+              key="label 2"
+              label="label 2"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="5"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-5
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <td>
+            <TagBadge
+              count={0}
+              key="label 1"
+              label="label 1"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+            <TagBadge
+              count={0}
+              key="label 2"
+              label="label 2"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirmDelete={[Function]}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;

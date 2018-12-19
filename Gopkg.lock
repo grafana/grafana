@@ -20,6 +20,12 @@
   revision = "7677a1d7c1137cd3dd5ba7a076d0c898a1ef4520"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/VividCortex/mysqlerr"
+  packages = ["."]
+  revision = "6c6b55f8796f578c870b7e19bafb16103bc40095"
+
+[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -135,12 +141,6 @@
   version = "v1.36.0"
 
 [[projects]]
-  name = "github.com/go-ldap/ldap"
-  packages = ["."]
-  revision = "bb7a9ca6e4fbc2129e3db588a34bc970ffe811a9"
-  version = "v2.5.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/go-macaron/binding"
   packages = ["."]
@@ -167,7 +167,7 @@
     "postgres",
     "redis"
   ]
-  revision = "b8e286a0dba8f4999042d6b258daf51b31d08938"
+  revision = "068d408f9c54c7fa7fcc5e2bdd3241ab21280c9e"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -258,7 +258,7 @@
   branch = "master"
   name = "github.com/hashicorp/yamux"
   packages = ["."]
-  revision = "2658be15c5f05e76244154714161f17e3e77de2e"
+  revision = "7221087c3d281fda5f794e28c2ea4c6e4d5c4558"
 
 [[projects]]
   name = "github.com/inconshreveable/log15"
@@ -501,6 +501,8 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "ed25519",
+    "ed25519/internal/edwards25519",
     "md4",
     "pbkdf2"
   ]
@@ -647,6 +649,12 @@
   version = "v1.36.0"
 
 [[projects]]
+  name = "gopkg.in/ldap.v3"
+  packages = ["."]
+  revision = "5c2c0f997205c29de14cb6c35996370c2c5dfab1"
+  version = "v3"
+
+[[projects]]
   name = "gopkg.in/macaron.v1"
   packages = ["."]
   revision = "c1be95e6d21e769e44e1ec33cec9da5837861c10"
@@ -665,14 +673,24 @@
   version = "v2.3.2"
 
 [[projects]]
+  name = "gopkg.in/square/go-jose.v2"
+  packages = [
+    ".",
+    "cipher",
+    "json"
+  ]
+  revision = "ef984e69dd356202fd4e4910d4d9c24468bdf0b8"
+  version = "v2.1.9"
+
+[[projects]]
+  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "81a37e747b875cf870c1b9486fa3147e704dea7db8ba86f7cb942d3ddc01d3e3"
+  inputs-digest = "88f0eb826b9c154ba46ea3bb64767707d86db75449ec75199eb2b8cf2b337fd4"
   solver-name = "gps-cdcl"
   solver-version = 1

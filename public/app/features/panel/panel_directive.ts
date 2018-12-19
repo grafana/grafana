@@ -8,50 +8,21 @@ const module = angular.module('grafana.directives');
 
 const panelTemplate = `
   <div class="panel-container">
-    <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.fullscreen}">
-      <span class="panel-info-corner">
-        <i class="fa"></i>
-        <span class="panel-info-corner-inner"></span>
-      </span>
+      <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
+        <span class="panel-info-corner">
+          <i class="fa"></i>
+          <span class="panel-info-corner-inner"></span>
+        </span>
 
-      <span class="panel-loading" ng-show="ctrl.loading">
-        <i class="fa fa-spinner fa-spin"></i>
-      </span>
+        <span class="panel-loading" ng-show="ctrl.loading">
+          <i class="fa fa-spinner fa-spin"></i>
+        </span>
 
-      <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
-    </div>
-
-    <div class="panel-content">
-      <div class="panel-height-helper">
-        <ng-transclude></ng-transclude>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-full-edit" ng-if="ctrl.editMode">
-    <div class="tabbed-view tabbed-view--panel-edit">
-      <div class="tabbed-view-header">
-        <h3 class="tabbed-view-panel-title">
-          {{ctrl.pluginName}}
-        </h3>
-
-        <ul class="gf-tabs">
-          <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
-            <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
-              {{::tab.title}}
-            </a>
-          </li>
-        </ul>
-
-        <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-          <i class="fa fa-remove"></i>
-        </button>
+        <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
       </div>
 
-      <div class="tabbed-view-body">
-        <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
-          <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
-        </div>
+      <div class="panel-content">
+        <ng-transclude class="panel-height-helper"></ng-transclude>
       </div>
     </div>
   </div>
@@ -90,6 +61,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         ctrl.dashboard.setPanelFocus(0);
       }
 
+<<<<<<< HEAD
       function panelHeightUpdated() {
         panelContent.css({ height: ctrl.height + 'px' });
         if (ctrl.panel.dynamicHeight) {
@@ -108,6 +80,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       }
 
+=======
+>>>>>>> grafana/master
       function resizeScrollableContent() {
         if (panelScrollbar) {
           panelScrollbar.update();
@@ -166,16 +140,27 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       ctrl.events.on('panel-size-changed', () => {
         ctrl.calculatePanelHeight();
-        panelHeightUpdated();
         $timeout(() => {
           resizeScrollableContent();
           ctrl.render();
         });
       });
 
+      ctrl.events.on('view-mode-changed', () => {
+        // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
+        setTimeout(() => {
+          // then recalc style
+          ctrl.calculatePanelHeight();
+          // then wait another cycle (this might not be needed)
+          $timeout(() => {
+            ctrl.render();
+            resizeScrollableContent();
+          });
+        });
+      });
+
       // set initial height
       ctrl.calculatePanelHeight();
-      panelHeightUpdated();
 
       ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
@@ -195,7 +180,11 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
             panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           }
 
-          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
+          if (
+            ctrl.alertState.state === 'ok' ||
+            ctrl.alertState.state === 'alerting' ||
+            ctrl.alertState.state === 'pending'
+          ) {
             panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
           }
 

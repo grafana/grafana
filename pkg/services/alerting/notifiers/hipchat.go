@@ -125,7 +125,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	case models.AlertStateOK:
 		color = "green"
 	case models.AlertStateNoData:
-		color = "grey"
+		color = "gray"
 	case models.AlertStateAlerting:
 		color = "red"
 	}

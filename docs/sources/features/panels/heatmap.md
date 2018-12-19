@@ -80,7 +80,7 @@ the upper or lower bound of the interval.
 There are a number of datasources supporting histogram over time like Elasticsearch (by using a Histogram bucket
 aggregation) or Prometheus (with [histogram](https://prometheus.io/docs/concepts/metric_types/#histogram) metric type
 and *Format as* option set to Heatmap). But generally, any datasource could be used if it meets the requirements:
-returns series with names representing bucket bound or returns sereis sorted by the bound in ascending order.
+returns series with names representing bucket bound or returns series sorted by the bound in ascending order.
 
 With Elasticsearch you control the size of the buckets using the Histogram interval (Y-Axis) and the Date Histogram interval (X-axis).
 

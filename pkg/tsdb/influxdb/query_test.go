@@ -158,7 +158,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" < 10001`)
 		})
 
-		Convey("can render number greather then condition tags", func() {
+		Convey("can render number greater then condition tags", func() {
 			query := &Query{Tags: []*Tag{{Operator: ">", Value: "10001", Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" > 10001`)

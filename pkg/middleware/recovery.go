@@ -115,6 +115,7 @@ func Recovery() macaron.Handler {
 
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
+				c.Data["Theme"] = setting.DefaultTheme
 
 				if setting.Env == setting.DEV {
 					if theErr, ok := err.(error); ok {
@@ -138,7 +139,7 @@ func Recovery() macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, "error")
+					c.HTML(500, setting.ERR_TEMPLATE_NAME)
 				}
 			}
 		}()

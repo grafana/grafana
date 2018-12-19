@@ -24,6 +24,7 @@ func GetAnnotations(c *m.ReqContext) Response {
 		Limit:       c.QueryInt64("limit"),
 		Tags:        c.QueryStrings("tags"),
 		Type:        c.Query("type"),
+		MatchAny:    c.QueryBool("matchAny"),
 	}
 
 	repo := annotations.GetRepository()

@@ -56,9 +56,7 @@ func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 			if err != nil {
 				return nil, err
 			}
-			for _, agg := range aggArray {
-				sr.Aggs = append(sr.Aggs, agg)
-			}
+			sr.Aggs = append(sr.Aggs, aggArray...)
 		}
 	}
 
@@ -112,9 +110,9 @@ func (b *SearchRequestBuilder) Query() *QueryBuilder {
 	return b.queryBuilder
 }
 
-// Agg initaite and returns a new aggregation builder
+// Agg initiate and returns a new aggregation builder
 func (b *SearchRequestBuilder) Agg() AggBuilder {
-	aggBuilder := newAggBuilder()
+	aggBuilder := newAggBuilder(b.version)
 	b.aggBuilders = append(b.aggBuilders, aggBuilder)
 	return aggBuilder
 }
@@ -277,11 +275,13 @@ type AggBuilder interface {
 type aggBuilderImpl struct {
 	AggBuilder
 	aggDefs []*aggDef
+	version int
 }
 
-func newAggBuilder() *aggBuilderImpl {
+func newAggBuilder(version int) *aggBuilderImpl {
 	return &aggBuilderImpl{
 		aggDefs: make([]*aggDef, 0),
+		version: version,
 	}
 }
 
@@ -300,9 +300,7 @@ func (b *aggBuilderImpl) Build() (AggArray, error) {
 				return nil, err
 			}
 
-			for _, childAgg := range childAggs {
-				agg.Aggregation.Aggs = append(agg.Aggregation.Aggs, childAgg)
-			}
+			agg.Aggregation.Aggs = append(agg.Aggregation.Aggs, childAggs...)
 		}
 
 		aggs = append(aggs, agg)
@@ -321,7 +319,7 @@ func (b *aggBuilderImpl) Histogram(key, field string, fn func(a *HistogramAgg, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder()
+		builder := newAggBuilder(b.version)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -341,7 +339,7 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 	})
 
 	if fn != nil {
-		builder := newAggBuilder()
+		builder := newAggBuilder(b.version)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -350,6 +348,8 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 
 	return b
 }
+
+const termsOrderTerm = "_term"
 
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{
@@ -362,9 +362,16 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 	})
 
 	if fn != nil {
-		builder := newAggBuilder()
+		builder := newAggBuilder(b.version)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
+	}
+
+	if b.version >= 60 && len(innerAgg.Order) > 0 {
+		if orderBy, exists := innerAgg.Order[termsOrderTerm]; exists {
+			innerAgg.Order["_key"] = orderBy
+			delete(innerAgg.Order, termsOrderTerm)
+		}
 	}
 
 	b.aggDefs = append(b.aggDefs, aggDef)
@@ -381,7 +388,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 		Aggregation: innerAgg,
 	})
 	if fn != nil {
-		builder := newAggBuilder()
+		builder := newAggBuilder(b.version)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}
@@ -402,7 +409,7 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 	})
 
 	if fn != nil {
-		builder := newAggBuilder()
+		builder := newAggBuilder(b.version)
 		aggDef.builders = append(aggDef.builders, builder)
 		fn(innerAgg, builder)
 	}

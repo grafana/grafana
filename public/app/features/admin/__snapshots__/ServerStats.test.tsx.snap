@@ -1,0 +1,118 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ServerStats Should render table with stats 1`] = `
+<div>
+  <div
+    className="page-header-canvas"
+  >
+    <div
+      className="page-container"
+    >
+      <div
+        className="page-header"
+      >
+        <div
+          className="page-header__inner"
+        >
+          <span
+            className="page-header__logo"
+          >
+            <i
+              className="page-header__icon fa fa-fw fa-warning"
+            />
+          </span>
+          <div
+            className="page-header__info-block"
+          >
+            <h1
+              className="page-header__title"
+            >
+              Admin
+            </h1>
+            <div
+              className="page-header__sub-title"
+            >
+              subTitle
+            </div>
+          </div>
+        </div>
+        <nav>
+          <div
+            className="gf-form-select-wrapper width-20 page-header__select-nav"
+          >
+            <label
+              className="gf-form-select-icon icon"
+              htmlFor="page-header-select-nav"
+            />
+            <select
+              className="gf-select-nav gf-form-input"
+              id="page-header-select-nav"
+              onChange={[Function]}
+              value="Admin"
+            >
+              <option
+                value="Admin"
+              >
+                Admin
+              </option>
+            </select>
+          </div>
+          <ul
+            className="gf-tabs page-header__tabs"
+          >
+            <li
+              className="gf-tabs-item"
+            >
+              <a
+                className="gf-tabs-link active"
+                href="Admin"
+              >
+                <i
+                  className="icon"
+                />
+                Admin
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div
+    className="page-container page-body"
+  >
+    <table
+      className="filter-table form-inline"
+    >
+      <thead>
+        <tr>
+          <th>
+            Name
+          </th>
+          <th>
+            Value
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            Total dashboards
+          </td>
+          <td>
+            10
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total Users
+          </td>
+          <td>
+            1
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;

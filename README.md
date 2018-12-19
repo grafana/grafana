@@ -24,8 +24,8 @@ the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.11
-- NodeJS LTS
+- Go (Latest Stable)
+- Node.js LTS
 
 ### Building the backend
 ```bash
@@ -37,7 +37,7 @@ go run build.go build
 
 ### Building frontend assets
 
-For this you need nodejs (v.6+).
+For this you need Node.js (LTS version).
 
 To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
@@ -69,14 +69,28 @@ bra run
 
 Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
 
-### Building a docker image (on linux/amd64)
+### Building a Docker image
 
-This builds a docker image from your local sources:
+There are two different ways to build a Grafana docker image. If you're machine is setup for Grafana development and you run linux/amd64 you can build just the image. Otherwise, there is the option to build Grafana completely within Docker.
+
+Run the image you have built using: `docker run --rm -p 3000:3000 grafana/grafana:dev`
+
+#### Building on linux/amd64 (fast)
 
 1. Build the frontend `go run build.go build-frontend`
 2. Build the docker image `make build-docker-dev`
 
 The resulting image will be tagged as `grafana/grafana:dev`
+
+#### Building anywhere (slower)
+
+Choose this option to build on platforms other than linux/amd64 and/or not have to setup the Grafana development environment.
+
+1. `make build-docker-full` or `docker build -t grafana/grafana:dev .`
+
+The resulting image will be tagged as `grafana/grafana:dev`
+
+Notice: If you are using Docker for MacOS, be sure to let limit of Memory bigger than 2 GiB (at docker -> Preferences -> Advanced), otherwize you may faild at `grunt build`
 
 ### Dev config
 
@@ -113,18 +127,6 @@ GRAFANA_TEST_DB=mysql go test ./pkg/...
 GRAFANA_TEST_DB=postgres go test ./pkg/...
 ```
 
-## Building custom docker image
-
-You can build a custom image using Docker, which doesn't require installing any dependencies besides docker itself.
-```bash
-git clone https://github.com/grafana/grafana
-cd grafana
-docker build -t grafana:dev .
-docker run -d --name=grafana -p 3000:3000 grafana:dev
-```
-
-Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
-
 ## Contribute
 
 If you have any idea for an improvement or found a bug, do not hesitate to open an issue.
@@ -138,5 +140,5 @@ plugin development.
 
 ## License
 
-Grafana is distributed under Apache 2.0 License.
+Grafana is distributed under [Apache 2.0 License](https://github.com/grafana/grafana/blob/master/LICENSE.md).
 

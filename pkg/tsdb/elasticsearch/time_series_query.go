@@ -75,29 +75,43 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		// iterate backwards to create aggregations bottom-down
 		for _, bucketAgg := range q.BucketAggs {
 			switch bucketAgg.Type {
-			case "date_histogram":
+			case dateHistType:
 				aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
-			case "histogram":
+			case histogramType:
 				aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
-			case "filters":
+			case filtersType:
 				aggBuilder = addFiltersAgg(aggBuilder, bucketAgg)
-			case "terms":
+			case termsType:
 				aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
-			case "geohash_grid":
+			case geohashGridType:
 				aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
 			}
 		}
 
 		for _, m := range q.Metrics {
-			if m.Type == "count" {
+			if m.Type == countType {
 				continue
 			}
 
 			if isPipelineAgg(m.Type) {
 				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
-					aggBuilder.Pipeline(m.ID, m.Type, m.PipelineAggregate, func(a *es.PipelineAggregation) {
-						a.Settings = m.Settings.MustMap()
-					})
+					var appliedAgg *MetricAgg
+					for _, pipelineMetric := range q.Metrics {
+						if pipelineMetric.ID == m.PipelineAggregate {
+							appliedAgg = pipelineMetric
+							break
+						}
+					}
+					if appliedAgg != nil {
+						bucketPath := m.PipelineAggregate
+						if appliedAgg.Type == countType {
+							bucketPath = "_count"
+						}
+
+						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
+							a.Settings = m.Settings.MustMap()
+						})
+					}
 				} else {
 					continue
 				}
@@ -132,6 +146,10 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 
 		if a.Interval == "auto" {
 			a.Interval = "$__interval"
+		}
+
+		if offset, err := bucketAgg.Settings.Get("offset").String(); err == nil {
+			a.Offset = offset
 		}
 
 		if missing, err := bucketAgg.Settings.Get("missing").String(); err == nil {
@@ -171,6 +189,10 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 		} else {
 			a.Size = 500
 		}
+		if a.Size == 0 {
+			a.Size = 500
+		}
+
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {
 			a.MinDocCount = &minDocCount
 		}

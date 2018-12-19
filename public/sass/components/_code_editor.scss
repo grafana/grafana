@@ -12,6 +12,10 @@
     @include border-radius($input-border-radius-sm);
     border: $input-btn-border-width solid $input-border-color;
   }
+
+  .ace_content {
+    z-index: 0;
+  }
 }
 
 .ace_editor.ace_autocomplete {

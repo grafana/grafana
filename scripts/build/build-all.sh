@@ -4,6 +4,10 @@
 #   This script is executed from within the container.
 #
 
+set -e
+
+EXTRA_OPTS="$@"
+
 CCARMV7=arm-linux-gnueabihf-gcc
 CCARM64=aarch64-linux-gnu-gcc
 CCOSX64=/tmp/osxcross/target/bin/o64-clang
@@ -18,16 +22,21 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
-  OPT="-includeBuildNumber=false"
+  OPT="-includeBuildId=false ${EXTRA_OPTS}"
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  OPT="-buildNumber=${CIRCLE_BUILD_NUM}"
+  OPT="-buildId=${CIRCLE_WORKFLOW_ID} ${EXTRA_OPTS}"
 fi
+
+echo "Build arguments: $OPT"
 
 go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
 go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
 go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
+
 go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
+
+# Do not remove CC from the linux build, its there for compatibility with Centos6
 CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
@@ -67,7 +76,7 @@ if [ -d '/tmp/phantomjs/windows' ]; then
   cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
   rm tools/phantomjs/phantomjs
 else
-    echo 'PhantomJS binaries for darwin missing!'
+    echo 'PhantomJS binaries for Windows missing!'
 fi
 go run build.go -goos windows -pkg-arch amd64 ${OPT} package-only
 

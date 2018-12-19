@@ -44,6 +44,8 @@ type Dialect interface {
 
 	CleanDB() error
 	NoOpSql() string
+
+	IsUniqueConstraintViolation(err error) bool
 }
 
 func NewDialect(engine *xorm.Engine) Dialect {

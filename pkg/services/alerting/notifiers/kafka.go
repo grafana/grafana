@@ -61,7 +61,7 @@ func (this *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	state := evalContext.Rule.State
 
-	customData := "Triggered metrics:\n\n"
+	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}

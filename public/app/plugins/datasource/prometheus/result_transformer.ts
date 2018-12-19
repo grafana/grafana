@@ -8,8 +8,15 @@ export class ResultTransformer {
     const prometheusResult = response.data.data.result;
 
     if (options.format === 'table') {
-      return [this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.refId)];
-    } else if (options.format === 'heatmap') {
+      return [
+        this.transformMetricDataToTable(
+          prometheusResult,
+          options.responseListLength,
+          options.refId,
+          options.valueWithRefId
+        ),
+      ];
+    } else if (prometheusResult && options.format === 'heatmap') {
       let seriesList = [];
       prometheusResult.sort(sortSeriesByLabel);
       for (const metricData of prometheusResult) {
@@ -17,7 +24,7 @@ export class ResultTransformer {
       }
       seriesList = this.transformToHistogramOverTime(seriesList);
       return seriesList;
-    } else {
+    } else if (prometheusResult) {
       const seriesList = [];
       for (const metricData of prometheusResult) {
         if (response.data.data.resultType === 'matrix') {
@@ -66,17 +73,16 @@ export class ResultTransformer {
     return {
       datapoints: dps,
       query: options.query,
-      responseIndex: options.responseIndex,
       target: metricLabel,
     };
   }
 
-  transformMetricDataToTable(md, resultCount: number, refId: string) {
+  transformMetricDataToTable(md, resultCount: number, refId: string, valueWithRefId?: boolean) {
     const table = new TableModel();
     let i, j;
     const metricLabels = {};
 
-    if (md.length === 0) {
+    if (!md || md.length === 0) {
       return table;
     }
 
@@ -96,7 +102,7 @@ export class ResultTransformer {
       metricLabels[label] = labelIndex + 1;
       table.columns.push({ text: label, filterable: !label.startsWith('__') });
     });
-    const valueText = resultCount > 1 ? `Value #${refId}` : 'Value';
+    const valueText = resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value';
     table.columns.push({ text: valueText });
 
     // Populate rows, set value to empty string when label not present.

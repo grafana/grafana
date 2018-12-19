@@ -1,23 +1,9 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 
-export function elasticMetricAgg() {
-  return {
-    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/metric_agg.html',
-    controller: 'ElasticMetricAggCtrl',
-    restrict: 'E',
-    scope: {
-      target: '=',
-      index: '=',
-      onChange: '&',
-      getFields: '&',
-      esVersion: '=',
-    },
-  };
-}
-
 export class ElasticMetricAggCtrl {
+  /** @ngInject */
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
     const metricAggs = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
@@ -160,6 +146,12 @@ export class ElasticMetricAggCtrl {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
       $scope.showOptions = false;
+
+      // reset back to metric/group by query
+      if ($scope.target.bucketAggs.length === 0 && $scope.agg.type !== 'raw_document') {
+        $scope.target.bucketAggs = [queryDef.defaultBucketAgg()];
+      }
+
       $scope.updatePipelineAggOptions();
       $scope.onChange();
     };
@@ -203,6 +195,19 @@ export class ElasticMetricAggCtrl {
   }
 }
 
-const module = angular.module('grafana.directives');
-module.directive('elasticMetricAgg', elasticMetricAgg);
-module.controller('ElasticMetricAggCtrl', ElasticMetricAggCtrl);
+export function elasticMetricAgg() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/metric_agg.html',
+    controller: ElasticMetricAggCtrl,
+    restrict: 'E',
+    scope: {
+      target: '=',
+      index: '=',
+      onChange: '&',
+      getFields: '&',
+      esVersion: '=',
+    },
+  };
+}
+
+coreModule.directive('elasticMetricAgg', elasticMetricAgg);
