@@ -1,10 +1,12 @@
 import React, { PureComponent } from 'react';
 import Remarkable from 'remarkable';
 import { getBackendSrv } from '../../services/backend_srv';
-import { PluginMeta } from 'app/types';
 
 interface Props {
-  plugin: PluginMeta;
+  plugin: {
+    name: string;
+    id: string;
+  };
   type: string;
 }
 
@@ -14,7 +16,7 @@ interface State {
   help: string;
 }
 
-export default class PluginHelp extends PureComponent<Props, State> {
+export class PluginHelp extends PureComponent<Props, State> {
   state = {
     isError: false,
     isLoading: false,
@@ -25,24 +27,9 @@ export default class PluginHelp extends PureComponent<Props, State> {
     this.loadHelp();
   }
 
-  constructPlaceholderInfo = () => {
-    const { plugin } = this.props;
-    const markdown = new Remarkable();
-
-    const fallBack = markdown.render(
-      `## ${plugin.name} \n by _${plugin.info.author.name} (<${plugin.info.author.url}>)_\n\n${
-        plugin.info.description
-      }\n\n${
-        plugin.info.links
-          ? `### Links \n ${plugin.info.links.map(link => {
-              return `${link.name}: <${link.url}>\n`;
-            })}`
-          : ''
-      }`
-    );
-
-    return fallBack;
-  };
+  constructPlaceholderInfo() {
+    return 'No plugin help or readme markdown file was found';
+  }
 
   loadHelp = () => {
     const { plugin, type } = this.props;
