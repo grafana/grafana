@@ -45,8 +45,7 @@ export class Aggregations extends React.Component<Props, State> {
     }
   }
 
-  setAggOptions({ metricDescriptor, aggregation }) {
-    const { templateSrv } = this.props;
+  setAggOptions({ metricDescriptor, aggregation, templateSrv }) {
     let aggregations = getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(
       a => ({
         ...a,
@@ -63,7 +62,9 @@ export class Aggregations extends React.Component<Props, State> {
 
     if (aggregation.groupBys.length > 0) {
       aggregations = aggregations.filter(o => o.value !== 'REDUCE_NONE');
-      this.deselectAggregationOption('REDUCE_NONE');
+      if (aggregation.crossSeriesReducer === 'REDUCE_NONE') {
+        this.deselectAggregationOption('REDUCE_NONE');
+      }
     }
     this.setState({ aggOptions: aggregations });
   }
