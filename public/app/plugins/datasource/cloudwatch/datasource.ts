@@ -362,14 +362,9 @@ export default class CloudWatchDatasource {
     const metricName = 'EstimatedCharges';
     const dimensions = {};
 
-    return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(
-      () => {
-        return { status: 'success', message: 'Data source is working' };
-      },
-      err => {
-        return { status: 'error', message: err.message };
-      }
-    );
+    return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(() => {
+      return { status: 'success', message: 'Data source is working' };
+    });
   }
 
   awsRequest(url, data) {

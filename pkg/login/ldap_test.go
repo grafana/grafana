@@ -5,10 +5,10 @@ import (
 	"crypto/tls"
 	"testing"
 
-	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/ldap.v3"
 )
 
 func TestLdapAuther(t *testing.T) {

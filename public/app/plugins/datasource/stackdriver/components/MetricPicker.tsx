@@ -1,8 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { OptionPicker } from './OptionPicker';
-import { OptionGroupPicker } from './OptionGroupPicker';
+import { StackdriverPicker } from './StackdriverPicker';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
@@ -74,7 +73,9 @@ export class MetricPicker extends React.Component<Props, State> {
   }
 
   getMetricsList(metricDescriptors) {
-    const selectedMetricDescriptor = metricDescriptors.find(md => md.type === this.props.metricType);
+    const selectedMetricDescriptor = metricDescriptors.find(
+      md => md.type === this.props.templateSrv.replace(this.props.metricType)
+    );
     const metricsByService = metricDescriptors.filter(m => m.service === selectedMetricDescriptor.service).map(m => ({
       service: m.service,
       value: m.type,
@@ -146,7 +147,7 @@ export class MetricPicker extends React.Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <span className="gf-form-label width-9 query-keyword">Service</span>
-            <OptionPicker
+            <StackdriverPicker
               onChange={value => this.handleServiceChange(value)}
               selected={service}
               options={services}
@@ -162,10 +163,10 @@ export class MetricPicker extends React.Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <span className="gf-form-label width-9 query-keyword">Metric</span>
-            <OptionGroupPicker
+            <StackdriverPicker
               onChange={value => this.handleMetricTypeChange(value)}
               selected={metricType}
-              groups={this.getMetricGroups()}
+              options={this.getMetricGroups()}
               searchable={true}
               placeholder="Select Metric"
               className="width-15"

@@ -50,6 +50,15 @@ export class StackdriverFilterCtrl {
     this.services = [];
 
     this.initSegments($scope.hideGroupBys);
+    this.handleMetricTypeChange = this.handleMetricTypeChange.bind(this);
+    this.handleServiceChange = this.handleServiceChange.bind(this);
+  }
+
+  handleMetricTypeChange(value) {
+    this.target.metricType = value;
+    this.setMetricType();
+    this.$scope.refresh();
+    // this.getLabels();
   }
 
   initSegments(hideGroupBys: boolean) {
@@ -71,29 +80,98 @@ export class StackdriverFilterCtrl {
     // this.filterSegments.buildSegmentModel();
   }
 
+  // async getCurrentProject() {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       if (!this.target.defaultProject || this.target.defaultProject === 'loading project...') {
+  //         this.target.defaultProject = await this.datasource.getDefaultProject();
+  //       }
+  //       resolve(this.target.defaultProject);
+  //     } catch (error) {
+  //       appEvents.emit('ds-request-error', error);
+  //       reject();
+  //     }
+  //   });
+  // }
+
+  // async loadMetricDescriptors() {
+  //   if (this.target.defaultProject !== 'loading project...') {
+  //     this.metricDescriptors = await this.datasource.getMetricTypes(this.target.defaultProject);
+  //     this.services = this.getServicesList();
+  //     this.metrics = this.getMetricsList();
+  //     return this.metricDescriptors;
+  //   } else {
+  //     return [];
+  //   }
+  // }
+
+  getServicesList() {
+    const services = this.metricDescriptors.map(m => ({
+      value: m.service,
+      label: _.startCase(m.serviceShortName),
+    }));
+
+    return services.length > 0 ? _.uniqBy(services, s => s.value) : [];
+  }
+
+  getMetricsList() {
+    const metricsByService = this.metricDescriptors.filter(m => m.service === this.target.service).map(m => ({
+      service: m.service,
+      value: m.type,
+      label: m.displayName,
+      description: m.description,
+    }));
+
+    if (
+      metricsByService.length > 0 &&
+      !metricsByService.some(m => m.value === this.templateSrv.replace(this.target.metricType))
+    ) {
+      this.target.metricType = metricsByService[0].value;
+    }
+    return metricsByService;
+  }
+
   // async getLabels() {
   //   this.loadLabelsPromise = new Promise(async resolve => {
   //     try {
   //       if (this.target.metricType) {
   //         const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
-  //         this.$scope.labelData.metricLabels = meta.metricLabels;
-  //         this.$scope.labelData.resourceLabels = meta.resourceLabels;
-  //         this.$scope.labelData.resourceTypes = meta.resourceTypes;
+  //         this.metricLabels = meta.metricLabels;
+  //         this.resourceLabels = meta.resourceLabels;
+  //         this.resourceTypes = meta.resourceTypes;
   //         resolve();
   //       } else {
   //         resolve();
   //       }
   //     } catch (error) {
-  //       if (error.data && error.data.message) {
-  //         console.log(error.data.message);
-  //       } else {
-  //         console.log(error);
-  //       }
   //       appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
   //       resolve();
   //     }
   //   });
   // }
+
+  handleServiceChange(service) {
+    this.target.service = service;
+    this.metrics = this.getMetricsList();
+    this.setMetricType();
+    // this.getLabels();
+    if (!this.metrics.some(m => m.value === this.target.metricType)) {
+      this.target.metricType = '';
+    } else {
+      this.$scope.refresh();
+    }
+  }
+
+  setMetricType() {
+    const metric = this.metricDescriptors.find(m => m.type === this.templateSrv.replace(this.target.metricType));
+    if (metric) {
+      const { valueType, metricKind, unit } = metric;
+      this.target.unit = unit;
+      this.target.valueType = valueType;
+      this.target.metricKind = metricKind;
+      this.$rootScope.$broadcast('metricTypeChanged');
+    }
+  }
 
   async createLabelKeyElements() {
     await this.$scope.loading;

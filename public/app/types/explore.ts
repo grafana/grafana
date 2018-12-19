@@ -3,6 +3,7 @@ import { Value } from 'slate';
 import { DataQuery, RawTimeRange } from './series';
 import TableModel from 'app/core/table_model';
 import { LogsModel } from 'app/core/logs_model';
+import { DataSourceSelectItem } from 'app/types/datasources';
 
 export interface CompletionItem {
   /**
@@ -72,11 +73,6 @@ export interface CompletionItemGroup {
    * If true, do not sort items.
    */
   skipSort?: boolean;
-}
-
-interface ExploreDatasource {
-  value: string;
-  label: string;
 }
 
 export interface HistoryItem {
@@ -159,7 +155,7 @@ export interface ExploreState {
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   datasourceName?: string;
-  exploreDatasources: ExploreDatasource[];
+  exploreDatasources: DataSourceSelectItem[];
   graphInterval: number; // in ms
   graphResult?: any[];
   history: HistoryItem[];

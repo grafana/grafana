@@ -73,7 +73,7 @@ interface RowState {
   fieldStats: LogsLabelStat[];
   fieldValue: string;
   parsed: boolean;
-  parser: LogsParser;
+  parser?: LogsParser;
   parsedFieldHighlights: string[];
   showFieldStats: boolean;
 }
@@ -94,7 +94,7 @@ class Row extends PureComponent<RowProps, RowState> {
     fieldStats: null,
     fieldValue: null,
     parsed: false,
-    parser: null,
+    parser: undefined,
     parsedFieldHighlights: [],
     showFieldStats: false,
   };
@@ -110,19 +110,16 @@ class Row extends PureComponent<RowProps, RowState> {
   onClickHighlight = (fieldText: string) => {
     const { getRows } = this.props;
     const { parser } = this.state;
+    const allRows = getRows();
 
-    const fieldMatch = fieldText.match(parser.fieldRegex);
-    if (fieldMatch) {
-      const allRows = getRows();
-      // Build value-agnostic row matcher based on the field label
-      const fieldLabel = fieldMatch[1];
-      const fieldValue = fieldMatch[2];
-      const matcher = parser.buildMatcher(fieldLabel);
-      const fieldStats = calculateFieldStats(allRows, matcher);
-      const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
+    // Build value-agnostic row matcher based on the field label
+    const fieldLabel = parser.getLabelFromField(fieldText);
+    const fieldValue = parser.getValueFromField(fieldText);
+    const matcher = parser.buildMatcher(fieldLabel);
+    const fieldStats = calculateFieldStats(allRows, matcher);
+    const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
 
-      this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue, showFieldStats: true });
-    }
+    this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue, showFieldStats: true });
   };
 
   onMouseOverMessage = () => {
@@ -141,11 +138,7 @@ class Row extends PureComponent<RowProps, RowState> {
       const parser = getParser(row.entry);
       if (parser) {
         // Use parser to highlight detected fields
-        const parsedFieldHighlights = [];
-        this.props.row.entry.replace(new RegExp(parser.fieldRegex, 'g'), substring => {
-          parsedFieldHighlights.push(substring.trim());
-          return '';
-        });
+        const parsedFieldHighlights = parser.getFields(this.props.row.entry);
         this.setState({ parsedFieldHighlights, parsed: true, parser });
       }
     }
@@ -415,41 +408,36 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} small />
-            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} small />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} small />
-            <ToggleButtonGroup
-              label="Dedup"
-              onChange={this.onChangeDedup}
-              value={dedup}
-              render={({ selectedValue, onChange }) =>
-                Object.keys(LogsDedupStrategy).map((dedupType, i) => (
-                  <ToggleButton
-                    className="btn-small"
-                    key={i}
-                    value={dedupType}
-                    onChange={onChange}
-                    title={LogsDedupDescription[dedupType] || null}
-                    selected={selectedValue === dedupType}
-                  >
-                    {dedupType}
-                  </ToggleButton>
-                ))
-              }
-            />
-            {hasData &&
-              meta && (
-                <div className="logs-panel-meta">
-                  {meta.map(item => (
-                    <div className="logs-panel-meta__item" key={item.label}>
-                      <span className="logs-panel-meta__label">{item.label}:</span>
-                      <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} transparent />
+            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} transparent />
+            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <ToggleButtonGroup label="Dedup" transparent={true}>
+              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+                <ToggleButton
+                  key={i}
+                  value={dedupType}
+                  onChange={this.onChangeDedup}
+                  selected={dedup === dedupType}
+                  tooltip={LogsDedupDescription[dedupType]}
+                >
+                  {dedupType}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </div>
         </div>
+
+        {hasData &&
+          meta && (
+            <div className="logs-panel-meta">
+              {meta.map(item => (
+                <div className="logs-panel-meta__item" key={item.label}>
+                  <span className="logs-panel-meta__label">{item.label}:</span>
+                  <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
         <div className="logs-rows">
           {hasData &&

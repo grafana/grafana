@@ -1,7 +1,21 @@
-﻿import appEvents from 'app/core/app_events';
+// Store
+import store from 'app/core/store';
+
+// Models
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
-import store from 'app/core/store';
+import { TimeRange } from 'app/types/series';
+
+// Utils
+import { isString as _isString } from 'lodash';
+import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as dateMath from 'app/core/utils/datemath';
+import appEvents from 'app/core/app_events';
+
+// Services
+import templateSrv from 'app/features/templating/template_srv';
+
+// Constants
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
@@ -84,3 +98,70 @@ export const toggleLegend = (panel: PanelModel) => {
   // panel.legend.show = !panel.legend.show;
   refreshPanel(panel);
 };
+
+export interface TimeOverrideResult {
+  timeRange: TimeRange;
+  timeInfo: string;
+}
+
+export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange): TimeOverrideResult {
+  const newTimeData = {
+    timeInfo: '',
+    timeRange: timeRange,
+  };
+
+  if (panel.timeFrom) {
+    const timeFromInterpolated = templateSrv.replace(panel.timeFrom, panel.scopedVars);
+    const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
+    if (timeFromInfo.invalid) {
+      newTimeData.timeInfo = 'invalid time override';
+      return newTimeData;
+    }
+
+    if (_isString(timeRange.raw.from)) {
+      const timeFromDate = dateMath.parse(timeFromInfo.from);
+      newTimeData.timeInfo = timeFromInfo.display;
+      newTimeData.timeRange = {
+        from: timeFromDate,
+        to: dateMath.parse(timeFromInfo.to),
+        raw: {
+          from: timeFromInfo.from,
+          to: timeFromInfo.to,
+        },
+      };
+    }
+  }
+
+  if (panel.timeShift) {
+    const timeShiftInterpolated = templateSrv.replace(panel.timeShift, panel.scopedVars);
+    const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+    if (timeShiftInfo.invalid) {
+      newTimeData.timeInfo = 'invalid timeshift';
+      return newTimeData;
+    }
+
+    const timeShift = '-' + timeShiftInterpolated;
+    newTimeData.timeInfo += ' timeshift ' + timeShift;
+    newTimeData.timeRange = {
+      from: dateMath.parseDateMath(timeShift, timeRange.from, false),
+      to: dateMath.parseDateMath(timeShift, timeRange.to, true),
+      raw: {
+        from: timeRange.from,
+        to: timeRange.to,
+      },
+    };
+  }
+
+  if (panel.hideTimeOverride) {
+    newTimeData.timeInfo = '';
+  }
+
+  return newTimeData;
+}
+
+export function getResolution(panel: PanelModel): number {
+  const htmlEl = document.getElementsByTagName('html')[0];
+  const width = htmlEl.getBoundingClientRect().width; // https://stackoverflow.com/a/21454625
+
+  return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
+}

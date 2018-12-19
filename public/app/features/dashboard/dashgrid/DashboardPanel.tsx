@@ -1,14 +1,19 @@
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import classNames from 'classnames';
+
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { DashboardRow } from './DashboardRow';
-import { AddPanelPanel } from './AddPanelPanel';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { PluginExports, PanelPlugin } from 'app/types/plugins';
+
+import { AddPanelPanel } from './AddPanelPanel';
+import { getPanelPluginNotFound } from './PanelPluginNotFound';
+import { DashboardRow } from './DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from './PanelEditor';
+
+import { PanelModel } from '../panel_model';
+import { DashboardModel } from '../dashboard_model';
+import { PanelPlugin } from 'app/types';
 
 export interface Props {
   panel: PanelModel;
@@ -18,28 +23,28 @@ export interface Props {
 }
 
 export interface State {
-  pluginExports: PluginExports;
+  plugin: PanelPlugin;
+  angularPanel: AngularComponent;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
-  element: any;
-  angularPanel: AngularComponent;
-  pluginInfo: any;
+  element: HTMLElement;
   specialPanels = {};
 
   constructor(props) {
     super(props);
 
     this.state = {
-      pluginExports: null,
+      plugin: null,
+      angularPanel: null,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
   }
 
-  isSpecial() {
-    return this.specialPanels[this.props.panel.type];
+  isSpecial(pluginId: string) {
+    return this.specialPanels[pluginId];
   }
 
   renderRow() {
@@ -51,60 +56,60 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   onPluginTypeChanged = (plugin: PanelPlugin) => {
-    this.props.panel.changeType(plugin.id);
-    this.loadPlugin();
+    this.loadPlugin(plugin.id);
   };
 
-  onAngularPluginTypeChanged = () => {
-    this.loadPlugin();
-  };
-
-  loadPlugin() {
-    if (this.isSpecial()) {
+  async loadPlugin(pluginId: string) {
+    if (this.isSpecial(pluginId)) {
       return;
     }
 
-    // handle plugin loading & changing of plugin type
-    if (!this.pluginInfo || this.pluginInfo.id !== this.props.panel.type) {
-      this.pluginInfo = config.panels[this.props.panel.type];
+    const { panel } = this.props;
 
-      if (this.pluginInfo.exports) {
-        this.cleanUpAngularPanel();
-        this.setState({ pluginExports: this.pluginInfo.exports });
+    // handle plugin loading & changing of plugin type
+    if (!this.state.plugin || this.state.plugin.id !== pluginId) {
+      const plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
+
+      // remember if this is from an angular panel
+      const fromAngularPanel = this.state.angularPanel != null;
+
+      // unmount angular panel
+      this.cleanUpAngularPanel();
+
+      if (panel.type !== pluginId) {
+        this.props.panel.changeType(pluginId, fromAngularPanel);
+      }
+
+      if (plugin.exports) {
+        this.setState({ plugin: plugin, angularPanel: null });
       } else {
-        importPluginModule(this.pluginInfo.module).then(pluginExports => {
-          this.cleanUpAngularPanel();
-          // cache plugin exports (saves a promise async cycle next time)
-          this.pluginInfo.exports = pluginExports;
-          // update panel state
-          this.setState({ pluginExports: pluginExports });
-        });
+        plugin.exports = await importPluginModule(plugin.module);
+        this.setState({ plugin: plugin, angularPanel: null });
       }
     }
   }
 
   componentDidMount() {
-    this.loadPlugin();
+    this.loadPlugin(this.props.panel.type);
   }
 
   componentDidUpdate() {
-    this.loadPlugin();
-
-    // handle angular plugin loading
-    if (!this.element || this.angularPanel) {
+    if (!this.element || this.state.angularPanel) {
       return;
     }
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
     const scopeProps = { panel: this.props.panel, dashboard: this.props.dashboard };
-    this.angularPanel = loader.load(this.element, scopeProps, template);
+    const angularPanel = loader.load(this.element, scopeProps, template);
+
+    this.setState({ angularPanel });
   }
 
   cleanUpAngularPanel() {
-    if (this.angularPanel) {
-      this.angularPanel.destroy();
-      this.angularPanel = null;
+    if (this.state.angularPanel) {
+      this.state.angularPanel.destroy();
+      this.element = null;
     }
   }
 
@@ -112,50 +117,61 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.cleanUpAngularPanel();
   }
 
+  onMouseEnter = () => {
+    this.props.dashboard.setPanelFocus(this.props.panel.id);
+  };
+
+  onMouseLeave = () => {
+    this.props.dashboard.setPanelFocus(0);
+  };
+
   renderReactPanel() {
-    const { pluginExports } = this.state;
-    const containerClass = this.props.isEditing ? 'panel-editor-container' : 'panel-height-helper';
-    const panelWrapperClass = this.props.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
-    // this might look strange with these classes that change when edit, but
-    // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
-    return (
-      <div className={containerClass}>
-        <div className={panelWrapperClass}>
-          <PanelChrome
-            component={pluginExports.PanelComponent}
-            panel={this.props.panel}
-            dashboard={this.props.dashboard}
-          />
-        </div>
-        {this.props.panel.isEditing && (
-          <div className="panel-editor-container__editor">
-            <PanelEditor
-              panel={this.props.panel}
-              panelType={this.props.panel.type}
-              dashboard={this.props.dashboard}
-              onTypeChanged={this.onPluginTypeChanged}
-              pluginExports={pluginExports}
-            />
-          </div>
-        )}
-      </div>
-    );
+    const { dashboard, panel } = this.props;
+    const { plugin } = this.state;
+
+    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} />;
+  }
+
+  renderAngularPanel() {
+    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
   }
 
   render() {
-    if (this.isSpecial()) {
-      return this.specialPanels[this.props.panel.type]();
+    const { panel, dashboard, isFullscreen, isEditing } = this.props;
+    const { plugin, angularPanel } = this.state;
+
+    if (this.isSpecial(panel.type)) {
+      return this.specialPanels[panel.type]();
     }
 
-    if (!this.state.pluginExports) {
+    // if we have not loaded plugin exports yet, wait
+    if (!plugin || !plugin.exports) {
       return null;
     }
 
-    if (this.state.pluginExports.PanelComponent) {
-      return this.renderReactPanel();
-    }
+    const containerClass = classNames({ 'panel-editor-container': isEditing, 'panel-height-helper': !isEditing });
+    const panelWrapperClass = classNames({
+      'panel-wrapper': true,
+      'panel-wrapper--edit': isEditing,
+      'panel-wrapper--view': isFullscreen && !isEditing,
+    });
 
-    // legacy angular rendering
-    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
+    return (
+      <div className={containerClass}>
+        <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+          {plugin.exports.Panel && this.renderReactPanel()}
+          {plugin.exports.PanelCtrl && this.renderAngularPanel()}
+        </div>
+        {panel.isEditing && (
+          <PanelEditor
+            panel={panel}
+            plugin={plugin}
+            dashboard={dashboard}
+            angularPanel={angularPanel}
+            onTypeChanged={this.onPluginTypeChanged}
+          />
+        )}
+      </div>
+    );
   }
 }

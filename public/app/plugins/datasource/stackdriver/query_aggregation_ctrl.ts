@@ -29,16 +29,10 @@ export class StackdriverAggregationCtrl {
   constructor(private $scope, private templateSrv) {
     this.$scope.ctrl = this;
     this.target = $scope.target;
-    this.alignmentPeriods = [
-      this.getTemplateVariablesGroup(),
-      {
-        label: 'Alignment Periods',
-        options: alignmentPeriods.map(ap => ({
-          ...ap,
-          label: ap.text,
-        })),
-      },
-    ];
+    this.alignmentPeriods = alignmentPeriods.map(ap => ({
+      ...ap,
+      label: ap.text,
+    }));
     this.setAggOptions();
     this.setAlignOptions();
     const self = this;
@@ -46,26 +40,13 @@ export class StackdriverAggregationCtrl {
       self.setAggOptions();
       self.setAlignOptions();
     });
-    this.handleAlignmentChange = this.handleAlignmentChange.bind(this);
-    this.handleAggregationChange = this.handleAggregationChange.bind(this);
-    this.handleAlignmentPeriodChange = this.handleAlignmentPeriodChange.bind(this);
   }
 
   setAlignOptions() {
-    const alignments = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
+    this.alignOptions = getAlignmentOptionsByMetric(this.target.valueType, this.target.metricKind).map(a => ({
       ...a,
       label: a.text,
     }));
-    this.alignOptions = [
-      this.getTemplateVariablesGroup(),
-      {
-        label: 'Alignment Options',
-        options: alignments,
-      },
-    ];
-    if (!alignments.find(o => o.value === this.templateSrv.replace(this.target.aggregation.perSeriesAligner))) {
-      this.target.aggregation.perSeriesAligner = alignments.length > 0 ? alignments[0].value : '';
-    }
   }
 
   setAggOptions() {

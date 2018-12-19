@@ -3,6 +3,8 @@ import appEvents from 'app/core/app_events';
 import { QueryCtrl } from 'app/plugins/sdk';
 import './query_aggregation_ctrl';
 import './query_filter_ctrl';
+import { StackdriverPicker } from './components/StackdriverPicker';
+import { react2AngularDirective } from 'app/core/utils/react2angular';
 import { registerAngularDirectives } from './angular_wrappers';
 import { Target, QueryMeta } from './types';
 
@@ -29,7 +31,24 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
   target: Target;
 
-  defaults = DefaultTarget;
+  defaults = {
+    defaultProject: 'loading project...',
+    metricType: '',
+    service: '',
+    metric: '',
+    unit: '',
+    aggregation: {
+      crossSeriesReducer: 'REDUCE_MEAN',
+      alignmentPeriod: 'stackdriver-auto',
+      perSeriesAligner: 'ALIGN_MEAN',
+      groupBys: [],
+    },
+    filters: [],
+    showAggregationOptions: false,
+    aliasBy: '',
+    metricKind: '',
+    valueType: '',
+  };
 
   showHelp: boolean;
   showLastQuery: boolean;
@@ -51,6 +70,16 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     _.defaultsDeep(this.target, this.defaults);
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+    react2AngularDirective('stackdriverPicker', StackdriverPicker, [
+      'options',
+      'onChange',
+      'selected',
+      'searchable',
+      'className',
+      'placeholder',
+      'groupName',
+      ['templateVariables', { watchDepth: 'reference' }],
+    ]);
     // this.handleMetricTypeChange = this.handleMetricTypeChange.bind(this);
     // this.handleAggregationChange = this.handleAggregationChange.bind(this);
     this.handleTargetChange = this.handleTargetChange.bind(this);

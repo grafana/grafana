@@ -1,6 +1,5 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import Select from 'react-select';
 import _ from 'lodash';
 
 import { DataSource } from 'app/types/datasources';
@@ -12,7 +11,7 @@ import {
   QueryHintGetter,
   QueryHint,
 } from 'app/types/explore';
-import { RawTimeRange, DataQuery } from 'app/types/series';
+import { TimeRange, DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
@@ -25,12 +24,11 @@ import {
   makeTimeSeriesList,
   updateHistory,
 } from 'app/core/utils/explore';
-import ResetStyles from 'app/core/components/Picker/ResetStyles';
-import PickerOption from 'app/core/components/Picker/PickerOption';
-import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
-import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import TableModel from 'app/core/table_model';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { Emitter } from 'app/core/utils/emitter';
+import * as dateMath from 'app/core/utils/datemath';
 
 import Panel from './Panel';
 import QueryRows from './QueryRows';
@@ -38,6 +36,7 @@ import Graph from './Graph';
 import Logs from './Logs';
 import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
+import { Alert } from './Error';
 import TimePicker, { parseTime } from './TimePicker';
 
 interface ExploreProps {
@@ -68,9 +67,9 @@ interface ExploreProps {
  * contain one empty DataQuery. While the user modifies the DataQuery, the
  * modifications are being tracked in `this.modifiedQueries`, which need to be
  * used whenever a query is sent to the datasource to reflect what the user sees
- * on the screen. Query rows can be initialized or reset using `initialQueries`,
- * by giving the respective row a new key. This wipes the old row and its state.
- * This property is also used to govern how many query rows there are (minimum 1).
+ * on the screen. Query"react-popper": "^0.7.5", rows can be initialized or reset using `initialQueries`,
+ * by giving the respec"react-popper": "^0.7.5",tive row a new key. This wipes the old row and its state.
+ * This property is als"react-popper": "^0.7.5",o used to govern how many query rows there are (minimum 1).
  *
  * This flow makes sure that a query row can be arbitrarily complex without the
  * fear of being wiped or re-initialized via props. The query row is free to keep
@@ -89,6 +88,7 @@ interface ExploreProps {
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
+  exploreEvents: Emitter;
   /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
@@ -144,6 +144,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       };
     }
     this.modifiedQueries = initialQueries.slice();
+    this.exploreEvents = new Emitter();
     this.timepickerRef = React.createRef();
   }
 
@@ -153,10 +154,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
-    const datasources = datasourceSrv.getExploreSources();
+
+    const datasources = datasourceSrv.getExternal();
     const exploreDatasources = datasources.map(ds => ({
       value: ds.name,
-      label: ds.name,
+      name: ds.name,
+      meta: ds.meta,
     }));
 
     if (datasources.length > 0) {
@@ -168,9 +171,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       } else {
         datasource = await datasourceSrv.get();
       }
-      if (!datasource.meta.explore) {
-        datasource = await datasourceSrv.get(datasources[0].name);
-      }
       await this.setDatasource(datasource);
     } else {
       this.setState({ datasourceMissing: true });
@@ -178,6 +178,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   componentWillUnmount() {
+    this.exploreEvents.removeAllListeners();
     clearTimeout(this.scanTimer);
   }
 
@@ -186,7 +187,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
-    const supportsTable = datasource.meta.metrics;
+    const supportsTable = datasource.meta.tables;
     const datasourceId = datasource.meta.id;
     let datasourceError = null;
 
@@ -348,8 +349,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
   };
 
-  onChangeTime = (nextRange: RawTimeRange, scanning?: boolean) => {
-    const range: RawTimeRange = {
+  onChangeTime = (nextRange: TimeRange, scanning?: boolean) => {
+    const range: TimeRange = {
       ...nextRange,
     };
     if (this.state.scanning && !scanning) {
@@ -605,8 +606,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     ];
 
     // Clone range for query request
-    const queryRange: RawTimeRange = { ...range };
-
+    // const queryRange: RawTimeRange = { ...range };
+    // const { from, to, raw } = this.timeSrv.timeRange();
     // Datasource is using `panelId + query.refId` for cancellation logic.
     // Using `format` here because it relates to the view panel that the request is for.
     const panelId = queryOptions.format;
@@ -616,7 +617,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       intervalMs,
       panelId,
       targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
-      range: queryRange,
+      range: {
+        from: dateMath.parse(range.from, false),
+        to: dateMath.parse(range.to, true),
+        raw: range,
+      },
+      rangeRaw: range,
+      scopedVars: {
+        __interval: { text: interval, value: interval },
+        __interval_ms: { text: intervalMs, value: intervalMs },
+      },
     };
   }
 
@@ -802,16 +812,18 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     }
     const { datasource } = this.state;
     const datasourceId = datasource.meta.id;
-    // Run all queries concurrently
+    // Run all queries concurrentlyso
     queries.forEach(async (query, rowIndex) => {
       const transaction = this.startQueryTransaction(query, rowIndex, resultType, queryOptions);
       try {
         const now = Date.now();
         const res = await datasource.query(transaction.options);
+        this.exploreEvents.emit('data-received', res.data || []);
         const latency = Date.now() - now;
         const results = resultGetter ? resultGetter(res.data) : res.data;
         this.completeQueryTransaction(transaction.id, results, latency, queries, datasourceId);
       } catch (response) {
+        this.exploreEvents.emit('data-error', response);
         this.failQueryTransaction(transaction.id, response, datasourceId);
       }
     });
@@ -871,7 +883,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     } = this.state;
     const graphHeight = showingGraph && showingTable ? '200px' : '400px';
     const exploreClass = split ? 'explore explore-split' : 'explore';
-    const selectedDatasource = datasource ? exploreDatasources.find(d => d.label === datasource.name) : undefined;
+    const selectedDatasource = datasource ? exploreDatasources.find(d => d.name === datasource.name) : undefined;
     const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
     const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
     const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
@@ -896,24 +908,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
-              <Select
-                classNamePrefix={`gf-form-select-box`}
-                isMulti={false}
-                isLoading={datasourceLoading}
-                isClearable={false}
-                className="gf-form-input gf-form-input--form-dropdown datasource-picker"
+              <DataSourcePicker
                 onChange={this.onChangeDatasource}
-                options={exploreDatasources}
-                styles={ResetStyles}
-                placeholder="Select datasource"
-                loadingMessage={() => 'Loading datasources...'}
-                noOptionsMessage={() => 'No datasources found'}
-                value={selectedDatasource}
-                components={{
-                  Option: PickerOption,
-                  IndicatorsContainer,
-                  NoOptionsMessage,
-                }}
+                datasources={exploreDatasources}
+                current={selectedDatasource}
               />
             </div>
           ) : null}
@@ -932,22 +930,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             </button>
           </div>
           <div className="navbar-buttons relative">
-            <button className="btn navbar-button--primary" onClick={this.onSubmit}>
+            <button className="btn navbar-button navbar-button--primary" onClick={this.onSubmit}>
               Run Query{' '}
               {loading ? <i className="fa fa-spinner fa-spin run-icon" /> : <i className="fa fa-level-down run-icon" />}
             </button>
           </div>
         </div>
-
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
-
         {datasourceMissing ? (
           <div className="explore-container">Please add a datasource that supports Explore (e.g., Prometheus).</div>
         ) : null}
 
-        {datasourceError ? (
-          <div className="explore-container">Error connecting to datasource. [{datasourceError}]</div>
-        ) : null}
+        {datasourceError && (
+          <div className="explore-container">
+            <Alert message={`Error connecting to datasource: ${datasourceError}`} />
+          </div>
+        )}
 
         {datasource && !datasourceError ? (
           <div className="explore-container">
@@ -961,6 +959,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
               onExecuteQuery={this.onSubmit}
               onRemoveQueryRow={this.onRemoveQueryRow}
               transactions={queryTransactions}
+              exploreEvents={this.exploreEvents}
+              range={range}
             />
             <main className="m-t-2">
               <ErrorBoundary>

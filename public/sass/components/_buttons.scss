@@ -23,7 +23,7 @@
   &.active {
     &:focus,
     &.focus {
-      @include tab-focus();
+      @include no-focus();
     }
   }
 
@@ -78,6 +78,7 @@
 
 .btn-link {
   color: $btn-link-color;
+  background: transparent;
 }
 
 // Set the backgrounds
@@ -120,8 +121,8 @@
 // Info appears as a neutral blue
 .btn-secondary {
   @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  // Inverse appears as dark gray
 }
-// Inverse appears as dark gray
 .btn-inverse {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;
@@ -170,6 +171,12 @@
 .btn-p-x-2 {
   padding-left: 20px;
   padding-right: 20px;
+}
+
+// No horizontal padding
+.btn-p-x-0 {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 // External services

@@ -2,10 +2,10 @@ import React from 'react';
 import _ from 'lodash';
 
 // import { OptionPicker } from './OptionPicker';
-import { OptionGroupPicker } from './OptionGroupPicker';
 // import { alignmentPeriods } from '../constants';
 // import { getAlignmentOptionsByMetric, getAggregationOptionsByMetric } from '../functions';
 import { getAggregationOptionsByMetric } from '../functions';
+import { StackdriverPicker } from './StackdriverPicker';
 // import kbn from 'app/core/utils/kbn';
 
 export interface Props {
@@ -109,10 +109,10 @@ export class AggregationPicker extends React.Component<Props, State> {
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Aggregation</label>
             <div className="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-              <OptionGroupPicker
+              <StackdriverPicker
                 onChange={value => this.handleAggregationChange(value)}
                 selected={aggregation.crossSeriesReducer}
-                groups={aggOptions}
+                options={aggOptions}
                 searchable={true}
                 placeholder="Select Aggregation"
                 className="width-15"

@@ -11,4 +11,4 @@ export class Text2 extends PureComponent<PanelProps> {
   }
 }
 
-export { Text2 as PanelComponent };
+export { Text2 as Panel };

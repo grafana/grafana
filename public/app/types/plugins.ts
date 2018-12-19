@@ -12,20 +12,26 @@ export interface PluginExports {
 
   // Panel plugin
   PanelCtrl?;
-  PanelComponent?: ComponentClass<PanelProps>;
-  PanelOptionsComponent: ComponentClass<PanelOptionsProps>;
+  Panel?: ComponentClass<PanelProps>;
+  PanelOptions?: ComponentClass<PanelOptionsProps>;
+  PanelDefaults?: any;
 }
 
 export interface PanelPlugin {
   id: string;
   name: string;
-  meta: any;
-  hideFromList: boolean;
+  hideFromList?: boolean;
   module: string;
   baseUrl: string;
   info: any;
   sort: number;
   exports?: PluginExports;
+}
+
+interface PluginMetaQueryOptions {
+  cacheTimeout?: boolean;
+  maxDataPoints?: boolean;
+  minInterval?: boolean;
 }
 
 export interface PluginMeta {
@@ -36,9 +42,13 @@ export interface PluginMeta {
 
   // Datasource-specific
   metrics?: boolean;
+  tables?: boolean;
   logs?: boolean;
   explore?: boolean;
   annotations?: boolean;
+  mixed?: boolean;
+  hasQueryHelp?: boolean;
+  queryOptions?: PluginMetaQueryOptions;
 }
 
 export interface PluginInclude {
@@ -50,7 +60,7 @@ export interface PluginInclude {
 export interface PluginMetaInfo {
   author: {
     name: string;
-    url: string;
+    url?: string;
   };
   description: string;
   links: string[];
@@ -58,7 +68,7 @@ export interface PluginMetaInfo {
     large: string;
     small: string;
   };
-  screenshots: string;
+  screenshots: any[];
   updated: string;
   version: string;
 }
@@ -74,6 +84,7 @@ export interface Plugin {
   pinned: boolean;
   state: string;
   type: string;
+  module: any;
 }
 
 export interface PluginDashboard {

@@ -7,7 +7,7 @@ import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState, UserState } from './user';
-import { DataSource, DataSourcesState } from './datasources';
+import { DataSource, DataSourceSelectItem, DataSourcesState } from './datasources';
 import {
   TimeRange,
   LoadingState,
@@ -21,8 +21,8 @@ import {
   DataQueryOptions,
   IntervalValues,
 } from './series';
-import { PanelProps, PanelOptionsProps } from './panel';
-import { PluginDashboard, PluginMeta, Plugin, PluginsState } from './plugins';
+import { BasicGaugeColor, MappingType, PanelProps, PanelOptionsProps, RangeMap, Threshold, ValueMap } from './panel';
+import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
 import { Organization, OrganizationState } from './organization';
 import {
   AppNotification,
@@ -31,7 +31,7 @@ import {
   AppNotificationTimeout,
 } from './appNotifications';
 import { DashboardSearchHit } from './search';
-
+import { ValidationEvents, ValidationRule } from './form';
 export {
   Team,
   TeamsState,
@@ -56,6 +56,7 @@ export {
   OrgRole,
   PermissionLevel,
   DataSource,
+  DataSourceSelectItem,
   PluginMeta,
   ApiKey,
   ApiKeysState,
@@ -69,6 +70,7 @@ export {
   UsersState,
   TimeRange,
   LoadingState,
+  PanelPlugin,
   PanelProps,
   PanelOptionsProps,
   TimeSeries,
@@ -88,7 +90,14 @@ export {
   AppNotificationTimeout,
   DashboardSearchHit,
   UserState,
+  Threshold,
+  ValidationEvents,
+  ValidationRule,
+  ValueMap,
+  RangeMap,
   IntervalValues,
+  MappingType,
+  BasicGaugeColor,
 };
 
 export interface StoreState {
