@@ -3,9 +3,11 @@ import React, { PureComponent } from 'react';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 import 'app/features/alerting/AlertTabCtrl';
+import { PanelModel } from '../panel_model';
 
 interface Props {
   angularPanel?: AngularComponent;
+  panel: PanelModel;
 }
 
 export class AlertTab extends PureComponent<Props> {
@@ -63,8 +65,26 @@ export class AlertTab extends PureComponent<Props> {
   }
 
   render() {
+    const { alert } = this.props.panel;
+
+    const stateHistory = {
+      title: 'State history',
+      render: () => {
+        return <div>State history</div>;
+      },
+    };
+
+    const deleteAlert = {
+      title: 'Delete button',
+      render: () => {
+        return <div>Hello</div>;
+      },
+    };
+
+    const toolbarItems = alert ? [deleteAlert, stateHistory] : [];
+
     return (
-      <EditorTabBody heading="Alert" toolbarItems={[]}>
+      <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <div ref={element => (this.element = element)} />
       </EditorTabBody>
     );
