@@ -3,7 +3,7 @@
     <span class="gf-form-label width-9 query-keyword">Service</span>
     <stackdriver-picker
       onChange="ctrl.handleServiceChange"
-      selected="ctrl.target.service"
+      value="ctrl.target.service"
       options="ctrl.services"
       is-searchable="false"
       placeholder="'Select Services'"
@@ -17,7 +17,7 @@
     <span class="gf-form-label width-9 query-keyword">Metric</span>
     <stackdriver-picker
       onChange="ctrl.handleMetricTypeChange"
-      selected="ctrl.target.metricType"
+      value="ctrl.target.metricType"
       options="ctrl.getMetricsList()"
       template-variables="ctrl.templateSrv.variables"
       group-name="'Metric Types'"

@@ -66,7 +66,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     react2AngularDirective('stackdriverPicker', StackdriverPicker, [
       'options',
       'onChange',
-      'selected',
+      'value',
       'isSearchable',
       'className',
       'placeholder',
