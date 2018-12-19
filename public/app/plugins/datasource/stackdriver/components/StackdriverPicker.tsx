@@ -6,7 +6,7 @@ export interface Props {
   onChange: (value: string) => void;
   options: any[];
   isSearchable: boolean;
-  selected: string;
+  value: string;
   placeholder?: string;
   className?: string;
   groupName?: string;
@@ -41,7 +41,7 @@ export class StackdriverPicker extends React.Component<Props, State> {
 
   shouldComponentUpdate(nextProps: Props) {
     const nextOptions = this.buildOptions(nextProps);
-    return nextProps.selected !== this.props.selected || !_.isEqual(nextOptions, this.state.options);
+    return nextProps.value !== this.props.value || !_.isEqual(nextOptions, this.state.options);
   }
 
   buildOptions({ templateVariables = [], groupName = '', options }) {
@@ -70,7 +70,7 @@ export class StackdriverPicker extends React.Component<Props, State> {
   getSelectedOption() {
     const { options } = this.state;
     const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
-    return allOptions.find(option => option.value === this.props.selected);
+    return allOptions.find(option => option.value === this.props.value);
   }
 
   render() {
