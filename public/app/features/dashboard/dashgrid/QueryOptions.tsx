@@ -38,7 +38,33 @@ interface Props {
   datasource: DataSourceSelectItem;
 }
 
-export class QueryOptions extends PureComponent<Props> {
+interface State {
+  relativeTime: string;
+  timeShift: string;
+}
+
+export class QueryOptions extends PureComponent<Props, State> {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      relativeTime: props.panel.timeFrom || '',
+      timeShift: props.panel.timeShift || '',
+    };
+  }
+
+  onRelativeTimeChange = event => {
+    this.setState({
+      relativeTime: event.target.value,
+    });
+  };
+
+  onTimeShiftChange = event => {
+    this.setState({
+      timeShift: event.target.value,
+    });
+  };
+
   onOverrideTime = (evt, status: InputStatus) => {
     const { value } = evt.target;
     const { panel } = this.props;
@@ -128,8 +154,10 @@ export class QueryOptions extends PureComponent<Props> {
     });
   }
 
-  render = () => {
+  render() {
     const hideTimeOverride = this.props.panel.hideTimeOverride;
+    const { relativeTime, timeShift } = this.state;
+
     return (
       <div className="gf-form-inline">
         {this.renderOptions()}
@@ -140,9 +168,11 @@ export class QueryOptions extends PureComponent<Props> {
             type="text"
             className="width-6"
             placeholder="1h"
+            onChange={this.onRelativeTimeChange}
             onBlur={this.onOverrideTime}
             validationEvents={timeRangeValidationEvents}
             hideErrorMessage={true}
+            value={relativeTime}
           />
         </div>
 
@@ -152,9 +182,11 @@ export class QueryOptions extends PureComponent<Props> {
             type="text"
             className="width-6"
             placeholder="1h"
+            onChange={this.onTimeShiftChange}
             onBlur={this.onTimeShift}
             validationEvents={timeRangeValidationEvents}
             hideErrorMessage={true}
+            value={timeShift}
           />
         </div>
 
@@ -163,5 +195,5 @@ export class QueryOptions extends PureComponent<Props> {
         </div>
       </div>
     );
-  };
+  }
 }
