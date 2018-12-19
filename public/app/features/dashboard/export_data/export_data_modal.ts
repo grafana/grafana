@@ -8,15 +8,16 @@ export class ExportDataModalCtrl {
   asRows = true;
   dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';
   excel = false;
+  removeNullValues = false;
 
   export() {
     if (this.panel === 'table') {
-      fileExport.exportTableDataToCsv(this.data, this.excel);
+      fileExport.exportTableDataToCsv(this.data, this.excel, this.removeNullValues);
     } else {
       if (this.asRows) {
-        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel, this.removeNullValues);
       } else {
-        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel, this.removeNullValues);
       }
     }
 

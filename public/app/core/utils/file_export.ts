@@ -54,15 +54,24 @@ function formatRow(row, addEndRowDelimiter = true) {
   return addEndRowDelimiter ? text + END_ROW : text;
 }
 
-export function convertSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
+export function convertSeriesListToCsv(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  removeNullValues = false
+) {
   let text = formatSpecialHeader(excel) + formatRow(['Series', 'Time', 'Value']);
   for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex += 1) {
     for (let i = 0; i < seriesList[seriesIndex].datapoints.length; i += 1) {
+      const value = seriesList[seriesIndex].datapoints[i][POINT_VALUE_INDEX];
+      if (removeNullValues && value === null) {
+        continue;
+      }
       text += formatRow(
         [
           seriesList[seriesIndex].alias,
           moment(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat),
-          seriesList[seriesIndex].datapoints[i][POINT_VALUE_INDEX],
+          value,
         ],
         i < seriesList[seriesIndex].datapoints.length - 1 || seriesIndex < seriesList.length - 1
       );
@@ -71,12 +80,22 @@ export function convertSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATE
   return text;
 }
 
-export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  const text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel);
+export function exportSeriesListToCsv(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  removeNullValues = false
+) {
+  const text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel, removeNullValues);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
+export function convertSeriesListToCsvColumns(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  removeNullValues = false
+) {
   // add header
   let text =
     formatSpecialHeader(excel) +
@@ -93,14 +112,24 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
   // make text
   for (let i = 0; i < seriesList[0].datapoints.length; i += 1) {
     const timestamp = moment(seriesList[0].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat);
-    text += formatRow(
-      [timestamp].concat(
-        seriesList.map(series => {
-          return series.datapoints[i][POINT_VALUE_INDEX];
-        })
-      ),
-      i < seriesList[0].datapoints.length - 1
-    );
+
+    // if a value is null and removeNullValues is true we don't add the text
+    let hasNullValues = false;
+
+    seriesList.map(series => {
+      hasNullValues = series.datapoints[i][POINT_VALUE_INDEX] ? false : true;
+    });
+
+    if ((!hasNullValues && removeNullValues) || !removeNullValues) {
+      text += formatRow(
+        [timestamp].concat(
+          seriesList.map(series => {
+            return series.datapoints[i][POINT_VALUE_INDEX];
+          })
+        ),
+        i < seriesList[0].datapoints.length - 1
+      );
+    }
   }
 
   return text;
@@ -138,24 +167,31 @@ function mergeSeriesByTime(seriesList) {
   return seriesList;
 }
 
-export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  const text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel);
+export function exportSeriesListToCsvColumns(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  removeNullValues = false
+) {
+  const text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel, removeNullValues);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertTableDataToCsv(table, excel = false) {
+export function convertTableDataToCsv(table, excel = false, removeNullValues = false) {
   let text = formatSpecialHeader(excel);
   // add headline
   text += formatRow(table.columns.map(val => val.title || val.text));
   // process data
   for (let i = 0; i < table.rows.length; i += 1) {
-    text += formatRow(table.rows[i], i < table.rows.length - 1);
+    if ((removeNullValues && table.rows[i]) || !removeNullValues) {
+      text += formatRow(table.rows[i], i < table.rows.length - 1);
+    }
   }
   return text;
 }
 
-export function exportTableDataToCsv(table, excel = false) {
-  const text = convertTableDataToCsv(table, excel);
+export function exportTableDataToCsv(table, excel = false, removeNullValues = false) {
+  const text = convertTableDataToCsv(table, excel, removeNullValues);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
