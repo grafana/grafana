@@ -10,7 +10,7 @@ export interface Props {
   placeholder?: string;
   className?: string;
   groupName?: string;
-  templateVariables?: any[];
+  variables?: any[];
 }
 
 interface State {
@@ -19,7 +19,7 @@ interface State {
 
 export class StackdriverPicker extends React.Component<Props, State> {
   static defaultProps = {
-    templateVariables: [],
+    variables: [],
     options: [],
     groupName: 'Options',
   };
@@ -34,7 +34,7 @@ export class StackdriverPicker extends React.Component<Props, State> {
   }
 
   componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.options.length > 0 || nextProps.templateVariables.length) {
+    if (nextProps.options.length > 0 || nextProps.variables.length) {
       this.setState({ options: this.buildOptions(nextProps) });
     }
   }
@@ -44,10 +44,10 @@ export class StackdriverPicker extends React.Component<Props, State> {
     return nextProps.value !== this.props.value || !_.isEqual(nextOptions, this.state.options);
   }
 
-  buildOptions({ templateVariables = [], groupName = '', options }) {
-    return templateVariables.length > 0
+  buildOptions({ variables = [], groupName = '', options }) {
+    return variables.length > 0
       ? [
-          this.getTemplateVariablesGroup(),
+          this.getVariablesGroup(),
           {
             label: groupName,
             expanded: true,
@@ -57,10 +57,10 @@ export class StackdriverPicker extends React.Component<Props, State> {
       : options;
   }
 
-  getTemplateVariablesGroup() {
+  getVariablesGroup() {
     return {
       label: 'Template Variables',
-      options: this.props.templateVariables.map(v => ({
+      options: this.props.variables.map(v => ({
         label: `$${v.name}`,
         value: `$${v.name}`,
       })),

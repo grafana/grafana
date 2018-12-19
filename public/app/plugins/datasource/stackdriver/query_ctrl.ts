@@ -71,7 +71,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       'className',
       'placeholder',
       'groupName',
-      ['templateVariables', { watchDepth: 'reference' }],
+      ['variables', { watchDepth: 'reference' }],
     ]);
   }
 
