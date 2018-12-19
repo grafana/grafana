@@ -67,7 +67,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       'options',
       'onChange',
       'selected',
-      'searchable',
+      'isSearchable',
       'className',
       'placeholder',
       'groupName',
