@@ -5,7 +5,7 @@ import Select from 'app/core/components/Select/Select';
 export interface Props {
   onChange: (value: string) => void;
   options: any[];
-  searchable: boolean;
+  isSearchable: boolean;
   selected: string;
   placeholder?: string;
   className?: string;
@@ -74,7 +74,7 @@ export class StackdriverPicker extends React.Component<Props, State> {
   }
 
   render() {
-    const { placeholder, className, searchable, onChange } = this.props;
+    const { placeholder, className, isSearchable, onChange } = this.props;
     const { options } = this.state;
     const selectedOption = this.getSelectedOption();
 
@@ -86,7 +86,7 @@ export class StackdriverPicker extends React.Component<Props, State> {
         backspaceRemovesValue={false}
         onChange={item => onChange(item.value)}
         options={options}
-        isSearchable={searchable}
+        isSearchable={isSearchable}
         maxMenuHeight={500}
         placeholder={placeholder}
         noOptionsMessage={() => 'No options found'}
