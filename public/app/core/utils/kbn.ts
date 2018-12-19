@@ -484,6 +484,14 @@ kbn.valueFormats.Mbits = kbn.formatBuilders.decimalSIPrefix('bps', 2);
 kbn.valueFormats.GBs = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
 kbn.valueFormats.Gbits = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
+// Floating Point Operations per Second
+kbn.valueFormats.flops = kbn.formatBuilders.decimalSIPrefix('FLOP/s');
+kbn.valueFormats.mflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 2);
+kbn.valueFormats.gflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 3);
+kbn.valueFormats.tflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 4);
+kbn.valueFormats.pflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 5);
+kbn.valueFormats.eflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 6);
+
 // Hash Rate
 kbn.valueFormats.Hs = kbn.formatBuilders.decimalSIPrefix('H/s');
 kbn.valueFormats.KHs = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
@@ -1017,6 +1025,17 @@ kbn.getUnitFormats = () => {
         { text: 'terahashes/sec', value: 'THs' },
         { text: 'petahashes/sec', value: 'PHs' },
         { text: 'exahashes/sec', value: 'EHs' },
+      ],
+    },
+    {
+      text: 'computation throughput',
+      submenu: [
+        { text: 'FLOP/s', value: 'flops' },
+        { text: 'MFLOP/s', value: 'mflops' },
+        { text: 'GFLOP/s', value: 'gflops' },
+        { text: 'TFLOP/s', value: 'tflops' },
+        { text: 'PFLOP/s', value: 'pflops' },
+        { text: 'EFLOP/s', value: 'eflops' },
       ],
     },
     {
