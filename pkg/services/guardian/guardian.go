@@ -40,7 +40,7 @@ var New = func(dashId int64, orgId int64, user *m.SignedInUser) DashboardGuardia
 		user:   user,
 		dashId: dashId,
 		orgId:  orgId,
-		log:    log.New("guardians.dashboard"),
+		log:    log.New("dashboard.permissions"),
 	}
 }
 
@@ -66,15 +66,30 @@ func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
 
 func (g *dashboardGuardianImpl) HasPermission(permission m.PermissionType) (bool, error) {
 	if g.user.OrgRole == m.ROLE_ADMIN {
-		return true, nil
+		return g.logHasPermissionResult(permission, true, nil)
 	}
 
 	acl, err := g.GetAcl()
 	if err != nil {
-		return false, err
+		return g.logHasPermissionResult(permission, false, err)
 	}
 
-	return g.checkAcl(permission, acl)
+	result, err := g.checkAcl(permission, acl)
+	return g.logHasPermissionResult(permission, result, err)
+}
+
+func (g *dashboardGuardianImpl) logHasPermissionResult(permission m.PermissionType, hasPermission bool, err error) (bool, error) {
+	if err != nil {
+		return hasPermission, err
+	}
+
+	if hasPermission {
+		g.log.Debug("User granted access to execute action", "userId", g.user.UserId, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
+	} else {
+		g.log.Debug("User denied access to execute action", "userId", g.user.UserId, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
+	}
+
+	return hasPermission, err
 }
 
 func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.DashboardAclInfoDTO) (bool, error) {

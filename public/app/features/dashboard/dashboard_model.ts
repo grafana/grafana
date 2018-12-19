@@ -200,6 +200,40 @@ export class DashboardModel {
     this.events.emit('view-mode-changed', panel);
   }
 
+  timeRangeUpdated() {
+    this.events.emit('time-range-updated');
+  }
+
+  startRefresh() {
+    this.events.emit('refresh');
+
+    for (const panel of this.panels) {
+      if (!this.otherPanelInFullscreen(panel)) {
+        panel.refresh();
+      }
+    }
+  }
+
+  render() {
+    this.events.emit('render');
+
+    for (const panel of this.panels) {
+      panel.render();
+    }
+  }
+
+  panelInitialized(panel: PanelModel) {
+    panel.initialized();
+
+    if (!this.otherPanelInFullscreen(panel)) {
+      panel.refresh();
+    }
+  }
+
+  otherPanelInFullscreen(panel: PanelModel) {
+    return this.meta.fullscreen && !panel.fullscreen;
+  }
+
   private ensureListExist(data) {
     if (!data) {
       data = {};
@@ -770,16 +804,6 @@ export class DashboardModel {
     date = moment.isMoment(date) ? date : moment(date);
 
     return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
-  }
-
-  getNextQueryLetter(panel) {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(panel.targets, other => {
-        return other.refId !== refId;
-      });
-    });
   }
 
   isTimezoneUtc() {

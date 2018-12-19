@@ -1,20 +1,6 @@
 import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
-
-export class CloudWatchQueryParameter {
-  constructor() {
-    return {
-      templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/query.parameter.html',
-      controller: 'CloudWatchQueryParameterCtrl',
-      restrict: 'E',
-      scope: {
-        target: '=',
-        datasource: '=',
-        onChange: '&',
-      },
-    };
-  }
-}
 
 export class CloudWatchQueryParameterCtrl {
   /** @ngInject */
@@ -239,5 +225,17 @@ export class CloudWatchQueryParameterCtrl {
   }
 }
 
-angular.module('grafana.controllers').directive('cloudwatchQueryParameter', CloudWatchQueryParameter);
-angular.module('grafana.controllers').controller('CloudWatchQueryParameterCtrl', CloudWatchQueryParameterCtrl);
+export function cloudWatchQueryParameter() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/query.parameter.html',
+    controller: CloudWatchQueryParameterCtrl,
+    restrict: 'E',
+    scope: {
+      target: '=',
+      datasource: '=',
+      onChange: '&',
+    },
+  };
+}
+
+coreModule.directive('cloudwatchQueryParameter', cloudWatchQueryParameter);

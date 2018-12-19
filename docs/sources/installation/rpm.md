@@ -115,6 +115,8 @@ This will start the `grafana-server` process as the `grafana` user,
 which is created during package installation. The default HTTP port is
 `3000`, and default user and group is `admin`.
 
+Default login and password `admin`/ `admin`
+
 To configure the Grafana server to start at boot time:
 
 ```bash

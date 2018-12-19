@@ -5,12 +5,14 @@ export class MssqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  interval: string;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
   interpolateVariable(value, variable) {

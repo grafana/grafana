@@ -1,0 +1,52 @@
+<div class="gf-form-inline">
+  <div class="gf-form">
+    <span class="gf-form-label width-9 query-keyword">Service</span>
+    <select
+      class="gf-form-input width-12"
+      ng-model="ctrl.service"
+      ng-options="f.value as f.text for f in ctrl.services"
+      ng-change="ctrl.onServiceChange(ctrl.service)"
+    ></select>
+  </div>
+  <div class="gf-form">
+    <span class="gf-form-label width-9 query-keyword">Metric</span>
+    <gf-form-dropdown
+      model="ctrl.metricType"
+      get-options="ctrl.metrics"
+      class="min-width-20"
+      disabled
+      type="text"
+      allow-custom="true"
+      lookup-text="true"
+      css-class="min-width-12"
+      on-change="ctrl.onMetricTypeChange()"
+    ></gf-form-dropdown>
+  </div>
+  <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
+</div>
+<div class="gf-form-inline">
+  <div class="gf-form">
+    <span class="gf-form-label query-keyword width-9">Filter</span>
+    <div class="gf-form" ng-repeat="segment in ctrl.filterSegments.filterSegments">
+      <metric-segment
+        segment="segment"
+        get-options="ctrl.getFilters(segment, $index)"
+        on-change="ctrl.filterSegmentUpdated(segment, $index)"
+      ></metric-segment>
+    </div>
+  </div>
+  <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
+</div>
+<div class="gf-form-inline" ng-hide="ctrl.$scope.hideGroupBys">
+  <div class="gf-form">
+    <span class="gf-form-label query-keyword width-9">Group By</span>
+    <div class="gf-form" ng-repeat="segment in ctrl.groupBySegments">
+      <metric-segment
+        segment="segment"
+        get-options="ctrl.getGroupBys(segment)"
+        on-change="ctrl.groupByChanged(segment, $index)"
+      ></metric-segment>
+    </div>
+  </div>
+  <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
+</div>

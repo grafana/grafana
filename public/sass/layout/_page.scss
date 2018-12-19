@@ -14,6 +14,12 @@
   background: $page-gradient;
 }
 
+.panel-in-fullscreen {
+  .main-view {
+    background: $edit-gradient;
+  }
+}
+
 .page-container {
   margin-left: auto;
   margin-right: auto;
@@ -39,6 +45,29 @@
 
   &--dashboard {
     height: calc(100% - 56px);
+  }
+
+  // Sticky footer
+  display: flex;
+  flex-direction: column;
+
+  > div {
+    flex-grow: 1;
+  }
+
+  > .footer {
+    flex-shrink: 0;
+  }
+
+  // Render in correct position even ng-view div is not rendered yet
+  > .footer:first-child {
+    flex-grow: 1;
+    display: flex;
+
+    > * {
+      width: 100%;
+      align-self: flex-end;
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 import '../shareModalCtrl';
 import { ShareModalCtrl } from '../shareModalCtrl';
 import config from 'app/core/config';
-import { LinkSrv } from 'app/features/panellinks/link_srv';
+import { LinkSrv } from 'app/features/dashboard/panellinks/link_srv';
 
 describe('ShareModalCtrl', () => {
   const ctx = {

@@ -8,8 +8,8 @@
   </div>
 
   <div class="gf-form-inline">
-    <div class="gf-form max-width-26">
-      <label class="gf-form-label width-8">Legend format</label>
+    <div class="gf-form">
+      <label class="gf-form-label">Legend</label>
       <input type="text" class="gf-form-input" ng-model="ctrl.target.legendFormat" spellcheck='false' placeholder="legend format"
         data-min-length=0 data-items=1000 ng-model-onblur ng-change="ctrl.refreshMetricData()">
       </input>
@@ -39,23 +39,19 @@
       </div>
     </div>
 
-    <div class="gf-form">
-      <label class="gf-form-label width-6">Format as</label>
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label width-5">Format</label>
       <div class="gf-form-select-wrapper width-8">
         <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats"
           ng-change="ctrl.refresh()"></select>
       </div>
       <gf-form-switch class="gf-form" label="Instant" label-class="width-5" checked="ctrl.target.instant" on-change="ctrl.refresh()">
       </gf-form-switch>
-      <label class="gf-form-label">
+      <label class="gf-form-label gf-form-label--grow">
         <a href="{{ctrl.linkToPrometheus}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
           <i class="fa fa-share-square-o"></i>
         </a>
       </label>
-    </div>
-
-    <div class="gf-form gf-form--grow">
-      <div class="gf-form-label gf-form-label--grow"></div>
     </div>
   </div>
 </query-editor-row>

@@ -36,7 +36,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render organisation switcher', () => {
+  it('should render organization switcher', () => {
     const wrapper = setup({
       link: {
         showOrgSwitcher: true,

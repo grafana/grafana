@@ -1,0 +1,281 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <h3
+      className="page-sub-heading"
+    >
+      External group sync
+    </h3>
+    <class_1
+      className="page-sub-heading-icon"
+      content="Sync LDAP or OAuth groups with your Grafana teams."
+      placement="auto"
+    >
+      <i
+        className="gicon gicon-question gicon--has-hover"
+      />
+    </class_1>
+    <div
+      className="page-action-bar__spacer"
+    />
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add External Group
+      </h5>
+      <form
+        className="gf-form-inline"
+        onSubmit={[Function]}
+      >
+        <div
+          className="gf-form"
+        >
+          <input
+            className="gf-form-input width-30"
+            onChange={[Function]}
+            placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
+            type="text"
+            value=""
+          />
+        </div>
+        <div
+          className="gf-form"
+        >
+          <button
+            className="btn btn-success gf-form-btn"
+            disabled={true}
+            type="submit"
+          >
+            Add group
+          </button>
+        </div>
+      </form>
+    </div>
+  </Component>
+  <div
+    className="empty-list-cta"
+  >
+    <div
+      className="empty-list-cta__title"
+    >
+      There are no external groups to sync with
+    </div>
+    <button
+      className="empty-list-cta__button btn btn-xlarge btn-success"
+      onClick={[Function]}
+    >
+      <i
+        className="gicon gicon-add-team"
+      />
+      Add Group
+    </button>
+    <div
+      className="empty-list-cta__pro-tip"
+    >
+      <i
+        className="fa fa-rocket"
+      />
+       
+      Sync LDAP or OAuth groups with your Grafana teams.
+      <a
+        className="text-link empty-list-cta__pro-tip-link"
+        href="http://docs.grafana.org/auth/enhanced_ldap/"
+        target="_blank"
+      >
+        Learn more
+      </a>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should render groups table 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <h3
+      className="page-sub-heading"
+    >
+      External group sync
+    </h3>
+    <class_1
+      className="page-sub-heading-icon"
+      content="Sync LDAP or OAuth groups with your Grafana teams."
+      placement="auto"
+    >
+      <i
+        className="gicon gicon-question gicon--has-hover"
+      />
+    </class_1>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-success pull-right"
+      onClick={[Function]}
+    >
+      <i
+        className="fa fa-plus"
+      />
+       Add group
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add External Group
+      </h5>
+      <form
+        className="gf-form-inline"
+        onSubmit={[Function]}
+      >
+        <div
+          className="gf-form"
+        >
+          <input
+            className="gf-form-input width-30"
+            onChange={[Function]}
+            placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
+            type="text"
+            value=""
+          />
+        </div>
+        <div
+          className="gf-form"
+        >
+          <button
+            className="btn btn-success gf-form-btn"
+            disabled={true}
+            type="submit"
+          >
+            Add group
+          </button>
+        </div>
+      </form>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th>
+            External Group ID
+          </th>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="group-1"
+        >
+          <td>
+            group-1
+          </td>
+          <td
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          >
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+        <tr
+          key="group-2"
+        >
+          <td>
+            group-2
+          </td>
+          <td
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          >
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+        <tr
+          key="group-3"
+        >
+          <td>
+            group-3
+          </td>
+          <td
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          >
+            <a
+              className="btn btn-danger btn-mini"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-remove"
+              />
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;

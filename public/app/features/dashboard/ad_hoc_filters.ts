@@ -59,10 +59,10 @@ export class AdHocFiltersCtrl {
       let promise = null;
 
       if (segment.type !== 'value') {
-        promise = ds.getTagKeys();
+        promise = ds.getTagKeys ? ds.getTagKeys() : Promise.resolve([]);
       } else {
         options.key = this.segments[index - 2].value;
-        promise = ds.getTagValues(options);
+        promise = ds.getTagValues ? ds.getTagValues(options) : Promise.resolve([]);
       }
 
       return promise.then(results => {
@@ -99,7 +99,7 @@ export class AdHocFiltersCtrl {
           this.segments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
         }
         this.segments.push(this.uiSegmentSrv.newOperator('='));
-        this.segments.push(this.uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'));
+        this.segments.push(this.uiSegmentSrv.newFake('select value', 'value', 'query-segment-value'));
         segment.type = 'key';
         segment.cssClass = 'query-segment-key';
       }

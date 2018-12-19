@@ -2,7 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
-import 'app/features/panellinks/link_srv';
+import 'app/features/dashboard/panellinks/link_srv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -77,7 +77,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private linkSrv) {
+  constructor($scope, $injector, private linkSrv, private $sanitize) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -107,7 +107,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
-    const data: any = {};
+    const data: any = {
+      scopedVars: _.extend({}, this.panel.scopedVars),
+    };
+
     if (dataList.length > 0 && dataList[0].type === 'table') {
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
@@ -117,6 +120,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.series = dataList.map(this.seriesHandler.bind(this));
       this.setValues(data);
     }
+
     this.data = data;
     this.render();
   }
@@ -320,7 +324,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       // Add $__name variable for using in prefix or postfix
-      data.scopedVars = _.extend({}, this.panel.scopedVars);
       data.scopedVars['__name'] = { value: this.series[0].label };
     }
     this.setValueMapping(data);
@@ -398,14 +401,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     const $location = this.$location;
     const linkSrv = this.linkSrv;
     const $timeout = this.$timeout;
+    const $sanitize = this.$sanitize;
     const panel = ctrl.panel;
     const templateSrv = this.templateSrv;
     let data, linkInfo;
     const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
-    function applyColoringThresholds(value, valueString) {
-      const color = getColorForValue(data, value);
+    function applyColoringThresholds(valueString) {
+      const color = getColorForValue(data, data.value);
       if (color) {
         return '<span style="color:' + color + '">' + valueString + '</span>';
       }
@@ -413,8 +417,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return valueString;
     }
 
-    function getSpan(className, fontSize, value) {
-      value = templateSrv.replace(value, data.scopedVars);
+    function getSpan(className, fontSize, applyColoring, value) {
+      value = $sanitize(templateSrv.replace(value, data.scopedVars));
+      value = applyColoring ? applyColoringThresholds(value) : value;
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' + value + '</span>';
     }
 
@@ -422,25 +427,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       let body = '<div class="singlestat-panel-value-container">';
 
       if (panel.prefix) {
-        let prefix = panel.prefix;
-        if (panel.colorPrefix) {
-          prefix = applyColoringThresholds(data.value, panel.prefix);
-        }
-        body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, prefix);
+        body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, panel.colorPrefix, panel.prefix);
       }
 
-      let value = data.valueFormatted;
-      if (panel.colorValue) {
-        value = applyColoringThresholds(data.value, value);
-      }
-      body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
+      body += getSpan('singlestat-panel-value', panel.valueFontSize, panel.colorValue, data.valueFormatted);
 
       if (panel.postfix) {
-        let postfix = panel.postfix;
-        if (panel.colorPostfix) {
-          postfix = applyColoringThresholds(data.value, panel.postfix);
-        }
-        body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, postfix);
+        body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.colorPostfix, panel.postfix);
       }
 
       body += '</div>';
@@ -544,7 +537,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.append(plotCanvas);
 
       const plotSeries = {
-        data: [[0, data.valueRounded]],
+        data: [[0, data.value]],
       };
 
       $.plot(plotCanvas, [plotSeries], options);

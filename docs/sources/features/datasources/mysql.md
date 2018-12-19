@@ -35,13 +35,34 @@ Name | Description
 *Database* | Name of your MySQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
+*Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+*Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).
+
+### Min time interval
+
+A lower limit for the [$__interval](/reference/templating/#the-interval-variable) and [$__interval_ms](/reference/templating/#the-interval-ms-variable) variables.
+Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
 
 ### Database User Permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommmend you create a specific mysql user with restricted permissions.
+executed. To protect against this we **Highly** recommend you create a specific mysql user with restricted permissions.
 
 Example:
 
@@ -52,6 +73,58 @@ Example:
 
 You can use wildcards (`*`)  in place of database or table if you want to grant access to more databases and tables.
 
+## Query Editor
+
+> Only available in Grafana v5.4+.
+
+{{< docs-imagebox img="/img/docs/v54/mysql_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v54/mysql_query.gif" >}}
+
+You find the MySQL query editor in the metrics tab in a panel's edit mode. You enter edit mode by clicking the
+panel title, then edit.
+
+The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
+
+### Select table, time column and metric column (FROM)
+
+When you enter edit mode for the first time or add a new query Grafana will try to prefill the query builder with the first table that has a timestamp column and a numeric column.
+
+In the FROM field, Grafana will suggest tables that are in the configured database. To select a table or view in another database that your database user has access to you can manually enter a fully qualified name (database.table) like `otherDb.metrics`.
+
+The Time column field refers to the name of the column holding your time values. Selecting a value for the Metric column field is optional. If a value is selected, the Metric column field will be used as the series name.
+
+The metric column suggestions will only contain columns with a text datatype (text, tinytext, mediumtext, longtext, varchar, char).
+If you want to use a column with a different datatype as metric column you may enter the column name with a cast: `CAST(numericColumn as CHAR)`.
+You may also enter arbitrary SQL expressions in the metric column field that evaluate to a text datatype like
+`CONCAT(column1, " ", CAST(numericColumn as CHAR))`.
+
+### Columns and Aggregation functions (SELECT)
+
+In the `SELECT` row you can specify what columns and functions you want to use.
+In the column field you may write arbitrary expressions instead of a column name like `column1 * column2 / column3`.
+
+If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
+
+You may add further value columns by clicking the plus button and selecting `Column` from the menu. Multiple value columns will be plotted as separate series in the graph panel.
+
+### Filter data (WHERE)
+To add a filter click the plus icon to the right of the `WHERE` condition. You can remove filters by clicking on
+the filter and selecting `Remove`. A filter for the current selected timerange is automatically added to new queries.
+
+### Group By
+To group by time or any other columns click the plus icon at the end of the GROUP BY row. The suggestion dropdown will only show text columns of your currently selected table but you may manually enter any column.
+You can remove the group by clicking on the item and then selecting `Remove`.
+
+If you add any grouping, all selected columns need to have an aggregate function applied. The query builder will automatically add aggregate functions to all columns without aggregate functions when you add groupings.
+
+#### Gap Filling
+
+Grafana can fill in missing values when you group by time. The time function accepts two arguments. The first argument is the time window that you would like to group by, and the second argument is the value you want Grafana to fill missing items with.
+
+### Text Editor Mode (RAW)
+You can switch to the raw query editor mode by clicking the hamburger icon and selecting `Switch editor mode` or by clicking `Edit SQL` below the query.
+
+> If you use the raw query editor, be sure your query at minimum has `ORDER BY time` and a filter on the returned time range.
+
 ## Macros
 
 To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
@@ -60,9 +133,9 @@ Macro example | Description
 ------------ | -------------
 *$__time(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
 *$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
-*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
-*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)*
+*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
+*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494410983)*
 *$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
 *$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
 *$__timeGroup(dateColumn,'5m', NULL)* | Same as above but NULL will be used as value for missing points.
@@ -110,6 +183,8 @@ If you set `Format as` to `Time series`, for use in Graph panel for example, the
 Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
+
+Resultsets of time series queries need to be sorted by time.
 
 **Example with `metric` column:**
 
@@ -296,4 +371,8 @@ datasources:
     database: grafana
     user: grafana
     password: password
+    jsonData:
+      maxOpenConns: 0         # Grafana v5.4+
+      maxIdleConns: 2         # Grafana v5.4+
+      connMaxLifetime: 14400  # Grafana v5.4+
 ```

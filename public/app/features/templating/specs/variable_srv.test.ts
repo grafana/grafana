@@ -1,5 +1,6 @@
 import '../all';
 import { VariableSrv } from '../variable_srv';
+import { DashboardModel } from '../../dashboard/dashboard_model';
 import moment from 'moment';
 import $q from 'q';
 
@@ -56,10 +57,12 @@ describe('VariableSrv', function(this: any) {
           return getVarMockConstructor(ctr, model, ctx);
         };
 
-        ctx.variableSrv.init({
-          templating: { list: [] },
-          updateSubmenuVisibility: () => {},
-        });
+        ctx.variableSrv.init(
+          new DashboardModel({
+            templating: { list: [] },
+            updateSubmenuVisibility: () => {},
+          })
+        );
 
         scenario.variable = ctx.variableSrv.createVariableFromModel(scenario.variableModel);
         ctx.variableSrv.addVariable(scenario.variable);
@@ -490,15 +493,17 @@ describe('VariableSrv', function(this: any) {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'custom',
-        query: 'hej, hop, asd',
+        query: 'hej, hop, asd, escaped\\,var',
         name: 'test',
       };
     });
 
     it('should update options array', () => {
-      expect(scenario.variable.options.length).toBe(3);
+      expect(scenario.variable.options.length).toBe(4);
       expect(scenario.variable.options[0].text).toBe('hej');
       expect(scenario.variable.options[1].value).toBe('hop');
+      expect(scenario.variable.options[2].value).toBe('asd');
+      expect(scenario.variable.options[3].value).toBe('escaped,var');
     });
   });
 

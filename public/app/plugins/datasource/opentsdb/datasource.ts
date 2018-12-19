@@ -10,7 +10,6 @@ export default class OpenTsDatasource {
   basicAuth: any;
   tsdbVersion: any;
   tsdbResolution: any;
-  supportMetrics: any;
   tagKeys: any;
 
   aggregatorsPromise: any;
@@ -26,7 +25,6 @@ export default class OpenTsDatasource {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
     this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.tsdbResolution = instanceSettings.jsonData.tsdbResolution || 1;
-    this.supportMetrics = true;
     this.tagKeys = {};
 
     this.aggregatorsPromise = null;

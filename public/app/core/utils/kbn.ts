@@ -405,7 +405,8 @@ kbn.valueFormats.percentunit = (size, decimals) => {
 };
 
 /* Formats the value to hex. Uses float if specified decimals are not 0.
- * There are two options, one with 0x, and one without */
+ * There are two submenu
+ * , one with 0x, and one without */
 
 kbn.valueFormats.hex = (value, decimals) => {
   if (value == null) {
@@ -428,10 +429,16 @@ kbn.valueFormats.hex0x = (value, decimals) => {
 };
 
 kbn.valueFormats.sci = (value, decimals) => {
+  if (value == null) {
+    return '';
+  }
   return value.toExponential(decimals);
 };
 
 kbn.valueFormats.locale = (value, decimals) => {
+  if (value == null) {
+    return '';
+  }
   return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
 };
 
@@ -476,6 +483,14 @@ kbn.valueFormats.MBs = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
 kbn.valueFormats.Mbits = kbn.formatBuilders.decimalSIPrefix('bps', 2);
 kbn.valueFormats.GBs = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
 kbn.valueFormats.Gbits = kbn.formatBuilders.decimalSIPrefix('bps', 3);
+
+// Floating Point Operations per Second
+kbn.valueFormats.flops = kbn.formatBuilders.decimalSIPrefix('FLOP/s');
+kbn.valueFormats.mflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 2);
+kbn.valueFormats.gflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 3);
+kbn.valueFormats.tflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 4);
+kbn.valueFormats.pflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 5);
+kbn.valueFormats.eflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 6);
 
 // Hash Rate
 kbn.valueFormats.Hs = kbn.formatBuilders.decimalSIPrefix('H/s');
@@ -584,8 +599,8 @@ kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
 kbn.valueFormats.litreh = kbn.formatBuilders.fixedUnit('l/h');
-kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
-kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
+kbn.valueFormats.flowlpm = kbn.formatBuilders.fixedUnit('l/min');
+kbn.valueFormats.flowmlpm = kbn.formatBuilders.fixedUnit('mL/min');
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
@@ -808,6 +823,51 @@ kbn.toDuration = (size, decimals, timeScale) => {
   return strings.join(', ');
 };
 
+kbn.toClock = (size, decimals) => {
+  if (size === null) {
+    return '';
+  }
+
+  // < 1 second
+  if (size < 1000) {
+    return moment.utc(size).format('SSS\\m\\s');
+  }
+
+  // < 1 minute
+  if (size < 60000) {
+    let format = 'ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  // < 1 hour
+  if (size < 3600000) {
+    let format = 'mm\\m:ss\\s:SSS\\m\\s';
+    if (decimals === 0) {
+      format = 'mm\\m';
+    } else if (decimals === 1) {
+      format = 'mm\\m:ss\\s';
+    }
+    return moment.utc(size).format(format);
+  }
+
+  let format = 'mm\\m:ss\\s:SSS\\m\\s';
+
+  const hours = `${('0' + Math.floor(moment.duration(size, 'milliseconds').asHours())).slice(-2)}h`;
+
+  if (decimals === 0) {
+    format = '';
+  } else if (decimals === 1) {
+    format = 'mm\\m';
+  } else if (decimals === 2) {
+    format = 'mm\\m:ss\\s';
+  }
+
+  return format ? `${hours}:${moment.utc(size).format(format)}` : hours;
+};
+
 kbn.valueFormats.dtdurationms = (size, decimals) => {
   return kbn.toDuration(size, decimals, 'millisecond');
 };
@@ -822,6 +882,14 @@ kbn.valueFormats.dthms = (size, decimals) => {
 
 kbn.valueFormats.timeticks = (size, decimals, scaledDecimals) => {
   return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
+};
+
+kbn.valueFormats.clockms = (size, decimals) => {
+  return kbn.toClock(size, decimals);
+};
+
+kbn.valueFormats.clocks = (size, decimals) => {
+  return kbn.toClock(size * 1000, decimals);
 };
 
 kbn.valueFormats.dateTimeAsIso = (epoch, isUtc) => {
@@ -901,6 +969,8 @@ kbn.getUnitFormats = () => {
         { text: 'duration (s)', value: 'dtdurations' },
         { text: 'duration (hh:mm:ss)', value: 'dthms' },
         { text: 'Timeticks (s/100)', value: 'timeticks' },
+        { text: 'clock (ms)', value: 'clockms' },
+        { text: 'clock (s)', value: 'clocks' },
       ],
     },
     {
@@ -955,6 +1025,17 @@ kbn.getUnitFormats = () => {
         { text: 'terahashes/sec', value: 'THs' },
         { text: 'petahashes/sec', value: 'PHs' },
         { text: 'exahashes/sec', value: 'EHs' },
+      ],
+    },
+    {
+      text: 'computation throughput',
+      submenu: [
+        { text: 'FLOP/s', value: 'flops' },
+        { text: 'MFLOP/s', value: 'mflops' },
+        { text: 'GFLOP/s', value: 'gflops' },
+        { text: 'TFLOP/s', value: 'tflops' },
+        { text: 'PFLOP/s', value: 'pflops' },
+        { text: 'EFLOP/s', value: 'eflops' },
       ],
     },
     {
@@ -1023,7 +1104,7 @@ kbn.getUnitFormats = () => {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
-        { text: 'Watt per square metre (W/m²)', value: 'Wm2' },
+        { text: 'Watt per square meter (W/m²)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
@@ -1120,14 +1201,14 @@ kbn.getUnitFormats = () => {
       submenu: [
         { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
-        { text: 'nanogram per cubic metre (ng/m³)', value: 'conngm3' },
-        { text: 'nanogram per normal cubic metre (ng/Nm³)', value: 'conngNm3' },
-        { text: 'microgram per cubic metre (μg/m³)', value: 'conμgm3' },
-        { text: 'microgram per normal cubic metre (μg/Nm³)', value: 'conμgNm3' },
-        { text: 'milligram per cubic metre (mg/m³)', value: 'conmgm3' },
-        { text: 'milligram per normal cubic metre (mg/Nm³)', value: 'conmgNm3' },
-        { text: 'gram per cubic metre (g/m³)', value: 'congm3' },
-        { text: 'gram per normal cubic metre (g/Nm³)', value: 'congNm3' },
+        { text: 'nanogram per cubic meter (ng/m³)', value: 'conngm3' },
+        { text: 'nanogram per normal cubic meter (ng/Nm³)', value: 'conngNm3' },
+        { text: 'microgram per cubic meter (μg/m³)', value: 'conμgm3' },
+        { text: 'microgram per normal cubic meter (μg/Nm³)', value: 'conμgNm3' },
+        { text: 'milligram per cubic meter (mg/m³)', value: 'conmgm3' },
+        { text: 'milligram per normal cubic meter (mg/Nm³)', value: 'conmgNm3' },
+        { text: 'gram per cubic meter (g/m³)', value: 'congm3' },
+        { text: 'gram per normal cubic meter (g/Nm³)', value: 'congNm3' },
       ],
     },
   ];

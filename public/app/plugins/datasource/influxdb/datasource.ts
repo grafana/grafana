@@ -16,8 +16,6 @@ export default class InfluxDatasource {
   basicAuth: any;
   withCredentials: any;
   interval: any;
-  supportAnnotations: boolean;
-  supportMetrics: boolean;
   responseParser: any;
 
   /** @ngInject */
@@ -34,8 +32,6 @@ export default class InfluxDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
-    this.supportAnnotations = true;
-    this.supportMetrics = true;
     this.responseParser = new ResponseParser();
   }
 

@@ -58,7 +58,8 @@ func (ts *TracingService) parseSettings() {
 
 func (ts *TracingService) initGlobalTracer() error {
 	cfg := jaegercfg.Configuration{
-		Disabled: !ts.enabled,
+		ServiceName: "grafana",
+		Disabled:    !ts.enabled,
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  ts.samplerType,
 			Param: ts.samplerParam,
@@ -78,7 +79,7 @@ func (ts *TracingService) initGlobalTracer() error {
 		options = append(options, jaegercfg.Tag(tag, value))
 	}
 
-	tracer, closer, err := cfg.New("grafana", options...)
+	tracer, closer, err := cfg.NewTracer(options...)
 	if err != nil {
 		return err
 	}

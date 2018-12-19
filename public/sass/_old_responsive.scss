@@ -10,6 +10,7 @@
   max-width: 120px;
 }
 
+.navbar-buttons--tv,
 .navbar-buttons--actions {
   display: none;
 }
@@ -35,6 +36,7 @@
 }
 
 @include media-breakpoint-up(md) {
+  .navbar-buttons--tv,
   .navbar-buttons--actions {
     display: flex;
   }

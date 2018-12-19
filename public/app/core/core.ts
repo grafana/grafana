@@ -14,12 +14,11 @@ import './components/jsontree/jsontree';
 import './components/code_editor/code_editor';
 import './utils/outline';
 import './components/colorpicker/ColorPicker';
-import './components/colorpicker/SeriesColorPicker';
+import './components/colorpicker/SeriesColorPickerPopover';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';
 
-import { grafanaAppDirective } from './components/grafana_app';
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
 import { navbarDirective } from './components/navbar/navbar';
@@ -60,7 +59,6 @@ export {
   registerAngularDirectives,
   arrayJoin,
   coreModule,
-  grafanaAppDirective,
   navbarDirective,
   searchDirective,
   liveSrv,

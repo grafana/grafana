@@ -76,6 +76,7 @@ func AdminUpdateUserPassword(c *m.ReqContext, form dtos.AdminUpdateUserPasswordF
 	c.JsonOK("User password updated")
 }
 
+// PUT /api/admin/users/:id/permissions
 func AdminUpdateUserPermissions(c *m.ReqContext, form dtos.AdminUpdateUserPermissionsForm) {
 	userID := c.ParamsInt64(":id")
 
@@ -85,6 +86,11 @@ func AdminUpdateUserPermissions(c *m.ReqContext, form dtos.AdminUpdateUserPermis
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrLastGrafanaAdmin {
+			c.JsonApiErr(400, m.ErrLastGrafanaAdmin.Error(), nil)
+			return
+		}
+
 		c.JsonApiErr(500, "Failed to update user permissions", err)
 		return
 	}

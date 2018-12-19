@@ -31,8 +31,9 @@ export class TimePickerCtrl {
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
-    $rootScope.onAppEvent('refresh', this.onRefresh.bind(this), $scope);
     $rootScope.onAppEvent('closeTimepicker', this.openDropdown.bind(this), $scope);
+
+    this.dashboard.on('refresh', this.onRefresh.bind(this), $scope);
 
     // init options
     this.panel = this.dashboard.timepicker;

@@ -42,8 +42,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	accessKeyId := ""
 	secretAccessKey := ""
 	sessionToken := ""
-	var expiration *time.Time
-	expiration = nil
+	var expiration *time.Time = nil
 	if dsInfo.AuthType == "arn" && strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
 			RoleArn:         aws.String(dsInfo.AssumeRoleArn),

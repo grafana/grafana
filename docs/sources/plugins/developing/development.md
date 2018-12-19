@@ -10,7 +10,7 @@ weight = 1
 
 # Developer Guide
 
-You can extend Grafana by writing your own plugins and then share then with other users in [our plugin repository](https://grafana.com/plugins).
+You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
 ## Short version
 
@@ -33,7 +33,7 @@ There are two blog posts about authoring a plugin that might also be of interest
 ## What languages?
 
 Since everything turns into javascript it's up to you to choose which language you want. That said it's probably a good idea to choose es6 or typescript since
-we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo is you choose one of those languages.
+we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo if you choose one of those languages.
 
 ## Buildscript
 
@@ -60,7 +60,6 @@ and [apps]({{< relref "apps.md" >}}) plugins in the documentation.
 The Grafana SDK is quite small so far and can be found here:
 
 - [SDK file in Grafana](https://github.com/grafana/grafana/blob/master/public/app/plugins/sdk.ts)
-- [SDK Readme](https://github.com/grafana/grafana/blob/master/public/app/plugins/plugin_api.md)
 
 The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "datasources.md" >}}).
 

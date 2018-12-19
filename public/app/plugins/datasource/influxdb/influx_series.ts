@@ -99,9 +99,6 @@ export default class InfluxSeries {
         if (column === 'sequence_number') {
           return;
         }
-        if (!titleCol) {
-          titleCol = index;
-        }
         if (column === this.annotation.titleColumn) {
           titleCol = index;
           return;
@@ -113,6 +110,10 @@ export default class InfluxSeries {
         if (column === this.annotation.textColumn) {
           textCol = index;
           return;
+        }
+        // legacy case
+        if (!titleCol && textCol !== index) {
+          titleCol = index;
         }
       });
 

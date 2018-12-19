@@ -213,6 +213,9 @@ export function describeOrder(order) {
 
 export function describeMetric(metric) {
   const def = _.find(metricAggTypes, { value: metric.type });
+  if (!def.requiresField && !isPipelineAgg(metric.type)) {
+    return def.text;
+  }
   return def.text + ' ' + metric.field;
 }
 
@@ -228,3 +231,15 @@ export function describeOrderBy(orderBy, target) {
     return 'metric not found';
   }
 }
+
+export function defaultMetricAgg() {
+  return { type: 'count', id: '1' };
+}
+
+export function defaultBucketAgg() {
+  return { type: 'date_histogram', id: '2', settings: { interval: 'auto' } };
+}
+
+export const findMetricById = (metrics: any[], id: any) => {
+  return _.find(metrics, { id: id });
+};
