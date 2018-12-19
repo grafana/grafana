@@ -61,15 +61,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         ctrl.dashboard.setPanelFocus(0);
       }
 
-<<<<<<< HEAD
-      function panelHeightUpdated() {
-        panelContent.css({ height: ctrl.height + 'px' });
-        if (ctrl.panel.dynamicHeight) {
-          panelInnerContentHeight = -1; // force checking
-          checkInnerContentHeight();
-        }
-      }
-
       function checkInnerContentHeight() {
         if (ctrl.panel.dynamicHeight && panelInnerContent) {
           const v = panelInnerContent.outerHeight(true);
@@ -80,8 +71,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       }
 
-=======
->>>>>>> grafana/master
       function resizeScrollableContent() {
         if (panelScrollbar) {
           panelScrollbar.update();
@@ -106,7 +95,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
           `;
 
           const scrollRoot = panelContent;
-          const scroller = panelContent.find(':first').find(':first');
+          let scroller = panelContent.find(':first').find(':first');
 
           // Add a div under the scroller and watch for changes
           if (ctrl.panel.dynamicHeight) {
@@ -116,7 +105,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
             panelInnerContent = $(scroller).find(':first');
             panelInnerContent.removeClass('panel-height-helper');
             panelInnerContent.css('margin-right', '20px');
-            //panelInnerContent.css('border', '1px solid #FF0');
+            panelInnerContent.css('border', '2px solid #F0F');
 
             // tslint:disable-next-line
             new ResizeSensor(panelInnerContent, checkInnerContentHeight);
