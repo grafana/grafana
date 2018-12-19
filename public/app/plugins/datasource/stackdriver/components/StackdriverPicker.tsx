@@ -1,6 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
+
 import Select from 'app/core/components/Select/Select';
+import { Variable } from 'app/types/templates';
 
 export interface Props {
   onChange: (value: string) => void;
@@ -10,7 +12,7 @@ export interface Props {
   placeholder?: string;
   className?: string;
   groupName?: string;
-  variables?: any[];
+  variables?: Variable[];
 }
 
 interface State {
