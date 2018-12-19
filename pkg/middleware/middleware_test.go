@@ -271,6 +271,23 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
+		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not within trusted CIDR block", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.RemoteAddr = "192.168.3.1:12345"
+			sc.exec()
+
+			Convey("should return 407 status code", func() {
+				So(sc.resp.Code, ShouldEqual, 407)
+				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 192.168.3.1 is not from the authentication proxy")
+			})
+		})
+
 		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
@@ -288,11 +305,84 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
+		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not within trusted CIDR block", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.RemoteAddr = "[2001:23]:12345"
+			sc.exec()
+
+			Convey("should return 407 status code", func() {
+				So(sc.resp.Code, ShouldEqual, 407)
+				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 2001:23 is not from the authentication proxy")
+			})
+		})
+
 		middlewareScenario("When auth_proxy is enabled and request RemoteAddr is trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.RemoteAddr = "[2001::23]:12345"
+			sc.exec()
+
+			Convey("Should init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeTrue)
+				So(sc.context.UserId, ShouldEqual, 33)
+				So(sc.context.OrgId, ShouldEqual, 4)
+			})
+		})
+
+		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is within trusted CIDR block", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.RemoteAddr = "192.168.1.10:12345"
+			sc.exec()
+
+			Convey("Should init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeTrue)
+				So(sc.context.UserId, ShouldEqual, 33)
+				So(sc.context.OrgId, ShouldEqual, 4)
+			})
+		})
+
+		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is within trusted CIDR block", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
