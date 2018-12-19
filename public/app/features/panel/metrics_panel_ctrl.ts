@@ -30,8 +30,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   constructor($scope, $injector) {
     super($scope, $injector);
 
-    // make metrics tab the default
-    this.editorTabIndex = 1;
     this.$q = $injector.get('$q');
     this.contextSrv = $injector.get('contextSrv');
     this.datasourceSrv = $injector.get('datasourceSrv');
