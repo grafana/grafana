@@ -9,6 +9,7 @@ export interface Props {
   datasource: any;
   defaultProject: string;
   metricType: string;
+  children?: (renderProps: any) => JSX.Element;
 }
 
 interface State {
@@ -17,6 +18,7 @@ interface State {
   services: any[];
   service: string;
   metric: string;
+  metricDescriptor: any;
 }
 
 export class Metrics extends React.Component<Props, State> {
@@ -26,6 +28,7 @@ export class Metrics extends React.Component<Props, State> {
     services: [],
     service: '',
     metric: '',
+    metricDescriptor: null,
   };
 
   constructor(props) {
@@ -68,13 +71,16 @@ export class Metrics extends React.Component<Props, State> {
     const services = this.getServicesList(metricDescriptors);
     const metrics = this.getMetricsList(metricDescriptors);
     const service = metrics.length > 0 ? metrics[0].service : '';
-    this.setState({ metricDescriptors, services, metrics, service: service });
+    const metricDescriptor = this.getSelectedMetricDescriptor(this.props.metricType);
+    this.setState({ metricDescriptors, services, metrics, service: service, metricDescriptor });
+  }
+
+  getSelectedMetricDescriptor(metricType) {
+    return this.state.metricDescriptors.find(md => md.type === this.props.templateSrv.replace(metricType));
   }
 
   getMetricsList(metricDescriptors) {
-    const selectedMetricDescriptor = metricDescriptors.find(
-      md => md.type === this.props.templateSrv.replace(this.props.metricType)
-    );
+    const selectedMetricDescriptor = this.getSelectedMetricDescriptor(this.props.metricType);
     const metricsByService = metricDescriptors.filter(m => m.service === selectedMetricDescriptor.service).map(m => ({
       service: m.service,
       value: m.type,
@@ -103,8 +109,9 @@ export class Metrics extends React.Component<Props, State> {
   }
 
   handleMetricTypeChange(value) {
-    const selectedMetricDescriptor = this.state.metricDescriptors.find(md => md.type === value);
-    this.props.onChange(selectedMetricDescriptor);
+    const metricDescriptor = this.getSelectedMetricDescriptor(value);
+    this.setState({ metricDescriptor });
+    this.props.onChange(metricDescriptor);
   }
 
   getServicesList(metricDescriptors) {
@@ -166,6 +173,7 @@ export class Metrics extends React.Component<Props, State> {
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
+        {this.props.children(this.state.metricDescriptor)}
       </React.Fragment>
     );
   }

@@ -11,8 +11,10 @@ import { StackdriverPicker } from './StackdriverPicker';
 export interface Props {
   onChange: (metricDescriptor) => void;
   templateSrv: any;
-  valueType: string;
-  metricKind: string;
+  metricDescriptor: {
+    valueType: string;
+    metricKind: string;
+  };
   aggregation: {
     crossSeriesReducer: string;
     alignmentPeriod: string;
@@ -39,26 +41,31 @@ export class Aggregations extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.setAggOptions(this.props);
+    if (this.props.metricDescriptor !== null) {
+      this.setAggOptions(this.props);
+    }
   }
 
   componentWillReceiveProps(nextProps: Props) {
-    const { valueType, metricKind, aggregation } = this.props;
-    if (
-      nextProps.valueType !== valueType ||
-      nextProps.metricKind !== metricKind ||
-      nextProps.aggregation.groupBys !== aggregation.groupBys
-    ) {
+    // const { metricDescriptor, aggregation } = this.props;
+    // if (
+    //   (metricDescriptor !== null && nextProps.metricDescriptor.valueType !== metricDescriptor.valueType) ||
+    //   nextProps.metricDescriptor.metricKind !== metricDescriptor.metricKind ||
+    //   nextProps.aggregation.groupBys !== aggregation.groupBys
+    // ) {
+    if (nextProps.metricDescriptor !== null) {
       this.setAggOptions(nextProps);
     }
   }
 
-  setAggOptions({ valueType, metricKind, aggregation }) {
+  setAggOptions({ metricDescriptor, aggregation }) {
     const { templateSrv } = this.props;
-    let aggregations = getAggregationOptionsByMetric(valueType, metricKind).map(a => ({
-      ...a,
-      label: a.text,
-    }));
+    let aggregations = getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(
+      a => ({
+        ...a,
+        label: a.text,
+      })
+    );
 
     if (
       aggregations.length > 0 &&
@@ -75,7 +82,10 @@ export class Aggregations extends React.Component<Props, State> {
   }
 
   deselectAggregationOption(notValidOptionValue: string) {
-    const aggregations = getAggregationOptionsByMetric(this.props.valueType, this.props.metricKind);
+    const aggregations = getAggregationOptionsByMetric(
+      this.props.metricDescriptor.valueType,
+      this.props.metricDescriptor.metricKind
+    );
     const newValue = aggregations.find(o => o.value !== notValidOptionValue);
     this.handleAggregationChange(newValue ? newValue.value : '');
   }
