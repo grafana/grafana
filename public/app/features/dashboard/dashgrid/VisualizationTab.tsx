@@ -106,6 +106,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
 
     const panelCtrl = scope.$$childHead.ctrl;
+    panelCtrl.initEditMode();
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
