@@ -1,5 +1,6 @@
 // Library
 import React, { Component } from 'react';
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
 
 // Services
 import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -138,7 +139,7 @@ export class DataPanel extends Component<Props, State> {
     const timeSeries = response.data;
 
     if (isFirstLoad && loading === LoadingState.Loading) {
-      return this.renderLoadingSpinner();
+      return this.renderLoadingState();
     }
 
     if (!queries.length) {
@@ -151,7 +152,7 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {this.renderLoadingSpinner()}
+        {this.renderLoadingState()}
         {this.props.children({
           timeSeries,
           loading,
@@ -160,14 +161,25 @@ export class DataPanel extends Component<Props, State> {
     );
   }
 
-  private renderLoadingSpinner(): JSX.Element {
+  private renderLoadingState(): JSX.Element {
     const { loading } = this.state;
-
     if (loading === LoadingState.Loading) {
       return (
         <div className="panel-loading">
           <i className="fa fa-spinner fa-spin" />
         </div>
+      );
+    } else if (loading === LoadingState.Error) {
+      return (
+        <Tooltip
+          content="Request Error"
+          className="popper__manager--block"
+          refClassName={`panel-info-corner panel-info-corner--error`}
+          placement="bottom-start"
+        >
+          <i className="fa" />
+          <span className="panel-info-corner-inner" />
+        </Tooltip>
       );
     }
 
