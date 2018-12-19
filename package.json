@@ -170,7 +170,7 @@
     "slate-plain-serializer": "^0.5.10",
     "slate-prism": "^0.5.0",
     "slate-react": "^0.12.4",
-    "css-element-queries": "1.0.2",
+    "css-element-queries": "1.1.1",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "^1.4.1",
