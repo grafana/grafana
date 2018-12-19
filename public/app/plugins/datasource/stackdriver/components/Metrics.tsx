@@ -19,7 +19,7 @@ interface State {
   metric: string;
 }
 
-export class MetricPicker extends React.Component<Props, State> {
+export class Metrics extends React.Component<Props, State> {
   state: State = {
     metricDescriptors: [],
     metrics: [],
@@ -36,7 +36,6 @@ export class MetricPicker extends React.Component<Props, State> {
     this.getCurrentProject()
       .then(this.loadMetricDescriptors.bind(this))
       .then(this.initializeServiceAndMetrics.bind(this));
-    // .then(this.getLabels.bind(this));
   }
 
   async getCurrentProject() {
@@ -86,7 +85,6 @@ export class MetricPicker extends React.Component<Props, State> {
   }
 
   handleServiceChange(service) {
-    console.log('handleServiceChange', service);
     const { metricDescriptors } = this.state;
     const { templateSrv, metricType } = this.props;
 
@@ -128,19 +126,9 @@ export class MetricPicker extends React.Component<Props, State> {
     };
   }
 
-  getMetricGroups() {
-    return [
-      this.getTemplateVariablesGroup(),
-      {
-        label: 'Metrics',
-        options: this.state.metrics,
-      },
-    ];
-  }
-
   render() {
-    const { services, service } = this.state;
-    const { metricType } = this.props;
+    const { services, service, metrics } = this.state;
+    const { metricType, templateSrv } = this.props;
 
     return (
       <React.Fragment>
@@ -166,10 +154,12 @@ export class MetricPicker extends React.Component<Props, State> {
             <StackdriverPicker
               onChange={value => this.handleMetricTypeChange(value)}
               selected={metricType}
-              options={this.getMetricGroups()}
+              templateVariables={templateSrv.variables}
+              options={metrics}
               searchable={true}
               placeholder="Select Metric"
               className="width-15"
+              groupName="Metric Types"
             />
           </div>
           <div className="gf-form gf-form--grow">

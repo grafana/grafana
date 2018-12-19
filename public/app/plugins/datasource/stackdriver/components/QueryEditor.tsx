@@ -2,9 +2,9 @@ import React from 'react';
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
 
-import { MetricPicker } from './MetricPicker';
+import { Metrics } from './Metrics';
 import { Filter } from './Filter';
-import { AggregationPicker } from './AggregationPicker';
+import { Aggregations } from './Aggregations';
 import { Target, QueryMeta } from '../types';
 
 export interface Props {
@@ -124,7 +124,7 @@ export class QueryEditor extends React.Component<Props, State> {
 
     return (
       <React.Fragment>
-        <MetricPicker
+        <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
           templateSrv={templateSrv}
@@ -140,7 +140,7 @@ export class QueryEditor extends React.Component<Props, State> {
           templateSrv={templateSrv}
           loading={loadLabelsPromise}
         />
-        <AggregationPicker
+        <Aggregations
           valueType={valueType}
           metricKind={metricKind}
           templateSrv={templateSrv}

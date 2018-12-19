@@ -27,7 +27,7 @@ interface State {
   aggOptions: any[];
 }
 
-export class AggregationPicker extends React.Component<Props, State> {
+export class Aggregations extends React.Component<Props, State> {
   state: State = {
     alignmentPeriods: [],
     alignOptions: [],
@@ -86,7 +86,7 @@ export class AggregationPicker extends React.Component<Props, State> {
 
   render() {
     const { aggOptions } = this.state;
-    const { aggregation } = this.props;
+    const { aggregation, templateSrv } = this.props;
 
     return (
       <React.Fragment>
@@ -96,6 +96,7 @@ export class AggregationPicker extends React.Component<Props, State> {
             <StackdriverPicker
               onChange={value => this.handleAggregationChange(value)}
               selected={aggregation.crossSeriesReducer}
+              templateVariables={templateSrv.variables}
               options={aggOptions}
               searchable={true}
               placeholder="Select Aggregation"
