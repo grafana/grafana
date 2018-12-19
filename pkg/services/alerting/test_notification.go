@@ -32,7 +32,7 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		Settings: cmd.Settings,
 	}
 
-	notifiers, err := notifier.createNotifierFor(model)
+	notifiers, err := InitNotifier(model)
 
 	if err != nil {
 		log.Error2("Failed to create notifier", "error", err.Error())
