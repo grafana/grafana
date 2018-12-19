@@ -1,12 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
 
-// import { OptionPicker } from './OptionPicker';
-// import { alignmentPeriods } from '../constants';
-// import { getAlignmentOptionsByMetric, getAggregationOptionsByMetric } from '../functions';
 import { getAggregationOptionsByMetric } from '../functions';
 import { StackdriverPicker } from './StackdriverPicker';
-// import kbn from 'app/core/utils/kbn';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
@@ -21,12 +17,14 @@ export interface Props {
     perSeriesAligner: string;
     groupBys: string[];
   };
+  children?: (renderProps: any) => JSX.Element;
 }
 
 interface State {
   alignmentPeriods: any[];
   alignOptions: any[];
   aggOptions: any[];
+  displayAdvancedOptions: boolean;
 }
 
 export class Aggregations extends React.Component<Props, State> {
@@ -34,6 +32,7 @@ export class Aggregations extends React.Component<Props, State> {
     alignmentPeriods: [],
     alignOptions: [],
     aggOptions: [],
+    displayAdvancedOptions: false,
   };
 
   constructor(props) {
@@ -47,12 +46,6 @@ export class Aggregations extends React.Component<Props, State> {
   }
 
   componentWillReceiveProps(nextProps: Props) {
-    // const { metricDescriptor, aggregation } = this.props;
-    // if (
-    //   (metricDescriptor !== null && nextProps.metricDescriptor.valueType !== metricDescriptor.valueType) ||
-    //   nextProps.metricDescriptor.metricKind !== metricDescriptor.metricKind ||
-    //   nextProps.aggregation.groupBys !== aggregation.groupBys
-    // ) {
     if (nextProps.metricDescriptor !== null) {
       this.setAggOptions(nextProps);
     }
@@ -94,8 +87,14 @@ export class Aggregations extends React.Component<Props, State> {
     this.props.onChange(value);
   }
 
+  handleToggleDisplayAdvanced() {
+    this.setState(state => ({
+      displayAdvancedOptions: !state.displayAdvancedOptions,
+    }));
+  }
+
   render() {
-    const { aggOptions } = this.state;
+    const { aggOptions, displayAdvancedOptions } = this.state;
     const { aggregation, templateSrv } = this.props;
 
     return (
@@ -116,13 +115,19 @@ export class Aggregations extends React.Component<Props, State> {
           </div>
           <div className="gf-form gf-form--grow">
             <label className="gf-form-label gf-form-label--grow">
-              <a ng-click="ctrl.target.showAggregationOptions = !ctrl.target.showAggregationOptions">
-                <i className="fa fa-caret-down" ng-show="ctrl.target.showAggregationOptions" />
-                <i className="fa fa-caret-right" ng-hide="ctrl.target.showAggregationOptions" /> Advanced Options
+              <a onClick={() => this.handleToggleDisplayAdvanced()}>
+                {displayAdvancedOptions ? (
+                  <i className="fa fa-caret-down" ng-show="ctrl.target.showAggregationOptions" />
+                ) : (
+                  <React.Fragment>
+                    <i className="fa fa-caret-right" ng-hide="ctrl.target.showAggregationOptions" /> Advanced Options
+                  </React.Fragment>
+                )}
               </a>
             </label>
           </div>
         </div>
+        {this.props.children(this.state.displayAdvancedOptions)}
       </React.Fragment>
     );
   }

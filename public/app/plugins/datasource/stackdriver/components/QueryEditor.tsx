@@ -138,7 +138,9 @@ export class QueryEditor extends React.Component<Props, State> {
                 templateSrv={templateSrv}
                 aggregation={aggregation}
                 onChange={value => this.handleAggregationChange(value)}
-              />
+              >
+                {displayAdvancedOptions => displayAdvancedOptions && <p>RÖV</p>}
+              </Aggregations>
             </React.Fragment>
           )}
         </Metrics>
