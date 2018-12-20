@@ -5,6 +5,7 @@ import { Metrics } from './Metrics';
 import { Filter } from './Filter';
 import { Aggregations } from './Aggregations';
 import { Alignments } from './Alignments';
+import { AlignmentPeriods } from './AlignmentPeriods';
 import { Target } from '../types';
 import { getAlignmentPickerData } from '../functions';
 
@@ -109,13 +110,23 @@ export class QueryEditor extends React.Component<Props, State> {
     });
   }
 
-  // componentDidUpdate(prevProps: Props, prevState: Target) {
-  //   this.props.onQueryChange(this.state);
-
-  // }
+  handleAlignmentPeriodChange(value) {
+    this.setState({ alignmentPeriod: value }, () => {
+      this.props.onQueryChange(this.state);
+      this.props.onExecuteQuery();
+    });
+  }
 
   render() {
-    const { defaultProject, metricType, crossSeriesReducer, groupBys, perSeriesAligner, alignOptions } = this.state;
+    const {
+      defaultProject,
+      metricType,
+      crossSeriesReducer,
+      groupBys,
+      perSeriesAligner,
+      alignOptions,
+      alignmentPeriod,
+    } = this.state;
     const { templateSrv, datasource, uiSegmentSrv } = this.props;
 
     return (
@@ -157,6 +168,11 @@ export class QueryEditor extends React.Component<Props, State> {
                   )
                 }
               </Aggregations>
+              <AlignmentPeriods
+                templateSrv={templateSrv}
+                alignmentPeriod={alignmentPeriod}
+                onChange={value => this.handleAlignmentPeriodChange(value)}
+              />
             </React.Fragment>
           )}
         </Metrics>
