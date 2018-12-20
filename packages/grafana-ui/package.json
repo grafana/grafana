@@ -1,11 +1,15 @@
 {
-  "name": "grafana-ui",
+  "name": "@grafana/ui",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/types",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc --noEmit"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.2.2"
+  }
 }

@@ -15,6 +15,7 @@ import { PanelOptionSection } from './PanelOptionSection';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types/plugins';
+import { TimeSeries } from '@grafana/ui/types';
 
 interface Props {
   panel: PanelModel;

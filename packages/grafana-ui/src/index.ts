@@ -1,11 +1,16 @@
+export { Other } from './other';
+import { TimeSeries } from '../types';
+
 export class Google {
+  data: TimeSeries;
+
   hello() {
     return 'hello';
   }
 }
 
 class Singleton {
-  constructor(private state) {}
+  constructor(private state: string) {}
 
   hello() {
     return this.state;
