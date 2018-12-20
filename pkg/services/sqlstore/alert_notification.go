@@ -46,8 +46,8 @@ func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 
 func DeleteAlertNotificationWithUid(cmd *m.DeleteAlertNotificationWithUidCommand) error {
 	existingNotification := &m.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
-	if getNotificationErr := getAlertNotificationWithUidInternal(existingNotification, newSession()); getNotificationErr != nil {
-		return getNotificationErr
+	if err := getAlertNotificationWithUidInternal(existingNotification, newSession()); err != nil {
+		return err
 	}
 
 	if existingNotification.Result != nil {
@@ -55,8 +55,8 @@ func DeleteAlertNotificationWithUid(cmd *m.DeleteAlertNotificationWithUidCommand
 			Id:    existingNotification.Result.Id,
 			OrgId: existingNotification.Result.OrgId,
 		}
-		if deleteErr := bus.Dispatch(deleteCommand); deleteErr != nil {
-			return deleteErr
+		if err := bus.Dispatch(deleteCommand); err != nil {
+			return err
 		}
 	}
 
@@ -343,10 +343,8 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand) error {
 	getAlertNotificationWithUidQuery := &m.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
 
-	getCurrentNotificationErr := getAlertNotificationWithUidInternal(getAlertNotificationWithUidQuery, newSession())
-
-	if getCurrentNotificationErr != nil {
-		return getCurrentNotificationErr
+	if err := getAlertNotificationWithUidInternal(getAlertNotificationWithUidQuery, newSession()); err != nil {
+		return err
 	}
 
 	current := getAlertNotificationWithUidQuery.Result
@@ -368,8 +366,8 @@ func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand
 		OrgId: cmd.OrgId,
 	}
 
-	if updateErr := bus.Dispatch(updateNotification); updateErr != nil {
-		return updateErr
+	if err := bus.Dispatch(updateNotification); err != nil {
+		return err
 	}
 
 	return nil
