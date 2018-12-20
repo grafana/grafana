@@ -7,6 +7,7 @@ import { Aggregations } from './Aggregations';
 import { Alignments } from './Alignments';
 import { AlignmentPeriods } from './AlignmentPeriods';
 import { AliasBy } from './AliasBy';
+import { Help } from './Help';
 import { Target } from '../types';
 import { getAlignmentPickerData } from '../functions';
 
@@ -73,28 +74,18 @@ export class QueryEditor extends React.Component<Props, State> {
     );
   }
 
-  handleFilterChange(value) {
-    this.setState(
-      {
-        filters: value,
-      },
-      () => {
-        this.props.onQueryChange(this.state);
-        this.props.onExecuteQuery();
-      }
-    );
+  handleFilterChange(filters) {
+    this.setState({ filters }, () => {
+      this.props.onQueryChange(this.state);
+      this.props.onExecuteQuery();
+    });
   }
 
-  handleGroupBysChange(value) {
-    this.setState(
-      {
-        groupBys: value,
-      },
-      () => {
-        this.props.onQueryChange(this.state);
-        this.props.onExecuteQuery();
-      }
-    );
+  handleGroupBysChange(groupBys) {
+    this.setState({ groupBys }, () => {
+      this.props.onQueryChange(this.state);
+      this.props.onExecuteQuery();
+    });
   }
 
   handleAggregationChange(value) {
@@ -177,15 +168,37 @@ export class QueryEditor extends React.Component<Props, State> {
                   )
                 }
               </Aggregations>
-              <AlignmentPeriods
-                templateSrv={templateSrv}
-                alignmentPeriod={alignmentPeriod}
-                onChange={value => this.handleAlignmentPeriodChange(value)}
-              />
               <AliasBy value={aliasBy} onChange={value => this.handleAliasByChange(value)} />
             </React.Fragment>
           )}
         </Metrics>
+        <AlignmentPeriods
+          templateSrv={templateSrv}
+          alignmentPeriod={alignmentPeriod}
+          onChange={value => this.handleAlignmentPeriodChange(value)}
+        />
+
+        <Help datasource={datasource} />
+        {/* <div className="gf-form-inline">
+          <Help datasource={datasource} />
+          <div className="gf-form" ng-show="ctrl.lastQueryMeta">
+            <label className="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+              Show Help
+              <i className="fa fa-caret-down" ng-show="ctrl.showHelp" />
+              <i className="fa fa-caret-right" ng-hide="ctrl.showHelp" />
+            </label>
+          </div>
+          <div className="gf-form" ng-show="ctrl.lastQueryMeta">
+            <label className="gf-form-label query-keyword" ng-click="ctrl.showLastQuery = !ctrl.showLastQuery">
+              Raw Query
+              <i className="fa fa-caret-down" ng-show="ctrl.showLastQuery" />
+              <i className="fa fa-caret-right" ng-hide="ctrl.showLastQuery" />
+            </label>
+          </div>
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label gf-form-label--grow" />
+          </div>
+        </div> */}
       </React.Fragment>
     );
   }
