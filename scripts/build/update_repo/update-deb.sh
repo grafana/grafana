@@ -33,11 +33,12 @@ echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
 ./scripts/build/update_repo/sign-deb-repo.sh "$GPG_PASS"
 
 # Update the repo and db on gcp
-gsutil -m rsync -r -d /deb-repo/db gs://grafana-aptly-db/repo-db
+gsutil -m rsync -r -d /deb-repo/db gs://grafana-aptly-db/repo-db # TODO: support separate enterprise db
 gsutil -m rsync -r -d /deb-repo/repo/grafana "gs://grafana-repo/$RELEASE_TYPE/deb"
 
 # usage:
 # deb https://grafana-repo.storage.googleapis.com/oss/deb squeeze main
 #
 # later:
-# deb https://repo.grafana.com/oss/deb squeeze main
+# curl https://packages.grafana.com/gpg.key | apt-key add -
+# deb https://packages.grafana.com/oss/deb squeeze main
