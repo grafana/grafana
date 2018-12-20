@@ -6,6 +6,7 @@ import { Filter } from './Filter';
 import { Aggregations } from './Aggregations';
 import { Alignments } from './Alignments';
 import { AlignmentPeriods } from './AlignmentPeriods';
+import { AliasBy } from './AliasBy';
 import { Target } from '../types';
 import { getAlignmentPickerData } from '../functions';
 
@@ -117,6 +118,13 @@ export class QueryEditor extends React.Component<Props, State> {
     });
   }
 
+  handleAliasByChange(value) {
+    this.setState({ aliasBy: value }, () => {
+      this.props.onQueryChange(this.state);
+      this.props.onExecuteQuery();
+    });
+  }
+
   render() {
     const {
       defaultProject,
@@ -126,6 +134,7 @@ export class QueryEditor extends React.Component<Props, State> {
       perSeriesAligner,
       alignOptions,
       alignmentPeriod,
+      aliasBy,
     } = this.state;
     const { templateSrv, datasource, uiSegmentSrv } = this.props;
 
@@ -173,6 +182,7 @@ export class QueryEditor extends React.Component<Props, State> {
                 alignmentPeriod={alignmentPeriod}
                 onChange={value => this.handleAlignmentPeriodChange(value)}
               />
+              <AliasBy value={aliasBy} onChange={value => this.handleAliasByChange(value)} />
             </React.Fragment>
           )}
         </Metrics>
