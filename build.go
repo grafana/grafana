@@ -164,6 +164,8 @@ func makeLatestDistCopies() {
 		"_amd64.deb":          "dist/grafana_latest_amd64.deb",
 		".x86_64.rpm":         "dist/grafana-latest-1.x86_64.rpm",
 		".linux-amd64.tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
+		".linux-armv7.tar.gz": "dist/grafana-latest.linux-armv7.tar.gz",
+		".linux-arm64.tar.gz": "dist/grafana-latest.linux-arm64.tar.gz",
 	}
 
 	for _, file := range files {
