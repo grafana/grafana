@@ -11,10 +11,8 @@ export interface Props {
     valueType: string;
     metricKind: string;
   };
-  aggregation: {
-    crossSeriesReducer: string;
-    groupBys: string[];
-  };
+  crossSeriesReducer: string;
+  groupBys: string[];
   children?: (renderProps: any) => JSX.Element;
 }
 
@@ -45,7 +43,7 @@ export class Aggregations extends React.Component<Props, State> {
     }
   }
 
-  setAggOptions({ metricDescriptor, aggregation, templateSrv }) {
+  setAggOptions({ metricDescriptor, crossSeriesReducer, groupBys, templateSrv }) {
     let aggregations = getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(
       a => ({
         ...a,
@@ -53,16 +51,13 @@ export class Aggregations extends React.Component<Props, State> {
       })
     );
 
-    if (
-      aggregations.length > 0 &&
-      !aggregations.find(o => o.value === templateSrv.replace(aggregation.crossSeriesReducer))
-    ) {
+    if (aggregations.length > 0 && !aggregations.find(o => o.value === templateSrv.replace(crossSeriesReducer))) {
       this.deselectAggregationOption('REDUCE_NONE');
     }
 
-    if (aggregation.groupBys.length > 0) {
+    if (groupBys.length > 0) {
       aggregations = aggregations.filter(o => o.value !== 'REDUCE_NONE');
-      if (aggregation.crossSeriesReducer === 'REDUCE_NONE') {
+      if (crossSeriesReducer === 'REDUCE_NONE') {
         this.deselectAggregationOption('REDUCE_NONE');
       }
     }
@@ -86,7 +81,7 @@ export class Aggregations extends React.Component<Props, State> {
 
   render() {
     const { aggOptions, displayAdvancedOptions } = this.state;
-    const { aggregation, templateSrv, onChange } = this.props;
+    const { templateSrv, onChange, crossSeriesReducer } = this.props;
 
     return (
       <React.Fragment>
@@ -95,7 +90,7 @@ export class Aggregations extends React.Component<Props, State> {
             <label className="gf-form-label query-keyword width-9">Aggregation</label>
             <StackdriverPicker
               onChange={value => onChange(value)}
-              selected={aggregation.crossSeriesReducer}
+              selected={crossSeriesReducer}
               templateVariables={templateSrv.variables}
               options={aggOptions}
               searchable={true}

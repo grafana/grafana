@@ -16,10 +16,6 @@ export interface Props {
   uiSegmentSrv: any;
 }
 
-interface State {
-  target: Target;
-}
-
 const DefaultTarget: Target = {
   defaultProject: 'loading project...',
   metricType: '',
@@ -28,38 +24,31 @@ const DefaultTarget: Target = {
   refId: '',
   service: '',
   unit: '',
-  aggregation: {
-    crossSeriesReducer: 'REDUCE_MEAN',
-    alignmentPeriod: 'stackdriver-auto',
-    perSeriesAligner: 'ALIGN_MEAN',
-    groupBys: [],
-  },
+  crossSeriesReducer: 'REDUCE_MEAN',
+  alignmentPeriod: 'stackdriver-auto',
+  perSeriesAligner: 'ALIGN_MEAN',
+  groupBys: [],
   filters: [],
   aliasBy: '',
 };
 
-export class QueryEditor extends React.Component<Props, State> {
-  state: State = { target: DefaultTarget };
+export class QueryEditor extends React.Component<Props, Target> {
+  state: Target = DefaultTarget;
 
   componentDidMount() {
-    this.setState({ target: this.props.target });
+    this.setState(this.props.target);
   }
 
   handleMetricTypeChange({ valueType, metricKind, type, unit }) {
     this.setState(
       {
-        target: {
-          ...this.state.target,
-          ...{
-            metricType: type,
-            unit,
-            valueType,
-            metricKind,
-          },
-        },
+        metricType: type,
+        unit,
+        valueType,
+        metricKind,
       },
       () => {
-        // this.props.onQueryChange(this.state.target);
+        // this.props.onQueryChange(this.state);
         this.props.onExecuteQuery();
       }
     );
@@ -68,13 +57,10 @@ export class QueryEditor extends React.Component<Props, State> {
   handleFilterChange(value) {
     this.setState(
       {
-        target: {
-          ...this.state.target,
-          filters: value,
-        },
+        filters: value,
       },
       () => {
-        this.props.onQueryChange(this.state.target);
+        // this.props.onQueryChange(this.state);
         this.props.onExecuteQuery();
       }
     );
@@ -83,52 +69,35 @@ export class QueryEditor extends React.Component<Props, State> {
   handleGroupBysChange(value) {
     this.setState(
       {
-        target: {
-          ...this.state.target,
-          aggregation: {
-            ...this.state.target.aggregation,
-            groupBys: value,
-          },
-        },
+        groupBys: value,
       },
       () => {
-        this.props.onQueryChange(this.state.target);
+        // this.props.onQueryChange(this.state);
         this.props.onExecuteQuery();
       }
     );
   }
 
   handleAggregationChange(value) {
-    const target = {
-      ...this.state.target,
-      aggregation: {
-        ...this.state.target.aggregation,
-        crossSeriesReducer: value,
-      },
-    };
-    this.setState({ target }, () => {
-      this.props.onQueryChange(target);
+    this.setState({ crossSeriesReducer: value }, () => {
+      // this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
   }
 
   handleAlignmentChange(value) {
-    const target = {
-      ...this.state.target,
-      aggregation: {
-        ...this.state.target.aggregation,
-        perSeriesAligner: value,
-      },
-    };
-    this.setState({ target }, () => {
-      this.props.onQueryChange(target);
+    this.setState({ perSeriesAligner: value }, () => {
+      // this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
   }
 
+  componentDidUpdate(prevProps: Props, prevState: Target) {
+    this.props.onQueryChange(this.state);
+  }
+
   render() {
-    const { target } = this.state;
-    const { defaultProject, metricType, aggregation } = target;
+    const { defaultProject, metricType, crossSeriesReducer, groupBys, perSeriesAligner } = this.state;
     const { templateSrv, datasource, uiSegmentSrv } = this.props;
 
     return (
@@ -145,7 +114,7 @@ export class QueryEditor extends React.Component<Props, State> {
               <Filter
                 filtersChanged={value => this.handleFilterChange(value)}
                 groupBysChanged={value => this.handleGroupBysChange(value)}
-                target={target}
+                target={this.state}
                 uiSegmentSrv={uiSegmentSrv}
                 templateSrv={templateSrv}
                 datasource={datasource}
@@ -154,19 +123,19 @@ export class QueryEditor extends React.Component<Props, State> {
               <Aggregations
                 metricDescriptor={metric}
                 templateSrv={templateSrv}
-                aggregation={aggregation}
+                crossSeriesReducer={crossSeriesReducer}
+                groupBys={groupBys}
                 onChange={value => this.handleAggregationChange(value)}
               >
-                {displayAdvancedOptions =>
-                  displayAdvancedOptions && (
-                    <Alignments
-                      metricDescriptor={metric}
-                      templateSrv={templateSrv}
-                      perSeriesAligner={aggregation.perSeriesAligner}
-                      onChange={value => this.handleAlignmentChange(value)}
-                    />
-                  )
-                }
+                {displayAdvancedOptions => (
+                  <Alignments
+                    display={displayAdvancedOptions}
+                    metricDescriptor={metric}
+                    templateSrv={templateSrv}
+                    perSeriesAligner={perSeriesAligner}
+                    onChange={value => this.handleAlignmentChange(value)}
+                  />
+                )}
               </Aggregations>
             </React.Fragment>
           )}

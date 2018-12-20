@@ -12,7 +12,8 @@ describe('StackdriverAggregationCtrl', () => {
               target: {
                 valueType: 'DOUBLE',
                 metricKind: 'GAUGE',
-                aggregation: { crossSeriesReducer: '', groupBys: [] },
+                crossSeriesReducer: '',
+                groupBys: [],
               },
             },
             {
@@ -52,7 +53,8 @@ describe('StackdriverAggregationCtrl', () => {
               target: {
                 valueType: 'DOUBLE',
                 metricKind: 'DELTA',
-                aggregation: { crossSeriesReducer: '', groupBys: [] },
+                crossSeriesReducer: '',
+                groupBys: [],
               },
             },
             {
@@ -87,7 +89,8 @@ describe('StackdriverAggregationCtrl', () => {
               target: {
                 valueType: 'DOUBLE',
                 metricKind: 'GAUGE',
-                aggregation: { crossSeriesReducer: 'REDUCE_NONE', groupBys: ['resource.label.projectid'] },
+                crossSeriesReducer: 'REDUCE_NONE',
+                groupBys: ['resource.label.projectid'],
               },
             },
             {
@@ -110,8 +113,8 @@ describe('StackdriverAggregationCtrl', () => {
 
         it('should select some other reducer than REDUCE_NONE', () => {
           ctrl.setAggOptions();
-          expect(ctrl.target.aggregation.crossSeriesReducer).not.toBe('');
-          expect(ctrl.target.aggregation.crossSeriesReducer).not.toBe('REDUCE_NONE');
+          expect(ctrl.target.crossSeriesReducer).not.toBe('');
+          expect(ctrl.target.crossSeriesReducer).not.toBe('REDUCE_NONE');
         });
       });
     });

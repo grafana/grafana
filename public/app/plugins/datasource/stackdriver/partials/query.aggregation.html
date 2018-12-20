@@ -3,7 +3,7 @@
     <label class="gf-form-label query-keyword width-9">Aggregation</label>
     <stackdriver-picker
       onChange="ctrl.handleAggregationChange"
-      selected="ctrl.target.aggregation.crossSeriesReducer"
+      selected="ctrl.target.crossSeriesReducer"
       options="ctrl.aggOptions"
       searchable="true"
       placeholder="'Select Aggregation'"
@@ -26,7 +26,7 @@
     <label class="gf-form-label query-keyword width-15">Aligner</label>
     <stackdriver-picker
       onChange="ctrl.handleAlignmentChange"
-      selected="ctrl.target.aggregation.perSeriesAligner"
+      selected="ctrl.target.perSeriesAligner"
       options="ctrl.alignOptions"
       searchable="true"
       placeholder="'Select Alignment'"
@@ -43,7 +43,7 @@
     <label class="gf-form-label query-keyword width-9">Alignment Period</label>
     <stackdriver-picker
       onChange="ctrl.handleAlignmentPeriodChange"
-      selected="ctrl.target.aggregation.alignmentPeriod"
+      selected="ctrl.target.alignmentPeriod"
       options="ctrl.alignmentPeriods"
       searchable="true"
       placeholder="'Select Alignment'"

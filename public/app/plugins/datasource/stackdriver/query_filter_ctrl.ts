@@ -40,7 +40,7 @@ export class StackdriverFilterCtrl {
 
   initSegments(hideGroupBys: boolean) {
     if (!hideGroupBys) {
-      this.groupBySegments = this.target.aggregation.groupBys.map(groupBy => {
+      this.groupBySegments = this.target.groupBys.map(groupBy => {
         return this.uiSegmentSrv.getSegmentForValue(groupBy);
       });
       this.ensurePlusButton(this.groupBySegments);
@@ -111,7 +111,7 @@ export class StackdriverFilterCtrl {
   async getGroupBys(segment) {
     let elements = await this.createLabelKeyElements();
 
-    elements = elements.filter(e => this.target.aggregation.groupBys.indexOf(e.value) === -1);
+    elements = elements.filter(e => this.target.groupBys.indexOf(e.value) === -1);
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
     if (noValueOrPlusButton && elements.length === 0) {
       return [];

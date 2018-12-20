@@ -56,7 +56,7 @@ describe('StackdriverQueryFilterCtrl', () => {
           'resource-key-1': ['resource-value-1'],
           'resource-key-2': ['resource-value-2'],
         };
-        ctrl.target.aggregation.groupBys = ['metric.label.metric-key-1', 'resource.label.resource-key-1'];
+        ctrl.target.groupBys = ['metric.label.metric-key-1', 'resource.label.resource-key-1'];
 
         result = await ctrl.getGroupBys();
       });
@@ -78,7 +78,7 @@ describe('StackdriverQueryFilterCtrl', () => {
       });
 
       it('should be added to group bys list', () => {
-        expect(ctrl.target.aggregation.groupBys.length).toBe(1);
+        expect(ctrl.target.groupBys.length).toBe(1);
       });
     });
 
@@ -91,7 +91,7 @@ describe('StackdriverQueryFilterCtrl', () => {
       });
 
       it('should be added to group bys list', () => {
-        expect(ctrl.target.aggregation.groupBys.length).toBe(0);
+        expect(ctrl.target.groupBys.length).toBe(0);
       });
     });
   });
@@ -425,12 +425,10 @@ function createTarget(existingFilters?: string[]) {
     metricType: 'ametric',
     service: '',
     refId: 'A',
-    aggregation: {
-      crossSeriesReducer: '',
-      alignmentPeriod: '',
-      perSeriesAligner: '',
-      groupBys: [],
-    },
+    crossSeriesReducer: '',
+    alignmentPeriod: '',
+    perSeriesAligner: '',
+    groupBys: [],
     filters: existingFilters || [],
     aliasBy: '',
     metricService: '',

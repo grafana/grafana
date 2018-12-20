@@ -26,12 +26,10 @@ export interface Target {
   metricType: string;
   service: string;
   refId: string;
-  aggregation: {
-    crossSeriesReducer: string;
-    alignmentPeriod: string;
-    perSeriesAligner: string;
-    groupBys: string[];
-  };
+  crossSeriesReducer: string;
+  alignmentPeriod: string;
+  perSeriesAligner: string;
+  groupBys: string[];
   filters: string[];
   aliasBy: string;
   metricKind: any;
