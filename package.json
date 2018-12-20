@@ -1,4 +1,5 @@
 {
+  "private": true,
   "author": {
     "name": "Torkel Ödegaard",
     "company": "Grafana Labs"
@@ -178,5 +179,6 @@
   "resolutions": {
     "caniuse-db": "1.0.30000772",
     "**/@types/react": "16.7.6"
-  }
+  },
+  "workspaces": ["packages/grafana-ui"]
 }
