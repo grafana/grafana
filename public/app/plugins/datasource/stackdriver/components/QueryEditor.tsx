@@ -65,7 +65,7 @@ export class QueryEditor extends React.Component<Props, State> {
         metricKind,
       },
       () => {
-        // this.props.onQueryChange(this.state);
+        this.props.onQueryChange(this.state);
         this.props.onExecuteQuery();
       }
     );
@@ -77,7 +77,7 @@ export class QueryEditor extends React.Component<Props, State> {
         filters: value,
       },
       () => {
-        // this.props.onQueryChange(this.state);
+        this.props.onQueryChange(this.state);
         this.props.onExecuteQuery();
       }
     );
@@ -89,7 +89,7 @@ export class QueryEditor extends React.Component<Props, State> {
         groupBys: value,
       },
       () => {
-        // this.props.onQueryChange(this.state);
+        this.props.onQueryChange(this.state);
         this.props.onExecuteQuery();
       }
     );
@@ -97,21 +97,22 @@ export class QueryEditor extends React.Component<Props, State> {
 
   handleAggregationChange(value) {
     this.setState({ crossSeriesReducer: value }, () => {
-      // this.props.onQueryChange(this.state);
+      this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
   }
 
   handleAlignmentChange(value) {
     this.setState({ perSeriesAligner: value }, () => {
-      // this.props.onQueryChange(this.state);
+      this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
   }
 
-  componentDidUpdate(prevProps: Props, prevState: Target) {
-    this.props.onQueryChange(this.state);
-  }
+  // componentDidUpdate(prevProps: Props, prevState: Target) {
+  //   this.props.onQueryChange(this.state);
+
+  // }
 
   render() {
     const { defaultProject, metricType, crossSeriesReducer, groupBys, perSeriesAligner, alignOptions } = this.state;

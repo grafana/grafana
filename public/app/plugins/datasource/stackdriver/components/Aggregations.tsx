@@ -27,50 +27,23 @@ export class Aggregations extends React.Component<Props, State> {
     displayAdvancedOptions: false,
   };
 
-  constructor(props) {
-    super(props);
-  }
-
   componentDidMount() {
-    if (this.props.metricDescriptor !== null) {
-      this.setAggOptions(this.props);
-    }
+    this.setAggOptions(this.props);
   }
 
   componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.metricDescriptor !== null) {
-      this.setAggOptions(nextProps);
-    }
+    this.setAggOptions(nextProps);
   }
 
-  setAggOptions({ metricDescriptor, crossSeriesReducer, groupBys, templateSrv }) {
-    let aggregations = getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(
-      a => ({
+  setAggOptions({ metricDescriptor }: Props) {
+    let aggOptions = [];
+    if (metricDescriptor !== null) {
+      aggOptions = getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(a => ({
         ...a,
         label: a.text,
-      })
-    );
-
-    if (aggregations.length > 0 && !aggregations.find(o => o.value === templateSrv.replace(crossSeriesReducer))) {
-      this.deselectAggregationOption('REDUCE_NONE');
+      }));
     }
-
-    if (groupBys.length > 0) {
-      aggregations = aggregations.filter(o => o.value !== 'REDUCE_NONE');
-      if (crossSeriesReducer === 'REDUCE_NONE') {
-        this.deselectAggregationOption('REDUCE_NONE');
-      }
-    }
-    this.setState({ aggOptions: aggregations });
-  }
-
-  deselectAggregationOption(notValidOptionValue: string) {
-    const aggregations = getAggregationOptionsByMetric(
-      this.props.metricDescriptor.valueType,
-      this.props.metricDescriptor.metricKind
-    );
-    const newValue = aggregations.find(o => o.value !== notValidOptionValue);
-    this.props.onChange(newValue ? newValue.value : '');
+    this.setState({ aggOptions });
   }
 
   handleToggleDisplayAdvanced() {
@@ -80,7 +53,7 @@ export class Aggregations extends React.Component<Props, State> {
   }
 
   render() {
-    const { aggOptions, displayAdvancedOptions } = this.state;
+    const { displayAdvancedOptions, aggOptions } = this.state;
     const { templateSrv, onChange, crossSeriesReducer } = this.props;
 
     return (
