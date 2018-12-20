@@ -254,6 +254,15 @@
 			</gf-form-switch>
 		</div>
 
+        <div class="gf-form">
+            <label class="gf-form-label query-keyword">RollUp point size</label>
+            <input type="text" class="gf-form-input"
+                         ng-model="ctrl.target.rollUpSize" spellcheck='false'
+                         placeholder="default 200" ng-model-onblur
+                         ng-blur="ctrl.targetBlur()">
+            </input>
+        </div>
+
 		<div class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>

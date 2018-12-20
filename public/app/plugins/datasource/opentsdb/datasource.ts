@@ -41,7 +41,7 @@ export default class OpenTsDatasource {
       if (!target.metric) {
         return;
       }
-      qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
+      qs.push(this.convertTargetToQuery(target, options, start, end, this.tsdbVersion));
     });
 
     const queries = _.compact(qs);
@@ -385,9 +385,15 @@ export default class OpenTsDatasource {
     return label;
   }
 
-  convertTargetToQuery(target, options, tsdbVersion) {
+  convertTargetToQuery(target, options, start, end, tsdbVersion) {
     if (!target.metric || target.hide) {
       return null;
+    }
+    if (!end){
+      end = Math.round(new Date().getTime())
+    }
+    if (!target.rollUpSize) {
+      target.rollUpSize = 200;
     }
 
     const query: any = {
@@ -420,7 +426,7 @@ export default class OpenTsDatasource {
     }
 
     if (!target.disableDownsampling) {
-      let interval = this.templateSrv.replace(target.downsampleInterval || options.interval);
+      let interval = this.templateSrv.replace(target.downsampleInterval || (end - start)/target.rollUpSize/1000 + "s");
 
       if (interval.match(/\.[0-9]+s/)) {
         interval = parseFloat(interval) * 1000 + 'ms';
