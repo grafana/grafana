@@ -6,6 +6,7 @@ import { Filter } from './Filter';
 import { Aggregations } from './Aggregations';
 import { Alignments } from './Alignments';
 import { Target } from '../types';
+import { getAlignmentPickerData } from '../functions';
 
 export interface Props {
   onQueryChange: (target: Target) => void;
@@ -16,7 +17,11 @@ export interface Props {
   uiSegmentSrv: any;
 }
 
-const DefaultTarget: Target = {
+interface State extends Target {
+  alignOptions: any[];
+}
+
+const DefaultTarget: State = {
   defaultProject: 'loading project...',
   metricType: '',
   metricKind: '',
@@ -30,18 +35,30 @@ const DefaultTarget: Target = {
   groupBys: [],
   filters: [],
   aliasBy: '',
+  alignOptions: [],
 };
 
-export class QueryEditor extends React.Component<Props, Target> {
-  state: Target = DefaultTarget;
+export class QueryEditor extends React.Component<Props, State> {
+  state: State = DefaultTarget;
 
   componentDidMount() {
-    this.setState(this.props.target);
+    const { perSeriesAligner, alignOptions } = getAlignmentPickerData(this.props.target, this.props.templateSrv);
+    this.setState({
+      ...this.props.target,
+      alignOptions,
+      perSeriesAligner,
+    });
   }
 
   handleMetricTypeChange({ valueType, metricKind, type, unit }) {
+    const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
+      { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
+      this.props.templateSrv
+    );
     this.setState(
       {
+        alignOptions,
+        perSeriesAligner,
         metricType: type,
         unit,
         valueType,
@@ -97,7 +114,7 @@ export class QueryEditor extends React.Component<Props, Target> {
   }
 
   render() {
-    const { defaultProject, metricType, crossSeriesReducer, groupBys, perSeriesAligner } = this.state;
+    const { defaultProject, metricType, crossSeriesReducer, groupBys, perSeriesAligner, alignOptions } = this.state;
     const { templateSrv, datasource, uiSegmentSrv } = this.props;
 
     return (
@@ -127,15 +144,17 @@ export class QueryEditor extends React.Component<Props, Target> {
                 groupBys={groupBys}
                 onChange={value => this.handleAggregationChange(value)}
               >
-                {displayAdvancedOptions => (
-                  <Alignments
-                    display={displayAdvancedOptions}
-                    metricDescriptor={metric}
-                    templateSrv={templateSrv}
-                    perSeriesAligner={perSeriesAligner}
-                    onChange={value => this.handleAlignmentChange(value)}
-                  />
-                )}
+                {displayAdvancedOptions =>
+                  displayAdvancedOptions && (
+                    <Alignments
+                      alignOptions={alignOptions}
+                      metricDescriptor={metric}
+                      templateSrv={templateSrv}
+                      perSeriesAligner={perSeriesAligner}
+                      onChange={value => this.handleAlignmentChange(value)}
+                    />
+                  )
+                }
               </Aggregations>
             </React.Fragment>
           )}
