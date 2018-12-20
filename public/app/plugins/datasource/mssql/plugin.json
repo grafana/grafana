@@ -18,9 +18,9 @@
   "alerting": true,
   "annotations": true,
   "metrics": true,
+  "tables": true,
 
   "queryOptions": {
     "minInterval": true
   }
-
 }

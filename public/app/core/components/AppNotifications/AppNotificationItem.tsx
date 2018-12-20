@@ -20,6 +20,7 @@ export default class AppNotificationItem extends Component<Props> {
 
   render() {
     const { appNotification, onClearNotification } = this.props;
+
     return (
       <div className={`alert-${appNotification.severity} alert`}>
         <div className="alert-icon">

@@ -40,7 +40,7 @@ export default class TableModel {
     this.rows.sort((a, b) => {
       a = a[options.col];
       b = b[options.col];
-      // Sort null or undefined seperately from comparable values
+      // Sort null or undefined separately from comparable values
       return +(a == null) - +(b == null) || +(a > b) || -(a < b);
     });
 
@@ -86,11 +86,10 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
   if (arguments.length === 1) {
     return model;
   }
-
   // Single query returns data columns and rows as is
   if (arguments.length === 2) {
-    model.columns = [...tables[0].columns];
-    model.rows = [...tables[0].rows];
+    model.columns = tables[0].hasOwnProperty('columns') ? [...tables[0].columns] : [];
+    model.rows = tables[0].hasOwnProperty('rows') ? [...tables[0].rows] : [];
     return model;
   }
 

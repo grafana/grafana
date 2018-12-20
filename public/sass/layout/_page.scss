@@ -14,6 +14,12 @@
   background: $page-gradient;
 }
 
+.panel-in-fullscreen {
+  .main-view {
+    background: $edit-gradient;
+  }
+}
+
 .page-container {
   margin-left: auto;
   margin-right: auto;

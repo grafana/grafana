@@ -3,7 +3,7 @@
   padding-left: 40px;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
-  padding-right: $spacer;
+  padding-right: 20px;
   display: flex;
   flex-grow: 1;
   border-bottom: 1px solid transparent;
@@ -41,7 +41,7 @@
 
 .panel-in-fullscreen {
   .navbar {
-    @include navbar-alt-look();
+    padding-left: 15px;
   }
 
   .navbar-button--add-panel,
@@ -98,7 +98,7 @@
 }
 
 .navbar-buttons {
-  height: $navbarHeight;
+  // height: $navbarHeight;
   display: flex;
   align-items: center;
   justify-content: flex-end;

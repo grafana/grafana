@@ -5,8 +5,8 @@ export interface Props {
   label: string;
   checked: boolean;
   labelClass?: string;
-  small?: boolean;
   switchClass?: string;
+  transparent?: boolean;
   onChange: (event) => any;
 }
 
@@ -25,27 +25,20 @@ export class Switch extends PureComponent<Props, State> {
   };
 
   render() {
-    const { labelClass = '', switchClass = '', label, checked, small } = this.props;
+    const { labelClass = '', switchClass = '', label, checked, transparent } = this.props;
+
     const labelId = `check-${this.state.id}`;
-    let labelClassName = `gf-form-label ${labelClass} pointer`;
-    let switchClassName = `gf-form-switch ${switchClass}`;
-    if (small) {
-      labelClassName += ' gf-form-label--small';
-      switchClassName += ' gf-form-switch--small';
-    }
+    const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
+    const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
 
     return (
-      <div className="gf-form">
-        {label && (
-          <label htmlFor={labelId} className={labelClassName}>
-            {label}
-          </label>
-        )}
+      <label htmlFor={labelId} className="gf-form gf-form-switch-container">
+        {label && <div className={labelClassName}>{label}</div>}
         <div className={switchClassName}>
           <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
-          <label htmlFor={labelId} />
+          <span className="gf-form-switch__slider" />
         </div>
-      </div>
+      </label>
     );
   }
 }

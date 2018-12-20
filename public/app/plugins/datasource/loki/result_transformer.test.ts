@@ -35,7 +35,7 @@ describe('getLoglevel()', () => {
 });
 
 describe('parseLabels()', () => {
-  it('returns no labels on emtpy labels string', () => {
+  it('returns no labels on empty labels string', () => {
     expect(parseLabels('')).toEqual({});
     expect(parseLabels('{}')).toEqual({});
   });
@@ -46,7 +46,7 @@ describe('parseLabels()', () => {
 });
 
 describe('formatLabels()', () => {
-  it('returns no labels on emtpy label set', () => {
+  it('returns no labels on empty label set', () => {
     expect(formatLabels({})).toEqual('');
     expect(formatLabels({}, 'foo')).toEqual('foo');
   });

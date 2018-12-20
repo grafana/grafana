@@ -25,7 +25,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Dependencies
 
 - Go (Latest Stable)
-- NodeJS LTS
+- Node.js LTS
 
 ### Building the backend
 ```bash
@@ -37,7 +37,7 @@ go run build.go build
 
 ### Building frontend assets
 
-For this you need nodejs (v.6+).
+For this you need Node.js (LTS version).
 
 To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
@@ -90,7 +90,7 @@ Choose this option to build on platforms other than linux/amd64 and/or not have 
 
 The resulting image will be tagged as `grafana/grafana:dev`
 
-Notice: If you are using Docker for MacOS, be sure to let limit of Memory bigger than 2 GiB (at docker -> Perferences -> Advanced), otherwize you may faild at `grunt build`
+Notice: If you are using Docker for MacOS, be sure to let limit of Memory bigger than 2 GiB (at docker -> Preferences -> Advanced), otherwize you may faild at `grunt build`
 
 ### Dev config
 

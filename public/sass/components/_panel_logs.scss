@@ -1,15 +1,20 @@
 $column-horizontal-spacing: 10px;
 
-.logs-panel-controls {
+.logs-panel-options {
   display: flex;
   background-color: $page-bg;
   padding: $panel-padding;
   padding-top: 10px;
   border-radius: $border-radius;
-  margin: 2*$panel-margin 0;
+  margin: 2*$panel-margin 0 $panel-margin;
   border: $panel-border;
+  flex-direction: column;
+}
+
+.logs-panel-controls {
+  display: flex;
   justify-items: flex-start;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
 
   > * {
@@ -26,10 +31,14 @@ $column-horizontal-spacing: 10px;
 .logs-panel-meta {
   flex: 1;
   color: $text-color-weak;
+  margin-bottom: 10px;
+  min-width: 30%;
+  display: flex;
 }
 
 .logs-panel-meta__item {
   margin-right: 1em;
+  display: flex;
 }
 
 .logs-panel-meta__label {

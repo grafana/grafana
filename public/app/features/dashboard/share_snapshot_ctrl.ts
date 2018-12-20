@@ -27,7 +27,6 @@ export class ShareSnapshotCtrl {
 
     $scope.init = () => {
       backendSrv.get('/api/snapshot/shared-options').then(options => {
-        $scope.externalUrl = options['externalSnapshotURL'];
         $scope.sharingButtonText = options['externalSnapshotName'];
         $scope.externalEnabled = options['externalEnabled'];
       });
@@ -61,30 +60,14 @@ export class ShareSnapshotCtrl {
         dashboard: dash,
         name: dash.title,
         expires: $scope.snapshot.expires,
+        external: external,
       };
 
-      const postUrl = external ? $scope.externalUrl + $scope.apiUrl : $scope.apiUrl;
-
-      backendSrv.post(postUrl, cmdData).then(
+      backendSrv.post($scope.apiUrl, cmdData).then(
         results => {
           $scope.loading = false;
-
-          if (external) {
-            $scope.deleteUrl = results.deleteUrl;
-            $scope.snapshotUrl = results.url;
-            $scope.saveExternalSnapshotRef(cmdData, results);
-          } else {
-            const url = $location.url();
-            let baseUrl = $location.absUrl();
-
-            if (url !== '/') {
-              baseUrl = baseUrl.replace(url, '') + '/';
-            }
-
-            $scope.snapshotUrl = baseUrl + 'dashboard/snapshot/' + results.key;
-            $scope.deleteUrl = baseUrl + 'api/snapshots-delete/' + results.deleteKey;
-          }
-
+          $scope.deleteUrl = results.deleteUrl;
+          $scope.snapshotUrl = results.url;
           $scope.step = 2;
         },
         () => {
@@ -160,14 +143,6 @@ export class ShareSnapshotCtrl {
       backendSrv.get($scope.deleteUrl).then(() => {
         $scope.step = 3;
       });
-    };
-
-    $scope.saveExternalSnapshotRef = (cmdData, results) => {
-      // save external in local instance as well
-      cmdData.external = true;
-      cmdData.key = results.key;
-      cmdData.deleteKey = results.deleteKey;
-      backendSrv.post('/api/snapshots/', cmdData);
     };
   }
 }

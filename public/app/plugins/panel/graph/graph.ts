@@ -737,7 +737,7 @@ class GraphElement {
     if (min && max && ticks) {
       const range = max - min;
       const secPerTick = range / ticks / 1000;
-      // Need have 10 milisecond margin on the day range
+      // Need have 10 millisecond margin on the day range
       // As sometimes last 24 hour dashboard evaluates to more than 86400000
       const oneDay = 86400010;
       const oneYear = 31536000000;

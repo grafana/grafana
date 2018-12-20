@@ -1,11 +1,12 @@
 import React from 'react';
-import AsyncSelect from 'react-select/lib/Async';
+import AsyncSelect from '@torkelo/react-select/lib/Async';
+
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
-import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
-import { components } from 'react-select';
-import ResetStyles from 'app/core/components/Picker/ResetStyles';
+import IndicatorsContainer from 'app/core/components/Select/IndicatorsContainer';
+import NoOptionsMessage from 'app/core/components/Select/NoOptionsMessage';
+import { components } from '@torkelo/react-select';
+import ResetStyles from 'app/core/components/Select/ResetStyles';
 
 export interface Props {
   tags: string[];
