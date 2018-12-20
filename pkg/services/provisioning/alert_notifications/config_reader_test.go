@@ -293,7 +293,8 @@ func TestNotificationAsConfig(t *testing.T) {
 		Convey("Unknown notifier should return error", func() {
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			_, err := cfgProvifer.readConfig(unknownNotifier)
-			So(err, ShouldEqual, ErrInvalidNotifierType)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "Unsupported notification type")
 		})
 
 		Convey("Read incorrect properties", func() {

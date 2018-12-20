@@ -136,7 +136,6 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 }
 
 func validateNotifications(notifications []*notificationsAsConfig) error {
-	notifierTypes := alerting.GetNotifiers()
 
 	for i := range notifications {
 		if notifications[i].Notifications == nil {
@@ -144,24 +143,13 @@ func validateNotifications(notifications []*notificationsAsConfig) error {
 		}
 
 		for _, notification := range notifications[i].Notifications {
-			foundNotifier := false
-
-			for _, notifier := range notifierTypes {
-				if notifier.Type == notification.Type {
-					foundNotifier = true
-					_, notifierError := notifier.Factory(&m.AlertNotification{
-						Name:     notification.Name,
-						Settings: notification.SettingsToJson(),
-						Type:     notification.Type,
-					})
-					if notifierError != nil {
-						return notifierError
-					}
-					break
-				}
-			}
-			if !foundNotifier {
-				return ErrInvalidNotifierType
+			_, err := alerting.InitNotifier(&m.AlertNotification{
+				Name:     notification.Name,
+				Settings: notification.SettingsToJson(),
+				Type:     notification.Type,
+			})
+			if err != nil {
+				return err
 			}
 		}
 	}

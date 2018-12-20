@@ -10,7 +10,6 @@ import (
 
 var (
 	ErrInvalidConfigTooManyDefault = errors.New("Alert notification provisioning config is invalid. Only one alert notification can be marked as default")
-	ErrInvalidNotifierType         = errors.New("Unknown notifier type")
 )
 
 func Provision(configDirectory string) error {
