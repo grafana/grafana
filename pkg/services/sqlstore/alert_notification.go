@@ -130,6 +130,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 
 	sql.WriteString(`SELECT
 										alert_notification.id,
+										alert_notification.uid,
 										alert_notification.org_id,
 										alert_notification.name,
 										alert_notification.type,

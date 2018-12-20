@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -45,6 +46,7 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 }
 
 func TestAlertRuleModel(t *testing.T) {
+	sqlstore.InitTestDB(t)
 	Convey("Testing alert rule", t, func() {
 
 		RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
@@ -57,46 +59,59 @@ func TestAlertRuleModel(t *testing.T) {
 		})
 
 		Convey("can construct alert rule model", func() {
-			json := `
-			{
-				"name": "name2",
-				"description": "desc2",
-				"handler": 0,
-				"noDataMode": "critical",
-				"enabled": true,
-				"frequency": "60s",
-        "conditions": [
-          {
-            "type": "test",
-            "prop": 123
-					}
-        ],
-        "notifications": [
-					{"uid": "1134"},
-					{"uid": "22"}
-				]
-			}
-			`
-
-			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
-			So(jsonErr, ShouldBeNil)
-
-			alert := &m.Alert{
-				Id:          1,
-				OrgId:       1,
-				DashboardId: 1,
-				PanelId:     1,
-
-				Settings: alertJSON,
-			}
-
-			alertRule, err := NewRuleFromDBAlert(alert)
+			err := sqlstore.CreateOrg(&m.CreateOrgCommand{Name: "Main Org."})
+			So(err, ShouldBeNil)
+			firstNotification := m.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+			err = sqlstore.CreateAlertNotificationCommand(&firstNotification)
+			So(err, ShouldBeNil)
+			secondNotification := m.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
 			So(err, ShouldBeNil)
 
-			So(len(alertRule.Conditions), ShouldEqual, 1)
+			Convey("with notification id and uid", func() {
+				json := `
+				{
+					"name": "name2",
+					"description": "desc2",
+					"handler": 0,
+					"noDataMode": "critical",
+					"enabled": true,
+					"frequency": "60s",
+			"conditions": [
+			{
+				"type": "test",
+				"prop": 123
+						}
+			],
+			"notifications": [
+						{"id": 1},
+						{"uid": "notifier2"}
+					]
+				}
+				`
 
-			Convey("Can read notifications", func() {
-				So(len(alertRule.Notifications), ShouldEqual, 2)
+				alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+				So(jsonErr, ShouldBeNil)
+
+				alert := &m.Alert{
+					Id:          1,
+					OrgId:       1,
+					DashboardId: 1,
+					PanelId:     1,
+
+					Settings: alertJSON,
+				}
+
+				alertRule, err := NewRuleFromDBAlert(alert)
+				So(err, ShouldBeNil)
+
+				So(len(alertRule.Conditions), ShouldEqual, 1)
+
+				Convey("Can read notifications", func() {
+					So(len(alertRule.Notifications), ShouldEqual, 2)
+					So(alertRule.Notifications, ShouldContain, "notifier1")
+					So(alertRule.Notifications, ShouldContain, "notifier2")
+				})
 			})
 		})
 
@@ -128,6 +143,44 @@ func TestAlertRuleModel(t *testing.T) {
 			alertRule, err := NewRuleFromDBAlert(alert)
 			So(err, ShouldBeNil)
 			So(alertRule.Frequency, ShouldEqual, 60)
+		})
+
+		Convey("raise error in case of missing notification id and uid", func() {
+			json := `
+			{
+				"name": "name2",
+				"description": "desc2",
+				"noDataMode": "critical",
+				"enabled": true,
+				"frequency": "60s",
+        "conditions": [
+          {
+            "type": "test",
+            "prop": 123
+					}
+        ],
+        "notifications": [
+					{"not_id_uid": "1134"}
+				]
+			}
+			`
+
+			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+			So(jsonErr, ShouldBeNil)
+
+			alert := &m.Alert{
+				Id:          1,
+				OrgId:       1,
+				DashboardId: 1,
+				PanelId:     1,
+				Frequency:   0,
+
+				Settings: alertJSON,
+			}
+
+			_, err := NewRuleFromDBAlert(alert)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "Alert validation error: Neither id nor uid is specified AlertId: 1 PanelId: 1 DashboardId: 1")
 		})
 
 	})

@@ -45,6 +45,9 @@
               "notifications": [
                 {
                   "uid": "notifier1"
+                },
+                {
+                  "id": 2
                 }
               ]
             },

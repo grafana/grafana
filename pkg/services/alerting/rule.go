@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+
+	"github.com/grafana/grafana/pkg/bus"
 )
 
 var (
@@ -126,12 +128,33 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
-		uid, err := jsonModel.Get("uid").String()
-		if err != nil {
-			return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
-		}
-		model.Notifications = append(model.Notifications, uid)
+		if id, err := jsonModel.Get("id").Int64(); err == nil {
+			cmd := m.GetAlertNotificationsQuery{
+				Id:    id,
+				OrgId: ruleDef.OrgId,
+			}
 
+			if err = bus.Dispatch(&cmd); err != nil {
+				return nil, err
+			}
+
+			if cmd.Result == nil {
+				errString := fmt.Sprintf("Alert notification id %d doesn't exist", id)
+				return nil, ValidationError{Reason: errString, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+
+			if cmd.Result.Uid == "" {
+				errString := fmt.Sprintf("Alert notification id %d has empty uid", id)
+				return nil, ValidationError{Reason: errString, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+			model.Notifications = append(model.Notifications, cmd.Result.Uid)
+		} else {
+			if uid, err := jsonModel.Get("uid").String(); err != nil {
+				return nil, ValidationError{Reason: "Neither id nor uid is specified", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			} else {
+				model.Notifications = append(model.Notifications, uid)
+			}
+		}
 	}
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
