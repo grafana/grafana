@@ -27,6 +27,8 @@ createrepo .
 echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
 echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
 
+rm /rpm-repo/repodata/repomd.xml.asc || true
+pkill gpg-agent || true
 ./scripts/build/update_repo/sign-rpm-repo.sh "$GPG_PASS"
 
 # Update the repo and db on gcp
