@@ -398,7 +398,7 @@ jobs:
 
   deploy-release:
     docker:
-      - image: xlson/aptly-ci:0.1
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - checkout
       - attach_workspace:
