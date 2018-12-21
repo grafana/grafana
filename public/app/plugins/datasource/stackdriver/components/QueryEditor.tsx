@@ -17,7 +17,6 @@ export interface Props {
   target: Target;
   events: any;
   datasource: any;
-  uiSegmentSrv: any;
 }
 
 interface State extends Target {
@@ -129,7 +128,7 @@ export class QueryEditor extends React.Component<Props, State> {
       lastQuery,
       lastQueryError,
     } = this.state;
-    const { datasource, uiSegmentSrv } = this.props;
+    const { datasource } = this.props;
 
     return (
       <React.Fragment>
@@ -146,7 +145,6 @@ export class QueryEditor extends React.Component<Props, State> {
                 filtersChanged={value => this.handleChange('filters', value)}
                 groupBysChanged={value => this.handleChange('groupBys', value)}
                 target={this.state}
-                uiSegmentSrv={uiSegmentSrv}
                 templateSrv={datasource.templateSrv}
                 datasource={datasource}
                 metricType={metric ? metric.type : ''}

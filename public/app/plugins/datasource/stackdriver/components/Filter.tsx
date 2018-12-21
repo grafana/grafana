@@ -12,7 +12,6 @@ export interface Props {
   metricType: string;
   templateSrv: any;
   target: Target;
-  uiSegmentSrv: any;
   datasource: any;
 }
 

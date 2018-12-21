@@ -8,12 +8,10 @@ import { Target } from './types';
 
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
-  uiSegmentSrv: any;
 
   /** @ngInject */
-  constructor($scope, $injector, uiSegmentSrv) {
+  constructor($scope, $injector) {
     super($scope, $injector);
-    this.uiSegmentSrv = uiSegmentSrv;
     react2AngularDirective('stackdriverPicker', StackdriverPicker, [
       'options',
       'onChange',
