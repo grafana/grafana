@@ -89,15 +89,29 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		}
 
 		for _, m := range q.Metrics {
-			if m.Type == "count" {
+			if m.Type == countType {
 				continue
 			}
 
 			if isPipelineAgg(m.Type) {
 				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
-					aggBuilder.Pipeline(m.ID, m.Type, m.PipelineAggregate, func(a *es.PipelineAggregation) {
-						a.Settings = m.Settings.MustMap()
-					})
+					var appliedAgg *MetricAgg
+					for _, pipelineMetric := range q.Metrics {
+						if pipelineMetric.ID == m.PipelineAggregate {
+							appliedAgg = pipelineMetric
+							break
+						}
+					}
+					if appliedAgg != nil {
+						bucketPath := m.PipelineAggregate
+						if appliedAgg.Type == countType {
+							bucketPath = "_count"
+						}
+
+						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
+							a.Settings = m.Settings.MustMap()
+						})
+					}
 				} else {
 					continue
 				}
@@ -132,6 +146,10 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 
 		if a.Interval == "auto" {
 			a.Interval = "$__interval"
+		}
+
+		if offset, err := bucketAgg.Settings.Get("offset").String(); err == nil {
+			a.Offset = offset
 		}
 
 		if missing, err := bucketAgg.Settings.Get("missing").String(); err == nil {

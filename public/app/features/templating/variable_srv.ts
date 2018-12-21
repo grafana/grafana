@@ -237,8 +237,10 @@ export class VariableSrv {
   setOptionAsCurrent(variable, option) {
     variable.current = _.cloneDeep(option);
 
-    if (_.isArray(variable.current.text)) {
+    if (_.isArray(variable.current.text) && variable.current.text.length > 0) {
       variable.current.text = variable.current.text.join(' + ');
+    } else if (_.isArray(variable.current.value) && variable.current.value[0] !== '$__all') {
+      variable.current.text = variable.current.value.join(' + ');
     }
 
     this.selectOptionsForCurrentValue(variable);

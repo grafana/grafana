@@ -59,6 +59,7 @@
 @import 'components/panel_text';
 @import 'components/panel_heatmap';
 @import 'components/panel_add_panel';
+@import 'components/panel_logs';
 @import 'components/settings_permissions';
 @import 'components/tagsinput';
 @import 'components/tables_lists';
@@ -95,12 +96,15 @@
 @import 'components/empty_list_cta';
 @import 'components/popper';
 @import 'components/form_select_box';
-@import 'components/user-picker';
-@import 'components/description-picker';
-@import 'components/viz_editor';
+@import 'components/panel_editor';
+@import 'components/toolbar';
 @import 'components/delete_button';
 @import 'components/add_data_source.scss';
 @import 'components/page_loader';
+@import 'components/thresholds';
+@import 'components/toggle_button_group';
+@import 'components/value-mappings';
+@import 'components/popover-box';
 
 // PAGES
 @import 'pages/login';

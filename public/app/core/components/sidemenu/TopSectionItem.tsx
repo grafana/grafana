@@ -15,7 +15,7 @@ const TopSectionItem: SFC<Props> = props => {
           {link.img && <img src={link.img} />}
         </span>
       </a>
-      {link.children && <SideMenuDropDown link={link} />}
+      <SideMenuDropDown link={link} />
     </div>
   );
 };

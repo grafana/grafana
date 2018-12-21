@@ -72,6 +72,10 @@ export class ElasticQueryBuilder {
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
     esAgg.format = 'epoch_millis';
 
+    if (settings.offset !== '') {
+      esAgg.offset = settings.offset;
+    }
+
     if (esAgg.interval === 'auto') {
       esAgg.interval = '$__interval';
     }
@@ -266,7 +270,14 @@ export class ElasticQueryBuilder {
 
       if (queryDef.isPipelineAgg(metric.type)) {
         if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-          metricAgg = { buckets_path: metric.pipelineAgg };
+          const appliedAgg = queryDef.findMetricById(target.metrics, metric.pipelineAgg);
+          if (appliedAgg) {
+            if (appliedAgg.type === 'count') {
+              metricAgg = { buckets_path: '_count' };
+            } else {
+              metricAgg = { buckets_path: metric.pipelineAgg };
+            }
+          }
         } else {
           continue;
         }

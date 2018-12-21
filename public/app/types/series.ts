@@ -19,6 +19,11 @@ export interface TimeRange {
   raw: RawTimeRange;
 }
 
+export interface IntervalValues {
+  interval: string; // 10s,5m
+  intervalMs: number;
+}
+
 export type TimeSeriesValue = string | number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
@@ -63,6 +68,7 @@ export enum NullValueMode {
 /** View model projection of many time series */
 export interface TimeSeriesVMs {
   [index: number]: TimeSeriesVM;
+  length: number;
 }
 
 export interface DataQueryResponse {
@@ -90,13 +96,27 @@ export interface DataQueryOptions {
 
 export interface DataSourceApi {
   /**
+   *  min interval range
+   */
+  interval?: string;
+
+  /**
    * Imports queries from a different datasource
    */
   importQueries?(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]>;
+
   /**
    * Initializes a datasource after instantiation
    */
   init?: () => void;
+
+  /**
+   * Main metrics / data query action
+   */
   query(options: DataQueryOptions): Promise<DataQueryResponse>;
-  testDatasource?: () => Promise<any>;
+
+  /**
+   * Test & verify datasource settings & connection details
+   */
+  testDatasource(): Promise<any>;
 }

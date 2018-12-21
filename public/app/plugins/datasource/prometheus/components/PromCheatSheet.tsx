@@ -21,7 +21,7 @@ const CHEAT_SHEET_ITEMS = [
 
 export default (props: any) => (
   <div>
-    <h1>PromQL Cheat Sheet</h1>
+    <h2>PromQL Cheat Sheet</h2>
     {CHEAT_SHEET_ITEMS.map(item => (
       <div className="cheat-sheet-item" key={item.expression}>
         <div className="cheat-sheet-item__title">{item.title}</div>

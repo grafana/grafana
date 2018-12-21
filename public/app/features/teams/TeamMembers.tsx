@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
-import { UserPicker } from 'app/core/components/Picker/UserPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
@@ -115,7 +115,7 @@ export class TeamMembers extends PureComponent<Props, State> {
             </button>
             <h5>Add Team Member</h5>
             <div className="gf-form-inline">
-              <UserPicker onSelected={this.onUserSelected} className="width-30" />
+              <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
                 <button className="btn btn-success gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
                   Add to team

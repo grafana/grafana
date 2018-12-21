@@ -333,12 +333,12 @@ func (fr *fileReader) resolvePath(path string) string {
 	copy := path
 	path, err := filepath.Abs(path)
 	if err != nil {
-		fr.log.Error("Could not create absolute path ", "path", path)
+		fr.log.Error("Could not create absolute path", "path", copy, "error", err)
 	}
 
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		fr.log.Error("Failed to read content of symlinked path: %s", path)
+		fr.log.Error("Failed to read content of symlinked path", "path", copy, "error", err)
 	}
 
 	if path == "" {

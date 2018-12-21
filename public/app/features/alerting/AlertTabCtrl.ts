@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import coreModule from 'app/core/core_module';
 import { ThresholdMapper } from './state/ThresholdMapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './state/alertDef';
@@ -261,7 +262,7 @@ export class AlertTabCtrl {
       this.datasourceSrv.get(datasourceName).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate(foundTarget)) {
+        } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
           this.error = 'Template variables are not supported in alert queries';
         } else {
           this.error = '';
@@ -430,3 +431,5 @@ export function alertTab() {
     controller: AlertTabCtrl,
   };
 }
+
+coreModule.directive('alertTab', alertTab);

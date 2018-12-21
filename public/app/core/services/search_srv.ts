@@ -31,7 +31,7 @@ export class SearchSrv {
   }
 
   private queryForRecentDashboards() {
-    const dashIds = _.take(impressionSrv.getDashboardOpened(), 5);
+    const dashIds = _.take(impressionSrv.getDashboardOpened(), 30);
     if (dashIds.length === 0) {
       return Promise.resolve([]);
     }
@@ -70,7 +70,7 @@ export class SearchSrv {
       return Promise.resolve();
     }
 
-    return this.backendSrv.search({ starred: true, limit: 5 }).then(result => {
+    return this.backendSrv.search({ starred: true, limit: 30 }).then(result => {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',

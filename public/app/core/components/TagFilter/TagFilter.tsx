@@ -1,16 +1,17 @@
 import React from 'react';
-import AsyncSelect from 'react-select/lib/Async';
+import AsyncSelect from '@torkelo/react-select/lib/Async';
+
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import IndicatorsContainer from 'app/core/components/Picker/IndicatorsContainer';
-import NoOptionsMessage from 'app/core/components/Picker/NoOptionsMessage';
-import { components } from 'react-select';
-import ResetStyles from 'app/core/components/Picker/ResetStyles';
+import IndicatorsContainer from 'app/core/components/Select/IndicatorsContainer';
+import NoOptionsMessage from 'app/core/components/Select/NoOptionsMessage';
+import { components } from '@torkelo/react-select';
+import ResetStyles from 'app/core/components/Select/ResetStyles';
 
 export interface Props {
   tags: string[];
   tagOptions: () => any;
-  onSelect: (tag: string) => void;
+  onChange: (tags: string[]) => void;
 }
 
 export class TagFilter extends React.Component<Props, any> {
@@ -18,12 +19,9 @@ export class TagFilter extends React.Component<Props, any> {
 
   constructor(props) {
     super(props);
-
-    this.searchTags = this.searchTags.bind(this);
-    this.onChange = this.onChange.bind(this);
   }
 
-  searchTags(query) {
+  onLoadOptions = query => {
     return this.props.tagOptions().then(options => {
       return options.map(option => ({
         value: option.term,
@@ -31,18 +29,20 @@ export class TagFilter extends React.Component<Props, any> {
         count: option.count,
       }));
     });
-  }
+  };
 
-  onChange(newTags) {
-    this.props.onSelect(newTags);
-  }
+  onChange = (newTags: any[]) => {
+    this.props.onChange(newTags.map(tag => tag.value));
+  };
 
   render() {
+    const tags = this.props.tags.map(tag => ({ value: tag, label: tag, count: 0 }));
+
     const selectOptions = {
       classNamePrefix: 'gf-form-select-box',
       isMulti: true,
       defaultOptions: true,
-      loadOptions: this.searchTags,
+      loadOptions: this.onLoadOptions,
       onChange: this.onChange,
       className: 'gf-form-input gf-form-input--form-dropdown',
       placeholder: 'Tags',
@@ -50,8 +50,12 @@ export class TagFilter extends React.Component<Props, any> {
       noOptionsMessage: () => 'No tags found',
       getOptionValue: i => i.value,
       getOptionLabel: i => i.label,
-      value: this.props.tags,
+      value: tags,
       styles: ResetStyles,
+      filterOption: (option, searchQuery) => {
+        const regex = RegExp(searchQuery, 'i');
+        return regex.test(option.value);
+      },
       components: {
         Option: TagOption,
         IndicatorsContainer,

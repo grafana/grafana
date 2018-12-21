@@ -64,10 +64,10 @@
 
   <div class="search-results" ng-show="ctrl.sections.length > 0">
     <div class="search-results-filter-row">
-      <gf-form-switch
+      <gf-form-checkbox
         on-change="ctrl.onSelectAllChanged()"
         checked="ctrl.selectAllChecked"
-        switch-class="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+        switch-class="gf-form-checkbox--transparent"
       />
       <div class="search-results-filter-row__filters">
         <div class="gf-form-select-wrapper" ng-show="!(ctrl.canMove || ctrl.canDelete)">

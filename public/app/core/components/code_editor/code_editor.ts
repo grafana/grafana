@@ -50,7 +50,7 @@ const DEFAULT_THEME_LIGHT = 'ace/theme/textmate';
 const DEFAULT_MODE = 'text';
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
-const DEFAULT_BEHAVIOURS = true;
+const DEFAULT_BEHAVIORS = true;
 const DEFAULT_SNIPPETS = true;
 
 const editorTemplate = `<div></div>`;
@@ -61,7 +61,7 @@ function link(scope, elem, attrs) {
   const maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
   const showGutter = attrs.showGutter !== undefined;
   const tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
-  const behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
+  const behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIORS;
   const snippetsEnabled = attrs.snippetsEnabled ? attrs.snippetsEnabled === 'true' : DEFAULT_SNIPPETS;
 
   // Initialize editor
@@ -84,7 +84,7 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  (codeEditor.renderer as any).setScrollMargin(15, 15);
+  (codeEditor.renderer as any).setScrollMargin(10, 10);
   codeEditor.renderer.setPadding(10);
 
   setThemeMode();

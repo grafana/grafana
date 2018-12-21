@@ -223,6 +223,8 @@ export class DashboardModel {
   }
 
   panelInitialized(panel: PanelModel) {
+    panel.initialized();
+
     if (!this.otherPanelInFullscreen(panel)) {
       panel.refresh();
     }
@@ -802,16 +804,6 @@ export class DashboardModel {
     date = moment.isMoment(date) ? date : moment(date);
 
     return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
-  }
-
-  getNextQueryLetter(panel) {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(panel.targets, other => {
-        return other.refId !== refId;
-      });
-    });
   }
 
   isTimezoneUtc() {

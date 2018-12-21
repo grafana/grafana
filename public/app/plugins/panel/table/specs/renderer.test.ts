@@ -186,6 +186,21 @@ describe('when rendering table', () => {
       expect(html).toBe('<td>2014-01-01T06:06:06Z</td>');
     });
 
+    it('time column with epoch as string should be formatted', () => {
+      const html = renderer.renderCell(0, 0, '1388556366666');
+      expect(html).toBe('<td>2014-01-01T06:06:06Z</td>');
+    });
+
+    it('time column with RFC2822 date as string should be formatted', () => {
+      const html = renderer.renderCell(0, 0, 'Sat, 01 Dec 2018 01:00:00 GMT');
+      expect(html).toBe('<td>2018-12-01T01:00:00Z</td>');
+    });
+
+    it('time column with ISO date as string should be formatted', () => {
+      const html = renderer.renderCell(0, 0, '2018-12-01T01:00:00Z');
+      expect(html).toBe('<td>2018-12-01T01:00:00Z</td>');
+    });
+
     it('undefined time column should be rendered as -', () => {
       const html = renderer.renderCell(0, 0, undefined);
       expect(html).toBe('<td>-</td>');

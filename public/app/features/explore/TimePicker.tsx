@@ -3,7 +3,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange, TimeRange } from 'app/types/series';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_RANGE = {
@@ -15,11 +15,14 @@ export const DEFAULT_RANGE = {
  * Return a human-editable string of either relative (inludes "now") or absolute local time (in the shape of DATE_FORMAT).
  * @param value Epoch or relative time
  */
-export function parseTime(value: string, isUtc = false): string {
+export function parseTime(value: string | moment.Moment, isUtc = false, ensureString = false): string | moment.Moment {
   if (moment.isMoment(value)) {
+    if (ensureString) {
+      return value.format(DATE_FORMAT);
+    }
     return value;
   }
-  if (value.indexOf('now') !== -1) {
+  if ((value as string).indexOf('now') !== -1) {
     return value;
   }
   let time: any = value;
@@ -50,6 +53,16 @@ interface TimePickerState {
   toRaw: string;
 }
 
+/**
+ * TimePicker with dropdown menu for relative dates.
+ *
+ * Initialize with a range that is either based on relative time strings,
+ * or on Moment objects.
+ * Internally the component needs to keep a string representation in `fromRaw`
+ * and `toRaw` for the controlled inputs.
+ * When a time is picked, `onChangeTime` is called with the new range that
+ * is again based on relative time strings or Moment objects.
+ */
 export default class TimePicker extends PureComponent<TimePickerProps, TimePickerState> {
   dropdownEl: any;
 
@@ -65,7 +78,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
       initialRange: DEFAULT_RANGE,
       refreshInterval: '',
     };
-  }
+  } //Temp solution... How do detect if ds supports table format?
 
   static getDerivedStateFromProps(props, state) {
     if (state.initialRange && state.initialRange === props.range) {
@@ -75,9 +88,9 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     const from = props.range ? props.range.from : DEFAULT_RANGE.from;
     const to = props.range ? props.range.to : DEFAULT_RANGE.to;
 
-    // Ensure internal format
-    const fromRaw = parseTime(from, props.isUtc);
-    const toRaw = parseTime(to, props.isUtc);
+    // Ensure internal string format
+    const fromRaw = parseTime(from, props.isUtc, true);
+    const toRaw = parseTime(to, props.isUtc, true);
     const range = {
       from: fromRaw,
       to: toRaw,
@@ -121,6 +134,12 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
       to: moment(nextTo),
     };
 
+    const nextTimeRange: TimeRange = {
+      raw: nextRange,
+      from: nextRange.from,
+      to: nextRange.to,
+    };
+
     this.setState(
       {
         rangeString: rangeUtil.describeTimeRange(nextRange),
@@ -128,7 +147,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         toRaw: nextRange.to.format(DATE_FORMAT),
       },
       () => {
-        onChangeTime(nextRange, scanning);
+        onChangeTime(nextTimeRange, scanning);
       }
     );
 
@@ -213,60 +232,60 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     const timeOptions = this.getTimeOptions();
     return (
       <div ref={this.dropdownRef} className="gf-timepicker-dropdown">
-        <div className="gf-timepicker-absolute-section">
-          <h3 className="section-heading">Custom range</h3>
-
-          <label className="small">From:</label>
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-28">
-              <input
-                type="text"
-                className="gf-form-input input-large timepicker-from"
-                value={fromRaw}
-                onChange={this.handleChangeFrom}
-              />
-            </div>
+        <div className="popover-box">
+          <div className="popover-box__header">
+            <span className="popover-box__title">Quick ranges</span>
           </div>
-
-          <label className="small">To:</label>
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-28">
-              <input
-                type="text"
-                className="gf-form-input input-large timepicker-to"
-                value={toRaw}
-                onChange={this.handleChangeTo}
-              />
-            </div>
-          </div>
-
-          {/* <label className="small">Refreshing every:</label>
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-28">
-              <select className="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
-            </div>
-          </div> */}
-          <div className="gf-form">
-            <button className="btn gf-form-btn btn-secondary" onClick={this.handleClickApply}>
-              Apply
-            </button>
+          <div className="popover-box__body gf-timepicker-relative-section">
+            {Object.keys(timeOptions).map(section => {
+              const group = timeOptions[section];
+              return (
+                <ul key={section}>
+                  {group.map(option => (
+                    <li className={option.active ? 'active' : ''} key={option.display}>
+                      <a onClick={() => this.handleClickRelativeOption(option)}>{option.display}</a>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })}
           </div>
         </div>
 
-        <div className="gf-timepicker-relative-section">
-          <h3 className="section-heading">Quick ranges</h3>
-          {Object.keys(timeOptions).map(section => {
-            const group = timeOptions[section];
-            return (
-              <ul key={section}>
-                {group.map(option => (
-                  <li className={option.active ? 'active' : ''} key={option.display}>
-                    <a onClick={() => this.handleClickRelativeOption(option)}>{option.display}</a>
-                  </li>
-                ))}
-              </ul>
-            );
-          })}
+        <div className="popover-box">
+          <div className="popover-box__header">
+            <span className="popover-box__title">Custom range</span>
+          </div>
+          <div className="popover-box__body gf-timepicker-absolute-section">
+            <label className="small">From:</label>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-28">
+                <input
+                  type="text"
+                  className="gf-form-input input-large timepicker-from"
+                  value={fromRaw}
+                  onChange={this.handleChangeFrom}
+                />
+              </div>
+            </div>
+
+            <label className="small">To:</label>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-28">
+                <input
+                  type="text"
+                  className="gf-form-input input-large timepicker-to"
+                  value={toRaw}
+                  onChange={this.handleChangeTo}
+                />
+              </div>
+            </div>
+            <div className="gf-form">
+              <button className="btn gf-form-btn btn-secondary" onClick={this.handleClickApply}>
+                Apply
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

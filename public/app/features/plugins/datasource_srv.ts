@@ -1,14 +1,11 @@
-// Libraries
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
-// Utils
 import config from 'app/core/config';
 import { importPluginModule } from './plugin_loader';
 
-// Types
 import { DataSourceApi } from 'app/types/series';
-import { DataSource } from 'app/types';
+import { DataSource, DataSourceSelectItem } from 'app/types';
 
 export class DatasourceSrv {
   datasources: { [name: string]: DataSource };
@@ -77,7 +74,13 @@ export class DatasourceSrv {
   }
 
   getAll() {
-    return config.datasources;
+    const { datasources } = config;
+    return Object.keys(datasources).map(name => datasources[name]);
+  }
+
+  getExternal() {
+    const datasources = this.getAll().filter(ds => !ds.meta.builtIn);
+    return _.sortBy(datasources, ['name']);
   }
 
   getAnnotationSources() {
@@ -94,16 +97,8 @@ export class DatasourceSrv {
     return sources;
   }
 
-  getExploreSources() {
-    const { datasources } = config;
-    const es = Object.keys(datasources)
-      .map(name => datasources[name])
-      .filter(ds => ds.meta && ds.meta.explore);
-    return _.sortBy(es, ['name']);
-  }
-
-  getMetricSources(options) {
-    const metricSources = [];
+  getMetricSources(options?) {
+    const metricSources: DataSourceSelectItem[] = [];
 
     _.each(config.datasources, (value, key) => {
       if (value.meta && value.meta.metrics) {

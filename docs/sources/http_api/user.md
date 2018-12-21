@@ -196,7 +196,7 @@ Content-Type: application/json
 {"message":"User updated"}
 ```
 
-## Get Organisations for user
+## Get Organizations for user
 
 `GET /api/users/:id/orgs`
 
@@ -367,11 +367,11 @@ Content-Type: application/json
 {"message":"Active organization changed"}
 ```
 
-## Organisations of the actual User
+## Organizations of the actual User
 
 `GET /api/user/orgs`
 
-Return a list of all organisations of the current user.
+Return a list of all organizations of the current user.
 
 **Example Request**:
 
