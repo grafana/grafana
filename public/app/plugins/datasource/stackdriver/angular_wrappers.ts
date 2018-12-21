@@ -9,6 +9,5 @@ export function registerAngularDirectives() {
     ['events', { watchDepth: 'reference' }],
     ['uiSegmentSrv', { watchDepth: 'reference' }],
     ['datasource', { watchDepth: 'reference' }],
-    ['templateSrv', { watchDepth: 'reference' }],
   ]);
 }

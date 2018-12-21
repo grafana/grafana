@@ -4,13 +4,9 @@ import _ from 'lodash';
 import { StackdriverPicker } from './StackdriverPicker';
 
 export interface Props {
-  onChange: (metricDescriptor) => void;
+  onChange: (perSeriesAligner) => void;
   templateSrv: any;
   alignOptions: any[];
-  metricDescriptor: {
-    valueType: string;
-    metricKind: string;
-  };
   perSeriesAligner: string;
 }
 

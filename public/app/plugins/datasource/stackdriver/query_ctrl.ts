@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
-import './query_aggregation_ctrl';
 import './query_filter_ctrl';
 import { StackdriverPicker } from './components/StackdriverPicker';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
@@ -9,13 +8,11 @@ import { Target } from './types';
 
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
-  templateSrv: any;
   uiSegmentSrv: any;
 
   /** @ngInject */
-  constructor($scope, $injector, templateSrv, uiSegmentSrv) {
+  constructor($scope, $injector, uiSegmentSrv) {
     super($scope, $injector);
-    this.templateSrv = templateSrv;
     this.uiSegmentSrv = uiSegmentSrv;
     react2AngularDirective('stackdriverPicker', StackdriverPicker, [
       'options',

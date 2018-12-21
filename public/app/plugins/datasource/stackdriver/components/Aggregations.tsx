@@ -37,7 +37,7 @@ export class Aggregations extends React.Component<Props, State> {
 
   setAggOptions({ metricDescriptor }: Props) {
     let aggOptions = [];
-    if (metricDescriptor !== null) {
+    if (metricDescriptor) {
       aggOptions = getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(a => ({
         ...a,
         label: a.text,
