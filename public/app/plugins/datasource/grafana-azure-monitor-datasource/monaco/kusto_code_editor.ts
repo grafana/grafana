@@ -103,6 +103,10 @@ export default class KustoCodeEditor {
 
       monaco.languages['kusto'].getKustoWorker().then(workerAccessor => {
         const model = this.codeEditor.getModel();
+        if (!model) {
+          return;
+        }
+
         workerAccessor(model.uri).then(worker => {
           const dbName = Object.keys(schema.Databases).length > 0 ? Object.keys(schema.Databases)[0] : '';
           worker.setSchemaFromShowSchema(schema, 'https://help.kusto.windows.net', dbName);
