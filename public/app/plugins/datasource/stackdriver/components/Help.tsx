@@ -4,6 +4,7 @@ import { Project } from './Project';
 export interface Props {
   datasource: any;
   rawQuery: string;
+  lastQueryError: string;
 }
 
 interface State {
@@ -31,7 +32,7 @@ export class Help extends React.Component<Props, State> {
 
   render() {
     const { displayHelp, displaRawQuery } = this.state;
-    const { datasource, rawQuery } = this.props;
+    const { datasource, rawQuery, lastQueryError } = this.props;
 
     return (
       <React.Fragment>
@@ -96,10 +97,13 @@ export class Help extends React.Component<Props, State> {
                   <code>{`${'{{resource.label.label_name}}'}`}</code> = Resource label metadata e.g. resource.label.zone
                 </li>
               </ul>
-              <div className="gf-form" ng-show="ctrl.lastQueryError">
-                <pre className="gf-form-pre alert alert-error">{'ctrl.lastQueryError'}</pre>
-              </div>
             </pre>
+          </div>
+        )}
+
+        {lastQueryError && (
+          <div className="gf-form">
+            <pre className="gf-form-pre alert alert-error">{lastQueryError}</pre>
           </div>
         )}
       </React.Fragment>

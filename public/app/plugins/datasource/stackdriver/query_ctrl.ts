@@ -63,8 +63,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.$rootScope = $rootScope;
     this.uiSegmentSrv = uiSegmentSrv;
     _.defaultsDeep(this.target, this.defaults);
-    this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
-    this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     react2AngularDirective('stackdriverPicker', StackdriverPicker, [
       'options',
       'onChange',
@@ -76,8 +74,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       ['templateVariables', { watchDepth: 'reference' }],
     ]);
     registerAngularDirectives();
-    this.handleQueryChange = this.handleQueryChange.bind(this);
-    this.handleExecuteQuery = this.handleExecuteQuery.bind(this);
   }
 
   handleQueryChange(target: Target) {
@@ -86,35 +82,5 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
   handleExecuteQuery() {
     this.$scope.ctrl.refresh();
-  }
-
-  onDataReceived(dataList) {
-    this.lastQueryError = null;
-    this.lastQueryMeta = null;
-
-    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
-    if (anySeriesFromQuery) {
-      this.lastQueryMeta = anySeriesFromQuery.meta;
-      this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
-    }
-  }
-
-  onDataError(err) {
-    if (err.data && err.data.results) {
-      const queryRes = err.data.results[this.target.refId];
-      if (queryRes && queryRes.error) {
-        this.lastQueryMeta = queryRes.meta;
-        this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
-
-        let jsonBody;
-        try {
-          jsonBody = JSON.parse(queryRes.error);
-        } catch {
-          this.lastQueryError = queryRes.error;
-        }
-
-        this.lastQueryError = jsonBody.error.message;
-      }
-    }
   }
 }

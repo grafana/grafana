@@ -24,6 +24,7 @@ export interface Props {
 interface State extends Target {
   alignOptions: any[];
   lastQuery: string;
+  lastQueryError: string;
 }
 
 const DefaultTarget: State = {
@@ -42,6 +43,7 @@ const DefaultTarget: State = {
   aliasBy: '',
   alignOptions: [],
   lastQuery: '',
+  lastQueryError: '',
 };
 
 export class QueryEditor extends React.Component<Props, State> {
@@ -62,25 +64,29 @@ export class QueryEditor extends React.Component<Props, State> {
   onDataReceived(dataList) {
     const anySeriesFromQuery = dataList.find(item => item.refId === this.props.target.refId);
     if (anySeriesFromQuery) {
-      this.setState({ lastQuery: decodeURIComponent(anySeriesFromQuery.meta.rawQuery) });
+      this.setState({ lastQuery: decodeURIComponent(anySeriesFromQuery.meta.rawQuery), lastQueryError: '' });
     }
   }
 
   onDataError(err) {
-    // if (err.data && err.data.results) {
-    //   const queryRes = err.data.results[this.target.refId];
-    //   if (queryRes && queryRes.error) {
-    //     this.lastQueryMeta = queryRes.meta;
-    //     this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
-    //     let jsonBody;
-    //     try {
-    //       jsonBody = JSON.parse(queryRes.error);
-    //     } catch {
-    //       this.lastQueryError = queryRes.error;
-    //     }
-    //     this.lastQueryError = jsonBody.error.message;
-    //   }
-    // }
+    if (err) {
+      let lastQuery;
+      let lastQueryError;
+      if (err.data && err.data.error) {
+        lastQueryError = this.props.datasource.formatStackdriverError(err);
+      } else if (err.data && err.data.results) {
+        const queryRes = err.data.results[this.props.target.refId];
+        lastQuery = decodeURIComponent(queryRes.meta.rawQuery);
+        if (queryRes && queryRes.error) {
+          try {
+            lastQueryError = JSON.parse(queryRes.error).error.message;
+          } catch {
+            lastQueryError = queryRes.error;
+          }
+        }
+      }
+      this.setState({ lastQuery, lastQueryError });
+    }
   }
 
   handleMetricTypeChange({ valueType, metricKind, type, unit }) {
@@ -157,6 +163,7 @@ export class QueryEditor extends React.Component<Props, State> {
       alignmentPeriod,
       aliasBy,
       lastQuery,
+      lastQueryError,
     } = this.state;
     const { templateSrv, datasource, uiSegmentSrv } = this.props;
 
@@ -207,7 +214,7 @@ export class QueryEditor extends React.Component<Props, State> {
                 onChange={value => this.handleAlignmentPeriodChange(value)}
               />
 
-              <Help datasource={datasource} rawQuery={lastQuery} />
+              <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
             </React.Fragment>
           )}
         </Metrics>
