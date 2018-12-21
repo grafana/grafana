@@ -40,6 +40,8 @@ type DatasourceInfo struct {
 
 	AccessKey string
 	SecretKey string
+
+	TlsSkipVerify bool
 }
 
 func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {

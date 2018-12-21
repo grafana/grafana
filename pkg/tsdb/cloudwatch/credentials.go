@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"net/http"
+	"crypto/tls"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -159,6 +161,8 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 		}
 	}
 
+	tlsSkipVerify := e.DataSource.JsonData.Get("tlsSkipVerify").MustBool(false)
+
 	datasourceInfo := &DatasourceInfo{
 		Region:        region,
 		Profile:       e.DataSource.Database,
@@ -166,6 +170,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 		AssumeRoleArn: assumeRoleArn,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
+		TlsSkipVerify: tlsSkipVerify,
 	}
 
 	return datasourceInfo
@@ -177,11 +182,27 @@ func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, 
 		return nil, err
 	}
 
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
+	if(dsInfo.TlsSkipVerify) {
+		tlsCfg := &tls.Config{}
+		tlsCfg.InsecureSkipVerify = true
+
+		cfg := &aws.Config{
+			Region:      aws.String(dsInfo.Region),
+			Credentials: creds,
+			HTTPClient: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: tlsCfg,
+				},
+			},
+		}
+		return cfg, nil
+	} else {
+		cfg := &aws.Config{
+			Region:      aws.String(dsInfo.Region),
+			Credentials: creds,
+		}
+		return cfg, nil
 	}
-	return cfg, nil
 }
 
 func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
