@@ -105,6 +105,7 @@ export class AlertTab extends PureComponent<Props> {
 
     const toolbarItems = alert ? [this.stateHistory(), this.deleteAlert()] : [];
 
+    //TODO move add button react from angular and add condition to render angular view
     return (
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <div ref={element => (this.element = element)} />
