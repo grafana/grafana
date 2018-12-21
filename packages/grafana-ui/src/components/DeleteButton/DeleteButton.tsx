@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, SyntheticEvent } from 'react';
 
 interface Props {
-  onConfirm();
+  onConfirm(): void;
 }
 
 interface State {
@@ -13,7 +13,7 @@ export class DeleteButton extends PureComponent<Props, State> {
     showConfirm: false,
   };
 
-  onClickDelete = event => {
+  onClickDelete = (event: SyntheticEvent) => {
     if (event) {
       event.preventDefault();
     }
@@ -23,7 +23,7 @@ export class DeleteButton extends PureComponent<Props, State> {
     });
   };
 
-  onClickCancel = event => {
+  onClickCancel = (event: SyntheticEvent) => {
     if (event) {
       event.preventDefault();
     }

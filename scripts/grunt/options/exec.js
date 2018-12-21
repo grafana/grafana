@@ -2,12 +2,20 @@ module.exports = function (config, grunt) {
   'use strict';
 
   return {
-    tslint: {
-      command: 'node ./node_modules/tslint/lib/tslintCli.js -c tslint.json --project ./tsconfig.json',
+    tslintPackages: {
+      command: 'yarn workspaces run tslint',
+      src: ['packages/**/*.ts*'],
+    },
+    tslintRoot: {
+      command: 'yarn run tslint',
       src: ['public/app/**/*.ts*'],
     },
-    tsc: {
-      command: 'yarn tsc --noEmit',
+    typecheckPackages: {
+      command: 'yarn workspaces run typecheck',
+      src: ['packages/**/*.ts*'],
+    },
+    typecheckRoot: {
+      command: 'yarn run typecheck',
       src: ['public/app/**/*.ts*'],
     },
     jest: 'node ./node_modules/jest-cli/bin/jest.js --maxWorkers 2',

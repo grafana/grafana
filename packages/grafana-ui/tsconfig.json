@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.json",
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx"
@@ -6,30 +7,11 @@
   "exclude": [
     "dist"
   ],
-  "scripts": {
-    "build": "tsc"
-  },
   "compilerOptions": {
-    "moduleResolution": "node",
-    "target": "es5",
-    "lib": ["es6", "dom"],
-    "jsx": "react",
+    "rootDir": ".",
     "module": "esnext",
     "outDir": "dist",
-    "declaration": false,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
-    "noEmitHelpers": true,
-    "removeComments": false,
-    "inlineSourceMap": false,
-    "sourceMap": true,
-    "noEmitOnError": false,
-    "emitDecoratorMetadata": false,
-    "experimentalDecorators": true,
     "declaration": true,
-    "declarationDir": "./dist/types",
     "noImplicitAny": true,
     "strictNullChecks": true
   }
