@@ -25,6 +25,7 @@ interface State extends Target {
   alignOptions: any[];
   lastQuery: string;
   lastQueryError: string;
+  [key: string]: any;
 }
 
 const DefaultTarget: State = {
@@ -62,31 +63,29 @@ export class QueryEditor extends React.Component<Props, State> {
   }
 
   onDataReceived(dataList) {
-    const anySeriesFromQuery = dataList.find(item => item.refId === this.props.target.refId);
-    if (anySeriesFromQuery) {
-      this.setState({ lastQuery: decodeURIComponent(anySeriesFromQuery.meta.rawQuery), lastQueryError: '' });
+    const series = dataList.find(item => item.refId === this.props.target.refId);
+    if (series) {
+      this.setState({ lastQuery: decodeURIComponent(series.meta.rawQuery), lastQueryError: '' });
     }
   }
 
   onDataError(err) {
-    if (err) {
-      let lastQuery;
-      let lastQueryError;
-      if (err.data && err.data.error) {
-        lastQueryError = this.props.datasource.formatStackdriverError(err);
-      } else if (err.data && err.data.results) {
-        const queryRes = err.data.results[this.props.target.refId];
-        lastQuery = decodeURIComponent(queryRes.meta.rawQuery);
-        if (queryRes && queryRes.error) {
-          try {
-            lastQueryError = JSON.parse(queryRes.error).error.message;
-          } catch {
-            lastQueryError = queryRes.error;
-          }
+    let lastQuery;
+    let lastQueryError;
+    if (err.data && err.data.error) {
+      lastQueryError = this.props.datasource.formatStackdriverError(err);
+    } else if (err.data && err.data.results) {
+      const queryRes = err.data.results[this.props.target.refId];
+      lastQuery = decodeURIComponent(queryRes.meta.rawQuery);
+      if (queryRes && queryRes.error) {
+        try {
+          lastQueryError = JSON.parse(queryRes.error).error.message;
+        } catch {
+          lastQueryError = queryRes.error;
         }
       }
-      this.setState({ lastQuery, lastQueryError });
     }
+    this.setState({ lastQuery, lastQueryError });
   }
 
   handleMetricTypeChange({ valueType, metricKind, type, unit }) {
@@ -110,43 +109,8 @@ export class QueryEditor extends React.Component<Props, State> {
     );
   }
 
-  handleFilterChange(filters) {
-    this.setState({ filters }, () => {
-      this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
-    });
-  }
-
-  handleGroupBysChange(groupBys) {
-    this.setState({ groupBys }, () => {
-      this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
-    });
-  }
-
-  handleAggregationChange(value) {
-    this.setState({ crossSeriesReducer: value }, () => {
-      this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
-    });
-  }
-
-  handleAlignmentChange(value) {
-    this.setState({ perSeriesAligner: value }, () => {
-      this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
-    });
-  }
-
-  handleAlignmentPeriodChange(value) {
-    this.setState({ alignmentPeriod: value }, () => {
-      this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
-    });
-  }
-
-  handleAliasByChange(value) {
-    this.setState({ aliasBy: value }, () => {
+  handleChange(prop, value) {
+    this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
@@ -179,8 +143,8 @@ export class QueryEditor extends React.Component<Props, State> {
           {metric => (
             <React.Fragment>
               <Filter
-                filtersChanged={value => this.handleFilterChange(value)}
-                groupBysChanged={value => this.handleGroupBysChange(value)}
+                filtersChanged={value => this.handleChange('filters', value)}
+                groupBysChanged={value => this.handleChange('groupBys', value)}
                 target={this.state}
                 uiSegmentSrv={uiSegmentSrv}
                 templateSrv={templateSrv}
@@ -192,7 +156,7 @@ export class QueryEditor extends React.Component<Props, State> {
                 templateSrv={templateSrv}
                 crossSeriesReducer={crossSeriesReducer}
                 groupBys={groupBys}
-                onChange={value => this.handleAggregationChange(value)}
+                onChange={value => this.handleChange('crossSeriesReducer', value)}
               >
                 {displayAdvancedOptions =>
                   displayAdvancedOptions && (
@@ -201,17 +165,17 @@ export class QueryEditor extends React.Component<Props, State> {
                       metricDescriptor={metric}
                       templateSrv={templateSrv}
                       perSeriesAligner={perSeriesAligner}
-                      onChange={value => this.handleAlignmentChange(value)}
+                      onChange={value => this.handleChange('perSeriesAligner', value)}
                     />
                   )
                 }
               </Aggregations>
-              <AliasBy value={aliasBy} onChange={value => this.handleAliasByChange(value)} />
+              <AliasBy value={aliasBy} onChange={value => this.handleChange('aliasBy', value)} />
 
               <AlignmentPeriods
                 templateSrv={templateSrv}
                 alignmentPeriod={alignmentPeriod}
-                onChange={value => this.handleAlignmentPeriodChange(value)}
+                onChange={value => this.handleChange('alignmentPeriod', value)}
               />
 
               <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />

@@ -1,4 +1,4 @@
-import { StackdriverAggregationCtrl } from '../query_aggregation_ctrl';
+const StackdriverAggregationCtrl = ({}, {}) => {};
 
 describe('StackdriverAggregationCtrl', () => {
   let ctrl;
