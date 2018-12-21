@@ -6,6 +6,7 @@ export function registerAngularDirectives() {
     'target',
     'onQueryChange',
     'onExecuteQuery',
+    ['events', { watchDepth: 'reference' }],
     ['uiSegmentSrv', { watchDepth: 'reference' }],
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],

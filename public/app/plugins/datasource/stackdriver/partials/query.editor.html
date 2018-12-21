@@ -1,5 +1,13 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
-    <query-editor target="ctrl.target" template-srv="ctrl.templateSrv" datasource="ctrl.datasource" on-query-change="ctrl.handleQueryChange" on-execute-query="ctrl.handleExecuteQuery" ui-segment-srv=ctrl.uiSegmentSrv></query-editor>
+  <query-editor
+    target="ctrl.target"
+    events="ctrl.panelCtrl.events"
+    template-srv="ctrl.templateSrv"
+    datasource="ctrl.datasource"
+    on-query-change="(ctrl.handleQueryChange)"
+    on-execute-query="(ctrl.handleExecuteQuery)"
+    ui-segment-srv="ctrl.uiSegmentSrv"
+  ></query-editor>
   <!-- <metric-picker target="ctrl.target" default-project="ctrl.target.defaultProject"  metric-type="ctrl.target.metricType" template-srv="ctrl.templateSrv" datasource="ctrl.datasource" on-change="ctrl.handleMetricTypeChange"></metric-picker>
   <stackdriver-filter target="ctrl.target" refresh="ctrl.refresh()" loading="ctrl.loadLabelsPromise" label-data="ctrl.labelData"
     ></stackdriver-filter>
@@ -43,7 +51,7 @@
     </div>
   </div> -->
 
-  <div class="gf-form" ng-show="ctrl.showLastQuery">
+  <!-- <div class="gf-form" ng-show="ctrl.showLastQuery">
     <pre class="gf-form-pre">{{ctrl.lastQueryMeta.rawQueryString}}</pre>
   </div>
   <div class="gf-form grafana-info-box" style="padding: 0" ng-show="ctrl.showHelp">
@@ -76,5 +84,5 @@
   </div>
   <div class="gf-form" ng-show="ctrl.lastQueryError">
     <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
-  </div>
+  </div> -->
 </query-editor-row>
