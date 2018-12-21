@@ -13,23 +13,28 @@
 }
 
 .gf-timepicker-dropdown {
-  position: absolute;
-  top: $navbarHeight;
-  right: 0;
-  padding: 10px 20px;
   background-color: $page-bg;
   border-radius: 0 0 0 4px;
   box-shadow: $search-shadow;
   z-index: $zindex-dropdown;
-}
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  right: 20px;
+  top: $navbarHeight;
+  width: 550px;
 
-.gf-timepicker-absolute-section {
-  width: 290px;
-  float: left;
-  padding: 0 10px;
-  select {
-    width: 183px;
-    margin-bottom: 0;
+  .popover-box {
+    max-width: 100%;
+
+    &:first-child {
+      border-radius: $border-radius $border-radius 0 0;
+      border-bottom: 0;
+    }
+
+    &:last-child {
+      border-radius: 0 0 $border-radius $border-radius;
+    }
   }
 }
 
@@ -48,9 +53,9 @@
 }
 
 .gf-timepicker-relative-section {
-  padding: 0 20px 0 30px;
   min-height: 237px;
   float: left;
+
   ul {
     list-style: none;
     float: left;

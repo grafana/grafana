@@ -7,6 +7,7 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 // Components
 import { EditorTabBody } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
+import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelOptionSection } from './PanelOptionSection';
 
@@ -105,6 +106,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
 
     const panelCtrl = scope.$$childHead.ctrl;
+    panelCtrl.initEditMode();
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
@@ -198,12 +200,20 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
+  renderHelp = () => <PluginHelp plugin={this.props.plugin} type="help" />;
+
   render() {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
 
+    const pluginHelp = {
+      heading: 'Help',
+      icon: 'fa fa-question',
+      render: this.renderHelp,
+    };
+
     return (
-      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar}>
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[pluginHelp]}>
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
             <VizTypePicker

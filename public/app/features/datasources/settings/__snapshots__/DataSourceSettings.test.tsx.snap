@@ -61,7 +61,10 @@ exports[`Render should render alpha info text 1`] = `
                 },
                 "description": "pretty decent plugin",
                 "links": Array [
-                  "one link",
+                  Object {
+                    "name": "project",
+                    "url": "one link",
+                  },
                 ],
                 "logos": Object {
                   "large": "large/logo",
@@ -160,7 +163,10 @@ exports[`Render should render beta info text 1`] = `
                 },
                 "description": "pretty decent plugin",
                 "links": Array [
-                  "one link",
+                  Object {
+                    "name": "project",
+                    "url": "one link",
+                  },
                 ],
                 "logos": Object {
                   "large": "large/logo",
@@ -254,7 +260,10 @@ exports[`Render should render component 1`] = `
                 },
                 "description": "pretty decent plugin",
                 "links": Array [
-                  "one link",
+                  Object {
+                    "name": "project",
+                    "url": "one link",
+                  },
                 ],
                 "logos": Object {
                   "large": "large/logo",
@@ -353,7 +362,10 @@ exports[`Render should render is ready only message 1`] = `
                 },
                 "description": "pretty decent plugin",
                 "links": Array [
-                  "one link",
+                  Object {
+                    "name": "project",
+                    "url": "one link",
+                  },
                 ],
                 "logos": Object {
                   "large": "large/logo",
