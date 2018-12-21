@@ -1,26 +1,23 @@
 // Libraries
-import React, { SFC, PureComponent } from 'react';
+import React, { PureComponent, SFC } from 'react';
 import _ from 'lodash';
-
 // Components
 import './../../panel/metrics_tab';
-import { EditorTabBody } from './EditorTabBody';
+import { EditorTabBody, EditorToolbarView, ToolbarButtonType } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
 import { PanelOptionSection } from './PanelOptionSection';
-
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import config from 'app/core/config';
-
 // Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { DataSourceSelectItem, DataQuery } from 'app/types';
+import { DataQuery, DataSourceSelectItem } from 'app/types';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 
 interface Props {
@@ -204,15 +201,17 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { currentDS, isAddingMixed } = this.state;
 
-    const queryInspector = {
+    const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
       render: this.renderQueryInspector,
+      buttonType: ToolbarButtonType.View,
     };
 
-    const dsHelp = {
+    const dsHelp: EditorToolbarView = {
       heading: 'Help',
       icon: 'fa fa-question',
       render: this.renderHelp,
+      buttonType: ToolbarButtonType.View,
     };
 
     return (

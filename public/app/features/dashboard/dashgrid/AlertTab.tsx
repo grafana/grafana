@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { EditorTabBody } from './EditorTabBody';
+import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { EditorTabBody, EditorToolbarView, ToolbarButtonType } from './EditorTabBody';
 import 'app/features/alerting/AlertTabCtrl';
 import { PanelModel } from '../panel_model';
 
@@ -67,11 +67,12 @@ export class AlertTab extends PureComponent<Props> {
   render() {
     const { alert } = this.props.panel;
 
-    const stateHistory = {
+    const stateHistory: EditorToolbarView = {
       title: 'State history',
       render: () => {
         return <div>State history</div>;
       },
+      buttonType: ToolbarButtonType.View,
     };
 
     const deleteAlert = {
@@ -79,6 +80,7 @@ export class AlertTab extends PureComponent<Props> {
       render: () => {
         return <div>Hello</div>;
       },
+      buttonType: ToolbarButtonType.Action,
     };
 
     const toolbarItems = alert ? [deleteAlert, stateHistory] : [];
