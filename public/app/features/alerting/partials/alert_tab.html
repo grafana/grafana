@@ -1,4 +1,4 @@
-<div ng-if="ctrl.alert">
+<div ng-if="ctrl.panel.alert">
   <div class="alert alert-error m-b-2" ng-show="ctrl.error">
     <i class="fa fa-warning"></i> {{ctrl.error}}
   </div>
@@ -154,7 +154,7 @@
   </div>
 </div>
 
-<div class="gf-form-group p-t-4 p-b-4" ng-if="!ctrl.alert">
+<div class="gf-form-group p-t-4 p-b-4" ng-if="!ctrl.panel.alert">
   <div class="empty-list-cta">
     <div class="empty-list-cta__title">Panel has no alert rule defined</div>
     <button class="empty-list-cta__button btn btn-xlarge btn-success" ng-click="ctrl.enable()">

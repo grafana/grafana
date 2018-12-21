@@ -2,8 +2,9 @@ import React, { PureComponent } from 'react';
 
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { EditorTabBody, EditorToolbarView, ToolbarButtonType } from './EditorTabBody';
-import 'app/features/alerting/AlertTabCtrl';
+import appEvents from 'app/core/app_events';
 import { PanelModel } from '../panel_model';
+import 'app/features/alerting/AlertTabCtrl';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -13,6 +14,7 @@ interface Props {
 export class AlertTab extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
+  panelCtrl: any;
 
   constructor(props) {
     super(props);
@@ -53,37 +55,55 @@ export class AlertTab extends PureComponent<Props> {
       return;
     }
 
-    const panelCtrl = scope.$$childHead.ctrl;
+    this.panelCtrl = scope.$$childHead.ctrl;
     const loader = getAngularLoader();
     const template = '<alert-tab />';
 
     const scopeProps = {
-      ctrl: panelCtrl,
+      ctrl: this.panelCtrl,
     };
 
     this.component = loader.load(this.element, scopeProps, template);
   }
 
-  render() {
-    const { alert } = this.props.panel;
-
-    const stateHistory: EditorToolbarView = {
+  stateHistory = (): EditorToolbarView => {
+    return {
       title: 'State history',
       render: () => {
         return <div>State history</div>;
       },
       buttonType: ToolbarButtonType.View,
     };
+  };
 
-    const deleteAlert = {
-      title: 'Delete button',
-      render: () => {
-        return <div>Hello</div>;
+  deleteAlert = (): EditorToolbarView => {
+    const { panel } = this.props;
+    return {
+      title: 'Delete',
+      icon: 'fa fa-trash',
+      onClick: () => {
+        appEvents.emit('confirm-modal', {
+          title: 'Delete Alert',
+          text: 'Are you sure you want to delete this alert rule?',
+          text2: 'You need to save dashboard for the delete to take effect',
+          icon: 'fa-trash',
+          yesText: 'Delete',
+          onConfirm: () => {
+            delete panel.alert;
+            panel.thresholds = [];
+            this.panelCtrl.alertState = null;
+            this.panelCtrl.render();
+          },
+        });
       },
       buttonType: ToolbarButtonType.Action,
     };
+  };
 
-    const toolbarItems = alert ? [deleteAlert, stateHistory] : [];
+  render() {
+    const { alert } = this.props.panel;
+
+    const toolbarItems = alert ? [this.stateHistory(), this.deleteAlert()] : [];
 
     return (
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
