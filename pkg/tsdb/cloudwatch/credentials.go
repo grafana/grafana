@@ -1,13 +1,13 @@
 package cloudwatch
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
-	"net/http"
-	"crypto/tls"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -182,7 +182,7 @@ func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, 
 		return nil, err
 	}
 
-	if(dsInfo.TlsSkipVerify) {
+	if dsInfo.TlsSkipVerify {
 		tlsCfg := &tls.Config{}
 		tlsCfg.InsecureSkipVerify = true
 
