@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { DeleteButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { NavModel, Team } from '../../types';
@@ -58,7 +58,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.deleteTeam(team)} />
+          <DeleteButton onConfirm={() => this.deleteTeam(team)} />
         </td>
       </tr>
     );

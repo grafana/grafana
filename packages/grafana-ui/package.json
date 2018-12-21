@@ -2,8 +2,7 @@
   "name": "@grafana/ui",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "types": "dist/types",
+  "main": "src/index.ts",
   "scripts": {
     "test": "tsc --noEmit"
   },

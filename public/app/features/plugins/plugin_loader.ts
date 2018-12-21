@@ -72,7 +72,7 @@ function exposeToPlugin(name: string, component: any) {
   });
 }
 
-exposeToPlugin('grafana-ui', grafanaUI);
+exposeToPlugin('@grafana/ui', grafanaUI);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);

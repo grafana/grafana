@@ -7,9 +7,6 @@ import { DashboardModel } from '../dashboard_model';
 import { PanelModel } from '../panel_model';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
-import { Google } from 'grafana-ui';
-
-console.log(Google);
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
