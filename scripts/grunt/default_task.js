@@ -10,7 +10,8 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', [
     'sasslint',
-    'exec:tslint',
+    'tslint',
+    'typecheck',
     "exec:jest",
     'no-only-tests'
   ]);
