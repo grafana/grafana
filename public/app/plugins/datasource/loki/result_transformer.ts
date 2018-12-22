@@ -116,10 +116,10 @@ export function processEntry(
   uniqueLabels: LogsStreamLabels,
   search: string
 ): LogRow {
-  const { line, timestamp } = entry;
+  const { line, ts } = entry;
   // Assumes unique-ness, needs nanosec precision for timestamp
-  const key = `EK${timestamp}${labels}`;
-  const time = moment(timestamp);
+  const key = `EK${ts}${labels}`;
+  const time = moment(ts);
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
@@ -135,7 +135,7 @@ export function processEntry(
     entry: line,
     labels: parsedLabels,
     searchWords: search ? [search] : [],
-    timestamp: timestamp,
+    timestamp: ts,
   };
 }
 
