@@ -26,6 +26,7 @@
   flex-direction: row;
   flex: 1 1 0;
   position: relative;
+  min-height: 0;
 }
 
 .panel-editor__right {
@@ -36,6 +37,7 @@
   margin: 0 20px 0 84px;
   border-radius: 3px;
   box-shadow: $panel-editor-shadow;
+  min-height: 0;
 }
 
 .panel-editor__close {
@@ -60,6 +62,7 @@
   flex-grow: 1;
   min-width: 0;
   display: flex;
+  min-height: 0;
 }
 
 .panel-editor__content {
