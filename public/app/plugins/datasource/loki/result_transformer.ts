@@ -116,7 +116,8 @@ export function processEntry(
   uniqueLabels: LogsStreamLabels,
   search: string
 ): LogRow {
-  const { line, ts } = entry;
+  const { line } = entry;
+  const ts = entry.ts || entry.timestamp;
   // Assumes unique-ness, needs nanosec precision for timestamp
   const key = `EK${ts}${labels}`;
   const time = moment(ts);
