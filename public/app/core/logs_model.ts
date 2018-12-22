@@ -81,7 +81,9 @@ export interface LogsStream {
 
 export interface LogsStreamEntry {
   line: string;
-  timestamp: string;
+  ts: string;
+  // Legacy, was renamed to ts
+  timestamp?: string;
 }
 
 export interface LogsStreamLabels {
