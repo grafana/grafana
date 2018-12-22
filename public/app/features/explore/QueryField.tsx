@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import { Change, Value } from 'slate';
 import { Editor } from 'slate-react';
 import Plain from 'slate-plain-serializer';
+import classnames from 'classnames';
 
 import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/explore';
 
@@ -30,6 +31,7 @@ function hasSuggestions(suggestions: CompletionItemGroup[]): boolean {
 export interface QueryFieldProps {
   additionalPlugins?: any[];
   cleanText?: (text: string) => string;
+  disabled?: boolean;
   initialQuery: string | null;
   onBlur?: () => void;
   onFocus?: () => void;
@@ -78,7 +80,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     this.placeholdersBuffer = new PlaceholdersBuffer(props.initialQuery || '');
 
     // Base plugins
-    this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins].filter(p => p);
+    this.plugins = [ClearPlugin(), NewlinePlugin(), ...(props.additionalPlugins || [])].filter(p => p);
 
     this.state = {
       suggestions: [],
@@ -440,12 +442,17 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   };
 
   render() {
+    const { disabled } = this.props;
+    const wrapperClassName = classnames('slate-query-field__wrapper', {
+      'slate-query-field__wrapper--disabled': disabled,
+    });
     return (
-      <div className="slate-query-field-wrapper">
+      <div className={wrapperClassName}>
         <div className="slate-query-field">
           {this.renderMenu()}
           <Editor
             autoCorrect={false}
+            readOnly={this.props.disabled}
             onBlur={this.handleBlur}
             onKeyDown={this.onKeyDown}
             onChange={this.onChange}
