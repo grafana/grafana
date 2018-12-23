@@ -6,6 +6,7 @@ function dashLinksContainer() {
   return {
     scope: {
       links: '=',
+      dashboard: '=',
     },
     restrict: 'E',
     controller: 'DashLinksContainerCtrl',
@@ -20,6 +21,8 @@ function dashLink($compile, $sanitize, linkSrv) {
     restrict: 'E',
     link: (scope, elem) => {
       const link = scope.link;
+      const dashboard = scope.dashboard;
+
       let template =
         '<div class="gf-form">' +
         '<a class="pointer gf-form-label" data-placement="bottom"' +
@@ -76,7 +79,7 @@ function dashLink($compile, $sanitize, linkSrv) {
       }
 
       update();
-      scope.$on('refresh', update);
+      dashboard.events.on('refresh', update, scope);
     },
   };
 }
