@@ -11,7 +11,8 @@ import {
   QueryHintGetter,
   QueryHint,
 } from 'app/types/explore';
-import { TimeRange, DataQuery } from 'app/types/series';
+import { TimeRange } from '@grafana/ui';
+import { DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,

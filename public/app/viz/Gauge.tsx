@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { BasicGaugeColor, MappingType, RangeMap, Threshold, TimeSeriesVMs, ValueMap } from 'app/types';
+import { BasicGaugeColor, MappingType, RangeMap, Threshold, ValueMap } from 'app/types';
+import { TimeSeriesVMs } from '@grafana/ui';
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
 

@@ -9,7 +9,7 @@ import Graph from 'app/viz/Graph';
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 
 // Types
-import { PanelProps, NullValueMode } from 'app/types';
+import { PanelProps, NullValueMode } from '@grafana/ui';
 import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}

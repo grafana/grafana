@@ -8,8 +8,8 @@ import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource
 import kbn from 'app/core/utils/kbn';
 
 // Types
-import { TimeRange, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
-import { LoadingState } from '@grafana/ui';
+import { DataQueryOptions, DataQueryResponse } from 'app/types';
+import { TimeRange, TimeSeries, LoadingState } from '@grafana/ui';
 
 interface RenderProps {
   loading: LoadingState;

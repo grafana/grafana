@@ -5,7 +5,7 @@ import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 
 // Types
-import { TimeRange, TimeSeriesVMs } from 'app/types';
+import { TimeRange, TimeSeriesVMs } from '@grafana/ui';
 
 interface GraphProps {
   timeSeries: TimeSeriesVMs;
