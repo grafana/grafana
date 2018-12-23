@@ -16,6 +16,7 @@
     "react-highlight-words": "0.11.0",
     "@torkelo/react-select": "2.1.1",
     "react-transition-group": "^2.2.1",
+    "moment": "^2.22.2",
     "react-virtualized": "^9.21.0"
   },
   "devDependencies": {

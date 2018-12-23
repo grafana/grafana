@@ -8,7 +8,7 @@ module.exports = {
   "roots": [
     "<rootDir>/public/app",
     "<rootDir>/public/test",
-    "<rootDir>packages"
+    "<rootDir>/packages"
   ],
   "testRegex": "(\\.|/)(test)\\.(jsx?|tsx?)$",
   "moduleFileExtensions": [

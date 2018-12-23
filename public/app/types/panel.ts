@@ -1,4 +1,5 @@
-import { LoadingState, TimeSeries, TimeRange } from './series';
+import { TimeSeries, TimeRange } from './series';
+import { LoadingState } from '@grafana/ui';
 
 export interface PanelProps<T = any> {
   timeSeries: TimeSeries[];

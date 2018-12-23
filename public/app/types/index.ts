@@ -10,7 +10,6 @@ import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourceSelectItem, DataSourcesState } from './datasources';
 import {
   TimeRange,
-  LoadingState,
   TimeSeries,
   TimeSeriesVM,
   TimeSeriesVMs,
@@ -69,7 +68,6 @@ export {
   User,
   UsersState,
   TimeRange,
-  LoadingState,
   PanelPlugin,
   PanelProps,
   PanelOptionsProps,
