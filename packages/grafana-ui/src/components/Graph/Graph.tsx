@@ -1,11 +1,9 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.time';
 
 // Types
-import { TimeRange, TimeSeriesVMs } from '@grafana/ui';
+import { TimeRange, TimeSeriesVMs } from '../../types';
 
 interface GraphProps {
   timeSeries: TimeSeriesVMs;

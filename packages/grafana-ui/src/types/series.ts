@@ -5,7 +5,7 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export type TimeSeriesValue = string | number | null;
+export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
@@ -24,9 +24,9 @@ export interface TimeSeriesVM {
 }
 
 export interface TimeSeriesStats {
-  total: number;
-  max: number;
-  min: number;
+  total: number | null;
+  max: number | null;
+  min: number | null;
   logmin: number;
   avg: number | null;
   current: number | null;
