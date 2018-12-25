@@ -12,11 +12,11 @@
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
-    "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.1.0",
+    "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
     "@types/d3": "^4.10.1",
     "@types/enzyme": "^3.1.13",
     "@types/jest": "^23.3.2",
@@ -25,6 +25,7 @@
     "@types/react-custom-scrollbars": "^4.0.5",
     "@types/react-dom": "^16.0.9",
     "@types/react-select": "^2.0.4",
+    "@types/jquery": "^1.10.35",
     "angular-mocks": "1.6.6",
     "autoprefixer": "^6.4.0",
     "axios": "^0.17.1",
@@ -116,9 +117,18 @@
     "precommit": "lint-staged && grunt precommit"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["prettier --write", "git add"],
-    "*.scss": ["prettier --write", "git add"],
-    "*pkg/**/*.go": ["gofmt -w -s", "git add"]
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.scss": [
+      "prettier --write",
+      "git add"
+    ],
+    "*pkg/**/*.go": [
+      "gofmt -w -s",
+      "git add"
+    ]
   },
   "prettier": {
     "trailingComma": "es5",
@@ -128,6 +138,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
+    "@torkelo/react-select": "2.1.1",
     "angular": "1.6.6",
     "angular-bindonce": "0.3.1",
     "angular-native-dragdrop": "1.2.2",
@@ -154,10 +165,9 @@
     "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.6.3",
     "react-grid-layout": "0.16.6",
-    "react-popper": "^1.3.0",
     "react-highlight-words": "0.11.0",
+    "react-popper": "^1.3.0",
     "react-redux": "^5.0.7",
-    "@torkelo/react-select": "2.1.1",
     "react-sizeme": "^2.3.6",
     "react-table": "^6.8.6",
     "react-transition-group": "^2.2.1",
@@ -181,7 +191,7 @@
     "caniuse-db": "1.0.30000772",
     "**/@types/react": "16.7.6"
   },
-   "workspaces": {
+  "workspaces": {
     "packages": [
       "packages/*"
     ],

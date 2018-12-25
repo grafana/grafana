@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tslint": "echo \"Nothing to do\"",
+    "typecheck": "echo \"Nothing to do\""
   },
   "author": "",
   "license": "ISC"
