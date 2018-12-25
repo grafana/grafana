@@ -3,14 +3,8 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import colors from 'app/core/utils/colors';
 
-// Components
-import { Graph } from '@grafana/ui';
-
-// Services & Utils
-import { processTimeSeries } from '@grafana/ui';
-
-// Types
-import { PanelProps, NullValueMode } from '@grafana/ui';
+// Components & Types
+import { Graph, PanelProps, NullValueMode, processTimeSeries } from '@grafana/ui';
 import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
