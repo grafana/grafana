@@ -26,6 +26,7 @@ import * as ticks from 'app/core/utils/ticks';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
+import * as grafanaUI from '@grafana/ui';
 
 // rxjs
 import { Observable } from 'rxjs/Observable';
@@ -71,6 +72,7 @@ function exposeToPlugin(name: string, component: any) {
   });
 }
 
+exposeToPlugin('@grafana/ui', grafanaUI);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);

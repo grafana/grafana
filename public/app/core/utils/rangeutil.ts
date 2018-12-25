@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange } from '@grafana/ui';
 
 import * as dateMath from './datemath';
 

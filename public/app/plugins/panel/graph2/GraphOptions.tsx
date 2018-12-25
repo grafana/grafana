@@ -6,7 +6,7 @@ import React, { PureComponent } from 'react';
 import { Switch } from 'app/core/components/Switch/Switch';
 
 // Types
-import { PanelOptionsProps } from 'app/types';
+import { PanelOptionsProps } from '@grafana/ui';
 import { Options } from './types';
 
 export class GraphOptions extends PureComponent<PanelOptionsProps<Options>> {

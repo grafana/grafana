@@ -4,6 +4,7 @@ module.exports = function(config) {
     options: {
       configFile: 'public/sass/.sass-lint.yml',
     },
+    // src: ['public/sass#<{(||)}>#*'],
     target: [
       'public/sass/*.scss',
       'public/sass/components/*.scss',

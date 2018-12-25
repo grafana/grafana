@@ -4,7 +4,7 @@ import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange } from '@grafana/ui';
 import {
   LogsDedupDescription,
   LogsDedupStrategy,

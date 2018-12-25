@@ -10,6 +10,7 @@ import { Input } from 'app/core/components/Form';
 import { EventsWithValidation } from 'app/core/components/Form/Input';
 import { InputStatus } from 'app/core/components/Form/Input';
 import DataSourceOption from './DataSourceOption';
+import { GfFormLabel } from '@grafana/ui';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -163,7 +164,7 @@ export class QueryOptions extends PureComponent<Props, State> {
         {this.renderOptions()}
 
         <div className="gf-form">
-          <span className="gf-form-label">Relative time</span>
+          <GfFormLabel>Relative time</GfFormLabel>
           <Input
             type="text"
             className="width-6"

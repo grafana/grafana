@@ -16,7 +16,8 @@ import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 // Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { PanelPlugin, TimeRange } from 'app/types';
+import { PanelPlugin } from 'app/types';
+import { TimeRange } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;

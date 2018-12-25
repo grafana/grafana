@@ -7,7 +7,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import QueryEditor from './QueryEditor';
 import QueryTransactionStatus from './QueryTransactionStatus';
 import { DataSource, DataQuery } from 'app/types';
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange } from '@grafana/ui';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
