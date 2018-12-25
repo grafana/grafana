@@ -13,9 +13,11 @@ $login-border: #8daac5;
   background-image: url(../img/heatmap_bg_test.svg);
   background-size: cover;
   color: #d8d9da;
+
   & a {
     color: #d8d9da !important;
   }
+
   & .btn-primary {
     @include buttonBackground(#ff6600, #bc3e06);
   }
@@ -198,6 +200,10 @@ select:-webkit-autofill:focus {
   border: none;
   font-size: 15px;
   padding: 10px 10px;
+  font-weight: bold;
+  display: inline-block;
+  width: 170px;
+  color: $text-color;
 
   &.active {
     background: darken($tight-form-bg, 5%);
@@ -207,11 +213,6 @@ select:-webkit-autofill:focus {
   &:focus {
     outline: 0;
   }
-
-  font-weight: bold;
-  display: inline-block;
-  width: 170px;
-  color: $text-color;
 }
 
 .password-strength {
@@ -222,10 +223,12 @@ select:-webkit-autofill:focus {
   padding-top: 3px;
   color: darken($text-color, 20%);
   border-top: 3px solid $red;
+
   &.password-strength-ok {
     width: 40%;
     border-top: 3px solid lighten($yellow, 10%);
   }
+
   &.password-strength-good {
     width: 100%;
     border-top: 3px solid lighten($green, 10%);
@@ -252,6 +255,7 @@ select:-webkit-autofill:focus {
 .password-recovery {
   background: $tight-form-bg;
   padding: 10px;
+
   a {
     color: $gray-2;
   }

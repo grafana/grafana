@@ -42,14 +42,12 @@
   overflow: auto;
   height: 100%;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 
   &--dashboard {
     height: calc(100% - 56px);
   }
-
-  // Sticky footer
-  display: flex;
-  flex-direction: column;
 
   > div {
     flex-grow: 1;

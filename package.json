@@ -59,8 +59,7 @@
     "grunt-newer": "^1.3.0",
     "grunt-notify": "^0.4.5",
     "grunt-postcss": "^0.8.0",
-    "grunt-sass": "^2.0.0",
-    "grunt-sass-lint": "^0.2.2",
+    "grunt-sass-lint": "^0.2.4",
     "grunt-usemin": "3.1.1",
     "grunt-webpack": "^3.0.2",
     "html-loader": "^0.5.1",
@@ -116,7 +115,12 @@
     "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
-    "precommit": "lint-staged && grunt precommit"
+    "precommit": "grunt precommit"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged && grunt precommit"
+    }
   },
   "lint-staged": {
     "*.{ts,tsx}": [
