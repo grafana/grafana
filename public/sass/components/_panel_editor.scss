@@ -174,7 +174,6 @@
 }
 
 .panel-editor-tabs {
-  position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -221,7 +220,6 @@
 
     &:hover {
       filter: $panel-editor-side-menu-shadow;
-      transform: translate(-2px, -2px);
       transform: scale(1.1);
     }
   }

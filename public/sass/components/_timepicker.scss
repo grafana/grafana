@@ -60,9 +60,11 @@
     list-style: none;
     float: left;
     margin: 0 30px 10px 0px;
+
     li {
       line-height: 22px;
     }
+
     li.active {
       border-bottom: 1px solid $blue;
       margin: 3px 0;
@@ -77,26 +79,32 @@
   td {
     padding: 1px;
   }
+
   button {
     @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
     background-image: none;
     border: none;
     color: $text-color;
+
     &.active span {
       color: $blue;
       font-weight: bold;
     }
+
     .text-info {
       color: $orange;
       font-weight: bold;
     }
+
     &.btn-sm {
       font-size: $font-size-sm;
       padding: 5px 11px;
     }
+
     &:hover {
       color: $text-color-strong;
     }
+
     &[disabled] {
       color: $text-color;
     }
@@ -119,6 +127,7 @@
 .fa-chevron-left::before {
   content: '\f053';
 }
+
 .fa-chevron-right::before {
   content: '\f054';
 }

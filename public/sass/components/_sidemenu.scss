@@ -29,12 +29,12 @@
   .sidemenu-open {
     .sidemenu {
       background: $side-menu-bg;
-      position: initial;
       height: auto;
       box-shadow: $side-menu-shadow;
       position: relative;
       z-index: $zindex-sidemenu;
     }
+
     .sidemenu__top,
     .sidemenu__bottom {
       display: block;
@@ -212,7 +212,6 @@ li.sidemenu-org-switcher {
     .sidemenu {
       width: 100%;
       background: $side-menu-bg-mobile;
-      position: initial;
       height: auto;
       box-shadow: $side-menu-shadow;
       position: relative;
