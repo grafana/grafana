@@ -175,7 +175,9 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
+		OrgId:   dto.OrgId,
 	}
+
 	cmd, err := dr.buildSaveDashboardCommand(dto, true, false)
 	if err != nil {
 		return nil, err
