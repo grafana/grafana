@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/models"
-
+	"github.com/jmespath/go-jmespath"
 	"golang.org/x/oauth2"
 )
 
@@ -21,6 +21,7 @@ type SocialGenericOAuth struct {
 	apiUrl               string
 	allowSignup          bool
 	emailAttributeName   string
+	emailAttributePath   string
 	teamIds              []int
 }
 
@@ -76,6 +77,31 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 	}
 
 	return false
+}
+
+// SearchJSONForEmail searches the provided JSON response for an e-mail address
+// using the configured e-mail attribute path associated with the generic OAuth
+// provider.
+// If an e-mail address is not found, an empty string is returned.
+// Returns a non-nil error if the provided JSON response could not be decoded or otherwise
+// could not be searched.
+func (s *SocialGenericOAuth) SearchJSONForEmail(data []byte) (email string, err error) {
+	if s.emailAttributePath == "" || len(data) == 0 {
+		return "", nil
+	}
+	var buf interface{}
+	if err := json.Unmarshal(data, &buf); err != nil {
+		return "", err
+	}
+	val, err := jmespath.Search(s.emailAttributePath, buf)
+	if err != nil {
+		return "", err
+	}
+	strVal, ok := val.(string)
+	if ok {
+		return strVal, nil
+	}
+	return "", nil
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
@@ -181,15 +207,16 @@ type UserInfoJson struct {
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data UserInfoJson
+	var rawUserInfoResponse HttpGetResponse
 	var err error
 
-	if !s.extractToken(&data, token) {
-		response, err := HttpGet(client, s.apiUrl)
+	if !s.extractToken(rawUserInfoResponse.Body, token) {
+		rawUserInfoResponse, err = HttpGet(client, s.apiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting user info: %s", err)
 		}
 
-		err = json.Unmarshal(response.Body, &data)
+		err = json.Unmarshal(rawUserInfoResponse.Body, &data)
 		if err != nil {
 			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
 		}
@@ -197,7 +224,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	name := s.extractName(&data)
 
-	email := s.extractEmail(&data)
+	email := s.extractEmail(rawUserInfoResponse.Body)
 	if email == "" {
 		email, err = s.FetchPrivateEmail(client)
 		if err != nil {
@@ -224,7 +251,12 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
+func (s *SocialGenericOAuth) extractToken(userInfoResp []byte, token *oauth2.Token) bool {
+	var data UserInfoJson
+	if err := json.Unmarshal(userInfoResp, &data); err != nil {
+		return false
+	}
+
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
@@ -244,13 +276,13 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 		return false
 	}
 
-	err = json.Unmarshal(payload, data)
+	err = json.Unmarshal(payload, &data)
 	if err != nil {
 		s.log.Error("Error decoding id_token JSON", "payload", string(payload), "err", err)
 		return false
 	}
 
-	email := s.extractEmail(data)
+	email := s.extractEmail(userInfoResp)
 	if email == "" {
 		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
 		return false
@@ -260,9 +292,19 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 	return true
 }
 
-func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
+func (s *SocialGenericOAuth) extractEmail(userInfoResp []byte) string {
+	var data UserInfoJson
+	if err := json.Unmarshal(userInfoResp, &data); err != nil {
+		return ""
+	}
+
 	if data.Email != "" {
 		return data.Email
+	}
+
+	email, err := s.SearchJSONForEmail(userInfoResp)
+	if err == nil && email != "" {
+		return email
 	}
 
 	emails, ok := data.Attributes[s.emailAttributeName]
