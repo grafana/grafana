@@ -60,6 +60,11 @@ export class QueryEditor extends React.Component<Props, State> {
     });
   }
 
+  componentWillUnmount() {
+    this.props.events.off('data-received');
+    this.props.events.off('data-error');
+  }
+
   onDataReceived(dataList) {
     const series = dataList.find(item => item.refId === this.props.target.refId);
     if (series) {
@@ -121,12 +126,14 @@ export class QueryEditor extends React.Component<Props, State> {
       metricType,
       crossSeriesReducer,
       groupBys,
+      filters,
       perSeriesAligner,
       alignOptions,
       alignmentPeriod,
       aliasBy,
       lastQuery,
       lastQueryError,
+      refId,
     } = this.state;
     const { datasource } = this.props;
 
@@ -144,7 +151,10 @@ export class QueryEditor extends React.Component<Props, State> {
               <Filter
                 filtersChanged={value => this.handleChange('filters', value)}
                 groupBysChanged={value => this.handleChange('groupBys', value)}
-                target={this.state}
+                filters={filters}
+                groupBys={groupBys}
+                refId={refId}
+                hideGroupBys={false}
                 templateSrv={datasource.templateSrv}
                 datasource={datasource}
                 metricType={metric ? metric.type : ''}
@@ -168,13 +178,11 @@ export class QueryEditor extends React.Component<Props, State> {
                 }
               </Aggregations>
               <AliasBy value={aliasBy} onChange={value => this.handleChange('aliasBy', value)} />
-
               <AlignmentPeriods
                 templateSrv={datasource.templateSrv}
                 alignmentPeriod={alignmentPeriod}
                 onChange={value => this.handleChange('alignmentPeriod', value)}
               />
-
               <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
             </React.Fragment>
           )}

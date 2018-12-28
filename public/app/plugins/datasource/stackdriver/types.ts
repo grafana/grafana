@@ -32,8 +32,19 @@ export interface Target {
   groupBys: string[];
   filters: string[];
   aliasBy: string;
-  metricKind: any;
-  valueType: any;
+  metricKind: string;
+  valueType: string;
+}
+
+export interface AnnotationTarget {
+  defaultProject: string;
+  metricType: string;
+  refId: string;
+  filters: string[];
+  metricKind: string;
+  valueType: string;
+  title: string;
+  text: string;
 }
 
 export interface QueryMeta {

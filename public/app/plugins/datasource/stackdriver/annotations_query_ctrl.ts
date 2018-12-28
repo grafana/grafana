@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import './query_filter_ctrl';
+import { registerAngularDirectives } from './angular_wrappers';
 
 export class StackdriverAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
@@ -27,5 +28,11 @@ export class StackdriverAnnotationsQueryCtrl {
     this.annotation.target = this.annotation.target || {};
     this.annotation.target.refId = 'annotationQuery';
     _.defaultsDeep(this.annotation.target, this.defaults);
+    registerAngularDirectives();
+    this.handleQueryChange = this.handleQueryChange.bind(this);
+  }
+
+  handleQueryChange(target) {
+    Object.assign(this.annotation.target, target);
   }
 }

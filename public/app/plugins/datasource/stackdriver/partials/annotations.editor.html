@@ -1,7 +1,12 @@
-<stackdriver-filter target="ctrl.annotation.target" refresh="ctrl.refresh()" datasource="ctrl.datasource"
-  default-dropdown-value="ctrl.defaultDropdownValue" default-service-value="ctrl.defaultServiceValue" hide-group-bys="true"></stackdriver-filter>
+<!-- <stackdriver-filter target="ctrl.annotation.target" refresh="ctrl.refresh()" datasource="ctrl.datasource"
+  default-dropdown-value="ctrl.defaultDropdownValue" default-service-value="ctrl.defaultServiceValue" hide-group-bys="true"></stackdriver-filter> -->
+<annotation-query-editor
+  target="ctrl.annotation.target"
+  datasource="ctrl.datasource"
+  on-query-change="(ctrl.handleQueryChange)"
+></annotation-query-editor>
 
-<div class="gf-form gf-form-inline">
+<!-- <div class="gf-form gf-form-inline">
   <div class="gf-form">
     <span class="gf-form-label query-keyword width-9">Title</span>
     <input type="text" class="gf-form-input width-20" ng-model="ctrl.annotation.target.title" />
@@ -10,10 +15,8 @@
     <span class="gf-form-label query-keyword width-9">Text</span>
     <input type="text" class="gf-form-input width-20" ng-model="ctrl.annotation.target.text" />
   </div>
-  <div class="gf-form gf-form--grow">
-    <div class="gf-form-label gf-form-label--grow"></div>
-  </div>
-</div>
+  <div class="gf-form gf-form--grow"><div class="gf-form-label gf-form-label--grow"></div></div>
+</div> -->
 
 <div class="gf-form grafana-info-box" style="padding: 0">
   <pre class="gf-form-pre alert alert-info" style="margin-right: 0"><h5>Annotation Query Format</h5>

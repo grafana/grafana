@@ -19,6 +19,7 @@ interface State {
   service: string;
   metric: string;
   metricDescriptor: any;
+  defaultProject: string;
 }
 
 export class Metrics extends React.Component<Props, State> {
@@ -29,6 +30,7 @@ export class Metrics extends React.Component<Props, State> {
     service: '',
     metric: '',
     metricDescriptor: null,
+    defaultProject: '',
   };
 
   constructor(props) {
@@ -36,19 +38,21 @@ export class Metrics extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.getCurrentProject()
-      .then(this.loadMetricDescriptors.bind(this))
-      .then(this.initializeServiceAndMetrics.bind(this));
+    this.setState({ defaultProject: this.props.defaultProject }, () => {
+      this.getCurrentProject()
+        .then(this.loadMetricDescriptors.bind(this))
+        .then(this.initializeServiceAndMetrics.bind(this));
+    });
   }
 
   async getCurrentProject() {
     return new Promise(async (resolve, reject) => {
       try {
-        if (!this.props.defaultProject || this.props.defaultProject === 'loading project...') {
-          // this.props.defaultProject = await this.props.datasource.getDefaultProject();
-          await this.props.datasource.getDefaultProject();
+        if (!this.state.defaultProject || this.state.defaultProject === 'loading project...') {
+          const defaultProject = await this.props.datasource.getDefaultProject();
+          this.setState({ defaultProject });
         }
-        resolve(this.props.defaultProject);
+        resolve(this.state.defaultProject);
       } catch (error) {
         // appEvents.emit('ds-request-error', error);
         reject();
@@ -57,8 +61,8 @@ export class Metrics extends React.Component<Props, State> {
   }
 
   async loadMetricDescriptors() {
-    if (this.props.defaultProject !== 'loading project...') {
-      const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.defaultProject);
+    if (this.state.defaultProject !== 'loading project...') {
+      const metricDescriptors = await this.props.datasource.getMetricTypes(this.state.defaultProject);
       this.setState({ metricDescriptors });
       return metricDescriptors;
     } else {
@@ -81,6 +85,9 @@ export class Metrics extends React.Component<Props, State> {
 
   getMetricsList(metricDescriptors) {
     const selectedMetricDescriptor = this.getSelectedMetricDescriptor(this.props.metricType);
+    if (!selectedMetricDescriptor) {
+      return [];
+    }
     const metricsByService = metricDescriptors.filter(m => m.service === selectedMetricDescriptor.service).map(m => ({
       service: m.service,
       value: m.type,

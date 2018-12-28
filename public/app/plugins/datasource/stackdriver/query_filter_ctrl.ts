@@ -13,7 +13,8 @@ export class StackdriverFilter {
       scope: {
         labelData: '<',
         loading: '<',
-        target: '=',
+        groupBys: '<',
+        filters: '<',
         filtersChanged: '&',
         groupBysChanged: '&',
         hideGroupBys: '<',
@@ -28,19 +29,17 @@ export class StackdriverFilterCtrl {
   groupBySegments: any[];
   filterSegments: FilterSegments;
   removeSegment: any;
-  target: any;
 
   /** @ngInject */
   constructor(private $scope, private uiSegmentSrv, private templateSrv, private $rootScope) {
     this.$scope = $scope.$parent;
-    this.target = this.$scope.target;
 
     this.initSegments(this.$scope.hideGroupBys);
   }
 
   initSegments(hideGroupBys: boolean) {
     if (!hideGroupBys) {
-      this.groupBySegments = this.target.groupBys.map(groupBy => {
+      this.groupBySegments = this.$scope.groupBys.map(groupBy => {
         return this.uiSegmentSrv.getSegmentForValue(groupBy);
       });
       this.ensurePlusButton(this.groupBySegments);
@@ -50,7 +49,7 @@ export class StackdriverFilterCtrl {
 
     this.filterSegments = new FilterSegments(
       this.uiSegmentSrv,
-      this.target,
+      this.$scope.filters,
       this.getFilterKeys.bind(this),
       this.getFilterValues.bind(this)
     );
@@ -93,7 +92,7 @@ export class StackdriverFilterCtrl {
   async getFilterKeys(segment, removeText?: string) {
     let elements = await this.createLabelKeyElements();
 
-    if (this.target.filters.indexOf(this.resourceTypeValue) !== -1) {
+    if (this.$scope.filters.indexOf(this.resourceTypeValue) !== -1) {
       elements = elements.filter(e => e.value !== this.resourceTypeValue);
     }
 
@@ -111,7 +110,7 @@ export class StackdriverFilterCtrl {
   async getGroupBys(segment) {
     let elements = await this.createLabelKeyElements();
 
-    elements = elements.filter(e => this.target.groupBys.indexOf(e.value) === -1);
+    elements = elements.filter(e => this.$scope.groupBys.indexOf(e.value) === -1);
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
     if (noValueOrPlusButton && elements.length === 0) {
       return [];
@@ -142,6 +141,7 @@ export class StackdriverFilterCtrl {
   }
 
   async getFilters(segment, index) {
+    await this.$scope.loading;
     const hasNoFilterKeys =
       this.$scope.labelData.metricLabels && Object.keys(this.$scope.labelData.metricLabels).length === 0;
     return this.filterSegments.getFilters(segment, index, hasNoFilterKeys);
