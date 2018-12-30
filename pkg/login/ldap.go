@@ -292,6 +292,8 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
 
+		a.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
+
 		searchResult, err = a.conn.Search(&searchReq)
 		if err != nil {
 			return nil, err
