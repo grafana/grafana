@@ -3,22 +3,22 @@ import React from 'react';
 const CHEAT_SHEET_ITEMS = [
   {
     title: 'See your logs',
-    label: 'Start by selecting a log stream from the Log Labels selector.',
+    label: 'Start by selecting a log stream from the Log labels selector.',
   },
   {
-    title: 'Logs From a Job',
+    title: 'Logs from a "job"',
     expression: '{job="default/prometheus"}',
     label: 'Returns all log lines emitted by instances of this job.',
   },
   {
-    title: 'Combine Stream Selectors',
+    title: 'Combine stream selectors',
     expression: '{app="cassandra",namespace="prod"}',
     label: 'Returns all log lines from streams that have both labels.',
   },
   {
-    title: 'Search For Text',
+    title: 'Search for text',
     expression: '{app="cassandra"} (duration|latency)\\s*(=|is|of)\\s*[\\d\\.]+',
-    label: 'The right search field takes a regular expression to search for.',
+    label: 'Add a regular expression after the selector to filter for.',
   },
 ];
 
