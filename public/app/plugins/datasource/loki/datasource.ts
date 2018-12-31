@@ -29,10 +29,13 @@ function serializeParams(data: any) {
 
 export default class LokiDatasource {
   languageProvider: LanguageProvider;
+  queryLimit: number;
 
   /** @ngInject */
   constructor(private instanceSettings, private backendSrv, private templateSrv) {
     this.languageProvider = new LanguageProvider(this);
+    const settingsData = instanceSettings.jsonData || {};
+    this.queryLimit = parseInt(settingsData.queryLimit, 10) || DEFAULT_LIMIT;
   }
 
   _request(apiUrl: string, data?, options?: any) {
@@ -47,7 +50,7 @@ export default class LokiDatasource {
   }
 
   mergeStreams(streams: LogsStream[], intervalMs: number): LogsModel {
-    const logs = mergeStreamsToLogs(streams);
+    const logs = mergeStreamsToLogs(streams, this.queryLimit);
     logs.series = makeSeriesForLogs(logs.rows, intervalMs);
     return logs;
   }
@@ -61,6 +64,7 @@ export default class LokiDatasource {
       ...parseQuery(interpolated),
       start,
       end,
+      limit: this.queryLimit,
     };
   }
 
@@ -77,6 +81,9 @@ export default class LokiDatasource {
     return Promise.all(queries).then((results: any[]) => {
       // Flatten streams from multiple queries
       const allStreams: LogsStream[] = results.reduce((acc, response, i) => {
+        if (!response) {
+          return acc;
+        }
         const streams: LogsStream[] = response.data.streams || [];
         // Inject search for match highlighting
         const search: string = queryTargets[i].regexp;
