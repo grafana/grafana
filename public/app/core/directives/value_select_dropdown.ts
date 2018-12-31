@@ -13,6 +13,7 @@ export class ValueSelectDropdownCtrl {
   selectedValues: any;
   tags: any;
   variable: any;
+  showDisplayed = false;
 
   hide: any;
   onUpdated: any;
@@ -273,7 +274,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
       }
 
       function bodyOnClick(e) {
-        if (elem.has(e.target).length === 0) {
+        if (elem.has(e.target).length === 0 && !angular.element(e.target).hasClass("keep-dropdown-open")) {
           scope.$apply(() => {
             scope.vm.commitChanges();
           });

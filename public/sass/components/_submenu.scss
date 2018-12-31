@@ -120,6 +120,13 @@
       background: url($checkboxImageUrl) 0px -36px no-repeat;
     }
   }
+  .fa {
+    vertical-align: middle;
+  }
+}
+
+.variable-options-column-header-selections a {
+  padding-left: 20px;
 }
 
 .variable-option-icon {
