@@ -243,7 +243,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
-		cnnstr = "file:" + ss.dbCfg.Path + "?cache=shared&mode=rwc"
+		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
 	default:
 		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
 	}
@@ -319,6 +319,8 @@ func (ss *SqlStore) readConfig() {
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+
+	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 }
 
 func InitTestDB(t *testing.T) *SqlStore {
@@ -391,13 +393,20 @@ func IsTestDbPostgres() bool {
 }
 
 type DatabaseConfig struct {
-	Type, Host, Name, User, Pwd, Path, SslMode string
-	CaCertPath                                 string
-	ClientKeyPath                              string
-	ClientCertPath                             string
-	ServerCertName                             string
-	ConnectionString                           string
-	MaxOpenConn                                int
-	MaxIdleConn                                int
-	ConnMaxLifetime                            int
+	Type             string
+	Host             string
+	Name             string
+	User             string
+	Pwd              string
+	Path             string
+	SslMode          string
+	CaCertPath       string
+	ClientKeyPath    string
+	ClientCertPath   string
+	ServerCertName   string
+	ConnectionString string
+	MaxOpenConn      int
+	MaxIdleConn      int
+	ConnMaxLifetime  int
+	CacheMode        string
 }
