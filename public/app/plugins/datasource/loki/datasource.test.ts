@@ -15,7 +15,7 @@ describe('LokiDatasource', () => {
 
     const range = { from: 'now-6h', to: 'now' };
 
-    test('should use default limit when no limit given', () => {
+    test('should use default max lines when no limit given', () => {
       const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn();
       ds.query({ range, targets: [{ expr: 'foo' }] });
@@ -23,8 +23,8 @@ describe('LokiDatasource', () => {
       expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=1000');
     });
 
-    test('should use custom limit if set', () => {
-      const customData = { ...(instanceSettings.jsonData || {}), queryLimit: 20 };
+    test('should use custom max lines if limit is set', () => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
       const customSettings = { ...instanceSettings, jsonData: customData };
       const ds = new LokiDatasource(customSettings, backendSrvMock, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn();

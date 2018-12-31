@@ -9,11 +9,11 @@ import LanguageProvider from './language_provider';
 import { mergeStreamsToLogs } from './result_transformer';
 import { formatQuery, parseQuery } from './query_utils';
 
-export const DEFAULT_LIMIT = 1000;
+export const DEFAULT_MAX_LINES = 1000;
 
 const DEFAULT_QUERY_PARAMS = {
   direction: 'BACKWARD',
-  limit: DEFAULT_LIMIT,
+  limit: DEFAULT_MAX_LINES,
   regexp: '',
   query: '',
 };
@@ -29,13 +29,13 @@ function serializeParams(data: any) {
 
 export default class LokiDatasource {
   languageProvider: LanguageProvider;
-  queryLimit: number;
+  maxLines: number;
 
   /** @ngInject */
   constructor(private instanceSettings, private backendSrv, private templateSrv) {
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
-    this.queryLimit = parseInt(settingsData.queryLimit, 10) || DEFAULT_LIMIT;
+    this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
   }
 
   _request(apiUrl: string, data?, options?: any) {
@@ -50,7 +50,7 @@ export default class LokiDatasource {
   }
 
   mergeStreams(streams: LogsStream[], intervalMs: number): LogsModel {
-    const logs = mergeStreamsToLogs(streams, this.queryLimit);
+    const logs = mergeStreamsToLogs(streams, this.maxLines);
     logs.series = makeSeriesForLogs(logs.rows, intervalMs);
     return logs;
   }
@@ -64,7 +64,7 @@ export default class LokiDatasource {
       ...parseQuery(interpolated),
       start,
       end,
-      limit: this.queryLimit,
+      limit: this.maxLines,
     };
   }
 
