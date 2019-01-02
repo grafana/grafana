@@ -1,6 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 
+import appEvents from 'app/core/app_events';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 
 export interface Props {
@@ -54,7 +55,7 @@ export class Metrics extends React.Component<Props, State> {
         }
         resolve(this.state.defaultProject);
       } catch (error) {
-        // appEvents.emit('ds-request-error', error);
+        appEvents.emit('ds-request-error', error);
         reject();
       }
     });

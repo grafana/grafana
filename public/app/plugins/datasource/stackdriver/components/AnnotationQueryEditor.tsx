@@ -109,7 +109,6 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         </div>
 
         <AnnotationsHelp />
-        {/* <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} /> */}
       </React.Fragment>
     );
   }

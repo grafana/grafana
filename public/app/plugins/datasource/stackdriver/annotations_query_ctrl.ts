@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import './query_filter_ctrl';
-import { registerAngularDirectives } from './angular_wrappers';
+import { react2AngularDirective } from 'app/core/utils/react2angular';
+import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 
 export class StackdriverAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
@@ -28,8 +29,14 @@ export class StackdriverAnnotationsQueryCtrl {
     this.annotation.target = this.annotation.target || {};
     this.annotation.target.refId = 'annotationQuery';
     _.defaultsDeep(this.annotation.target, this.defaults);
-    registerAngularDirectives();
     this.handleQueryChange = this.handleQueryChange.bind(this);
+
+    react2AngularDirective('annotationQueryEditor', AnnotationQueryEditor, [
+      'target',
+      'onQueryChange',
+      'onExecuteQuery',
+      ['datasource', { watchDepth: 'reference' }],
+    ]);
   }
 
   handleQueryChange(target) {

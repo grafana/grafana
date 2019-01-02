@@ -1,8 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { getAggregationOptionsByMetric } from '../functions';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
+import { getAggregationOptionsByMetric } from '../functions';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
