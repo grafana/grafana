@@ -11,7 +11,6 @@ export interface Props {
   value: string;
   placeholder?: string;
   className?: string;
-  groupName?: string;
   variables?: Variable[];
 }
 
@@ -23,7 +22,6 @@ export class MetricSelect extends React.Component<Props, State> {
   static defaultProps = {
     variables: [],
     options: [],
-    groupName: 'Options',
   };
 
   constructor(props) {
@@ -46,15 +44,16 @@ export class MetricSelect extends React.Component<Props, State> {
     return nextProps.value !== this.props.value || !_.isEqual(nextOptions, this.state.options);
   }
 
-  buildOptions({ variables = [], groupName = '', options }) {
+  buildOptions({ variables = [], options }) {
     return variables.length > 0
       ? [
           this.getVariablesGroup(),
-          {
-            label: groupName,
-            expanded: true,
-            options,
-          },
+          // {
+          //   label: groupName,
+          //   expanded: true,
+          //   options,
+          // },
+          ...options,
         ]
       : options;
   }

@@ -27,7 +27,6 @@ export function registerAngularDirectives() {
     'isSearchable',
     'className',
     'placeholder',
-    'groupName',
     ['variables', { watchDepth: 'reference' }],
   ]);
 }
