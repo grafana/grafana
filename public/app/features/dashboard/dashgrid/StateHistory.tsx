@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
 import alertDef from '../../alerting/state/alertDef';
-import { getBackendSrv } from '../../../core/services/backend_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardModel } from '../dashboard_model';
+import appEvents from '../../../core/app_events';
 
 interface Props {
   dashboard: DashboardModel;
   panelId: number;
+  onRefresh: () => void;
 }
 
 interface State {
@@ -23,14 +25,12 @@ class StateHistory extends PureComponent<Props, State> {
     getBackendSrv()
       .get(`/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`)
       .then(res => {
-        console.log(res);
-        const items = [];
-        res.map(item => {
-          items.push({
+        const items = res.map(item => {
+          return {
             stateModel: alertDef.getStateDisplayModel(item.newState),
             time: dashboard.formatDate(item.time, 'MMM D, YYYY HH:mm:ss'),
             info: alertDef.getAlertAnnotationInfo(item),
-          });
+          };
         });
 
         this.setState({
@@ -39,20 +39,47 @@ class StateHistory extends PureComponent<Props, State> {
       });
   }
 
+  clearHistory = () => {
+    const { dashboard, onRefresh, panelId } = this.props;
+
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Alert History',
+      text: 'Are you sure you want to remove all history & annotations for this alert?',
+      icon: 'fa-trash',
+      yesText: 'Yes',
+      onConfirm: () => {
+        getBackendSrv()
+          .post('/api/annotations/mass-delete', {
+            dashboardId: dashboard.id,
+            panelId: panelId,
+          })
+          .then(() => {
+            onRefresh();
+          });
+
+        this.setState({
+          stateHistoryItems: [],
+        });
+      },
+    });
+  };
+
   render() {
     const { stateHistoryItems } = this.state;
 
     return (
       <div>
         <div style={{ margin: '0 auto', maxWidth: '720px' }}>
-          <div style={{ marginBottom: '15px' }}>
-            <span className="muted">Last 50 state changes</span>
-            <button className="btn btn-mini btn-danger pull-right">
-              <i className="fa fa-trash" /> {` Clear history`}
-            </button>
-          </div>
+          {stateHistoryItems.length > 0 && (
+            <div style={{ marginBottom: '15px' }}>
+              <span className="muted">Last 50 state changes</span>
+              <button className="btn btn-mini btn-danger pull-right" onClick={this.clearHistory}>
+                <i className="fa fa-trash" /> {` Clear history`}
+              </button>
+            </div>
+          )}
           <ol className="alert-rule-list">
-            {stateHistoryItems ? (
+            {stateHistoryItems.length > 0 ? (
               stateHistoryItems.map((item, index) => {
                 return (
                   <li className="alert-rule-item" key={`${item.time}-${index}`}>

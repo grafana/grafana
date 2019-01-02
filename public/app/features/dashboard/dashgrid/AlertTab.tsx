@@ -19,10 +19,6 @@ export class AlertTab extends PureComponent<Props> {
   component: AngularComponent;
   panelCtrl: any;
 
-  constructor(props) {
-    super(props);
-  }
-
   componentDidMount() {
     if (this.shouldLoadAlertTab()) {
       this.loadAlertTab();
@@ -73,7 +69,13 @@ export class AlertTab extends PureComponent<Props> {
     return {
       title: 'State history',
       render: () => {
-        return <StateHistory dashboard={this.props.dashboard} panelId={this.props.panel.id} />;
+        return (
+          <StateHistory
+            dashboard={this.props.dashboard}
+            panelId={this.props.panel.id}
+            onRefresh={this.panelCtrl.refresh}
+          />
+        );
       },
       buttonType: ToolbarButtonType.View,
     };
