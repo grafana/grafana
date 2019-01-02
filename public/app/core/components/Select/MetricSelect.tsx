@@ -3,10 +3,11 @@ import _ from 'lodash';
 
 import Select from './Select';
 import { Variable } from 'app/types/templates';
+import { SelectOptionItem } from './Select';
 
 export interface Props {
   onChange: (value: string) => void;
-  options: any[];
+  options: SelectOptionItem[];
   isSearchable: boolean;
   value: string;
   placeholder?: string;
@@ -46,17 +47,7 @@ export class MetricSelect extends React.Component<Props, State> {
   }
 
   buildOptions({ variables = [], options }) {
-    return variables.length > 0
-      ? [
-          this.getVariablesGroup(),
-          // {
-          //   label: groupName,
-          //   expanded: true,
-          //   options,
-          // },
-          ...options,
-        ]
-      : options;
+    return variables.length > 0 ? [this.getVariablesGroup(), ...options] : options;
   }
 
   getVariablesGroup() {
