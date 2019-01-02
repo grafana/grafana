@@ -1,6 +1,7 @@
 import { Value } from 'slate';
 
-import { DataQuery, RawTimeRange } from './series';
+import { DataQuery } from './series';
+import { RawTimeRange } from '@grafana/ui';
 import TableModel from 'app/core/table_model';
 import { LogsModel } from 'app/core/logs_model';
 import { DataSourceSelectItem } from 'app/types/datasources';

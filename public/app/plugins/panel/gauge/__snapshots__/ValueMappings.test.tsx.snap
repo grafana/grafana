@@ -5,7 +5,7 @@ exports[`Render should render component 1`] = `
   className="section gf-form-group"
 >
   <h5
-    className="page-heading"
+    className="section-heading"
   >
     Value mappings
   </h5>

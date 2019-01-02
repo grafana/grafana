@@ -1,6 +1,5 @@
 .thresholds {
   display: flex;
-  margin-top: 30px;
 }
 
 .threshold-rows {
@@ -10,7 +9,7 @@
 .threshold-row {
   display: flex;
   align-items: center;
-  margin: 5px 0;
+  margin-top: 3px;
   padding: 5px;
 
   &::before {
@@ -25,8 +24,11 @@
   border-radius: $border-radius;
   display: flex;
   overflow: hidden;
-  width: 300px;
   height: 37px;
+
+  &--base {
+    width: auto;
+  }
 }
 
 .threshold-row-color {
@@ -48,13 +50,12 @@
 
 .threshold-row-input {
   padding: 8px 10px;
-  width: 230px;
+  width: 150px;
 }
 
 .threshold-row-label {
   background-color: $input-label-bg;
   padding: 5px;
-  width: 36px;
   display: flex;
   align-items: center;
 }
@@ -63,14 +64,6 @@
   align-items: center;
   display: flex;
   padding: 5px 8px;
-}
-
-.threshold-row-min {
-  margin-top: -22px;
-}
-
-.threshold-row-max {
-  margin-bottom: -22px;
 }
 
 .threshold-row-remove {
@@ -98,11 +91,13 @@
 
 .indicator-section {
   width: 100%;
+  height: 50px;
   cursor: pointer;
 }
 
 .color-indicators {
   width: 15px;
-  border-radius: $border-radius;
+  border-bottom-left-radius: $border-radius;
+  border-bottom-right-radius: $border-radius;
   overflow: hidden;
 }

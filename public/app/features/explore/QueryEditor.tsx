@@ -3,7 +3,7 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 import { Emitter } from 'app/core/utils/emitter';
 import { getIntervals } from 'app/core/utils/explore';
 import { DataQuery } from 'app/types';
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/time_srv';
 import 'app/features/plugins/plugin_loader';
 

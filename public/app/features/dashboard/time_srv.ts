@@ -6,9 +6,9 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 import * as dateMath from 'app/core/utils/datemath';
-// Types
 
-import { TimeRange } from 'app/types';
+// Types
+import { TimeRange } from '@grafana/ui';
 
 export class TimeSrv {
   time: any;

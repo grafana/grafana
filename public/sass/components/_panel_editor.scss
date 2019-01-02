@@ -14,7 +14,7 @@
 
   &--view {
     flex: 1 1 0;
-    height: 80%;
+    height: 90%;
     margin: 0 $dashboard-padding;
     padding-top: $dashboard-padding;
   }
@@ -26,6 +26,7 @@
   flex-direction: row;
   flex: 1 1 0;
   position: relative;
+  min-height: 0;
 }
 
 .panel-editor__right {
@@ -36,6 +37,7 @@
   margin: 0 20px 0 84px;
   border-radius: 3px;
   box-shadow: $panel-editor-shadow;
+  min-height: 0;
 }
 
 .panel-editor__close {
@@ -60,6 +62,7 @@
   flex-grow: 1;
   min-width: 0;
   display: flex;
+  min-height: 0;
 }
 
 .panel-editor__content {
@@ -84,46 +87,34 @@
   }
 }
 
-.panel-editor-resizer {
-  position: absolute;
-  height: 2px;
-  width: 100%;
-  top: -23px;
-  text-align: center;
-  border-bottom: 2px dashed transparent;
-
-  &:hover {
-    transition: border-color 0.2s ease-in 0.4s;
-    transition-delay: 0.2s;
-    border-color: $text-color-faint;
-  }
+.panel-editor-container__resizer {
+  position: relative;
+  margin-top: -3px;
 }
 
 .panel-editor-resizer__handle {
-  display: inline-block;
-  width: 180px;
   position: relative;
-  border-radius: 2px;
-  height: 7px;
-  cursor: grabbing;
-  background: $input-label-bg;
-  top: -9px;
+  display: block;
+  background: $vertical-resize-handle-bg;
+  width: 150px;
+  margin-left: -75px;
+  height: 6px;
+  cursor: ns-resize;
+  border-radius: 3px;
+  margin: 0 auto;
 
-  &:hover {
-    transition: background 0.2s ease-in 0.4s;
-    transition-delay: 0.2s;
-    background: linear-gradient(90deg, $orange, $red);
-    .panel-editor-resizer__handle-dots {
-      transition: opacity 0.2s ease-in;
-      opacity: 0;
-    }
+  &::before {
+    content: ' ';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 2px;
+    border-top: 2px dotted $vertical-resize-handle-dots;
   }
-}
 
-.panel-editor-resizer__handle-dots {
-  border-top: 2px dashed $text-color-faint;
-  position: relative;
-  top: 4px;
+  &:hover::before {
+    border-color: $vertical-resize-handle-dots-hover;
+  }
 }
 
 .viz-picker {
@@ -149,7 +140,6 @@
   display: flex;
   margin-right: 10px;
   margin-bottom: 10px;
-  //border: 1px solid transparent;
   align-items: center;
   justify-content: center;
   padding-bottom: 6px;
@@ -184,7 +174,6 @@
 }
 
 .panel-editor-tabs {
-  position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -231,7 +220,6 @@
 
     &:hover {
       filter: $panel-editor-side-menu-shadow;
-      transform: translate(-2px, -2px);
       transform: scale(1.1);
     }
   }

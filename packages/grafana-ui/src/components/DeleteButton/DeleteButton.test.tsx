@@ -1,10 +1,10 @@
 import React from 'react';
-import DeleteButton from './DeleteButton';
+import { DeleteButton } from './DeleteButton';
 import { shallow } from 'enzyme';
 
 describe('DeleteButton', () => {
-  let wrapper;
-  let deleted;
+  let wrapper: any;
+  let deleted: any;
 
   beforeAll(() => {
     deleted = false;
@@ -12,7 +12,8 @@ describe('DeleteButton', () => {
     function deleteItem() {
       deleted = true;
     }
-    wrapper = shallow(<DeleteButton onConfirmDelete={() => deleteItem()} />);
+
+    wrapper = shallow(<DeleteButton onConfirm={() => deleteItem()} />);
   });
 
   it('should show confirm delete when clicked', () => {

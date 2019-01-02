@@ -3,7 +3,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, TimeRange } from 'app/types/series';
+import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_RANGE = {
@@ -232,60 +232,60 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     const timeOptions = this.getTimeOptions();
     return (
       <div ref={this.dropdownRef} className="gf-timepicker-dropdown">
-        <div className="gf-timepicker-absolute-section">
-          <h3 className="section-heading">Custom range</h3>
-
-          <label className="small">From:</label>
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-28">
-              <input
-                type="text"
-                className="gf-form-input input-large timepicker-from"
-                value={fromRaw}
-                onChange={this.handleChangeFrom}
-              />
-            </div>
+        <div className="popover-box">
+          <div className="popover-box__header">
+            <span className="popover-box__title">Quick ranges</span>
           </div>
-
-          <label className="small">To:</label>
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-28">
-              <input
-                type="text"
-                className="gf-form-input input-large timepicker-to"
-                value={toRaw}
-                onChange={this.handleChangeTo}
-              />
-            </div>
-          </div>
-
-          {/* <label className="small">Refreshing every:</label>
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-28">
-              <select className="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
-            </div>
-          </div> */}
-          <div className="gf-form">
-            <button className="btn gf-form-btn btn-secondary" onClick={this.handleClickApply}>
-              Apply
-            </button>
+          <div className="popover-box__body gf-timepicker-relative-section">
+            {Object.keys(timeOptions).map(section => {
+              const group = timeOptions[section];
+              return (
+                <ul key={section}>
+                  {group.map(option => (
+                    <li className={option.active ? 'active' : ''} key={option.display}>
+                      <a onClick={() => this.handleClickRelativeOption(option)}>{option.display}</a>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })}
           </div>
         </div>
 
-        <div className="gf-timepicker-relative-section">
-          <h3 className="section-heading">Quick ranges</h3>
-          {Object.keys(timeOptions).map(section => {
-            const group = timeOptions[section];
-            return (
-              <ul key={section}>
-                {group.map(option => (
-                  <li className={option.active ? 'active' : ''} key={option.display}>
-                    <a onClick={() => this.handleClickRelativeOption(option)}>{option.display}</a>
-                  </li>
-                ))}
-              </ul>
-            );
-          })}
+        <div className="popover-box">
+          <div className="popover-box__header">
+            <span className="popover-box__title">Custom range</span>
+          </div>
+          <div className="popover-box__body gf-timepicker-absolute-section">
+            <label className="small">From:</label>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-28">
+                <input
+                  type="text"
+                  className="gf-form-input input-large timepicker-from"
+                  value={fromRaw}
+                  onChange={this.handleChangeFrom}
+                />
+              </div>
+            </div>
+
+            <label className="small">To:</label>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-28">
+                <input
+                  type="text"
+                  className="gf-form-input input-large timepicker-to"
+                  value={toRaw}
+                  onChange={this.handleChangeTo}
+                />
+              </div>
+            </div>
+            <div className="gf-form">
+              <button className="btn gf-form-btn btn-secondary" onClick={this.handleClickApply}>
+                Apply
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -164,6 +164,14 @@ func GetPluginMarkdown(c *m.ReqContext) Response {
 		return Error(500, "Could not get markdown file", err)
 	}
 
+	// fallback try readme
+	if len(content) == 0 {
+		content, err = plugins.GetPluginMarkdown(pluginID, "readme")
+		if err != nil {
+			return Error(501, "Could not get markdown file", err)
+		}
+	}
+
 	resp := Respond(200, content)
 	resp.Header("Content-Type", "text/plain; charset=utf-8")
 	return resp

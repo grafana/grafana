@@ -11,4 +11,3 @@ function exit_if_fail {
 }
 
 exit_if_fail npm run test
-exit_if_fail npm run build

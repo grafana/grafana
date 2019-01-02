@@ -1,6 +1,5 @@
 // Libraries
 import React, { SFC, PureComponent } from 'react';
-import Remarkable from 'remarkable';
 import _ from 'lodash';
 
 // Components
@@ -22,6 +21,7 @@ import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { DataSourceSelectItem, DataQuery } from 'app/types';
+import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 
 interface Props {
   panel: PanelModel;
@@ -128,43 +128,13 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
-  loadHelp = () => {
-    const { currentDS } = this.state;
-    const hasHelp = currentDS.meta.hasQueryHelp;
-
-    if (hasHelp) {
-      this.setState({
-        helpContent: <h3>Loading help...</h3>,
-        isLoadingHelp: true,
-      });
-
-      this.backendSrv
-        .get(`/api/plugins/${currentDS.meta.id}/markdown/query_help`)
-        .then(res => {
-          const md = new Remarkable();
-          const helpHtml = md.render(res);
-          this.setState({
-            helpContent: <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />,
-            isLoadingHelp: false,
-          });
-        })
-        .catch(() => {
-          this.setState({
-            helpContent: <h3>'Error occured when loading help'</h3>,
-            isLoadingHelp: false,
-          });
-        });
-    }
-  };
-
   renderQueryInspector = () => {
     const { panel } = this.props;
     return <QueryInspector panel={panel} LoadingPlaceholder={LoadingPlaceholder} />;
   };
 
   renderHelp = () => {
-    const { helpContent, isLoadingHelp } = this.state;
-    return isLoadingHelp ? <LoadingPlaceholder text="Loading help..." /> : helpContent;
+    return <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />;
   };
 
   onAddQuery = (query?: Partial<DataQuery>) => {
@@ -233,7 +203,6 @@ export class QueriesTab extends PureComponent<Props, State> {
   render() {
     const { panel } = this.props;
     const { currentDS, isAddingMixed } = this.state;
-    const { hasQueryHelp } = currentDS.meta;
 
     const queryInspector = {
       title: 'Query Inspector',
@@ -243,8 +212,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     const dsHelp = {
       heading: 'Help',
       icon: 'fa fa-question',
-      disabled: !hasQueryHelp,
-      onClick: this.loadHelp,
       render: this.renderHelp,
     };
 

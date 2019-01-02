@@ -484,6 +484,14 @@ kbn.valueFormats.Mbits = kbn.formatBuilders.decimalSIPrefix('bps', 2);
 kbn.valueFormats.GBs = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
 kbn.valueFormats.Gbits = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
+// Floating Point Operations per Second
+kbn.valueFormats.flops = kbn.formatBuilders.decimalSIPrefix('FLOP/s');
+kbn.valueFormats.mflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 2);
+kbn.valueFormats.gflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 3);
+kbn.valueFormats.tflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 4);
+kbn.valueFormats.pflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 5);
+kbn.valueFormats.eflops = kbn.formatBuilders.decimalSIPrefix('FLOP/s', 6);
+
 // Hash Rate
 kbn.valueFormats.Hs = kbn.formatBuilders.decimalSIPrefix('H/s');
 kbn.valueFormats.KHs = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
@@ -621,6 +629,8 @@ kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m³');
 kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm³');
 kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m³');
 kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm³');
+kbn.valueFormats.conmgdL = kbn.formatBuilders.fixedUnit('mg/dL');
+kbn.valueFormats.conmmolL = kbn.formatBuilders.fixedUnit('mmol/L');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -1020,6 +1030,17 @@ kbn.getUnitFormats = () => {
       ],
     },
     {
+      text: 'computation throughput',
+      submenu: [
+        { text: 'FLOP/s', value: 'flops' },
+        { text: 'MFLOP/s', value: 'mflops' },
+        { text: 'GFLOP/s', value: 'gflops' },
+        { text: 'TFLOP/s', value: 'tflops' },
+        { text: 'PFLOP/s', value: 'pflops' },
+        { text: 'EFLOP/s', value: 'eflops' },
+      ],
+    },
+    {
       text: 'throughput',
       submenu: [
         { text: 'ops/sec (ops)', value: 'ops' },
@@ -1085,7 +1106,7 @@ kbn.getUnitFormats = () => {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
-        { text: 'Watt per square metre (W/m²)', value: 'Wm2' },
+        { text: 'Watt per square meter (W/m²)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
@@ -1182,14 +1203,16 @@ kbn.getUnitFormats = () => {
       submenu: [
         { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
-        { text: 'nanogram per cubic metre (ng/m³)', value: 'conngm3' },
-        { text: 'nanogram per normal cubic metre (ng/Nm³)', value: 'conngNm3' },
-        { text: 'microgram per cubic metre (μg/m³)', value: 'conμgm3' },
-        { text: 'microgram per normal cubic metre (μg/Nm³)', value: 'conμgNm3' },
-        { text: 'milligram per cubic metre (mg/m³)', value: 'conmgm3' },
-        { text: 'milligram per normal cubic metre (mg/Nm³)', value: 'conmgNm3' },
-        { text: 'gram per cubic metre (g/m³)', value: 'congm3' },
-        { text: 'gram per normal cubic metre (g/Nm³)', value: 'congNm3' },
+        { text: 'nanogram per cubic meter (ng/m³)', value: 'conngm3' },
+        { text: 'nanogram per normal cubic meter (ng/Nm³)', value: 'conngNm3' },
+        { text: 'microgram per cubic meter (μg/m³)', value: 'conμgm3' },
+        { text: 'microgram per normal cubic meter (μg/Nm³)', value: 'conμgNm3' },
+        { text: 'milligram per cubic meter (mg/m³)', value: 'conmgm3' },
+        { text: 'milligram per normal cubic meter (mg/Nm³)', value: 'conmgNm3' },
+        { text: 'gram per cubic meter (g/m³)', value: 'congm3' },
+        { text: 'gram per normal cubic meter (g/Nm³)', value: 'congNm3' },
+        { text: 'milligrams per decilitre (mg/dL)', value: 'conmgdL' },
+        { text: 'millimoles per litre (mmol/L)', value: 'conmmolL' },
       ],
     },
   ];

@@ -1,7 +1,7 @@
 import React, { SFC } from 'react';
 import _ from 'lodash';
 
-import { StackdriverPicker } from './StackdriverPicker';
+import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { alignmentPeriods } from '../constants';
 
 export interface Props {
@@ -16,18 +16,22 @@ export const AlignmentPeriods: SFC<Props> = ({ alignmentPeriod, templateSrv, onC
       <div className="gf-form-inline">
         <div className="gf-form">
           <label className="gf-form-label query-keyword width-9">Alignment Period</label>
-          <StackdriverPicker
+          <MetricSelect
             onChange={value => onChange(value)}
-            selected={alignmentPeriod}
-            templateVariables={templateSrv.variables}
-            options={alignmentPeriods.map(ap => ({
-              ...ap,
-              label: ap.text,
-            }))}
-            searchable={true}
+            value={alignmentPeriod}
+            variables={templateSrv.variables}
+            options={[
+              {
+                label: 'Alignment options',
+                expanded: true,
+                options: alignmentPeriods.map(ap => ({
+                  ...ap,
+                  label: ap.text,
+                })),
+              },
+            ]}
             placeholder="Select Alignment"
             className="width-15"
-            groupName="Alignment Options"
           />
         </div>
       </div>

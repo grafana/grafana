@@ -1,9 +1,38 @@
 import LokiDatasource from './datasource';
 
 describe('LokiDatasource', () => {
-  const instanceSettings = {
+  const instanceSettings: any = {
     url: 'myloggingurl',
   };
+
+  describe('when querying', () => {
+    const backendSrvMock = { datasourceRequest: jest.fn() };
+
+    const templateSrvMock = {
+      getAdhocFilters: () => [],
+      replace: a => a,
+    };
+
+    const range = { from: 'now-6h', to: 'now' };
+
+    test('should use default max lines when no limit given', () => {
+      const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
+      backendSrvMock.datasourceRequest = jest.fn();
+      ds.query({ range, targets: [{ expr: 'foo' }] });
+      expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
+      expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=1000');
+    });
+
+    test('should use custom max lines if limit is set', () => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      const ds = new LokiDatasource(customSettings, backendSrvMock, templateSrvMock);
+      backendSrvMock.datasourceRequest = jest.fn();
+      ds.query({ range, targets: [{ expr: 'foo' }] });
+      expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
+      expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=20');
+    });
+  });
 
   describe('when performing testDataSource', () => {
     let ds;

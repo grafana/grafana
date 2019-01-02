@@ -48,12 +48,19 @@ export const getLabelKeys = async (datasource, selectedMetricType) => {
 };
 
 export const getAlignmentPickerData = ({ valueType, metricKind, perSeriesAligner }, templateSrv) => {
-  const alignOptions = getAlignmentOptionsByMetric(valueType, metricKind).map(option => ({
+  const options = getAlignmentOptionsByMetric(valueType, metricKind).map(option => ({
     ...option,
     label: option.text,
   }));
-  if (!alignOptions.some(o => o.value === templateSrv.replace(perSeriesAligner))) {
-    perSeriesAligner = alignOptions.length > 0 ? alignOptions[0].value : '';
+  const alignOptions = [
+    {
+      label: 'Alignment options',
+      expanded: true,
+      options,
+    },
+  ];
+  if (!options.some(o => o.value === templateSrv.replace(perSeriesAligner))) {
+    perSeriesAligner = options.length > 0 ? options[0].value : '';
   }
   return { alignOptions, perSeriesAligner };
 };

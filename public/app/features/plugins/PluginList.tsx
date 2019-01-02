@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import classNames from 'classnames/bind';
+import classNames from 'classnames';
 import PluginListItem from './PluginListItem';
 import { Plugin } from 'app/types';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';

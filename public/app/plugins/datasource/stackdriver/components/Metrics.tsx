@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { StackdriverPicker } from './StackdriverPicker';
+import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
@@ -149,11 +149,11 @@ export class Metrics extends React.Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <span className="gf-form-label width-9 query-keyword">Service</span>
-            <StackdriverPicker
+            <MetricSelect
               onChange={value => this.handleServiceChange(value)}
-              selected={service}
+              value={service}
               options={services}
-              searchable={false}
+              isSearchable={false}
               placeholder="Select Services"
               className="width-15"
             />
@@ -165,15 +165,13 @@ export class Metrics extends React.Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <span className="gf-form-label width-9 query-keyword">Metric</span>
-            <StackdriverPicker
+            <MetricSelect
               onChange={value => this.handleMetricTypeChange(value)}
-              selected={metricType}
-              templateVariables={templateSrv.variables}
+              value={metricType}
+              variables={templateSrv.variables}
               options={metrics}
-              searchable={true}
               placeholder="Select Metric"
               className="width-15"
-              groupName="Metric Types"
             />
           </div>
           <div className="gf-form gf-form--grow">

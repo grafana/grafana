@@ -11,7 +11,8 @@ import {
   QueryHintGetter,
   QueryHint,
 } from 'app/types/explore';
-import { TimeRange, DataQuery } from 'app/types/series';
+import { TimeRange } from '@grafana/ui';
+import { DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
@@ -482,7 +483,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           } else {
             // Modify query only at index
             nextQueries = initialQueries.map((query, i) => {
-              // Synchronise all queries with local query cache to ensure consistency
+              // Synchronize all queries with local query cache to ensure consistency
               // TODO still needed?
               return i === index
                 ? {
@@ -608,9 +609,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // Clone range for query request
     // const queryRange: RawTimeRange = { ...range };
     // const { from, to, raw } = this.timeSrv.timeRange();
-    // Datasource is using `panelId + query.refId` for cancellation logic.
+    // Most datasource is using `panelId + query.refId` for cancellation logic.
     // Using `format` here because it relates to the view panel that the request is for.
-    const panelId = queryOptions.format;
+    // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
+    // Therefore panel id has to be unique.
+    const panelId = `${queryOptions.format}-${query.key}`;
 
     return {
       interval,

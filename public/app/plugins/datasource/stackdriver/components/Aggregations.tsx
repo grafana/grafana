@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 
 import { getAggregationOptionsByMetric } from '../functions';
-import { StackdriverPicker } from './StackdriverPicker';
+import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
@@ -38,10 +38,16 @@ export class Aggregations extends React.Component<Props, State> {
   setAggOptions({ metricDescriptor }: Props) {
     let aggOptions = [];
     if (metricDescriptor) {
-      aggOptions = getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(a => ({
-        ...a,
-        label: a.text,
-      }));
+      aggOptions = [
+        {
+          label: 'Aggregations',
+          expanded: true,
+          options: getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(a => ({
+            ...a,
+            label: a.text,
+          })),
+        },
+      ];
     }
     this.setState({ aggOptions });
   }
@@ -61,15 +67,13 @@ export class Aggregations extends React.Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Aggregation</label>
-            <StackdriverPicker
+            <MetricSelect
               onChange={value => onChange(value)}
-              selected={crossSeriesReducer}
-              templateVariables={templateSrv.variables}
+              value={crossSeriesReducer}
+              variables={templateSrv.variables}
               options={aggOptions}
-              searchable={true}
               placeholder="Select Aggregation"
               className="width-15"
-              groupName="Aggregations"
             />
           </div>
           <div className="gf-form gf-form--grow">

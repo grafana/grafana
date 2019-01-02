@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
-import classNames from 'classnames/bind';
+import tinycolor from 'tinycolor2';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { OptionModuleProps } from './module';
 import { BasicGaugeColor, Threshold } from 'app/types';
 
 interface State {
   thresholds: Threshold[];
+  baseColor: string;
 }
 
 export default class Thresholds extends PureComponent<OptionModuleProps, State> {
@@ -14,10 +15,12 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
 
     this.state = {
       thresholds: props.options.thresholds,
+      baseColor: props.options.baseColor,
     };
   }
 
   onAddThreshold = index => {
+    const { maxValue, minValue } = this.props.options;
     const { thresholds } = this.state;
 
     const newThresholds = thresholds.map(threshold => {
@@ -28,15 +31,28 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
       return threshold;
     });
 
-    // Setting value to a value between the new threshold.
-    const value = newThresholds[index].value - (newThresholds[index].value - newThresholds[index - 1].value) / 2;
+    // Setting value to a value between the previous thresholds
+    let value;
+
+    if (index === 0 && thresholds.length === 0) {
+      value = maxValue - (maxValue - minValue) / 2;
+    } else if (index === 0 && thresholds.length > 0) {
+      value = newThresholds[index + 1].value - (newThresholds[index + 1].value - minValue) / 2;
+    } else if (index > newThresholds[newThresholds.length - 1].index) {
+      value = maxValue - (maxValue - newThresholds[index - 1].value) / 2;
+    }
+
+    // Set a color that lies between the previous thresholds
+    let color;
+    if (index === 0 && thresholds.length === 0) {
+      color = tinycolor.mix(BasicGaugeColor.Green, BasicGaugeColor.Red, 50).toRgbString();
+    } else {
+      color = tinycolor.mix(thresholds[index - 1].color, BasicGaugeColor.Red, 50).toRgbString();
+    }
 
     this.setState(
       {
-        thresholds: this.sortThresholds([
-          ...newThresholds,
-          { index: index, label: '', value: value, canRemove: true, color: BasicGaugeColor.Orange },
-        ]),
+        thresholds: this.sortThresholds([...newThresholds, { index: index, value: value, color: color }]),
       },
       () => this.updateGauge()
     );
@@ -86,6 +102,7 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
     );
   };
 
+  onChangeBaseColor = color => this.props.onChange({ ...this.props.options, baseColor: color });
   onBlur = () => {
     this.setState(prevState => ({
       thresholds: this.sortThresholds(prevState.thresholds),
@@ -100,78 +117,16 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
 
   sortThresholds = thresholds => {
     return thresholds.sort((t1, t2) => {
-      return t1.value - t2.value;
+      return t2.value - t1.value;
     });
   };
-
-  getIndicatorColor = index => {
-    const { thresholds } = this.state;
-
-    if (index === 0) {
-      return thresholds[0].color;
-    }
-
-    return index < thresholds.length ? thresholds[index].color : BasicGaugeColor.Red;
-  };
-
-  renderNoThresholds() {
-    const { thresholds } = this.state;
-
-    const min = thresholds[0];
-    const max = thresholds[1];
-
-    return [
-      <div className="threshold-row threshold-row-min" key="min">
-        <div className="threshold-row-inner">
-          <div className="threshold-row-color">
-            <div className="threshold-row-color-inner">
-              <ColorPicker color={min.color} onChange={color => this.onChangeThresholdColor(min, color)} />
-            </div>
-          </div>
-          <input
-            className="threshold-row-input"
-            onBlur={this.onBlur}
-            onChange={event => this.onChangeThresholdValue(event, min)}
-            value={min.value}
-          />
-          <div className="threshold-row-label">{min.label}</div>
-        </div>
-      </div>,
-      <div className="threshold-row" key="add">
-        <div className="threshold-row-inner">
-          <div onClick={() => this.onAddThreshold(1)} className="threshold-row-add">
-            <i className="fa fa-plus" />
-          </div>
-          <div className="threshold-row-add-label">Add new threshold by clicking the line.</div>
-        </div>
-      </div>,
-      <div className="threshold-row threshold-row-max" key="max">
-        <div className="threshold-row-inner">
-          <div className="threshold-row-color" />
-          <input
-            className="threshold-row-input"
-            onBlur={this.onBlur}
-            onChange={event => this.onChangeThresholdValue(event, max)}
-            value={max.value}
-          />
-          <div className="threshold-row-label">{max.label}</div>
-        </div>
-      </div>,
-    ];
-  }
 
   renderThresholds() {
     const { thresholds } = this.state;
 
     return thresholds.map((threshold, index) => {
-      const rowStyle = classNames({
-        'threshold-row': true,
-        'threshold-row-min': index === 0,
-        'threshold-row-max': index === thresholds.length - 1,
-      });
-
       return (
-        <div className={rowStyle} key={`${threshold.index}-${index}`}>
+        <div className="threshold-row" key={`${threshold.index}-${index}`}>
           <div className="threshold-row-inner">
             <div className="threshold-row-color">
               {threshold.color && (
@@ -190,103 +145,80 @@ export default class Thresholds extends PureComponent<OptionModuleProps, State> 
               value={threshold.value}
               onBlur={this.onBlur}
             />
-            {threshold.canRemove ? (
-              <div onClick={() => this.onRemoveThreshold(threshold)} className="threshold-row-remove">
-                <i className="fa fa-times" />
-              </div>
-            ) : (
-              <div className="threshold-row-label">{threshold.label}</div>
-            )}
+            <div onClick={() => this.onRemoveThreshold(threshold)} className="threshold-row-remove">
+              <i className="fa fa-times" />
+            </div>
           </div>
         </div>
       );
     });
   }
 
-  insertAtIndex(index) {
+  renderIndicator() {
     const { thresholds } = this.state;
 
-    // If thresholds.length is greater or equal to 3
-    // it means a user has added one threshold
-    if (thresholds.length < 3 || index < 0) {
-      return 1;
-    }
-
-    return index;
-  }
-
-  renderIndicatorSection(index) {
-    const { thresholds } = this.state;
-    const indicators = thresholds.length - 1;
-
-    if (index === 0 || index === thresholds.length) {
+    return thresholds.map((t, i) => {
       return (
-        <div
-          key={index}
-          className="indicator-section"
-          style={{
-            height: `calc(100%/${indicators})`,
-          }}
-        >
+        <div key={`${t.value}-${i}`} className="indicator-section">
           <div
-            onClick={() => this.onAddThreshold(this.insertAtIndex(index - 1))}
+            onClick={() => this.onAddThreshold(t.index + 1)}
             style={{
-              height: '100%',
-              background: this.getIndicatorColor(index),
+              height: '50%',
+              backgroundColor: t.color,
+            }}
+          />
+          <div
+            onClick={() => this.onAddThreshold(t.index)}
+            style={{
+              height: '50%',
+              backgroundColor: t.color,
             }}
           />
         </div>
       );
-    }
+    });
+  }
 
+  renderBaseIndicator() {
     return (
-      <div
-        key={index}
-        className="indicator-section"
-        style={{
-          height: `calc(100%/${indicators})`,
-        }}
-      >
+      <div className="indicator-section" style={{ height: '100%' }}>
         <div
-          onClick={() => this.onAddThreshold(this.insertAtIndex(index))}
-          style={{
-            height: '50%',
-            background: this.getIndicatorColor(index),
-          }}
-        />
-        <div
-          onClick={() => this.onAddThreshold(this.insertAtIndex(index + 1))}
-          style={{
-            height: `50%`,
-            background: this.getIndicatorColor(index),
-          }}
+          onClick={() => this.onAddThreshold(0)}
+          style={{ height: '100%', backgroundColor: this.props.options.baseColor }}
         />
       </div>
     );
   }
 
-  renderIndicator() {
-    const { thresholds } = this.state;
+  renderBase() {
+    const { baseColor } = this.props.options;
 
-    return thresholds.map((t, i) => {
-      if (i <= thresholds.length - 1) {
-        return this.renderIndicatorSection(i);
-      }
-
-      return null;
-    });
+    return (
+      <div className="threshold-row threshold-row-base">
+        <div className="threshold-row-inner threshold-row-inner--base">
+          <div className="threshold-row-color">
+            <div className="threshold-row-color-inner">
+              <ColorPicker color={baseColor} onChange={color => this.onChangeBaseColor(color)} />
+            </div>
+          </div>
+          <div className="threshold-row-label">Base</div>
+        </div>
+      </div>
+    );
   }
 
   render() {
-    const { thresholds } = this.state;
-
     return (
       <div className="section gf-form-group">
-        <h5 className="page-heading">Thresholds</h5>
+        <h5 className="section-heading">Thresholds</h5>
         <div className="thresholds">
-          <div className="color-indicators">{this.renderIndicator()}</div>
+          <div className="color-indicators">
+            {this.renderIndicator()}
+            {this.renderBaseIndicator()}
+          </div>
           <div className="threshold-rows">
-            {thresholds.length > 2 ? this.renderThresholds() : this.renderNoThresholds()}
+            {this.renderThresholds()}
+            {this.renderBase()}
           </div>
         </div>
       </div>
