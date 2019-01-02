@@ -45,6 +45,7 @@ export class AlertTabCtrl {
     this.noDataModes = alertDef.noDataModes;
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
+    this.panelCtrl._enableAlert = this.enable;
   }
 
   $onInit() {
@@ -353,11 +354,11 @@ export class AlertTabCtrl {
     });
   }
 
-  enable() {
+  enable = () => {
     this.panel.alert = {};
     this.initModel();
     this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
-  }
+  };
 
   evaluatorParamsChanged() {
     ThresholdMapper.alertToGraphThresholds(this.panel);

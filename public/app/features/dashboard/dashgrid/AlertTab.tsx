@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { EditorTabBody, EditorToolbarView, ToolbarButtonType } from './EditorTabBody';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import appEvents from 'app/core/app_events';
 import { PanelModel } from '../panel_model';
 import 'app/features/alerting/AlertTabCtrl';
@@ -33,7 +33,7 @@ export class AlertTab extends PureComponent<Props> {
   }
 
   shouldLoadAlertTab() {
-    return this.props.angularPanel && this.element;
+    return this.props.angularPanel && this.element && !this.component;
   }
 
   componentWillUnmount() {
@@ -93,6 +93,7 @@ export class AlertTab extends PureComponent<Props> {
             panel.thresholds = [];
             this.panelCtrl.alertState = null;
             this.panelCtrl.render();
+            this.forceUpdate();
           },
         });
       },
@@ -100,15 +101,31 @@ export class AlertTab extends PureComponent<Props> {
     };
   };
 
+  onAddAlert = () => {
+    this.panelCtrl._enableAlert();
+    this.component.digest();
+    this.forceUpdate();
+  };
+
   render() {
     const { alert } = this.props.panel;
 
     const toolbarItems = alert ? [this.stateHistory(), this.deleteAlert()] : [];
 
+    const model = {
+      title: 'Panel has no alert rule defined',
+      icon: 'icon-gf icon-gf-alert',
+      onClick: this.onAddAlert,
+      buttonTitle: 'Create Alert',
+    };
+
     //TODO move add button react from angular and add condition to render angular view
     return (
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
-        <div ref={element => (this.element = element)} />
+        <>
+          <div ref={element => (this.element = element)} />
+          {!alert && <EmptyListCTA model={model} />}
+        </>
       </EditorTabBody>
     );
   }
