@@ -221,6 +221,10 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			mysql.RegisterTLSConfig("custom", tlsCert)
 			cnnstr += "&tls=custom"
 		}
+
+		if ss.dbCfg.ExtraConnectionStringArgs != "" {
+			cnnstr += "&" + ss.dbCfg.ExtraConnectionStringArgs
+		}
 	case migrator.POSTGRES:
 		var host, port = "127.0.0.1", "5432"
 		fields := strings.Split(ss.dbCfg.Host, ":")
@@ -237,6 +241,9 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			ss.dbCfg.User = "''"
 		}
 		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.dbCfg.User, ss.dbCfg.Pwd, host, port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
+		if ss.dbCfg.ExtraConnectionStringArgs != "" {
+			cnnstr += " " + ss.dbCfg.ExtraConnectionStringArgs
+		}
 	case migrator.SQLITE:
 		// special case for tests
 		if !filepath.IsAbs(ss.dbCfg.Path) {
@@ -244,6 +251,9 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
+		if ss.dbCfg.ExtraConnectionStringArgs != "" {
+			cnnstr += "&" + ss.dbCfg.ExtraConnectionStringArgs
+		}
 	default:
 		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
 	}
@@ -321,6 +331,8 @@ func (ss *SqlStore) readConfig() {
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+
+	ss.dbCfg.ExtraConnectionStringArgs = sec.Key("extra_connection_string_args").String()
 }
 
 func InitTestDB(t *testing.T) *SqlStore {
@@ -393,20 +405,21 @@ func IsTestDbPostgres() bool {
 }
 
 type DatabaseConfig struct {
-	Type             string
-	Host             string
-	Name             string
-	User             string
-	Pwd              string
-	Path             string
-	SslMode          string
-	CaCertPath       string
-	ClientKeyPath    string
-	ClientCertPath   string
-	ServerCertName   string
-	ConnectionString string
-	MaxOpenConn      int
-	MaxIdleConn      int
-	ConnMaxLifetime  int
-	CacheMode        string
+	Type                      string
+	Host                      string
+	Name                      string
+	User                      string
+	Pwd                       string
+	Path                      string
+	SslMode                   string
+	CaCertPath                string
+	ClientKeyPath             string
+	ClientCertPath            string
+	ServerCertName            string
+	ConnectionString          string
+	MaxOpenConn               int
+	MaxIdleConn               int
+	ConnMaxLifetime           int
+	CacheMode                 string
+	ExtraConnectionStringArgs string
 }
