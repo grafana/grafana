@@ -198,11 +198,10 @@ export class PanelCtrl {
   }
 
   calculatePanelHeight() {
-    if (this.panel.fullscreen) {
-      const docHeight = $('.react-grid-layout').height();
-      const editHeight = Math.floor(docHeight * 0.35);
-      const fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
+    if (this.panel.isEditing) {
+      this.containerHeight = $('.panel-wrapper--edit').height();
+    } else if (this.panel.fullscreen)  {
+      this.containerHeight = $('.panel-wrapper--view').height();
     } else {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
