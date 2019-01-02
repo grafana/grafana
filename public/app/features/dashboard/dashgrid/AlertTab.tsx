@@ -2,12 +2,15 @@ import React, { PureComponent } from 'react';
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { EditorTabBody, EditorToolbarView, ToolbarButtonType } from './EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import StateHistory from './StateHistory';
 import appEvents from 'app/core/app_events';
 import { PanelModel } from '../panel_model';
 import 'app/features/alerting/AlertTabCtrl';
+import { DashboardModel } from '../dashboard_model';
 
 interface Props {
   angularPanel?: AngularComponent;
+  dashboard: DashboardModel;
   panel: PanelModel;
 }
 
@@ -70,7 +73,7 @@ export class AlertTab extends PureComponent<Props> {
     return {
       title: 'State history',
       render: () => {
-        return <div>State history</div>;
+        return <StateHistory dashboard={this.props.dashboard} panelId={this.props.panel.id} />;
       },
       buttonType: ToolbarButtonType.View,
     };
@@ -119,7 +122,6 @@ export class AlertTab extends PureComponent<Props> {
       buttonTitle: 'Create Alert',
     };
 
-    //TODO move add button react from angular and add condition to render angular view
     return (
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <>

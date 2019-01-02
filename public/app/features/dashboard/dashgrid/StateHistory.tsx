@@ -1,0 +1,85 @@
+import React, { PureComponent } from 'react';
+import alertDef from '../../alerting/state/alertDef';
+import { getBackendSrv } from '../../../core/services/backend_srv';
+import { DashboardModel } from '../dashboard_model';
+
+interface Props {
+  dashboard: DashboardModel;
+  panelId: number;
+}
+
+interface State {
+  stateHistoryItems: any[];
+}
+
+class StateHistory extends PureComponent<Props, State> {
+  state = {
+    stateHistoryItems: [],
+  };
+
+  componentDidMount(): void {
+    const { dashboard, panelId } = this.props;
+
+    getBackendSrv()
+      .get(`/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`)
+      .then(res => {
+        console.log(res);
+        const items = [];
+        res.map(item => {
+          items.push({
+            stateModel: alertDef.getStateDisplayModel(item.newState),
+            time: dashboard.formatDate(item.time, 'MMM D, YYYY HH:mm:ss'),
+            info: alertDef.getAlertAnnotationInfo(item),
+          });
+        });
+
+        this.setState({
+          stateHistoryItems: items,
+        });
+      });
+  }
+
+  render() {
+    const { stateHistoryItems } = this.state;
+
+    return (
+      <div>
+        <div style={{ margin: '0 auto', maxWidth: '720px' }}>
+          <div style={{ marginBottom: '15px' }}>
+            <span className="muted">Last 50 state changes</span>
+            <button className="btn btn-mini btn-danger pull-right">
+              <i className="fa fa-trash" /> {` Clear history`}
+            </button>
+          </div>
+          <ol className="alert-rule-list">
+            {stateHistoryItems ? (
+              stateHistoryItems.map((item, index) => {
+                return (
+                  <li className="alert-rule-item" key={`${item.time}-${index}`}>
+                    <div className={`alert-rule-item__icon ${item.stateModel.stateClass}`}>
+                      <i className={item.stateModel.iconClass} />
+                    </div>
+                    <div className="alert-rule-item__body">
+                      <div className="alert-rule-item__header">
+                        <p className="alert-rule-item__name">{item.alertName}</p>
+                        <div className="alert-rule-item__text">
+                          <span className={`${item.stateModel.stateClass}`}>{item.stateModel.text}</span>
+                        </div>
+                      </div>
+                      {item.info}
+                    </div>
+                    <div className="alert-rule-item__time">{item.time}</div>
+                  </li>
+                );
+              })
+            ) : (
+              <i>No state changes recorded</i>
+            )}
+          </ol>
+        </div>
+      </div>
+    );
+  }
+}
+
+export default StateHistory;
