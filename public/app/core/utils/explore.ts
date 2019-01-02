@@ -105,7 +105,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 
 export function serializeStateToUrlParam(state: ExploreState, compact?: boolean): string {
   const urlState: ExploreUrlState = {
-    datasource: state.datasourceName,
+    datasource: state.initialDatasource,
     queries: state.initialQueries.map(clearQueryKeys),
     range: state.range,
   };

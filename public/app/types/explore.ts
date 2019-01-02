@@ -155,11 +155,11 @@ export interface ExploreState {
   datasourceError: any;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
-  datasourceName?: string;
   exploreDatasources: DataSourceSelectItem[];
   graphInterval: number; // in ms
   graphResult?: any[];
   history: HistoryItem[];
+  initialDatasource?: string;
   initialQueries: DataQuery[];
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
