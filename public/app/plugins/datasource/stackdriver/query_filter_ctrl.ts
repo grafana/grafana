@@ -130,7 +130,14 @@ export class StackdriverFilterCtrl {
     ) {
       this.target.metricType = metricsByService[0].value;
     }
-    return metricsByService;
+
+    return [
+      {
+        label: 'Metrics',
+        expanded: true,
+        options: metricsByService,
+      },
+    ];
   }
 
   async getLabels() {
