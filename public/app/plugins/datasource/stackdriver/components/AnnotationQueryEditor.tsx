@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { Metrics } from './Metrics';
 import { Filter } from './Filter';
 import { AnnotationTarget } from '../types';
+import { AnnotationsHelp } from './AnnotationsHelp';
 
 export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
@@ -57,7 +58,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const { defaultProject, metricType, filters, refId, title } = this.state;
+    const { defaultProject, metricType, filters, refId, title, text } = this.state;
     const { datasource } = this.props;
 
     return (
@@ -95,12 +96,19 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           </div>
           <div className="gf-form">
             <span className="gf-form-label query-keyword width-9">Text</span>
-            <input type="text" className="gf-form-input width-20" ng-model="ctrl.annotation.target.text" />
+            <input
+              type="text"
+              className="gf-form-input width-20"
+              value={text}
+              onChange={e => this.handleChange('text', e.target.value)}
+            />
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
+
+        <AnnotationsHelp />
         {/* <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} /> */}
       </React.Fragment>
     );
