@@ -159,7 +159,7 @@ export interface ExploreState {
   graphInterval: number; // in ms
   graphResult?: any[];
   history: HistoryItem[];
-  initialDatasourceId?: string;
+  initialDatasource?: string;
   initialQueries: DataQuery[];
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;

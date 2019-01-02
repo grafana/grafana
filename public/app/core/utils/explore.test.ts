@@ -68,7 +68,7 @@ describe('state functions', () => {
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        initialDatasourceId: 'foo',
+        initialDatasource: 'foo',
         range: {
           from: 'now-5h',
           to: 'now',
@@ -93,7 +93,7 @@ describe('state functions', () => {
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        initialDatasourceId: 'foo',
+        initialDatasource: 'foo',
         range: {
           from: 'now-5h',
           to: 'now',
@@ -119,7 +119,7 @@ describe('state functions', () => {
     it('can parse the serialized state into the original state', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        initialDatasourceId: 'foo',
+        initialDatasource: 'foo',
         range: {
           from: 'now - 5h',
           to: 'now',
@@ -143,7 +143,7 @@ describe('state functions', () => {
       const resultState = {
         ...rest,
         datasource: DEFAULT_EXPLORE_STATE.datasource,
-        initialDatasourceId: datasource,
+        initialDatasource: datasource,
         initialQueries: queries,
       };
 

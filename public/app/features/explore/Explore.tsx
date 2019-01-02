@@ -95,7 +95,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   /**
    * Set via URL or local storage
    */
-  initialDatasourceId: string;
+  initialDatasource: string;
   /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
@@ -121,7 +121,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       initialQueries = splitState.initialQueries;
     } else {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
-      const initialDatasourceId = datasource || store.get(LAST_USED_DATASOURCE_KEY);
+      const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
       initialQueries = ensureQueries(queries);
       const initialRange = { from: parseTime(range.from), to: parseTime(range.to) } || { ...DEFAULT_RANGE };
       // Millies step for helper bar charts
@@ -134,7 +134,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         exploreDatasources: [],
         graphInterval: initialGraphInterval,
         graphResult: [],
-        initialDatasourceId,
+        initialDatasource,
         initialQueries,
         history: [],
         logsResult: null,
@@ -158,7 +158,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   async componentDidMount() {
     const { datasourceSrv } = this.props;
-    const { initialDatasourceId } = this.state;
+    const { initialDatasource } = this.state;
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
@@ -174,8 +174,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       this.setState({ datasourceLoading: true, exploreDatasources });
       // Priority for datasource preselection: URL, localstorage, default datasource
       let datasource;
-      if (initialDatasourceId) {
-        datasource = await datasourceSrv.get(initialDatasourceId);
+      if (initialDatasource) {
+        datasource = await datasourceSrv.get(initialDatasource);
       } else {
         datasource = await datasourceSrv.get();
       }
@@ -260,7 +260,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         supportsLogs,
         supportsTable,
         datasourceLoading: false,
-        initialDatasourceId: datasource.name,
+        initialDatasource: datasource.name,
         initialQueries: nextQueries,
         logsHighlighterExpressions: undefined,
         showingStartPage: Boolean(StartPage),
