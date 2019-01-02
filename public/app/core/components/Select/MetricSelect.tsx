@@ -22,6 +22,7 @@ export class MetricSelect extends React.Component<Props, State> {
   static defaultProps = {
     variables: [],
     options: [],
+    isSearchable: true,
   };
 
   constructor(props) {
