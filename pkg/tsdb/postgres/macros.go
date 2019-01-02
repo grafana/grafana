@@ -122,6 +122,11 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
+	case "__unixEpochFilterNano":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsTimeUTC().UnixNano(), args[0], m.timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
