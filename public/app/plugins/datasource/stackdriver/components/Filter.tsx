@@ -57,10 +57,12 @@ export class Filter extends React.Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
+    const scope = this.component.getScope();
     if (prevProps.metricType !== this.props.metricType) {
-      const scope = this.component.getScope();
       scope.loading = this.loadLabels(scope);
     }
+    scope.filters = this.props.filters;
+    scope.groupBys = this.props.groupBys;
   }
 
   componentWillUnmount() {
