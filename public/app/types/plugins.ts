@@ -1,5 +1,5 @@
 import { ComponentClass } from 'react';
-import { PanelProps, PanelOptionsProps } from './panel';
+import { PanelProps, PanelOptionsProps } from '@grafana/ui';
 
 export interface PluginExports {
   Datasource?: any;

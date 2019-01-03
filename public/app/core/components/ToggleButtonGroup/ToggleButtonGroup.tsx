@@ -52,7 +52,11 @@ export const ToggleButton: SFC<ToggleButtonProps> = ({
   );
 
   if (tooltip) {
-    return <Tooltip content={tooltip}>{button}</Tooltip>;
+    return (
+      <Tooltip content={tooltip} placement="bottom">
+        {button}
+      </Tooltip>
+    );
   } else {
     return button;
   }

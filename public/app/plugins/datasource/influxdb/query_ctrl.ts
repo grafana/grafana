@@ -100,6 +100,9 @@ export class InfluxQueryCtrl extends QueryCtrl {
         if (!this.target.slimit) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'SLIMIT' }));
         }
+        if (!this.target.tz) {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'tz' }));
+        }
         if (this.target.orderByTime === 'ASC') {
           options.push(this.uiSegmentSrv.newSegment({ value: 'ORDER BY time DESC' }));
         }
@@ -122,6 +125,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
       case 'SLIMIT': {
         this.target.slimit = 10;
+        break;
+      }
+      case 'tz': {
+        this.target.tz = 'UTC';
         break;
       }
       case 'ORDER BY time DESC': {

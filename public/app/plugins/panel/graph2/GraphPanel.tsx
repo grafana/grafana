@@ -1,15 +1,10 @@
 // Libraries
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
+import colors from 'app/core/utils/colors';
 
-// Components
-import Graph from 'app/viz/Graph';
-
-// Services & Utils
-import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
-
-// Types
-import { PanelProps, NullValueMode } from 'app/types';
+// Components & Types
+import { Graph, PanelProps, NullValueMode, processTimeSeries } from '@grafana/ui';
 import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
@@ -23,9 +18,10 @@ export class GraphPanel extends PureComponent<Props> {
     const { timeSeries, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    const vmSeries = getTimeSeriesVMs({
+    const vmSeries = processTimeSeries({
       timeSeries: timeSeries,
       nullValueMode: NullValueMode.Ignore,
+      colorPalette: colors,
     });
 
     return (

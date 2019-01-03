@@ -5,7 +5,7 @@ import _ from 'lodash';
 import colors from 'app/core/utils/colors';
 
 // Types
-import { TimeSeries, TimeSeriesVMs, NullValueMode } from 'app/types';
+import { TimeSeries, TimeSeriesVMs, NullValueMode } from '@grafana/ui';
 
 interface Options {
   timeSeries: TimeSeries[];

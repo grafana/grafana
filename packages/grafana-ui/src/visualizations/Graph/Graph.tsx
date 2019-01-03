@@ -1,11 +1,9 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.time';
 
 // Types
-import { TimeRange, TimeSeriesVMs } from 'app/types';
+import { TimeRange, TimeSeriesVMs } from '../../types';
 
 interface GraphProps {
   timeSeries: TimeSeriesVMs;
@@ -24,7 +22,7 @@ export class Graph extends PureComponent<GraphProps> {
     showBars: false,
   };
 
-  element: HTMLElement;
+  element: HTMLElement | null;
 
   componentDidUpdate() {
     this.draw();
@@ -35,6 +33,10 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   draw() {
+    if (this.element === null) {
+      return;
+    }
+
     const { width, timeSeries, timeRange, showLines, showBars, showPoints } = this.props;
 
     if (!width) {
@@ -76,7 +78,7 @@ export class Graph extends PureComponent<GraphProps> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timeformat: time_format(ticks, min, max),
+        timeformat: timeFormat(ticks, min, max),
       },
       grid: {
         minBorderMargin: 0,
@@ -109,7 +111,7 @@ export class Graph extends PureComponent<GraphProps> {
 }
 
 // Copied from graph.ts
-function time_format(ticks, min, max) {
+function timeFormat(ticks: number, min: number, max: number): string {
   if (min && max && ticks) {
     const range = max - min;
     const secPerTick = range / ticks / 1000;

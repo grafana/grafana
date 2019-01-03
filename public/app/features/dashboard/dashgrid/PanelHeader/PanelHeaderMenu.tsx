@@ -3,7 +3,7 @@ import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
-import { PanelMenuItem } from 'app/types/panel';
+import { PanelMenuItem } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;

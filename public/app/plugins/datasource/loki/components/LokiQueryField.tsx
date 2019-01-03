@@ -15,6 +15,16 @@ import { DataQuery } from 'app/types';
 
 const PRISM_SYNTAX = 'promql';
 
+function getChooserText(hasSytax, hasLogLabels) {
+  if (!hasSytax) {
+    return 'Loading labels...';
+  }
+  if (!hasLogLabels) {
+    return '(No labels found)';
+  }
+  return 'Log labels';
+}
+
 export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
@@ -67,7 +77,10 @@ interface LokiQueryFieldState {
 
 class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: any[];
+  pluginsSearch: any[];
   languageProvider: any;
+  modifiedSearch: string;
+  modifiedQuery: string;
 
   constructor(props: LokiQueryFieldProps, context) {
     super(props, context);
@@ -84,6 +97,8 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
         getSyntax: node => 'promql',
       }),
     ];
+
+    this.pluginsSearch = [RunnerPlugin({ handler: props.onPressEnter })];
 
     this.state = {
       logLabelOptions: [],
@@ -189,7 +204,8 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
     const { error, hint, initialQuery } = this.props;
     const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = syntaxLoaded ? 'Log labels' : 'Loading labels...';
+    const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
+    const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
 
     return (
       <div className="prom-query-field">
@@ -208,7 +224,7 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
             onTypeahead={this.onTypeahead}
             onWillApplySuggestion={willApplySuggestion}
             onValueChanged={this.onChangeQuery}
-            placeholder="Enter a Loki Log query"
+            placeholder="Enter a Loki query"
             portalOrigin="loki"
             syntaxLoaded={syntaxLoaded}
           />

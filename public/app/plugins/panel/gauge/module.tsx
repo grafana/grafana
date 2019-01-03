@@ -5,15 +5,8 @@ import ValueOptions from './ValueOptions';
 import GaugeOptions from './GaugeOptions';
 import Thresholds from './Thresholds';
 import ValueMappings from './ValueMappings';
-import {
-  BasicGaugeColor,
-  NullValueMode,
-  PanelOptionsProps,
-  PanelProps,
-  RangeMap,
-  Threshold,
-  ValueMap,
-} from 'app/types';
+import { PanelOptionsProps, PanelProps, NullValueMode } from '@grafana/ui';
+import { BasicGaugeColor, RangeMap, Threshold, ValueMap } from 'app/types';
 
 export interface OptionsProps {
   baseColor: string;
