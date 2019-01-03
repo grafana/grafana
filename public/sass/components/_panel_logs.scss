@@ -18,7 +18,7 @@ $column-horizontal-spacing: 10px;
   flex-wrap: wrap;
 
   > * {
-    margin-right: 1em;
+    margin-right: $spacer*2;
   }
 }
 
@@ -31,20 +31,21 @@ $column-horizontal-spacing: 10px;
 .logs-panel-meta {
   flex: 1;
   color: $text-color-weak;
-  margin-bottom: 10px;
+  margin-bottom: $spacer;
   min-width: 30%;
   display: flex;
 }
 
 .logs-panel-meta__item {
-  margin-right: 1em;
+  margin-right: $spacer;
   display: flex;
+  align-items: baseline;
 }
 
 .logs-panel-meta__label {
-  margin-right: 0.5em;
-  font-size: 0.9em;
-  font-weight: 500;
+  margin-right: $spacer / 2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semi-bold;
 }
 
 .logs-panel-meta__value {
@@ -59,7 +60,7 @@ $column-horizontal-spacing: 10px;
 
 .logs-rows {
   font-family: $font-family-monospace;
-  font-size: 12px;
+  font-size: $font-size-sm;
   display: table;
   table-layout: fixed;
 }

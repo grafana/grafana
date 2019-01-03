@@ -1,19 +1,19 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, SyntheticEvent } from 'react';
 
-export interface DeleteButtonProps {
-  onConfirmDelete();
+interface Props {
+  onConfirm(): void;
 }
 
-export interface DeleteButtonStates {
+interface State {
   showConfirm: boolean;
 }
 
-export default class DeleteButton extends PureComponent<DeleteButtonProps, DeleteButtonStates> {
-  state: DeleteButtonStates = {
+export class DeleteButton extends PureComponent<Props, State> {
+  state: State = {
     showConfirm: false,
   };
 
-  onClickDelete = event => {
+  onClickDelete = (event: SyntheticEvent) => {
     if (event) {
       event.preventDefault();
     }
@@ -23,7 +23,7 @@ export default class DeleteButton extends PureComponent<DeleteButtonProps, Delet
     });
   };
 
-  onClickCancel = event => {
+  onClickCancel = (event: SyntheticEvent) => {
     if (event) {
       event.preventDefault();
     }
@@ -33,7 +33,7 @@ export default class DeleteButton extends PureComponent<DeleteButtonProps, Delet
   };
 
   render() {
-    const onClickConfirm = this.props.onConfirmDelete;
+    const { onConfirm } = this.props;
     let showConfirm;
     let showDeleteButton;
 
@@ -55,7 +55,7 @@ export default class DeleteButton extends PureComponent<DeleteButtonProps, Delet
             <a className="btn btn-small" onClick={this.onClickCancel}>
               Cancel
             </a>
-            <a className="btn btn-danger btn-small" onClick={onClickConfirm}>
+            <a className="btn btn-danger btn-small" onClick={onConfirm}>
               Confirm Delete
             </a>
           </span>

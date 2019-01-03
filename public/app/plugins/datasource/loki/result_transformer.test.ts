@@ -99,7 +99,7 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'WARN boooo',
-          timestamp: '1970-01-01T00:00:00Z',
+          ts: '1970-01-01T00:00:00Z',
         },
       ],
     };
@@ -120,7 +120,7 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'WARN boooo',
-          timestamp: '1970-01-01T00:00:01Z',
+          ts: '1970-01-01T00:00:01Z',
         },
       ],
     };
@@ -129,11 +129,11 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'INFO 1',
-          timestamp: '1970-01-01T00:00:00Z',
+          ts: '1970-01-01T00:00:00Z',
         },
         {
           line: 'INFO 2',
-          timestamp: '1970-01-01T00:00:02Z',
+          ts: '1970-01-01T00:00:02Z',
         },
       ],
     };

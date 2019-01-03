@@ -629,6 +629,8 @@ kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m³');
 kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm³');
 kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m³');
 kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm³');
+kbn.valueFormats.conmgdL = kbn.formatBuilders.fixedUnit('mg/dL');
+kbn.valueFormats.conmmolL = kbn.formatBuilders.fixedUnit('mmol/L');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -1209,6 +1211,8 @@ kbn.getUnitFormats = () => {
         { text: 'milligram per normal cubic meter (mg/Nm³)', value: 'conmgNm3' },
         { text: 'gram per cubic meter (g/m³)', value: 'congm3' },
         { text: 'gram per normal cubic meter (g/Nm³)', value: 'congNm3' },
+        { text: 'milligrams per decilitre (mg/dL)', value: 'conmgdL' },
+        { text: 'millimoles per litre (mmol/L)', value: 'conmmolL' },
       ],
     },
   ];

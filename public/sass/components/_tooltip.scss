@@ -11,21 +11,26 @@
   font-size: 11px;
   line-height: 1.4;
   @include opacity(0);
+
   &.in {
     @include opacity(100);
   }
+
   &.top {
     margin-top: -3px;
     padding: 5px 0;
   }
+
   &.right {
     margin-left: 3px;
     padding: 0 5px;
   }
+
   &.bottom {
     margin-top: 3px;
     padding: 5px 0;
   }
+
   &.left {
     margin-left: -3px;
     padding: 0 5px;
@@ -60,6 +65,7 @@
     border-width: $tooltipArrowWidth $tooltipArrowWidth 0;
     border-top-color: $tooltipArrowColor;
   }
+
   &.right .tooltip-arrow {
     top: 50%;
     left: 0;
@@ -67,6 +73,7 @@
     border-width: $tooltipArrowWidth $tooltipArrowWidth $tooltipArrowWidth 0;
     border-right-color: $tooltipArrowColor;
   }
+
   &.left .tooltip-arrow {
     top: 50%;
     right: 0;
@@ -74,6 +81,7 @@
     border-width: $tooltipArrowWidth 0 $tooltipArrowWidth $tooltipArrowWidth;
     border-left-color: $tooltipArrowColor;
   }
+
   &.bottom .tooltip-arrow {
     top: 0;
     left: 50%;
@@ -98,6 +106,7 @@
   max-height: 600px;
   overflow: hidden;
   line-height: 14px;
+
   a {
     color: $tooltipLinkColor;
   }

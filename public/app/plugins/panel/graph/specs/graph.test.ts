@@ -114,6 +114,7 @@ describe('grafanaGraph', () => {
       {}
     );
 
+    // @ts-ignore
     $.plot = ctrl.plot = jest.fn();
     scope.ctrl = ctrl;
 
