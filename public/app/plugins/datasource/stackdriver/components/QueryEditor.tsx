@@ -26,7 +26,7 @@ interface State extends Target {
   [key: string]: any;
 }
 
-const DefaultTarget: State = {
+export const DefaultTarget: State = {
   defaultProject: 'loading project...',
   metricType: '',
   metricKind: '',

@@ -52,11 +52,13 @@ export class Filter extends React.Component<Props, State> {
       hideGroupBys,
     };
     scopeProps.loading = this.loadLabels(scopeProps);
-
     this.component = loader.load(this.element, scopeProps, template);
   }
 
   componentDidUpdate(prevProps: Props) {
+    if (!this.element) {
+      return;
+    }
     const scope = this.component.getScope();
     if (prevProps.metricType !== this.props.metricType) {
       scope.loading = this.loadLabels(scope);
