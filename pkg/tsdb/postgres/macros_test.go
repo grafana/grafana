@@ -115,8 +115,8 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.Unix(), to.Unix()))
 			})
-			Convey("interpolate __unixEpochFilterNano function", func() {
-				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilterNano(time)")
+			Convey("interpolate __unixEpochNanoFilter function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time)")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.UnixNano(), to.UnixNano()))
@@ -153,8 +153,8 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.Unix(), to.Unix()))
 			})
-			Convey("interpolate __unixEpochFilterNano function", func() {
-				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilterNano(time)")
+			Convey("interpolate __unixEpochNanoFilter function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time)")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.UnixNano(), to.UnixNano()))
@@ -179,8 +179,8 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.Unix(), to.Unix()))
 			})
-			Convey("interpolate __unixEpochFilterNano function", func() {
-				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilterNano(time)")
+			Convey("interpolate __unixEpochNanoFilter function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time)")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.UnixNano(), to.UnixNano()))
