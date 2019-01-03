@@ -5,7 +5,7 @@ import { TimeSeriesVMs } from '@grafana/ui';
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
 
-interface Props {
+export interface Props {
   baseColor: string;
   decimals: number;
   height: number;
@@ -96,12 +96,14 @@ export class Gauge extends PureComponent<Props> {
   getFontColor(value) {
     const { baseColor, maxValue, thresholds } = this.props;
 
-    const atThreshold = thresholds.filter(threshold => value <= threshold.value);
+    if (thresholds.length > 0) {
+      const atThreshold = thresholds.filter(threshold => value <= threshold.value);
 
-    if (atThreshold.length > 0) {
-      return atThreshold[0].color;
-    } else if (value <= maxValue) {
-      return BasicGaugeColor.Red;
+      if (atThreshold.length > 0) {
+        return atThreshold[0].color;
+      } else if (value <= maxValue) {
+        return BasicGaugeColor.Red;
+      }
     }
 
     return baseColor;
