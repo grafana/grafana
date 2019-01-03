@@ -22,6 +22,12 @@ export class AliasBy extends Component<Props, State> {
     this.setState({ value: this.props.value });
   }
 
+  componentWillReceiveProps(nextProps: Props) {
+    if (nextProps.value !== this.props.value) {
+      this.setState({ value: nextProps.value });
+    }
+  }
+
   handleChange(e) {
     this.setState({ value: e.target.value });
     this.onChange(e.target.value);

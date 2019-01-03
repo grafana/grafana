@@ -119,7 +119,7 @@ export class Metrics extends React.Component<Props, State> {
   handleMetricTypeChange(value) {
     const metricDescriptor = this.getSelectedMetricDescriptor(value);
     this.setState({ metricDescriptor });
-    this.props.onChange(metricDescriptor);
+    this.props.onChange({ ...metricDescriptor, type: value });
   }
 
   getServicesList(metricDescriptors) {
@@ -170,7 +170,13 @@ export class Metrics extends React.Component<Props, State> {
               onChange={value => this.handleMetricTypeChange(value)}
               value={metricType}
               variables={templateSrv.variables}
-              options={metrics}
+              options={[
+                {
+                  label: 'Metrics',
+                  expanded: true,
+                  options: metrics,
+                },
+              ]}
               placeholder="Select Metric"
               className="width-15"
             />
