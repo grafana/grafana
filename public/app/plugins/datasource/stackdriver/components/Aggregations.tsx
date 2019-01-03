@@ -16,7 +16,7 @@ export interface Props {
   children?: (renderProps: any) => JSX.Element;
 }
 
-interface State {
+export interface State {
   aggOptions: any[];
   displayAdvancedOptions: boolean;
 }
@@ -79,13 +79,9 @@ export class Aggregations extends React.Component<Props, State> {
           <div className="gf-form gf-form--grow">
             <label className="gf-form-label gf-form-label--grow">
               <a onClick={() => this.handleToggleDisplayAdvanced()}>
-                {displayAdvancedOptions ? (
-                  <i className="fa fa-caret-down" ng-show="ctrl.target.showAggregationOptions" />
-                ) : (
-                  <React.Fragment>
-                    <i className="fa fa-caret-right" ng-hide="ctrl.target.showAggregationOptions" /> Advanced Options
-                  </React.Fragment>
-                )}
+                <React.Fragment>
+                  <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
+                </React.Fragment>
               </a>
             </label>
           </div>

@@ -276,7 +276,6 @@ Array [
         >
           <i
             className="fa fa-caret-right"
-            ng-hide="ctrl.target.showAggregationOptions"
           />
            Advanced Options
         </a>
