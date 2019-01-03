@@ -125,14 +125,14 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFrom()")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select '%d'", from.UnixNano()))
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", from.UnixNano()))
 			})
 
 			Convey("interpolate __unixEpochNanoTo function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoTo()")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select '%d'", to.UnixNano()))
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", to.UnixNano()))
 			})
 
 			Convey("interpolate __unixEpochGroup function", func() {

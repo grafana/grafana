@@ -128,9 +128,9 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsTimeUTC().UnixNano(), args[0], m.timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochNanoFrom":
-		return fmt.Sprintf("'%d'", m.timeRange.GetFromAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%d", m.timeRange.GetFromAsTimeUTC().UnixNano()), nil
 	case "__unixEpochNanoTo":
-		return fmt.Sprintf("'%d'", m.timeRange.GetToAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%d", m.timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
