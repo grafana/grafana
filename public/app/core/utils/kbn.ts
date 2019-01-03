@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import moment from 'moment';
+import { getValueFormat, getValueFormatterIndex  } from '@grafana/ui';
 
 const kbn: any = {};
 
@@ -1217,5 +1218,25 @@ kbn.getUnitFormats = () => {
     },
   ];
 };
+
+if (typeof Proxy !== "undefined") {
+  kbn.valueFormats = new Proxy(kbn.valueFormats, {
+    get(target, name, receiver) {
+      if (typeof name !== 'string') {
+        throw {message: `Value format ${String(name)} is not a string` };
+      }
+
+      const formatter = getValueFormat(name);
+      if  (formatter) {
+        return formatter;
+      }
+
+      // default to look here
+      return Reflect.get(target, name, receiver);
+    }
+  });
+} else {
+  kbn.valueFormats = getValueFormatterIndex();
+}
 
 export default kbn;
