@@ -13,7 +13,7 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { DeleteButton } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -224,7 +224,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                     <td>{key.name}</td>
                     <td>{key.role}</td>
                     <td>
-                      <DeleteButton onConfirmDelete={() => this.onDeleteApiKey(key)} />
+                      <DeleteButton onConfirm={() => this.onDeleteApiKey(key)} />
                     </td>
                   </tr>
                 );

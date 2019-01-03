@@ -10,6 +10,7 @@
 
   .navbar-page-btn {
     transform: translate3d(-36px, 0, 0);
+
     i {
       opacity: 0;
     }
@@ -40,9 +41,11 @@
   .navbar {
     display: none;
   }
+
   .scroll-canvas--dashboard {
     height: 100%;
   }
+
   .submenu-controls {
     display: none;
   }

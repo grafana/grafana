@@ -76,7 +76,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, models.ErrDashboardFolderCannotHaveParent
 	}
 
-	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(models.RootFolderName) {
+	if dash.IsFolder && strings.EqualFold(dash.Title, models.RootFolderName) {
 		return nil, models.ErrDashboardFolderNameExists
 	}
 
@@ -175,7 +175,9 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
+		OrgId:   dto.OrgId,
 	}
+
 	cmd, err := dr.buildSaveDashboardCommand(dto, true, false)
 	if err != nil {
 		return nil, err

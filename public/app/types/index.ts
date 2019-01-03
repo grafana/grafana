@@ -8,20 +8,8 @@ import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourceSelectItem, DataSourcesState } from './datasources';
-import {
-  TimeRange,
-  LoadingState,
-  TimeSeries,
-  TimeSeriesVM,
-  TimeSeriesVMs,
-  TimeSeriesStats,
-  NullValueMode,
-  DataQuery,
-  DataQueryResponse,
-  DataQueryOptions,
-  IntervalValues,
-} from './series';
-import { BasicGaugeColor, MappingType, PanelProps, PanelOptionsProps, RangeMap, Threshold, ValueMap } from './panel';
+import { DataQuery, DataQueryResponse, DataQueryOptions } from './series';
+import { BasicGaugeColor, MappingType, RangeMap, Threshold, ValueMap } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
 import { Organization, OrganizationState } from './organization';
 import {
@@ -68,16 +56,7 @@ export {
   OrgUser,
   User,
   UsersState,
-  TimeRange,
-  LoadingState,
   PanelPlugin,
-  PanelProps,
-  PanelOptionsProps,
-  TimeSeries,
-  TimeSeriesVM,
-  TimeSeriesVMs,
-  NullValueMode,
-  TimeSeriesStats,
   DataQuery,
   DataQueryResponse,
   DataQueryOptions,
@@ -95,7 +74,6 @@ export {
   ValidationRule,
   ValueMap,
   RangeMap,
-  IntervalValues,
   MappingType,
   BasicGaugeColor,
 };

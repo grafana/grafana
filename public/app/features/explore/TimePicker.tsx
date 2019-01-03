@@ -3,7 +3,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, TimeRange } from 'app/types/series';
+import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_RANGE = {

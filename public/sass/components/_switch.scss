@@ -19,15 +19,14 @@ gf-form-switch[disabled] {
 }
 
 .gf-form-switch {
+  display: flex;
   position: relative;
-  display: inline-block;
   width: 60px;
   height: $gf-form-input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
   border-left: none;
   border-radius: $input-border-radius;
-  display: flex;
   align-items: center;
   justify-content: center;
 
@@ -77,14 +76,13 @@ input:checked + .gf-form-switch__slider::before {
 
 .gf-form-checkbox {
   position: relative;
-  display: inline-block;
+  display: flex;
   width: 50px;
   height: $gf-form-input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
   border-left: none;
   border-radius: $input-border-radius;
-  display: flex;
   align-items: center;
   justify-content: center;
 

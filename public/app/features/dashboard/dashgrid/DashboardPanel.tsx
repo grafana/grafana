@@ -160,14 +160,14 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return (
       <div className={containerClass}>
         <PanelResizer
-          isEditing={!!isEditing}
+          isEditing={isEditing}
           panel={panel}
-          render={(panelHeight: number | 'inherit') => (
+          render={styles => (
             <div
               className={panelWrapperClass}
               onMouseEnter={this.onMouseEnter}
               onMouseLeave={this.onMouseLeave}
-              style={{ height: panelHeight }}
+              style={styles}
             >
               {plugin.exports.Panel && this.renderReactPanel()}
               {plugin.exports.PanelCtrl && this.renderAngularPanel()}

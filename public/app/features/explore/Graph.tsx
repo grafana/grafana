@@ -8,7 +8,7 @@ import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { RawTimeRange } from 'app/types/series';
+import { RawTimeRange } from '@grafana/ui';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 

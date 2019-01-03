@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { DeleteButton } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
@@ -76,7 +76,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         <td>{member.email}</td>
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.onRemoveMember(member)} />
+          <DeleteButton onConfirm={() => this.onRemoveMember(member)} />
         </td>
       </tr>
     );

@@ -26,6 +26,7 @@
     "noUnusedLocals": true,
     "baseUrl": "public",
     "pretty": true,
+    "typeRoots": ["node_modules/@types", "types"],
     "paths": {
       "app": ["app"]
     }
