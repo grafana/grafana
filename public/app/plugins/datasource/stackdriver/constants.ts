@@ -151,7 +151,7 @@ export const aggOptions = [
   {
     text: 'mean',
     value: 'REDUCE_MEAN',
-    valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
+    valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
