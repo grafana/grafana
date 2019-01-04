@@ -69,41 +69,39 @@ class StateHistory extends PureComponent<Props, State> {
 
     return (
       <div>
-        <div style={{ margin: '0 auto', maxWidth: '720px' }}>
-          {stateHistoryItems.length > 0 && (
-            <div style={{ marginBottom: '15px' }}>
-              <span className="muted">Last 50 state changes</span>
-              <button className="btn btn-mini btn-danger pull-right" onClick={this.clearHistory}>
-                <i className="fa fa-trash" /> {` Clear history`}
-              </button>
-            </div>
-          )}
-          <ol className="alert-rule-list">
-            {stateHistoryItems.length > 0 ? (
-              stateHistoryItems.map((item, index) => {
-                return (
-                  <li className="alert-rule-item" key={`${item.time}-${index}`}>
-                    <div className={`alert-rule-item__icon ${item.stateModel.stateClass}`}>
-                      <i className={item.stateModel.iconClass} />
-                    </div>
-                    <div className="alert-rule-item__body">
-                      <div className="alert-rule-item__header">
-                        <p className="alert-rule-item__name">{item.alertName}</p>
-                        <div className="alert-rule-item__text">
-                          <span className={`${item.stateModel.stateClass}`}>{item.stateModel.text}</span>
-                        </div>
+        {stateHistoryItems.length > 0 && (
+          <div className="p-b-1">
+            <span className="muted">Last 50 state changes</span>
+            <button className="btn btn-mini btn-danger pull-right" onClick={this.clearHistory}>
+              <i className="fa fa-trash" /> {` Clear history`}
+            </button>
+          </div>
+        )}
+        <ol className="alert-rule-list">
+          {stateHistoryItems.length > 0 ? (
+            stateHistoryItems.map((item, index) => {
+              return (
+                <li className="alert-rule-item" key={`${item.time}-${index}`}>
+                  <div className={`alert-rule-item__icon ${item.stateModel.stateClass}`}>
+                    <i className={item.stateModel.iconClass} />
+                  </div>
+                  <div className="alert-rule-item__body">
+                    <div className="alert-rule-item__header">
+                      <p className="alert-rule-item__name">{item.alertName}</p>
+                      <div className="alert-rule-item__text">
+                        <span className={`${item.stateModel.stateClass}`}>{item.stateModel.text}</span>
                       </div>
-                      {item.info}
                     </div>
-                    <div className="alert-rule-item__time">{item.time}</div>
-                  </li>
-                );
-              })
-            ) : (
-              <i>No state changes recorded</i>
-            )}
-          </ol>
-        </div>
+                    {item.info}
+                  </div>
+                  <div className="alert-rule-item__time">{item.time}</div>
+                </li>
+              );
+            })
+          ) : (
+            <i>No state changes recorded</i>
+          )}
+        </ol>
       </div>
     );
   }
