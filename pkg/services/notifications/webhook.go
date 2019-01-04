@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -69,11 +70,14 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		return err
 	}
 
+	defer resp.Body.Close()
+
 	if resp.StatusCode/100 == 2 {
+		// flushing the body enables the transport to reuse the same connection
+		io.Copy(ioutil.Discard, resp.Body)
 		return nil
 	}
 
-	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err

@@ -10,15 +10,26 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', [
     'sasslint',
-    'exec:tslint',
+    'tslint',
+    'typecheck',
     "exec:jest",
     'no-only-tests'
   ]);
 
+  grunt.registerTask('tslint', [
+    'newer:exec:tslintPackages',
+    'newer:exec:tslintRoot',
+  ]);
+
+  grunt.registerTask('typecheck', [
+    'newer:exec:typecheckPackages',
+    'newer:exec:typecheckRoot',
+  ]);
+
   grunt.registerTask('precommit', [
-    'sasslint',
-    'newer:exec:tslint',
-    'newer:exec:tsc',
+    'newer:sasslint',
+    'typecheck',
+    'tslint',
     'no-only-tests'
   ]);
 

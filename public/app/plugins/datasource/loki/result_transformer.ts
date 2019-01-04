@@ -11,7 +11,7 @@ import {
   LogsStreamLabels,
   LogsMetaKind,
 } from 'app/core/logs_model';
-import { DEFAULT_LIMIT } from './datasource';
+import { DEFAULT_MAX_LINES } from './datasource';
 
 /**
  * Returns the log level of a log line.
@@ -116,10 +116,11 @@ export function processEntry(
   uniqueLabels: LogsStreamLabels,
   search: string
 ): LogRow {
-  const { line, timestamp } = entry;
+  const { line } = entry;
+  const ts = entry.ts || entry.timestamp;
   // Assumes unique-ness, needs nanosec precision for timestamp
-  const key = `EK${timestamp}${labels}`;
-  const time = moment(timestamp);
+  const key = `EK${ts}${labels}`;
+  const time = moment(ts);
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
@@ -135,11 +136,11 @@ export function processEntry(
     entry: line,
     labels: parsedLabels,
     searchWords: search ? [search] : [],
-    timestamp: timestamp,
+    timestamp: ts,
   };
 }
 
-export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT): LogsModel {
+export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LINES): LogsModel {
   // Unique model identifier
   const id = streams.map(stream => stream.labels).join();
 

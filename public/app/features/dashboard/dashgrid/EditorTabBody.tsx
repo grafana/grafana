@@ -10,21 +10,22 @@ interface Props {
   children: JSX.Element;
   heading: string;
   renderToolbar?: () => JSX.Element;
-  toolbarItems?: EditorToolBarView[];
+  toolbarItems?: EditorToolbarView[];
 }
 
-export interface EditorToolBarView {
+export interface EditorToolbarView {
   title?: string;
   heading?: string;
-  imgSrc?: string;
   icon?: string;
   disabled?: boolean;
   onClick?: () => void;
-  render: (closeFunction?: any) => JSX.Element | JSX.Element[];
+  render?: () => JSX.Element;
+  action?: () => void;
+  btnType?: 'danger';
 }
 
 interface State {
-  openView?: EditorToolBarView;
+  openView?: EditorToolbarView;
   isOpen: boolean;
   fadeIn: boolean;
 }
@@ -48,7 +49,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     this.setState({ fadeIn: true });
   }
 
-  onToggleToolBarView = (item: EditorToolBarView) => {
+  onToggleToolBarView = (item: EditorToolbarView) => {
     this.setState({
       openView: item,
       isOpen: !this.state.isOpen,
@@ -74,12 +75,15 @@ export class EditorTabBody extends PureComponent<Props, State> {
     return state;
   }
 
-  renderButton(view: EditorToolBarView) {
+  renderButton(view: EditorToolbarView) {
     const onClick = () => {
       if (view.onClick) {
         view.onClick();
       }
-      this.onToggleToolBarView(view);
+
+      if (view.render) {
+        this.onToggleToolBarView(view);
+      }
     };
 
     return (
@@ -91,7 +95,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     );
   }
 
-  renderOpenView(view: EditorToolBarView) {
+  renderOpenView(view: EditorToolbarView) {
     return (
       <PanelOptionSection title={view.title || view.heading} onClose={this.onCloseOpenView}>
         {view.render()}

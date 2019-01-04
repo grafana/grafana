@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { PanelProps } from 'app/types';
+import { PanelProps } from '@grafana/ui';
 
 export class Text2 extends PureComponent<PanelProps> {
   constructor(props) {
