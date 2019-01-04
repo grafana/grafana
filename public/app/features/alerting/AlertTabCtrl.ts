@@ -115,7 +115,7 @@ export class AlertTabCtrl {
   }
 
   getNotifications() {
-    return Promise.resolve(
+    return this.$q.when(
       this.notifications.map(item => {
         return this.uiSegmentSrv.newSegment(item.name);
       })
@@ -148,6 +148,7 @@ export class AlertTabCtrl {
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
     this.addNotificationSegment.html = this.uiSegmentSrv.newPlusButton().html;
+    this.addNotificationSegment.fake = true;
   }
 
   removeNotification(index) {
