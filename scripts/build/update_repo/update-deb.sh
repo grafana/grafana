@@ -17,7 +17,7 @@ mkdir -p /deb-repo/repo
 mkdir -p /deb-repo/tmp
 
 # Download the database
-gsutil -m rsync -r gs://grafana-aptly-db/repo-db /deb-repo/db
+gsutil -m rsync -r "gs://grafana-aptly-db/$RELEASE_TYPE" /deb-repo/db
 
 # Add the new release to the repo
 aptly publish drop squeeze filesystem:repo:grafana || true
@@ -33,12 +33,9 @@ echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
 ./scripts/build/update_repo/sign-deb-repo.sh "$GPG_PASS"
 
 # Update the repo and db on gcp
-gsutil -m rsync -r -d /deb-repo/db gs://grafana-aptly-db/repo-db # TODO: support separate enterprise db
+gsutil -m rsync -r -d /deb-repo/db "gs://grafana-aptly-db/$RELEASE_TYPE"
 gsutil -m rsync -r -d /deb-repo/repo/grafana "gs://grafana-repo/$RELEASE_TYPE/deb"
 
 # usage:
-# deb https://grafana-repo.storage.googleapis.com/oss/deb squeeze main
-#
-# later:
 # curl https://packages.grafana.com/gpg.key | apt-key add -
-# deb https://packages.grafana.com/oss/deb squeeze main
+# deb https://packages.grafana.com/oss/deb stable main
