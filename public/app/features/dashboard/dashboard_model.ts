@@ -19,7 +19,8 @@ export class DashboardModel {
   tags: any;
   style: any;
   timezone: any;
-  editable: any;
+  editable: boolean;
+  lazyLoad: boolean;
   graphTooltip: any;
   time: any;
   private originalTime: any;
@@ -70,6 +71,7 @@ export class DashboardModel {
     this.style = data.style || 'dark';
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
+    this.lazyLoad = data.lazyLoad !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
@@ -81,7 +83,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
-    this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
+    this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData, this));
 
     this.resetOriginalVariables();
     this.resetOriginalTime();
@@ -282,7 +284,7 @@ export class DashboardModel {
   addPanel(panelData) {
     panelData.id = this.getNextPanelId();
 
-    const panel = new PanelModel(panelData);
+    const panel = new PanelModel(panelData, this);
 
     this.panels.unshift(panel);
 
@@ -388,7 +390,7 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    const clone = new PanelModel(sourcePanel.getSaveModel());
+    const clone = new PanelModel(sourcePanel.getSaveModel(), this);
     clone.id = this.getNextPanelId();
 
     // insert after source panel + value index
@@ -410,7 +412,7 @@ export class DashboardModel {
       return sourceRowPanel;
     }
 
-    const clone = new PanelModel(sourceRowPanel.getSaveModel());
+    const clone = new PanelModel(sourceRowPanel.getSaveModel(), this);
     // for row clones we need to figure out panels under row to clone and where to insert clone
     let rowPanels, insertPos;
     if (sourceRowPanel.collapsed) {
@@ -521,7 +523,7 @@ export class DashboardModel {
         _.each(rowPanels, (rowPanel, i) => {
           setScopedVars(rowPanel, option);
           if (optionIndex > 0) {
-            const cloneRowPanel = new PanelModel(rowPanel);
+            const cloneRowPanel = new PanelModel(rowPanel, this);
             this.updateRepeatedPanelIds(cloneRowPanel, true);
             // For exposed row additionally set proper Y grid position and add it to dashboard panels
             cloneRowPanel.gridPos.y += rowHeight * optionIndex;
@@ -719,7 +721,7 @@ export class DashboardModel {
           // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
           // insert after row
-          this.panels.splice(insertPos, 0, new PanelModel(panel));
+          this.panels.splice(insertPos, 0, new PanelModel(panel, this));
           // update insert post and y max
           insertPos += 1;
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);

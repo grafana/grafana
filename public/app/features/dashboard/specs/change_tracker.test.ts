@@ -93,7 +93,7 @@ describe('ChangeTracker', () => {
   });
 
   it('Should ignore panel repeats', () => {
-    dash.panels.push(new PanelModel({ repeatPanelId: 10 }));
+    dash.panels.push(new PanelModel({ repeatPanelId: 10 }, new DashboardModel({}, {})));
     expect(tracker.hasChanges()).toBe(false);
   });
 });

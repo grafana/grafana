@@ -47,7 +47,7 @@ export function ControllerTestContext(this: any) {
       self.$location = $location;
       self.$browser = $browser;
       self.$q = $q;
-      self.panel = new PanelModel({ type: 'test' });
+      self.panel = new PanelModel({ type: 'test' }, self.dashboard);
       self.dashboard = { meta: {} };
       self.isUtc = false;
       self.dashboard.isTimezoneUtc = () => {

@@ -55,7 +55,7 @@ const replacePanel = (dashboard: DashboardModel, newPanel: PanelModel, oldPanel:
   const deletedPanel = dashboard.panels.splice(index, 1);
   dashboard.events.emit('panel-removed', deletedPanel);
 
-  newPanel = new PanelModel(newPanel);
+  newPanel = new PanelModel(newPanel, dashboard);
   newPanel.id = oldPanel.id;
 
   dashboard.panels.splice(index, 0, newPanel);

@@ -2,6 +2,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import _ from 'lodash';
 import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
 import { DataQuery } from 'app/types';
+import { DashboardModel } from './dashboard_model';
 
 export interface GridPos {
   x: number;
@@ -16,6 +17,9 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   hasRefreshed: true,
+  skippedLastRefresh: true,
+  isPanelVisible: true,
+  dashboard: true,
   cachedPluginOptions: true,
 };
 
@@ -63,6 +67,7 @@ const defaults: any = {
   targets: [{}],
   cachedPluginOptions: {},
   transparent: false,
+  skippedLastRefresh: true,
 };
 
 export class PanelModel {
@@ -100,19 +105,24 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   hasRefreshed: boolean;
+  skippedLastRefresh: boolean;
+  isPanelVisible: () => boolean;
+  dashboard: DashboardModel;
   events: Emitter;
   cacheTimeout?: any;
 
   // cache props between plugins
   cachedPluginOptions?: any;
 
-  constructor(model) {
+  constructor(model, dashboard: DashboardModel) {
     this.events = new Emitter();
 
     // copy properties from persisted model
     for (const property in model) {
       this[property] = model[property];
     }
+
+    this.dashboard = dashboard;
 
     // defaults
     _.defaultsDeep(this, _.cloneDeep(defaults));
@@ -178,6 +188,13 @@ export class PanelModel {
   }
 
   refresh() {
+    if (this.dashboard.lazyLoad && !this.isPanelVisible() && !this.dashboard.meta.soloMode && !this.dashboard.snapshot) {
+      this.skippedLastRefresh = true;
+      return;
+    }
+
+    this.skippedLastRefresh = false;
+
     this.hasRefreshed = true;
     this.events.emit('refresh');
   }

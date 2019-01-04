@@ -428,7 +428,7 @@ export class DashboardMigrator {
           w: GRID_COLUMN_COUNT,
           h: rowGridHeight,
         };
-        rowPanelModel = new PanelModel(rowPanel);
+        rowPanelModel = new PanelModel(rowPanel, this.dashboard);
         nextRowId++;
         yPos++;
       }
@@ -458,7 +458,7 @@ export class DashboardMigrator {
         if (rowPanelModel && rowPanel.collapsed) {
           rowPanelModel.panels.push(panel);
         } else {
-          this.dashboard.panels.push(new PanelModel(panel));
+          this.dashboard.panels.push(new PanelModel(panel, this.dashboard));
         }
       }
 

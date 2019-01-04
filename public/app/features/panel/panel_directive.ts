@@ -2,6 +2,7 @@ import angular from 'angular';
 import $ from 'jquery';
 import Drop from 'tether-drop';
 import baron from 'baron';
+import { debounce } from 'lodash';
 
 const module = angular.module('grafana.directives');
 
@@ -200,9 +201,29 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
+      ctrl.panel.isPanelVisible = () => {
+        const position = panelContainer[0].getBoundingClientRect();
+        return (0 < position.top) && (position.top < window.innerHeight);
+      };
+
+      $document.bind('scroll', debounce(() => {
+        if (ctrl.panel.skippedLastRefresh) {
+          ctrl.refresh();
+        }
+      }, 250));
+
+      const refreshOnScroll = () => {
+        if (ctrl.panel.skippedLastRefresh) {
+          ctrl.refresh();
+        }
+      };
+
+      $document.on('scroll', refreshOnScroll);
+
       scope.$on('$destroy', () => {
         elem.off();
         cornerInfoElem.off();
+        $document.off('scroll', refreshOnScroll);
 
         if (infoDrop) {
           infoDrop.destroy();

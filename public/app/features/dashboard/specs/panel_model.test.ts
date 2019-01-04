@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import { PanelModel } from '../panel_model';
+import { DashboardModel } from '../dashboard_model';
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -9,7 +9,7 @@ describe('PanelModel', () => {
       model = new PanelModel({
         type: 'table',
         showColumns: true,
-      });
+      }, new DashboardModel({}, {}));
     });
 
     it('should apply defaults', () => {

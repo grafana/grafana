@@ -14,7 +14,7 @@ describe('DashboardRow', () => {
       },
     };
 
-    panel = new PanelModel({ collapsed: false });
+    panel = new PanelModel({ collapsed: false }, dashboardMock);
     wrapper = shallow(<DashboardRow panel={panel} dashboard={dashboardMock} />);
   });
 
@@ -42,7 +42,7 @@ describe('DashboardRow', () => {
 
   it('should have zero actions when cannot edit', () => {
     dashboardMock.meta.canEdit = false;
-    panel = new PanelModel({ collapsed: false });
+    panel = new PanelModel({ collapsed: false }, dashboardMock);
     wrapper = shallow(<DashboardRow panel={panel} dashboard={dashboardMock} />);
     expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(0);
   });

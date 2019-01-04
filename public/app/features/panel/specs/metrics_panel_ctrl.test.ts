@@ -1,3 +1,5 @@
+import { DashboardModel } from '../../dashboard/dashboard_model';
+
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/core/config', () => {
   return {
@@ -71,7 +73,7 @@ function setupController() {
     colors: [],
   };
 
-  MetricsPanelCtrl.prototype.panel = new PanelModel({ type: 'test' });
+  MetricsPanelCtrl.prototype.panel = new PanelModel({ type: 'test' }, new DashboardModel({}, {}));
 
   return new MetricsPanelCtrl(scope, injectorStub);
 }
