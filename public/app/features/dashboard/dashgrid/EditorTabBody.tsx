@@ -13,21 +13,15 @@ interface Props {
   toolbarItems?: EditorToolbarView[];
 }
 
-export enum ToolbarButtonType {
-  Action = 'action',
-  View = 'view',
-}
-
 export interface EditorToolbarView {
   title?: string;
   heading?: string;
-  imgSrc?: string;
   icon?: string;
   disabled?: boolean;
   onClick?: () => void;
   render?: () => JSX.Element;
   action?: () => void;
-  buttonType: ToolbarButtonType;
+  btnType?: 'danger';
 }
 
 interface State {
@@ -87,7 +81,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
         view.onClick();
       }
 
-      if (view.buttonType !== ToolbarButtonType.Action) {
+      if (view.render) {
         this.onToggleToolBarView(view);
       }
     };

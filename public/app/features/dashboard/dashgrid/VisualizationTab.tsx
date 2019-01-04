@@ -1,13 +1,16 @@
 // Libraries
 import React, { PureComponent } from 'react';
+
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+
 // Components
-import { EditorTabBody, EditorToolbarView, ToolbarButtonType } from './EditorTabBody';
+import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelOptionSection } from './PanelOptionSection';
+
 // Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
@@ -207,7 +210,6 @@ export class VisualizationTab extends PureComponent<Props, State> {
       heading: 'Help',
       icon: 'fa fa-question',
       render: this.renderHelp,
-      buttonType: ToolbarButtonType.View,
     };
 
     return (

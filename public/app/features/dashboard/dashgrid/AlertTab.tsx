@@ -1,12 +1,19 @@
+// Libraries
 import React, { PureComponent } from 'react';
+
+// Services & Utils
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
-import { EditorTabBody, EditorToolbarView, ToolbarButtonType } from './EditorTabBody';
+import appEvents from 'app/core/app_events';
+
+// Components
+import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
-import appEvents from 'app/core/app_events';
-import { PanelModel } from '../panel_model';
 import 'app/features/alerting/AlertTabCtrl';
+
+// Types
 import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../panel_model';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -77,7 +84,6 @@ export class AlertTab extends PureComponent<Props> {
           />
         );
       },
-      buttonType: ToolbarButtonType.View,
     };
   };
 
@@ -85,7 +91,7 @@ export class AlertTab extends PureComponent<Props> {
     const { panel } = this.props;
     return {
       title: 'Delete',
-      icon: 'fa fa-trash',
+      btnType: 'danger',
       onClick: () => {
         appEvents.emit('confirm-modal', {
           title: 'Delete Alert',
@@ -102,7 +108,6 @@ export class AlertTab extends PureComponent<Props> {
           },
         });
       },
-      buttonType: ToolbarButtonType.Action,
     };
   };
 
