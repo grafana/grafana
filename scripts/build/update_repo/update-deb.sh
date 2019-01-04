@@ -12,9 +12,9 @@ set -e
 
 # Setup environment
 cp scripts/build/update_repo/aptly.conf /etc/aptly.conf
-mkdir -p /deb-repo/db
-mkdir -p /deb-repo/repo
-mkdir -p /deb-repo/tmp
+mkdir -p /deb-repo/db   \
+         /deb-repo/repo \
+         /deb-repo/tmp
 
 # Download the database
 gsutil -m rsync -r "gs://grafana-aptly-db/$RELEASE_TYPE" /deb-repo/db
