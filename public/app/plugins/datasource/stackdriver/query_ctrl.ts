@@ -88,7 +88,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         try {
           jsonBody = JSON.parse(queryRes.error);
         } catch {
-          this.lastQueryError = queryRes.error;
         }
 
         this.lastQueryError = jsonBody.error.message;

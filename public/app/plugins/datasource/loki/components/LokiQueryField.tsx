@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import React from 'react';
 import Cascader from 'rc-cascader';
 import PluginPrism from 'slate-prism';
