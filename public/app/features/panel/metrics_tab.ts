@@ -1,6 +1,3 @@
-// Libraries
-import _ from 'lodash';
-
 // Services & utils
 import coreModule from 'app/core/core_module';
 import { Emitter } from 'app/core/utils/emitter';

@@ -16,7 +16,6 @@ export default class StackdriverDatasource {
   constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
-    this.doRequest = this.doRequest;
     this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
