@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
