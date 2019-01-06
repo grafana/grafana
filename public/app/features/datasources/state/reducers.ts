@@ -5,7 +5,7 @@ import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelec
 const initialState: DataSourcesState = {
   dataSources: [] as DataSource[],
   dataSource: {} as DataSource,
-  layoutMode: LayoutModes.Grid,
+  layoutMode: LayoutModes.List,
   searchQuery: '',
   dataSourcesCount: 0,
   dataSourceTypes: [] as Plugin[],

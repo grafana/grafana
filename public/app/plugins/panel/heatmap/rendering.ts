@@ -251,7 +251,6 @@ export class HeatmapRenderer {
     if (tickInterval === 0) {
       yMax = max * this.dataRangeWidingFactor;
       yMin = min - min * (this.dataRangeWidingFactor - 1);
-      tickInterval = (yMax - yMin) / 2;
     } else {
       yMax = Math.ceil((max + yWiding) / tickInterval) * tickInterval;
       yMin = Math.floor((min - yWiding) / tickInterval) * tickInterval;
@@ -389,9 +388,7 @@ export class HeatmapRenderer {
 
   // Adjust data range to log base
   adjustLogRange(min, max, logBase) {
-    let yMin, yMax;
-
-    yMin = this.data.heatmapStats.minLog;
+    let yMin = this.data.heatmapStats.minLog;
     if (this.data.heatmapStats.minLog > 1 || !this.data.heatmapStats.minLog) {
       yMin = 1;
     } else {
@@ -399,7 +396,7 @@ export class HeatmapRenderer {
     }
 
     // Adjust max Y value to log base
-    yMax = this.adjustLogMax(this.data.heatmapStats.max, logBase);
+    const yMax = this.adjustLogMax(this.data.heatmapStats.max, logBase);
 
     return { yMin, yMax };
   }

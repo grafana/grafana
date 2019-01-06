@@ -250,6 +250,12 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 Set to `true` to log the sql calls and execution times.
 
+### cache_mode
+
+For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
+Defaults to private.
+
+
 <hr />
 
 ## [security]

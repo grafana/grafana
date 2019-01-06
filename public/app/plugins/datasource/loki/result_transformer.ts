@@ -11,7 +11,7 @@ import {
   LogsStreamLabels,
   LogsMetaKind,
 } from 'app/core/logs_model';
-import { DEFAULT_LIMIT } from './datasource';
+import { DEFAULT_MAX_LINES } from './datasource';
 
 /**
  * Returns the log level of a log line.
@@ -140,7 +140,7 @@ export function processEntry(
   };
 }
 
-export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT): LogsModel {
+export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LINES): LogsModel {
   // Unique model identifier
   const id = streams.map(stream => stream.labels).join();
 

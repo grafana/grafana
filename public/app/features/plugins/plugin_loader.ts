@@ -29,14 +29,7 @@ import * as d3 from 'd3';
 import * as grafanaUI from '@grafana/ui';
 
 // rxjs
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-
-// these imports add functions to Observable
-import 'rxjs/add/observable/empty';
-import 'rxjs/add/observable/from';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/combineAll';
+import { Observable, Subject } from 'rxjs';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
