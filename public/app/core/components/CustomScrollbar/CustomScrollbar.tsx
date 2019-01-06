@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import Scrollbars from 'react-custom-scrollbars';
+import Scrollbars, { ScrollbarProps } from 'react-custom-scrollbars';
 
-interface Props {
+interface Props extends ScrollbarProps {
   customClassName?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
@@ -30,6 +30,7 @@ class CustomScrollbar extends PureComponent<Props> {
         autoHeight={true}
         autoHeightMin={'inherit'}
         autoHeightMax={'inherit'}
+        onScroll={() => {console.log('scrolling');}}
         renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
         renderTrackVertical={props => <div {...props} className="track-vertical" />}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}

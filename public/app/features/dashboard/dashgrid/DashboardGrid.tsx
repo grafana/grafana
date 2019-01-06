@@ -7,6 +7,7 @@ import { DashboardModel } from '../dashboard_model';
 import { PanelModel } from '../panel_model';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
+import CustomScrollbar from '../../../core/components/CustomScrollbar/CustomScrollbar';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
@@ -19,6 +20,7 @@ function GridWrapper({
   onDragStop,
   onResize,
   onResizeStop,
+  onScroll,
   onWidthChange,
   className,
   isResizable,
@@ -38,26 +40,30 @@ function GridWrapper({
   }
 
   return (
-    <ReactGridLayout
-      width={lastGridWidth}
-      className={className}
-      isDraggable={isDraggable}
-      isResizable={isResizable}
-      measureBeforeMount={false}
-      containerPadding={[0, 0]}
-      useCSSTransforms={false}
-      margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-      cols={GRID_COLUMN_COUNT}
-      rowHeight={GRID_CELL_HEIGHT}
-      draggableHandle=".grid-drag-handle"
-      layout={layout}
-      onResize={onResize}
-      onResizeStop={onResizeStop}
-      onDragStop={onDragStop}
-      onLayoutChange={onLayoutChange}
+    <CustomScrollbar
+      onScroll={onScroll}
     >
-      {children}
-    </ReactGridLayout>
+      <ReactGridLayout
+        width={lastGridWidth}
+        className={className}
+        isDraggable={isDraggable}
+        isResizable={isResizable}
+        measureBeforeMount={false}
+        containerPadding={[0, 0]}
+        useCSSTransforms={false}
+        margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+        cols={GRID_COLUMN_COUNT}
+        rowHeight={GRID_CELL_HEIGHT}
+        draggableHandle=".grid-drag-handle"
+        layout={layout}
+        onResize={onResize}
+        onResizeStop={onResizeStop}
+        onDragStop={onDragStop}
+        onLayoutChange={onLayoutChange}
+      >
+          {children}
+      </ReactGridLayout>
+    </CustomScrollbar>
   );
 }
 
@@ -87,6 +93,18 @@ export class DashboardGrid extends React.Component<DashboardGridProps> {
     dashboard.on('view-mode-changed', this.onViewModeChanged.bind(this));
     dashboard.on('row-collapsed', this.triggerForceUpdate.bind(this));
     dashboard.on('row-expanded', this.triggerForceUpdate.bind(this));
+
+    this.refreshOnScroll  = this.refreshOnScroll.bind(this);
+    // $('.scroll-canvas--dashboard').on('scroll', this.refreshOnScroll);
+  }
+
+  refreshOnScroll() {
+    console.log('bound');
+    for (const panel of this.props.dashboard.panels) {
+      if (panel.skippedLastRefresh) {
+        panel.refresh();
+      }
+    }
   }
 
   buildLayout() {
@@ -197,6 +215,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps> {
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}
         onDragStop={this.onDragStop}
+        onScroll={this.refreshOnScroll}
         onResize={this.onResize}
         onResizeStop={this.onResizeStop}
         isFullscreen={this.props.dashboard.meta.fullscreen}
