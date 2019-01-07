@@ -108,7 +108,7 @@
   padding: 2px 27px 0 8px;
   position: relative;
   white-space: nowrap;
-  min-width: 115px;
+  min-width: 146px;
 }
 
 .variable-options-column-header {
@@ -120,6 +120,10 @@
       background: url($checkboxImageUrl) 0px -36px no-repeat;
     }
   }
+  &.expanded {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
   .fa {
     vertical-align: middle;
   }
@@ -127,6 +131,10 @@
 
 .variable-options-column-header-selections a {
   padding-left: 20px;
+  &:last-of-type {
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+  }
 }
 
 .variable-option-icon {
