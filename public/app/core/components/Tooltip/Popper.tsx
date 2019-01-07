@@ -21,12 +21,20 @@ interface Props {
   placement?: any;
   content: string | ((props: any) => JSX.Element);
   refClassName?: string;
+  theme?: string;
+}
+
+export enum Themes {
+  Default = 'popper__background--default',
+  Error = 'popper__background--error',
 }
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { children, renderContent, show, placement, refClassName } = this.props;
+    const { children, renderContent, show, placement, refClassName, theme } = this.props;
     const { content } = this.props;
+
+    const popperBackgroundClassName = 'popper__background' + (theme ? ' ' + theme : '');
 
     return (
       <Manager>
@@ -53,7 +61,7 @@ class Popper extends PureComponent<Props> {
                       data-placement={placement}
                       className="popper"
                     >
-                      <div className="popper__background">
+                      <div className={popperBackgroundClassName}>
                         {renderContent(content)}
                         <div ref={arrowProps.ref} data-placement={placement} className="popper__arrow" />
                       </div>

@@ -9,6 +9,7 @@ export interface UsingPopperProps {
   content: string | ((props: any) => JSX.Element);
   className?: string;
   refClassName?: string;
+  theme?: string;
 }
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
   className?: string;
   refClassName?: string;
   content: string | ((props: any) => JSX.Element);
+  theme?: string;
 }
 
 interface State {
@@ -71,7 +73,6 @@ export default function withPopper(WrappedComponent) {
     render() {
       const { show, placement } = this.state;
       const className = this.props.className || '';
-
       return (
         <WrappedComponent
           {...this.props}
