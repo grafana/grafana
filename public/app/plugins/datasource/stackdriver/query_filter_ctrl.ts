@@ -89,7 +89,7 @@ export class StackdriverFilterCtrl {
     return elements;
   }
 
-  async getFilterKeys(segment, removeText?: string) {
+  async getFilterKeys(segment, removeText: string, hideRemoveButton: boolean) {
     let elements = await this.createLabelKeyElements();
 
     if (this.$scope.filters.indexOf(this.resourceTypeValue) !== -1) {
@@ -101,10 +101,12 @@ export class StackdriverFilterCtrl {
       return [];
     }
 
-    return [
-      ...elements,
-      this.uiSegmentSrv.newSegment({ fake: true, value: removeText || this.defaultRemoveGroupByValue }),
-    ];
+    return hideRemoveButton
+      ? elements
+      : [
+          ...elements,
+          this.uiSegmentSrv.newSegment({ fake: true, value: removeText || this.defaultRemoveGroupByValue }),
+        ];
   }
 
   async getGroupBys(segment) {
@@ -117,7 +119,7 @@ export class StackdriverFilterCtrl {
     }
 
     this.removeSegment.value = this.defaultRemoveGroupByValue;
-    return [...elements, this.removeSegment];
+    return segment.type === 'plus-button' ? elements : [...elements, this.removeSegment];
   }
 
   groupByChanged(segment, index) {
