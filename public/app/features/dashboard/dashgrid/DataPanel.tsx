@@ -11,6 +11,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { DataQueryOptions, DataQueryResponse } from 'app/types';
 import { TimeRange, TimeSeries, LoadingState } from '@grafana/ui';
+import { Themes } from 'app/core/components/Tooltip/Popper';
 
 interface RenderProps {
   loading: LoadingState;
@@ -140,7 +141,7 @@ export class DataPanel extends Component<Props, State> {
     const timeSeries = response.data;
 
     if (isFirstLoad && loading === LoadingState.Loading) {
-      return this.renderLoadingState();
+      return this.renderLoadingStates();
     }
 
     if (!queries.length) {
@@ -153,7 +154,7 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {this.renderLoadingState()}
+        {this.renderLoadingStates()}
         {this.props.children({
           timeSeries,
           loading,
@@ -162,7 +163,7 @@ export class DataPanel extends Component<Props, State> {
     );
   }
 
-  private renderLoadingState(): JSX.Element {
+  private renderLoadingStates(): JSX.Element {
     const { loading } = this.state;
     if (loading === LoadingState.Loading) {
       return (
@@ -177,6 +178,7 @@ export class DataPanel extends Component<Props, State> {
           className="popper__manager--block"
           refClassName={`panel-info-corner panel-info-corner--error`}
           placement="bottom-start"
+          theme={Themes.Error}
         >
           <i className="fa" />
           <span className="panel-info-corner-inner" />
