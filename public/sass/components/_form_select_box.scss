@@ -63,6 +63,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 .gf-form-select-box__menu-list {
   overflow-y: auto;
   max-height: 300px;
+  max-width: 600px;
 }
 
 .tag-filter .gf-form-select-box__menu {
@@ -172,22 +173,18 @@ $select-input-bg-disabled: $input-bg-disabled;
   margin-right: 10px;
 }
 
-.gf-form-select-box__option-group {
-  max-width: 600px;
+.gf-form-select-box__option-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-items: center;
+  cursor: pointer;
+  padding: 7px 10px;
+  width: 100%;
+  border-bottom: 1px solid $hr-border-color;
+  text-transform: capitalize;
 
-  .gf-form-select-box__option-group__header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    justify-items: center;
-    cursor: pointer;
-    padding: 7px 10px;
-    width: 100%;
-    border-bottom: 1px solid $hr-border-color;
-    text-transform: capitalize;
-
-    .fa {
-      padding-right: 2px;
-    }
+  .fa {
+    padding-right: 2px;
   }
 }
