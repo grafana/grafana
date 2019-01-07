@@ -28,8 +28,10 @@ class CustomScrollbar extends PureComponent<Props> {
       <Scrollbars
         className={customClassName}
         autoHeight={true}
-        autoHeightMin={'inherit'}
-        autoHeightMax={'inherit'}
+        // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
+        // Before these where set to inhert but that caused problems with cut of legends in firefox
+        autoHeightMin={'0'}
+        autoHeightMax={'100%'}
         renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
         renderTrackVertical={props => <div {...props} className="track-vertical" />}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
