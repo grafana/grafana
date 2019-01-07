@@ -32,7 +32,7 @@ export class StackdriverFilterCtrl {
 
   /** @ngInject */
   constructor(private $scope, private uiSegmentSrv, private templateSrv, private $rootScope) {
-    this.$scope = $scope.$parent;
+    this.$scope = $scope.hasOwnProperty('groupBysChanged') ? $scope : $scope.$parent;
 
     this.initSegments(this.$scope.hideGroupBys);
   }
