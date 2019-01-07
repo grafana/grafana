@@ -24,12 +24,14 @@ class EmptyListCTA extends Component<Props, any> {
           <i className={buttonIcon} />
           {buttonTitle}
         </a>
-        <div className="empty-list-cta__pro-tip">
-          <i className="fa fa-rocket" /> ProTip: {proTip}
-          <a className="text-link empty-list-cta__pro-tip-link" href={proTipLink} target={proTipTarget}>
-            {proTipLinkTitle}
-          </a>
-        </div>
+        {proTip && (
+          <div className="empty-list-cta__pro-tip">
+            <i className="fa fa-rocket" /> ProTip: {proTip}
+            <a className="text-link empty-list-cta__pro-tip-link" href={proTipLink} target={proTipTarget}>
+              {proTipLinkTitle}
+            </a>
+          </div>
+        )}
       </div>
     );
   }

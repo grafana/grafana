@@ -2,10 +2,10 @@
 import React, { PureComponent } from 'react';
 
 // Utils & Services
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 
 // Components
-import { EditorTabBody } from './EditorTabBody';
+import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
@@ -206,7 +206,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
 
-    const pluginHelp = {
+    const pluginHelp: EditorToolbarView = {
       heading: 'Help',
       icon: 'fa fa-question',
       render: this.renderHelp,
