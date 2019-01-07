@@ -206,10 +206,9 @@ func (f *JSONFormatter) processObject(object map[string]interface{}, deltas []di
 
 	// Added
 	for _, delta := range deltas {
-		switch delta.(type) {
+		switch delta := delta.(type) {
 		case *diff.Added:
-			d := delta.(*diff.Added)
-			f.printRecursive(d.Position.String(), d.Value, ChangeAdded)
+			f.printRecursive(delta.Position.String(), delta.Value, ChangeAdded)
 		}
 	}
 
@@ -222,9 +221,8 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 	if len(matchedDeltas) > 0 {
 		for _, matchedDelta := range matchedDeltas {
 
-			switch matchedDelta.(type) {
+			switch matchedDelta := matchedDelta.(type) {
 			case *diff.Object:
-				d := matchedDelta.(*diff.Object)
 				switch value.(type) {
 				case map[string]interface{}:
 					//ok
@@ -238,7 +236,7 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.print("{")
 				f.closeLine()
 				f.push(positionStr, len(o), false)
-				f.processObject(o, d.Deltas)
+				f.processObject(o, matchedDelta.Deltas)
 				f.pop()
 				f.newLine(ChangeNil)
 				f.print("}")
@@ -246,7 +244,6 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.closeLine()
 
 			case *diff.Array:
-				d := matchedDelta.(*diff.Array)
 				switch value.(type) {
 				case []interface{}:
 					//ok
@@ -260,7 +257,7 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.print("[")
 				f.closeLine()
 				f.push(positionStr, len(a), true)
-				f.processArray(a, d.Deltas)
+				f.processArray(a, matchedDelta.Deltas)
 				f.pop()
 				f.newLine(ChangeNil)
 				f.print("]")
@@ -268,27 +265,23 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.closeLine()
 
 			case *diff.Added:
-				d := matchedDelta.(*diff.Added)
-				f.printRecursive(positionStr, d.Value, ChangeAdded)
+				f.printRecursive(positionStr, matchedDelta.Value, ChangeAdded)
 				f.size[len(f.size)-1]++
 
 			case *diff.Modified:
-				d := matchedDelta.(*diff.Modified)
 				savedSize := f.size[len(f.size)-1]
-				f.printRecursive(positionStr, d.OldValue, ChangeOld)
+				f.printRecursive(positionStr, matchedDelta.OldValue, ChangeOld)
 				f.size[len(f.size)-1] = savedSize
-				f.printRecursive(positionStr, d.NewValue, ChangeNew)
+				f.printRecursive(positionStr, matchedDelta.NewValue, ChangeNew)
 
 			case *diff.TextDiff:
 				savedSize := f.size[len(f.size)-1]
-				d := matchedDelta.(*diff.TextDiff)
-				f.printRecursive(positionStr, d.OldValue, ChangeOld)
+				f.printRecursive(positionStr, matchedDelta.OldValue, ChangeOld)
 				f.size[len(f.size)-1] = savedSize
-				f.printRecursive(positionStr, d.NewValue, ChangeNew)
+				f.printRecursive(positionStr, matchedDelta.NewValue, ChangeNew)
 
 			case *diff.Deleted:
-				d := matchedDelta.(*diff.Deleted)
-				f.printRecursive(positionStr, d.Value, ChangeDeleted)
+				f.printRecursive(positionStr, matchedDelta.Value, ChangeDeleted)
 
 			default:
 				return errors.New("Unknown Delta type detected")
@@ -305,13 +298,13 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 func (f *JSONFormatter) searchDeltas(deltas []diff.Delta, position diff.Position) (results []diff.Delta) {
 	results = make([]diff.Delta, 0)
 	for _, delta := range deltas {
-		switch delta.(type) {
+		switch typedDelta := delta.(type) {
 		case diff.PostDelta:
-			if delta.(diff.PostDelta).PostPosition() == position {
+			if typedDelta.PostPosition() == position {
 				results = append(results, delta)
 			}
 		case diff.PreDelta:
-			if delta.(diff.PreDelta).PrePosition() == position {
+			if typedDelta.PrePosition() == position {
 				results = append(results, delta)
 			}
 		default:
@@ -417,20 +410,19 @@ func (f *JSONFormatter) print(a string) {
 }
 
 func (f *JSONFormatter) printRecursive(name string, value interface{}, change ChangeType) {
-	switch value.(type) {
+	switch value := value.(type) {
 	case map[string]interface{}:
 		f.newLine(change)
 		f.printKey(name)
 		f.print("{")
 		f.closeLine()
 
-		m := value.(map[string]interface{})
-		size := len(m)
+		size := len(value)
 		f.push(name, size, false)
 
-		keys := sortKeys(m)
+		keys := sortKeys(value)
 		for _, key := range keys {
-			f.printRecursive(key, m[key], change)
+			f.printRecursive(key, value[key], change)
 		}
 		f.pop()
 
@@ -445,10 +437,9 @@ func (f *JSONFormatter) printRecursive(name string, value interface{}, change Ch
 		f.print("[")
 		f.closeLine()
 
-		s := value.([]interface{})
-		size := len(s)
+		size := len(value)
 		f.push("", size, true)
-		for _, item := range s {
+		for _, item := range value {
 			f.printRecursive("", item, change)
 		}
 		f.pop()
