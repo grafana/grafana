@@ -89,7 +89,7 @@ export class StackdriverFilterCtrl {
     return elements;
   }
 
-  async getFilterKeys(segment, removeText: string, hideRemoveButton: boolean) {
+  async getFilterKeys(segment, removeText: string) {
     let elements = await this.createLabelKeyElements();
 
     if (this.$scope.filters.indexOf(this.resourceTypeValue) !== -1) {
@@ -101,7 +101,7 @@ export class StackdriverFilterCtrl {
       return [];
     }
 
-    return hideRemoveButton
+    return segment.type === 'plus-button'
       ? elements
       : [
           ...elements,
