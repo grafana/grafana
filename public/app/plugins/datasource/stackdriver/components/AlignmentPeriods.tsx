@@ -34,6 +34,9 @@ export const AlignmentPeriods: SFC<Props> = ({ alignmentPeriod, templateSrv, onC
             className="width-15"
           />
         </div>
+        <div className="gf-form gf-form--grow">
+          <div className="gf-form-label gf-form-label--grow" />
+        </div>
       </div>
     </>
   );
