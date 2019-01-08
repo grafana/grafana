@@ -55,3 +55,14 @@ export interface QueryMeta {
   resourceLabels: { [key: string]: string[] };
   resourceTypes: string[];
 }
+
+export interface MetricDescriptor {
+  valueType: string;
+  metricKind: string;
+  type: string;
+  unit: string;
+  service: string;
+  serviceShortName: string;
+  displayName: string;
+  description: string;
+}

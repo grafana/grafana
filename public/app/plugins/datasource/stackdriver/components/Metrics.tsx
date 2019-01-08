@@ -2,10 +2,11 @@ import React from 'react';
 import _ from 'lodash';
 
 import appEvents from 'app/core/app_events';
+import { MetricDescriptor } from '../types';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 
 export interface Props {
-  onChange: (metricDescriptor) => void;
+  onChange: (metricDescriptor: MetricDescriptor) => void;
   templateSrv: any;
   datasource: any;
   defaultProject: string;
@@ -14,12 +15,12 @@ export interface Props {
 }
 
 interface State {
-  metricDescriptors: any[];
+  metricDescriptors: MetricDescriptor[];
   metrics: any[];
   services: any[];
   service: string;
   metric: string;
-  metricDescriptor: any;
+  metricDescriptor: MetricDescriptor;
   defaultProject: string;
 }
 
@@ -84,7 +85,7 @@ export class Metrics extends React.Component<Props, State> {
     return this.state.metricDescriptors.find(md => md.type === this.props.templateSrv.replace(metricType));
   }
 
-  getMetricsList(metricDescriptors) {
+  getMetricsList(metricDescriptors: MetricDescriptor[]) {
     const selectedMetricDescriptor = this.getSelectedMetricDescriptor(this.props.metricType);
     if (!selectedMetricDescriptor) {
       return [];
@@ -122,7 +123,7 @@ export class Metrics extends React.Component<Props, State> {
     this.props.onChange({ ...metricDescriptor, type: value });
   }
 
-  getServicesList(metricDescriptors) {
+  getServicesList(metricDescriptors: MetricDescriptor[]) {
     const services = metricDescriptors.map(m => ({
       value: m.service,
       label: _.startCase(m.serviceShortName),

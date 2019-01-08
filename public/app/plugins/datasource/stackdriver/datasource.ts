@@ -2,6 +2,7 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
+import { MetricDescriptor } from './types';
 
 export default class StackdriverDatasource {
   id: number;
@@ -253,7 +254,7 @@ export default class StackdriverDatasource {
     }
   }
 
-  async getMetricTypes(projectName: string) {
+  async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {
     try {
       if (this.metricTypes.length === 0) {
         const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;

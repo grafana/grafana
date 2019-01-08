@@ -8,7 +8,7 @@ import { Alignments } from './Alignments';
 import { AlignmentPeriods } from './AlignmentPeriods';
 import { AliasBy } from './AliasBy';
 import { Help } from './Help';
-import { Target } from '../types';
+import { Target, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 
 export interface Props {
@@ -92,7 +92,7 @@ export class QueryEditor extends React.Component<Props, State> {
     this.setState({ lastQuery, lastQueryError });
   }
 
-  onMetricTypeChange({ valueType, metricKind, type, unit }) {
+  onMetricTypeChange({ valueType, metricKind, type, unit }: MetricDescriptor) {
     const { templateSrv, onQueryChange, onExecuteQuery } = this.props;
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
