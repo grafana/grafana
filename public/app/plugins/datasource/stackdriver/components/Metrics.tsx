@@ -146,7 +146,7 @@ export class Metrics extends React.Component<Props, State> {
     const { metricType, templateSrv } = this.props;
 
     return (
-      <React.Fragment>
+      <>
         <div className="gf-form-inline">
           <div className="gf-form">
             <span className="gf-form-label width-9 query-keyword">Service</span>
@@ -186,7 +186,7 @@ export class Metrics extends React.Component<Props, State> {
           </div>
         </div>
         {this.props.children(this.state.metricDescriptor)}
-      </React.Fragment>
+      </>
     );
   }
 }

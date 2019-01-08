@@ -62,7 +62,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     const { datasource } = this.props;
 
     return (
-      <React.Fragment>
+      <>
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
@@ -71,7 +71,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           onChange={value => this.handleMetricTypeChange(value)}
         >
           {metric => (
-            <React.Fragment>
+            <>
               <Filter
                 filtersChanged={value => this.handleChange('filters', value)}
                 filters={filters}
@@ -81,7 +81,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
                 datasource={datasource}
                 metricType={metric ? metric.type : ''}
               />
-            </React.Fragment>
+            </>
           )}
         </Metrics>
         <div className="gf-form gf-form-inline">
@@ -109,7 +109,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         </div>
 
         <AnnotationsHelp />
-      </React.Fragment>
+      </>
     );
   }
 }

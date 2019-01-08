@@ -12,7 +12,7 @@ export interface Props {
 
 export const AlignmentPeriods: SFC<Props> = ({ alignmentPeriod, templateSrv, onChange }) => {
   return (
-    <React.Fragment>
+    <>
       <div className="gf-form-inline">
         <div className="gf-form">
           <label className="gf-form-label query-keyword width-9">Alignment Period</label>
@@ -35,6 +35,6 @@ export const AlignmentPeriods: SFC<Props> = ({ alignmentPeriod, templateSrv, onC
           />
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 };

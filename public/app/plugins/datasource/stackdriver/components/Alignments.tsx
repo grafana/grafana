@@ -12,7 +12,7 @@ export interface Props {
 
 export const Alignments: SFC<Props> = ({ perSeriesAligner, templateSrv, onChange, alignOptions }) => {
   return (
-    <React.Fragment>
+    <>
       <div className="gf-form-group">
         <div className="gf-form offset-width-9">
           <label className="gf-form-label query-keyword width-15">Aligner</label>
@@ -26,6 +26,6 @@ export const Alignments: SFC<Props> = ({ perSeriesAligner, templateSrv, onChange
           />
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 };

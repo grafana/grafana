@@ -138,7 +138,7 @@ export class QueryEditor extends React.Component<Props, State> {
     const { datasource } = this.props;
 
     return (
-      <React.Fragment>
+      <>
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
@@ -147,7 +147,7 @@ export class QueryEditor extends React.Component<Props, State> {
           onChange={value => this.handleMetricTypeChange(value)}
         >
           {metric => (
-            <React.Fragment>
+            <>
               <Filter
                 filtersChanged={value => this.handleChange('filters', value)}
                 groupBysChanged={value => this.handleChange('groupBys', value)}
@@ -184,10 +184,10 @@ export class QueryEditor extends React.Component<Props, State> {
                 onChange={value => this.handleChange('alignmentPeriod', value)}
               />
               <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
-            </React.Fragment>
+            </>
           )}
         </Metrics>
-      </React.Fragment>
+      </>
     );
   }
 }

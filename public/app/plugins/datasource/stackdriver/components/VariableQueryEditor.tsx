@@ -134,7 +134,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       case MetricFindQueryTypes.LabelValues:
       case MetricFindQueryTypes.ResourceTypes:
         return (
-          <React.Fragment>
+          <>
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
@@ -155,12 +155,12 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
                 label="Label Key"
               />
             )}
-          </React.Fragment>
+          </>
         );
       case MetricFindQueryTypes.Aligners:
       case MetricFindQueryTypes.Aggregations:
         return (
-          <React.Fragment>
+          <>
             <SimpleSelect
               value={this.state.selectedService}
               options={this.insertTemplateVariables(this.state.services)}
@@ -173,7 +173,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
               onValueChange={e => this.onMetricTypeChange(e)}
               label="Metric Type"
             />
-          </React.Fragment>
+          </>
         );
       default:
         return '';
@@ -182,7 +182,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
 
   render() {
     return (
-      <React.Fragment>
+      <>
         <SimpleSelect
           value={this.state.selectedQueryType}
           options={this.queryTypes}
@@ -190,7 +190,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
           label="Query Type"
         />
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}
-      </React.Fragment>
+      </>
     );
   }
 }

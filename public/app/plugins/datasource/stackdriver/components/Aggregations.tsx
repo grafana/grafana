@@ -63,7 +63,7 @@ export class Aggregations extends React.Component<Props, State> {
     const { templateSrv, onChange, crossSeriesReducer } = this.props;
 
     return (
-      <React.Fragment>
+      <>
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Aggregation</label>
@@ -79,15 +79,15 @@ export class Aggregations extends React.Component<Props, State> {
           <div className="gf-form gf-form--grow">
             <label className="gf-form-label gf-form-label--grow">
               <a onClick={() => this.handleToggleDisplayAdvanced()}>
-                <React.Fragment>
+                <>
                   <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
-                </React.Fragment>
+                </>
               </a>
             </label>
           </div>
         </div>
         {this.props.children(this.state.displayAdvancedOptions)}
-      </React.Fragment>
+      </>
     );
   }
 }

@@ -35,7 +35,7 @@ export class Help extends React.Component<Props, State> {
     const { datasource, rawQuery, lastQueryError } = this.props;
 
     return (
-      <React.Fragment>
+      <>
         <div className="gf-form-inline">
           <Project datasource={datasource} />
           <div className="gf-form" onClick={() => this.handleHelpClicked()}>
@@ -106,7 +106,7 @@ export class Help extends React.Component<Props, State> {
             <pre className="gf-form-pre alert alert-error">{lastQueryError}</pre>
           </div>
         )}
-      </React.Fragment>
+      </>
     );
   }
 }
