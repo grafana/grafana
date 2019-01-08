@@ -5,10 +5,12 @@ import { Target } from './types';
 
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
+  templateSrv: any;
 
   /** @ngInject */
-  constructor($scope, $injector) {
+  constructor($scope, $injector, templateSrv) {
     super($scope, $injector);
+    this.templateSrv = templateSrv;
     this.onQueryChange = this.onQueryChange.bind(this);
     this.onExecuteQuery = this.onExecuteQuery.bind(this);
   }

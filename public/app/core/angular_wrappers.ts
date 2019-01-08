@@ -1,5 +1,6 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 import { QueryEditor } from 'app/plugins/datasource/stackdriver/components/QueryEditor';
+import { AnnotationQueryEditor } from 'app/plugins/datasource/stackdriver/components/AnnotationQueryEditor';
 import { PasswordStrength } from './components/PasswordStrength';
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
@@ -36,5 +37,13 @@ export function registerAngularDirectives() {
     'onExecuteQuery',
     ['events', { watchDepth: 'reference' }],
     ['datasource', { watchDepth: 'reference' }],
+    ['templateSrv', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('annotationQueryEditor', AnnotationQueryEditor, [
+    'target',
+    'onQueryChange',
+    'onExecuteQuery',
+    ['datasource', { watchDepth: 'reference' }],
+    ['templateSrv', { watchDepth: 'reference' }],
   ]);
 }

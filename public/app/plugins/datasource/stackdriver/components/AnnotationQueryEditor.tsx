@@ -10,6 +10,7 @@ export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
   target: AnnotationTarget;
   datasource: any;
+  templateSrv: any;
 }
 
 interface State extends AnnotationTarget {
@@ -59,14 +60,14 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
 
   render() {
     const { defaultProject, metricType, filters, refId, title, text } = this.state;
-    const { datasource } = this.props;
+    const { datasource, templateSrv } = this.props;
 
     return (
       <>
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
-          templateSrv={datasource.templateSrv}
+          templateSrv={templateSrv}
           datasource={datasource}
           onChange={value => this.onMetricTypeChange(value)}
         >
@@ -77,7 +78,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
                 filters={filters}
                 refId={refId}
                 hideGroupBys={true}
-                templateSrv={datasource.templateSrv}
+                templateSrv={templateSrv}
                 datasource={datasource}
                 metricType={metric ? metric.type : ''}
               />

@@ -13,10 +13,11 @@ import { getAlignmentPickerData } from '../functions';
 
 export interface Props {
   onQueryChange: (target: Target) => void;
-  onExecuteQuery?: () => void;
+  onExecuteQuery: () => void;
   target: Target;
   events: any;
   datasource: any;
+  templateSrv: any;
 }
 
 interface State extends Target {
@@ -49,10 +50,10 @@ export class QueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
   componentDidMount() {
-    const { events, target, datasource } = this.props;
+    const { events, target, templateSrv } = this.props;
     events.on('data-received', this.onDataReceived.bind(this));
     events.on('data-error', this.onDataError.bind(this));
-    const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, datasource.templateSrv);
+    const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
     this.setState({
       ...this.props.target,
       alignOptions,
@@ -92,10 +93,10 @@ export class QueryEditor extends React.Component<Props, State> {
   }
 
   onMetricTypeChange({ valueType, metricKind, type, unit }) {
-    const { datasource, onQueryChange, onExecuteQuery } = this.props;
+    const { templateSrv, onQueryChange, onExecuteQuery } = this.props;
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
-      datasource.templateSrv
+      templateSrv
     );
     this.setState(
       {
@@ -135,14 +136,14 @@ export class QueryEditor extends React.Component<Props, State> {
       lastQueryError,
       refId,
     } = this.state;
-    const { datasource } = this.props;
+    const { datasource, templateSrv } = this.props;
 
     return (
       <>
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
-          templateSrv={datasource.templateSrv}
+          templateSrv={templateSrv}
           datasource={datasource}
           onChange={value => this.onMetricTypeChange(value)}
         >
@@ -155,13 +156,13 @@ export class QueryEditor extends React.Component<Props, State> {
                 groupBys={groupBys}
                 refId={refId}
                 hideGroupBys={false}
-                templateSrv={datasource.templateSrv}
+                templateSrv={templateSrv}
                 datasource={datasource}
                 metricType={metric ? metric.type : ''}
               />
               <Aggregations
                 metricDescriptor={metric}
-                templateSrv={datasource.templateSrv}
+                templateSrv={templateSrv}
                 crossSeriesReducer={crossSeriesReducer}
                 groupBys={groupBys}
                 onChange={value => this.onPropertyChange('crossSeriesReducer', value)}
@@ -170,7 +171,7 @@ export class QueryEditor extends React.Component<Props, State> {
                   displayAdvancedOptions && (
                     <Alignments
                       alignOptions={alignOptions}
-                      templateSrv={datasource.templateSrv}
+                      templateSrv={templateSrv}
                       perSeriesAligner={perSeriesAligner}
                       onChange={value => this.onPropertyChange('perSeriesAligner', value)}
                     />
@@ -179,7 +180,7 @@ export class QueryEditor extends React.Component<Props, State> {
               </Aggregations>
               <AliasBy value={aliasBy} onChange={value => this.onPropertyChange('aliasBy', value)} />
               <AlignmentPeriods
-                templateSrv={datasource.templateSrv}
+                templateSrv={templateSrv}
                 alignmentPeriod={alignmentPeriod}
                 onChange={value => this.onPropertyChange('alignmentPeriod', value)}
               />

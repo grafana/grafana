@@ -8,10 +8,10 @@ const props: Props = {
   target: DefaultTarget,
   events: { on: () => {} },
   datasource: {
-    templateSrv: { variables: [] },
     getDefaultProject: () => 'project',
     getMetricTypes: () => [],
   },
+  templateSrv: { variables: [] },
 };
 
 describe('QueryEditor', () => {
