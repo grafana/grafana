@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { QueriesTab } from './QueriesTab';
 import { VisualizationTab } from './VisualizationTab';
 import { GeneralTab } from './GeneralTab';
-import { AlertTab } from './AlertTab';
+import { AlertTab } from '../../alerting/AlertTab';
 
 import config from 'app/core/config';
 import { store } from 'app/store/store';
