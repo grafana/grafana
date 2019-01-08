@@ -1,6 +1,7 @@
 ﻿import React, { PureComponent } from 'react';
+import * as PopperJS from 'popper.js';
+import { Manager, Popper as ReactPopper } from 'react-popper';
 import Portal from 'app/core/components/Portal/Portal';
-import { Manager, Popper as ReactPopper, Reference } from 'react-popper';
 import Transition from 'react-transition-group/Transition';
 
 const defaultTransitionStyles = {
@@ -18,29 +19,23 @@ const transitionStyles = {
 interface Props {
   renderContent: (content: any) => any;
   show: boolean;
-  placement?: any;
+  placement?: PopperJS.Placement;
   content: string | ((props: any) => JSX.Element);
   refClassName?: string;
+  referenceElement: PopperJS.ReferenceObject;
 }
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { children, renderContent, show, placement, refClassName } = this.props;
+    const { renderContent, show, placement } = this.props;
     const { content } = this.props;
 
     return (
       <Manager>
-        <Reference>
-          {({ ref }) => (
-            <div className={`popper_ref ${refClassName || ''}`} ref={ref}>
-              {children}
-            </div>
-          )}
-        </Reference>
         <Transition in={show} timeout={100} mountOnEnter={true} unmountOnExit={true}>
           {transitionState => (
             <Portal>
-              <ReactPopper placement={placement}>
+              <ReactPopper placement={placement} referenceElement={this.props.referenceElement}>
                 {({ ref, style, placement, arrowProps }) => {
                   return (
                     <div
