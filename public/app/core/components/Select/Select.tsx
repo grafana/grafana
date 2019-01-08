@@ -11,7 +11,7 @@ import OptionGroup from './OptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import ResetStyles from './ResetStyles';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '@grafana/ui';
 
 export interface SelectOptionItem {
   label?: string;
