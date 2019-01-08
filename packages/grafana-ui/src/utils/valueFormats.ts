@@ -509,6 +509,22 @@ function buildFormats() {
       ],
     },
     {
+      name: 'acceleration',
+      formats: [
+        { name: 'Meters/sec²', id: 'accMS2', fn: toFixedUnit('m/sec²') },
+        { name: 'Feet/sec²', id: 'accFS2', fn: toFixedUnit('f/sec²') },
+        { name: 'G unit', id: 'accG', fn: toFixedUnit('g') },
+      ],
+    },
+    {
+      name: 'angle',
+      formats: [
+        { name: 'Degrees (°)', id: 'degree', fn: toFixedUnit('°') },
+        { name: 'Radians', id: 'radian', fn: toFixedUnit('rad') },
+        { name: 'Gradian', id: 'grad', fn: toFixedUnit('grad') },
+      ],
+    },
+    {
       name: 'area',
       formats: [
         { name: 'Square Meters (m²)', id: 'areaM2', fn: toFixedUnit('m²') },
@@ -525,6 +541,23 @@ function buildFormats() {
         { name: 'TFLOP/s', id: 'tflops', fn: decimalSIPrefix('FLOP/s', 4) },
         { name: 'PFLOP/s', id: 'pflops', fn: decimalSIPrefix('FLOP/s', 5) },
         { name: 'EFLOP/s', id: 'eflops', fn: decimalSIPrefix('FLOP/s', 6) },
+      ],
+    },
+    {
+      name: 'concentration',
+      formats: [
+        { name: 'parts-per-million (ppm)', id: 'ppm', fn: toFixedUnit('ppm') },
+        { name: 'parts-per-billion (ppb)', id: 'conppb', fn: toFixedUnit('ppb') },
+        { name: 'nanogram per cubic meter (ng/m³)', id: 'conngm3', fn: toFixedUnit('ng/m³') },
+        { name: 'nanogram per normal cubic meter (ng/Nm³)', id: 'conngNm3', fn: toFixedUnit('ng/Nm³') },
+        { name: 'microgram per cubic meter (μg/m³)', id: 'conμgm3', fn: toFixedUnit('μg/m³') },
+        { name: 'microgram per normal cubic meter (μg/Nm³)', id: 'conμgNm3', fn: toFixedUnit('μg/Nm³') },
+        { name: 'milligram per cubic meter (mg/m³)', id: 'conmgm3', fn: toFixedUnit('mg/m³') },
+        { name: 'milligram per normal cubic meter (mg/Nm³)', id: 'conmgNm3', fn: toFixedUnit('mg/Nm³') },
+        { name: 'gram per cubic meter (g/m³)', id: 'congm3', fn: toFixedUnit('g/m³') },
+        { name: 'gram per normal cubic meter (g/Nm³)', id: 'congNm3', fn: toFixedUnit('g/Nm³') },
+        { name: 'milligrams per decilitre (mg/dL)', id: 'conmgdL', fn: toFixedUnit('mg/dL') },
+        { name: 'millimoles per litre (mmol/L)', id: 'conmmolL', fn: toFixedUnit('mmol/L') },
       ],
     },
     {
@@ -617,6 +650,27 @@ function buildFormats() {
       ],
     },
     {
+      name: 'flow',
+      formats: [
+        { name: 'Gallons/min (gpm)', id: 'flowgpm', fn: toFixedUnit('gpm') },
+        { name: 'Cubic meters/sec (cms)', id: 'flowcms', fn: toFixedUnit('cms') },
+        { name: 'Cubic feet/sec (cfs)', id: 'flowcfs', fn: toFixedUnit('cfs') },
+        { name: 'Cubic feet/min (cfm)', id: 'flowcfm', fn: toFixedUnit('cfm') },
+        { name: 'Litre/hour', id: 'litreh', fn: toFixedUnit('l/h') },
+        { name: 'Litre/min (l/min)', id: 'flowlpm', fn: toFixedUnit('l/min') },
+        { name: 'milliLitre/min (mL/min)', id: 'flowmlpm', fn: toFixedUnit('mL/min') },
+      ],
+    },
+    {
+      name: 'force',
+      formats: [
+        { name: 'Newton-meters (Nm)', id: 'forceNm', fn: decimalSIPrefix('Nm') },
+        { name: 'Kilonewton-meters (kNm)', id: 'forcekNm', fn: decimalSIPrefix('Nm', 1) },
+        { name: 'Newtons (N)', id: 'forceN', fn: decimalSIPrefix('N') },
+        { name: 'Kilonewtons (kN)', id: 'forcekN', fn: decimalSIPrefix('N', 1) },
+      ],
+    },
+    {
       name: 'hash rate',
       formats: [
         { name: 'hashes/sec', id: 'Hs', fn: decimalSIPrefix('H/s') },
@@ -645,6 +699,32 @@ function buildFormats() {
         { name: 'meter (m)', id: 'lengthm', fn: decimalSIPrefix('m') },
         { name: 'kilometer (km)', id: 'lengthkm', fn: decimalSIPrefix('m', 1) },
         { name: 'mile (mi)', id: 'lengthmi', fn: toFixedUnit('mi') },
+      ],
+    },
+    {
+      name: 'pressure',
+      formats: [
+        { name: 'Millibars', id: 'pressurembar', fn: decimalSIPrefix('bar', -1) },
+        { name: 'Bars', id: 'pressurebar', fn: decimalSIPrefix('bar') },
+        { name: 'Kilobars', id: 'pressurekbar', fn: decimalSIPrefix('bar', 1) },
+        { name: 'Hectopascals', id: 'pressurehpa', fn: toFixedUnit('hPa') },
+        { name: 'Kilopascals', id: 'pressurekpa', fn: toFixedUnit('kPa') },
+        { name: 'Inches of mercury', id: 'pressurehg', fn: toFixedUnit('"Hg') },
+        { name: 'PSI', id: 'pressurepsi', fn: scaledUnits(1000, ['psi', 'ksi', 'Mpsi']) },
+      ],
+    },
+    {
+      name: 'radiation',
+      formats: [
+        { name: 'Becquerel (Bq)', id: 'radbq', fn: decimalSIPrefix('Bq') },
+        { name: 'curie (Ci)', id: 'radci', fn: decimalSIPrefix('Ci') },
+        { name: 'Gray (Gy)', id: 'radgy', fn: decimalSIPrefix('Gy') },
+        { name: 'rad', id: 'radrad', fn: decimalSIPrefix('rad') },
+        { name: 'Sievert (Sv)', id: 'radsv', fn: decimalSIPrefix('Sv') },
+        { name: 'rem', id: 'radrem', fn: decimalSIPrefix('rem') },
+        { name: 'Exposure (C/kg)', id: 'radexpckg', fn: decimalSIPrefix('C/kg') },
+        { name: 'roentgen (R)', id: 'radr', fn: decimalSIPrefix('R') },
+        { name: 'Sievert/hour (Sv/h)', id: 'radsvh', fn: decimalSIPrefix('Sv/h') },
       ],
     },
     {
