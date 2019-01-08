@@ -1,6 +1,6 @@
 // Libraries
 import _ from 'lodash';
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import colors from 'app/core/utils/colors';
 
 // Components & Types
@@ -9,7 +9,7 @@ import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
 
-export class GraphPanel extends Component<Props> {
+export class GraphPanel extends PureComponent<Props> {
   constructor(props) {
     super(props);
   }
