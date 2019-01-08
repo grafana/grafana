@@ -94,7 +94,7 @@ export class QueryOptions extends PureComponent<Props, State> {
 
   renderOptions() {
     const { datasource, panel } = this.props;
-    const { queryOptions } = datasource.meta;
+    const queryOptions = datasource && datasource.meta ? datasource.meta.queryOptions : undefined;
 
     if (!queryOptions) {
       return null;
