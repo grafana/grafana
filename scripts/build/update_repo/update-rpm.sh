@@ -3,18 +3,31 @@
 RELEASE_TYPE="${1:-}"
 GPG_PASS="${2:-}"
 
+RELEASE_TAG="${3:-}"
+REPO="rpm"
+
 if [ -z "$RELEASE_TYPE" -o -z "$GPG_PASS" ]; then
     echo "Both RELEASE_TYPE (arg 1) and GPG_PASS (arg 2) has to be set"
     exit 1
 fi
 
+if [[ "$RELEASE_TYPE" != "oss" && "$RELEASE_TYPE" != "enterprise" ]]; then
+    echo "RELEASE_TYPE (arg 1) must be either oss or enterprise."
+    exit 1
+fi
+
+if echo "$RELEASE_TAG" | grep -q "beta"; then
+    REPO="rpm-beta"
+fi
+
 set -e
 
 # Setup environment
+BUCKET="gs://grafana-repo/$RELEASE_TYPE/$REPO"
 mkdir -p /rpm-repo
 
 # Download the database
-gsutil -m rsync -r "gs://grafana-repo/$RELEASE_TYPE/rpm" /rpm-repo
+gsutil -m rsync -r "$BUCKET" /rpm-repo
 
 # Add the new release to the repo
 cp ./dist/*.rpm /rpm-repo
@@ -32,7 +45,7 @@ pkill gpg-agent || true
 ./scripts/build/update_repo/sign-rpm-repo.sh "$GPG_PASS"
 
 # Update the repo and db on gcp
-gsutil -m rsync -r -d /rpm-repo "gs://grafana-repo/$RELEASE_TYPE/rpm"
+gsutil -m rsync -r -d /rpm-repo "$BUCKET"
 
 # usage:
 # [grafana]
