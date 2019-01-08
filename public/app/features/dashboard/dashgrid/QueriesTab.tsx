@@ -50,15 +50,19 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   constructor(props) {
     super(props);
-    const { panel } = props;
 
     this.state = {
-      currentDS: this.datasources.find(datasource => datasource.value === panel.datasource),
       isLoadingHelp: false,
+      currentDS: this.findCurrentDataSource(),
       helpContent: null,
       isPickerOpen: false,
       isAddingMixed: false,
     };
+  }
+
+  findCurrentDataSource(): DataSourceSelectItem {
+    const { panel } = this.props;
+    return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
