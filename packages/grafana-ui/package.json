@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "@torkelo/react-select": "2.1.1",
+    "@types/react-test-renderer": "^16.0.3",
+    "@types/react-transition-group": "^2.0.15",
     "classnames": "^2.2.5",
     "jquery": "^3.2.1",
     "lodash": "^4.17.10",
@@ -23,11 +25,11 @@
     "react-virtualized": "^9.21.0"
   },
   "devDependencies": {
+    "@types/classnames": "^2.2.6",
     "@types/jest": "^23.3.2",
+    "@types/jquery": "^1.10.35",
     "@types/lodash": "^4.14.119",
     "@types/react": "^16.7.6",
-    "@types/classnames": "^2.2.6",
-    "@types/jquery": "^1.10.35",
     "typescript": "^3.2.2"
   }
 }

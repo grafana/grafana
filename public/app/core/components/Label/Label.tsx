@@ -1,5 +1,5 @@
 import React, { SFC, ReactNode } from 'react';
-import Tooltip from '../Tooltip/Tooltip';
+import { Tooltip } from '@grafana/ui';
 
 interface Props {
   tooltip?: string;

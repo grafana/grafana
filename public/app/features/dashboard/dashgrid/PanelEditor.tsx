@@ -15,7 +15,7 @@ import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types/plugins';
 
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import { Tooltip } from '@grafana/ui';
 
 interface PanelEditorProps {
   panel: PanelModel;

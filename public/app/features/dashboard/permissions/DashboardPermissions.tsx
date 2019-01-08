@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import { Tooltip } from '@grafana/ui';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { StoreState, FolderInfo } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
