@@ -107,6 +107,18 @@ export function locale(value: number, decimals: number) {
   return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
 }
 
+export function simpleCountUnit(symbol: string) {
+  const units = ['', 'K', 'M', 'B', 'T'];
+  const scaler = scaledUnits(1000, units);
+  return (size: number, decimals: number, scaledDecimals: number) => {
+    if (size === null) {
+      return '';
+    }
+    const scaled = scaler(size, decimals, scaledDecimals);
+    return scaled + ' ' + symbol;
+  };
+}
+
 function buildFormats() {
   categories = getCategories();
 

@@ -1,4 +1,4 @@
-import { locale, scaledUnits, toFixed, toFixedUnit, ValueFormatCategory } from './valueFormats';
+import { locale, scaledUnits, simpleCountUnit, toFixed, toFixedUnit, ValueFormatCategory } from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsUS,
@@ -289,14 +289,14 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'throughput',
     formats: [
-      { name: 'ops/sec (ops)', id: 'ops', fn: decimalSIPrefix('ops') },
-      { name: 'requests/sec (rps)', id: 'reqps', fn: decimalSIPrefix('reqps') },
-      { name: 'reads/sec (rps)', id: 'rps', fn: decimalSIPrefix('rps') },
-      { name: 'writes/sec (wps)', id: 'wps', fn: decimalSIPrefix('wps') },
-      { name: 'I/O ops/sec (iops)', id: 'iops', fn: decimalSIPrefix('iops') },
-      { name: 'ops/min (opm)', id: 'opm', fn: decimalSIPrefix('opm') },
-      { name: 'reads/min (rpm)', id: 'rpm', fn: decimalSIPrefix('rpm') },
-      { name: 'writes/min (wpm)', id: 'wpm', fn: decimalSIPrefix('wpm') },
+      { name: 'ops/sec (ops)', id: 'ops', fn: simpleCountUnit('ops') },
+      { name: 'requests/sec (rps)', id: 'reqps', fn: simpleCountUnit('reqps') },
+      { name: 'reads/sec (rps)', id: 'rps', fn: simpleCountUnit('rps') },
+      { name: 'writes/sec (wps)', id: 'wps', fn: simpleCountUnit('wps') },
+      { name: 'I/O ops/sec (iops)', id: 'iops', fn: simpleCountUnit('iops') },
+      { name: 'ops/min (opm)', id: 'opm', fn: simpleCountUnit('opm') },
+      { name: 'reads/min (rpm)', id: 'rpm', fn: simpleCountUnit('rpm') },
+      { name: 'writes/min (wpm)', id: 'wpm', fn: simpleCountUnit('wpm') },
     ],
   },
   {
