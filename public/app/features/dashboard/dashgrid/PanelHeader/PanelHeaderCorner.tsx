@@ -78,12 +78,14 @@ export class PanelHeaderCorner extends Component<Props> {
         {infoMode === InfoModes.Info || infoMode === InfoModes.Links ? (
           <Tooltip
             content={this.getInfoContent}
-            className="popper__manager--block"
-            refClassName={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}
             placement="bottom-start"
           >
-            <i className="fa" />
-            <span className="panel-info-corner-inner" />
+            <div
+              className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}
+            >
+              <i className="fa" />
+              <span className="panel-info-corner-inner" />
+            </div>
           </Tooltip>
         ) : null}
       </>

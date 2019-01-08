@@ -77,8 +77,10 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <div>
         <div className="page-action-bar">
           <h3 className="page-sub-heading">External group sync</h3>
-          <Tooltip className="page-sub-heading-icon" placement="auto" content={headerTooltip}>
-            <i className="gicon gicon-question gicon--has-hover" />
+          <Tooltip placement="auto" content={headerTooltip}>
+            <div className="page-sub-heading-icon">
+              <i className="gicon gicon-question gicon--has-hover" />
+            </div>
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (

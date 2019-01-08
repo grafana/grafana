@@ -1,17 +1,28 @@
-﻿import React, { PureComponent } from 'react';
+﻿import React, { createRef } from 'react';
+import * as PopperJS from 'popper.js';
+
 import Popper from './Popper';
-import withPopper, { UsingPopperProps } from './withPopper';
+import PopperController, { UsingPopperProps } from './PopperController';
 
-class Tooltip extends PureComponent<UsingPopperProps> {
-  render() {
-    const { children, hidePopper, showPopper, className, ...restProps } = this.props;
+const Tooltip = ({ children, renderContent, ...controllerProps }: UsingPopperProps) => {
+  const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
 
-    return (
-      <div className={`popper__manager ${className}`} onMouseEnter={showPopper} onMouseLeave={hidePopper}>
-        <Popper {...restProps}>{children}</Popper>
-      </div>
-    );
-  }
-}
+  return (
+    <PopperController {...controllerProps}>
+      {(showPopper, hidePopper, popperProps) => {
+        return (
+          <>
+            <Popper {...popperProps} referenceElement={tooltipTriggerRef.current} />
+            {React.cloneElement(children, {
+              ref: tooltipTriggerRef,
+              onMouseEnter: showPopper,
+              onMouseLeave: hidePopper,
+            })}
+          </>
+        );
+      }}
+    </PopperController>
+  );
+};
 
-export default withPopper(Tooltip);
+export default Tooltip;
