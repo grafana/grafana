@@ -6,14 +6,14 @@ import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoa
 import appEvents from 'app/core/app_events';
 
 // Components
-import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
+import { EditorTabBody, EditorToolbarView } from '../dashboard/dashgrid/EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
 
 // Types
-import { DashboardModel } from '../dashboard_model';
-import { PanelModel } from '../panel_model';
+import { DashboardModel } from '../dashboard/dashboard_model';
+import { PanelModel } from '../dashboard/panel_model';
 
 interface Props {
   angularPanel?: AngularComponent;
