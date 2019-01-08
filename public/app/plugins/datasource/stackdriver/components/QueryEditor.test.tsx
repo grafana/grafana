@@ -7,7 +7,11 @@ const props: Props = {
   onExecuteQuery: () => {},
   target: DefaultTarget,
   events: { on: () => {} },
-  datasource: { templateSrv: { variables: [] } },
+  datasource: {
+    templateSrv: { variables: [] },
+    getDefaultProject: () => 'project',
+    getMetricTypes: () => [],
+  },
 };
 
 describe('QueryEditor', () => {
