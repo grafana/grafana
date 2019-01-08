@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+﻿import { Component } from 'react';
 
 interface ErrorInfo {
   componentStack: string;
@@ -19,10 +19,10 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  constructor(props) {
-    super(props);
-    this.state = { error: null, errorInfo: null };
-  }
+  readonly state: State = {
+    error: null,
+    errorInfo: null,
+  };
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({
@@ -32,15 +32,12 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
+    const { children } = this.props;
     const { error, errorInfo } = this.state;
-    return (
-      <>
-        {this.props.children({
-          error,
-          errorInfo,
-        })}
-      </>
-    );
+    return children({
+      error,
+      errorInfo,
+    });
   }
 }
 
