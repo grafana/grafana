@@ -9,7 +9,6 @@ export interface PanelProps<T = any> {
   renderCounter: number;
   width: number;
   height: number;
-  onRenderError: () => void;
 }
 
 export interface PanelOptionsProps<T = any> {

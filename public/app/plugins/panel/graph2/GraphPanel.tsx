@@ -10,12 +10,12 @@ import { Options } from './types';
 interface Props extends PanelProps<Options> {}
 
 export class GraphPanel extends PureComponent<Props> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
   render() {
-    const { timeSeries, timeRange, width, height, onRenderError } = this.props;
+    const { timeSeries, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
     const vmSeries = processTimeSeries({
@@ -33,7 +33,6 @@ export class GraphPanel extends PureComponent<Props> {
         showBars={showBars}
         width={width}
         height={height}
-        onRenderError={onRenderError}
       />
     );
   }

@@ -1,6 +1,7 @@
 // Library
 import React, { Component } from 'react';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Services
 import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -13,10 +14,11 @@ import { DataQueryOptions, DataQueryResponse } from 'app/types';
 import { TimeRange, TimeSeries, LoadingState } from '@grafana/ui';
 import { Themes } from 'app/core/components/Tooltip/Popper';
 
+const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
+
 interface RenderProps {
   loading: LoadingState;
   timeSeries: TimeSeries[];
-  onRenderError: () => void;
 }
 
 export interface Props {
@@ -147,10 +149,6 @@ export class DataPanel extends Component<Props, State> {
     }
   }
 
-  onRenderError = () => {
-    this.onError('Error rendering panel');
-  }
-
   render() {
     const { queries } = this.props;
     const { response, loading, isFirstLoad } = this.state;
@@ -172,11 +170,22 @@ export class DataPanel extends Component<Props, State> {
     return (
       <>
         {this.renderLoadingStates()}
-        {this.props.children({
-          timeSeries,
-          loading,
-          onRenderError: this.onRenderError
-        })}
+        <ErrorBoundary>
+          {({error, errorInfo}) => {
+            if (errorInfo) {
+              this.onError(error.message || DEFAULT_PLUGIN_ERROR);
+              return null;
+            }
+            return (
+              <>
+                {this.props.children({
+                  timeSeries,
+                  loading,
+                })}
+              </>
+            );
+          }}
+        </ErrorBoundary>
       </>
     );
   }

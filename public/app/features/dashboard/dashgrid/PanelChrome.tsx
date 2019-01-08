@@ -114,7 +114,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 widthPixels={width}
                 refreshCounter={refreshCounter}
               >
-                {({ loading, timeSeries, onRenderError }) => {
+                {({ loading, timeSeries }) => {
                   return (
                     <div className="panel-content">
                       <PanelComponent
@@ -125,7 +125,6 @@ export class PanelChrome extends PureComponent<Props, State> {
                         width={width}
                         height={height - PANEL_HEADER_HEIGHT}
                         renderCounter={renderCounter}
-                        onRenderError={onRenderError}
                       />
                     </div>
                   );
