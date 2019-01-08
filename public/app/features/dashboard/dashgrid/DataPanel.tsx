@@ -16,6 +16,7 @@ import { Themes } from 'app/core/components/Tooltip/Popper';
 interface RenderProps {
   loading: LoadingState;
   timeSeries: TimeSeries[];
+  onRenderError: () => void;
 }
 
 export interface Props {
@@ -35,6 +36,7 @@ export interface Props {
 export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
+  errorMessage: string;
   response: DataQueryResponse;
 }
 
@@ -53,6 +55,7 @@ export class DataPanel extends Component<Props, State> {
 
     this.state = {
       loading: LoadingState.NotStarted,
+      errorMessage: '',
       response: {
         data: [],
       },
@@ -92,7 +95,7 @@ export class DataPanel extends Component<Props, State> {
       return;
     }
 
-    this.setState({ loading: LoadingState.Loading });
+    this.setState({ loading: LoadingState.Loading, errorMessage: '' });
 
     try {
       const ds = await this.dataSourceSrv.get(datasource);
@@ -130,9 +133,23 @@ export class DataPanel extends Component<Props, State> {
       });
     } catch (err) {
       console.log('Loading error', err);
-      this.setState({ loading: LoadingState.Error, isFirstLoad: false });
+      this.onError('Request Error');
     }
   };
+
+  onError = (errorMessage: string) => {
+    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
+      this.setState({
+        loading: LoadingState.Error,
+        isFirstLoad: false,
+        errorMessage: errorMessage
+      });
+    }
+  }
+
+  onRenderError = () => {
+    this.onError('Error rendering panel');
+  }
 
   render() {
     const { queries } = this.props;
@@ -158,13 +175,14 @@ export class DataPanel extends Component<Props, State> {
         {this.props.children({
           timeSeries,
           loading,
+          onRenderError: this.onRenderError
         })}
       </>
     );
   }
 
   private renderLoadingStates(): JSX.Element {
-    const { loading } = this.state;
+    const { loading, errorMessage } = this.state;
     if (loading === LoadingState.Loading) {
       return (
         <div className="panel-loading">
@@ -174,7 +192,7 @@ export class DataPanel extends Component<Props, State> {
     } else if (loading === LoadingState.Error) {
       return (
         <Tooltip
-          content="Request Error"
+          content={errorMessage}
           className="popper__manager--block"
           refClassName={`panel-info-corner panel-info-corner--error`}
           placement="bottom-start"

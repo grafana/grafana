@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Themes } from './Popper';
 export interface UsingPopperProps {
   showPopper: (prevState: object) => void;
   hidePopper: (prevState: object) => void;
@@ -9,7 +9,7 @@ export interface UsingPopperProps {
   content: string | ((props: any) => JSX.Element);
   className?: string;
   refClassName?: string;
-  theme?: string;
+  theme?: Themes;
 }
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
   className?: string;
   refClassName?: string;
   content: string | ((props: any) => JSX.Element);
-  theme?: string;
+  theme?: Themes;
 }
 
 interface State {

@@ -13,6 +13,7 @@ interface GraphProps {
   showBars?: boolean;
   width: number;
   height: number;
+  onRenderError: () => void;
 }
 
 export class Graph extends PureComponent<GraphProps> {
@@ -37,7 +38,7 @@ export class Graph extends PureComponent<GraphProps> {
       return;
     }
 
-    const { width, timeSeries, timeRange, showLines, showBars, showPoints } = this.props;
+    const { width, timeSeries, timeRange, showLines, showBars, showPoints, onRenderError } = this.props;
 
     if (!width) {
       return;
@@ -98,6 +99,7 @@ export class Graph extends PureComponent<GraphProps> {
       $.plot(this.element, timeSeries, flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, timeSeries);
+      onRenderError();
     }
   }
 

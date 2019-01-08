@@ -3,6 +3,11 @@ import Portal from 'app/core/components/Portal/Portal';
 import { Manager, Popper as ReactPopper, Reference } from 'react-popper';
 import Transition from 'react-transition-group/Transition';
 
+export enum Themes {
+  Default = 'popper__background--default',
+  Error = 'popper__background--error',
+}
+
 const defaultTransitionStyles = {
   transition: 'opacity 200ms linear',
   opacity: 0,
@@ -21,12 +26,7 @@ interface Props {
   placement?: any;
   content: string | ((props: any) => JSX.Element);
   refClassName?: string;
-  theme?: string;
-}
-
-export enum Themes {
-  Default = 'popper__background--default',
-  Error = 'popper__background--error',
+  theme?: Themes;
 }
 
 class Popper extends PureComponent<Props> {

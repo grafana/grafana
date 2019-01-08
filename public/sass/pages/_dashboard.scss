@@ -233,7 +233,7 @@ div.flot-text {
 
   &--error {
     display: block;
-    color: $text-color;
+    color: $white;
     @include panel-corner-color($popover-error-bg);
     .fa:before {
       content: '\f12a';
