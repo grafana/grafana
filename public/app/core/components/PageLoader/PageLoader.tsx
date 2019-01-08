@@ -1,7 +1,7 @@
 import React, { SFC } from 'react';
 
 interface Props {
-  pageName: string;
+  pageName?: string;
 }
 
 const PageLoader: SFC<Props> = ({ pageName }) => {
