@@ -50,10 +50,10 @@ gsutil -m rsync -r -d /rpm-repo "$BUCKET"
 # usage:
 # [grafana]
 # name=grafana
-# baseurl=https://grafana-repo.storage.googleapis.com/oss/rpm
+# baseurl=https://packages.grafana.com/oss/rpm
 # repo_gpgcheck=1
 # enabled=1
 # gpgcheck=1
-# gpgkey=https://grafana-repo.storage.googleapis.com/gpg.key https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
+# gpgkey=https://packages.grafana.com/gpg.key
 # sslverify=1
-# sslcacert=/etc/pki/tls/certs/ca-bundle.crt# later:
+# sslcacert=/etc/pki/tls/certs/ca-bundle.crt
