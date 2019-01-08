@@ -7,7 +7,7 @@ export class StackdriverAnnotationsQueryCtrl {
 
   constructor() {
     this.annotation.target = this.annotation.target || {};
-    this.handleQueryChange = this.handleQueryChange.bind(this);
+    this.onQueryChange = this.onQueryChange.bind(this);
 
     react2AngularDirective('annotationQueryEditor', AnnotationQueryEditor, [
       'target',
@@ -17,7 +17,7 @@ export class StackdriverAnnotationsQueryCtrl {
     ]);
   }
 
-  handleQueryChange(target) {
+  onQueryChange(target) {
     Object.assign(this.annotation.target, target);
   }
 }

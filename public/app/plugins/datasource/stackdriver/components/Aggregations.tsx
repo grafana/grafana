@@ -52,7 +52,7 @@ export class Aggregations extends React.Component<Props, State> {
     this.setState({ aggOptions });
   }
 
-  handleToggleDisplayAdvanced() {
+  onToggleDisplayAdvanced() {
     this.setState(state => ({
       displayAdvancedOptions: !state.displayAdvancedOptions,
     }));
@@ -78,7 +78,7 @@ export class Aggregations extends React.Component<Props, State> {
           </div>
           <div className="gf-form gf-form--grow">
             <label className="gf-form-label gf-form-label--grow">
-              <a onClick={() => this.handleToggleDisplayAdvanced()}>
+              <a onClick={() => this.onToggleDisplayAdvanced()}>
                 <>
                   <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
                 </>

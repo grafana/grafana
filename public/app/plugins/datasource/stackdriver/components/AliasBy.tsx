@@ -13,8 +13,7 @@ export interface State {
 export class AliasBy extends Component<Props, State> {
   constructor(props) {
     super(props);
-    this.handleChange = this.handleChange.bind(this);
-    this.onChange = debounce(this.onChange.bind(this), 500);
+    this.updateQuery = debounce(this.updateQuery.bind(this), 500);
     this.state = { value: '' };
   }
 
@@ -28,18 +27,18 @@ export class AliasBy extends Component<Props, State> {
     }
   }
 
-  handleChange(e) {
+  onChange(e) {
     this.setState({ value: e.target.value });
-    this.onChange(e.target.value);
+    this.updateQuery(e.target.value);
   }
 
-  onChange(value) {
+  updateQuery(value) {
     this.props.onChange(value);
   }
 
   render() {
     return (
-      <>
+      <React.Fragment>
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Alias By</label>
@@ -47,14 +46,14 @@ export class AliasBy extends Component<Props, State> {
               type="text"
               className="gf-form-input width-24"
               value={this.state.value}
-              onChange={this.handleChange}
+              onChange={e => this.onChange(e)}
             />
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
-      </>
+      </React.Fragment>
     );
   }
 }

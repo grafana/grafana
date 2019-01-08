@@ -18,11 +18,11 @@ export class Help extends React.Component<Props, State> {
     displaRawQuery: false,
   };
 
-  handleHelpClicked() {
+  onHelpClicked() {
     this.setState({ displayHelp: !this.state.displayHelp });
   }
 
-  handleRawQueryClicked() {
+  onRawQueryClicked() {
     this.setState({ displaRawQuery: !this.state.displaRawQuery });
   }
 
@@ -38,7 +38,7 @@ export class Help extends React.Component<Props, State> {
       <>
         <div className="gf-form-inline">
           <Project datasource={datasource} />
-          <div className="gf-form" onClick={() => this.handleHelpClicked()}>
+          <div className="gf-form" onClick={() => this.onHelpClicked()}>
             <label className="gf-form-label query-keyword">
               Show Help
               <i className={`fa fa-caret-${displayHelp ? 'down' : 'right'}`} />
@@ -46,7 +46,7 @@ export class Help extends React.Component<Props, State> {
           </div>
 
           {rawQuery && (
-            <div className="gf-form" onClick={() => this.handleRawQueryClicked()}>
+            <div className="gf-form" onClick={() => this.onRawQueryClicked()}>
               <label className="gf-form-label query-keyword">
                 Raw Query
                 <i className={`fa fa-caret-${displaRawQuery ? 'down' : 'right'}`} ng-show="ctrl.showHelp" />

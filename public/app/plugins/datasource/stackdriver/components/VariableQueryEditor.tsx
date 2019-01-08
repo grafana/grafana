@@ -63,7 +63,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async handleQueryTypeChange(event) {
+  async onQueryTypeChange(event) {
     const state: any = {
       selectedQueryType: event.target.value,
       ...await this.getLabels(this.state.selectedMetricType, event.target.value),
@@ -186,7 +186,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
         <SimpleSelect
           value={this.state.selectedQueryType}
           options={this.queryTypes}
-          onValueChange={e => this.handleQueryTypeChange(e)}
+          onValueChange={e => this.onQueryTypeChange(e)}
           label="Query Type"
         />
         {this.renderQueryTypeSwitch(this.state.selectedQueryType)}

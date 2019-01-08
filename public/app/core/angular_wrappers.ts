@@ -1,4 +1,5 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
+import { QueryEditor } from 'app/plugins/datasource/stackdriver/components/QueryEditor';
 import { PasswordStrength } from './components/PasswordStrength';
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
@@ -28,5 +29,12 @@ export function registerAngularDirectives() {
     'className',
     'placeholder',
     ['variables', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('queryEditor', QueryEditor, [
+    'target',
+    'onQueryChange',
+    'onExecuteQuery',
+    ['events', { watchDepth: 'reference' }],
+    ['datasource', { watchDepth: 'reference' }],
   ]);
 }

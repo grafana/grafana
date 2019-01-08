@@ -36,7 +36,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     });
   }
 
-  handleMetricTypeChange({ valueType, metricKind, type, unit }) {
+  onMetricTypeChange({ valueType, metricKind, type, unit }) {
     const { onQueryChange } = this.props;
     this.setState(
       {
@@ -51,7 +51,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     );
   }
 
-  handleChange(prop, value) {
+  onChange(prop, value) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
     });
@@ -68,12 +68,12 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           metricType={metricType}
           templateSrv={datasource.templateSrv}
           datasource={datasource}
-          onChange={value => this.handleMetricTypeChange(value)}
+          onChange={value => this.onMetricTypeChange(value)}
         >
           {metric => (
             <>
               <Filter
-                filtersChanged={value => this.handleChange('filters', value)}
+                filtersChanged={value => this.onChange('filters', value)}
                 filters={filters}
                 refId={refId}
                 hideGroupBys={true}
@@ -91,7 +91,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
               type="text"
               className="gf-form-input width-20"
               value={title}
-              onChange={e => this.handleChange('title', e.target.value)}
+              onChange={e => this.onChange('title', e.target.value)}
             />
           </div>
           <div className="gf-form">
@@ -100,7 +100,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
               type="text"
               className="gf-form-input width-20"
               value={text}
-              onChange={e => this.handleChange('text', e.target.value)}
+              onChange={e => this.onChange('text', e.target.value)}
             />
           </div>
           <div className="gf-form gf-form--grow">

@@ -1,9 +1,6 @@
 import _ from 'lodash';
 
 import { QueryCtrl } from 'app/plugins/sdk';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
-
-import { QueryEditor } from './components/QueryEditor';
 import { Target } from './types';
 
 export class StackdriverQueryCtrl extends QueryCtrl {
@@ -12,22 +9,15 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
-    this.handleQueryChange = this.handleQueryChange.bind(this);
-    this.handleExecuteQuery = this.handleExecuteQuery.bind(this);
-    react2AngularDirective('queryEditor', QueryEditor, [
-      'target',
-      'onQueryChange',
-      'onExecuteQuery',
-      ['events', { watchDepth: 'reference' }],
-      ['datasource', { watchDepth: 'reference' }],
-    ]);
+    this.onQueryChange = this.onQueryChange.bind(this);
+    this.onExecuteQuery = this.onExecuteQuery.bind(this);
   }
 
-  handleQueryChange(target: Target) {
+  onQueryChange(target: Target) {
     Object.assign(this.target, target);
   }
 
-  handleExecuteQuery() {
+  onExecuteQuery() {
     this.$scope.ctrl.refresh();
   }
 }

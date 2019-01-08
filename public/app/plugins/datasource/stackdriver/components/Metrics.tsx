@@ -98,7 +98,7 @@ export class Metrics extends React.Component<Props, State> {
     return metricsByService;
   }
 
-  handleServiceChange(service) {
+  onServiceChange(service) {
     const { metricDescriptors } = this.state;
     const { templateSrv, metricType } = this.props;
 
@@ -112,11 +112,11 @@ export class Metrics extends React.Component<Props, State> {
     this.setState({ service, metrics });
 
     if (metrics.length > 0 && !metrics.some(m => m.value === templateSrv.replace(metricType))) {
-      this.handleMetricTypeChange(metrics[0].value);
+      this.onMetricTypeChange(metrics[0].value);
     }
   }
 
-  handleMetricTypeChange(value) {
+  onMetricTypeChange(value) {
     const metricDescriptor = this.getSelectedMetricDescriptor(value);
     this.setState({ metricDescriptor });
     this.props.onChange({ ...metricDescriptor, type: value });
@@ -151,7 +151,7 @@ export class Metrics extends React.Component<Props, State> {
           <div className="gf-form">
             <span className="gf-form-label width-9 query-keyword">Service</span>
             <MetricSelect
-              onChange={value => this.handleServiceChange(value)}
+              onChange={value => this.onServiceChange(value)}
               value={service}
               options={services}
               isSearchable={false}
@@ -167,7 +167,7 @@ export class Metrics extends React.Component<Props, State> {
           <div className="gf-form">
             <span className="gf-form-label width-9 query-keyword">Metric</span>
             <MetricSelect
-              onChange={value => this.handleMetricTypeChange(value)}
+              onChange={value => this.onMetricTypeChange(value)}
               value={metricType}
               variables={templateSrv.variables}
               options={[

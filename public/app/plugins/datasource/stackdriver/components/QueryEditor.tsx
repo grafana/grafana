@@ -91,7 +91,7 @@ export class QueryEditor extends React.Component<Props, State> {
     this.setState({ lastQuery, lastQueryError });
   }
 
-  handleMetricTypeChange({ valueType, metricKind, type, unit }) {
+  onMetricTypeChange({ valueType, metricKind, type, unit }) {
     const { datasource, onQueryChange, onExecuteQuery } = this.props;
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
@@ -113,7 +113,7 @@ export class QueryEditor extends React.Component<Props, State> {
     );
   }
 
-  handleChange(prop, value) {
+  onPropertyChange(prop, value) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
@@ -144,13 +144,13 @@ export class QueryEditor extends React.Component<Props, State> {
           metricType={metricType}
           templateSrv={datasource.templateSrv}
           datasource={datasource}
-          onChange={value => this.handleMetricTypeChange(value)}
+          onChange={value => this.onMetricTypeChange(value)}
         >
           {metric => (
             <>
               <Filter
-                filtersChanged={value => this.handleChange('filters', value)}
-                groupBysChanged={value => this.handleChange('groupBys', value)}
+                filtersChanged={value => this.onPropertyChange('filters', value)}
+                groupBysChanged={value => this.onPropertyChange('groupBys', value)}
                 filters={filters}
                 groupBys={groupBys}
                 refId={refId}
@@ -164,7 +164,7 @@ export class QueryEditor extends React.Component<Props, State> {
                 templateSrv={datasource.templateSrv}
                 crossSeriesReducer={crossSeriesReducer}
                 groupBys={groupBys}
-                onChange={value => this.handleChange('crossSeriesReducer', value)}
+                onChange={value => this.onPropertyChange('crossSeriesReducer', value)}
               >
                 {displayAdvancedOptions =>
                   displayAdvancedOptions && (
@@ -172,16 +172,16 @@ export class QueryEditor extends React.Component<Props, State> {
                       alignOptions={alignOptions}
                       templateSrv={datasource.templateSrv}
                       perSeriesAligner={perSeriesAligner}
-                      onChange={value => this.handleChange('perSeriesAligner', value)}
+                      onChange={value => this.onPropertyChange('perSeriesAligner', value)}
                     />
                   )
                 }
               </Aggregations>
-              <AliasBy value={aliasBy} onChange={value => this.handleChange('aliasBy', value)} />
+              <AliasBy value={aliasBy} onChange={value => this.onPropertyChange('aliasBy', value)} />
               <AlignmentPeriods
                 templateSrv={datasource.templateSrv}
                 alignmentPeriod={alignmentPeriod}
-                onChange={value => this.handleChange('alignmentPeriod', value)}
+                onChange={value => this.onPropertyChange('alignmentPeriod', value)}
               />
               <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
             </>
