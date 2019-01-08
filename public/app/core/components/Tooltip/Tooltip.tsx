@@ -12,7 +12,12 @@ const Tooltip = ({ children, renderContent, ...controllerProps }: UsingPopperPro
       {(showPopper, hidePopper, popperProps) => {
         return (
           <>
-            <Popper {...popperProps} referenceElement={tooltipTriggerRef.current} />
+            <Popper
+              {...popperProps}
+              onMouseEnter={showPopper}
+              onMouseLeave={hidePopper}
+              referenceElement={tooltipTriggerRef.current}
+            />
             {React.cloneElement(children, {
               ref: tooltipTriggerRef,
               onMouseEnter: showPopper,

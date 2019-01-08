@@ -16,7 +16,7 @@ const transitionStyles = {
   exiting: { opacity: 0 },
 };
 
-interface Props {
+interface Props extends React.DOMAttributes<HTMLDivElement> {
   renderContent: (content: any) => any;
   show: boolean;
   placement?: PopperJS.Placement;
@@ -27,7 +27,7 @@ interface Props {
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { renderContent, show, placement } = this.props;
+    const { renderContent, show, placement, onMouseEnter, onMouseLeave } = this.props;
     const { content } = this.props;
 
     return (
@@ -39,6 +39,8 @@ class Popper extends PureComponent<Props> {
                 {({ ref, style, placement, arrowProps }) => {
                   return (
                     <div
+                      onMouseEnter={onMouseEnter}
+                      onMouseLeave={onMouseLeave}
                       ref={ref}
                       style={{
                         ...style,
