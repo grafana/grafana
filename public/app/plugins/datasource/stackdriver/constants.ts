@@ -151,32 +151,32 @@ export const aggOptions = [
   {
     text: 'mean',
     value: 'REDUCE_MEAN',
-    valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
+    valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'min',
     value: 'REDUCE_MIN',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE, MetricKind.METRIC_KIND_UNSPECIFIED],
   },
   {
     text: 'max',
     value: 'REDUCE_MAX',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE, MetricKind.METRIC_KIND_UNSPECIFIED],
   },
   {
     text: 'sum',
     value: 'REDUCE_SUM',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE, MetricKind.METRIC_KIND_UNSPECIFIED],
   },
   {
     text: 'std. dev.',
     value: 'REDUCE_STDDEV',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE, MetricKind.METRIC_KIND_UNSPECIFIED],
   },
   {
     text: 'count',
