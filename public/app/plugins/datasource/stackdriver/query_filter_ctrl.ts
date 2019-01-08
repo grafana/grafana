@@ -31,7 +31,7 @@ export class StackdriverFilterCtrl {
   removeSegment: any;
 
   /** @ngInject */
-  constructor(private $scope, private uiSegmentSrv, private templateSrv, private $rootScope) {
+  constructor(private $scope, private uiSegmentSrv, private templateSrv) {
     this.$scope = $scope.hasOwnProperty('groupBysChanged') ? $scope : $scope.$parent;
 
     this.initSegments(this.$scope.hideGroupBys);
@@ -139,7 +139,6 @@ export class StackdriverFilterCtrl {
     const groupBys = this.groupBySegments.reduce(reducer, []);
     this.$scope.groupBysChanged(groupBys);
     this.ensurePlusButton(this.groupBySegments);
-    this.$rootScope.$broadcast('metricTypeChanged');
   }
 
   async getFilters(segment, index) {
