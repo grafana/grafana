@@ -38,6 +38,9 @@
 @import 'layout/lists';
 @import 'layout/page';
 
+// LOAD @grafana/ui components
+@import '../../packages/grafana-ui/src/index';
+
 // COMPONENTS
 @import 'components/scrollbar';
 @import 'components/cards';
@@ -98,12 +101,12 @@
 @import 'components/form_select_box';
 @import 'components/panel_editor';
 @import 'components/toolbar';
-@import 'components/delete_button';
 @import 'components/add_data_source.scss';
 @import 'components/page_loader';
 @import 'components/thresholds';
 @import 'components/toggle_button_group';
 @import 'components/value-mappings';
+@import 'components/popover-box';
 
 // PAGES
 @import 'pages/login';

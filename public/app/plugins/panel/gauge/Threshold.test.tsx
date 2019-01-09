@@ -2,7 +2,8 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import Thresholds from './Thresholds';
 import { defaultProps, OptionsProps } from './module';
-import { BasicGaugeColor, PanelOptionsProps } from 'app/types';
+import { BasicGaugeColor } from 'app/types';
+import { PanelOptionsProps } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<OptionsProps> = {

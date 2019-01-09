@@ -16,7 +16,8 @@ import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 // Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { PanelPlugin, TimeRange } from 'app/types';
+import { PanelPlugin } from 'app/types';
+import { TimeRange } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;
@@ -86,7 +87,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { datasource, targets, transparent } = panel;
     const PanelComponent = plugin.exports.Panel;
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
-
     return (
       <AutoSizer>
         {({ width, height }) => {

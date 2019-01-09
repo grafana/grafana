@@ -18,7 +18,6 @@ export class PanelCtrl {
   panel: any;
   error: any;
   dashboard: any;
-  editorTabIndex: number;
   pluginName: string;
   pluginId: string;
   editorTabs: any;
@@ -39,7 +38,7 @@ export class PanelCtrl {
     this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
-    this.editorTabIndex = 0;
+    this.editorTabs = [];
     this.events = this.panel.events;
     this.timing = {};
 
@@ -90,10 +89,10 @@ export class PanelCtrl {
   }
 
   initEditMode() {
-    this.editorTabs = [];
-
-    this.editModeInitiated = true;
-    this.events.emit('init-edit-mode', null);
+    if (!this.editModeInitiated) {
+      this.editModeInitiated = true;
+      this.events.emit('init-edit-mode', null);
+    }
   }
 
   addEditorTab(title, directiveFn, index?, icon?) {
@@ -199,22 +198,16 @@ export class PanelCtrl {
   }
 
   calculatePanelHeight() {
-    if (this.panel.fullscreen) {
-      const docHeight = $('.react-grid-layout').height();
-      const editHeight = Math.floor(docHeight * 0.35);
-      const fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
+    if (this.panel.isEditing) {
+      this.containerHeight = $('.panel-wrapper--edit').height();
+    } else if (this.panel.fullscreen)  {
+      this.containerHeight = $('.panel-wrapper--view').height();
     } else {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
     if (this.panel.soloMode) {
       this.containerHeight = $(window).height();
-    }
-
-    // hacky solution
-    if (this.panel.isEditing && !this.editModeInitiated) {
-      this.initEditMode();
     }
 
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);

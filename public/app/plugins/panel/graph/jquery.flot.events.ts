@@ -54,7 +54,7 @@ export function createEditPopover(element, event, plot) {
   const eventManager = plot.getOptions().events.manager;
   if (eventManager.editorOpen) {
     // update marker element to attach to (needed in case of legend on the right
-    // when there is a double render pass and the inital marker element is removed)
+    // when there is a double render pass and the initial marker element is removed)
     markerElementToAttachTo = element;
     return;
   }

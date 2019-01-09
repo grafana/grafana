@@ -11,7 +11,8 @@ import {
   QueryHintGetter,
   QueryHint,
 } from 'app/types/explore';
-import { TimeRange, DataQuery } from 'app/types/series';
+import { TimeRange } from '@grafana/ui';
+import { DataQuery } from 'app/types/series';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
@@ -38,6 +39,8 @@ import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
 import { Alert } from './Error';
 import TimePicker, { parseTime } from './TimePicker';
+
+const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
 
 interface ExploreProps {
   datasourceSrv: DatasourceSrv;
@@ -90,6 +93,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
   exploreEvents: Emitter;
   /**
+   * Set via URL or local storage
+   */
+  initialDatasource: string;
+  /**
    * Current query expressions of the rows including their modifications, used for running queries.
    * Not kept in component state to prevent edit-render roundtrips.
    */
@@ -114,6 +121,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       initialQueries = splitState.initialQueries;
     } else {
       const { datasource, queries, range } = props.urlState as ExploreUrlState;
+      const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
       initialQueries = ensureQueries(queries);
       const initialRange = { from: parseTime(range.from), to: parseTime(range.to) } || { ...DEFAULT_RANGE };
       // Millies step for helper bar charts
@@ -123,10 +131,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         datasourceError: null,
         datasourceLoading: null,
         datasourceMissing: false,
-        datasourceName: datasource,
         exploreDatasources: [],
         graphInterval: initialGraphInterval,
         graphResult: [],
+        initialDatasource,
         initialQueries,
         history: [],
         logsResult: null,
@@ -150,7 +158,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
   async componentDidMount() {
     const { datasourceSrv } = this.props;
-    const { datasourceName } = this.state;
+    const { initialDatasource } = this.state;
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
@@ -164,10 +172,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     if (datasources.length > 0) {
       this.setState({ datasourceLoading: true, exploreDatasources });
-      // Priority: datasource in url, default datasource, first explore datasource
+      // Priority for datasource preselection: URL, localstorage, default datasource
       let datasource;
-      if (datasourceName) {
-        datasource = await datasourceSrv.get(datasourceName);
+      if (initialDatasource) {
+        datasource = await datasourceSrv.get(initialDatasource);
       } else {
         datasource = await datasourceSrv.get();
       }
@@ -252,13 +260,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         supportsLogs,
         supportsTable,
         datasourceLoading: false,
-        datasourceName: datasource.name,
+        initialDatasource: datasource.name,
         initialQueries: nextQueries,
         logsHighlighterExpressions: undefined,
         showingStartPage: Boolean(StartPage),
       },
       () => {
         if (datasourceError === null) {
+          // Save last-used datasource
+          store.set(LAST_USED_DATASOURCE_KEY, datasource.name);
           this.onSubmit();
         }
       }
@@ -482,7 +492,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           } else {
             // Modify query only at index
             nextQueries = initialQueries.map((query, i) => {
-              // Synchronise all queries with local query cache to ensure consistency
+              // Synchronize all queries with local query cache to ensure consistency
               // TODO still needed?
               return i === index
                 ? {
@@ -934,7 +944,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
           <div className="navbar-buttons relative">
             <button className="btn navbar-button navbar-button--primary" onClick={this.onSubmit}>
               Run Query{' '}
-              {loading ? <i className="fa fa-spinner fa-spin run-icon" /> : <i className="fa fa-level-down run-icon" />}
+              {loading ? <i className="fa fa-spinner fa-fw fa-spin run-icon" /> : <i className="fa fa-level-down fa-fw run-icon" />}
             </button>
           </div>
         </div>

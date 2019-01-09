@@ -69,7 +69,7 @@ function bootstrapTagsinput() {
             },
       });
 
-      select.on('itemAdded', event => {
+      select.on('itemAdded', (event: any) => {
         if (scope.model.indexOf(event.item) === -1) {
           scope.model.push(event.item);
           if (scope.onTagsUpdated) {
@@ -85,7 +85,7 @@ function bootstrapTagsinput() {
         setColor(event.item, tagElement);
       });
 
-      select.on('itemRemoved', event => {
+      select.on('itemRemoved', (event: any) => {
         const idx = scope.model.indexOf(event.item);
         if (idx !== -1) {
           scope.model.splice(idx, 1);

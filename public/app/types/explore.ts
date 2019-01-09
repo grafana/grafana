@@ -1,6 +1,7 @@
 import { Value } from 'slate';
 
-import { DataQuery, RawTimeRange } from './series';
+import { DataQuery } from './series';
+import { RawTimeRange } from '@grafana/ui';
 import TableModel from 'app/core/table_model';
 import { LogsModel } from 'app/core/logs_model';
 import { DataSourceSelectItem } from 'app/types/datasources';
@@ -154,11 +155,11 @@ export interface ExploreState {
   datasourceError: any;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
-  datasourceName?: string;
   exploreDatasources: DataSourceSelectItem[];
   graphInterval: number; // in ms
   graphResult?: any[];
   history: HistoryItem[];
+  initialDatasource?: string;
   initialQueries: DataQuery[];
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;

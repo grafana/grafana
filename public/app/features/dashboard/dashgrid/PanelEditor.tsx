@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { QueriesTab } from './QueriesTab';
 import { VisualizationTab } from './VisualizationTab';
 import { GeneralTab } from './GeneralTab';
-import { AlertTab } from './AlertTab';
+import { AlertTab } from '../../alerting/AlertTab';
 
 import config from 'app/core/config';
 import { store } from 'app/store/store';
@@ -54,7 +54,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
       case 'queries':
         return <QueriesTab panel={panel} dashboard={dashboard} />;
       case 'alert':
-        return <AlertTab angularPanel={angularPanel} />;
+        return <AlertTab angularPanel={angularPanel} dashboard={dashboard} panel={panel} />;
       case 'visualization':
         return (
           <VisualizationTab

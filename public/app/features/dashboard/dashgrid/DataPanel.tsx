@@ -1,5 +1,7 @@
 // Library
 import React, { Component } from 'react';
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Services
 import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -8,7 +10,11 @@ import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource
 import kbn from 'app/core/utils/kbn';
 
 // Types
-import { TimeRange, LoadingState, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
+import { DataQueryOptions, DataQueryResponse } from 'app/types';
+import { TimeRange, TimeSeries, LoadingState } from '@grafana/ui';
+import { Themes } from 'app/core/components/Tooltip/Popper';
+
+const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 interface RenderProps {
   loading: LoadingState;
@@ -32,6 +38,7 @@ export interface Props {
 export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
+  errorMessage: string;
   response: DataQueryResponse;
 }
 
@@ -50,6 +57,7 @@ export class DataPanel extends Component<Props, State> {
 
     this.state = {
       loading: LoadingState.NotStarted,
+      errorMessage: '',
       response: {
         data: [],
       },
@@ -89,7 +97,7 @@ export class DataPanel extends Component<Props, State> {
       return;
     }
 
-    this.setState({ loading: LoadingState.Loading });
+    this.setState({ loading: LoadingState.Loading, errorMessage: '' });
 
     try {
       const ds = await this.dataSourceSrv.get(datasource);
@@ -127,9 +135,19 @@ export class DataPanel extends Component<Props, State> {
       });
     } catch (err) {
       console.log('Loading error', err);
-      this.setState({ loading: LoadingState.Error, isFirstLoad: false });
+      this.onError('Request Error');
     }
   };
+
+  onError = (errorMessage: string) => {
+    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
+      this.setState({
+        loading: LoadingState.Error,
+        isFirstLoad: false,
+        errorMessage: errorMessage
+      });
+    }
+  }
 
   render() {
     const { queries } = this.props;
@@ -138,7 +156,7 @@ export class DataPanel extends Component<Props, State> {
     const timeSeries = response.data;
 
     if (isFirstLoad && loading === LoadingState.Loading) {
-      return this.renderLoadingSpinner();
+      return this.renderLoadingStates();
     }
 
     if (!queries.length) {
@@ -151,23 +169,47 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {this.renderLoadingSpinner()}
-        {this.props.children({
-          timeSeries,
-          loading,
-        })}
+        {this.renderLoadingStates()}
+        <ErrorBoundary>
+          {({error, errorInfo}) => {
+            if (errorInfo) {
+              this.onError(error.message || DEFAULT_PLUGIN_ERROR);
+              return null;
+            }
+            return (
+              <>
+                {this.props.children({
+                  timeSeries,
+                  loading,
+                })}
+              </>
+            );
+          }}
+        </ErrorBoundary>
       </>
     );
   }
 
-  private renderLoadingSpinner(): JSX.Element {
-    const { loading } = this.state;
-
+  private renderLoadingStates(): JSX.Element {
+    const { loading, errorMessage } = this.state;
     if (loading === LoadingState.Loading) {
       return (
         <div className="panel-loading">
           <i className="fa fa-spinner fa-spin" />
         </div>
+      );
+    } else if (loading === LoadingState.Error) {
+      return (
+        <Tooltip
+          content={errorMessage}
+          className="popper__manager--block"
+          refClassName={`panel-info-corner panel-info-corner--error`}
+          placement="bottom-start"
+          theme={Themes.Error}
+        >
+          <i className="fa" />
+          <span className="panel-info-corner-inner" />
+        </Tooltip>
       );
     }
 

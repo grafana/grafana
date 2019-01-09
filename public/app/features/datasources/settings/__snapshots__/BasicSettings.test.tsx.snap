@@ -16,7 +16,7 @@ exports[`Render should render component 1`] = `
       }
     >
       <Component
-        tooltip="The name is used when you select the data source in panels. The Default data source ispreselected in new panels."
+        tooltip="The name is used when you select the data source in panels. The Default data source is preselected in new panels."
       >
         Name
       </Component>

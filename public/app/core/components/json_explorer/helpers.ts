@@ -1,5 +1,5 @@
 // Based on work https://github.com/mohsen1/json-formatter-js
-// Licence MIT, Copyright (c) 2015 Mohsen Azimi
+// License MIT, Copyright (c) 2015 Mohsen Azimi
 
 /*
  * Escapes `"` characters from string

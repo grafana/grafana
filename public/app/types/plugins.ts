@@ -1,5 +1,5 @@
 import { ComponentClass } from 'react';
-import { PanelProps, PanelOptionsProps } from './panel';
+import { PanelProps, PanelOptionsProps } from '@grafana/ui';
 
 export interface PluginExports {
   Datasource?: any;
@@ -57,13 +57,18 @@ export interface PluginInclude {
   path: string;
 }
 
+interface PluginMetaInfoLink {
+  name: string;
+  url: string;
+}
+
 export interface PluginMetaInfo {
   author: {
     name: string;
     url?: string;
   };
   description: string;
-  links: string[];
+  links: PluginMetaInfoLink[];
   logos: {
     large: string;
     small: string;

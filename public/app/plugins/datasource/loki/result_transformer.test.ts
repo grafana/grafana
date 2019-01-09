@@ -35,7 +35,7 @@ describe('getLoglevel()', () => {
 });
 
 describe('parseLabels()', () => {
-  it('returns no labels on emtpy labels string', () => {
+  it('returns no labels on empty labels string', () => {
     expect(parseLabels('')).toEqual({});
     expect(parseLabels('{}')).toEqual({});
   });
@@ -46,7 +46,7 @@ describe('parseLabels()', () => {
 });
 
 describe('formatLabels()', () => {
-  it('returns no labels on emtpy label set', () => {
+  it('returns no labels on empty label set', () => {
     expect(formatLabels({})).toEqual('');
     expect(formatLabels({}, 'foo')).toEqual('foo');
   });
@@ -99,7 +99,7 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'WARN boooo',
-          timestamp: '1970-01-01T00:00:00Z',
+          ts: '1970-01-01T00:00:00Z',
         },
       ],
     };
@@ -120,7 +120,7 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'WARN boooo',
-          timestamp: '1970-01-01T00:00:01Z',
+          ts: '1970-01-01T00:00:01Z',
         },
       ],
     };
@@ -129,11 +129,11 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'INFO 1',
-          timestamp: '1970-01-01T00:00:00Z',
+          ts: '1970-01-01T00:00:00Z',
         },
         {
           line: 'INFO 2',
-          timestamp: '1970-01-01T00:00:02Z',
+          ts: '1970-01-01T00:00:02Z',
         },
       ],
     };

@@ -135,7 +135,6 @@
     position: absolute;
     animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
     animation-iteration-count: 100;
-    z-index: 2;
     background: $blue;
   }
 
@@ -161,7 +160,7 @@
   }
 
   .run-icon {
-    margin-left: 0.5em;
+    margin-left: 0.25em;
     transform: rotate(90deg);
   }
 

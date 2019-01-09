@@ -166,7 +166,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 
 	var result notifierStateSlice
 	for _, notification := range query.Result {
-		not, err := n.createNotifierFor(notification)
+		not, err := InitNotifier(notification)
 		if err != nil {
 			n.log.Error("Could not create notifier", "notifier", notification.Id, "error", err)
 			continue
@@ -195,7 +195,8 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 	return result, nil
 }
 
-func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Notifier, error) {
+// InitNotifier instantiate a new notifier based on the model
+func InitNotifier(model *m.AlertNotification) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, errors.New("Unsupported notification type")
@@ -208,6 +209,7 @@ type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 
+// RegisterNotifier register an notifier
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }

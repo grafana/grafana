@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import classNames from 'classnames/bind';
+import classNames from 'classnames';
 import DataSourcesListItem from './DataSourcesListItem';
 import { DataSource } from 'app/types';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';

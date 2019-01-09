@@ -14,7 +14,6 @@ const DEFAULT_EXPLORE_STATE: ExploreState = {
   datasourceError: null,
   datasourceLoading: null,
   datasourceMissing: false,
-  datasourceName: '',
   exploreDatasources: [],
   graphInterval: 1000,
   history: [],
@@ -69,7 +68,7 @@ describe('state functions', () => {
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        datasourceName: 'foo',
+        initialDatasource: 'foo',
         range: {
           from: 'now-5h',
           to: 'now',
@@ -94,7 +93,7 @@ describe('state functions', () => {
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        datasourceName: 'foo',
+        initialDatasource: 'foo',
         range: {
           from: 'now-5h',
           to: 'now',
@@ -120,7 +119,7 @@ describe('state functions', () => {
     it('can parse the serialized state into the original state', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        datasourceName: 'foo',
+        initialDatasource: 'foo',
         range: {
           from: 'now - 5h',
           to: 'now',
@@ -144,7 +143,7 @@ describe('state functions', () => {
       const resultState = {
         ...rest,
         datasource: DEFAULT_EXPLORE_STATE.datasource,
-        datasourceName: datasource,
+        initialDatasource: datasource,
         initialQueries: queries,
       };
 

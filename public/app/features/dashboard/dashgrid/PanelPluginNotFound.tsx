@@ -1,6 +1,10 @@
+// Libraries
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
-import { PanelPlugin, PanelProps } from 'app/types';
+
+// Types
+import { PanelProps } from '@grafana/ui';
+import { PanelPlugin } from 'app/types';
 
 interface Props {
   pluginId: string;

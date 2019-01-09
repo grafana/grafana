@@ -101,6 +101,7 @@ $panel-bg: $white;
 $panel-border-color: $gray-5;
 $panel-border: solid 1px $panel-border-color;
 $panel-header-hover-bg: $gray-6;
+$panel-corner: $gray-4;
 
 // Page header
 $page-header-bg: linear-gradient(90deg, $white, $gray-7);
@@ -306,11 +307,13 @@ $popover-error-bg: $btn-danger-bg;
 // Tooltips and popovers
 // -------------------------
 $tooltipColor: $popover-help-color;
-$tooltipBackground: $popover-help-bg;
 $tooltipArrowWidth: 5px;
-$tooltipArrowColor: $tooltipBackground;
 $tooltipLinkColor: lighten($popover-help-color, 5%);
 $graph-tooltip-bg: $gray-5;
+
+$tooltipBackground: $popover-help-bg;
+$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
+$tooltipBackgroundError: $brand-danger;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
@@ -408,3 +411,7 @@ $logs-color-unkown: $gray-5;
 $button-toggle-group-btn-active-bg: $brand-primary;
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $white;
 $button-toggle-group-btn-seperator-border: 1px solid $gray-6;
+
+$vertical-resize-handle-bg: $gray-4;
+$vertical-resize-handle-dots: $gray-3;
+$vertical-resize-handle-dots-hover: $gray-2;

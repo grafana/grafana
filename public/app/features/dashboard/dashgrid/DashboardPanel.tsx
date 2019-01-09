@@ -14,6 +14,7 @@ import { PanelEditor } from './PanelEditor';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types';
+import { PanelResizer } from './PanelResizer';
 
 export interface Props {
   panel: PanelModel;
@@ -158,10 +159,21 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     return (
       <div className={containerClass}>
-        <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-          {plugin.exports.Panel && this.renderReactPanel()}
-          {plugin.exports.PanelCtrl && this.renderAngularPanel()}
-        </div>
+        <PanelResizer
+          isEditing={isEditing}
+          panel={panel}
+          render={styles => (
+            <div
+              className={panelWrapperClass}
+              onMouseEnter={this.onMouseEnter}
+              onMouseLeave={this.onMouseLeave}
+              style={styles}
+            >
+              {plugin.exports.Panel && this.renderReactPanel()}
+              {plugin.exports.PanelCtrl && this.renderAngularPanel()}
+            </div>
+          )}
+        />
         {panel.isEditing && (
           <PanelEditor
             panel={panel}

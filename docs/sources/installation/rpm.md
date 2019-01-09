@@ -32,7 +32,7 @@ $ sudo yum install <rpm package url>
 Example:
 
 ```bash
-$ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4-1.x86_64.rpm
+$ sudo yum install https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
 ```
 
 Or install manually using `rpm`. First execute
@@ -44,7 +44,7 @@ $ wget <rpm package url>
 Example:
 
 ```bash
-$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4-1.x86_64.rpm
+$ wget https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
 ```
 
 ### On CentOS / Fedora / Redhat:
@@ -67,19 +67,27 @@ Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
 ```bash
 [grafana]
 name=grafana
-baseurl=https://packagecloud.io/grafana/stable/el/7/$basearch
+baseurl=https://packages.grafana.com/oss/rpm
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1
-gpgkey=https://packagecloud.io/gpg.key https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
+gpgkey=https://packages.grafana.com/gpg.key
 sslverify=1
 sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
 
-There is also a testing repository if you want beta or release candidates.
+There is a separate repository if you want beta releases.
 
 ```bash
-baseurl=https://packagecloud.io/grafana/testing/el/7/$basearch
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm-beta
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
 
 Then install Grafana via the `yum` command.
@@ -91,7 +99,7 @@ $ sudo yum install grafana
 ### RPM GPG Key
 
 The RPMs are signed, you can verify the signature with this [public GPG
-key](https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana).
+key](https://packages.grafana.com/gpg.key).
 
 ## Package details
 
