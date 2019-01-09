@@ -78,7 +78,7 @@ export class PanelHeaderCorner extends Component<Props> {
         {infoMode === InfoModes.Info || infoMode === InfoModes.Links ? (
           <Tooltip
             content={this.getInfoContent}
-              placement="bottom-start"
+            placement="bottom-start"
           >
             <div
               className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}
