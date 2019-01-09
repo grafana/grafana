@@ -48,7 +48,7 @@ describe('Aggregations', () => {
       });
       it('', () => {
         const options = wrapper.state().aggOptions[0].options;
-        expect(options.length).toEqual(1);
+        expect(options.length).toEqual(5);
         expect(options.map(o => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
       });
     });
