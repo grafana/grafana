@@ -23,7 +23,7 @@ export default class UnitPicker extends PureComponent<Props> {
       const options = group.submenu.map(unit => {
         return {
           label: unit.text,
-          value: unit.value,
+          value: unit.id,
         };
       });
 
