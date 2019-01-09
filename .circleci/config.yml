@@ -323,7 +323,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.0.0
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
           at: .
@@ -346,7 +346,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.0.0
+    - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
          at: .
@@ -365,10 +365,20 @@ jobs:
       - run:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh --enterprise'
+      - run:
+          name: Load GPG private key
+          comand: './scripts/build/load-signing-key.sh'
+      - run:
+          name: Update Debian repository
+          command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+      - run:
+          name: Update RPM repository
+          command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.0.0
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
           at: .
@@ -398,8 +408,9 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.0.0
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run:
@@ -417,6 +428,15 @@ jobs:
       - run:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh'
+      - run:
+          name: Load GPG private key
+          comand: './scripts/build/load-signing-key.sh'
+      - run:
+          name: Update Debian repository
+          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+      - run:
+          name: Update RPM repository
+          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
 
 workflows:
   version: 2

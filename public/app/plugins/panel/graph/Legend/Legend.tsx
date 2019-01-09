@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import { TimeSeries } from 'app/core/core';
-import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '@grafana/ui';
 import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
 interface LegendProps {
