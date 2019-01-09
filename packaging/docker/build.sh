@@ -1,13 +1,14 @@
 #!/bin/sh
 
-_grafana_tag=${1:-}
-_docker_repo=${2:-grafana/grafana}
+_grafana_tag=$1
 
 # If the tag starts with v, treat this as a official release
 if echo "$_grafana_tag" | grep -q "^v"; then
 	_grafana_version=$(echo "${_grafana_tag}" | cut -d "v" -f 2)
+	_docker_repo=${2:-grafana/grafana}
 else
 	_grafana_version=$_grafana_tag
+	_docker_repo=${2:-grafana/grafana-dev}
 fi
 
 echo "Building ${_docker_repo}:${_grafana_version}"
@@ -44,6 +45,5 @@ docker_build "arm64v8/debian:stretch-slim" "grafana-latest.linux-arm64.tar.gz" "
 if echo "$_grafana_tag" | grep -q "^v"; then
 	docker_tag_all "${_docker_repo}" "latest"
 else
-	docker_tag_all "${_docker_repo}" "master"
-	docker tag "${_docker_repo}:${_grafana_version} grafana/grafana-dev:${_grafana_version}"
+	docker_tag_all "grafana/grafana" "master"
 fi
