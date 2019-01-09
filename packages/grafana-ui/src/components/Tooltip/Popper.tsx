@@ -7,6 +7,7 @@ import Transition from 'react-transition-group/Transition';
 export enum Themes {
   Default = 'popper__background--default',
   Error = 'popper__background--error',
+  Brand = 'popper__background--brand',
 }
 
 const defaultTransitionStyles = {
