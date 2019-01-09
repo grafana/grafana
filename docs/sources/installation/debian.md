@@ -47,6 +47,12 @@ Create a file `/etc/apt/sources.list.d/grafana.list` and add the following to it
 deb https://packages.grafana.com/oss/deb stable main
 ```
 
+There is a separate repository if you want beta releases.
+
+```bash
+deb https://packages.grafana.com/oss/deb beta main
+```
+
 Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
 
 ```bash

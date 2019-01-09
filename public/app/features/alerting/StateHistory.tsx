@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
-import alertDef from '../../alerting/state/alertDef';
+import alertDef from './state/alertDef';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DashboardModel } from '../dashboard_model';
-import appEvents from '../../../core/app_events';
+import { DashboardModel } from '../dashboard/dashboard_model';
+import appEvents from '../../core/app_events';
 
 interface Props {
   dashboard: DashboardModel;

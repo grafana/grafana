@@ -87,7 +87,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { datasource, targets, transparent } = panel;
     const PanelComponent = plugin.exports.Panel;
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
-
     return (
       <AutoSizer>
         {({ width, height }) => {

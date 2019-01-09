@@ -4,6 +4,11 @@ import { Manager, Popper as ReactPopper } from 'react-popper';
 import Portal from 'app/core/components/Portal/Portal';
 import Transition from 'react-transition-group/Transition';
 
+export enum Themes {
+  Default = 'popper__background--default',
+  Error = 'popper__background--error',
+}
+
 const defaultTransitionStyles = {
   transition: 'opacity 200ms linear',
   opacity: 0,
@@ -23,12 +28,15 @@ interface Props extends React.DOMAttributes<HTMLDivElement> {
   content: string | ((props: any) => JSX.Element);
   refClassName?: string;
   referenceElement: PopperJS.ReferenceObject;
+  theme?: Themes;
 }
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { renderContent, show, placement, onMouseEnter, onMouseLeave } = this.props;
+    const { renderContent, show, placement, onMouseEnter, onMouseLeave, theme } = this.props;
     const { content } = this.props;
+
+    const popperBackgroundClassName = 'popper__background' + (theme ? ' ' + theme : '');
 
     return (
       <Manager>
@@ -50,7 +58,7 @@ class Popper extends PureComponent<Props> {
                       data-placement={placement}
                       className="popper"
                     >
-                      <div className="popper__background">
+                      <div className={popperBackgroundClassName}>
                         {renderContent(content)}
                         <div ref={arrowProps.ref} data-placement={placement} className="popper__arrow" />
                       </div>

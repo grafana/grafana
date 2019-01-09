@@ -98,6 +98,7 @@ export class Graph extends PureComponent<GraphProps> {
       $.plot(this.element, timeSeries, flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, timeSeries);
+      throw new Error('Error rendering panel');
     }
   }
 
