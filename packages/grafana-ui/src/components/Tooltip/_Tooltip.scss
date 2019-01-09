@@ -1,5 +1,13 @@
 $popper-margin-from-ref: 5px;
 
+
+@mixin popper-theme($backgroundColor, $arrowColor) {
+  background: $backgroundColor;
+  .popper__arrow {
+    border-color: $arrowColor;
+  }
+}
+
 .popper {
   position: absolute;
   z-index: $zindex-tooltip;
@@ -8,7 +16,24 @@ $popper-margin-from-ref: 5px;
   text-align: center;
 }
 
-.popper .popper__arrow {
+.popper__background {
+  background: $tooltipBackground;
+  border-radius: $border-radius;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  padding: 10px;
+
+  // Themes
+  &.popper__background--error {
+    @include popper-theme($tooltipBackgroundError, $tooltipBackgroundError);
+  }
+
+  &.popper__background--brand {
+    @include popper-theme($tooltipBackgroundBrand, $tooltipBackgroundBrand);
+    @include gradient-vertical($red, $orange);
+  }
+}
+
+.popper__arrow {
   width: 0;
   height: 0;
   border-style: solid;
@@ -16,15 +41,8 @@ $popper-margin-from-ref: 5px;
   margin: 0px;
 }
 
-.popper .popper__arrow {
+.popper__arrow {
   border-color: $tooltipBackground;
-}
-
-.popper__background {
-  background: $tooltipBackground;
-  border-radius: $border-radius;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  padding: 10px;
 }
 
 // Top

@@ -9,7 +9,7 @@ import { Switch } from 'app/core/components/Switch/Switch';
 import { PanelOptionsProps } from '@grafana/ui';
 import { Options } from './types';
 
-export class GraphOptions extends PureComponent<PanelOptionsProps<Options>> {
+export class GraphPanelOptions extends PureComponent<PanelOptionsProps<Options>> {
   onToggleLines = () => {
     this.props.onChange({ ...this.props.options, showLines: !this.props.options.showLines });
   };

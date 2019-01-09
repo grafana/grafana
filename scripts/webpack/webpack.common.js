@@ -3,9 +3,6 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
   target: 'web',
-  stats: {
-    children: false
-  },
   entry: {
     app: './public/app/index.ts',
   },
@@ -25,6 +22,7 @@ module.exports = {
     ],
   },
   stats: {
+    children: false,
     warningsFilter: /export .* was not found in/
   },
   node: {

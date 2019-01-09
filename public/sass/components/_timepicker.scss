@@ -23,7 +23,9 @@
   left: 20px;
   right: 20px;
   top: $navbarHeight;
+
   @include media-breakpoint-up(md) {
+    left: auto;
     width: 550px;
   }
 

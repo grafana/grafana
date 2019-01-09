@@ -34,32 +34,29 @@ sudo dpkg -i grafana_<version>_amd64.deb
 Example:
 
 ```bash
-wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.1.4_amd64.deb
+wget https://dl.grafana.com/oss/release/grafana_5.4.2_amd64.deb
 sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.1.4_amd64.deb
+sudo dpkg -i grafana_5.4.2_amd64.deb
 ```
 
 ## APT Repository
 
-Add the following line to your `/etc/apt/sources.list` file.
+Create a file `/etc/apt/sources.list.d/grafana.list` and add the following to it.
 
 ```bash
-deb https://packagecloud.io/grafana/stable/debian/ stretch main
+deb https://packages.grafana.com/oss/deb stable main
 ```
 
-Use the above line even if you are on Ubuntu or another Debian version.
-There is also a testing repository if you want beta or release
-candidates.
+There is a separate repository if you want beta releases.
 
 ```bash
-deb https://packagecloud.io/grafana/testing/debian/ stretch main
+deb https://packages.grafana.com/oss/deb beta main
 ```
 
-Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
-allows you to install signed packages.
+Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
 
 ```bash
-curl https://packagecloud.io/gpg.key | sudo apt-key add -
+curl https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Update your Apt repositories and install Grafana

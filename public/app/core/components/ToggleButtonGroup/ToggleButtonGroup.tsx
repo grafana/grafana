@@ -1,5 +1,5 @@
 import React, { SFC, ReactNode, PureComponent } from 'react';
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import { Tooltip } from '@grafana/ui';
 
 interface ToggleButtonGroupProps {
   label?: string;
