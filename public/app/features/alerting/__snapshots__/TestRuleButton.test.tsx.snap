@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<Fragment>
+  <JSONFormatter
+    config={
+      Object {
+        "animateOpen": true,
+      }
+    }
+    json={Object {}}
+    open={3}
+  />
+</Fragment>
+`;
