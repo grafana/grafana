@@ -1,12 +1,13 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import Thresholds from './Thresholds';
-import { defaultProps, OptionsProps } from './module';
+import { defaultProps } from './GaugePanelOptions';
 import { BasicGaugeColor } from 'app/types';
 import { PanelOptionsProps } from '@grafana/ui';
+import { Options } from './types';
 
 const setup = (propOverrides?: object) => {
-  const props: PanelOptionsProps<OptionsProps> = {
+  const props: PanelOptionsProps<Options> = {
     onChange: jest.fn(),
     options: {
       ...defaultProps.options,
