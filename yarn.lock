@@ -937,7 +937,14 @@
     "@types/react-dom" "*"
     "@types/react-transition-group" "*"
 
-"@types/react-transition-group@*":
+"@types/react-test-renderer@^16.0.3":
+  version "16.0.3"
+  resolved "https://registry.yarnpkg.com/@types/react-test-renderer/-/react-test-renderer-16.0.3.tgz#cce5c983d66cc5c3582e7c2f44b274ab635a8acc"
+  integrity sha512-NWOAxVQeJxpXuNKgw83Hah0nquiw1nUexM9qY/Hk3a+XhZwgMtaa6GLA9E1TKMT75Odb3/KE/jiBO4enTuEJjQ==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react-transition-group@*", "@types/react-transition-group@^2.0.15":
   version "2.0.15"
   resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-2.0.15.tgz#e5ee3fe558832e141cc6041bdd54caea7b787af8"
   dependencies:
@@ -2743,6 +2750,7 @@ caniuse-api@^1.5.2:
 caniuse-db@1.0.30000772, caniuse-db@^1.0.30000529, caniuse-db@^1.0.30000634, caniuse-db@^1.0.30000639:
   version "1.0.30000772"
   resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000772.tgz#51aae891768286eade4a3d8319ea76d6a01b512b"
+  integrity sha1-UarokXaChureSj2DGep21qAbUSs=
 
 caniuse-lite@^1.0.30000925:
   version "1.0.30000926"
@@ -10561,7 +10569,7 @@ react-table@^6.8.6:
   dependencies:
     classnames "^2.2.5"
 
-react-test-renderer@^16.0.0-0, react-test-renderer@^16.5.0:
+react-test-renderer@^16.0.0-0, react-test-renderer@^16.5.0, react-test-renderer@^16.7.0:
   version "16.7.0"
   resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-16.7.0.tgz#1ca96c2b450ab47c36ba92cd8c03fcefc52ea01c"
   dependencies:
@@ -11298,6 +11306,7 @@ sax@^1.2.4, sax@~1.2.1:
 scheduler@^0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.12.0.tgz#8ab17699939c0aedc5a196a657743c496538647b"
+  integrity sha512-t7MBR28Akcp4Jm+QoR63XgAi9YgCUmgvDHqf5otgAj4QvdoBE4ImCX0ffehefePPG+aitiYHp0g/mW6s4Tp+dw==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
