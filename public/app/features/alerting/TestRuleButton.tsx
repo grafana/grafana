@@ -15,10 +15,10 @@ interface State {
 }
 
 export class TestRuleButton extends PureComponent<Props, State> {
-  constructor(props) {
-    super(props);
-    this.state = { isLoading: false, testRuleResponse: {} };
-  }
+  readonly state: State = {
+    isLoading: false,
+    testRuleResponse: {},
+  };
 
   componentDidMount() {
     this.testRule();
@@ -39,10 +39,6 @@ export class TestRuleButton extends PureComponent<Props, State> {
       return <LoadingPlaceholder text="Evaluating rule" />;
     }
 
-    return (
-      <>
-        <JSONFormatter json={testRuleResponse} />
-      </>
-    );
+    return <JSONFormatter json={testRuleResponse} />;
   }
 }
