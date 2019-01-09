@@ -6,7 +6,7 @@
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "storybook": "start-storybook -p 9001 -c .storybook"
+    "storybook": "start-storybook -p 9001 -c .storybook -s ../../public"
   },
   "author": "",
   "license": "ISC",

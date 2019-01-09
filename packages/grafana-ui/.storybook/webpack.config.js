@@ -34,10 +34,6 @@ module.exports = (baseConfig, env, config) => {
       { loader: 'sass-loader', options: { sourceMap: false } },
     ],
   });
-  config.module.rules.push({
-    test: /\.(png|jpg|gif|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
-    loader: 'file-loader',
-  });
   config.resolve.extensions.push('.ts', '.tsx');
   return config;
 };
