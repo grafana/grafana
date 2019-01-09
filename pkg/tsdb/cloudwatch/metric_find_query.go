@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -200,6 +201,8 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
 	case "ec2_instance_attribute":
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
+	case "resource_arns":
+		data, err = e.handleGetResourceArns(ctx, parameters, queryContext)
 	}
 
 	transformToTable(data, queryResult)
@@ -536,6 +539,65 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
+func (e *CloudWatchExecutor) ensureRGTAClientSession(region string) error {
+	if e.rgtaSvc == nil {
+		dsInfo := e.getDsInfo(region)
+		cfg, err := e.getAwsConfig(dsInfo)
+		if err != nil {
+			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
+		}
+		sess, err := session.NewSession(cfg)
+		if err != nil {
+			return fmt.Errorf("Failed to call ec2:NewSession, %v", err)
+		}
+		e.rgtaSvc = resourcegroupstaggingapi.New(sess, cfg)
+	}
+	return nil
+}
+
+func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	resourceType := parameters.Get("resourceType").MustString()
+	filterJson := parameters.Get("tags").MustMap()
+
+	err := e.ensureRGTAClientSession(region)
+	if err != nil {
+		return nil, err
+	}
+
+	var filters []*resourcegroupstaggingapi.TagFilter
+	for k, v := range filterJson {
+		if vv, ok := v.([]interface{}); ok {
+			var vvvvv []*string
+			for _, vvv := range vv {
+				if vvvv, ok := vvv.(string); ok {
+					vvvvv = append(vvvvv, &vvvv)
+				}
+			}
+			filters = append(filters, &resourcegroupstaggingapi.TagFilter{
+				Key:    aws.String(k),
+				Values: vvvvv,
+			})
+		}
+	}
+
+	var resourceTypes []*string
+	resourceTypes = append(resourceTypes, &resourceType)
+
+	resources, err := e.resourceGroupsGetResources(region, filters, resourceTypes)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	for _, resource := range resources.ResourceTagMappingList {
+		data := *resource.ResourceARN
+		result = append(result, suggestData{Text: data, Value: data})
+	}
+
+	return result, nil
+}
+
 func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
 	svc, err := e.getClient(region)
 	if err != nil {
@@ -582,6 +644,28 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 		})
 	if err != nil {
 		return nil, errors.New("Failed to call ec2:DescribeInstances")
+	}
+
+	return &resp, nil
+}
+
+func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter, resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+	params := &resourcegroupstaggingapi.GetResourcesInput{
+		ResourceTypeFilters: resourceTypes,
+		TagFilters:          filters,
+	}
+
+	var resp resourcegroupstaggingapi.GetResourcesOutput
+	err := e.rgtaSvc.GetResourcesPages(params,
+		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
+			resources, _ := awsutil.ValuesAtPath(page, "ResourceTagMappingList")
+			for _, resource := range resources {
+				resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, resource.(*resourcegroupstaggingapi.ResourceTagMapping))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return nil, errors.New("Failed to call tags:GetResources")
 	}
 
 	return &resp, nil
