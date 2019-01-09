@@ -62,8 +62,8 @@ export class QueryEditor extends React.Component<Props, State> {
   }
 
   componentWillUnmount() {
-    this.props.events.off('data-received');
-    this.props.events.off('data-error');
+    this.props.events.off('data-received', this.onDataReceived);
+    this.props.events.off('data-error', this.onDataError);
   }
 
   onDataReceived(dataList) {
