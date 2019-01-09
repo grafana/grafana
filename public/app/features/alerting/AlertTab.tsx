@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, SFC } from 'react';
 
 // Services & Utils
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
@@ -14,12 +14,23 @@ import 'app/features/alerting/AlertTabCtrl';
 // Types
 import { DashboardModel } from '../dashboard/dashboard_model';
 import { PanelModel } from '../dashboard/panel_model';
+import { TestRuleButton } from './TestRuleButton';
 
 interface Props {
   angularPanel?: AngularComponent;
   dashboard: DashboardModel;
   panel: PanelModel;
 }
+
+interface LoadingPlaceholderProps {
+  text: string;
+}
+
+const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => (
+  <div className="gf-form-group">
+    {text} <i className="fa fa-spinner fa-spin" />
+  </div>
+);
 
 export class AlertTab extends PureComponent<Props> {
   element: any;
@@ -65,9 +76,7 @@ export class AlertTab extends PureComponent<Props> {
     const loader = getAngularLoader();
     const template = '<alert-tab />';
 
-    const scopeProps = {
-      ctrl: this.panelCtrl,
-    };
+    const scopeProps = { ctrl: this.panelCtrl };
 
     this.component = loader.load(this.element, scopeProps, template);
   }
@@ -111,6 +120,16 @@ export class AlertTab extends PureComponent<Props> {
     };
   };
 
+  renderTestRuleButton = () => {
+    const { panel, dashboard } = this.props;
+    return <TestRuleButton panelId={panel.id} dashboard={dashboard} LoadingPlaceholder={LoadingPlaceholder} />;
+  };
+
+  testRule = (): EditorToolbarView => ({
+    title: 'Test Rule',
+    render: () => this.renderTestRuleButton(),
+  });
+
   onAddAlert = () => {
     this.panelCtrl._enableAlert();
     this.component.digest();
@@ -120,7 +139,7 @@ export class AlertTab extends PureComponent<Props> {
   render() {
     const { alert } = this.props.panel;
 
-    const toolbarItems = alert ? [this.stateHistory(), this.deleteAlert()] : [];
+    const toolbarItems = alert ? [this.stateHistory(), this.testRule(), this.deleteAlert()] : [];
 
     const model = {
       title: 'Panel has no alert rule defined',
