@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "@torkelo/react-select": "2.1.1",
+    "@types/react-test-renderer": "^16.0.3",
+    "@types/react-transition-group": "^2.0.15",
     "classnames": "^2.2.5",
     "jquery": "^3.2.1",
     "lodash": "^4.17.10",

@@ -1,6 +1,8 @@
 // Library
 import React, { Component } from 'react';
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import { Tooltip } from '@grafana/ui';
+import { Themes } from '@grafana/ui/src/components/Tooltip/Popper';
+
 import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Services
@@ -12,7 +14,6 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { DataQueryOptions, DataQueryResponse } from 'app/types';
 import { TimeRange, TimeSeries, LoadingState } from '@grafana/ui';
-import { Themes } from 'app/core/components/Tooltip/Popper';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -144,10 +145,10 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Error,
         isFirstLoad: false,
-        errorMessage: errorMessage
+        errorMessage: errorMessage,
       });
     }
-  }
+  };
 
   render() {
     const { queries } = this.props;
@@ -171,7 +172,7 @@ export class DataPanel extends Component<Props, State> {
       <>
         {this.renderLoadingStates()}
         <ErrorBoundary>
-          {({error, errorInfo}) => {
+          {({ error, errorInfo }) => {
             if (errorInfo) {
               this.onError(error.message || DEFAULT_PLUGIN_ERROR);
               return null;
@@ -200,15 +201,11 @@ export class DataPanel extends Component<Props, State> {
       );
     } else if (loading === LoadingState.Error) {
       return (
-        <Tooltip
-          content={errorMessage}
-          className="popper__manager--block"
-          refClassName={`panel-info-corner panel-info-corner--error`}
-          placement="bottom-start"
-          theme={Themes.Error}
-        >
-          <i className="fa" />
-          <span className="panel-info-corner-inner" />
+        <Tooltip content={errorMessage} placement="bottom-start" theme={Themes.Error}>
+          <div className="panel-info-corner panel-info-corner--error">
+            <i className="fa" />
+            <span className="panel-info-corner-inner" />
+          </div>
         </Tooltip>
       );
     }

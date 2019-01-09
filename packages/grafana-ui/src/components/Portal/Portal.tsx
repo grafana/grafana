@@ -6,11 +6,11 @@ interface Props {
   root?: HTMLElement;
 }
 
-export default class BodyPortal extends PureComponent<Props> {
+export class Portal extends PureComponent<Props> {
   node: HTMLElement = document.createElement('div');
   portalRoot: HTMLElement;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     const {
       className,
