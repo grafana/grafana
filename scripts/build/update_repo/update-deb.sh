@@ -42,7 +42,9 @@ aptly repo add "$REPO" ./dist
 echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
 echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
 
+touch /tmp/sign-this
 ./scripts/build/update_repo/unlock-gpg-key.sh "$GPG_PASS"
+rm /tmp/sign-this /tmp/sign-this.asc
 
 aptly publish repo grafana filesystem:repo:grafana
 aptly publish repo beta filesystem:repo:grafana
