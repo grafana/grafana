@@ -26,7 +26,6 @@ interface Props extends React.DOMAttributes<HTMLDivElement> {
   show: boolean;
   placement?: PopperJS.Placement;
   content: string | ((props: any) => JSX.Element);
-  refClassName?: string;
   referenceElement: PopperJS.ReferenceObject;
   theme?: Themes;
 }
