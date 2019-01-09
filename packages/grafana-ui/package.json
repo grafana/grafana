@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "storybook": "start-storybook -p 9001 -c .storybook"
   },
   "author": "",
   "license": "ISC",
@@ -23,11 +24,20 @@
     "react-virtualized": "^9.21.0"
   },
   "devDependencies": {
-    "@types/jest": "^23.3.2",
-    "@types/lodash": "^4.14.119",
-    "@types/react": "^16.7.6",
+    "@storybook/addon-info": "^4.1.4",
+    "@storybook/react": "^4.1.4",
     "@types/classnames": "^2.2.6",
+    "@types/jest": "^23.3.2",
     "@types/jquery": "^1.10.35",
+    "@types/lodash": "^4.14.119",
+    "@types/node": "^10.12.18",
+    "@types/react": "^16.7.6",
+    "@types/storybook__react": "^4.0.0",
+    "awesome-typescript-loader": "^5.2.1",
+    "react-docgen-typescript-webpack-plugin": "^1.1.0",
     "typescript": "^3.2.2"
+  },
+  "resolutions": {
+    "@types/lodash": "4.14.119"
   }
 }

@@ -4,7 +4,7 @@
     "outDir": "public/dist",
     "target": "es5",
     "lib": ["es6", "dom"],
-    "rootDir": "public/",
+    "rootDirs": ["public/"],
     "jsx": "react",
     "module": "esnext",
     "declaration": false,
