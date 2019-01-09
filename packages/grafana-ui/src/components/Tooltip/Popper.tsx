@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+﻿import React, { PureComponent } from 'react';
 import * as PopperJS from 'popper.js';
 import { Manager, Popper as ReactPopper } from 'react-popper';
 import { Portal } from '@grafana/ui';
@@ -14,7 +14,7 @@ const defaultTransitionStyles = {
   opacity: 0,
 };
 
-const transitionStyles = {
+const transitionStyles: {[key: string]: object} = {
   exited: { opacity: 0 },
   entering: { opacity: 0 },
   entered: { opacity: 1 },

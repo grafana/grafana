@@ -10,7 +10,7 @@ exports[`Render should render component 1`] = `
     >
       External group sync
     </h3>
-    <Tooltip
+    <Component
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
@@ -21,7 +21,7 @@ exports[`Render should render component 1`] = `
           className="gicon gicon-question gicon--has-hover"
         />
       </div>
-    </Tooltip>
+    </Component>
     <div
       className="page-action-bar__spacer"
     />
@@ -119,7 +119,7 @@ exports[`Render should render groups table 1`] = `
     >
       External group sync
     </h3>
-    <Tooltip
+    <Component
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
@@ -130,7 +130,7 @@ exports[`Render should render groups table 1`] = `
           className="gicon gicon-question gicon--has-hover"
         />
       </div>
-    </Tooltip>
+    </Component>
     <div
       className="page-action-bar__spacer"
     />
