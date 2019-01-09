@@ -12,34 +12,13 @@ else
 	_docker_repo=${2:-grafana/grafana-dev}
 fi
 
-export DOCKER_CLI_EXPERIMENTAL=enabled
-
 echo "pushing ${_docker_repo}:${_grafana_version}"
-
-
-docker_push_all () {
-	repo=$1
-	tag=$2
-
-	# Push each image individually
-	docker push "${repo}:${tag}"
-	docker push "${repo}-arm32v7-linux:${tag}"
-	docker push "${repo}-arm64v8-linux:${tag}"
-
-	# Create and push a multi-arch manifest
-	docker manifest create "${repo}:${tag}" \
-		"${repo}:${tag}" \
-  	"${repo}-arm32v7-linux:${tag}" \
-		"${repo}-arm64v8-linux:${tag}"
-
-	docker manifest push "${repo}:${tag}"
-}
-
-docker_push_all "${_docker_repo}" "${_grafana_version}"
+docker push "${_docker_repo}:${_grafana_version}"
 
 if echo "$_grafana_tag" | grep -q "^v" && echo "$_grafana_tag" | grep -vq "beta"; then
 	echo "pushing ${_docker_repo}:latest"
-	docker_push_all "${_docker_repo}" "latest"
+	docker push "${_docker_repo}:latest"
 elif echo "$_grafana_tag" | grep -q "master"; then
-	docker_push_all "grafana/grafana" "master"
+	echo "pushing grafana/grafana:master"
+	docker push grafana/grafana:master
 fi

@@ -200,47 +200,47 @@ jobs:
             - dist/grafana*
 
   grafana-docker-master:
-    machine:
-      image: circleci/classic:201808-01
+    docker:
+      - image: docker:stable-git
     steps:
       - checkout
       - attach_workspace:
           at: .
+      - setup_remote_docker
       - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
       - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
-      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
+      - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "master"
 
 
   grafana-docker-pr:
-    machine:
-      image: circleci/classic:201808-01
+    docker:
+      - image: docker:stable-git
     steps:
       - checkout
       - attach_workspace:
           at: .
+      - setup_remote_docker
       - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
       - run: cd packaging/docker && ./build.sh "${CIRCLE_SHA1}"
 
   grafana-docker-release:
-    machine:
-      image: circleci/classic:201808-01
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run: docker info
-      - run: docker run --privileged linuxkit/binfmt:v0.6
-      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
-      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
-      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
-      - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
+      docker:
+        - image: docker:stable-git
+      steps:
+        - checkout
+        - attach_workspace:
+            at: .
+        - setup_remote_docker
+        - run: docker info
+        - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+        - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
+        - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
+        - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+        - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
