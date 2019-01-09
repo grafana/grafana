@@ -1,5 +1,4 @@
-ARG BASE_IMAGE=debian:stretch-slim
-FROM ${BASE_IMAGE}
+FROM debian:stretch-slim
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 
@@ -11,8 +10,7 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 RUN mkdir /tmp/grafana && tar xfvz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
-ARG BASE_IMAGE=debian:stretch-slim
-FROM ${BASE_IMAGE}
+FROM debian:stretch-slim
 
 ARG GF_UID="472"
 ARG GF_GID="472"
