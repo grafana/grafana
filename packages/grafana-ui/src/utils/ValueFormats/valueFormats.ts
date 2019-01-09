@@ -20,7 +20,7 @@ interface ValueFormatterIndex {
 // Globals & formats cache
 let categories: ValueFormatCategory[] = [];
 const index: ValueFormatterIndex = {};
-let hasBuildIndex = false;
+let hasBuiltIndex = false;
 
 export function toFixed(value: number, decimals?: number): string {
   if (value === null) {
@@ -128,11 +128,11 @@ function buildFormats() {
     }
   }
 
-  hasBuildIndex = true;
+  hasBuiltIndex = true;
 }
 
 export function getValueFormat(id: string): ValueFormatter {
-  if (!hasBuildIndex) {
+  if (!hasBuiltIndex) {
     buildFormats();
   }
 
@@ -140,7 +140,7 @@ export function getValueFormat(id: string): ValueFormatter {
 }
 
 export function getValueFormatterIndex(): ValueFormatterIndex {
-  if (!hasBuildIndex) {
+  if (!hasBuiltIndex) {
     buildFormats();
   }
 
@@ -148,7 +148,7 @@ export function getValueFormatterIndex(): ValueFormatterIndex {
 }
 
 export function getUnitFormats() {
-  if (!hasBuildIndex) {
+  if (!hasBuiltIndex) {
     buildFormats();
   }
 
