@@ -101,6 +101,15 @@ describe('ShareModalCtrl', () => {
       expect(ctx.scope.shareUrl).toBe('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
     });
 
+    it('should add timeout when specified', () => {
+      ctx.scope.options.timeoutSeconds = 20;
+      ctx.scope.panel = null;
+
+      ctx.scope.init();
+      expect(ctx.scope.shareUrl).toContain('&timeout=20');
+      expect(ctx.scope.imageUrl).toContain('&timeout=20');
+    });
+
     it('should remove fullscreen from image url when is first param in querystring and modeSharePanel is true', () => {
       ctx.$location.search = () => {
         return { fullscreen: true, edit: true };

@@ -64,6 +64,10 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
       params.theme = $scope.options.theme;
     }
 
+    if ($scope.options.timeoutSeconds !== undefined) {
+        params.timeout = $scope.options.timeoutSeconds;
+    }
+
     if ($scope.modeSharePanel) {
       params.panelId = $scope.panel.id;
       params.fullscreen = true;

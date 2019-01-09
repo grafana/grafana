@@ -80,6 +80,17 @@
 				Create a direct link to this dashboard or panel, customized with the options below.
 			</p>
 			<div ng-include src="'shareLinkOptions.html'"></div>
+			<div ng-show="modeSharePanel">
+				<p class="share-modal-info-text">
+					You may need to configure the timeout value if it takes a long time to collect your dashboard's metrics.
+				</p>
+			</div>
+			<div class="gf-form-group" ng-show="modeSharePanel">
+				<div class="gf-form">
+					<span class="gf-form-label width-12">Timeout (seconds)</span>
+					<input type="number" ng-model="options.timeoutSeconds" class="gf-form-input max-width-15" ng-change="buildUrl()">
+				</div>
+			</div>
 			<div>
 				<div class="gf-form-group">
 					<div class="gf-form-inline">
