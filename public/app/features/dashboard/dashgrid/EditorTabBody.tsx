@@ -52,7 +52,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
   onToggleToolBarView = (item: EditorToolbarView) => {
     this.setState({
       openView: item,
-      isOpen: !this.state.isOpen,
+      isOpen: this.state.openView !== item ? true : !this.state.isOpen,
     });
   };
 
