@@ -9,8 +9,6 @@ import appEvents from 'app/core/app_events';
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  testing: boolean;
-  testResult: any;
   subTabIndex: number;
   conditionTypes: any;
   alert: any;
@@ -404,21 +402,6 @@ export class AlertTabCtrl {
             this.panelCtrl.refresh();
           });
       },
-    });
-  }
-
-  test() {
-    this.testing = true;
-    this.testResult = false;
-
-    const payload = {
-      dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
-      panelId: this.panelCtrl.panel.id,
-    };
-
-    return this.backendSrv.post('/api/alerts/test', payload).then(res => {
-      this.testResult = res;
-      this.testing = false;
     });
   }
 }
