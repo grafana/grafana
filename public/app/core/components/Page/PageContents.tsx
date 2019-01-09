@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 
 // Components
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '@grafana/ui';
 import PageLoader from '../PageLoader/PageLoader';
 
 interface Props {
