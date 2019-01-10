@@ -33,8 +33,6 @@ export class StackdriverFilterCtrl {
 
   /** @ngInject */
   constructor(private $scope, private uiSegmentSrv, private templateSrv) {
-    // this.$scope = $scope.labelData ? $scope : $scope.$parent;
-
     this.initSegments(this.$scope.ctrl.hideGroupBys);
   }
 
@@ -112,7 +110,7 @@ export class StackdriverFilterCtrl {
 
   async getGroupBys(segment) {
     let elements = await this.createLabelKeyElements();
-
+    console.log('elements', elements);
     elements = elements.filter(e => this.$scope.ctrl.groupBys.indexOf(e.value) === -1);
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
     if (noValueOrPlusButton && elements.length === 0) {
@@ -138,7 +136,7 @@ export class StackdriverFilterCtrl {
     };
 
     const groupBys = this.groupBySegments.reduce(reducer, []);
-    this.$scope.ctrl.groupBysChanged()(groupBys);
+    this.$scope.ctrl.groupBysChanged({ groupBys });
     this.ensurePlusButton(this.groupBySegments);
   }
 
@@ -179,7 +177,7 @@ export class StackdriverFilterCtrl {
   filterSegmentUpdated(segment, index) {
     const filters = this.filterSegments.filterSegmentUpdated(segment, index);
     if (!filters.some(f => f === DefaultFilterValue)) {
-      this.$scope.ctrl.filtersChanged()(filters);
+      this.$scope.ctrl.filtersChanged({ filters });
     }
   }
 

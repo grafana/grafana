@@ -38,8 +38,16 @@ export class Filter extends React.Component<Props, State> {
       return;
     }
 
-    const { groupBys, filters, filtersChanged, groupBysChanged, hideGroupBys } = this.props;
+    const { groupBys, filters, hideGroupBys } = this.props;
     const loader = getAngularLoader();
+
+    const filtersChanged = filters => {
+      this.props.filtersChanged(filters);
+    };
+
+    const groupBysChanged = groupBys => {
+      this.props.groupBysChanged(groupBys);
+    };
 
     const scopeProps = {
       loading: null,
@@ -57,8 +65,8 @@ export class Filter extends React.Component<Props, State> {
                         group-bys="groupBys"
                         label-data="labelData"
                         loading="loading"
-                        filters-changed="filtersChanged"
-                        group-bys-changed="groupBysChanged"
+                        filters-changed="filtersChanged(filters)"
+                        group-bys-changed="groupBysChanged(groupBys)"
                         hide-group-bys="hideGroupBys"/>`;
     this.component = loader.load(this.element, scopeProps, template);
   }
