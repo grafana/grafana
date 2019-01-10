@@ -5,7 +5,7 @@ export interface SeriesColorPickerPopoverProps {
   color: string;
   yaxis?: number;
   onColorChange: (color: string) => void;
-  onToggleAxis: () => void;
+  onToggleAxis?: () => void;
 }
 
 export class SeriesColorPickerPopover extends React.PureComponent<SeriesColorPickerPopoverProps, any> {
@@ -21,7 +21,7 @@ export class SeriesColorPickerPopover extends React.PureComponent<SeriesColorPic
 
 interface AxisSelectorProps {
   yaxis: number;
-  onToggleAxis: () => void;
+  onToggleAxis?: () => void;
 }
 
 interface AxisSelectorState {
@@ -41,7 +41,10 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
     this.setState({
       yaxis: this.state.yaxis === 2 ? 1 : 2,
     });
-    this.props.onToggleAxis();
+
+    if (this.props.onToggleAxis) {
+      this.props.onToggleAxis();
+    }
   }
 
   render() {
