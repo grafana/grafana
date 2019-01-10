@@ -48,6 +48,8 @@ go run build.go ${OPT} build-frontend
 source /etc/profile.d/rvm.sh
 
 echo "Packaging"
-go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only latest
-go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only latest
-go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only latest
+go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
+go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
+go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+
+go run build.go latest
