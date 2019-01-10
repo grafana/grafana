@@ -19,6 +19,7 @@ import {
 } from './appNotifications';
 import { DashboardSearchHit } from './search';
 import { ValidationEvents, ValidationRule } from './form';
+import { ExploreState } from 'app/features/explore/state/reducers';
 export {
   Team,
   TeamsState,
@@ -81,6 +82,7 @@ export interface StoreState {
   folder: FolderState;
   dashboard: DashboardState;
   dataSources: DataSourcesState;
+  explore: ExploreState;
   users: UsersState;
   organization: OrganizationState;
   appNotifications: AppNotificationsState;

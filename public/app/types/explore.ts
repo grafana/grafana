@@ -4,7 +4,6 @@ import { DataQuery } from './series';
 import { RawTimeRange } from '@grafana/ui';
 import TableModel from 'app/core/table_model';
 import { LogsModel } from 'app/core/logs_model';
-import { DataSourceSelectItem } from 'app/types/datasources';
 
 export interface CompletionItem {
   /**
@@ -128,6 +127,19 @@ export interface QueryHintGetter {
   (query: DataQuery, results: any[], ...rest: any): QueryHint[];
 }
 
+export interface QueryIntervals {
+  interval: string;
+  intervalMs: number;
+}
+
+export interface QueryOptions {
+  interval: string;
+  format: string;
+  hinting?: boolean;
+  instant?: boolean;
+  valueWithRefId?: boolean;
+}
+
 export interface QueryTransaction {
   id: string;
   done: boolean;
@@ -142,6 +154,8 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
+export type RangeScanner = () => RawTimeRange;
+
 export interface TextMatch {
   text: string;
   start: number;
@@ -153,18 +167,11 @@ export interface ExploreState {
   StartPage?: any;
   datasource: any;
   datasourceError: any;
-  datasourceLoading: boolean | null;
-  datasourceMissing: boolean;
-  exploreDatasources: DataSourceSelectItem[];
-  graphInterval: number; // in ms
   graphResult?: any[];
   history: HistoryItem[];
-  initialDatasource?: string;
-  initialQueries: DataQuery[];
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   queryTransactions: QueryTransaction[];
-  range: RawTimeRange;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   showingGraph: boolean;
