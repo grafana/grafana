@@ -14,7 +14,7 @@ interface State {
   testRuleResponse: {};
 }
 
-export class TestRuleButton extends PureComponent<Props, State> {
+export class TestRuleResult extends PureComponent<Props, State> {
   readonly state: State = {
     isLoading: false,
     testRuleResponse: {},
@@ -27,8 +27,10 @@ export class TestRuleButton extends PureComponent<Props, State> {
   async testRule() {
     const { panelId, dashboard } = this.props;
     const payload = { dashboard: dashboard.getSaveModelClone(), panelId };
+
+    this.setState({ isLoading: true });
     const testRuleResponse = await getBackendSrv().post(`/api/alerts/test`, payload);
-    this.setState(prevState => ({ ...prevState, isLoading: false, testRuleResponse }));
+    this.setState({ isLoading: false, testRuleResponse });
   }
 
   render() {

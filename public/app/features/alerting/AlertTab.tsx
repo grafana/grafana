@@ -1,11 +1,12 @@
 // Libraries
-import React, { PureComponent, SFC } from 'react';
+import React, { PureComponent } from 'react';
 
 // Services & Utils
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import appEvents from 'app/core/app_events';
 
 // Components
+import { LoadingPlaceholder } from '@grafana/ui';
 import { EditorTabBody, EditorToolbarView } from '../dashboard/dashgrid/EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
@@ -14,23 +15,13 @@ import 'app/features/alerting/AlertTabCtrl';
 // Types
 import { DashboardModel } from '../dashboard/dashboard_model';
 import { PanelModel } from '../dashboard/panel_model';
-import { TestRuleButton } from './TestRuleButton';
+import { TestRuleResult } from './TestRuleResult';
 
 interface Props {
   angularPanel?: AngularComponent;
   dashboard: DashboardModel;
   panel: PanelModel;
 }
-
-interface LoadingPlaceholderProps {
-  text: string;
-}
-
-const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => (
-  <div className="gf-form-group">
-    {text} <i className="fa fa-spinner fa-spin" />
-  </div>
-);
 
 export class AlertTab extends PureComponent<Props> {
   element: any;
@@ -120,14 +111,14 @@ export class AlertTab extends PureComponent<Props> {
     };
   };
 
-  renderTestRuleButton = () => {
+  renderTestRuleResult = () => {
     const { panel, dashboard } = this.props;
-    return <TestRuleButton panelId={panel.id} dashboard={dashboard} LoadingPlaceholder={LoadingPlaceholder} />;
+    return <TestRuleResult panelId={panel.id} dashboard={dashboard} LoadingPlaceholder={LoadingPlaceholder} />;
   };
 
   testRule = (): EditorToolbarView => ({
     title: 'Test Rule',
-    render: () => this.renderTestRuleButton(),
+    render: () => this.renderTestRuleResult(),
   });
 
   onAddAlert = () => {
