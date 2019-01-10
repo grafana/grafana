@@ -7,8 +7,8 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoa
 import '../query_filter_ctrl';
 
 export interface Props {
-  filtersChanged: (filters) => void;
-  groupBysChanged?: (groupBys) => void;
+  filtersChanged: (filters: string[]) => void;
+  groupBysChanged?: (groupBys: string[]) => void;
   metricType: string;
   templateSrv: any;
   groupBys?: string[];
@@ -23,7 +23,7 @@ interface State {
   loading: Promise<any>;
 }
 
-const defaultLabelData = {
+const labelData = {
   metricLabels: {},
   resourceLabels: {},
   resourceTypes: [],
@@ -40,18 +40,26 @@ export class Filter extends React.Component<Props, State> {
 
     const { groupBys, filters, filtersChanged, groupBysChanged, hideGroupBys } = this.props;
     const loader = getAngularLoader();
-    const template = '<stackdriver-filter> </stackdriver-filter>';
 
     const scopeProps = {
       loading: null,
-      labelData: null,
+      labelData,
       groupBys,
       filters,
       filtersChanged,
       groupBysChanged,
       hideGroupBys,
     };
-    scopeProps.loading = this.loadLabels(scopeProps);
+    const loading = this.loadLabels(scopeProps);
+    scopeProps.loading = loading;
+    const template = `<stackdriver-filter
+                        filters="filters"
+                        group-bys="groupBys"
+                        label-data="labelData"
+                        loading="loading"
+                        filters-changed="filtersChanged"
+                        group-bys-changed="groupBysChanged"
+                        hide-group-bys="hideGroupBys"/>`;
     this.component = loader.load(this.element, scopeProps, template);
   }
 
@@ -77,7 +85,7 @@ export class Filter extends React.Component<Props, State> {
     return new Promise(async resolve => {
       try {
         if (!this.props.metricType) {
-          scope.labelData = defaultLabelData;
+          scope.labelData = labelData;
         } else {
           const { meta } = await this.props.datasource.getLabels(this.props.metricType, this.props.refId);
           scope.labelData = meta;
@@ -85,7 +93,7 @@ export class Filter extends React.Component<Props, State> {
         resolve();
       } catch (error) {
         appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.props.metricType]);
-        scope.labelData = defaultLabelData;
+        scope.labelData = labelData;
         resolve();
       }
     });

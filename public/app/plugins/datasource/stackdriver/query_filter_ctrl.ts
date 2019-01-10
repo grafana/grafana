@@ -9,6 +9,7 @@ export class StackdriverFilter {
       templateUrl: 'public/app/plugins/datasource/stackdriver/partials/query.filter.html',
       controller: 'StackdriverFilterCtrl',
       controllerAs: 'ctrl',
+      bindToController: true,
       restrict: 'E',
       scope: {
         labelData: '<',
@@ -32,14 +33,14 @@ export class StackdriverFilterCtrl {
 
   /** @ngInject */
   constructor(private $scope, private uiSegmentSrv, private templateSrv) {
-    this.$scope = $scope.labelData ? $scope : $scope.$parent;
+    // this.$scope = $scope.labelData ? $scope : $scope.$parent;
 
-    this.initSegments(this.$scope.hideGroupBys);
+    this.initSegments(this.$scope.ctrl.hideGroupBys);
   }
 
   initSegments(hideGroupBys: boolean) {
     if (!hideGroupBys) {
-      this.groupBySegments = this.$scope.groupBys.map(groupBy => {
+      this.groupBySegments = this.$scope.ctrl.groupBys.map(groupBy => {
         return this.uiSegmentSrv.getSegmentForValue(groupBy);
       });
       this.ensurePlusButton(this.groupBySegments);
@@ -49,7 +50,7 @@ export class StackdriverFilterCtrl {
 
     this.filterSegments = new FilterSegments(
       this.uiSegmentSrv,
-      this.$scope.filters,
+      this.$scope.ctrl.filters,
       this.getFilterKeys.bind(this),
       this.getFilterValues.bind(this)
     );
@@ -57,9 +58,9 @@ export class StackdriverFilterCtrl {
   }
 
   async createLabelKeyElements() {
-    await this.$scope.loading;
+    await this.$scope.ctrl.loading;
 
-    let elements = Object.keys(this.$scope.labelData.metricLabels || {}).map(l => {
+    let elements = Object.keys(this.$scope.ctrl.labelData.metricLabels || {}).map(l => {
       return this.uiSegmentSrv.newSegment({
         value: `metric.label.${l}`,
         expandable: false,
@@ -68,7 +69,7 @@ export class StackdriverFilterCtrl {
 
     elements = [
       ...elements,
-      ...Object.keys(this.$scope.labelData.resourceLabels || {}).map(l => {
+      ...Object.keys(this.$scope.ctrl.labelData.resourceLabels || {}).map(l => {
         return this.uiSegmentSrv.newSegment({
           value: `resource.label.${l}`,
           expandable: false,
@@ -76,7 +77,7 @@ export class StackdriverFilterCtrl {
       }),
     ];
 
-    if (this.$scope.labelData.resourceTypes && this.$scope.labelData.resourceTypes.length > 0) {
+    if (this.$scope.ctrl.labelData.resourceTypes && this.$scope.ctrl.labelData.resourceTypes.length > 0) {
       elements = [
         ...elements,
         this.uiSegmentSrv.newSegment({
@@ -92,7 +93,7 @@ export class StackdriverFilterCtrl {
   async getFilterKeys(segment, removeText: string) {
     let elements = await this.createLabelKeyElements();
 
-    if (this.$scope.filters.indexOf(this.resourceTypeValue) !== -1) {
+    if (this.$scope.ctrl.filters.indexOf(this.resourceTypeValue) !== -1) {
       elements = elements.filter(e => e.value !== this.resourceTypeValue);
     }
 
@@ -112,7 +113,7 @@ export class StackdriverFilterCtrl {
   async getGroupBys(segment) {
     let elements = await this.createLabelKeyElements();
 
-    elements = elements.filter(e => this.$scope.groupBys.indexOf(e.value) === -1);
+    elements = elements.filter(e => this.$scope.ctrl.groupBys.indexOf(e.value) === -1);
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
     if (noValueOrPlusButton && elements.length === 0) {
       return [];
@@ -137,14 +138,14 @@ export class StackdriverFilterCtrl {
     };
 
     const groupBys = this.groupBySegments.reduce(reducer, []);
-    this.$scope.groupBysChanged(groupBys);
+    this.$scope.ctrl.groupBysChanged()(groupBys);
     this.ensurePlusButton(this.groupBySegments);
   }
 
   async getFilters(segment, index) {
-    await this.$scope.loading;
+    await this.$scope.ctrl.loading;
     const hasNoFilterKeys =
-      this.$scope.labelData.metricLabels && Object.keys(this.$scope.labelData.metricLabels).length === 0;
+      this.$scope.ctrl.labelData.metricLabels && Object.keys(this.$scope.ctrl.labelData.metricLabels).length === 0;
     return this.filterSegments.getFilters(segment, index, hasNoFilterKeys);
   }
 
@@ -152,24 +153,24 @@ export class StackdriverFilterCtrl {
     const filterKey = this.templateSrv.replace(this.filterSegments.filterSegments[index - 2].value);
     if (
       !filterKey ||
-      !this.$scope.labelData.metricLabels ||
-      Object.keys(this.$scope.labelData.metricLabels).length === 0
+      !this.$scope.ctrl.labelData.metricLabels ||
+      Object.keys(this.$scope.ctrl.labelData.metricLabels).length === 0
     ) {
       return [];
     }
 
     const shortKey = filterKey.substring(filterKey.indexOf('.label.') + 7);
 
-    if (filterKey.startsWith('metric.label.') && this.$scope.labelData.metricLabels.hasOwnProperty(shortKey)) {
-      return this.$scope.labelData.metricLabels[shortKey];
+    if (filterKey.startsWith('metric.label.') && this.$scope.ctrl.labelData.metricLabels.hasOwnProperty(shortKey)) {
+      return this.$scope.ctrl.labelData.metricLabels[shortKey];
     }
 
-    if (filterKey.startsWith('resource.label.') && this.$scope.labelData.resourceLabels.hasOwnProperty(shortKey)) {
-      return this.$scope.labelData.resourceLabels[shortKey];
+    if (filterKey.startsWith('resource.label.') && this.$scope.ctrl.labelData.resourceLabels.hasOwnProperty(shortKey)) {
+      return this.$scope.ctrl.labelData.resourceLabels[shortKey];
     }
 
     if (filterKey === this.resourceTypeValue) {
-      return this.$scope.labelData.resourceTypes;
+      return this.$scope.ctrl.labelData.resourceTypes;
     }
 
     return [];
@@ -178,7 +179,7 @@ export class StackdriverFilterCtrl {
   filterSegmentUpdated(segment, index) {
     const filters = this.filterSegments.filterSegmentUpdated(segment, index);
     if (!filters.some(f => f === DefaultFilterValue)) {
-      this.$scope.filtersChanged(filters);
+      this.$scope.ctrl.filtersChanged()(filters);
     }
   }
 
