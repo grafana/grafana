@@ -14,31 +14,41 @@ func (f *FakeCondition) Eval(context *EvalContext) (*ConditionResult, error) {
 	return &ConditionResult{}, nil
 }
 
+func TestAlertRuleFrequencyParsing(t *testing.T) {
+	tcs := []struct {
+		input  string
+		err    error
+		result int64
+	}{
+		{input: "10s", result: 10},
+		{input: "10m", result: 600},
+		{input: "1h", result: 3600},
+		{input: "1o", result: 1},
+		{input: "0s", err: ErrFrequencyCannotBeZeroOrLess},
+		{input: "0m", err: ErrFrequencyCannotBeZeroOrLess},
+		{input: "0h", err: ErrFrequencyCannotBeZeroOrLess},
+		{input: "0", err: ErrFrequencyCannotBeZeroOrLess},
+		{input: "-1s", err: ErrFrequencyCouldNotBeParsed},
+	}
+
+	for _, tc := range tcs {
+		r, err := getTimeDurationStringToSeconds(tc.input)
+		if err != tc.err {
+			t.Errorf("expected error: '%v' got: '%v'", tc.err, err)
+			return
+		}
+
+		if r != tc.result {
+			t.Errorf("expected result: %d got %d", tc.result, r)
+		}
+	}
+}
+
 func TestAlertRuleModel(t *testing.T) {
 	Convey("Testing alert rule", t, func() {
 
 		RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 			return &FakeCondition{}, nil
-		})
-
-		Convey("Can parse seconds", func() {
-			seconds, _ := getTimeDurationStringToSeconds("10s")
-			So(seconds, ShouldEqual, 10)
-		})
-
-		Convey("Can parse minutes", func() {
-			seconds, _ := getTimeDurationStringToSeconds("10m")
-			So(seconds, ShouldEqual, 600)
-		})
-
-		Convey("Can parse hours", func() {
-			seconds, _ := getTimeDurationStringToSeconds("1h")
-			So(seconds, ShouldEqual, 3600)
-		})
-
-		Convey("defaults to seconds", func() {
-			seconds, _ := getTimeDurationStringToSeconds("1o")
-			So(seconds, ShouldEqual, 1)
 		})
 
 		Convey("should return err for empty string", func() {
@@ -88,6 +98,36 @@ func TestAlertRuleModel(t *testing.T) {
 			Convey("Can read notifications", func() {
 				So(len(alertRule.Notifications), ShouldEqual, 2)
 			})
+		})
+
+		Convey("can construct alert rule model with invalid frequency", func() {
+			json := `
+			{
+				"name": "name2",
+				"description": "desc2",
+				"noDataMode": "critical",
+				"enabled": true,
+				"frequency": "0s",
+        		"conditions": [ { "type": "test", "prop": 123 } ],
+        		"notifications": []
+			}`
+
+			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+			So(jsonErr, ShouldBeNil)
+
+			alert := &m.Alert{
+				Id:          1,
+				OrgId:       1,
+				DashboardId: 1,
+				PanelId:     1,
+				Frequency:   0,
+
+				Settings: alertJSON,
+			}
+
+			alertRule, err := NewRuleFromDBAlert(alert)
+			So(err, ShouldBeNil)
+			So(alertRule.Frequency, ShouldEqual, 60)
 		})
 	})
 }
