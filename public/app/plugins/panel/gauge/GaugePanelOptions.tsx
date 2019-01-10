@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import ValueOptions from 'app/plugins/panel/gauge/ValueOptions';
-import Thresholds from 'app/plugins/panel/gauge/Thresholds';
 import { BasicGaugeColor } from 'app/types';
-import { PanelOptionsProps } from '@grafana/ui';
+import { PanelOptionsProps, Thresholds } from '@grafana/ui';
 import ValueMappings from 'app/plugins/panel/gauge/ValueMappings';
 import { Options } from './types';
 import GaugeOptions from './GaugeOptions';

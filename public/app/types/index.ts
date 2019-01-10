@@ -9,7 +9,7 @@ import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourceSelectItem, DataSourcesState } from './datasources';
 import { DataQuery, DataQueryResponse, DataQueryOptions } from './series';
-import { BasicGaugeColor, MappingType, RangeMap, Threshold, ValueMap } from './panel';
+import { BasicGaugeColor, MappingType, RangeMap, ValueMap } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
 import { Organization, OrganizationState } from './organization';
 import {
@@ -20,6 +20,7 @@ import {
 } from './appNotifications';
 import { DashboardSearchHit } from './search';
 import { ValidationEvents, ValidationRule } from './form';
+import { Threshold } from '@grafana/ui';
 export {
   Team,
   TeamsState,

@@ -1,16 +1,16 @@
 import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 import { ColorPicker } from '@grafana/ui';
-import { BasicGaugeColor, Threshold } from 'app/types';
-import { PanelOptionsProps } from '@grafana/ui';
-import { Options } from './types';
+import { BasicGaugeColor } from 'app/types';
+import { PanelOptionsProps, Threshold } from '@grafana/ui';
+import { Options } from 'app/plugins/panel/gauge/types';
 
 interface State {
   thresholds: Threshold[];
   baseColor: string;
 }
 
-export default class Thresholds extends PureComponent<PanelOptionsProps<Options>, State> {
+export class Thresholds extends PureComponent<PanelOptionsProps<Options>, State> {
   constructor(props) {
     super(props);
 

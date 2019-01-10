@@ -5,3 +5,4 @@ export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 export { ColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover } from './ColorPicker/SeriesColorPickerPopover';
 export { SeriesColorPicker } from './ColorPicker/SeriesColorPicker';
+export { Thresholds } from './Thresholds/Thresholds';
