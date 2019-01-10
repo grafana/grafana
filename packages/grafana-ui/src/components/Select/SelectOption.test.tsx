@@ -1,6 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import PickerOption from './PickerOption';
+import SelectOption from './SelectOption';
 import { OptionProps } from 'react-select/lib/components/Option';
 
 const model: OptionProps<any> = {
@@ -31,11 +31,11 @@ const model: OptionProps<any> = {
   className: 'class-for-user-picker',
 };
 
-describe('PickerOption', () => {
+describe('SelectOption', () => {
   it('renders correctly', () => {
     const tree = renderer
       .create(
-        <PickerOption
+        <SelectOption
           {...model}
           data={{
             imgUrl: 'url/to/avatar',

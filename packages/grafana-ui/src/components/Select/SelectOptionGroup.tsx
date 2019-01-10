@@ -9,7 +9,7 @@ interface State {
   expanded: boolean;
 }
 
-export default class OptionGroup extends PureComponent<ExtendedGroupProps, State> {
+export default class SelectOptionGroup extends PureComponent<ExtendedGroupProps, State> {
   state = {
     expanded: false,
   };

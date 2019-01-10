@@ -13,7 +13,7 @@ interface ExtendedOptionProps extends OptionProps<any> {
   };
 }
 
-export const Option = (props: ExtendedOptionProps) => {
+export const SelectOption = (props: ExtendedOptionProps) => {
   const { children, isSelected, data } = props;
 
   return (
@@ -44,4 +44,4 @@ export const SingleValue = (props: any) => {
   );
 };
 
-export default Option;
+export default SelectOption;

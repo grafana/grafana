@@ -11,8 +11,8 @@ import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
 import { components } from '@torkelo/react-select';
 
 // Components
-import { Option, SingleValue } from './PickerOption';
-import OptionGroup from './OptionGroup';
+import { SelectOption, SingleValue } from './SelectOption';
+import SelectOptionGroup from './SelectOptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from './resetSelectStyles';
@@ -117,11 +117,11 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         classNamePrefix="gf-form-select-box"
         className={selectClassNames}
         components={{
-          Option,
+          Option: SelectOption,
           SingleValue,
           IndicatorsContainer,
           MenuList,
-          Group: OptionGroup,
+          Group: SelectOptionGroup,
         }}
         defaultValue={defaultValue}
         value={value}

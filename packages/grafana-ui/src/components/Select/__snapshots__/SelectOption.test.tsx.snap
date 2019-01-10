@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PickerOption renders correctly 1`] = `
+exports[`SelectOption renders correctly 1`] = `
 <div
   id=""
   onClick={[MockFunction]}
