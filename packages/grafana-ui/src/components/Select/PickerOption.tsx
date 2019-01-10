@@ -1,4 +1,7 @@
 import React from 'react';
+
+// Ignoring because I couldn't get @types/react-select work wih Torkel's fork
+// @ts-ignore
 import { components } from '@torkelo/react-select';
 import { OptionProps } from 'react-select/lib/components/Option';
 

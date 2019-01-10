@@ -38,9 +38,7 @@ describe('PickerOption', () => {
         <PickerOption
           {...model}
           data={{
-            title: 'Model title',
             imgUrl: 'url/to/avatar',
-            label: 'User picker label',
           }}
         />
       )

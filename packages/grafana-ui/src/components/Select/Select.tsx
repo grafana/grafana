@@ -1,8 +1,13 @@
 // Libraries
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
+
+// Ignoring because I couldn't get @types/react-select work wih Torkel's fork
+// @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
+// @ts-ignore
 import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
+// @ts-ignore
 import { components } from '@torkelo/react-select';
 
 // Components
