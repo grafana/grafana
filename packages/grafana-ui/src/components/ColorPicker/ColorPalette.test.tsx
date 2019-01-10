@@ -1,6 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import { ColorPalette } from '../components/colorpicker/ColorPalette';
+import { ColorPalette } from './ColorPalette';
 
 describe('CollorPalette', () => {
   it('renders correctly', () => {

@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Drop from 'tether-drop';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 export interface Props {
   color: string;
@@ -10,7 +9,7 @@ export interface Props {
 }
 
 export class ColorPicker extends React.Component<Props, any> {
-  pickerElem: HTMLElement;
+  pickerElem: HTMLElement | null;
   colorPickerDrop: any;
 
   openColorPicker = () => {
@@ -45,7 +44,7 @@ export class ColorPicker extends React.Component<Props, any> {
     }, 100);
   };
 
-  onColorSelect = color => {
+  onColorSelect = (color: string) => {
     this.props.onChange(color);
   };
 
@@ -59,8 +58,3 @@ export class ColorPicker extends React.Component<Props, any> {
     );
   }
 }
-
-react2AngularDirective('colorPicker', ColorPicker, [
-  'color',
-  ['onChange', { watchDepth: 'reference', wrapApply: true }],
-]);

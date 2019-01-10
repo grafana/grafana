@@ -1,12 +1,11 @@
 import React from 'react';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 export interface SeriesColorPickerPopoverProps {
   color: string;
   yaxis?: number;
   onColorChange: (color: string) => void;
-  onToggleAxis?: () => void;
+  onToggleAxis: () => void;
 }
 
 export class SeriesColorPickerPopover extends React.PureComponent<SeriesColorPickerPopoverProps, any> {
@@ -30,7 +29,7 @@ interface AxisSelectorState {
 }
 
 export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSelectorState> {
-  constructor(props) {
+  constructor(props: AxisSelectorProps) {
     super(props);
     this.state = {
       yaxis: this.props.yaxis,
@@ -62,9 +61,3 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
     );
   }
 }
-
-react2AngularDirective('seriesColorPickerPopover', SeriesColorPickerPopover, [
-  'series',
-  'onColorChange',
-  'onToggleAxis',
-]);
