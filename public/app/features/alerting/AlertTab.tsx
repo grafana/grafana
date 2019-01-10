@@ -6,7 +6,6 @@ import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoa
 import appEvents from 'app/core/app_events';
 
 // Components
-import { LoadingPlaceholder } from '@grafana/ui';
 import { EditorTabBody, EditorToolbarView } from '../dashboard/dashgrid/EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
@@ -113,7 +112,7 @@ export class AlertTab extends PureComponent<Props> {
 
   renderTestRuleResult = () => {
     const { panel, dashboard } = this.props;
-    return <TestRuleResult panelId={panel.id} dashboard={dashboard} LoadingPlaceholder={LoadingPlaceholder} />;
+    return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
   };
 
   testRule = (): EditorToolbarView => ({

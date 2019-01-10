@@ -13,7 +13,6 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     panelId: 1,
     dashboard: new DashboardModel({ panels: [{ id: 1 }] }),
-    LoadingPlaceholder: {},
   };
 
   Object.assign(props, propOverrides);

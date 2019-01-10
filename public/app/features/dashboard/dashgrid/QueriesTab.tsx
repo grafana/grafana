@@ -10,7 +10,6 @@ import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
 import { PanelOptionSection } from './PanelOptionSection';
-import { LoadingPlaceholder } from '@grafana/ui';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -129,7 +128,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderQueryInspector = () => {
     const { panel } = this.props;
-    return <QueryInspector panel={panel} LoadingPlaceholder={LoadingPlaceholder} />;
+    return <QueryInspector panel={panel} />;
   };
 
   renderHelp = () => {

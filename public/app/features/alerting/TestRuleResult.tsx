@@ -2,11 +2,11 @@ import React, { PureComponent } from 'react';
 import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardModel } from '../dashboard/dashboard_model';
+import { LoadingPlaceholder } from '@grafana/ui/src';
 
 export interface Props {
   panelId: number;
   dashboard: DashboardModel;
-  LoadingPlaceholder: any;
 }
 
 interface State {
@@ -35,7 +35,6 @@ export class TestRuleResult extends PureComponent<Props, State> {
 
   render() {
     const { testRuleResponse, isLoading } = this.state;
-    const { LoadingPlaceholder } = this.props;
 
     if (isLoading === true) {
       return <LoadingPlaceholder text="Evaluating rule" />;
