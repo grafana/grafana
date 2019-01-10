@@ -5,7 +5,6 @@ import { DefaultRemoveFilterValue, DefaultFilterValue } from '../filter_segments
 describe('StackdriverQueryFilterCtrl', () => {
   let ctrl;
   let result;
-  // let filterChangedMock;
   let groupByChangedMock;
 
   describe('when initializing query editor', () => {
@@ -34,8 +33,8 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when labels are fetched', () => {
       beforeEach(async () => {
-        ctrl.$scope.ctrl.labelData.metricLabels = { 'metric-key-1': ['metric-value-1'] };
-        ctrl.$scope.ctrl.labelData.resourceLabels = { 'resource-key-1': ['resource-value-1'] };
+        ctrl.labelData.metricLabels = { 'metric-key-1': ['metric-value-1'] };
+        ctrl.labelData.resourceLabels = { 'resource-key-1': ['resource-value-1'] };
 
         result = await ctrl.getGroupBys({ type: '' });
       });
@@ -50,15 +49,15 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when a group by label is selected', () => {
       beforeEach(async () => {
-        ctrl.$scope.ctrl.labelData.metricLabels = {
+        ctrl.labelData.metricLabels = {
           'metric-key-1': ['metric-value-1'],
           'metric-key-2': ['metric-value-2'],
         };
-        ctrl.$scope.ctrl.labelData.resourceLabels = {
+        ctrl.labelData.resourceLabels = {
           'resource-key-1': ['resource-value-1'],
           'resource-key-2': ['resource-value-2'],
         };
-        ctrl.$scope.ctrl.groupBys = ['metric.label.metric-key-1', 'resource.label.resource-key-1'];
+        ctrl.groupBys = ['metric.label.metric-key-1', 'resource.label.resource-key-1'];
 
         result = await ctrl.getGroupBys({ type: '' });
       });
@@ -74,7 +73,7 @@ describe('StackdriverQueryFilterCtrl', () => {
     describe('when a group by is selected', () => {
       beforeEach(() => {
         groupByChangedMock = jest.fn();
-        ctrl.$scope.ctrl.groupBysChanged = groupByChangedMock;
+        ctrl.groupBysChanged = groupByChangedMock;
         const removeSegment = { fake: true, value: '-- remove group by --' };
         const segment = { value: 'groupby1' };
         ctrl.groupBySegments = [segment, removeSegment];
@@ -89,7 +88,7 @@ describe('StackdriverQueryFilterCtrl', () => {
     describe('when a selected group by is removed', () => {
       beforeEach(() => {
         groupByChangedMock = jest.fn();
-        ctrl.$scope.ctrl.groupBysChanged = groupByChangedMock;
+        ctrl.groupBysChanged = groupByChangedMock;
         const removeSegment = { fake: true, value: '-- remove group by --' };
         const segment = { value: 'groupby1' };
         ctrl.groupBySegments = [segment, removeSegment];
@@ -136,11 +135,11 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when values for a key filter part are fetched', () => {
       beforeEach(async () => {
-        ctrl.$scope.ctrl.labelData.metricLabels = {
+        ctrl.labelData.metricLabels = {
           'metric-key-1': ['metric-value-1'],
           'metric-key-2': ['metric-value-2'],
         };
-        ctrl.$scope.ctrl.labelData.resourceLabels = {
+        ctrl.labelData.resourceLabels = {
           'resource-key-1': ['resource-value-1'],
           'resource-key-2': ['resource-value-2'],
         };
@@ -161,11 +160,11 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when values for a value filter part are fetched', () => {
       beforeEach(async () => {
-        ctrl.$scope.ctrl.labelData.metricLabels = {
+        ctrl.labelData.metricLabels = {
           'metric-key-1': ['metric-value-1'],
           'metric-key-2': ['metric-value-2'],
         };
-        ctrl.$scope.ctrl.labelData.resourceLabels = {
+        ctrl.labelData.resourceLabels = {
           'resource-key-1': ['resource-value-1'],
           'resource-key-2': ['resource-value-2'],
         };
@@ -392,25 +391,24 @@ function createCtrlWithFakes(existingFilters?: string[]) {
     },
   };
   const scope = {
-    ctrl: {
-      hideGroupBys: false,
-      groupBys: [],
-      filters: existingFilters || [],
-      labelData: {
-        metricLabels: {},
-        resourceLabels: {},
-        resourceTypes: [],
-      },
-      filtersChanged: () => {},
-      groupBysChanged: () => {},
-      datasource: {
-        getDefaultProject: () => {
-          return 'project';
-        },
-      },
-      refresh: () => {},
+    hideGroupBys: false,
+    groupBys: [],
+    filters: existingFilters || [],
+    labelData: {
+      metricLabels: {},
+      resourceLabels: {},
+      resourceTypes: [],
     },
+    filtersChanged: () => {},
+    groupBysChanged: () => {},
+    datasource: {
+      getDefaultProject: () => {
+        return 'project';
+      },
+    },
+    refresh: () => {},
   };
 
+  Object.assign(StackdriverFilterCtrl.prototype, scope);
   return new StackdriverFilterCtrl(scope, fakeSegmentServer, new TemplateSrvStub());
 }
