@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Label } from 'app/core/components/Label/Label';
-import { Select } from 'app/core/components/Select/Select';
+import { Select } from '@grafana/ui';
 import { MappingType, RangeMap, ValueMap } from 'app/types';
 
 interface Props {

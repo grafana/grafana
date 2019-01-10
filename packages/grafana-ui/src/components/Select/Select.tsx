@@ -10,7 +10,7 @@ import { Option, SingleValue } from './PickerOption';
 import OptionGroup from './OptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import ResetStyles from './ResetStyles';
+import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '@grafana/ui';
 
 export interface SelectOptionItem {
@@ -53,7 +53,7 @@ interface AsyncProps {
   loadingMessage?: () => string;
 }
 
-export const MenuList = props => {
+export const MenuList = (props: any) => {
   return (
     <components.MenuList {...props}>
       <CustomScrollbar autoHide={false}>{props.children}</CustomScrollbar>
@@ -127,7 +127,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         onChange={onChange}
         options={options}
         placeholder={placeholder || 'Choose'}
-        styles={ResetStyles}
+        styles={resetSelectStyles()}
         isDisabled={isDisabled}
         isLoading={isLoading}
         isClearable={isClearable}
@@ -212,7 +212,7 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
         isLoading={isLoading}
         defaultOptions={defaultOptions}
         placeholder={placeholder || 'Choose'}
-        styles={ResetStyles}
+        styles={resetSelectStyles()}
         loadingMessage={loadingMessage}
         noOptionsMessage={noOptionsMessage}
         isDisabled={isDisabled}

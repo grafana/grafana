@@ -1,11 +1,11 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import PickerOption from './PickerOption';
+import { OptionProps } from 'react-select/lib/components/Option';
 
-const model = {
+const model: OptionProps<any> = {
   cx: jest.fn(),
   clearValue: jest.fn(),
-  onSelect: jest.fn(),
   getStyles: jest.fn(),
   getValue: jest.fn(),
   hasValue: true,
@@ -18,21 +18,33 @@ const model = {
   isFocused: false,
   isSelected: false,
   innerRef: null,
-  innerProps: null,
-  label: 'Option label',
-  type: null,
-  children: 'Model title',
-  data: {
-    title: 'Model title',
-    imgUrl: 'url/to/avatar',
-    label: 'User picker label',
+  innerProps: {
+    id: '',
+    key: '',
+    onClick: jest.fn(),
+    onMouseOver: jest.fn(),
+    tabIndex: 1,
   },
+  label: 'Option label',
+  type: 'option',
+  children: 'Model title',
   className: 'class-for-user-picker',
 };
 
 describe('PickerOption', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<PickerOption {...model} />).toJSON();
+    const tree = renderer
+      .create(
+        <PickerOption
+          {...model}
+          data={{
+            title: 'Model title',
+            imgUrl: 'url/to/avatar',
+            label: 'User picker label',
+          }}
+        />
+      )
+      .toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

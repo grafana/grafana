@@ -24,7 +24,7 @@ export default class OptionGroup extends PureComponent<ExtendedGroupProps, State
     }
   }
 
-  componentDidUpdate(nextProps) {
+  componentDidUpdate(nextProps: ExtendedGroupProps) {
     if (nextProps.selectProps.inputValue !== '') {
       this.setState({ expanded: true });
     }

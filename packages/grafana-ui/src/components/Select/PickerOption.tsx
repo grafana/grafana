@@ -28,7 +28,7 @@ export const Option = (props: ExtendedOptionProps) => {
 };
 
 // was not able to type this without typescript error
-export const SingleValue = props => {
+export const SingleValue = (props: any) => {
   const { children, data } = props;
 
   return (

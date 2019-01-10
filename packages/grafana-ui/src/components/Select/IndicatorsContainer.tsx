@@ -1,7 +1,7 @@
 import React from 'react';
 import { components } from '@torkelo/react-select';
 
-export const IndicatorsContainer = props => {
+export const IndicatorsContainer = (props: any) => {
   const isOpen = props.selectProps.menuIsOpen;
   return (
     <components.IndicatorsContainer {...props}>
