@@ -131,7 +131,9 @@ GRAFANA_TEST_DB=postgres go test ./pkg/...
 
 If you have any idea for an improvement or found a bug, do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
-the kickass metrics & devops dashboard we all dream about!
+the kickass metrics & devops dashboard we all dream about! 
+
+Read the [contributing](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guide then check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) label to find issues that are easy and that we would like help with.
 
 ## Plugin development
 
