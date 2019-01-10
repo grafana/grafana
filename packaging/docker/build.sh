@@ -45,5 +45,5 @@ if echo "$_grafana_tag" | grep -q "^v"; then
 	docker_tag_all "${_docker_repo}" "latest"
 else
 	docker_tag_all "${_docker_repo}" "master"
-	docker tag "${_docker_repo}:${_grafana_version} grafana/grafana-dev:${_grafana_version}"
+	docker tag "${_docker_repo}:${_grafana_version}" "grafana/grafana-dev:${_grafana_version}"
 fi

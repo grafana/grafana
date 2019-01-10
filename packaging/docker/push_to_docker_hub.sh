@@ -41,6 +41,6 @@ if echo "$_grafana_tag" | grep -q "^v" && echo "$_grafana_tag" | grep -vq "beta"
 elif echo "$_grafana_tag" | grep -q "^v" && echo "$_grafana_tag" | grep -q "beta"; then
 	docker_push_all "${_docker_repo}" "${_grafana_version}"
 elif echo "$_grafana_tag" | grep -q "master"; then
-	docker_push_all "grafana/grafana" "master"
+	docker_push_all "${_docker_repo}" "master"
 	docker push "grafana/grafana-dev:${_grafana_version}"
 fi
