@@ -4,7 +4,7 @@ import { PanelOptionsProps } from '@grafana/ui';
 import { defaultProps } from 'app/plugins/panel/gauge/GaugePanelOptions';
 import { Options } from 'app/plugins/panel/gauge/types';
 import { BasicGaugeColor } from 'app/types';
-import { Thresholds } from './Thresholds';
+import { ThresholdsEditor } from './Thresholds';
 
 const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<Options> = {
@@ -17,7 +17,7 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<Thresholds {...props} />).instance() as Thresholds;
+  return shallow(<ThresholdsEditor {...props} />).instance() as ThresholdsEditor;
 };
 
 describe('Add threshold', () => {

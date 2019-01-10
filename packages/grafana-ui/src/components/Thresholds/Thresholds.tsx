@@ -10,7 +10,7 @@ interface State {
   baseColor: string;
 }
 
-export class Thresholds extends PureComponent<PanelOptionsProps<Options>, State> {
+export class ThresholdsEditor extends PureComponent<PanelOptionsProps<Options>, State> {
   constructor(props) {
     super(props);
 
