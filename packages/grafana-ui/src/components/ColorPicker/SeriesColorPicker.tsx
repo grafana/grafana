@@ -8,7 +8,7 @@ export interface SeriesColorPickerProps {
   yaxis?: number;
   optionalClass?: string;
   onColorChange: (newColor: string) => void;
-  onToggleAxis: () => void;
+  onToggleAxis?: () => void;
 }
 
 export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
