@@ -72,21 +72,21 @@ const colors = [
 function sortColorsByHue(hexColors: string[]) {
   const hslColors = _.map(hexColors, hexToHsl);
 
-  let sortedHSLColors = _.sortBy(hslColors, ['h']);
-  sortedHSLColors = _.chunk(sortedHSLColors, PALETTE_ROWS);
-  sortedHSLColors = _.map(sortedHSLColors, chunk => {
+  const sortedHSLColors = _.sortBy(hslColors, ['h']);
+  const chunkedHSLColors = _.chunk(sortedHSLColors, PALETTE_ROWS);
+  const sortedChunkedHSLColors = _.map(chunkedHSLColors, chunk => {
     return _.sortBy(chunk, 'l');
   });
-  sortedHSLColors = _.flattenDeep(_.zip(...sortedHSLColors));
+  const flattenedZippedSortedChunkedHSLColors = _.flattenDeep(_.zip(...sortedChunkedHSLColors));
 
-  return _.map(sortedHSLColors, hslToHex);
+  return _.map(flattenedZippedSortedChunkedHSLColors, hslToHex);
 }
 
 function hexToHsl(color: string) {
   return tinycolor(color).toHsl();
 }
 
-function hslToHex(color: string) {
+function hslToHex(color: any) {
   return tinycolor(color).toHexString();
 }
 

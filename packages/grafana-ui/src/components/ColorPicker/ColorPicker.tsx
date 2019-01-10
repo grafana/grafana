@@ -19,7 +19,7 @@ export class ColorPicker extends React.Component<Props, any> {
     ReactDOM.render(dropContent, dropContentElem);
 
     const drop = new Drop({
-      target: this.pickerElem,
+      target: this.pickerElem as Element,
       content: dropContentElem,
       position: 'top center',
       classes: 'drop-popover',
@@ -27,6 +27,7 @@ export class ColorPicker extends React.Component<Props, any> {
       hoverCloseDelay: 200,
       tetherOptions: {
         constraints: [{ to: 'scrollParent', attachment: 'none both' }],
+        attachment: 'bottom center',
       },
     });
 
