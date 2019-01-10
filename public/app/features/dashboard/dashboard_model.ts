@@ -1,8 +1,8 @@
 import moment from 'moment';
 import _ from 'lodash';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 
 import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-import { DEFAULT_ANNOTATION_COLOR } from 'app/core/utils/colors';
 import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';

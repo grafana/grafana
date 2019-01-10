@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
-import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
+import { ColorPicker } from '@grafana/ui';
 import { BasicGaugeColor, Threshold } from 'app/types';
 import { PanelOptionsProps } from '@grafana/ui';
 import { Options } from './types';
