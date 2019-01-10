@@ -1,9 +1,3 @@
-export interface Threshold {
-  index: number;
-  value: number;
-  color?: string;
-}
-
 export enum MappingType {
   ValueToText = 1,
   RangeToText = 2,
