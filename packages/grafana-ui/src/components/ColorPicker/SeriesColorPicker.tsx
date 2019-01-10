@@ -51,6 +51,7 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
       remove: true,
       tetherOptions: {
         constraints: [{ to: 'scrollParent', attachment: 'none both' }],
+        attachment: 'bottom center',
       },
     });
 
