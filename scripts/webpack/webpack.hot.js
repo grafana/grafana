@@ -7,6 +7,7 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const IgnoreNotFoundExportPlugin = require("./IgnoreNotFoundExportPlugin.js");
 
 module.exports = merge(common, {
   entry: {
@@ -111,5 +112,6 @@ module.exports = merge(common, {
         NODE_ENV: JSON.stringify('development'),
       },
     }),
+    new IgnoreNotFoundExportPlugin(),
   ],
 });
