@@ -3,13 +3,13 @@ package notifications
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
-	"crypto/tls"
 
 	"golang.org/x/net/context/ctxhttp"
 
