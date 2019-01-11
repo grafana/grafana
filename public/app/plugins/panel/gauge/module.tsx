@@ -1,6 +1,4 @@
-import { GaugePanelOptionsDefaultProps } from '@grafana/ui';
-
-import GaugePanelOptions from './GaugePanelOptions';
+import GaugePanelOptions, { defaultProps } from './GaugePanelOptions';
 import { GaugePanel } from './GaugePanel';
 
-export { GaugePanel as Panel, GaugePanelOptions as PanelOptions, GaugePanelOptionsDefaultProps as PanelDefaults };
+export { GaugePanel as Panel, GaugePanelOptions as PanelOptions, defaultProps as PanelDefaults };

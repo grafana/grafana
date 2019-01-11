@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { GaugeOptions, MappingType, PanelOptionsProps } from '@grafana/ui';
-import { GaugePanelOptionsDefaultProps } from '@grafana/ui/src/types/gauge';
+import { defaultProps } from 'app/plugins/panel/gauge/GaugePanelOptions';
 
 import ValueMappings from './ValueMappings';
 
@@ -9,7 +9,7 @@ const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<GaugeOptions> = {
     onChange: jest.fn(),
     options: {
-      ...GaugePanelOptionsDefaultProps.options,
+      ...defaultProps.options,
       mappings: [
         { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
         { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
@@ -67,7 +67,7 @@ describe('Next id to add', () => {
   });
 
   it('should default to 1', () => {
-    const { instance } = setup({ options: { ...GaugePanelOptionsDefaultProps.options } });
+    const { instance } = setup({ options: { ...defaultProps.options } });
 
     expect(instance.state.nextIdToAdd).toEqual(1);
   });

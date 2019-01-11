@@ -1,33 +1,13 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import { ThresholdsEditor } from './ThresholdsEditor';
-import { BasicGaugeColor, PanelOptionsProps, GaugeOptions } from '../../types';
-
-const defaultProps = {
-  options: {
-    baseColor: BasicGaugeColor.Green,
-    minValue: 0,
-    maxValue: 100,
-    prefix: '',
-    showThresholdMarkers: true,
-    showThresholdLabels: false,
-    suffix: '',
-    decimals: 0,
-    stat: 'avg',
-    unit: 'none',
-    mappings: [],
-    thresholds: [],
-  },
-};
+import { ThresholdsEditor, Props } from './ThresholdsEditor';
+import { BasicGaugeColor } from '../../types';
 
 const setup = (propOverrides?: object) => {
-  const props: PanelOptionsProps<GaugeOptions> = {
+  const props: Props = {
     onChange: jest.fn(),
-    options: {
-      ...defaultProps.options,
-      thresholds: [],
-    },
+    thresholds: [],
   };
 
   Object.assign(props, propOverrides);
@@ -46,10 +26,7 @@ describe('Add threshold', () => {
 
   it('should add another threshold above a first', () => {
     const instance = setup({
-      options: {
-        ...defaultProps.options,
-        thresholds: [{ index: 0, value: 50, color: 'rgb(127, 115, 64)' }],
-      },
+      thresholds: [{ index: 0, value: 50, color: 'rgb(127, 115, 64)' }],
     });
 
     instance.onAddThreshold(1);

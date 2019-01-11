@@ -1,28 +1,37 @@
 import React, { PureComponent } from 'react';
 import tinycolor, { ColorInput } from 'tinycolor2';
 
-import { Threshold, PanelOptionsProps, GaugeOptions, BasicGaugeColor } from '../../types';
+import { Threshold, BasicGaugeColor } from '../../types';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
+
+export interface Props {
+  thresholds: Threshold[];
+  onChange: (thresholds: Threshold[]) => void;
+}
 
 interface State {
   thresholds: Threshold[];
   baseColor: string;
 }
 
-export class ThresholdsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>, State> {
-  constructor(props: PanelOptionsProps<GaugeOptions>) {
+export class ThresholdsEditor extends PureComponent<Props, State> {
+  constructor(props: Props) {
     super(props);
 
-    this.state = { thresholds: props.options.thresholds, baseColor: props.options.baseColor };
+    this.state = { thresholds: props.thresholds, baseColor: BasicGaugeColor.Green };
   }
 
   onAddThreshold = (index: number) => {
-    const { maxValue, minValue } = this.props.options;
+    const maxValue = 100; // hardcoded for now before we add the base threshold
+    const minValue = 0; // hardcoded for now before we add the base threshold
     const { thresholds } = this.state;
 
     const newThresholds = thresholds.map(threshold => {
       if (threshold.index >= index) {
-        threshold = { ...threshold, index: threshold.index + 1 };
+        threshold = {
+          ...threshold,
+          index: threshold.index + 1,
+        };
       }
 
       return threshold;
@@ -49,7 +58,14 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<GaugeOptio
 
     this.setState(
       {
-        thresholds: this.sortThresholds([...newThresholds, { index, value: value as number, color }]),
+        thresholds: this.sortThresholds([
+          ...newThresholds,
+          {
+            index,
+            value: value as number,
+            color,
+          },
+        ]),
       },
       () => this.updateGauge()
     );
@@ -95,7 +111,7 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<GaugeOptio
     );
   };
 
-  onChangeBaseColor = (color: string) => this.props.onChange({ ...this.props.options, baseColor: color });
+  onChangeBaseColor = (color: string) => this.props.onChange(this.state.thresholds);
   onBlur = () => {
     this.setState(prevState => ({ thresholds: this.sortThresholds(prevState.thresholds) }));
 
@@ -103,7 +119,7 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<GaugeOptio
   };
 
   updateGauge = () => {
-    this.props.onChange({ ...this.props.options, thresholds: this.state.thresholds });
+    this.props.onChange(this.state.thresholds);
   };
 
   sortThresholds = (thresholds: Threshold[]) => {
@@ -163,14 +179,14 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<GaugeOptio
       <div className="indicator-section" style={{ height: '100%' }}>
         <div
           onClick={() => this.onAddThreshold(0)}
-          style={{ height: '100%', backgroundColor: this.props.options.baseColor }}
+          style={{ height: '100%', backgroundColor: BasicGaugeColor.Green }}
         />
       </div>
     );
   }
 
   renderBase() {
-    const { baseColor } = this.props.options;
+    const baseColor = BasicGaugeColor.Green;
 
     return (
       <div className="threshold-row threshold-row-base">

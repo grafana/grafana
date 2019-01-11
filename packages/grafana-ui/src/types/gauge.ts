@@ -1,4 +1,4 @@
-import { BasicGaugeColor, RangeMap, Threshold, ValueMap } from './panel';
+import { RangeMap, Threshold, ValueMap } from './panel';
 
 export interface GaugeOptions {
   baseColor: string;
@@ -14,20 +14,3 @@ export interface GaugeOptions {
   thresholds: Threshold[];
   unit: string;
 }
-
-export const GaugePanelOptionsDefaultProps = {
-  options: {
-    baseColor: BasicGaugeColor.Green,
-    minValue: 0,
-    maxValue: 100,
-    prefix: '',
-    showThresholdMarkers: true,
-    showThresholdLabels: false,
-    suffix: '',
-    decimals: 0,
-    stat: 'avg',
-    unit: 'none',
-    mappings: [],
-    thresholds: [],
-  },
-};
