@@ -1,26 +1,20 @@
 import React, { PureComponent } from 'react';
-import tinycolor from 'tinycolor2';
-import { ColorPicker } from '@grafana/ui';
-import { BasicGaugeColor } from 'app/types';
-import { PanelOptionsProps, Threshold } from '@grafana/ui';
-import { Options } from 'app/plugins/panel/gauge/types';
+import tinycolor, { ColorInput } from 'tinycolor2';
+import { BasicGaugeColor, ColorPicker, GaugeOptions, PanelOptionsProps, Threshold } from '@grafana/ui';
 
 interface State {
   thresholds: Threshold[];
   baseColor: string;
 }
 
-export class ThresholdsEditor extends PureComponent<PanelOptionsProps<Options>, State> {
-  constructor(props) {
+export class ThresholdsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>, State> {
+  constructor(props: PanelOptionsProps<GaugeOptions>) {
     super(props);
 
-    this.state = {
-      thresholds: props.options.thresholds,
-      baseColor: props.options.baseColor,
-    };
+    this.state = { thresholds: props.options.thresholds, baseColor: props.options.baseColor };
   }
 
-  onAddThreshold = index => {
+  onAddThreshold = (index: number) => {
     const { maxValue, minValue } = this.props.options;
     const { thresholds } = this.state;
 
@@ -48,27 +42,25 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<Options>, 
     if (index === 0 && thresholds.length === 0) {
       color = tinycolor.mix(BasicGaugeColor.Green, BasicGaugeColor.Red, 50).toRgbString();
     } else {
-      color = tinycolor.mix(thresholds[index - 1].color, BasicGaugeColor.Red, 50).toRgbString();
+      color = tinycolor.mix(thresholds[index - 1].color as ColorInput, BasicGaugeColor.Red, 50).toRgbString();
     }
 
     this.setState(
       {
-        thresholds: this.sortThresholds([...newThresholds, { index: index, value: value, color: color }]),
+        thresholds: this.sortThresholds([...newThresholds, { index, value: value as number, color }]),
       },
       () => this.updateGauge()
     );
   };
 
-  onRemoveThreshold = threshold => {
+  onRemoveThreshold = (threshold: Threshold) => {
     this.setState(
-      prevState => ({
-        thresholds: prevState.thresholds.filter(t => t !== threshold),
-      }),
+      prevState => ({ thresholds: prevState.thresholds.filter(t => t !== threshold) }),
       () => this.updateGauge()
     );
   };
 
-  onChangeThresholdValue = (event, threshold) => {
+  onChangeThresholdValue = (event: any, threshold: Threshold) => {
     const { thresholds } = this.state;
 
     const newThresholds = thresholds.map(t => {
@@ -79,12 +71,10 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<Options>, 
       return t;
     });
 
-    this.setState({
-      thresholds: newThresholds,
-    });
+    this.setState({ thresholds: newThresholds });
   };
 
-  onChangeThresholdColor = (threshold, color) => {
+  onChangeThresholdColor = (threshold: Threshold, color: string) => {
     const { thresholds } = this.state;
 
     const newThresholds = thresholds.map(t => {
@@ -103,11 +93,9 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<Options>, 
     );
   };
 
-  onChangeBaseColor = color => this.props.onChange({ ...this.props.options, baseColor: color });
+  onChangeBaseColor = (color: string) => this.props.onChange({ ...this.props.options, baseColor: color });
   onBlur = () => {
-    this.setState(prevState => ({
-      thresholds: this.sortThresholds(prevState.thresholds),
-    }));
+    this.setState(prevState => ({ thresholds: this.sortThresholds(prevState.thresholds) }));
 
     this.updateGauge();
   };
@@ -116,7 +104,7 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<Options>, 
     this.props.onChange({ ...this.props.options, thresholds: this.state.thresholds });
   };
 
-  sortThresholds = thresholds => {
+  sortThresholds = (thresholds: Threshold[]) => {
     return thresholds.sort((t1, t2) => {
       return t2.value - t1.value;
     });
@@ -161,20 +149,8 @@ export class ThresholdsEditor extends PureComponent<PanelOptionsProps<Options>, 
     return thresholds.map((t, i) => {
       return (
         <div key={`${t.value}-${i}`} className="indicator-section">
-          <div
-            onClick={() => this.onAddThreshold(t.index + 1)}
-            style={{
-              height: '50%',
-              backgroundColor: t.color,
-            }}
-          />
-          <div
-            onClick={() => this.onAddThreshold(t.index)}
-            style={{
-              height: '50%',
-              backgroundColor: t.color,
-            }}
-          />
+          <div onClick={() => this.onAddThreshold(t.index + 1)} style={{ height: '50%', backgroundColor: t.color }} />
+          <div onClick={() => this.onAddThreshold(t.index)} style={{ height: '50%', backgroundColor: t.color }} />
         </div>
       );
     });

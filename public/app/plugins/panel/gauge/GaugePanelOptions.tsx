@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
+import { BasicGaugeColor, GaugeOptions, PanelOptionsProps, ThresholdsEditor } from '@grafana/ui';
+
 import ValueOptions from 'app/plugins/panel/gauge/ValueOptions';
-import { BasicGaugeColor } from 'app/types';
-import { PanelOptionsProps, ThresholdsEditor } from '@grafana/ui';
 import ValueMappings from 'app/plugins/panel/gauge/ValueMappings';
-import { Options } from './types';
-import GaugeOptions from './GaugeOptions';
+import GaugeOptionsEditor from './GaugeOptionsEditor';
 
 export const defaultProps = {
   options: {
@@ -23,7 +22,7 @@ export const defaultProps = {
   },
 };
 
-export default class GaugePanelOptions extends PureComponent<PanelOptionsProps<Options>> {
+export default class GaugePanelOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
   static defaultProps = defaultProps;
 
   render() {
@@ -32,7 +31,7 @@ export default class GaugePanelOptions extends PureComponent<PanelOptionsProps<O
       <>
         <div className="form-section">
           <ValueOptions onChange={onChange} options={options} />
-          <GaugeOptions onChange={onChange} options={options} />
+          <GaugeOptionsEditor onChange={onChange} options={options} />
           <ThresholdsEditor onChange={onChange} options={options} />
         </div>
 

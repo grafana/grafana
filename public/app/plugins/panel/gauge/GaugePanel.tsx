@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
-import { PanelProps, NullValueMode } from '@grafana/ui';
+import { GaugeOptions, PanelProps, NullValueMode } from '@grafana/ui';
+
 import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
 import Gauge from 'app/viz/Gauge';
-import { Options } from './types';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<GaugeOptions> {}
 
 export class GaugePanel extends PureComponent<Props> {
   render() {

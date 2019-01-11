@@ -1,13 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { GaugeOptions, MappingType, PanelOptionsProps } from '@grafana/ui';
+
 import ValueMappings from './ValueMappings';
-import { MappingType } from 'app/types';
-import { PanelOptionsProps } from '@grafana/ui';
-import { Options } from './types';
 import { defaultProps } from 'app/plugins/panel/gauge/GaugePanelOptions';
 
 const setup = (propOverrides?: object) => {
-  const props: PanelOptionsProps<Options> = {
+  const props: PanelOptionsProps<GaugeOptions> = {
     onChange: jest.fn(),
     options: {
       ...defaultProps.options,
