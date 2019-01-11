@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import Select from './Select';
+import { Select } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
 
 interface Props {
