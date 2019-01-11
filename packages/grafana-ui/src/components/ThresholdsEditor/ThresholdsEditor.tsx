@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
 import tinycolor, { ColorInput } from 'tinycolor2';
-import { BasicGaugeColor, ColorPicker, GaugeOptions, PanelOptionsProps, Threshold } from '@grafana/ui';
+
+import { Threshold, PanelOptionsProps, GaugeOptions, BasicGaugeColor } from '../../types';
+import { ColorPicker } from '../ColorPicker/ColorPicker';
 
 interface State {
   thresholds: Threshold[];

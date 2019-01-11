@@ -1,8 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { BasicGaugeColor, GaugeOptions, PanelOptionsProps } from '@grafana/ui';
 
 import { ThresholdsEditor } from './ThresholdsEditor';
+import { BasicGaugeColor, PanelOptionsProps, GaugeOptions } from '../../types';
 
 const defaultProps = {
   options: {
