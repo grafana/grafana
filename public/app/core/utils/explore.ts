@@ -1,9 +1,9 @@
 import _ from 'lodash';
+import { colors } from '@grafana/ui';
 
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import colors from 'app/core/utils/colors';
 import { parse as parseDate } from 'app/core/utils/datemath';
 
 import TimeSeries from 'app/core/time_series2';
