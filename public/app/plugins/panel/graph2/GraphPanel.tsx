@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
-import colors from '@grafana/ui';
+import { colors } from '@grafana/ui';
 
 // Components & Types
 import { Graph, PanelProps, NullValueMode, processTimeSeries } from '@grafana/ui';
