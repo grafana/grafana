@@ -8153,6 +8153,11 @@ jest-config@^23.6.0:
     micromatch "^2.3.11"
     pretty-format "^23.6.0"
 
+jest-date-mock@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/jest-date-mock/-/jest-date-mock-1.0.6.tgz#7ea405d1fa68f86bb727d12e47b9c5e6760066a6"
+  integrity sha512-wnLgDaK3i2md/cQ1wKx/+/78PieO4nkGen8avEmHd4dt1NGGxeuW8/oLAF5qsatQBXdn08pxpqRtUoDvTTLdRg==
+
 jest-diff@^23.6.0:
   version "23.6.0"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-23.6.0.tgz#1500f3f16e850bb3d71233408089be099f610c7d"
