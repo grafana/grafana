@@ -2,8 +2,24 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { BasicGaugeColor, GaugeOptions, PanelOptionsProps } from '@grafana/ui';
 
-import { defaultProps } from 'app/plugins/panel/gauge/GaugePanelOptions';
 import { ThresholdsEditor } from './ThresholdsEditor';
+
+const defaultProps = {
+  options: {
+    baseColor: BasicGaugeColor.Green,
+    minValue: 0,
+    maxValue: 100,
+    prefix: '',
+    showThresholdMarkers: true,
+    showThresholdLabels: false,
+    suffix: '',
+    decimals: 0,
+    stat: 'avg',
+    unit: 'none',
+    mappings: [],
+    thresholds: [],
+  },
+};
 
 const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<GaugeOptions> = {
