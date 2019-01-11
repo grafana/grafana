@@ -1,16 +1,28 @@
 import React, { SFC } from 'react';
 import _ from 'lodash';
 
+import kbn from 'app/core/utils/kbn';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
-import { alignmentPeriods } from '../constants';
+import { alignmentPeriods, alignOptions } from '../constants';
 
 export interface Props {
   onChange: (alignmentPeriod) => void;
   templateSrv: any;
   alignmentPeriod: string;
+  perSeriesAligner: string;
+  usedAlignmentPeriod: string;
 }
 
-export const AlignmentPeriods: SFC<Props> = ({ alignmentPeriod, templateSrv, onChange }) => {
+export const AlignmentPeriods: SFC<Props> = ({
+  alignmentPeriod,
+  templateSrv,
+  onChange,
+  perSeriesAligner,
+  usedAlignmentPeriod,
+}) => {
+  const alignment = alignOptions.find(ap => ap.value === templateSrv.replace(perSeriesAligner));
+  const formatAlignmentText = `${kbn.secondsToHms(usedAlignmentPeriod)} interval (${alignment ? alignment.text : ''})`;
+
   return (
     <>
       <div className="gf-form-inline">
@@ -35,7 +47,7 @@ export const AlignmentPeriods: SFC<Props> = ({ alignmentPeriod, templateSrv, onC
           />
         </div>
         <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow" />
+          {usedAlignmentPeriod && <label className="gf-form-label gf-form-label--grow">{formatAlignmentText}</label>}
         </div>
       </div>
     </>

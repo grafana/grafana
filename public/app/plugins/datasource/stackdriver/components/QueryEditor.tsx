@@ -46,6 +46,7 @@ export const DefaultTarget: State = {
   alignOptions: [],
   lastQuery: '',
   lastQueryError: '',
+  usedAlignmentPeriod: '',
 };
 
 export class QueryEditor extends React.Component<Props, State> {
@@ -71,7 +72,11 @@ export class QueryEditor extends React.Component<Props, State> {
   onDataReceived(dataList) {
     const series = dataList.find(item => item.refId === this.props.target.refId);
     if (series) {
-      this.setState({ lastQuery: decodeURIComponent(series.meta.rawQuery), lastQueryError: '' });
+      this.setState({
+        lastQuery: decodeURIComponent(series.meta.rawQuery),
+        lastQueryError: '',
+        usedAlignmentPeriod: series.meta.alignmentPeriod,
+      });
     }
   }
 
@@ -125,6 +130,7 @@ export class QueryEditor extends React.Component<Props, State> {
 
   render() {
     const {
+      usedAlignmentPeriod,
       defaultProject,
       metricType,
       crossSeriesReducer,
@@ -180,12 +186,14 @@ export class QueryEditor extends React.Component<Props, State> {
                   )
                 }
               </Aggregations>
-              <AliasBy value={aliasBy} onChange={value => this.onPropertyChange('aliasBy', value)} />
               <AlignmentPeriods
                 templateSrv={templateSrv}
                 alignmentPeriod={alignmentPeriod}
+                perSeriesAligner={perSeriesAligner}
+                usedAlignmentPeriod={usedAlignmentPeriod}
                 onChange={value => this.onPropertyChange('alignmentPeriod', value)}
               />
+              <AliasBy value={aliasBy} onChange={value => this.onPropertyChange('aliasBy', value)} />
               <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
             </>
           )}
