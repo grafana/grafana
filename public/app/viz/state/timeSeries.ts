@@ -2,7 +2,7 @@
 import _ from 'lodash';
 
 // Utils
-import colors from '@grafana/ui';
+import { colors } from '@grafana/ui';
 
 // Types
 import { TimeSeries, TimeSeriesVMs, NullValueMode } from '@grafana/ui';

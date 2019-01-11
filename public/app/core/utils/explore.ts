@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import colors from '@grafana/ui';
+import { colors } from '@grafana/ui';
 
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';

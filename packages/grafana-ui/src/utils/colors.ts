@@ -10,7 +10,7 @@ export const NO_DATA_COLOR = 'rgba(150, 150, 150, 1)';
 export const PENDING_COLOR = 'rgba(247, 149, 32, 1)';
 export const REGION_FILL_ALPHA = 0.09;
 
-const colors = [
+export const colors = [
   '#7EB26D', // 0: pale green
   '#EAB839', // 1: mustard
   '#6ED0E0', // 2: light blue
@@ -91,4 +91,3 @@ function hslToHex(color: any) {
 }
 
 export let sortedColors = sortColorsByHue(colors);
-export default colors;

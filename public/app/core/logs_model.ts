@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import colors from '@grafana/ui';
+import { colors } from '@grafana/ui';
 
 import { TimeSeries } from 'app/core/core';
 import { getThemeColor } from 'app/core/utils/colors';

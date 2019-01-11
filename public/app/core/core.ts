@@ -16,6 +16,7 @@ import './utils/outline';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';
+import { colors } from '@grafana/ui/';
 
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
@@ -34,7 +35,6 @@ import 'app/core/services/all';
 import './filters/filters';
 import coreModule from './core_module';
 import appEvents from './app_events';
-import colors from '@grafana/ui/';
 import { assignModelProperties } from './utils/model_utils';
 import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';
