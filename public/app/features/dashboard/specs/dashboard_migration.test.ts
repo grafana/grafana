@@ -127,7 +127,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(16);
+      expect(model.schemaVersion).toBe(17);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -364,20 +364,22 @@ describe('DashboardModel', () => {
       expect(dashboard.panels.length).toBe(2);
     });
 
-    it('minSpan should be twice', () => {
-      model.rows = [createRow({ height: 8 }, [[6]])];
-      model.rows[0].panels[0] = { minSpan: 12 };
-
-      const dashboard = new DashboardModel(model);
-      expect(dashboard.panels[0].minSpan).toBe(24);
-    });
-
     it('should assign id', () => {
       model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]])];
       model.rows[0].panels[0] = {};
 
       const dashboard = new DashboardModel(model);
       expect(dashboard.panels[0].id).toBe(1);
+    });
+  });
+
+  describe('when migrating from minSpan to maxPerRow', () => {
+    it('maxPerRow should be correct', () => {
+      const model = {
+        panels: [{ minSpan: 8 }],
+      };
+      const dashboard = new DashboardModel(model);
+      expect(dashboard.panels[0].maxPerRow).toBe(3);
     });
   });
 });
