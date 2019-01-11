@@ -16,7 +16,14 @@ import { LogsModel } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
 // TODO move to types
+
 export interface ExploreState {
+  split: boolean;
+  left: ExploreItemState;
+  right: ExploreItemState;
+}
+
+export interface ExploreItemState {
   StartPage?: any;
   containerWidth: number;
   datasourceInstance: any;
@@ -57,7 +64,7 @@ export const DEFAULT_RANGE = {
 // Millies step for helper bar charts
 const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 
-const initialExploreState: ExploreState = {
+const makeExploreItemState = (): ExploreItemState => ({
   StartPage: undefined,
   containerWidth: 0,
   datasourceInstance: null,
@@ -79,9 +86,15 @@ const initialExploreState: ExploreState = {
   supportsGraph: null,
   supportsLogs: null,
   supportsTable: null,
+});
+
+const initialExploreState: ExploreState = {
+  split: false,
+  left: makeExploreItemState(),
+  right: makeExploreItemState(),
 };
 
-export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
+const itemReducer = (state, action: Action): ExploreItemState => {
   switch (action.type) {
     case ActionTypes.AddQueryRow: {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
@@ -402,6 +415,36 @@ export const exploreReducer = (state = initialExploreState, action: Action): Exp
       const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
       return { ...state, queryTransactions: nextQueryTransactions, scanning: false, scanRange: undefined };
     }
+  }
+
+  return state;
+};
+
+export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
+  switch (action.type) {
+    case ActionTypes.ClickCloseSplit: {
+      return {
+        ...state,
+        split: false,
+      };
+    }
+
+    case ActionTypes.ClickSplit: {
+      return {
+        ...state,
+        split: true,
+        right: action.itemState,
+      };
+    }
+  }
+
+  const { exploreId } = action as any;
+  if (exploreId !== undefined) {
+    const exploreItemState = state[exploreId];
+    return {
+      ...state,
+      [exploreId]: itemReducer(exploreItemState, action),
+    };
   }
 
   return state;

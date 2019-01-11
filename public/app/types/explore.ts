@@ -75,6 +75,11 @@ export interface CompletionItemGroup {
   skipSort?: boolean;
 }
 
+export enum ExploreId {
+  left = 'left',
+  right = 'right',
+}
+
 export interface HistoryItem {
   ts: number;
   query: DataQuery;
