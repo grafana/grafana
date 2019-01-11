@@ -165,6 +165,7 @@ func makeLatestDistCopies() {
 		".x86_64.rpm":         "dist/grafana-latest-1.x86_64.rpm",
 		".linux-amd64.tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
 		".linux-armv7.tar.gz": "dist/grafana-latest.linux-armv7.tar.gz",
+		".linux-armv6.tar.gz": "dist/grafana-latest.linux-armv6.tar.gz",
 		".linux-arm64.tar.gz": "dist/grafana-latest.linux-arm64.tar.gz",
 	}
 
@@ -239,6 +240,8 @@ func createDebPackages() {
 	previousPkgArch := pkgArch
 	if pkgArch == "armv7" {
 		pkgArch = "armhf"
+	} else if pkgArch == "armv6" {
+		pkgArch = "armel"
 	}
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
