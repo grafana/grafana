@@ -1,10 +1,10 @@
 // Libraries
-import React, { PureComponent, SFC } from 'react';
+import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Components
 import 'app/features/panel/metrics_tab';
-import { EditorTabBody, EditorToolbarView} from './EditorTabBody';
+import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
@@ -35,12 +35,6 @@ interface State {
   isPickerOpen: boolean;
   isAddingMixed: boolean;
 }
-
-interface LoadingPlaceholderProps {
-  text: string;
-}
-
-const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => <h2>{text}</h2>;
 
 export class QueriesTab extends PureComponent<Props, State> {
   element: HTMLElement;
@@ -134,7 +128,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderQueryInspector = () => {
     const { panel } = this.props;
-    return <QueryInspector panel={panel} LoadingPlaceholder={LoadingPlaceholder} />;
+    return <QueryInspector panel={panel} />;
   };
 
   renderHelp = () => {

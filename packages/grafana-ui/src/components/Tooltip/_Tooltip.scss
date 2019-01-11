@@ -1,5 +1,13 @@
 $popper-margin-from-ref: 5px;
 
+
+@mixin popper-theme($backgroundColor, $arrowColor) {
+  background: $backgroundColor;
+  .popper__arrow {
+    border-color: $arrowColor;
+  }
+}
+
 .popper {
   position: absolute;
   z-index: $zindex-tooltip;
@@ -16,10 +24,12 @@ $popper-margin-from-ref: 5px;
 
   // Themes
   &.popper__background--error {
-    background: $tooltipBackgroundError;
-    .popper__arrow {
-      border-color: $tooltipBackgroundError;
-    }
+    @include popper-theme($tooltipBackgroundError, $tooltipBackgroundError);
+  }
+
+  &.popper__background--brand {
+    @include popper-theme($tooltipBackgroundBrand, $tooltipBackgroundBrand);
+    @include gradient-vertical($red, $orange);
   }
 }
 

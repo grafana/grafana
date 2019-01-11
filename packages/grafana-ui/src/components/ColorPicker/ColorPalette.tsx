@@ -1,5 +1,5 @@
 import React from 'react';
-import { sortedColors } from 'app/core/utils/colors';
+import { sortedColors } from '../../utils';
 
 export interface Props {
   color: string;
@@ -9,13 +9,13 @@ export interface Props {
 export class ColorPalette extends React.Component<Props, any> {
   paletteColors: string[];
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.paletteColors = sortedColors;
     this.onColorSelect = this.onColorSelect.bind(this);
   }
 
-  onColorSelect(color) {
+  onColorSelect(color: string) {
     return () => {
       this.props.onColorSelect(color);
     };

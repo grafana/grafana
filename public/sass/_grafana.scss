@@ -1,4 +1,4 @@
-// DEPENDENCIES
+ // DEPENDENCIES
 @import '../../node_modules/react-table/react-table.css';
 
 // VENDOR
@@ -37,9 +37,6 @@
 // LAYOUTS
 @import 'layout/lists';
 @import 'layout/page';
-
-// LOAD @grafana/ui components
-@import '../../packages/grafana-ui/src/index';
 
 // COMPONENTS
 @import 'components/scrollbar';
@@ -97,15 +94,16 @@
 @import 'components/page_header';
 @import 'components/dashboard_settings';
 @import 'components/empty_list_cta';
-@import 'components/form_select_box';
 @import 'components/panel_editor';
 @import 'components/toolbar';
 @import 'components/add_data_source.scss';
 @import 'components/page_loader';
-@import 'components/thresholds';
 @import 'components/toggle_button_group';
 @import 'components/value-mappings';
 @import 'components/popover-box';
+
+// LOAD @grafana/ui components
+@import '../../packages/grafana-ui/src/index';
 
 // PAGES
 @import 'pages/login';

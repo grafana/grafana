@@ -9,7 +9,6 @@ import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { Invitee, OrgUser, User, UsersState, UserState } from './user';
 import { DataSource, DataSourceSelectItem, DataSourcesState } from './datasources';
 import { DataQuery, DataQueryResponse, DataQueryOptions } from './series';
-import { BasicGaugeColor, MappingType, RangeMap, Threshold, ValueMap } from './panel';
 import { PluginDashboard, PluginMeta, Plugin, PanelPlugin, PluginsState } from './plugins';
 import { Organization, OrganizationState } from './organization';
 import {
@@ -69,13 +68,8 @@ export {
   AppNotificationTimeout,
   DashboardSearchHit,
   UserState,
-  Threshold,
   ValidationEvents,
   ValidationRule,
-  ValueMap,
-  RangeMap,
-  MappingType,
-  BasicGaugeColor,
 };
 
 export interface StoreState {

@@ -1,6 +1,8 @@
 import _ from 'lodash';
+import { colors } from '@grafana/ui';
+
 import { TimeSeries } from 'app/core/core';
-import colors, { getThemeColor } from 'app/core/utils/colors';
+import { getThemeColor } from 'app/core/utils/colors';
 
 /**
  * Mapping of log level abbreviation to canonical log level.

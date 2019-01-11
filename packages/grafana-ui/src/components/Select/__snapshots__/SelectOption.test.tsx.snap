@@ -1,7 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PickerOption renders correctly 1`] = `
-<div>
+exports[`SelectOption renders correctly 1`] = `
+<div
+  id=""
+  onClick={[MockFunction]}
+  onMouseOver={[MockFunction]}
+  tabIndex={1}
+>
   <div
     className="gf-form-select-box__desc-option"
   >

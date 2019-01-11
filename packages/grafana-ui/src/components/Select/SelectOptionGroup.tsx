@@ -13,7 +13,7 @@ interface State {
   expanded: boolean;
 }
 
-export default class OptionGroup extends PureComponent<ExtendedGroupProps, State> {
+export default class SelectOptionGroup extends PureComponent<ExtendedGroupProps, State> {
   state = {
     expanded: false,
   };
@@ -30,7 +30,7 @@ export default class OptionGroup extends PureComponent<ExtendedGroupProps, State
     }
   }
 
-  componentDidUpdate(nextProps) {
+  componentDidUpdate(nextProps: ExtendedGroupProps) {
     if (nextProps.selectProps.inputValue !== '') {
       this.setState({ expanded: true });
     }

@@ -1,9 +1,9 @@
 import React from 'react';
 import _ from 'lodash';
 
-import Select from './Select';
+import { Select } from '@grafana/ui';
+import { SelectOptionItem } from '@grafana/ui';
 import { Variable } from 'app/types/templates';
-import { SelectOptionItem } from './Select';
 
 export interface Props {
   onChange: (value: string) => void;

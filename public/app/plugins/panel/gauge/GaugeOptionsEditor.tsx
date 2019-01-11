@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
+import { GaugeOptions, PanelOptionsProps } from '@grafana/ui';
+
 import { Switch } from 'app/core/components/Switch/Switch';
-import { OptionModuleProps } from './module';
 import { Label } from '../../../core/components/Label/Label';
 
-export default class GaugeOptions extends PureComponent<OptionModuleProps> {
+export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>> {
   onToggleThresholdLabels = () =>
     this.props.onChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
 
@@ -15,7 +16,8 @@ export default class GaugeOptions extends PureComponent<OptionModuleProps> {
   onMaxValueChange = ({ target }) => this.props.onChange({ ...this.props.options, maxValue: target.value });
 
   render() {
-    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers } = this.props.options;
+    const { options } = this.props;
+    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers } = options;
 
     return (
       <div className="section gf-form-group">

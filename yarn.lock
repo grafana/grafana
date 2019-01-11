@@ -961,6 +961,23 @@
   version "0.2.5"
   resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-0.2.5.tgz#2443fc12da514c81346b1a665675559cee21fa75"
 
+"@types/tether-drop@^1.4.8":
+  version "1.4.8"
+  resolved "https://registry.yarnpkg.com/@types/tether-drop/-/tether-drop-1.4.8.tgz#8d64288e673259d1bc28518250b80b5ef43af0bc"
+  integrity sha512-QzrJDUxnLoqACUm7opxGOwa9mgMBlkyb7hHYWApMLM3ywWif4pWraTiotooiG3ePZmnTe8wQj2nx7GWMX4pb+w==
+  dependencies:
+    "@types/tether" "*"
+
+"@types/tether@*":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@types/tether/-/tether-1.4.4.tgz#0fde1ccbd2f1fad74f8f465fe6227ff3b7bff634"
+  integrity sha512-6qhsFJVMuMqaQRVyQVi3zUBLfKYyryktL0ZP0Z3zegzeQ7WKm0PZNCdl3JsaitJbzqaoQ9qsFKMfaj5MiMfcSQ==
+
+"@types/tinycolor2@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/@types/tinycolor2/-/tinycolor2-1.4.1.tgz#2f5670c9d1d6e558897a810ed284b44918fc1253"
+  integrity sha512-25L/RL5tqZkquKXVHM1fM2bd23qjfbcPpAZ2N/H05Y45g3UEi+Hw8CbDV28shKY8gH1SHiLpZSxPI1lacqdpGg==
+
 "@types/uglify-js@*":
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/@types/uglify-js/-/uglify-js-3.0.4.tgz#96beae23df6f561862a830b4288a49e86baac082"
