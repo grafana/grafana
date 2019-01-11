@@ -1,6 +1,7 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { QueryEditor, Props, DefaultTarget } from './QueryEditor';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const props: Props = {
   onQueryChange: target => {},
@@ -8,10 +9,10 @@ const props: Props = {
   target: DefaultTarget,
   events: { on: () => {} },
   datasource: {
-    getDefaultProject: () => 'project',
-    getMetricTypes: () => [],
+    getDefaultProject: () => Promise.resolve('project'),
+    getMetricTypes: () => Promise.resolve([]),
   },
-  templateSrv: { variables: [] },
+  templateSrv: new TemplateSrv(),
 };
 
 describe('QueryEditor', () => {

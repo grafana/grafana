@@ -1,7 +1,8 @@
 import React from 'react';
+import StackdriverDatasource from '../datasource';
 
 export interface Props {
-  datasource: any;
+  datasource: StackdriverDatasource;
 }
 
 interface State {

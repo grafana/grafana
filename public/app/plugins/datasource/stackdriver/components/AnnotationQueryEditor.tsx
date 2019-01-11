@@ -1,6 +1,9 @@
 import React from 'react';
 import _ from 'lodash';
 
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
+import StackdriverDatasource from '../datasource';
 import { Metrics } from './Metrics';
 import { Filter } from './Filter';
 import { AnnotationTarget } from '../types';
@@ -9,8 +12,8 @@ import { AnnotationsHelp } from './AnnotationsHelp';
 export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
   target: AnnotationTarget;
-  datasource: any;
-  templateSrv: any;
+  datasource: StackdriverDatasource;
+  templateSrv: TemplateSrv;
 }
 
 interface State extends AnnotationTarget {

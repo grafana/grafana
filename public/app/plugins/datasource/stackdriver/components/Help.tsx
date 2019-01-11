@@ -1,8 +1,9 @@
 import React from 'react';
 import { Project } from './Project';
+import StackdriverDatasource from '../datasource';
 
 export interface Props {
-  datasource: any;
+  datasource: StackdriverDatasource;
   rawQuery: string;
   lastQueryError: string;
 }

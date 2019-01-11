@@ -1,6 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 
+import StackdriverDatasource from '../datasource';
 import appEvents from 'app/core/app_events';
 import { MetricDescriptor } from '../types';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
@@ -8,7 +9,7 @@ import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
   templateSrv: any;
-  datasource: any;
+  datasource: StackdriverDatasource;
   defaultProject: string;
   metricType: string;
   children?: (renderProps: any) => JSX.Element;

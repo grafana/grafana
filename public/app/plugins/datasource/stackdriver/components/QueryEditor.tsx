@@ -1,6 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
 
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { Metrics } from './Metrics';
 import { Filter } from './Filter';
 import { Aggregations } from './Aggregations';
@@ -17,7 +19,7 @@ export interface Props {
   target: Target;
   events: any;
   datasource: any;
-  templateSrv: any;
+  templateSrv: TemplateSrv;
 }
 
 interface State extends Target {
