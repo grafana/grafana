@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormats } from '@grafana/ui';
 
 export class ColumnOptionsCtrl {
   panel: any;
@@ -22,7 +22,7 @@ export class ColumnOptionsCtrl {
     this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    this.unitFormats = kbn.getUnitFormats();
+    this.unitFormats = getValueFormats();
     this.colorModes = [
       { text: 'Disabled', value: null },
       { text: 'Cell', value: 'cell' },

@@ -158,7 +158,7 @@ export function getValueFormats() {
       submenu: cat.formats.map(format => {
         return {
           text: format.name,
-          id: format.id,
+          value: format.id,
         };
       }),
     };

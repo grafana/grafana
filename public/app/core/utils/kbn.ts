@@ -1,6 +1,5 @@
 import _ from 'lodash';
-import { getValueFormat, getValueFormatterIndex  } from '@grafana/ui';
-import { getUnitFormats } from '@grafana/ui/src';
+import { getValueFormat, getValueFormatterIndex, getValueFormats } from '@grafana/ui';
 
 const kbn: any = {};
 
@@ -284,9 +283,12 @@ kbn.roundValue = (num, decimals) => {
 ///// FORMAT MENU /////
 
 kbn.getUnitFormats = () => {
-  return getUnitFormats();
+  return getValueFormats();
 };
 
+//
+// Backward compatible layer for value formats to support old plugins
+//
 if (typeof Proxy !== "undefined") {
   kbn.valueFormats = new Proxy(kbn.valueFormats, {
     get(target, name, receiver) {
