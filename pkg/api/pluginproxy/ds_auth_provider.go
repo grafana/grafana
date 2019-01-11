@@ -45,35 +45,55 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		logger.Error("Failed to render plugin headers", "error", err)
 	}
 
-	tokenProvider := newAccessTokenProvider(ds, route)
-
-	if route.TokenAuth != nil {
-		if token, err := tokenProvider.getAccessToken(data); err != nil {
-			logger.Error("Failed to get access token", "error", err)
-		} else {
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-	}
-
 	authenticationType := ds.JsonData.Get("authenticationType").MustString("jwt")
-	if route.JwtTokenAuth != nil && authenticationType == "jwt" {
-		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
-			logger.Error("Failed to get access token", "error", err)
-		} else {
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-	}
 
-	if authenticationType == "gce" {
-		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
-		if err != nil {
-			logger.Error("Failed to get default token from meta data server", "error", err)
-		} else {
-			token, err := tokenSrc.Token()
-			if err != nil {
-				logger.Error("Failed to get default access token from meta data server", "error", err)
+	if authenticationType == "opaque" {
+		tokenProvider := newOpaqueTokenProvider(ds, route)
+
+		if route.TokenAuth != nil {
+			client, getClientErr := ds.GetHttpClient()
+			if getClientErr != nil {
+				logger.Error("Unable to retrieve HttpClient from datasource in DSAuthProvider",
+					getClientErr)
+			}
+
+			if token, err := tokenProvider.getOpaqueToken(data, client); err != nil {
+				logger.Error("Failed to get opaque access token", "error", err)
 			} else {
-				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+			}
+		}
+	} else {
+
+		tokenProvider := newAccessTokenProvider(ds, route)
+
+		if route.TokenAuth != nil {
+			if token, err := tokenProvider.getAccessToken(data); err != nil {
+				logger.Error("Failed to get access token", "error", err)
+			} else {
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+			}
+		}
+
+		if route.JwtTokenAuth != nil && authenticationType == "jwt" {
+			if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
+				logger.Error("Failed to get access token", "error", err)
+			} else {
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+			}
+		}
+
+		if authenticationType == "gce" {
+			tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
+			if err != nil {
+				logger.Error("Failed to get default token from meta data server", "error", err)
+			} else {
+				token, err := tokenSrc.Token()
+				if err != nil {
+					logger.Error("Failed to get default access token from meta data server", "error", err)
+				} else {
+					req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+				}
 			}
 		}
 	}
