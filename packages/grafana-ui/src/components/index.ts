@@ -13,3 +13,4 @@ export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover } from './ColorPicker/SeriesColorPickerPopover';
 export { SeriesColorPicker } from './ColorPicker/SeriesColorPicker';
+export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';

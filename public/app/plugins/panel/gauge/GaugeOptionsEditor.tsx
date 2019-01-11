@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
+import { GaugeOptions, PanelOptionsProps } from '@grafana/ui';
+
 import { Switch } from 'app/core/components/Switch/Switch';
 import { Label } from '../../../core/components/Label/Label';
-import { PanelOptionsProps } from '@grafana/ui';
-import { Options } from './types';
 
-export default class GaugeOptions extends PureComponent<PanelOptionsProps<Options>> {
+export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>> {
   onToggleThresholdLabels = () =>
     this.props.onChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
 
