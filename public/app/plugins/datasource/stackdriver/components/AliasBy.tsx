@@ -11,9 +11,11 @@ export interface State {
 }
 
 export class AliasBy extends Component<Props, State> {
+  propagateOnChange: (value) => void;
+
   constructor(props) {
     super(props);
-    this.updateQuery = debounce(this.updateQuery.bind(this), 500);
+    this.propagateOnChange = debounce(this.props.onChange, 500);
     this.state = { value: '' };
   }
 
@@ -29,16 +31,12 @@ export class AliasBy extends Component<Props, State> {
 
   onChange(e) {
     this.setState({ value: e.target.value });
-    this.updateQuery(e.target.value);
-  }
-
-  updateQuery(value) {
-    this.props.onChange(value);
+    this.propagateOnChange(e.target.value);
   }
 
   render() {
     return (
-      <React.Fragment>
+      <>
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Alias By</label>
@@ -53,7 +51,7 @@ export class AliasBy extends Component<Props, State> {
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
-      </React.Fragment>
+      </>
     );
   }
 }
