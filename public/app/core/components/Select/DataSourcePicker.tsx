@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Components
-import Select from './Select';
+import { Select } from '@grafana/ui';
 
 // Types
 import { DataSourceSelectItem } from 'app/types';

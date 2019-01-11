@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { GaugeOptions, PanelOptionsProps } from '@grafana/ui';
 
 import { Label } from 'app/core/components/Label/Label';
-import Select from 'app/core/components/Select/Select';
+import { Select} from '@grafana/ui';
 import UnitPicker from 'app/core/components/Select/UnitPicker';
 
 const statOptions = [

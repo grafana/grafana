@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select } from 'app/core/components/Select/Select';
+import { Select } from '@grafana/ui';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
 
