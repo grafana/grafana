@@ -35,6 +35,8 @@ go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
 go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
 
 go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
+
+# Do not remove CC from the linux build, its there for compatibility with Centos6
 CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
@@ -57,7 +59,7 @@ go run build.go ${OPT} build-frontend
 source /etc/profile.d/rvm.sh
 
 echo "Packaging"
-go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only latest
+go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
 #removing amd64 phantomjs bin for armv7/arm64 packages
 rm tools/phantomjs/phantomjs
 go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
@@ -78,3 +80,4 @@ else
 fi
 go run build.go -goos windows -pkg-arch amd64 ${OPT} package-only
 
+go run build.go latest
