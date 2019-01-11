@@ -28,6 +28,9 @@ import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 import * as grafanaUI from '@grafana/ui';
 
+// Built-in plugins exposed for extension
+import * as influxdbPlugin from 'app/plugins/datasource/influxdb/module';
+
 // rxjs
 import { Observable, Subject } from 'rxjs';
 
@@ -112,6 +115,9 @@ exposeToPlugin('app/core/core', {
   contextSrv: contextSrv,
   __esModule: true,
 });
+
+// Built-in plugins exposed for extension
+exposeToPlugin('app/plugins/datasource/influxdb/module', influxdbPlugin);
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
