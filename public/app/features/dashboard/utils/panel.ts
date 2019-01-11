@@ -143,12 +143,9 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
     const timeShift = '-' + timeShiftInterpolated;
     newTimeData.timeInfo += ' timeshift ' + timeShift;
     newTimeData.timeRange = {
-      from: dateMath.parseDateMath(timeShift, timeRange.from, false),
-      to: dateMath.parseDateMath(timeShift, timeRange.to, true),
-      raw: {
-        from: timeRange.from,
-        to: timeRange.to,
-      },
+      from: dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false),
+      to: dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true),
+      raw: newTimeData.timeRange.raw,
     };
   }
 

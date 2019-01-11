@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
+import { LoadingPlaceholder } from '@grafana/ui';
 
 interface DsQuery {
   isLoading: boolean;
@@ -10,7 +11,6 @@ interface DsQuery {
 
 interface Props {
   panel: any;
-  LoadingPlaceholder: any;
 }
 
 interface State {
@@ -177,7 +177,6 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   render() {
     const { response, isLoading } = this.state.dsQuery;
-    const { LoadingPlaceholder } = this.props;
     const { isMocking } = this.state;
     const openNodes = this.getNrOfOpenNodes();
 

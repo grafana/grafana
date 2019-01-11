@@ -14,7 +14,7 @@ export interface Props {
 export class ColorPickerPopover extends React.Component<Props, any> {
   pickerNavElem: any;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       tab: 'palette',
@@ -23,60 +23,51 @@ export class ColorPickerPopover extends React.Component<Props, any> {
     };
   }
 
-  setPickerNavElem(elem) {
+  setPickerNavElem(elem: any) {
     this.pickerNavElem = $(elem);
   }
 
-  setColor(color) {
+  setColor(color: string) {
     const newColor = tinycolor(color);
     if (newColor.isValid()) {
-      this.setState({
-        color: newColor.toString(),
-        colorString: newColor.toString(),
-      });
+      this.setState({ color: newColor.toString(), colorString: newColor.toString() });
       this.props.onColorSelect(color);
     }
   }
 
-  sampleColorSelected(color) {
+  sampleColorSelected(color: string) {
     this.setColor(color);
   }
 
-  spectrumColorSelected(color) {
+  spectrumColorSelected(color: any) {
     const rgbColor = color.toRgbString();
     this.setColor(rgbColor);
   }
 
-  onColorStringChange(e) {
+  onColorStringChange(e: any) {
     const colorString = e.target.value;
-    this.setState({
-      colorString: colorString,
-    });
+    this.setState({ colorString: colorString });
 
     const newColor = tinycolor(colorString);
     if (newColor.isValid()) {
       // Update only color state
       const newColorString = newColor.toString();
-      this.setState({
-        color: newColorString,
-      });
+      this.setState({ color: newColorString });
       this.props.onColorSelect(newColorString);
     }
   }
 
-  onColorStringBlur(e) {
+  onColorStringBlur(e: any) {
     const colorString = e.target.value;
     this.setColor(colorString);
   }
 
   componentDidMount() {
     this.pickerNavElem.find('li:first').addClass('active');
-    this.pickerNavElem.on('show', e => {
+    this.pickerNavElem.on('show', (e: any) => {
       // use href attr (#name => name)
       const tab = e.target.hash.slice(1);
-      this.setState({
-        tab: tab,
-      });
+      this.setState({ tab: tab });
     });
   }
 

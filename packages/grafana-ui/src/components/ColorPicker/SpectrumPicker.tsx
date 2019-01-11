@@ -13,17 +13,17 @@ export class SpectrumPicker extends React.Component<Props, any> {
   elem: any;
   isMoving: boolean;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.onSpectrumMove = this.onSpectrumMove.bind(this);
     this.setComponentElem = this.setComponentElem.bind(this);
   }
 
-  setComponentElem(elem) {
+  setComponentElem(elem: any) {
     this.elem = $(elem);
   }
 
-  onSpectrumMove(color) {
+  onSpectrumMove(color: any) {
     this.isMoving = true;
     this.props.onColorSelect(color);
   }
@@ -46,7 +46,7 @@ export class SpectrumPicker extends React.Component<Props, any> {
     this.elem.spectrum('set', this.props.color);
   }
 
-  componentWillUpdate(nextProps) {
+  componentWillUpdate(nextProps: any) {
     // If user move pointer over spectrum field this produce 'move' event and component
     // may update props.color. We don't want to update spectrum color in this case, so we can use
     // isMoving flag for tracking moving state. Flag should be cleared in componentDidUpdate() which

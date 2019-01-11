@@ -2,11 +2,11 @@ import React, { PureComponent } from 'react';
 import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardModel } from '../dashboard/dashboard_model';
+import { LoadingPlaceholder } from '@grafana/ui/src';
 
 export interface Props {
   panelId: number;
   dashboard: DashboardModel;
-  LoadingPlaceholder: any;
 }
 
 interface State {
@@ -14,7 +14,7 @@ interface State {
   testRuleResponse: {};
 }
 
-export class TestRuleButton extends PureComponent<Props, State> {
+export class TestRuleResult extends PureComponent<Props, State> {
   readonly state: State = {
     isLoading: false,
     testRuleResponse: {},
@@ -27,13 +27,14 @@ export class TestRuleButton extends PureComponent<Props, State> {
   async testRule() {
     const { panelId, dashboard } = this.props;
     const payload = { dashboard: dashboard.getSaveModelClone(), panelId };
+
+    this.setState({ isLoading: true });
     const testRuleResponse = await getBackendSrv().post(`/api/alerts/test`, payload);
-    this.setState(prevState => ({ ...prevState, isLoading: false, testRuleResponse }));
+    this.setState({ isLoading: false, testRuleResponse });
   }
 
   render() {
     const { testRuleResponse, isLoading } = this.state;
-    const { LoadingPlaceholder } = this.props;
 
     if (isLoading === true) {
       return <LoadingPlaceholder text="Evaluating rule" />;

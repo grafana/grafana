@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Drop from 'tether-drop';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 export interface Props {
   color: string;
@@ -10,7 +9,7 @@ export interface Props {
 }
 
 export class ColorPicker extends React.Component<Props, any> {
-  pickerElem: HTMLElement;
+  pickerElem: HTMLElement | null;
   colorPickerDrop: any;
 
   openColorPicker = () => {
@@ -20,7 +19,7 @@ export class ColorPicker extends React.Component<Props, any> {
     ReactDOM.render(dropContent, dropContentElem);
 
     const drop = new Drop({
-      target: this.pickerElem,
+      target: this.pickerElem as Element,
       content: dropContentElem,
       position: 'top center',
       classes: 'drop-popover',
@@ -28,6 +27,7 @@ export class ColorPicker extends React.Component<Props, any> {
       hoverCloseDelay: 200,
       tetherOptions: {
         constraints: [{ to: 'scrollParent', attachment: 'none both' }],
+        attachment: 'bottom center',
       },
     });
 
@@ -45,7 +45,7 @@ export class ColorPicker extends React.Component<Props, any> {
     }, 100);
   };
 
-  onColorSelect = color => {
+  onColorSelect = (color: string) => {
     this.props.onChange(color);
   };
 
@@ -59,8 +59,3 @@ export class ColorPicker extends React.Component<Props, any> {
     );
   }
 }
-
-react2AngularDirective('colorPicker', ColorPicker, [
-  'color',
-  ['onChange', { watchDepth: 'reference', wrapApply: true }],
-]);
