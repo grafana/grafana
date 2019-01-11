@@ -84,8 +84,8 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
 	if !evalContext.IsTestRun {
 		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
-			Id:                           notifierState.state.Id,
-			Version:                      notifierState.state.Version,
+			Id:      notifierState.state.Id,
+			Version: notifierState.state.Version,
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
 
