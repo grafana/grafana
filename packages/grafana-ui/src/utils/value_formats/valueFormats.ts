@@ -147,7 +147,7 @@ export function getValueFormatterIndex(): ValueFormatterIndex {
   return index;
 }
 
-export function getUnitFormats() {
+export function getValueFormats() {
   if (!hasBuiltIndex) {
     buildFormats();
   }

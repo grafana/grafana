@@ -1,2 +1,2 @@
 export * from './processTimeSeries';
-export * from './ValueFormats/valueFormats';
+export * from './value_formats/valueFormats';
