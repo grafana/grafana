@@ -1,16 +1,21 @@
 // Libraries
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
+
+// Ignoring because I couldn't get @types/react-select work wih Torkel's fork
+// @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
+// @ts-ignore
 import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
+// @ts-ignore
 import { components } from '@torkelo/react-select';
 
 // Components
-import { Option, SingleValue } from './PickerOption';
-import OptionGroup from './OptionGroup';
+import { SelectOption, SingleValue } from './SelectOption';
+import SelectOptionGroup from './SelectOptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import ResetStyles from './ResetStyles';
+import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '@grafana/ui';
 
 export interface SelectOptionItem {
@@ -53,7 +58,7 @@ interface AsyncProps {
   loadingMessage?: () => string;
 }
 
-export const MenuList = props => {
+export const MenuList = (props: any) => {
   return (
     <components.MenuList {...props}>
       <CustomScrollbar autoHide={false}>{props.children}</CustomScrollbar>
@@ -112,11 +117,11 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         classNamePrefix="gf-form-select-box"
         className={selectClassNames}
         components={{
-          Option,
+          Option: SelectOption,
           SingleValue,
           IndicatorsContainer,
           MenuList,
-          Group: OptionGroup,
+          Group: SelectOptionGroup,
         }}
         defaultValue={defaultValue}
         value={value}
@@ -127,7 +132,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         onChange={onChange}
         options={options}
         placeholder={placeholder || 'Choose'}
-        styles={ResetStyles}
+        styles={resetSelectStyles()}
         isDisabled={isDisabled}
         isLoading={isLoading}
         isClearable={isClearable}
@@ -212,7 +217,7 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
         isLoading={isLoading}
         defaultOptions={defaultOptions}
         placeholder={placeholder || 'Choose'}
-        styles={ResetStyles}
+        styles={resetSelectStyles()}
         loadingMessage={loadingMessage}
         noOptionsMessage={noOptionsMessage}
         isDisabled={isDisabled}

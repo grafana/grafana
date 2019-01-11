@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import Select from './Select';
 import { getValueFormats } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 
 interface Props {
   onChange: (item: any) => void;

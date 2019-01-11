@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { Label } from 'app/core/components/Label/Label';
-import Select from 'app/core/components/Select/Select';
+import { Select } from '@grafana/ui';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit } from 'app/types';

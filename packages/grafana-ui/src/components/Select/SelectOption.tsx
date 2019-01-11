@@ -1,4 +1,7 @@
 import React from 'react';
+
+// Ignoring because I couldn't get @types/react-select work wih Torkel's fork
+// @ts-ignore
 import { components } from '@torkelo/react-select';
 import { OptionProps } from 'react-select/lib/components/Option';
 
@@ -10,7 +13,7 @@ interface ExtendedOptionProps extends OptionProps<any> {
   };
 }
 
-export const Option = (props: ExtendedOptionProps) => {
+export const SelectOption = (props: ExtendedOptionProps) => {
   const { children, isSelected, data } = props;
 
   return (
@@ -28,7 +31,7 @@ export const Option = (props: ExtendedOptionProps) => {
 };
 
 // was not able to type this without typescript error
-export const SingleValue = props => {
+export const SingleValue = (props: any) => {
   const { children, data } = props;
 
   return (
@@ -41,4 +44,4 @@ export const SingleValue = props => {
   );
 };
 
-export default Option;
+export default SelectOption;

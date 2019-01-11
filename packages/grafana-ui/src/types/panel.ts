@@ -29,3 +29,35 @@ export interface PanelMenuItem {
   shortcut?: string;
   subMenu?: PanelMenuItem[];
 }
+
+export interface Threshold {
+  index: number;
+  value: number;
+  color?: string;
+}
+
+export enum BasicGaugeColor {
+  Green = '#299c46',
+  Red = '#d44a3a',
+}
+
+export enum MappingType {
+  ValueToText = 1,
+  RangeToText = 2,
+}
+
+interface BaseMap {
+  id: number;
+  operator: string;
+  text: string;
+  type: MappingType;
+}
+
+export interface ValueMap extends BaseMap {
+  value: string;
+}
+
+export interface RangeMap extends BaseMap {
+  from: string;
+  to: string;
+}

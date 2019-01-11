@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
-import colors from 'app/core/utils/colors';
+import { colors } from '@grafana/ui';
 
 // Utils
 import { processTimeSeries } from '@grafana/ui/src/utils';

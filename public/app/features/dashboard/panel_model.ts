@@ -77,7 +77,7 @@ export class PanelModel {
   repeatPanelId?: number;
   repeatDirection?: string;
   repeatedByRow?: boolean;
-  minSpan?: number;
+  maxPerRow?: number;
   collapsed?: boolean;
   panels?: any;
   soloMode?: boolean;

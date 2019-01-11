@@ -292,9 +292,11 @@ The `direction` controls how the panels will be arranged.
 
 By choosing `horizontal` the panels will be arranged side-by-side. Grafana will automatically adjust the width
 of each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated
-panel. Each panel will never be smaller that the provided `Min width` if you have many selected values.
+panel.
 
-By choosing `vertical` the panels will be arranged from top to bottom in a column. The `Min width` doesn't have any effect in this case. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
+Set `Max per row` to tell grafana how many panels per row you want at most. It defaults to *4* if you don't set anything.
+
+By choosing `vertical` the panels will be arranged from top to bottom in a column. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
 
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.

@@ -1,6 +1,6 @@
-import { RangeMap, ValueMap, Threshold } from 'app/types';
+import { RangeMap, Threshold, ValueMap } from './panel';
 
-export interface Options {
+export interface GaugeOptions {
   baseColor: string;
   decimals: number;
   mappings: Array<RangeMap | ValueMap>;
