@@ -2,9 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { CustomScrollbar } from '@grafana/ui';
+import { CustomScrollbar, PanelOptionSection } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-import { PanelOptionSection } from './PanelOptionSection';
 
 interface Props {
   children: JSX.Element;

@@ -16,3 +16,5 @@ export { SeriesColorPicker } from './ColorPicker/SeriesColorPicker';
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { GfFormLabel } from './GfFormLabel/GfFormLabel';
 export { Graph } from './Graph/Graph';
+export { PanelOptionSection } from './PanelOptionSection/PanelOptionSection';
+export { PanelOptionGrid } from './PanelOptionGrid/PanelOptionGrid';

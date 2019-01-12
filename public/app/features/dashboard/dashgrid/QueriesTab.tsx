@@ -9,7 +9,7 @@ import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
-import { PanelOptionSection } from './PanelOptionSection';
+import { PanelOptionSection } from '@grafana/ui';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

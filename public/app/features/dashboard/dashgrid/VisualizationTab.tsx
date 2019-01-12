@@ -9,7 +9,6 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-import { PanelOptionSection } from './PanelOptionSection';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -62,13 +61,13 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
 
     return (
-      <PanelOptionSection>
+      <>
         {PanelOptions ? (
           <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />
         ) : (
           <p>Visualization has no options</p>
         )}
-      </PanelOptionSection>
+      </>
     );
   }
 
