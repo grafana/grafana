@@ -71,7 +71,10 @@ func (provider *opaqueTokenProvider) getOpaqueToken(data templateData, httpClien
 		params.Add(key, interpolatedParam)
 	}
 
-	token, err := getOpaqueTokenSource(urlInterpolated, params, httpClient)
+	token, tokenSourceErr := getOpaqueTokenSource(urlInterpolated, params, httpClient)
+	if tokenSourceErr != nil {
+		return "", err
+	}
 
 	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
 	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
