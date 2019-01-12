@@ -19,7 +19,7 @@ import {
 } from './appNotifications';
 import { DashboardSearchHit } from './search';
 import { ValidationEvents, ValidationRule } from './form';
-import { ExploreState } from 'app/features/explore/state/reducers';
+import { ExploreState } from './explore';
 export {
   Team,
   TeamsState,

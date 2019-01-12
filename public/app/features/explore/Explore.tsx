@@ -6,7 +6,14 @@ import { AutoSizer } from 'react-virtualized';
 import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 import { DataSourceSelectItem } from 'app/types/datasources';
-import { ExploreUrlState, HistoryItem, QueryTransaction, RangeScanner, ExploreId } from 'app/types/explore';
+import {
+  ExploreItemState,
+  ExploreUrlState,
+  HistoryItem,
+  QueryTransaction,
+  RangeScanner,
+  ExploreId,
+} from 'app/types/explore';
 import { DataQuery } from 'app/types/series';
 import { StoreState } from 'app/types';
 import store from 'app/core/store';
@@ -37,7 +44,6 @@ import {
   scanStart,
   scanStop,
 } from './state/actions';
-import { ExploreItemState } from './state/reducers';
 
 import Panel from './Panel';
 import QueryRows from './QueryRows';

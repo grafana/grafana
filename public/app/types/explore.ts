@@ -1,9 +1,12 @@
 import { Value } from 'slate';
+import { RawTimeRange, TimeRange } from '@grafana/ui';
+
+import { Emitter } from 'app/core/core';
+import { LogsModel } from 'app/core/logs_model';
+import TableModel from 'app/core/table_model';
+import { DataSourceSelectItem } from 'app/types/datasources';
 
 import { DataQuery } from './series';
-import { RawTimeRange } from '@grafana/ui';
-import TableModel from 'app/core/table_model';
-import { LogsModel } from 'app/core/logs_model';
 
 export interface CompletionItem {
   /**
@@ -78,6 +81,52 @@ export interface CompletionItemGroup {
 export enum ExploreId {
   left = 'left',
   right = 'right',
+}
+
+export interface ExploreState {
+  split: boolean;
+  left: ExploreItemState;
+  right: ExploreItemState;
+}
+
+export interface ExploreItemState {
+  StartPage?: any;
+  containerWidth: number;
+  datasourceInstance: any;
+  datasourceError: string;
+  datasourceLoading: boolean | null;
+  datasourceMissing: boolean;
+  eventBridge?: Emitter;
+  exploreDatasources: DataSourceSelectItem[];
+  graphResult?: any[];
+  history: HistoryItem[];
+  initialDatasource?: string;
+  initialQueries: DataQuery[];
+  initialized: boolean;
+  logsHighlighterExpressions?: string[];
+  logsResult?: LogsModel;
+  modifiedQueries: DataQuery[];
+  queryIntervals: QueryIntervals;
+  queryTransactions: QueryTransaction[];
+  requestedDatasourceId?: number;
+  range: TimeRange | RawTimeRange;
+  scanner?: RangeScanner;
+  scanning?: boolean;
+  scanRange?: RawTimeRange;
+  showingGraph: boolean;
+  showingLogs: boolean;
+  showingStartPage?: boolean;
+  showingTable: boolean;
+  supportsGraph: boolean | null;
+  supportsLogs: boolean | null;
+  supportsTable: boolean | null;
+  tableResult?: TableModel;
+}
+
+export interface ExploreUrlState {
+  datasource: string;
+  queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
+  range: RawTimeRange;
 }
 
 export interface HistoryItem {
@@ -166,33 +215,6 @@ export interface TextMatch {
   start: number;
   length: number;
   end: number;
-}
-
-export interface ExploreState {
-  StartPage?: any;
-  datasource: any;
-  datasourceError: any;
-  graphResult?: any[];
-  history: HistoryItem[];
-  logsHighlighterExpressions?: string[];
-  logsResult?: LogsModel;
-  queryTransactions: QueryTransaction[];
-  scanning?: boolean;
-  scanRange?: RawTimeRange;
-  showingGraph: boolean;
-  showingLogs: boolean;
-  showingStartPage?: boolean;
-  showingTable: boolean;
-  supportsGraph: boolean | null;
-  supportsLogs: boolean | null;
-  supportsTable: boolean | null;
-  tableResult?: TableModel;
-}
-
-export interface ExploreUrlState {
-  datasource: string;
-  queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
-  range: RawTimeRange;
 }
 
 export type ResultType = 'Graph' | 'Logs' | 'Table';

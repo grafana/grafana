@@ -1,61 +1,13 @@
-import { RawTimeRange, TimeRange } from '@grafana/ui';
-
 import {
   calculateResultsFromQueryTransactions,
   generateEmptyQuery,
   getIntervals,
   ensureQueries,
 } from 'app/core/utils/explore';
-import { DataSourceSelectItem } from 'app/types/datasources';
-import { HistoryItem, QueryTransaction, QueryIntervals, RangeScanner } from 'app/types/explore';
+import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
 import { DataQuery } from 'app/types/series';
 
 import { Action, ActionTypes } from './actions';
-import { Emitter } from 'app/core/core';
-import { LogsModel } from 'app/core/logs_model';
-import TableModel from 'app/core/table_model';
-
-// TODO move to types
-
-export interface ExploreState {
-  split: boolean;
-  left: ExploreItemState;
-  right: ExploreItemState;
-}
-
-export interface ExploreItemState {
-  StartPage?: any;
-  containerWidth: number;
-  datasourceInstance: any;
-  datasourceError: string;
-  datasourceLoading: boolean | null;
-  datasourceMissing: boolean;
-  eventBridge?: Emitter;
-  exploreDatasources: DataSourceSelectItem[];
-  graphResult?: any[];
-  history: HistoryItem[];
-  initialDatasource?: string;
-  initialQueries: DataQuery[];
-  initialized: boolean;
-  logsHighlighterExpressions?: string[];
-  logsResult?: LogsModel;
-  modifiedQueries: DataQuery[];
-  queryIntervals: QueryIntervals;
-  queryTransactions: QueryTransaction[];
-  requestedDatasourceId?: number;
-  range: TimeRange | RawTimeRange;
-  scanner?: RangeScanner;
-  scanning?: boolean;
-  scanRange?: RawTimeRange;
-  showingGraph: boolean;
-  showingLogs: boolean;
-  showingStartPage?: boolean;
-  showingTable: boolean;
-  supportsGraph: boolean | null;
-  supportsLogs: boolean | null;
-  supportsTable: boolean | null;
-  tableResult?: TableModel;
-}
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

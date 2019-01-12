@@ -21,6 +21,8 @@ import { DataQuery, StoreState } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   ExploreId,
+  ExploreItemState,
+  ExploreUrlState,
   HistoryItem,
   RangeScanner,
   ResultType,
@@ -28,10 +30,8 @@ import {
   QueryTransaction,
   QueryHint,
   QueryHintGetter,
-  ExploreUrlState,
 } from 'app/types/explore';
 import { Emitter } from 'app/core/core';
-import { ExploreItemState } from './reducers';
 
 export enum ActionTypes {
   AddQueryRow = 'ADD_QUERY_ROW',
