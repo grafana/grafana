@@ -337,8 +337,8 @@ class GraphElement {
         let bucketSize: number;
 
         if (this.data.length) {
-          const histMin = _.min(_.map(this.data, s => s.stats.min));
-          const histMax = _.max(_.map(this.data, s => s.stats.max));
+          const histMin = panel.xaxis.min ? panel.xaxis.min : _.min(_.map(this.data, s => s.stats.min));
+          const histMax = panel.xaxis.max ? panel.xaxis.max : _.max(_.map(this.data, s => s.stats.max));
           const ticks = panel.xaxis.buckets || this.panelWidth / 50;
           bucketSize = tickStep(histMin, histMax, ticks);
           options.series.bars.barWidth = bucketSize * 0.8;

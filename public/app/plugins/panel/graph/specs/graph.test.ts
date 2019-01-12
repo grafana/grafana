@@ -516,4 +516,68 @@ describe('grafanaGraph', () => {
       expect(ctx.plotData[0].data[0][1]).toBe(2);
     });
   });
+
+  describe('when graph is histogram, and xaxis min is set', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 150;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values lower than min', () => {
+        const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+        expect(Math.min.apply(Math, nonZero.map(t => t[0])) === 200);
+        expect(Math.max.apply(Math, nonZero.map(t => t[0])) === 300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is set', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = 250;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values lower than min', () => {
+        const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+        expect(Math.min.apply(Math, nonZero.map(t => t[0])) === 100);
+        expect(Math.max.apply(Math, nonZero.map(t => t[0])) === 200);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min and max are set', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 150;
+        ctrl.panel.xaxis.max = 250;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values lower than min', () => {
+        const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+        expect(Math.min.apply(Math, nonZero.map(t => t[0])) === 200);
+        expect(Math.max.apply(Math, nonZero.map(t => t[0])) === 200);
+    });
+  });
 });
