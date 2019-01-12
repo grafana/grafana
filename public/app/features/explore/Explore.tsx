@@ -13,6 +13,8 @@ import store from 'app/core/store';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE } from 'app/core/utils/explore';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { Emitter } from 'app/core/utils/emitter';
+import { LogsModel } from 'app/core/logs_model';
+import TableModel from 'app/core/table_model';
 
 import {
   addQueryRow,
@@ -45,8 +47,6 @@ import Table from './Table';
 import ErrorBoundary from './ErrorBoundary';
 import { Alert } from './Error';
 import TimePicker, { parseTime } from './TimePicker';
-import { LogsModel } from 'app/core/logs_model';
-import TableModel from 'app/core/table_model';
 
 interface ExploreProps {
   StartPage?: any;
@@ -74,6 +74,7 @@ interface ExploreProps {
   initialDatasource?: string;
   initialQueries: DataQuery[];
   initializeExplore: typeof initializeExplore;
+  initialized: boolean;
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   modifyQueries: typeof modifyQueries;
@@ -149,8 +150,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   async componentDidMount() {
-    const { exploreId, split, urlState } = this.props;
-    if (!split) {
+    const { exploreId, initialized, urlState } = this.props;
+    // Don't initialize on split, but need to initialize urlparameters when present
+    if (!initialized) {
       // Load URL state and parse range
       const { datasource, queries, range = DEFAULT_RANGE } = (urlState || {}) as ExploreUrlState;
       const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
@@ -276,11 +278,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
       this.props.highlightLogsExpression(this.props.exploreId, expressions);
     }
   }, 500);
-
-  // saveState = () => {
-  //   const { stateKey, onSaveState } = this.props;
-  //   onSaveState(stateKey, this.cloneState());
-  // };
 
   render() {
     const {
@@ -478,6 +475,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     graphResult,
     initialDatasource,
     initialQueries,
+    initialized,
     history,
     logsHighlighterExpressions,
     logsResult,
@@ -504,6 +502,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     graphResult,
     initialDatasource,
     initialQueries,
+    initialized,
     history,
     logsHighlighterExpressions,
     logsResult,

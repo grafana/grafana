@@ -3,51 +3,56 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 import { updateLocation } from 'app/core/actions';
-// import { serializeStateToUrlParam, parseUrlState } from 'app/core/utils/explore';
 import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
+import { ExploreId, ExploreUrlState } from 'app/types/explore';
+import { parseUrlState } from 'app/core/utils/explore';
 
+import { initializeExploreSplit } from './state/actions';
 import ErrorBoundary from './ErrorBoundary';
 import Explore from './Explore';
 
 interface WrapperProps {
-  backendSrv?: any;
-  datasourceSrv?: any;
+  initializeExploreSplit: typeof initializeExploreSplit;
   split: boolean;
   updateLocation: typeof updateLocation;
-  // urlStates: { [key: string]: string };
+  urlStates: { [key: string]: string };
 }
 
 export class Wrapper extends Component<WrapperProps> {
-  // urlStates: { [key: string]: string };
+  initialSplit: boolean;
+  urlStates: { [key: string]: ExploreUrlState };
 
   constructor(props: WrapperProps) {
     super(props);
-    // this.urlStates = props.urlStates;
+    this.urlStates = {};
+    const { left, right } = props.urlStates;
+    if (props.urlStates.left) {
+      this.urlStates.leftState = parseUrlState(left);
+    }
+    if (props.urlStates.right) {
+      this.urlStates.rightState = parseUrlState(right);
+      this.initialSplit = true;
+    }
   }
 
-  // onSaveState = (key: string, state: ExploreState) => {
-  //   const urlState = serializeStateToUrlParam(state, true);
-  //   this.urlStates[key] = urlState;
-  //   this.props.updateLocation({
-  //     query: this.urlStates,
-  //   });
-  // };
+  componentDidMount() {
+    if (this.initialSplit) {
+      this.props.initializeExploreSplit();
+    }
+  }
 
   render() {
     const { split } = this.props;
-    // State overrides for props from first Explore
-    // const urlStateLeft = parseUrlState(this.urlStates[STATE_KEY_LEFT]);
-    // const urlStateRight = parseUrlState(this.urlStates[STATE_KEY_RIGHT]);
+    const { leftState, rightState } = this.urlStates;
 
     return (
       <div className="explore-wrapper">
         <ErrorBoundary>
-          <Explore exploreId={ExploreId.left} />
+          <Explore exploreId={ExploreId.left} urlState={leftState} />
         </ErrorBoundary>
         {split && (
           <ErrorBoundary>
-            <Explore exploreId={ExploreId.right} />
+            <Explore exploreId={ExploreId.right} urlState={rightState} />
           </ErrorBoundary>
         )}
       </div>
@@ -56,12 +61,13 @@ export class Wrapper extends Component<WrapperProps> {
 }
 
 const mapStateToProps = (state: StoreState) => {
-  // urlStates: state.location.query,
+  const urlStates = state.location.query;
   const { split } = state.explore;
-  return { split };
+  return { split, urlStates };
 };
 
 const mapDispatchToProps = {
+  initializeExploreSplit,
   updateLocation,
 };
 

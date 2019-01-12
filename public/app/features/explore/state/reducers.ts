@@ -36,6 +36,7 @@ export interface ExploreItemState {
   history: HistoryItem[];
   initialDatasource?: string;
   initialQueries: DataQuery[];
+  initialized: boolean;
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   modifiedQueries: DataQuery[];
@@ -74,6 +75,7 @@ const makeExploreItemState = (): ExploreItemState => ({
   exploreDatasources: [],
   history: [],
   initialQueries: [],
+  initialized: false,
   modifiedQueries: [],
   queryTransactions: [],
   queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
@@ -89,7 +91,7 @@ const makeExploreItemState = (): ExploreItemState => ({
 });
 
 const initialExploreState: ExploreState = {
-  split: false,
+  split: null,
   left: makeExploreItemState(),
   right: makeExploreItemState(),
 };
@@ -236,6 +238,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
         range,
         initialDatasource: action.datasource,
         initialQueries: action.queries,
+        initialized: true,
         modifiedQueries: action.queries.slice(),
       };
     }
@@ -436,6 +439,13 @@ export const exploreReducer = (state = initialExploreState, action: Action): Exp
         right: action.itemState,
       };
     }
+
+    case ActionTypes.InitializeExploreSplit: {
+      return {
+        ...state,
+        split: true,
+      };
+    }
   }
 
   const { exploreId } = action as any;
@@ -446,6 +456,8 @@ export const exploreReducer = (state = initialExploreState, action: Action): Exp
       [exploreId]: itemReducer(exploreItemState, action),
     };
   }
+
+  console.error('Unhandled action', action.type);
 
   return state;
 };

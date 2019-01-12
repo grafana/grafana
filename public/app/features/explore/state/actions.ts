@@ -4,14 +4,17 @@ import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 import {
   LAST_USED_DATASOURCE_KEY,
+  clearQueryKeys,
   ensureQueries,
   generateEmptyQuery,
   hasNonEmptyQuery,
   makeTimeSeriesList,
   updateHistory,
   buildQueryTransaction,
+  serializeStateToUrlParam,
 } from 'app/core/utils/explore';
 
+import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
 import { DataSourceSelectItem } from 'app/types/datasources';
 import { DataQuery, StoreState } from 'app/types';
@@ -25,6 +28,7 @@ import {
   QueryTransaction,
   QueryHint,
   QueryHintGetter,
+  ExploreUrlState,
 } from 'app/types/explore';
 import { Emitter } from 'app/core/core';
 import { ExploreItemState } from './reducers';
@@ -44,6 +48,7 @@ export enum ActionTypes {
   ClickTableButton = 'CLICK_TABLE_BUTTON',
   HighlightLogsExpression = 'HIGHLIGHT_LOGS_EXPRESSION',
   InitializeExplore = 'INITIALIZE_EXPLORE',
+  InitializeExploreSplit = 'INITIALIZE_EXPLORE_SPLIT',
   LoadDatasourceFailure = 'LOAD_DATASOURCE_FAILURE',
   LoadDatasourceMissing = 'LOAD_DATASOURCE_MISSING',
   LoadDatasourcePending = 'LOAD_DATASOURCE_PENDING',
@@ -58,6 +63,7 @@ export enum ActionTypes {
   ScanRange = 'SCAN_RANGE',
   ScanStart = 'SCAN_START',
   ScanStop = 'SCAN_STOP',
+  StateSave = 'STATE_SAVE',
 }
 
 export interface AddQueryRowAction {
@@ -123,6 +129,12 @@ export interface ClickTableButtonAction {
   exploreId: ExploreId;
 }
 
+export interface HighlightLogsExpressionAction {
+  type: ActionTypes.HighlightLogsExpression;
+  exploreId: ExploreId;
+  expressions: string[];
+}
+
 export interface InitializeExploreAction {
   type: ActionTypes.InitializeExplore;
   exploreId: ExploreId;
@@ -134,10 +146,8 @@ export interface InitializeExploreAction {
   range: RawTimeRange;
 }
 
-export interface HighlightLogsExpressionAction {
-  type: ActionTypes.HighlightLogsExpression;
-  exploreId: ExploreId;
-  expressions: string[];
+export interface InitializeExploreSplitAction {
+  type: ActionTypes.InitializeExploreSplit;
 }
 
 export interface LoadDatasourceFailureAction {
@@ -224,6 +234,10 @@ export interface ScanStopAction {
   exploreId: ExploreId;
 }
 
+export interface StateSaveAction {
+  type: ActionTypes.StateSave;
+}
+
 export type Action =
   | AddQueryRowAction
   | ChangeQueryAction
@@ -238,6 +252,7 @@ export type Action =
   | ClickTableButtonAction
   | HighlightLogsExpressionAction
   | InitializeExploreAction
+  | InitializeExploreSplitAction
   | LoadDatasourceFailureAction
   | LoadDatasourceMissingAction
   | LoadDatasourcePendingAction
@@ -301,15 +316,14 @@ export function clickClear(exploreId: ExploreId): ThunkResult<void> {
   return dispatch => {
     dispatch(scanStop(exploreId));
     dispatch({ type: ActionTypes.ClickClear, exploreId });
-    // TODO save state
+    dispatch(stateSave());
   };
 }
 
 export function clickCloseSplit(): ThunkResult<void> {
   return dispatch => {
     dispatch({ type: ActionTypes.ClickCloseSplit });
-    // When closing split, remove URL state for split part
-    // TODO save state
+    dispatch(stateSave());
   };
 }
 
@@ -353,7 +367,7 @@ export function clickSplit(): ThunkResult<void> {
       initialQueries: leftState.modifiedQueries.slice(),
     };
     dispatch({ type: ActionTypes.ClickSplit, itemState });
-    // TODO save state
+    dispatch(stateSave());
   };
 }
 
@@ -409,6 +423,12 @@ export function initializeExplore(
     } else {
       dispatch(loadDatasourceMissing(exploreId));
     }
+  };
+}
+
+export function initializeExploreSplit() {
+  return async dispatch => {
+    dispatch({ type: ActionTypes.InitializeExploreSplit });
   };
 }
 
@@ -733,7 +753,7 @@ export function runQueries(exploreId: ExploreId) {
     if (showingLogs && supportsLogs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
-    // TODO save state
+    dispatch(stateSave());
   };
 }
 
@@ -791,4 +811,26 @@ export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkRes
 
 export function scanStop(exploreId: ExploreId): ScanStopAction {
   return { type: ActionTypes.ScanStop, exploreId };
+}
+
+export function stateSave() {
+  return (dispatch, getState) => {
+    const { left, right, split } = getState().explore;
+    const urlStates: { [index: string]: string } = {};
+    const leftUrlState: ExploreUrlState = {
+      datasource: left.datasourceInstance.name,
+      queries: left.modifiedQueries.map(clearQueryKeys),
+      range: left.range,
+    };
+    urlStates.left = serializeStateToUrlParam(leftUrlState, true);
+    if (split) {
+      const rightUrlState: ExploreUrlState = {
+        datasource: right.datasourceInstance.name,
+        queries: right.modifiedQueries.map(clearQueryKeys),
+        range: right.range,
+      };
+      urlStates.right = serializeStateToUrlParam(rightUrlState, true);
+    }
+    dispatch(updateLocation({ query: urlStates }));
+  };
 }
