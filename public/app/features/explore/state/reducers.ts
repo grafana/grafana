@@ -17,6 +17,9 @@ export const DEFAULT_RANGE = {
 // Millies step for helper bar charts
 const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 
+/**
+ * Returns a fresh Explore area state
+ */
 const makeExploreItemState = (): ExploreItemState => ({
   StartPage: undefined,
   containerWidth: 0,
@@ -42,12 +45,18 @@ const makeExploreItemState = (): ExploreItemState => ({
   supportsTable: null,
 });
 
+/**
+ * Global Explore state that handles multiple Explore areas and the split state
+ */
 const initialExploreState: ExploreState = {
   split: null,
   left: makeExploreItemState(),
   right: makeExploreItemState(),
 };
 
+/**
+ * Reducer for an Explore area, to be used by the global Explore reducer.
+ */
 const itemReducer = (state, action: Action): ExploreItemState => {
   switch (action.type) {
     case ActionTypes.AddQueryRow: {
@@ -375,6 +384,10 @@ const itemReducer = (state, action: Action): ExploreItemState => {
   return state;
 };
 
+/**
+ * Global Explore reducer that handles multiple Explore areas (left and right).
+ * Actions that have an `exploreId` get routed to the ExploreItemReducer.
+ */
 export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
   switch (action.type) {
     case ActionTypes.ClickCloseSplit: {
@@ -408,8 +421,6 @@ export const exploreReducer = (state = initialExploreState, action: Action): Exp
       [exploreId]: itemReducer(exploreItemState, action),
     };
   }
-
-  console.error('Unhandled action', action.type);
 
   return state;
 };

@@ -110,26 +110,14 @@ interface ExploreProps {
  * Once a datasource is selected it populates the query section at the top.
  * When queries are run, their results are being displayed in the main section.
  * The datasource determines what kind of query editor it brings, and what kind
- * of results viewers it supports.
+ * of results viewers it supports. The state is managed entirely in Redux.
  *
- * QUERY HANDLING
+ * SPLIT VIEW
  *
- * TLDR: to not re-render Explore during edits, query editing is not "controlled"
- * in a React sense: values need to be pushed down via `initialQueries`, while
- * edits travel up via `this.modifiedQueries`.
- *
- * By default the query rows start without prior state: `initialQueries` will
- * contain one empty DataQuery. While the user modifies the DataQuery, the
- * modifications are being tracked in `this.modifiedQueries`, which need to be
- * used whenever a query is sent to the datasource to reflect what the user sees
- * on the screen. Query"react-popper": "^0.7.5", rows can be initialized or reset using `initialQueries`,
- * by giving the respec"react-popper": "^0.7.5",tive row a new key. This wipes the old row and its state.
- * This property is als"react-popper": "^0.7.5",o used to govern how many query rows there are (minimum 1).
- *
- * This flow makes sure that a query row can be arbitrarily complex without the
- * fear of being wiped or re-initialized via props. The query row is free to keep
- * its own state while the user edits or builds a query. Valid queries can be sent
- * up to Explore via the `onChangeQuery` prop.
+ * Explore can have two Explore areas side-by-side. This is handled in `Wrapper.tsx`.
+ * Since there can be multiple Explores (e.g., left and right) each action needs
+ * the `exploreId` as first parameter so that the reducer knows which Explore state
+ * is affected.
  *
  * DATASOURCE REQUESTS
  *
