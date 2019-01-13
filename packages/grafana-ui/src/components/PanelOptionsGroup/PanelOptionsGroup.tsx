@@ -7,11 +7,11 @@ interface Props {
   children: JSX.Element | JSX.Element[];
 }
 
-export const PanelOptionSection: SFC<Props> = props => {
+export const PanelOptionsGroup: SFC<Props> = props => {
   return (
-    <div className="panel-option-section">
+    <div className="panel-options-group">
       {props.title && (
-        <div className="panel-option-section__header">
+        <div className="panel-options-group__header">
           {props.title}
           {props.onClose && (
             <button className="btn btn-link" onClick={props.onClose}>
@@ -20,7 +20,7 @@ export const PanelOptionSection: SFC<Props> = props => {
           )}
         </div>
       )}
-      <div className="panel-option-section__body">{props.children}</div>
+      <div className="panel-options-group__body">{props.children}</div>
     </div>
   );
 };

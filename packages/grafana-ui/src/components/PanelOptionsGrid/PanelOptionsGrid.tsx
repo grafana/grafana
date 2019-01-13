@@ -5,10 +5,10 @@ interface Props {
   children: JSX.Element[] | JSX.Element;
 }
 
-export const PanelOptionGrid: SFC<Props> = ({ children }) => {
+export const PanelOptionsGrid: SFC<Props> = ({ children }) => {
 
   return (
-    <div className="panel-option-grid">
+    <div className="panel-options-grid">
       {children}
     </div>
   );

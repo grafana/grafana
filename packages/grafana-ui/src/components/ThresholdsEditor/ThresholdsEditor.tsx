@@ -3,7 +3,7 @@ import tinycolor, { ColorInput } from 'tinycolor2';
 
 import { Threshold, BasicGaugeColor } from '../../types';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { PanelOptionSection } from '../PanelOptionSection/PanelOptionSection';
+import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
   thresholds: Threshold[];
@@ -205,7 +205,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   render() {
     return (
-      <PanelOptionSection title="Thresholds">
+      <PanelOptionsGroup title="Thresholds">
         <div className="thresholds">
           <div className="color-indicators">
             {this.renderIndicator()}
@@ -216,7 +216,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             {this.renderBase()}
           </div>
         </div>
-      </PanelOptionSection>
+      </PanelOptionsGroup>
     );
   }
 }

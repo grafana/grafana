@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { GaugeOptions, PanelOptionsProps, MappingType, RangeMap, ValueMap, PanelOptionSection } from '@grafana/ui';
+import { GaugeOptions, PanelOptionsProps, MappingType, RangeMap, ValueMap, PanelOptionsGroup } from '@grafana/ui';
 
 import MappingRow from './MappingRow';
 
@@ -75,7 +75,7 @@ export default class ValueMappings extends PureComponent<PanelOptionsProps<Gauge
     const { mappings } = this.state;
 
     return (
-      <PanelOptionSection title="Value Mappings">
+      <PanelOptionsGroup title="Value Mappings">
         <div>
           {mappings.length > 0 &&
             mappings.map((mapping, index) => (
@@ -93,7 +93,7 @@ export default class ValueMappings extends PureComponent<PanelOptionsProps<Gauge
           </div>
           <div className="add-mapping-row-label">Add mapping</div>
         </div>
-      </PanelOptionSection>
+      </PanelOptionsGroup>
     );
   }
 }

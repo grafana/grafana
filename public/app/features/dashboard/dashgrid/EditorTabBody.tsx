@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { CustomScrollbar, PanelOptionSection } from '@grafana/ui';
+import { CustomScrollbar, PanelOptionsGroup } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface Props {
@@ -96,9 +96,9 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderOpenView(view: EditorToolbarView) {
     return (
-      <PanelOptionSection title={view.title || view.heading} onClose={this.onCloseOpenView}>
+      <PanelOptionsGroup title={view.title || view.heading} onClose={this.onCloseOpenView}>
         {view.render()}
-      </PanelOptionSection>
+      </PanelOptionsGroup>
     );
   }
 

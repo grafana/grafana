@@ -1,14 +1,14 @@
-.panel-option-section {
+.panel-options-group {
   margin-bottom: 10px;
-  border: $panel-option-section-border;
+  border: $panel-options-group-border;
   border-radius: $border-radius;
   background: $page-bg;
 }
 
-.panel-option-section__header {
+.panel-options-group__header {
   padding: 4px 20px;
   font-size: 1.1rem;
-  background: $panel-option-section-header-bg;
+  background: $panel-options-group-header-bg;
   position: relative;
 
   .btn {
@@ -18,7 +18,7 @@
   }
 }
 
-.panel-option-section__body {
+.panel-options-group__body {
   padding: 20px;
 
   &--queries {
