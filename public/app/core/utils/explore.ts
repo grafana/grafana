@@ -17,7 +17,7 @@ import {
   QueryIntervals,
   QueryOptions,
 } from 'app/types/explore';
-import { DataQuery, DataSourceApi } from 'app/types/series';
+import { DataQuery } from 'app/types/series';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -243,8 +243,8 @@ export function calculateResultsFromQueryTransactions(
   };
 }
 
-export function getIntervals(range: RawTimeRange, datasource: DataSourceApi, resolution: number): IntervalValues {
-  if (!datasource || !resolution) {
+export function getIntervals(range: RawTimeRange, lowLimit: string, resolution: number): IntervalValues {
+  if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }
 
@@ -253,7 +253,7 @@ export function getIntervals(range: RawTimeRange, datasource: DataSourceApi, res
     to: parseDate(range.to, true),
   };
 
-  return kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+  return kbn.calculateInterval(absoluteRange, resolution, lowLimit);
 }
 
 export function makeTimeSeriesList(dataList) {

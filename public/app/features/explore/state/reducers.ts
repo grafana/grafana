@@ -122,11 +122,12 @@ const itemReducer = (state, action: Action): ExploreItemState => {
 
     case ActionTypes.ChangeSize: {
       const { range, datasourceInstance } = state;
-      if (!datasourceInstance) {
-        return state;
+      let interval = '1s';
+      if (datasourceInstance && datasourceInstance.interval) {
+        interval = datasourceInstance.interval;
       }
       const containerWidth = action.width;
-      const queryIntervals = getIntervals(range, datasourceInstance.interval, containerWidth);
+      const queryIntervals = getIntervals(range, interval, containerWidth);
       return { ...state, containerWidth, queryIntervals };
     }
 
@@ -187,6 +188,11 @@ const itemReducer = (state, action: Action): ExploreItemState => {
       );
 
       return { ...state, ...results, queryTransactions: nextQueryTransactions, showingTable };
+    }
+
+    case ActionTypes.HighlightLogsExpression: {
+      const { expressions } = action;
+      return { ...state, logsHighlighterExpressions: expressions };
     }
 
     case ActionTypes.InitializeExplore: {

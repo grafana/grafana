@@ -48,7 +48,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
           getNextQueryLetter: x => '',
         },
         hideEditorRowActions: true,
-        ...getIntervals(range, datasource, null), // Possible to get resolution?
+        ...getIntervals(range, (datasource || {}).interval, null), // Possible to get resolution?
       },
     };
 
