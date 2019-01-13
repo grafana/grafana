@@ -214,7 +214,7 @@ div.flot-text {
 
   &--info {
     display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
+    @include panel-corner-color(lighten($panel-corner, 4%));
     .fa:before {
       content: '\f129';
     }
@@ -222,7 +222,7 @@ div.flot-text {
 
   &--links {
     display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
+    @include panel-corner-color(lighten($panel-corner, 4%));
     .fa {
       left: 4px;
     }
@@ -233,7 +233,7 @@ div.flot-text {
 
   &--error {
     display: block;
-    color: $text-color;
+    color: $white;
     @include panel-corner-color($popover-error-bg);
     .fa:before {
       content: '\f12a';

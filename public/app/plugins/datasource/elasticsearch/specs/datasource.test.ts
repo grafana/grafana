@@ -16,7 +16,13 @@ describe('ElasticDatasource', function(this: any) {
   };
 
   const templateSrv = {
-    replace: jest.fn(text => text),
+    replace: jest.fn(text => {
+      if (text.startsWith("$")) {
+        return `resolvedVariable`;
+      } else {
+        return text;
+      }
+    }),
     getAdhocFilters: jest.fn(() => []),
   };
 
@@ -67,7 +73,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing metric query with interval pattern', () => {
-    let requestOptions, parts, header;
+    let requestOptions, parts, header, query;
 
     beforeEach(() => {
       createDatasource({
@@ -81,19 +87,22 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.resolve({ data: { responses: [] } });
       });
 
-      ctx.ds.query({
+      query = {
         range: {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10]),
         },
         targets: [
           {
+            alias: "$varAlias",
             bucketAggs: [],
             metrics: [{ type: 'raw_document' }],
             query: 'escape\\:test',
           },
         ],
-      });
+      };
+
+      ctx.ds.query(query);
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
@@ -101,6 +110,10 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should translate index pattern to current day', () => {
       expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
+    });
+
+    it('should resolve the alias variable', () => {
+      expect(query.targets[0].alias).toEqual('resolvedVariable');
     });
 
     it('should json escape lucene query', () => {

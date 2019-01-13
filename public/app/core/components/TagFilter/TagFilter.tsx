@@ -1,12 +1,10 @@
 import React from 'react';
+import { NoOptionsMessage, IndicatorsContainer, resetSelectStyles } from '@grafana/ui';
 import AsyncSelect from '@torkelo/react-select/lib/Async';
 
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import IndicatorsContainer from 'app/core/components/Select/IndicatorsContainer';
-import NoOptionsMessage from 'app/core/components/Select/NoOptionsMessage';
 import { components } from '@torkelo/react-select';
-import ResetStyles from 'app/core/components/Select/ResetStyles';
 
 export interface Props {
   tags: string[];
@@ -51,7 +49,7 @@ export class TagFilter extends React.Component<Props, any> {
       getOptionValue: i => i.value,
       getOptionLabel: i => i.label,
       value: tags,
-      styles: ResetStyles,
+      styles: resetSelectStyles(),
       filterOption: (option, searchQuery) => {
         const regex = RegExp(searchQuery, 'i');
         return regex.test(option.value);

@@ -1,10 +1,10 @@
 // Libraries
-import React, { PureComponent, SFC } from 'react';
+import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Components
 import 'app/features/panel/metrics_tab';
-import { EditorTabBody, EditorToolbarView} from './EditorTabBody';
+import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
@@ -36,12 +36,6 @@ interface State {
   isAddingMixed: boolean;
 }
 
-interface LoadingPlaceholderProps {
-  text: string;
-}
-
-const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text }) => <h2>{text}</h2>;
-
 export class QueriesTab extends PureComponent<Props, State> {
   element: HTMLElement;
   component: AngularComponent;
@@ -50,15 +44,19 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   constructor(props) {
     super(props);
-    const { panel } = props;
 
     this.state = {
-      currentDS: this.datasources.find(datasource => datasource.value === panel.datasource),
       isLoadingHelp: false,
+      currentDS: this.findCurrentDataSource(),
       helpContent: null,
       isPickerOpen: false,
       isAddingMixed: false,
     };
+  }
+
+  findCurrentDataSource(): DataSourceSelectItem {
+    const { panel } = this.props;
+    return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
@@ -130,7 +128,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderQueryInspector = () => {
     const { panel } = this.props;
-    return <QueryInspector panel={panel} LoadingPlaceholder={LoadingPlaceholder} />;
+    return <QueryInspector panel={panel} />;
   };
 
   renderHelp = () => {

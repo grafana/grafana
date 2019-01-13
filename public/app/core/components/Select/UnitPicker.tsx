@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import Select from './Select';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormats } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 
 interface Props {
   onChange: (item: any) => void;
@@ -16,7 +16,7 @@ export default class UnitPicker extends PureComponent<Props> {
   render() {
     const { defaultValue, onChange, width } = this.props;
 
-    const unitGroups = kbn.getUnitFormats();
+    const unitGroups = getValueFormats();
 
     // Need to transform the data structure to work well with Select
     const groupOptions = unitGroups.map(group => {

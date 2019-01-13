@@ -103,6 +103,7 @@ $panel-bg: #212124;
 $panel-border-color: $dark-1;
 $panel-border: solid 1px $panel-border-color;
 $panel-header-hover-bg: $dark-4;
+$panel-corner: $panel-bg;
 
 // page header
 $page-header-bg: linear-gradient(90deg, #292a2d, black);
@@ -302,11 +303,14 @@ $popover-error-bg: $btn-danger-bg;
 // Tooltips and popovers
 // -------------------------
 $tooltipColor: $popover-help-color;
-$tooltipBackground: $popover-help-bg;
 $tooltipArrowWidth: 5px;
-$tooltipArrowColor: $tooltipBackground;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
+
+$tooltipBackground: $popover-help-bg;
+$tooltipArrowColor: $tooltipBackground;
+$tooltipBackgroundError: $brand-danger;
+$tooltipBackgroundBrand: $brand-primary;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
