@@ -232,6 +232,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
         initialQueries: action.initialQueries,
         logsHighlighterExpressions: undefined,
         modifiedQueries: action.initialQueries.slice(),
+        queryTransactions: [],
         showingStartPage: action.showingStartPage,
         supportsGraph: action.supportsGraph,
         supportsLogs: action.supportsLogs,

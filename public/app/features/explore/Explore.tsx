@@ -6,86 +6,58 @@ import { AutoSizer } from 'react-virtualized';
 import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 import { DataSourceSelectItem } from 'app/types/datasources';
-import {
-  ExploreItemState,
-  ExploreUrlState,
-  HistoryItem,
-  QueryTransaction,
-  RangeScanner,
-  ExploreId,
-} from 'app/types/explore';
+import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
 import { DataQuery } from 'app/types/series';
 import { StoreState } from 'app/types';
 import store from 'app/core/store';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE } from 'app/core/utils/explore';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { Emitter } from 'app/core/utils/emitter';
-import { LogsModel } from 'app/core/logs_model';
-import TableModel from 'app/core/table_model';
 
 import {
-  addQueryRow,
   changeDatasource,
-  changeQuery,
   changeSize,
   changeTime,
   clickClear,
   clickCloseSplit,
   clickExample,
-  clickGraphButton,
-  clickLogsButton,
   clickSplit,
-  clickTableButton,
-  highlightLogsExpression,
   initializeExplore,
   modifyQueries,
-  removeQueryRow,
   runQueries,
   scanStart,
   scanStop,
 } from './state/actions';
 
-import Panel from './Panel';
-import QueryRows from './QueryRows';
-import Graph from './Graph';
-import Logs from './Logs';
-import Table from './Table';
-import ErrorBoundary from './ErrorBoundary';
 import { Alert } from './Error';
+import ErrorBoundary from './ErrorBoundary';
+import GraphContainer from './GraphContainer';
+import LogsContainer from './LogsContainer';
+import QueryRows from './QueryRows';
+import TableContainer from './TableContainer';
 import TimePicker, { parseTime } from './TimePicker';
 
 interface ExploreProps {
   StartPage?: any;
-  addQueryRow: typeof addQueryRow;
   changeDatasource: typeof changeDatasource;
-  changeQuery: typeof changeQuery;
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
   clickClear: typeof clickClear;
   clickCloseSplit: typeof clickCloseSplit;
   clickExample: typeof clickExample;
-  clickGraphButton: typeof clickGraphButton;
-  clickLogsButton: typeof clickLogsButton;
   clickSplit: typeof clickSplit;
-  clickTableButton: typeof clickTableButton;
   datasourceError: string;
   datasourceInstance: any;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreDatasources: DataSourceSelectItem[];
   exploreId: ExploreId;
-  graphResult?: any[];
-  highlightLogsExpression: typeof highlightLogsExpression;
-  history: HistoryItem[];
   initialDatasource?: string;
   initialQueries: DataQuery[];
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
-  logsHighlighterExpressions?: string[];
-  logsResult?: LogsModel;
+  loading: boolean;
   modifyQueries: typeof modifyQueries;
-  queryTransactions: QueryTransaction[];
-  removeQueryRow: typeof removeQueryRow;
   range: RawTimeRange;
   runQueries: typeof runQueries;
   scanner?: RangeScanner;
@@ -94,14 +66,10 @@ interface ExploreProps {
   scanStart: typeof scanStart;
   scanStop: typeof scanStop;
   split: boolean;
-  showingGraph: boolean;
-  showingLogs: boolean;
   showingStartPage?: boolean;
-  showingTable: boolean;
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
-  tableResult?: TableModel;
   urlState: ExploreUrlState;
 }
 
@@ -172,22 +140,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.el = el;
   };
 
-  onAddQueryRow = index => {
-    this.props.addQueryRow(this.props.exploreId, index);
-  };
-
   onChangeDatasource = async option => {
     this.props.changeDatasource(this.props.exploreId, option.value);
-  };
-
-  onChangeQuery = (query: DataQuery, index: number, override?: boolean) => {
-    const { changeQuery, datasourceInstance, exploreId } = this.props;
-
-    changeQuery(exploreId, query, index, override);
-    if (query && !override && datasourceInstance.getHighlighterExpression && index === 0) {
-      // Live preview of log search matches. Only use on first row for now
-      this.updateLogsHighlights(query);
-    }
   };
 
   onChangeTime = (range: TimeRange, changedByScanner?: boolean) => {
@@ -205,14 +159,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.props.clickCloseSplit();
   };
 
-  onClickGraphButton = () => {
-    this.props.clickGraphButton(this.props.exploreId);
-  };
-
-  onClickLogsButton = () => {
-    this.props.clickLogsButton(this.props.exploreId);
-  };
-
   // Use this in help pages to set page to a single query
   onClickExample = (query: DataQuery) => {
     this.props.clickExample(this.props.exploreId, query);
@@ -220,10 +166,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   onClickSplit = () => {
     this.props.clickSplit();
-  };
-
-  onClickTableButton = () => {
-    this.props.clickTableButton(this.props.exploreId);
   };
 
   onClickLabel = (key: string, value: string) => {
@@ -236,10 +178,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
       const modifier = (queries: DataQuery, action: any) => datasourceInstance.modifyQuery(queries, action);
       this.props.modifyQueries(this.props.exploreId, action, index, modifier);
     }
-  };
-
-  onRemoveQueryRow = index => {
-    this.props.removeQueryRow(this.props.exploreId, index);
   };
 
   onResize = (size: { height: number; width: number }) => {
@@ -265,14 +203,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.props.runQueries(this.props.exploreId);
   };
 
-  updateLogsHighlights = _.debounce((value: DataQuery) => {
-    const { datasourceInstance } = this.props;
-    if (datasourceInstance.getHighlighterExpression) {
-      const expressions = [datasourceInstance.getHighlighterExpression(value)];
-      this.props.highlightLogsExpression(this.props.exploreId, expressions);
-    }
-  }, 500);
-
   render() {
     const {
       StartPage,
@@ -282,34 +212,19 @@ export class Explore extends React.PureComponent<ExploreProps> {
       datasourceMissing,
       exploreDatasources,
       exploreId,
-      graphResult,
-      history,
+      loading,
       initialQueries,
-      logsHighlighterExpressions,
-      logsResult,
-      queryTransactions,
       range,
-      scanning,
-      scanRange,
-      showingGraph,
-      showingLogs,
       showingStartPage,
-      showingTable,
       split,
       supportsGraph,
       supportsLogs,
       supportsTable,
-      tableResult,
     } = this.props;
-    const graphHeight = showingGraph && showingTable ? '200px' : '400px';
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const selectedDatasource = datasourceInstance
       ? exploreDatasources.find(d => d.name === datasourceInstance.name)
       : undefined;
-    const graphLoading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
-    const tableLoading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
-    const logsLoading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
-    const loading = queryTransactions.some(qt => !qt.done);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -372,19 +287,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance &&
           !datasourceError && (
             <div className="explore-container">
-              <QueryRows
-                datasource={datasourceInstance}
-                history={history}
-                initialQueries={initialQueries}
-                onAddQueryRow={this.onAddQueryRow}
-                onChangeQuery={this.onChangeQuery}
-                onClickHintFix={this.onModifyQueries}
-                onExecuteQuery={this.onSubmit}
-                onRemoveQueryRow={this.onRemoveQueryRow}
-                transactions={queryTransactions}
-                exploreEvents={this.exploreEvents}
-                range={range}
-              />
+              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} initialQueries={initialQueries} />
               <AutoSizer onResize={this.onResize} disableHeight>
                 {({ width }) => (
                   <main className="m-t-2" style={{ width }}>
@@ -392,55 +295,16 @@ export class Explore extends React.PureComponent<ExploreProps> {
                       {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                       {!showingStartPage && (
                         <>
-                          {supportsGraph && (
-                            <Panel
-                              label="Graph"
-                              isOpen={showingGraph}
-                              loading={graphLoading}
-                              onToggle={this.onClickGraphButton}
-                            >
-                              <Graph
-                                data={graphResult}
-                                height={graphHeight}
-                                id={`explore-graph-${exploreId}`}
-                                onChangeTime={this.onChangeTime}
-                                range={range}
-                                split={split}
-                              />
-                            </Panel>
-                          )}
-                          {supportsTable && (
-                            <Panel
-                              label="Table"
-                              loading={tableLoading}
-                              isOpen={showingTable}
-                              onToggle={this.onClickTableButton}
-                            >
-                              <Table data={tableResult} loading={tableLoading} onClickCell={this.onClickLabel} />
-                            </Panel>
-                          )}
+                          {supportsGraph && <GraphContainer exploreId={exploreId} />}
+                          {supportsTable && <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />}
                           {supportsLogs && (
-                            <Panel
-                              label="Logs"
-                              loading={logsLoading}
-                              isOpen={showingLogs}
-                              onToggle={this.onClickLogsButton}
-                            >
-                              <Logs
-                                data={logsResult}
-                                exploreId={exploreId}
-                                key={logsResult.id}
-                                highlighterExpressions={logsHighlighterExpressions}
-                                loading={logsLoading}
-                                onChangeTime={this.onChangeTime}
-                                onClickLabel={this.onClickLabel}
-                                onStartScanning={this.onStartScanning}
-                                onStopScanning={this.onStopScanning}
-                                range={range}
-                                scanning={scanning}
-                                scanRange={scanRange}
-                              />
-                            </Panel>
+                            <LogsContainer
+                              exploreId={exploreId}
+                              onChangeTime={this.onChangeTime}
+                              onClickLabel={this.onClickLabel}
+                              onStartScanning={this.onStartScanning}
+                              onStopScanning={this.onStopScanning}
+                            />
                           )}
                         </>
                       )}
@@ -466,26 +330,17 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceLoading,
     datasourceMissing,
     exploreDatasources,
-    graphResult,
     initialDatasource,
     initialQueries,
     initialized,
-    history,
-    logsHighlighterExpressions,
-    logsResult,
     queryTransactions,
     range,
-    scanning,
-    scanRange,
-    showingGraph,
-    showingLogs,
     showingStartPage,
-    showingTable,
     supportsGraph,
     supportsLogs,
     supportsTable,
-    tableResult,
   } = item;
+  const loading = queryTransactions.some(qt => !qt.done);
   return {
     StartPage,
     datasourceError,
@@ -493,46 +348,30 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceLoading,
     datasourceMissing,
     exploreDatasources,
-    graphResult,
     initialDatasource,
     initialQueries,
     initialized,
-    history,
-    logsHighlighterExpressions,
-    logsResult,
+    loading,
     queryTransactions,
     range,
-    scanning,
-    scanRange,
-    showingGraph,
-    showingLogs,
     showingStartPage,
-    showingTable,
     split,
     supportsGraph,
     supportsLogs,
     supportsTable,
-    tableResult,
   };
 }
 
 const mapDispatchToProps = {
-  addQueryRow,
   changeDatasource,
-  changeQuery,
   changeSize,
   changeTime,
   clickClear,
   clickCloseSplit,
   clickExample,
-  clickGraphButton,
-  clickLogsButton,
   clickSplit,
-  clickTableButton,
-  highlightLogsExpression,
   initializeExplore,
   modifyQueries,
-  removeQueryRow,
   runQueries,
   scanStart,
   scanStop,
