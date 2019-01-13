@@ -46,6 +46,7 @@ devenv/docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
+/conf/ldap_freeipa.toml
 profile.cov
 /grafana
 /local
