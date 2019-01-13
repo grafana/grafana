@@ -278,18 +278,27 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 	var err error
 
 	for _, searchBase := range a.server.SearchBaseDNs {
+		attributes := make([]string, 0)
+
+		appendIfNotEmpty := func(slice []string, attr string) []string {
+			if attr == "" {
+				return slice
+			}
+			return append(slice, attr)
+		}
+
+		attributes = appendIfNotEmpty(attributes, a.server.Attr.Username)
+		attributes = appendIfNotEmpty(attributes, a.server.Attr.Surname)
+		attributes = appendIfNotEmpty(attributes, a.server.Attr.Email)
+		attributes = appendIfNotEmpty(attributes, a.server.Attr.Name)
+		attributes = appendIfNotEmpty(attributes, a.server.Attr.MemberOf)
+
 		searchReq := ldap.SearchRequest{
 			BaseDN:       searchBase,
 			Scope:        ldap.ScopeWholeSubtree,
 			DerefAliases: ldap.NeverDerefAliases,
-			Attributes: []string{
-				a.server.Attr.Username,
-				a.server.Attr.Surname,
-				a.server.Attr.Email,
-				a.server.Attr.Name,
-				a.server.Attr.MemberOf,
-			},
-			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
+			Attributes:   attributes,
+			Filter:       strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
 
 		a.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
