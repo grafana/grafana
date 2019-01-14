@@ -2,8 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Remarkable from 'remarkable';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
@@ -105,16 +104,18 @@ export class UsersListPage extends PureComponent<Props, State> {
     const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
+      <Page title="Configuration: Users">
+        <Page.Header model={navModel} />
+        <Page.Contents isLoading={!hasFetched}>
+          <>
           <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
           {externalUserMngInfoHtml && (
             <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
           )}
-          {hasFetched ? this.renderTable() : <PageLoader pageName="Users" />}
-        </div>
-      </div>
+          {hasFetched && this.renderTable()}
+          </>
+        </Page.Contents>
+      </Page>
     );
   }
 }

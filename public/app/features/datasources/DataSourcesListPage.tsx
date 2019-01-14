@@ -66,7 +66,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
     };
 
     return (
-      <Page title="Data Sources">
+      <Page title="Configuration: Data Sources">
         <Page.Header model={navModel} />
         <Page.Contents isLoading={!hasFetched}>
           <>
