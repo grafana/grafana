@@ -198,6 +198,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ isAddingMixed: false });
   };
 
+  renderQueryRow(query: DataQuery) {
+    console.log('render query row', this.state.currentDS);
+    return <div ref={element => (this.element = element)} />;
+  }
+
   render() {
     const { panel } = this.props;
     const { currentDS, isAddingMixed } = this.state;
@@ -218,7 +223,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         <>
           <PanelOptionsGroup>
             <div className="query-editor-rows">
-              <div ref={element => (this.element = element)} />
+              {panel.targets.map(query => this.renderQueryRow(query))}
 
               <div className="gf-form-query">
                 <div className="gf-form gf-form-query-letter-cell">
