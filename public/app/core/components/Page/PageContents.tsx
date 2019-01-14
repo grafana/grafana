@@ -2,7 +2,6 @@
 import React, { Component } from 'react';
 
 // Components
-import { CustomScrollbar } from '@grafana/ui';
 import PageLoader from '../PageLoader/PageLoader';
 
 interface Props {
@@ -17,10 +16,8 @@ class PageContents extends Component<Props> {
 
     return (
       <div className="page-container page-body">
-        <CustomScrollbar>
-          {isLoading && <PageLoader />}
-          {this.props.children}
-        </CustomScrollbar>
+        {isLoading && <PageLoader />}
+        {this.props.children}
       </div>
     );
   }
