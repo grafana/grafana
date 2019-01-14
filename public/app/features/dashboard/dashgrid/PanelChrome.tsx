@@ -19,6 +19,8 @@ import { DashboardModel } from '../dashboard_model';
 import { PanelPlugin } from 'app/types';
 import { TimeRange } from '@grafana/ui';
 
+import variables from 'sass/_variables.scss';
+
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
@@ -122,8 +124,8 @@ export class PanelChrome extends PureComponent<Props, State> {
                         timeSeries={timeSeries}
                         timeRange={timeRange}
                         options={panel.getOptions(plugin.exports.PanelDefaults)}
-                        width={width}
-                        height={height - PANEL_HEADER_HEIGHT}
+                        width={width - 2 * variables.panelHorizontalPadding }
+                        height={height - PANEL_HEADER_HEIGHT - variables.panelVerticalPadding}
                         renderCounter={renderCounter}
                       />
                     </div>

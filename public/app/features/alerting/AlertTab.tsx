@@ -6,7 +6,7 @@ import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoa
 import appEvents from 'app/core/app_events';
 
 // Components
-import { EditorTabBody, EditorToolbarView } from '../dashboard/dashgrid/EditorTabBody';
+import { EditorTabBody, EditorToolbarView } from '../dashboard/panel_editor/EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
