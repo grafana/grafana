@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import Page from 'app/core/components/Page/Page';
 import { DeleteButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { NavModel, Team } from '../../types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
@@ -141,10 +140,12 @@ export class TeamList extends PureComponent<Props, any> {
     const { hasFetched, navModel } = this.props;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        {hasFetched ? this.renderList() : <PageLoader pageName="Teams" />}
-      </div>
+      <Page title="Configuration: Teams">
+        <Page.Header model={navModel} />
+        <Page.Contents isLoading={!hasFetched}>
+          {hasFetched && this.renderList()}
+        </Page.Contents>
+      </Page>
     );
   }
 }
