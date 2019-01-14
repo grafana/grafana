@@ -6,11 +6,13 @@ $attachmentOffset: 0%;
 $easing: cubic-bezier(0, 0, 0.265, 1);
 
 @include drop-theme('error', $popover-error-bg, $popover-color);
+@include drop-theme('warning', $popover-warning-bg, $popover-help-color);
 @include drop-theme('popover', $popover-bg, $popover-color, $popover-border-color);
 @include drop-theme('help', $popover-help-bg, $popover-help-color);
 
 @include drop-animation-scale('drop', 'help', $attachmentOffset: $attachmentOffset, $easing: $easing);
 @include drop-animation-scale('drop', 'error', $attachmentOffset: $attachmentOffset, $easing: $easing);
+@include drop-animation-scale('drop', 'warning', $attachmentOffset: $attachmentOffset, $easing: $easing);
 @include drop-animation-scale('drop', 'popover', $attachmentOffset: $attachmentOffset, $easing: $easing);
 
 .drop-element {

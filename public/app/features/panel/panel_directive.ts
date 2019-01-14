@@ -166,12 +166,22 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
             infoDrop.destroy();
           }
 
+          let dropClass;
+
+          if (ctrl.error) {
+            dropClass = 'drop-error';
+          } else if (ctrl.warning) {
+            dropClass = 'drop-warning';
+          } else {
+            dropClass = 'drop-help';
+          }
+
           infoDrop = new Drop({
             target: cornerInfoElem[0],
             content: () => {
               return ctrl.getInfoContent({ mode: 'tooltip' });
             },
-            classes: ctrl.error ? 'drop-error' : 'drop-help',
+            classes: dropClass,
             openOn: 'hover',
             hoverOpenDelay: 100,
             tetherOptions: {
@@ -189,7 +199,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       }
 
-      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
+      scope.$watchGroup(['ctrl.error', 'ctrl.warning', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
       cornerInfoElem.on('click', () => {
@@ -221,7 +231,7 @@ module.directive('panelHelpCorner', $rootScope => {
     restrict: 'E',
     template: `
     <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
-    <span data-placement="top" bs-tooltip="ctrl.error">
+    <span data-placement="top" bs-tooltip="ctrl.error ? ctrl.error : (ctrl.warning ? ctrl.warning : ''))">
     <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
     </span>
     </span>

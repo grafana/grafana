@@ -21,7 +21,12 @@ class MixedDatasource {
     });
 
     return this.$q.all(promises).then(results => {
-      return { data: _.flatten(_.map(results, 'data')) };
+      const warningStates = _.flatten(_.map(results, 'warning'));
+
+      return {
+        data: _.flatten(_.map(results, 'data')),
+        warning: warningStates && warningStates.length > 0 ? warningStates.join('\n') : null,
+      };
     });
   }
 }

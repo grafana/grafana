@@ -231,6 +231,15 @@ div.flot-text {
     }
   }
 
+  &--warning {
+    display: block;
+    color: $text-color;
+    @include panel-corner-color($warn);
+    .fa:before {
+      content: '\f12a';
+    }
+  }
+
   &--error {
     display: block;
     color: $white;

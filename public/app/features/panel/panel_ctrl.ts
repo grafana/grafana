@@ -18,6 +18,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, PANEL_HEADER_HE
 export class PanelCtrl {
   panel: any;
   error: any;
+  warning: string;
   dashboard: any;
   pluginName: string;
   pluginId: string;
@@ -244,8 +245,12 @@ export class PanelCtrl {
   }
 
   getInfoMode() {
+    // Error > Warn > Description
     if (this.error) {
       return 'error';
+    }
+    if (this.warning) {
+      return 'warning';
     }
     if (!!this.panel.description) {
       return 'info';
@@ -260,7 +265,7 @@ export class PanelCtrl {
     let markdown = this.panel.description;
 
     if (options.mode === 'tooltip') {
-      markdown = this.error || this.panel.description;
+      markdown = this.error ? this.error : this.warning ? this.warning : this.panel.description;
     }
 
     const linkSrv = this.$injector.get('linkSrv');
