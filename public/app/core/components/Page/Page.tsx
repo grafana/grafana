@@ -8,7 +8,6 @@ import Footer from '../Footer/Footer';
 import PageContents from './PageContents';
 import { CustomScrollbar } from '@grafana/ui';
 
-
 interface Props {
   title?: string;
   children: JSX.Element[] | JSX.Element;
@@ -16,7 +15,7 @@ interface Props {
 
 class Page extends Component<Props> {
   private bodyClass = 'is-react';
-  private body = document.getElementsByTagName('body')[0];
+  private body = document.body;
   static Header = PageHeader;
   static Contents = PageContents;
 
