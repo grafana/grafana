@@ -162,8 +162,8 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           {thresholds.map((threshold, index) => {
             return (
               <div className="thresholds-row" key={`${threshold.index}-${index}`}>
-                <div className="thresholds-row-add-button">
-                  <i className="fa fa-plus-circle fa-2x" onClick={() => this.onAddThreshold(threshold.index + 1)} />
+                <div className="thresholds-row-add-button" onClick={() => this.onAddThreshold(threshold.index + 1)}>
+                  <i className="fa fa-plus" />
                 </div>
                 <div className="thresholds-row-color-indicator" style={{ backgroundColor: threshold.color }} />
                 <div className="thresholds-row-input">{this.renderInput(threshold)}</div>

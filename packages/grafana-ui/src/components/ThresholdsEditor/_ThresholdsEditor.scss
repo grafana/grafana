@@ -1,3 +1,7 @@
+.thresholds {
+  margin-bottom: 10px;
+}
+
 .thresholds-row {
   display: flex;
   flex-direction: row;
@@ -14,10 +18,18 @@
   align-self: center;
   margin-right: 5px;
   color: $green;
+  height: 24px;
+  width: 24px;
+  background-color: $green;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .thresholds-row-add-button > i {
-  cursor: pointer;
+  color: $white;
 }
 
 .thresholds-row-color-indicator {
@@ -47,7 +59,7 @@
   height: 0;
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
-  border-right: 5px solid $gray-5;
+  border-right: 5px solid $input-label-border-color;
 }
 
 .thresholds-row-input-inner-value {
@@ -83,7 +95,7 @@
   justify-content: center;
   height: 37px;
   width: 37px;
-  background-color: $gray-5;
+  background-color: $input-label-border-color;
   border-top: 1px solid $input-label-border-color;
   border-bottom: 1px solid $input-label-border-color;
   border-right: 1px solid $input-label-border-color;
