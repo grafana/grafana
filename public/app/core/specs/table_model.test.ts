@@ -9,17 +9,40 @@ describe('when sorting table desc', () => {
   beforeEach(() => {
     table = new TableModel();
     table.columns = [{}, {}];
-    table.rows = [[100, 12], [105, 10], [103, 11]];
-    table.sort(panel.sort);
   });
 
   it('should sort by time', () => {
+    table.rows = [[100, 12], [105, 10], [103, 11]];
+    table.sort(panel.sort);
+
     expect(table.rows[0][0]).toBe(105);
     expect(table.rows[1][0]).toBe(103);
     expect(table.rows[2][0]).toBe(100);
   });
 
+  it('should sort by stringified number', () => {
+    table.rows = [["5012"], ["501"], ["5008"], ["5010"]];
+    table.sort(panel.sort);
+
+    expect(table.rows[0][0]).toBe("5012");
+    expect(table.rows[1][0]).toBe("5010");
+    expect(table.rows[2][0]).toBe("5008");
+    expect(table.rows[3][0]).toBe("501");
+  });
+
+  it('should sort by number and string', () => {
+    table.rows = [[5012], ["aaaa"], ["bbbb"], ["5010"]];
+    table.sort(panel.sort);
+
+    expect(table.rows[0][0]).toBe("bbbb");
+    expect(table.rows[1][0]).toBe("aaaa");
+    expect(table.rows[2][0]).toBe(5012);
+    expect(table.rows[3][0]).toBe("5010");
+  });
+
   it('should mark column being sorted', () => {
+    table.rows = [[100, 12], [105, 10], [103, 11]];
+    table.sort(panel.sort);
     expect(table.columns[0].sort).toBe(true);
     expect(table.columns[0].desc).toBe(true);
   });
@@ -34,14 +57,35 @@ describe('when sorting table asc', () => {
   beforeEach(() => {
     table = new TableModel();
     table.columns = [{}, {}];
-    table.rows = [[100, 11], [105, 15], [103, 10]];
-    table.sort(panel.sort);
   });
 
   it('should sort by time', () => {
+    table.rows = [[100, 11], [105, 15], [103, 10]];
+    table.sort(panel.sort);
+
     expect(table.rows[0][1]).toBe(10);
     expect(table.rows[1][1]).toBe(11);
     expect(table.rows[2][1]).toBe(15);
+  });
+
+  it('should sort by stringified number', () => {
+    table.rows = [[100, "5012"], [105, "501"], [103, "5008"], [999, "5010"]];
+    table.sort(panel.sort);
+
+    expect(table.rows[0][1]).toBe("501");
+    expect(table.rows[1][1]).toBe("5008");
+    expect(table.rows[2][1]).toBe("5010");
+    expect(table.rows[3][1]).toBe("5012");
+  });
+
+  it('should sort by number and string', () => {
+    table.rows = [[100, 5012], [105, "aaaa"], [103, "bbbb"], [999, "5010"]];
+    table.sort(panel.sort);
+
+    expect(table.rows[0][1]).toBe("5010"); // stringified number
+    expect(table.rows[1][1]).toBe(5012);
+    expect(table.rows[2][1]).toBe("aaaa");
+    expect(table.rows[3][1]).toBe("bbbb");
   });
 });
 

@@ -228,6 +228,10 @@ kbn.slugifyForUrl = str => {
     .replace(/ +/g, '-');
 };
 
+kbn.isNumeric = value => {
+  return String(value).match(/^[0-9]+\.*[0-9]*$/);
+};
+
 kbn.stringToJsRegex = str => {
   if (str[0] !== '/') {
     return new RegExp('^' + str + '$');

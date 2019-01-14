@@ -32,17 +32,61 @@ export default class TableModel {
     }
   }
 
+  private categorizeRows(colIndex, nullRows, undefRows, numRows, strRows) {
+    this.rows.forEach((row, index) => {
+      const value = row[colIndex];
+
+      if (value === null) {
+        return nullRows.push({ position: index, value: value });
+      }
+      if (value === "") {
+        return undefRows.push({ position: index, value: value });
+      }
+
+      const numericVal = (+value);
+      if (Number.isNaN(numericVal)) {
+        strRows.push({ position: index, value: value });
+      } else {
+        numRows.push({ position: index, value: numericVal });
+      }
+    });
+  }
+
+  private sortbyNumeric(value1, value2) {
+    return value1.value - value2.value;
+  }
+
+  private sortbyString(value1, value2) {
+    if (value1.value < value2.value) {
+      return -1;
+    }
+    if (value1.value > value2.value) {
+      return 1;
+    }
+    return 0;
+  }
+
   sort(options) {
     if (options.col === null || this.columns.length <= options.col) {
       return;
     }
 
-    this.rows.sort((a, b) => {
-      a = a[options.col];
-      b = b[options.col];
-      // Sort null or undefined separately from comparable values
-      return +(a == null) - +(b == null) || +(a > b) || -(a < b);
-    });
+    const nullRows = [];
+    const undefRows = [];
+    const numRows = [];
+    const strRows = [];
+
+    // Distribute the rows into their respective array based on their data type.
+    // Then sort the individual array before joinning them back again.
+    this.categorizeRows(options.col, nullRows, undefRows, numRows, strRows);
+
+    numRows.sort(this.sortbyNumeric);
+    strRows.sort(this.sortbyString);
+
+    this.rows = undefRows.concat(numRows)
+                        .concat(strRows)
+                        .concat(nullRows)
+                        .map(data => this.rows[data.position]);
 
     if (options.desc) {
       this.rows.reverse();
