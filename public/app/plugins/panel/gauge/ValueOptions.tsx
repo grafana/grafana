@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { GaugeOptions, PanelOptionsProps } from '@grafana/ui';
+import { GaugeOptions, PanelOptionsProps, PanelOptionsGroup } from '@grafana/ui';
 
 import { Label } from 'app/core/components/Label/Label';
 import { Select} from '@grafana/ui';
@@ -40,8 +40,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
     const { stat, unit, decimals, prefix, suffix } = this.props.options;
 
     return (
-      <div className="section gf-form-group">
-        <h5 className="section-heading">Value</h5>
+      <PanelOptionsGroup title="Value">
         <div className="gf-form">
           <Label width={labelWidth}>Stat</Label>
           <Select
@@ -73,7 +72,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
           <Label width={labelWidth}>Suffix</Label>
           <input className="gf-form-input width-12" type="text" value={suffix || ''} onChange={this.onSuffixChange} />
         </div>
-      </div>
+      </PanelOptionsGroup>
     );
   }
 }
