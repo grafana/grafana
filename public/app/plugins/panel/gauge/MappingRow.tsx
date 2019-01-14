@@ -1,7 +1,5 @@
 import React, { PureComponent } from 'react';
-import { MappingType, RangeMap, Select, ValueMap } from '@grafana/ui';
-
-import { Label } from 'app/core/components/Label/Label';
+import { FormGroup, Label, MappingType, RangeMap, Select, ValueMap } from '@grafana/ui';
 
 interface Props {
   mapping: ValueMap | RangeMap;
@@ -63,48 +61,52 @@ export default class MappingRow extends PureComponent<Props, State> {
     if (type === MappingType.RangeToText) {
       return (
         <>
-          <div className="gf-form">
-            <Label width={4}>From</Label>
-            <input
-              className="gf-form-input width-8"
-              value={from}
-              onBlur={this.updateMapping}
-              onChange={this.onMappingFromChange}
-            />
-          </div>
-          <div className="gf-form">
-            <Label width={4}>To</Label>
-            <input
-              className="gf-form-input width-8"
-              value={to}
-              onBlur={this.updateMapping}
-              onChange={this.onMappingToChange}
-            />
-          </div>
-          <div className="gf-form">
-            <Label width={4}>Text</Label>
-            <input
-              className="gf-form-input width-10"
-              value={text}
-              onBlur={this.updateMapping}
-              onChange={this.onMappingTextChange}
-            />
-          </div>
+          <FormGroup
+            label="From"
+            labelWidth={4}
+            inputProps={{
+              onChange: event => this.onMappingFromChange(event),
+              onBlur: () => this.updateMapping(),
+              value: from,
+            }}
+            inputWidth={8}
+          />
+          <FormGroup
+            label="To"
+            labelWidth={4}
+            inputProps={{
+              onBlur: () => this.updateMapping,
+              onChange: event => this.onMappingToChange(event),
+              value: to,
+            }}
+            inputWidth={8}
+          />
+          <FormGroup
+            label="Text"
+            labelWidth={4}
+            inputProps={{
+              onBlur: () => this.updateMapping,
+              onChange: event => this.onMappingTextChange(event),
+              value: text,
+            }}
+            inputWidth={10}
+          />
         </>
       );
     }
 
     return (
       <>
-        <div className="gf-form">
-          <Label width={4}>Value</Label>
-          <input
-            className="gf-form-input width-8"
-            onBlur={this.updateMapping}
-            onChange={this.onMappingValueChange}
-            value={value}
-          />
-        </div>
+        <FormGroup
+          label="Value"
+          labelWidth={4}
+          inputProps={{
+            onBlur: () => this.updateMapping,
+            onChange: event => this.onMappingValueChange(event),
+            value: value,
+          }}
+          inputWidth={8}
+        />
         <div className="gf-form gf-form--grow">
           <Label width={4}>Text</Label>
           <input

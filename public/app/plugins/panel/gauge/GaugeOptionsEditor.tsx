@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { GaugeOptions, PanelOptionsProps, PanelOptionsGroup } from '@grafana/ui';
 
 import { Switch } from 'app/core/components/Switch/Switch';
-import { Label } from '../../../core/components/Label/Label';
+import { FormGroup } from '@grafana/ui/src';
 
 export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>> {
   onToggleThresholdLabels = () =>
@@ -21,14 +21,16 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
 
     return (
       <PanelOptionsGroup title="Gauge">
-        <div className="gf-form">
-          <Label width={8}>Min value</Label>
-          <input type="text" className="gf-form-input width-12" onChange={this.onMinValueChange} value={minValue} />
-        </div>
-        <div className="gf-form">
-          <Label width={8}>Max value</Label>
-          <input type="text" className="gf-form-input width-12" onChange={this.onMaxValueChange} value={maxValue} />
-        </div>
+        <FormGroup
+          label="Min value"
+          labelWidth={8}
+          inputProps={{ onChange: event => this.onMinValueChange(event), value: minValue }}
+        />
+        <FormGroup
+          label="Max value"
+          labelWidth={8}
+          inputProps={{ onChange: event => this.onMaxValueChange(event), value: maxValue }}
+        />
         <Switch
           label="Show labels"
           labelClass="width-8"

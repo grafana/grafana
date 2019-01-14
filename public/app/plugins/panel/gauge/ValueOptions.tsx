@@ -1,8 +1,5 @@
 import React, { PureComponent } from 'react';
-import { GaugeOptions, PanelOptionsProps, PanelOptionsGroup } from '@grafana/ui';
-
-import { Label } from 'app/core/components/Label/Label';
-import { Select} from '@grafana/ui';
+import { FormGroup, Label, GaugeOptions, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
 import UnitPicker from 'app/core/components/Select/UnitPicker';
 
 const statOptions = [
@@ -54,24 +51,32 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
           <Label width={labelWidth}>Unit</Label>
           <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
         </div>
-        <div className="gf-form">
-          <Label width={labelWidth}>Decimals</Label>
-          <input
-            className="gf-form-input width-12"
-            type="number"
-            placeholder="auto"
-            value={decimals || ''}
-            onChange={this.onDecimalChange}
-          />
-        </div>
-        <div className="gf-form">
-          <Label width={labelWidth}>Prefix</Label>
-          <input className="gf-form-input width-12" type="text" value={prefix || ''} onChange={this.onPrefixChange} />
-        </div>
-        <div className="gf-form">
-          <Label width={labelWidth}>Suffix</Label>
-          <input className="gf-form-input width-12" type="text" value={suffix || ''} onChange={this.onSuffixChange} />
-        </div>
+        <FormGroup
+          label="Decimals"
+          labelWidth={labelWidth}
+          inputProps={{
+            placeholder: 'auto',
+            onChange: event => this.onDecimalChange(event),
+            value: decimals || '',
+            type: 'number',
+          }}
+        />
+        <FormGroup
+          label="Prefix"
+          labelWidth={labelWidth}
+          inputProps={{
+            onChange: event => this.onPrefixChange(event),
+            value: prefix || '',
+          }}
+        />
+        <FormGroup
+          label="Suffix"
+          labelWidth={labelWidth}
+          inputProps={{
+            onChange: event => this.onSuffixChange(event),
+            value: suffix || '',
+          }}
+        />
       </PanelOptionsGroup>
     );
   }

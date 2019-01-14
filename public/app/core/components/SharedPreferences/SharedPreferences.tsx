@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { Label } from 'app/core/components/Label/Label';
+import { Label } from '../../../../../packages/grafana-ui/src/components/Label/Label';
 import { Select } from '@grafana/ui';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
