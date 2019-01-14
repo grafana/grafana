@@ -1,11 +1,19 @@
 <div class="editor-row">
 	<div class="section gf-form-group">
 		<h5 class="section-heading">Data</h5>
-    <div class="gf-form">
+    <div class="gf-form-inline">
       <label class="gf-form-label width-10">Table Transform</label>
-      <div class="gf-form-select-wrapper max-width-15">
+      <div class="gf-form-select-wrapper max-width-15 gf-form">
         <select class="gf-form-input" ng-model="editor.panel.transform" ng-options="k as v.description for (k, v) in editor.transformers" ng-change="editor.transformChanged()"></select>
       </div>
+      <div class="gf-form" ng-show="editor.canSetPivots">
+				<label class="gf-form-label">
+					Info
+					<info-popover mode="right-normal">
+						Choose this feature if labels are returned by the datasource and alias is set.
+					</info-popover>
+				</label>
+			</div>
     </div>
     <div class="gf-form-inline">
       <div class="gf-form">
@@ -27,6 +35,20 @@
 						{{editor.columnsHelpMessage}}
 					</info-popover>
 				</label>
+			</div>
+    </div>
+    <div class="gf-form-inline" ng-show="editor.canSetPivots">
+      <div class="gf-form">
+        <label class="gf-form-label width-10">Pivot By</label>
+      </div>
+			<div class="gf-form" ng-repeat="pivot in editor.panel.pivots">
+				<label class="gf-form-label">
+					<i class="pointer fa fa-remove" ng-click="editor.removePivot(pivot)"></i>
+					<span>{{pivot.text}}</span>
+				</label>
+			</div>
+			<div class="gf-form">
+				<metric-segment segment="editor.addPivotSegment" get-options="editor.getPivotOptions()" on-change="editor.addPivot()"></metric-segment>
 			</div>
 		</div>
 	</div>

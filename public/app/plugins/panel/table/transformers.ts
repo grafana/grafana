@@ -80,24 +80,19 @@ transformers['timeseries_aggregations'] = {
   transform: (data, panel, model) => {
     let i, y;
     model.columns.push({ text: 'Metric' });
-
     for (i = 0; i < panel.columns.length; i++) {
       model.columns.push({ text: panel.columns[i].text });
     }
-
     for (i = 0; i < data.length; i++) {
       const series = new TimeSeries({
         datapoints: data[i].datapoints,
         alias: data[i].target,
       });
-
       series.getFlotPairs('connected');
       const cells = [series.alias];
-
       for (y = 0; y < panel.columns.length; y++) {
         cells.push(series.stats[panel.columns[y].value]);
       }
-
       model.rows.push(cells);
     }
   },
@@ -234,12 +229,119 @@ transformers['json'] = {
         } else {
           values.push(JSON.stringify(dp));
         }
-
         model.rows.push(values);
       }
     }
   },
 };
+
+transformers['timeseries_pivot_by'] = {
+  description: 'Time series pivot by label',
+  getColumns: () => {
+    return [
+      { text: 'Avg', value: 'avg' },
+      { text: 'Min', value: 'min' },
+      { text: 'Max', value: 'max' },
+      { text: 'Total', value: 'total' },
+      { text: 'Count', value: 'count' },
+      { text: 'Current', value: 'current' },
+    ];
+  },
+  getPivots: data => {
+    if (!data || data.length === 0) {
+      return [];
+    }
+    let allPivots = [];
+    data.forEach(series => {
+      _.keys(series.labels).forEach(key => {
+        allPivots.push({ text: key, value: key, type: 'pivot' });
+      });
+    });
+    allPivots = _.uniqBy(allPivots, 'text');
+    return allPivots;
+  },
+  transform: (data, panel, model) => {
+    let i, y;
+
+    if (!_.isEmpty(panel.pivots)) {
+      getPivotByDataTransform(data, panel, model);
+    } else {
+      model.columns.push({ text: 'Metric' });
+      for (i = 0; i < panel.columns.length; i++) {
+        model.columns.push({ text: panel.columns[i].text });
+      }
+      for (i = 0; i < data.length; i++) {
+        const series = new TimeSeries({
+          datapoints: data[i].datapoints,
+          alias: data[i].target,
+        });
+        series.getFlotPairs('connected');
+        const cells = [series.alias];
+        for (y = 0; y < panel.columns.length; y++) {
+          cells.push(series.stats[panel.columns[y].value]);
+        }
+        model.rows.push(cells);
+      }
+    }
+  },
+};
+
+function getPivotByDataTransform(data, panel, model) {
+  const seriesRowStats = [];
+  let metricColumns = [];
+  model.columns.push(...panel.pivots);
+
+  _.forEach(data, series => {
+    const metricName = series.target;
+    metricColumns.push(metricName);
+
+    const timeSeries = new TimeSeries({
+      datapoints: series.datapoints,
+      alias: series.target,
+      labels: series.labels,
+    });
+    timeSeries.getFlotPairs('connected');
+
+    const pivotLabels = {};
+    const seriesLabels = series.labels || {};
+    _.forEach(panel.pivots, pivot => {
+      pivotLabels[pivot.text] = seriesLabels[pivot.text];
+    });
+
+    const key = JSON.stringify(pivotLabels);
+    const seriesStat = _.find(seriesRowStats, { searchKey: key });
+    if (seriesStat) {
+      seriesStat.stats[metricName] = timeSeries.stats;
+    } else {
+      const seriesStat = { labels: pivotLabels, stats: {}, searchKey: key };
+      seriesStat.stats[metricName] = timeSeries.stats;
+      seriesRowStats.push(seriesStat);
+    }
+  });
+
+  metricColumns = _.uniq(metricColumns);
+  _.forEach(metricColumns, metricColumn => {
+      _.forEach(panel.columns, column => {
+        model.columns.push({ text: metricColumn + '(' + column.text + ')' });
+      });
+  });
+
+  _.forEach(seriesRowStats, seriesStat => {
+      const row = [];
+      _.forEach(panel.pivots, pivot => {
+        row.push(seriesStat.labels[pivot.value]);
+      });
+
+      _.forEach(metricColumns, metricColumn => {
+        const seriesStats = seriesStat.stats[metricColumn] || {};
+        _.forEach(panel.columns, column => {
+          row.push(seriesStats[column.value]);
+        });
+    });
+
+    model.rows.push(row);
+  });
+}
 
 function transformDataToTable(data, panel) {
   const model = new TableModel();
