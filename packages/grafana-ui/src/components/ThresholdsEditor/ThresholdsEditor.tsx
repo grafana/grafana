@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
-import tinycolor, { ColorInput } from 'tinycolor2';
+// import tinycolor, { ColorInput } from 'tinycolor2';
 
 import { Threshold, BasicGaugeColor } from '../../types';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import { colors } from '../../utils';
 
 export interface Props {
   thresholds: Threshold[];
@@ -19,43 +20,41 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    this.state = { thresholds: props.thresholds, baseColor: BasicGaugeColor.Green };
+    const thresholds: Threshold[] =
+      props.thresholds.length > 0 ? props.thresholds : [{ index: 0, value: -Infinity, color: colors[0] }];
+    this.state = { thresholds, baseColor: BasicGaugeColor.Green };
   }
 
   onAddThreshold = (index: number) => {
-    const maxValue = 100; // hardcoded for now before we add the base threshold
-    const minValue = 0; // hardcoded for now before we add the base threshold
     const { thresholds } = this.state;
+    const maxValue = 100;
+    const minValue = 0;
+
+    if (index === 0) {
+      return;
+    }
 
     const newThresholds = thresholds.map(threshold => {
       if (threshold.index >= index) {
+        const index = threshold.index + 1;
         threshold = {
           ...threshold,
-          index: threshold.index + 1,
+          index,
+          color: colors[index],
         };
       }
-
       return threshold;
     });
 
     // Setting value to a value between the previous thresholds
-    let value;
+    const beforeThreshold = newThresholds.filter(threshold => threshold.index === index - 1)[0];
+    const afterThreshold = newThresholds.filter(threshold => threshold.index === index + 1)[0];
+    const beforeThresholdValue = beforeThreshold !== undefined ? Math.max(beforeThreshold.value, minValue) : minValue;
+    const afterThresholdValue = afterThreshold !== undefined ? Math.min(afterThreshold.value, maxValue) : maxValue;
+    const value = afterThresholdValue - (afterThresholdValue - beforeThresholdValue) / 2;
 
-    if (index === 0 && thresholds.length === 0) {
-      value = maxValue - (maxValue - minValue) / 2;
-    } else if (index === 0 && thresholds.length > 0) {
-      value = newThresholds[index + 1].value - (newThresholds[index + 1].value - minValue) / 2;
-    } else if (index > newThresholds[newThresholds.length - 1].index) {
-      value = maxValue - (maxValue - newThresholds[index - 1].value) / 2;
-    }
-
-    // Set a color that lies between the previous thresholds
-    let color;
-    if (index === 0 && thresholds.length === 0) {
-      color = tinycolor.mix(BasicGaugeColor.Green, BasicGaugeColor.Red, 50).toRgbString();
-    } else {
-      color = tinycolor.mix(thresholds[index - 1].color as ColorInput, BasicGaugeColor.Red, 50).toRgbString();
-    }
+    // Set a color
+    const color = colors[index];
 
     this.setState(
       {
