@@ -14,6 +14,8 @@
       <tr>
         <th>Id</th>
         <th>Name</th>
+        <th>Tenantlabel</th>
+        <th>Tenantvalue</th>
         <th style="width:1%"></th>
       </tr>
     </thead>
@@ -27,6 +29,16 @@
         <td class="link-td">
           <a href="admin/orgs/edit/{{org.id}}">
             {{org.name}}
+          </a>
+        </td>
+        <td class="link-td">
+          <a href="admin/orgs/edit/{{org.id}}">
+            {{org.tenantlabel}}
+          </a>
+        </td>
+        <td class="link-td">
+          <a href="admin/orgs/edit/{{org.id}}">
+            {{org.tenantvalue}}
           </a>
         </td>
         <td class="text-right">

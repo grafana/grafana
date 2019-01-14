@@ -7,8 +7,11 @@ import (
 
 // Typed errors
 var (
+	// Typed errors
 	ErrOrgNotFound  = errors.New("Organization not found")
 	ErrOrgNameTaken = errors.New("Organization name is taken")
+	// define empty string
+	EmptyString = "empty"
 )
 
 type Org struct {
@@ -25,6 +28,9 @@ type Org struct {
 
 	Created time.Time
 	Updated time.Time
+
+	Tenantlabel    string
+	Tenantvalue    string
 }
 
 // ---------------------
@@ -32,6 +38,8 @@ type Org struct {
 
 type CreateOrgCommand struct {
 	Name string `json:"name" binding:"Required"`
+	Tenantlabel string `json:"tenantlabel"`
+	Tenantvalue string `json:"tenantvalue"`
 
 	// initial admin user for account
 	UserId int64 `json:"-"`
@@ -44,6 +52,8 @@ type DeleteOrgCommand struct {
 
 type UpdateOrgCommand struct {
 	Name  string
+	Tenantlabel  string
+	Tenantvalue  string
 	OrgId int64
 }
 
@@ -65,6 +75,8 @@ type GetOrgByNameQuery struct {
 type SearchOrgsQuery struct {
 	Query string
 	Name  string
+	Tenantlabel  string
+	Tenantvalue  string
 	Limit int
 	Page  int
 
@@ -74,16 +86,22 @@ type SearchOrgsQuery struct {
 type OrgDTO struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
+	Tenantlabel    string  `json:"tenantlabel"`
+	Tenantvalue    string  `json:"tenantvalue"`
 }
 
 type OrgDetailsDTO struct {
 	Id      int64   `json:"id"`
 	Name    string  `json:"name"`
+	Tenantlabel    string  `json:"tenantlabel"`
+	Tenantvalue    string  `json:"tenantvalue"`
 	Address Address `json:"address"`
 }
 
 type UserOrgDTO struct {
 	OrgId int64    `json:"orgId"`
 	Name  string   `json:"name"`
+	Tenantlabel    string  `json:"tenantlabel"`
+	Tenantvalue    string  `json:"tenantvalue"`
 	Role  RoleType `json:"role"`
 }

@@ -175,7 +175,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org
 		apiRoute.Group("/org", func(orgRoute RouteRegister) {
-			orgRoute.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
+			orgRoute.Put("/", GetTenantInfo, bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
 			orgRoute.Post("/users", quota("user"), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
@@ -205,7 +205,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute RouteRegister) {
 			orgsRoute.Get("/", wrap(GetOrgByID))
-			orgsRoute.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrg))
+			orgsRoute.Put("/", GetTenantInfo, bind(dtos.UpdateOrgForm{}), wrap(UpdateOrg))
 			orgsRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddress))
 			orgsRoute.Delete("/", wrap(DeleteOrgByID))
 			orgsRoute.Get("/users", wrap(GetOrgUsers))

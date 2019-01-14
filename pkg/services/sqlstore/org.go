@@ -28,7 +28,8 @@ func SearchOrgs(query *m.SearchOrgsQuery) error {
 		sess.Where("name=?", query.Name)
 	}
 	sess.Limit(query.Limit, query.Limit*query.Page)
-	sess.Cols("id", "name")
+	sess.Cols("id", "name", "tenantlabel", "tenantvalue")
+//        sess.Cols("id", "name")
 	err := sess.Find(&query.Result)
 	return err
 }
@@ -90,6 +91,8 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 
 		org := m.Org{
 			Name:    cmd.Name,
+			Tenantlabel:    cmd.Tenantlabel,
+			Tenantvalue:    cmd.Tenantvalue,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
@@ -113,11 +116,14 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 			Timestamp: org.Created,
 			Id:        org.Id,
 			Name:      org.Name,
+			Tenantlabel:      org.Tenantlabel,
+			Tenantvalue:      org.Tenantvalue,
 		})
 
 		return err
 	})
 }
+
 
 func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 	return inTransaction(func(sess *DBSession) error {
@@ -130,7 +136,25 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 
 		org := m.Org{
 			Name:    cmd.Name,
+			Tenantlabel:    cmd.Tenantlabel,
+			Tenantvalue:    cmd.Tenantvalue,
 			Updated: time.Now(),
+		}
+
+		if org.Tenantlabel == m.EmptyString {
+			org.Tenantlabel = ""
+			_, err := sess.Id(cmd.OrgId).Cols("Tenantlabel").Update(&org)
+			if err != nil {
+				return err
+			}
+		}
+
+		if org.Tenantvalue == m.EmptyString {
+			org.Tenantvalue = ""
+			_, err := sess.Id(cmd.OrgId).Cols("Tenantvalue").Update(&org)
+			if err != nil {
+				return err
+			}
 		}
 
 		affectedRows, err := sess.Id(cmd.OrgId).Update(&org)
@@ -147,6 +171,8 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 			Timestamp: org.Updated,
 			Id:        org.Id,
 			Name:      org.Name,
+			Tenantlabel:      org.Tenantlabel,
+			Tenantvalue:      org.Tenantvalue,
 		})
 
 		return nil
@@ -174,6 +200,8 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 			Timestamp: org.Updated,
 			Id:        org.Id,
 			Name:      org.Name,
+			Tenantlabel:      org.Tenantlabel,
+			Tenantvalue:      org.Tenantvalue,
 		})
 
 		return nil

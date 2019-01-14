@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const HeaderNameNoBackendCache = "X-Grafana-NoCache"
@@ -54,6 +55,24 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	}
 
 	proxyPath := c.Params("*")
+	//code change
+	//add label to expr
+	if ds.Type == m.DS_PROMETHEUS && (proxyPath == "api/v1/query" || proxyPath == "api/v1/query_range") {
+		orgQuery := m.GetOrgByIdQuery{Id: c.OrgId}
+		if err := bus.Dispatch(&orgQuery); err != nil { return }
+
+		tlabel := orgQuery.Result.Tenantlabel
+		tlabelValue := orgQuery.Result.Tenantvalue
+		if "" != tlabel && "" != tlabelValue {
+			query := c.Query("query")
+            c.Req.Form.Set("query", util.ParseExpr(query, tlabel, tlabelValue))
+			c.Req.URL.RawQuery = c.Req.Form.Encode()
+			//for log
+			c.Req.RequestURI = c.Req.URL.RequestURI()
+		}
+	}//end if
+	//end code change
+
 	proxy := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath)
 	proxy.HandleRequest()
 }

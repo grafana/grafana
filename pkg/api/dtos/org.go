@@ -1,7 +1,14 @@
 package dtos
 
 type UpdateOrgForm struct {
-	Name string `json:"name" binding:"Required"`
+	Name string `json:"name"`
+	Tenantlabel string `json:"tenantlabel"`
+	Tenantvalue string `json:"tenantvalue"`
+}
+
+type TenantInfo struct {
+	HasLabel bool
+	HasValue bool
 }
 
 type UpdateOrgAddressForm struct {

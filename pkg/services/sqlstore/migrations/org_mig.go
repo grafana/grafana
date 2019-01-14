@@ -18,6 +18,8 @@ func addOrgMigrations(mg *Migrator) {
 			{Name: "billing_email", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
+                        {Name: "tenantlabel", Type: DB_NVarchar, Length: 255, Nullable: true},
+                        {Name: "tenantvalue", Type: DB_NVarchar, Length: 255, Nullable: true},
 		},
 		Indices: []*Index{
 			{Cols: []string{"name"}, Type: UniqueIndex},
@@ -57,6 +59,8 @@ func addOrgMigrations(mg *Migrator) {
 		{Name: "zip_code", Type: DB_NVarchar, Length: 50, Nullable: true},
 		{Name: "country", Type: DB_NVarchar, Length: 255, Nullable: true},
 		{Name: "billing_email", Type: DB_NVarchar, Length: 255, Nullable: true},
+                {Name: "tenantlabel", Type: DB_NVarchar, Length: 255, Nullable: true},
+                {Name: "tenantvalue", Type: DB_NVarchar, Length: 255, Nullable: true},
 	}))
 
 	mg.AddMigration("Update org_user table charset", NewTableCharsetMigration("org_user", []*Column{

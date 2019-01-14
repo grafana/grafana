@@ -5,9 +5,13 @@
 
   <form name="orgForm" class="gf-form-group">
     <div class="gf-form-inline">
-      <div class="gf-form max-width-28">
-        <span class="gf-form-label">Organization name</span>
-        <input class="gf-form-input" type="text" required ng-model="org.name">
+      <div class="gf-form">
+        <span class="gf-form-label width-15">Organization name</span>
+        <input class="gf-form-input max-width-16" type="text" required ng-model="org.name">
+        <span class="gf-form-label width-15">Organization tenantlabel</span>
+        <input class="gf-form-input max-width-16" type="text" ng-model="org.tenantlabel">
+        <span class="gf-form-label width-15">Organization tenantvalue</span>
+        <input class="gf-form-input max-width-16" type="text" ng-model="org.tenantvalue">
       </div>
     </div>
 

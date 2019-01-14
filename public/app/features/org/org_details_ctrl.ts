@@ -20,7 +20,7 @@ export class OrgDetailsCtrl {
       if (!$scope.orgForm.$valid) {
         return;
       }
-      var data = { name: $scope.org.name };
+      var data = { name: $scope.org.name, tenantlabel: $scope.org.tenantlabel, tenantvalue: $scope.org.tenantvalue };
       backendSrv.put('/api/org', data).then($scope.getOrgInfo);
     };
 

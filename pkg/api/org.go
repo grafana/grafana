@@ -1,6 +1,9 @@
 package api
 
 import (
+	"strings"
+	"bytes"
+	"io/ioutil"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -33,6 +36,8 @@ func GetOrgByName(c *m.ReqContext) Response {
 	result := m.OrgDetailsDTO{
 		Id:   org.Id,
 		Name: org.Name,
+		Tenantlabel: org.Tenantlabel,
+		Tenantvalue: org.Tenantvalue,
 		Address: m.Address{
 			Address1: org.Address1,
 			Address2: org.Address2,
@@ -61,6 +66,8 @@ func getOrgHelper(orgID int64) Response {
 	result := m.OrgDetailsDTO{
 		Id:   org.Id,
 		Name: org.Name,
+		Tenantlabel: org.Tenantlabel,
+		Tenantvalue: org.Tenantvalue,
 		Address: m.Address{
 			Address1: org.Address1,
 			Address2: org.Address2,
@@ -97,17 +104,46 @@ func CreateOrg(c *m.ReqContext, cmd m.CreateOrgCommand) Response {
 }
 
 // PUT /api/org
-func UpdateOrgCurrent(c *m.ReqContext, form dtos.UpdateOrgForm) Response {
-	return updateOrgHelper(form, c.OrgId)
+func UpdateOrgCurrent(c *m.ReqContext, form dtos.UpdateOrgForm, tenantInfo dtos.TenantInfo) Response {
+	return updateOrgHelper(form, tenantInfo, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId
-func UpdateOrg(c *m.ReqContext, form dtos.UpdateOrgForm) Response {
-	return updateOrgHelper(form, c.ParamsInt64(":orgId"))
+func UpdateOrg(c *m.ReqContext, form dtos.UpdateOrgForm, tenantInfo dtos.TenantInfo) Response {
+	return updateOrgHelper(form, tenantInfo, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) Response {
-	cmd := m.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
+func GetTenantInfo(c *m.ReqContext) {
+	body, _ := c.Req.Body().String()
+	tenantInfo := dtos.TenantInfo {
+			HasLabel: false,
+			HasValue: false,
+	}
+	if strings.Contains(body, "tenantlabel") {
+		tenantInfo.HasLabel = true
+	}
+	if strings.Contains(body, "tenantvalue") {
+		tenantInfo.HasValue = true
+	}
+
+	c.Map(tenantInfo)
+	c.Req.Request.Body = ioutil.NopCloser(bytes.NewBufferString(body))
+}
+
+func updateOrgHelper(form dtos.UpdateOrgForm, tenantInfo dtos.TenantInfo, orgID int64) Response {
+	if tenantInfo.HasLabel && len(form.Tenantlabel) == 0 {
+		form.Tenantlabel = m.EmptyString
+	}
+
+	if tenantInfo.HasValue && len(form.Tenantvalue) == 0 {
+		form.Tenantvalue = m.EmptyString
+	}
+
+	cmd := m.UpdateOrgCommand{
+		Name: form.Name, 
+		OrgId: orgID,
+		Tenantlabel: form.Tenantlabel,
+		Tenantvalue: form.Tenantvalue}
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
 			return Error(400, "Organization name taken", err)
@@ -163,6 +199,8 @@ func SearchOrgs(c *m.ReqContext) Response {
 	query := m.SearchOrgsQuery{
 		Query: c.Query("query"),
 		Name:  c.Query("name"),
+		Tenantlabel: c.Query("tenantlabel"),
+		Tenantvalue: c.Query("tenantvalue"),
 		Page:  0,
 		Limit: 1000,
 	}
