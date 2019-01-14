@@ -29,7 +29,7 @@ export const AlignmentPeriods: SFC<Props> = ({
         <div className="gf-form">
           <label className="gf-form-label query-keyword width-9">Alignment Period</label>
           <MetricSelect
-            onChange={value => onChange(value)}
+            onChange={onChange}
             value={alignmentPeriod}
             variables={templateSrv.variables}
             options={[

@@ -99,7 +99,7 @@ export class QueryEditor extends React.Component<Props, State> {
     this.setState({ lastQuery, lastQueryError });
   }
 
-  onMetricTypeChange({ valueType, metricKind, type, unit }: MetricDescriptor) {
+  onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
     const { templateSrv, onQueryChange, onExecuteQuery } = this.props;
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
@@ -119,7 +119,7 @@ export class QueryEditor extends React.Component<Props, State> {
         onExecuteQuery();
       }
     );
-  }
+  };
 
   onPropertyChange(prop, value) {
     this.setState({ [prop]: value }, () => {
@@ -153,7 +153,7 @@ export class QueryEditor extends React.Component<Props, State> {
           metricType={metricType}
           templateSrv={templateSrv}
           datasource={datasource}
-          onChange={value => this.onMetricTypeChange(value)}
+          onChange={this.onMetricTypeChange}
         >
           {metric => (
             <>

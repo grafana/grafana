@@ -52,11 +52,11 @@ export class Aggregations extends React.Component<Props, State> {
     this.setState({ aggOptions });
   }
 
-  onToggleDisplayAdvanced() {
+  onToggleDisplayAdvanced = () => {
     this.setState(state => ({
       displayAdvancedOptions: !state.displayAdvancedOptions,
     }));
-  }
+  };
 
   render() {
     const { displayAdvancedOptions, aggOptions } = this.state;
@@ -68,7 +68,7 @@ export class Aggregations extends React.Component<Props, State> {
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Aggregation</label>
             <MetricSelect
-              onChange={value => onChange(value)}
+              onChange={onChange}
               value={crossSeriesReducer}
               variables={templateSrv.variables}
               options={aggOptions}
@@ -78,7 +78,7 @@ export class Aggregations extends React.Component<Props, State> {
           </div>
           <div className="gf-form gf-form--grow">
             <label className="gf-form-label gf-form-label--grow">
-              <a onClick={() => this.onToggleDisplayAdvanced()}>
+              <a onClick={this.onToggleDisplayAdvanced}>
                 <>
                   <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
                 </>

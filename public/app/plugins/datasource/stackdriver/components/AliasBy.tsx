@@ -29,10 +29,10 @@ export class AliasBy extends Component<Props, State> {
     }
   }
 
-  onChange(e) {
+  onChange = e => {
     this.setState({ value: e.target.value });
     this.propagateOnChange(e.target.value);
-  }
+  };
 
   render() {
     return (
@@ -40,12 +40,7 @@ export class AliasBy extends Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Alias By</label>
-            <input
-              type="text"
-              className="gf-form-input width-24"
-              value={this.state.value}
-              onChange={e => this.onChange(e)}
-            />
+            <input type="text" className="gf-form-input width-24" value={this.state.value} onChange={this.onChange} />
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />

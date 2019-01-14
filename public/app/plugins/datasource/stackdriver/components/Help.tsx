@@ -19,13 +19,13 @@ export class Help extends React.Component<Props, State> {
     displaRawQuery: false,
   };
 
-  onHelpClicked() {
+  onHelpClicked = () => {
     this.setState({ displayHelp: !this.state.displayHelp });
-  }
+  };
 
-  onRawQueryClicked() {
+  onRawQueryClicked = () => {
     this.setState({ displaRawQuery: !this.state.displaRawQuery });
-  }
+  };
 
   shouldComponentUpdate(nextProps) {
     return nextProps.metricDescriptor !== null;
@@ -39,14 +39,14 @@ export class Help extends React.Component<Props, State> {
       <>
         <div className="gf-form-inline">
           <Project datasource={datasource} />
-          <div className="gf-form" onClick={() => this.onHelpClicked()}>
+          <div className="gf-form" onClick={this.onHelpClicked}>
             <label className="gf-form-label query-keyword pointer">
               Show Help <i className={`fa fa-caret-${displayHelp ? 'down' : 'right'}`} />
             </label>
           </div>
 
           {rawQuery && (
-            <div className="gf-form" onClick={() => this.onRawQueryClicked()}>
+            <div className="gf-form" onClick={this.onRawQueryClicked}>
               <label className="gf-form-label query-keyword">
                 Raw Query <i className={`fa fa-caret-${displaRawQuery ? 'down' : 'right'}`} ng-show="ctrl.showHelp" />
               </label>

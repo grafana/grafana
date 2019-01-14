@@ -40,7 +40,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     });
   }
 
-  onMetricTypeChange({ valueType, metricKind, type, unit }) {
+  onMetricTypeChange = ({ valueType, metricKind, type, unit }) => {
     const { onQueryChange } = this.props;
     this.setState(
       {
@@ -53,7 +53,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
-  }
+  };
 
   onChange(prop, value) {
     this.setState({ [prop]: value }, () => {
@@ -72,7 +72,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           metricType={metricType}
           templateSrv={templateSrv}
           datasource={datasource}
-          onChange={value => this.onMetricTypeChange(value)}
+          onChange={this.onMetricTypeChange}
         >
           {metric => (
             <>

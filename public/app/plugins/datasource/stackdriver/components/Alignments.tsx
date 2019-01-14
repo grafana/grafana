@@ -17,7 +17,7 @@ export const Alignments: SFC<Props> = ({ perSeriesAligner, templateSrv, onChange
         <div className="gf-form offset-width-9">
           <label className="gf-form-label query-keyword width-15">Aligner</label>
           <MetricSelect
-            onChange={value => onChange(value)}
+            onChange={onChange}
             value={perSeriesAligner}
             variables={templateSrv.variables}
             options={alignOptions}
