@@ -436,9 +436,9 @@ Array [
       onClick={[Function]}
     >
       <label
-        className="gf-form-label query-keyword"
+        className="gf-form-label query-keyword pointer"
       >
-        Show Help
+        Show Help 
         <i
           className="fa fa-caret-right"
         />

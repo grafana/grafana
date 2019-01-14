@@ -2,10 +2,11 @@ import _ from 'lodash';
 
 import { QueryCtrl } from 'app/plugins/sdk';
 import { Target } from './types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
-  templateSrv: any;
+  templateSrv: TemplateSrv;
 
   /** @ngInject */
   constructor($scope, $injector, templateSrv) {

@@ -12,18 +12,20 @@ import { AliasBy } from './AliasBy';
 import { Help } from './Help';
 import { Target, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
+import StackdriverDatasource from '../datasource';
+import { SelectOptionItem } from '@grafana/ui';
 
 export interface Props {
   onQueryChange: (target: Target) => void;
   onExecuteQuery: () => void;
   target: Target;
   events: any;
-  datasource: any;
+  datasource: StackdriverDatasource;
   templateSrv: TemplateSrv;
 }
 
 interface State extends Target {
-  alignOptions: any[];
+  alignOptions: SelectOptionItem[];
   lastQuery: string;
   lastQueryError: string;
   [key: string]: any;

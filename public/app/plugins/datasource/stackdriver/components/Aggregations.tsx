@@ -3,10 +3,11 @@ import _ from 'lodash';
 
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { getAggregationOptionsByMetric } from '../functions';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
-  templateSrv: any;
+  templateSrv: TemplateSrv;
   metricDescriptor: {
     valueType: string;
     metricKind: string;

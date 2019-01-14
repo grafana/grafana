@@ -4,10 +4,11 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { alignmentPeriods, alignOptions } from '../constants';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export interface Props {
   onChange: (alignmentPeriod) => void;
-  templateSrv: any;
+  templateSrv: TemplateSrv;
   alignmentPeriod: string;
   perSeriesAligner: string;
   usedAlignmentPeriod: string;

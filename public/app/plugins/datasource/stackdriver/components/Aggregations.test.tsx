@@ -3,10 +3,11 @@ import renderer from 'react-test-renderer';
 import { Aggregations, Props } from './Aggregations';
 import { shallow } from 'enzyme';
 import { ValueTypes, MetricKind } from '../constants';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
 const props: Props = {
   onChange: () => {},
-  templateSrv: {},
+  templateSrv: new TemplateSrvStub(),
   metricDescriptor: {
     valueType: '',
     metricKind: '',

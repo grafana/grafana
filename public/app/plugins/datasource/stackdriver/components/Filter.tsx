@@ -4,16 +4,18 @@ import appEvents from 'app/core/app_events';
 
 import { QueryMeta } from '../types';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import StackdriverDatasource from '../datasource';
 import '../query_filter_ctrl';
 
 export interface Props {
   filtersChanged: (filters: string[]) => void;
   groupBysChanged?: (groupBys: string[]) => void;
   metricType: string;
-  templateSrv: any;
+  templateSrv: TemplateSrv;
   groupBys?: string[];
   filters: string[];
-  datasource: any;
+  datasource: StackdriverDatasource;
   refId: string;
   hideGroupBys: boolean;
 }

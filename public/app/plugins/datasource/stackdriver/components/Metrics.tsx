@@ -5,10 +5,11 @@ import StackdriverDatasource from '../datasource';
 import appEvents from 'app/core/app_events';
 import { MetricDescriptor } from '../types';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
-  templateSrv: any;
+  templateSrv: TemplateSrv;
   datasource: StackdriverDatasource;
   defaultProject: string;
   metricType: string;

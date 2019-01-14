@@ -1,7 +1,9 @@
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 export class StackdriverAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
   annotation: any;
-  templateSrv: any;
+  templateSrv: TemplateSrv;
 
   /** @ngInject */
   constructor(templateSrv) {

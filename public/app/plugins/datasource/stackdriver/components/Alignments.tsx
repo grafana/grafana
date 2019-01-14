@@ -2,11 +2,13 @@ import React, { SFC } from 'react';
 import _ from 'lodash';
 
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { SelectOptionItem } from '@grafana/ui';
 
 export interface Props {
   onChange: (perSeriesAligner) => void;
-  templateSrv: any;
-  alignOptions: any[];
+  templateSrv: TemplateSrv;
+  alignOptions: SelectOptionItem[];
   perSeriesAligner: string;
 }
 
