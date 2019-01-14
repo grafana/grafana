@@ -9,7 +9,6 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-import { PanelOptionSection } from './PanelOptionSection';
 
 // Types
 import { PanelModel } from '../panel_model';
@@ -62,13 +61,13 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
 
     return (
-      <PanelOptionSection>
+      <>
         {PanelOptions ? (
           <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />
         ) : (
           <p>Visualization has no options</p>
         )}
-      </PanelOptionSection>
+      </>
     );
   }
 
@@ -112,9 +111,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
       template +=
         `
-      <div class="panel-option-section" ng-cloak>` +
-        (i > 0 ? `<div class="panel-option-section__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
-        `<div class="panel-option-section__body">
+      <div class="panel-options-group" ng-cloak>` +
+        (i > 0 ? `<div class="panel-options-group__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
+        `<div class="panel-options-group__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
       </div>

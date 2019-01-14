@@ -312,14 +312,20 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         const formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
-        data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
+        data.valueFormatted = formatFunc(data.value, 0, 0, this.dashboard.isTimezoneUtc());
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
         const decimalInfo = this.getDecimalsForValue(data.value);
         const formatFunc = kbn.valueFormats[this.panel.format];
-        data.valueFormatted = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
+
+        data.valueFormatted = formatFunc(
+          data.value,
+          decimalInfo.decimals,
+          decimalInfo.scaledDecimals,
+          this.dashboard.isTimezoneUtc()
+        );
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
 

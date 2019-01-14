@@ -212,6 +212,10 @@ func GetAlertNotificationByID(c *m.ReqContext) Response {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
+	if query.Result == nil {
+		return Error(404, "Alert notification not found", nil)
+	}
+
 	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 

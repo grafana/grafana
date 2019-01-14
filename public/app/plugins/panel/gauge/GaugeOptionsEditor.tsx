@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { GaugeOptions, PanelOptionsProps } from '@grafana/ui';
+import { GaugeOptions, PanelOptionsProps, PanelOptionsGroup } from '@grafana/ui';
 
 import { Switch } from 'app/core/components/Switch/Switch';
 import { Label } from '../../../core/components/Label/Label';
@@ -20,8 +20,7 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
     const { maxValue, minValue, showThresholdLabels, showThresholdMarkers } = options;
 
     return (
-      <div className="section gf-form-group">
-        <h5 className="section-heading">Gauge</h5>
+      <PanelOptionsGroup title="Gauge">
         <div className="gf-form">
           <Label width={8}>Min value</Label>
           <input type="text" className="gf-form-input width-12" onChange={this.onMinValueChange} value={minValue} />
@@ -42,7 +41,7 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
           checked={showThresholdMarkers}
           onChange={this.onToggleThresholdMarkers}
         />
-      </div>
+      </PanelOptionsGroup>
     );
   }
 }

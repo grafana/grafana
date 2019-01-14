@@ -9,7 +9,7 @@ import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
-import { PanelOptionSection } from './PanelOptionSection';
+import { PanelOptionsGroup } from '@grafana/ui';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -216,7 +216,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     return (
       <EditorTabBody heading="Queries" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
         <>
-          <PanelOptionSection>
+          <PanelOptionsGroup>
             <div className="query-editor-rows">
               <div ref={element => (this.element = element)} />
 
@@ -239,10 +239,10 @@ export class QueriesTab extends PureComponent<Props, State> {
                 </div>
               </div>
             </div>
-          </PanelOptionSection>
-          <PanelOptionSection>
+          </PanelOptionsGroup>
+          <PanelOptionsGroup>
             <QueryOptions panel={panel} datasource={currentDS} />
-          </PanelOptionSection>
+          </PanelOptionsGroup>
         </>
       </EditorTabBody>
     );
