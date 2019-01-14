@@ -1,7 +1,6 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
-import { FilterSegments } from './filter_segments';
-import appEvents from 'app/core/app_events';
+import { FilterSegments, DefaultFilterValue } from './filter_segments';
 
 export class StackdriverFilter {
   /** @ngInject */
@@ -10,13 +9,15 @@ export class StackdriverFilter {
       templateUrl: 'public/app/plugins/datasource/stackdriver/partials/query.filter.html',
       controller: 'StackdriverFilterCtrl',
       controllerAs: 'ctrl',
+      bindToController: true,
       restrict: 'E',
       scope: {
-        target: '=',
-        datasource: '=',
-        refresh: '&',
-        defaultDropdownValue: '<',
-        defaultServiceValue: '<',
+        labelData: '<',
+        loading: '<',
+        groupBys: '<',
+        filters: '<',
+        filtersChanged: '&',
+        groupBysChanged: '&',
         hideGroupBys: '<',
       },
     };
@@ -24,46 +25,28 @@ export class StackdriverFilter {
 }
 
 export class StackdriverFilterCtrl {
-  metricLabels: { [key: string]: string[] };
-  resourceLabels: { [key: string]: string[] };
-  resourceTypes: string[];
-
   defaultRemoveGroupByValue = '-- remove group by --';
   resourceTypeValue = 'resource.type';
-  loadLabelsPromise: Promise<any>;
-
-  service: string;
-  metricType: string;
-  metricDescriptors: any[];
-  metrics: any[];
-  services: any[];
   groupBySegments: any[];
   filterSegments: FilterSegments;
   removeSegment: any;
-  target: any;
-  datasource: any;
+  filters: string[];
+  groupBys: string[];
+  hideGroupBys: boolean;
+  labelData: any;
+  loading: Promise<any>;
+  filtersChanged: (filters) => void;
+  groupBysChanged: (groupBys) => void;
 
   /** @ngInject */
-  constructor(private $scope, private uiSegmentSrv, private templateSrv, private $rootScope) {
-    this.datasource = $scope.datasource;
-    this.target = $scope.target;
-    this.metricType = $scope.defaultDropdownValue;
-    this.service = $scope.defaultServiceValue;
-
-    this.metricDescriptors = [];
-    this.metrics = [];
-    this.services = [];
-
-    this.getCurrentProject()
-      .then(this.loadMetricDescriptors.bind(this))
-      .then(this.getLabels.bind(this));
-
-    this.initSegments($scope.hideGroupBys);
+  constructor(private $scope, private uiSegmentSrv, private templateSrv) {
+    this.$scope.ctrl = this;
+    this.initSegments(this.hideGroupBys);
   }
 
   initSegments(hideGroupBys: boolean) {
     if (!hideGroupBys) {
-      this.groupBySegments = this.target.aggregation.groupBys.map(groupBy => {
+      this.groupBySegments = this.groupBys.map(groupBy => {
         return this.uiSegmentSrv.getSegmentForValue(groupBy);
       });
       this.ensurePlusButton(this.groupBySegments);
@@ -73,133 +56,17 @@ export class StackdriverFilterCtrl {
 
     this.filterSegments = new FilterSegments(
       this.uiSegmentSrv,
-      this.target,
+      this.filters,
       this.getFilterKeys.bind(this),
       this.getFilterValues.bind(this)
     );
     this.filterSegments.buildSegmentModel();
   }
 
-  async getCurrentProject() {
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (!this.target.defaultProject || this.target.defaultProject === 'loading project...') {
-          this.target.defaultProject = await this.datasource.getDefaultProject();
-        }
-        resolve(this.target.defaultProject);
-      } catch (error) {
-        appEvents.emit('ds-request-error', error);
-        reject();
-      }
-    });
-  }
-
-  async loadMetricDescriptors() {
-    if (this.target.defaultProject !== 'loading project...') {
-      this.metricDescriptors = await this.datasource.getMetricTypes(this.target.defaultProject);
-      this.services = this.getServicesList();
-      this.metrics = this.getMetricsList();
-      return this.metricDescriptors;
-    } else {
-      return [];
-    }
-  }
-
-  getServicesList() {
-    const defaultValue = { value: this.$scope.defaultServiceValue, text: this.$scope.defaultServiceValue };
-    const services = this.metricDescriptors.map(m => {
-      return {
-        value: m.service,
-        text: m.serviceShortName,
-      };
-    });
-
-    if (services.find(m => m.value === this.target.service)) {
-      this.service = this.target.service;
-    }
-
-    return services.length > 0 ? [defaultValue, ..._.uniqBy(services, 'value')] : [];
-  }
-
-  getMetricsList() {
-    const metrics = this.metricDescriptors.map(m => {
-      return {
-        service: m.service,
-        value: m.type,
-        serviceShortName: m.serviceShortName,
-        text: m.displayName,
-        title: m.description,
-      };
-    });
-
-    let result;
-    if (this.target.service === this.$scope.defaultServiceValue) {
-      result = metrics.map(m => ({ ...m, text: `${m.service} - ${m.text}` }));
-    } else {
-      result = metrics.filter(m => m.service === this.target.service);
-    }
-
-    if (result.find(m => m.value === this.templateSrv.replace(this.target.metricType))) {
-      this.metricType = this.target.metricType;
-    } else if (result.length > 0) {
-      this.metricType = this.target.metricType = result[0].value;
-    }
-    return result;
-  }
-
-  async getLabels() {
-    this.loadLabelsPromise = new Promise(async resolve => {
-      try {
-        const { meta } = await this.datasource.getLabels(this.target.metricType, this.target.refId);
-        this.metricLabels = meta.metricLabels;
-        this.resourceLabels = meta.resourceLabels;
-        this.resourceTypes = meta.resourceTypes;
-        resolve();
-      } catch (error) {
-        if (error.data && error.data.message) {
-          console.log(error.data.message);
-        } else {
-          console.log(error);
-        }
-        appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
-        resolve();
-      }
-    });
-  }
-
-  onServiceChange() {
-    this.target.service = this.service;
-    this.metrics = this.getMetricsList();
-    this.setMetricType();
-    this.getLabels();
-    if (!this.metrics.find(m => m.value === this.target.metricType)) {
-      this.target.metricType = this.$scope.defaultDropdownValue;
-    } else {
-      this.$scope.refresh();
-    }
-  }
-
-  async onMetricTypeChange() {
-    this.setMetricType();
-    this.$scope.refresh();
-    this.getLabels();
-  }
-
-  setMetricType() {
-    this.target.metricType = this.metricType;
-    const { valueType, metricKind, unit } = this.metricDescriptors.find(
-      m => m.type === this.templateSrv.replace(this.metricType)
-    );
-    this.target.unit = unit;
-    this.target.valueType = valueType;
-    this.target.metricKind = metricKind;
-    this.$rootScope.$broadcast('metricTypeChanged');
-  }
-
   async createLabelKeyElements() {
-    await this.loadLabelsPromise;
+    await this.loading;
 
-    let elements = Object.keys(this.metricLabels || {}).map(l => {
+    let elements = Object.keys(this.labelData.metricLabels || {}).map(l => {
       return this.uiSegmentSrv.newSegment({
         value: `metric.label.${l}`,
         expandable: false,
@@ -208,7 +75,7 @@ export class StackdriverFilterCtrl {
 
     elements = [
       ...elements,
-      ...Object.keys(this.resourceLabels || {}).map(l => {
+      ...Object.keys(this.labelData.resourceLabels || {}).map(l => {
         return this.uiSegmentSrv.newSegment({
           value: `resource.label.${l}`,
           expandable: false,
@@ -216,7 +83,7 @@ export class StackdriverFilterCtrl {
       }),
     ];
 
-    if (this.resourceTypes && this.resourceTypes.length > 0) {
+    if (this.labelData.resourceTypes && this.labelData.resourceTypes.length > 0) {
       elements = [
         ...elements,
         this.uiSegmentSrv.newSegment({
@@ -229,10 +96,10 @@ export class StackdriverFilterCtrl {
     return elements;
   }
 
-  async getFilterKeys(segment, removeText?: string) {
+  async getFilterKeys(segment, removeText: string) {
     let elements = await this.createLabelKeyElements();
 
-    if (this.target.filters.indexOf(this.resourceTypeValue) !== -1) {
+    if (this.filters.indexOf(this.resourceTypeValue) !== -1) {
       elements = elements.filter(e => e.value !== this.resourceTypeValue);
     }
 
@@ -241,21 +108,24 @@ export class StackdriverFilterCtrl {
       return [];
     }
 
-    this.removeSegment.value = removeText;
-    return [...elements, this.removeSegment];
+    return segment.type === 'plus-button'
+      ? elements
+      : [
+          ...elements,
+          this.uiSegmentSrv.newSegment({ fake: true, value: removeText || this.defaultRemoveGroupByValue }),
+        ];
   }
 
   async getGroupBys(segment) {
     let elements = await this.createLabelKeyElements();
-
-    elements = elements.filter(e => this.target.aggregation.groupBys.indexOf(e.value) === -1);
+    elements = elements.filter(e => this.groupBys.indexOf(e.value) === -1);
     const noValueOrPlusButton = !segment || segment.type === 'plus-button';
     if (noValueOrPlusButton && elements.length === 0) {
       return [];
     }
 
     this.removeSegment.value = this.defaultRemoveGroupByValue;
-    return [...elements, this.removeSegment];
+    return segment.type === 'plus-button' ? elements : [...elements, this.removeSegment];
   }
 
   groupByChanged(segment, index) {
@@ -272,43 +142,45 @@ export class StackdriverFilterCtrl {
       return memo;
     };
 
-    this.target.aggregation.groupBys = this.groupBySegments.reduce(reducer, []);
+    const groupBys = this.groupBySegments.reduce(reducer, []);
+    this.groupBysChanged({ groupBys });
     this.ensurePlusButton(this.groupBySegments);
-    this.$rootScope.$broadcast('metricTypeChanged');
-    this.$scope.refresh();
   }
 
   async getFilters(segment, index) {
-    const hasNoFilterKeys = this.metricLabels && Object.keys(this.metricLabels).length === 0;
+    await this.loading;
+    const hasNoFilterKeys = this.labelData.metricLabels && Object.keys(this.labelData.metricLabels).length === 0;
     return this.filterSegments.getFilters(segment, index, hasNoFilterKeys);
   }
 
   getFilterValues(index) {
     const filterKey = this.templateSrv.replace(this.filterSegments.filterSegments[index - 2].value);
-    if (!filterKey || !this.metricLabels || Object.keys(this.metricLabels).length === 0) {
+    if (!filterKey || !this.labelData.metricLabels || Object.keys(this.labelData.metricLabels).length === 0) {
       return [];
     }
 
     const shortKey = filterKey.substring(filterKey.indexOf('.label.') + 7);
 
-    if (filterKey.startsWith('metric.label.') && this.metricLabels.hasOwnProperty(shortKey)) {
-      return this.metricLabels[shortKey];
+    if (filterKey.startsWith('metric.label.') && this.labelData.metricLabels.hasOwnProperty(shortKey)) {
+      return this.labelData.metricLabels[shortKey];
     }
 
-    if (filterKey.startsWith('resource.label.') && this.resourceLabels.hasOwnProperty(shortKey)) {
-      return this.resourceLabels[shortKey];
+    if (filterKey.startsWith('resource.label.') && this.labelData.resourceLabels.hasOwnProperty(shortKey)) {
+      return this.labelData.resourceLabels[shortKey];
     }
 
     if (filterKey === this.resourceTypeValue) {
-      return this.resourceTypes;
+      return this.labelData.resourceTypes;
     }
 
     return [];
   }
 
   filterSegmentUpdated(segment, index) {
-    this.target.filters = this.filterSegments.filterSegmentUpdated(segment, index);
-    this.$scope.refresh();
+    const filters = this.filterSegments.filterSegmentUpdated(segment, index);
+    if (!filters.some(f => f === DefaultFilterValue)) {
+      this.filtersChanged({ filters });
+    }
   }
 
   ensurePlusButton(segments) {

@@ -4,6 +4,7 @@ import SelectOption from './SelectOption';
 import { OptionProps } from 'react-select/lib/components/Option';
 
 const model: OptionProps<any> = {
+  data: jest.fn(),
   cx: jest.fn(),
   clearValue: jest.fn(),
   getStyles: jest.fn(),
