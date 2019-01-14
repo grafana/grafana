@@ -17,11 +17,15 @@
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
     "react": "^16.6.3",
+    "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.6.3",
     "react-highlight-words": "0.11.0",
     "react-popper": "^1.3.0",
     "react-transition-group": "^2.2.1",
-    "react-virtualized": "^9.21.0"
+    "react-virtualized": "^9.21.0",
+    "tether": "^1.4.0",
+    "tether-drop": "https://github.com/torkelo/drop/tarball/master",
+    "tinycolor2": "^1.4.1"
   },
   "devDependencies": {
     "@storybook/addon-info": "^4.1.4",
@@ -33,8 +37,14 @@
     "@types/node": "^10.12.18",
     "@types/react": "^16.7.6",
     "@types/storybook__react": "^4.0.0",
+    "@types/react-custom-scrollbars": "^4.0.5",
+    "@types/react-test-renderer": "^16.0.3",
+    "@types/react-transition-group": "^2.0.15",
+    "@types/tether-drop": "^1.4.8",
+    "@types/tinycolor2": "^1.4.1",
     "awesome-typescript-loader": "^5.2.1",
     "react-docgen-typescript-webpack-plugin": "^1.1.0",
+    "react-test-renderer": "^16.7.0",
     "typescript": "^3.2.2"
   },
   "resolutions": {

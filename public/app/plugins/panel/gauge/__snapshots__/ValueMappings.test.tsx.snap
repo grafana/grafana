@@ -1,14 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div
-  className="section gf-form-group"
+<Component
+  title="Value Mappings"
 >
-  <h5
-    className="section-heading"
-  >
-    Value mappings
-  </h5>
   <div>
     <MappingRow
       key="Ok-0"
@@ -57,5 +52,5 @@ exports[`Render should render component 1`] = `
       Add mapping
     </div>
   </div>
-</div>
+</Component>
 `;

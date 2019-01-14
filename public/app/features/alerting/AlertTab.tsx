@@ -14,6 +14,7 @@ import 'app/features/alerting/AlertTabCtrl';
 // Types
 import { DashboardModel } from '../dashboard/dashboard_model';
 import { PanelModel } from '../dashboard/panel_model';
+import { TestRuleResult } from './TestRuleResult';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -65,9 +66,7 @@ export class AlertTab extends PureComponent<Props> {
     const loader = getAngularLoader();
     const template = '<alert-tab />';
 
-    const scopeProps = {
-      ctrl: this.panelCtrl,
-    };
+    const scopeProps = { ctrl: this.panelCtrl };
 
     this.component = loader.load(this.element, scopeProps, template);
   }
@@ -111,6 +110,16 @@ export class AlertTab extends PureComponent<Props> {
     };
   };
 
+  renderTestRuleResult = () => {
+    const { panel, dashboard } = this.props;
+    return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
+  };
+
+  testRule = (): EditorToolbarView => ({
+    title: 'Test Rule',
+    render: () => this.renderTestRuleResult(),
+  });
+
   onAddAlert = () => {
     this.panelCtrl._enableAlert();
     this.component.digest();
@@ -120,7 +129,7 @@ export class AlertTab extends PureComponent<Props> {
   render() {
     const { alert } = this.props.panel;
 
-    const toolbarItems = alert ? [this.stateHistory(), this.deleteAlert()] : [];
+    const toolbarItems = alert ? [this.stateHistory(), this.testRule(), this.deleteAlert()] : [];
 
     const model = {
       title: 'Panel has no alert rule defined',

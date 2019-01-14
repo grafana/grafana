@@ -10,15 +10,18 @@ exports[`Render should render component 1`] = `
     >
       External group sync
     </h3>
-    <class_1
-      className="page-sub-heading-icon"
+    <Component
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
-      <i
-        className="gicon gicon-question gicon--has-hover"
-      />
-    </class_1>
+      <div
+        className="page-sub-heading-icon"
+      >
+        <i
+          className="gicon gicon-question gicon--has-hover"
+        />
+      </div>
+    </Component>
     <div
       className="page-action-bar__spacer"
     />
@@ -116,15 +119,18 @@ exports[`Render should render groups table 1`] = `
     >
       External group sync
     </h3>
-    <class_1
-      className="page-sub-heading-icon"
+    <Component
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
-      <i
-        className="gicon gicon-question gicon--has-hover"
-      />
-    </class_1>
+      <div
+        className="page-sub-heading-icon"
+      >
+        <i
+          className="gicon gicon-question gicon--has-hover"
+        />
+      </div>
+    </Component>
     <div
       className="page-action-bar__spacer"
     />

@@ -254,6 +254,10 @@ export class ElasticDatasource {
         continue;
       }
 
+      if (target.alias) {
+        target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
+      }
+
       const queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
       const queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
       const esQuery = angular.toJson(queryObj);

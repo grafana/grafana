@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
+import { GaugeOptions, PanelOptionsProps, MappingType, RangeMap, ValueMap, PanelOptionsGroup } from '@grafana/ui';
+
 import MappingRow from './MappingRow';
-import { OptionModuleProps } from './module';
-import { MappingType, RangeMap, ValueMap } from 'app/types';
 
 interface State {
   mappings: Array<ValueMap | RangeMap>;
   nextIdToAdd: number;
 }
 
-export default class ValueMappings extends PureComponent<OptionModuleProps, State> {
+export default class ValueMappings extends PureComponent<PanelOptionsProps<GaugeOptions>, State> {
   constructor(props) {
     super(props);
 
@@ -75,8 +75,7 @@ export default class ValueMappings extends PureComponent<OptionModuleProps, Stat
     const { mappings } = this.state;
 
     return (
-      <div className="section gf-form-group">
-        <h5 className="section-heading">Value mappings</h5>
+      <PanelOptionsGroup title="Value Mappings">
         <div>
           {mappings.length > 0 &&
             mappings.map((mapping, index) => (
@@ -94,7 +93,7 @@ export default class ValueMappings extends PureComponent<OptionModuleProps, Stat
           </div>
           <div className="add-mapping-row-label">Add mapping</div>
         </div>
-      </div>
+      </PanelOptionsGroup>
     );
   }
 }

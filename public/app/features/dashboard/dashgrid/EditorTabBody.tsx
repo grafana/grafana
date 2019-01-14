@@ -2,9 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar, PanelOptionsGroup } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-import { PanelOptionSection } from './PanelOptionSection';
 
 interface Props {
   children: JSX.Element;
@@ -52,7 +51,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
   onToggleToolBarView = (item: EditorToolbarView) => {
     this.setState({
       openView: item,
-      isOpen: !this.state.isOpen,
+      isOpen: this.state.openView !== item || !this.state.isOpen,
     });
   };
 
@@ -97,9 +96,9 @@ export class EditorTabBody extends PureComponent<Props, State> {
 
   renderOpenView(view: EditorToolbarView) {
     return (
-      <PanelOptionSection title={view.title || view.heading} onClose={this.onCloseOpenView}>
+      <PanelOptionsGroup title={view.title || view.heading} onClose={this.onCloseOpenView}>
         {view.render()}
-      </PanelOptionSection>
+      </PanelOptionsGroup>
     );
   }
 

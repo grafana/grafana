@@ -3,6 +3,7 @@ package notifications
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,6 +27,9 @@ type Webhook struct {
 }
 
 var netTransport = &http.Transport{
+	TLSClientConfig: &tls.Config{
+		Renegotiation: tls.RenegotiateFreelyAsClient,
+	},
 	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
 		Timeout:   30 * time.Second,

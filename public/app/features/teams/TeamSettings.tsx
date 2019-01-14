@@ -60,6 +60,7 @@ export class TeamSettings extends React.Component<Props, State> {
               onChange={this.onChangeName}
             />
           </div>
+
           <div className="gf-form max-width-30">
             <Label tooltip="This is optional and is primarily used to set the team profile avatar (via gravatar service)">
               Email
