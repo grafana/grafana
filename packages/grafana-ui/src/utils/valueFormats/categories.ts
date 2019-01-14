@@ -300,6 +300,15 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
+    name: 'velocity',
+    formats: [
+      { name: 'metres/second (m/s)', id: 'velocityms', fn: toFixedUnit('m/s') },
+      { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
+      { name: 'miles/hour (mph)', id: 'velocitymph', fn: toFixedUnit('mph') },
+      { name: 'knot (kn)', id: 'velocityknot', fn: toFixedUnit('kn') },
+    ]
+  },
+  {
     name: 'volume',
     formats: [
       { name: 'millilitre (mL)', id: 'mlitre', fn: decimalSIPrefix('L', -1) },
