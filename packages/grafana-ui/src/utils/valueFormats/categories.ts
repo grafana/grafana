@@ -22,7 +22,7 @@ import { binarySIPrefix, currency, decimalSIPrefix } from './symbolFormatters';
 
 export const getCategories = (): ValueFormatCategory[] => [
   {
-    name: 'none',
+    name: 'Misc',
     formats: [
       { name: 'none', id: 'none', fn: toFixed },
       {
@@ -41,7 +41,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'acceleration',
+    name: 'Acceleration',
     formats: [
       { name: 'Meters/sec²', id: 'accMS2', fn: toFixedUnit('m/sec²') },
       { name: 'Feet/sec²', id: 'accFS2', fn: toFixedUnit('f/sec²') },
@@ -49,7 +49,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'angle',
+    name: 'Angle',
     formats: [
       { name: 'Degrees (°)', id: 'degree', fn: toFixedUnit('°') },
       { name: 'Radians', id: 'radian', fn: toFixedUnit('rad') },
@@ -57,7 +57,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'area',
+    name: 'Area',
     formats: [
       { name: 'Square Meters (m²)', id: 'areaM2', fn: toFixedUnit('m²') },
       { name: 'Square Feet (ft²)', id: 'areaF2', fn: toFixedUnit('ft²') },
@@ -65,7 +65,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'computation throughput',
+    name: 'Computation',
     formats: [
       { name: 'FLOP/s', id: 'flops', fn: decimalSIPrefix('FLOP/s') },
       { name: 'MFLOP/s', id: 'mflops', fn: decimalSIPrefix('FLOP/s', 2) },
@@ -76,7 +76,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'concentration',
+    name: 'Concentration',
     formats: [
       { name: 'parts-per-million (ppm)', id: 'ppm', fn: toFixedUnit('ppm') },
       { name: 'parts-per-billion (ppb)', id: 'conppb', fn: toFixedUnit('ppb') },
@@ -93,7 +93,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'currency',
+    name: 'Currency',
     formats: [
       { name: 'Dollars ($)', id: 'currencyUSD', fn: currency('$') },
       { name: 'Pounds (£)', id: 'currencyGBP', fn: currency('£') },
@@ -113,7 +113,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'data (IEC)',
+    name: 'Data (IEC)',
     formats: [
       { name: 'bits', id: 'bits', fn: binarySIPrefix('b') },
       { name: 'bytes', id: 'bytes', fn: binarySIPrefix('B') },
@@ -123,7 +123,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'data (Metric)',
+    name: 'Data (Metric)',
     formats: [
       { name: 'bits', id: 'decbits', fn: decimalSIPrefix('d') },
       { name: 'bytes', id: 'decbytes', fn: decimalSIPrefix('B') },
@@ -133,7 +133,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'data rate',
+    name: 'Data Rate',
     formats: [
       { name: 'packets/sec', id: 'pps', fn: decimalSIPrefix('pps') },
       { name: 'bits/sec', id: 'bps', fn: decimalSIPrefix('bps') },
@@ -147,7 +147,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'date & time',
+    name: 'Date & Time',
     formats: [
       { name: 'YYYY-MM-DD HH:mm:ss', id: 'dateTimeAsIso', fn: dateTimeAsIso },
       { name: 'DD/MM/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
@@ -155,7 +155,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'energy',
+    name: 'Energy',
     formats: [
       { name: 'Watt (W)', id: 'watt', fn: decimalSIPrefix('W') },
       { name: 'Kilowatt (kW)', id: 'kwatt', fn: decimalSIPrefix('W', 1) },
@@ -182,7 +182,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'flow',
+    name: 'Flow',
     formats: [
       { name: 'Gallons/min (gpm)', id: 'flowgpm', fn: toFixedUnit('gpm') },
       { name: 'Cubic meters/sec (cms)', id: 'flowcms', fn: toFixedUnit('cms') },
@@ -194,7 +194,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'force',
+    name: 'Force',
     formats: [
       { name: 'Newton-meters (Nm)', id: 'forceNm', fn: decimalSIPrefix('Nm') },
       { name: 'Kilonewton-meters (kNm)', id: 'forcekNm', fn: decimalSIPrefix('Nm', 1) },
@@ -203,7 +203,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'hash rate',
+    name: 'Hash Rate',
     formats: [
       { name: 'hashes/sec', id: 'Hs', fn: decimalSIPrefix('H/s') },
       { name: 'kilohashes/sec', id: 'KHs', fn: decimalSIPrefix('H/s', 1) },
@@ -215,7 +215,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'mass',
+    name: 'Mass',
     formats: [
       { name: 'milligram (mg)', id: 'massmg', fn: decimalSIPrefix('g', -1) },
       { name: 'gram (g)', id: 'massg', fn: decimalSIPrefix('g') },
@@ -234,7 +234,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'pressure',
+    name: 'Pressure',
     formats: [
       { name: 'Millibars', id: 'pressurembar', fn: decimalSIPrefix('bar', -1) },
       { name: 'Bars', id: 'pressurebar', fn: decimalSIPrefix('bar') },
@@ -246,7 +246,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'radiation',
+    name: 'Radiation',
     formats: [
       { name: 'Becquerel (Bq)', id: 'radbq', fn: decimalSIPrefix('Bq') },
       { name: 'curie (Ci)', id: 'radci', fn: decimalSIPrefix('Ci') },
@@ -260,7 +260,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'temperature',
+    name: 'Temperature',
     formats: [
       { name: 'Celsius (°C)', id: 'celsius', fn: toFixedUnit('°C') },
       { name: 'Farenheit (°F)', id: 'farenheit', fn: toFixedUnit('°F') },
@@ -268,7 +268,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'time',
+    name: 'Time',
     formats: [
       { name: 'Hertz (1/s)', id: 'hertz', fn: decimalSIPrefix('Hz') },
       { name: 'nanoseconds (ns)', id: 'ns', fn: toNanoSeconds },
@@ -287,7 +287,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'throughput',
+    name: 'Throughput',
     formats: [
       { name: 'ops/sec (ops)', id: 'ops', fn: simpleCountUnit('ops') },
       { name: 'requests/sec (rps)', id: 'reqps', fn: simpleCountUnit('reqps') },
@@ -300,7 +300,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'velocity',
+    name: 'Velocity',
     formats: [
       { name: 'metres/second (m/s)', id: 'velocityms', fn: toFixedUnit('m/s') },
       { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
@@ -309,7 +309,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ]
   },
   {
-    name: 'volume',
+    name: 'Volume',
     formats: [
       { name: 'millilitre (mL)', id: 'mlitre', fn: decimalSIPrefix('L', -1) },
       { name: 'litre (L)', id: 'litre', fn: decimalSIPrefix('L') },
@@ -318,5 +318,5 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'cubic decimetre', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
     ],
-  },
+  }
 ];
