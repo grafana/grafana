@@ -1,5 +1,6 @@
 import './bucket_agg';
 import './metric_agg';
+import './pipeline_variables';
 
 import angular from 'angular';
 import _ from 'lodash';
@@ -69,6 +70,9 @@ export class ElasticQueryCtrl extends QueryCtrl {
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += metric.field;
+      }
+      if (aggDef.supportsMultipleBucketPaths) {
+        text += metric.settings.script.replace(new RegExp('params.', 'g'), '');
       }
       text += '), ';
     });
