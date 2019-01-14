@@ -95,6 +95,10 @@ export class Help extends React.Component<Props, State> {
                 <li>
                   <code>{`${'{{resource.label.label_name}}'}`}</code> = Resource label metadata e.g. resource.label.zone
                 </li>
+                <li>
+                  <code>{`${'{{bucket}}'}`}</code> = bucket boundary for distribution metrics when using a heatmap in
+                  Grafana
+                </li>
               </ul>
             </pre>
           </div>
