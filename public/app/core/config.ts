@@ -6,6 +6,8 @@ export interface BuildInfo {
   commit: string;
   isEnterprise: boolean;
   env: string;
+  latestVersion: string;
+  hasUpdate: boolean;
 }
 
 export class Settings {
