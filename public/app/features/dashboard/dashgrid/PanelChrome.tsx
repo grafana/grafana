@@ -20,6 +20,7 @@ import { PanelPlugin } from 'app/types';
 import { TimeRange } from '@grafana/ui';
 
 import variables from 'sass/_variables.scss';
+import templateSrv from 'app/features/templating/template_srv';
 
 export interface Props {
   panel: PanelModel;
@@ -78,6 +79,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
+  onInterpolate = (value: string, format?: string) => {
+    return templateSrv.replace(value, this.props.panel.scopedVars, format);
+  };
+
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
@@ -124,9 +129,10 @@ export class PanelChrome extends PureComponent<Props, State> {
                         timeSeries={timeSeries}
                         timeRange={timeRange}
                         options={panel.getOptions(plugin.exports.PanelDefaults)}
-                        width={width - 2 * variables.panelHorizontalPadding }
+                        width={width - 2 * variables.panelHorizontalPadding}
                         height={height - PANEL_HEADER_HEIGHT - variables.panelVerticalPadding}
                         renderCounter={renderCounter}
+                        onInterpolate={this.onInterpolate}
                       />
                     </div>
                   );

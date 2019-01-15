@@ -1,6 +1,8 @@
 import { TimeSeries, LoadingState } from './series';
 import { TimeRange } from './time';
 
+export type InterpolateFunction = (value: string, format?: string | Function) => string;
+
 export interface PanelProps<T = any> {
   timeSeries: TimeSeries[];
   timeRange: TimeRange;
@@ -9,6 +11,7 @@ export interface PanelProps<T = any> {
   renderCounter: number;
   width: number;
   height: number;
+  onInterpolate: InterpolateFunction;
 }
 
 export interface PanelOptionsProps<T = any> {
