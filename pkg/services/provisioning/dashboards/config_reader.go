@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -69,7 +70,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 		parsedDashboards, err := cr.parseConfigs(file)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not parse provisioning config file: %s error: %v", file.Name(), err)
 		}
 
 		if len(parsedDashboards) > 0 {
