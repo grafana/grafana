@@ -48,7 +48,18 @@
   height: 37px;
 }
 
-.thresholds-row-input-inner > div:last-child {
+.thresholds-row-input-inner > div {
+  border-left: 1px solid $input-label-border-color;
+  border-top: 1px solid $input-label-border-color;
+  border-bottom: 1px solid $input-label-border-color;
+}
+
+.thresholds-row-input-inner > *:nth-child(2) {
+  border-top-left-radius: $border-radius;
+  border-bottom-left-radius: $border-radius;
+}
+
+.thresholds-row-input-inner > *:last-child {
   border-top-right-radius: $border-radius;
   border-bottom-right-radius: $border-radius;
 }
@@ -57,24 +68,18 @@
   align-self: center;
   width: 0;
   height: 0;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-right: 5px solid $input-label-border-color;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid $input-label-border-color;
 }
 
-.thresholds-row-input-inner-value {
-  border: 1px solid $input-label-border-color;
-  border-top-left-radius: $border-radius;
-  border-bottom-left-radius: $border-radius;
+.thresholds-row-input-inner-value > input {
   padding: 8px 10px;
   width: 150px;
 }
 
 .thresholds-row-input-inner-color {
   width: 37px;
-  border-top: 1px solid $input-label-border-color;
-  border-bottom: 1px solid $input-label-border-color;
-  border-right: 1px solid $input-label-border-color;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -96,8 +101,5 @@
   height: 37px;
   width: 37px;
   background-color: $input-label-border-color;
-  border-top: 1px solid $input-label-border-color;
-  border-bottom: 1px solid $input-label-border-color;
-  border-right: 1px solid $input-label-border-color;
   cursor: pointer;
 }

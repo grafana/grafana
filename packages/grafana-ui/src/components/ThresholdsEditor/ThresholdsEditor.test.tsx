@@ -69,6 +69,26 @@ describe('Add threshold', () => {
   });
 });
 
+describe('Remove threshold', () => {
+  it('should remove threshold', () => {
+    const thresholds = [
+      { index: 0, value: -Infinity, color: '#299c46' },
+      { index: 1, value: 50, color: '#EAB839' },
+      { index: 2, value: 75, color: '#6ED0E0' },
+    ];
+    const instance = setup({
+      thresholds,
+    });
+
+    instance.onRemoveThreshold(thresholds[1]);
+
+    expect(instance.state.thresholds).toEqual([
+      { index: 0, value: -Infinity, color: '#299c46' },
+      { index: 1, value: 75, color: '#6ED0E0' },
+    ]);
+  });
+});
+
 describe('change threshold value', () => {
   it('should update value and resort rows', () => {
     const instance = setup();

@@ -69,7 +69,19 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   onRemoveThreshold = (threshold: Threshold) => {
     this.setState(
-      prevState => ({ thresholds: prevState.thresholds.filter(t => t !== threshold) }),
+      prevState => {
+        const newThresholds = prevState.thresholds.map(t => {
+          if (t.index > threshold.index) {
+            const index = t.index - 1;
+            t = { ...t, index };
+          }
+          return t;
+        });
+
+        return {
+          thresholds: newThresholds.filter(t => t !== threshold),
+        };
+      },
       () => this.updateGauge()
     );
   };
@@ -128,21 +140,22 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const value = threshold.index === 0 ? 'Base' : threshold.value;
     return (
       <div className="thresholds-row-input-inner">
-        <div className="thresholds-row-input-inner-arrow" />
-        <input
-          className="thresholds-row-input-inner-value"
-          type="text"
-          onChange={event => this.onChangeThresholdValue(event, threshold)}
-          value={value}
-          onBlur={this.onBlur}
-          readOnly={threshold.index === 0}
-        />
+        <span className="thresholds-row-input-inner-arrow" />
         <div className="thresholds-row-input-inner-color">
           {threshold.color && (
             <div className="thresholds-row-input-inner-color-colorpicker">
               <ColorPicker color={threshold.color} onChange={color => this.onChangeThresholdColor(threshold, color)} />
             </div>
           )}
+        </div>
+        <div className="thresholds-row-input-inner-value">
+          <input
+            type="text"
+            onChange={event => this.onChangeThresholdValue(event, threshold)}
+            value={value}
+            onBlur={this.onBlur}
+            readOnly={threshold.index === 0}
+          />
         </div>
         {threshold.index > 0 && (
           <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
