@@ -111,6 +111,21 @@ describe('Remove threshold', () => {
 });
 
 describe('change threshold value', () => {
+  it('should not change threshold at index 0', () => {
+    const thresholds = [
+      { index: 0, value: -Infinity, color: '#7EB26D' },
+      { index: 1, value: 50, color: '#EAB839' },
+      { index: 2, value: 75, color: '#6ED0E0' },
+    ];
+    const instance = setup({ thresholds });
+
+    const mockEvent = { target: { value: 12 } };
+
+    instance.onChangeThresholdValue(mockEvent, thresholds[0]);
+
+    expect(instance.state.thresholds).toEqual(thresholds);
+  });
+
   it('should update value', () => {
     const instance = setup();
     const thresholds = [
