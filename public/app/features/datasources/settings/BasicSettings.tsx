@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import { Label } from '../../../../../packages/grafana-ui/src/components/Label/Label';
+import { Label } from '@grafana/ui';
 import { Switch } from '../../../core/components/Switch/Switch';
 
 export interface Props {

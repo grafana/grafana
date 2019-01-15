@@ -81,16 +81,15 @@ export default class MappingRow extends PureComponent<Props, State> {
             }}
             inputWidth={8}
           />
-          <FormGroup
-            label="Text"
-            labelWidth={4}
-            inputProps={{
-              onBlur: () => this.updateMapping,
-              onChange: event => this.onMappingTextChange(event),
-              value: text,
-            }}
-            inputWidth={10}
-          />
+          <div className="gf-form gf-form--grow">
+            <Label width={4}>Text</Label>
+            <input
+              className="gf-form-input"
+              onBlur={this.updateMapping}
+              value={text}
+              onChange={this.onMappingTextChange}
+            />
+          </div>
         </>
       );
     }

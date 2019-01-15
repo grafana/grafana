@@ -1,7 +1,7 @@
 import React, { SFC } from 'react';
 import { Label } from '..';
 
-interface Props {
+export interface Props {
   label: string;
   inputProps: {};
   labelWidth?: number;
