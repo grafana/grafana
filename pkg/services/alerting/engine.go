@@ -105,8 +105,9 @@ func (e *AlertingService) runJobDispatcher(grafanaCtx context.Context) error {
 var (
 	unfinishedWorkTimeout = time.Second * 5
 	// TODO: Make alertTimeout and alertMaxAttempts configurable in the config file.
-	alertTimeout     = time.Second * 30
-	alertMaxAttempts = 3
+	alertTimeout        = time.Second * 30
+	resultHandleTimeout = time.Second * 30
+	alertMaxAttempts    = 3
 )
 
 func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
@@ -116,7 +117,7 @@ func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *J
 		}
 	}()
 
-	cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+	cancelChan := make(chan context.CancelFunc, alertMaxAttempts*2)
 	attemptChan := make(chan int, 1)
 
 	// Initialize with first attemptID=1
@@ -204,6 +205,9 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 			}
 		}
 
+		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), resultHandleTimeout)
+		cancelChan <- resultHandleCancelFn
+		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
 		e.resultHandler.Handle(evalContext)
 		span.Finish()
