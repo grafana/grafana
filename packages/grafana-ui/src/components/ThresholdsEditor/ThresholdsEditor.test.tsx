@@ -24,6 +24,14 @@ describe('Initialization', () => {
 });
 
 describe('Add threshold', () => {
+  it('should not add threshold at index 0', () => {
+    const instance = setup();
+
+    instance.onAddThreshold(0);
+
+    expect(instance.state.thresholds).toEqual([{ index: 0, value: -Infinity, color: '#299c46' }]);
+  });
+
   it('should add threshold', () => {
     const instance = setup();
 
@@ -70,6 +78,19 @@ describe('Add threshold', () => {
 });
 
 describe('Remove threshold', () => {
+  it('should not remove threshold at index 0', () => {
+    const thresholds = [
+      { index: 0, value: -Infinity, color: '#299c46' },
+      { index: 1, value: 50, color: '#EAB839' },
+      { index: 2, value: 75, color: '#6ED0E0' },
+    ];
+    const instance = setup({ thresholds });
+
+    instance.onRemoveThreshold(thresholds[0]);
+
+    expect(instance.state.thresholds).toEqual(thresholds);
+  });
+
   it('should remove threshold', () => {
     const thresholds = [
       { index: 0, value: -Infinity, color: '#299c46' },
@@ -90,7 +111,7 @@ describe('Remove threshold', () => {
 });
 
 describe('change threshold value', () => {
-  it('should update value and resort rows', () => {
+  it('should update value', () => {
     const instance = setup();
     const thresholds = [
       { index: 0, value: -Infinity, color: '#299c46' },
@@ -111,6 +132,30 @@ describe('change threshold value', () => {
       { index: 0, value: -Infinity, color: '#299c46' },
       { index: 1, value: 78, color: '#EAB839' },
       { index: 2, value: 75, color: '#6ED0E0' },
+    ]);
+  });
+});
+
+describe('on blur threshold value', () => {
+  it('should resort rows and update indexes', () => {
+    const instance = setup();
+    const thresholds = [
+      { index: 0, value: -Infinity, color: '#299c46' },
+      { index: 1, value: 78, color: '#EAB839' },
+      { index: 2, value: 75, color: '#6ED0E0' },
+    ];
+
+    instance.state = {
+      baseColor: BasicGaugeColor.Green,
+      thresholds,
+    };
+
+    instance.onBlur();
+
+    expect(instance.state.thresholds).toEqual([
+      { index: 2, value: 78, color: '#EAB839' },
+      { index: 1, value: 75, color: '#6ED0E0' },
+      { index: 0, value: -Infinity, color: '#299c46' },
     ]);
   });
 });
