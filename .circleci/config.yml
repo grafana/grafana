@@ -367,7 +367,7 @@ jobs:
           command: './scripts/build/publish.sh --enterprise'
       - run:
           name: Load GPG private key
-          comand: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/load-signing-key.sh'
       - run:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
@@ -430,7 +430,7 @@ jobs:
           command: './scripts/build/publish.sh'
       - run:
           name: Load GPG private key
-          comand: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/load-signing-key.sh'
       - run:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'

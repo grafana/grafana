@@ -11,3 +11,4 @@ import './alerting/NotificationsListCtrl';
 import './manage-dashboards';
 import './teams/CreateTeamCtrl';
 import './profile/all';
+import './datasources/settings/HttpSettingsCtrl';

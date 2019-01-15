@@ -2,6 +2,7 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
+import { MetricDescriptor } from './types';
 
 export default class StackdriverDatasource {
   id: number;
@@ -28,21 +29,15 @@ export default class StackdriverDatasource {
         return !target.hide && target.metricType;
       })
       .map(t => {
-        if (!t.hasOwnProperty('aggregation')) {
-          t.aggregation = {
-            crossSeriesReducer: 'REDUCE_MEAN',
-            groupBys: [],
-          };
-        }
         return {
           refId: t.refId,
           intervalMs: options.intervalMs,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(t.metricType, options.scopedVars || {}),
-          primaryAggregation: this.templateSrv.replace(t.aggregation.crossSeriesReducer, options.scopedVars || {}),
-          perSeriesAligner: this.templateSrv.replace(t.aggregation.perSeriesAligner, options.scopedVars || {}),
-          alignmentPeriod: this.templateSrv.replace(t.aggregation.alignmentPeriod, options.scopedVars || {}),
-          groupBys: this.interpolateGroupBys(t.aggregation.groupBys, options.scopedVars),
+          primaryAggregation: this.templateSrv.replace(t.crossSeriesReducer || 'REDUCE_MEAN', options.scopedVars || {}),
+          perSeriesAligner: this.templateSrv.replace(t.perSeriesAligner, options.scopedVars || {}),
+          alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod, options.scopedVars || {}),
+          groupBys: this.interpolateGroupBys(t.groupBys, options.scopedVars),
           view: t.view || 'FULL',
           filters: (t.filters || []).map(f => {
             return this.templateSrv.replace(f, options.scopedVars || {});
@@ -75,9 +70,7 @@ export default class StackdriverDatasource {
           refId: refId,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(metricType),
-          aggregation: {
-            crossSeriesReducer: 'REDUCE_NONE',
-          },
+          crossSeriesReducer: 'REDUCE_NONE',
           view: 'HEADERS',
         },
       ],
@@ -261,7 +254,7 @@ export default class StackdriverDatasource {
     }
   }
 
-  async getMetricTypes(projectName: string) {
+  async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {
     try {
       if (this.metricTypes.length === 0) {
         const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
@@ -273,6 +266,7 @@ export default class StackdriverDatasource {
           m.service = service;
           m.serviceShortName = serviceShortName;
           m.displayName = m.displayName || m.type;
+
           return m;
         });
       }
