@@ -2,7 +2,6 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import { ThresholdsEditor, Props } from './ThresholdsEditor';
-import { BasicGaugeColor } from '../../types';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -135,7 +134,6 @@ describe('change threshold value', () => {
     ];
 
     instance.state = {
-      baseColor: BasicGaugeColor.Green,
       thresholds,
     };
 
@@ -161,7 +159,6 @@ describe('on blur threshold value', () => {
     ];
 
     instance.state = {
-      baseColor: BasicGaugeColor.Green,
       thresholds,
     };
 

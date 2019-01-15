@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 // import tinycolor, { ColorInput } from 'tinycolor2';
 
-import { Threshold, BasicGaugeColor } from '../../types';
+import { Threshold } from '../../types';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { colors } from '../../utils';
@@ -13,7 +13,6 @@ export interface Props {
 
 interface State {
   thresholds: Threshold[];
-  baseColor: string;
 }
 
 export class ThresholdsEditor extends PureComponent<Props, State> {
@@ -22,7 +21,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
     const thresholds: Threshold[] =
       props.thresholds.length > 0 ? props.thresholds : [{ index: 0, value: -Infinity, color: colors[0] }];
-    this.state = { thresholds, baseColor: BasicGaugeColor.Green };
+    this.state = { thresholds };
   }
 
   onAddThreshold = (index: number) => {
