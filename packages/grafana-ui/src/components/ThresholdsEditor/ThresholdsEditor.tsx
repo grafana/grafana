@@ -95,10 +95,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     }
 
     const { thresholds } = this.state;
+    const parsedValue = parseInt(event.target.value, 10);
+    const value = isNaN(parsedValue) ? null : parsedValue;
 
     const newThresholds = thresholds.map(t => {
       if (t === threshold) {
-        t = { ...t, value: parseInt(event.target.value, 10) };
+        t = { ...t, value: value as number };
       }
 
       return t;
