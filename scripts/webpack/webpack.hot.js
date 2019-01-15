@@ -7,7 +7,7 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const IgnoreNotFoundExportPlugin = require("./IgnoreNotFoundExportPlugin.js");
+const IgnoreNotFoundExportPlugin = require('./IgnoreNotFoundExportPlugin.js');
 
 module.exports = merge(common, {
   entry: {
@@ -57,6 +57,7 @@ module.exports = merge(common, {
                 [require('@rtsao/plugin-proposal-class-properties'), { loose: true }],
                 'angularjs-annotate',
                 'syntax-dynamic-import', // needed for `() => import()` in routes.ts
+                'babel-plugin-emotion',
                 'react-hot-loader/babel',
               ],
               presets: [
@@ -67,9 +68,15 @@ module.exports = merge(common, {
                     useBuiltIns: 'entry',
                   },
                 ],
-                '@babel/preset-typescript',
+                // '@babel/preset-typescript',
                 '@babel/preset-react',
               ],
+            },
+          },
+          {
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true,
             },
           },
         ],

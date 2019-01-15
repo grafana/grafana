@@ -1,9 +1,9 @@
 import React from 'react';
 import { DeleteButton } from './DeleteButton';
-import { shallow } from 'enzyme';
+import { shallow, ShallowWrapper } from 'enzyme';
 
 describe('DeleteButton', () => {
-  let wrapper: any;
+  let wrapper: ShallowWrapper<any, any>;
   let deleted: any;
 
   beforeAll(() => {
@@ -18,28 +18,20 @@ describe('DeleteButton', () => {
 
   it('should show confirm delete when clicked', () => {
     expect(wrapper.state().showConfirm).toBe(false);
-    wrapper.find('.delete-button').simulate('click');
+    wrapper.find('[data-test-id="deleteButton"]').simulate('click');
     expect(wrapper.state().showConfirm).toBe(true);
   });
 
-  it('should hide confirm delete when clicked', () => {
-    wrapper.find('.delete-button').simulate('click');
+  it.only('should hide confirm delete when clicked', () => {
+    wrapper.find('[data-test-id="deleteButton"]').simulate('click');
     expect(wrapper.state().showConfirm).toBe(true);
-    wrapper
-      .find('.confirm-delete')
-      .find('.btn')
-      .at(0)
-      .simulate('click');
+    wrapper.find('[data-test-id="cancelDeleteButton"]').simulate('click');
     expect(wrapper.state().showConfirm).toBe(false);
   });
 
   it('should show confirm delete when clicked', () => {
     expect(deleted).toBe(false);
-    wrapper
-      .find('.confirm-delete')
-      .find('.btn')
-      .at(1)
-      .simulate('click');
+    wrapper.find('[data-test-id="confirmDeleteButton"]').simulate('click');
     expect(deleted).toBe(true);
   });
 });
