@@ -2,14 +2,14 @@ package mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
-	"errors"
 
-	"crypto/x509"
 	"crypto/tls"
+	"crypto/x509"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -47,7 +47,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	if tlsAuth || tlsAuthWithCACert {
 
 		secureJsonData := datasource.SecureJsonData.Decrypt()
-		tlsConfig := tls.Config {
+		tlsConfig := tls.Config{
 			InsecureSkipVerify: tlsSkipVerify,
 		}
 
