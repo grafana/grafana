@@ -2,7 +2,7 @@
 
 exports[`Render should render action bar and datasources 1`] = `
 <Page
-  title="Data Sources"
+  title="Configuration: Data Sources"
 >
   <PageHeader
     model={Object {}}
@@ -151,7 +151,7 @@ exports[`Render should render action bar and datasources 1`] = `
 
 exports[`Render should render component 1`] = `
 <Page
-  title="Data Sources"
+  title="Configuration: Data Sources"
 >
   <PageHeader
     model={Object {}}
