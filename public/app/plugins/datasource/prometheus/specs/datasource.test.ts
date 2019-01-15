@@ -644,8 +644,8 @@ describe('PrometheusDatasource', () => {
         ctx.ds.annotationQuery(query);
         const req = backendSrv.datasourceRequest.mock.calls[0][0];
         // Range in seconds: (to - from) / 1000
-        // Max_datapints: 11000
-        // Step: range / max_datapints
+        // Max_datapoints: 11000
+        // Step: range / max_datapoints
         const step = 236;
         expect(req.url).toContain(`step=${step}`);
       });
