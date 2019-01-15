@@ -68,6 +68,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   onRemoveThreshold = (threshold: Threshold) => {
+    if (threshold.index === 0) {
+      return;
+    }
+
     this.setState(
       prevState => {
         const newThresholds = prevState.thresholds.map(t => {
@@ -91,7 +95,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
     const newThresholds = thresholds.map(t => {
       if (t === threshold) {
-        t = { ...t, value: event.target.value };
+        t = { ...t, value: parseInt(event.target.value, 10) };
       }
 
       return t;
@@ -121,7 +125,14 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   onChangeBaseColor = (color: string) => this.props.onChange(this.state.thresholds);
   onBlur = () => {
-    this.setState(prevState => ({ thresholds: this.sortThresholds(prevState.thresholds) }));
+    this.setState(prevState => {
+      const sortThresholds = this.sortThresholds([...prevState.thresholds]);
+      let index = sortThresholds.length - 1;
+      sortThresholds.forEach(t => {
+        t.index = index--;
+      });
+      return { thresholds: sortThresholds };
+    });
 
     this.updateGauge();
   };
