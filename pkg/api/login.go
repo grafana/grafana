@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -43,7 +42,7 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 		return
 	}
 
-	if !tryLoginUsingRememberCookie(c) {
+	if !hs.tryLoginUsingRememberCookie(c) {
 		c.HTML(200, ViewIndex, viewData)
 		return
 	}
@@ -75,7 +74,7 @@ func tryOAuthAutoLogin(c *m.ReqContext) bool {
 	return false
 }
 
-func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
+func (hs *HTTPServer) tryLoginUsingRememberCookie(c *m.ReqContext) bool {
 	// Check auto-login.
 	uname := c.GetCookie(setting.CookieUserName)
 	if len(uname) == 0 {
@@ -111,12 +110,12 @@ func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
 	}
 
 	isSucceed = true
-	loginUserWithUser(user, c)
+	hs.loginUserWithUser(user, c)
 	return true
 }
 
-func LoginAPIPing(c *m.ReqContext) {
-	if !tryLoginUsingRememberCookie(c) {
+func (hs *HTTPServer) LoginAPIPing(c *m.ReqContext) {
+	if !hs.tryLoginUsingRememberCookie(c) {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
 	}
@@ -124,7 +123,7 @@ func LoginAPIPing(c *m.ReqContext) {
 	c.JsonOK("Logged in")
 }
 
-func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
+func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	if setting.DisableLoginForm {
 		return Error(401, "Login is disabled", nil)
 	}
@@ -146,7 +145,7 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 
 	user := authQuery.User
 
-	loginUserWithUser(user, c)
+	hs.loginUserWithUser(user, c)
 
 	result := map[string]interface{}{
 		"message": "Logged in",
@@ -162,27 +161,20 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	return JSON(200, result)
 }
 
-func loginUserWithUser(user *m.User, c *m.ReqContext) {
+func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 	if user == nil {
-		log.Error(3, "User login with nil user")
+		hs.log.Error("User login with nil user")
 	}
 
-	c.Resp.Header().Del("Set-Cookie")
-
-	days := 86400 * setting.LogInRememberDays
-	if days > 0 {
-		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	err := hs.AuthTokenService.UserAuthenticatedHook(user, c)
+	if err != nil {
+		hs.log.Error("User auth hook failed", err)
 	}
-
-	c.Session.RegenerateId(c.Context)
-	c.Session.Set(session.SESS_KEY_USERID, user.Id)
 }
 
-func Logout(c *m.ReqContext) {
-	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
-	c.Session.Destory(c.Context)
+func (hs *HTTPServer) Logout(c *m.ReqContext) {
+	hs.AuthTokenService.UserSignedOutHook(c)
+
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
 	} else {

@@ -148,7 +148,7 @@ func GetInviteInfoByCode(c *m.ReqContext) Response {
 	})
 }
 
-func CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
+func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
 	query := m.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -186,7 +186,7 @@ func CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Res
 		return rsp
 	}
 
-	loginUserWithUser(user, c)
+	hs.loginUserWithUser(user, c)
 
 	metrics.M_Api_User_SignUpCompleted.Inc()
 	metrics.M_Api_User_SignUpInvite.Inc()

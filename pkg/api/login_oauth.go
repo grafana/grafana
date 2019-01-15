@@ -31,7 +31,7 @@ func GenStateString() string {
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
-func OAuthLogin(ctx *m.ReqContext) {
+func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
 		return
@@ -178,7 +178,7 @@ func OAuthLogin(ctx *m.ReqContext) {
 	}
 
 	// login
-	loginUserWithUser(cmd.Result, ctx)
+	hs.loginUserWithUser(cmd.Result, ctx)
 
 	metrics.M_Api_Login_OAuth.Inc()
 

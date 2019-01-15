@@ -11,6 +11,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/auth"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -49,13 +51,14 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister   routing.RouteRegister    `inject:""`
-	Bus             bus.Bus                  `inject:""`
-	RenderService   rendering.Service        `inject:""`
-	Cfg             *setting.Cfg             `inject:""`
-	HooksService    *hooks.HooksService      `inject:""`
-	CacheService    *cache.CacheService      `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
+	RouteRegister    routing.RouteRegister      `inject:""`
+	Bus              bus.Bus                    `inject:""`
+	RenderService    rendering.Service          `inject:""`
+	Cfg              *setting.Cfg               `inject:""`
+	HooksService     *hooks.HooksService        `inject:""`
+	CacheService     *cache.CacheService        `inject:""`
+	DatasourceCache  datasources.CacheService   `inject:""`
+	AuthTokenService *auth.UserAuthTokenService `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
