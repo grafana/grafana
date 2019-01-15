@@ -7,12 +7,11 @@ import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { LogsModel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
-import { clickLogsButton } from './state/actions';
+import { toggleLogs } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
 
 interface LogsContainerProps {
-  clickLogsButton: typeof clickLogsButton;
   exploreId: ExploreId;
   loading: boolean;
   logsHighlighterExpressions?: string[];
@@ -25,11 +24,12 @@ interface LogsContainerProps {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   showingLogs: boolean;
+  toggleLogs: typeof toggleLogs;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
   onClickLogsButton = () => {
-    this.props.clickLogsButton(this.props.exploreId);
+    this.props.toggleLogs(this.props.exploreId);
   };
 
   render() {
@@ -85,7 +85,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
 }
 
 const mapDispatchToProps = {
-  clickLogsButton,
+  toggleLogs,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LogsContainer));

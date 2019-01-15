@@ -18,15 +18,15 @@ import {
   changeDatasource,
   changeSize,
   changeTime,
-  clickClear,
-  clickCloseSplit,
-  clickExample,
-  clickSplit,
+  clearQueries,
   initializeExplore,
   modifyQueries,
   runQueries,
   scanStart,
   scanStop,
+  setQueries,
+  splitClose,
+  splitOpen,
 } from './state/actions';
 
 import { Alert } from './Error';
@@ -42,10 +42,7 @@ interface ExploreProps {
   changeDatasource: typeof changeDatasource;
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
-  clickClear: typeof clickClear;
-  clickCloseSplit: typeof clickCloseSplit;
-  clickExample: typeof clickExample;
-  clickSplit: typeof clickSplit;
+  clearQueries: typeof clearQueries;
   datasourceError: string;
   datasourceInstance: any;
   datasourceLoading: boolean | null;
@@ -65,7 +62,10 @@ interface ExploreProps {
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
   scanStop: typeof scanStop;
+  setQueries: typeof setQueries;
   split: boolean;
+  splitClose: typeof splitClose;
+  splitOpen: typeof splitOpen;
   showingStartPage?: boolean;
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
@@ -152,20 +152,20 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onClickClear = () => {
-    this.props.clickClear(this.props.exploreId);
+    this.props.clearQueries(this.props.exploreId);
   };
 
   onClickCloseSplit = () => {
-    this.props.clickCloseSplit();
+    this.props.splitClose();
   };
 
   // Use this in help pages to set page to a single query
   onClickExample = (query: DataQuery) => {
-    this.props.clickExample(this.props.exploreId, query);
+    this.props.setQueries(this.props.exploreId, [query]);
   };
 
   onClickSplit = () => {
-    this.props.clickSplit();
+    this.props.splitOpen();
   };
 
   onClickLabel = (key: string, value: string) => {
@@ -175,7 +175,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   onModifyQueries = (action, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, action: any) => datasourceInstance.modifyQuery(queries, action);
+      const modifier = (queries: DataQuery, modification: any) => datasourceInstance.modifyQuery(queries, modification);
       this.props.modifyQueries(this.props.exploreId, action, index, modifier);
     }
   };
@@ -366,15 +366,15 @@ const mapDispatchToProps = {
   changeDatasource,
   changeSize,
   changeTime,
-  clickClear,
-  clickCloseSplit,
-  clickExample,
-  clickSplit,
+  clearQueries,
   initializeExplore,
   modifyQueries,
   runQueries,
   scanStart,
   scanStop,
+  setQueries,
+  splitClose,
+  splitOpen,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Explore));

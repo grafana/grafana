@@ -6,13 +6,12 @@ import { RawTimeRange, TimeRange } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { clickGraphButton } from './state/actions';
+import { toggleGraph } from './state/actions';
 import Graph from './Graph';
 import Panel from './Panel';
 
 interface GraphContainerProps {
   onChangeTime: (range: TimeRange) => void;
-  clickGraphButton: typeof clickGraphButton;
   exploreId: ExploreId;
   graphResult?: any[];
   loading: boolean;
@@ -20,11 +19,12 @@ interface GraphContainerProps {
   showingGraph: boolean;
   showingTable: boolean;
   split: boolean;
+  toggleGraph: typeof toggleGraph;
 }
 
 export class GraphContainer extends PureComponent<GraphContainerProps> {
   onClickGraphButton = () => {
-    this.props.clickGraphButton(this.props.exploreId);
+    this.props.toggleGraph(this.props.exploreId);
   };
 
   render() {
@@ -55,7 +55,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
 }
 
 const mapDispatchToProps = {
-  clickGraphButton,
+  toggleGraph,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(GraphContainer));

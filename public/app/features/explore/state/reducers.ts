@@ -7,7 +7,7 @@ import {
 import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
 import { DataQuery } from 'app/types/series';
 
-import { Action, ActionTypes } from './actions';
+import { Action, ActionTypes } from './actionTypes';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -62,13 +62,16 @@ const itemReducer = (state, action: Action): ExploreItemState => {
     case ActionTypes.AddQueryRow: {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
       const { index, query } = action;
-      modifiedQueries[index + 1] = query;
 
-      const nextQueries = [
-        ...initialQueries.slice(0, index + 1),
-        { ...modifiedQueries[index + 1] },
+      // Add new query row after given index, keep modifications of existing rows
+      const nextModifiedQueries = [
+        ...modifiedQueries.slice(0, index + 1),
+        { ...query },
         ...initialQueries.slice(index + 1),
       ];
+
+      // Add to initialQueries, which will cause a new row to be rendered
+      const nextQueries = [...initialQueries.slice(0, index + 1), { ...query }, ...initialQueries.slice(index + 1)];
 
       // Ongoing transactions need to update their row indices
       const nextQueryTransactions = queryTransactions.map(qt => {
@@ -83,9 +86,9 @@ const itemReducer = (state, action: Action): ExploreItemState => {
 
       return {
         ...state,
-        modifiedQueries,
         initialQueries: nextQueries,
         logsHighlighterExpressions: undefined,
+        modifiedQueries: nextModifiedQueries,
         queryTransactions: nextQueryTransactions,
       };
     }
@@ -94,29 +97,33 @@ const itemReducer = (state, action: Action): ExploreItemState => {
       const { initialQueries, queryTransactions } = state;
       let { modifiedQueries } = state;
       const { query, index, override } = action;
+
+      // Fast path: only change modifiedQueries to not trigger an update
       modifiedQueries[index] = query;
-      if (override) {
-        const nextQuery: DataQuery = {
-          ...query,
-          ...generateEmptyQuery(index),
-        };
-        const nextQueries = [...initialQueries];
-        nextQueries[index] = nextQuery;
-        modifiedQueries = [...nextQueries];
-
-        // Discard ongoing transaction related to row query
-        const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
-
+      if (!override) {
         return {
           ...state,
-          initialQueries: nextQueries,
-          modifiedQueries: nextQueries.slice(),
-          queryTransactions: nextQueryTransactions,
+          modifiedQueries,
         };
       }
+
+      // Override path: queries are completely reset
+      const nextQuery: DataQuery = {
+        ...query,
+        ...generateEmptyQuery(index),
+      };
+      const nextQueries = [...initialQueries];
+      nextQueries[index] = nextQuery;
+      modifiedQueries = [...nextQueries];
+
+      // Discard ongoing transaction related to row query
+      const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+
       return {
         ...state,
-        modifiedQueries,
+        initialQueries: nextQueries,
+        modifiedQueries: nextQueries.slice(),
+        queryTransactions: nextQueryTransactions,
       };
     }
 
@@ -138,56 +145,15 @@ const itemReducer = (state, action: Action): ExploreItemState => {
       };
     }
 
-    case ActionTypes.ClickClear: {
+    case ActionTypes.ClearQueries: {
       const queries = ensureQueries();
       return {
         ...state,
         initialQueries: queries.slice(),
         modifiedQueries: queries.slice(),
+        queryTransactions: [],
         showingStartPage: Boolean(state.StartPage),
       };
-    }
-
-    case ActionTypes.ClickExample: {
-      const modifiedQueries = [action.query];
-      return { ...state, initialQueries: modifiedQueries.slice(), modifiedQueries };
-    }
-
-    case ActionTypes.ClickGraphButton: {
-      const showingGraph = !state.showingGraph;
-      let nextQueryTransactions = state.queryTransactions;
-      if (!showingGraph) {
-        // Discard transactions related to Graph query
-        nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Graph');
-      }
-      return { ...state, queryTransactions: nextQueryTransactions, showingGraph };
-    }
-
-    case ActionTypes.ClickLogsButton: {
-      const showingLogs = !state.showingLogs;
-      let nextQueryTransactions = state.queryTransactions;
-      if (!showingLogs) {
-        // Discard transactions related to Logs query
-        nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Logs');
-      }
-      return { ...state, queryTransactions: nextQueryTransactions, showingLogs };
-    }
-
-    case ActionTypes.ClickTableButton: {
-      const showingTable = !state.showingTable;
-      if (showingTable) {
-        return { ...state, showingTable, queryTransactions: state.queryTransactions };
-      }
-
-      // Toggle off needs discarding of table queries and results
-      const nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
-      const results = calculateResultsFromQueryTransactions(
-        nextQueryTransactions,
-        state.datasourceInstance,
-        state.queryIntervals.intervalMs
-      );
-
-      return { ...state, ...results, queryTransactions: nextQueryTransactions, showingTable };
     }
 
     case ActionTypes.HighlightLogsExpression: {
@@ -248,7 +214,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
 
     case ActionTypes.ModifyQueries: {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
-      const { action: modification, index, modifier } = action as any;
+      const { modification, index, modifier } = action as any;
       let nextQueries: DataQuery[];
       let nextQueryTransactions;
       if (index === undefined) {
@@ -285,37 +251,6 @@ const itemReducer = (state, action: Action): ExploreItemState => {
       return {
         ...state,
         initialQueries: nextQueries,
-        modifiedQueries: nextQueries.slice(),
-        queryTransactions: nextQueryTransactions,
-      };
-    }
-
-    case ActionTypes.RemoveQueryRow: {
-      const { datasourceInstance, initialQueries, queryIntervals, queryTransactions } = state;
-      let { modifiedQueries } = state;
-      const { index } = action;
-
-      modifiedQueries = [...modifiedQueries.slice(0, index), ...modifiedQueries.slice(index + 1)];
-
-      if (initialQueries.length <= 1) {
-        return state;
-      }
-
-      const nextQueries = [...initialQueries.slice(0, index), ...initialQueries.slice(index + 1)];
-
-      // Discard transactions related to row query
-      const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
-      const results = calculateResultsFromQueryTransactions(
-        nextQueryTransactions,
-        datasourceInstance,
-        queryIntervals.intervalMs
-      );
-
-      return {
-        ...state,
-        ...results,
-        initialQueries: nextQueries,
-        logsHighlighterExpressions: undefined,
         modifiedQueries: nextQueries.slice(),
         queryTransactions: nextQueryTransactions,
       };
@@ -373,6 +308,41 @@ const itemReducer = (state, action: Action): ExploreItemState => {
       };
     }
 
+    case ActionTypes.RemoveQueryRow: {
+      const { datasourceInstance, initialQueries, queryIntervals, queryTransactions } = state;
+      let { modifiedQueries } = state;
+      const { index } = action;
+
+      modifiedQueries = [...modifiedQueries.slice(0, index), ...modifiedQueries.slice(index + 1)];
+
+      if (initialQueries.length <= 1) {
+        return state;
+      }
+
+      const nextQueries = [...initialQueries.slice(0, index), ...initialQueries.slice(index + 1)];
+
+      // Discard transactions related to row query
+      const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+      const results = calculateResultsFromQueryTransactions(
+        nextQueryTransactions,
+        datasourceInstance,
+        queryIntervals.intervalMs
+      );
+
+      return {
+        ...state,
+        ...results,
+        initialQueries: nextQueries,
+        logsHighlighterExpressions: undefined,
+        modifiedQueries: nextQueries.slice(),
+        queryTransactions: nextQueryTransactions,
+      };
+    }
+
+    case ActionTypes.RunQueriesEmpty: {
+      return { ...state, queryTransactions: [] };
+    }
+
     case ActionTypes.ScanRange: {
       return { ...state, scanRange: action.range };
     }
@@ -386,6 +356,48 @@ const itemReducer = (state, action: Action): ExploreItemState => {
       const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
       return { ...state, queryTransactions: nextQueryTransactions, scanning: false, scanRange: undefined };
     }
+
+    case ActionTypes.SetQueries: {
+      const { queries } = action;
+      return { ...state, initialQueries: queries.slice(), modifiedQueries: queries.slice() };
+    }
+
+    case ActionTypes.ToggleGraph: {
+      const showingGraph = !state.showingGraph;
+      let nextQueryTransactions = state.queryTransactions;
+      if (!showingGraph) {
+        // Discard transactions related to Graph query
+        nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Graph');
+      }
+      return { ...state, queryTransactions: nextQueryTransactions, showingGraph };
+    }
+
+    case ActionTypes.ToggleLogs: {
+      const showingLogs = !state.showingLogs;
+      let nextQueryTransactions = state.queryTransactions;
+      if (!showingLogs) {
+        // Discard transactions related to Logs query
+        nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Logs');
+      }
+      return { ...state, queryTransactions: nextQueryTransactions, showingLogs };
+    }
+
+    case ActionTypes.ToggleTable: {
+      const showingTable = !state.showingTable;
+      if (showingTable) {
+        return { ...state, showingTable, queryTransactions: state.queryTransactions };
+      }
+
+      // Toggle off needs discarding of table queries and results
+      const nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
+      const results = calculateResultsFromQueryTransactions(
+        nextQueryTransactions,
+        state.datasourceInstance,
+        state.queryIntervals.intervalMs
+      );
+
+      return { ...state, ...results, queryTransactions: nextQueryTransactions, showingTable };
+    }
   }
 
   return state;
@@ -397,14 +409,14 @@ const itemReducer = (state, action: Action): ExploreItemState => {
  */
 export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
   switch (action.type) {
-    case ActionTypes.ClickCloseSplit: {
+    case ActionTypes.SplitClose: {
       return {
         ...state,
         split: false,
       };
     }
 
-    case ActionTypes.ClickSplit: {
+    case ActionTypes.SplitOpen: {
       return {
         ...state,
         split: true,
