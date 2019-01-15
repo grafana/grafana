@@ -56,10 +56,6 @@ func Debug(format string, v ...interface{}) {
 	Root.Debug(message)
 }
 
-func Debug2(message string, v ...interface{}) {
-	Root.Debug(message, v...)
-}
-
 func Info(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
@@ -69,10 +65,6 @@ func Info(format string, v ...interface{}) {
 	}
 
 	Root.Info(message)
-}
-
-func Info2(message string, v ...interface{}) {
-	Root.Info(message, v...)
 }
 
 func Warn(format string, v ...interface{}) {
