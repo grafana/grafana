@@ -91,6 +91,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   onChangeThresholdValue = (event: any, threshold: Threshold) => {
+    if (threshold.index === 0) {
+      return;
+    }
+
     const { thresholds } = this.state;
 
     const newThresholds = thresholds.map(t => {
