@@ -80,9 +80,9 @@ export class Gauge extends PureComponent<Props> {
       const { rangeMap, valueMap } = this.formatWithMappings(mappings, formattedValue);
 
       if (valueMap) {
-        return valueMap;
+        return `${prefix} ${valueMap} ${suffix}`;
       } else if (rangeMap) {
-        return rangeMap;
+        return `${prefix} ${rangeMap} ${suffix}`;
       }
     }
 
