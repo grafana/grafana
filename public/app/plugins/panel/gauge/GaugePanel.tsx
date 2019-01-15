@@ -11,12 +11,22 @@ export class GaugePanel extends PureComponent<Props> {
     const { timeSeries, width, height, onInterpolate, options } = this.props;
 
     const prefix = onInterpolate(options.prefix);
+    const suffix = onInterpolate(options.suffix);
 
     const vmSeries = getTimeSeriesVMs({
       timeSeries: timeSeries,
       nullValueMode: NullValueMode.Ignore,
     });
 
-    return <Gauge timeSeries={vmSeries} {...this.props.options} width={width} height={height} prefix={prefix} />;
+    return (
+      <Gauge
+        timeSeries={vmSeries}
+        {...this.props.options}
+        width={width}
+        height={height}
+        prefix={prefix}
+        suffix={suffix}
+      />
+    );
   }
 }
