@@ -21,7 +21,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     super(props);
 
     const thresholds: Threshold[] =
-      props.thresholds.length > 0 ? props.thresholds : [{ index: 0, value: -Infinity, color: '#299c46' }];
+      props.thresholds.length > 0 ? props.thresholds : [{ index: 0, value: -Infinity, color: colors[0] }];
     this.state = { thresholds, baseColor: BasicGaugeColor.Green };
   }
 
@@ -37,7 +37,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const newThresholds = thresholds.map(threshold => {
       if (threshold.index >= index) {
         const index = threshold.index + 1;
-        threshold = { ...threshold, index, color: colors[index] };
+        threshold = { ...threshold, index };
       }
       return threshold;
     });
@@ -50,7 +50,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const value = afterThresholdValue - (afterThresholdValue - beforeThresholdValue) / 2;
 
     // Set a color
-    const color = colors[index];
+    const color = colors.filter(c => newThresholds.some(t => t.color === c) === false)[0];
 
     this.setState(
       {
