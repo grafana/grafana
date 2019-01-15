@@ -9,7 +9,7 @@ import { AddPanelPanel } from './AddPanelPanel';
 import { getPanelPluginNotFound } from './PanelPluginNotFound';
 import { DashboardRow } from './DashboardRow';
 import { PanelChrome } from './PanelChrome';
-import { PanelEditor } from './PanelEditor';
+import { PanelEditor } from '../panel_editor/PanelEditor';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';

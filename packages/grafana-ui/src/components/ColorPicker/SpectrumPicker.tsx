@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 import $ from 'jquery';
-import 'vendor/spectrum';
+import '../../vendor/spectrum';
 
 export interface Props {
   color: string;

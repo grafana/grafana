@@ -15,6 +15,13 @@ export class GaugePanel extends PureComponent<Props> {
       nullValueMode: NullValueMode.Ignore,
     });
 
-    return <Gauge timeSeries={vmSeries} {...this.props.options} width={width} height={height} />;
+    return (
+      <Gauge
+        timeSeries={vmSeries}
+        {...this.props.options}
+        width={width}
+        height={height}
+      />
+    );
   }
 }

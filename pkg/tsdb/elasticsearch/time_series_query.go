@@ -94,26 +94,56 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 			}
 
 			if isPipelineAgg(m.Type) {
-				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
-					var appliedAgg *MetricAgg
-					for _, pipelineMetric := range q.Metrics {
-						if pipelineMetric.ID == m.PipelineAggregate {
-							appliedAgg = pipelineMetric
-							break
-						}
-					}
-					if appliedAgg != nil {
-						bucketPath := m.PipelineAggregate
-						if appliedAgg.Type == countType {
-							bucketPath = "_count"
+				if isPipelineAggWithMultipleBucketPaths(m.Type) {
+					if len(m.PipelineVariables) > 0 {
+						bucketPaths := map[string]interface{}{}
+						for name, pipelineAgg := range m.PipelineVariables {
+							if _, err := strconv.Atoi(pipelineAgg); err == nil {
+								var appliedAgg *MetricAgg
+								for _, pipelineMetric := range q.Metrics {
+									if pipelineMetric.ID == pipelineAgg {
+										appliedAgg = pipelineMetric
+										break
+									}
+								}
+								if appliedAgg != nil {
+									if appliedAgg.Type == countType {
+										bucketPaths[name] = "_count"
+									} else {
+										bucketPaths[name] = pipelineAgg
+									}
+								}
+							}
 						}
 
-						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
+						aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
 							a.Settings = m.Settings.MustMap()
 						})
+					} else {
+						continue
 					}
 				} else {
-					continue
+					if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
+						var appliedAgg *MetricAgg
+						for _, pipelineMetric := range q.Metrics {
+							if pipelineMetric.ID == m.PipelineAggregate {
+								appliedAgg = pipelineMetric
+								break
+							}
+						}
+						if appliedAgg != nil {
+							bucketPath := m.PipelineAggregate
+							if appliedAgg.Type == countType {
+								bucketPath = "_count"
+							}
+
+							aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
+								a.Settings = m.Settings.MustMap()
+							})
+						}
+					} else {
+						continue
+					}
 				}
 			} else {
 				aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
@@ -328,10 +358,18 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
 		metric.Settings = simplejson.NewFromAny(metricJSON.Get("settings").MustMap())
 		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
-
 		metric.Type, err = metricJSON.Get("type").String()
 		if err != nil {
 			return nil, err
+		}
+
+		if isPipelineAggWithMultipleBucketPaths(metric.Type) {
+			metric.PipelineVariables = map[string]string{}
+			pvArr := metricJSON.Get("pipelineVariables").MustArray()
+			for _, v := range pvArr {
+				kv := v.(map[string]interface{})
+				metric.PipelineVariables[kv["name"].(string)] = kv["pipelineAgg"].(string)
+			}
 		}
 
 		result = append(result, metric)
