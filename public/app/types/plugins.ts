@@ -4,6 +4,7 @@ import { PanelProps, PanelOptionsProps } from '@grafana/ui';
 export interface PluginExports {
   Datasource?: any;
   QueryCtrl?: any;
+  QueryEditor?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;

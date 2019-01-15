@@ -3,18 +3,16 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Components
-import 'app/features/panel/metrics_tab';
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
 import { PanelOptionsGroup } from '@grafana/ui';
+import { QueryEditorRow } from './QueryEditorRow';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import config from 'app/core/config';
 
 // Types
@@ -37,61 +35,20 @@ interface State {
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
-  element: HTMLElement;
-  component: AngularComponent;
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv: BackendSrv = getBackendSrv();
 
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      isLoadingHelp: false,
-      currentDS: this.findCurrentDataSource(),
-      helpContent: null,
-      isPickerOpen: false,
-      isAddingMixed: false,
-    };
-  }
+  state: State = {
+    isLoadingHelp: false,
+    currentDS: this.findCurrentDataSource(),
+    helpContent: null,
+    isPickerOpen: false,
+    isAddingMixed: false,
+  };
 
   findCurrentDataSource(): DataSourceSelectItem {
     const { panel } = this.props;
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
-  }
-
-  getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { panel, dashboard } = this.props;
-
-    return {
-      panel: panel,
-      dashboard: dashboard,
-      refresh: () => panel.refresh(),
-      render: () => panel.render,
-      addQuery: this.onAddQuery,
-      moveQuery: this.onMoveQuery,
-      removeQuery: this.onRemoveQuery,
-      events: panel.events,
-    };
-  }
-
-  componentDidMount() {
-    if (!this.element) {
-      return;
-    }
-
-    const loader = getAngularLoader();
-    const template = '<metrics-tab />';
-    const scopeProps = {
-      ctrl: this.getAngularQueryComponentScope(),
-    };
-
-    this.component = loader.load(this.element, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.component) {
-      this.component.destroy();
-    }
   }
 
   onChangeDataSource = datasource => {
@@ -147,7 +104,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     this.props.panel.addQuery();
-    this.component.digest();
     this.forceUpdate();
   };
 
@@ -190,7 +146,6 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onAddMixedQuery = datasource => {
     this.onAddQuery({ datasource: datasource.name });
-    this.component.digest();
     this.setState({ isAddingMixed: false });
   };
 
@@ -218,7 +173,17 @@ export class QueriesTab extends PureComponent<Props, State> {
         <>
           <PanelOptionsGroup>
             <div className="query-editor-rows">
-              <div ref={element => (this.element = element)} />
+              {panel.targets.map((query, index) => (
+                <QueryEditorRow
+                  datasourceName={query.datasource || panel.datasource}
+                  key={query.refId}
+                  panel={panel}
+                  query={query}
+                  onRemoveQuery={this.onRemoveQuery}
+                  onAddQuery={this.onAddQuery}
+                  onMoveQuery={this.onMoveQuery}
+                />
+              ))}
 
               <div className="gf-form-query">
                 <div className="gf-form gf-form-query-letter-cell">
