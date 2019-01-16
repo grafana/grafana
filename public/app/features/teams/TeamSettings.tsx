@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { Label } from '@grafana/ui';
 
-import { Label } from 'app/core/components/Label/Label';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
 import { getRouteParamsId } from 'app/core/selectors/location';

@@ -1,7 +1,5 @@
 import React, { PureComponent } from 'react';
-import { MappingType, RangeMap, Select, ValueMap } from '@grafana/ui';
-
-import { Label } from 'app/core/components/Label/Label';
+import { MappingType, RangeMap, Select, ValueMap, Label } from '@grafana/ui';
 
 interface Props {
   mapping: ValueMap | RangeMap;

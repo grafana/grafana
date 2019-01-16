@@ -1,5 +1,6 @@
 import React, { SFC } from 'react';
-import { Label } from 'app/core/components/Label/Label';
+import { Label } from '@grafana/ui';
+
 import { Switch } from '../../../core/components/Switch/Switch';
 
 export interface Props {
