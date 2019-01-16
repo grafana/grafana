@@ -1,22 +1,23 @@
 import React, { PureComponent } from 'react';
-import { MappingType, RangeMap, Select, ValueMap } from '@grafana/ui';
 
-import { Label } from 'app/core/components/Label/Label';
+import { MappingType, ValueMapping } from '../../types/panel';
+import { Label } from '../Label/Label';
+import { Select } from '../Select/Select';
 
-interface Props {
-  mapping: ValueMap | RangeMap;
-  updateMapping: (mapping) => void;
-  removeMapping: () => void;
+export interface Props {
+  valueMapping: ValueMapping;
+  updateValueMapping: (valueMapping: ValueMapping) => void;
+  removeValueMapping: () => void;
 }
 
 interface State {
-  from: string;
+  from?: string;
   id: number;
   operator: string;
   text: string;
-  to: string;
+  to?: string;
   type: MappingType;
-  value: string;
+  value?: string;
 }
 
 const mappingOptions = [
@@ -25,36 +26,34 @@ const mappingOptions = [
 ];
 
 export default class MappingRow extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
-    this.state = {
-      ...props.mapping,
-    };
+    this.state = { ...props.valueMapping };
   }
 
-  onMappingValueChange = event => {
+  onMappingValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ value: event.target.value });
   };
 
-  onMappingFromChange = event => {
+  onMappingFromChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ from: event.target.value });
   };
 
-  onMappingToChange = event => {
+  onMappingToChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ to: event.target.value });
   };
 
-  onMappingTextChange = event => {
+  onMappingTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ text: event.target.value });
   };
 
-  onMappingTypeChange = mappingType => {
+  onMappingTypeChange = (mappingType: MappingType) => {
     this.setState({ type: mappingType });
   };
 
   updateMapping = () => {
-    this.props.updateMapping({ ...this.state });
+    this.props.updateValueMapping({ ...this.state } as ValueMapping);
   };
 
   renderRow() {
@@ -136,7 +135,7 @@ export default class MappingRow extends PureComponent<Props, State> {
         </div>
         {this.renderRow()}
         <div className="gf-form">
-          <button onClick={this.props.removeMapping} className="gf-form-label gf-form-label--btn">
+          <button onClick={this.props.removeValueMapping} className="gf-form-label gf-form-label--btn">
             <i className="fa fa-times" />
           </button>
         </div>

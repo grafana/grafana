@@ -7,7 +7,9 @@ exports[`Render should render component 1`] = `
   <div>
     <MappingRow
       key="Ok-0"
-      mapping={
+      removeValueMapping={[Function]}
+      updateValueMapping={[Function]}
+      valueMapping={
         Object {
           "id": 1,
           "operator": "",
@@ -16,12 +18,12 @@ exports[`Render should render component 1`] = `
           "value": "20",
         }
       }
-      removeMapping={[Function]}
-      updateMapping={[Function]}
     />
     <MappingRow
       key="Meh-1"
-      mapping={
+      removeValueMapping={[Function]}
+      updateValueMapping={[Function]}
+      valueMapping={
         Object {
           "from": "21",
           "id": 2,
@@ -31,8 +33,6 @@ exports[`Render should render component 1`] = `
           "type": 2,
         }
       }
-      removeMapping={[Function]}
-      updateMapping={[Function]}
     />
   </div>
   <div

@@ -56,6 +56,8 @@ interface BaseMap {
   type: MappingType;
 }
 
+export type ValueMapping = ValueMap | RangeMap;
+
 export interface ValueMap extends BaseMap {
   value: string;
 }

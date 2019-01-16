@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
-import { GaugeOptions, PanelOptionsProps, PanelOptionsGroup } from '@grafana/ui';
+import { PanelOptionsProps, PanelOptionsGroup, Label, Select } from '@grafana/ui';
 
-import { Label } from 'app/core/components/Label/Label';
-import { Select} from '@grafana/ui';
 import UnitPicker from 'app/core/components/Select/UnitPicker';
+import { GaugeOptions } from './types';
 
 const statOptions = [
   { value: 'min', label: 'Min' },

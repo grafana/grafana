@@ -1,33 +1,39 @@
 import React, { PureComponent } from 'react';
-import { GaugeOptions, PanelOptionsProps, MappingType, RangeMap, ValueMap, PanelOptionsGroup } from '@grafana/ui';
 
 import MappingRow from './MappingRow';
+import { MappingType, ValueMapping } from '../../types/panel';
+import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+
+export interface Props {
+  valueMappings: ValueMapping[];
+  onChange: (valueMappings: ValueMapping[]) => void;
+}
 
 interface State {
-  mappings: Array<ValueMap | RangeMap>;
+  valueMappings: ValueMapping[];
   nextIdToAdd: number;
 }
 
-export default class ValueMappings extends PureComponent<PanelOptionsProps<GaugeOptions>, State> {
-  constructor(props) {
+export class ValueMappingsEditor extends PureComponent<Props, State> {
+  constructor(props: Props) {
     super(props);
 
-    const mappings = props.options.mappings;
+    const mappings = props.valueMappings;
 
     this.state = {
-      mappings: mappings || [],
-      nextIdToAdd: mappings.length > 0 ? this.getMaxIdFromMappings(mappings) : 1,
+      valueMappings: mappings,
+      nextIdToAdd: mappings.length > 0 ? this.getMaxIdFromValueMappings(mappings) : 1,
     };
   }
 
-  getMaxIdFromMappings(mappings) {
+  getMaxIdFromValueMappings(mappings: ValueMapping[]) {
     return Math.max.apply(null, mappings.map(mapping => mapping.id).map(m => m)) + 1;
   }
 
   addMapping = () =>
     this.setState(prevState => ({
-      mappings: [
-        ...prevState.mappings,
+      valueMappings: [
+        ...prevState.valueMappings,
         {
           id: prevState.nextIdToAdd,
           operator: '',
@@ -41,23 +47,23 @@ export default class ValueMappings extends PureComponent<PanelOptionsProps<Gauge
       nextIdToAdd: prevState.nextIdToAdd + 1,
     }));
 
-  onRemoveMapping = id => {
+  onRemoveMapping = (id: number) => {
     this.setState(
       prevState => ({
-        mappings: prevState.mappings.filter(m => {
+        valueMappings: prevState.valueMappings.filter(m => {
           return m.id !== id;
         }),
       }),
       () => {
-        this.props.onChange({ ...this.props.options, mappings: this.state.mappings });
+        this.props.onChange(this.state.valueMappings);
       }
     );
   };
 
-  updateGauge = mapping => {
+  updateGauge = (mapping: ValueMapping) => {
     this.setState(
       prevState => ({
-        mappings: prevState.mappings.map(m => {
+        valueMappings: prevState.valueMappings.map(m => {
           if (m.id === mapping.id) {
             return { ...mapping };
           }
@@ -66,24 +72,24 @@ export default class ValueMappings extends PureComponent<PanelOptionsProps<Gauge
         }),
       }),
       () => {
-        this.props.onChange({ ...this.props.options, mappings: this.state.mappings });
+        this.props.onChange(this.state.valueMappings);
       }
     );
   };
 
   render() {
-    const { mappings } = this.state;
+    const { valueMappings } = this.state;
 
     return (
       <PanelOptionsGroup title="Value Mappings">
         <div>
-          {mappings.length > 0 &&
-            mappings.map((mapping, index) => (
+          {valueMappings.length > 0 &&
+            valueMappings.map((valueMapping, index) => (
               <MappingRow
-                key={`${mapping.text}-${index}`}
-                mapping={mapping}
-                updateMapping={this.updateGauge}
-                removeMapping={() => this.onRemoveMapping(mapping.id)}
+                key={`${valueMapping.text}-${index}`}
+                valueMapping={valueMapping}
+                updateValueMapping={this.updateGauge}
+                removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
               />
             ))}
         </div>
