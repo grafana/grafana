@@ -54,9 +54,12 @@ aptly publish update stable filesystem:repo:grafana
 aptly publish update beta filesystem:repo:grafana
 
 # Update the repo and db on gcp
-## TODO: need to update this to push the binaries first and then the metadata so that we dont cache the binaries missing.
 
 gsutil -m rsync -r -d /deb-repo/db "gs://$GCP_DB_BUCKET/$RELEASE_TYPE"
+
+# Uploads the binaries before the metadata (to prevent 404's for debs)
+gsutil -m rsync -r /deb-repo/repo/grafana/pool "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb/pool"
+
 gsutil -m rsync -r -d /deb-repo/repo/grafana "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb"
 
 # usage:
