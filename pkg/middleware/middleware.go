@@ -3,15 +3,15 @@ package middleware
 import (
 	"strconv"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/macaron.v1"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler() macaron.Handler {
+func GetContextHandler(ats *auth.UserAuthTokenService) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
@@ -49,7 +49,8 @@ func GetContextHandler() macaron.Handler {
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
 		case initContextWithAuthProxy(ctx, orgId):
-		case initContextWithUserSessionCookie(ctx, orgId):
+		//case initContextWithUserSessionCookie(ctx, orgId):
+		case initContextWithToken(ctx, orgId, ats):
 		case initContextWithAnonymousUser(ctx):
 		}
 
@@ -57,6 +58,11 @@ func GetContextHandler() macaron.Handler {
 		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
+
+		c.Next()
+
+		//if signed in with token
+		//ats.RefreshToken()
 
 		// update last seen every 5min
 		if ctx.ShouldUpdateLastSeenAt() {
@@ -85,6 +91,25 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
+	return true
+}
+
+func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthTokenService) bool {
+	user, err := ts.LookupToken(ctx)
+	if err != nil {
+		ctx.Logger.Info("failed to look up user based on cookie")
+		return false
+	}
+
+	query := m.GetSignedInUserQuery{UserId: user.UserId, OrgId: orgID}
+	if err := bus.Dispatch(&query); err != nil {
+		ctx.Logger.Error("Failed to get user with id", "userId", user.UserId, "error", err)
+		return false
+	}
+
+	ctx.SignedInUser = query.Result
+	ctx.IsSignedIn = true
+
 	return true
 }
 

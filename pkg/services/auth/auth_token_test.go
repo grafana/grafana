@@ -27,22 +27,22 @@ func TestUserAuthToken(t *testing.T) {
 			So(token.AuthTokenSeen, ShouldBeFalse)
 
 			Convey("When lookup unhashed token should return user auth token", func() {
-				lookupToken, err := userAuthTokenService.lookupToken(token.unhashedToken)
+				LookupToken, err := userAuthTokenService.LookupToken(token.unhashedToken)
 				So(err, ShouldBeNil)
-				So(lookupToken, ShouldNotBeNil)
-				So(lookupToken.UserId, ShouldEqual, userID)
-				So(lookupToken.AuthTokenSeen, ShouldBeTrue)
+				So(LookupToken, ShouldNotBeNil)
+				So(LookupToken.UserId, ShouldEqual, userID)
+				So(LookupToken.AuthTokenSeen, ShouldBeTrue)
 
-				storedAuthToken, err := ctx.getAuthTokenByID(lookupToken.Id)
+				storedAuthToken, err := ctx.getAuthTokenByID(LookupToken.Id)
 				So(err, ShouldBeNil)
 				So(storedAuthToken, ShouldNotBeNil)
 				So(storedAuthToken.AuthTokenSeen, ShouldBeTrue)
 			})
 
 			Convey("When lookup hashed token should return user auth token not found error", func() {
-				lookupToken, err := userAuthTokenService.lookupToken(token.AuthToken)
+				LookupToken, err := userAuthTokenService.LookupToken(token.AuthToken)
 				So(err, ShouldEqual, ErrAuthTokenNotFound)
-				So(lookupToken, ShouldBeNil)
+				So(LookupToken, ShouldBeNil)
 			})
 		})
 
@@ -51,25 +51,25 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(token, ShouldNotBeNil)
 
-			_, err = userAuthTokenService.lookupToken(token.unhashedToken)
+			_, err = userAuthTokenService.LookupToken(token.unhashedToken)
 			So(err, ShouldBeNil)
 
 			token, err = ctx.getAuthTokenByID(token.Id)
 			So(err, ShouldBeNil)
 
 			// set now (now - 23 hours)
-			_, err = userAuthTokenService.refreshToken(token, "192.168.10.11:1234", "some user agent")
+			_, err = userAuthTokenService.RefreshToken(token, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
 
-			_, err = userAuthTokenService.lookupToken(token.unhashedToken)
+			_, err = userAuthTokenService.LookupToken(token.unhashedToken)
 			So(err, ShouldBeNil)
 
-			stillGood, err := userAuthTokenService.lookupToken(token.unhashedToken)
+			stillGood, err := userAuthTokenService.LookupToken(token.unhashedToken)
 			So(err, ShouldBeNil)
 			So(stillGood, ShouldNotBeNil)
 
 			// set now (new - 2 hours)
-			notGood, err := userAuthTokenService.lookupToken(token.unhashedToken)
+			notGood, err := userAuthTokenService.LookupToken(token.unhashedToken)
 			So(err, ShouldEqual, ErrAuthTokenNotFound)
 			So(notGood, ShouldBeNil)
 		})
@@ -82,7 +82,7 @@ func TestUserAuthToken(t *testing.T) {
 			prevToken := token.AuthToken
 			unhashedPrev := token.unhashedToken
 
-			refreshed, err := userAuthTokenService.refreshToken(token, "192.168.10.12:1234", "a new user agent")
+			refreshed, err := userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
 			So(refreshed, ShouldBeFalse)
 
@@ -95,7 +95,7 @@ func TestUserAuthToken(t *testing.T) {
 				return t
 			}
 
-			refreshed, err = userAuthTokenService.refreshToken(token, "192.168.10.12:1234", "a new user agent")
+			refreshed, err = userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
 			So(refreshed, ShouldBeTrue)
 
@@ -112,13 +112,13 @@ func TestUserAuthToken(t *testing.T) {
 			So(token.SeenAt, ShouldEqual, 0)
 			So(token.PrevAuthToken, ShouldEqual, prevToken)
 
-			lookedUp, err := userAuthTokenService.lookupToken(token.unhashedToken)
+			lookedUp, err := userAuthTokenService.LookupToken(token.unhashedToken)
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
 			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
 			So(lookedUp.SeenAt, ShouldEqual, t.Unix())
 
-			lookedUp, err = userAuthTokenService.lookupToken(unhashedPrev)
+			lookedUp, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
 			So(lookedUp.Id, ShouldEqual, token.Id)
@@ -127,7 +127,7 @@ func TestUserAuthToken(t *testing.T) {
 				return t.Add(2 * time.Minute)
 			}
 
-			lookedUp, err = userAuthTokenService.lookupToken(unhashedPrev)
+			lookedUp, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
 
@@ -136,7 +136,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(lookedUp, ShouldNotBeNil)
 			So(lookedUp.AuthTokenSeen, ShouldBeFalse)
 
-			refreshed, err = userAuthTokenService.refreshToken(token, "192.168.10.12:1234", "a new user agent")
+			refreshed, err = userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
 			So(refreshed, ShouldBeTrue)
 

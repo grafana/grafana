@@ -42,10 +42,10 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 		return
 	}
 
-	if !hs.tryLoginUsingRememberCookie(c) {
-		c.HTML(200, ViewIndex, viewData)
-		return
-	}
+	//if !hs.tryLoginUsingRememberCookie(c) {
+	c.HTML(200, ViewIndex, viewData)
+	return
+	//}
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")

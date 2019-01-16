@@ -11,16 +11,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/live"
+	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -29,11 +21,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func init() {
@@ -226,7 +222,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
-	m.Use(middleware.GetContextHandler())
+	m.Use(middleware.GetContextHandler(hs.AuthTokenService))
 	m.Use(middleware.Sessioner(&setting.SessionOptions, setting.SessionConnMaxLifetime))
 	m.Use(middleware.OrgRedirect())
 

@@ -3,16 +3,17 @@ package auth
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -42,7 +43,15 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 	}
 
 	c.Resp.Header().Del("Set-Cookie")
-	c.SetCookie(sessionCookieKey, userToken.unhashedToken, setting.AppSubUrl+"/", setting.Domain, false, true)
+	cookie := http.Cookie{
+		Name:     sessionCookieKey,
+		Value:    url.QueryEscape(userToken.unhashedToken),
+		HttpOnly: true,
+		Expires:  time.Now().Add(time.Minute * 10),
+		Domain:   setting.Domain,
+	}
+
+	c.Resp.Header().Add("Set-Cookie", cookie.String())
 
 	return nil
 }
@@ -51,27 +60,27 @@ func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
 	c.SetCookie(sessionCookieKey, "", -1, setting.AppSubUrl+"/", setting.Domain, false, true)
 }
 
-func (s *UserAuthTokenService) RequestMiddleware() macaron.Handler {
-	return func(ctx *models.ReqContext) {
-		authToken := ctx.GetCookie(sessionCookieKey)
-		userToken, err := s.lookupToken(authToken)
-		if err != nil {
+// func (s *UserAuthTokenService) RequestMiddleware() macaron.Handler {
+// 	return func(ctx *models.ReqContext) {
+// 		authToken := ctx.GetCookie(sessionCookieKey)
+// 		userToken, err := s.LookupToken(authToken)
+// 		if err != nil {
 
-		}
+// 		}
 
-		ctx.Next()
+// 		ctx.Next()
 
-		refreshed, err := s.refreshToken(userToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
-		if err != nil {
+// 		refreshed, err := s.RefreshToken(userToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
+// 		if err != nil {
 
-		}
+// 		}
 
-		if refreshed {
-			ctx.Resp.Header().Del("Set-Cookie")
-			ctx.SetCookie(sessionCookieKey, userToken.unhashedToken, setting.AppSubUrl+"/", setting.Domain, false, true)
-		}
-	}
-}
+// 		if refreshed {
+// 			ctx.Resp.Header().Del("Set-Cookie")
+// 			ctx.SetCookie(sessionCookieKey, userToken.unhashedToken, setting.AppSubUrl+"/", setting.Domain, false, true)
+// 		}
+// 	}
+// }
 
 func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*userAuthToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
@@ -104,7 +113,12 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 	return &userToken, nil
 }
 
-func (s *UserAuthTokenService) lookupToken(unhashedToken string) (*userAuthToken, error) {
+func (s *UserAuthTokenService) LookupToken(ctx *models.ReqContext) (*userAuthToken, error) {
+	unhashedToken := ctx.GetCookie(sessionCookieKey)
+	if unhashedToken == "" {
+		return nil, fmt.Errorf("session token cookie is empty")
+	}
+
 	hashedToken := hashToken(unhashedToken)
 
 	var userToken userAuthToken
@@ -157,7 +171,7 @@ func (s *UserAuthTokenService) lookupToken(unhashedToken string) (*userAuthToken
 	return &userToken, nil
 }
 
-func (s *UserAuthTokenService) refreshToken(token *userAuthToken, clientIP, userAgent string) (bool, error) {
+func (s *UserAuthTokenService) RefreshToken(token *userAuthToken, clientIP, userAgent string) (bool, error) {
 	// lookup token in db
 	// refresh token if needed
 
