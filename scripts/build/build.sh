@@ -8,6 +8,8 @@ set -e
 
 EXTRA_OPTS="$@"
 
+CCARMV7=arm-linux-gnueabihf-gcc
+CCARM64=aarch64-linux-gnu-gcc
 CCX64=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
 
 GOPATH=/go
@@ -26,6 +28,9 @@ fi
 
 echo "Build arguments: $OPT"
 
+go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
+go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+
 CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
@@ -43,4 +48,8 @@ go run build.go ${OPT} build-frontend
 source /etc/profile.d/rvm.sh
 
 echo "Packaging"
-go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only latest
+go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
+go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
+go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+
+go run build.go latest

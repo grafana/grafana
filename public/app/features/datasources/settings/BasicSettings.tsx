@@ -1,5 +1,6 @@
 import React, { SFC } from 'react';
-import { Label } from 'app/core/components/Label/Label';
+import { Label } from '@grafana/ui';
+
 import { Switch } from '../../../core/components/Switch/Switch';
 
 export interface Props {
@@ -16,7 +17,7 @@ const BasicSettings: SFC<Props> = ({ dataSourceName, isDefault, onDefaultChange,
         <div className="gf-form max-width-30" style={{ marginRight: '3px' }}>
           <Label
             tooltip={
-              'The name is used when you select the data source in panels. The Default data source is' +
+              'The name is used when you select the data source in panels. The Default data source is ' +
               'preselected in new panels.'
             }
           >

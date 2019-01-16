@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
-import { Label } from 'app/core/components/Label/Label';
-import Select from 'app/core/components/Select/Select';
+import { PanelOptionsProps, PanelOptionsGroup, Label, Select } from '@grafana/ui';
+
 import UnitPicker from 'app/core/components/Select/UnitPicker';
-import { OptionModuleProps } from './module';
+import { GaugeOptions } from './types';
 
 const statOptions = [
   { value: 'min', label: 'Min' },
@@ -20,7 +20,7 @@ const statOptions = [
 
 const labelWidth = 6;
 
-export default class ValueOptions extends PureComponent<OptionModuleProps> {
+export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
   onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
 
   onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
@@ -39,8 +39,7 @@ export default class ValueOptions extends PureComponent<OptionModuleProps> {
     const { stat, unit, decimals, prefix, suffix } = this.props.options;
 
     return (
-      <div className="section gf-form-group">
-        <h5 className="section-heading">Value</h5>
+      <PanelOptionsGroup title="Value">
         <div className="gf-form">
           <Label width={labelWidth}>Stat</Label>
           <Select
@@ -72,7 +71,7 @@ export default class ValueOptions extends PureComponent<OptionModuleProps> {
           <Label width={labelWidth}>Suffix</Label>
           <input className="gf-form-input width-12" type="text" value={suffix || ''} onChange={this.onSuffixChange} />
         </div>
-      </div>
+      </PanelOptionsGroup>
     );
   }
 }

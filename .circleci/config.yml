@@ -127,7 +127,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.1
+     - image: grafana/build-container:1.2.2
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -200,51 +200,51 @@ jobs:
             - dist/grafana*
 
   grafana-docker-master:
-    docker:
-      - image: docker:stable-git
+    machine:
+      image: circleci/classic:201808-01
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker
       - run: docker info
-      - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
-      - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "master"
 
 
   grafana-docker-pr:
-    docker:
-      - image: docker:stable-git
+    machine:
+      image: circleci/classic:201808-01
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker
       - run: docker info
-      - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build.sh "${CIRCLE_SHA1}"
 
   grafana-docker-release:
-      docker:
-        - image: docker:stable-git
-      steps:
-        - checkout
-        - attach_workspace:
-            at: .
-        - setup_remote_docker
-        - run: docker info
-        - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
-        - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
-        - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
-        - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
-        - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.1
+     - image: grafana/build-container:1.2.2
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -276,7 +276,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.1
+    - image: grafana/build-container:1.2.2
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -323,7 +323,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.0.0
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
           at: .
@@ -346,7 +346,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.0.0
+    - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
          at: .
@@ -365,10 +365,20 @@ jobs:
       - run:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh --enterprise'
+      - run:
+          name: Load GPG private key
+          command: './scripts/build/load-signing-key.sh'
+      - run:
+          name: Update Debian repository
+          command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+      - run:
+          name: Update RPM repository
+          command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.0.0
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
           at: .
@@ -398,8 +408,9 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.0.0
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run:
@@ -417,6 +428,15 @@ jobs:
       - run:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh'
+      - run:
+          name: Load GPG private key
+          command: './scripts/build/load-signing-key.sh'
+      - run:
+          name: Update Debian repository
+          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+      - run:
+          name: Update RPM repository
+          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
 
 workflows:
   version: 2

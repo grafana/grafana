@@ -1,5 +1,6 @@
 +++
 title = "Explore"
+keywords = ["explore", "loki", "logs"]
 type = "docs"
 [menu.docs]
 name = "Explore"
@@ -8,7 +9,11 @@ parent = "features"
 weight = 5
 +++
 
-# Introduction
+# Explore
+
+> Explore is only available in Grafana 6.0 and above.
+
+## Introduction
 
 One of the major new features of Grafana 6.0 is the new query-focused Explore workflow for troubleshooting and/or for data exploration.
 

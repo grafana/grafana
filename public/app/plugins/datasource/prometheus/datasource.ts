@@ -219,8 +219,9 @@ export class PrometheusDatasource {
     };
     const range = Math.ceil(end - start);
 
+    // options.interval is the dynamically calculated interval
     let interval = kbn.interval_to_seconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
+    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
     );
@@ -366,12 +367,13 @@ export class PrometheusDatasource {
     const step = annotation.step || '60s';
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
-    // Unsetting min interval
     const queryOptions = {
       ...options,
-      interval: '0s',
+      interval: step,
     };
-    const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
+    // Unsetting min interval for accurate event resolution
+    const minStep = '1s';
+    const query = this.createQuery({ expr, interval: minStep }, queryOptions, start, end);
 
     const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {

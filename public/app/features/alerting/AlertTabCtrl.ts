@@ -9,8 +9,6 @@ import appEvents from 'app/core/app_events';
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  testing: boolean;
-  testResult: any;
   subTabIndex: number;
   conditionTypes: any;
   alert: any;
@@ -45,6 +43,7 @@ export class AlertTabCtrl {
     this.noDataModes = alertDef.noDataModes;
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
+    this.panelCtrl._enableAlert = this.enable;
   }
 
   $onInit() {
@@ -114,7 +113,7 @@ export class AlertTabCtrl {
   }
 
   getNotifications() {
-    return Promise.resolve(
+    return this.$q.when(
       this.notifications.map(item => {
         return this.uiSegmentSrv.newSegment(item.name);
       })
@@ -147,6 +146,7 @@ export class AlertTabCtrl {
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
     this.addNotificationSegment.html = this.uiSegmentSrv.newPlusButton().html;
+    this.addNotificationSegment.fake = true;
   }
 
   removeNotification(index) {
@@ -353,11 +353,11 @@ export class AlertTabCtrl {
     });
   }
 
-  enable() {
+  enable = () => {
     this.panel.alert = {};
     this.initModel();
     this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
-  }
+  };
 
   evaluatorParamsChanged() {
     ThresholdMapper.alertToGraphThresholds(this.panel);
@@ -402,21 +402,6 @@ export class AlertTabCtrl {
             this.panelCtrl.refresh();
           });
       },
-    });
-  }
-
-  test() {
-    this.testing = true;
-    this.testResult = false;
-
-    const payload = {
-      dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
-      panelId: this.panelCtrl.panel.id,
-    };
-
-    return this.backendSrv.post('/api/alerts/test', payload).then(res => {
-      this.testResult = res;
-      this.testing = false;
     });
   }
 }

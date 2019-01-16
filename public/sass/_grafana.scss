@@ -3,7 +3,6 @@
 
 // VENDOR
 @import '../vendor/css/timepicker.css';
-@import '../vendor/css/spectrum.css';
 @import '../vendor/css/rc-cascader.scss';
 
 // MIXINS
@@ -37,9 +36,6 @@
 // LAYOUTS
 @import 'layout/lists';
 @import 'layout/page';
-
-// LOAD @grafana/ui components
-@import '../../packages/grafana-ui/src/index';
 
 // COMPONENTS
 @import 'components/scrollbar';
@@ -79,7 +75,6 @@
 @import 'components/typeahead';
 @import 'components/modals';
 @import 'components/dropdown';
-@import 'components/color_picker';
 @import 'components/footer';
 @import 'components/infobox';
 @import 'components/shortcuts';
@@ -97,16 +92,15 @@
 @import 'components/page_header';
 @import 'components/dashboard_settings';
 @import 'components/empty_list_cta';
-@import 'components/popper';
-@import 'components/form_select_box';
 @import 'components/panel_editor';
 @import 'components/toolbar';
 @import 'components/add_data_source.scss';
 @import 'components/page_loader';
-@import 'components/thresholds';
 @import 'components/toggle_button_group';
-@import 'components/value-mappings';
 @import 'components/popover-box';
+
+// LOAD @grafana/ui components
+@import '../../packages/grafana-ui/src/index';
 
 // PAGES
 @import 'pages/login';
