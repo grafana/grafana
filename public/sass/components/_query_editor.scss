@@ -18,12 +18,6 @@
 }
 
 .gf-form-query {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-content: flex-start;
-  align-items: flex-start;
-
   .gf-form,
   .gf-form-filler {
     margin-bottom: 2px;
@@ -188,3 +182,53 @@ input[type='text'].tight-form-func-param {
 .rst-literal-block .rst-text {
   display: block;
 }
+
+.query-editor-box {
+  background: $page-bg;
+  margin-bottom: 2px;
+
+  &:hover {
+    .query-editor-box__actions {
+      display: flex;
+    }
+  }
+}
+
+.query-editor-box__header {
+  display: flex;
+  padding: 4px 0px 4px 8px;
+  position: relative;
+  height: 35px;
+}
+
+.query-editor-box__ref-id {
+  font-weight: $font-weight-semi-bold;
+  color: $blue;
+  font-size: $font-size-md;
+  flex-grow: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  i {
+    padding-right: 5px;
+    color: $text-muted;
+    position: relative;
+  }
+}
+
+.query-editor-box__actions {
+  display: flex;
+  justify-content: flex-end;
+  display: none;
+}
+
+.query-editor-box__action {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
+  border: 1px solid $navbar-button-border;
+  margin-right: 3px;
+}
+
+ .query-editor-box__body {
+   padding: 10px 20px;
+ }

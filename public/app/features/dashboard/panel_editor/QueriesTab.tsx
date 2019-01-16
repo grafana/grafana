@@ -171,40 +171,39 @@ export class QueriesTab extends PureComponent<Props, State> {
     return (
       <EditorTabBody heading="Queries" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
         <>
-          <PanelOptionsGroup>
-            <div className="query-editor-rows">
-              {panel.targets.map((query, index) => (
-                <QueryEditorRow
-                  datasourceName={query.datasource || panel.datasource}
-                  key={query.refId}
-                  panel={panel}
-                  query={query}
-                  onRemoveQuery={this.onRemoveQuery}
-                  onAddQuery={this.onAddQuery}
-                  onMoveQuery={this.onMoveQuery}
-                />
-              ))}
-
-              <div className="gf-form-query">
-                <div className="gf-form gf-form-query-letter-cell">
-                  <label className="gf-form-label">
-                    <span className="gf-form-query-letter-cell-carret muted">
-                      <i className="fa fa-caret-down" />
-                    </span>{' '}
-                    <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
-                  </label>
-                </div>
-                <div className="gf-form">
-                  {!isAddingMixed && (
-                    <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
-                      Add Query
-                    </button>
-                  )}
-                  {isAddingMixed && this.renderMixedPicker()}
-                </div>
+          <div className="query-editor-rows">
+            {panel.targets.map((query, index) => (
+              <QueryEditorRow
+                datasourceName={query.datasource || panel.datasource}
+                key={query.refId}
+                panel={panel}
+                query={query}
+                onRemoveQuery={this.onRemoveQuery}
+                onAddQuery={this.onAddQuery}
+                onMoveQuery={this.onMoveQuery}
+              />
+            ))}
+          </div>
+          <div>
+            <div className="gf-form-query">
+              <div className="gf-form gf-form-query-letter-cell">
+                <label className="gf-form-label">
+                  <span className="gf-form-query-letter-cell-carret muted">
+                    <i className="fa fa-caret-down" />
+                  </span>{' '}
+                  <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
+                </label>
+              </div>
+              <div className="gf-form">
+                {!isAddingMixed && (
+                  <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
+                    Add Query
+                  </button>
+                )}
+                {isAddingMixed && this.renderMixedPicker()}
               </div>
             </div>
-          </PanelOptionsGroup>
+          </div>
           <PanelOptionsGroup>
             <QueryOptions panel={panel} datasource={currentDS} />
           </PanelOptionsGroup>

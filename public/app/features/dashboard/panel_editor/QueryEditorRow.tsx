@@ -1,5 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
+import classNames from 'classnames';
 
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -21,6 +22,7 @@ interface Props {
 
 interface State {
   datasource: DataSourceApi | null;
+  isCollapsed: boolean;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -29,6 +31,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   state: State = {
     datasource: null,
+    isCollapsed: false,
   };
 
   componentDidMount() {
@@ -90,15 +93,51 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
   }
 
+  onToggleCollapse = () => {
+    this.setState({ isCollapsed: !this.state.isCollapsed });
+  };
+
   render() {
-    const { datasource } = this.state;
+    const { query } = this.props;
+    const { datasource, isCollapsed } = this.state;
+    const bodyClasses = classNames('query-editor-box__body gf-form-query', {hide: isCollapsed});
 
     if (!datasource) {
       return null;
     }
 
     if (datasource.pluginExports.QueryCtrl) {
-      return <div ref={element => (this.element = element)} />;
+      return (
+        <div className="query-editor-box">
+          <div className="query-editor-box__header">
+            <div className="query-editor-box__ref-id" onClick={this.onToggleCollapse}>
+              {isCollapsed && <i className="fa fa-caret-right" />}
+              {!isCollapsed && <i className="fa fa-caret-down" />}
+              <span>{query.refId}</span>
+            </div>
+            <div className="query-editor-box__actions">
+              <button className="query-editor-box__action">
+                <i className="fa fa-fw fa-arrow-down" />
+              </button>
+              <button className="query-editor-box__action">
+                <i className="fa fa-fw fa-arrow-up" />
+              </button>
+              <button className="query-editor-box__action">
+                <i className="fa fa-fw fa-copy" />
+              </button>
+              <button className="query-editor-box__action">
+                <i className="fa fa-fw fa-eye" />
+              </button>
+              <button className="query-editor-box__action">
+                <i className="fa fa-fw fa-trash" />
+              </button>
+            </div>
+          </div>
+          <div className={bodyClasses}>
+            <div ref={element => (this.element = element)} />
+          </div>
+        </div>
+      );
     } else if (datasource.pluginExports.QueryEditor) {
       const QueryEditor = datasource.pluginExports.QueryEditor;
       return <QueryEditor />;
@@ -119,4 +158,3 @@ export interface AngularQueryComponentScope {
   moveQuery: (query: DataQuery, direction: number) => void;
   datasource: DataSourceApi;
 }
-
