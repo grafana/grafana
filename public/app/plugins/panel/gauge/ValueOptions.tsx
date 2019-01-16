@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormField, Label, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
+import { FormField, FormLabel, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
 import UnitPicker from 'app/core/components/Select/UnitPicker';
 import { GaugeOptions } from './types';
 
@@ -40,7 +40,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
     return (
       <PanelOptionsGroup title="Value">
         <div className="gf-form">
-          <Label width={labelWidth}>Stat</Label>
+          <FormLabel width={labelWidth}>Stat</FormLabel>
           <Select
             width={12}
             options={statOptions}
@@ -49,7 +49,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
           />
         </div>
         <div className="gf-form">
-          <Label width={labelWidth}>Unit</Label>
+          <FormLabel width={labelWidth}>Unit</FormLabel>
           <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
         </div>
         <FormField

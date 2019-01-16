@@ -1,16 +1,28 @@
-import React, { SFC, ReactNode } from 'react';
+import React, { FunctionComponent, ReactNode } from 'react';
 import classNames from 'classnames';
+import { Tooltip } from '..';
 
 interface Props {
   children: ReactNode;
-  htmlFor?: string;
   className?: string;
+  htmlFor?: string;
   isFocused?: boolean;
   isInvalid?: boolean;
+  tooltip?: string;
+  width?: number;
 }
 
-export const FormLabel: SFC<Props> = ({ children, isFocused, isInvalid, className, htmlFor, ...rest }) => {
-  const classes = classNames('gf-form-label', className, {
+export const FormLabel: FunctionComponent<Props> = ({
+  children,
+  isFocused,
+  isInvalid,
+  className,
+  htmlFor,
+  tooltip,
+  width,
+  ...rest
+}) => {
+  const classes = classNames(`gf-form-label width-${width ? width : '10'}`, className, {
     'gf-form-label--is-focused': isFocused,
     'gf-form-label--is-invalid': isInvalid,
   });
@@ -18,6 +30,13 @@ export const FormLabel: SFC<Props> = ({ children, isFocused, isInvalid, classNam
   return (
     <label className={classes} {...rest} htmlFor={htmlFor}>
       {children}
+      {tooltip && (
+        <Tooltip placement="auto" content={tooltip}>
+          <div className="gf-form-help-icon--right-normal">
+            <i className="gicon gicon-question gicon--has-hover" />
+          </div>
+        </Tooltip>
+      )}
     </label>
   );
 };

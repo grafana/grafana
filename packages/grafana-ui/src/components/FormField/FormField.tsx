@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { Label } from '..';
+import { FormLabel } from '..';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -15,7 +15,7 @@ const defaultProps = {
 const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputWidth, ...inputProps }) => {
   return (
     <div className="form-field">
-      <Label width={labelWidth}>{label}</Label>
+      <FormLabel width={labelWidth}>{label}</FormLabel>
       <input type="text" className={`gf-form-input width-${inputWidth}`} {...inputProps} />
     </div>
   );
