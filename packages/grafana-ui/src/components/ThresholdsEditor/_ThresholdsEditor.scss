@@ -8,6 +8,12 @@
   height: 70px;
 }
 
+.thresholds-row:first-child > .thresholds-row-color-indicator {
+  border-top-left-radius: $border-radius;
+  border-top-right-radius: $border-radius;
+  overflow: hidden;
+}
+
 .thresholds-row:last-child > .thresholds-row-color-indicator {
   border-bottom-left-radius: $border-radius;
   border-bottom-right-radius: $border-radius;
@@ -33,7 +39,7 @@
 }
 
 .thresholds-row-color-indicator {
-  width: 20px;
+  width: 10px;
 }
 
 .thresholds-row-input {
