@@ -2,12 +2,13 @@
 
 RELEASE_TYPE="${1:-}"
 GPG_PASS="${2:-}"
-
 RELEASE_TAG="${3:-}"
+DIST_PATH="${4:-}"
+
 REPO="rpm"
 
-if [ -z "$RELEASE_TYPE" -o -z "$GPG_PASS" ]; then
-    echo "Both RELEASE_TYPE (arg 1) and GPG_PASS (arg 2) has to be set"
+if [ -z "$RELEASE_TYPE" -o -z "$GPG_PASS" -o -z "$DIST_PATH" ]; then
+    echo "Both RELEASE_TYPE (arg 1), GPG_PASS (arg 2) and DIST_PATH (arg 4) has to be set"
     exit 1
 fi
 
@@ -30,10 +31,11 @@ mkdir -p /rpm-repo
 gsutil -m rsync -r "$BUCKET" /rpm-repo
 
 # Add the new release to the repo
-cp ./dist/*.rpm /rpm-repo
+cp $DIST_PATH/*.rpm /rpm-repo # adds to many files for enterprise
 rm /rpm-repo/grafana-latest-1*.rpm || true
 cd /rpm-repo
 createrepo .
+cd /go/src/github.com/grafana/grafana
 
 # Setup signing and sign the repo
 
