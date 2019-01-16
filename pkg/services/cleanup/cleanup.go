@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -15,8 +16,9 @@ import (
 )
 
 type CleanUpService struct {
-	log log.Logger
-	Cfg *setting.Cfg `inject:""`
+	log               log.Logger
+	Cfg               *setting.Cfg                  `inject:""`
+	ServerLockService *serverlock.ServerLockService `inject:""`
 }
 
 func init() {
@@ -38,7 +40,10 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
-			srv.deleteOldLoginAttempts()
+			srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts", time.Minute*10, func() {
+				srv.deleteOldLoginAttempts()
+			})
+
 		case <-ctx.Done():
 			return ctx.Err()
 		}

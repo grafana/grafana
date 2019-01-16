@@ -1,4 +1,5 @@
-FROM debian:stretch-slim
+ARG BASE_IMAGE=debian:stretch-slim
+FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 
@@ -10,7 +11,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 RUN mkdir /tmp/grafana && tar xfvz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
-FROM debian:stretch-slim
+ARG BASE_IMAGE=debian:stretch-slim
+FROM ${BASE_IMAGE}
 
 ARG GF_UID="472"
 ARG GF_GID="472"
@@ -25,7 +27,8 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apt-get update && apt-get install -qq -y libfontconfig ca-certificates curl && \
+RUN apt-get update && apt-get -y upgrade && \
+    apt-get install -qq -y libfontconfig ca-certificates curl && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 

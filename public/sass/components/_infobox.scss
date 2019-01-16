@@ -32,6 +32,10 @@
   a {
     @extend .external-link;
   }
+
+  &--max-lg {
+    max-width: map-get($grid-breakpoints, 'lg');
+  }
 }
 
 .grafana-info-box__close {

@@ -9,6 +9,7 @@ import {
 } from 'app/core/constants';
 import { PanelModel } from './panel_model';
 import { DashboardModel } from './dashboard_model';
+import getFactors from 'app/core/utils/factors';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -21,7 +22,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 16;
+    this.dashboard.schemaVersion = 17;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -143,7 +144,7 @@ export class DashboardMigrator {
       panelUpgrades.push(panel => {
         _.each(panel.targets, target => {
           if (!target.refId) {
-            target.refId = this.dashboard.getNextQueryLetter(panel);
+            target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
           }
         });
       });
@@ -366,6 +367,24 @@ export class DashboardMigrator {
 
     if (oldVersion < 16) {
       this.upgradeToGridLayout(old);
+    }
+
+    if (oldVersion < 17) {
+      panelUpgrades.push(panel => {
+        if (panel.minSpan) {
+          const max = GRID_COLUMN_COUNT / panel.minSpan;
+          const factors = getFactors(GRID_COLUMN_COUNT);
+          // find the best match compared to factors
+          // (ie. [1,2,3,4,6,12,24] for 24 columns)
+          panel.maxPerRow =
+            factors[
+              _.findIndex(factors, o => {
+                return o > max;
+              }) - 1
+            ];
+        }
+        delete panel.minSpan;
+      });
     }
 
     if (panelUpgrades.length === 0) {

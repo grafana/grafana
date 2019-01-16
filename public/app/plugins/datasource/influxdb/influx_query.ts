@@ -256,6 +256,10 @@ export default class InfluxQuery {
       query += ' SLIMIT ' + target.slimit;
     }
 
+    if (target.tz) {
+      query += " tz('" + target.tz + "')";
+    }
+
     return query;
   }
 

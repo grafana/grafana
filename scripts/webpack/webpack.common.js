@@ -3,9 +3,6 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
   target: 'web',
-  stats: {
-    children: false
-  },
   entry: {
     app: './public/app/index.ts',
   },
@@ -16,7 +13,7 @@ module.exports = {
     publicPath: "public/build/",
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.es6', '.js', '.json'],
+    extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
     },
     modules: [
@@ -25,6 +22,7 @@ module.exports = {
     ],
   },
   stats: {
+    children: false,
     warningsFilter: /export .* was not found in/
   },
   node: {
@@ -47,7 +45,7 @@ module.exports = {
       },
       {
         test: /\.html$/,
-        exclude: /index\.template.html/,
+        exclude: /(index|error)\-template\.html/,
         use: [
           { loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public' },
           {

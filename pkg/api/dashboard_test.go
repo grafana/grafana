@@ -727,7 +727,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{SaveError: m.ErrDashboardTitleEmpty, ExpectedStatusCode: 400},
 				{SaveError: m.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: 400},
 				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: 422},
-				{SaveError: m.ErrDashboardFailedToUpdateAlertData, ExpectedStatusCode: 500},
 				{SaveError: m.ErrDashboardFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 				{SaveError: m.ErrDashboardTypeMismatch, ExpectedStatusCode: 400},
 				{SaveError: m.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: 400},

@@ -21,10 +21,10 @@
         display: none;
       }
       &.json-formatter-object::after {
-        content: "No properties";
+        content: 'No properties';
       }
       &.json-formatter-array::after {
-        content: "[]";
+        content: '[]';
       }
     }
   }
@@ -33,7 +33,9 @@
     color: $json-explorer-string-color;
     white-space: normal;
     word-wrap: break-word;
+    word-break: break-all;
   }
+
   .json-formatter-number {
     color: $json-explorer-number-color;
   }
@@ -87,7 +89,7 @@
     &::after {
       display: inline-block;
       transition: transform $json-explorer-rotate-time ease-in;
-      content: "►";
+      content: '►';
     }
   }
 

@@ -16,6 +16,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -47,8 +48,9 @@ func init() {
 }
 
 type SqlStore struct {
-	Cfg *setting.Cfg `inject:""`
-	Bus bus.Bus      `inject:""`
+	Cfg          *setting.Cfg        `inject:""`
+	Bus          bus.Bus             `inject:""`
+	CacheService *cache.CacheService `inject:""`
 
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
@@ -148,8 +150,10 @@ func (ss *SqlStore) Init() error {
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
-
 	ss.Bus.SetTransactionManager(ss)
+
+	// Register handlers
+	ss.addUserQueryAndCommandHandlers()
 
 	// ensure admin user
 	if ss.skipEnsureAdmin {
@@ -239,7 +243,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
-		cnnstr = "file:" + ss.dbCfg.Path + "?cache=shared&mode=rwc"
+		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
 	default:
 		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
 	}
@@ -315,6 +319,8 @@ func (ss *SqlStore) readConfig() {
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+
+	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 }
 
 func InitTestDB(t *testing.T) *SqlStore {
@@ -322,6 +328,7 @@ func InitTestDB(t *testing.T) *SqlStore {
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
+	sqlstore.CacheService = cache.New(5*time.Minute, 10*time.Minute)
 
 	dbType := migrator.SQLITE
 
@@ -386,13 +393,20 @@ func IsTestDbPostgres() bool {
 }
 
 type DatabaseConfig struct {
-	Type, Host, Name, User, Pwd, Path, SslMode string
-	CaCertPath                                 string
-	ClientKeyPath                              string
-	ClientCertPath                             string
-	ServerCertName                             string
-	ConnectionString                           string
-	MaxOpenConn                                int
-	MaxIdleConn                                int
-	ConnMaxLifetime                            int
+	Type             string
+	Host             string
+	Name             string
+	User             string
+	Pwd              string
+	Path             string
+	SslMode          string
+	CaCertPath       string
+	ClientKeyPath    string
+	ClientCertPath   string
+	ServerCertName   string
+	ConnectionString string
+	MaxOpenConn      int
+	MaxIdleConn      int
+	ConnMaxLifetime  int
+	CacheMode        string
 }

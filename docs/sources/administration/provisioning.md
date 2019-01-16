@@ -156,7 +156,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
-| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56) |
+| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56/60) |
 | timeField | string | Elasticsearch | Which field that should be used as timestamp |
 | interval | string | Elasticsearch | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
@@ -230,4 +230,4 @@ By default Grafana will delete dashboards in the database if the file is removed
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
-> or `uid` within the same installation as this will cause weird behaviours.
+> or `uid` within the same installation as this will cause weird behaviors.

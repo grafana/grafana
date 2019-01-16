@@ -42,7 +42,7 @@ class TypeaheadItem extends React.PureComponent<TypeaheadItemProps> {
   render() {
     const { isSelected, item, prefix } = this.props;
     const className = isSelected ? 'typeahead-item typeahead-item__selected' : 'typeahead-item';
-    const { label } = item;
+    const label = item.label || '';
     return (
       <li ref={this.getRef} className={className} onClick={this.onClick}>
         <Highlighter textToHighlight={label} searchWords={[prefix]} highlightClassName="typeahead-match" />
@@ -55,7 +55,7 @@ class TypeaheadItem extends React.PureComponent<TypeaheadItemProps> {
 interface TypeaheadGroupProps {
   items: CompletionItem[];
   label: string;
-  onClickItem: (CompletionItem) => void;
+  onClickItem: (suggestion: CompletionItem) => void;
   selected: CompletionItem;
   prefix?: string;
 }

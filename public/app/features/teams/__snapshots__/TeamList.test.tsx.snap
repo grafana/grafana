@@ -124,7 +124,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -174,7 +174,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -224,7 +224,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -274,7 +274,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -324,7 +324,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>

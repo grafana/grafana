@@ -2,10 +2,10 @@
 import _ from 'lodash';
 
 // Utils
-import colors from 'app/core/utils/colors';
+import { colors } from '@grafana/ui';
 
 // Types
-import { TimeSeries, TimeSeriesVMs, NullValueMode } from 'app/types';
+import { TimeSeries, TimeSeriesVMs, NullValueMode } from '@grafana/ui';
 
 interface Options {
   timeSeries: TimeSeries[];

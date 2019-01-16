@@ -25,7 +25,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Dependencies
 
 - Go (Latest Stable)
-- NodeJS LTS
+- Node.js LTS
 
 ### Building the backend
 ```bash
@@ -37,7 +37,7 @@ go run build.go build
 
 ### Building frontend assets
 
-For this you need nodejs (v.6+).
+For this you need Node.js (LTS version).
 
 To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
@@ -90,6 +90,8 @@ Choose this option to build on platforms other than linux/amd64 and/or not have 
 
 The resulting image will be tagged as `grafana/grafana:dev`
 
+Notice: If you are using Docker for MacOS, be sure to let limit of Memory bigger than 2 GiB (at docker -> Preferences -> Advanced), otherwize you may faild at `grunt build`
+
 ### Dev config
 
 Create a custom.ini in the conf directory to override default configuration options.
@@ -129,7 +131,9 @@ GRAFANA_TEST_DB=postgres go test ./pkg/...
 
 If you have any idea for an improvement or found a bug, do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
-the kickass metrics & devops dashboard we all dream about!
+the kickass metrics & devops dashboard we all dream about! 
+
+Read the [contributing](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guide then check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) label to find issues that are easy and that we would like help with.
 
 ## Plugin development
 

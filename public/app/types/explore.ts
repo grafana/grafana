@@ -1,5 +1,11 @@
 import { Value } from 'slate';
 
+import { DataQuery } from './series';
+import { RawTimeRange } from '@grafana/ui';
+import TableModel from 'app/core/table_model';
+import { LogsModel } from 'app/core/logs_model';
+import { DataSourceSelectItem } from 'app/types/datasources';
+
 export interface CompletionItem {
   /**
    * The label of this completion item. By default
@@ -70,20 +76,20 @@ export interface CompletionItemGroup {
   skipSort?: boolean;
 }
 
-interface ExploreDatasource {
-  value: string;
-  label: string;
-}
-
 export interface HistoryItem {
   ts: number;
-  query: string;
+  query: DataQuery;
 }
 
 export abstract class LanguageProvider {
   datasource: any;
   request: (url) => Promise<any>;
-  start: () => Promise<any>;
+  /**
+   * Returns startTask that resolves with a task list when main syntax is loaded.
+   * Task list consists of secondary promises that load more detailed language features.
+   */
+  start: () => Promise<any[]>;
+  startTask?: Promise<any[]>;
 }
 
 export interface TypeaheadInput {
@@ -98,16 +104,6 @@ export interface TypeaheadOutput {
   context?: string;
   refresher?: Promise<{}>;
   suggestions: CompletionItemGroup[];
-}
-
-export interface Range {
-  from: string;
-  to: string;
-}
-
-export interface Query {
-  query: string;
-  key?: string;
 }
 
 export interface QueryFix {
@@ -128,17 +124,22 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+export interface QueryHintGetter {
+  (query: DataQuery, results: any[], ...rest: any): QueryHint[];
+}
+
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string;
+  error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
   options: any;
-  query: string;
+  query: DataQuery;
   result?: any; // Table model / Timeseries[] / Logs
   resultType: ResultType;
   rowIndex: number;
+  scanning?: boolean;
 }
 
 export interface TextMatch {
@@ -149,37 +150,37 @@ export interface TextMatch {
 }
 
 export interface ExploreState {
+  StartPage?: any;
   datasource: any;
   datasourceError: any;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
-  datasourceName?: string;
-  exploreDatasources: ExploreDatasource[];
-  graphRange: Range;
+  exploreDatasources: DataSourceSelectItem[];
+  graphInterval: number; // in ms
+  graphResult?: any[];
   history: HistoryItem[];
-  /**
-   * Initial rows of queries to push down the tree.
-   * Modifications do not end up here, but in `this.queryExpressions`.
-   * The only way to reset a query is to change its `key`.
-   */
-  queries: Query[];
-  /**
-   * Hints gathered for the query row.
-   */
+  initialDatasource?: string;
+  initialQueries: DataQuery[];
+  logsHighlighterExpressions?: string[];
+  logsResult?: LogsModel;
   queryTransactions: QueryTransaction[];
-  range: Range;
+  range: RawTimeRange;
+  scanning?: boolean;
+  scanRange?: RawTimeRange;
   showingGraph: boolean;
   showingLogs: boolean;
+  showingStartPage?: boolean;
   showingTable: boolean;
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
+  tableResult?: TableModel;
 }
 
 export interface ExploreUrlState {
   datasource: string;
-  queries: Query[];
-  range: Range;
+  queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
+  range: RawTimeRange;
 }
 
 export type ResultType = 'Graph' | 'Logs' | 'Table';

@@ -1,8 +1,8 @@
 import moment from 'moment';
 import _ from 'lodash';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 
 import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-import { DEFAULT_ANNOTATION_COLOR } from 'app/core/utils/colors';
 import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
@@ -223,6 +223,8 @@ export class DashboardModel {
   }
 
   panelInitialized(panel: PanelModel) {
+    panel.initialized();
+
     if (!this.otherPanelInFullscreen(panel)) {
       panel.refresh();
     }
@@ -230,11 +232,6 @@ export class DashboardModel {
 
   otherPanelInFullscreen(panel: PanelModel) {
     return this.meta.fullscreen && !panel.fullscreen;
-  }
-
-  changePanelType(panel: PanelModel, pluginId: string) {
-    panel.changeType(pluginId);
-    this.events.emit('panel-type-changed', panel);
   }
 
   private ensureListExist(data) {
@@ -445,7 +442,7 @@ export class DashboardModel {
     }
 
     const selectedOptions = this.getSelectedVariableOptions(variable);
-    const minWidth = panel.minSpan || 6;
+    const maxPerRow = panel.maxPerRow || 4;
     let xPos = 0;
     let yPos = panel.gridPos.y;
 
@@ -465,7 +462,7 @@ export class DashboardModel {
       } else {
         // set width based on how many are selected
         // assumed the repeated panels should take up full row width
-        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, minWidth);
+        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, GRID_COLUMN_COUNT / maxPerRow);
         copy.gridPos.x = xPos;
         copy.gridPos.y = yPos;
 
@@ -807,16 +804,6 @@ export class DashboardModel {
     date = moment.isMoment(date) ? date : moment(date);
 
     return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
-  }
-
-  getNextQueryLetter(panel) {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(panel.targets, other => {
-        return other.refId !== refId;
-      });
-    });
   }
 
   isTimezoneUtc() {

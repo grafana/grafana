@@ -96,16 +96,15 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {
-	for _, v := range queries {
-
-		query, err := e.QueryParser.Parse(v.Model, dsInfo)
+	// The model supports multiple queries, but right now this is only used from
+	// alerting so we only needed to support batch executing 1 query at a time.
+	if len(queries) > 0 {
+		query, err := e.QueryParser.Parse(queries[0].Model, dsInfo)
 		if err != nil {
 			return nil, err
 		}
-
 		return query, nil
 	}
-
 	return nil, fmt.Errorf("query request contains no queries")
 }
 

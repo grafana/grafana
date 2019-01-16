@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ldap.v3"
 )
 
 type ILdapConn interface {
@@ -291,6 +291,8 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			},
 			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
+
+		a.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
 
 		searchResult, err = a.conn.Search(&searchReq)
 		if err != nil {

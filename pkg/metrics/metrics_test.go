@@ -176,6 +176,7 @@ func TestMetrics(t *testing.T) {
 			setting.BasicAuthEnabled = true
 			setting.LdapEnabled = true
 			setting.AuthProxyEnabled = true
+			setting.Packaging = "deb"
 
 			wg.Add(1)
 			sendUsageStats(oauthProviders)
@@ -243,6 +244,8 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.auth_enabled.oauth_google.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.auth_enabled.oauth_generic_oauth.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
+
+				So(metrics.Get("stats.packaging.deb.count").MustInt(), ShouldEqual, 1)
 			})
 		})
 

@@ -9,7 +9,7 @@ import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
 import { Invitee, NavModel, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
-import { loadUsers, loadInvitees, revokeInvite, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
+import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
 
@@ -25,7 +25,6 @@ export interface Props {
   setUsersSearchQuery: typeof setUsersSearchQuery;
   updateUser: typeof updateUser;
   removeUser: typeof removeUser;
-  revokeInvite: typeof revokeInvite;
 }
 
 export interface State {
@@ -79,10 +78,6 @@ export class UsersListPage extends PureComponent<Props, State> {
     });
   };
 
-  onRevokeInvite = code => {
-    this.props.revokeInvite(code);
-  };
-
   onShowInvites = () => {
     this.setState(prevState => ({
       showInvites: !prevState.showInvites,
@@ -93,7 +88,7 @@ export class UsersListPage extends PureComponent<Props, State> {
     const { invitees, users } = this.props;
 
     if (this.state.showInvites) {
-      return <InviteesTable invitees={invitees} onRevokeInvite={code => this.onRevokeInvite(code)} />;
+      return <InviteesTable invitees={invitees} />;
     } else {
       return (
         <UsersTable
@@ -141,7 +136,6 @@ const mapDispatchToProps = {
   setUsersSearchQuery,
   updateUser,
   removeUser,
-  revokeInvite,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));

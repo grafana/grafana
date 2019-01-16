@@ -1,10 +1,13 @@
 import React, { PureComponent } from 'react';
 
-import { QueryTransaction, HistoryItem, Query, QueryHint } from 'app/types/explore';
+import { QueryTransaction, HistoryItem, QueryHint } from 'app/types/explore';
+import { Emitter } from 'app/core/utils/emitter';
 
-// TODO make this datasource-plugin-dependent
-import QueryField from './PromQueryField';
-import QueryTransactions from './QueryTransactions';
+// import DefaultQueryField from './QueryField';
+import QueryEditor from './QueryEditor';
+import QueryTransactionStatus from './QueryTransactionStatus';
+import { DataSource, DataQuery } from 'app/types';
+import { RawTimeRange } from '@grafana/ui';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
@@ -16,7 +19,7 @@ function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHi
 
 interface QueryRowEventHandlers {
   onAddQueryRow: (index: number) => void;
-  onChangeQuery: (value: string, index: number, override?: boolean) => void;
+  onChangeQuery: (value: DataQuery, index: number, override?: boolean) => void;
   onClickHintFix: (action: object, index?: number) => void;
   onExecuteQuery: () => void;
   onRemoveQueryRow: (index: number) => void;
@@ -24,21 +27,26 @@ interface QueryRowEventHandlers {
 
 interface QueryRowCommonProps {
   className?: string;
-  datasource: any;
+  datasource: DataSource;
   history: HistoryItem[];
-  // Temporarily
-  supportsLogs?: boolean;
   transactions: QueryTransaction[];
+  exploreEvents: Emitter;
+  range: RawTimeRange;
 }
 
 type QueryRowProps = QueryRowCommonProps &
   QueryRowEventHandlers & {
     index: number;
-    query: string;
+    initialQuery: DataQuery;
   };
 
 class QueryRow extends PureComponent<QueryRowProps> {
-  onChangeQuery = (value, override?: boolean) => {
+  onExecuteQuery = () => {
+    const { onExecuteQuery } = this.props;
+    onExecuteQuery();
+  };
+
+  onChangeQuery = (value: DataQuery, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
       onChangeQuery(value, index, override);
@@ -53,7 +61,7 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   onClickClearButton = () => {
-    this.onChangeQuery('', true);
+    this.onChangeQuery(null, true);
   };
 
   onClickHintFix = action => {
@@ -78,27 +86,39 @@ class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   render() {
-    const { datasource, history, query, supportsLogs, transactions } = this.props;
+    const { datasource, history, initialQuery, transactions, exploreEvents, range } = this.props;
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
+    const QueryField = datasource.pluginExports.ExploreQueryField;
     return (
       <div className="query-row">
         <div className="query-row-status">
-          <QueryTransactions transactions={transactions} />
+          <QueryTransactionStatus transactions={transactions} />
         </div>
         <div className="query-row-field">
-          <QueryField
-            datasource={datasource}
-            error={queryError}
-            hint={hint}
-            initialQuery={query}
-            history={history}
-            onClickHintFix={this.onClickHintFix}
-            onPressEnter={this.onPressEnter}
-            onQueryChange={this.onChangeQuery}
-            supportsLogs={supportsLogs}
-          />
+          {QueryField ? (
+            <QueryField
+              datasource={datasource}
+              error={queryError}
+              hint={hint}
+              initialQuery={initialQuery}
+              history={history}
+              onClickHintFix={this.onClickHintFix}
+              onPressEnter={this.onPressEnter}
+              onQueryChange={this.onChangeQuery}
+            />
+          ) : (
+            <QueryEditor
+              datasource={datasource}
+              error={queryError}
+              onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.onExecuteQuery}
+              initialQuery={initialQuery}
+              exploreEvents={exploreEvents}
+              range={range}
+            />
+          )}
         </div>
         <div className="query-row-tools">
           <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>
@@ -118,19 +138,19 @@ class QueryRow extends PureComponent<QueryRowProps> {
 
 type QueryRowsProps = QueryRowCommonProps &
   QueryRowEventHandlers & {
-    queries: Query[];
+    initialQueries: DataQuery[];
   };
 
 export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', queries, transactions, ...handlers } = this.props;
+    const { className = '', initialQueries, transactions, ...handlers } = this.props;
     return (
       <div className={className}>
-        {queries.map((q, index) => (
+        {initialQueries.map((query, index) => (
           <QueryRow
-            key={q.key}
+            key={query.key}
             index={index}
-            query={q.query}
+            initialQuery={query}
             transactions={transactions.filter(t => t.rowIndex === index)}
             {...handlers}
           />

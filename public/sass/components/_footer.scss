@@ -4,7 +4,7 @@
 
 .footer {
   color: $footer-link-color;
-  padding: 5rem 0 1rem 0;
+  padding: 1rem 0 1rem 0;
   font-size: $font-size-sm;
   position: relative;
   width: 98%; /* was causing horiz scrollbars - need to examine */
@@ -38,17 +38,18 @@
   }
 }
 
+// Keeping footer inside the graphic on Login screen
 .login-page {
   .footer {
+    bottom: $spacer;
+    position: absolute;
     padding: 1rem 0 1rem 0;
   }
 }
 
-@include media-breakpoint-up(md) {
+@include media-breakpoint-up(sm) {
   .login-page {
     .footer {
-      bottom: $spacer;
-      position: absolute;
       padding: 5rem 0 1rem 0;
     }
   }

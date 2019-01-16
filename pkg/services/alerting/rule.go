@@ -1,13 +1,19 @@
 package alerting
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-
 	m "github.com/grafana/grafana/pkg/models"
+)
+
+var (
+	ErrFrequencyCannotBeZeroOrLess = errors.New(`"evaluate every" cannot be zero or below`)
+	ErrFrequencyCouldNotBeParsed   = errors.New(`"evaluate every" field could not be parsed`)
 )
 
 type Rule struct {
@@ -18,6 +24,8 @@ type Rule struct {
 	Frequency           int64
 	Name                string
 	Message             string
+	LastStateChange     time.Time
+	For                 time.Duration
 	NoDataState         m.NoDataOption
 	ExecutionErrorState m.ExecutionErrorOption
 	State               m.AlertStateType
@@ -73,12 +81,16 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 	matches := ValueFormatRegex.FindAllString(str, 1)
 
 	if len(matches) <= 0 {
-		return 0, fmt.Errorf("Frequency could not be parsed")
+		return 0, ErrFrequencyCouldNotBeParsed
 	}
 
 	value, err := strconv.Atoi(matches[0])
 	if err != nil {
 		return 0, err
+	}
+
+	if value == 0 {
+		return 0, ErrFrequencyCannotBeZeroOrLess
 	}
 
 	unit := UnitFormatRegex.FindAllString(str, 1)[0]
@@ -98,11 +110,19 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.PanelId = ruleDef.PanelId
 	model.Name = ruleDef.Name
 	model.Message = ruleDef.Message
-	model.Frequency = ruleDef.Frequency
 	model.State = ruleDef.State
+	model.LastStateChange = ruleDef.NewStateDate
+	model.For = ruleDef.For
 	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
+
+	model.Frequency = ruleDef.Frequency
+	// frequency cannot be zero since that would not execute the alert rule.
+	// so we fallback to 60 seconds if `Freqency` is missing
+	if model.Frequency == 0 {
+		model.Frequency = 60
+	}
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)

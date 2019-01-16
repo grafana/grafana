@@ -13,22 +13,33 @@
 }
 
 .gf-timepicker-dropdown {
-  position: absolute;
-  top: $navbarHeight;
-  right: 0;
-  padding: 10px 20px;
   background-color: $page-bg;
   border-radius: 0 0 0 4px;
   box-shadow: $search-shadow;
-}
+  z-index: $zindex-dropdown;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: $navbarHeight;
 
-.gf-timepicker-absolute-section {
-  width: 290px;
-  float: left;
-  padding: 0 10px;
-  select {
-    width: 183px;
-    margin-bottom: 0;
+  @include media-breakpoint-up(md) {
+    left: auto;
+    width: 550px;
+  }
+
+  .popover-box {
+    max-width: 100%;
+
+    &:first-child {
+      border-radius: $border-radius $border-radius 0 0;
+      border-bottom: 0;
+    }
+
+    &:last-child {
+      border-radius: 0 0 $border-radius $border-radius;
+    }
   }
 }
 
@@ -47,16 +58,18 @@
 }
 
 .gf-timepicker-relative-section {
-  padding: 0 20px 0 30px;
   min-height: 237px;
   float: left;
+
   ul {
     list-style: none;
     float: left;
     margin: 0 30px 10px 0px;
+
     li {
       line-height: 22px;
     }
+
     li.active {
       border-bottom: 1px solid $blue;
       margin: 3px 0;
@@ -71,26 +84,32 @@
   td {
     padding: 1px;
   }
+
   button {
     @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
     background-image: none;
     border: none;
     color: $text-color;
+
     &.active span {
       color: $blue;
       font-weight: bold;
     }
+
     .text-info {
       color: $orange;
       font-weight: bold;
     }
+
     &.btn-sm {
       font-size: $font-size-sm;
       padding: 5px 11px;
     }
+
     &:hover {
       color: $text-color-strong;
     }
+
     &[disabled] {
       color: $text-color;
     }
@@ -113,6 +132,7 @@
 .fa-chevron-left::before {
   content: '\f053';
 }
+
 .fa-chevron-right::before {
   content: '\f054';
 }

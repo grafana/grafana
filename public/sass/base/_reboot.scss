@@ -87,7 +87,7 @@ body {
 // might still respond to pointer events.
 //
 // Credit: https://github.com/suitcss/base
-[tabindex="-1"]:focus {
+[tabindex='-1']:focus {
   outline: none !important;
 }
 
@@ -171,7 +171,7 @@ a {
   }
 
   &:focus {
-    @include tab-focus();
+    @include no-focus();
   }
 }
 
@@ -214,7 +214,7 @@ img {
 // for traditionally non-focusable elements with role="button"
 // see https://developer.mozilla.org/en-US/docs/Web/Events/click#Safari_Mobile
 
-[role="button"] {
+[role='button'] {
   cursor: pointer;
 }
 
@@ -231,7 +231,7 @@ img {
 a,
 area,
 button,
-[role="button"],
+[role='button'],
 input,
 label,
 select,
@@ -320,7 +320,7 @@ legend {
   //  border: 0;
 }
 
-input[type="search"] {
+input[type='search'] {
   // This overrides the extra rounded corners on search inputs in iOS so that our
   // `.form-control` class can properly style them. Note that this cannot simply
   // be added to `.form-control` as it's not specific enough. For details, see

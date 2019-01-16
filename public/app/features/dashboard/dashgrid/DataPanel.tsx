@@ -1,11 +1,21 @@
 // Library
 import React, { Component } from 'react';
+import { Tooltip } from '@grafana/ui';
+import { Themes } from '@grafana/ui/src/components/Tooltip/Popper';
+
+import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Services
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
+
+// Utils
+import kbn from 'app/core/utils/kbn';
 
 // Types
-import { TimeRange, LoadingState, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
+import { DataQueryOptions, DataQueryResponse } from 'app/types';
+import { TimeRange, TimeSeries, LoadingState } from '@grafana/ui';
+
+const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 interface RenderProps {
   loading: LoadingState;
@@ -19,13 +29,17 @@ export interface Props {
   dashboardId?: number;
   isVisible?: boolean;
   timeRange?: TimeRange;
+  widthPixels: number;
   refreshCounter: number;
+  minInterval?: string;
+  maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
 }
 
 export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
+  errorMessage: string;
   response: DataQueryResponse;
 }
 
@@ -36,11 +50,15 @@ export class DataPanel extends Component<Props, State> {
     dashboardId: 1,
   };
 
+  dataSourceSrv: DatasourceSrv = getDatasourceSrv();
+  isUnmounted = false;
+
   constructor(props: Props) {
     super(props);
 
     this.state = {
       loading: LoadingState.NotStarted,
+      errorMessage: '',
       response: {
         data: [],
       },
@@ -49,7 +67,11 @@ export class DataPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    console.log('DataPanel mount');
+    this.issueQueries();
+  }
+
+  componentWillUnmount() {
+    this.isUnmounted = true;
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -61,11 +83,11 @@ export class DataPanel extends Component<Props, State> {
   }
 
   hasPropsChanged(prevProps: Props) {
-    return this.props.refreshCounter !== prevProps.refreshCounter || this.props.isVisible !== prevProps.isVisible;
+    return this.props.refreshCounter !== prevProps.refreshCounter;
   }
 
-  issueQueries = async () => {
-    const { isVisible, queries, datasource, panelId, dashboardId, timeRange } = this.props;
+  private issueQueries = async () => {
+    const { isVisible, queries, datasource, panelId, dashboardId, timeRange, widthPixels, maxDataPoints } = this.props;
 
     if (!isVisible) {
       return;
@@ -76,11 +98,14 @@ export class DataPanel extends Component<Props, State> {
       return;
     }
 
-    this.setState({ loading: LoadingState.Loading });
+    this.setState({ loading: LoadingState.Loading, errorMessage: '' });
 
     try {
-      const dataSourceSrv = getDatasourceSrv();
-      const ds = await dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource);
+
+      // TODO interpolate variables
+      const minInterval = this.props.minInterval || ds.interval;
+      const intervalRes = kbn.calculateInterval(timeRange, widthPixels, minInterval);
 
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
@@ -88,10 +113,10 @@ export class DataPanel extends Component<Props, State> {
         dashboardId: dashboardId,
         range: timeRange,
         rangeRaw: timeRange.raw,
-        interval: '1s',
-        intervalMs: 60000,
+        interval: intervalRes.interval,
+        intervalMs: intervalRes.intervalMs,
         targets: queries,
-        maxDataPoints: 500,
+        maxDataPoints: maxDataPoints || widthPixels,
         scopedVars: {},
         cacheTimeout: null,
       };
@@ -100,6 +125,10 @@ export class DataPanel extends Component<Props, State> {
       const resp = await ds.query(queryOptions);
       console.log('Issuing DataPanel query Resp', resp);
 
+      if (this.isUnmounted) {
+        return;
+      }
+
       this.setState({
         loading: LoadingState.Done,
         response: resp,
@@ -107,42 +136,77 @@ export class DataPanel extends Component<Props, State> {
       });
     } catch (err) {
       console.log('Loading error', err);
-      this.setState({ loading: LoadingState.Error, isFirstLoad: false });
+      this.onError('Request Error');
+    }
+  };
+
+  onError = (errorMessage: string) => {
+    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
+      this.setState({
+        loading: LoadingState.Error,
+        isFirstLoad: false,
+        errorMessage: errorMessage,
+      });
     }
   };
 
   render() {
+    const { queries } = this.props;
     const { response, loading, isFirstLoad } = this.state;
-    console.log('data panel render');
+
     const timeSeries = response.data;
 
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+    if (isFirstLoad && loading === LoadingState.Loading) {
+      return this.renderLoadingStates();
+    }
+
+    if (!queries.length) {
       return (
-        <div className="loading">
-          <p>Loading</p>
+        <div className="panel-empty">
+          <p>Add a query to get some data!</p>
         </div>
       );
     }
 
     return (
       <>
-        {this.loadingSpinner}
-        {this.props.children({
-          timeSeries,
-          loading,
-        })}
+        {this.renderLoadingStates()}
+        <ErrorBoundary>
+          {({ error, errorInfo }) => {
+            if (errorInfo) {
+              this.onError(error.message || DEFAULT_PLUGIN_ERROR);
+              return null;
+            }
+            return (
+              <>
+                {this.props.children({
+                  timeSeries,
+                  loading,
+                })}
+              </>
+            );
+          }}
+        </ErrorBoundary>
       </>
     );
   }
 
-  private get loadingSpinner(): JSX.Element {
-    const { loading } = this.state;
-
+  private renderLoadingStates(): JSX.Element {
+    const { loading, errorMessage } = this.state;
     if (loading === LoadingState.Loading) {
       return (
-        <div className="panel__loading">
+        <div className="panel-loading">
           <i className="fa fa-spinner fa-spin" />
         </div>
+      );
+    } else if (loading === LoadingState.Error) {
+      return (
+        <Tooltip content={errorMessage} placement="bottom-start" theme={Themes.Error}>
+          <div className="panel-info-corner panel-info-corner--error">
+            <i className="fa" />
+            <span className="panel-info-corner-inner" />
+          </div>
+        </Tooltip>
       );
     }
 

@@ -13,6 +13,7 @@ import {
 
 export enum ActionTypes {
   LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
+  LoadStarredDashboards = 'LOAD_STARRED_DASHBOARDS',
 }
 
 export interface LoadDashboardPermissionsAction {
@@ -20,7 +21,12 @@ export interface LoadDashboardPermissionsAction {
   payload: DashboardAcl[];
 }
 
-export type Action = LoadDashboardPermissionsAction;
+export interface LoadStarredDashboardsAction {
+  type: ActionTypes.LoadStarredDashboards;
+  payload: DashboardAcl[];
+}
+
+export type Action = LoadDashboardPermissionsAction | LoadStarredDashboardsAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 
@@ -61,7 +67,7 @@ export function updateDashboardPermission(
 
       const updated = toUpdateItem(item);
 
-      // if this is the item we want to update, update it's permisssion
+      // if this is the item we want to update, update it's permission
       if (itemToUpdate === item) {
         updated.permission = level;
       }

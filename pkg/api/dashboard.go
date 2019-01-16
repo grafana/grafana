@@ -277,10 +277,6 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		return Error(500, "Failed to save dashboard", err)
 	}
 
-	if err == m.ErrDashboardFailedToUpdateAlertData {
-		return Error(500, "Invalid alert data. Cannot save dashboard", err)
-	}
-
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	return JSON(200, util.DynMap{
 		"status":  "success",
@@ -293,7 +289,7 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 }
 
 func GetHomeDashboard(c *m.ReqContext) Response {
-	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
+	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
 	}

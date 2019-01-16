@@ -1,68 +1,5 @@
-import { Moment } from 'moment';
-
-export enum LoadingState {
-  NotStarted = 'NotStarted',
-  Loading = 'Loading',
-  Done = 'Done',
-  Error = 'Error',
-}
-
-export interface RawTimeRange {
-  from: Moment | string;
-  to: Moment | string;
-}
-
-export interface TimeRange {
-  from: Moment;
-  to: Moment;
-  raw: RawTimeRange;
-}
-
-export type TimeSeriesValue = string | number | null;
-
-export type TimeSeriesPoints = TimeSeriesValue[][];
-
-export interface TimeSeries {
-  target: string;
-  datapoints: TimeSeriesPoints;
-  unit?: string;
-}
-
-/** View model projection of a time series */
-export interface TimeSeriesVM {
-  label: string;
-  color: string;
-  data: TimeSeriesValue[][];
-  stats: TimeSeriesStats;
-}
-
-export interface TimeSeriesStats {
-  total: number;
-  max: number;
-  min: number;
-  logmin: number;
-  avg: number | null;
-  current: number | null;
-  first: number | null;
-  delta: number;
-  diff: number | null;
-  range: number | null;
-  timeStep: number;
-  count: number;
-  allIsNull: boolean;
-  allIsZero: boolean;
-}
-
-export enum NullValueMode {
-  Null = 'null',
-  Ignore = 'connected',
-  AsZero = 'null as zero',
-}
-
-/** View model projection of many time series */
-export interface TimeSeriesVMs {
-  [index: number]: TimeSeriesVM;
-}
+import { PluginMeta } from './plugins';
+import { TimeSeries, TimeRange, RawTimeRange } from '@grafana/ui';
 
 export interface DataQueryResponse {
   data: TimeSeries[];
@@ -70,6 +7,7 @@ export interface DataQueryResponse {
 
 export interface DataQuery {
   refId: string;
+  [key: string]: any;
 }
 
 export interface DataQueryOptions {
@@ -87,5 +25,28 @@ export interface DataQueryOptions {
 }
 
 export interface DataSourceApi {
+  /**
+   *  min interval range
+   */
+  interval?: string;
+
+  /**
+   * Imports queries from a different datasource
+   */
+  importQueries?(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]>;
+
+  /**
+   * Initializes a datasource after instantiation
+   */
+  init?: () => void;
+
+  /**
+   * Main metrics / data query action
+   */
   query(options: DataQueryOptions): Promise<DataQueryResponse>;
+
+  /**
+   * Test & verify datasource settings & connection details
+   */
+  testDatasource(): Promise<any>;
 }

@@ -1,13 +1,12 @@
 import React from 'react';
 import _ from 'lodash';
-import classNames from 'classnames';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import Highlighter from 'react-highlight-words';
+import { updateLocation } from 'app/core/actions';
+import { store as reduxStore } from 'app/store/store';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
@@ -15,64 +14,25 @@ export interface AddPanelPanelProps {
 }
 
 export interface AddPanelPanelState {
-  filter: string;
-  panelPlugins: any[];
   copiedPanelPlugins: any[];
-  tab: string;
 }
 
 export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelPanelState> {
-  private scrollbar: ScrollBar;
-
   constructor(props) {
     super(props);
     this.handleCloseAddPanel = this.handleCloseAddPanel.bind(this);
-    this.renderPanelItem = this.renderPanelItem.bind(this);
-    this.panelSizeChanged = this.panelSizeChanged.bind(this);
 
     this.state = {
-      panelPlugins: this.getPanelPlugins(''),
-      copiedPanelPlugins: this.getCopiedPanelPlugins(''),
-      filter: '',
-      tab: 'Add',
+      copiedPanelPlugins: this.getCopiedPanelPlugins(),
     };
   }
 
-  componentDidMount() {
-    this.props.panel.events.on('panel-size-changed', this.panelSizeChanged);
-  }
-
-  componentWillUnmount() {
-    this.props.panel.events.off('panel-size-changed', this.panelSizeChanged);
-  }
-
-  panelSizeChanged() {
-    setTimeout(() => {
-      this.scrollbar.update();
-    });
-  }
-
-  getPanelPlugins(filter) {
-    let panels = _.chain(config.panels)
-      .filter({ hideFromList: false })
-      .map(item => item)
-      .value();
-
-    // add special row type
-    panels.push({ id: 'row', name: 'Row', sort: 8, info: { logos: { small: 'public/img/icn-row.svg' } } });
-
-    panels = this.filterPanels(panels, filter);
-
-    // add sort by sort property
-    return _.sortBy(panels, 'sort');
-  }
-
-  getCopiedPanelPlugins(filter) {
+  getCopiedPanelPlugins() {
     const panels = _.chain(config.panels)
       .filter({ hideFromList: false })
       .map(item => item)
       .value();
-    let copiedPanels = [];
+    const copiedPanels = [];
 
     const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
     if (copiedPanelJson) {
@@ -86,13 +46,52 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
         copiedPanels.push(pluginCopy);
       }
     }
-
-    copiedPanels = this.filterPanels(copiedPanels, filter);
-
     return _.sortBy(copiedPanels, 'sort');
   }
 
-  onAddPanel = panelPluginInfo => {
+  handleCloseAddPanel(evt) {
+    evt.preventDefault();
+    this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
+  }
+
+  copyButton(panel) {
+    return (
+      <button className="btn-inverse btn" onClick={() => this.onPasteCopiedPanel(panel)} title={panel.name}>
+        Paste copied Panel
+      </button>
+    );
+  }
+
+  moveToEdit(panel) {
+    reduxStore.dispatch(
+      updateLocation({
+        query: {
+          panelId: panel.id,
+          edit: true,
+          fullscreen: true,
+        },
+        partial: true,
+      })
+    );
+  }
+
+  onCreateNewPanel = () => {
+    const dashboard = this.props.dashboard;
+    const { gridPos } = this.props.panel;
+
+    const newPanel: any = {
+      type: 'graph',
+      title: 'Panel Title',
+      gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
+    };
+
+    dashboard.addPanel(newPanel);
+    dashboard.removePanel(this.props.panel);
+
+    this.moveToEdit(newPanel);
+  };
+
+  onPasteCopiedPanel = panelPluginInfo => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
@@ -102,16 +101,9 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
 
-    if (panelPluginInfo.id === 'row') {
-      newPanel.title = 'Row title';
-      newPanel.gridPos = { x: 0, y: 0 };
-    }
-
     // apply panel template / defaults
     if (panelPluginInfo.defaults) {
       _.defaults(newPanel, panelPluginInfo.defaults);
-      newPanel.gridPos.w = panelPluginInfo.defaults.gridPos.w;
-      newPanel.gridPos.h = panelPluginInfo.defaults.gridPos.h;
       newPanel.title = panelPluginInfo.defaults.title;
       store.delete(LS_PANEL_COPY_KEY);
     }
@@ -120,133 +112,44 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     dashboard.removePanel(this.props.panel);
   };
 
-  handleCloseAddPanel(evt) {
-    evt.preventDefault();
-    this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
-  }
+  onCreateNewRow = () => {
+    const dashboard = this.props.dashboard;
 
-  renderText(text: string) {
-    const searchWords = this.state.filter.split('');
-    return <Highlighter highlightClassName="highlight-search-match" textToHighlight={text} searchWords={searchWords} />;
-  }
+    const newRow: any = {
+      type: 'row',
+      title: 'Row title',
+      gridPos: { x: 0, y: 0 },
+    };
 
-  renderPanelItem(panel, index) {
-    return (
-      <div key={index} className="add-panel__item" onClick={() => this.onAddPanel(panel)} title={panel.name}>
-        <img className="add-panel__item-img" src={panel.info.logos.small} />
-        <div className="add-panel__item-name">{this.renderText(panel.name)}</div>
-      </div>
-    );
-  }
-
-  noCopiedPanelPlugins() {
-    return <div className="add-panel__no-panels">No copied panels yet.</div>;
-  }
-
-  filterChange(evt) {
-    this.setState({
-      filter: evt.target.value,
-      panelPlugins: this.getPanelPlugins(evt.target.value),
-      copiedPanelPlugins: this.getCopiedPanelPlugins(evt.target.value),
-    });
-  }
-
-  filterKeyPress(evt) {
-    if (evt.key === 'Enter') {
-      const panel = _.head(this.state.panelPlugins);
-      if (panel) {
-        this.onAddPanel(panel);
-      }
-    }
-  }
-
-  filterPanels(panels, filter) {
-    const regex = new RegExp(filter, 'i');
-    return panels.filter(panel => {
-      return regex.test(panel.name);
-    });
-  }
-
-  openCopy() {
-    this.setState({
-      tab: 'Copy',
-      filter: '',
-      panelPlugins: this.getPanelPlugins(''),
-      copiedPanelPlugins: this.getCopiedPanelPlugins(''),
-    });
-  }
-
-  openAdd() {
-    this.setState({
-      tab: 'Add',
-      filter: '',
-      panelPlugins: this.getPanelPlugins(''),
-      copiedPanelPlugins: this.getCopiedPanelPlugins(''),
-    });
-  }
+    dashboard.addPanel(newRow);
+    dashboard.removePanel(this.props.panel);
+  };
 
   render() {
-    const addClass = classNames({
-      'active active--panel': this.state.tab === 'Add',
-      '': this.state.tab === 'Copy',
-    });
+    let addCopyButton;
 
-    const copyClass = classNames({
-      '': this.state.tab === 'Add',
-      'active active--panel': this.state.tab === 'Copy',
-    });
-
-    let panelTab;
-
-    if (this.state.tab === 'Add') {
-      panelTab = this.state.panelPlugins.map(this.renderPanelItem);
-    } else if (this.state.tab === 'Copy') {
-      if (this.state.copiedPanelPlugins.length > 0) {
-        panelTab = this.state.copiedPanelPlugins.map(this.renderPanelItem);
-      } else {
-        panelTab = this.noCopiedPanelPlugins();
-      }
+    if (this.state.copiedPanelPlugins.length === 1) {
+      addCopyButton = this.copyButton(this.state.copiedPanelPlugins[0]);
     }
 
     return (
       <div className="panel-container add-panel-container">
         <div className="add-panel">
-          <div className="add-panel__header">
+          <div className="add-panel__header grid-drag-handle">
             <i className="gicon gicon-add-panel" />
-            <span className="add-panel__title">New Panel</span>
-            <ul className="gf-tabs">
-              <li className="gf-tabs-item">
-                <div className={'gf-tabs-link pointer ' + addClass} onClick={this.openAdd.bind(this)}>
-                  Add
-                </div>
-              </li>
-              <li className="gf-tabs-item">
-                <div className={'gf-tabs-link pointer ' + copyClass} onClick={this.openCopy.bind(this)}>
-                  Paste
-                </div>
-              </li>
-            </ul>
             <button className="add-panel__close" onClick={this.handleCloseAddPanel}>
               <i className="fa fa-close" />
             </button>
           </div>
-          <ScrollBar ref={element => (this.scrollbar = element)} className="add-panel__items">
-            <div className="add-panel__searchbar">
-              <label className="gf-form gf-form--grow gf-form--has-input-icon">
-                <input
-                  type="text"
-                  autoFocus
-                  className="gf-form-input gf-form--grow"
-                  placeholder="Panel Search Filter"
-                  value={this.state.filter}
-                  onChange={this.filterChange.bind(this)}
-                  onKeyPress={this.filterKeyPress.bind(this)}
-                />
-                <i className="gf-form-input-icon fa fa-search" />
-              </label>
-            </div>
-            {panelTab}
-          </ScrollBar>
+          <div className="add-panel-btn-container">
+            <button className="btn-success btn btn-large" onClick={this.onCreateNewPanel}>
+              Edit Panel
+            </button>
+            {addCopyButton}
+            <button className="btn-inverse btn" onClick={this.onCreateNewRow}>
+              Add Row
+            </button>
+          </div>
         </div>
       </div>
     );

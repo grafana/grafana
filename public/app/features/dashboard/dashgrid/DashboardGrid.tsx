@@ -1,4 +1,5 @@
 import React from 'react';
+import { hot } from 'react-hot-loader';
 import ReactGridLayout from 'react-grid-layout';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
@@ -8,6 +9,7 @@ import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
 let lastGridWidth = 1200;
+let ignoreNextWidthChange = false;
 
 function GridWrapper({
   size,
@@ -24,8 +26,12 @@ function GridWrapper({
   isFullscreen,
 }) {
   const width = size.width > 0 ? size.width : lastGridWidth;
+
+  // logic to ignore width changes (optimization)
   if (width !== lastGridWidth) {
-    if (!isFullscreen && Math.abs(width - lastGridWidth) > 8) {
+    if (ignoreNextWidthChange) {
+      ignoreNextWidthChange = false;
+    } else if (!isFullscreen && Math.abs(width - lastGridWidth) > 8) {
       onWidthChange();
       lastGridWidth = width;
     }
@@ -39,7 +45,7 @@ function GridWrapper({
       isResizable={isResizable}
       measureBeforeMount={false}
       containerPadding={[0, 0]}
-      useCSSTransforms={true}
+      useCSSTransforms={false}
       margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
       cols={GRID_COLUMN_COUNT}
       rowHeight={GRID_CELL_HEIGHT}
@@ -61,7 +67,7 @@ export interface DashboardGridProps {
   dashboard: DashboardModel;
 }
 
-export class DashboardGrid extends React.Component<DashboardGridProps, any> {
+export class DashboardGrid extends React.Component<DashboardGridProps> {
   gridToPanelMap: any;
   panelMap: { [id: string]: PanelModel };
 
@@ -73,8 +79,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onDragStop = this.onDragStop.bind(this);
     this.onWidthChange = this.onWidthChange.bind(this);
 
-    this.state = { animated: false };
-
     // subscribe to dashboard events
     const dashboard = this.props.dashboard;
     dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
@@ -83,7 +87,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     dashboard.on('view-mode-changed', this.onViewModeChanged.bind(this));
     dashboard.on('row-collapsed', this.triggerForceUpdate.bind(this));
     dashboard.on('row-expanded', this.triggerForceUpdate.bind(this));
-    dashboard.on('panel-type-changed', this.triggerForceUpdate.bind(this));
   }
 
   buildLayout() {
@@ -139,7 +142,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 
   onViewModeChanged(payload) {
-    this.setState({ animated: !payload.fullscreen });
+    ignoreNextWidthChange = true;
+    this.forceUpdate();
   }
 
   updateGridPos(item, layout) {
@@ -163,20 +167,19 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.updateGridPos(newItem, layout);
   }
 
-  componentDidMount() {
-    setTimeout(() => {
-      this.setState({ animated: true });
-    });
-  }
-
   renderPanels() {
     const panelElements = [];
 
     for (const panel of this.props.dashboard.panels) {
-      const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
+      const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses} id={`panel-${panel.id}`}>
-          <DashboardPanel panel={panel} dashboard={this.props.dashboard} panelType={panel.type} />
+          <DashboardPanel
+            panel={panel}
+            dashboard={this.props.dashboard}
+            isEditing={panel.isEditing}
+            isFullscreen={panel.fullscreen}
+          />
         </div>
       );
     }
@@ -187,7 +190,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   render() {
     return (
       <SizedReactLayoutGrid
-        className={classNames({ layout: true, animated: this.state.animated })}
+        className={classNames({ layout: true })}
         layout={this.buildLayout()}
         isResizable={this.props.dashboard.meta.canEdit}
         isDraggable={this.props.dashboard.meta.canEdit}
@@ -203,3 +206,5 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     );
   }
 }
+
+export default hot(module)(DashboardGrid);

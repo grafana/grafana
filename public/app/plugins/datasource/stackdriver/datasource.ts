@@ -1,6 +1,8 @@
 import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
+import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
+import { MetricDescriptor } from './types';
 
 export default class StackdriverDatasource {
   id: number;
@@ -9,15 +11,16 @@ export default class StackdriverDatasource {
   projectName: string;
   authenticationType: string;
   queryPromise: Promise<any>;
+  metricTypes: any[];
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
-    this.doRequest = this.doRequest;
     this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
+    this.metricTypes = [];
   }
 
   async getTimeSeries(options) {
@@ -26,21 +29,15 @@ export default class StackdriverDatasource {
         return !target.hide && target.metricType;
       })
       .map(t => {
-        if (!t.hasOwnProperty('aggregation')) {
-          t.aggregation = {
-            crossSeriesReducer: 'REDUCE_MEAN',
-            groupBys: [],
-          };
-        }
         return {
           refId: t.refId,
           intervalMs: options.intervalMs,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(t.metricType, options.scopedVars || {}),
-          primaryAggregation: this.templateSrv.replace(t.aggregation.crossSeriesReducer, options.scopedVars || {}),
-          perSeriesAligner: this.templateSrv.replace(t.aggregation.perSeriesAligner, options.scopedVars || {}),
-          alignmentPeriod: this.templateSrv.replace(t.aggregation.alignmentPeriod, options.scopedVars || {}),
-          groupBys: this.interpolateGroupBys(t.aggregation.groupBys, options.scopedVars),
+          primaryAggregation: this.templateSrv.replace(t.crossSeriesReducer || 'REDUCE_MEAN', options.scopedVars || {}),
+          perSeriesAligner: this.templateSrv.replace(t.perSeriesAligner, options.scopedVars || {}),
+          alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod, options.scopedVars || {}),
+          groupBys: this.interpolateGroupBys(t.groupBys, options.scopedVars),
           view: t.view || 'FULL',
           filters: (t.filters || []).map(f => {
             return this.templateSrv.replace(f, options.scopedVars || {});
@@ -67,20 +64,20 @@ export default class StackdriverDatasource {
   }
 
   async getLabels(metricType, refId) {
-    return await this.getTimeSeries({
+    const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(metricType),
-          aggregation: {
-            crossSeriesReducer: 'REDUCE_NONE',
-          },
+          crossSeriesReducer: 'REDUCE_NONE',
           view: 'HEADERS',
         },
       ],
       range: this.timeSrv.timeRange(),
     });
+
+    return response.results[refId];
   }
 
   interpolateGroupBys(groupBys: string[], scopedVars): string[] {
@@ -177,8 +174,9 @@ export default class StackdriverDatasource {
     return results;
   }
 
-  metricFindQuery(query) {
-    throw new Error('Template variables support is not yet imlemented');
+  async metricFindQuery(query) {
+    const stackdriverMetricFindQuery = new StackdriverMetricFindQuery(this);
+    return stackdriverMetricFindQuery.execute(query);
   }
 
   async testDatasource() {
@@ -256,21 +254,24 @@ export default class StackdriverDatasource {
     }
   }
 
-  async getMetricTypes(projectName: string) {
+  async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {
     try {
-      const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
-      const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
+      if (this.metricTypes.length === 0) {
+        const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
+        const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
 
-      const metrics = data.metricDescriptors.map(m => {
-        const [service] = m.type.split('/');
-        const [serviceShortName] = service.split('.');
-        m.service = service;
-        m.serviceShortName = serviceShortName;
-        m.displayName = m.displayName || m.type;
-        return m;
-      });
+        this.metricTypes = data.metricDescriptors.map(m => {
+          const [service] = m.type.split('/');
+          const [serviceShortName] = service.split('.');
+          m.service = service;
+          m.serviceShortName = serviceShortName;
+          m.displayName = m.displayName || m.type;
 
-      return metrics;
+          return m;
+        });
+      }
+
+      return this.metricTypes;
     } catch (error) {
       appEvents.emit('ds-request-error', this.formatStackdriverError(error));
       return [];

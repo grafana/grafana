@@ -1,10 +1,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
+
 import { Label } from 'app/core/components/Label/Label';
-import { Team } from '../../types';
+import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
-import { getRouteParamsId } from '../../core/selectors/location';
+import { getRouteParamsId } from 'app/core/selectors/location';
 import { getTeam } from './state/selectors';
+import { Team } from 'app/types';
 
 export interface Props {
   team: Team;
@@ -41,6 +43,7 @@ export class TeamSettings extends React.Component<Props, State> {
   };
 
   render() {
+    const { team } = this.props;
     const { name, email } = this.state;
 
     return (
@@ -57,6 +60,7 @@ export class TeamSettings extends React.Component<Props, State> {
               onChange={this.onChangeName}
             />
           </div>
+
           <div className="gf-form max-width-30">
             <Label tooltip="This is optional and is primarily used to set the team profile avatar (via gravatar service)">
               Email
@@ -76,6 +80,7 @@ export class TeamSettings extends React.Component<Props, State> {
             </button>
           </div>
         </form>
+        <SharedPreferences resourceUri={`teams/${team.id}`} />
       </div>
     );
   }

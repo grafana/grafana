@@ -1,5 +1,5 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { Plugin } from './plugins';
+import { Plugin, PluginExports, PluginMeta } from './plugins';
 
 export interface DataSource {
   id: number;
@@ -13,9 +13,21 @@ export interface DataSource {
   user: string;
   database: string;
   basicAuth: boolean;
+  basicAuthPassword: string;
+  basicAuthUser: string;
   isDefault: boolean;
   jsonData: { authType: string; defaultRegion: string };
   readOnly: boolean;
+  withCredentials: boolean;
+  meta?: PluginMeta;
+  pluginExports?: PluginExports;
+}
+
+export interface DataSourceSelectItem {
+  name: string;
+  value: string | null;
+  meta: PluginMeta;
+  sort: string;
 }
 
 export interface DataSourcesState {

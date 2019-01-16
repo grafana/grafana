@@ -5,13 +5,13 @@ import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelec
 const initialState: DataSourcesState = {
   dataSources: [] as DataSource[],
   dataSource: {} as DataSource,
-  layoutMode: LayoutModes.Grid,
+  layoutMode: LayoutModes.List,
   searchQuery: '',
   dataSourcesCount: 0,
   dataSourceTypes: [] as Plugin[],
   dataSourceTypeSearchQuery: '',
-  dataSourceMeta: {} as Plugin,
   hasFetched: false,
+  dataSourceMeta: {} as Plugin,
 };
 
 export const dataSourcesReducer = (state = initialState, action: Action): DataSourcesState => {
@@ -36,6 +36,12 @@ export const dataSourcesReducer = (state = initialState, action: Action): DataSo
 
     case ActionTypes.LoadDataSourceMeta:
       return { ...state, dataSourceMeta: action.payload };
+
+    case ActionTypes.SetDataSourceName:
+      return { ...state, dataSource: { ...state.dataSource, name: action.payload } };
+
+    case ActionTypes.SetIsDefault:
+      return { ...state, dataSource: { ...state.dataSource, isDefault: action.payload } };
   }
 
   return state;

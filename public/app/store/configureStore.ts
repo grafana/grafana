@@ -10,6 +10,8 @@ import dashboardReducers from 'app/features/dashboard/state/reducers';
 import pluginReducers from 'app/features/plugins/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
+import organizationReducers from 'app/features/org/state/reducers';
+import { setStore } from './store';
 
 const rootReducers = {
   ...sharedReducers,
@@ -21,9 +23,8 @@ const rootReducers = {
   ...pluginReducers,
   ...dataSourcesReducers,
   ...usersReducers,
+  ...organizationReducers,
 };
-
-export let store;
 
 export function addRootReducer(reducers) {
   Object.assign(rootReducers, ...reducers);
@@ -36,8 +37,8 @@ export function configureStore() {
 
   if (process.env.NODE_ENV !== 'production') {
     // DEV builds we had the logger middleware
-    store = createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, createLogger())));
+    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, createLogger()))));
   } else {
-    store = createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk)));
+    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk))));
   }
 }

@@ -3,10 +3,8 @@ package plugins
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana-plugin-model/go/datasource"
@@ -24,11 +22,11 @@ type DataSourcePlugin struct {
 	Metrics      bool              `json:"metrics"`
 	Alerting     bool              `json:"alerting"`
 	Explore      bool              `json:"explore"`
+	Table        bool              `json:"tables"`
 	Logs         bool              `json:"logs"`
 	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
 	BuiltIn      bool              `json:"builtIn,omitempty"`
 	Mixed        bool              `json:"mixed,omitempty"`
-	HasQueryHelp bool              `json:"hasQueryHelp,omitempty"`
 	Routes       []*AppPluginRoute `json:"routes"`
 
 	Backend    bool   `json:"backend,omitempty"`
@@ -45,15 +43,6 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 	if err := p.registerPlugin(pluginDir); err != nil {
 		return err
-	}
-
-	// look for help markdown
-	helpPath := filepath.Join(p.PluginDir, "QUERY_HELP.md")
-	if _, err := os.Stat(helpPath); os.IsNotExist(err) {
-		helpPath = filepath.Join(p.PluginDir, "query_help.md")
-	}
-	if _, err := os.Stat(helpPath); err == nil {
-		p.HasQueryHelp = true
 	}
 
 	DataSources[p.Id] = p

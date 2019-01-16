@@ -10,6 +10,9 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
+import { expandRecordingRules } from './language_utils';
+import { DataQuery } from 'app/types';
+import { ExploreUrlState } from 'app/types/explore';
 
 export function alignRange(start, end, step) {
   const alignedEnd = Math.ceil(end / step) * step;
@@ -216,8 +219,9 @@ export class PrometheusDatasource {
     };
     const range = Math.ceil(end - start);
 
+    // options.interval is the dynamically calculated interval
     let interval = kbn.interval_to_seconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
+    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
     );
@@ -363,12 +367,13 @@ export class PrometheusDatasource {
     const step = annotation.step || '60s';
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
-    // Unsetting min interval
     const queryOptions = {
       ...options,
-      interval: '0s',
+      interval: step,
     };
-    const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
+    // Unsetting min interval for accurate event resolution
+    const minStep = '1s';
+    const query = this.createQuery({ expr, interval: minStep }, queryOptions, start, end);
 
     const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
@@ -418,24 +423,23 @@ export class PrometheusDatasource {
     });
   }
 
-  getExploreState(targets: any[]) {
-    let state = {};
-    if (targets && targets.length > 0) {
-      const queries = targets.map(t => ({
-        query: this.templateSrv.replace(t.expr, {}, this.interpolateQueryExpr),
-        format: t.format,
+  getExploreState(queries: DataQuery[]): Partial<ExploreUrlState> {
+    let state: Partial<ExploreUrlState> = { datasource: this.name };
+    if (queries && queries.length > 0) {
+      const expandedQueries = queries.map(query => ({
+        ...query,
+        expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
       }));
       state = {
         ...state,
-        queries,
-        datasource: this.name,
+        queries: expandedQueries,
       };
     }
     return state;
   }
 
-  getQueryHints(query: string, result: any[]) {
-    return getQueryHints(query, result, this);
+  getQueryHints(query: DataQuery, result: any[]) {
+    return getQueryHints(query.expr || '', result, this);
   }
 
   loadRules() {
@@ -453,31 +457,35 @@ export class PrometheusDatasource {
       });
   }
 
-  modifyQuery(query: string, action: any): string {
+  modifyQuery(query: DataQuery, action: any): DataQuery {
+    let expression = query.expr || '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        return addLabelToQuery(query, action.key, action.value);
+        expression = addLabelToQuery(expression, action.key, action.value);
+        break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
-        return `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+        expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
+        break;
       }
       case 'ADD_RATE': {
-        return `rate(${query}[5m])`;
+        expression = `rate(${expression}[5m])`;
+        break;
       }
       case 'ADD_SUM': {
-        return `sum(${query.trim()}) by ($1)`;
+        expression = `sum(${expression.trim()}) by ($1)`;
+        break;
       }
       case 'EXPAND_RULES': {
-        const mapping = action.mapping;
-        if (mapping) {
-          const ruleNames = Object.keys(mapping);
-          const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\()`, 'ig');
-          return query.replace(rulesRegex, (match, pre, name, post) => mapping[name]);
+        if (action.mapping) {
+          expression = expandRecordingRules(expression, action.mapping);
         }
+        break;
       }
       default:
-        return query;
+        break;
     }
+    return { ...query, expr: expression };
   }
 
   getPrometheusTime(date, roundUp) {

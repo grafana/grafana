@@ -4,7 +4,7 @@ import * as elasticsearchPlugin from 'app/plugins/datasource/elasticsearch/modul
 import * as opentsdbPlugin from 'app/plugins/datasource/opentsdb/module';
 import * as grafanaPlugin from 'app/plugins/datasource/grafana/module';
 import * as influxdbPlugin from 'app/plugins/datasource/influxdb/module';
-import * as loggingPlugin from 'app/plugins/datasource/logging/module';
+import * as lokiPlugin from 'app/plugins/datasource/loki/module';
 import * as mixedPlugin from 'app/plugins/datasource/mixed/module';
 import * as mysqlPlugin from 'app/plugins/datasource/mysql/module';
 import * as postgresPlugin from 'app/plugins/datasource/postgres/module';
@@ -24,6 +24,7 @@ import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
+import * as gaugePanel from 'app/plugins/panel/gauge/module';
 
 const builtInPlugins = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -32,7 +33,7 @@ const builtInPlugins = {
   'app/plugins/datasource/opentsdb/module': opentsdbPlugin,
   'app/plugins/datasource/grafana/module': grafanaPlugin,
   'app/plugins/datasource/influxdb/module': influxdbPlugin,
-  'app/plugins/datasource/logging/module': loggingPlugin,
+  'app/plugins/datasource/loki/module': lokiPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
@@ -52,6 +53,7 @@ const builtInPlugins = {
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
+  'app/plugins/panel/gauge/module': gaugePanel,
 };
 
 export default builtInPlugins;

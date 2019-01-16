@@ -18,7 +18,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 - [TV mode]({{< relref "#tv-and-kiosk-mode" >}}) is improved and more accessible
 - [Alerting]({{< relref "#notification-reminders" >}}) with notification reminders
 - [Postgres]({{< relref "#postgres-query-builder" >}}) gets a new query builder!
-- [OAuth]({{< relref "#improved-oauth-support-for-gitlab" >}}) support for Gitlab is improved
+- [OAuth]({{< relref "#improved-oauth-support-for-gitlab" >}}) support for GitLab is improved
 - [Annotations]({{< relref "#annotations" >}}) with template variable filtering
 - [Variables]({{< relref "#variables" >}}) with free text support
 
@@ -69,9 +69,9 @@ Grafana 5.3 comes with a new graphical query builder for Postgres. This brings P
 
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 
-## Improved OAuth Support for Gitlab
+## Improved OAuth Support for GitLab
 
-Grafana 5.3 comes with a new OAuth integration for Gitlab that enables configuration to only allow users that are a member of certain Gitlab groups to authenticate. This makes it possible to use Gitlab OAuth with Grafana in a shared environment without giving everyone access to Grafana.
+Grafana 5.3 comes with a new OAuth integration for GitLab that enables configuration to only allow users that are a member of certain GitLab groups to authenticate. This makes it possible to use GitLab OAuth with Grafana in a shared environment without giving everyone access to Grafana.
 Learn how to enable and configure it in the [documentation](/auth/gitlab/).
 
 ## Annotations

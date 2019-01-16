@@ -21,10 +21,16 @@ function prepareRows(rows, columnNames) {
 export default class Table extends PureComponent<TableProps> {
   getCellProps = (state, rowInfo, column) => {
     return {
-      onClick: () => {
-        const columnKey = column.Header;
-        const rowValue = rowInfo.row[columnKey];
-        this.props.onClickCell(columnKey, rowValue);
+      onClick: (e: React.SyntheticEvent) => {
+        // Only handle click on link, not the cell
+        if (e.target) {
+          const link = e.target as HTMLElement;
+          if (link.className === 'link') {
+            const columnKey = column.Header;
+            const rowValue = rowInfo.row[columnKey];
+            this.props.onClickCell(columnKey, rowValue);
+          }
+        }
       },
     };
   };

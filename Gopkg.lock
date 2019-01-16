@@ -141,12 +141,6 @@
   version = "v1.36.0"
 
 [[projects]]
-  name = "github.com/go-ldap/ldap"
-  packages = ["."]
-  revision = "bb7a9ca6e4fbc2129e3db588a34bc970ffe811a9"
-  version = "v2.5.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/go-macaron/binding"
   packages = ["."]
@@ -173,7 +167,7 @@
     "postgres",
     "redis"
   ]
-  revision = "b8e286a0dba8f4999042d6b258daf51b31d08938"
+  revision = "068d408f9c54c7fa7fcc5e2bdd3241ab21280c9e"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -655,6 +649,12 @@
   version = "v1.36.0"
 
 [[projects]]
+  name = "gopkg.in/ldap.v3"
+  packages = ["."]
+  revision = "5c2c0f997205c29de14cb6c35996370c2c5dfab1"
+  version = "v3"
+
+[[projects]]
   name = "gopkg.in/macaron.v1"
   packages = ["."]
   revision = "c1be95e6d21e769e44e1ec33cec9da5837861c10"
@@ -683,14 +683,14 @@
   version = "v2.1.9"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6f7f271afd27f78b7d8ebe27436fee72c9925fb82a978bdc57fde44e01f3ca51"
+  inputs-digest = "88f0eb826b9c154ba46ea3bb64767707d86db75449ec75199eb2b8cf2b337fd4"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -17,6 +17,7 @@ export class TemplateSrv {
   constructor() {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
+    this.variables = [];
   }
 
   init(variables) {
@@ -28,7 +29,7 @@ export class TemplateSrv {
     const existsOrEmpty = value => value || value === '';
 
     this.index = this.variables.reduce((acc, currentValue) => {
-      if (currentValue.current && !currentValue.current.isNone && existsOrEmpty(currentValue.current.value)) {
+      if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
         acc[currentValue.name] = currentValue;
       }
       return acc;

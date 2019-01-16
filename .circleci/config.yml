@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.4
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -39,7 +39,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.4
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -74,7 +74,7 @@ jobs:
 
   gometalinter:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.4
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -85,12 +85,13 @@ jobs:
       - run: 'go get -u github.com/tsenart/deadcode'
       - run: 'go get -u github.com/jgautheron/goconst/cmd/goconst'
       - run: 'go get -u github.com/gordonklaus/ineffassign'
+      - run: 'go get -u honnef.co/go/tools/cmd/megacheck'
       - run: 'go get -u github.com/opennota/check/cmd/structcheck'
       - run: 'go get -u github.com/mdempsky/unconvert'
       - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
           name: run linters
-          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=goconst --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=goconst --enable=gofmt --enable=ineffassign --enable=megacheck --enable=structcheck --enable=unconvert --enable=varcheck ./...'
       - run:
           name: run go vet
           command: 'go vet ./pkg/...'
@@ -116,7 +117,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -126,7 +127,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.2
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -161,8 +162,8 @@ jobs:
           name: Build Grafana.com master publisher
           command: 'go build -o scripts/publish scripts/build/publish.go'
       - run:
-          name: Build Grafana.com release publisher
-          command: 'cd scripts/build/release_publisher && go build -o release_publisher .'
+          name: Test and build Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test . && go build -o release_publisher .'
       - persist_to_workspace:
           root: .
           paths:
@@ -174,7 +175,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.2
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -190,57 +191,60 @@ jobs:
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
       - persist_to_workspace:
           root: .
           paths:
             - dist/grafana*
 
   grafana-docker-master:
-    docker:
-      - image: docker:stable-git
+    machine:
+      image: circleci/classic:201808-01
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker
       - run: docker info
-      - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
-      - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "master"
 
 
   grafana-docker-pr:
-    docker:
-      - image: docker:stable-git
+    machine:
+      image: circleci/classic:201808-01
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker
       - run: docker info
-      - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build.sh "${CIRCLE_SHA1}"
 
   grafana-docker-release:
-      docker:
-        - image: docker:stable-git
-      steps:
-        - checkout
-        - attach_workspace:
-            at: .
-        - setup_remote_docker
-        - run: docker info
-        - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
-        - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
-        - run: rm packaging/docker/grafana-latest.linux-x64.tar.gz
-        - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
-        - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.0
+     - image: grafana/build-container:1.2.2
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -272,7 +276,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.0
+    - image: grafana/build-container:1.2.2
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -319,39 +323,65 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
       - run:
           name: deploy to s3
           command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
+      - run:
+          name: Deploy to grafana.com
+          command: 'cd enterprise-dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -from-local'
+
 
   deploy-enterprise-release:
     docker:
-    - image: circleci/python:2.7-stretch
+    - image: grafana/grafana-ci-deploy:1.1.0
     steps:
-    - attach_workspace:
-        at: .
-    - run:
-        name: install awscli
-        command: 'sudo pip install awscli'
-    - run:
-        name: deploy to s3
-        command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
+      - attach_workspace:
+         at: .
+      - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to s3
+          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/release'
+      - run:
+          name: Deploy to Grafana.com
+          command: './scripts/build/publish.sh --enterprise'
+      - run:
+          name: Load GPG private key
+          command: './scripts/build/load-signing-key.sh'
+      - run:
+          name: Update Debian repository
+          command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+      - run:
+          name: Update RPM repository
+          command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+
 
   deploy-master:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
       - run:
           name: deploy to s3
           command: |
@@ -362,6 +392,15 @@ jobs:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://$GCP_BUCKET_NAME/oss/master'
+      - run:
           name: Publish to Grafana.com
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
@@ -369,19 +408,35 @@ jobs:
 
   deploy-release:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: grafana/grafana-ci-deploy:1.1.0
     steps:
+      - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: install awscli
-          command: 'sudo pip install awscli'
       - run:
           name: deploy to s3
           command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
       - run:
+          name: gcp credentials
+          command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
+      - run:
+          name: sign in to gcp
+          command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
+      - run:
+          name: deploy to gcp
+          command: '/opt/google-cloud-sdk/bin/gsutil cp ./dist/* gs://$GCP_BUCKET_NAME/oss/release'
+      - run:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh'
+      - run:
+          name: Load GPG private key
+          command: './scripts/build/load-signing-key.sh'
+      - run:
+          name: Update Debian repository
+          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+      - run:
+          name: Update RPM repository
+          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
 
 workflows:
   version: 2
@@ -478,6 +533,7 @@ workflows:
       - grafana-docker-release:
           requires:
             - build-all
+            - build-all-enterprise
             - test-backend
             - test-frontend
             - codespell
