@@ -141,7 +141,7 @@ export class AlertTabCtrl {
       iconClass: this.getNotificationIcon(model.type),
       isDefault: false,
     });
-    this.alert.notifications.push({ id: model.id });
+    this.alert.notifications.push({ uid: model.uid });
 
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
