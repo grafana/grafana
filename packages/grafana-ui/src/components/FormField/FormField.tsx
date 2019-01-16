@@ -16,7 +16,7 @@ const defaultProps = {
 
 const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputProps, inputWidth }) => {
   return (
-    <div className="gf-form">
+    <div className="form-field">
       <Label width={labelWidth}>{label}</Label>
       <input type="text" className={`gf-form-input width-${inputWidth}`} {...inputProps} />
     </div>
