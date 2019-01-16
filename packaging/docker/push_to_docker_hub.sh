@@ -22,6 +22,7 @@ docker_push_all () {
 
 	# Push each image individually
 	docker push "${repo}:${tag}"
+	docker push "${repo}:${tag}-alpine"
 	docker push "${repo}-arm32v7-linux:${tag}"
 	docker push "${repo}-arm64v8-linux:${tag}"
 
