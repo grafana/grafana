@@ -26,6 +26,8 @@ queries through the use of query references.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
+> NOTE: If running localhost try setting http_url to http://localhost.
+
 Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
