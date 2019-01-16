@@ -6,10 +6,10 @@ import {
   ThresholdsEditor,
   Threshold,
   PanelOptionsGrid,
+  ValueMappingsEditor,
 } from '@grafana/ui';
 
 import ValueOptions from 'app/plugins/panel/gauge/ValueOptions';
-import ValueMappings from 'app/plugins/panel/gauge/ValueMappings';
 import GaugeOptionsEditor from './GaugeOptionsEditor';
 
 export const defaultProps = {
@@ -44,7 +44,7 @@ export default class GaugePanelOptions extends PureComponent<PanelOptionsProps<G
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappings onChange={onChange} options={options} />
+        <ValueMappingsEditor onChange={onChange} options={options} />
       </>
     );
   }

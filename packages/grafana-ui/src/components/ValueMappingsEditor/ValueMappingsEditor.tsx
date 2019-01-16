@@ -1,14 +1,16 @@
 import React, { PureComponent } from 'react';
-import { GaugeOptions, PanelOptionsProps, MappingType, RangeMap, ValueMap, PanelOptionsGroup } from '@grafana/ui';
 
 import MappingRow from './MappingRow';
+import { PanelOptionsProps, ValueMap, RangeMap, MappingType } from '../../types/panel';
+import { GaugeOptions } from '../../types/gauge';
+import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 interface State {
   mappings: Array<ValueMap | RangeMap>;
   nextIdToAdd: number;
 }
 
-export default class ValueMappings extends PureComponent<PanelOptionsProps<GaugeOptions>, State> {
+export class ValueMappingsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>, State> {
   constructor(props) {
     super(props);
 

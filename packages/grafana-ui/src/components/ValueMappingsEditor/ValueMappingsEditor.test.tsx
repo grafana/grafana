@@ -1,9 +1,10 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { GaugeOptions, MappingType, PanelOptionsProps } from '@grafana/ui';
-import { defaultProps } from 'app/plugins/panel/gauge/GaugePanelOptions';
 
-import ValueMappings from './ValueMappings';
+import { defaultProps } from 'app/plugins/panel/gauge/GaugePanelOptions';
+import { ValueMappingsEditor } from './ValueMappingsEditor';
+import { PanelOptionsProps, MappingType } from '../../types/panel';
+import { GaugeOptions } from '../../types/gauge';
 
 const setup = (propOverrides?: object) => {
   const props: PanelOptionsProps<GaugeOptions> = {
@@ -19,9 +20,9 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<ValueMappings {...props} />);
+  const wrapper = shallow(<ValueMappingsEditor {...props} />);
 
-  const instance = wrapper.instance() as ValueMappings;
+  const instance = wrapper.instance() as ValueMappingsEditor;
 
   return {
     instance,
