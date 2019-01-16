@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormGroup, Label, GaugeOptions, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
+import { FormField, Label, GaugeOptions, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
 import UnitPicker from 'app/core/components/Select/UnitPicker';
 
 const statOptions = [
@@ -51,7 +51,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
           <Label width={labelWidth}>Unit</Label>
           <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
         </div>
-        <FormGroup
+        <FormField
           label="Decimals"
           labelWidth={labelWidth}
           inputProps={{
@@ -61,7 +61,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
             type: 'number',
           }}
         />
-        <FormGroup
+        <FormField
           label="Prefix"
           labelWidth={labelWidth}
           inputProps={{
@@ -69,7 +69,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
             value: prefix || '',
           }}
         />
-        <FormGroup
+        <FormField
           label="Suffix"
           labelWidth={labelWidth}
           inputProps={{

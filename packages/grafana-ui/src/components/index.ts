@@ -10,8 +10,8 @@ export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 
 // Forms
-export { GfFormLabel } from './GfFormLabel/GfFormLabel';
-export { FormGroup } from './FormGroup/FormGroup';
+export { FormLabel } from './FormLabel/FormLabel';
+export { FormField } from './FormGroup/FormField';
 export { Label } from './Label/Label';
 
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';

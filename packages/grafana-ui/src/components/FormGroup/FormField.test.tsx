@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { FormGroup, Props } from './FormGroup';
+import { FormField, Props } from './FormField';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -14,7 +14,7 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<FormGroup {...props} />);
+  return shallow(<FormField {...props} />);
 };
 
 describe('Render', () => {

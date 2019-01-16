@@ -1,9 +1,9 @@
-import React, { SFC } from 'react';
+import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { Label } from '..';
 
 export interface Props {
   label: string;
-  inputProps: {};
+  inputProps: InputHTMLAttributes<HTMLInputElement>;
   labelWidth?: number;
   inputWidth?: number;
 }
@@ -14,7 +14,7 @@ const defaultProps = {
   inputWidth: 12,
 };
 
-const FormGroup: SFC<Props> = ({ label, labelWidth, inputProps, inputWidth }) => {
+const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputProps, inputWidth }) => {
   return (
     <div className="gf-form">
       <Label width={labelWidth}>{label}</Label>
@@ -23,5 +23,5 @@ const FormGroup: SFC<Props> = ({ label, labelWidth, inputProps, inputWidth }) =>
   );
 };
 
-FormGroup.defaultProps = defaultProps;
-export { FormGroup };
+FormField.defaultProps = defaultProps;
+export { FormField };

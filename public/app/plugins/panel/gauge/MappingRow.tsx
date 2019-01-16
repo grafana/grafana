@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormGroup, Label, MappingType, RangeMap, Select, ValueMap } from '@grafana/ui';
+import { FormField, Label, MappingType, RangeMap, Select, ValueMap } from '@grafana/ui';
 
 interface Props {
   mapping: ValueMap | RangeMap;
@@ -61,7 +61,7 @@ export default class MappingRow extends PureComponent<Props, State> {
     if (type === MappingType.RangeToText) {
       return (
         <>
-          <FormGroup
+          <FormField
             label="From"
             labelWidth={4}
             inputProps={{
@@ -71,7 +71,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             }}
             inputWidth={8}
           />
-          <FormGroup
+          <FormField
             label="To"
             labelWidth={4}
             inputProps={{
@@ -96,7 +96,7 @@ export default class MappingRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <FormGroup
+        <FormField
           label="Value"
           labelWidth={4}
           inputProps={{

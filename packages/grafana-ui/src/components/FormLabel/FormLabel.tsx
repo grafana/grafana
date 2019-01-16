@@ -9,7 +9,7 @@ interface Props {
   isInvalid?: boolean;
 }
 
-export const GfFormLabel: SFC<Props> = ({ children, isFocused, isInvalid, className, htmlFor, ...rest }) => {
+export const FormLabel: SFC<Props> = ({ children, isFocused, isInvalid, className, htmlFor, ...rest }) => {
   const classes = classNames('gf-form-label', className, {
     'gf-form-label--is-focused': isFocused,
     'gf-form-label--is-invalid': isInvalid,
