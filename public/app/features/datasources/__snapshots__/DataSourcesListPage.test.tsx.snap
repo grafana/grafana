@@ -5,7 +5,16 @@ exports[`Render should render action bar and datasources 1`] = `
   title="Configuration: Data Sources"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Data Sources",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={false}
@@ -154,7 +163,16 @@ exports[`Render should render component 1`] = `
   title="Configuration: Data Sources"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Data Sources",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={true}

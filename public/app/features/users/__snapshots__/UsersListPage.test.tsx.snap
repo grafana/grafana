@@ -5,7 +5,16 @@ exports[`Render should render List page 1`] = `
   title="Configuration: Users"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Users",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={false}
@@ -28,7 +37,16 @@ exports[`Render should render component 1`] = `
   title="Configuration: Users"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Users",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={true}

@@ -5,7 +5,16 @@ exports[`Render should render component 1`] = `
   title="Configuration: Plugins"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Plugins",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={true}
@@ -31,7 +40,16 @@ exports[`Render should render list 1`] = `
   title="Configuration: Plugins"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Plugins",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={false}

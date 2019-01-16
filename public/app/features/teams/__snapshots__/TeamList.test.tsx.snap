@@ -2,10 +2,19 @@
 
 exports[`Render should render component 1`] = `
 <Page
-  title="Configuration: Teams"
+  title="Configuration: Team List"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Team List",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={true}
@@ -15,10 +24,19 @@ exports[`Render should render component 1`] = `
 
 exports[`Render should render teams table 1`] = `
 <Page
-  title="Configuration: Teams"
+  title="Configuration: Team List"
 >
   <PageHeader
-    model={Object {}}
+    model={
+      Object {
+        "main": Object {
+          "text": "Configuration",
+        },
+        "node": Object {
+          "text": "Team List",
+        },
+      }
+    }
   />
   <PageContents
     isLoading={false}

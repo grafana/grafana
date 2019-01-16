@@ -6,7 +6,14 @@ import { NavModel, Organization } from '../../types';
 const setup = (propOverrides?: object) => {
   const props: Props = {
     organization: {} as Organization,
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration'
+      },
+      node: {
+        text: 'Org details'
+      }
+    } as NavModel,
     loadOrganization: jest.fn(),
     setOrganizationName: jest.fn(),
     updateOrganization: jest.fn(),
