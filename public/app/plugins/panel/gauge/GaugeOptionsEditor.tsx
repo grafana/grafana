@@ -21,16 +21,8 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
 
     return (
       <PanelOptionsGroup title="Gauge">
-        <FormField
-          label="Min value"
-          labelWidth={8}
-          inputProps={{ onChange: event => this.onMinValueChange(event), value: minValue }}
-        />
-        <FormField
-          label="Max value"
-          labelWidth={8}
-          inputProps={{ onChange: event => this.onMaxValueChange(event), value: maxValue }}
-        />
+        <FormField label="Min value" labelWidth={8} onChange={event => this.onMinValueChange(event)} value={minValue} />
+        <FormField label="Max value" labelWidth={8} onChange={event => this.onMaxValueChange(event)} value={maxValue} />
         <Switch
           label="Show labels"
           labelClass="width-8"

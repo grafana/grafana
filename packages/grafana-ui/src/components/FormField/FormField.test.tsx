@@ -6,10 +6,8 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     label: 'Test',
     labelWidth: 11,
-    inputProps: {
-      value: 10,
-      onChange: jest.fn(),
-    },
+    value: 10,
+    onChange: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

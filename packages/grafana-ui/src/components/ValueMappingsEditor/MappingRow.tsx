@@ -64,22 +64,18 @@ export default class MappingRow extends PureComponent<Props, State> {
           <FormField
             label="From"
             labelWidth={4}
-            inputProps={{
-              onChange: (event: ChangeEvent<HTMLInputElement>) => this.onMappingFromChange(event),
-              onBlur: () => this.updateMapping(),
-              value: from,
-            }}
             inputWidth={8}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => this.onMappingFromChange(event)}
+            onBlur={() => this.updateMapping()}
+            value={from}
           />
           <FormField
             label="To"
             labelWidth={4}
-            inputProps={{
-              onBlur: () => this.updateMapping,
-              onChange: (event: ChangeEvent<HTMLInputElement>) => this.onMappingToChange(event),
-              value: to,
-            }}
             inputWidth={8}
+            onBlur={() => this.updateMapping}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => this.onMappingToChange(event)}
+            value={to}
           />
           <div className="gf-form gf-form--grow">
             <Label width={4}>Text</Label>
@@ -99,11 +95,9 @@ export default class MappingRow extends PureComponent<Props, State> {
         <FormField
           label="Value"
           labelWidth={4}
-          inputProps={{
-            onBlur: () => this.updateMapping,
-            onChange: (event: ChangeEvent<HTMLInputElement>) => this.onMappingValueChange(event),
-            value: value,
-          }}
+          onBlur={() => this.updateMapping}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => this.onMappingValueChange(event)}
+          value={value}
           inputWidth={8}
         />
         <div className="gf-form gf-form--grow">

@@ -1,20 +1,18 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { Label } from '..';
 
-export interface Props {
+export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  inputProps: InputHTMLAttributes<HTMLInputElement>;
   labelWidth?: number;
   inputWidth?: number;
 }
 
 const defaultProps = {
   labelWidth: 6,
-  inputProps: {},
   inputWidth: 12,
 };
 
-const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputProps, inputWidth }) => {
+const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputWidth, ...inputProps }) => {
   return (
     <div className="form-field">
       <Label width={labelWidth}>{label}</Label>

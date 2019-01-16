@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormField, Label,  PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
+import { FormField, Label, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
 import UnitPicker from 'app/core/components/Select/UnitPicker';
 import { GaugeOptions } from './types';
 
@@ -55,28 +55,22 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
         <FormField
           label="Decimals"
           labelWidth={labelWidth}
-          inputProps={{
-            placeholder: 'auto',
-            onChange: event => this.onDecimalChange(event),
-            value: decimals || '',
-            type: 'number',
-          }}
+          placeholder="auto"
+          onChange={event => this.onDecimalChange(event)}
+          value={decimals || ''}
+          type="number"
         />
         <FormField
           label="Prefix"
           labelWidth={labelWidth}
-          inputProps={{
-            onChange: event => this.onPrefixChange(event),
-            value: prefix || '',
-          }}
+          onChange={event => this.onPrefixChange(event)}
+          value={prefix || ''}
         />
         <FormField
           label="Suffix"
           labelWidth={labelWidth}
-          inputProps={{
-            onChange: event => this.onSuffixChange(event),
-            value: suffix || '',
-          }}
+          onChange={event => this.onSuffixChange(event)}
+          value={suffix || ''}
         />
       </PanelOptionsGroup>
     );
