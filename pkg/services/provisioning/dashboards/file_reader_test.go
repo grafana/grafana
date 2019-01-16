@@ -166,6 +166,36 @@ func TestDashboardFileReader(t *testing.T) {
 				_, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 			})
+
+			Convey("Two dashboard providers should be able to provisioned the same dashboard without uid", func() {
+				cfg1 := &DashboardsAsConfig{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingId}}
+				cfg2 := &DashboardsAsConfig{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingId}}
+
+				reader1, err := NewDashboardFileReader(cfg1, logger)
+				So(err, ShouldBeNil)
+
+				err = reader1.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				reader2, err := NewDashboardFileReader(cfg2, logger)
+				So(err, ShouldBeNil)
+
+				err = reader2.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				var folderCount int
+				var dashCount int
+				for _, o := range fakeService.inserted {
+					if o.Dashboard.IsFolder {
+						folderCount++
+					} else {
+						dashCount++
+					}
+				}
+
+				So(folderCount, ShouldEqual, 2)
+				So(dashCount, ShouldEqual, 2)
+			})
 		})
 
 		Convey("Should not create new folder if folder name is missing", func() {
@@ -256,7 +286,9 @@ func (ffi FakeFileInfo) Sys() interface{} {
 }
 
 func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
-	mock := fakeDashboardProvisioningService{}
+	mock := fakeDashboardProvisioningService{
+		provisioned: map[string][]*models.DashboardProvisioning{},
+	}
 	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
 		return &mock
 	}
@@ -265,17 +297,26 @@ func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
 
 type fakeDashboardProvisioningService struct {
 	inserted     []*dashboards.SaveDashboardDTO
-	provisioned  []*models.DashboardProvisioning
+	provisioned  map[string][]*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
 func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	return s.provisioned, nil
+	if _, ok := s.provisioned[name]; !ok {
+		s.provisioned[name] = []*models.DashboardProvisioning{}
+	}
+
+	return s.provisioned[name], nil
 }
 
 func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	s.inserted = append(s.inserted, dto)
-	s.provisioned = append(s.provisioned, provisioning)
+
+	if _, ok := s.provisioned[provisioning.Name]; !ok {
+		s.provisioned[provisioning.Name] = []*models.DashboardProvisioning{}
+	}
+
+	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], provisioning)
 	return dto.Dashboard, nil
 }
 

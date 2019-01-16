@@ -241,9 +241,9 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 
 interface LogsProps {
   data: LogsModel;
+  exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
-  position: string;
   range?: RawTimeRange;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -348,10 +348,10 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
   render() {
     const {
       data,
+      exploreId,
       highlighterExpressions,
       loading = false,
       onClickLabel,
-      position,
       range,
       scanning,
       scanRange,
@@ -400,7 +400,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             data={data.series}
             height="100px"
             range={range}
-            id={`explore-logs-graph-${position}`}
+            id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}
             onToggleSeries={this.onToggleLogLevel}
             userOptions={graphOptions}

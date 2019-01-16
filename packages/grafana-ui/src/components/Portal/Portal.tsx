@@ -12,10 +12,7 @@ export class Portal extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
-    const {
-      className,
-      root = document.body
-    } = this.props;
+    const { className, root = document.body } = this.props;
 
     if (className) {
       this.node.classList.add(className);

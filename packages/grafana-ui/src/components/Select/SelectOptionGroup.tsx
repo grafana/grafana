@@ -2,7 +2,11 @@ import React, { PureComponent } from 'react';
 import { GroupProps } from 'react-select/lib/components/Group';
 
 interface ExtendedGroupProps extends GroupProps<any> {
-  data: any;
+  data: {
+    label: string;
+    expanded: boolean;
+    options: any[];
+  };
 }
 
 interface State {
@@ -15,8 +19,10 @@ export default class SelectOptionGroup extends PureComponent<ExtendedGroupProps,
   };
 
   componentDidMount() {
-    if (this.props.selectProps) {
-      const value = this.props.selectProps.value[this.props.selectProps.value.length - 1];
+    if (this.props.data.expanded) {
+      this.setState({ expanded: true });
+    } else if (this.props.selectProps && this.props.selectProps.value) {
+      const { value } = this.props.selectProps.value;
 
       if (value && this.props.options.some(option => option.value === value)) {
         this.setState({ expanded: true });

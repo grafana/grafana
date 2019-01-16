@@ -35,11 +35,20 @@ export class ElasticMetricAggCtrl {
       $scope.isFirst = $scope.index === 0;
       $scope.isSingle = metricAggs.length === 1;
       $scope.settingsLinkText = '';
+      $scope.variablesLinkText = '';
       $scope.aggDef = _.find($scope.metricAggTypes, { value: $scope.agg.type });
 
       if (queryDef.isPipelineAgg($scope.agg.type)) {
-        $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
-        $scope.agg.field = $scope.agg.pipelineAgg;
+        if (queryDef.isPipelineAggWithMultipleBucketPaths($scope.agg.type)) {
+          $scope.variablesLinkText = 'Options';
+
+          if ($scope.agg.settings.script) {
+            $scope.variablesLinkText = 'Script: ' + $scope.agg.settings.script.replace(new RegExp('params.', 'g'), '');
+          }
+        } else {
+          $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
+          $scope.agg.field = $scope.agg.pipelineAgg;
+        }
 
         const pipelineOptions = queryDef.getPipelineOptions($scope.agg);
         if (pipelineOptions.length > 0) {
@@ -119,6 +128,10 @@ export class ElasticMetricAggCtrl {
       $scope.updatePipelineAggOptions();
     };
 
+    $scope.toggleVariables = () => {
+      $scope.showVariables = !$scope.showVariables;
+    };
+
     $scope.onChangeInternal = () => {
       $scope.onChange();
     };
@@ -152,6 +165,7 @@ export class ElasticMetricAggCtrl {
         $scope.target.bucketAggs = [queryDef.defaultBucketAgg()];
       }
 
+      $scope.showVariables = queryDef.isPipelineAggWithMultipleBucketPaths($scope.agg.type);
       $scope.updatePipelineAggOptions();
       $scope.onChange();
     };
