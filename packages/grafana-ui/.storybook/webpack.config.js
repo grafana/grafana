@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = (baseConfig, env, config) => {
+
   config.module.rules.push({
     test: /\.(ts|tsx)$/,
     use: [
@@ -9,6 +10,7 @@ module.exports = (baseConfig, env, config) => {
       },
     ],
   });
+
   config.module.rules.push({
     test: /\.scss$/,
     use: [
@@ -34,6 +36,21 @@ module.exports = (baseConfig, env, config) => {
       { loader: 'sass-loader', options: { sourceMap: false } },
     ],
   });
+
+  config.module.rules.push({
+    test: require.resolve('jquery'),
+    use: [
+      {
+        loader: 'expose-loader',
+        query: 'jQuery',
+      },
+      {
+        loader: 'expose-loader',
+        query: '$',
+      },
+    ],
+  });
+
   config.resolve.extensions.push('.ts', '.tsx');
   return config;
 };

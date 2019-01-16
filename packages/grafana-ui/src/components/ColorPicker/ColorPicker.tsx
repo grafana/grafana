@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Drop from 'tether-drop';
 import { ColorPickerPopover } from './ColorPickerPopover';
 
-export interface Props {
+interface Props {
+  /**
+   * Value to display, either empty (" ") or "X" / "O".
+   *
+   * @default " "
+   **/
   color: string;
   onChange: (c: string) => void;
 }
 
-export class ColorPicker extends React.Component<Props, any> {
+export class ColorPicker extends Component<Props, any> {
   pickerElem: HTMLElement | null;
   colorPickerDrop: any;
 
@@ -59,3 +64,5 @@ export class ColorPicker extends React.Component<Props, any> {
     );
   }
 }
+
+export default ColorPicker;

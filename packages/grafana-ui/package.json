@@ -28,7 +28,7 @@
     "tinycolor2": "^1.4.1"
   },
   "devDependencies": {
-    "@storybook/addon-info": "^4.1.4",
+    "@storybook/addon-info": "^4.1.6",
     "@storybook/react": "^4.1.4",
     "@types/classnames": "^2.2.6",
     "@types/jest": "^23.3.2",
@@ -36,13 +36,15 @@
     "@types/lodash": "^4.14.119",
     "@types/node": "^10.12.18",
     "@types/react": "^16.7.6",
-    "@types/storybook__react": "^4.0.0",
     "@types/react-custom-scrollbars": "^4.0.5",
     "@types/react-test-renderer": "^16.0.3",
     "@types/react-transition-group": "^2.0.15",
+    "@types/storybook__addon-info": "^3.4.2",
+    "@types/storybook__react": "^4.0.0",
     "@types/tether-drop": "^1.4.8",
     "@types/tinycolor2": "^1.4.1",
     "awesome-typescript-loader": "^5.2.1",
+    "react-docgen-typescript-loader": "^3.0.0",
     "react-docgen-typescript-webpack-plugin": "^1.1.0",
     "react-test-renderer": "^16.7.0",
     "typescript": "^3.2.2"
