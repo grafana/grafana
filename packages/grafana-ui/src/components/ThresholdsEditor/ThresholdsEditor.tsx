@@ -42,10 +42,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     });
 
     // Setting value to a value between the previous thresholds
-    const beforeThreshold = newThresholds.filter(threshold => threshold.index === index - 1)[0];
-    const afterThreshold = newThresholds.filter(threshold => threshold.index === index + 1)[0];
-    const beforeThresholdValue = beforeThreshold !== undefined ? Math.max(beforeThreshold.value, minValue) : minValue;
-    const afterThresholdValue = afterThreshold !== undefined ? Math.min(afterThreshold.value, maxValue) : maxValue;
+    const beforeThreshold = newThresholds.filter(t => t.index === index - 1 && t.index !== 0)[0];
+    const afterThreshold = newThresholds.filter(t => t.index === index + 1 && t.index !== 0)[0];
+    const beforeThresholdValue = beforeThreshold !== undefined ? beforeThreshold.value : minValue;
+    const afterThresholdValue = afterThreshold !== undefined ? afterThreshold.value : maxValue;
     const value = afterThresholdValue - (afterThresholdValue - beforeThresholdValue) / 2;
 
     // Set a color
