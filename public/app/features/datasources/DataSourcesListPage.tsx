@@ -8,7 +8,8 @@ import DataSourcesList from './DataSourcesList';
 import { DataSource, NavModel, StoreState } from 'app/types';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { loadDataSources, setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel, getTitleFromNavModel } from 'app/core/selectors/navModel';
+
 import {
   getDataSources,
   getDataSourcesCount,
@@ -66,7 +67,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
     };
 
     return (
-      <Page title="Configuration: Data Sources">
+      <Page title={getTitleFromNavModel(navModel)}>
         <Page.Header model={navModel} />
         <Page.Contents isLoading={!hasFetched}>
           <>

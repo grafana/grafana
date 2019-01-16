@@ -4,10 +4,10 @@ import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
 import { DeleteButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { NavModel, Team } from '../../types';
+import { NavModel, Team } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel, getTitleFromNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
@@ -140,7 +140,7 @@ export class TeamList extends PureComponent<Props, any> {
     const { hasFetched, navModel } = this.props;
 
     return (
-      <Page title="Configuration: Teams">
+      <Page title={getTitleFromNavModel(navModel)}>
         <Page.Header model={navModel} />
         <Page.Contents isLoading={!hasFetched}>
           {hasFetched && this.renderList()}
