@@ -1,6 +1,6 @@
 import { configure } from '@storybook/react';
 
-import '@grafana/ui/src/components/index.scss';
+import '../../../public/sass/grafana.light.scss';
 
 // automatically import all files ending in *.stories.tsx
 const req = require.context('../src/components', true, /.story.tsx$/);
