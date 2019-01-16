@@ -1,21 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import { defaultProps } from 'app/plugins/panel/gauge/GaugePanelOptions';
-import { ValueMappingsEditor } from './ValueMappingsEditor';
-import { PanelOptionsProps, MappingType } from '../../types/panel';
-import { GaugeOptions } from '../../types/gauge';
+import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
+import { MappingType } from '../../types/panel';
 
 const setup = (propOverrides?: object) => {
-  const props: PanelOptionsProps<GaugeOptions> = {
+  const props: Props = {
     onChange: jest.fn(),
-    options: {
-      ...defaultProps.options,
-      mappings: [
-        { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
-        { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
-      ],
-    },
+    valueMappings: [
+      { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
+      { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
+    ],
   };
 
   Object.assign(props, propOverrides);
@@ -41,18 +36,20 @@ describe('Render', () => {
 describe('On remove mapping', () => {
   it('Should remove mapping with id 0', () => {
     const { instance } = setup();
+
     instance.onRemoveMapping(1);
 
-    expect(instance.state.mappings).toEqual([
+    expect(instance.state.valueMappings).toEqual([
       { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
     ]);
   });
 
   it('should remove mapping with id 1', () => {
     const { instance } = setup();
+
     instance.onRemoveMapping(2);
 
-    expect(instance.state.mappings).toEqual([
+    expect(instance.state.valueMappings).toEqual([
       { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
     ]);
   });
@@ -68,7 +65,7 @@ describe('Next id to add', () => {
   });
 
   it('should default to 1', () => {
-    const { instance } = setup({ options: { ...defaultProps.options } });
+    const { instance } = setup({ valueMappings: [] });
 
     expect(instance.state.nextIdToAdd).toEqual(1);
   });
