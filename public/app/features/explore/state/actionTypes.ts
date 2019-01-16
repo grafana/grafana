@@ -47,52 +47,66 @@ export enum ActionTypes {
 
 export interface AddQueryRowAction {
   type: ActionTypes.AddQueryRow;
-  exploreId: ExploreId;
-  index: number;
-  query: DataQuery;
+  payload: {
+    exploreId: ExploreId;
+    index: number;
+    query: DataQuery;
+  };
 }
 
 export interface ChangeQueryAction {
   type: ActionTypes.ChangeQuery;
-  exploreId: ExploreId;
-  query: DataQuery;
-  index: number;
-  override: boolean;
+  payload: {
+    exploreId: ExploreId;
+    query: DataQuery;
+    index: number;
+    override: boolean;
+  };
 }
 
 export interface ChangeSizeAction {
   type: ActionTypes.ChangeSize;
-  exploreId: ExploreId;
-  width: number;
-  height: number;
+  payload: {
+    exploreId: ExploreId;
+    width: number;
+    height: number;
+  };
 }
 
 export interface ChangeTimeAction {
   type: ActionTypes.ChangeTime;
-  exploreId: ExploreId;
-  range: TimeRange;
+  payload: {
+    exploreId: ExploreId;
+    range: TimeRange;
+  };
 }
 
 export interface ClearQueriesAction {
   type: ActionTypes.ClearQueries;
-  exploreId: ExploreId;
+  payload: {
+    exploreId: ExploreId;
+  };
 }
 
 export interface HighlightLogsExpressionAction {
   type: ActionTypes.HighlightLogsExpression;
-  exploreId: ExploreId;
-  expressions: string[];
+  payload: {
+    exploreId: ExploreId;
+    expressions: string[];
+  };
 }
 
 export interface InitializeExploreAction {
   type: ActionTypes.InitializeExplore;
-  exploreId: ExploreId;
-  containerWidth: number;
-  datasource: string;
-  eventBridge: Emitter;
-  exploreDatasources: DataSourceSelectItem[];
-  queries: DataQuery[];
-  range: RawTimeRange;
+  payload: {
+    exploreId: ExploreId;
+    containerWidth: number;
+    datasource: string;
+    eventBridge: Emitter;
+    exploreDatasources: DataSourceSelectItem[];
+    queries: DataQuery[];
+    range: RawTimeRange;
+  };
 }
 
 export interface InitializeExploreSplitAction {
@@ -101,97 +115,125 @@ export interface InitializeExploreSplitAction {
 
 export interface LoadDatasourceFailureAction {
   type: ActionTypes.LoadDatasourceFailure;
-  exploreId: ExploreId;
-  error: string;
+  payload: {
+    exploreId: ExploreId;
+    error: string;
+  };
 }
 
 export interface LoadDatasourcePendingAction {
   type: ActionTypes.LoadDatasourcePending;
-  exploreId: ExploreId;
-  datasourceId: number;
+  payload: {
+    exploreId: ExploreId;
+    datasourceId: number;
+  };
 }
 
 export interface LoadDatasourceMissingAction {
   type: ActionTypes.LoadDatasourceMissing;
-  exploreId: ExploreId;
+  payload: {
+    exploreId: ExploreId;
+  };
 }
 
 export interface LoadDatasourceSuccessAction {
   type: ActionTypes.LoadDatasourceSuccess;
-  exploreId: ExploreId;
-  StartPage?: any;
-  datasourceInstance: any;
-  history: HistoryItem[];
-  initialDatasource: string;
-  initialQueries: DataQuery[];
-  logsHighlighterExpressions?: any[];
-  showingStartPage: boolean;
-  supportsGraph: boolean;
-  supportsLogs: boolean;
-  supportsTable: boolean;
+  payload: {
+    exploreId: ExploreId;
+    StartPage?: any;
+    datasourceInstance: any;
+    history: HistoryItem[];
+    initialDatasource: string;
+    initialQueries: DataQuery[];
+    logsHighlighterExpressions?: any[];
+    showingStartPage: boolean;
+    supportsGraph: boolean;
+    supportsLogs: boolean;
+    supportsTable: boolean;
+  };
 }
 
 export interface ModifyQueriesAction {
   type: ActionTypes.ModifyQueries;
-  exploreId: ExploreId;
-  modification: any;
-  index: number;
-  modifier: (queries: DataQuery[], modification: any) => DataQuery[];
+  payload: {
+    exploreId: ExploreId;
+    modification: any;
+    index: number;
+    modifier: (queries: DataQuery[], modification: any) => DataQuery[];
+  };
 }
 
 export interface QueryTransactionFailureAction {
   type: ActionTypes.QueryTransactionFailure;
-  exploreId: ExploreId;
-  queryTransactions: QueryTransaction[];
+  payload: {
+    exploreId: ExploreId;
+    queryTransactions: QueryTransaction[];
+  };
 }
 
 export interface QueryTransactionStartAction {
   type: ActionTypes.QueryTransactionStart;
-  exploreId: ExploreId;
-  resultType: ResultType;
-  rowIndex: number;
-  transaction: QueryTransaction;
+  payload: {
+    exploreId: ExploreId;
+    resultType: ResultType;
+    rowIndex: number;
+    transaction: QueryTransaction;
+  };
 }
 
 export interface QueryTransactionSuccessAction {
   type: ActionTypes.QueryTransactionSuccess;
-  exploreId: ExploreId;
-  history: HistoryItem[];
-  queryTransactions: QueryTransaction[];
+  payload: {
+    exploreId: ExploreId;
+    history: HistoryItem[];
+    queryTransactions: QueryTransaction[];
+  };
 }
 
 export interface RemoveQueryRowAction {
   type: ActionTypes.RemoveQueryRow;
-  exploreId: ExploreId;
-  index: number;
+  payload: {
+    exploreId: ExploreId;
+    index: number;
+  };
 }
 
 export interface RunQueriesEmptyAction {
   type: ActionTypes.RunQueriesEmpty;
-  exploreId: ExploreId;
+  payload: {
+    exploreId: ExploreId;
+  };
 }
 
 export interface ScanStartAction {
   type: ActionTypes.ScanStart;
-  exploreId: ExploreId;
-  scanner: RangeScanner;
+  payload: {
+    exploreId: ExploreId;
+    scanner: RangeScanner;
+  };
 }
 
 export interface ScanRangeAction {
   type: ActionTypes.ScanRange;
-  exploreId: ExploreId;
-  range: RawTimeRange;
+  payload: {
+    exploreId: ExploreId;
+    range: RawTimeRange;
+  };
 }
 
 export interface ScanStopAction {
   type: ActionTypes.ScanStop;
-  exploreId: ExploreId;
+  payload: {
+    exploreId: ExploreId;
+  };
 }
 
 export interface SetQueriesAction {
   type: ActionTypes.SetQueries;
-  exploreId: ExploreId;
-  queries: DataQuery[];
+  payload: {
+    exploreId: ExploreId;
+    queries: DataQuery[];
+  };
 }
 
 export interface SplitCloseAction {
@@ -200,7 +242,9 @@ export interface SplitCloseAction {
 
 export interface SplitOpenAction {
   type: ActionTypes.SplitOpen;
-  itemState: ExploreItemState;
+  payload: {
+    itemState: ExploreItemState;
+  };
 }
 
 export interface StateSaveAction {
@@ -209,17 +253,23 @@ export interface StateSaveAction {
 
 export interface ToggleTableAction {
   type: ActionTypes.ToggleTable;
-  exploreId: ExploreId;
+  payload: {
+    exploreId: ExploreId;
+  };
 }
 
 export interface ToggleGraphAction {
   type: ActionTypes.ToggleGraph;
-  exploreId: ExploreId;
+  payload: {
+    exploreId: ExploreId;
+  };
 }
 
 export interface ToggleLogsAction {
   type: ActionTypes.ToggleLogs;
-  exploreId: ExploreId;
+  payload: {
+    exploreId: ExploreId;
+  };
 }
 
 export type Action =

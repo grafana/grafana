@@ -52,7 +52,7 @@ type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
  */
 export function addQueryRow(exploreId: ExploreId, index: number): AddQueryRowAction {
   const query = generateEmptyQuery(index + 1);
-  return { type: ActionTypes.AddQueryRow, exploreId, index, query };
+  return { type: ActionTypes.AddQueryRow, payload: { exploreId, index, query } };
 }
 
 /**
@@ -81,7 +81,7 @@ export function changeQuery(
       query = { ...generateEmptyQuery(index) };
     }
 
-    dispatch({ type: ActionTypes.ChangeQuery, exploreId, query, index, override });
+    dispatch({ type: ActionTypes.ChangeQuery, payload: { exploreId, query, index, override } });
     if (override) {
       dispatch(runQueries(exploreId));
     }
@@ -96,7 +96,7 @@ export function changeSize(
   exploreId: ExploreId,
   { height, width }: { height: number; width: number }
 ): ChangeSizeAction {
-  return { type: ActionTypes.ChangeSize, exploreId, height, width };
+  return { type: ActionTypes.ChangeSize, payload: { exploreId, height, width } };
 }
 
 /**
@@ -104,7 +104,7 @@ export function changeSize(
  */
 export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<void> {
   return dispatch => {
-    dispatch({ type: ActionTypes.ChangeTime, exploreId, range });
+    dispatch({ type: ActionTypes.ChangeTime, payload: { exploreId, range } });
     dispatch(runQueries(exploreId));
   };
 }
@@ -115,7 +115,7 @@ export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<
 export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
   return dispatch => {
     dispatch(scanStop(exploreId));
-    dispatch({ type: ActionTypes.ClearQueries, exploreId });
+    dispatch({ type: ActionTypes.ClearQueries, payload: { exploreId } });
     dispatch(stateSave());
   };
 }
@@ -124,7 +124,7 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
  * Highlight expressions in the log results
  */
 export function highlightLogsExpression(exploreId: ExploreId, expressions: string[]): HighlightLogsExpressionAction {
-  return { type: ActionTypes.HighlightLogsExpression, exploreId, expressions };
+  return { type: ActionTypes.HighlightLogsExpression, payload: { exploreId, expressions } };
 }
 
 /**
@@ -150,13 +150,15 @@ export function initializeExplore(
 
     dispatch({
       type: ActionTypes.InitializeExplore,
-      exploreId,
-      containerWidth,
-      datasource,
-      eventBridge,
-      exploreDatasources,
-      queries,
-      range,
+      payload: {
+        exploreId,
+        containerWidth,
+        datasource,
+        eventBridge,
+        exploreDatasources,
+        queries,
+        range,
+      },
     });
 
     if (exploreDatasources.length > 1) {
@@ -187,8 +189,10 @@ export function initializeExploreSplit() {
  */
 export const loadDatasourceFailure = (exploreId: ExploreId, error: string): LoadDatasourceFailureAction => ({
   type: ActionTypes.LoadDatasourceFailure,
-  exploreId,
-  error,
+  payload: {
+    exploreId,
+    error,
+  },
 });
 
 /**
@@ -196,7 +200,7 @@ export const loadDatasourceFailure = (exploreId: ExploreId, error: string): Load
  */
 export const loadDatasourceMissing = (exploreId: ExploreId): LoadDatasourceMissingAction => ({
   type: ActionTypes.LoadDatasourceMissing,
-  exploreId,
+  payload: { exploreId },
 });
 
 /**
@@ -204,8 +208,10 @@ export const loadDatasourceMissing = (exploreId: ExploreId): LoadDatasourceMissi
  */
 export const loadDatasourcePending = (exploreId: ExploreId, datasourceId: number): LoadDatasourcePendingAction => ({
   type: ActionTypes.LoadDatasourcePending,
-  exploreId,
-  datasourceId,
+  payload: {
+    exploreId,
+    datasourceId,
+  },
 });
 
 /**
@@ -232,16 +238,18 @@ export const loadDatasourceSuccess = (
 
   return {
     type: ActionTypes.LoadDatasourceSuccess,
-    exploreId,
-    StartPage,
-    datasourceInstance: instance,
-    history,
-    initialDatasource: instance.name,
-    initialQueries: queries,
-    showingStartPage: Boolean(StartPage),
-    supportsGraph,
-    supportsLogs,
-    supportsTable,
+    payload: {
+      exploreId,
+      StartPage,
+      datasourceInstance: instance,
+      history,
+      initialDatasource: instance.name,
+      initialQueries: queries,
+      showingStartPage: Boolean(StartPage),
+      supportsGraph,
+      supportsLogs,
+      supportsTable,
+    },
   };
 };
 
@@ -323,7 +331,7 @@ export function modifyQueries(
   modifier: any
 ): ThunkResult<void> {
   return dispatch => {
-    dispatch({ type: ActionTypes.ModifyQueries, exploreId, modification, index, modifier });
+    dispatch({ type: ActionTypes.ModifyQueries, payload: { exploreId, modification, index, modifier } });
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
     }
@@ -349,7 +357,7 @@ export function queryTransactionFailure(
 
     // Transaction might have been discarded
     if (!queryTransactions.find(qt => qt.id === transactionId)) {
-      return null;
+      return;
     }
 
     console.error(response);
@@ -388,7 +396,10 @@ export function queryTransactionFailure(
       return qt;
     });
 
-    dispatch({ type: ActionTypes.QueryTransactionFailure, exploreId, queryTransactions: nextQueryTransactions });
+    dispatch({
+      type: ActionTypes.QueryTransactionFailure,
+      payload: { exploreId, queryTransactions: nextQueryTransactions },
+    });
   };
 }
 
@@ -405,7 +416,7 @@ export function queryTransactionStart(
   resultType: ResultType,
   rowIndex: number
 ): QueryTransactionStartAction {
-  return { type: ActionTypes.QueryTransactionStart, exploreId, resultType, rowIndex, transaction };
+  return { type: ActionTypes.QueryTransactionStart, payload: { exploreId, resultType, rowIndex, transaction } };
 }
 
 /**
@@ -466,9 +477,11 @@ export function queryTransactionSuccess(
 
     dispatch({
       type: ActionTypes.QueryTransactionSuccess,
-      exploreId,
-      history: nextHistory,
-      queryTransactions: nextQueryTransactions,
+      payload: {
+        exploreId,
+        history: nextHistory,
+        queryTransactions: nextQueryTransactions,
+      },
     });
 
     // Keep scanning for results if this was the last scanning transaction
@@ -477,7 +490,7 @@ export function queryTransactionSuccess(
         const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
         if (!other) {
           const range = scanner();
-          dispatch({ type: ActionTypes.ScanRange, exploreId, range });
+          dispatch({ type: ActionTypes.ScanRange, payload: { exploreId, range } });
         }
       } else {
         // We can stop scanning if we have a result
@@ -492,7 +505,7 @@ export function queryTransactionSuccess(
  */
 export function removeQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
   return dispatch => {
-    dispatch({ type: ActionTypes.RemoveQueryRow, exploreId, index });
+    dispatch({ type: ActionTypes.RemoveQueryRow, payload: { exploreId, index } });
     dispatch(runQueries(exploreId));
   };
 }
@@ -514,7 +527,7 @@ export function runQueries(exploreId: ExploreId) {
     } = getState().explore[exploreId];
 
     if (!hasNonEmptyQuery(modifiedQueries)) {
-      dispatch({ type: ActionTypes.RunQueriesEmpty, exploreId });
+      dispatch({ type: ActionTypes.RunQueriesEmpty, payload: { exploreId } });
       return;
     }
 
@@ -618,11 +631,11 @@ function runQueriesForType(
 export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkResult<void> {
   return dispatch => {
     // Register the scanner
-    dispatch({ type: ActionTypes.ScanStart, exploreId, scanner });
+    dispatch({ type: ActionTypes.ScanStart, payload: { exploreId, scanner } });
     // Scanning must trigger query run, and return the new range
     const range = scanner();
     // Set the new range to be displayed
-    dispatch({ type: ActionTypes.ScanRange, exploreId, range });
+    dispatch({ type: ActionTypes.ScanRange, payload: { exploreId, range } });
   };
 }
 
@@ -630,7 +643,7 @@ export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkRes
  * Stop any scanning for more results.
  */
 export function scanStop(exploreId: ExploreId): ScanStopAction {
-  return { type: ActionTypes.ScanStop, exploreId };
+  return { type: ActionTypes.ScanStop, payload: { exploreId } };
 }
 
 /**
@@ -643,8 +656,10 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
     const queries = rawQueries.map(q => ({ ...q, ...generateEmptyQuery() }));
     dispatch({
       type: ActionTypes.SetQueries,
-      exploreId,
-      queries,
+      payload: {
+        exploreId,
+        queries,
+      },
     });
     dispatch(runQueries(exploreId));
   };
@@ -674,7 +689,7 @@ export function splitOpen(): ThunkResult<void> {
       queryTransactions: [],
       initialQueries: leftState.modifiedQueries.slice(),
     };
-    dispatch({ type: ActionTypes.SplitOpen, itemState });
+    dispatch({ type: ActionTypes.SplitOpen, payload: { itemState } });
     dispatch(stateSave());
   };
 }
@@ -710,7 +725,7 @@ export function stateSave() {
  */
 export function toggleGraph(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.ToggleGraph, exploreId });
+    dispatch({ type: ActionTypes.ToggleGraph, payload: { exploreId } });
     if (getState().explore[exploreId].showingGraph) {
       dispatch(runQueries(exploreId));
     }
@@ -722,7 +737,7 @@ export function toggleGraph(exploreId: ExploreId): ThunkResult<void> {
  */
 export function toggleLogs(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.ToggleLogs, exploreId });
+    dispatch({ type: ActionTypes.ToggleLogs, payload: { exploreId } });
     if (getState().explore[exploreId].showingLogs) {
       dispatch(runQueries(exploreId));
     }
@@ -734,7 +749,7 @@ export function toggleLogs(exploreId: ExploreId): ThunkResult<void> {
  */
 export function toggleTable(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.ToggleTable, exploreId });
+    dispatch({ type: ActionTypes.ToggleTable, payload: { exploreId } });
     if (getState().explore[exploreId].showingTable) {
       dispatch(runQueries(exploreId));
     }
