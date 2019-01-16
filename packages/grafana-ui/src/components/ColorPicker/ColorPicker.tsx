@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Drop from 'tether-drop';
 import { ColorPickerPopover } from './ColorPickerPopover';
+import { Color } from '../../utils/colorsPalette';
 
 interface Props {
   /**
@@ -9,6 +10,7 @@ interface Props {
    *
    * @default " "
    **/
+  name?: Color;
   color: string;
   onChange: (c: string) => void;
 }
@@ -55,6 +57,7 @@ export class ColorPicker extends Component<Props, any> {
   };
 
   render() {
+
     return (
       <div className="sp-replacer sp-light" onClick={this.openColorPicker} ref={element => (this.pickerElem = element)}>
         <div className="sp-preview">
