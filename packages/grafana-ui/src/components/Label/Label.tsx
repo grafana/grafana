@@ -1,5 +1,5 @@
 import React, { SFC, ReactNode } from 'react';
-import { Tooltip } from '..';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface Props {
   tooltip?: string;

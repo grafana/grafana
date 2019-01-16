@@ -2,7 +2,7 @@
 
 exports[`Render should render component 1`] = `
 <div
-  className="gf-form"
+  className="form-field"
 >
   <Component
     width={11}

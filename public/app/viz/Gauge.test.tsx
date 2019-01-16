@@ -12,7 +12,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     baseColor: BasicGaugeColor.Green,
     maxValue: 100,
-    mappings: [],
+    valueMappings: [],
     minValue: 0,
     prefix: '',
     showThresholdMarkers: true,

@@ -132,7 +132,7 @@ export class VariableSrv {
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
-        this.$rootScope.$emit('template-variable-value-updated');
+        this.$rootScope.appEvent('template-variable-value-updated');
         this.dashboard.startRefresh();
       }
     });

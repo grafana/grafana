@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
+import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 import { PanelModel } from 'app/features/dashboard/panel_model';
@@ -45,7 +46,9 @@ export class PanelHeader extends Component<Props, State> {
     const isFullscreen = false;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
-    const { panel, dashboard, timeInfo } = this.props;
+    const { panel, dashboard, timeInfo, scopedVars } = this.props;
+    const title = templateSrv.replaceWithText(panel.title, scopedVars);
+
     return (
       <>
         <PanelHeaderCorner
@@ -65,7 +68,7 @@ export class PanelHeader extends Component<Props, State> {
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">
-                {panel.title} <span className="fa fa-caret-down panel-menu-toggle" />
+                {title} <span className="fa fa-caret-down panel-menu-toggle" />
               </span>
 
               {this.state.panelMenuOpen && (

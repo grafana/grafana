@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { BasicGaugeColor, Threshold, TimeSeriesVMs, RangeMap, ValueMap, MappingType } from '@grafana/ui';
+import { BasicGaugeColor, Threshold, TimeSeriesVMs, MappingType, ValueMapping } from '@grafana/ui';
 
 import config from '../core/config';
 import kbn from '../core/utils/kbn';
@@ -9,7 +9,7 @@ export interface Props {
   baseColor: string;
   decimals: number;
   height: number;
-  mappings: Array<RangeMap | ValueMap>;
+  valueMappings: ValueMapping[];
   maxValue: number;
   minValue: number;
   prefix: string;
@@ -29,7 +29,7 @@ export class Gauge extends PureComponent<Props> {
   static defaultProps = {
     baseColor: BasicGaugeColor.Green,
     maxValue: 100,
-    mappings: [],
+    valueMappings: [],
     minValue: 0,
     prefix: '',
     showThresholdMarkers: true,
@@ -64,25 +64,22 @@ export class Gauge extends PureComponent<Props> {
       }
     })[0];
 
-    return {
-      rangeMap,
-      valueMap,
-    };
+    return { rangeMap, valueMap };
   }
 
   formatValue(value) {
-    const { decimals, mappings, prefix, suffix, unit } = this.props;
+    const { decimals, valueMappings, prefix, suffix, unit } = this.props;
 
     const formatFunc = kbn.valueFormats[unit];
     const formattedValue = formatFunc(value, decimals);
 
-    if (mappings.length > 0) {
-      const { rangeMap, valueMap } = this.formatWithMappings(mappings, formattedValue);
+    if (valueMappings.length > 0) {
+      const { rangeMap, valueMap } = this.formatWithMappings(valueMappings, formattedValue);
 
       if (valueMap) {
-        return valueMap;
+        return `${prefix} ${valueMap} ${suffix}`;
       } else if (rangeMap) {
-        return rangeMap;
+        return `${prefix} ${rangeMap} ${suffix}`;
       }
     }
 
@@ -148,10 +145,7 @@ export class Gauge extends PureComponent<Props> {
           color: index === 0 ? threshold.color : thresholds[index].color,
         };
       }),
-      {
-        value: maxValue,
-        color: thresholds.length > 0 ? BasicGaugeColor.Red : baseColor,
-      },
+      { value: maxValue, color: thresholds.length > 0 ? BasicGaugeColor.Red : baseColor },
     ];
 
     const options = {
@@ -184,19 +178,14 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return this.formatValue(value);
             },
-            font: {
-              size: fontSize,
-              family: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-            },
+            font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
           },
           show: true,
         },
       },
     };
 
-    const plotSeries = {
-      data: [[0, value]],
-    };
+    const plotSeries = { data: [[0, value]] };
 
     try {
       $.plot(this.canvasElement, [plotSeries], options);
