@@ -12,12 +12,17 @@ export class QueryRowCtrl {
   panel: any;
   collapsed: any;
   hideEditorRowActions: boolean;
+  hasTextEditMode: boolean;
 
   constructor() {
     this.panelCtrl = this.queryCtrl.panelCtrl;
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;
     this.hideEditorRowActions = this.panelCtrl.hideEditorRowActions;
+
+    if (this.hasTextEditMode) {
+      this.panelCtrl.toggleEditorMode = this.toggleEditorMode.bind(this);
+    }
 
     if (!this.target.refId) {
       this.target.refId = this.panel.getNextQueryLetter();

@@ -184,7 +184,6 @@ input[type='text'].tight-form-func-param {
 }
 
 .query-editor-box {
-  background: $page-bg;
   margin-bottom: 2px;
 
   &:hover {
@@ -199,13 +198,13 @@ input[type='text'].tight-form-func-param {
   padding: 4px 0px 4px 8px;
   position: relative;
   height: 35px;
+  background: $page-bg;
 }
 
 .query-editor-box__ref-id {
   font-weight: $font-weight-semi-bold;
   color: $blue;
   font-size: $font-size-md;
-  flex-grow: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -218,17 +217,24 @@ input[type='text'].tight-form-func-param {
 }
 
 .query-editor-box__actions {
+  flex-grow: 1;
   display: flex;
   justify-content: flex-end;
-  display: none;
+  color: $text-muted;
 }
 
 .query-editor-box__action {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
-  border: 1px solid $navbar-button-border;
-  margin-right: 3px;
+  margin-left: 3px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
+  &:hover {
+    color: $text-color;
+  }
 }
 
  .query-editor-box__body {
-   padding: 10px 20px;
+   margin: 0 0 10px 40px;
+   background: $page-bg;
  }

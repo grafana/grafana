@@ -23,6 +23,7 @@ interface Props {
 interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
+  angularScope: AngularQueryComponentScope | null;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -32,6 +33,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   state: State = {
     datasource: null,
     isCollapsed: false,
+    angularScope: null,
   };
 
   componentDidMount() {
@@ -85,6 +87,11 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
 
     this.angularQueryEditor = loader.load(this.element, scopeProps, template);
+
+    // give angular time to compile
+    setTimeout(() => {
+      this.setState({ angularScope: scopeProps.ctrl });
+    }, 10);
   }
 
   componentWillUnmount() {
@@ -97,53 +104,83 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.setState({ isCollapsed: !this.state.isCollapsed });
   };
 
-  render() {
-    const { query } = this.props;
-    const { datasource, isCollapsed } = this.state;
-    const bodyClasses = classNames('query-editor-box__body gf-form-query', {hide: isCollapsed});
-
-    if (!datasource) {
-      return null;
-    }
+  renderPluginEditor() {
+    const { datasource } = this.state;
 
     if (datasource.pluginExports.QueryCtrl) {
-      return (
-        <div className="query-editor-box">
-          <div className="query-editor-box__header">
-            <div className="query-editor-box__ref-id" onClick={this.onToggleCollapse}>
-              {isCollapsed && <i className="fa fa-caret-right" />}
-              {!isCollapsed && <i className="fa fa-caret-down" />}
-              <span>{query.refId}</span>
-            </div>
-            <div className="query-editor-box__actions">
-              <button className="query-editor-box__action">
-                <i className="fa fa-fw fa-arrow-down" />
-              </button>
-              <button className="query-editor-box__action">
-                <i className="fa fa-fw fa-arrow-up" />
-              </button>
-              <button className="query-editor-box__action">
-                <i className="fa fa-fw fa-copy" />
-              </button>
-              <button className="query-editor-box__action">
-                <i className="fa fa-fw fa-eye" />
-              </button>
-              <button className="query-editor-box__action">
-                <i className="fa fa-fw fa-trash" />
-              </button>
-            </div>
-          </div>
-          <div className={bodyClasses}>
-            <div ref={element => (this.element = element)} />
-          </div>
-        </div>
-      );
-    } else if (datasource.pluginExports.QueryEditor) {
+    }
+    return <div ref={element => (this.element = element)} />;
+
+    if (datasource.pluginExports.QueryEditor) {
       const QueryEditor = datasource.pluginExports.QueryEditor;
       return <QueryEditor />;
     }
 
     return <div>Data source plugin does not export any Query Editor component</div>;
+  }
+
+  onToggleEditMode = () => {
+    const { angularScope } = this.state;
+
+    if (angularScope && angularScope.toggleEditorMode) {
+      angularScope.toggleEditorMode();
+      this.angularQueryEditor.digest();
+    }
+  }
+
+  get hasTextEditMode() {
+    const { angularScope } = this.state;
+    return angularScope && angularScope.toggleEditorMode;
+  }
+
+  render() {
+    const { query } = this.props;
+    const { datasource, isCollapsed, angularScope } = this.state;
+    const bodyClasses = classNames('query-editor-box__body gf-form-query', { hide: isCollapsed });
+
+    if (!datasource) {
+      return null;
+    }
+
+    console.log('Query render');
+    if (angularScope !== null && angularScope.toggleEditorMode) {
+      console.log('Query editor has text edit mode');
+    }
+
+    return (
+      <div className="query-editor-box">
+        <div className="query-editor-box__header">
+          <div className="query-editor-box__ref-id" onClick={this.onToggleCollapse}>
+            {isCollapsed && <i className="fa fa-caret-right" />}
+            {!isCollapsed && <i className="fa fa-caret-down" />}
+            <span>{query.refId}</span>
+          </div>
+          <div className="query-editor-box__actions">
+            {this.hasTextEditMode && (
+              <button className="query-editor-box__action" onClick={this.onToggleEditMode}>
+                <i className="fa fa-fw fa-pencil" />
+              </button>
+            )}
+            <button className="query-editor-box__action">
+              <i className="fa fa-fw fa-arrow-down" />
+            </button>
+            <button className="query-editor-box__action">
+              <i className="fa fa-fw fa-arrow-up" />
+            </button>
+            <button className="query-editor-box__action">
+              <i className="fa fa-fw fa-copy" />
+            </button>
+            <button className="query-editor-box__action">
+              <i className="fa fa-fw fa-eye" />
+            </button>
+            <button className="query-editor-box__action">
+              <i className="fa fa-fw fa-trash" />
+            </button>
+          </div>
+        </div>
+        <div className={bodyClasses}>{this.renderPluginEditor()}</div>
+      </div>
+    );
   }
 }
 
@@ -157,4 +194,5 @@ export interface AngularQueryComponentScope {
   addQuery: (query?: DataQuery) => void;
   moveQuery: (query: DataQuery, direction: number) => void;
   datasource: DataSourceApi;
+  toggleEditorMode?: () => void;
 }
