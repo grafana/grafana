@@ -110,8 +110,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { datasource } = this.state;
 
     if (datasource.pluginExports.QueryCtrl) {
+      return <div ref={element => (this.element = element)} />;
     }
-    return <div ref={element => (this.element = element)} />;
 
     if (datasource.pluginExports.QueryEditor) {
       const QueryEditor = datasource.pluginExports.QueryEditor;
@@ -128,7 +128,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       angularScope.toggleEditorMode();
       this.angularQueryEditor.digest();
     }
-  }
+  };
 
   get hasTextEditMode() {
     const { angularScope } = this.state;
@@ -148,6 +148,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.props.query.hide = !this.props.query.hide;
     this.forceUpdate();
   };
+
+  renderCollapsedText(): string | null {
+    const { angularScope } = this.state;
+
+    if (angularScope && angularScope.getCollapsedText) {
+      return angularScope.getCollapsedText();
+    }
+
+    return null;
+  }
 
   render() {
     const { query, datasourceName, inMixedMode } = this.props;
@@ -177,9 +187,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             {inMixedMode && <em className="query-editor-row__context-info"> ({datasourceName})</em>}
             {isDisabled && <em className="query-editor-row__context-info"> Disabled</em>}
           </div>
+          <div className="query-editor-row__collapsed-text">
+            {isCollapsed && <div>{this.renderCollapsedText()}</div>}
+          </div>
           <div className="query-editor-row__actions">
             {this.hasTextEditMode && (
-              <button className="query-editor-row__action" onClick={this.onToggleEditMode} title="Toggle text edit mode">
+              <button
+                className="query-editor-row__action"
+                onClick={this.onToggleEditMode}
+                title="Toggle text edit mode"
+              >
                 <i className="fa fa-fw fa-pencil" />
               </button>
             )}
@@ -218,4 +235,5 @@ export interface AngularQueryComponentScope {
   moveQuery: (query: DataQuery, direction: number) => void;
   datasource: DataSourceApi;
   toggleEditorMode?: () => void;
+  getCollapsedText?: () => string;
 }
