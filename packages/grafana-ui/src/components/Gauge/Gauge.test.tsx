@@ -1,8 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { TimeSeriesVMs } from '@grafana/ui';
 
 import { Gauge, Props } from './Gauge';
+import { TimeSeriesVMs } from '../../types/series';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),

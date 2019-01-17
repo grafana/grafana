@@ -22,3 +22,4 @@ export { Graph } from './Graph/Graph';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
+export { Gauge } from './Gauge/Gauge';

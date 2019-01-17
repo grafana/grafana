@@ -1,15 +1,9 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import {
-  BasicGaugeColor,
-  Threshold,
-  TimeSeriesVMs,
-  MappingType,
-  ValueMapping,
-  getValueFormat,
-  Theme,
-  Themes,
-} from '@grafana/ui';
+
+import { ValueMapping, Threshold, Theme, MappingType, BasicGaugeColor, Themes } from '../../types/panel';
+import { TimeSeriesVMs } from '../../types/series';
+import { getValueFormat } from '../../utils/valueFormats/valueFormats';
 
 export interface Props {
   decimals: number;
