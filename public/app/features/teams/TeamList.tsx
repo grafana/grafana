@@ -7,7 +7,7 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { NavModel, Team } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
-import { getNavModel, getTitleFromNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
@@ -140,8 +140,7 @@ export class TeamList extends PureComponent<Props, any> {
     const { hasFetched, navModel } = this.props;
 
     return (
-      <Page title={getTitleFromNavModel(navModel)}>
-        <Page.Header model={navModel} />
+      <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           {hasFetched && this.renderList()}
         </Page.Contents>

@@ -2,20 +2,17 @@
 
 exports[`Render should render API keys table if there are any keys 1`] = `
 <Page
-  title="Configuration: Api Keys"
->
-  <PageHeader
-    model={
-      Object {
-        "main": Object {
-          "text": "Configuration",
-        },
-        "node": Object {
-          "text": "Api Keys",
-        },
-      }
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Api Keys",
+      },
     }
-  />
+  }
+>
   <PageContents
     isLoading={true}
   />
@@ -24,20 +21,17 @@ exports[`Render should render API keys table if there are any keys 1`] = `
 
 exports[`Render should render CTA if there are no API keys 1`] = `
 <Page
-  title="Configuration: Api Keys"
->
-  <PageHeader
-    model={
-      Object {
-        "main": Object {
-          "text": "Configuration",
-        },
-        "node": Object {
-          "text": "Api Keys",
-        },
-      }
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Api Keys",
+      },
     }
-  />
+  }
+>
   <PageContents
     isLoading={false}
   >

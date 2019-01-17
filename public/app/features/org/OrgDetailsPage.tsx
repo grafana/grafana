@@ -6,7 +6,7 @@ import OrgProfile from './OrgProfile';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
 import { NavModel, Organization, StoreState } from 'app/types';
-import { getNavModel, getTitleFromNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
@@ -34,8 +34,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
     const isLoading = Object.keys(organization).length === 0;
 
     return (
-      <Page title={getTitleFromNavModel(navModel)}>
-        <Page.Header model={navModel} />
+      <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
             <div className="page-container page-body">
               {!isLoading && (

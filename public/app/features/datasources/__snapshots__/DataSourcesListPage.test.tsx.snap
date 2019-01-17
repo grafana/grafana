@@ -2,20 +2,17 @@
 
 exports[`Render should render action bar and datasources 1`] = `
 <Page
-  title="Configuration: Data Sources"
->
-  <PageHeader
-    model={
-      Object {
-        "main": Object {
-          "text": "Configuration",
-        },
-        "node": Object {
-          "text": "Data Sources",
-        },
-      }
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Data Sources",
+      },
     }
-  />
+  }
+>
   <PageContents
     isLoading={false}
   >
@@ -160,20 +157,17 @@ exports[`Render should render action bar and datasources 1`] = `
 
 exports[`Render should render component 1`] = `
 <Page
-  title="Configuration: Data Sources"
->
-  <PageHeader
-    model={
-      Object {
-        "main": Object {
-          "text": "Configuration",
-        },
-        "node": Object {
-          "text": "Data Sources",
-        },
-      }
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Data Sources",
+      },
     }
-  />
+  }
+>
   <PageContents
     isLoading={true}
   />

@@ -6,7 +6,7 @@ import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
 import PluginList from './PluginList';
 import { NavModel, Plugin } from 'app/types';
 import { loadPlugins, setPluginsLayoutMode, setPluginsSearchQuery } from './state/actions';
-import { getNavModel, getTitleFromNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 
@@ -47,8 +47,7 @@ export class PluginListPage extends PureComponent<Props> {
     };
 
     return (
-      <Page title={getTitleFromNavModel(navModel)}>
-        <Page.Header model={navModel} />
+      <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
             <OrgActionBar

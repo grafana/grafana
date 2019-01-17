@@ -9,7 +9,7 @@ import InviteesTable from './InviteesTable';
 import { Invitee, NavModel, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
 import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
-import { getNavModel, getTitleFromNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
 
 export interface Props {
@@ -104,8 +104,7 @@ export class UsersListPage extends PureComponent<Props, State> {
     const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
-      <Page title={getTitleFromNavModel(navModel)}>
-        <Page.Header model={navModel} />
+      <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
           <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />

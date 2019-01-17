@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { NavModel, ApiKey, NewApiKey, OrgRole } from 'app/types';
-import { getNavModel, getTitleFromNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
 import Page from 'app/core/components/Page/Page';
@@ -239,8 +239,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     const { hasFetched, navModel, apiKeysCount } = this.props;
 
     return (
-      <Page title={getTitleFromNavModel(navModel)}>
-        <Page.Header model={navModel} />
+      <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           {hasFetched && (
             apiKeysCount > 0 ? (
