@@ -96,7 +96,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onAddQuery = (query?: Partial<DataQuery>) => {
     this.props.panel.addQuery(query);
-    this.forceUpdate();
+    this.setState({ scrollTop: this.state.scrollTop + 100000 });
   };
 
   onAddQueryClick = () => {
@@ -105,8 +105,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       return;
     }
 
-    this.props.panel.addQuery();
-    this.setState({ scrollTop: this.state.scrollTop + 100000 });
+    this.onAddQuery();
   };
 
   onRemoveQuery = (query: DataQuery) => {
