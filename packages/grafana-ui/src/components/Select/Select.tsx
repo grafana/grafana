@@ -202,7 +202,7 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
         classNamePrefix="gf-form-select-box"
         className={selectClassNames}
         components={{
-          Option,
+          Option: SelectOption,
           SingleValue,
           IndicatorsContainer,
           NoOptionsMessage,
