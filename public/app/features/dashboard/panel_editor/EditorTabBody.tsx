@@ -10,6 +10,8 @@ interface Props {
   heading: string;
   renderToolbar?: () => JSX.Element;
   toolbarItems?: EditorToolbarView[];
+  scrollTop?: number;
+  setScrollTop?: (value: React.MouseEvent<HTMLElement>) => void;
 }
 
 export interface EditorToolbarView {
@@ -103,7 +105,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
   }
 
   render() {
-    const { children, renderToolbar, heading, toolbarItems } = this.props;
+    const { children, renderToolbar, heading, toolbarItems, scrollTop, setScrollTop } = this.props;
     const { openView, fadeIn, isOpen } = this.state;
 
     return (
@@ -119,7 +121,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
           )}
         </div>
         <div className="panel-editor__scroll">
-          <CustomScrollbar autoHide={false}>
+          <CustomScrollbar autoHide={false} scrollTop={scrollTop} setScrollTop={setScrollTop}>
             <div className="panel-editor__content">
               <FadeIn in={isOpen} duration={200} unmountOnExit={true}>
                 {openView && this.renderOpenView(openView)}

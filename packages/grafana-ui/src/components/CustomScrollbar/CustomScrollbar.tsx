@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import _ from 'lodash';
 import Scrollbars from 'react-custom-scrollbars';
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
   autoHideDuration?: number;
   autoMaxHeight?: string;
   hideTracksWhenNotNeeded?: boolean;
+  scrollTop?: number;
+  setScrollTop: (value: React.MouseEvent<HTMLElement>) => void;
   autoHeightMin?: number | string;
 }
 
@@ -22,14 +25,44 @@ export class CustomScrollbar extends PureComponent<Props> {
     autoHideDuration: 200,
     autoMaxHeight: '100%',
     hideTracksWhenNotNeeded: false,
+    scrollTop: 0,
+    setScrollTop: () => {},
     autoHeightMin: '0'
   };
+
+  private ref: React.RefObject<Scrollbars>;
+
+  constructor(props: Props) {
+    super(props);
+    this.ref = React.createRef<Scrollbars>();
+  }
+
+  updateScroll() {
+    const ref = this.ref.current;
+
+    if (ref && !_.isNil(this.props.scrollTop)) {
+      if (this.props.scrollTop > 10000) {
+        ref.scrollToBottom();
+      } else {
+        ref.scrollTop(this.props.scrollTop);
+      }
+   }
+  }
+
+  componentDidMount() {
+    this.updateScroll();
+  }
+
+  componentDidUpdate() {
+    this.updateScroll();
+  }
 
   render() {
     const { customClassName, children, autoMaxHeight } = this.props;
 
     return (
       <Scrollbars
+        ref={this.ref}
         className={customClassName}
         autoHeight={true}
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.

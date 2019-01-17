@@ -1,4 +1,4 @@
-import { PluginMeta } from './plugins';
+import { PluginMeta, PluginExports } from './plugins';
 import { TimeSeries, TimeRange, RawTimeRange } from '@grafana/ui';
 
 export interface DataQueryResponse {
@@ -25,6 +25,10 @@ export interface DataQueryOptions {
 }
 
 export interface DataSourceApi {
+  name: string;
+  meta: PluginMeta;
+  pluginExports: PluginExports;
+
   /**
    *  min interval range
    */

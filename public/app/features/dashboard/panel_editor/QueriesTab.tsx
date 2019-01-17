@@ -3,18 +3,16 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Components
-import 'app/features/panel/metrics_tab';
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { AngularQueryComponentScope } from 'app/features/panel/metrics_tab';
 import { PanelOptionsGroup } from '@grafana/ui';
+import { QueryEditorRow } from './QueryEditorRow';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import config from 'app/core/config';
 
 // Types
@@ -34,64 +32,25 @@ interface State {
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
+  scrollTop: number;
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
-  element: HTMLElement;
-  component: AngularComponent;
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv: BackendSrv = getBackendSrv();
 
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      isLoadingHelp: false,
-      currentDS: this.findCurrentDataSource(),
-      helpContent: null,
-      isPickerOpen: false,
-      isAddingMixed: false,
-    };
-  }
+  state: State = {
+    isLoadingHelp: false,
+    currentDS: this.findCurrentDataSource(),
+    helpContent: null,
+    isPickerOpen: false,
+    isAddingMixed: false,
+    scrollTop: 0,
+  };
 
   findCurrentDataSource(): DataSourceSelectItem {
     const { panel } = this.props;
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
-  }
-
-  getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { panel, dashboard } = this.props;
-
-    return {
-      panel: panel,
-      dashboard: dashboard,
-      refresh: () => panel.refresh(),
-      render: () => panel.render,
-      addQuery: this.onAddQuery,
-      moveQuery: this.onMoveQuery,
-      removeQuery: this.onRemoveQuery,
-      events: panel.events,
-    };
-  }
-
-  componentDidMount() {
-    if (!this.element) {
-      return;
-    }
-
-    const loader = getAngularLoader();
-    const template = '<metrics-tab />';
-    const scopeProps = {
-      ctrl: this.getAngularQueryComponentScope(),
-    };
-
-    this.component = loader.load(this.element, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.component) {
-      this.component.destroy();
-    }
   }
 
   onChangeDataSource = datasource => {
@@ -137,7 +96,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onAddQuery = (query?: Partial<DataQuery>) => {
     this.props.panel.addQuery(query);
-    this.forceUpdate();
+    this.setState({ scrollTop: this.state.scrollTop + 100000 });
   };
 
   onAddQueryClick = () => {
@@ -146,9 +105,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       return;
     }
 
-    this.props.panel.addQuery();
-    this.component.digest();
-    this.forceUpdate();
+    this.onAddQuery();
   };
 
   onRemoveQuery = (query: DataQuery) => {
@@ -171,9 +128,21 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderToolbar = () => {
-    const { currentDS } = this.state;
+    const { currentDS, isAddingMixed } = this.state;
 
-    return <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />;
+    return (
+      <>
+        <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+        <div className="m-l-2">
+          {!isAddingMixed && (
+            <button className="btn navbar-button navbar-button--primary" onClick={this.onAddQueryClick}>
+              Add Query
+            </button>
+          )}
+          {isAddingMixed && this.renderMixedPicker()}
+        </div>
+      </>
+    );
   };
 
   renderMixedPicker = () => {
@@ -190,17 +159,21 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onAddMixedQuery = datasource => {
     this.onAddQuery({ datasource: datasource.name });
-    this.component.digest();
-    this.setState({ isAddingMixed: false });
+    this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
   };
 
   onMixedPickerBlur = () => {
     this.setState({ isAddingMixed: false });
   };
 
+  setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    this.setState({ scrollTop: target.scrollTop });
+  };
+
   render() {
     const { panel } = this.props;
-    const { currentDS, isAddingMixed } = this.state;
+    const { currentDS, scrollTop } = this.state;
 
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
@@ -214,32 +187,28 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Queries" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
+      <EditorTabBody
+        heading="Queries to"
+        renderToolbar={this.renderToolbar}
+        toolbarItems={[queryInspector, dsHelp]}
+        setScrollTop={this.setScrollTop}
+        scrollTop={scrollTop}
+      >
         <>
-          <PanelOptionsGroup>
-            <div className="query-editor-rows">
-              <div ref={element => (this.element = element)} />
-
-              <div className="gf-form-query">
-                <div className="gf-form gf-form-query-letter-cell">
-                  <label className="gf-form-label">
-                    <span className="gf-form-query-letter-cell-carret muted">
-                      <i className="fa fa-caret-down" />
-                    </span>{' '}
-                    <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
-                  </label>
-                </div>
-                <div className="gf-form">
-                  {!isAddingMixed && (
-                    <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
-                      Add Query
-                    </button>
-                  )}
-                  {isAddingMixed && this.renderMixedPicker()}
-                </div>
-              </div>
-            </div>
-          </PanelOptionsGroup>
+          <div className="query-editor-rows">
+            {panel.targets.map((query, index) => (
+              <QueryEditorRow
+                datasourceName={query.datasource || panel.datasource}
+                key={query.refId}
+                panel={panel}
+                query={query}
+                onRemoveQuery={this.onRemoveQuery}
+                onAddQuery={this.onAddQuery}
+                onMoveQuery={this.onMoveQuery}
+                inMixedMode={currentDS.meta.mixed}
+              />
+            ))}
+          </div>
           <PanelOptionsGroup>
             <QueryOptions panel={panel} datasource={currentDS} />
           </PanelOptionsGroup>
