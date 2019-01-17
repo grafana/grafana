@@ -1,10 +1,54 @@
 import { ComponentClass } from 'react';
 import { PanelProps, PanelOptionsProps } from './panel';
+import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint } from './datasource';
+
+export interface DataSourceApi {
+  name: string;
+  meta: PluginMeta;
+  pluginExports: PluginExports;
+
+  /**
+   *  min interval range
+   */
+  interval?: string;
+
+  /**
+   * Imports queries from a different datasource
+   */
+  importQueries?(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]>;
+
+  /**
+   * Initializes a datasource after instantiation
+   */
+  init?: () => void;
+
+  /**
+   * Main metrics / data query action
+   */
+  query(options: DataQueryOptions): Promise<DataQueryResponse>;
+
+  /**
+   * Test & verify datasource settings & connection details
+   */
+  testDatasource(): Promise<any>;
+
+  /**
+   *  Get hints for query improvements
+   */
+  getQueryHints(query: DataQuery, results: any[], ...rest: any): QueryHint[];
+}
+
+export interface QueryEditorProps {
+  datasource: DataSourceApi;
+  query: DataQuery;
+  onExecuteQuery?: () => void;
+  onQueryChange?: (value: DataQuery) => void;
+}
 
 export interface PluginExports {
   Datasource?: any;
   QueryCtrl?: any;
-  QueryEditor?: any;
+  QueryEditor?: ComponentClass<QueryEditorProps>;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;

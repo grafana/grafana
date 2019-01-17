@@ -1,6 +1,6 @@
 import { TimeRange, RawTimeRange } from './time';
 import { TimeSeries } from './series';
-import { PluginExports, PluginMeta } from './plugin';
+import { PluginMeta } from './plugin';
 
 export interface DataQueryResponse {
   data: TimeSeries[];
@@ -41,42 +41,6 @@ export interface QueryHint {
   type: string;
   label: string;
   fix?: QueryFix;
-}
-
-export interface DataSourceApi {
-  name: string;
-  meta: PluginMeta;
-  pluginExports: PluginExports;
-
-  /**
-   *  min interval range
-   */
-  interval?: string;
-
-  /**
-   * Imports queries from a different datasource
-   */
-  importQueries?(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]>;
-
-  /**
-   * Initializes a datasource after instantiation
-   */
-  init?: () => void;
-
-  /**
-   * Main metrics / data query action
-   */
-  query(options: DataQueryOptions): Promise<DataQueryResponse>;
-
-  /**
-   * Test & verify datasource settings & connection details
-   */
-  testDatasource(): Promise<any>;
-
-  /**
-   *  Get hints for query improvements
-   */
-  getQueryHints(query: DataQuery, results: any[], ...rest: any): QueryHint[];
 }
 
 export interface DataSourceSettings {
