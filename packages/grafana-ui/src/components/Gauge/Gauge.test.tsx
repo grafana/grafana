@@ -73,7 +73,7 @@ describe('Get font color', () => {
 describe('Format value with value mappings', () => {
   it('should return undefined with no valuemappings', () => {
     const valueMappings: ValueMapping[] = [];
-    const value = 10;
+    const value = '10';
     const { instance } = setup({ valueMappings });
 
     const result = instance.getFirstFormattedValueMapping(valueMappings, value);
@@ -86,7 +86,7 @@ describe('Format value with value mappings', () => {
       { id: 0, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
       { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
     ];
-    const value = 10;
+    const value = '10';
     const { instance } = setup({ valueMappings });
 
     const result = instance.getFirstFormattedValueMapping(valueMappings, value);
@@ -99,7 +99,7 @@ describe('Format value with value mappings', () => {
       { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
       { id: 1, operator: '', text: 'tio', type: MappingType.ValueToText, value: '10' },
     ];
-    const value = 10;
+    const value = '10';
     const { instance } = setup({ valueMappings });
 
     const result = instance.getFirstFormattedValueMapping(valueMappings, value);
@@ -112,7 +112,7 @@ describe('Format value with value mappings', () => {
       { id: 0, operator: '', text: '1-10', type: MappingType.RangeToText, from: '1', to: '10' },
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
-    const value = 10;
+    const value = '10';
     const { instance } = setup({ valueMappings });
 
     const result = instance.getFirstFormattedValueMapping(valueMappings, value);
@@ -125,7 +125,7 @@ describe('Format value with value mappings', () => {
       { id: 0, operator: '', text: '10-20', type: MappingType.RangeToText, from: '10', to: '20' },
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
-    const value = 10;
+    const value = '10';
     const { instance } = setup({ valueMappings });
 
     const result = instance.getFirstFormattedValueMapping(valueMappings, value);
@@ -138,11 +138,59 @@ describe('Format value with value mappings', () => {
       { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
-    const value = 10;
+    const value = '10';
     const { instance } = setup({ valueMappings });
 
     const result = instance.getFirstFormattedValueMapping(valueMappings, value);
 
     expect(result.text).toEqual('1-20');
+  });
+});
+
+describe('Format value', () => {
+  it('should return if value isNaN', () => {
+    const valueMappings: ValueMapping[] = [];
+    const value = 'N/A';
+    const { instance } = setup({ valueMappings });
+
+    const result = instance.formatValue(value);
+
+    expect(result).toEqual('N/A');
+  });
+
+  it('should return formatted value if there are no value mappings', () => {
+    const valueMappings: ValueMapping[] = [];
+    const value = '6';
+    const { instance } = setup({ valueMappings, decimals: 1 });
+
+    const result = instance.formatValue(value);
+
+    expect(result).toEqual(' 6.0 ');
+  });
+
+  it('should return formatted value if there are no matching value mappings', () => {
+    const valueMappings: ValueMapping[] = [
+      { id: 0, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
+      { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
+    ];
+    const value = '10';
+    const { instance } = setup({ valueMappings, decimals: 1 });
+
+    const result = instance.formatValue(value);
+
+    expect(result).toEqual(' 10.0 ');
+  });
+
+  it('should return mapped value if there are matching value mappings', () => {
+    const valueMappings: ValueMapping[] = [
+      { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
+      { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
+    ];
+    const value = '11';
+    const { instance } = setup({ valueMappings, decimals: 1 });
+
+    const result = instance.formatValue(value);
+
+    expect(result).toEqual(' 1-20 ');
   });
 });

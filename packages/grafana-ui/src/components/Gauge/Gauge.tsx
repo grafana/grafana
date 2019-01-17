@@ -78,13 +78,19 @@ export class Gauge extends PureComponent<Props> {
   }
 
   addRangeToTextMappingText(allValueMappings: ValueMapping[], rangeToTextMapping: RangeMap, value: TimeSeriesValue) {
-    if (
-      rangeToTextMapping.from &&
-      rangeToTextMapping.to &&
-      value &&
-      value >= rangeToTextMapping.from &&
-      value <= rangeToTextMapping.to
-    ) {
+    if (!rangeToTextMapping.from || !rangeToTextMapping.to || !value) {
+      return allValueMappings;
+    }
+
+    const valueAsNumber = parseFloat(value as string);
+    const fromAsNumber = parseFloat(rangeToTextMapping.from as string);
+    const toAsNumber = parseFloat(rangeToTextMapping.to as string);
+
+    if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
+      return allValueMappings;
+    }
+
+    if (valueAsNumber >= fromAsNumber && valueAsNumber <= toAsNumber) {
       return allValueMappings.concat(rangeToTextMapping);
     }
 
