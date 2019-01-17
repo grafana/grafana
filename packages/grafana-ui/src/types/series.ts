@@ -21,9 +21,12 @@ export interface TimeSeriesVM {
   color: string;
   data: TimeSeriesValue[][];
   stats: TimeSeriesStats;
+  allIsNull: boolean;
+  allIsZero: boolean;
 }
 
 export interface TimeSeriesStats {
+  [key: string]: number | null;
   total: number | null;
   max: number | null;
   min: number | null;
@@ -36,8 +39,6 @@ export interface TimeSeriesStats {
   range: number | null;
   timeStep: number;
   count: number;
-  allIsNull: boolean;
-  allIsZero: boolean;
 }
 
 export enum NullValueMode {

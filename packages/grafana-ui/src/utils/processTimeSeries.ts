@@ -151,6 +151,8 @@ export function processTimeSeries({ timeSeries, nullValueMode, colorPalette }: O
       data: result,
       label: label,
       color: colorPalette[colorIndex],
+      allIsZero,
+      allIsNull,
       stats: {
         total,
         min,
@@ -164,8 +166,6 @@ export function processTimeSeries({ timeSeries, nullValueMode, colorPalette }: O
         range,
         count,
         first,
-        allIsZero,
-        allIsNull,
       },
     };
   });

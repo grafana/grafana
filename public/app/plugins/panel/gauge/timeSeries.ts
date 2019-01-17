@@ -145,6 +145,8 @@ export function getTimeSeriesVMs({ timeSeries, nullValueMode }: Options): TimeSe
       data: result,
       label: label,
       color: colors[colorIndex],
+      allIsZero,
+      allIsNull,
       stats: {
         total,
         min,
@@ -158,8 +160,6 @@ export function getTimeSeriesVMs({ timeSeries, nullValueMode }: Options): TimeSe
         range,
         count,
         first,
-        allIsZero,
-        allIsNull,
       },
     };
   });
