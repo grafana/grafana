@@ -30,8 +30,7 @@ fi
 
 echo "Build arguments: $OPT"
 
-# might want to check for enterprise here and only build what we need
-
+# build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
   go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
   go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
@@ -66,6 +65,7 @@ go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
 #removing amd64 phantomjs bin for armv7/arm64 packages
 rm tools/phantomjs/phantomjs
 
+# build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
   go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
   go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
