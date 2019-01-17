@@ -25,6 +25,24 @@ export interface DataQueryOptions {
   scopedVars: object;
 }
 
+export interface QueryFix {
+  type: string;
+  label: string;
+  action?: QueryFixAction;
+}
+
+export interface QueryFixAction {
+  type: string;
+  query?: string;
+  preventSubmit?: boolean;
+}
+
+export interface QueryHint {
+  type: string;
+  label: string;
+  fix?: QueryFix;
+}
+
 export interface DataSourceApi {
   name: string;
   meta: PluginMeta;
@@ -54,6 +72,11 @@ export interface DataSourceApi {
    * Test & verify datasource settings & connection details
    */
   testDatasource(): Promise<any>;
+
+  /**
+   *  Get hints for query improvements
+   */
+  getQueryHints(query: DataQuery, results: any[], ...rest: any): QueryHint[];
 }
 
 export interface DataSourceSettings {
@@ -82,4 +105,3 @@ export interface DataSourceSelectItem {
   meta: PluginMeta;
   sort: string;
 }
-

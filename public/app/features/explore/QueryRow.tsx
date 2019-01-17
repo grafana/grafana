@@ -19,9 +19,9 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, DataQuery } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { QueryTransaction, HistoryItem, QueryHint, ExploreItemState, ExploreId } from 'app/types/explore';
+import { RawTimeRange, DataQuery, QueryHint } from '@grafana/ui';
+import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
