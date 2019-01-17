@@ -1,10 +1,14 @@
+// Libraries
 import React, { PureComponent } from 'react';
+
+// Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { Emitter } from 'app/core/utils/emitter';
 import { getIntervals } from 'app/core/utils/explore';
-import { DataQuery } from 'app/types';
-import { RawTimeRange } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/time_srv';
+
+// Types
+import { Emitter } from 'app/core/utils/emitter';
+import { RawTimeRange, DataQuery } from '@grafana/ui';
 import 'app/features/plugins/plugin_loader';
 
 interface QueryEditorProps {

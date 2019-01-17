@@ -1,4 +1,6 @@
-import { TimeSeries, TimeRange, RawTimeRange, PluginExports, PluginMeta } from '@grafana/ui/src/types';
+import { TimeRange, RawTimeRange } from './time';
+import { TimeSeries } from './series';
+import { PluginExports, PluginMeta } from './plugin';
 
 export interface DataQueryResponse {
   data: TimeSeries[];

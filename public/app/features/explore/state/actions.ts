@@ -17,7 +17,8 @@ import {
 import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
 import { DataSourceSelectItem } from 'app/types/datasources';
-import { DataQuery, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
+import { DataQuery } from '@grafana/ui/src/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   ExploreId,

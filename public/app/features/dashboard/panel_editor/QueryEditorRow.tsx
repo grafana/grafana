@@ -10,7 +10,7 @@ import { Emitter } from 'app/core/utils/emitter';
 
 // Types
 import { PanelModel } from '../panel_model';
-import { DataQuery, DataSourceApi } from 'app/types/series';
+import { DataQuery, DataSourceApi } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;

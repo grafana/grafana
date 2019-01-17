@@ -2,8 +2,7 @@ import _ from 'lodash';
 
 import * as dateMath from 'app/core/utils/datemath';
 import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
-import { DataQuery } from 'app/types';
-import { PluginMeta } from '@grafana/ui/src/types';
+import { PluginMeta, DataQuery } from '@grafana/ui/src/types';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 
 import LanguageProvider from './language_provider';

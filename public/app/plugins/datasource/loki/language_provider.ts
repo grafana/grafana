@@ -11,7 +11,7 @@ import {
 } from 'app/types/explore';
 import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
 import syntax from './syntax';
-import { DataQuery } from 'app/types';
+import { DataQuery } from '@grafana/ui/src/types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';

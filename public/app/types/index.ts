@@ -8,7 +8,6 @@ export * from './acl';
 export * from './apiKeys';
 export * from './user';
 export * from './datasources';
-export * from './series';
 export * from './plugins';
 export * from './organization';
 export * from './appNotifications';

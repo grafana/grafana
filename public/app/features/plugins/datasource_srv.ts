@@ -4,7 +4,7 @@ import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import { importPluginModule } from './plugin_loader';
 
-import { DataSourceApi } from 'app/types/series';
+import { DataSourceApi } from '@grafana/ui/src/types';
 import { DataSource, DataSourceSelectItem } from 'app/types';
 
 export class DatasourceSrv {
