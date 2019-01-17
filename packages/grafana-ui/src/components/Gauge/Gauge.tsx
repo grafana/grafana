@@ -58,34 +58,26 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  addValueToTextMappingText(
-    allTexts: Array<{ text: string; type: MappingType }>,
-    valueToTextMapping: ValueMap,
-    value: TimeSeriesValue
-  ) {
+  addValueToTextMappingText(allValueMappings: ValueMapping[], valueToTextMapping: ValueMap, value: TimeSeriesValue) {
     if (!valueToTextMapping.value) {
-      return allTexts;
+      return allValueMappings;
     }
 
     const valueAsNumber = parseFloat(value as string);
     const valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
 
     if (isNaN(valueAsNumber) || isNaN(valueToTextMappingAsNumber)) {
-      return allTexts;
+      return allValueMappings;
     }
 
     if (valueAsNumber !== valueToTextMappingAsNumber) {
-      return allTexts;
+      return allValueMappings;
     }
 
-    return allTexts.concat({ text: valueToTextMapping.text, type: MappingType.ValueToText });
+    return allValueMappings.concat(valueToTextMapping);
   }
 
-  addRangeToTextMappingText(
-    allTexts: Array<{ text: string; type: MappingType }>,
-    rangeToTextMapping: RangeMap,
-    value: TimeSeriesValue
-  ) {
+  addRangeToTextMappingText(allValueMappings: ValueMapping[], rangeToTextMapping: RangeMap, value: TimeSeriesValue) {
     if (
       rangeToTextMapping.from &&
       rangeToTextMapping.to &&
@@ -93,35 +85,35 @@ export class Gauge extends PureComponent<Props> {
       value >= rangeToTextMapping.from &&
       value <= rangeToTextMapping.to
     ) {
-      return allTexts.concat({ text: rangeToTextMapping.text, type: MappingType.RangeToText });
+      return allValueMappings.concat(rangeToTextMapping);
     }
 
-    return allTexts;
+    return allValueMappings;
   }
 
-  getAllMappingTexts(valueMappings: ValueMapping[], value: TimeSeriesValue) {
-    const allMappingTexts = valueMappings.reduce(
-      (allTexts, valueMapping) => {
+  getAllFormattedValueMappings(valueMappings: ValueMapping[], value: TimeSeriesValue) {
+    const allFormattedValueMappings = valueMappings.reduce(
+      (allValueMappings, valueMapping) => {
         if (valueMapping.type === MappingType.ValueToText) {
-          allTexts = this.addValueToTextMappingText(allTexts, valueMapping as ValueMap, value);
+          allValueMappings = this.addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
         } else if (valueMapping.type === MappingType.RangeToText) {
-          allTexts = this.addRangeToTextMappingText(allTexts, valueMapping as RangeMap, value);
+          allValueMappings = this.addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
         }
 
-        return allTexts;
+        return allValueMappings;
       },
-      [] as Array<{ text: string; type: MappingType }>
+      [] as ValueMapping[]
     );
 
-    allMappingTexts.sort((t1, t2) => {
-      return t1.type - t2.type;
+    allFormattedValueMappings.sort((t1, t2) => {
+      return t1.id - t2.id;
     });
 
-    return allMappingTexts;
+    return allFormattedValueMappings;
   }
 
-  formatWithValueMappings(valueMappings: ValueMapping[], value: TimeSeriesValue) {
-    return this.getAllMappingTexts(valueMappings, value)[0];
+  getFirstFormattedValueMapping(valueMappings: ValueMapping[], value: TimeSeriesValue) {
+    return this.getAllFormattedValueMappings(valueMappings, value)[0];
   }
 
   formatValue(value: TimeSeriesValue) {
@@ -132,7 +124,7 @@ export class Gauge extends PureComponent<Props> {
     }
 
     if (valueMappings.length > 0) {
-      const valueMappedValue = this.formatWithValueMappings(valueMappings, value);
+      const valueMappedValue = this.getFirstFormattedValueMapping(valueMappings, value);
       if (valueMappedValue) {
         return `${prefix} ${valueMappedValue.text} ${suffix}`;
       }
