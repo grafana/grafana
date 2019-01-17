@@ -38,17 +38,33 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Get font color', () => {
-  it('should get base color if no threshold', () => {
-    const { instance } = setup();
+  it('should get first threshold color when only one threshold', () => {
+    const { instance } = setup({ thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] });
 
-    expect(instance.getFontColor(40)).toEqual('#7EB26D');
+    expect(instance.getFontColor(49)).toEqual('#7EB26D');
   });
 
-  it('should be f2f2f2', () => {
+  it('should get the next threshold color if value is same as a threshold', () => {
     const { instance } = setup({
-      thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }, { index: 1, value: 59, color: '#f2f2f2' }],
+      thresholds: [
+        { index: 2, value: 75, color: '#6ED0E0' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 0, value: -Infinity, color: '#7EB26D' },
+      ],
     });
 
-    expect(instance.getFontColor(58)).toEqual('#f2f2f2');
+    expect(instance.getFontColor(50)).toEqual('#6ED0E0');
+  });
+
+  it('should get the nearest threshold color', () => {
+    const { instance } = setup({
+      thresholds: [
+        { index: 2, value: 75, color: '#6ED0E0' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 0, value: -Infinity, color: '#7EB26D' },
+      ],
+    });
+
+    expect(instance.getFontColor(6.5)).toEqual('#EAB839');
   });
 });
