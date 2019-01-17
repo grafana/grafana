@@ -4,11 +4,6 @@ import { Manager, Popper as ReactPopper } from 'react-popper';
 import { Portal } from '@grafana/ui';
 import Transition from 'react-transition-group/Transition';
 
-export enum Themes {
-  Default = 'popper__background--default',
-  Error = 'popper__background--error',
-  Brand = 'popper__background--brand',
-}
 
 const defaultTransitionStyles = {
   transition: 'opacity 200ms linear',
@@ -22,21 +17,19 @@ const transitionStyles: {[key: string]: object} = {
   exiting: { opacity: 0 },
 };
 
-interface Props extends React.DOMAttributes<HTMLDivElement> {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   renderContent: (content: any) => any;
   show: boolean;
   placement?: PopperJS.Placement;
   content: string | ((props: any) => JSX.Element);
   referenceElement: PopperJS.ReferenceObject;
-  theme?: Themes;
+
 }
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { renderContent, show, placement, onMouseEnter, onMouseLeave, theme } = this.props;
+    const { renderContent, show, placement, onMouseEnter, onMouseLeave, className } = this.props;
     const { content } = this.props;
-
-    const popperBackgroundClassName = 'popper__background' + (theme ? ' ' + theme : '');
 
     return (
       <Manager>
@@ -56,9 +49,9 @@ class Popper extends PureComponent<Props> {
                         ...transitionStyles[transitionState],
                       }}
                       data-placement={placement}
-                      className="popper"
+                      className={`popper`}
                     >
-                      <div className={popperBackgroundClassName}>
+                      <div className={className}>
                         {renderContent(content)}
                         <div ref={arrowProps.ref} data-placement={placement} className="popper__arrow" />
                       </div>

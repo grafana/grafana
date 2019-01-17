@@ -1,6 +1,5 @@
 $popper-margin-from-ref: 5px;
 
-
 @mixin popper-theme($backgroundColor, $arrowColor) {
   background: $backgroundColor;
   .popper__arrow {
@@ -22,6 +21,10 @@ $popper-margin-from-ref: 5px;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   padding: 10px;
 
+  .popper__arrow {
+    border-color: $tooltipBackground;
+  }
+
   // Themes
   &.popper__background--error {
     @include popper-theme($tooltipBackgroundError, $tooltipBackgroundError);
@@ -41,9 +44,6 @@ $popper-margin-from-ref: 5px;
   margin: 0px;
 }
 
-.popper__arrow {
-  border-color: $tooltipBackground;
-}
 
 // Top
 .popper[data-placement^='top'] {

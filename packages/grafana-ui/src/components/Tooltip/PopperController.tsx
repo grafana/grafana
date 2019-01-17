@@ -1,6 +1,5 @@
 import React from 'react';
 import * as PopperJS from 'popper.js';
-import { Themes } from './Popper';
 
 type PopperContent = string | (() => JSX.Element);
 
@@ -10,7 +9,6 @@ export interface UsingPopperProps {
   content: PopperContent;
   children: JSX.Element;
   renderContent?: (content: PopperContent) => JSX.Element;
-  theme?: Themes;
 }
 
 type PopperControllerRenderProp = (
@@ -21,7 +19,6 @@ type PopperControllerRenderProp = (
     placement: PopperJS.Placement;
     content: string | ((props: any) => JSX.Element);
     renderContent: (content: any) => any;
-    theme?: Themes;
   }
 ) => JSX.Element;
 
@@ -30,7 +27,6 @@ interface Props {
   content: PopperContent;
   className?: string;
   children: PopperControllerRenderProp;
-  theme?: Themes;
 }
 
 interface State {
@@ -83,7 +79,7 @@ class PopperController extends React.Component<Props, State> {
   }
 
   render() {
-    const { children, content, theme } = this.props;
+    const { children, content } = this.props;
     const { show, placement } = this.state;
 
     return children(this.showPopper, this.hidePopper, {
@@ -91,7 +87,6 @@ class PopperController extends React.Component<Props, State> {
       placement,
       content,
       renderContent: this.renderContent,
-      theme,
     });
   }
 }
