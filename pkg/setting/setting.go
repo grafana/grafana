@@ -18,7 +18,7 @@ import (
 	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/ini.v1"
+	ini "gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -90,6 +90,7 @@ var (
 	EmailCodeValidMinutes            int
 	DataProxyWhiteList               map[string]bool
 	DisableBruteForceLoginProtection bool
+	SanitizeInput                    bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -222,6 +223,7 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	EnableAlphaPanels                bool
+	SanitizeInput                    bool
 	EnterpriseLicensePath            string
 }
 
@@ -709,6 +711,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	panels := iniFile.Section("panels")
 	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
+	cfg.SanitizeInput = panels.Key("sanitize_input").MustBool(true)
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
