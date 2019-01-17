@@ -43,7 +43,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { panel, onAddQuery, onMoveQuery, onRemoveQuery, query } = this.props;
+    const { panel, query } = this.props;
     const { datasource } = this.state;
 
     return {
@@ -52,9 +52,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       panel: panel,
       refresh: () => panel.refresh(),
       render: () => panel.render,
-      addQuery: onAddQuery,
-      moveQuery: onMoveQuery,
-      removeQuery: onRemoveQuery,
       events: panel.events,
     };
   }
@@ -234,9 +231,6 @@ export interface AngularQueryComponentScope {
   events: Emitter;
   refresh: () => void;
   render: () => void;
-  removeQuery: (query: DataQuery) => void;
-  addQuery: (query?: DataQuery) => void;
-  moveQuery: (query: DataQuery, direction: number) => void;
   datasource: DataSourceApi;
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
