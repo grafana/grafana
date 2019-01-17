@@ -56,22 +56,12 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
           label="Decimals"
           labelWidth={labelWidth}
           placeholder="auto"
-          onChange={event => this.onDecimalChange(event)}
+          onChange={this.onDecimalChange}
           value={decimals || ''}
           type="number"
         />
-        <FormField
-          label="Prefix"
-          labelWidth={labelWidth}
-          onChange={event => this.onPrefixChange(event)}
-          value={prefix || ''}
-        />
-        <FormField
-          label="Suffix"
-          labelWidth={labelWidth}
-          onChange={event => this.onSuffixChange(event)}
-          value={suffix || ''}
-        />
+        <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />
+        <FormField label="Suffix" labelWidth={labelWidth} onChange={this.onSuffixChange} value={suffix || ''} />
       </PanelOptionsGroup>
     );
   }
