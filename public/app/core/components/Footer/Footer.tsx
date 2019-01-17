@@ -9,7 +9,7 @@ interface Props {
   newGrafanaVersion: string;
 }
 
-export const Footer: SFC<Props> = ({appName, buildVersion, buildCommit, newGrafanaVersionExists, newGrafanaVersion}) => {
+export const Footer: SFC<Props> = React.memo(({appName, buildVersion, buildCommit, newGrafanaVersionExists, newGrafanaVersion}) => {
   return (
     <footer className="footer">
       <div className="text-center">
@@ -45,6 +45,6 @@ export const Footer: SFC<Props> = ({appName, buildVersion, buildCommit, newGrafa
       </div>
     </footer>
   );
-};
+});
 
 export default Footer;
