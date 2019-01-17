@@ -3,7 +3,6 @@ package auth
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -45,10 +44,11 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 	c.Resp.Header().Del("Set-Cookie")
 	cookie := http.Cookie{
 		Name:     sessionCookieKey,
-		Value:    url.QueryEscape(userToken.unhashedToken),
+		Value:    url.QueryEscape(userToken.UnhashedToken),
 		HttpOnly: true,
-		Expires:  time.Now().Add(time.Minute * 10),
+		MaxAge:   int(time.Minute * 10),
 		Domain:   setting.Domain,
+		Path:     setting.AppSubUrl + "/",
 	}
 
 	c.Resp.Header().Add("Set-Cookie", cookie.String())
@@ -57,7 +57,18 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 }
 
 func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
-	c.SetCookie(sessionCookieKey, "", -1, setting.AppSubUrl+"/", setting.Domain, false, true)
+	//c.SetCookie(sessionCookieKey, "", -1, setting.AppSubUrl+"/", setting.Domain, false, true)
+	c.Resp.Header().Del("Set-Cookie")
+	cookie := http.Cookie{
+		Name:     sessionCookieKey,
+		Value:    "",
+		HttpOnly: true,
+		MaxAge:   -1,
+		Domain:   setting.Domain,
+		Path:     setting.AppSubUrl + "/",
+	}
+
+	c.Resp.Header().Add("Set-Cookie", cookie.String())
 }
 
 // func (s *UserAuthTokenService) RequestMiddleware() macaron.Handler {
@@ -82,7 +93,7 @@ func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
 // 	}
 // }
 
-func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*userAuthToken, error) {
+func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserAuthToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
 	token, err := util.RandomHex(16)
 	if err != nil {
@@ -91,7 +102,7 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 
 	hashedToken := hashToken(token)
 
-	userToken := userAuthToken{
+	userToken := models.UserAuthToken{
 		UserId:        userId,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
@@ -108,20 +119,15 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 		return nil, err
 	}
 
-	userToken.unhashedToken = token
+	userToken.UnhashedToken = token
 
 	return &userToken, nil
 }
 
-func (s *UserAuthTokenService) LookupToken(ctx *models.ReqContext) (*userAuthToken, error) {
-	unhashedToken := ctx.GetCookie(sessionCookieKey)
-	if unhashedToken == "" {
-		return nil, fmt.Errorf("session token cookie is empty")
-	}
-
+func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAuthToken, error) {
 	hashedToken := hashToken(unhashedToken)
 
-	var userToken userAuthToken
+	var userToken models.UserAuthToken
 	exists, err := s.SQLStore.NewSession().Where("auth_token = ? OR prev_auth_token = ?", hashedToken, hashedToken).Get(&userToken)
 	if err != nil {
 		return nil, err
@@ -166,14 +172,55 @@ func (s *UserAuthTokenService) LookupToken(ctx *models.ReqContext) (*userAuthTok
 		}
 	}
 
-	userToken.unhashedToken = unhashedToken
+	userToken.UnhashedToken = unhashedToken
 
 	return &userToken, nil
 }
 
-func (s *UserAuthTokenService) RefreshToken(token *userAuthToken, clientIP, userAgent string) (bool, error) {
-	// lookup token in db
-	// refresh token if needed
+func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientIP, userAgent string) (bool, error) {
+	if token == nil {
+		return false, nil
+	}
+
+	var needsRotation = false
+	rotatedAt := time.Unix(token.RotatedAt, 0)
+	if token.AuthTokenSeen {
+		needsRotation = rotatedAt.Before(now().Add(time.Duration(-1) * time.Minute))
+	} else {
+		needsRotation = rotatedAt.Before(now().Add(time.Duration(-30) * time.Second))
+	}
+
+	s.log.Info("refresh token", "needs rotation?", needsRotation, "auth_token_seen", token.AuthTokenSeen, "rotated_at", rotatedAt, "token.Id", token.Id)
+	if !needsRotation {
+		return false, nil
+	}
+
+	newToken, _ := util.RandomHex(16)
+	hashedToken := hashToken(newToken)
+
+	sql := `
+		UPDATE user_auth_token
+		SET
+			auth_token_seen = false,
+			seen_at = null,
+			user_agent = ?,
+			client_ip = ?,
+			prev_auth_token = case when auth_token_seen then auth_token else prev_auth_token end,
+			auth_token = ?,
+			rotated_at = ?
+		WHERE id = ? AND (auth_token_seen or rotated_at < ?)`
+
+	res, err := s.SQLStore.NewSession().Exec(sql, userAgent, clientIP, hashedToken, now().Unix(), token.Id, now().Add(time.Duration(-30)*time.Second))
+	if err != nil {
+		return false, err
+	}
+
+	affected, _ := res.RowsAffected()
+	s.log.Info("rotated", "affected", affected, "auth_token_id", token.Id, "userId", token.UserId, "user_agent", userAgent, "client_ip", clientIP)
+	if affected > 0 {
+		token.UnhashedToken = newToken
+		return true, nil
+	}
 
 	return false, nil
 }

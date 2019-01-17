@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"net/http"
+	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -11,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 )
 
 var (
@@ -62,7 +65,27 @@ func GetContextHandler(ats *auth.UserAuthTokenService) macaron.Handler {
 		c.Next()
 
 		//if signed in with token
-		//ats.RefreshToken()
+		rotated, err := ats.RefreshToken(ctx.UserToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
+		if err != nil {
+			ctx.Logger.Error("failed to rotate token", "error", err)
+			return
+		}
+
+		if rotated {
+			ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
+			//c.SetCookie("grafana_session", url.QueryEscape(ctx.UserToken.UnhashedToken), nil, setting.AppSubUrl+"/", setting.Domain, false, true)
+			// ctx.Resp.Header().Del("Set-Cookie")
+			cookie := http.Cookie{
+				Name:     "grafana_session",
+				Value:    url.QueryEscape(ctx.UserToken.UnhashedToken),
+				HttpOnly: true,
+				MaxAge:   int(time.Minute * 10),
+				Domain:   setting.Domain,
+				Path:     setting.AppSubUrl + "/",
+			}
+
+			ctx.Resp.Header().Add("Set-Cookie", cookie.String())
+		}
 
 		// update last seen every 5min
 		if ctx.ShouldUpdateLastSeenAt() {
@@ -95,7 +118,12 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 }
 
 func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthTokenService) bool {
-	user, err := ts.LookupToken(ctx)
+	unhashedToken := ctx.GetCookie("grafana_session")
+	if unhashedToken == "" {
+		return false
+	}
+
+	user, err := ts.LookupToken(unhashedToken)
 	if err != nil {
 		ctx.Logger.Info("failed to look up user based on cookie")
 		return false
@@ -109,6 +137,7 @@ func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthToken
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
+	ctx.UserToken = user
 
 	return true
 }

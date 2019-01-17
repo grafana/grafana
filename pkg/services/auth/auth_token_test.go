@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -27,7 +28,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(token.AuthTokenSeen, ShouldBeFalse)
 
 			Convey("When lookup unhashed token should return user auth token", func() {
-				LookupToken, err := userAuthTokenService.LookupToken(token.unhashedToken)
+				LookupToken, err := userAuthTokenService.LookupToken(token.UnhashedToken)
 				So(err, ShouldBeNil)
 				So(LookupToken, ShouldNotBeNil)
 				So(LookupToken.UserId, ShouldEqual, userID)
@@ -51,7 +52,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(token, ShouldNotBeNil)
 
-			_, err = userAuthTokenService.LookupToken(token.unhashedToken)
+			_, err = userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldBeNil)
 
 			token, err = ctx.getAuthTokenByID(token.Id)
@@ -61,15 +62,15 @@ func TestUserAuthToken(t *testing.T) {
 			_, err = userAuthTokenService.RefreshToken(token, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
 
-			_, err = userAuthTokenService.LookupToken(token.unhashedToken)
+			_, err = userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldBeNil)
 
-			stillGood, err := userAuthTokenService.LookupToken(token.unhashedToken)
+			stillGood, err := userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldBeNil)
 			So(stillGood, ShouldNotBeNil)
 
 			// set now (new - 2 hours)
-			notGood, err := userAuthTokenService.LookupToken(token.unhashedToken)
+			notGood, err := userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldEqual, ErrAuthTokenNotFound)
 			So(notGood, ShouldBeNil)
 		})
@@ -80,7 +81,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(token, ShouldNotBeNil)
 
 			prevToken := token.AuthToken
-			unhashedPrev := token.unhashedToken
+			unhashedPrev := token.UnhashedToken
 
 			refreshed, err := userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
@@ -99,11 +100,11 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(refreshed, ShouldBeTrue)
 
-			unhashedToken := token.unhashedToken
+			unhashedToken := token.UnhashedToken
 
 			token, err = ctx.getAuthTokenByID(token.Id)
 			So(err, ShouldBeNil)
-			token.unhashedToken = unhashedToken
+			token.UnhashedToken = unhashedToken
 
 			So(token.RotatedAt, ShouldEqual, t.Unix())
 			So(token.ClientIp, ShouldEqual, "192.168.10.12")
@@ -112,7 +113,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(token.SeenAt, ShouldEqual, 0)
 			So(token.PrevAuthToken, ShouldEqual, prevToken)
 
-			lookedUp, err := userAuthTokenService.LookupToken(token.unhashedToken)
+			lookedUp, err := userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
 			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
@@ -180,9 +181,9 @@ type testContext struct {
 	tokenService *UserAuthTokenService
 }
 
-func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
+func (c *testContext) getAuthTokenByID(id int64) (*models.UserAuthToken, error) {
 	sess := c.sqlstore.NewSession()
-	var t userAuthToken
+	var t models.UserAuthToken
 	found, err := sess.ID(id).Get(&t)
 	if err != nil || !found {
 		return nil, err
