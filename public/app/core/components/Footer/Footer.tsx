@@ -1,4 +1,4 @@
-﻿import React, { SFC } from 'react';
+﻿import React, { FC } from 'react';
 import { Tooltip } from '@grafana/ui';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   newGrafanaVersion: string;
 }
 
-export const Footer: SFC<Props> = React.memo(({appName, buildVersion, buildCommit, newGrafanaVersionExists, newGrafanaVersion}) => {
+export const Footer: FC<Props> = React.memo(({appName, buildVersion, buildCommit, newGrafanaVersionExists, newGrafanaVersion}) => {
   return (
     <footer className="footer">
       <div className="text-center">

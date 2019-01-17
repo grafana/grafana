@@ -1,6 +1,6 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
-const SignIn: SFC<any> = () => {
+const SignIn: FC<any> = () => {
   const loginUrl = `login?redirect=${encodeURIComponent(window.location.pathname)}`;
   return (
     <div className="sidemenu-item">

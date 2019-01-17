@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import _ from 'lodash';
 
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
@@ -12,7 +12,7 @@ export interface Props {
   perSeriesAligner: string;
 }
 
-export const Alignments: SFC<Props> = ({ perSeriesAligner, templateSrv, onChange, alignOptions }) => {
+export const Alignments: FC<Props> = ({ perSeriesAligner, templateSrv, onChange, alignOptions }) => {
   return (
     <>
       <div className="gf-form-group">
