@@ -30,10 +30,12 @@ fi
 
 echo "Build arguments: $OPT"
 
-go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
-go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
-go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
-
+# build only amd64 for enterprise
+if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
+  go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
+  go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+  go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
+fi
 go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
 
 # Do not remove CC from the linux build, its there for compatibility with Centos6
@@ -62,19 +64,23 @@ echo "Packaging"
 go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
 #removing amd64 phantomjs bin for armv7/arm64 packages
 rm tools/phantomjs/phantomjs
-go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
-go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
 
-if [ -d '/tmp/phantomjs/darwin' ]; then
-  cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
-else
-  echo 'PhantomJS binaries for darwin missing!'
+# build only amd64 for enterprise
+if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
+  go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
+  go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+
+  if [ -d '/tmp/phantomjs/darwin' ]; then
+    cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
+  else
+    echo 'PhantomJS binaries for darwin missing!'
+  fi
+  go run build.go -goos darwin -pkg-arch amd64 ${OPT} package-only
 fi
-go run build.go -goos darwin -pkg-arch amd64 ${OPT} package-only
 
 if [ -d '/tmp/phantomjs/windows' ]; then
   cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
-  rm tools/phantomjs/phantomjs
+  rm tools/phantomjs/phantomjs || true
 else
     echo 'PhantomJS binaries for Windows missing!'
 fi
