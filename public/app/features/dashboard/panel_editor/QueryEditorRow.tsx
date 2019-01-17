@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import _ from 'lodash';
 
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -18,6 +19,7 @@ interface Props {
   onRemoveQuery: (query: DataQuery) => void;
   onMoveQuery: (query: DataQuery, direction: number) => void;
   datasourceName: string | null;
+  inMixedMode: boolean;
 }
 
 interface State {
@@ -133,47 +135,68 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     return angularScope && angularScope.toggleEditorMode;
   }
 
+  onRemoveQuery = () => {
+    this.props.onRemoveQuery(this.props.query);
+  };
+
+  onCopyQuery = () => {
+    const copy = _.cloneDeep(this.props.query);
+    this.props.onAddQuery(copy);
+  };
+
+  onDisableQuery = () => {
+    this.props.query.hide = !this.props.query.hide;
+    this.forceUpdate();
+  };
+
   render() {
-    const { query } = this.props;
-    const { datasource, isCollapsed, angularScope } = this.state;
-    const bodyClasses = classNames('query-editor-box__body gf-form-query', { hide: isCollapsed });
+    const { query, datasourceName, inMixedMode } = this.props;
+    const { datasource, isCollapsed } = this.state;
+    const isDisabled = query.hide;
+
+    const bodyClasses = classNames('query-editor-row__body gf-form-query', {
+      'query-editor-row__body--collapsed': isCollapsed,
+    });
+
+    const rowClasses = classNames('query-editor-row', {
+      'query-editor-row--disabled': isDisabled,
+      'gf-form-disabled': isDisabled,
+    });
 
     if (!datasource) {
       return null;
     }
 
-    console.log('Query render');
-    if (angularScope !== null && angularScope.toggleEditorMode) {
-      console.log('Query editor has text edit mode');
-    }
-
     return (
-      <div className="query-editor-box">
-        <div className="query-editor-box__header">
-          <div className="query-editor-box__ref-id" onClick={this.onToggleCollapse}>
+      <div className={rowClasses}>
+        <div className="query-editor-row__header">
+          <div className="query-editor-row__ref-id" onClick={this.onToggleCollapse}>
             {isCollapsed && <i className="fa fa-caret-right" />}
             {!isCollapsed && <i className="fa fa-caret-down" />}
             <span>{query.refId}</span>
+            {inMixedMode && <em className="query-editor-row__context-info"> ({datasourceName})</em>}
+            {isDisabled && <em className="query-editor-row__context-info"> Disabled</em>}
           </div>
-          <div className="query-editor-box__actions">
+          <div className="query-editor-row__actions">
             {this.hasTextEditMode && (
-              <button className="query-editor-box__action" onClick={this.onToggleEditMode}>
+              <button className="query-editor-row__action" onClick={this.onToggleEditMode} title="Toggle text edit mode">
                 <i className="fa fa-fw fa-pencil" />
               </button>
             )}
-            <button className="query-editor-box__action">
+            <button className="query-editor-row__action" onClick={() => this.props.onMoveQuery(query, 1)}>
               <i className="fa fa-fw fa-arrow-down" />
             </button>
-            <button className="query-editor-box__action">
+            <button className="query-editor-row__action" onClick={() => this.props.onMoveQuery(query, -1)}>
               <i className="fa fa-fw fa-arrow-up" />
             </button>
-            <button className="query-editor-box__action">
+            <button className="query-editor-row__action" onClick={this.onCopyQuery} title="Duplicate query">
               <i className="fa fa-fw fa-copy" />
             </button>
-            <button className="query-editor-box__action">
-              <i className="fa fa-fw fa-eye" />
+            <button className="query-editor-row__action" onClick={this.onDisableQuery} title="Disable/enable query">
+              {isDisabled && <i className="fa fa-fw fa-eye-slash" />}
+              {!isDisabled && <i className="fa fa-fw fa-eye" />}
             </button>
-            <button className="query-editor-box__action">
+            <button className="query-editor-row__action" onClick={this.onRemoveQuery} title="Remove query">
               <i className="fa fa-fw fa-trash" />
             </button>
           </div>

@@ -181,18 +181,16 @@ export class QueriesTab extends PureComponent<Props, State> {
                 onRemoveQuery={this.onRemoveQuery}
                 onAddQuery={this.onAddQuery}
                 onMoveQuery={this.onMoveQuery}
+                inMixedMode={currentDS.meta.mixed}
               />
             ))}
           </div>
-          <div>
-            <div className="gf-form-query">
-              <div className="gf-form gf-form-query-letter-cell">
-                <label className="gf-form-label">
-                  <span className="gf-form-query-letter-cell-carret muted">
-                    <i className="fa fa-caret-down" />
-                  </span>{' '}
-                  <span className="gf-form-query-letter-cell-letter">{panel.getNextQueryLetter()}</span>
-                </label>
+          <div className="query-editor-box">
+            <div className="query-editor-row__header">
+              <div className="query-editor-row__ref-id">
+                <i className="fa fa-caret-down" />
+                 {' '}
+                 <span>{panel.getNextQueryLetter()}</span>
               </div>
               <div className="gf-form">
                 {!isAddingMixed && (
