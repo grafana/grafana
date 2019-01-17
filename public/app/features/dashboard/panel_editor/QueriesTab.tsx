@@ -32,6 +32,7 @@ interface State {
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
+  scrollTop: number;
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
@@ -44,6 +45,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     helpContent: null,
     isPickerOpen: false,
     isAddingMixed: false,
+    scrollTop: 0,
   };
 
   findCurrentDataSource(): DataSourceSelectItem {
@@ -104,7 +106,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
 
     this.props.panel.addQuery();
-    this.forceUpdate();
+    this.setState({ scrollTop: this.state.scrollTop + 100000 });
   };
 
   onRemoveQuery = (query: DataQuery) => {
@@ -127,9 +129,21 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderToolbar = () => {
-    const { currentDS } = this.state;
+    const { currentDS, isAddingMixed } = this.state;
 
-    return <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />;
+    return (
+      <>
+        <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+        <div className="m-l-2">
+          {!isAddingMixed && (
+            <button className="btn navbar-button navbar-button--primary" onClick={this.onAddQueryClick}>
+              Add Query
+            </button>
+          )}
+          {isAddingMixed && this.renderMixedPicker()}
+        </div>
+      </>
+    );
   };
 
   renderMixedPicker = () => {
@@ -146,16 +160,21 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onAddMixedQuery = datasource => {
     this.onAddQuery({ datasource: datasource.name });
-    this.setState({ isAddingMixed: false });
+    this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
   };
 
   onMixedPickerBlur = () => {
     this.setState({ isAddingMixed: false });
   };
 
+  setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    this.setState({ scrollTop: target.scrollTop });
+  };
+
   render() {
     const { panel } = this.props;
-    const { currentDS, isAddingMixed } = this.state;
+    const { currentDS, scrollTop } = this.state;
 
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
@@ -169,7 +188,13 @@ export class QueriesTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Queries" renderToolbar={this.renderToolbar} toolbarItems={[queryInspector, dsHelp]}>
+      <EditorTabBody
+        heading="Data Source"
+        renderToolbar={this.renderToolbar}
+        toolbarItems={[queryInspector, dsHelp]}
+        setScrollTop={this.setScrollTop}
+        scrollTop={scrollTop}
+      >
         <>
           <div className="query-editor-rows">
             {panel.targets.map((query, index) => (
@@ -184,23 +209,6 @@ export class QueriesTab extends PureComponent<Props, State> {
                 inMixedMode={currentDS.meta.mixed}
               />
             ))}
-          </div>
-          <div className="query-editor-box">
-            <div className="query-editor-row__header">
-              <div className="query-editor-row__ref-id">
-                <i className="fa fa-caret-down" />
-                 {' '}
-                 <span>{panel.getNextQueryLetter()}</span>
-              </div>
-              <div className="gf-form">
-                {!isAddingMixed && (
-                  <button className="btn btn-secondary gf-form-btn" onClick={this.onAddQueryClick}>
-                    Add Query
-                  </button>
-                )}
-                {isAddingMixed && this.renderMixedPicker()}
-              </div>
-            </div>
           </div>
           <PanelOptionsGroup>
             <QueryOptions panel={panel} datasource={currentDS} />
