@@ -26,7 +26,8 @@ fi
 set -e
 
 # Setup environment
-cp scripts/build/update_repo/aptly.conf /etc/aptly.conf
+cp scripts/build/update_repo/aptly.conf ~/.aptly.conf
+
 mkdir -p /deb-repo/db   \
          /deb-repo/repo \
          /deb-repo/tmp

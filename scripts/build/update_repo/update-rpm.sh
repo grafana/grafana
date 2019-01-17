@@ -26,6 +26,7 @@ set -e
 
 # Setup environment
 BUCKET="gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/$REPO"
+
 mkdir -p /rpm-repo
 
 # Download the database
