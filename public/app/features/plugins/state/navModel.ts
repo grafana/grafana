@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { DataSource, PluginMeta, NavModel } from 'app/types';
+import { DataSource, NavModel } from 'app/types';
+import { PluginMeta } from '@grafana/ui/src/types';
 import config from 'app/core/config';
 
 export function buildNavModel(ds: DataSource, plugin: PluginMeta, currentPage: string): NavModel {

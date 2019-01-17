@@ -1,6 +1,6 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { Plugin, PluginMeta } from './plugins';
-import { PluginExports } from '@grafana/ui';
+import { Plugin } from './plugins';
+import { PluginExports, PluginMeta } from '@grafana/ui/src/types';
 
 export interface DataSource {
   id: number;
