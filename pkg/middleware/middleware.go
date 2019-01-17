@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -71,15 +70,14 @@ func GetContextHandler(ats *auth.UserAuthTokenService) macaron.Handler {
 
 		if rotated {
 			ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
-			//c.SetCookie("grafana_session", url.QueryEscape(ctx.UserToken.UnhashedToken), nil, setting.AppSubUrl+"/", setting.Domain, false, true)
-			// ctx.Resp.Header().Del("Set-Cookie")
+			ctx.Resp.Header().Del("Set-Cookie")
 			cookie := http.Cookie{
 				Name:     "grafana_session",
 				Value:    url.QueryEscape(ctx.UserToken.UnhashedToken),
 				HttpOnly: true,
-				MaxAge:   int(time.Minute * 10),
-				Domain:   setting.Domain,
-				Path:     setting.AppSubUrl + "/",
+				//MaxAge:   600,
+				Domain: setting.Domain,
+				Path:   setting.AppSubUrl + "/",
 			}
 
 			ctx.Resp.Header().Add("Set-Cookie", cookie.String())

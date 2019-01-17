@@ -46,9 +46,9 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 		Name:     sessionCookieKey,
 		Value:    url.QueryEscape(userToken.UnhashedToken),
 		HttpOnly: true,
-		MaxAge:   int(time.Minute * 10),
-		Domain:   setting.Domain,
-		Path:     setting.AppSubUrl + "/",
+		//MaxAge:   600,
+		Domain: setting.Domain,
+		Path:   setting.AppSubUrl + "/",
 	}
 
 	c.Resp.Header().Add("Set-Cookie", cookie.String())
