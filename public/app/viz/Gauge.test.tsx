@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { BasicGaugeColor, TimeSeriesVMs } from '@grafana/ui';
+import { TimeSeriesVMs } from '@grafana/ui';
 
 import { Gauge, Props } from './Gauge';
 
@@ -10,7 +10,6 @@ jest.mock('jquery', () => ({
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    baseColor: BasicGaugeColor.Green,
     maxValue: 100,
     valueMappings: [],
     minValue: 0,
@@ -18,7 +17,7 @@ const setup = (propOverrides?: object) => {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     suffix: '',
-    thresholds: [],
+    thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }],
     unit: 'none',
     stat: 'avg',
     height: 300,
@@ -42,12 +41,12 @@ describe('Get font color', () => {
   it('should get base color if no threshold', () => {
     const { instance } = setup();
 
-    expect(instance.getFontColor(40)).toEqual(BasicGaugeColor.Green);
+    expect(instance.getFontColor(40)).toEqual('#7EB26D');
   });
 
   it('should be f2f2f2', () => {
     const { instance } = setup({
-      thresholds: [{ value: 59, color: '#f2f2f2' }],
+      thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }, { index: 1, value: 59, color: '#f2f2f2' }],
     });
 
     expect(instance.getFontColor(58)).toEqual('#f2f2f2');
