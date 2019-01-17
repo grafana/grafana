@@ -33,11 +33,19 @@ export class TextPanelCtrl extends PanelCtrl {
     this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
 
+    const renderWhenChanged = (scope: any) => {
+      const { panel } = scope.ctrl;
+      return [
+        panel.content,
+        panel.mode
+      ].join();
+    };
+
     $scope.$watch(
-      'ctrl.panel.content',
+      renderWhenChanged,
       _.throttle(() => {
         this.render();
-      }, 1000)
+      }, 1000, {trailing: true})
     );
   }
 
