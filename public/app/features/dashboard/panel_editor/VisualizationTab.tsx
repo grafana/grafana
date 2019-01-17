@@ -26,6 +26,7 @@ interface Props {
 interface State {
   isVizPickerOpen: boolean;
   searchQuery: string;
+  scrollTop: number;
 }
 
 export class VisualizationTab extends PureComponent<Props, State> {
@@ -39,6 +40,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.state = {
       isVizPickerOpen: false,
       searchQuery: '',
+      scrollTop: 0,
     };
   }
 
@@ -143,7 +145,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
   };
 
   onOpenVizPicker = () => {
-    this.setState({ isVizPickerOpen: true });
+    this.setState({ isVizPickerOpen: true, scrollTop: 0 });
   };
 
   onCloseVizPicker = () => {
@@ -201,9 +203,14 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
   renderHelp = () => <PluginHelp plugin={this.props.plugin} type="help" />;
 
+  setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    this.setState({ scrollTop: target.scrollTop });
+  };
+
   render() {
     const { plugin } = this.props;
-    const { isVizPickerOpen, searchQuery } = this.state;
+    const { isVizPickerOpen, searchQuery, scrollTop } = this.state;
 
     const pluginHelp: EditorToolbarView = {
       heading: 'Help',
@@ -212,7 +219,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[pluginHelp]}>
+      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[pluginHelp]}
+        scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
             <VizTypePicker
