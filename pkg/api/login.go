@@ -168,7 +168,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 
 	err := hs.AuthTokenService.UserAuthenticatedHook(user, c)
 	if err != nil {
-		hs.log.Error("User auth hook failed", err)
+		hs.log.Error("User auth hook failed", "error", err)
 	}
 }
 
