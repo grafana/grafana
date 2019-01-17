@@ -487,7 +487,7 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
 
-		sc.m.Use(GetContextHandler())
+		sc.m.Use(GetContextHandler(nil))
 		// mock out gc goroutine
 		session.StartSessionGC = func() {}
 		sc.m.Use(Sessioner(&ms.Options{}, 0))
