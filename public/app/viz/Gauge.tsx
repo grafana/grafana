@@ -1,9 +1,15 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { BasicGaugeColor, Threshold, TimeSeriesVMs, MappingType, ValueMapping } from '@grafana/ui';
-
-import config from '../core/config';
-import kbn from '../core/utils/kbn';
+import {
+  BasicGaugeColor,
+  Threshold,
+  TimeSeriesVMs,
+  MappingType,
+  ValueMapping,
+  getValueFormat,
+  Theme,
+  Themes,
+} from '@grafana/ui';
 
 export interface Props {
   decimals: number;
@@ -20,6 +26,7 @@ export interface Props {
   suffix: string;
   unit: string;
   width: number;
+  theme?: Theme;
 }
 
 export class Gauge extends PureComponent<Props> {
@@ -68,7 +75,7 @@ export class Gauge extends PureComponent<Props> {
   formatValue(value) {
     const { decimals, valueMappings, prefix, suffix, unit } = this.props;
 
-    const formatFunc = kbn.valueFormats[unit];
+    const formatFunc = getValueFormat(unit);
     const formattedValue = formatFunc(value, decimals);
 
     if (valueMappings.length > 0) {
@@ -116,6 +123,7 @@ export class Gauge extends PureComponent<Props> {
       width,
       height,
       stat,
+      theme,
     } = this.props;
 
     let value: string | number = '';
@@ -127,7 +135,7 @@ export class Gauge extends PureComponent<Props> {
     }
 
     const dimension = Math.min(width, height * 1.3);
-    const backgroundColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
+    const backgroundColor = theme === Themes.Light ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
     const fontScale = parseInt('80', 10) / 100;
     const fontSize = Math.min(dimension / 5, 100) * fontScale;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;

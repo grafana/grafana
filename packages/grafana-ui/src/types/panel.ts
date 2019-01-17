@@ -66,3 +66,10 @@ export interface RangeMap extends BaseMap {
   from: string;
   to: string;
 }
+
+export type Theme = 'dark' | 'light';
+
+export enum Themes {
+  Dark = 'dark',
+  Light = 'light',
+}
