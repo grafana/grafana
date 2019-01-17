@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import { FormLabel } from '@grafana/ui';
 import { Switch } from '../../../core/components/Switch/Switch';
 
@@ -9,7 +9,7 @@ export interface Props {
   onDefaultChange: (value: boolean) => void;
 }
 
-const BasicSettings: SFC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
+const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
   return (
     <div className="gf-form-group">
       <div className="gf-form-inline">

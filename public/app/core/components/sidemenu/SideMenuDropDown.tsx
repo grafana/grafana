@@ -1,11 +1,11 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import DropDownChild from './DropDownChild';
 
 interface Props {
   link: any;
 }
 
-const SideMenuDropDown: SFC<Props> = props => {
+const SideMenuDropDown: FC<Props> = props => {
   const { link } = props;
   return (
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">

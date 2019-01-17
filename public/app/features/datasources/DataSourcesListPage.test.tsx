@@ -10,7 +10,14 @@ const setup = (propOverrides?: object) => {
     dataSources: [] as DataSource[],
     layoutMode: LayoutModes.Grid,
     loadDataSources: jest.fn(),
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration'
+      },
+      node: {
+        text: 'Data Sources'
+      }
+    } as NavModel,
     dataSourcesCount: 0,
     searchQuery: '',
     setDataSourcesSearchQuery: jest.fn(),

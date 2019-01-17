@@ -8,6 +8,7 @@ interface Props {
   autoHideDuration?: number;
   autoMaxHeight?: string;
   hideTracksWhenNotNeeded?: boolean;
+  autoHeightMin?: number | string;
 }
 
 /**
@@ -21,6 +22,7 @@ export class CustomScrollbar extends PureComponent<Props> {
     autoHideDuration: 200,
     autoMaxHeight: '100%',
     hideTracksWhenNotNeeded: false,
+    autoHeightMin: '0'
   };
 
   render() {
@@ -32,7 +34,6 @@ export class CustomScrollbar extends PureComponent<Props> {
         autoHeight={true}
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
         // Before these where set to inhert but that caused problems with cut of legends in firefox
-        autoHeightMin={'0'}
         autoHeightMax={autoMaxHeight}
         renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
         renderTrackVertical={props => <div {...props} className="track-vertical" />}

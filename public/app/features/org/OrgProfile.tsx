@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
 export interface Props {
   orgName: string;
@@ -6,7 +6,7 @@ export interface Props {
   onOrgNameChange: (orgName: string) => void;
 }
 
-const OrgProfile: SFC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
+const OrgProfile: FC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
   return (
     <div>
       <h3 className="page-sub-heading">Organization profile</h3>
