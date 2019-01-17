@@ -62,8 +62,6 @@ func GetContextHandler(ats *auth.UserAuthTokenService) macaron.Handler {
 
 		c.Map(ctx)
 
-		c.Next()
-
 		//if signed in with token
 		rotated, err := ats.RefreshToken(ctx.UserToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
 		if err != nil {
