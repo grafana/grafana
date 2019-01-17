@@ -128,6 +128,10 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       angularScope.toggleEditorMode();
       this.angularQueryEditor.digest();
     }
+
+    if (this.state.isCollapsed) {
+      this.setState({ isCollapsed: false });
+    }
   };
 
   get hasTextEditMode() {
