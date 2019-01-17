@@ -161,11 +161,17 @@ export function initializeExplore(
       },
     });
 
-    if (exploreDatasources.length > 1) {
+    if (exploreDatasources.length >= 1) {
       let instance;
       if (datasource) {
-        instance = await getDatasourceSrv().get(datasource);
-      } else {
+        try {
+          instance = await getDatasourceSrv().get(datasource);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      // Checking on instance here because requested datasource could be deleted already
+      if (!instance) {
         instance = await getDatasourceSrv().get();
       }
       dispatch(loadDatasource(exploreId, instance));
