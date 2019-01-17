@@ -1,10 +1,9 @@
 import { Value } from 'slate';
-import { RawTimeRange, TimeRange, DataQuery } from '@grafana/ui';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
 import { LogsModel } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
-import { DataSourceSelectItem } from 'app/types/datasources';
 
 export interface CompletionItem {
   /**

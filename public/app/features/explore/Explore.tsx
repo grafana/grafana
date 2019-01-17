@@ -9,7 +9,7 @@ import { AutoSizer } from 'react-virtualized';
 import store from 'app/core/store';
 
 // Components
-import { DataSourceSelectItem } from 'app/types/datasources';
+import { DataSourceSelectItem } from '@grafana/ui/src/types';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { Alert } from './Error';
 import ErrorBoundary from './ErrorBoundary';

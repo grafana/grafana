@@ -55,3 +55,31 @@ export interface DataSourceApi {
    */
   testDatasource(): Promise<any>;
 }
+
+export interface DataSourceSettings {
+  id: number;
+  orgId: number;
+  name: string;
+  typeLogoUrl: string;
+  type: string;
+  access: string;
+  url: string;
+  password: string;
+  user: string;
+  database: string;
+  basicAuth: boolean;
+  basicAuthPassword: string;
+  basicAuthUser: string;
+  isDefault: boolean;
+  jsonData: { authType: string; defaultRegion: string };
+  readOnly: boolean;
+  withCredentials: boolean;
+}
+
+export interface DataSourceSelectItem {
+  name: string;
+  value: string | null;
+  meta: PluginMeta;
+  sort: string;
+}
+

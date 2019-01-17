@@ -6,7 +6,7 @@ import _ from 'lodash';
 import { Select } from '@grafana/ui';
 
 // Types
-import { DataSourceSelectItem } from 'app/types';
+import { DataSourceSelectItem } from '@grafana/ui/src/types';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;

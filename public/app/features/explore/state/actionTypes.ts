@@ -1,6 +1,6 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { RawTimeRange, TimeRange, DataQuery } from '@grafana/ui';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem  } from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreItemState,
@@ -9,7 +9,6 @@ import {
   ResultType,
   QueryTransaction,
 } from 'app/types/explore';
-import { DataSourceSelectItem } from 'app/types/datasources';
 
 export enum ActionTypes {
   AddQueryRow = 'explore/ADD_QUERY_ROW',
