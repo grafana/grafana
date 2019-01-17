@@ -11,6 +11,7 @@ interface Props {
   hideTracksWhenNotNeeded?: boolean;
   scrollTop?: number;
   setScrollTop: (value: React.MouseEvent<HTMLElement>) => void;
+  autoHeightMin?: number | string;
 }
 
 /**
@@ -26,6 +27,7 @@ export class CustomScrollbar extends PureComponent<Props> {
     hideTracksWhenNotNeeded: false,
     scrollTop: 0,
     setScrollTop: () => {},
+    autoHeightMin: '0'
   };
 
   private ref: React.RefObject<Scrollbars>;
@@ -65,7 +67,6 @@ export class CustomScrollbar extends PureComponent<Props> {
         autoHeight={true}
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
         // Before these where set to inhert but that caused problems with cut of legends in firefox
-        autoHeightMin={'0'}
         autoHeightMax={autoMaxHeight}
         renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
         renderTrackVertical={props => <div {...props} className="track-vertical" />}

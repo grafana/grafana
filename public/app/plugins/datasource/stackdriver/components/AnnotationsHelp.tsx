@@ -1,6 +1,6 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
-export const AnnotationsHelp: SFC = () => {
+export const AnnotationsHelp: FC = () => {
   return (
     <div className="gf-form grafana-info-box" style={{ padding: 0 }}>
       <pre className="gf-form-pre alert alert-info" style={{ marginRight: 0 }}>

@@ -8,6 +8,12 @@
   height: 70px;
 }
 
+.thresholds-row:first-child > .thresholds-row-color-indicator {
+  border-top-left-radius: $border-radius;
+  border-top-right-radius: $border-radius;
+  overflow: hidden;
+}
+
 .thresholds-row:last-child > .thresholds-row-color-indicator {
   border-bottom-left-radius: $border-radius;
   border-bottom-right-radius: $border-radius;
@@ -33,7 +39,7 @@
 }
 
 .thresholds-row-color-indicator {
-  width: 20px;
+  width: 10px;
 }
 
 .thresholds-row-input {
@@ -45,18 +51,6 @@
   display: flex;
   justify-content: center;
   flex-direction: row;
-  height: 42px;
-}
-
-.thresholds-row-input-inner > div {
-  border-left: 1px solid $input-label-border-color;
-  border-top: 1px solid $input-label-border-color;
-  border-bottom: 1px solid $input-label-border-color;
-}
-
-.thresholds-row-input-inner > *:nth-child(2) {
-  border-top-left-radius: $border-radius;
-  border-bottom-left-radius: $border-radius;
 }
 
 .thresholds-row-input-inner > *:last-child {
@@ -74,9 +68,11 @@
 }
 
 .thresholds-row-input-inner-value > input {
-  height: 100%;
-  padding: 8px 10px;
+  height: $gf-form-input-height;
+  padding: $input-padding-y $input-padding-x;
   width: 150px;
+  border-top: 1px solid $input-label-border-color;
+  border-bottom: 1px solid $input-label-border-color;
 }
 
 .thresholds-row-input-inner-color {
@@ -85,6 +81,7 @@
   align-items: center;
   justify-content: center;
   background-color: $input-bg;
+  border: 1px solid $input-label-border-color;
 }
 
 .thresholds-row-input-inner-color-colorpicker {
@@ -99,8 +96,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 42px;
+  height: $gf-form-input-height;
+  padding: $input-padding-y $input-padding-x;
   width: 42px;
-  background-color: $input-label-border-color;
+  background-color: $input-label-bg;
+  border: 1px solid $input-label-border-color;
   cursor: pointer;
 }
