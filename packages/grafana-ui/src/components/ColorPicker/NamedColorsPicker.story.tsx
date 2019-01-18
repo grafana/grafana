@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
 import NamedColorsPicker from './NamedColorsPicker';
-import { Color, getColorName } from '@grafana/ui/src/utils/colorsPalette';
+import { getColorName } from '@grafana/ui/src/utils/colorsPalette';
 import { withKnobs, select } from '@storybook/addon-knobs';
 
 const CenteredStory: FunctionComponent<{}> = ({ children }) => {
@@ -24,16 +24,18 @@ interface StateHolderProps<T> {
   children: (currentState: T, updateState: (nextState: T) => void) => JSX.Element;
 }
 
-class UseState<T> extends React.Component<StateHolderProps<T>, { value: T }> {
+export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T }> {
   constructor(props: StateHolderProps<T>) {
     super(props);
     this.state = {
       value: props.initialState,
     };
   }
+
   static getDerivedStateFromProps(props: StateHolderProps<{}>, state: { value: {} }) {
     return {
       value: props.initialState,
+      ...state
     };
   }
 
@@ -62,14 +64,10 @@ storiesOf('UI/NamedColorPicker', module)
     return (
       <UseState initialState={selectedColor}>
         {(selectedColor, updateSelectedColor) => {
-          console.log(selectedColor);
           return (
             <NamedColorsPicker
-              selectedColor={selectedColor as Color}
-              onChange={color => {
-                // @ts-ignore
-                updateSelectedColor((color).name);
-              }}
+              color={selectedColor}
+              onChange={updateSelectedColor}
             />
           );
         }}
@@ -82,8 +80,8 @@ storiesOf('UI/NamedColorPicker', module)
         {(selectedColor, updateSelectedColor) => {
           return (
             <NamedColorsPicker
-              selectedColor={getColorName(selectedColor)}
-              onChange={color => updateSelectedColor(color.variants.dark)}
+              color={getColorName(selectedColor)}
+              onChange={updateSelectedColor}
             />
           );
         }}

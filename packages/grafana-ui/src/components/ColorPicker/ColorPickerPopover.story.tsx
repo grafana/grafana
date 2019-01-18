@@ -35,7 +35,7 @@ storiesOf('UI/ColorPickerPopover', module)
     return (
       <ColorPickerPopover
         color="#BC67E6"
-        onColorSelect={color => {
+        onChange={color => {
           console.log(color);
         }}
         theme={selectedTheme || undefined}

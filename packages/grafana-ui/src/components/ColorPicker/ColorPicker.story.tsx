@@ -1,7 +1,8 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
 import { ColorPicker } from './ColorPicker';
-import { withKnobs, text } from '@storybook/addon-knobs';
+import { SeriesColorPicker } from './SeriesColorPicker';
+import { UseState } from './NamedColorsPicker.story';
 
 const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   return (
@@ -21,7 +22,24 @@ const CenteredStory: FunctionComponent<{}> = ({ children }) => {
 const ColorPickerStories = storiesOf('UI/ColorPicker', module);
 
 ColorPickerStories.addDecorator(story => <CenteredStory>{story()}</CenteredStory>);
-ColorPickerStories.addDecorator(withKnobs);
 ColorPickerStories.add('Color picker', () => {
-  return <ColorPicker color={text('Color HEX or Name or RGB string', '#ff0000')} onChange={() => {}} />;
+  return <ColorPicker color="#ff0000" onChange={() => {}} />;
+});
+ColorPickerStories.add('Series color picker', () => {
+  return (
+    <UseState initialState="#00ff00">
+      {(selectedColor, updateSelectedColor) => {
+        return (
+          <SeriesColorPicker
+            yaxis={1}
+            onToggleAxis={() => {}}
+            color={selectedColor}
+            onChange={color => updateSelectedColor(color)}
+          >
+            <div style={{color: selectedColor}}>Open color picker</div>
+          </SeriesColorPicker>
+        );
+      }}
+    </UseState>
+  );
 });
