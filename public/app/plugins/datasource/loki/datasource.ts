@@ -1,13 +1,18 @@
+// Libraries
 import _ from 'lodash';
 
+// Services & Utils
 import * as dateMath from 'app/core/utils/datemath';
-import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
-import { PluginMeta, DataQuery } from '@grafana/ui/src/types';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
-
 import LanguageProvider from './language_provider';
 import { mergeStreamsToLogs } from './result_transformer';
 import { formatQuery, parseQuery } from './query_utils';
+import { makeSeriesForLogs } from 'app/core/logs_model';
+
+// Types
+import { LogsStream, LogsModel } from 'app/core/logs_model';
+import { PluginMeta, DataQueryOptions, DataSourceApi } from '@grafana/ui/src/types';
+import { LokiQuery } from './types';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -27,7 +32,7 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export default class LokiDatasource {
+export default class LokiDatasource implements DataSourceApi<LokiQuery> {
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -68,7 +73,7 @@ export default class LokiDatasource {
     };
   }
 
-  query(options): Promise<{ data: LogsStream[] }> {
+  query(options: DataQueryOptions<LokiQuery>): Promise<{ data: LogsStream[] }> {
     const queryTargets = options.targets
       .filter(target => target.expr)
       .map(target => this.prepareQueryTarget(target, options));

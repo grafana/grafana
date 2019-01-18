@@ -243,8 +243,6 @@ export class PanelModel {
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = this.getNextQueryLetter();
-    query.isNew = true;
-
     this.targets.push(query);
   }
 
