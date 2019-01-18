@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
-import NamedColorsPicker from './NamedColorsPicker';
+import NamedColorsPalette from './NamedColorsPalette';
 import { getColorName } from '@grafana/ui/src/utils/colorsPalette';
 import { withKnobs, select } from '@storybook/addon-knobs';
 
@@ -47,7 +47,7 @@ export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T
   }
 }
 
-storiesOf('UI/NamedColorPicker', module)
+storiesOf('UI/NamedColorsPalette', module)
   .addDecorator(withKnobs)
   .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
   .add('Named colors swatch - support for named colors', () => {
@@ -65,7 +65,7 @@ storiesOf('UI/NamedColorPicker', module)
       <UseState initialState={selectedColor}>
         {(selectedColor, updateSelectedColor) => {
           return (
-            <NamedColorsPicker
+            <NamedColorsPalette
               color={selectedColor}
               onChange={updateSelectedColor}
             />
@@ -79,7 +79,7 @@ storiesOf('UI/NamedColorPicker', module)
       <UseState initialState="#00ff00">
         {(selectedColor, updateSelectedColor) => {
           return (
-            <NamedColorsPicker
+            <NamedColorsPalette
               color={getColorName(selectedColor)}
               onChange={updateSelectedColor}
             />

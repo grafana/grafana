@@ -2,9 +2,12 @@ import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
 import { ColorPicker } from './ColorPicker';
 import { SeriesColorPicker } from './SeriesColorPicker';
-import { UseState } from './NamedColorsPicker.story';
+import { UseState } from './NamedColorsPalette.story';
+import { withKnobs, select } from '@storybook/addon-knobs';
+import { GrafanaTheme } from '../../types';
 
-const CenteredStory: FunctionComponent<{}> = ({ children }) => {
+// TODO: extract to decorators
+export const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   return (
     <div
       style={{
@@ -22,10 +25,39 @@ const CenteredStory: FunctionComponent<{}> = ({ children }) => {
 const ColorPickerStories = storiesOf('UI/ColorPicker', module);
 
 ColorPickerStories.addDecorator(story => <CenteredStory>{story()}</CenteredStory>);
+ColorPickerStories.addDecorator(withKnobs);
+
 ColorPickerStories.add('Color picker', () => {
-  return <ColorPicker color="#ff0000" onChange={() => {}} />;
+  const selectedTheme = select(
+    'Theme',
+    {
+      Default: '',
+      Light: GrafanaTheme.Light,
+      Dark: GrafanaTheme.Dark,
+    },
+    GrafanaTheme.Light
+  );
+
+  return (
+    <UseState initialState="#00ff00">
+      {(selectedColor, updateSelectedColor) => {
+        return <ColorPicker color={selectedColor} onChange={updateSelectedColor} theme={selectedTheme || undefined} />;
+      }}
+    </UseState>
+  );
 });
+
 ColorPickerStories.add('Series color picker', () => {
+  const selectedTheme = select(
+    'Theme',
+    {
+      Default: '',
+      Light: GrafanaTheme.Light,
+      Dark: GrafanaTheme.Dark,
+    },
+    GrafanaTheme.Light
+  );
+
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
@@ -35,8 +67,9 @@ ColorPickerStories.add('Series color picker', () => {
             onToggleAxis={() => {}}
             color={selectedColor}
             onChange={color => updateSelectedColor(color)}
+            theme={selectedTheme || undefined}
           >
-            <div style={{color: selectedColor}}>Open color picker</div>
+            <div style={{ color: selectedColor }}>Open color picker</div>
           </SeriesColorPicker>
         );
       }}
