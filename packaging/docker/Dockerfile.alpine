@@ -10,102 +10,104 @@ FROM ${BASE_IMAGE}
 
 # Add glibc - required by grafana-server, grafana-cli, and phantomjs.
 ARG GLIBC_VER="2.28-r0"
-RUN apk add --update --no-cache shadow ca-certificates curl bash file openssl \
-    && ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" \
-    && curl -Ls https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub -o /etc/apk/keys/sgerrand.rsa.pub \
-    && curl -Ls ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-${GLIBC_VER}.apk > /tmp/${GLIBC_VER}.apk \
-    && apk add /tmp/${GLIBC_VER}.apk \
-    && curl -Ls ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-bin-${GLIBC_VER}.apk > /tmp/${GLIBC_VER}-bin.apk \
-    && apk add /tmp/${GLIBC_VER}-bin.apk \
-    && rm -rf /tmp/*.apk /var/cache/apk/*
+RUN apk add --update --no-cache shadow ca-certificates curl bash file openssl && \
+    ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" && \
+    curl -Ls https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub -o /etc/apk/keys/sgerrand.rsa.pub && \
+    curl -Ls ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-${GLIBC_VER}.apk > /tmp/${GLIBC_VER}.apk && \
+    apk add /tmp/${GLIBC_VER}.apk && \
+    curl -Ls ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-bin-${GLIBC_VER}.apk > /tmp/${GLIBC_VER}-bin.apk && \
+    apk add /tmp/${GLIBC_VER}-bin.apk && \
+    rm -rf /tmp/*.apk /var/cache/apk/*
 
 # Fix glibc ldd command - see https://github.com/sgerrand/alpine-pkg-glibc/issues/103.
 RUN sed -i s/lib64/lib/ /usr/glibc-compat/bin/ldd
 
 # Add required phantomjs libs.
-ARG GCC_LIBS_VERSION="8.2.1%2B20181127-1"
-ARG GCC_LIBS_SHA256="2d8640104df7717a58ddb7d823cd9063c3b5a019046f023144fd53911fa3e1a6"
-ARG GCC_LIBS_URL="https://archive.archlinux.org/packages/g/gcc-libs/gcc-libs-${GCC_LIBS_VERSION}-x86_64.pkg.tar.xz"
-ARG GCC_LIBS_LIBS='usr/lib/libgcc* usr/lib/libstdc++*'
-
-ARG ZLIB_VERSION="1%3A1.2.9-1"
-ARG ZLIB_SHA256="bb0959c08c1735de27abf01440a6f8a17c5c51e61c3b4c707e988c906d3b7f67"
-ARG ZLIB_URL="https://archive.archlinux.org/packages/z/zlib/zlib-${ZLIB_VERSION}-x86_64.pkg.tar.xz"
-ARG ZLIB_LIBS='usr/lib/libz*'
-
-ARG EXPAT_VERSION="2.2.6-1"
-ARG EXPAT_SHA256="1f909e78f14c2d1cb1e06c014207b9650361d2b57d009d50d97ed6103fde4f67"
-ARG EXPAT_URL="https://archive.archlinux.org/packages/e/expat/expat-${EXPAT_VERSION}-x86_64.pkg.tar.xz"
-ARG EXPAT_LIBS='usr/lib/libexpat*'
-
-ARG FONTCONFIG_VERSION="2%3A2.13.1%2B12%2Bg5f5ec56-1"
-ARG FONTCONFIG_SHA256="c089ea26c660e2e15b45fe708beb1d8847784a5782b1562f05e7e7df30f6685f"
-ARG FONTCONFIG_URL="https://archive.archlinux.org/packages/f/fontconfig/fontconfig-${FONTCONFIG_VERSION}-x86_64.pkg.tar.xz"
-ARG FONTCONFIG_COPY_DIRS="etc/fonts var/cache/fontconfig"
-ARG FONTCONFIG_LIBS='usr/lib/libfontconfig*'
-
-ARG FREETYPE_VERSION="2.9.1-1"
-ARG FREETYPE_SHA256="d13e74fa0e6067d3584e661d77006c20026f838866fb2b96cc41b8280067fce1"
-ARG FREETYPE_URL="https://archive.archlinux.org/packages/f/freetype2/freetype2-${FREETYPE_VERSION}-x86_64.pkg.tar.xz"
-ARG FREETYPE_LIBS='usr/lib/libfreetype*'
-
-ARG LIBPNG_VERSION="1.6.36-1"
-ARG LIBPNG_SHA256="c0189c2beee45c4510c065c7295c9fad12184df47965110803d864eff3ba92a8"
-ARG LIBPNG_URL="https://archive.archlinux.org/packages/l/libpng/libpng-${LIBPNG_VERSION}-x86_64.pkg.tar.xz"
-ARG LIBPNG_LIBS='usr/lib/libpng*'
-
-# fontconfig requires libuuid from this
-ARG LIBUTIL_LINUX_VERSION="2.33.1-2"
-ARG LIBUTIL_LINUX_SHA256="19e5ed4e29c768b70976bae9b087b59c222e12f6581c1e9f2c3946ac5d81d50f"
-ARG LIBUTIL_LINUX_URL="https://archive.archlinux.org/packages/l/libutil-linux/libutil-linux-${LIBUTIL_LINUX_VERSION}-x86_64.pkg.tar.xz"
-ARG LIBUTIL_LINUX_LIBS='usr/lib/libuuid*'
-
-# freetype requires this
-ARG HARFBUZZ_VERSION="2.3.0-1"
-ARG HARFBUZZ_SHA256="af4357f812cf25b37dc36c7df183865f2349e006f42ab0efb0f1e988d5ad0819"
-ARG HARFBUZZ_URL="https://archive.archlinux.org/packages/h/harfbuzz/harfbuzz-${HARFBUZZ_VERSION}-x86_64.pkg.tar.xz"
-ARG HARFBUZZ_LIBS='usr/lib/libharfbuzz*'
-
-# harfbuzz requires this
-ARG BZIP2_VERSION="1.0.6-8"
-ARG BZIP2_SHA256="b6c65d5fcc8012a019b2b1b81165cdb49b46afdcd6683d291b35419ccce2ea4b"
-ARG BZIP2_URL="https://archive.archlinux.org/packages/b/bzip2/bzip2-${BZIP2_VERSION}-x86_64.pkg.tar.xz"
-ARG BZIP2_LIBS='usr/lib/libbz2*'
-
-# harfbuzz requires this
-ARG GLIB_VERSION="2.54.0-3"
-ARG GLIB_SHA256="376d4919708f31e0d8c4068dd4dfde0ad9a7ec6a371b77b5e8fc4b43eccba50b"
-ARG GLIB_URL="https://archive.archlinux.org/packages/g/glib/glib-${GLIB_VERSION}-x86_64.pkg.tar.xz"
-ARG GLIB_LIBS='usr/lib/libglib-2.0*'
-
-# harfbuzz requires this
-ARG GRAPHITE_VERSION="1%3A1.3.9-1"
-ARG GRAPHITE_SHA256="95404674f73aad37a70c2b0dbb0588027a8d3a14860d3f6dbce19ea3a5521bf4"
-ARG GRAPHITE_URL="https://archive.archlinux.org/packages/g/graphite/graphite-${GRAPHITE_VERSION}-x86_64.pkg.tar.xz"
-ARG GRAPHITE_LIBS='usr/lib/libgraphite2*'
-
-# glib requires this
-ARG PCRE_VERSION="8.42-2"
-ARG PCRE_SHA256="c8b1f458fb4b416f2f95a05e18c62e276c745d35dff2c502df80abef9025d0aa"
-ARG PCRE_URL="https://archive.archlinux.org/packages/p/pcre/pcre-${PCRE_VERSION}-x86_64.pkg.tar.xz"
-ARG PCRE_LIBS='usr/lib/libpcre.*'
-
 COPY download-lib.sh /tmp
-RUN apk add --update --no-cache binutils xz \
-  && /tmp/download-lib.sh ${GCC_LIBS_URL} ${GCC_LIBS_SHA256} ${GCC_LIBS_LIBS} \
-  && /tmp/download-lib.sh ${ZLIB_URL} ${ZLIB_SHA256} ${ZLIB_LIBS} \
-  && /tmp/download-lib.sh ${EXPAT_URL} ${EXPAT_SHA256} ${EXPAT_LIBS} \
-  && COPY_DIRS="${FONTCONFIG_COPY_DIRS}" /tmp/download-lib.sh ${FONTCONFIG_URL} ${FONTCONFIG_SHA256} ${FONTCONFIG_LIBS} \
-  && /tmp/download-lib.sh ${FREETYPE_URL} ${FREETYPE_SHA256} ${FREETYPE_LIBS} \
-  && /tmp/download-lib.sh ${LIBPNG_URL} ${LIBPNG_SHA256} ${LIBPNG_LIBS} \
-  && /tmp/download-lib.sh ${LIBUTIL_LINUX_URL} ${LIBUTIL_LINUX_SHA256} ${LIBUTIL_LINUX_LIBS} \
-  && /tmp/download-lib.sh ${HARFBUZZ_URL} ${HARFBUZZ_SHA256} ${HARFBUZZ_LIBS} \
-  && /tmp/download-lib.sh ${BZIP2_URL} ${BZIP2_SHA256} ${BZIP2_LIBS} \
-  && /tmp/download-lib.sh ${GLIB_URL} ${GLIB_SHA256} ${GLIB_LIBS} \
-  && /tmp/download-lib.sh ${GRAPHITE_URL} ${GRAPHITE_SHA256} ${GRAPHITE_LIBS} \
-  && /tmp/download-lib.sh ${PCRE_URL} ${PCRE_SHA256} ${PCRE_LIBS} \
-  && /usr/glibc-compat/sbin/ldconfig \
-  && apk del binutils xz && rm /tmp/download-lib.sh && rm -rf /var/cache/apk/*
+
+RUN GCC_LIBS_VERSION="8.2.1%2B20181127-1" && \
+    GCC_LIBS_SHA256="2d8640104df7717a58ddb7d823cd9063c3b5a019046f023144fd53911fa3e1a6" && \
+    GCC_LIBS_URL="https://archive.archlinux.org/packages/g/gcc-libs/gcc-libs-${GCC_LIBS_VERSION}-x86_64.pkg.tar.xz" && \
+    GCC_LIBS_LIBS='usr/lib/libgcc* usr/lib/libstdc++*' && \
+
+    ZLIB_VERSION="1%3A1.2.9-1" && \
+    ZLIB_SHA256="bb0959c08c1735de27abf01440a6f8a17c5c51e61c3b4c707e988c906d3b7f67" && \
+    ZLIB_URL="https://archive.archlinux.org/packages/z/zlib/zlib-${ZLIB_VERSION}-x86_64.pkg.tar.xz" && \
+    ZLIB_LIBS='usr/lib/libz*' && \
+
+    EXPAT_VERSION="2.2.6-1" && \
+    EXPAT_SHA256="1f909e78f14c2d1cb1e06c014207b9650361d2b57d009d50d97ed6103fde4f67" && \
+    EXPAT_URL="https://archive.archlinux.org/packages/e/expat/expat-${EXPAT_VERSION}-x86_64.pkg.tar.xz" && \
+    EXPAT_LIBS='usr/lib/libexpat*' && \
+
+    FONTCONFIG_VERSION="2%3A2.13.1%2B12%2Bg5f5ec56-1" && \
+    FONTCONFIG_SHA256="c089ea26c660e2e15b45fe708beb1d8847784a5782b1562f05e7e7df30f6685f" && \
+    FONTCONFIG_URL="https://archive.archlinux.org/packages/f/fontconfig/fontconfig-${FONTCONFIG_VERSION}-x86_64.pkg.tar.xz" && \
+    FONTCONFIG_COPY_DIRS="etc/fonts var/cache/fontconfig" && \
+    FONTCONFIG_LIBS='usr/lib/libfontconfig*' && \
+
+    FREETYPE_VERSION="2.9.1-1" && \
+    FREETYPE_SHA256="d13e74fa0e6067d3584e661d77006c20026f838866fb2b96cc41b8280067fce1" && \
+    FREETYPE_URL="https://archive.archlinux.org/packages/f/freetype2/freetype2-${FREETYPE_VERSION}-x86_64.pkg.tar.xz" && \
+    FREETYPE_LIBS='usr/lib/libfreetype*' && \
+
+    LIBPNG_VERSION="1.6.36-1" && \
+    LIBPNG_SHA256="c0189c2beee45c4510c065c7295c9fad12184df47965110803d864eff3ba92a8" && \
+    LIBPNG_URL="https://archive.archlinux.org/packages/l/libpng/libpng-${LIBPNG_VERSION}-x86_64.pkg.tar.xz" && \
+    LIBPNG_LIBS='usr/lib/libpng*' && \
+
+    # fontconfig requires libuuid from this
+    LIBUTIL_LINUX_VERSION="2.33.1-2" && \
+    LIBUTIL_LINUX_SHA256="19e5ed4e29c768b70976bae9b087b59c222e12f6581c1e9f2c3946ac5d81d50f" && \
+    LIBUTIL_LINUX_URL="https://archive.archlinux.org/packages/l/libutil-linux/libutil-linux-${LIBUTIL_LINUX_VERSION}-x86_64.pkg.tar.xz" && \
+    LIBUTIL_LINUX_LIBS='usr/lib/libuuid*' && \
+
+    # freetype requires this
+    HARFBUZZ_VERSION="2.3.0-1" && \
+    HARFBUZZ_SHA256="af4357f812cf25b37dc36c7df183865f2349e006f42ab0efb0f1e988d5ad0819" && \
+    HARFBUZZ_URL="https://archive.archlinux.org/packages/h/harfbuzz/harfbuzz-${HARFBUZZ_VERSION}-x86_64.pkg.tar.xz" && \
+    HARFBUZZ_LIBS='usr/lib/libharfbuzz*' && \
+
+    # harfbuzz requires this
+    BZIP2_VERSION="1.0.6-8" && \
+    BZIP2_SHA256="b6c65d5fcc8012a019b2b1b81165cdb49b46afdcd6683d291b35419ccce2ea4b" && \
+    BZIP2_URL="https://archive.archlinux.org/packages/b/bzip2/bzip2-${BZIP2_VERSION}-x86_64.pkg.tar.xz" && \
+    BZIP2_LIBS='usr/lib/libbz2*' && \
+
+    # harfbuzz requires this
+    GLIB_VERSION="2.54.0-3" && \
+    GLIB_SHA256="376d4919708f31e0d8c4068dd4dfde0ad9a7ec6a371b77b5e8fc4b43eccba50b" && \
+    GLIB_URL="https://archive.archlinux.org/packages/g/glib/glib-${GLIB_VERSION}-x86_64.pkg.tar.xz" && \
+    GLIB_LIBS='usr/lib/libglib-2.0*' && \
+
+    # harfbuzz requires this
+    GRAPHITE_VERSION="1%3A1.3.9-1" && \
+    GRAPHITE_SHA256="95404674f73aad37a70c2b0dbb0588027a8d3a14860d3f6dbce19ea3a5521bf4" && \
+    GRAPHITE_URL="https://archive.archlinux.org/packages/g/graphite/graphite-${GRAPHITE_VERSION}-x86_64.pkg.tar.xz" && \
+    GRAPHITE_LIBS='usr/lib/libgraphite2*' && \
+
+    # glib requires this
+    PCRE_VERSION="8.42-2" && \
+    PCRE_SHA256="c8b1f458fb4b416f2f95a05e18c62e276c745d35dff2c502df80abef9025d0aa" && \
+    PCRE_URL="https://archive.archlinux.org/packages/p/pcre/pcre-${PCRE_VERSION}-x86_64.pkg.tar.xz" && \
+    PCRE_LIBS='usr/lib/libpcre.*' && \
+
+    # install libs
+    apk add --update --no-cache binutils xz && \
+    /tmp/download-lib.sh ${GCC_LIBS_URL} ${GCC_LIBS_SHA256} ${GCC_LIBS_LIBS} && \
+    /tmp/download-lib.sh ${ZLIB_URL} ${ZLIB_SHA256} ${ZLIB_LIBS} && \
+    /tmp/download-lib.sh ${EXPAT_URL} ${EXPAT_SHA256} ${EXPAT_LIBS} && \
+    COPY_DIRS="${FONTCONFIG_COPY_DIRS}" /tmp/download-lib.sh ${FONTCONFIG_URL} ${FONTCONFIG_SHA256} ${FONTCONFIG_LIBS} && \
+    /tmp/download-lib.sh ${FREETYPE_URL} ${FREETYPE_SHA256} ${FREETYPE_LIBS} && \
+    /tmp/download-lib.sh ${LIBPNG_URL} ${LIBPNG_SHA256} ${LIBPNG_LIBS} && \
+    /tmp/download-lib.sh ${LIBUTIL_LINUX_URL} ${LIBUTIL_LINUX_SHA256} ${LIBUTIL_LINUX_LIBS} && \
+    /tmp/download-lib.sh ${HARFBUZZ_URL} ${HARFBUZZ_SHA256} ${HARFBUZZ_LIBS} && \
+    /tmp/download-lib.sh ${BZIP2_URL} ${BZIP2_SHA256} ${BZIP2_LIBS} && \
+    /tmp/download-lib.sh ${GLIB_URL} ${GLIB_SHA256} ${GLIB_LIBS} && \
+    /tmp/download-lib.sh ${GRAPHITE_URL} ${GRAPHITE_SHA256} ${GRAPHITE_LIBS} && \
+    /tmp/download-lib.sh ${PCRE_URL} ${PCRE_SHA256} ${PCRE_LIBS} && \
+    /usr/glibc-compat/sbin/ldconfig && \
+    apk del binutils xz && rm /tmp/download-lib.sh && rm -rf /var/cache/apk/*
 
 # Set up grafana.
 ARG GF_UID="472"
