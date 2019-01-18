@@ -8,14 +8,14 @@ export interface DataQueryResponse {
 
 export interface DataQuery {
   refId: string;
-  [key: string]: any;
+  hide?: boolean;
 }
 
-export interface DataQueryOptions {
+export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;
   rangeRaw: RawTimeRange;
-  targets: DataQuery[];
+  targets: TQuery[];
   panelId: number;
   dashboardId: number;
   cacheTimeout?: string;

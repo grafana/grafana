@@ -2,10 +2,11 @@ import { ComponentClass } from 'react';
 import { PanelProps, PanelOptionsProps } from './panel';
 import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint } from './datasource';
 
-export interface DataSourceApi {
-  name: string;
-  meta: PluginMeta;
-  pluginExports: PluginExports;
+export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
+  // set externally by grafana
+  name?: string;
+  meta?: PluginMeta;
+  pluginExports?: PluginExports;
 
   /**
    *  min interval range
@@ -15,7 +16,7 @@ export interface DataSourceApi {
   /**
    * Imports queries from a different datasource
    */
-  importQueries?(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]>;
+  importQueries?(queries: TQuery[], originMeta: PluginMeta): Promise<TQuery[]>;
 
   /**
    * Initializes a datasource after instantiation
@@ -25,7 +26,7 @@ export interface DataSourceApi {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryOptions): Promise<DataQueryResponse>;
+  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -35,12 +36,12 @@ export interface DataSourceApi {
   /**
    *  Get hints for query improvements
    */
-  getQueryHints(query: DataQuery, results: any[], ...rest: any): QueryHint[];
+  getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
 }
 
-export interface QueryEditorProps {
-  datasource: DataSourceApi;
-  query: DataQuery;
+export interface QueryEditorProps<DSType extends DataSourceApi = DataSourceApi, TQuery extends DataQuery = DataQuery> {
+  datasource: DSType;
+  query: TQuery;
   onExecuteQuery?: () => void;
   onQueryChange?: (value: DataQuery) => void;
 }

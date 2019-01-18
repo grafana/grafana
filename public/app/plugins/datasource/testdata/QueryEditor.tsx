@@ -10,18 +10,17 @@ import { FormLabel, Select, SelectOptionItem } from '@grafana/ui';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui/src/types';
-
-interface Scenario {
-  id: string;
-  name: string;
-}
+import { TestDataDatasource } from './datasource';
+import { TestDataQuery, Scenario } from './types';
 
 interface State {
   scenarioList: Scenario[];
   current: Scenario | null;
 }
 
-export class QueryEditor extends PureComponent<QueryEditorProps> {
+type Props = QueryEditorProps<TestDataDatasource, TestDataQuery>;
+
+export class QueryEditor extends PureComponent<Props> {
   backendSrv: BackendSrv = getBackendSrv();
 
   state: State = {

@@ -1,15 +1,17 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
+import { DataSourceApi, DataQueryOptions } from '@grafana/ui';
+import { TestDataQuery } from './types';
 
-class TestDataDatasource {
-  id: any;
+export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
+  id: number;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q) {
     this.id = instanceSettings.id;
   }
 
-  query(options) {
+  query(options: DataQueryOptions<TestDataQuery>) {
     const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
@@ -93,4 +95,3 @@ class TestDataDatasource {
   }
 }
 
-export { TestDataDatasource };
