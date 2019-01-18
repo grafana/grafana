@@ -46,6 +46,8 @@ var (
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
 	enterprise            bool     = false
+	skipRpmGen            bool     = false
+	skipDebGen            bool     = false
 )
 
 func main() {
@@ -67,6 +69,8 @@ func main() {
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
+	flag.BoolVar(&skipRpmGen, "skipRpm", skipRpmGen, "skip rpm package generation (default: false)")
+	flag.BoolVar(&skipDebGen, "skipDeb", skipDebGen, "skip deb package generation (default: false)")
 	flag.Parse()
 
 	buildId = shortenBuildId(buildIdRaw)
@@ -292,8 +296,13 @@ func createRpmPackages() {
 }
 
 func createLinuxPackages() {
-	createDebPackages()
-	createRpmPackages()
+	if !skipDebGen {
+		createDebPackages()
+	}
+
+	if !skipRpmGen {
+		createRpmPackages()
+	}
 }
 
 func createPackage(options linuxPackageOptions) {

@@ -50,7 +50,7 @@ source /etc/profile.d/rvm.sh
 
 echo "Packaging"
 go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
-go run build.go -goos linux -pkg-arch armv6 ${OPT} package-only
+go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
 go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
 go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
 
