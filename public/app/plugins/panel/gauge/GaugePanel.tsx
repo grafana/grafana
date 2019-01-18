@@ -24,7 +24,7 @@ export class GaugePanel extends PureComponent<Props> {
 
     const vmSeries = processTimeSeries({
       timeSeries: timeSeries,
-      nullValueMode: NullValueMode.Ignore,
+      nullValueMode: NullValueMode.Null,
     });
 
     return (
