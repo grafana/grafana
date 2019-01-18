@@ -1,7 +1,10 @@
-import { Emitter } from 'app/core/utils/emitter';
+// Libraries
 import _ from 'lodash';
+
+// Types
+import { Emitter } from 'app/core/utils/emitter';
 import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
-import { DataQuery } from 'app/types';
+import { DataQuery } from '@grafana/ui/src/types';
 
 export interface GridPos {
   x: number;

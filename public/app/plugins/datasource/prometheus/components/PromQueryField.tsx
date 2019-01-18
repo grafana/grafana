@@ -11,7 +11,7 @@ import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { DataQuery } from 'app/types';
+import { DataQuery } from '@grafana/ui/src/types';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';

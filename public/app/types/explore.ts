@@ -1,12 +1,9 @@
 import { Value } from 'slate';
-import { RawTimeRange, TimeRange } from '@grafana/ui';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi, QueryHint } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
 import { LogsModel } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
-import { DataSourceSelectItem } from 'app/types/datasources';
-
-import { DataQuery } from './series';
 
 export interface CompletionItem {
   /**
@@ -113,7 +110,7 @@ export interface ExploreItemState {
   /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
-  datasourceInstance: any;
+  datasourceInstance: DataSourceApi;
   /**
    * Error to be shown when datasource loading or testing failed.
    */
@@ -274,28 +271,6 @@ export interface TypeaheadOutput {
   context?: string;
   refresher?: Promise<{}>;
   suggestions: CompletionItemGroup[];
-}
-
-export interface QueryFix {
-  type: string;
-  label: string;
-  action?: QueryFixAction;
-}
-
-export interface QueryFixAction {
-  type: string;
-  query?: string;
-  preventSubmit?: boolean;
-}
-
-export interface QueryHint {
-  type: string;
-  label: string;
-  fix?: QueryFix;
-}
-
-export interface QueryHintGetter {
-  (query: DataQuery, results: any[], ...rest: any): QueryHint[];
 }
 
 export interface QueryIntervals {

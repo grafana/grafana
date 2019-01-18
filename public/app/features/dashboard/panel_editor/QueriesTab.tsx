@@ -18,7 +18,7 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { DataQuery, DataSourceSelectItem } from 'app/types';
+import { DataQuery, DataSourceSelectItem  } from '@grafana/ui/src/types';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 
 interface Props {

@@ -1,16 +1,14 @@
+// Libraries
 import React, { PureComponent } from 'react';
+import _ from 'lodash';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange } from '@grafana/ui';
-import _ from 'lodash';
 
-import { QueryTransaction, HistoryItem, QueryHint, ExploreItemState, ExploreId } from 'app/types/explore';
-import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery, StoreState } from 'app/types';
-
-// import DefaultQueryField from './QueryField';
+// Components
 import QueryEditor from './QueryEditor';
 import QueryTransactionStatus from './QueryTransactionStatus';
+
+// Actions
 import {
   addQueryRow,
   changeQuery,
@@ -19,6 +17,12 @@ import {
   removeQueryRow,
   runQueries,
 } from './state/actions';
+
+// Types
+import { StoreState } from 'app/types';
+import { RawTimeRange, DataQuery, QueryHint } from '@grafana/ui';
+import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
+import { Emitter } from 'app/core/utils/emitter';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);

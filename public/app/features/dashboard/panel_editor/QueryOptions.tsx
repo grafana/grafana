@@ -14,7 +14,8 @@ import { FormLabel } from '@grafana/ui';
 
 // Types
 import { PanelModel } from '../panel_model';
-import { ValidationEvents, DataSourceSelectItem } from 'app/types';
+import { DataSourceSelectItem } from '@grafana/ui/src/types';
+import { ValidationEvents } from 'app/types';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [

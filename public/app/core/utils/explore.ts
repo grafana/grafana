@@ -1,14 +1,18 @@
+// Libraries
 import _ from 'lodash';
-import { colors, RawTimeRange, IntervalValues } from '@grafana/ui';
 
+// Services & Utils
 import * as dateMath from 'app/core/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
 import { parse as parseDate } from 'app/core/utils/datemath';
-
-import TimeSeries from 'app/core/time_series2';
+import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+
+// Types
+import { RawTimeRange, IntervalValues, DataQuery } from '@grafana/ui/src/types';
+import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -17,7 +21,6 @@ import {
   QueryIntervals,
   QueryOptions,
 } from 'app/types/explore';
-import { DataQuery } from 'app/types/series';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

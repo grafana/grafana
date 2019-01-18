@@ -1,12 +1,20 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
+
+// Components
 import Page from 'app/core/components/Page/Page';
 import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
-import { DataSource, NavModel, StoreState } from 'app/types';
+
+// Types
+import { DataSourceSettings } from '@grafana/ui/src/types';
+import { NavModel, StoreState } from 'app/types';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+
+// Actions
 import { loadDataSources, setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 
@@ -19,7 +27,7 @@ import {
 
 export interface Props {
   navModel: NavModel;
-  dataSources: DataSource[];
+  dataSources: DataSourceSettings[];
   dataSourcesCount: number;
   layoutMode: LayoutMode;
   searchQuery: string;

@@ -1,13 +1,14 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DataSourcesListPage, Props } from './DataSourcesListPage';
-import { DataSource, NavModel } from 'app/types';
+import { NavModel } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui/src/types';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    dataSources: [] as DataSource[],
+    dataSources: [] as DataSourceSettings[],
     layoutMode: LayoutModes.Grid,
     loadDataSources: jest.fn(),
     navModel: {

@@ -11,7 +11,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
-import { DataQuery } from 'app/types';
+import { DataQuery } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
 export function alignRange(start, end, step) {

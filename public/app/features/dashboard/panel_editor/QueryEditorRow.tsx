@@ -10,7 +10,7 @@ import { Emitter } from 'app/core/utils/emitter';
 
 // Types
 import { PanelModel } from '../panel_model';
-import { DataQuery, DataSourceApi } from 'app/types/series';
+import { DataQuery, DataSourceApi } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
@@ -103,7 +103,17 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.setState({ isCollapsed: !this.state.isCollapsed });
   };
 
+  onQueryChange = (query: DataQuery) => {
+    Object.assign(this.props.query, query);
+    this.onExecuteQuery();
+  };
+
+  onExecuteQuery = () => {
+    this.props.panel.refresh();
+  };
+
   renderPluginEditor() {
+    const { query } = this.props;
     const { datasource } = this.state;
 
     if (datasource.pluginExports.QueryCtrl) {
@@ -112,7 +122,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     if (datasource.pluginExports.QueryEditor) {
       const QueryEditor = datasource.pluginExports.QueryEditor;
-      return <QueryEditor />;
+      return (
+        <QueryEditor
+          query={query}
+          datasource={datasource}
+          onQueryChange={this.onQueryChange}
+          onExecuteQuery={this.onExecuteQuery}
+        />
+      );
     }
 
     return <div>Data source plugin does not export any Query Editor component</div>;

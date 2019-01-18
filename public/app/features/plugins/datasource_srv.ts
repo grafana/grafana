@@ -1,14 +1,16 @@
+// Libraries
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
+// Services & Utils
 import config from 'app/core/config';
 import { importPluginModule } from './plugin_loader';
 
-import { DataSourceApi } from 'app/types/series';
-import { DataSource, DataSourceSelectItem } from 'app/types';
+// Types
+import { DataSourceApi, DataSourceSelectItem  } from '@grafana/ui/src/types';
 
 export class DatasourceSrv {
-  datasources: { [name: string]: DataSource };
+  datasources: { [name: string]: DataSourceApi };
 
   /** @ngInject */
   constructor(private $q, private $injector, private $rootScope, private templateSrv) {
@@ -59,7 +61,7 @@ export class DatasourceSrv {
           throw new Error('Plugin module is missing Datasource constructor');
         }
 
-        const instance: DataSource = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
+        const instance: DataSourceApi = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
         instance.meta = pluginDef;
         instance.name = name;
         instance.pluginExports = plugin;

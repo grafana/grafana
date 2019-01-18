@@ -1,7 +1,9 @@
+// Libraries
 import _ from 'lodash';
 import { ThunkAction } from 'redux-thunk';
-import { RawTimeRange, TimeRange } from '@grafana/ui';
 
+// Services & Utils
+import store from 'app/core/store';
 import {
   LAST_USED_DATASOURCE_KEY,
   clearQueryKeys,
@@ -14,10 +16,12 @@ import {
   serializeStateToUrlParam,
 } from 'app/core/utils/explore';
 
+// Actions
 import { updateLocation } from 'app/core/actions';
-import store from 'app/core/store';
-import { DataSourceSelectItem } from 'app/types/datasources';
-import { DataQuery, StoreState } from 'app/types';
+
+// Types
+import { StoreState } from 'app/types';
+import { DataQuery, DataSourceSelectItem, QueryHint  } from '@grafana/ui/src/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   ExploreId,
@@ -26,11 +30,10 @@ import {
   ResultType,
   QueryOptions,
   QueryTransaction,
-  QueryHint,
-  QueryHintGetter,
 } from 'app/types/explore';
-import { Emitter } from 'app/core/core';
 
+import { Emitter } from 'app/core/core';
+import { RawTimeRange, TimeRange } from '@grafana/ui';
 import {
   Action as ThunkableAction,
   ActionTypes,
@@ -44,6 +47,7 @@ import {
   QueryTransactionStartAction,
   ScanStopAction,
 } from './actionTypes';
+
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
 
@@ -460,7 +464,7 @@ export function queryTransactionSuccess(
 
     // Get query hints
     let hints: QueryHint[];
-    if (datasourceInstance.getQueryHints as QueryHintGetter) {
+    if (datasourceInstance.getQueryHints) {
       hints = datasourceInstance.getQueryHints(transaction.query, result);
     }
 

@@ -5,7 +5,7 @@ import {
   ensureQueries,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
-import { DataQuery } from 'app/types/series';
+import { DataQuery } from '@grafana/ui/src/types';
 
 import { Action, ActionTypes } from './actionTypes';
 

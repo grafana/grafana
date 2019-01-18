@@ -1,28 +1,34 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
+// Components
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import PluginSettings from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 
+// Services & Utils
 import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
+// Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
 import { deleteDataSource, loadDataSource, setDataSourceName, setIsDefault, updateDataSource } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
-import { DataSource, NavModel, Plugin } from 'app/types/';
+// Types
+import { NavModel, Plugin } from 'app/types/';
+import { DataSourceSettings } from '@grafana/ui/src/types/';
 import { getDataSourceLoadingNav } from '../state/navModel';
 
 export interface Props {
   navModel: NavModel;
-  dataSource: DataSource;
+  dataSource: DataSourceSettings;
   dataSourceMeta: Plugin;
   pageId: number;
   deleteDataSource: typeof deleteDataSource;
@@ -33,7 +39,7 @@ export interface Props {
 }
 
 interface State {
-  dataSource: DataSource;
+  dataSource: DataSourceSettings;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
@@ -44,12 +50,12 @@ enum DataSourceStates {
   Beta = 'beta',
 }
 
-export class DataSourceSettings extends PureComponent<Props, State> {
+export class DataSourceSettingsPage extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
 
     this.state = {
-      dataSource: {} as DataSource,
+      dataSource: {} as DataSourceSettings,
     };
   }
 
@@ -246,4 +252,4 @@ const mapDispatchToProps = {
   setIsDefault,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettings));
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettingsPage));

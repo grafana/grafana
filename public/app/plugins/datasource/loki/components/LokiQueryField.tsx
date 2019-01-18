@@ -3,6 +3,7 @@ import Cascader from 'rc-cascader';
 import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
+import { DataQuery } from '@grafana/ui/src/types';
 import { TypeaheadOutput } from 'app/types/explore';
 
 // dom also includes Element polyfills
@@ -10,7 +11,6 @@ import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { DataQuery } from 'app/types';
 
 const PRISM_SYNTAX = 'promql';
 
