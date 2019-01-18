@@ -11,7 +11,7 @@ import { makeSeriesForLogs } from 'app/core/logs_model';
 
 // Types
 import { LogsStream, LogsModel } from 'app/core/logs_model';
-import { PluginMeta, DataQueryOptions, DataSourceApi } from '@grafana/ui/src/types';
+import { PluginMeta, DataQueryOptions } from '@grafana/ui/src/types';
 import { LokiQuery } from './types';
 
 export const DEFAULT_MAX_LINES = 1000;
@@ -32,7 +32,7 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export default class LokiDatasource implements DataSourceApi<LokiQuery> {
+export default class LokiDatasource {
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -101,7 +101,7 @@ export default class LokiDatasource implements DataSourceApi<LokiQuery> {
     });
   }
 
-  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]> {
+  async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
@@ -114,7 +114,7 @@ export default class LokiDatasource implements DataSourceApi<LokiQuery> {
     });
   }
 
-  modifyQuery(query: DataQuery, action: any): DataQuery {
+  modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
     let selector = parsed.query;
     switch (action.type) {
@@ -129,7 +129,7 @@ export default class LokiDatasource implements DataSourceApi<LokiQuery> {
     return { ...query, expr: expression };
   }
 
-  getHighlighterExpression(query: DataQuery): string {
+  getHighlighterExpression(query: LokiQuery): string {
     return parseQuery(query.expr).regexp;
   }
 

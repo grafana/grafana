@@ -243,9 +243,9 @@ export interface ExploreUrlState {
   range: RawTimeRange;
 }
 
-export interface HistoryItem {
+export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   ts: number;
-  query: DataQuery;
+  query: TQuery;
 }
 
 export abstract class LanguageProvider {
