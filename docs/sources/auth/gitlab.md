@@ -47,7 +47,7 @@ authentication:
 
 ```bash
 [auth.gitlab]
-enabled = false
+enabled = true
 allow_sign_up = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
