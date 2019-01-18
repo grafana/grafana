@@ -1,12 +1,17 @@
 import React, { PureComponent } from 'react';
-import { PanelProps, NullValueMode, Gauge } from '@grafana/ui';
+import { PanelProps, NullValueMode, Gauge, Themes } from '@grafana/ui';
 
 import { getTimeSeriesVMs } from './timeSeries';
 import { GaugeOptions } from './types';
+import { contextSrv } from 'app/core/core';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
 export class GaugePanel extends PureComponent<Props> {
+  getTheme() {
+    return contextSrv.user.lightTheme ? Themes.Light : Themes.Dark;
+  }
+
   render() {
     const { timeSeries, width, height, onInterpolate, options } = this.props;
 
@@ -26,6 +31,7 @@ export class GaugePanel extends PureComponent<Props> {
         height={height}
         prefix={prefix}
         suffix={suffix}
+        theme={this.getTheme()}
       />
     );
   }
