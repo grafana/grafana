@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQueryOptions } from '@grafana/ui';
-import { TestDataQuery } from './types';
+import { TestDataQuery, Scenario } from './types';
 
 export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
   id: number;
@@ -92,6 +92,10 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
       status: 'success',
       message: 'Data source is working',
     });
+  }
+
+  getScenarios(): Promise<Scenario[]> {
+    return this.backendSrv.get('/api/tsdb/testdata/scenarios');
   }
 }
 

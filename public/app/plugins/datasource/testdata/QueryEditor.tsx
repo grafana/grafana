@@ -29,11 +29,12 @@ export class QueryEditor extends PureComponent<Props> {
   };
 
   async componentDidMount() {
-    const { query } = this.props;
+    const { query, datasource } = this.props;
 
     query.scenarioId = query.scenarioId || 'random_walk';
 
-    const scenarioList = await this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    // const scenarioList = await this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    const scenarioList = await datasource.getScenarios();
     const current = _.find(scenarioList, { id: query.scenarioId });
 
     this.setState({ scenarioList: scenarioList, current: current });

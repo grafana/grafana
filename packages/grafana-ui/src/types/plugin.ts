@@ -3,11 +3,6 @@ import { PanelProps, PanelOptionsProps } from './panel';
 import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint } from './datasource';
 
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
-  // set externally by grafana
-  name?: string;
-  meta?: PluginMeta;
-  pluginExports?: PluginExports;
-
   /**
    *  min interval range
    */
@@ -37,19 +32,26 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    *  Get hints for query improvements
    */
   getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
+
+  /**
+   *  Set after constructor is called by Grafana
+   */
+  name?: string;
+  meta?: PluginMeta;
+  pluginExports?: PluginExports;
 }
 
-export interface QueryEditorProps<DSType extends DataSourceApi = DataSourceApi, TQuery extends DataQuery = DataQuery> {
+export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
   datasource: DSType;
   query: TQuery;
   onExecuteQuery?: () => void;
-  onQueryChange?: (value: DataQuery) => void;
+  onQueryChange?: (value: TQuery) => void;
 }
 
 export interface PluginExports {
-  Datasource?: any;
+  Datasource?: DataSourceApi;
   QueryCtrl?: any;
-  QueryEditor?: ComponentClass<QueryEditorProps>;
+  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi,DataQuery>>;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;

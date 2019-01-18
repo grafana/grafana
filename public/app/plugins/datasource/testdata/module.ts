@@ -1,6 +1,6 @@
 import { TestDataDatasource } from './datasource';
-// import { TestDataQueryCtrl } from './query_ctrl';
-import { QueryEditor } from './QueryEditor';
+import { TestDataQueryCtrl } from './query_ctrl';
+// import { QueryEditor } from './QueryEditor';
 
 class TestDataAnnotationsQueryCtrl {
   annotation: any;
@@ -11,8 +11,8 @@ class TestDataAnnotationsQueryCtrl {
 }
 
 export {
-  QueryEditor,
+  // QueryEditor,
   TestDataDatasource as Datasource,
-  // TestDataQueryCtrl as QueryCtrl,
+  TestDataQueryCtrl as QueryCtrl,
   TestDataAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
