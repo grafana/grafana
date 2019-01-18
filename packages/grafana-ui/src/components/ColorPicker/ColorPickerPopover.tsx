@@ -1,4 +1,4 @@
-import React, { Children } from 'react';
+import React from 'react';
 import NamedColorsPicker from './NamedColorsPicker';
 import { Color } from 'csstype';
 import { ColorDefinition, getColorName } from '../..//utils/colorsPalette';

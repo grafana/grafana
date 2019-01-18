@@ -1,7 +1,8 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
-import  NamedColorsPicker  from './NamedColorsPicker';
+import NamedColorsPicker from './NamedColorsPicker';
 import { Color, getColorName } from '@grafana/ui/src/utils/colorsPalette';
+import { withKnobs, select } from '@storybook/addon-knobs';
 
 const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   return (
@@ -23,46 +24,69 @@ interface StateHolderProps<T> {
   children: (currentState: T, updateState: (nextState: T) => void) => JSX.Element;
 }
 
-class UseState<T> extends React.Component<StateHolderProps<T>, {value: T}> {
+class UseState<T> extends React.Component<StateHolderProps<T>, { value: T }> {
   constructor(props: StateHolderProps<T>) {
-    super(props)
+    super(props);
     this.state = {
-      value: props.initialState
-    }
+      value: props.initialState,
+    };
   }
+  static getDerivedStateFromProps(props: StateHolderProps<{}>, state: { value: {} }) {
+    return {
+      value: props.initialState,
+    };
+  }
+
   handleStateUpdate = (nextState: T) => {
-    this.setState({value: nextState})
-  }
+    this.setState({ value: nextState });
+  };
   render() {
-    return this.props.children(this.state.value, this.handleStateUpdate)
+    return this.props.children(this.state.value, this.handleStateUpdate);
   }
 }
 
-storiesOf('UI/ColorPicker', module)
+storiesOf('UI/NamedColorPicker', module)
+  .addDecorator(withKnobs)
   .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
   .add('Named colors swatch - support for named colors', () => {
-    return(
-       <UseState initialState="green">
-         {(selectedColor, updateSelectedColor) => {
-            return (
-              <NamedColorsPicker
-                selectedColor={selectedColor as Color}
-                onChange={(color) => { updateSelectedColor(color.name);}}
-              />
-            )
-         }}
-       </UseState>);
+    const selectedColor = select(
+      'Selected color',
+      {
+        Green: 'green',
+        Red: 'red',
+        'Light blue': 'light-blue',
+      },
+      'green'
+    );
+
+    return (
+      <UseState initialState={selectedColor}>
+        {(selectedColor, updateSelectedColor) => {
+          console.log(selectedColor);
+          return (
+            <NamedColorsPicker
+              selectedColor={selectedColor as Color}
+              onChange={color => {
+                // @ts-ignore
+                updateSelectedColor((color).name);
+              }}
+            />
+          );
+        }}
+      </UseState>
+    );
   })
   .add('Named colors swatch - support for hex values', () => {
-    return(
-       <UseState initialState="#00ff00">
-         {(selectedColor, updateSelectedColor) => {
-            return (
-              <NamedColorsPicker
-                selectedColor={getColorName(selectedColor)}
-                onChange={(color) => updateSelectedColor(color.variants.dark)}
-              />
-            )
-         }}
-       </UseState>);
+    return (
+      <UseState initialState="#00ff00">
+        {(selectedColor, updateSelectedColor) => {
+          return (
+            <NamedColorsPicker
+              selectedColor={getColorName(selectedColor)}
+              onChange={color => updateSelectedColor(color.variants.dark)}
+            />
+          );
+        }}
+      </UseState>
+    );
   });

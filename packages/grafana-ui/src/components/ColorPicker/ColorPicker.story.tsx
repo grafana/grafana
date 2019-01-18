@@ -1,6 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
-import { ColorPickerPopover } from './ColorPickerPopover';
+import { ColorPicker } from './ColorPicker';
+import { withKnobs, text } from '@storybook/addon-knobs';
 
 const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   return (
@@ -17,11 +18,10 @@ const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   );
 };
 
-storiesOf('UI/ColorPicker', module)
-  .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
-  // .add('Color picker popover', () => {
-  //   return <ColorPickerPopover color="#ff0000" onColorSelect={() => {}} />;
-  // })
-  .add('Named colors swatch', () => {
-    return <ColorPickerPopover color="#ff0000" onColorSelect={() => {}} />;
-  });
+const ColorPickerStories = storiesOf('UI/ColorPicker', module);
+
+ColorPickerStories.addDecorator(story => <CenteredStory>{story()}</CenteredStory>);
+ColorPickerStories.addDecorator(withKnobs);
+ColorPickerStories.add('Color picker', () => {
+  return <ColorPicker color={text('Color HEX or Name or RGB string', '#ff0000')} onChange={() => {}} />;
+});
