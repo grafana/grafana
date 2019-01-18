@@ -4,7 +4,7 @@ describe('colors', () => {
   const FakeBlue = buildColorDefinition('blue', 'blue', ['#0000ff', '#00000ee']);
 
   beforeAll(() => {
-    ColorsPalete.set('blue', [FakeBlue])
+    ColorsPalete.set('blue', [FakeBlue]);
   });
 
   describe('getColorDefinition', () => {
