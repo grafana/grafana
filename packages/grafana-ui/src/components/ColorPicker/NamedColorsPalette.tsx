@@ -19,7 +19,7 @@ const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPaletteProps)
         selectedColor={color}
         colors={colors}
         onColorSelect={color => {
-          onChange(color.name)
+          onChange(color.name);
         }}
       />
     );
