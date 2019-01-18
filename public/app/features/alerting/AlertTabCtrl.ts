@@ -140,6 +140,7 @@ export class AlertTabCtrl {
       name: model.name,
       iconClass: this.getNotificationIcon(model.type),
       isDefault: false,
+      uid: model.uid
     });
     if (!_.find(this.alert.notifications, { id: model.id})) {
       this.alert.notifications.push({ uid: model.uid });
@@ -151,9 +152,9 @@ export class AlertTabCtrl {
     this.addNotificationSegment.fake = true;
   }
 
-  removeNotification(index) {
-    this.alert.notifications.splice(index, 1);
-    this.alertNotifications.splice(index, 1);
+  removeNotification(deleteUid) {
+    _.remove(this.alert.notifications, { uid: deleteUid});
+    _.remove(this.alertNotifications, { uid: deleteUid});
   }
 
   initModel() {
