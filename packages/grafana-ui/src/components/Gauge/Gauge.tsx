@@ -149,14 +149,40 @@ export class Gauge extends PureComponent<Props> {
       return thresholds[0].color;
     }
 
-    const atThreshold = thresholds.filter(threshold => (value as number) < threshold.value);
+    const atThreshold = thresholds.filter(threshold => (value as number) === threshold.value)[0];
+    if (atThreshold) {
+      return atThreshold.color;
+    }
 
-    if (atThreshold.length > 0) {
-      const nearestThreshold = atThreshold.sort((t1, t2) => t1.value - t2.value)[0];
+    const belowThreshold = thresholds.filter(threshold => (value as number) > threshold.value);
+
+    if (belowThreshold.length > 0) {
+      const nearestThreshold = belowThreshold.sort((t1, t2) => t2.value - t1.value)[0];
       return nearestThreshold.color;
     }
 
     return BasicGaugeColor.Red;
+  }
+
+  getFormattedThresholds() {
+    const { maxValue, minValue, thresholds } = this.props;
+
+    const thresholdsSortedByIndex = [...thresholds].sort((t1, t2) => t1.index - t2.index);
+    const lastThreshold = thresholdsSortedByIndex[thresholdsSortedByIndex.length - 1];
+
+    const formattedThresholds = [
+      ...thresholdsSortedByIndex.map(threshold => {
+        if (threshold.index === 0) {
+          return { value: minValue, color: threshold.color };
+        }
+
+        const previousThreshold = thresholdsSortedByIndex[threshold.index - 1];
+        return { value: threshold.value, color: previousThreshold.color };
+      }),
+      { value: maxValue, color: lastThreshold.color },
+    ];
+
+    return formattedThresholds;
   }
 
   draw() {
@@ -166,7 +192,6 @@ export class Gauge extends PureComponent<Props> {
       timeSeries,
       showThresholdLabels,
       showThresholdMarkers,
-      thresholds,
       width,
       height,
       stat,
@@ -190,17 +215,6 @@ export class Gauge extends PureComponent<Props> {
     const thresholdMarkersWidth = gaugeWidth / 5;
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    const formattedThresholds = [
-      { value: minValue, color: thresholds.length === 1 ? thresholds[0].color : BasicGaugeColor.Green },
-      ...thresholds.map((threshold, index) => {
-        return {
-          value: threshold.value,
-          color: thresholds[index].color,
-        };
-      }),
-      { value: maxValue, color: thresholds.length === 1 ? thresholds[0].color : BasicGaugeColor.Red },
-    ];
-
     const options = {
       series: {
         gauges: {
@@ -217,7 +231,7 @@ export class Gauge extends PureComponent<Props> {
           layout: { margin: 0, thresholdWidth: 0 },
           cell: { border: { width: 0 } },
           threshold: {
-            values: formattedThresholds,
+            values: this.getFormattedThresholds(),
             label: {
               show: showThresholdLabels,
               margin: thresholdMarkersWidth + 1,
