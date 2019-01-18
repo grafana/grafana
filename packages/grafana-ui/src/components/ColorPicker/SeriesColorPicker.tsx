@@ -1,7 +1,9 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import Drop from 'tether-drop';
+import React, { createRef } from 'react';
+import * as PopperJS from 'popper.js';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
+import PopperController from '../Tooltip/PopperController';
+import Popper from '../Tooltip/Popper';
+import { GrafanaTheme } from '../../types';
 
 export interface SeriesColorPickerProps {
   color: string;
@@ -9,10 +11,12 @@ export interface SeriesColorPickerProps {
   optionalClass?: string;
   onColorChange: (newColor: string) => void;
   onToggleAxis?: () => void;
+  children: JSX.Element;
+  theme?: GrafanaTheme;
 }
 
 export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
-  pickerElem: any;
+  private pickerTriggerRef = createRef<PopperJS.ReferenceObject>();
   colorPickerDrop: any;
 
   static defaultProps = {
@@ -21,65 +25,46 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
     onToggleAxis: () => {},
   };
 
-  constructor(props: SeriesColorPickerProps) {
-    super(props);
-  }
-
-  componentWillUnmount() {
-    this.destroyDrop();
-  }
-
-  onClickToOpen = () => {
-    if (this.colorPickerDrop) {
-      this.destroyDrop();
-    }
-
-    const { color, yaxis, onColorChange, onToggleAxis } = this.props;
-    const dropContent = (
-      <SeriesColorPickerPopover color={color} yaxis={yaxis} onColorChange={onColorChange} onToggleAxis={onToggleAxis} />
+  renderPickerTabs = () => {
+    const { color, yaxis, onColorChange, onToggleAxis, theme } = this.props;
+    return (
+      <SeriesColorPickerPopover
+        theme={theme}
+        color={color}
+        yaxis={yaxis}
+        onColorChange={onColorChange}
+        onToggleAxis={onToggleAxis}
+      />
     );
-    const dropContentElem = document.createElement('div');
-    ReactDOM.render(dropContent, dropContentElem);
-
-    const drop = new Drop({
-      target: this.pickerElem,
-      content: dropContentElem,
-      position: 'bottom center',
-      classes: 'drop-popover',
-      openOn: 'hover',
-      hoverCloseDelay: 200,
-      remove: true,
-      tetherOptions: {
-        constraints: [{ to: 'scrollParent', attachment: 'none both' }],
-        attachment: 'bottom center',
-      },
-    });
-
-    drop.on('close', this.closeColorPicker.bind(this));
-
-    this.colorPickerDrop = drop;
-    this.colorPickerDrop.open();
   };
 
-  closeColorPicker() {
-    setTimeout(() => {
-      this.destroyDrop();
-    }, 100);
-  }
-
-  destroyDrop() {
-    if (this.colorPickerDrop && this.colorPickerDrop.tether) {
-      this.colorPickerDrop.destroy();
-      this.colorPickerDrop = null;
-    }
-  }
-
   render() {
-    const { optionalClass, children } = this.props;
+    const { children } = this.props;
+
     return (
-      <div className={optionalClass} ref={e => (this.pickerElem = e)} onClick={this.onClickToOpen}>
-        {children}
-      </div>
+      <PopperController placement="bottom-start" content={this.renderPickerTabs}>
+        {(showPopper, hidePopper, popperProps) => {
+          return (
+            <>
+              {this.pickerTriggerRef.current && (
+                <Popper
+                  {...popperProps}
+                  onMouseEnter={showPopper}
+                  onMouseLeave={hidePopper}
+                  referenceElement={this.pickerTriggerRef.current}
+                  className="ColorPicker"
+                  arrowClassName="popper__arrow"
+                />
+              )}
+              {React.cloneElement(children, {
+                ref: this.pickerTriggerRef,
+                onClick: showPopper,
+                onMouseLeave: hidePopper,
+              })}
+            </>
+          );
+        }}
+      </PopperController>
     );
   }
 }

@@ -1,3 +1,54 @@
+.ColorPicker {
+  .popper__arrow {
+    border-color: #f7f8fa;
+  }
+}
+
+.ColorPickerPopover {
+  border-radius: 3px;
+}
+
+.ColorPickerPopover--light {
+  color: black;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 104.25%);
+  box-shadow: 0px 2px 4px #dde4ed, 0px 0px 2px #dde4ed;
+}
+
+.ColorPickerPopover--dark {
+  color: #d8d9da;
+  background: linear-gradient(180deg, #1e2028 0%, #161719 104.25%);
+  box-shadow: 0px 2px 4px #000000, 0px 0px 2px #000000;
+
+  .ColorPickerPopover__tab {
+    background: #303133;
+    color: white;
+  }
+  .ColorPickerPopover__tab--active {
+    background: none;
+  }
+}
+
+.ColorPickerPopover__content {
+  width: 360px;
+  padding: 32px;
+}
+
+.ColorPickerPopover__tabs {
+  display: flex;
+  width: 100%;
+}
+
+.ColorPickerPopover__tab {
+  width: 50%;
+  text-align: center;
+  padding: 8px 0;
+  background: #dde4ed;
+  border-radius: 3px;
+}
+
+.ColorPickerPopover__tab--active {
+  background: white;
+}
 .sp-replacer {
   background: inherit;
   border: none;

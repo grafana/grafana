@@ -6,7 +6,7 @@ import '../../vendor/spectrum';
 export interface Props {
   color: string;
   options: object;
-  onColorSelect: (c: string) => void;
+  onColorSelect: (color: string) => void;
 }
 
 export class SpectrumPicker extends React.Component<Props, any> {

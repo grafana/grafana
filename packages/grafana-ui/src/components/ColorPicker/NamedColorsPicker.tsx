@@ -47,19 +47,22 @@ const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
   );
 };
 
-const ColorsGroup = ({
+interface ColorsGroupProps  {
+  colors: ColorDefinition[];
+  selectedColor?: Color;
+  onColorSelect: ColorChangeHandler;
+  key?: string;
+}
+const ColorsGroup: FunctionComponent<ColorsGroupProps> = ({
   colors,
   selectedColor,
   onColorSelect,
-}: {
-  colors: ColorDefinition[];
-  selectedColor?: Color;
-  onColorSelect: ColorChangeHandler
+  ...otherProps
 }) => {
   const primaryColor = find(colors, color => !!color.isPrimary);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div  {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
       {primaryColor && (
         <ColorSwatch
           isSelected={primaryColor.name === selectedColor}
@@ -75,7 +78,7 @@ const ColorsGroup = ({
         }}
       >
         {colors.map(color => !color.isPrimary && (
-          <div style={{ marginRight: '4px' }}>
+          <div key={color.name} style={{ marginRight: '4px' }}>
             <ColorSwatch
               isSelected={color.name === selectedColor}
               color={color}
@@ -88,7 +91,6 @@ const ColorsGroup = ({
   );
 };
 
-
 interface NamedColorsPickerProps {
   selectedColor?: Color;
   onChange: ColorChangeHandler;
@@ -98,9 +100,7 @@ const NamedColorsPicker = ({ selectedColor, onChange }: NamedColorsPickerProps) 
 
   ColorsPalete.forEach((colors, hue) => {
     swatches.push(
-      <>
-        <ColorsGroup selectedColor={selectedColor} colors={colors} onColorSelect={onChange} />
-      </>
+      <ColorsGroup key={hue} selectedColor={selectedColor} colors={colors} onColorSelect={onChange} />
     );
   });
 

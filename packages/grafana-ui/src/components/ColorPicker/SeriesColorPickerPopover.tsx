@@ -1,19 +1,24 @@
 import React from 'react';
 import { ColorPickerPopover } from './ColorPickerPopover';
+import { GrafanaTheme } from '../../types';
 
 export interface SeriesColorPickerPopoverProps {
   color: string;
   yaxis?: number;
   onColorChange: (color: string) => void;
   onToggleAxis?: () => void;
+  theme?: GrafanaTheme;
 }
 
 export class SeriesColorPickerPopover extends React.PureComponent<SeriesColorPickerPopoverProps, any> {
   render() {
     return (
-      <div className="graph-legend-popover">
-        {this.props.yaxis && <AxisSelector yaxis={this.props.yaxis} onToggleAxis={this.props.onToggleAxis} />}
-        <ColorPickerPopover color={this.props.color} onColorSelect={this.props.onColorChange} />
+      <div>
+        <ColorPickerPopover theme={this.props.theme} color={this.props.color} onColorSelect={this.props.onColorChange}>
+          <div style={{ marginTop: '32px' }}>
+            {this.props.yaxis && <AxisSelector yaxis={this.props.yaxis} onToggleAxis={this.props.onToggleAxis} />}
+          </div>
+        </ColorPickerPopover>
       </div>
     );
   }

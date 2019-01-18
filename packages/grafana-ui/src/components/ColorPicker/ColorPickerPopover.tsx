@@ -1,111 +1,76 @@
-import React from 'react';
-import $ from 'jquery';
-import tinycolor from 'tinycolor2';
-import { ColorPalette } from './ColorPalette';
+import React, { Children } from 'react';
+import NamedColorsPicker from './NamedColorsPicker';
+import { Color } from 'csstype';
+import { ColorDefinition, getColorName } from '../..//utils/colorsPalette';
 import { SpectrumPicker } from './SpectrumPicker';
+import { GrafanaTheme } from '../../types';
 
-const DEFAULT_COLOR = '#000000';
+// const DEFAULT_COLOR = '#000000';
 
 export interface Props {
-  color: string;
-  onColorSelect: (c: string) => void;
+  color: Color | string;
+  theme?: GrafanaTheme;
+  onColorSelect: (color: string | ColorDefinition) => void;
 }
 
-export class ColorPickerPopover extends React.Component<Props, any> {
-  pickerNavElem: any;
+type PickerType = 'palette' | 'spectrum';
 
+interface State {
+  activePicker: PickerType;
+}
+
+export class ColorPickerPopover extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      tab: 'palette',
-      color: this.props.color || DEFAULT_COLOR,
-      colorString: this.props.color || DEFAULT_COLOR,
+      activePicker: 'spectrum',
     };
   }
 
-  setPickerNavElem(elem: any) {
-    this.pickerNavElem = $(elem);
-  }
+  handleSpectrumColorSelect = (color: any) => {
+    this.props.onColorSelect(color.toRgbString());
+  };
 
-  setColor(color: string) {
-    const newColor = tinycolor(color);
-    if (newColor.isValid()) {
-      this.setState({ color: newColor.toString(), colorString: newColor.toString() });
-      this.props.onColorSelect(color);
-    }
-  }
+  renderPicker = () => {
+    const { activePicker } = this.state;
+    const { color } = this.props;
 
-  sampleColorSelected(color: string) {
-    this.setColor(color);
-  }
-
-  spectrumColorSelected(color: any) {
-    const rgbColor = color.toRgbString();
-    this.setColor(rgbColor);
-  }
-
-  onColorStringChange(e: any) {
-    const colorString = e.target.value;
-    this.setState({ colorString: colorString });
-
-    const newColor = tinycolor(colorString);
-    if (newColor.isValid()) {
-      // Update only color state
-      const newColorString = newColor.toString();
-      this.setState({ color: newColorString });
-      this.props.onColorSelect(newColorString);
-    }
-  }
-
-  onColorStringBlur(e: any) {
-    const colorString = e.target.value;
-    this.setColor(colorString);
-  }
-
-  componentDidMount() {
-    this.pickerNavElem.find('li:first').addClass('active');
-    this.pickerNavElem.on('show', (e: any) => {
-      // use href attr (#name => name)
-      const tab = e.target.hash.slice(1);
-      this.setState({ tab: tab });
-    });
-  }
+    return activePicker === 'spectrum' ? (
+      <SpectrumPicker color={color} onColorSelect={this.handleSpectrumColorSelect} options={{}} />
+    ) : (
+      <NamedColorsPicker selectedColor={getColorName(color)} onChange={this.props.onColorSelect} />
+    );
+  };
 
   render() {
-    const paletteTab = (
-      <div id="palette">
-        <ColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected.bind(this)} />
-      </div>
-    );
-    const spectrumTab = (
-      <div id="spectrum">
-        <SpectrumPicker color={this.state.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
-      </div>
-    );
-    const currentTab = this.state.tab === 'palette' ? paletteTab : spectrumTab;
+    const { activePicker } = this.state;
+    const { theme, children } = this.props;
+    const colorPickerTheme = theme || GrafanaTheme.Dark;
 
     return (
-      <div className="gf-color-picker">
-        <ul className="nav nav-tabs" id="colorpickernav" ref={this.setPickerNavElem.bind(this)}>
-          <li className="gf-tabs-item-colorpicker">
-            <a href="#palette" data-toggle="tab">
-              Colors
-            </a>
-          </li>
-          <li className="gf-tabs-item-colorpicker">
-            <a href="#spectrum" data-toggle="tab">
-              Custom
-            </a>
-          </li>
-        </ul>
-        <div className="gf-color-picker__body">{currentTab}</div>
-        <div>
-          <input
-            className="gf-form-input gf-form-input--small"
-            value={this.state.colorString}
-            onChange={this.onColorStringChange.bind(this)}
-            onBlur={this.onColorStringBlur.bind(this)}
-          />
+      <div className={`ColorPickerPopover ColorPickerPopover--${colorPickerTheme}`}>
+        <div className="ColorPickerPopover__tabs">
+          <div
+            className={`ColorPickerPopover__tab ${activePicker === 'palette' && 'ColorPickerPopover__tab--active'}`}
+            onClick={() => {
+              this.setState({ activePicker: 'palette' });
+            }}
+          >
+            Default
+          </div>
+          <div
+            className={`ColorPickerPopover__tab ${activePicker === 'spectrum' && 'ColorPickerPopover__tab--active'}`}
+            onClick={() => {
+              this.setState({ activePicker: 'spectrum' });
+            }}
+          >
+            Custom
+          </div>
+        </div>
+
+        <div className="ColorPickerPopover__content">
+          {this.renderPicker()}
+          {children}
         </div>
       </div>
     );
