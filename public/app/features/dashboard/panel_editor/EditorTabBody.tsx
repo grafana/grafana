@@ -111,14 +111,11 @@ export class EditorTabBody extends PureComponent<Props, State> {
     return (
       <>
         <div className="toolbar">
-          <div className="toolbar__heading">{heading}</div>
-          {renderToolbar && renderToolbar()}
-          {toolbarItems.length > 0 && (
-            <>
-              <div className="gf-form--grow" />
-              {toolbarItems.map(item => this.renderButton(item))}
-            </>
-          )}
+          <div className="toolbar__left">
+            <div className="toolbar__heading">{heading}</div>
+            {renderToolbar && renderToolbar()}
+          </div>
+          {toolbarItems.map(item => this.renderButton(item))}
         </div>
         <div className="panel-editor__scroll">
           <CustomScrollbar autoHide={false} scrollTop={scrollTop} setScrollTop={setScrollTop}>
