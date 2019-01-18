@@ -70,6 +70,7 @@ class PopperController extends React.Component<Props, State> {
   };
 
   renderContent(content: PopperContent) {
+
     if (typeof content === 'function') {
       // If it's a function we assume it's a React component
       const ReactComponent = content;
