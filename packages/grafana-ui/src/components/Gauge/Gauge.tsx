@@ -4,10 +4,10 @@ import $ from 'jquery';
 import {
   ValueMapping,
   Threshold,
-  Theme,
+  ThemeName,
   MappingType,
   BasicGaugeColor,
-  Themes,
+  ThemeNames,
   ValueMap,
   RangeMap,
 } from '../../types/panel';
@@ -31,7 +31,7 @@ export interface Props {
   suffix: string;
   unit: string;
   width: number;
-  theme?: Theme;
+  theme?: ThemeName;
 }
 
 export class Gauge extends PureComponent<Props> {
@@ -48,6 +48,7 @@ export class Gauge extends PureComponent<Props> {
     thresholds: [],
     unit: 'none',
     stat: 'avg',
+    theme: ThemeNames.Dark,
   };
 
   componentDidMount() {
@@ -207,7 +208,7 @@ export class Gauge extends PureComponent<Props> {
     }
 
     const dimension = Math.min(width, height * 1.3);
-    const backgroundColor = theme === Themes.Light ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
+    const backgroundColor = theme === ThemeNames.Light ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
     const fontScale = parseInt('80', 10) / 100;
     const fontSize = Math.min(dimension / 5, 100) * fontScale;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;

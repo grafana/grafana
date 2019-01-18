@@ -1,18 +1,19 @@
 // Libraries
 import _ from 'lodash';
 
+import { colors } from './colors';
+
 // Types
 import { TimeSeries, TimeSeriesVMs, NullValueMode, TimeSeriesValue } from '../types';
 
 interface Options {
   timeSeries: TimeSeries[];
   nullValueMode: NullValueMode;
-  colorPalette: string[];
 }
 
-export function processTimeSeries({ timeSeries, nullValueMode, colorPalette }: Options): TimeSeriesVMs {
+export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeSeriesVMs {
   const vmSeries = timeSeries.map((item, index) => {
-    const colorIndex = index % colorPalette.length;
+    const colorIndex = index % colors.length;
     const label = item.target;
     const result = [];
 
@@ -150,7 +151,7 @@ export function processTimeSeries({ timeSeries, nullValueMode, colorPalette }: O
     return {
       data: result,
       label: label,
-      color: colorPalette[colorIndex],
+      color: colors[colorIndex],
       allIsZero,
       allIsNull,
       stats: {
