@@ -4,6 +4,9 @@
   }
 }
 
+.ColorPicker__arrow {
+
+}
 .ColorPickerPopover {
   border-radius: 3px;
 }
@@ -22,6 +25,7 @@
   .ColorPickerPopover__tab {
     background: #303133;
     color: white;
+    cursor: pointer;
   }
   .ColorPickerPopover__tab--active {
     background: none;

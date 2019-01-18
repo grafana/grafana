@@ -1,4 +1,5 @@
 import { flatten, some, values } from 'lodash';
+import { GrafanaTheme } from '../types';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -38,6 +39,7 @@ type ThemeVariants = {
   dark: string;
   light: string;
 };
+
 export type ColorDefinition = {
   hue: Hue;
   isPrimary?: boolean;
@@ -118,8 +120,23 @@ export const getColorDefinition = (hex: string): ColorDefinition | undefined => 
   )[0];
 };
 
-export const getColorName = (hex: string): Color | undefined => {
-  const definition = getColorDefinition(hex);
+const isHex = (color: string) => {
+  const hexRegex = /^((0x){0,1}|#{0,1})([0-9A-F]{8}|[0-9A-F]{6})$/gi;
+  return hexRegex.test(color);
+};
 
-  return definition ? definition.name : undefined;
+export const getColorName = (color: string): Color | undefined => {
+  if (color.indexOf('rgb') > -1) {
+    return undefined;
+  }
+  if (isHex(color)) {
+    const definition = getColorDefinition(color);
+    return definition ? definition.name : undefined;
+  }
+
+  return color as Color;
+};
+
+export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaTheme) => {
+  return theme ? color.variants[theme] : color.variants.dark;
 };

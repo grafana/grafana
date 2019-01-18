@@ -8,3 +8,7 @@ export enum GrafanaTheme {
   Light = 'light',
   Dark = 'dark',
 }
+
+export interface Themeable {
+  theme?: GrafanaTheme;
+}

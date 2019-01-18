@@ -2,29 +2,19 @@ import React, { Component, createRef } from 'react';
 import PopperController from '../Tooltip/PopperController';
 import Popper from '../Tooltip/Popper';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { ColorDefinition } from '../../utils/colorsPalette';
+import { Themeable } from '../../types';
 
-interface Props {
+export interface ColorPickerProps {
   color: string;
-  onChange: (c: string) => void;
+  onChange: (color: string) => void;
 }
 
-export class ColorPicker extends Component<Props, any> {
+export class ColorPicker extends Component<ColorPickerProps & Themeable, any> {
   private pickerTriggerRef = createRef<HTMLDivElement>();
-  pickerElem: HTMLElement | null;
-  colorPickerDrop: any;
-
-  onColorSelect = (color: ColorDefinition) => {
-    this.props.onChange(color.name);
-  };
-
-  renderPickerTabs = () => {
-    return <ColorPickerPopover color="" onColorSelect={() => {}} />;
-  };
 
   render() {
     return (
-      <PopperController content={this.renderPickerTabs}>
+      <PopperController content={<ColorPickerPopover {...this.props} />}>
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>

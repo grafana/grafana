@@ -3,16 +3,14 @@ import * as PopperJS from 'popper.js';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import PopperController from '../Tooltip/PopperController';
 import Popper from '../Tooltip/Popper';
-import { GrafanaTheme } from '../../types';
+import { Themeable } from '../../types';
+import { ColorPickerProps } from './ColorPicker';
 
-export interface SeriesColorPickerProps {
-  color: string;
+export interface SeriesColorPickerProps extends ColorPickerProps, Themeable {
   yaxis?: number;
   optionalClass?: string;
-  onColorChange: (newColor: string) => void;
   onToggleAxis?: () => void;
   children: JSX.Element;
-  theme?: GrafanaTheme;
 }
 
 export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
@@ -26,13 +24,13 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
   };
 
   renderPickerTabs = () => {
-    const { color, yaxis, onColorChange, onToggleAxis, theme } = this.props;
+    const { color, yaxis, onChange, onToggleAxis, theme } = this.props;
     return (
       <SeriesColorPickerPopover
         theme={theme}
         color={color}
         yaxis={yaxis}
-        onColorChange={onColorChange}
+        onChange={onChange}
         onToggleAxis={onToggleAxis}
       />
     );
@@ -40,9 +38,8 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
 
   render() {
     const { children } = this.props;
-
     return (
-      <PopperController placement="bottom-start" content={this.renderPickerTabs}>
+      <PopperController placement="bottom-start" content={this.renderPickerTabs()}>
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>
