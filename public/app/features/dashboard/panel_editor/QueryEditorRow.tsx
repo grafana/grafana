@@ -51,7 +51,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       target: query,
       panel: panel,
       refresh: () => panel.refresh(),
-      render: () => panel.render,
+      render: () => panel.render(),
       events: panel.events,
     };
   }
