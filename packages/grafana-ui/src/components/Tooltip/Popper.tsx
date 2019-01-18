@@ -3,6 +3,7 @@ import * as PopperJS from 'popper.js';
 import { Manager, Popper as ReactPopper } from 'react-popper';
 import { Portal } from '@grafana/ui';
 import Transition from 'react-transition-group/Transition';
+import { PopperContent } from './PopperController';
 
 const defaultTransitionStyles = {
   transition: 'opacity 200ms linear',
@@ -17,17 +18,16 @@ const transitionStyles: { [key: string]: object } = {
 };
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  renderContent: (content: any) => any;
   show: boolean;
   placement?: PopperJS.Placement;
-  content: string | ((props: any) => JSX.Element);
+  content: PopperContent;
   referenceElement: PopperJS.ReferenceObject;
   arrowClassName?: string;
 }
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { renderContent, show, placement, onMouseEnter, onMouseLeave, className, arrowClassName } = this.props;
+    const { show, placement, onMouseEnter, onMouseLeave, className, arrowClassName } = this.props;
     const { content } = this.props;
 
     return (
@@ -56,7 +56,7 @@ class Popper extends PureComponent<Props> {
                       className={`popper`}
                     >
                       <div className={className}>
-                        {renderContent(content)}
+                        {content}
                         <div
                           ref={arrowProps.ref}
                           style={{ ...arrowProps.style }}

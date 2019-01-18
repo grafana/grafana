@@ -12,7 +12,7 @@ export enum Themes {
 interface TooltipProps extends UsingPopperProps {
   theme?: Themes;
 }
-export const Tooltip = ({ children, renderContent, theme, ...controllerProps }: TooltipProps) => {
+export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
   const popperBackgroundClassName = 'popper__background' + (theme ? ' ' + theme : '');
 

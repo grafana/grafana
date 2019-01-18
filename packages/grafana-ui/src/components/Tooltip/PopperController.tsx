@@ -1,14 +1,13 @@
 import React from 'react';
 import * as PopperJS from 'popper.js';
 
-type PopperContent = string | (() => JSX.Element);
+export type PopperContent = string | JSX.Element;
 
 export interface UsingPopperProps {
   show?: boolean;
   placement?: PopperJS.Placement;
   content: PopperContent;
   children: JSX.Element;
-  renderContent?: (content: PopperContent) => JSX.Element;
 }
 
 type PopperControllerRenderProp = (
@@ -17,8 +16,7 @@ type PopperControllerRenderProp = (
   popperProps: {
     show: boolean;
     placement: PopperJS.Placement;
-    content: string | ((props: any) => JSX.Element);
-    renderContent: (content: any) => any;
+    content: PopperContent;
   }
 ) => JSX.Element;
 
@@ -69,16 +67,6 @@ class PopperController extends React.Component<Props, State> {
     }));
   };
 
-  renderContent(content: PopperContent) {
-
-    if (typeof content === 'function') {
-      // If it's a function we assume it's a React component
-      const ReactComponent = content;
-      return <ReactComponent />;
-    }
-    return content;
-  }
-
   render() {
     const { children, content } = this.props;
     const { show, placement } = this.state;
@@ -87,7 +75,6 @@ class PopperController extends React.Component<Props, State> {
       show,
       placement,
       content,
-      renderContent: this.renderContent,
     });
   }
 }
