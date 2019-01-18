@@ -11,14 +11,9 @@ sha256="$2"
 shift;shift
 files_to_copy="$@"
 
-if [ -z "$files_to_copy" ]; then
-  echo "\$files_to_copy was empty"
-  exit 1
-fi
-
 COPY_DIRS="${COPY_DIRS:-}"
 
-echo -n "Installing ${files_to_copy}..."
+echo -n "Installing [${files_to_copy}] [${COPY_DIRS}]..."
 
 # Download library.
 curl -Ls ${url} -o /tmp/libs.tar.xz
@@ -41,8 +36,13 @@ for file in ${files_to_copy}; do
 done
 
 # Copy any extra required directories.
+COPY_DIRS="$COPY_DIRS usr/share/licenses"
 for dir in ${COPY_DIRS}; do
-  cp -r /tmp/libs/${dir} /${dir}
+  [ -e /tmp/libs/${dir} ] || continue
+  mkdir -p /usr/glibc-compat/${dir}
+  for i in /tmp/libs/${dir}/*; do
+    cp -r ${i} /usr/glibc-compat/${dir}/
+  done;
 done
 
 # Clean up.
