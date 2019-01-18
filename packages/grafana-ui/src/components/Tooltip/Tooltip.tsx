@@ -27,8 +27,11 @@ export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) =
                 onMouseEnter={showPopper}
                 onMouseLeave={hidePopper}
                 referenceElement={tooltipTriggerRef.current}
+                wrapperClassName='popper'
                 className={popperBackgroundClassName}
-                arrowClassName={'popper__arrow'}
+                renderArrow={({ arrowProps, placement }) => (
+                  <div className="popper__arrow" data-placement={placement} {...arrowProps} />
+                )}
               />
             )}
             {React.cloneElement(children, {

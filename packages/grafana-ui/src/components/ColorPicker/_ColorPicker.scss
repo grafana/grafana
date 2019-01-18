@@ -1,12 +1,107 @@
+$arrowSize: 10px;
 .ColorPicker {
-  .popper__arrow {
-    border-color: #f7f8fa;
-  }
+  @extend .popper;
 }
 
 .ColorPicker__arrow {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  position: absolute;
+  margin: 0px;
 
+  &[data-placement^='top'] {
+    border-width: $arrowSize $arrowSize 0 $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    bottom: -$arrowSize;
+    left: calc(50% - $arrowSize);
+    padding-top: $arrowSize;
+  }
+
+  &[data-placement^='bottom'] {
+    border-width: 0 $arrowSize $arrowSize $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    top: 0;
+    left: calc(50% - $arrowSize);
+  }
+
+  &[data-placement^='bottom-start'] {
+    border-width: 0 $arrowSize $arrowSize $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    top: 0;
+    left: $arrowSize;
+  }
+
+  &[data-placement^='bottom-end'] & {
+    border-width: 0 $arrowSize $arrowSize $arrowSize;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    top: 0;
+    left: calc(100% - $arrowSize);
+  }
+
+  &[data-placement^='right'] {
+    border-width: $arrowSize $arrowSize $arrowSize 0;
+    border-left-color: transparent;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    left: 0;
+    top: calc(50% - $arrowSize);
+  }
+
+  &[data-placement^='left'] {
+    border-width: $arrowSize 0 $arrowSize $arrowSize;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    right: -$arrowSize;
+    top: calc(50% - $arrowSize);
+  }
 }
+
+.ColorPicker__arrow--light {
+  border-color: #ffffff;
+}
+
+.ColorPicker__arrow--dark {
+  border-color: #1e2028;
+}
+
+// Top
+.ColorPicker[data-placement^='top'] {
+  padding-bottom: $arrowSize;
+}
+
+// Bottom
+.ColorPicker[data-placement^='bottom'] {
+  padding-top: $arrowSize;
+}
+
+.ColorPicker[data-placement^='bottom-start'] {
+  padding-top: $arrowSize;
+}
+
+.ColorPicker[data-placement^='bottom-end'] {
+  padding-top: $arrowSize;
+}
+
+// Right
+.ColorPicker[data-placement^='right'] {
+  padding-left: $arrowSize;
+}
+
+// Left
+.ColorPicker[data-placement^='left'] {
+  padding-right: $arrowSize;
+}
+
 .ColorPickerPopover {
   border-radius: 3px;
 }
@@ -93,7 +188,7 @@
 }
 
 .gf-color-picker__body {
-  padding-bottom: 10px;
+  padding-bottom: $arrowSize;
   padding-left: 6px;
 }
 

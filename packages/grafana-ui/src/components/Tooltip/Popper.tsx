@@ -1,6 +1,6 @@
 ﻿import React, { PureComponent } from 'react';
 import * as PopperJS from 'popper.js';
-import { Manager, Popper as ReactPopper } from 'react-popper';
+import { Manager, Popper as ReactPopper, PopperArrowProps } from 'react-popper';
 import { Portal } from '@grafana/ui';
 import Transition from 'react-transition-group/Transition';
 import { PopperContent } from './PopperController';
@@ -22,12 +22,18 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   placement?: PopperJS.Placement;
   content: PopperContent;
   referenceElement: PopperJS.ReferenceObject;
-  arrowClassName?: string;
+  wrapperClassName?: string;
+  renderArrow?: (
+    props: {
+      arrowProps: PopperArrowProps;
+      placement: string;
+    }
+  ) => JSX.Element;
 }
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { show, placement, onMouseEnter, onMouseLeave, className, arrowClassName } = this.props;
+    const { show, placement, onMouseEnter, onMouseLeave, className, wrapperClassName, renderArrow } = this.props;
     const { content } = this.props;
 
     return (
@@ -53,16 +59,15 @@ class Popper extends PureComponent<Props> {
                         ...transitionStyles[transitionState],
                       }}
                       data-placement={placement}
-                      className={`popper`}
+                      className={`${wrapperClassName}`}
                     >
                       <div className={className}>
                         {content}
-                        <div
-                          ref={arrowProps.ref}
-                          style={{ ...arrowProps.style }}
-                          data-placement={placement}
-                          className={arrowClassName}
-                        />
+                        {renderArrow &&
+                          renderArrow({
+                            arrowProps,
+                            placement,
+                          })}
                       </div>
                     </div>
                   );

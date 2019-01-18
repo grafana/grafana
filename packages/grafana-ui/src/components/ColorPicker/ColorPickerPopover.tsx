@@ -1,7 +1,7 @@
 import React from 'react';
-import NamedColorsPicker from './NamedColorsPicker';
+import NamedColorsPicker from './NamedColorsPalette';
 import { getColorName } from '../..//utils/colorsPalette';
-import { SpectrumPicker } from './SpectrumPicker';
+import { SpectrumPalette } from './SpectrumPalette';
 import { ColorPickerProps } from './ColorPicker';
 import { GrafanaTheme, Themeable } from '../../types';
 
@@ -32,7 +32,7 @@ export class ColorPickerPopover extends React.Component<Props, State> {
     const { color, onChange, theme } = this.props;
 
     return activePicker === 'spectrum' ? (
-      <SpectrumPicker color={color} onColorSelect={this.handleSpectrumColorSelect} options={{}} />
+      <SpectrumPalette color={color} onColorSelect={this.handleSpectrumColorSelect} options={{}} />
     ) : (
       <NamedColorsPicker color={getColorName(color)} onChange={onChange} theme={theme} />
     );

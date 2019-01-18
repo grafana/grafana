@@ -9,7 +9,7 @@ export interface Props {
   onColorSelect: (color: string) => void;
 }
 
-export class SpectrumPicker extends React.Component<Props, any> {
+export class SpectrumPalette extends React.Component<Props, any> {
   elem: any;
   isMoving: boolean;
 

@@ -3,7 +3,7 @@ import * as PopperJS from 'popper.js';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import PopperController from '../Tooltip/PopperController';
 import Popper from '../Tooltip/Popper';
-import { Themeable } from '../../types';
+import { Themeable, GrafanaTheme } from '../../types';
 import { ColorPickerProps } from './ColorPicker';
 
 export interface SeriesColorPickerProps extends ColorPickerProps, Themeable {
@@ -37,7 +37,7 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
   };
 
   render() {
-    const { children } = this.props;
+    const { children, theme } = this.props;
     return (
       <PopperController placement="bottom-start" content={this.renderPickerTabs()}>
         {(showPopper, hidePopper, popperProps) => {
@@ -49,10 +49,21 @@ export class SeriesColorPicker extends React.Component<SeriesColorPickerProps> {
                   onMouseEnter={showPopper}
                   onMouseLeave={hidePopper}
                   referenceElement={this.pickerTriggerRef.current}
-                  className="ColorPicker"
-                  arrowClassName="popper__arrow"
+                  wrapperClassName="ColorPicker"
+                  renderArrow={({ arrowProps, placement }) => {
+                    return (
+                      <div
+                        {...arrowProps}
+                        data-placement={placement}
+                        className={`ColorPicker__arrow ColorPicker__arrow--${
+                          theme === GrafanaTheme.Light ? 'light' : 'dark'
+                        }`}
+                      />
+                    );
+                  }}
                 />
               )}
+
               {React.cloneElement(children, {
                 ref: this.pickerTriggerRef,
                 onClick: showPopper,

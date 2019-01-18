@@ -1,7 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { ColorDefinition } from '@grafana/ui/src/utils/colorsPalette';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) {
@@ -357,13 +356,8 @@ export default class TimeSeries {
     return false;
   }
 
-  setColor(color: string | ColorDefinition) {
-    if (typeof color === 'string') {
-      this.color = color;
-      this.bars.fillColor = color;
-    } else {
-      this.color = color.variants.dark;
-      this.bars.fillColor = color.variants.dark;
-    }
+  setColor(color: string) {
+    this.color = color;
+    this.bars.fillColor = color;
   }
 }

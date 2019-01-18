@@ -1,11 +1,7 @@
-import { getColorName, getColorDefinition, ColorsPalete, buildColorDefinition } from './colorsPalette';
+import { getColorName, getColorDefinition, getColorByName, SemiDarkBlue, getColorFromHexRgbOrName } from './colorsPalette';
+import { GrafanaTheme } from '../types';
 
 describe('colors', () => {
-  const FakeBlue = buildColorDefinition('blue', 'blue', ['#0000ff', '#00000ee']);
-
-  beforeAll(() => {
-    ColorsPalete.set('blue', [FakeBlue]);
-  });
 
   describe('getColorDefinition', () => {
     it('returns undefined for unknown hex', () => {
@@ -13,8 +9,8 @@ describe('colors', () => {
     });
 
     it('returns definition for known hex', () => {
-      expect(getColorDefinition(FakeBlue.variants.light)).toEqual(FakeBlue);
-      expect(getColorDefinition(FakeBlue.variants.dark)).toEqual(FakeBlue);
+      expect(getColorDefinition(SemiDarkBlue.variants.light)).toEqual(SemiDarkBlue);
+      expect(getColorDefinition(SemiDarkBlue.variants.dark)).toEqual(SemiDarkBlue);
     });
   });
 
@@ -24,8 +20,39 @@ describe('colors', () => {
     });
 
     it('returns name for known hex', () => {
-      expect(getColorName(FakeBlue.variants.light)).toEqual(FakeBlue.name);
-      expect(getColorName(FakeBlue.variants.dark)).toEqual(FakeBlue.name);
+      expect(getColorName(SemiDarkBlue.variants.light)).toEqual(SemiDarkBlue.name);
+      expect(getColorName(SemiDarkBlue.variants.dark)).toEqual(SemiDarkBlue.name);
+    });
+  });
+
+  describe('getColorByName', () => {
+    it('returns undefined for unknown color', () => {
+      expect(getColorByName('aruba-sunshine')).toBeUndefined();
+    });
+
+    it('returns color definiton for known color', () => {
+      expect(getColorByName(SemiDarkBlue.name)).toBe(SemiDarkBlue);
+    });
+
+  });
+  describe('getColorFromHexRgbOrName', () => {
+    it('returns undefined for unknown color', () => {
+      expect(() => getColorFromHexRgbOrName('aruba-sunshine')).toThrow();
+    });
+
+    it('returns dark hex variant for known color if theme not specified', () => {
+      expect(getColorFromHexRgbOrName(SemiDarkBlue.name)).toBe(SemiDarkBlue.variants.dark);
+    });
+
+    it('returns correct variant\'s hex for known color if theme specified', () => {
+      expect(getColorFromHexRgbOrName(SemiDarkBlue.name, GrafanaTheme.Light)).toBe(SemiDarkBlue.variants.light);
+    });
+
+    it('returns color if specified as hex or rgb/a', () => {
+      expect(getColorFromHexRgbOrName('ff0000')).toBe('ff0000');
+      expect(getColorFromHexRgbOrName('#ff0000')).toBe('#ff0000');
+      expect(getColorFromHexRgbOrName('rgb(0,0,0)')).toBe('rgb(0,0,0)');
+      expect(getColorFromHexRgbOrName('rgba(0,0,0,1)')).toBe('rgba(0,0,0,1)');
     });
   });
 });

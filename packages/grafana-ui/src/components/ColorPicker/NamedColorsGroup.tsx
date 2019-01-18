@@ -1,11 +1,12 @@
 import React, { FunctionComponent } from 'react';
-import { find, upperFirst } from 'lodash';
-import { Color, ColorsPalete, ColorDefinition, getColorForTheme } from '../../utils/colorsPalette';
 import { Themeable } from '../../types';
+import { ColorDefinition, getColorForTheme } from '../../utils/colorsPalette';
+import { Color } from 'csstype';
+import { find, upperFirst } from 'lodash';
 
 type ColorChangeHandler = (color: ColorDefinition) => void;
 
-enum ColorSwatchVariant {
+export enum ColorSwatchVariant {
   Small = 'small',
   Large = 'large',
 }
@@ -50,14 +51,14 @@ const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
   );
 };
 
-interface ColorsGroupProps extends Themeable {
+interface NamedColorsGroupProps extends Themeable {
   colors: ColorDefinition[];
   selectedColor?: Color;
   onColorSelect: ColorChangeHandler;
   key?: string;
 }
 
-const ColorsGroup: FunctionComponent<ColorsGroupProps> = ({
+const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   colors,
   selectedColor,
   onColorSelect,
@@ -100,37 +101,4 @@ const ColorsGroup: FunctionComponent<ColorsGroupProps> = ({
   );
 };
 
-interface NamedColorsPickerProps extends Themeable {
-  color?: Color;
-  onChange: (colorName: string) => void;
-}
-
-const NamedColorsPicker = ({ color, onChange, theme }: NamedColorsPickerProps) => {
-  const swatches: JSX.Element[] = [];
-  ColorsPalete.forEach((colors, hue) => {
-    swatches.push(
-      <ColorsGroup
-        key={hue}
-        theme={theme}
-        selectedColor={color}
-        colors={colors}
-        onColorSelect={color => onChange(color.name)}
-      />
-    );
-  });
-
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gridRowGap: '32px',
-        gridColumnGap: '32px',
-      }}
-    >
-      {swatches}
-    </div>
-  );
-};
-
-export default NamedColorsPicker;
+export default NamedColorsGroup;

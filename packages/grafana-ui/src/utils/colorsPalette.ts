@@ -47,7 +47,7 @@ export type ColorDefinition = {
   variants: ThemeVariants;
 };
 
-export const ColorsPalete = new Map<Hue, ColorDefinition[]>();
+export const ColorsPalette = new Map<Hue, ColorDefinition[]>();
 
 export const buildColorDefinition = (
   hue: Hue,
@@ -107,15 +107,15 @@ const blues = [BasicBlue, DarkBlue, SemiDarkBlue, LightBlue, SuperLightBlue];
 const oranges = [BasicOrange, DarkOrange, SemiDarkOrange, LightOrange, SuperLightOrange];
 const purples = [BasicPurple, DarkPurple, SemiDarkPurple, LightPurple, SuperLightPurple];
 
-ColorsPalete.set('green', greens);
-ColorsPalete.set('yellow', yellows);
-ColorsPalete.set('red', reds);
-ColorsPalete.set('blue', blues);
-ColorsPalete.set('orange', oranges);
-ColorsPalete.set('purple', purples);
+ColorsPalette.set('green', greens);
+ColorsPalette.set('yellow', yellows);
+ColorsPalette.set('red', reds);
+ColorsPalette.set('blue', blues);
+ColorsPalette.set('orange', oranges);
+ColorsPalette.set('purple', purples);
 
 export const getColorDefinition = (hex: string): ColorDefinition | undefined => {
-  return flatten(Array.from(ColorsPalete.values())).filter(definition =>
+  return flatten(Array.from(ColorsPalette.values())).filter(definition =>
     some(values(definition.variants), color => color === hex)
   )[0];
 };
@@ -135,6 +135,25 @@ export const getColorName = (color: string): Color | undefined => {
   }
 
   return color as Color;
+};
+
+export const getColorByName = (colorName: string) => {
+  const definition = flatten(Array.from(ColorsPalette.values())).filter(definition => definition.name === colorName);
+  return definition.length > 0 ? definition[0] : undefined;
+};
+
+export const getColorFromHexRgbOrName = (color: string, theme?: GrafanaTheme): string => {
+  if (color.indexOf('rgb') > -1 || isHex(color)) {
+    return color;
+  }
+
+  const colorDefinition = getColorByName(color);
+
+  if (!colorDefinition) {
+    throw new Error('Unknown color');
+  }
+
+  return theme ? colorDefinition.variants[theme] : colorDefinition.variants.dark;
 };
 
 export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaTheme) => {
