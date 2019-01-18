@@ -3,7 +3,6 @@ import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
 import { SeriesColorPicker } from '@grafana/ui';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
-import { GrafanaTheme } from '@grafana/ui/';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -176,9 +175,9 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
               optionalClass="graph-legend-icon"
               yaxis={this.props.yaxis}
               color={this.props.color}
-              onColorChange={this.props.onColorChange}
+              onChange={this.props.onColorChange}
               onToggleAxis={this.props.onToggleAxis}
-              theme={theme as GrafanaTheme}
+              theme={theme}
             >
               <span>
                 <SeriesIcon color={this.props.color} />
