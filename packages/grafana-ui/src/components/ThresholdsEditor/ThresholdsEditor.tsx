@@ -105,7 +105,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const value = isNaN(parsedValue) ? null : parsedValue;
 
     const newThresholds = thresholds.map(t => {
-      if (t === threshold) {
+      if (t === threshold && t.index !== 0) {
         t = { ...t, value: value as number };
       }
 
