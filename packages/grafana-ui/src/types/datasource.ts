@@ -7,15 +7,33 @@ export interface DataQueryResponse {
 }
 
 export interface DataQuery {
+  /**
+   * A - Z
+   */
   refId: string;
-  [key: string]: any;
+
+  /**
+   * true if query is disabled (ie not executed / sent to TSDB)
+   */
+  hide?: boolean;
+
+  /**
+   * Unique, guid like, string used in explore mode
+   */
+  key?: string;
+
+  /**
+   * For mixed data sources the selected datasource is on the query level.
+   * For non mixed scenarios this is undefined.
+   */
+  datasource?: string | null;
 }
 
-export interface DataQueryOptions {
+export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;
   rangeRaw: RawTimeRange;
-  targets: DataQuery[];
+  targets: TQuery[];
   panelId: number;
   dashboardId: number;
   cacheTimeout?: string;

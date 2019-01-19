@@ -203,7 +203,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 /**
  * A target is non-empty when it has keys (with non-empty values) other than refId and key.
  */
-export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
+export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
   return (
     queries &&
     queries.some(
@@ -280,7 +280,11 @@ export function makeTimeSeriesList(dataList) {
 /**
  * Update the query history. Side-effect: store history in local storage
  */
-export function updateHistory(history: HistoryItem[], datasourceId: string, queries: DataQuery[]): HistoryItem[] {
+export function updateHistory<T extends DataQuery = any>(
+  history: Array<HistoryItem<T>>,
+  datasourceId: string,
+  queries: T[]
+): Array<HistoryItem<T>> {
   const ts = Date.now();
   queries.forEach(query => {
     history = [{ query, ts }, ...history];

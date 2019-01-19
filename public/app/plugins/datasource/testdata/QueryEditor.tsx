@@ -10,18 +10,17 @@ import { FormLabel, Select, SelectOptionItem } from '@grafana/ui';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui/src/types';
-
-interface Scenario {
-  id: string;
-  name: string;
-}
+import { TestDataDatasource } from './datasource';
+import { TestDataQuery, Scenario } from './types';
 
 interface State {
   scenarioList: Scenario[];
   current: Scenario | null;
 }
 
-export class QueryEditor extends PureComponent<QueryEditorProps> {
+type Props = QueryEditorProps<TestDataDatasource, TestDataQuery>;
+
+export class QueryEditor extends PureComponent<Props> {
   backendSrv: BackendSrv = getBackendSrv();
 
   state: State = {
@@ -30,11 +29,12 @@ export class QueryEditor extends PureComponent<QueryEditorProps> {
   };
 
   async componentDidMount() {
-    const { query } = this.props;
+    const { query, datasource } = this.props;
 
     query.scenarioId = query.scenarioId || 'random_walk';
 
-    const scenarioList = await this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    // const scenarioList = await this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    const scenarioList = await datasource.getScenarios();
     const current = _.find(scenarioList, { id: query.scenarioId });
 
     this.setState({ scenarioList: scenarioList, current: current });
