@@ -18,11 +18,12 @@ interface Props {
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onMoveQuery: (query: DataQuery, direction: number) => void;
-  datasourceName: string | null;
+  dataSourceValue: string | null;
   inMixedMode: boolean;
 }
 
 interface State {
+  loadedDataSourceValue: string | null | undefined;
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   angularScope: AngularQueryComponentScope | null;
@@ -36,6 +37,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     datasource: null,
     isCollapsed: false,
     angularScope: null,
+    loadedDataSourceValue: undefined,
   };
 
   componentDidMount() {
@@ -61,14 +63,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const dataSourceSrv = getDatasourceSrv();
     const datasource = await dataSourceSrv.get(query.datasource || panel.datasource);
 
-    this.setState({ datasource });
+    this.setState({ datasource, loadedDataSourceValue: this.props.dataSourceValue });
   }
 
   componentDidUpdate() {
-    const { datasource } = this.state;
+    const { loadedDataSourceValue } = this.state;
 
     // check if we need to load another datasource
-    if (datasource && datasource.name !== this.props.datasourceName) {
+    if (loadedDataSourceValue !== this.props.dataSourceValue) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -178,7 +180,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { query, datasourceName, inMixedMode } = this.props;
+    const { query, inMixedMode } = this.props;
     const { datasource, isCollapsed } = this.state;
     const isDisabled = query.hide;
 
@@ -202,7 +204,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             {isCollapsed && <i className="fa fa-caret-right" />}
             {!isCollapsed && <i className="fa fa-caret-down" />}
             <span>{query.refId}</span>
-            {inMixedMode && <em className="query-editor-row__context-info"> ({datasourceName})</em>}
+            {inMixedMode && <em className="query-editor-row__context-info"> ({datasource.name})</em>}
             {isDisabled && <em className="query-editor-row__context-info"> Disabled</em>}
           </div>
           <div className="query-editor-row__collapsed-text" onClick={this.onToggleEditMode}>
