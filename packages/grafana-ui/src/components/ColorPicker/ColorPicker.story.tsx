@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
-import { ColorPicker } from './ColorPicker';
-import { SeriesColorPicker } from './SeriesColorPicker';
+import SeriesColorPicker from './SeriesColorPicker';
+import ColorPicker  from './ColorPicker';
 import { UseState } from './NamedColorsPalette.story';
 import { withKnobs, select } from '@storybook/addon-knobs';
 import { GrafanaTheme } from '../../types';
@@ -69,7 +69,7 @@ ColorPickerStories.add('Series color picker', () => {
             onChange={color => updateSelectedColor(color)}
             theme={selectedTheme || undefined}
           >
-            <div style={{ color: selectedColor }}>Open color picker</div>
+            <div style={{ color: selectedColor, cursor: 'pointer' }} >Open color picker</div>
           </SeriesColorPicker>
         );
       }}
