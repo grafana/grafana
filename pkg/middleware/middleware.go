@@ -125,7 +125,7 @@ func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthToken
 		ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
 		ctx.Resp.Header().Del("Set-Cookie")
 		cookie := http.Cookie{
-			Name:     "grafana_session",
+			Name:     setting.SessionOptions.CookieName,
 			Value:    url.QueryEscape(ctx.UserToken.UnhashedToken),
 			HttpOnly: true,
 			Domain:   setting.Domain,

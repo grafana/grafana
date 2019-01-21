@@ -37,8 +37,6 @@ func (s *UserAuthTokenService) Init() error {
 	return nil
 }
 
-const sessionCookieKey = "grafana_session"
-
 func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *models.ReqContext) error {
 	userToken, err := s.CreateToken(user.Id, c.RemoteAddr(), c.Req.UserAgent())
 	if err != nil {
@@ -47,11 +45,12 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 
 	c.Resp.Header().Del("Set-Cookie")
 	cookie := http.Cookie{
-		Name:     sessionCookieKey,
+		Name:     setting.SessionOptions.CookieName,
 		Value:    url.QueryEscape(userToken.UnhashedToken),
 		HttpOnly: true,
 		Domain:   setting.Domain,
 		Path:     setting.AppSubUrl + "/",
+		Secure:   setting.SessionOptions.Secure,
 	}
 
 	http.SetCookie(c.Resp, &cookie)
@@ -62,11 +61,12 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
 	c.Resp.Header().Del("Set-Cookie")
 	cookie := http.Cookie{
-		Name:     sessionCookieKey,
+		Name:     setting.SessionOptions.CookieName,
 		Value:    "",
 		HttpOnly: true,
 		Domain:   setting.Domain,
 		Path:     setting.AppSubUrl + "/",
+		Secure:   setting.SessionOptions.Secure,
 	}
 	http.SetCookie(c.Resp, &cookie)
 }
