@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -23,6 +24,7 @@ var (
 	now              = time.Now
 	RotateTime       = 1 * time.Minute
 	UrgentRotateTime = 30 * time.Second
+	oneYearInSeconds = 31557600 //used as default maxage for session cookies. We validate/rotate them more often.
 )
 
 // UserAuthTokenService are used for generating and validating user auth tokens
@@ -37,38 +39,70 @@ func (s *UserAuthTokenService) Init() error {
 	return nil
 }
 
+func (s *UserAuthTokenService) InitContextWithToken(ctx *models.ReqContext, orgID int64) bool {
+	//auth User
+	unhashedToken := ctx.GetCookie(setting.SessionOptions.CookieName)
+	if unhashedToken == "" {
+		return false
+	}
+
+	user, err := s.LookupToken(unhashedToken)
+	if err != nil {
+		ctx.Logger.Info("failed to look up user based on cookie", "error", err)
+		return false
+	}
+
+	query := models.GetSignedInUserQuery{UserId: user.UserId, OrgId: orgID}
+	if err := bus.Dispatch(&query); err != nil {
+		ctx.Logger.Error("Failed to get user with id", "userId", user.UserId, "error", err)
+		return false
+	}
+
+	ctx.SignedInUser = query.Result
+	ctx.IsSignedIn = true
+	ctx.UserToken = user
+
+	//rotate session token if needed.
+	rotated, err := s.RefreshToken(ctx.UserToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
+	if err != nil {
+		ctx.Logger.Error("failed to rotate token", "error", err, "user.id", user.UserId, "user_token.id", user.Id)
+		return true
+	}
+
+	if rotated {
+		s.writeSessionCookie(ctx, ctx.UserToken.UnhashedToken, oneYearInSeconds)
+	}
+
+	return true
+}
+
+func (s *UserAuthTokenService) writeSessionCookie(ctx *models.ReqContext, value string, maxAge int) {
+	ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
+	ctx.Resp.Header().Del("Set-Cookie")
+	cookie := http.Cookie{
+		Name:     setting.SessionOptions.CookieName,
+		Value:    url.QueryEscape(value),
+		HttpOnly: true,
+		Domain:   setting.Domain,
+		Path:     setting.AppSubUrl + "/",
+		Secure:   setting.SessionOptions.Secure,
+	}
+
+	http.SetCookie(ctx.Resp, &cookie)
+}
+
 func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *models.ReqContext) error {
 	userToken, err := s.CreateToken(user.Id, c.RemoteAddr(), c.Req.UserAgent())
 	if err != nil {
 		return err
 	}
 
-	c.Resp.Header().Del("Set-Cookie")
-	cookie := http.Cookie{
-		Name:     setting.SessionOptions.CookieName,
-		Value:    url.QueryEscape(userToken.UnhashedToken),
-		HttpOnly: true,
-		Domain:   setting.Domain,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.SessionOptions.Secure,
-	}
-
-	http.SetCookie(c.Resp, &cookie)
-
+	s.writeSessionCookie(c, userToken.UnhashedToken, oneYearInSeconds)
 	return nil
 }
 
 func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
-	c.Resp.Header().Del("Set-Cookie")
-	cookie := http.Cookie{
-		Name:     setting.SessionOptions.CookieName,
-		Value:    "",
-		HttpOnly: true,
-		Domain:   setting.Domain,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.SessionOptions.Secure,
-	}
-	http.SetCookie(c.Resp, &cookie)
+	s.writeSessionCookie(c, "", -1)
 }
 
 func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserAuthToken, error) {

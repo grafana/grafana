@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -51,8 +49,7 @@ func GetContextHandler(ats *auth.UserAuthTokenService) macaron.Handler {
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
 		case initContextWithAuthProxy(ctx, orgId):
-		//case initContextWithUserSessionCookie(ctx, orgId):
-		case initContextWithToken(ctx, orgId, ats):
+		case ats.InitContextWithToken(ctx, orgId):
 		case initContextWithAnonymousUser(ctx):
 		}
 
@@ -88,53 +85,6 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
-	return true
-}
-
-func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthTokenService) bool {
-	//auth User
-	unhashedToken := ctx.GetCookie("grafana_session")
-	if unhashedToken == "" {
-		return false
-	}
-
-	user, err := ts.LookupToken(unhashedToken)
-	if err != nil {
-		ctx.Logger.Info("failed to look up user based on cookie")
-		return false
-	}
-
-	query := m.GetSignedInUserQuery{UserId: user.UserId, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", user.UserId, "error", err)
-		return false
-	}
-
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
-	ctx.UserToken = user
-
-	//rotate session token if needed.
-	rotated, err := ts.RefreshToken(ctx.UserToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
-	if err != nil {
-		ctx.Logger.Error("failed to rotate token", "error", err, "user.id", user.UserId, "user_token.id", user.Id)
-		return true
-	}
-
-	if rotated {
-		ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
-		ctx.Resp.Header().Del("Set-Cookie")
-		cookie := http.Cookie{
-			Name:     setting.SessionOptions.CookieName,
-			Value:    url.QueryEscape(ctx.UserToken.UnhashedToken),
-			HttpOnly: true,
-			Domain:   setting.Domain,
-			Path:     setting.AppSubUrl + "/",
-		}
-
-		http.SetCookie(ctx.Resp, &cookie)
-	}
-
 	return true
 }
 
