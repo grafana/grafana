@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -22,8 +23,8 @@ func init() {
 
 var (
 	now              = time.Now
-	RotateTime       = 1 * time.Minute // this should be read from [session] configuration.
-	UrgentRotateTime = 30 * time.Second
+	RotateTime       = 30 * time.Second
+	UrgentRotateTime = 10 * time.Second
 	oneYearInSeconds = 31557600 //used as default maxage for session cookies. We validate/rotate them more often.
 )
 
@@ -154,17 +155,18 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAu
 	}
 
 	if userToken.AuthToken != hashedToken && userToken.PrevAuthToken == hashedToken && userToken.AuthTokenSeen {
-		userToken.AuthTokenSeen = false
-		expireBefore := now().Add(-RotateTime).Unix()
-		affectedRows, err := s.SQLStore.NewSession().Where("id = ? AND prev_auth_token = ? AND rotated_at < ?", userToken.Id, userToken.PrevAuthToken, expireBefore).AllCols().Update(&userToken)
+		userTokenCopy := userToken
+		userTokenCopy.AuthTokenSeen = false
+		expireBefore := now().Add(-UrgentRotateTime).Unix()
+		affectedRows, err := s.SQLStore.NewSession().Where("id = ? AND prev_auth_token = ? AND rotated_at < ?", userTokenCopy.Id, userTokenCopy.PrevAuthToken, expireBefore).AllCols().Update(&userTokenCopy)
 		if err != nil {
 			return nil, err
 		}
 
 		if affectedRows == 0 {
-			s.log.Debug("prev seen token unchanged", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
+			fmt.Println("prev seen token unchanged", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
 		} else {
-			s.log.Debug("prev seen token", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
+			fmt.Println("prev seen token", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
 		}
 	}
 
@@ -182,9 +184,9 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAu
 		}
 
 		if affectedRows == 0 {
-			s.log.Debug("seen wrong token", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
+			fmt.Println("seen wrong token", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
 		} else {
-			s.log.Debug("seen token", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
+			fmt.Println("seen token", "userTokenId", userToken.Id, "userId", userToken.UserId, "authToken", userToken.AuthToken, "clientIP", userToken.ClientIp, "userAgent", userToken.UserAgent)
 		}
 	}
 

@@ -95,11 +95,13 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(refreshed, ShouldBeFalse)
 
-			ctx.markAuthTokenAsSeen(token.Id)
+			updated, err := ctx.markAuthTokenAsSeen(token.Id)
+			So(err, ShouldBeNil)
+			So(updated, ShouldBeTrue)
+
 			token, err = ctx.getAuthTokenByID(token.Id)
 			So(err, ShouldBeNil)
 
-			// ability to auth using an old token
 			now = func() time.Time {
 				return t.Add(time.Hour)
 			}
@@ -114,31 +116,35 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			token.UnhashedToken = unhashedToken
 
-			So(token.RotatedAt, ShouldEqual, t.Unix())
+			So(token.RotatedAt, ShouldEqual, now().Unix())
 			So(token.ClientIp, ShouldEqual, "192.168.10.12")
 			So(token.UserAgent, ShouldEqual, "a new user agent")
 			So(token.AuthTokenSeen, ShouldBeFalse)
 			So(token.SeenAt, ShouldEqual, 0)
 			So(token.PrevAuthToken, ShouldEqual, prevToken)
 
+			// ability to auth using an old token
+
 			lookedUp, err := userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
 			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
-			So(lookedUp.SeenAt, ShouldEqual, t.Unix())
+			So(lookedUp.SeenAt, ShouldEqual, now().Unix())
 
 			lookedUp, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
 			So(lookedUp.Id, ShouldEqual, token.Id)
+			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
 
 			now = func() time.Time {
-				return t.Add(2 * time.Minute)
+				return t.Add(time.Hour + (2 * time.Minute))
 			}
 
 			lookedUp, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
+			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
 
 			lookedUp, err = ctx.getAuthTokenByID(lookedUp.Id)
 			So(err, ShouldBeNil)
