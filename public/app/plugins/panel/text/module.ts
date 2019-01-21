@@ -46,9 +46,8 @@ export class TextPanelCtrl extends PanelCtrl {
     $scope.$watch(
       renderWhenChanged,
       _.throttle(() => {
-        console.log('this.render', new Date());
         this.render();
-      }, 2000, {trailing: true, leading: true})
+      }, 100)
     );
   }
 
@@ -93,9 +92,8 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   updateContent(html: string) {
-    const { sanitizeInput } = config;
-    html = sanitizeInput ? sanitize(html) : html;
-    console.log('html', html);
+    const { disableSanitizeInput } = config;
+    html = disableSanitizeInput ? html : sanitize(html);
     try {
       this.content = this.$sce.trustAsHtml(this.templateSrv.replace(html, this.panel.scopedVars));
     } catch (e) {
