@@ -4,10 +4,11 @@ import { getColorName } from '../..//utils/colorsPalette';
 import { SpectrumPalette } from './SpectrumPalette';
 import { ColorPickerProps } from './ColorPicker';
 import { GrafanaTheme, Themeable } from '../../types';
+import { PopperContentProps } from '../Tooltip/PopperController';
 
 // const DEFAULT_COLOR = '#000000';
 
-export interface Props extends ColorPickerProps, Themeable {}
+export interface Props extends ColorPickerProps, Themeable, PopperContentProps {}
 
 type PickerType = 'palette' | 'spectrum';
 
@@ -40,7 +41,7 @@ export class ColorPickerPopover extends React.Component<Props, State> {
 
   render() {
     const { activePicker } = this.state;
-    const { theme, children } = this.props;
+    const { theme, children, updatePopperPosition } = this.props;
     const colorPickerTheme = theme || GrafanaTheme.Dark;
 
     return (
@@ -49,7 +50,11 @@ export class ColorPickerPopover extends React.Component<Props, State> {
           <div
             className={`ColorPickerPopover__tab ${activePicker === 'palette' && 'ColorPickerPopover__tab--active'}`}
             onClick={() => {
-              this.setState({ activePicker: 'palette' });
+              this.setState({ activePicker: 'palette' }, () => {
+                if (updatePopperPosition) {
+                  updatePopperPosition();
+                }
+              });
             }}
           >
             Default
@@ -57,7 +62,11 @@ export class ColorPickerPopover extends React.Component<Props, State> {
           <div
             className={`ColorPickerPopover__tab ${activePicker === 'spectrum' && 'ColorPickerPopover__tab--active'}`}
             onClick={() => {
-              this.setState({ activePicker: 'spectrum' });
+              this.setState({ activePicker: 'spectrum' }, () => {
+                if (updatePopperPosition) {
+                  updatePopperPosition();
+                }
+              });
             }}
           >
             Custom

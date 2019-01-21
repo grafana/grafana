@@ -1,4 +1,4 @@
-$arrowSize: 10px;
+$arrowSize: 15px;
 .ColorPicker {
   @extend .popper;
 }
@@ -16,7 +16,7 @@ $arrowSize: 10px;
     border-right-color: transparent;
     border-bottom-color: transparent;
     bottom: -$arrowSize;
-    left: calc(50% - $arrowSize);
+    left: calc(50%-#{$arrowSize});
     padding-top: $arrowSize;
   }
 
@@ -26,7 +26,7 @@ $arrowSize: 10px;
     border-right-color: transparent;
     border-top-color: transparent;
     top: 0;
-    left: calc(50% - $arrowSize);
+    left: calc(50%-#{$arrowSize});
   }
 
   &[data-placement^='bottom-start'] {
@@ -44,7 +44,7 @@ $arrowSize: 10px;
     border-right-color: transparent;
     border-top-color: transparent;
     top: 0;
-    left: calc(100% - $arrowSize);
+    left: calc(100% -$arrowSize);
   }
 
   &[data-placement^='right'] {
@@ -53,7 +53,7 @@ $arrowSize: 10px;
     border-top-color: transparent;
     border-bottom-color: transparent;
     left: 0;
-    top: calc(50% - $arrowSize);
+    top: calc(50%-#{$arrowSize});
   }
 
   &[data-placement^='left'] {
@@ -62,7 +62,7 @@ $arrowSize: 10px;
     border-right-color: transparent;
     border-bottom-color: transparent;
     right: -$arrowSize;
-    top: calc(50% - $arrowSize);
+    top: calc(50%-#{$arrowSize});
   }
 }
 
@@ -148,11 +148,13 @@ $arrowSize: 10px;
 .ColorPickerPopover__tab--active {
   background: white;
 }
+
 .sp-replacer {
   background: inherit;
   border: none;
   color: inherit;
   padding: 0;
+  border-radius: 10px;
 }
 
 .sp-replacer:hover,

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 // import tinycolor, { ColorInput } from 'tinycolor2';
 
 import { Threshold } from '../../types';
-import { ColorPicker } from '../ColorPicker/ColorPicker';
+import ColorPicker  from '../ColorPicker/ColorPicker';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { colors } from '../../utils';
 

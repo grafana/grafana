@@ -172,14 +172,13 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
         {theme => {
           return (
             <SeriesColorPicker
-              optionalClass="graph-legend-icon"
               yaxis={this.props.yaxis}
               color={this.props.color}
               onChange={this.props.onColorChange}
               onToggleAxis={this.props.onToggleAxis}
               theme={theme}
             >
-              <span>
+              <span className="graph-legend-icon">
                 <SeriesIcon color={this.props.color} />
               </span>
             </SeriesColorPicker>

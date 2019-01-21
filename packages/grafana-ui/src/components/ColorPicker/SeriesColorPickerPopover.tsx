@@ -2,8 +2,9 @@ import React, { FunctionComponent } from 'react';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { Themeable } from '../../types';
 import { ColorPickerProps } from './ColorPicker';
+import  { PopperContentProps } from '../Tooltip/PopperController';
 
-export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Themeable {
+export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Themeable, PopperContentProps {
   yaxis?: number;
   onToggleAxis?: () => void;
 }
@@ -14,9 +15,10 @@ export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopove
   theme,
   yaxis,
   onToggleAxis,
+  updatePopperPosition
 }) => {
   return (
-    <ColorPickerPopover theme={theme} color={color} onChange={onChange}>
+    <ColorPickerPopover theme={theme} color={color} onChange={onChange} updatePopperPosition={updatePopperPosition}>
       <div style={{ marginTop: '32px' }}>{yaxis && <AxisSelector yaxis={yaxis} onToggleAxis={onToggleAxis} />}</div>
     </ColorPickerPopover>
   );

@@ -17,18 +17,20 @@ const transitionStyles: { [key: string]: object } = {
   exiting: { opacity: 0 },
 };
 
+export type RenderPopperArrowFn = (
+  props: {
+    arrowProps: PopperArrowProps;
+    placement: string;
+  }
+) => JSX.Element;
+
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   show: boolean;
   placement?: PopperJS.Placement;
-  content: PopperContent;
+  content: PopperContent<any>;
   referenceElement: PopperJS.ReferenceObject;
   wrapperClassName?: string;
-  renderArrow?: (
-    props: {
-      arrowProps: PopperArrowProps;
-      placement: string;
-    }
-  ) => JSX.Element;
+  renderArrow?: RenderPopperArrowFn;
 }
 
 class Popper extends PureComponent<Props> {
@@ -47,7 +49,7 @@ class Popper extends PureComponent<Props> {
                 // TODO: move modifiers config to popper controller
                 modifiers={{ preventOverflow: { enabled: true, boundariesElement: 'window' } }}
               >
-                {({ ref, style, placement, arrowProps }) => {
+                {({ ref, style, placement, arrowProps, scheduleUpdate }) => {
                   return (
                     <div
                       onMouseEnter={onMouseEnter}
@@ -62,7 +64,11 @@ class Popper extends PureComponent<Props> {
                       className={`${wrapperClassName}`}
                     >
                       <div className={className}>
-                        {content}
+                        {typeof content === 'string'
+                          ? content
+                          : React.cloneElement(content, {
+                              updatePopperPosition: scheduleUpdate,
+                            })}
                         {renderArrow &&
                           renderArrow({
                             arrowProps,

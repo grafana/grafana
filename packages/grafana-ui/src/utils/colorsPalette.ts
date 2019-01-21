@@ -125,7 +125,11 @@ const isHex = (color: string) => {
   return hexRegex.test(color);
 };
 
-export const getColorName = (color: string): Color | undefined => {
+export const getColorName = (color?: string): Color | undefined => {
+  if (!color) {
+    return undefined;
+  }
+
   if (color.indexOf('rgb') > -1) {
     return undefined;
   }

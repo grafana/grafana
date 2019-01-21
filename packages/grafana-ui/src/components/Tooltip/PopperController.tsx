@@ -1,12 +1,16 @@
 import React from 'react';
 import * as PopperJS from 'popper.js';
 
-export type PopperContent = string | JSX.Element;
+// This API allows popovers to update Popper's position when e.g. popover content chaanges
+// updatePopperPosition is delivered to content by react-popper
+export interface PopperContentProps  { updatePopperPosition?: () => void; }
+
+export type PopperContent<T extends PopperContentProps> = string | React.ReactElement<T>;
 
 export interface UsingPopperProps {
   show?: boolean;
   placement?: PopperJS.Placement;
-  content: PopperContent;
+  content: PopperContent<any>;
   children: JSX.Element;
 }
 
@@ -16,13 +20,13 @@ type PopperControllerRenderProp = (
   popperProps: {
     show: boolean;
     placement: PopperJS.Placement;
-    content: PopperContent;
+    content: PopperContent<any>;
   }
 ) => JSX.Element;
 
 interface Props {
   placement?: PopperJS.Placement;
-  content: PopperContent;
+  content: PopperContent<any>;
   className?: string;
   children: PopperControllerRenderProp;
 }
