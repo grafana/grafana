@@ -34,6 +34,7 @@ export class Settings {
   disableUserSignUp: boolean;
   loginHint: any;
   loginError: any;
+  viewersCanEdit: boolean;
 
   constructor(options) {
     const defaults = {
@@ -50,6 +51,7 @@ export class Settings {
         env: 'production',
         isEnterprise: false,
       },
+      viewersCanEdit: false,
     };
 
     _.extend(this, defaults, options);

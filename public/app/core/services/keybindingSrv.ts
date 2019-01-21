@@ -8,6 +8,7 @@ import { getExploreUrl } from 'app/core/utils/explore';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -21,7 +22,7 @@ export class KeybindingSrv {
     private $timeout,
     private datasourceSrv,
     private timeSrv,
-    private contextSrv
+    private contextSrv: ContextSrv
   ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
@@ -196,7 +197,7 @@ export class KeybindingSrv {
     });
 
     // jump to explore if permissions allow
-    if (this.contextSrv.isEditor && config.exploreEnabled) {
+    if ((this.contextSrv.isEditor || config.viewersCanEdit) && config.exploreEnabled) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
