@@ -141,9 +141,10 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 
 func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAuthToken, error) {
 	hashedToken := hashToken(unhashedToken)
+	expireBefore := now().Add(time.Duration(-86400*setting.LogInRememberDays) * time.Second).Unix()
 
 	var userToken models.UserAuthToken
-	exists, err := s.SQLStore.NewSession().Where("auth_token = ? OR prev_auth_token = ?", hashedToken, hashedToken).Get(&userToken)
+	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ?", hashedToken, hashedToken, expireBefore).Get(&userToken)
 	if err != nil {
 		return nil, err
 	}

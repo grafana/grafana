@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -58,9 +60,13 @@ func TestUserAuthToken(t *testing.T) {
 			token, err = ctx.getAuthTokenByID(token.Id)
 			So(err, ShouldBeNil)
 
-			// set now (now - 23 hours)
-			_, err = userAuthTokenService.RefreshToken(token, "192.168.10.11:1234", "some user agent")
+			now = func() time.Time {
+				return t.Add(time.Hour)
+			}
+
+			refreshed, err := userAuthTokenService.RefreshToken(token, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
+			So(refreshed, ShouldBeTrue)
 
 			_, err = userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldBeNil)
@@ -69,7 +75,9 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(stillGood, ShouldNotBeNil)
 
-			// set now (new - 2 hours)
+			now = func() time.Time {
+				return t.Add(24 * 7 * time.Hour)
+			}
 			notGood, err := userAuthTokenService.LookupToken(token.UnhashedToken)
 			So(err, ShouldEqual, ErrAuthTokenNotFound)
 			So(notGood, ShouldBeNil)
@@ -93,7 +101,7 @@ func TestUserAuthToken(t *testing.T) {
 
 			// ability to auth using an old token
 			now = func() time.Time {
-				return t
+				return t.Add(time.Hour)
 			}
 
 			refreshed, err = userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
@@ -172,6 +180,7 @@ func createTestContext(t *testing.T) *testContext {
 
 	RotateTime = 10 * time.Minute
 	UrgentRotateTime = time.Minute
+	setting.LogInRememberDays = 7
 
 	return &testContext{
 		sqlstore:     sqlstore,
