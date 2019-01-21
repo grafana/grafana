@@ -9,6 +9,10 @@ describe('PanelModel', () => {
       model = new PanelModel({
         type: 'table',
         showColumns: true,
+        targets: [
+          {refId: 'A'},
+          {noRefId: true}
+        ]
       });
     });
 
@@ -18,6 +22,10 @@ describe('PanelModel', () => {
 
     it('should set model props on instance', () => {
       expect(model.showColumns).toBe(true);
+    });
+
+    it('should add missing refIds', () => {
+      expect(model.targets[1].refId).toBe('B');
     });
 
     it('getSaveModel should remove defaults', () => {
