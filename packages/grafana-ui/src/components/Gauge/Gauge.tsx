@@ -91,7 +91,8 @@ export class Gauge extends PureComponent<Props> {
       value === null &&
       rangeToTextMapping.from &&
       rangeToTextMapping.to &&
-      (rangeToTextMapping.from.toLowerCase() === 'null' || rangeToTextMapping.to.toLowerCase() === 'null')
+      rangeToTextMapping.from.toLowerCase() === 'null' &&
+      rangeToTextMapping.to.toLowerCase() === 'null'
     ) {
       return allValueMappings.concat(rangeToTextMapping);
     }

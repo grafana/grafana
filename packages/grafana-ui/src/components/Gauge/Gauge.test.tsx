@@ -148,22 +148,9 @@ describe('Format value with value mappings', () => {
     expect(result.text).toEqual('<NULL>');
   });
 
-  it('should return if value is null and range to text mapping from is null', () => {
+  it('should return if value is null and range to text mapping from and to is null', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, operator: '', text: '<NULL>', type: MappingType.RangeToText, from: 'null', to: '10' },
-      { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
-    ];
-    const value = null;
-    const { instance } = setup({ valueMappings });
-
-    const result = instance.getFirstFormattedValueMapping(valueMappings, value);
-
-    expect(result.text).toEqual('<NULL>');
-  });
-
-  it('should return if value is null and range to text mapping to is null', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 0, operator: '', text: '<NULL>', type: MappingType.RangeToText, from: '1', to: 'null' },
+      { id: 0, operator: '', text: '<NULL>', type: MappingType.RangeToText, from: 'null', to: 'null' },
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
     const value = null;
