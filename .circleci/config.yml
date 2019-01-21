@@ -82,7 +82,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: frontend tests
+          name: Gometalinter tests
           command: './scripts/build/gometalinter.sh'
 
   test-frontend:
