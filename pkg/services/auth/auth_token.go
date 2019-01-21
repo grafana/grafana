@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -29,8 +30,9 @@ var (
 
 // UserAuthTokenService are used for generating and validating user auth tokens
 type UserAuthTokenService struct {
-	SQLStore *sqlstore.SqlStore `inject:""`
-	log      log.Logger
+	SQLStore          *sqlstore.SqlStore            `inject:""`
+	ServerLockService *serverlock.ServerLockService `inject:""`
+	log               log.Logger
 }
 
 // Init this service
@@ -239,7 +241,7 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 	}
 
 	affected, _ := res.RowsAffected()
-	s.log.Debug("rotated", "affected", affected, "auth_token_id", token.Id, "userId", token.UserId, "user_agent", userAgent, "client_ip", clientIP)
+	s.log.Debug("rotated", "affected", affected, "auth_token_id", token.Id, "userId", token.UserId)
 	if affected > 0 {
 		token.UnhashedToken = newToken
 		return true, nil
