@@ -1,4 +1,4 @@
-   // DEPENDENCIES
+// DEPENDENCIES
 @import '../../node_modules/react-table/react-table.css';
 
 // VENDOR
@@ -32,6 +32,7 @@
 @import 'utils/angular';
 @import 'utils/spacings';
 @import 'utils/widths';
+@import 'utils/hacks';
 
 // LAYOUTS
 @import 'layout/lists';
@@ -97,7 +98,6 @@
 @import 'components/add_data_source.scss';
 @import 'components/page_loader';
 @import 'components/toggle_button_group';
-@import 'components/value-mappings';
 @import 'components/popover-box';
 
 // LOAD @grafana/ui components

@@ -12,8 +12,7 @@ import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource
 import kbn from 'app/core/utils/kbn';
 
 // Types
-import { DataQueryOptions, DataQueryResponse } from 'app/types';
-import { TimeRange, TimeSeries, LoadingState } from '@grafana/ui';
+import { TimeRange, TimeSeries, LoadingState, DataQueryResponse, DataQueryOptions } from '@grafana/ui/src/types';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 

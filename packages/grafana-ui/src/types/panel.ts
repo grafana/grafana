@@ -1,6 +1,8 @@
 import { TimeSeries, LoadingState } from './series';
 import { TimeRange } from './time';
 
+export type InterpolateFunction = (value: string, format?: string | Function) => string;
+
 export interface PanelProps<T = any> {
   timeSeries: TimeSeries[];
   timeRange: TimeRange;
@@ -9,6 +11,7 @@ export interface PanelProps<T = any> {
   renderCounter: number;
   width: number;
   height: number;
+  onInterpolate: InterpolateFunction;
 }
 
 export interface PanelOptionsProps<T = any> {
@@ -53,6 +56,8 @@ interface BaseMap {
   type: MappingType;
 }
 
+export type ValueMapping = ValueMap | RangeMap;
+
 export interface ValueMap extends BaseMap {
   value: string;
 }
@@ -60,4 +65,11 @@ export interface ValueMap extends BaseMap {
 export interface RangeMap extends BaseMap {
   from: string;
   to: string;
+}
+
+export type ThemeName = 'dark' | 'light';
+
+export enum ThemeNames {
+  Dark = 'dark',
+  Light = 'light',
 }

@@ -1,7 +1,10 @@
-import { Emitter } from 'app/core/utils/emitter';
+// Libraries
 import _ from 'lodash';
+
+// Types
+import { Emitter } from 'app/core/utils/emitter';
 import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
-import { DataQuery } from 'app/types';
+import { DataQuery } from '@grafana/ui/src/types';
 
 export interface GridPos {
   x: number;
@@ -52,7 +55,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
-  nullPointMode: true,
   cachedPluginOptions: true,
   transparent: true,
 };
@@ -241,8 +243,6 @@ export class PanelModel {
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = this.getNextQueryLetter();
-    query.isNew = true;
-
     this.targets.push(query);
   }
 

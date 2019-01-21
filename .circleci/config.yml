@@ -323,7 +323,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.1.0
+      - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - attach_workspace:
           at: .
@@ -346,7 +346,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.1.0
+    - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - attach_workspace:
          at: .
@@ -370,15 +370,15 @@ jobs:
           command: './scripts/build/load-signing-key.sh'
       - run:
           name: Update Debian repository
-          command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
       - run:
           name: Update RPM repository
-          command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
 
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.1.0
+      - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - attach_workspace:
           at: .
@@ -408,7 +408,7 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.1.0
+      - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - checkout
       - attach_workspace:
@@ -433,10 +433,10 @@ jobs:
           command: './scripts/build/load-signing-key.sh'
       - run:
           name: Update Debian repository
-          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
       - run:
           name: Update RPM repository
-          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
 
 workflows:
   version: 2

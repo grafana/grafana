@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import Transition from 'react-transition-group/Transition';
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
   unmountOnExit?: boolean;
 }
 
-export const FadeIn: SFC<Props> = props => {
+export const FadeIn: FC<Props> = props => {
   const defaultStyle = {
     transition: `opacity ${props.duration}ms linear`,
     opacity: 0,

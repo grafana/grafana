@@ -14,7 +14,7 @@ import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
-import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
+import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 
 /** @ngInject */
@@ -78,7 +78,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
       resolve: {
-        component: () => DataSourceSettings,
+        component: () => DataSourceSettingsPage,
       },
     })
     .when('/datasources/edit/:id/dashboards', {
