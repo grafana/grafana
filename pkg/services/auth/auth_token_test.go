@@ -19,7 +19,7 @@ func TestUserAuthToken(t *testing.T) {
 		userID := int64(10)
 
 		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
-		now = func() time.Time {
+		getTime = func() time.Time {
 			return t
 		}
 
@@ -60,7 +60,7 @@ func TestUserAuthToken(t *testing.T) {
 			token, err = ctx.getAuthTokenByID(token.Id)
 			So(err, ShouldBeNil)
 
-			now = func() time.Time {
+			getTime = func() time.Time {
 				return t.Add(time.Hour)
 			}
 
@@ -75,7 +75,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(stillGood, ShouldNotBeNil)
 
-			now = func() time.Time {
+			getTime = func() time.Time {
 				return t.Add(24 * 7 * time.Hour)
 			}
 			notGood, err := userAuthTokenService.LookupToken(token.UnhashedToken)
@@ -102,7 +102,7 @@ func TestUserAuthToken(t *testing.T) {
 			token, err = ctx.getAuthTokenByID(token.Id)
 			So(err, ShouldBeNil)
 
-			now = func() time.Time {
+			getTime = func() time.Time {
 				return t.Add(time.Hour)
 			}
 
@@ -116,7 +116,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			token.UnhashedToken = unhashedToken
 
-			So(token.RotatedAt, ShouldEqual, now().Unix())
+			So(token.RotatedAt, ShouldEqual, getTime().Unix())
 			So(token.ClientIp, ShouldEqual, "192.168.10.12")
 			So(token.UserAgent, ShouldEqual, "a new user agent")
 			So(token.AuthTokenSeen, ShouldBeFalse)
@@ -129,7 +129,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(lookedUp, ShouldNotBeNil)
 			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
-			So(lookedUp.SeenAt, ShouldEqual, now().Unix())
+			So(lookedUp.SeenAt, ShouldEqual, getTime().Unix())
 
 			lookedUp, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
@@ -137,7 +137,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(lookedUp.Id, ShouldEqual, token.Id)
 			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
 
-			now = func() time.Time {
+			getTime = func() time.Time {
 				return t.Add(time.Hour + (2 * time.Minute))
 			}
 
@@ -170,7 +170,7 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Reset(func() {
-			now = time.Now
+			getTime = time.Now
 		})
 	})
 }
