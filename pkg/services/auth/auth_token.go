@@ -190,7 +190,7 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 		needsRotation = rotatedAt.Before(now().Add(time.Duration(-30) * time.Second))
 	}
 
-	s.log.Info("refresh token", "needs rotation?", needsRotation, "auth_token_seen", token.AuthTokenSeen, "rotated_at", rotatedAt, "token.Id", token.Id)
+	s.log.Debug("refresh token", "needs rotation?", needsRotation, "auth_token_seen", token.AuthTokenSeen, "rotated_at", rotatedAt, "token.Id", token.Id)
 	if !needsRotation {
 		return false, nil
 	}
@@ -216,7 +216,7 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 	}
 
 	affected, _ := res.RowsAffected()
-	s.log.Info("rotated", "affected", affected, "auth_token_id", token.Id, "userId", token.UserId, "user_agent", userAgent, "client_ip", clientIP)
+	s.log.Debug("rotated", "affected", affected, "auth_token_id", token.Id, "userId", token.UserId, "user_agent", userAgent, "client_ip", clientIP)
 	if affected > 0 {
 		token.UnhashedToken = newToken
 		return true, nil

@@ -61,28 +61,6 @@ func GetContextHandler(ats *auth.UserAuthTokenService) macaron.Handler {
 
 		c.Map(ctx)
 
-		//if signed in with token
-		rotated, err := ats.RefreshToken(ctx.UserToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
-		if err != nil {
-			ctx.Logger.Error("failed to rotate token", "error", err)
-			return
-		}
-
-		if rotated {
-			ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
-			ctx.Resp.Header().Del("Set-Cookie")
-			cookie := http.Cookie{
-				Name:     "grafana_session",
-				Value:    url.QueryEscape(ctx.UserToken.UnhashedToken),
-				HttpOnly: true,
-				//MaxAge:   600,
-				Domain: setting.Domain,
-				Path:   setting.AppSubUrl + "/",
-			}
-
-			ctx.Resp.Header().Add("Set-Cookie", cookie.String())
-		}
-
 		// update last seen every 5min
 		if ctx.ShouldUpdateLastSeenAt() {
 			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
@@ -114,6 +92,7 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 }
 
 func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthTokenService) bool {
+	//auth User
 	unhashedToken := ctx.GetCookie("grafana_session")
 	if unhashedToken == "" {
 		return false
@@ -134,6 +113,27 @@ func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthToken
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
 	ctx.UserToken = user
+
+	//rotate session token if needed.
+	rotated, err := ts.RefreshToken(ctx.UserToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
+	if err != nil {
+		ctx.Logger.Error("failed to rotate token", "error", err, "user.id", user.UserId, "user_token.id", user.Id)
+		return true
+	}
+
+	if rotated {
+		ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
+		ctx.Resp.Header().Del("Set-Cookie")
+		cookie := http.Cookie{
+			Name:     "grafana_session",
+			Value:    url.QueryEscape(ctx.UserToken.UnhashedToken),
+			HttpOnly: true,
+			Domain:   setting.Domain,
+			Path:     setting.AppSubUrl + "/",
+		}
+
+		ctx.Resp.Header().Add("Set-Cookie", cookie.String())
+	}
 
 	return true
 }
