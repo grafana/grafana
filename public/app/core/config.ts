@@ -35,7 +35,7 @@ export class Settings {
   loginHint: any;
   loginError: any;
   viewersCanEdit: boolean;
-  sanitizeInput: boolean;
+  disableSanitizeInput: boolean;
 
   constructor(options: Settings) {
     const defaults = {
@@ -53,7 +53,7 @@ export class Settings {
         isEnterprise: false,
       },
       viewersCanEdit: false,
-      sanitizeInput: true
+      disableSanitizeInput: false
     };
 
     _.extend(this, defaults, options);
