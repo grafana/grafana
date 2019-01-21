@@ -132,7 +132,7 @@ func initContextWithToken(ctx *m.ReqContext, orgID int64, ts *auth.UserAuthToken
 			Path:     setting.AppSubUrl + "/",
 		}
 
-		ctx.Resp.Header().Add("Set-Cookie", cookie.String())
+		http.SetCookie(ctx.Resp, &cookie)
 	}
 
 	return true

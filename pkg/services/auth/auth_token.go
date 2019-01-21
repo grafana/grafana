@@ -19,7 +19,11 @@ func init() {
 	registry.RegisterService(&UserAuthTokenService{})
 }
 
-var now = time.Now
+var (
+	now              = time.Now
+	RotateTime       = 10 * time.Second
+	UrgentRotateTime = 5 * time.Second
+)
 
 // UserAuthTokenService are used for generating and validating user auth tokens
 type UserAuthTokenService struct {
@@ -50,7 +54,7 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 		Path:     setting.AppSubUrl + "/",
 	}
 
-	c.Resp.Header().Add("Set-Cookie", cookie.String())
+	http.SetCookie(c.Resp, &cookie)
 
 	return nil
 }
@@ -61,12 +65,10 @@ func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
 		Name:     sessionCookieKey,
 		Value:    "",
 		HttpOnly: true,
-		MaxAge:   -1,
 		Domain:   setting.Domain,
 		Path:     setting.AppSubUrl + "/",
 	}
-
-	c.Resp.Header().Add("Set-Cookie", cookie.String())
+	http.SetCookie(c.Resp, &cookie)
 }
 
 func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserAuthToken, error) {
@@ -115,7 +117,7 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAu
 
 	if userToken.AuthToken != hashedToken && userToken.PrevAuthToken == hashedToken && userToken.AuthTokenSeen {
 		userToken.AuthTokenSeen = false
-		expireBefore := now().Add(-1 * time.Minute).Unix()
+		expireBefore := now().Add(-RotateTime).Unix()
 		affectedRows, err := s.SQLStore.NewSession().Where("id = ? AND prev_auth_token = ? AND rotated_at < ?", userToken.Id, userToken.PrevAuthToken, expireBefore).AllCols().Update(&userToken)
 		if err != nil {
 			return nil, err
@@ -158,12 +160,12 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 		return false, nil
 	}
 
-	var needsRotation = false
+	needsRotation := false
 	rotatedAt := time.Unix(token.RotatedAt, 0)
 	if token.AuthTokenSeen {
-		needsRotation = rotatedAt.Before(now().Add(time.Duration(-1) * time.Minute))
+		needsRotation = rotatedAt.Before(now().Add(-RotateTime))
 	} else {
-		needsRotation = rotatedAt.Before(now().Add(time.Duration(-30) * time.Second))
+		needsRotation = rotatedAt.Before(now().Add(-UrgentRotateTime))
 	}
 
 	s.log.Debug("refresh token", "needs rotation?", needsRotation, "auth_token_seen", token.AuthTokenSeen, "rotated_at", rotatedAt, "token.Id", token.Id)
@@ -171,6 +173,7 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 		return false, nil
 	}
 
+	clientIP = util.ParseIPAddress(clientIP)
 	newToken, _ := util.RandomHex(16)
 	hashedToken := hashToken(newToken)
 
@@ -186,7 +189,7 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 			rotated_at = ?
 		WHERE id = ? AND (auth_token_seen or rotated_at < ?)`
 
-	res, err := s.SQLStore.NewSession().Exec(sql, userAgent, clientIP, hashedToken, now().Unix(), token.Id, now().Add(time.Duration(-30)*time.Second))
+	res, err := s.SQLStore.NewSession().Exec(sql, userAgent, clientIP, hashedToken, now().Unix(), token.Id, now().Add(-UrgentRotateTime))
 	if err != nil {
 		return false, err
 	}

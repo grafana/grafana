@@ -170,6 +170,9 @@ func createTestContext(t *testing.T) *testContext {
 		log:      log.New("test-logger"),
 	}
 
+	RotateTime = 10 * time.Minute
+	UrgentRotateTime = time.Minute
+
 	return &testContext{
 		sqlstore:     sqlstore,
 		tokenService: tokenService,
