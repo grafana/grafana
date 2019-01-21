@@ -60,8 +60,12 @@ export class Gauge extends PureComponent<Props> {
   }
 
   addValueToTextMappingText(allValueMappings: ValueMapping[], valueToTextMapping: ValueMap, value: TimeSeriesValue) {
-    if (!valueToTextMapping.value) {
+    if (valueToTextMapping.value === undefined) {
       return allValueMappings;
+    }
+
+    if (value === null && valueToTextMapping.value && valueToTextMapping.value.toLowerCase() === 'null') {
+      return allValueMappings.concat(valueToTextMapping);
     }
 
     const valueAsNumber = parseFloat(value as string);
@@ -79,8 +83,17 @@ export class Gauge extends PureComponent<Props> {
   }
 
   addRangeToTextMappingText(allValueMappings: ValueMapping[], rangeToTextMapping: RangeMap, value: TimeSeriesValue) {
-    if (!rangeToTextMapping.from || !rangeToTextMapping.to || !value) {
+    if (rangeToTextMapping.from === undefined || rangeToTextMapping.to === undefined || value === undefined) {
       return allValueMappings;
+    }
+
+    if (
+      value === null &&
+      rangeToTextMapping.from &&
+      rangeToTextMapping.to &&
+      (rangeToTextMapping.from.toLowerCase() === 'null' || rangeToTextMapping.to.toLowerCase() === 'null')
+    ) {
+      return allValueMappings.concat(rangeToTextMapping);
     }
 
     const valueAsNumber = parseFloat(value as string);
@@ -139,8 +152,9 @@ export class Gauge extends PureComponent<Props> {
 
     const formatFunc = getValueFormat(unit);
     const formattedValue = formatFunc(value as number, decimals);
+    const handleNoValueValue = formattedValue || 'no value';
 
-    return `${prefix} ${formattedValue} ${suffix}`;
+    return `${prefix} ${handleNoValueValue} ${suffix}`;
   }
 
   getFontColor(value: TimeSeriesValue) {
@@ -204,7 +218,7 @@ export class Gauge extends PureComponent<Props> {
     if (timeSeries[0]) {
       value = timeSeries[0].stats[stat];
     } else {
-      value = 'N/A';
+      value = null;
     }
 
     const dimension = Math.min(width, height * 1.3);
