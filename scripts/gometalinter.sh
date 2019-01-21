@@ -1,4 +1,15 @@
-#!/bin/bash -e
+#!/bin/bash
+
+function exit_if_fail {
+    command=$@
+    echo "Executing '$command'"
+    eval $command
+    rc=$?
+    if [ $rc -ne 0 ]; then
+        echo "'$command' returned $rc."
+        exit $rc
+    fi
+}
 
 go get -u github.com/alecthomas/gometalinter
 go get -u github.com/tsenart/deadcode
@@ -9,7 +20,7 @@ go get -u github.com/mdempsky/unconvert
 go get -u github.com/opennota/check/cmd/varcheck
 go get -u honnef.co/go/tools/cmd/staticcheck
 
-gometalinter --enable-gc --vendor --deadline 10m --disable-all \
+exit_if_fail gometalinter --enable-gc --vendor --deadline 10m --disable-all \
   --enable=deadcode \
   --enable=goconst \
   --enable=gofmt \
@@ -19,4 +30,4 @@ gometalinter --enable-gc --vendor --deadline 10m --disable-all \
   --enable=varcheck \
   --enable=staticcheck
 
-go vet ./pkg/...
+exit_if_fail go vet ./pkg/...
