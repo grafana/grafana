@@ -10,6 +10,11 @@
 
 .dashlist-link {
   @include list-item();
+  display: flex;
+  flex-grow: 1;
+  height: 37px;
+  white-space: nowrap;
+  padding: 0px;
 
   .fa {
     padding-top: 3px;
@@ -17,9 +22,31 @@
 
   .dashlist-star {
     float: right;
+    padding: 10px;
   }
 
   .fa-star {
     color: $orange;
   }
+
+  .dashlist-link-body {
+    flex: 1 1 auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 10px;
+  }
+}
+
+.dashlist-title {
+  color: $list-item-link-color;
+}
+
+.dashlist-folder-title {
+  color: $text-color-weak;
+  font-size: $font-size-xs;
+  line-height: 11px;
+  position: relative;
+  top: -1px;
 }

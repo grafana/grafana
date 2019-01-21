@@ -8,6 +8,7 @@ class DashListCtrl extends PanelCtrl {
 
   groups: any[];
   modes: any[];
+  showFolderNameOption: boolean;
 
   panelDefaults = {
     query: '',
@@ -18,6 +19,7 @@ class DashListCtrl extends PanelCtrl {
     starred: true,
     headings: true,
     folderId: null,
+    showFolderName: false,
   };
 
   /** @ngInject */
@@ -38,6 +40,7 @@ class DashListCtrl extends PanelCtrl {
       { list: [], show: false, header: 'Recently viewed dashboards' },
       { list: [], show: false, header: 'Search' },
     ];
+    this.showFolderNameOption = _.isNull(this.panel.folderId);
 
     // update capability
     if (this.panel.mode) {
@@ -138,6 +141,8 @@ class DashListCtrl extends PanelCtrl {
 
   onFolderChange(folder: any) {
     this.panel.folderId = folder.id;
+    this.panel.showFolderName = false;
+    this.showFolderNameOption = _.isNull(folder.id);
     this.refresh();
   }
 }

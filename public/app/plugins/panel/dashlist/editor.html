@@ -22,15 +22,17 @@
       <input type="text" class="gf-form-input" placeholder="title query" ng-model="ctrl.panel.query" ng-change="ctrl.refresh()" ng-model-onblur>
     </div>
 
-    <div class="gf-form">
-      <folder-picker  initial-folder-id="ctrl.panel.folderId"
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <folder-picker  initial-folder-id="ctrl.panel.folderId"
 											on-change="ctrl.onFolderChange($folder)"
                       label-class="width-6"
                       initial-title="'All'"
                       enable-reset="true">
-			</folder-picker>
+      </folder-picker>
+      </div>
+      <gf-form-switch class="gf-form" label="Folder names" label-class="width-9" ng-show="ctrl.showFolderNameOption" checked="ctrl.panel.showFolderName" on-change="ctrl.refresh()"></gf-form-switch>
     </div>
-
     <div class="gf-form">
       <span class="gf-form-label width-6">Tags</span>
       <bootstrap-tagsinput ng-model="ctrl.panel.tags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="ctrl.refresh()">
