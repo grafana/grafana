@@ -162,11 +162,122 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Convey("keeps prev token valid for 1 minute after it is confirmed", func() {
+			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			So(err, ShouldBeNil)
+			So(token, ShouldNotBeNil)
 
+			lookedUp, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			So(err, ShouldBeNil)
+			So(lookedUp, ShouldNotBeNil)
+
+			getTime = func() time.Time {
+				return t.Add(10 * time.Minute)
+			}
+
+			prevToken := token.UnhashedToken
+			refreshed, err := userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+			So(err, ShouldBeNil)
+			So(refreshed, ShouldBeTrue)
+
+			getTime = func() time.Time {
+				return t.Add(20 * time.Minute)
+			}
+
+			current, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			So(err, ShouldBeNil)
+			So(current, ShouldNotBeNil)
+
+			prev, err := userAuthTokenService.LookupToken(prevToken)
+			So(err, ShouldBeNil)
+			So(prev, ShouldNotBeNil)
 		})
 
 		Convey("will not mark token unseen when prev and current are the same", func() {
+			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			So(err, ShouldBeNil)
+			So(token, ShouldNotBeNil)
 
+			lookedUp, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			So(err, ShouldBeNil)
+			So(lookedUp, ShouldNotBeNil)
+
+			lookedUp, err = userAuthTokenService.LookupToken(token.UnhashedToken)
+			So(err, ShouldBeNil)
+			So(lookedUp, ShouldNotBeNil)
+
+			lookedUp, err = ctx.getAuthTokenByID(lookedUp.Id)
+			So(err, ShouldBeNil)
+			So(lookedUp, ShouldNotBeNil)
+			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
+		})
+
+		Convey("Rotate token", func() {
+			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			So(err, ShouldBeNil)
+			So(token, ShouldNotBeNil)
+
+			prevToken := token.AuthToken
+
+			Convey("Should rotate current token and previous token when auth token seen", func() {
+				updated, err := ctx.markAuthTokenAsSeen(token.Id)
+				So(err, ShouldBeNil)
+				So(updated, ShouldBeTrue)
+
+				getTime = func() time.Time {
+					return t.Add(10 * time.Minute)
+				}
+
+				refreshed, err := userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+				So(err, ShouldBeNil)
+				So(refreshed, ShouldBeTrue)
+
+				storedToken, err := ctx.getAuthTokenByID(token.Id)
+				So(err, ShouldBeNil)
+				So(storedToken, ShouldNotBeNil)
+				So(storedToken.AuthTokenSeen, ShouldBeFalse)
+				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
+				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
+
+				prevToken = storedToken.AuthToken
+
+				updated, err = ctx.markAuthTokenAsSeen(token.Id)
+				So(err, ShouldBeNil)
+				So(updated, ShouldBeTrue)
+
+				getTime = func() time.Time {
+					return t.Add(20 * time.Minute)
+				}
+
+				refreshed, err = userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+				So(err, ShouldBeNil)
+				So(refreshed, ShouldBeTrue)
+
+				storedToken, err = ctx.getAuthTokenByID(token.Id)
+				So(err, ShouldBeNil)
+				So(storedToken, ShouldNotBeNil)
+				So(storedToken.AuthTokenSeen, ShouldBeFalse)
+				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
+				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
+			})
+
+			Convey("Should rotate current token, but keep previous token when auth token not seen", func() {
+				token.RotatedAt = getTime().Add(-2 * time.Minute).Unix()
+
+				getTime = func() time.Time {
+					return t.Add(2 * time.Minute)
+				}
+
+				refreshed, err := userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+				So(err, ShouldBeNil)
+				So(refreshed, ShouldBeTrue)
+
+				storedToken, err := ctx.getAuthTokenByID(token.Id)
+				So(err, ShouldBeNil)
+				So(storedToken, ShouldNotBeNil)
+				So(storedToken.AuthTokenSeen, ShouldBeFalse)
+				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
+				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
+			})
 		})
 
 		Reset(func() {

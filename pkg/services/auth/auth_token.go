@@ -223,19 +223,20 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 	newToken, _ := util.RandomHex(16)
 	hashedToken := hashToken(newToken)
 
+	// very important that auth_token_seen is set after the prev_auth_token = case when ... for mysql to function correctly
 	sql := `
 		UPDATE user_auth_token
 		SET
-			auth_token_seen = false,
-			seen_at = null,
+			seen_at = 0,
 			user_agent = ?,
 			client_ip = ?,
-			prev_auth_token = case when auth_token_seen then auth_token else prev_auth_token end,
+			prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
 			auth_token = ?,
+			auth_token_seen = ?,
 			rotated_at = ?
-		WHERE id = ? AND (auth_token_seen or rotated_at < ?)`
+		WHERE id = ? AND (auth_token_seen = ? OR rotated_at < ?)`
 
-	res, err := s.SQLStore.NewSession().Exec(sql, userAgent, clientIP, hashedToken, now.Unix(), token.Id, now.Add(-UrgentRotateTime))
+	res, err := s.SQLStore.NewSession().Exec(sql, userAgent, clientIP, s.SQLStore.Dialect.BooleanStr(true), hashedToken, s.SQLStore.Dialect.BooleanStr(false), now.Unix(), token.Id, s.SQLStore.Dialect.BooleanStr(true), now.Add(-30*time.Second).Unix())
 	if err != nil {
 		return false, err
 	}
