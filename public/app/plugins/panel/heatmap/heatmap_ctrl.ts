@@ -304,6 +304,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   onCardColorChange(newColor) {
+    console.log(newColor)
     this.panel.color.cardColor = newColor;
     this.render();
   }

@@ -1,7 +1,13 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
 import moment from 'moment';
-import config from 'app/core/config';
+import { GrafanaTheme } from '@grafana/ui';
+import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
+
+type TimeRegionColorDefinition = {
+  fill: string;
+  line: string;
+};
 
 export const colorModes = {
   gray: {
@@ -38,31 +44,35 @@ export function getColorModes() {
   });
 }
 
-function getColor(timeRegion) {
+function getColor(timeRegion, theme: GrafanaTheme): TimeRegionColorDefinition {
   if (Object.keys(colorModes).indexOf(timeRegion.colorMode) === -1) {
     timeRegion.colorMode = 'red';
   }
 
   if (timeRegion.colorMode === 'custom') {
     return {
-      fill: timeRegion.fillColor,
-      line: timeRegion.lineColor,
+      fill: getColorFromHexRgbOrName(timeRegion.fillColor, theme),
+      line: getColorFromHexRgbOrName(timeRegion.lineColor, theme),
     };
   }
 
   const colorMode = colorModes[timeRegion.colorMode];
+
   if (colorMode.themeDependent === true) {
-    return config.bootData.user.lightTheme ? colorMode.lightColor : colorMode.darkColor;
+    return theme === GrafanaTheme.Light ? colorMode.lightColor : colorMode.darkColor;
   }
 
-  return colorMode.color;
+  return {
+    fill: getColorFromHexRgbOrName(colorMode.color.fill, theme),
+    line: getColorFromHexRgbOrName(colorMode.color.line, theme),
+  };
 }
 
 export class TimeRegionManager {
   plot: any;
   timeRegions: any;
 
-  constructor(private panelCtrl) {}
+  constructor(private panelCtrl, private theme: GrafanaTheme = GrafanaTheme.Dark) {}
 
   draw(plot) {
     this.timeRegions = this.panelCtrl.panel.timeRegions;
@@ -76,7 +86,7 @@ export class TimeRegionManager {
 
     const tRange = { from: moment(this.panelCtrl.range.from).utc(), to: moment(this.panelCtrl.range.to).utc() };
 
-    let i, hRange, timeRegion, regions, fromStart, fromEnd, timeRegionColor;
+    let i, hRange, timeRegion, regions, fromStart, fromEnd, timeRegionColor: TimeRegionColorDefinition;
 
     const timeRegionsCopy = panel.timeRegions.map(a => ({ ...a }));
 
@@ -200,7 +210,7 @@ export class TimeRegionManager {
         }
       }
 
-      timeRegionColor = getColor(timeRegion);
+      timeRegionColor = getColor(timeRegion, this.theme);
 
       for (let j = 0; j < regions.length; j++) {
         const r = regions[j];
