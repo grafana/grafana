@@ -25,7 +25,6 @@ export class CustomScrollbar extends PureComponent<Props> {
     autoHideDuration: 200,
     autoMaxHeight: '100%',
     hideTracksWhenNotNeeded: false,
-    scrollTop: 0,
     setScrollTop: () => {},
     autoHeightMin: '0'
   };

@@ -51,7 +51,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       target: query,
       panel: panel,
       refresh: () => panel.refresh(),
-      render: () => panel.render,
+      render: () => panel.render(),
       events: panel.events,
     };
   }
@@ -205,7 +205,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             {inMixedMode && <em className="query-editor-row__context-info"> ({datasourceName})</em>}
             {isDisabled && <em className="query-editor-row__context-info"> Disabled</em>}
           </div>
-          <div className="query-editor-row__collapsed-text">
+          <div className="query-editor-row__collapsed-text" onClick={this.onToggleEditMode}>
             {isCollapsed && <div>{this.renderCollapsedText()}</div>}
           </div>
           <div className="query-editor-row__actions">

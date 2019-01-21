@@ -55,7 +55,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
-  nullPointMode: true,
   cachedPluginOptions: true,
   transparent: true,
 };
@@ -244,8 +243,6 @@ export class PanelModel {
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = this.getNextQueryLetter();
-    query.isNew = true;
-
     this.targets.push(query);
   }
 

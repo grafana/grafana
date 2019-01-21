@@ -1,4 +1,6 @@
 import LokiDatasource from './datasource';
+import { LokiQuery } from './types';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('LokiDatasource', () => {
   const instanceSettings: any = {
@@ -13,12 +15,13 @@ describe('LokiDatasource', () => {
       replace: a => a,
     };
 
-    const range = { from: 'now-6h', to: 'now' };
-
     test('should use default max lines when no limit given', () => {
       const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn();
-      ds.query({ range, targets: [{ expr: 'foo' }] });
+      const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
+
+      ds.query(options);
+
       expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
       expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=1000');
     });
@@ -28,7 +31,10 @@ describe('LokiDatasource', () => {
       const customSettings = { ...instanceSettings, jsonData: customData };
       const ds = new LokiDatasource(customSettings, backendSrvMock, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn();
-      ds.query({ range, targets: [{ expr: 'foo' }] });
+
+      const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
+      ds.query(options);
+
       expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
       expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=20');
     });

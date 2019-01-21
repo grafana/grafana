@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 
 // Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { getIntervals } from 'app/core/utils/explore';
 import { getTimeSrv } from 'app/features/dashboard/time_srv';
 
 // Types
@@ -37,8 +36,9 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
     const target = { datasource: datasource.name, ...initialQuery };
     const scopeProps = {
-      target,
       ctrl: {
+        datasource,
+        target,
         refresh: () => {
           this.props.onQueryChange(target, false);
           this.props.onExecuteQuery();
@@ -48,11 +48,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
           datasource,
           targets: [target],
         },
-        dashboard: {
-          getNextQueryLetter: x => '',
-        },
-        hideEditorRowActions: true,
-        ...getIntervals(range, (datasource || {}).interval, null), // Possible to get resolution?
+        dashboard: {},
       },
     };
 

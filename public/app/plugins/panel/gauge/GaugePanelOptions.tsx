@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import {
-  BasicGaugeColor,
   PanelOptionsProps,
   ThresholdsEditor,
   Threshold,
@@ -15,7 +14,6 @@ import { GaugeOptions } from './types';
 
 export const defaultProps = {
   options: {
-    baseColor: BasicGaugeColor.Green,
     minValue: 0,
     maxValue: 100,
     prefix: '',

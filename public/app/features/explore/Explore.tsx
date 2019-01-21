@@ -242,11 +242,14 @@ export class Explore extends React.PureComponent<ExploreProps> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                Close Split
-              </button>
-            </div>
+            <>
+              <div className="navbar-page-btn" />
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                  Close Split
+                </button>
+              </div>
+            </>
           )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
@@ -274,7 +277,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
           <div className="navbar-buttons relative">
             <button className="btn navbar-button navbar-button--primary" onClick={this.onSubmit}>
               Run Query{' '}
-              {loading ? <i className="fa fa-spinner fa-fw fa-spin run-icon" /> : <i className="fa fa-level-down fa-fw run-icon" />}
+              {loading ? (
+                <i className="fa fa-spinner fa-fw fa-spin run-icon" />
+              ) : (
+                <i className="fa fa-level-down fa-fw run-icon" />
+              )}
             </button>
           </div>
         </div>
