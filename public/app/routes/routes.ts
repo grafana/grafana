@@ -16,6 +16,7 @@ import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
 import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
+import config from 'app/core/config';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -129,7 +130,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        roles: () => ['Editor', 'Admin'],
+        roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })
