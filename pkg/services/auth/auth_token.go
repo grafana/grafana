@@ -21,8 +21,8 @@ func init() {
 
 var (
 	now              = time.Now
-	RotateTime       = 10 * time.Second
-	UrgentRotateTime = 5 * time.Second
+	RotateTime       = 1 * time.Minute
+	UrgentRotateTime = 30 * time.Second
 )
 
 // UserAuthTokenService are used for generating and validating user auth tokens
