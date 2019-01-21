@@ -57,11 +57,13 @@ export default class KustoCodeEditor {
       includeControlCommands: true,
       newlineAfterPipe: true,
       useIntellisenseV2: false,
+      useSemanticColorization: true,
     });
 
     this.codeEditor = monaco.editor.create(this.containerDiv, {
       value: scope.content || 'Write your query here',
       language: 'kusto',
+      // language: 'go',
       selectionHighlight: false,
       theme: themeName,
       folding: true,

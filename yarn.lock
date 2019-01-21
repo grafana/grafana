@@ -654,6 +654,23 @@
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/@emotion/utils/-/utils-0.8.2.tgz#576ff7fb1230185b619a75d258cbc98f0867a8dc"
 
+"@kusto/language-service-next@0.0.25-alpha1":
+  version "0.0.25-alpha1"
+  resolved "https://registry.yarnpkg.com/@kusto/language-service-next/-/language-service-next-0.0.25-alpha1.tgz#73977b0873c7c2a23ae0c2cc1fef95a68c723c09"
+  integrity sha512-xxdY+Ei+e/GuzWZYoyjQqOfuzwVPMfHJwPRcxOdcSq5XMt9oZS+ryVH66l+CBxdZDdxEfQD2evVTXLjOAck5Rg==
+
+"@kusto/language-service@0.0.22-alpha":
+  version "0.0.22-alpha"
+  resolved "https://registry.yarnpkg.com/@kusto/language-service/-/language-service-0.0.22-alpha.tgz#990bbfb82e8e8991c35a12aab00d890a05fff623"
+  integrity sha512-oYiakH2Lq4j7ghahAtqxC+nuOKybH03H1o3IWyB3p8Ll4WkYQOrV8GWpqEjPtMfsuOt3t5k55OzzwDWFaX2zlw==
+
+"@kusto/monaco-kusto@https://github.com/grafana/monaco-kusto":
+  version "0.2.2"
+  resolved "https://github.com/grafana/monaco-kusto#877c1a5003510af51636281a7ce36ad3731c458a"
+  dependencies:
+    "@kusto/language-service" "0.0.22-alpha"
+    "@kusto/language-service-next" "0.0.25-alpha1"
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
@@ -10907,6 +10924,13 @@ regex-not@^1.0.0, regex-not@^1.0.2:
     extend-shallow "^3.0.2"
     safe-regex "^1.1.0"
 
+regexp-replace-loader@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/regexp-replace-loader/-/regexp-replace-loader-1.0.1.tgz#5dae73be9ee82a4d94d0955c2fa3fc923e134d7e"
+  integrity sha1-Xa5zvp7oKk2U0JVcL6P8kj4TTX4=
+  dependencies:
+    loader-utils "^1.0.2"
+
 regexpu-core@^1.0.0:
   version "1.0.0"
   resolved "http://registry.npmjs.org/regexpu-core/-/regexpu-core-1.0.0.tgz#86a763f58ee4d7c2f6b102e4764050de7ed90c6b"
@@ -12953,6 +12977,11 @@ vm-browserify@0.0.4:
   resolved "http://registry.npmjs.org/vm-browserify/-/vm-browserify-0.0.4.tgz#5d7ea45bbef9e4a6ff65f95438e0a87c357d5a73"
   dependencies:
     indexof "0.0.1"
+
+vscode-languageserver-types@^3.14.0:
+  version "3.14.0"
+  resolved "https://registry.yarnpkg.com/vscode-languageserver-types/-/vscode-languageserver-types-3.14.0.tgz#d3b5952246d30e5241592b6dde8280e03942e743"
+  integrity sha512-lTmS6AlAlMHOvPQemVwo3CezxBp0sNB95KNPkqp3Nxd5VFEnuG1ByM0zlRWos0zjO3ZWtkvhal0COgiV1xIA4A==
 
 w3c-blob@0.0.1:
   version "0.0.1"

@@ -1,9 +1,23 @@
 // tslint:disable-next-line:no-reference
-///<reference path="../../../../../../node_modules/monaco-editor/monaco.d.ts" />
+// ///<reference path="../../../../../../node_modules/monaco-editor/monaco.d.ts" />
 
 import angular from 'angular';
 import KustoCodeEditor from './kusto_code_editor';
 import config from 'app/core/config';
+
+/**
+ * Load monaco code editor and its' dependencies as a separate webpack chunk.
+ */
+function importMonaco() {
+  return import(
+    /* webpackChunkName: "monaco" */
+    './monaco-loader'
+  ).then(monaco => {
+    return monaco;
+  }).catch(error => {
+    console.error('An error occurred while loading monaco-kusto:\n', error);
+  });
+}
 
 const editorTemplate = `<div id="content" tabindex="0" style="width: 100%; height: 120px"></div>`;
 
@@ -11,7 +25,8 @@ function link(scope, elem, attrs) {
   const containerDiv = elem.find('#content')[0];
 
   if (!(global as any).monaco) {
-    (global as any).System.import(`./${scope.pluginBaseUrl}/lib/monaco.min.js`).then(() => {
+    // (global as any).System.import(`./${scope.pluginBaseUrl}/lib/monaco.min.js`).then(() => {
+    importMonaco().then(() => {
       setTimeout(() => {
         initMonaco(containerDiv, scope);
       }, 1);
