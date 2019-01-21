@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import _ from 'lodash';
 
-import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
@@ -197,7 +196,7 @@ export class KeybindingSrv {
     });
 
     // jump to explore if permissions allow
-    if ((this.contextSrv.isEditor || config.viewersCanEdit) && config.exploreEnabled) {
+    if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
