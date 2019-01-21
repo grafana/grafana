@@ -22,7 +22,7 @@ func init() {
 }
 
 var (
-	now              = time.Now
+	getTime          = time.Now
 	RotateTime       = 30 * time.Second
 	UrgentRotateTime = 10 * time.Second
 	oneYearInSeconds = 31557600 //used as default maxage for session cookies. We validate/rotate them more often.
@@ -118,15 +118,17 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 
 	hashedToken := hashToken(token)
 
+	now := getTime().Unix()
+
 	userToken := models.UserAuthToken{
 		UserId:        userId,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
 		ClientIp:      clientIP,
 		UserAgent:     userAgent,
-		RotatedAt:     now().Unix(),
-		CreatedAt:     now().Unix(),
-		UpdatedAt:     now().Unix(),
+		RotatedAt:     now,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 		SeenAt:        0,
 		AuthTokenSeen: false,
 	}
@@ -142,7 +144,7 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 
 func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAuthToken, error) {
 	hashedToken := hashToken(unhashedToken)
-	expireBefore := now().Add(time.Duration(-86400*setting.LogInRememberDays) * time.Second).Unix()
+	expireBefore := getTime().Add(time.Duration(-86400*setting.LogInRememberDays) * time.Second).Unix()
 
 	var userToken models.UserAuthToken
 	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ?", hashedToken, hashedToken, expireBefore).Get(&userToken)
@@ -157,7 +159,7 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAu
 	if userToken.AuthToken != hashedToken && userToken.PrevAuthToken == hashedToken && userToken.AuthTokenSeen {
 		userTokenCopy := userToken
 		userTokenCopy.AuthTokenSeen = false
-		expireBefore := now().Add(-UrgentRotateTime).Unix()
+		expireBefore := getTime().Add(-UrgentRotateTime).Unix()
 		affectedRows, err := s.SQLStore.NewSession().Where("id = ? AND prev_auth_token = ? AND rotated_at < ?", userTokenCopy.Id, userTokenCopy.PrevAuthToken, expireBefore).AllCols().Update(&userTokenCopy)
 		if err != nil {
 			return nil, err
@@ -173,7 +175,7 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAu
 	if !userToken.AuthTokenSeen && userToken.AuthToken == hashedToken {
 		userTokenCopy := userToken
 		userTokenCopy.AuthTokenSeen = true
-		userTokenCopy.SeenAt = now().Unix()
+		userTokenCopy.SeenAt = getTime().Unix()
 		affectedRows, err := s.SQLStore.NewSession().Where("id = ? AND auth_token = ?", userTokenCopy.Id, userTokenCopy.AuthToken).AllCols().Update(&userTokenCopy)
 		if err != nil {
 			return nil, err
@@ -200,18 +202,21 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 		return false, nil
 	}
 
+	now := getTime()
+
 	needsRotation := false
 	rotatedAt := time.Unix(token.RotatedAt, 0)
 	if token.AuthTokenSeen {
-		needsRotation = rotatedAt.Before(now().Add(-RotateTime))
+		needsRotation = rotatedAt.Before(now.Add(-RotateTime))
 	} else {
-		needsRotation = rotatedAt.Before(now().Add(-UrgentRotateTime))
+		needsRotation = rotatedAt.Before(now.Add(-UrgentRotateTime))
 	}
 
-	s.log.Debug("refresh token", "needs rotation?", needsRotation, "auth_token_seen", token.AuthTokenSeen, "rotated_at", rotatedAt, "token.Id", token.Id)
 	if !needsRotation {
 		return false, nil
 	}
+
+	s.log.Debug("refresh token needs rotation?", "auth_token_seen", token.AuthTokenSeen, "rotated_at", rotatedAt, "token.Id", token.Id)
 
 	clientIP = util.ParseIPAddress(clientIP)
 	newToken, _ := util.RandomHex(16)
@@ -229,7 +234,7 @@ func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientI
 			rotated_at = ?
 		WHERE id = ? AND (auth_token_seen or rotated_at < ?)`
 
-	res, err := s.SQLStore.NewSession().Exec(sql, userAgent, clientIP, hashedToken, now().Unix(), token.Id, now().Add(-UrgentRotateTime))
+	res, err := s.SQLStore.NewSession().Exec(sql, userAgent, clientIP, hashedToken, now.Unix(), token.Id, now.Add(-UrgentRotateTime))
 	if err != nil {
 		return false, err
 	}
