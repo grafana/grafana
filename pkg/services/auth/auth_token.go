@@ -46,9 +46,8 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 		Name:     sessionCookieKey,
 		Value:    url.QueryEscape(userToken.UnhashedToken),
 		HttpOnly: true,
-		//MaxAge:   600,
-		Domain: setting.Domain,
-		Path:   setting.AppSubUrl + "/",
+		Domain:   setting.Domain,
+		Path:     setting.AppSubUrl + "/",
 	}
 
 	c.Resp.Header().Add("Set-Cookie", cookie.String())
@@ -57,7 +56,6 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 }
 
 func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
-	//c.SetCookie(sessionCookieKey, "", -1, setting.AppSubUrl+"/", setting.Domain, false, true)
 	c.Resp.Header().Del("Set-Cookie")
 	cookie := http.Cookie{
 		Name:     sessionCookieKey,
@@ -70,28 +68,6 @@ func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
 
 	c.Resp.Header().Add("Set-Cookie", cookie.String())
 }
-
-// func (s *UserAuthTokenService) RequestMiddleware() macaron.Handler {
-// 	return func(ctx *models.ReqContext) {
-// 		authToken := ctx.GetCookie(sessionCookieKey)
-// 		userToken, err := s.LookupToken(authToken)
-// 		if err != nil {
-
-// 		}
-
-// 		ctx.Next()
-
-// 		refreshed, err := s.RefreshToken(userToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
-// 		if err != nil {
-
-// 		}
-
-// 		if refreshed {
-// 			ctx.Resp.Header().Del("Set-Cookie")
-// 			ctx.SetCookie(sessionCookieKey, userToken.unhashedToken, setting.AppSubUrl+"/", setting.Domain, false, true)
-// 		}
-// 	}
-// }
 
 func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserAuthToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
