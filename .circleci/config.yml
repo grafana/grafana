@@ -83,7 +83,7 @@ jobs:
       - checkout
       - run:
           name: Gometalinter tests
-          command: './scripts/build/gometalinter.sh'
+          command: './scripts/gometalinter.sh'
 
   test-frontend:
     docker:
