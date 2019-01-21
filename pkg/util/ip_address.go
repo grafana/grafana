@@ -7,11 +7,13 @@ import (
 
 // ParseIPAddress parses an IP address and removes port and/or IPV6 format
 func ParseIPAddress(input string) string {
-	var s string
+	s := input
 	lastIndex := strings.LastIndex(input, ":")
 
 	if lastIndex != -1 {
-		s = input[:lastIndex]
+		if lastIndex > 0 && input[lastIndex-1:lastIndex] != ":" {
+			s = input[:lastIndex]
+		}
 	}
 
 	s = strings.Replace(s, "[", "", -1)
