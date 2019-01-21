@@ -4,6 +4,7 @@ import Popper, { RenderPopperArrowFn } from '../Tooltip/Popper';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { Themeable, GrafanaTheme } from '../../types';
 import { getColorFromHexRgbOrName } from '../../utils/colorsPalette';
+import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 export interface ColorPickerProps extends Themeable {
   color: string;
@@ -78,4 +79,5 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
-export default colorPickerFactory(ColorPickerPopover, 'ColorPicker');
+export const ColorPicker =  colorPickerFactory(ColorPickerPopover, 'ColorPicker');
+export const SeriesColorPicker = colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker');

@@ -14,9 +14,8 @@ export { FormLabel } from './FormLabel/FormLabel';
 export { FormField } from './FormField/FormField';
 
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
-export { default as ColorPicker } from './ColorPicker/ColorPicker';
+export {  ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover } from './ColorPicker/SeriesColorPickerPopover';
-export { default as SeriesColorPicker } from './ColorPicker/SeriesColorPicker';
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { Graph } from './Graph/Graph';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
