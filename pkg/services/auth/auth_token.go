@@ -22,7 +22,7 @@ func init() {
 
 var (
 	now              = time.Now
-	RotateTime       = 1 * time.Minute
+	RotateTime       = 1 * time.Minute // this should be read from [session] configuration.
 	UrgentRotateTime = 30 * time.Second
 	oneYearInSeconds = 31557600 //used as default maxage for session cookies. We validate/rotate them more often.
 )
@@ -77,7 +77,8 @@ func (s *UserAuthTokenService) InitContextWithToken(ctx *models.ReqContext, orgI
 }
 
 func (s *UserAuthTokenService) writeSessionCookie(ctx *models.ReqContext, value string, maxAge int) {
-	ctx.Logger.Info("new token", "unhashed token", ctx.UserToken.UnhashedToken)
+	ctx.Logger.Info("new token", "unhashed token", value)
+
 	ctx.Resp.Header().Del("Set-Cookie")
 	cookie := http.Cookie{
 		Name:     setting.SessionOptions.CookieName,
@@ -96,6 +97,8 @@ func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *model
 	if err != nil {
 		return err
 	}
+
+	c.UserToken = userToken
 
 	s.writeSessionCookie(c, userToken.UnhashedToken, oneYearInSeconds)
 	return nil
