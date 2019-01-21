@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
-import { Threshold } from '../../types';
+import { Threshold, Themeable } from '../../types';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { colors } from '../../utils';
+import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
 
-export interface Props {
+export interface Props extends Themeable {
   thresholds: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
 }
@@ -187,6 +188,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   render() {
     const { thresholds } = this.state;
+    const { theme } = this.props;
 
     return (
       <PanelOptionsGroup title="Thresholds">
@@ -197,7 +199,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 <div className="thresholds-row-add-button" onClick={() => this.onAddThreshold(threshold.index + 1)}>
                   <i className="fa fa-plus" />
                 </div>
-                <div className="thresholds-row-color-indicator" style={{ backgroundColor: threshold.color }} />
+                <div
+                  className="thresholds-row-color-indicator"
+                  style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme) }}
+                />
                 <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
               </div>
             );
