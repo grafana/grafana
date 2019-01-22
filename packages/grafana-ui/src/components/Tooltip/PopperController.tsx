@@ -1,9 +1,11 @@
 import React from 'react';
 import * as PopperJS from 'popper.js';
 
-// This API allows popovers to update Popper's position when e.g. popover content chaanges
+// This API allows popovers to update Popper's position when e.g. popover content changes
 // updatePopperPosition is delivered to content by react-popper
-export interface PopperContentProps  { updatePopperPosition?: () => void; }
+export interface PopperContentProps {
+  updatePopperPosition?: () => void;
+}
 
 export type PopperContent<T extends PopperContentProps> = string | React.ReactElement<T>;
 
@@ -29,6 +31,7 @@ interface Props {
   content: PopperContent<any>;
   className?: string;
   children: PopperControllerRenderProp;
+  hideAfter?: number;
 }
 
 interface State {
@@ -37,6 +40,8 @@ interface State {
 }
 
 class PopperController extends React.Component<Props, State> {
+  private hideTimeout: any;
+
   constructor(props: Props) {
     super(props);
 
@@ -58,6 +63,10 @@ class PopperController extends React.Component<Props, State> {
   }
 
   showPopper = () => {
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+    }
+
     this.setState(prevState => ({
       ...prevState,
       show: true,
@@ -65,6 +74,15 @@ class PopperController extends React.Component<Props, State> {
   };
 
   hidePopper = () => {
+    if (this.props.hideAfter !== 0) {
+      this.hideTimeout = setTimeout(() => {
+        this.setState(prevState => ({
+          ...prevState,
+          show: false,
+        }));
+      }, this.props.hideAfter);
+      return;
+    }
     this.setState(prevState => ({
       ...prevState,
       show: false,

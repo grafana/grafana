@@ -6,7 +6,6 @@ import { ColorPickerProps } from './ColorPicker';
 import { GrafanaTheme, Themeable } from '../../types';
 import { PopperContentProps } from '../Tooltip/PopperController';
 
-// const DEFAULT_COLOR = '#000000';
 
 export interface Props extends ColorPickerProps, Themeable, PopperContentProps {}
 

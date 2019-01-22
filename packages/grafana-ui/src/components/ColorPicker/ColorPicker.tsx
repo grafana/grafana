@@ -37,7 +37,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
       };
 
       return (
-        <PopperController content={popoverElement} placement="bottom-start">
+        <PopperController content={popoverElement} hideAfter={500}>
           {(showPopper, hidePopper, popperProps) => {
             return (
               <>
@@ -79,5 +79,5 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
-export const ColorPicker =  colorPickerFactory(ColorPickerPopover, 'ColorPicker');
+export const ColorPicker = colorPickerFactory(ColorPickerPopover, 'ColorPicker');
 export const SeriesColorPicker = colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker');

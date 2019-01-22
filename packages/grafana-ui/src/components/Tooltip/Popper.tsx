@@ -13,8 +13,8 @@ const defaultTransitionStyles = {
 const transitionStyles: { [key: string]: object } = {
   exited: { opacity: 0 },
   entering: { opacity: 0 },
-  entered: { opacity: 1 },
-  exiting: { opacity: 0 },
+  entered: { opacity: 1, transitionDelay: '0s' },
+  exiting: { opacity: 0, transitionDelay: '500ms' },
 };
 
 export type RenderPopperArrowFn = (
@@ -41,46 +41,48 @@ class Popper extends PureComponent<Props> {
     return (
       <Manager>
         <Transition in={show} timeout={100} mountOnEnter={true} unmountOnExit={true}>
-          {transitionState => (
-            <Portal>
-              <ReactPopper
-                placement={placement}
-                referenceElement={this.props.referenceElement}
-                // TODO: move modifiers config to popper controller
-                modifiers={{ preventOverflow: { enabled: true, boundariesElement: 'window' } }}
-              >
-                {({ ref, style, placement, arrowProps, scheduleUpdate }) => {
-                  return (
-                    <div
-                      onMouseEnter={onMouseEnter}
-                      onMouseLeave={onMouseLeave}
-                      ref={ref}
-                      style={{
-                        ...style,
-                        ...defaultTransitionStyles,
-                        ...transitionStyles[transitionState],
-                      }}
-                      data-placement={placement}
-                      className={`${wrapperClassName}`}
-                    >
-                      <div className={className}>
-                        {typeof content === 'string'
-                          ? content
-                          : React.cloneElement(content, {
-                              updatePopperPosition: scheduleUpdate,
+          {transitionState => {
+            return (
+              <Portal>
+                <ReactPopper
+                  placement={placement}
+                  referenceElement={this.props.referenceElement}
+                  // TODO: move modifiers config to popper controller
+                  modifiers={{ preventOverflow: { enabled: true, boundariesElement: 'window' } }}
+                >
+                  {({ ref, style, placement, arrowProps, scheduleUpdate }) => {
+                    return (
+                      <div
+                        onMouseEnter={onMouseEnter}
+                        onMouseLeave={onMouseLeave}
+                        ref={ref}
+                        style={{
+                          ...style,
+                          ...defaultTransitionStyles,
+                          ...transitionStyles[transitionState],
+                        }}
+                        data-placement={placement}
+                        className={`${wrapperClassName}`}
+                      >
+                        <div className={className}>
+                          {typeof content === 'string'
+                            ? content
+                            : React.cloneElement(content, {
+                                updatePopperPosition: scheduleUpdate,
+                              })}
+                          {renderArrow &&
+                            renderArrow({
+                              arrowProps,
+                              placement,
                             })}
-                        {renderArrow &&
-                          renderArrow({
-                            arrowProps,
-                            placement,
-                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                }}
-              </ReactPopper>
-            </Portal>
-          )}
+                    );
+                  }}
+                </ReactPopper>
+              </Portal>
+            );
+          }}
         </Transition>
       </Manager>
     );
