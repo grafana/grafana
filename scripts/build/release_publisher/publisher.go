@@ -9,13 +9,11 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type publisher struct {
 	apiKey         string
-	apiUri         string
+	apiURI         string
 	product        string
 	dryRun         bool
 	enterprise     bool
@@ -63,23 +61,26 @@ func (p *publisher) postRelease(r *release) error {
 	return nil
 }
 
-type ReleaseType int
+type releaseType int
 
 const (
-	STABLE ReleaseType = iota + 1
+	// STABLE is a release type constant
+	STABLE releaseType = iota + 1
+	// BETA is a release type constant
 	BETA
+	// NIGHTLY is a release type constant
 	NIGHTLY
 )
 
-func (rt ReleaseType) beta() bool {
+func (rt releaseType) beta() bool {
 	return rt == BETA
 }
 
-func (rt ReleaseType) stable() bool {
+func (rt releaseType) stable() bool {
 	return rt == STABLE
 }
 
-func (rt ReleaseType) nightly() bool {
+func (rt releaseType) nightly() bool {
 	return rt == NIGHTLY
 }
 
@@ -89,7 +90,7 @@ type buildArtifact struct {
 	urlPostfix string
 }
 
-func (t buildArtifact) getURL(baseArchiveURL, version string, releaseType ReleaseType) string {
+func (t buildArtifact) getURL(baseArchiveURL, version string, releaseType releaseType) string {
 	prefix := "-"
 	rhelReleaseExtra := ""
 
@@ -182,13 +183,13 @@ func filterBuildArtifacts(filters []artifactFilter) ([]buildArtifact, error) {
 		}
 
 		if !matched {
-			return nil, errors.New(fmt.Sprintf("No buildArtifact for os=%v, arch=%v", f.os, f.arch))
+			return nil, fmt.Errorf("No buildArtifact for os=%v, arch=%v", f.os, f.arch)
 		}
 	}
 	return artifacts, nil
 }
 
-func newBuild(baseArchiveURL string, ba buildArtifact, version string, rt ReleaseType, sha256 string) build {
+func newBuild(baseArchiveURL string, ba buildArtifact, version string, rt releaseType, sha256 string) build {
 	return build{
 		Os:     ba.os,
 		URL:    ba.getURL(baseArchiveURL, version, rt),
@@ -198,7 +199,7 @@ func newBuild(baseArchiveURL string, ba buildArtifact, version string, rt Releas
 }
 
 func (p *publisher) apiURL(url string) string {
-	return fmt.Sprintf("%s/%s%s", p.apiUri, p.product, url)
+	return fmt.Sprintf("%s/%s%s", p.apiURI, p.product, url)
 }
 
 func (p *publisher) postRequest(url string, obj interface{}, desc string) error {

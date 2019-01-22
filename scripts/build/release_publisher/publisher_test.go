@@ -64,7 +64,7 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 
 	for _, test := range cases {
 		builder := releaseFromExternalContent{
-			getter:                 mockHttpGetter{},
+			getter:                 mockHTTPGetter{},
 			rawVersion:             test.version,
 			artifactConfigurations: test.buildArtifacts,
 		}
@@ -99,9 +99,9 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 	}
 }
 
-type mockHttpGetter struct{}
+type mockHTTPGetter struct{}
 
-func (mockHttpGetter) getContents(url string) (string, error) {
+func (mockHTTPGetter) getContents(url string) (string, error) {
 	return url, nil
 }
 

@@ -20,7 +20,7 @@ type releaseLocalSources struct {
 
 func (r releaseLocalSources) prepareRelease(baseArchiveURL, whatsNewURL string, releaseNotesURL string, nightly bool) (*release, error) {
 	if !nightly {
-		return nil, errors.New("Local releases only supported for nightly builds.")
+		return nil, errors.New("Local releases only supported for nightly builds")
 	}
 	buildData := r.findBuilds(baseArchiveURL)
 
@@ -91,5 +91,5 @@ func grabVersion(name string, suffix string) (string, error) {
 		return string(match[2]), nil
 	}
 
-	return "", errors.New("No version found.")
+	return "", errors.New("No version found")
 }
