@@ -154,11 +154,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  moveQuery(target, direction) {
-    super.moveQuery(target, direction);
-    super.refresh();
-  }
-
   exportCsv() {
     const scope = this.$scope.$new(true);
     scope.tableData = this.renderer.render_values();
@@ -257,13 +252,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     elem.on('click', '.table-panel-page-link', switchPage);
     elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
-    const unbindDestroy = scope.$on('$destroy', function() {
+    const unbindDestroy = scope.$on('$destroy', () => {
       elem.off('click', '.table-panel-page-link');
       elem.off('click', '.table-panel-filter-link');
       unbindDestroy();
     });
 
-    ctrl.events.on('render', function(renderData) {
+    ctrl.events.on('render', renderData => {
       data = renderData || data;
       if (data) {
         renderPanel();

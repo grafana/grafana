@@ -59,7 +59,7 @@ export class DashboardLoaderSrv {
         });
     }
 
-    promise.then(function(result) {
+    promise.then(result => {
       if (result.meta.dashboardNotFound !== true) {
         impressionSrv.addDashboardImpression(result.dashboard.id);
       }

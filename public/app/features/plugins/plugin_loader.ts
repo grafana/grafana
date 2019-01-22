@@ -18,6 +18,7 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
+import { PluginExports } from '@grafana/ui';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
@@ -25,16 +26,10 @@ import * as ticks from 'app/core/utils/ticks';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
+import * as grafanaUI from '@grafana/ui';
 
 // rxjs
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-
-// these imports add functions to Observable
-import 'rxjs/add/observable/empty';
-import 'rxjs/add/observable/from';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/combineAll';
+import { Observable, Subject } from 'rxjs';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
@@ -65,11 +60,12 @@ System.config({
 });
 
 function exposeToPlugin(name: string, component: any) {
-  System.registerDynamic(name, [], true, function(require, exports, module) {
+  System.registerDynamic(name, [], true, (require, exports, module) => {
     module.exports = component;
   });
 }
 
+exposeToPlugin('@grafana/ui', grafanaUI);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
@@ -140,11 +136,12 @@ const flotDeps = [
   'jquery.flot.events',
   'jquery.flot.gauge',
 ];
+
 for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
+export function importPluginModule(path: string): Promise<PluginExports> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);

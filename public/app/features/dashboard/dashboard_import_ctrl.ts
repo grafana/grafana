@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import config from 'app/core/config';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardImportCtrl {
   navModel: any;
@@ -179,7 +180,8 @@ export class DashboardImportCtrl {
         folderId: this.folderId,
       })
       .then(res => {
-        this.$location.url(res.importedUrl);
+        const dashUrl = locationUtil.stripBaseFromUrl(res.importedUrl);
+        this.$location.url(dashUrl);
       });
   }
 

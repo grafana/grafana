@@ -10,7 +10,7 @@ coreModule.directive('jsonTree', [
         startExpanded: '@',
         rootName: '@',
       },
-      link: function(scope, elem) {
+      link: (scope, elem) => {
         const jsonExp = new JsonExplorer(scope.object, 3, {
           animateOpen: true,
         });

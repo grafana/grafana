@@ -1,5 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
+import { variableRegex } from 'app/features/templating/variable';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -8,13 +9,7 @@ function luceneEscape(value) {
 export class TemplateSrv {
   variables: any[];
 
-  /*
-   * This regex matches 3 types of variable reference with an optional format specifier
-   * \$(\w+)                          $var1
-   * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
-   * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
-   */
-  private regex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?::(\w+))?}/g;
+  private regex = variableRegex;
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
@@ -22,6 +17,7 @@ export class TemplateSrv {
   constructor() {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
+    this.variables = [];
   }
 
   init(variables) {
@@ -30,17 +26,14 @@ export class TemplateSrv {
   }
 
   updateTemplateData() {
-    this.index = {};
+    const existsOrEmpty = value => value || value === '';
 
-    for (let i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-
-      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
-        continue;
+    this.index = this.variables.reduce((acc, currentValue) => {
+      if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
+        acc[currentValue.name] = currentValue;
       }
-
-      this.index[variable.name] = variable;
-    }
+      return acc;
+    }, {});
   }
 
   variableInitialized(variable) {
@@ -50,19 +43,20 @@ export class TemplateSrv {
   getAdhocFilters(datasourceName) {
     let filters = [];
 
-    for (let i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-      if (variable.type !== 'adhoc') {
-        continue;
-      }
+    if (this.variables) {
+      for (let i = 0; i < this.variables.length; i++) {
+        const variable = this.variables[i];
+        if (variable.type !== 'adhoc') {
+          continue;
+        }
 
-      if (variable.datasource === datasourceName) {
-        filters = filters.concat(variable.filters);
-      }
-
-      if (variable.datasource.indexOf('$') === 0) {
-        if (this.replace(variable.datasource) === datasourceName) {
+        // null is the "default" datasource
+        if (variable.datasource === null || variable.datasource === datasourceName) {
           filters = filters.concat(variable.filters);
+        } else if (variable.datasource.indexOf('$') === 0) {
+          if (this.replace(variable.datasource) === datasourceName) {
+            filters = filters.concat(variable.filters);
+          }
         }
       }
     }
@@ -77,7 +71,7 @@ export class TemplateSrv {
     if (value instanceof Array && value.length === 0) {
       return '__empty__';
     }
-    const quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       return '"' + luceneEscape(val) + '"';
     });
     return '(' + quotedValues.join(' OR ') + ')';
@@ -157,7 +151,8 @@ export class TemplateSrv {
     if (!match) {
       return null;
     }
-    return match[1] || match[2];
+    const variableName = match.slice(1).find(match => match !== undefined);
+    return variableName;
   }
 
   variableExists(expression) {
@@ -262,7 +257,7 @@ export class TemplateSrv {
   }
 
   fillVariableValuesForUrl(params, scopedVars) {
-    _.each(this.variables, function(variable) {
+    _.each(this.variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -278,7 +273,7 @@ export class TemplateSrv {
   }
 
   distributeVariable(value, variable) {
-    value = _.map(value, function(val, index) {
+    value = _.map(value, (val, index) => {
       if (index !== 0) {
         return variable + '=' + val;
       } else {

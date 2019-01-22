@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	captionLengthLimit = 200
+	captionLengthLimit = 1024
 )
 
 var (
@@ -127,7 +127,13 @@ func (this *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.Eval
 	var err error
 
 	imageFile, err = os.Open(evalContext.ImageOnDiskPath)
-	defer imageFile.Close()
+	defer func() {
+		err := imageFile.Close()
+		if err != nil {
+			this.log.Error("Could not close Telegram inline image.", "err", err)
+		}
+	}()
+
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +222,7 @@ func appendIfPossible(message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}
-	log.Debug("Line too long for image caption.", "value", extra)
+	log.Debug("Line too long for image caption. value: %s", extra)
 	return message
 }
 

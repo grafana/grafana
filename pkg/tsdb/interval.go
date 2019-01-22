@@ -49,6 +49,10 @@ func NewIntervalCalculator(opt *IntervalOptions) *intervalCalculator {
 	return calc
 }
 
+func (i *Interval) Milliseconds() int64 {
+	return i.Value.Nanoseconds() / int64(time.Millisecond)
+}
+
 func (ic *intervalCalculator) Calculate(timerange *TimeRange, minInterval time.Duration) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()

@@ -21,8 +21,6 @@ var (
 	ErrDashboardVersionMismatch                = errors.New("The dashboard has been changed by someone else")
 	ErrDashboardTitleEmpty                     = errors.New("Dashboard title cannot be empty")
 	ErrDashboardFolderCannotHaveParent         = errors.New("A Dashboard Folder cannot be added to another folder")
-	ErrDashboardContainsInvalidAlertData       = errors.New("Invalid alert data. Cannot save dashboard")
-	ErrDashboardFailedToUpdateAlertData        = errors.New("Failed to save alert data")
 	ErrDashboardsWithSameSlugExists            = errors.New("Multiple dashboards with the same slug exists")
 	ErrDashboardFailedGenerateUniqueUid        = errors.New("Failed to generate unique dashboard id")
 	ErrDashboardTypeMismatch                   = errors.New("Dashboard cannot be changed to a folder")
@@ -114,7 +112,7 @@ func NewDashboard(title string) *Dashboard {
 func NewDashboardFolder(title string) *Dashboard {
 	folder := NewDashboard(title)
 	folder.IsFolder = true
-	folder.Data.Set("schemaVersion", 16)
+	folder.Data.Set("schemaVersion", 17)
 	folder.Data.Set("version", 0)
 	folder.IsFolder = true
 	return folder

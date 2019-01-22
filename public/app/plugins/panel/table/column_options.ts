@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormats } from '@grafana/ui';
 
 export class ColumnOptionsCtrl {
   panel: any;
@@ -22,7 +22,7 @@ export class ColumnOptionsCtrl {
     this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    this.unitFormats = kbn.getUnitFormats();
+    this.unitFormats = getValueFormats();
     this.colorModes = [
       { text: 'Disabled', value: null },
       { text: 'Cell', value: 'cell' },
@@ -41,6 +41,7 @@ export class ColumnOptionsCtrl {
       { text: 'YYYY-MM-DD HH:mm:ss.SSS', value: 'YYYY-MM-DD HH:mm:ss.SSS' },
       { text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a' },
       { text: 'MMMM D, YYYY LT', value: 'MMMM D, YYYY LT' },
+      { text: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
     ];
     this.mappingTypes = [{ text: 'Value to text', value: 1 }, { text: 'Range to text', value: 2 }];
 
@@ -48,7 +49,7 @@ export class ColumnOptionsCtrl {
       if (!this.panelCtrl.table) {
         return [];
       }
-      return _.map(this.panelCtrl.table.columns, function(col: any) {
+      return _.map(this.panelCtrl.table.columns, (col: any) => {
         return col.text;
       });
     };

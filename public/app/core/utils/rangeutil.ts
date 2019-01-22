@@ -1,5 +1,8 @@
 import _ from 'lodash';
 import moment from 'moment';
+
+import { RawTimeRange } from '@grafana/ui';
+
 import * as dateMath from './datemath';
 
 const spans = {
@@ -61,7 +64,7 @@ const rangeOptions = [
 const absoluteFormat = 'MMM D, YYYY HH:mm:ss';
 
 const rangeIndex = {};
-_.each(rangeOptions, function(frame) {
+_.each(rangeOptions, frame => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
@@ -111,7 +114,7 @@ export function describeTextRange(expr: any) {
   const parts = /^now([-+])(\d+)(\w)/.exec(expr);
   if (parts) {
     const unit = parts[3];
-    const amount = parseInt(parts[2]);
+    const amount = parseInt(parts[2], 10);
     const span = spans[unit];
     if (span) {
       opt.display = isLast ? 'Last ' : 'Next ';
@@ -129,7 +132,7 @@ export function describeTextRange(expr: any) {
   return opt;
 }
 
-export function describeTimeRange(range) {
+export function describeTimeRange(range: RawTimeRange): string {
   const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
   if (option) {
     return option.display;
@@ -156,3 +159,12 @@ export function describeTimeRange(range) {
 
   return range.from.toString() + ' to ' + range.to.toString();
 }
+
+export const isValidTimeSpan = (value: string) => {
+  if (value.indexOf('$') === 0 || value.indexOf('+$') === 0) {
+    return true;
+  }
+
+  const info = describeTextRange(value);
+  return info.invalid !== true;
+};

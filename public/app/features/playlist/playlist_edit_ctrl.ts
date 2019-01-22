@@ -37,7 +37,7 @@ export class PlaylistEditCtrl {
   filterFoundPlaylistItems() {
     this.filteredDashboards = _.reject(this.dashboardresult, playlistItem => {
       return _.find(this.playlistItems, listPlaylistItem => {
-        return parseInt(listPlaylistItem.value) === playlistItem.id;
+        return parseInt(listPlaylistItem.value, 10) === playlistItem.id;
       });
     });
 

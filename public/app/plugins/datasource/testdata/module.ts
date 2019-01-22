@@ -1,16 +1,17 @@
 import { TestDataDatasource } from './datasource';
 import { TestDataQueryCtrl } from './query_ctrl';
+// import { QueryEditor } from './QueryEditor';
 
 class TestDataAnnotationsQueryCtrl {
   annotation: any;
 
   constructor() {}
 
-  static template = '<h2>test data</h2>';
+  static template = '<h2>Annotation scenario</h2>';
 }
 
 export {
-  TestDataDatasource,
+  // QueryEditor,
   TestDataDatasource as Datasource,
   TestDataQueryCtrl as QueryCtrl,
   TestDataAnnotationsQueryCtrl as AnnotationsQueryCtrl,

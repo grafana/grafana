@@ -23,7 +23,7 @@
   &.active {
     &:focus,
     &.focus {
-      @include tab-focus();
+      @include no-focus();
     }
   }
 
@@ -78,6 +78,7 @@
 
 .btn-link {
   color: $btn-link-color;
+  background: transparent;
 }
 
 // Set the backgrounds
@@ -120,8 +121,8 @@
 // Info appears as a neutral blue
 .btn-secondary {
   @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+  // Inverse appears as dark gray
 }
-// Inverse appears as dark gray
 .btn-inverse {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;
@@ -172,6 +173,12 @@
   padding-right: 20px;
 }
 
+// No horizontal padding
+.btn-p-x-0 {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 // External services
 // Usage:
 // <div class="btn btn-service btn-service--facebook">Button text</div>
@@ -218,6 +225,31 @@ $btn-service-icon-width: 35px;
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 60%;
+  }
+}
+
+//Toggle button
+
+.toggle-btn {
+  background: $input-label-bg;
+  color: $text-color-weak;
+  box-shadow: $card-shadow;
+
+  &:first-child {
+    border-radius: 2px 0 0 2px;
+    margin: 0;
+  }
+  &:last-child {
+    border-radius: 0 2px 2px 0;
+    margin-left: 0 !important;
+  }
+
+  &.active {
+    background-color: lighten($input-label-bg, 5%);
+    color: $link-color;
+    &:hover {
+      cursor: default;
+    }
   }
 }
 

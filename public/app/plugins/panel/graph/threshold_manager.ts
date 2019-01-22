@@ -53,7 +53,7 @@ export class ThresholdManager {
     function stopped() {
       // calculate graph level
       let graphValue = plot.c2p({ left: 0, top: posTop }).y;
-      graphValue = parseInt(graphValue.toFixed(0));
+      graphValue = parseInt(graphValue.toFixed(0), 10);
       model.value = graphValue;
 
       handleElem.off('mousemove', dragging);
@@ -61,7 +61,7 @@ export class ThresholdManager {
       handleElem.off('mouseleave', dragging);
 
       // trigger digest and render
-      panelCtrl.$scope.$apply(function() {
+      panelCtrl.$scope.$apply(() => {
         panelCtrl.render();
         panelCtrl.events.emit('threshold-changed', {
           threshold: model,

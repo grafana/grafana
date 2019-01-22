@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ldap.v3"
 )
 
 type ILdapConn interface {
@@ -185,7 +185,9 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 
 		if ldapUser.isMemberOf(group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
-			extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
+				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+			}
 		}
 	}
 
@@ -290,6 +292,8 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
 
+		a.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
+
 		searchResult, err = a.conn.Search(&searchReq)
 		if err != nil {
 			return nil, err
@@ -326,15 +330,19 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			a.log.Info("Searching for user's groups", "filter", filter)
 
+			// support old way of reading settings
+			groupIdAttribute := a.server.Attr.MemberOf
+			// but prefer dn attribute if default settings are used
+			if groupIdAttribute == "" || groupIdAttribute == "memberOf" {
+				groupIdAttribute = "dn"
+			}
+
 			groupSearchReq := ldap.SearchRequest{
 				BaseDN:       groupSearchBase,
 				Scope:        ldap.ScopeWholeSubtree,
 				DerefAliases: ldap.NeverDerefAliases,
-				Attributes: []string{
-					// Here MemberOf would be the thing that identifies the group, which is normally 'cn'
-					a.server.Attr.MemberOf,
-				},
-				Filter: filter,
+				Attributes:   []string{groupIdAttribute},
+				Filter:       filter,
 			}
 
 			groupSearchResult, err = a.conn.Search(&groupSearchReq)
@@ -344,7 +352,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			if len(groupSearchResult.Entries) > 0 {
 				for i := range groupSearchResult.Entries {
-					memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
+					memberOf = append(memberOf, getLdapAttrN(groupIdAttribute, groupSearchResult, i))
 				}
 				break
 			}

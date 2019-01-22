@@ -267,7 +267,7 @@ export class HeatmapTooltip {
 
   countValueFormatter(decimals, scaledDecimals = null) {
     const format = 'short';
-    return function(value) {
+    return value => {
       return kbn.valueFormats[format](value, decimals, scaledDecimals);
     };
   }

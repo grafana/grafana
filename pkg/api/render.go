@@ -41,15 +41,16 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 	}
 
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
-		Width:    width,
-		Height:   height,
-		Timeout:  time.Duration(timeout) * time.Second,
-		OrgId:    c.OrgId,
-		UserId:   c.UserId,
-		OrgRole:  c.OrgRole,
-		Path:     c.Params("*") + queryParams,
-		Timezone: queryReader.Get("tz", ""),
-		Encoding: queryReader.Get("encoding", ""),
+		Width:           width,
+		Height:          height,
+		Timeout:         time.Duration(timeout) * time.Second,
+		OrgId:           c.OrgId,
+		UserId:          c.UserId,
+		OrgRole:         c.OrgRole,
+		Path:            c.Params("*") + queryParams,
+		Timezone:        queryReader.Get("tz", ""),
+		Encoding:        queryReader.Get("encoding", ""),
+		ConcurrentLimit: 30,
 	})
 
 	if err != nil && err == rendering.ErrTimeout {

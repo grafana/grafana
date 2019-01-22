@@ -5,7 +5,7 @@ keywords = ["grafana", "http", "documentation", "api", "authentication"]
 aliases = ["/http_api/authentication/"]
 type = "docs"
 [menu.docs]
-name = "Authentication"
+name = "Authentication HTTP API"
 parent = "http_api"
 +++
 

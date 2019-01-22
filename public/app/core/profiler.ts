@@ -82,15 +82,15 @@ export class Profiler {
     let scopes = 0;
     const root = $(document.getElementsByTagName('body'));
 
-    const f = function(element) {
+    const f = element => {
       if (element.data().hasOwnProperty('$scope')) {
         scopes++;
-        angular.forEach(element.data().$scope.$$watchers, function() {
+        angular.forEach(element.data().$scope.$$watchers, () => {
           count++;
         });
       }
 
-      angular.forEach(element.children(), function(childElement) {
+      angular.forEach(element.children(), childElement => {
         f($(childElement));
       });
     };

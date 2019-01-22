@@ -138,6 +138,7 @@ $input-padding-y-lg: 10px !default;
 $input-height: (($font-size-base * $line-height-base) + ($input-padding-y * 2)) !default;
 
 $gf-form-margin: 0.2rem;
+$gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
 
@@ -188,7 +189,9 @@ $side-menu-width: 60px;
 // dashboard
 $panel-margin: 10px;
 $dashboard-padding: $panel-margin * 2;
-$panel-padding: 0px 10px 5px 10px;
+$panel-horizontal-padding: 10;
+$panel-vertical-padding: 5;
+$panel-padding: 0px $panel-horizontal-padding+0px $panel-vertical-padding+0px $panel-horizontal-padding+0px;
 
 // tabs
 $tabs-padding: 10px 15px 9px;
@@ -201,3 +204,8 @@ $external-services: (
     oauth: (bgColor: #262628, borderColor: #393939, icon: '')
   )
   !default;
+
+:export {
+  panelHorizontalPadding: $panel-horizontal-padding;
+  panelVerticalPadding: $panel-vertical-padding;
+}

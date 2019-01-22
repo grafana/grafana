@@ -1,7 +1,8 @@
 .dashboard-container {
   padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .template-variable {
@@ -14,13 +15,23 @@ div.flot-text {
 
 .panel {
   height: 100%;
+}
 
-  &--solo {
-    margin: 0;
-    .panel-container {
-      border: none;
-      z-index: $zindex-sidemenu + 1;
-    }
+.panel-solo {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 0;
+  left: 0;
+  top: 0;
+
+  .panel-container {
+    border: none;
+  }
+
+  .panel-menu-toggle,
+  .panel-menu {
+    display: none;
   }
 }
 
@@ -34,10 +45,28 @@ div.flot-text {
   border: $panel-border;
   position: relative;
   border-radius: 3px;
+  height: 100%;
+  width: 100%;
 
   &.panel-transparent {
     background-color: transparent;
     border: none;
+  }
+
+  &:hover {
+    .panel-menu-toggle {
+      visibility: visible;
+      transition: opacity 0.1s ease-in 0.2s;
+      opacity: 1;
+    }
+  }
+
+  &--is-editing {
+    height: auto;
+  }
+
+  &--absolute {
+    position: absolute;
   }
 }
 
@@ -103,7 +132,6 @@ div.flot-text {
   padding: 3px 5px;
   visibility: hidden;
   opacity: 0;
-  position: absolute;
   width: 16px;
   height: 16px;
   left: 1px;
@@ -121,6 +149,20 @@ div.flot-text {
   z-index: 800;
   font-size: $font-size-sm;
   color: $text-color-weak;
+}
+
+.panel-empty {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+
+  p {
+    text-align: center;
+    color: $text-muted;
+    font-size: $font-size-lg;
+    width: 100%;
+  }
 }
 
 .panel-header {
@@ -172,7 +214,7 @@ div.flot-text {
 
   &--info {
     display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
+    @include panel-corner-color(lighten($panel-corner, 4%));
     .fa:before {
       content: '\f129';
     }
@@ -180,7 +222,7 @@ div.flot-text {
 
   &--links {
     display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
+    @include panel-corner-color(lighten($panel-corner, 4%));
     .fa {
       left: 4px;
     }
@@ -191,19 +233,11 @@ div.flot-text {
 
   &--error {
     display: block;
-    color: $text-color;
+    color: $white;
     @include panel-corner-color($popover-error-bg);
     .fa:before {
       content: '\f12a';
     }
-  }
-}
-
-.panel-hover-highlight {
-  .panel-menu-toggle {
-    visibility: visible;
-    transition: opacity 0.1s ease-in 0.2s;
-    opacity: 1;
   }
 }
 
@@ -233,5 +267,5 @@ div.flot-text {
 }
 
 .panel-full-edit {
-  margin: $dashboard-padding (-$dashboard-padding) 0 (-$dashboard-padding);
+  padding-top: $dashboard-padding;
 }

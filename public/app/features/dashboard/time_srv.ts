@@ -1,8 +1,14 @@
+// Libraries
 import moment from 'moment';
 import _ from 'lodash';
-import coreModule from 'app/core/core_module';
+
+// Utils
 import kbn from 'app/core/utils/kbn';
+import coreModule from 'app/core/core_module';
 import * as dateMath from 'app/core/utils/datemath';
+
+// Types
+import { TimeRange } from '@grafana/ui';
 
 export class TimeSrv {
   time: any;
@@ -14,7 +20,7 @@ export class TimeSrv {
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
-  constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
+  constructor($rootScope, private $timeout, private $location, private timer, private contextSrv) {
     // default time
     this.time = { from: '6h', to: 'now' };
 
@@ -24,7 +30,6 @@ export class TimeSrv {
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
         this.autoRefreshBlocked = false;
-
         this.refreshDashboard();
       }
     });
@@ -70,7 +75,7 @@ export class TimeSrv {
     }
 
     if (!isNaN(value)) {
-      const epoch = parseInt(value);
+      const epoch = parseInt(value, 10);
       return moment.utc(epoch);
     }
 
@@ -85,6 +90,12 @@ export class TimeSrv {
     if (params.to) {
       this.time.to = this.parseUrlParam(params.to) || this.time.to;
     }
+    // if absolute ignore refresh option saved to dashboard
+    if (params.to && params.to.indexOf('now') === -1) {
+      this.refresh = false;
+      this.dashboard.refresh = false;
+    }
+    // but if refresh explicitly set then use that
     if (params.refresh) {
       this.refresh = params.refresh || this.refresh;
     }
@@ -107,7 +118,7 @@ export class TimeSrv {
   }
 
   private timeHasChangedSinceLoad() {
-    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
+    return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
   setAutoRefresh(interval) {
@@ -136,7 +147,7 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.$rootScope.$broadcast('refresh');
+    this.dashboard.timeRangeUpdated();
   }
 
   private startNextRefreshTimer(afterMs) {
@@ -178,7 +189,6 @@ export class TimeSrv {
       this.$location.search(urlParams);
     }
 
-    this.$rootScope.appEvent('time-range-changed', this.time);
     this.$timeout(this.refreshDashboard.bind(this), 0);
   }
 
@@ -195,7 +205,7 @@ export class TimeSrv {
     return range;
   }
 
-  timeRange() {
+  timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
     const raw = {
       from: moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from,
@@ -217,17 +227,21 @@ export class TimeSrv {
     const timespan = range.to.valueOf() - range.from.valueOf();
     const center = range.to.valueOf() - timespan / 2;
 
-    let to = center + timespan * factor / 2;
-    let from = center - timespan * factor / 2;
-
-    if (to > Date.now() && range.to <= Date.now()) {
-      const offset = to - Date.now();
-      from = from - offset;
-      to = Date.now();
-    }
+    const to = center + timespan * factor / 2;
+    const from = center - timespan * factor / 2;
 
     this.setTime({ from: moment.utc(from), to: moment.utc(to) });
   }
+}
+
+let singleton;
+
+export function setTimeSrv(srv: TimeSrv) {
+  singleton = srv;
+}
+
+export function getTimeSrv(): TimeSrv {
+  return singleton;
 }
 
 coreModule.service('timeSrv', TimeSrv);

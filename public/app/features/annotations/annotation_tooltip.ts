@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
-import alertDef from '../alerting/alert_def';
+import alertDef from '../alerting/state/alertDef';
 
 /** @ngInject */
 export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, $compile) {
@@ -20,7 +20,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       event: '=',
       onEdit: '&',
     },
-    link: function(scope, element) {
+    link: (scope, element) => {
       const event = scope.event;
       let title = event.title;
       let text = event.text;
@@ -32,7 +32,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       if (event.alertId) {
         const stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
-        title = `<i class="icon-gf ${stateModel.iconClass}"></i> ${stateModel.text}`;
+        title = `<i class="${stateModel.iconClass}"></i> ${stateModel.text}`;
         text = alertDef.getAlertAnnotationInfo(event);
         if (event.text) {
           text = text + '<br />' + event.text;

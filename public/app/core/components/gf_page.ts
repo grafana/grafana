@@ -31,7 +31,7 @@ export function gfPageDirective() {
       header: '?gfPageHeader',
       body: 'gfPageBody',
     },
-    link: function(scope, elem, attrs) {
+    link: (scope, elem, attrs) => {
       console.log(scope);
     },
   };

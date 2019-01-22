@@ -50,7 +50,7 @@ export function layoutMode($rootScope) {
   return {
     restrict: 'A',
     scope: {},
-    link: function(scope, elem) {
+    link: (scope, elem) => {
       const layout = store.get('grafana.list.layout.mode') || 'grid';
       let className = 'card-list-layout-' + layout;
       elem.addClass(className);

@@ -941,9 +941,10 @@ Lexer.prototype = {
 
   tokenize: function() {
     const list = [];
-    let token;
-    while ((token = this.next())) {
+    let token = this.next();
+    while (token) {
       list.push(token);
+      token = this.next();
     }
     return list;
   },
@@ -1370,7 +1371,7 @@ Lexer.prototype = {
     };
   },
 
-  isPunctuator: function(ch1) {
+  isPunctuator: ch1 => {
     switch (ch1) {
       case '.':
       case '(':

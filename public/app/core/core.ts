@@ -1,5 +1,6 @@
 import './directives/dash_class';
 import './directives/dropdown_typeahead';
+import './directives/autofill_event_fix';
 import './directives/metric_segment';
 import './directives/misc';
 import './directives/ng_model_on_blur';
@@ -13,13 +14,11 @@ import './partials';
 import './components/jsontree/jsontree';
 import './components/code_editor/code_editor';
 import './utils/outline';
-import './components/colorpicker/ColorPicker';
-import './components/colorpicker/SeriesColorPicker';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';
+import { colors } from '@grafana/ui/';
 
-import { grafanaAppDirective } from './components/grafana_app';
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
 import { navbarDirective } from './components/navbar/navbar';
@@ -37,7 +36,6 @@ import 'app/core/services/all';
 import './filters/filters';
 import coreModule from './core_module';
 import appEvents from './app_events';
-import colors from './utils/colors';
 import { assignModelProperties } from './utils/model_utils';
 import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';
@@ -60,7 +58,6 @@ export {
   registerAngularDirectives,
   arrayJoin,
   coreModule,
-  grafanaAppDirective,
   navbarDirective,
   searchDirective,
   liveSrv,

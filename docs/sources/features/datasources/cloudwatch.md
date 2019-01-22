@@ -38,7 +38,7 @@ Name | Description
 
 ### IAM Roles
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you grafana
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If your Grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
@@ -46,7 +46,7 @@ Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGu
 ## IAM Policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
-and EC2 tags/instances. You can attach these permissions to IAM roles and
+and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
 utilize Grafana's built-in support for assuming roles.
 
 Here is a minimal policy example:
@@ -60,16 +60,18 @@ Here is a minimal policy example:
             "Effect": "Allow",
             "Action": [
                 "cloudwatch:ListMetrics",
-                "cloudwatch:GetMetricStatistics"
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:GetMetricData"
             ],
             "Resource": "*"
         },
         {
-            "Sid": "AllowReadingTagsFromEC2",
+            "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
             "Effect": "Allow",
             "Action": [
                 "ec2:DescribeTags",
-                "ec2:DescribeInstances"
+                "ec2:DescribeInstances",
+                "ec2:DescribeRegions"
             ],
             "Resource": "*"
         }

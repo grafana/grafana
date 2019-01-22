@@ -36,7 +36,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 
 	// initialize session
 	if err := ctx.Session.Start(ctx.Context); err != nil {
-		log.Error(3, "Failed to start session", err)
+		log.Error(3, "Failed to start session. error %v", err)
 		return false
 	}
 
@@ -146,12 +146,12 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
 		// remove session
 		if err := ctx.Session.Destory(ctx.Context); err != nil {
-			log.Error(3, "Failed to destroy session, err")
+			log.Error(3, "Failed to destroy session. error: %v", err)
 		}
 
 		// initialize a new session
 		if err := ctx.Session.Start(ctx.Context); err != nil {
-			log.Error(3, "Failed to start session", err)
+			log.Error(3, "Failed to start session. error: %v", err)
 		}
 	}
 
@@ -198,17 +198,31 @@ func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error 
 	}
 
 	proxies := strings.Split(setting.AuthProxyWhitelist, ",")
-	sourceIP, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		return err
+	var proxyObjs []*net.IPNet
+	for _, proxy := range proxies {
+		proxyObjs = append(proxyObjs, coerceProxyAddress(proxy))
 	}
 
-	// Compare allowed IP addresses to actual address
-	for _, proxyIP := range proxies {
-		if sourceIP == strings.TrimSpace(proxyIP) {
+	sourceIP, _, _ := net.SplitHostPort(remoteAddr)
+	sourceObj := net.ParseIP(sourceIP)
+
+	for _, proxyObj := range proxyObjs {
+		if proxyObj.Contains(sourceObj) {
 			return nil
 		}
 	}
-
 	return fmt.Errorf("Request for user (%s) from %s is not from the authentication proxy", proxyHeaderValue, sourceIP)
+}
+
+func coerceProxyAddress(proxyAddr string) *net.IPNet {
+	proxyAddr = strings.TrimSpace(proxyAddr)
+	if !strings.Contains(proxyAddr, "/") {
+		proxyAddr = strings.Join([]string{proxyAddr, "32"}, "/")
+	}
+
+	_, network, err := net.ParseCIDR(proxyAddr)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return network
 }

@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<li
+  className="card-item-wrapper"
+>
+  <a
+    className="card-item"
+    href="plugins/1/edit"
+  >
+    <div
+      className="card-item-header"
+    >
+      <div
+        className="card-item-type"
+      >
+        <i
+          className="icon-gf icon-gf-"
+        />
+      </div>
+    </div>
+    <div
+      className="card-item-body"
+    >
+      <figure
+        className="card-item-figure"
+      >
+        <img
+          src="small/logo"
+        />
+      </figure>
+      <div
+        className="card-item-details"
+      >
+        <div
+          className="card-item-name"
+        >
+          pretty cool plugin 1
+        </div>
+        <div
+          className="card-item-sub-name"
+        >
+          By Grafana Labs
+        </div>
+      </div>
+    </div>
+  </a>
+</li>
+`;
+
+exports[`Render should render has plugin section 1`] = `
+<li
+  className="card-item-wrapper"
+>
+  <a
+    className="card-item"
+    href="plugins/1/edit"
+  >
+    <div
+      className="card-item-header"
+    >
+      <div
+        className="card-item-type"
+      >
+        <i
+          className="icon-gf icon-gf-"
+        />
+      </div>
+      <div
+        className="card-item-notice"
+      >
+        <span
+          bs-tooltip="plugin.latestVersion"
+        >
+          Update available!
+        </span>
+      </div>
+    </div>
+    <div
+      className="card-item-body"
+    >
+      <figure
+        className="card-item-figure"
+      >
+        <img
+          src="small/logo"
+        />
+      </figure>
+      <div
+        className="card-item-details"
+      >
+        <div
+          className="card-item-name"
+        >
+          pretty cool plugin 1
+        </div>
+        <div
+          className="card-item-sub-name"
+        >
+          By Grafana Labs
+        </div>
+      </div>
+    </div>
+  </a>
+</li>
+`;

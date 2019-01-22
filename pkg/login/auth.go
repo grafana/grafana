@@ -14,6 +14,7 @@ var (
 	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
 	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
 	ErrTooManyLoginAttempts  = errors.New("Too many consecutive incorrect login attempts for user. Login for user temporarily blocked")
+	ErrPasswordEmpty         = errors.New("No password provided.")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrGettingUserQuota      = errors.New("Error getting user quota")
 )
@@ -25,6 +26,10 @@ func Init() {
 
 func AuthenticateUser(query *m.LoginUserQuery) error {
 	if err := validateLoginAttempts(query.Username); err != nil {
+		return err
+	}
+
+	if err := validatePasswordSet(query.Password); err != nil {
 		return err
 	}
 
@@ -51,4 +56,11 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 	}
 
 	return err
+}
+func validatePasswordSet(password string) error {
+	if len(password) == 0 {
+		return ErrPasswordEmpty
+	}
+
+	return nil
 }

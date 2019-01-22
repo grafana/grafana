@@ -29,7 +29,7 @@ export class LoginCtrl {
     $scope.loginMode = true;
     $scope.submitBtnText = 'Log in';
 
-    $scope.init = function() {
+    $scope.init = () => {
       $scope.$watch('loginMode', $scope.loginModeChanged);
 
       if (config.loginError) {
@@ -37,7 +37,7 @@ export class LoginCtrl {
       }
     };
 
-    $scope.submit = function() {
+    $scope.submit = () => {
       if ($scope.loginMode) {
         $scope.login();
       } else {
@@ -45,7 +45,7 @@ export class LoginCtrl {
       }
     };
 
-    $scope.changeView = function() {
+    $scope.changeView = () => {
       const loginView = document.querySelector('#login-view');
       const changePasswordView = document.querySelector('#change-password-view');
 
@@ -65,7 +65,7 @@ export class LoginCtrl {
       }, 400);
     };
 
-    $scope.changePassword = function() {
+    $scope.changePassword = () => {
       $scope.command.oldPassword = 'admin';
 
       if ($scope.command.newPassword !== $scope.command.confirmNew) {
@@ -73,25 +73,25 @@ export class LoginCtrl {
         return;
       }
 
-      backendSrv.put('/api/user/password', $scope.command).then(function() {
+      backendSrv.put('/api/user/password', $scope.command).then(() => {
         $scope.toGrafana();
       });
     };
 
-    $scope.skip = function() {
+    $scope.skip = () => {
       $scope.toGrafana();
     };
 
-    $scope.loginModeChanged = function(newValue) {
+    $scope.loginModeChanged = newValue => {
       $scope.submitBtnText = newValue ? 'Log in' : 'Sign up';
     };
 
-    $scope.signUp = function() {
+    $scope.signUp = () => {
       if (!$scope.loginForm.$valid) {
         return;
       }
 
-      backendSrv.post('/api/user/signup', $scope.formModel).then(function(result) {
+      backendSrv.post('/api/user/signup', $scope.formModel).then(result => {
         if (result.status === 'SignUpCreated') {
           $location.path('/signup').search({ email: $scope.formModel.email });
         } else {
@@ -100,7 +100,7 @@ export class LoginCtrl {
       });
     };
 
-    $scope.login = function() {
+    $scope.login = () => {
       delete $scope.loginError;
 
       if (!$scope.loginForm.$valid) {
@@ -110,7 +110,7 @@ export class LoginCtrl {
 
       backendSrv
         .post('/login', $scope.formModel)
-        .then(function(result) {
+        .then(result => {
           $scope.result = result;
 
           if ($scope.formModel.password !== 'admin' || $scope.ldapEnabled || $scope.authProxyEnabled) {
@@ -125,7 +125,7 @@ export class LoginCtrl {
         });
     };
 
-    $scope.toGrafana = function() {
+    $scope.toGrafana = () => {
       const params = $location.search();
 
       if (params.redirect && params.redirect[0] === '/') {

@@ -41,10 +41,8 @@ function formatSpecialHeader(useExcelHeader) {
 function formatRow(row, addEndRowDelimiter = true) {
   let text = '';
   for (let i = 0; i < row.length; i += 1) {
-    if (isBoolean(row[i]) || isNullOrUndefined(row[i])) {
+    if (isBoolean(row[i]) || isNumber(row[i]) || isNullOrUndefined(row[i])) {
       text += row[i];
-    } else if (isNumber(row[i])) {
-      text += row[i].toLocaleString();
     } else {
       text += `${QUOTE}${csvEscaped(htmlUnescaped(htmlDecoded(row[i])))}${QUOTE}`;
     }
@@ -84,7 +82,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     formatSpecialHeader(excel) +
     formatRow(
       ['Time'].concat(
-        seriesList.map(function(val) {
+        seriesList.map(val => {
           return val.alias;
         })
       )
@@ -97,7 +95,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     const timestamp = moment(seriesList[0].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat);
     text += formatRow(
       [timestamp].concat(
-        seriesList.map(function(series) {
+        seriesList.map(series => {
           return series.datapoints[i][POINT_VALUE_INDEX];
         })
       ),

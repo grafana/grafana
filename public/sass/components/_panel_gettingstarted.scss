@@ -1,4 +1,4 @@
-// Colours
+// Colors
 $progress-color-dark: $panel-bg !default;
 $progress-color: $panel-bg !default;
 $progress-color-light: $panel-bg !default;
@@ -51,8 +51,7 @@ $path-position: $marker-size-half - ($path-height / 2);
   min-width: $marker-size;
 
   &::after {
-    right: -50%;
-    content: "";
+    content: '';
     display: block;
     position: absolute;
     z-index: 1;
@@ -105,7 +104,7 @@ $path-position: $marker-size-half - ($path-height / 2);
 
       // change icon to check
       .icon-gf::before {
-        content: "\e604";
+        content: '\e604';
       }
     }
     .progress-text {

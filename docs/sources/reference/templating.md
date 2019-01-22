@@ -25,7 +25,7 @@ the value, using the dropdown at the top of the dashboard, your panel's metric q
 
 Panel titles and metric queries can refer to variables using two different syntaxes:
 
-- `$<varname>`  Example: apps.frontend.$server.requests.count
+- `$varname`  Example: apps.frontend.$server.requests.count
 - `[[varname]]` Example: apps.frontend.[[server]].requests.count
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use
@@ -91,6 +91,7 @@ Type | Description
 *Custom* | Define the variable options manually using a comma separated list.
 *Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
 *Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB & Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
+*Text box* | This variable type will display as a free text input field with an optional default value.
 
 ### Query options
 
@@ -246,7 +247,7 @@ Grafana has global built-in variables that can be used in expressions in the que
 
 ### The $__interval Variable
 
-This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
+This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
 
 Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph then queries can be made more efficient by grouping by a larger interval. It is more efficient to group by 1 day than by 10s when looking at 3 months of data and the graph will look the same and the query will be faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
 
@@ -292,9 +293,11 @@ The `direction` controls how the panels will be arranged.
 
 By choosing `horizontal` the panels will be arranged side-by-side. Grafana will automatically adjust the width
 of each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated
-panel. Each panel will never be smaller that the provided `Min width` if you have many selected values.
+panel.
 
-By choosing `vertical` the panels will be arranged from top to bottom in a column. The `Min width` doesn't have any effect in this case. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
+Set `Max per row` to tell grafana how many panels per row you want at most. It defaults to *4* if you don't set anything.
+
+By choosing `vertical` the panels will be arranged from top to bottom in a column. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
 
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.

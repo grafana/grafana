@@ -14,10 +14,11 @@ const scrollerClass = 'baron__scroller';
 export function geminiScrollbar() {
   return {
     restrict: 'A',
-    link: function(scope, elem, attrs) {
+    link: (scope, elem, attrs) => {
       let scrollRoot = elem.parent();
       const scroller = elem;
 
+      console.log('scroll');
       if (attrs.grafanaScrollbar && attrs.grafanaScrollbar === 'scrollonroot') {
         scrollRoot = scroller;
       }

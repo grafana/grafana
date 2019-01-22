@@ -14,7 +14,29 @@
   background: $page-gradient;
 }
 
+.panel-in-fullscreen {
+  .main-view {
+    background: $edit-gradient;
+  }
+}
+
+.page-scrollbar-wrapper {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.page-scrollbar-content {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  width: 100%;
+}
+
 .page-container {
+  flex-grow: 1;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
   padding-left: $spacer*2;
@@ -36,9 +58,30 @@
   overflow: auto;
   height: 100%;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 
   &--dashboard {
     height: calc(100% - 56px);
+  }
+
+  > div {
+    flex-grow: 1;
+  }
+
+  > .footer {
+    flex-shrink: 0;
+  }
+
+  // Render in correct position even ng-view div is not rendered yet
+  > .footer:first-child {
+    flex-grow: 1;
+    display: flex;
+
+    > * {
+      width: 100%;
+      align-self: flex-end;
+    }
   }
 }
 
@@ -51,7 +94,6 @@
 
 .page-body {
   padding-top: $spacer*2;
-  min-height: 500px;
 }
 
 .page-heading {

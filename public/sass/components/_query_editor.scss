@@ -3,23 +3,15 @@
   color: $blue;
 }
 
-.gf-form-disabled {
-  .query-keyword {
-    color: darken($blue, 20%);
-  }
-}
-
 .query-segment-operator {
   color: $orange;
 }
 
-.gf-form-query {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-content: flex-start;
-  align-items: flex-start;
+.query-editor-rows {
+  margin: 20px 0;
+}
 
+.gf-form-query {
   .gf-form,
   .gf-form-filler {
     margin-bottom: 2px;
@@ -35,48 +27,8 @@
   }
 
   .gf-form + .gf-form {
-    margin-right: 0;
+    margin-left: 0;
   }
-}
-
-.gf-form-query-content {
-  flex-grow: 2;
-
-  &--collapsed {
-    overflow: hidden;
-
-    .gf-form-label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 100%;
-      white-space: nowrap;
-    }
-  }
-}
-
-.gf-form-query-letter-cell {
-  .gf-form-query-letter-cell-carret {
-    display: inline-block;
-    width: 0.7rem;
-    position: relative;
-    left: -2px;
-  }
-  .gf-form-query-letter-cell-letter {
-    font-weight: bold;
-    color: $blue;
-  }
-  .gf-form-query-letter-cell-ds {
-    color: $text-color-weak;
-  }
-}
-
-.gf-query-ds-label {
-  text-align: center;
-  width: 44px;
-}
-
-.grafana-metric-options {
-  margin-top: 25px;
 }
 
 .tight-form-func {
@@ -130,28 +82,6 @@ input[type='text'].tight-form-func-param {
   }
 }
 
-.query-troubleshooter {
-  font-size: $font-size-sm;
-  margin: $gf-form-margin;
-  border: 1px solid $btn-secondary-bg;
-  min-height: 100px;
-  border-radius: 3px;
-}
-
-.query-troubleshooter__header {
-  float: right;
-  font-size: $font-size-sm;
-  text-align: right;
-  padding: $input-padding-y $input-padding-x;
-  a {
-    margin-left: $spacer;
-  }
-}
-
-.query-troubleshooter__body {
-  padding: $spacer 0;
-}
-
 .rst-text::before {
   content: ' ';
 }
@@ -182,3 +112,98 @@ input[type='text'].tight-form-func-param {
 .rst-literal-block .rst-text {
   display: block;
 }
+
+.query-editor-row {
+  margin-bottom: 2px;
+
+  &:hover {
+    .query-editor-row__actions {
+      display: flex;
+    }
+  }
+
+  &--disabled {
+    .query-keyword {
+      color: darken($blue, 20%);
+    }
+  }
+
+}
+
+.query-editor-row__header {
+  display: flex;
+  padding: 4px 0px 4px 8px;
+  position: relative;
+  height: 35px;
+  background: $page-bg;
+  flex-wrap: nowrap;
+  align-items: center;
+
+}
+.query-editor-row__ref-id {
+  font-weight: $font-weight-semi-bold;
+  color: $blue;
+  font-size: $font-size-md;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  i {
+    padding-right: 5px;
+    color: $text-muted;
+    position: relative;
+  }
+}
+
+.query-editor-row__collapsed-text {
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  overflow: hidden;
+
+  > div {
+    color: $text-muted;
+    font-style: italic;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: $font-size-sm;
+    min-width: 0;
+  }
+}
+
+.query-editor-row__actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  color: $text-muted;
+}
+
+.query-editor-row__action {
+  margin-left: 3px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
+  &:hover {
+    color: $text-color;
+  }
+}
+
+.query-editor-row__body {
+  margin: 2px 0 10px 40px;
+  background: $page-bg;
+
+  &--collapsed {
+    display: none;
+  }
+}
+
+.query-editor-row__context-info {
+  font-style: italic;
+  font-size: $font-size-sm;
+  color: $text-muted;
+  padding-left: 10px;
+}
+

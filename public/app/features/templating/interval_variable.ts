@@ -65,7 +65,7 @@ export class IntervalVariable implements Variable {
 
   updateOptions() {
     // extract options between quotes and/or comma
-    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), function(text) {
+    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), text => {
       text = text.replace(/["']+/g, '');
       return { text: text.trim(), value: text.trim() };
     });

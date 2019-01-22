@@ -70,7 +70,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     const categories = queryPart.getCategories();
     this.selectMenu = _.reduce(
       categories,
-      function(memo, cat, key) {
+      (memo, cat, key) => {
         const menu = {
           text: key,
           submenu: cat.map(item => {
@@ -100,6 +100,9 @@ export class InfluxQueryCtrl extends QueryCtrl {
         if (!this.target.slimit) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'SLIMIT' }));
         }
+        if (!this.target.tz) {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'tz' }));
+        }
         if (this.target.orderByTime === 'ASC') {
           options.push(this.uiSegmentSrv.newSegment({ value: 'ORDER BY time DESC' }));
         }
@@ -122,6 +125,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
       case 'SLIMIT': {
         this.target.slimit = 10;
+        break;
+      }
+      case 'tz': {
+        this.target.tz = 'UTC';
         break;
       }
       case 'ORDER BY time DESC': {

@@ -16,14 +16,12 @@ export default class InfluxDatasource {
   basicAuth: any;
   withCredentials: any;
   interval: any;
-  supportAnnotations: boolean;
-  supportMetrics: boolean;
   responseParser: any;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
     this.type = 'influxdb';
-    this.urls = _.map(instanceSettings.url.split(','), function(url) {
+    this.urls = _.map(instanceSettings.url.split(','), url => {
       return url.trim();
     });
 
@@ -34,8 +32,6 @@ export default class InfluxDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
-    this.supportAnnotations = true;
-    this.supportMetrics = true;
     this.responseParser = new ResponseParser();
   }
 
@@ -274,7 +270,7 @@ export default class InfluxDatasource {
       result => {
         return result.data;
       },
-      function(err) {
+      err => {
         if (err.status !== 0 || err.status >= 300) {
           if (err.data && err.data.error) {
             throw {
@@ -312,9 +308,9 @@ export default class InfluxDatasource {
         return 'now()';
       }
 
-      const parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
+      const parts = /^now-(\d+)([dhms])$/.exec(date);
       if (parts) {
-        const amount = parseInt(parts[1]);
+        const amount = parseInt(parts[1], 10);
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }

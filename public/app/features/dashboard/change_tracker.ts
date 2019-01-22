@@ -128,7 +128,7 @@ export class ChangeTracker {
     });
 
     // ignore template variable values
-    _.each(dash.templating.list, function(value) {
+    _.each(dash.templating.list, value => {
       value.current = null;
       value.options = null;
       value.filters = null;

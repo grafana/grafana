@@ -64,6 +64,14 @@ export const metricAggTypes = [
     isPipelineAgg: true,
     minVersion: 2,
   },
+  {
+    text: 'Bucket Script',
+    value: 'bucket_script',
+    requiresField: false,
+    isPipelineAgg: true,
+    supportsMultipleBucketPaths: true,
+    minVersion: 2,
+  },
   { text: 'Raw Document', value: 'raw_document', requiresField: false },
 ];
 
@@ -128,6 +136,7 @@ export const pipelineOptions = {
     { text: 'minimize', default: false },
   ],
   derivative: [{ text: 'unit', default: undefined }],
+  bucket_script: [],
 };
 
 export const movingAvgModelSettings = {
@@ -145,7 +154,7 @@ export const movingAvgModelSettings = {
 };
 
 export function getMetricAggTypes(esVersion) {
-  return _.filter(metricAggTypes, function(f) {
+  return _.filter(metricAggTypes, f => {
     if (f.minVersion) {
       return f.minVersion <= esVersion;
     } else {
@@ -171,9 +180,17 @@ export function isPipelineAgg(metricType) {
   return false;
 }
 
+export function isPipelineAggWithMultipleBucketPaths(metricType) {
+  if (metricType) {
+    return metricAggTypes.find(t => t.value === metricType && t.supportsMultipleBucketPaths) !== undefined;
+  }
+
+  return false;
+}
+
 export function getPipelineAggOptions(targets) {
   const result = [];
-  _.each(targets.metrics, function(metric) {
+  _.each(targets.metrics, metric => {
     if (!isPipelineAgg(metric.type)) {
       result.push({ text: describeMetric(metric), value: metric.id });
     }
@@ -185,7 +202,7 @@ export function getPipelineAggOptions(targets) {
 export function getMovingAvgSettings(model, filtered) {
   const filteredResult = [];
   if (filtered) {
-    _.each(movingAvgModelSettings[model], function(setting) {
+    _.each(movingAvgModelSettings[model], setting => {
       if (!setting.isCheckbox) {
         filteredResult.push(setting);
       }
@@ -197,7 +214,7 @@ export function getMovingAvgSettings(model, filtered) {
 
 export function getOrderByOptions(target) {
   const metricRefs = [];
-  _.each(target.metrics, function(metric) {
+  _.each(target.metrics, metric => {
     if (metric.type !== 'count') {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
     }
@@ -213,6 +230,9 @@ export function describeOrder(order) {
 
 export function describeMetric(metric) {
   const def = _.find(metricAggTypes, { value: metric.type });
+  if (!def.requiresField && !isPipelineAgg(metric.type)) {
+    return def.text;
+  }
   return def.text + ' ' + metric.field;
 }
 
@@ -228,3 +248,15 @@ export function describeOrderBy(orderBy, target) {
     return 'metric not found';
   }
 }
+
+export function defaultMetricAgg() {
+  return { type: 'count', id: '1' };
+}
+
+export function defaultBucketAgg() {
+  return { type: 'date_histogram', id: '2', settings: { interval: 'auto' } };
+}
+
+export const findMetricById = (metrics: any[], id: any) => {
+  return _.find(metrics, { id: id });
+};

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -43,6 +44,11 @@ func TestPostgres(t *testing.T) {
 			return x, nil
 		}
 
+		origInterpolate := tsdb.Interpolate
+		tsdb.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+			return sql, nil
+		}
+
 		endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
@@ -55,6 +61,7 @@ func TestPostgres(t *testing.T) {
 		Reset(func() {
 			sess.Close()
 			tsdb.NewXormEngine = origXormEngine
+			tsdb.Interpolate = origInterpolate
 		})
 
 		Convey("Given a table with different native data types", func() {
@@ -111,7 +118,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -191,7 +198,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -222,6 +229,40 @@ func TestPostgres(t *testing.T) {
 				}
 			})
 
+			Convey("When doing a metric query using timeGroup and $__interval", func() {
+				mockInterpolate := tsdb.Interpolate
+				tsdb.Interpolate = origInterpolate
+
+				Reset(func() {
+					tsdb.Interpolate = mockInterpolate
+				})
+
+				Convey("Should replace $__interval", func() {
+					query := &tsdb.TsdbQuery{
+						Queries: []*tsdb.Query{
+							{
+								DataSource: &models.DataSource{},
+								Model: simplejson.NewFromAny(map[string]interface{}{
+									"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+									"format": "time_series",
+								}),
+								RefId: "A",
+							},
+						},
+						TimeRange: &tsdb.TimeRange{
+							From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+							To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
+						},
+					}
+
+					resp, err := endpoint.Query(context.Background(), nil, query)
+					So(err, ShouldBeNil)
+					queryResult := resp.Results["A"]
+					So(queryResult.Error, ShouldBeNil)
+					So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT floor(extract(epoch from time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+				})
+			})
+
 			Convey("When doing a metric query using timeGroup with NULL fill enabled", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
@@ -239,7 +280,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -293,7 +334,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -320,7 +361,7 @@ func TestPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := endpoint.Query(nil, nil, query)
+			resp, err := endpoint.Query(context.Background(), nil, query)
 			So(err, ShouldBeNil)
 			queryResult := resp.Results["A"]
 			So(queryResult.Error, ShouldBeNil)
@@ -410,7 +451,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -432,7 +473,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -454,7 +495,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -476,7 +517,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -498,7 +539,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -520,7 +561,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -542,7 +583,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -564,7 +605,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -586,7 +627,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -609,7 +650,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -634,7 +675,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -642,6 +683,30 @@ func TestPostgres(t *testing.T) {
 				So(len(queryResult.Series), ShouldEqual, 2)
 				So(queryResult.Series[0].Name, ShouldEqual, "valueOne")
 				So(queryResult.Series[1].Name, ShouldEqual, "valueTwo")
+			})
+
+			Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
+				tsdb.Interpolate = origInterpolate
+				query := &tsdb.TsdbQuery{
+					TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
+					Queries: []*tsdb.Query{
+						{
+							DataSource: &models.DataSource{JsonData: simplejson.New()},
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(context.Background(), nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+
 			})
 		})
 
@@ -695,7 +760,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Deploys"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
@@ -718,7 +783,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Tickets"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
@@ -744,7 +809,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -774,7 +839,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -804,7 +869,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -834,7 +899,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -862,7 +927,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -890,7 +955,7 @@ func TestPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := endpoint.Query(nil, nil, query)
+				resp, err := endpoint.Query(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)

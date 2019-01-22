@@ -1058,10 +1058,10 @@ function getFuncDef(name, idx?) {
 
 function getFuncDefs(graphiteVersion, idx?) {
   const funcs = {};
-  _.forEach(idx || index, function(funcDef) {
+  _.forEach(idx || index, funcDef => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
       funcs[funcDef.name] = _.assign({}, funcDef, {
-        params: _.filter(funcDef.params, function(param) {
+        params: _.filter(funcDef.params, param => {
           return isVersionRelatedFunction(param, graphiteVersion);
         }),
       });

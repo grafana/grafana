@@ -20,6 +20,12 @@
 }
 
 @for $i from 1 through 30 {
+  .min-width-#{$i} {
+    min-width: ($spacer * $i) - $gf-form-margin !important;
+  }
+}
+
+@for $i from 1 through 30 {
   .offset-width-#{$i} {
     margin-left: ($spacer * $i) !important;
   }

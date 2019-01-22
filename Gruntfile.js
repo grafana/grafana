@@ -9,10 +9,15 @@ module.exports = function (grunt) {
     destDir: 'dist',
     tempDir: 'tmp',
     platform: process.platform.replace('win32', 'windows'),
+    enterprise: false,
   };
 
   if (grunt.option('platform')) {
     config.platform = grunt.option('platform');
+  }
+
+  if (grunt.option('enterprise')) {
+    config.enterprise = true;
   }
 
   if (grunt.option('arch')) {
@@ -25,7 +30,6 @@ module.exports = function (grunt) {
     }
   }
 
-  config.coverage = grunt.option('coverage');
   config.phjs = grunt.option('phjsToRelease');
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
 

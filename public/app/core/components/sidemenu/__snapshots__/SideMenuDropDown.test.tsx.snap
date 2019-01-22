@@ -8,11 +8,13 @@ exports[`Render should render children 1`] = `
   <li
     className="side-menu-header"
   >
-    <span
-      className="sidemenu-item-text"
-    >
-      link
-    </span>
+    <a>
+      <span
+        className="sidemenu-item-text"
+      >
+        link
+      </span>
+    </a>
   </li>
   <DropDownChild
     child={
@@ -49,11 +51,13 @@ exports[`Render should render component 1`] = `
   <li
     className="side-menu-header"
   >
-    <span
-      className="sidemenu-item-text"
-    >
-      link
-    </span>
+    <a>
+      <span
+        className="sidemenu-item-text"
+      >
+        link
+      </span>
+    </a>
   </li>
 </ul>
 `;

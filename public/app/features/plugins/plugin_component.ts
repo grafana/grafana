@@ -5,10 +5,8 @@ import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { importPluginModule } from './plugin_loader';
 
-import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
-
 /** @ngInject */
-function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
+function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache, $timeout) {
   function getTemplate(component) {
     if (component.template) {
       return $q.when(component.template);
@@ -36,7 +34,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     // handle relative template urls for plugin templates
     options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
 
-    return function() {
+    return () => {
       return {
         templateUrl: options.Component.templateUrl,
         template: options.Component.template,
@@ -69,14 +67,14 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
 
     const panelInfo = config.panels[scope.panel.type];
-    let panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
+    let panelCtrlPromise = Promise.resolve(null);
     if (panelInfo) {
-      panelCtrlPromise = importPluginModule(panelInfo.module).then(function(panelModule) {
+      panelCtrlPromise = importPluginModule(panelInfo.module).then(panelModule => {
         return panelModule.PanelCtrl;
       });
     }
 
-    return panelCtrlPromise.then(function(PanelCtrl: any) {
+    return panelCtrlPromise.then((PanelCtrl: any) => {
       componentInfo.Component = PanelCtrl;
 
       if (!PanelCtrl || PanelCtrl.registered) {
@@ -107,28 +105,22 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
-        const datasource = scope.target.datasource || scope.ctrl.panel.datasource;
-        return datasourceSrv.get(datasource).then(ds => {
-          scope.datasource = ds;
-
-          return importPluginModule(ds.meta.module).then(dsModule => {
-            return {
-              baseUrl: ds.meta.baseUrl,
-              name: 'query-ctrl-' + ds.meta.id,
-              bindings: { target: '=', panelCtrl: '=', datasource: '=' },
-              attrs: {
-                target: 'target',
-                'panel-ctrl': 'ctrl.panelCtrl',
-                datasource: 'datasource',
-              },
-              Component: dsModule.QueryCtrl,
-            };
-          });
+        const ds = scope.ctrl.datasource;
+        return $q.when({
+          baseUrl: ds.meta.baseUrl,
+          name: 'query-ctrl-' + ds.meta.id,
+          bindings: { target: '=', panelCtrl: '=', datasource: '=' },
+          attrs: {
+            target: 'ctrl.target',
+            'panel-ctrl': 'ctrl',
+            datasource: 'ctrl.datasource',
+          },
+          Component: ds.pluginExports.QueryCtrl,
         });
       }
       // Annotations
       case 'annotations-query-ctrl': {
-        return importPluginModule(scope.ctrl.currentDatasource.meta.module).then(function(dsModule) {
+        return importPluginModule(scope.ctrl.currentDatasource.meta.module).then(dsModule => {
           return {
             baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
             name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
@@ -144,10 +136,18 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         const dsMeta = scope.ctrl.datasourceMeta;
-        return importPluginModule(dsMeta.module).then(function(dsModule): any {
+        return importPluginModule(dsMeta.module).then((dsModule): any => {
           if (!dsModule.ConfigCtrl) {
             return { notFound: true };
           }
+
+          scope.$watch(
+            'ctrl.current',
+            () => {
+              scope.onModelChanged(scope.ctrl.current);
+            },
+            true
+          );
 
           return {
             baseUrl: dsMeta.baseUrl,
@@ -161,7 +161,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // AppConfigCtrl
       case 'app-config-ctrl': {
         const model = scope.ctrl.model;
-        return importPluginModule(model.module).then(function(appModule) {
+        return importPluginModule(model.module).then(appModule => {
           return {
             baseUrl: model.baseUrl,
             name: 'app-config-' + model.id,
@@ -174,7 +174,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // App Page
       case 'app-page': {
         const appModel = scope.ctrl.appModel;
-        return importPluginModule(appModel.module).then(function(appModule) {
+        return importPluginModule(appModel.module).then(appModule => {
           return {
             baseUrl: appModel.baseUrl,
             name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
@@ -206,11 +206,14 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     elem.empty();
 
     // let a binding digest cycle complete before adding to dom
-    setTimeout(function() {
-      elem.append(child);
-      scope.$applyAsync(function() {
-        scope.$broadcast('component-did-mount');
-        scope.$broadcast('refresh');
+    setTimeout(() => {
+      scope.$applyAsync(() => {
+        elem.append(child);
+        setTimeout(() => {
+          scope.$applyAsync(() => {
+            scope.$broadcast('component-did-mount');
+          });
+        });
       });
     });
   }
@@ -239,13 +242,12 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
   return {
     restrict: 'E',
-    link: function(scope, elem, attrs) {
+    link: (scope, elem, attrs) => {
       getModule(scope, attrs)
-        .then(function(componentInfo) {
+        .then(componentInfo => {
           registerPluginComponent(scope, elem, attrs, componentInfo);
         })
         .catch(err => {
-          $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
           console.log('Plugin component error', err);
         });
     },

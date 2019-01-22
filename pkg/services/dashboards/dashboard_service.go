@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
@@ -25,7 +26,9 @@ type DashboardProvisioningService interface {
 
 // NewService factory for creating a new dashboard service
 var NewService = func() DashboardService {
-	return &dashboardServiceImpl{}
+	return &dashboardServiceImpl{
+		log: log.New("dashboard-service"),
+	}
 }
 
 // NewProvisioningService factory for creating a new dashboard provisioning service
@@ -45,6 +48,7 @@ type SaveDashboardDTO struct {
 type dashboardServiceImpl struct {
 	orgId int64
 	user  *models.SignedInUser
+	log   log.Logger
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -72,7 +76,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, models.ErrDashboardFolderCannotHaveParent
 	}
 
-	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(models.RootFolderName) {
+	if dash.IsFolder && strings.EqualFold(dash.Title, models.RootFolderName) {
 		return nil, models.ErrDashboardFolderNameExists
 	}
 
@@ -86,10 +90,11 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		validateAlertsCmd := models.ValidateDashboardAlertsCommand{
 			OrgId:     dto.OrgId,
 			Dashboard: dash,
+			User:      dto.User,
 		}
 
 		if err := bus.Dispatch(&validateAlertsCmd); err != nil {
-			return nil, models.ErrDashboardContainsInvalidAlertData
+			return nil, err
 		}
 	}
 
@@ -155,12 +160,12 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := models.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
-		UserId:    dto.User.UserId,
 		Dashboard: cmd.Result,
+		User:      dto.User,
 	}
 
 	if err := bus.Dispatch(&alertCmd); err != nil {
-		return models.ErrDashboardFailedToUpdateAlertData
+		return err
 	}
 
 	return nil
@@ -170,7 +175,9 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
+		OrgId:   dto.OrgId,
 	}
+
 	cmd, err := dr.buildSaveDashboardCommand(dto, true, false)
 	if err != nil {
 		return nil, err

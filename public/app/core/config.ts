@@ -1,15 +1,18 @@
 import _ from 'lodash';
+import { PanelPlugin } from 'app/types/plugins';
 
 export interface BuildInfo {
   version: string;
   commit: string;
   isEnterprise: boolean;
   env: string;
+  latestVersion: string;
+  hasUpdate: boolean;
 }
 
 export class Settings {
   datasources: any;
-  panels: any;
+  panels: PanelPlugin[];
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
@@ -22,6 +25,8 @@ export class Settings {
   disableLoginForm: boolean;
   defaultDatasource: string;
   alertingEnabled: boolean;
+  alertingErrorOrTimeout: string;
+  alertingNoDataOrNullValues: string;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;
@@ -29,6 +34,7 @@ export class Settings {
   disableUserSignUp: boolean;
   loginHint: any;
   loginError: any;
+  viewersCanEdit: boolean;
 
   constructor(options) {
     const defaults = {
@@ -45,13 +51,18 @@ export class Settings {
         env: 'production',
         isEnterprise: false,
       },
+      viewersCanEdit: false,
     };
 
     _.extend(this, defaults, options);
   }
 }
 
-const bootData = (window as any).grafanaBootData || { settings: {} };
+const bootData = (window as any).grafanaBootData || {
+  settings: {},
+  user: {},
+};
+
 const options = bootData.settings;
 options.bootData = bootData;
 
