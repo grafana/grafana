@@ -3,7 +3,8 @@ import { storiesOf } from '@storybook/react';
 import { SeriesColorPicker } from './ColorPicker';
 import { ColorPicker } from './ColorPicker';
 import { UseState } from './NamedColorsPalette.story';
-import { withKnobs, select } from '@storybook/addon-knobs';
+import { withKnobs, select, boolean } from '@storybook/addon-knobs';
+import { action } from '@storybook/addon-actions';
 import { GrafanaTheme } from '../../types';
 
 // TODO: extract to decorators
@@ -22,47 +23,55 @@ export const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   );
 };
 
-const ColorPickerStories = storiesOf('UI/ColorPicker', module);
+const getColorPickerKnobs = (defaultTheme: GrafanaTheme = GrafanaTheme.Light, enableNamedColors?: boolean) => {
+  return {
+    selectedTheme: select(
+      'Theme',
+      {
+        Default: '',
+        Light: GrafanaTheme.Light,
+        Dark: GrafanaTheme.Dark,
+      },
+      defaultTheme
+    ),
+    enableNamedColors: boolean('Enable named colors', !!enableNamedColors),
+  };
+};
 
+const ColorPickerStories = storiesOf('UI/ColorPicker', module);
 ColorPickerStories.addDecorator(story => <CenteredStory>{story()}</CenteredStory>);
 ColorPickerStories.addDecorator(withKnobs);
 
 ColorPickerStories.add('Color picker', () => {
-  const selectedTheme = select(
-    'Theme',
-    {
-      Default: '',
-      Light: GrafanaTheme.Light,
-      Dark: GrafanaTheme.Dark,
-    },
-    GrafanaTheme.Light
-  );
-
+  const { selectedTheme, enableNamedColors } = getColorPickerKnobs();
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
-        return <ColorPicker color={selectedColor} onChange={updateSelectedColor} theme={selectedTheme || undefined} />;
+        return (
+          <ColorPicker
+            enableNamedColors={enableNamedColors}
+            color={selectedColor}
+            onChange={color => {
+              action('Color changed')(color);
+              updateSelectedColor(color);
+            }}
+            theme={selectedTheme || undefined}
+          />
+        );
       }}
     </UseState>
   );
 });
 
 ColorPickerStories.add('Series color picker', () => {
-  const selectedTheme = select(
-    'Theme',
-    {
-      Default: '',
-      Light: GrafanaTheme.Light,
-      Dark: GrafanaTheme.Dark,
-    },
-    GrafanaTheme.Light
-  );
+  const { selectedTheme, enableNamedColors } = getColorPickerKnobs();
 
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
         return (
           <SeriesColorPicker
+            enableNamedColors={enableNamedColors}
             yaxis={1}
             onToggleAxis={() => {}}
             color={selectedColor}
