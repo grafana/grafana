@@ -92,8 +92,7 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   updateContent(html: string) {
-    const { disableSanitizeInput } = config;
-    html = disableSanitizeInput ? html : sanitize(html);
+    html = config.disableSanitizeHtml ? html : sanitize(html);
     try {
       this.content = this.$sce.trustAsHtml(this.templateSrv.replace(html, this.panel.scopedVars));
     } catch (e) {

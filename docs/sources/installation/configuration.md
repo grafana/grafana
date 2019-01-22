@@ -589,3 +589,14 @@ Default setting for how Grafana handles nodata or null values in alerting. (aler
 Alert notifications can include images, but rendering many images at the same time can overload the server.
 This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
 value is `5`.
+
+## [panels]
+
+### enable_alpha
+Set to true if you want to test panels that are not yet ready for general usage.
+
+### disable_sanitize_html
+If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default
+is false. This settings was introduced in Grafana v6.0.
+
+

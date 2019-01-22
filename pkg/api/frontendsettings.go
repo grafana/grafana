@@ -166,7 +166,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
 		"viewersCanEdit":             setting.ViewersCanEdit,
-		"disableSanitizeInput":       hs.Cfg.DisableSanitizeInput,
+		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
