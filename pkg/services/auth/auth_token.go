@@ -38,6 +38,7 @@ type UserAuthTokenService interface {
 type UserAuthTokenServiceImpl struct {
 	SQLStore          *sqlstore.SqlStore            `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
+	Cfg               *setting.Cfg                  `inject:""`
 	log               log.Logger
 }
 
@@ -49,7 +50,7 @@ func (s *UserAuthTokenServiceImpl) Init() error {
 
 func (s *UserAuthTokenServiceImpl) InitContextWithToken(ctx *models.ReqContext, orgID int64) bool {
 	//auth User
-	unhashedToken := ctx.GetCookie(setting.SessionOptions.CookieName)
+	unhashedToken := ctx.GetCookie(s.Cfg.LoginCookieName)
 	if unhashedToken == "" {
 		return false
 	}
@@ -84,16 +85,19 @@ func (s *UserAuthTokenServiceImpl) InitContextWithToken(ctx *models.ReqContext, 
 }
 
 func (s *UserAuthTokenServiceImpl) writeSessionCookie(ctx *models.ReqContext, value string, maxAge int) {
-	ctx.Logger.Info("new token", "unhashed token", value)
+	if setting.Env == setting.DEV {
+		ctx.Logger.Info("new token", "unhashed token", value, "cookieName", s.Cfg.LoginCookieName, "secure", s.Cfg.LoginCookieSecure)
+	}
 
 	ctx.Resp.Header().Del("Set-Cookie")
 	cookie := http.Cookie{
-		Name:     setting.SessionOptions.CookieName,
+		Name:     s.Cfg.LoginCookieName,
 		Value:    url.QueryEscape(value),
 		HttpOnly: true,
 		Domain:   setting.Domain,
 		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.SessionOptions.Secure,
+		Secure:   s.Cfg.LoginCookieSecure,
+		MaxAge:   maxAge,
 	}
 
 	http.SetCookie(ctx.Resp, &cookie)
@@ -148,7 +152,11 @@ func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent
 
 func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*userAuthToken, error) {
 	hashedToken := hashToken(unhashedToken)
-	expireBefore := getTime().Add(time.Duration(-86400*setting.LogInRememberDays) * time.Second).Unix()
+	if setting.Env == setting.DEV {
+		s.log.Info("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
+	}
+
+	expireBefore := getTime().Add(time.Duration(-86400*s.Cfg.LoginCookieMaxDays) * time.Second).Unix()
 
 	var userToken userAuthToken
 	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ?", hashedToken, hashedToken, expireBefore).Get(&userToken)

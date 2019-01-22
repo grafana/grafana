@@ -18,7 +18,7 @@ import (
 	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/ini.v1"
+	ini "gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -223,6 +223,11 @@ type Cfg struct {
 	MetricsEndpointBasicAuthPassword string
 	EnableAlphaPanels                bool
 	EnterpriseLicensePath            string
+
+	LoginCookieName     string
+	LoginCookieUsername string
+	LoginCookieSecure   bool
+	LoginCookieMaxDays  int
 }
 
 type CommandLineArgs struct {
@@ -545,6 +550,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if IsEnterprise {
 		ApplicationName = APP_NAME_ENTERPRISE
 	}
+
+	//login
+	login := iniFile.Section("login")
+	cfg.LoginCookieName = login.Key("cookie_name").String()
+	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt()
+	cfg.LoginCookieSecure = login.Key("cookie_secure").MustBool(false)
+	cfg.LoginCookieUsername = login.Key("cookie_username").String()
 
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
