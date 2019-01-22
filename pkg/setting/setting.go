@@ -224,10 +224,11 @@ type Cfg struct {
 	EnableAlphaPanels                bool
 	EnterpriseLicensePath            string
 
-	LoginCookieName     string
-	LoginCookieUsername string
-	LoginCookieSecure   bool
-	LoginCookieMaxDays  int
+	LoginCookieName                   string
+	LoginCookieUsername               string
+	LoginCookieSecure                 bool
+	LoginCookieMaxDays                int
+	LoginDeleteExpiredTokensAfterDays int
 }
 
 type CommandLineArgs struct {
@@ -553,10 +554,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	//login
 	login := iniFile.Section("login")
-	cfg.LoginCookieName = login.Key("cookie_name").String()
-	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt()
+	cfg.LoginCookieName = login.Key("cookie_name").MustString("grafana_session")
+	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
 	cfg.LoginCookieSecure = login.Key("cookie_secure").MustBool(false)
-	cfg.LoginCookieUsername = login.Key("cookie_username").String()
+	cfg.LoginCookieUsername = login.Key("cookie_username").MustString("grafana_username")
+	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
 
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")

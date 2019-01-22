@@ -7,7 +7,7 @@ import (
 
 func (srv *UserAuthTokenServiceImpl) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Hour * 12)
-	deleteSessionAfter := time.Hour * 24 * 7 * 30
+	deleteSessionAfter := time.Hour * 24 * time.Duration(srv.Cfg.LoginDeleteExpiredTokensAfterDays)
 
 	for {
 		select {
