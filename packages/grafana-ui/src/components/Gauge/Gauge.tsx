@@ -1,20 +1,10 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import {
-  ValueMapping,
-  Threshold,
-  ThemeName,
-  MappingType,
-  BasicGaugeColor,
-  ThemeNames,
-  ValueMap,
-  RangeMap,
-} from '../../types/panel';
+import { ValueMapping, Threshold, ThemeName, BasicGaugeColor, ThemeNames } from '../../types/panel';
 import { TimeSeriesVMs } from '../../types/series';
 import { getValueFormat } from '../../utils/valueFormats/valueFormats';
-
-type TimeSeriesValue = string | number | null;
+import { TimeSeriesValue, getMappedValue } from '../../utils/valueMappings';
 
 export interface Props {
   decimals: number;
@@ -59,84 +49,6 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  addValueToTextMappingText(allValueMappings: ValueMapping[], valueToTextMapping: ValueMap, value: TimeSeriesValue) {
-    if (valueToTextMapping.value === undefined) {
-      return allValueMappings;
-    }
-
-    if (value === null && valueToTextMapping.value && valueToTextMapping.value.toLowerCase() === 'null') {
-      return allValueMappings.concat(valueToTextMapping);
-    }
-
-    const valueAsNumber = parseFloat(value as string);
-    const valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
-
-    if (isNaN(valueAsNumber) || isNaN(valueToTextMappingAsNumber)) {
-      return allValueMappings;
-    }
-
-    if (valueAsNumber !== valueToTextMappingAsNumber) {
-      return allValueMappings;
-    }
-
-    return allValueMappings.concat(valueToTextMapping);
-  }
-
-  addRangeToTextMappingText(allValueMappings: ValueMapping[], rangeToTextMapping: RangeMap, value: TimeSeriesValue) {
-    if (rangeToTextMapping.from === undefined || rangeToTextMapping.to === undefined || value === undefined) {
-      return allValueMappings;
-    }
-
-    if (
-      value === null &&
-      rangeToTextMapping.from &&
-      rangeToTextMapping.to &&
-      rangeToTextMapping.from.toLowerCase() === 'null' &&
-      rangeToTextMapping.to.toLowerCase() === 'null'
-    ) {
-      return allValueMappings.concat(rangeToTextMapping);
-    }
-
-    const valueAsNumber = parseFloat(value as string);
-    const fromAsNumber = parseFloat(rangeToTextMapping.from as string);
-    const toAsNumber = parseFloat(rangeToTextMapping.to as string);
-
-    if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
-      return allValueMappings;
-    }
-
-    if (valueAsNumber >= fromAsNumber && valueAsNumber <= toAsNumber) {
-      return allValueMappings.concat(rangeToTextMapping);
-    }
-
-    return allValueMappings;
-  }
-
-  getAllFormattedValueMappings(valueMappings: ValueMapping[], value: TimeSeriesValue) {
-    const allFormattedValueMappings = valueMappings.reduce(
-      (allValueMappings, valueMapping) => {
-        if (valueMapping.type === MappingType.ValueToText) {
-          allValueMappings = this.addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
-        } else if (valueMapping.type === MappingType.RangeToText) {
-          allValueMappings = this.addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
-        }
-
-        return allValueMappings;
-      },
-      [] as ValueMapping[]
-    );
-
-    allFormattedValueMappings.sort((t1, t2) => {
-      return t1.id - t2.id;
-    });
-
-    return allFormattedValueMappings;
-  }
-
-  getFirstFormattedValueMapping(valueMappings: ValueMapping[], value: TimeSeriesValue) {
-    return this.getAllFormattedValueMappings(valueMappings, value)[0];
-  }
-
   formatValue(value: TimeSeriesValue) {
     const { decimals, valueMappings, prefix, suffix, unit } = this.props;
 
@@ -145,7 +57,7 @@ export class Gauge extends PureComponent<Props> {
     }
 
     if (valueMappings.length > 0) {
-      const valueMappedValue = this.getFirstFormattedValueMapping(valueMappings, value);
+      const valueMappedValue = getMappedValue(valueMappings, value);
       if (valueMappedValue) {
         return `${prefix} ${valueMappedValue.text} ${suffix}`;
       }
