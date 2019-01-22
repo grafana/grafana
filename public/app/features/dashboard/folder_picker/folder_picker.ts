@@ -21,6 +21,7 @@ export class FolderPickerCtrl {
   hasValidationError: boolean;
   validationError: any;
   isEditor: boolean;
+  dashboardId?: number;
 
   /** @ngInject */
   constructor(private backendSrv, private validationSrv, private contextSrv) {
@@ -131,6 +132,7 @@ export class FolderPickerCtrl {
   private loadInitialValue() {
     const resetFolder = { text: this.initialTitle, value: null };
     const rootFolder = { text: this.rootName, value: 0 };
+    const emptyFolder = { text: '', value: null };
 
     this.getOptions('').then(result => {
       let folder;
@@ -144,7 +146,13 @@ export class FolderPickerCtrl {
         if (this.isEditor) {
           folder = rootFolder;
         } else {
-          folder = result.length > 0 ? result[0] : resetFolder;
+          // We shouldn't assign a random folder without the user actively choosing it on a persisted dashboard
+          const isPersistedDashBoard = this.dashboardId ? true : false;
+          if (isPersistedDashBoard) {
+            folder = emptyFolder;
+          } else {
+            folder = result.length > 0 ? result[0] : resetFolder;
+          }
         }
       }
 
@@ -176,6 +184,7 @@ export function folderPicker() {
       exitFolderCreation: '&',
       enableCreateNew: '@',
       enableReset: '@',
+      dashboardId: '<?',
     },
   };
 }

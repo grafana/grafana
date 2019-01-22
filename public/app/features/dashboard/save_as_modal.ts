@@ -25,7 +25,8 @@ const template = `
                        enter-folder-creation="ctrl.onEnterFolderCreation()"
                        exit-folder-creation="ctrl.onExitFolderCreation()"
                        enable-create-new="true"
-                       label-class="width-7">
+                       label-class="width-7"
+                       dashboard-id="ctrl.clone.id">
         </folder-picker>
       </div>
 		</div>
