@@ -132,7 +132,6 @@ export class FolderPickerCtrl {
   private loadInitialValue() {
     const resetFolder = { text: this.initialTitle, value: null };
     const rootFolder = { text: this.rootName, value: 0 };
-    const emptyFolder = { text: '', value: null };
 
     this.getOptions('').then(result => {
       let folder;
@@ -149,7 +148,7 @@ export class FolderPickerCtrl {
           // We shouldn't assign a random folder without the user actively choosing it on a persisted dashboard
           const isPersistedDashBoard = this.dashboardId ? true : false;
           if (isPersistedDashBoard) {
-            folder = emptyFolder;
+            folder = resetFolder;
           } else {
             folder = result.length > 0 ? result[0] : resetFolder;
           }
