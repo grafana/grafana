@@ -10,7 +10,6 @@ import store from 'app/core/store';
 
 // Components
 import { DataSourceSelectItem } from '@grafana/ui/src/types';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { Alert } from './Error';
 import ErrorBoundary from './ErrorBoundary';
 import GraphContainer from './GraphContainer';
@@ -41,6 +40,7 @@ import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
+import { ExploreToolbar } from './ExploreToolbar';
 
 interface ExploreProps {
   StartPage?: any;
@@ -233,58 +233,21 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
     return (
       <div className={exploreClass} ref={this.getRef}>
-        <div className="navbar">
-          {exploreId === 'left' ? (
-            <div>
-              <a className="navbar-page-btn">
-                <i className="fa fa-rocket" />
-                Explore
-              </a>
-            </div>
-          ) : (
-            <>
-              <div className="navbar-page-btn" />
-              <div className="navbar-buttons explore-first-button">
-                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                  Close Split
-                </button>
-              </div>
-            </>
-          )}
-          {!datasourceMissing ? (
-            <div className="navbar-buttons">
-              <DataSourcePicker
-                onChange={this.onChangeDatasource}
-                datasources={exploreDatasources}
-                current={selectedDatasource}
-              />
-            </div>
-          ) : null}
-          <div className="navbar__spacer" />
-          {exploreId === 'left' && !split ? (
-            <div className="navbar-buttons">
-              <button className="btn navbar-button" onClick={this.onClickSplit}>
-                Split
-              </button>
-            </div>
-          ) : null}
-          <TimePicker ref={this.timepickerRef} range={range} onChangeTime={this.onChangeTime} />
-          <div className="navbar-buttons">
-            <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClickClear}>
-              Clear All
-            </button>
-          </div>
-          <div className="navbar-buttons relative">
-            <button className="btn navbar-button navbar-button--primary" onClick={this.onSubmit}>
-              Run Query{' '}
-              {loading ? (
-                <i className="fa fa-spinner fa-fw fa-spin run-icon" />
-              ) : (
-                <i className="fa fa-level-down fa-fw run-icon" />
-              )}
-            </button>
-          </div>
-        </div>
+        <ExploreToolbar
+          datasourceMissing={datasourceMissing}
+          exploreDatasources={exploreDatasources}
+          exploreId={exploreId}
+          loading={loading}
+          range={range}
+          selectedDatasource={selectedDatasource}
+          splitted={split}
+          onChangeDatasource={this.onChangeDatasource}
+          onClearAll={this.onClickClear}
+          onCloseSplit={this.onClickCloseSplit}
+          onChangeTime={this.onChangeTime}
+          onRunQuery={this.onSubmit}
+          onSplit={this.onClickSplit}
+        />
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? (
           <div className="explore-container">Please add a datasource that supports Explore (e.g., Prometheus).</div>
