@@ -18,67 +18,72 @@ import (
 )
 
 func init() {
-	registry.RegisterService(&UserAuthTokenService{})
+	registry.RegisterService(&UserAuthTokenServiceImpl{})
 }
 
 var (
 	getTime          = time.Now
-	RotateTime       = 30 * time.Second
-	UrgentRotateTime = 10 * time.Second
+	RotateTime       = 2 * time.Minute
+	UrgentRotateTime = 20 * time.Second
 	oneYearInSeconds = 31557600 //used as default maxage for session cookies. We validate/rotate them more often.
 )
 
 // UserAuthTokenService are used for generating and validating user auth tokens
-type UserAuthTokenService struct {
+type UserAuthTokenService interface {
+	InitContextWithToken(ctx *models.ReqContext, orgID int64) bool
+	UserAuthenticatedHook(user *models.User, c *models.ReqContext) error
+	UserSignedOutHook(c *models.ReqContext)
+}
+
+type UserAuthTokenServiceImpl struct {
 	SQLStore          *sqlstore.SqlStore            `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
 	log               log.Logger
 }
 
 // Init this service
-func (s *UserAuthTokenService) Init() error {
+func (s *UserAuthTokenServiceImpl) Init() error {
 	s.log = log.New("auth")
 	return nil
 }
 
-func (s *UserAuthTokenService) InitContextWithToken(ctx *models.ReqContext, orgID int64) bool {
+func (s *UserAuthTokenServiceImpl) InitContextWithToken(ctx *models.ReqContext, orgID int64) bool {
 	//auth User
 	unhashedToken := ctx.GetCookie(setting.SessionOptions.CookieName)
 	if unhashedToken == "" {
 		return false
 	}
 
-	user, err := s.LookupToken(unhashedToken)
+	userToken, err := s.LookupToken(unhashedToken)
 	if err != nil {
 		ctx.Logger.Info("failed to look up user based on cookie", "error", err)
 		return false
 	}
 
-	query := models.GetSignedInUserQuery{UserId: user.UserId, OrgId: orgID}
+	query := models.GetSignedInUserQuery{UserId: userToken.UserId, OrgId: orgID}
 	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", user.UserId, "error", err)
+		ctx.Logger.Error("Failed to get user with id", "userId", userToken.UserId, "error", err)
 		return false
 	}
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
-	ctx.UserToken = user
 
 	//rotate session token if needed.
-	rotated, err := s.RefreshToken(ctx.UserToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
+	rotated, err := s.RefreshToken(userToken, ctx.RemoteAddr(), ctx.Req.UserAgent())
 	if err != nil {
-		ctx.Logger.Error("failed to rotate token", "error", err, "user.id", user.UserId, "user_token.id", user.Id)
+		ctx.Logger.Error("failed to rotate token", "error", err, "userId", userToken.UserId, "tokenId", userToken.Id)
 		return true
 	}
 
 	if rotated {
-		s.writeSessionCookie(ctx, ctx.UserToken.UnhashedToken, oneYearInSeconds)
+		s.writeSessionCookie(ctx, userToken.UnhashedToken, oneYearInSeconds)
 	}
 
 	return true
 }
 
-func (s *UserAuthTokenService) writeSessionCookie(ctx *models.ReqContext, value string, maxAge int) {
+func (s *UserAuthTokenServiceImpl) writeSessionCookie(ctx *models.ReqContext, value string, maxAge int) {
 	ctx.Logger.Info("new token", "unhashed token", value)
 
 	ctx.Resp.Header().Del("Set-Cookie")
@@ -94,23 +99,21 @@ func (s *UserAuthTokenService) writeSessionCookie(ctx *models.ReqContext, value 
 	http.SetCookie(ctx.Resp, &cookie)
 }
 
-func (s *UserAuthTokenService) UserAuthenticatedHook(user *models.User, c *models.ReqContext) error {
+func (s *UserAuthTokenServiceImpl) UserAuthenticatedHook(user *models.User, c *models.ReqContext) error {
 	userToken, err := s.CreateToken(user.Id, c.RemoteAddr(), c.Req.UserAgent())
 	if err != nil {
 		return err
 	}
 
-	c.UserToken = userToken
-
 	s.writeSessionCookie(c, userToken.UnhashedToken, oneYearInSeconds)
 	return nil
 }
 
-func (s *UserAuthTokenService) UserSignedOutHook(c *models.ReqContext) {
+func (s *UserAuthTokenServiceImpl) UserSignedOutHook(c *models.ReqContext) {
 	s.writeSessionCookie(c, "", -1)
 }
 
-func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserAuthToken, error) {
+func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (*userAuthToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
 	token, err := util.RandomHex(16)
 	if err != nil {
@@ -121,7 +124,7 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 
 	now := getTime().Unix()
 
-	userToken := models.UserAuthToken{
+	userToken := userAuthToken{
 		UserId:        userId,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
@@ -143,11 +146,11 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 	return &userToken, nil
 }
 
-func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAuthToken, error) {
+func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*userAuthToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	expireBefore := getTime().Add(time.Duration(-86400*setting.LogInRememberDays) * time.Second).Unix()
 
-	var userToken models.UserAuthToken
+	var userToken userAuthToken
 	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ?", hashedToken, hashedToken, expireBefore).Get(&userToken)
 	if err != nil {
 		return nil, err
@@ -198,7 +201,7 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserAu
 	return &userToken, nil
 }
 
-func (s *UserAuthTokenService) RefreshToken(token *models.UserAuthToken, clientIP, userAgent string) (bool, error) {
+func (s *UserAuthTokenServiceImpl) RefreshToken(token *userAuthToken, clientIP, userAgent string) (bool, error) {
 	if token == nil {
 		return false, nil
 	}

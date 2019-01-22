@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -290,7 +289,7 @@ func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 
 	sqlstore := sqlstore.InitTestDB(t)
-	tokenService := &UserAuthTokenService{
+	tokenService := &UserAuthTokenServiceImpl{
 		SQLStore: sqlstore,
 		log:      log.New("test-logger"),
 	}
@@ -307,12 +306,12 @@ func createTestContext(t *testing.T) *testContext {
 
 type testContext struct {
 	sqlstore     *sqlstore.SqlStore
-	tokenService *UserAuthTokenService
+	tokenService *UserAuthTokenServiceImpl
 }
 
-func (c *testContext) getAuthTokenByID(id int64) (*models.UserAuthToken, error) {
+func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
 	sess := c.sqlstore.NewSession()
-	var t models.UserAuthToken
+	var t userAuthToken
 	found, err := sess.ID(id).Get(&t)
 	if err != nil || !found {
 		return nil, err

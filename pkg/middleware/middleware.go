@@ -21,7 +21,7 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats *auth.UserAuthTokenService) macaron.Handler {
+func GetContextHandler(ats auth.UserAuthTokenService) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,

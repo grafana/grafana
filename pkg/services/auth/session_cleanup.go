@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (srv *UserAuthTokenService) Run(ctx context.Context) error {
+func (srv *UserAuthTokenServiceImpl) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Hour * 12)
 	deleteSessionAfter := time.Hour * 24 * 7 * 30
 
@@ -22,7 +22,7 @@ func (srv *UserAuthTokenService) Run(ctx context.Context) error {
 	}
 }
 
-func (srv *UserAuthTokenService) deleteOldSession(deleteSessionAfter time.Duration) (int64, error) {
+func (srv *UserAuthTokenServiceImpl) deleteOldSession(deleteSessionAfter time.Duration) (int64, error) {
 	sql := `DELETE from user_auth_token WHERE rotated_at < ?`
 
 	deleteBefore := getTime().Add(-deleteSessionAfter)

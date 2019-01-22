@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -15,7 +14,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 		ctx := createTestContext(t)
 
 		insertToken := func(token string, prev string, rotatedAt int64) {
-			ut := models.UserAuthToken{AuthToken: token, PrevAuthToken: prev, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
+			ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
 			_, err := ctx.sqlstore.NewSession().Insert(&ut)
 			So(err, ShouldBeNil)
 		}

@@ -47,14 +47,14 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister    routing.RouteRegister      `inject:""`
-	Bus              bus.Bus                    `inject:""`
-	RenderService    rendering.Service          `inject:""`
-	Cfg              *setting.Cfg               `inject:""`
-	HooksService     *hooks.HooksService        `inject:""`
-	CacheService     *cache.CacheService        `inject:""`
-	DatasourceCache  datasources.CacheService   `inject:""`
-	AuthTokenService *auth.UserAuthTokenService `inject:""`
+	RouteRegister    routing.RouteRegister     `inject:""`
+	Bus              bus.Bus                   `inject:""`
+	RenderService    rendering.Service         `inject:""`
+	Cfg              *setting.Cfg              `inject:""`
+	HooksService     *hooks.HooksService       `inject:""`
+	CacheService     *cache.CacheService       `inject:""`
+	DatasourceCache  datasources.CacheService  `inject:""`
+	AuthTokenService auth.UserAuthTokenService `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

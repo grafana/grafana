@@ -10,25 +10,9 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-type UserAuthToken struct {
-	Id            int64
-	UserId        int64
-	AuthToken     string
-	PrevAuthToken string
-	UserAgent     string
-	ClientIp      string
-	AuthTokenSeen bool
-	SeenAt        int64
-	RotatedAt     int64
-	CreatedAt     int64
-	UpdatedAt     int64
-	UnhashedToken string `xorm:"-"`
-}
-
 type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
-	UserToken *UserAuthToken
 
 	Session session.SessionStore
 
