@@ -30,6 +30,7 @@
     "tinycolor2": "^1.4.1"
   },
   "devDependencies": {
+    "@storybook/addon-actions": "^4.1.7",
     "@storybook/addon-info": "^4.1.6",
     "@storybook/addon-knobs": "^4.1.7",
     "@storybook/react": "^4.1.4",
@@ -42,6 +43,7 @@
     "@types/react-custom-scrollbars": "^4.0.5",
     "@types/react-test-renderer": "^16.0.3",
     "@types/react-transition-group": "^2.0.15",
+    "@types/storybook__addon-actions": "^3.4.1",
     "@types/storybook__addon-info": "^3.4.2",
     "@types/storybook__addon-knobs": "^4.0.0",
     "@types/storybook__react": "^4.0.0",
