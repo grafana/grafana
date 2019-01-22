@@ -185,7 +185,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.LoadDatasourcePending: {
-      return { ...state, datasourceLoading: true, requestedDatasourceId: action.payload.datasourceId };
+      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.datasourceName };
     }
 
     case ActionTypes.LoadDatasourceSuccess: {
@@ -217,6 +217,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
         supportsTable,
         datasourceLoading: false,
         datasourceMissing: false,
+        datasourceError: null,
         logsHighlighterExpressions: undefined,
         modifiedQueries: initialQueries.slice(),
         queryTransactions: [],

@@ -123,7 +123,7 @@ export interface LoadDatasourcePendingAction {
   type: ActionTypes.LoadDatasourcePending;
   payload: {
     exploreId: ExploreId;
-    datasourceId: number;
+    datasourceName: string;
   };
 }
 
