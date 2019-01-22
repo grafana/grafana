@@ -1,19 +1,25 @@
+// Libraries
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
-import { RawTimeRange, TimeRange } from '@grafana/ui';
 
-import { DataSourceSelectItem } from 'app/types/datasources';
-import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
-import { DataQuery } from 'app/types/series';
-import { StoreState } from 'app/types';
+// Services & Utils
 import store from 'app/core/store';
-import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE } from 'app/core/utils/explore';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { Emitter } from 'app/core/utils/emitter';
 
+// Components
+import { DataSourceSelectItem } from '@grafana/ui/src/types';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+import { Alert } from './Error';
+import ErrorBoundary from './ErrorBoundary';
+import GraphContainer from './GraphContainer';
+import LogsContainer from './LogsContainer';
+import QueryRows from './QueryRows';
+import TableContainer from './TableContainer';
+import TimePicker, { parseTime } from './TimePicker';
+
+// Actions
 import {
   changeDatasource,
   changeSize,
@@ -29,13 +35,12 @@ import {
   splitOpen,
 } from './state/actions';
 
-import { Alert } from './Error';
-import ErrorBoundary from './ErrorBoundary';
-import GraphContainer from './GraphContainer';
-import LogsContainer from './LogsContainer';
-import QueryRows from './QueryRows';
-import TableContainer from './TableContainer';
-import TimePicker, { parseTime } from './TimePicker';
+// Types
+import { RawTimeRange, TimeRange, DataQuery } from '@grafana/ui';
+import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
+import { StoreState } from 'app/types';
+import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE } from 'app/core/utils/explore';
+import { Emitter } from 'app/core/utils/emitter';
 
 interface ExploreProps {
   StartPage?: any;
@@ -237,11 +242,14 @@ export class Explore extends React.PureComponent<ExploreProps> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
-                Close Split
-              </button>
-            </div>
+            <>
+              <div className="navbar-page-btn" />
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
+                  Close Split
+                </button>
+              </div>
+            </>
           )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
@@ -269,7 +277,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
           <div className="navbar-buttons relative">
             <button className="btn navbar-button navbar-button--primary" onClick={this.onSubmit}>
               Run Query{' '}
-              {loading ? <i className="fa fa-spinner fa-fw fa-spin run-icon" /> : <i className="fa fa-level-down fa-fw run-icon" />}
+              {loading ? (
+                <i className="fa fa-spinner fa-fw fa-spin run-icon" />
+              ) : (
+                <i className="fa fa-level-down fa-fw run-icon" />
+              )}
             </button>
           </div>
         </div>

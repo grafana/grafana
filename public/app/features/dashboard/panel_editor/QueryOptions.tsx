@@ -10,11 +10,12 @@ import { Input } from 'app/core/components/Form';
 import { EventsWithValidation } from 'app/core/components/Form/Input';
 import { InputStatus } from 'app/core/components/Form/Input';
 import DataSourceOption from './DataSourceOption';
-import { GfFormLabel } from '@grafana/ui';
+import { FormLabel } from '@grafana/ui';
 
 // Types
 import { PanelModel } from '../panel_model';
-import { ValidationEvents, DataSourceSelectItem } from 'app/types';
+import { DataSourceSelectItem } from '@grafana/ui/src/types';
+import { ValidationEvents } from 'app/types';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -164,7 +165,7 @@ export class QueryOptions extends PureComponent<Props, State> {
         {this.renderOptions()}
 
         <div className="gf-form">
-          <GfFormLabel>Relative time</GfFormLabel>
+          <FormLabel>Relative time</FormLabel>
           <Input
             type="text"
             className="width-6"

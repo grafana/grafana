@@ -1,4 +1,5 @@
 import { TextMatch } from 'app/types/explore';
+import xss from 'xss';
 
 /**
  * Adapt findMatchesInText for react-highlight-words findChunks handler.
@@ -22,7 +23,7 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
   }
   const matches = [];
   const cleaned = cleanNeedle(needle);
-  let regexp;
+  let regexp: RegExp;
   try {
     regexp = new RegExp(`(?:${cleaned})`, 'g');
   } catch (error) {
@@ -41,4 +42,13 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
     return '';
   });
   return matches;
+}
+
+export function sanitize (unsanitizedString: string): string {
+  try {
+    return xss(unsanitizedString);
+  } catch (error) {
+    console.log('String could not be sanitized', unsanitizedString);
+    return unsanitizedString;
+  }
 }

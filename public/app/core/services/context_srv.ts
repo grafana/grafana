@@ -2,6 +2,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import store from 'app/core/store';
+import { ThemeNames, ThemeName } from '@grafana/ui';
 
 export class User {
   isGrafanaAdmin: any;
@@ -58,6 +59,14 @@ export class ContextSrv {
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
     store.set('grafana.sidemenu', this.sidemenu);
+  }
+
+  hasAccessToExplore() {
+    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
+  }
+
+  getTheme(): ThemeName {
+    return this.user.lightTheme ? ThemeNames.Light : ThemeNames.Dark;
   }
 }
 

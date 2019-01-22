@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Select, Label } from '@grafana/ui';
 
+import { FormLabel, Select } from '@grafana/ui';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit } from 'app/types';
@@ -99,12 +99,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
           />
         </div>
         <div className="gf-form">
-          <Label
+          <FormLabel
             width={11}
             tooltip="Not finding dashboard you want? Star it first, then it should appear in this select box."
           >
             Home Dashboard
-          </Label>
+          </FormLabel>
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}

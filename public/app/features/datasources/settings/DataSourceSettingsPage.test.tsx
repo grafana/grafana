@@ -1,7 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { DataSourceSettings, Props } from './DataSourceSettings';
-import { DataSource, NavModel } from '../../../types';
+import { DataSourceSettingsPage, Props } from './DataSourceSettingsPage';
+import { NavModel } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui';
 import { getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 
@@ -20,7 +21,7 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<DataSourceSettings {...props} />);
+  return shallow(<DataSourceSettingsPage {...props} />);
 };
 
 describe('Render', () => {
@@ -32,7 +33,7 @@ describe('Render', () => {
 
   it('should render loader', () => {
     const wrapper = setup({
-      dataSource: {} as DataSource,
+      dataSource: {} as DataSourceSettings,
     });
 
     expect(wrapper).toMatchSnapshot();

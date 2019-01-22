@@ -1,4 +1,4 @@
-﻿import React, { SFC } from 'react';
+﻿import React, { FC } from 'react';
 import { Tooltip } from '@grafana/ui';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   tooltipInfo?: any;
 }
 
-export const DataSourceOptions: SFC<Props> = ({ label, placeholder, name, value, onChange, tooltipInfo }) => {
+export const DataSourceOptions: FC<Props> = ({ label, placeholder, name, value, onChange, tooltipInfo }) => {
   const dsOption = (
     <div className="gf-form gf-form--flex-end">
       <label className="gf-form-label">{label}</label>

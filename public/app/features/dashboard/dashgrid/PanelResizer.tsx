@@ -15,7 +15,7 @@ interface State {
 }
 
 export class PanelResizer extends PureComponent<Props, State> {
-  initialHeight: number = Math.floor(document.documentElement.scrollHeight * 0.4);
+  initialHeight: number = Math.floor(document.documentElement.scrollHeight * 0.3);
   prevEditorHeight: number;
   throttledChangeHeight: (height: number) => void;
   throttledResizeDone: () => void;

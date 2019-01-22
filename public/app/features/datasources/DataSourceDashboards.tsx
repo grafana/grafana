@@ -1,9 +1,13 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+
+// Components
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import DashboardTable from './DashboardsTable';
-import { DataSource, NavModel, PluginDashboard } from 'app/types';
+
+// Actions & Selectors
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { loadDataSource } from './state/actions';
@@ -11,10 +15,14 @@ import { loadPluginDashboards } from '../plugins/state/actions';
 import { importDashboard, removeDashboard } from '../dashboard/state/actions';
 import { getDataSource } from './state/selectors';
 
+// Types
+import { NavModel, PluginDashboard } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui/src/types';
+
 export interface Props {
   navModel: NavModel;
   dashboards: PluginDashboard[];
-  dataSource: DataSource;
+  dataSource: DataSourceSettings;
   pageId: number;
   importDashboard: typeof importDashboard;
   loadDataSource: typeof loadDataSource;

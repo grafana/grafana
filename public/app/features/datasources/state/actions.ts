@@ -6,7 +6,8 @@ import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { UpdateLocationAction } from 'app/core/actions/location';
 import { buildNavModel } from './navModel';
-import { DataSource, Plugin, StoreState } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui/src/types';
+import { Plugin, StoreState } from 'app/types';
 
 export enum ActionTypes {
   LoadDataSources = 'LOAD_DATA_SOURCES',
@@ -22,7 +23,7 @@ export enum ActionTypes {
 
 interface LoadDataSourcesAction {
   type: ActionTypes.LoadDataSources;
-  payload: DataSource[];
+  payload: DataSourceSettings[];
 }
 
 interface SetDataSourcesSearchQueryAction {
@@ -47,7 +48,7 @@ interface SetDataSourceTypeSearchQueryAction {
 
 interface LoadDataSourceAction {
   type: ActionTypes.LoadDataSource;
-  payload: DataSource;
+  payload: DataSourceSettings;
 }
 
 interface LoadDataSourceMetaAction {
@@ -65,12 +66,12 @@ interface SetIsDefaultAction {
   payload: boolean;
 }
 
-const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
+const dataSourcesLoaded = (dataSources: DataSourceSettings[]): LoadDataSourcesAction => ({
   type: ActionTypes.LoadDataSources,
   payload: dataSources,
 });
 
-const dataSourceLoaded = (dataSource: DataSource): LoadDataSourceAction => ({
+const dataSourceLoaded = (dataSource: DataSourceSettings): LoadDataSourceAction => ({
   type: ActionTypes.LoadDataSource,
   payload: dataSource,
 });
@@ -171,7 +172,7 @@ export function loadDataSourceTypes(): ThunkResult<void> {
   };
 }
 
-export function updateDataSource(dataSource: DataSource): ThunkResult<void> {
+export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
     await updateFrontendSettings();

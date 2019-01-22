@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { toggleGraph } from './state/actions';
+import { toggleTable } from './state/actions';
 import Table from './Table';
 import Panel from './Panel';
 import TableModel from 'app/core/table_model';
@@ -16,12 +16,12 @@ interface TableContainerProps {
   onClickCell: (key: string, value: string) => void;
   showingTable: boolean;
   tableResult?: TableModel;
-  toggleGraph: typeof toggleGraph;
+  toggleTable: typeof toggleTable;
 }
 
 export class TableContainer extends PureComponent<TableContainerProps> {
   onClickTableButton = () => {
-    this.props.toggleGraph(this.props.exploreId);
+    this.props.toggleTable(this.props.exploreId);
   };
 
   render() {
@@ -43,7 +43,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
 }
 
 const mapDispatchToProps = {
-  toggleGraph,
+  toggleTable,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TableContainer));

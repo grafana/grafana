@@ -8,8 +8,6 @@ RUN git clone https://github.com/aptly-dev/aptly $GOPATH/src/github.com/aptly-de
 
 FROM circleci/python:2.7-stretch
 
-ENV PATH=$PATH:/opt/google-cloud-sdk/bin
-
 USER root
 
 RUN pip install awscli && \
@@ -18,7 +16,9 @@ RUN pip install awscli && \
     apt update && \
     apt install -y createrepo expect && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil && \
+    ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud
 
 COPY --from=0 /go/bin/aptly /usr/local/bin/aptly
 
