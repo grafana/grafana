@@ -149,6 +149,12 @@
   color: #ebedf2;
 }
 
+.side-menu-header > a {
+  // Removes left-brand-border-gradient from link
+  border: none !important;
+  padding: 0 !important;
+}
+
 .sidemenu-subtitle {
   padding: 0.5rem 1rem 0.5rem;
   font-size: $font-size-sm;

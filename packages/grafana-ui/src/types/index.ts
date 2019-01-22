@@ -1,4 +1,5 @@
 export * from './series';
 export * from './time';
 export * from './panel';
-export * from './gauge';
+export * from './plugin';
+export * from './datasource';

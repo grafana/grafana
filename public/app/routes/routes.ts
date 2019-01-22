@@ -14,8 +14,9 @@ import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
-import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
+import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
+import config from 'app/core/config';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -78,7 +79,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
       resolve: {
-        component: () => DataSourceSettings,
+        component: () => DataSourceSettingsPage,
       },
     })
     .when('/datasources/edit/:id/dashboards', {
@@ -129,7 +130,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        roles: () => ['Editor', 'Admin'],
+        roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })

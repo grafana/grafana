@@ -222,6 +222,7 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	EnableAlphaPanels                bool
+	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
 	LoginCookieName                   string
@@ -723,6 +724,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	panels := iniFile.Section("panels")
 	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
+	cfg.DisableSanitizeHtml = panels.Key("disable_sanitize_html").MustBool(false)
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()

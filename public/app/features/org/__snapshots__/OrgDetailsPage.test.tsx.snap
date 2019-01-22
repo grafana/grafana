@@ -1,38 +1,58 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Org details",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={true}
   >
-    <PageLoader
-      pageName="Organization"
+    <div
+      className="page-container page-body"
     />
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;
 
 exports[`Render should render organization and preferences 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Org details",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={false}
   >
-    <div>
-      <OrgProfile
-        onOrgNameChange={[Function]}
-        onSubmit={[Function]}
-        orgName="Cool org"
-      />
-      <SharedPreferences
-        resourceUri="org"
-      />
+    <div
+      className="page-container page-body"
+    >
+      <div>
+        <OrgProfile
+          onOrgNameChange={[Function]}
+          onSubmit={[Function]}
+          orgName="Cool org"
+        />
+        <SharedPreferences
+          resourceUri="org"
+        />
+      </div>
     </div>
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;
