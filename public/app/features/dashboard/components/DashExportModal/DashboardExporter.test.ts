@@ -6,8 +6,8 @@ jest.mock('app/core/store', () => {
 
 import _ from 'lodash';
 import config from 'app/core/config';
-import { DashboardExporter } from '../export/exporter';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardExporter } from './DashboardExporter';
+import { DashboardModel } from '../../dashboard_model';
 
 describe('given dashboard with repeated panels', () => {
   let dash, exported;

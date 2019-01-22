@@ -1,6 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
-import { iconMap } from './editor';
+import { iconMap } from './DashLinksEditorCtrl';
 
 function dashLinksContainer() {
   return {

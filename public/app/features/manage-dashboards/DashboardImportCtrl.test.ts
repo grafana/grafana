@@ -1,5 +1,5 @@
-import { DashboardImportCtrl } from '../dashboard_import_ctrl';
-import config from '../../../core/config';
+import { DashboardImportCtrl } from './DashboardImportCtrl';
+import config from 'app/core/config';
 
 describe('DashboardImportCtrl', () => {
   const ctx: any = {};

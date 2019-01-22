@@ -46,7 +46,7 @@ export class MoveToFolderCtrl {
 export function moveToFolderModal() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/move_to_folder_modal/move_to_folder.html',
+    templateUrl: 'public/app/features/manage-dashboards/components/MoveToFolderModal/template.html',
     controller: MoveToFolderCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

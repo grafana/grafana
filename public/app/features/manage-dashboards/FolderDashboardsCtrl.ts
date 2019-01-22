@@ -1,4 +1,4 @@
-import { FolderPageLoader } from './folder_page_loader';
+import { FolderPageLoader } from './services/FolderPageLoader';
 import locationUtil from 'app/core/utils/location_util';
 
 export class FolderDashboardsCtrl {

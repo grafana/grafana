@@ -31,7 +31,7 @@ export class ExportDataModalCtrl {
 export function exportDataModal() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/export_data/export_data_modal.html',
+    templateUrl: 'public/app/features/dashboard/components/ExportDataModal/template.html',
     controller: ExportDataModalCtrl,
     controllerAs: 'ctrl',
     scope: {

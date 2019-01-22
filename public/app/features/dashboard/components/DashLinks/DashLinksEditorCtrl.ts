@@ -11,7 +11,7 @@ export let iconMap = {
   cloud: 'fa-cloud',
 };
 
-export class DashLinkEditorCtrl {
+export class DashLinksEditorCtrl {
   dashboard: any;
   iconMap: any;
   mode: any;
@@ -65,8 +65,8 @@ export class DashLinkEditorCtrl {
 function dashLinksEditor() {
   return {
     restrict: 'E',
-    controller: DashLinkEditorCtrl,
-    templateUrl: 'public/app/features/dashboard/dashlinks/editor.html',
+    controller: DashLinksEditorCtrl,
+    templateUrl: 'public/app/features/dashboard/components/DashLinks/editor.html',
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {

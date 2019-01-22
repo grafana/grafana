@@ -168,7 +168,7 @@ export class FolderPickerCtrl {
 export function folderPicker() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/folder_picker/folder_picker.html',
+    templateUrl: 'public/app/features/dashboard/components/FolderPicker/template.html',
     controller: FolderPickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

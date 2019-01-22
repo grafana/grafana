@@ -2,7 +2,7 @@ import angular from 'angular';
 import { saveAs } from 'file-saver';
 
 import coreModule from 'app/core/core_module';
-import { DashboardExporter } from './exporter';
+import { DashboardExporter } from './DashboardExporter';
 
 export class DashExportCtrl {
   dash: any;
@@ -66,7 +66,7 @@ export class DashExportCtrl {
 export function dashExportDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/export/export_modal.html',
+    templateUrl: 'public/app/features/dashboard/components/DashExportModal/template.html',
     controller: DashExportCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

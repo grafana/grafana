@@ -1,7 +1,7 @@
 import moment from 'moment';
 import angular from 'angular';
 import { appEvents, NavModel } from 'app/core/core';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel } from '../../dashboard_model';
 
 export class DashNavCtrl {
   dashboard: DashboardModel;
@@ -107,7 +107,7 @@ export class DashNavCtrl {
 export function dashNavDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/dashnav/dashnav.html',
+    templateUrl: 'public/app/features/dashboard/components/DashNav/template.html',
     controller: DashNavCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
