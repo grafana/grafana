@@ -177,6 +177,7 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
               onChange={this.props.onColorChange}
               onToggleAxis={this.props.onToggleAxis}
               theme={theme}
+              enableNamedColors
             >
               <span className="graph-legend-icon">
                 <SeriesIcon color={this.props.color} />

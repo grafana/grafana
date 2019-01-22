@@ -9,6 +9,7 @@ import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 export interface ColorPickerProps extends Themeable {
   color: string;
   onChange: (color: string) => void;
+  enableNamedColors?: boolean;
   withArrow?: boolean;
   children?: JSX.Element;
 }
@@ -22,10 +23,24 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     static displayName = displayName || 'ColorPicker';
     pickerTriggerRef = createRef<HTMLDivElement>();
 
+    handleColorChange = (color: string) => {
+      const { enableNamedColors, onChange } = this.props;
+
+      if (enableNamedColors) {
+        return onChange(color);
+      }
+
+      return onChange(getColorFromHexRgbOrName(color));
+
+    };
     render() {
-      const popoverElement = React.createElement(popover, this.props);
+      const popoverElement = React.createElement(popover, {
+        ...this.props,
+        onChange: this.handleColorChange,
+      });
       const { theme, withArrow, children } = this.props;
 
+      // TODO: hoist that this shit
       const renderArrow: RenderPopperArrowFn = ({ arrowProps, placement }) => {
         return (
           <div
