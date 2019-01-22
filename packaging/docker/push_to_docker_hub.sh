@@ -22,14 +22,12 @@ docker_push_all () {
 
 	# Push each image individually
 	docker push "${repo}:${tag}"
-	docker push "${repo}-arm32v6-linux:${tag}"
 	docker push "${repo}-arm32v7-linux:${tag}"
 	docker push "${repo}-arm64v8-linux:${tag}"
 
 	# Create and push a multi-arch manifest
 	docker manifest create "${repo}:${tag}" \
 		"${repo}:${tag}" \
-		"${repo}-arm32v6-linux:${tag}" \
   	"${repo}-arm32v7-linux:${tag}" \
 		"${repo}-arm64v8-linux:${tag}"
 
