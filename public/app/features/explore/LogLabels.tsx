@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import classnames from 'classnames';
 
-import { calculateLogsLabelStats, LogsLabelStat, LogsStreamLabels, LogRow } from 'app/core/logs_model';
+import { calculateLogsLabelStats, LogsLabelStat, LogsStreamLabels, LogRowModel } from 'app/core/logs_model';
 
 function StatsRow({ active, count, proportion, value }: LogsLabelStat) {
   const percent = `${Math.round(proportion * 100)}%`;
@@ -68,7 +68,7 @@ export class Stats extends PureComponent<{
 
 class Label extends PureComponent<
   {
-    getRows?: () => LogRow[];
+    getRows?: () => LogRowModel[];
     label: string;
     plain?: boolean;
     value: string;
@@ -133,7 +133,7 @@ class Label extends PureComponent<
 }
 
 export default class LogLabels extends PureComponent<{
-  getRows?: () => LogRow[];
+  getRows?: () => LogRowModel[];
   labels: LogsStreamLabels;
   plain?: boolean;
   onClickLabel?: (label: string, value: string) => void;
