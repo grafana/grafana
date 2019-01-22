@@ -11,7 +11,7 @@ const SideMenuDropDown: FC<Props> = props => {
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
       <li className="side-menu-header">
         <a href={link.url}>
-          <span className="sidemenu-item-text">{link.text}</span>{' '}
+          <span className="sidemenu-item-text">{link.text}</span>
         </a>
       </li>
       {link.children &&

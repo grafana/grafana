@@ -14,7 +14,6 @@ exports[`Render should render children 1`] = `
       >
         link
       </span>
-       
     </a>
   </li>
   <DropDownChild
@@ -58,7 +57,6 @@ exports[`Render should render component 1`] = `
       >
         link
       </span>
-       
     </a>
   </li>
 </ul>
