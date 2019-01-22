@@ -43,11 +43,6 @@ func TestMiddlewareContext(t *testing.T) {
 			So(sc.resp.Header().Get("Cache-Control"), ShouldBeEmpty)
 		})
 
-		middlewareScenario("Non api request should init session", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").exec()
-			So(sc.resp.Header().Get("Set-Cookie"), ShouldContainSubstring, "grafana_sess")
-		})
-
 		middlewareScenario("Invalid api key", func(sc *scenarioContext) {
 			sc.apiKey = "invalid_key_test"
 			sc.fakeReq("GET", "/").exec()
@@ -151,22 +146,17 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("UserId in session", func(sc *scenarioContext) {
-
-			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
-				c.Session.Set(session.SESS_KEY_USERID, int64(12))
-			}).exec()
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
+		middlewareScenario("Auth token service", func(sc *scenarioContext) {
+			var wasCalled bool
+			sc.userAuthTokenService.initContextWithTokenProvider = func(ctx *m.ReqContext, orgId int64) bool {
+				wasCalled = true
+				return false
+			}
 
 			sc.fakeReq("GET", "/").exec()
 
-			Convey("should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 12)
+			Convey("should call middleware", func() {
+				So(wasCalled, ShouldBeTrue)
 			})
 		})
 
@@ -487,7 +477,8 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
 
-		sc.m.Use(GetContextHandler(nil))
+		sc.userAuthTokenService = newFakeUserAuthTokenService()
+		sc.m.Use(GetContextHandler(sc.userAuthTokenService))
 		// mock out gc goroutine
 		session.StartSessionGC = func() {}
 		sc.m.Use(Sessioner(&ms.Options{}, 0))
@@ -508,15 +499,16 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 }
 
 type scenarioContext struct {
-	m              *macaron.Macaron
-	context        *m.ReqContext
-	resp           *httptest.ResponseRecorder
-	apiKey         string
-	authHeader     string
-	respJson       map[string]interface{}
-	handlerFunc    handlerFunc
-	defaultHandler macaron.Handler
-	url            string
+	m                    *macaron.Macaron
+	context              *m.ReqContext
+	resp                 *httptest.ResponseRecorder
+	apiKey               string
+	authHeader           string
+	respJson             map[string]interface{}
+	handlerFunc          handlerFunc
+	defaultHandler       macaron.Handler
+	url                  string
+	userAuthTokenService *fakeUserAuthTokenService
 
 	req *http.Request
 }
@@ -585,3 +577,25 @@ func (sc *scenarioContext) exec() {
 
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *m.ReqContext)
+
+type fakeUserAuthTokenService struct {
+	initContextWithTokenProvider func(ctx *m.ReqContext, orgID int64) bool
+}
+
+func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
+	return &fakeUserAuthTokenService{
+		initContextWithTokenProvider: func(ctx *m.ReqContext, orgID int64) bool {
+			return false
+		},
+	}
+}
+
+func (s *fakeUserAuthTokenService) InitContextWithToken(ctx *m.ReqContext, orgID int64) bool {
+	return s.initContextWithTokenProvider(ctx, orgID)
+}
+
+func (s *fakeUserAuthTokenService) UserAuthenticatedHook(user *m.User, c *m.ReqContext) error {
+	return nil
+}
+
+func (s *fakeUserAuthTokenService) UserSignedOutHook(c *m.ReqContext) {}
