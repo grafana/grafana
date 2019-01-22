@@ -90,7 +90,6 @@ var (
 	EmailCodeValidMinutes            int
 	DataProxyWhiteList               map[string]bool
 	DisableBruteForceLoginProtection bool
-	DisableSanitizeInput             bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -223,7 +222,7 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	EnableAlphaPanels                bool
-	DisableSanitizeInput             bool
+	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 }
 
@@ -711,7 +710,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	panels := iniFile.Section("panels")
 	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
-	cfg.DisableSanitizeInput = panels.Key("sanitize_input_disabled").MustBool(false)
+	cfg.DisableSanitizeHtml = panels.Key("disable_sanitize_html").MustBool(false)
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
