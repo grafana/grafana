@@ -29,10 +29,9 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
       if (enableNamedColors) {
         return onChange(color);
       }
-
       return onChange(getColorFromHexRgbOrName(color));
-
     };
+
     render() {
       const popoverElement = React.createElement(popover, {
         ...this.props,
@@ -40,7 +39,6 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
       });
       const { theme, withArrow, children } = this.props;
 
-      // TODO: hoist that this shit
       const renderArrow: RenderPopperArrowFn = ({ arrowProps, placement }) => {
         return (
           <div

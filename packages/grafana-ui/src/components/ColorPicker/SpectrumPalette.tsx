@@ -1,72 +1,93 @@
 import React from 'react';
-import _ from 'lodash';
-import $ from 'jquery';
-import '../../vendor/spectrum';
+import { CustomPicker, ColorResult } from 'react-color';
 
-export interface Props {
+import { Saturation, Hue, Alpha } from 'react-color/lib/components/common';
+import { getColorFromHexRgbOrName } from '../../utils/colorsPalette';
+import tinycolor from 'tinycolor2';
+import ColorInput from './ColorInput';
+
+export interface SpectrumPaletteProps {
   color: string;
-  options: object;
-  onColorSelect: (color: string) => void;
+  onChange: (color: string) => void;
 }
 
-export class SpectrumPalette extends React.Component<Props, any> {
-  elem: any;
-  isMoving: boolean;
+// @ts-ignore
+const SpectrumPicker = CustomPicker(({ rgb, hsl, onChange, renderers }) => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        width: '100%',
+        flexDirection: 'column',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexGrow: 1,
+            flexDirection: 'column',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              height: '100px',
+              width: '100%',
+            }}
+          >
+            {/*
+      // @ts-ignore */}
+            <Saturation onChange={onChange} hsl={hsl} hsv={tinycolor(hsl).toHsv()} />
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: '16px',
+              marginTop: '16px',
+              position: 'relative',
+              background: 'white',
+            }}
+          >
+            {/*
+      // @ts-ignore */}
+            <Alpha rgb={rgb} hsl={hsl} a={rgb.a} onChange={onChange} />
+          </div>
+        </div>
 
-  constructor(props: Props) {
-    super(props);
-    this.onSpectrumMove = this.onSpectrumMove.bind(this);
-    this.setComponentElem = this.setComponentElem.bind(this);
-  }
+        <div
+          style={{
+            position: 'relative',
+            width: '16px',
+            height: '100px',
+            marginLeft: '16px',
+          }}
+        >
+          {/*
+        // @ts-ignore */}
+          <Hue onChange={onChange} hsl={hsl} direction="vertical" />
+        </div>
+      </div>
+    </div>
+  );
+});
 
-  setComponentElem(elem: any) {
-    this.elem = $(elem);
-  }
+const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange }) => {
+  return (
+    <div>
+      <SpectrumPicker
+        color={tinycolor(getColorFromHexRgbOrName(color)).toRgb()}
+        onChange={(a: ColorResult) => {
+          onChange(tinycolor(a.rgb).toString());
+        }}
+      />
+      <ColorInput color={color} onChange={onChange} style={{ marginTop: '16px' }} />
+    </div>
+  );
+};
 
-  onSpectrumMove(color: any) {
-    this.isMoving = true;
-    this.props.onColorSelect(color);
-  }
-
-  componentDidMount() {
-    const spectrumOptions = _.assignIn(
-      {
-        flat: true,
-        showAlpha: true,
-        showButtons: false,
-        color: this.props.color,
-        appendTo: this.elem,
-        move: this.onSpectrumMove,
-      },
-      this.props.options
-    );
-
-    this.elem.spectrum(spectrumOptions);
-    this.elem.spectrum('show');
-    this.elem.spectrum('set', this.props.color);
-  }
-
-  componentWillUpdate(nextProps: any) {
-    // If user move pointer over spectrum field this produce 'move' event and component
-    // may update props.color. We don't want to update spectrum color in this case, so we can use
-    // isMoving flag for tracking moving state. Flag should be cleared in componentDidUpdate() which
-    // is called after updating occurs (when user finished moving).
-    if (!this.isMoving) {
-      this.elem.spectrum('set', nextProps.color);
-    }
-  }
-
-  componentDidUpdate() {
-    if (this.isMoving) {
-      this.isMoving = false;
-    }
-  }
-
-  componentWillUnmount() {
-    this.elem.spectrum('destroy');
-  }
-
-  render() {
-    return <div className="spectrum-container" ref={this.setComponentElem} />;
-  }
-}
+export default SpectrumPalette;
