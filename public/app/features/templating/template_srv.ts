@@ -77,10 +77,12 @@ export class TemplateSrv {
     return '(' + quotedValues.join(' OR ') + ')';
   }
 
-  // like encodeURIComponent() but for all characters except alpha-numerics
-  encodeURIQueryValue(str) {
-    return str.replace(/[^a-z0-9]/gi, function(c) {
-      return '%' + c.charCodeAt(0).toString(16);
+  // encode string according to RFC 3986; in contrast to encodeURIComponent()
+  // also the sub-delims "!", "'", "(", ")" and "*" are encoded;
+  // unicode handling uses UTF-8 as in ECMA-262.
+  encodeURIComponentStrict(str) {
+    return encodeURIComponent(str).replace(/[!'()*]/g, (c) => {
+      return '%' + c.charCodeAt(0).toString(16).toUpperCase();
     });
   }
 
@@ -128,9 +130,9 @@ export class TemplateSrv {
       case 'percentencode': {
         // like glob, but url escaped
         if (_.isArray(value)) {
-          return this.encodeURIQueryValue('{' + value.join(',') + '}');
+          return this.encodeURIComponentStrict('{' + value.join(',') + '}');
         }
-        return this.encodeURIQueryValue(value);
+        return this.encodeURIComponentStrict(value);
       }
       default: {
         if (_.isArray(value)) {

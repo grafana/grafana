@@ -277,7 +277,7 @@ describe('templateSrv', () => {
 
     it('multi value and percentencode format should render percent-encoded string', () => {
       const result = _templateSrv.formatValue(['foo()bar BAZ', 'test2'], 'percentencode');
-      expect(result).toBe('%7bfoo%28%29bar%20BAZ%2ctest2%7d');
+      expect(result).toBe('%7Bfoo%28%29bar%20BAZ%2Ctest2%7D');
     });
 
     it('slash should be properly escaped in regex format', () => {
