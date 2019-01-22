@@ -66,7 +66,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 		query.UserId = getRequestUserId(ctx)
 		// if we're using ldap, pass authproxy login name to ldap user sync
 	} else if setting.LdapEnabled {
-		ctx.Session.Delete(session.SESS_KEY_LASTLDAPSYNC)
+		ctx.Session.Delete(session.SESS_KEY_LASTLDAPSYNC) //makes sure we always sync with ldap if session if we only have last sync info in session but not user.
 
 		syncQuery := &m.LoginUserQuery{
 			ReqContext: ctx,

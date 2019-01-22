@@ -291,7 +291,14 @@ func createTestContext(t *testing.T) *testContext {
 	sqlstore := sqlstore.InitTestDB(t)
 	tokenService := &UserAuthTokenServiceImpl{
 		SQLStore: sqlstore,
-		log:      log.New("test-logger"),
+		Cfg: &setting.Cfg{
+			LoginCookieName:                   "grafana_session",
+			LoginCookieUsername:               "grafana_username",
+			LoginCookieSecure:                 false,
+			LoginCookieMaxDays:                7,
+			LoginDeleteExpiredTokensAfterDays: 30,
+		},
+		log: log.New("test-logger"),
 	}
 
 	RotateTime = 10 * time.Minute

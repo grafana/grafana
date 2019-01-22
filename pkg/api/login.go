@@ -47,13 +47,13 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 	return
 	//}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-		c.Redirect(redirectTo)
-		return
-	}
+	// if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+	// 	c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+	// 	c.Redirect(redirectTo)
+	// 	return
+	// }
 
-	c.Redirect(setting.AppSubUrl + "/")
+	// c.Redirect(setting.AppSubUrl + "/")
 }
 
 func tryOAuthAutoLogin(c *m.ReqContext) bool {
