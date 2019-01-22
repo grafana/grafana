@@ -62,7 +62,7 @@ const mustKeepProps: { [str: string]: boolean } = {
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   datasource: null,
-  targets: [{}],
+  targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
 };
@@ -83,7 +83,7 @@ export class PanelModel {
   collapsed?: boolean;
   panels?: any;
   soloMode?: boolean;
-  targets: any[];
+  targets: DataQuery[];
   datasource: string;
   thresholds?: any;
 
@@ -118,6 +118,18 @@ export class PanelModel {
 
     // defaults
     _.defaultsDeep(this, _.cloneDeep(defaults));
+    // queries must have refId
+    this.ensureQueryIds();
+  }
+
+  ensureQueryIds() {
+    if (this.targets) {
+      for (const query of this.targets) {
+        if (!query.refId) {
+          query.refId = this.getNextQueryLetter();
+        }
+      }
+    }
   }
 
   getOptions(panelDefaults) {
@@ -243,7 +255,7 @@ export class PanelModel {
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = this.getNextQueryLetter();
-    this.targets.push(query);
+    this.targets.push(query as DataQuery);
   }
 
   getNextQueryLetter(): string {

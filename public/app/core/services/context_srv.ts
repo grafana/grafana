@@ -61,6 +61,10 @@ export class ContextSrv {
     store.set('grafana.sidemenu', this.sidemenu);
   }
 
+  hasAccessToExplore() {
+    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
+  }
+
   getTheme(): ThemeName {
     return this.user.lightTheme ? ThemeNames.Light : ThemeNames.Dark;
   }

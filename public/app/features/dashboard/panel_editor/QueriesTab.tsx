@@ -197,7 +197,7 @@ export class QueriesTab extends PureComponent<Props, State> {
           <div className="query-editor-rows">
             {panel.targets.map((query, index) => (
               <QueryEditorRow
-                datasourceName={query.datasource || panel.datasource}
+                dataSourceValue={query.datasource || panel.datasource}
                 key={query.refId}
                 panel={panel}
                 query={query}
