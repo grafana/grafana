@@ -3,11 +3,12 @@ import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
-import { LogRowModel, LogsLabelStat, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
-import LogLabels, { Stats } from './LogLabels';
+import { LogRowModel, LogLabelStatsModel, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
+import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
+import { LogLabelStats } from './LogLabelStats';
 
-interface RowProps {
+interface Props {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
@@ -18,10 +19,10 @@ interface RowProps {
   onClickLabel?: (label: string, value: string) => void;
 }
 
-interface RowState {
+interface State {
   fieldCount: number;
   fieldLabel: string;
-  fieldStats: LogsLabelStat[];
+  fieldStats: LogLabelStatsModel[];
   fieldValue: string;
   parsed: boolean;
   parser?: LogsParser;
@@ -49,7 +50,7 @@ const FieldHighlight = onClick => props => {
  * Once a parser is found, it will determine fields, that will be highlighted.
  * When the user requests stats for a field, they will be calculated and rendered below the row.
  */
-export class LogRow extends PureComponent<RowProps, RowState> {
+export class LogRow extends PureComponent<Props, State> {
   mouseMessageTimer: NodeJS.Timer;
 
   state = {
@@ -177,7 +178,7 @@ export class LogRow extends PureComponent<RowProps, RowState> {
           {!parsed && !needsHighlighter && row.entry}
           {showFieldStats && (
             <div className="logs-row__stats">
-              <Stats
+              <LogLabelStats
                 stats={fieldStats}
                 label={fieldLabel}
                 value={fieldValue}

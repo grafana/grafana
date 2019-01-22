@@ -56,7 +56,7 @@ export interface LogRowModel {
   uniqueLabels?: LogsStreamLabels;
 }
 
-export interface LogsLabelStat {
+export interface LogLabelStatsModel {
   active?: boolean;
   count: number;
   proportion: number;
@@ -188,7 +188,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   },
 };
 
-export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogsLabelStat[] {
+export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogLabelStatsModel[] {
   // Consider only rows that satisfy the matcher
   const rowsWithField = rows.filter(row => extractor.test(row.entry));
   const rowCount = rowsWithField.length;
@@ -204,7 +204,7 @@ export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): Log
   return sortedCounts;
 }
 
-export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogsLabelStat[] {
+export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
   // Consider only rows that have the given label
   const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
   const rowCount = rowsWithLabel.length;

@@ -17,7 +17,7 @@ import { Switch } from 'app/core/components/Switch/Switch';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';
-import LogLabels from './LogLabels';
+import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 
 const PREVIEW_LIMIT = 100;
