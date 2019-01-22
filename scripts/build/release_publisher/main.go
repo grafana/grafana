@@ -72,7 +72,7 @@ func main() {
 		}
 	} else {
 		builder = releaseFromExternalContent{
-			getter:                 getHttpContents{},
+			getter:                 getHTTPContents{},
 			rawVersion:             version,
 			artifactConfigurations: buildArtifacts,
 		}
@@ -80,7 +80,7 @@ func main() {
 
 	p := publisher{
 		apiKey:         apiKey,
-		apiUri:         "https://grafana.com/api",
+		apiURI:         "https://grafana.com/api",
 		product:        product,
 		dryRun:         dryRun,
 		enterprise:     enterprise,

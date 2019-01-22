@@ -17,7 +17,7 @@ type releaseFromExternalContent struct {
 func (re releaseFromExternalContent) prepareRelease(baseArchiveURL, whatsNewURL string, releaseNotesURL string, nightly bool) (*release, error) {
 	version := re.rawVersion[1:]
 	beta := strings.Contains(version, "beta")
-	var rt ReleaseType
+	var rt releaseType
 	if beta {
 		rt = BETA
 	} else if nightly {
@@ -52,9 +52,9 @@ type urlGetter interface {
 	getContents(url string) (string, error)
 }
 
-type getHttpContents struct{}
+type getHTTPContents struct{}
 
-func (getHttpContents) getContents(url string) (string, error) {
+func (getHTTPContents) getContents(url string) (string, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return "", err
