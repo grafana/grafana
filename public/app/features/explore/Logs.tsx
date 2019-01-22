@@ -48,7 +48,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
   return value;
 }
 
-interface LogsProps {
+interface Props {
   data: LogsModel;
   exploreId: string;
   highlighterExpressions: string[];
@@ -62,7 +62,7 @@ interface LogsProps {
   onStopScanning?: () => void;
 }
 
-interface LogsState {
+interface State {
   dedup: LogsDedupStrategy;
   deferLogs: boolean;
   hiddenLogLevels: Set<LogLevel>;
@@ -72,7 +72,7 @@ interface LogsState {
   showUtc: boolean;
 }
 
-export default class Logs extends PureComponent<LogsProps, LogsState> {
+export default class Logs extends PureComponent<Props, State> {
   deferLogsTimer: NodeJS.Timer;
   renderAllTimer: NodeJS.Timer;
 
