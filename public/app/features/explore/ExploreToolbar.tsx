@@ -101,9 +101,9 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
             </div>
             <div className="toolbar-header-close">
               {exploreId === 'right' && (
-                <a onClick={this.props.onCloseSplit}>
-                  <i className="fa fa-times" />
-                </a>
+                <button className="btn navbar-button" onClick={this.props.onCloseSplit}>
+                  Close Split
+                </button>
               )}
             </div>
           </div>
