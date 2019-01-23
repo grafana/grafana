@@ -1,6 +1,4 @@
 import './dashboard_ctrl';
-import './save_provisioned_modal';
-import './shareModalCtrl';
 import './share_snapshot_ctrl';
 import './dashboard_srv';
 import './validation_srv';
@@ -29,6 +27,7 @@ import './components/SubMenu';
 import './components/TimePicker';
 import './components/UnsavedChangesModal';
 import './components/SaveModals';
+import './components/ShareModal';
 
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 

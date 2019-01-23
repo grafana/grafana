@@ -60,7 +60,7 @@ export class DashNavCtrl {
     modalScope.dashboard = this.dashboard;
 
     appEvents.emit('show-modal', {
-      src: 'public/app/features/dashboard/partials/shareModal.html',
+      src: 'public/app/features/dashboard/components/ShareModal/template.html',
       scope: modalScope,
     });
   }

@@ -1,4 +1,4 @@
-import { SaveProvisionedDashboardModalCtrl } from '../save_provisioned_modal';
+import { SaveProvisionedDashboardModalCtrl } from './SaveProvisionedDashboardModalCtrl';
 
 describe('SaveProvisionedDashboardModalCtrl', () => {
   const json = {
