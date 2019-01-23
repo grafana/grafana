@@ -83,7 +83,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     onMouseLeave: hidePopper,
                   })
                 ) : (
-                  <div ref={this.pickerTriggerRef} onClick={showPopper} className="sp-replacer sp-light">
+                  <div ref={this.pickerTriggerRef} onClick={showPopper} onMouseLeave={hidePopper} className="sp-replacer sp-light">
                     <div className="sp-preview">
                       <div
                         className="sp-preview-inner"
