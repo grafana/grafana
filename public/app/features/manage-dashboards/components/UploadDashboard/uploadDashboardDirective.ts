@@ -11,7 +11,7 @@ const template = `
 `;
 
 /** @ngInject */
-function uploadDashboardDirective(timer, $location) {
+export function uploadDashboardDirective(timer, $location) {
   return {
     restrict: 'E',
     template: template,

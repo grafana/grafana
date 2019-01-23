@@ -1,8 +1,5 @@
 import './dashboard_ctrl';
-import './validation_srv';
 import './time_srv';
-import './ad_hoc_filters';
-import './upload';
 import './repeat_option/repeat_option';
 import './dashgrid/DashboardGridDirective';
 import './dashgrid/RowOptions';
@@ -27,6 +24,7 @@ import './components/TimePicker';
 import './components/UnsavedChangesModal';
 import './components/SaveModals';
 import './components/ShareModal';
+import './components/AdHocFilters';
 
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 
