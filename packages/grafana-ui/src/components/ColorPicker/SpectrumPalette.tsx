@@ -5,14 +5,20 @@ import { Saturation, Hue, Alpha } from 'react-color/lib/components/common';
 import { getColorFromHexRgbOrName } from '../../utils/colorsPalette';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
+import { Themeable, GrafanaTheme } from '../../types';
+import SpectrumPalettePointer, { SpectrumPalettePointerProps } from './SpectrumPalettePointer';
 
-export interface SpectrumPaletteProps {
+export interface SpectrumPaletteProps extends Themeable {
   color: string;
   onChange: (color: string) => void;
 }
 
+const renderPointer = (theme?: GrafanaTheme) => (props: SpectrumPalettePointerProps) => (
+  <SpectrumPalettePointer {...props} theme={theme} />
+);
+
 // @ts-ignore
-const SpectrumPicker = CustomPicker(({ rgb, hsl, onChange, renderers }) => {
+const SpectrumPicker = CustomPicker<Themeable>(({ rgb, hsl, onChange, theme }) => {
   return (
     <div
       style={{
@@ -55,7 +61,7 @@ const SpectrumPicker = CustomPicker(({ rgb, hsl, onChange, renderers }) => {
           >
             {/*
       // @ts-ignore */}
-            <Alpha rgb={rgb} hsl={hsl} a={rgb.a} onChange={onChange} />
+            <Alpha rgb={rgb} hsl={hsl} a={rgb.a} onChange={onChange} pointer={renderPointer(theme)} />
           </div>
         </div>
 
@@ -69,14 +75,14 @@ const SpectrumPicker = CustomPicker(({ rgb, hsl, onChange, renderers }) => {
         >
           {/*
         // @ts-ignore */}
-          <Hue onChange={onChange} hsl={hsl} direction="vertical" />
+          <Hue onChange={onChange} hsl={hsl} direction="vertical" pointer={renderPointer(theme)} />
         </div>
       </div>
     </div>
   );
 });
 
-const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange }) => {
+const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange, theme }) => {
   return (
     <div>
       <SpectrumPicker
@@ -84,6 +90,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
         onChange={(a: ColorResult) => {
           onChange(tinycolor(a.rgb).toString());
         }}
+        theme={theme}
       />
       <ColorInput color={color} onChange={onChange} style={{ marginTop: '16px' }} />
     </div>

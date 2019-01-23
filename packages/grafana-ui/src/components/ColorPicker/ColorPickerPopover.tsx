@@ -38,7 +38,7 @@ export class ColorPickerPopover extends React.Component<Props, State> {
     const { color, theme } = this.props;
 
     return activePicker === 'spectrum' ? (
-      <SpectrumPalette color={color} onChange={this.handleChange} />
+      <SpectrumPalette color={color} onChange={this.handleChange}  theme={theme} />
     ) : (
       <NamedColorsPicker color={getColorName(color)} onChange={this.handleChange} theme={theme} />
     );

@@ -1,6 +1,8 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
 import SpectrumPalette from './SpectrumPalette';
+import { withKnobs, select } from '@storybook/addon-knobs';
+import { GrafanaTheme } from '../../types';
 
 const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   return (
@@ -40,17 +42,20 @@ export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T
 
 storiesOf('UI/SpectrumPalette', module)
   .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
+  .addDecorator(withKnobs)
   .add('Named colors swatch - support for named colors', () => {
-
+    const selectedTheme = select(
+      'Theme',
+      {
+        Light: GrafanaTheme.Light,
+        Dark: GrafanaTheme.Dark,
+      },
+      GrafanaTheme.Light
+    );
     return (
       <UseState initialState="red">
         {(selectedColor, updateSelectedColor) => {
-          return (
-            <SpectrumPalette
-              color={selectedColor}
-              onChange={updateSelectedColor}
-            />
-          );
+          return <SpectrumPalette theme={selectedTheme} color={selectedColor} onChange={updateSelectedColor} />;
         }}
       </UseState>
     );
