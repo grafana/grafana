@@ -1,12 +1,10 @@
-import './history_srv';
-
 import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
 import locationUtil from 'app/core/utils/location_util';
-import { DashboardModel } from '../dashboard_model';
-import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './history_srv';
+import { DashboardModel } from '../../dashboard_model';
+import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -200,7 +198,7 @@ export class HistoryListCtrl {
 export function dashboardHistoryDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/history/history.html',
+    templateUrl: 'public/app/features/dashboard/components/VersionHistory/template.html',
     controller: HistoryListCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

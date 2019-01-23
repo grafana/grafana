@@ -1,7 +1,6 @@
-import '../history/history_srv';
-import { versions, restore } from './history_mocks';
-import { HistorySrv } from '../history/history_srv';
-import { DashboardModel } from '../dashboard_model';
+import { versions, restore } from './__mocks__/history';
+import { HistorySrv } from './HistorySrv';
+import { DashboardModel } from '../../dashboard_model';
 jest.mock('app/core/store');
 
 describe('historySrv', () => {

@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { HistoryListCtrl } from 'app/features/dashboard/history/history';
-import { versions, compare, restore } from './history_mocks';
+import { HistoryListCtrl } from './HistoryListCtrl';
+import { versions, compare, restore } from './__mocks__/history';
 import $q from 'q';
 
 describe('HistoryListCtrl', () => {
