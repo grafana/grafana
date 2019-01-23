@@ -20,7 +20,7 @@ const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 /**
  * Returns a fresh Explore area state
  */
-const makeExploreItemState = (): ExploreItemState => ({
+export const makeExploreItemState = (): ExploreItemState => ({
   StartPage: undefined,
   containerWidth: 0,
   datasourceInstance: null,
@@ -48,7 +48,7 @@ const makeExploreItemState = (): ExploreItemState => ({
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
-const initialExploreState: ExploreState = {
+export const initialExploreState: ExploreState = {
   split: null,
   left: makeExploreItemState(),
   right: makeExploreItemState(),
@@ -57,7 +57,7 @@ const initialExploreState: ExploreState = {
 /**
  * Reducer for an Explore area, to be used by the global Explore reducer.
  */
-const itemReducer = (state, action: Action): ExploreItemState => {
+export const itemReducer = (state, action: Action): ExploreItemState => {
   switch (action.type) {
     case ActionTypes.AddQueryRow: {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
@@ -360,13 +360,19 @@ const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.ScanStart: {
-      return { ...state, scanning: true };
+      return { ...state, scanning: true, scanner: action.payload.scanner };
     }
 
     case ActionTypes.ScanStop: {
       const { queryTransactions } = state;
       const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
-      return { ...state, queryTransactions: nextQueryTransactions, scanning: false, scanRange: undefined };
+      return {
+        ...state,
+        queryTransactions: nextQueryTransactions,
+        scanning: false,
+        scanRange: undefined,
+        scanner: undefined,
+      };
     }
 
     case ActionTypes.SetQueries: {
