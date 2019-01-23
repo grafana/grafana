@@ -19,7 +19,6 @@ import './ad_hoc_filters';
 import './repeat_option/repeat_option';
 import './dashgrid/DashboardGridDirective';
 import './dashgrid/RowOptions';
-import './settings/settings';
 import './panellinks/module';
 import './components/DashLinks';
 import './components/DashExportModal';
@@ -27,6 +26,7 @@ import './components/DashNav';
 import './components/ExportDataModal';
 import './components/FolderPicker';
 import './components/VersionHistory';
+import './components/DashboardSettings';
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 
 // angular wrappers

@@ -1,5 +1,5 @@
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel } from '../../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
 import angular from 'angular';
@@ -230,7 +230,7 @@ export class SettingsCtrl {
 export function dashboardSettings() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/settings/settings.html',
+    templateUrl: 'public/app/features/dashboard/components/DashboardSettings/template.html',
     controller: SettingsCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
