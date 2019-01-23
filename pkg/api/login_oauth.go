@@ -52,7 +52,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if errorParam != "" {
 		errorDesc := ctx.Query("error_description")
 		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
-		redirectWithError(ctx, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
+		hs.redirectWithError(ctx, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
 		return
 	}
 
@@ -142,7 +142,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
 		if sErr, ok := err.(*social.Error); ok {
-			redirectWithError(ctx, sErr)
+			hs.redirectWithError(ctx, sErr)
 		} else {
 			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		}
@@ -153,13 +153,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
-		redirectWithError(ctx, login.ErrNoEmail)
+		hs.redirectWithError(ctx, login.ErrNoEmail)
 		return
 	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		redirectWithError(ctx, login.ErrEmailNotAllowed)
+		hs.redirectWithError(ctx, login.ErrEmailNotAllowed)
 		return
 	}
 
@@ -182,9 +182,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
+
 	err = bus.Dispatch(cmd)
 	if err != nil {
-		redirectWithError(ctx, err)
+		hs.redirectWithError(ctx, err)
 		return
 	}
 
@@ -218,8 +219,9 @@ func hashStatecode(code, seed string) string {
 	return hex.EncodeToString(hashBytes[:])
 }
 
-func redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
+func (hs *HTTPServer) redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
-	ctx.Session.Set("loginError", err.Error())
+	hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60)
+
 	ctx.Redirect(setting.AppSubUrl + "/login")
 }

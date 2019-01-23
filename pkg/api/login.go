@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/hex"
+	"net/http"
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,10 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
-	ViewIndex = "index"
+	ViewIndex            = "index"
+	LoginErrorCookieName = "login_error"
 )
 
 func (hs *HTTPServer) LoginView(c *m.ReqContext) {
@@ -33,8 +37,8 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
 
-	if loginError, ok := c.Session.Get("loginError").(string); ok {
-		c.Session.Delete("loginError")
+	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
+		deleteCookie(c, LoginErrorCookieName)
 		viewData.Settings["loginError"] = loginError
 	}
 
@@ -140,4 +144,41 @@ func (hs *HTTPServer) Logout(c *m.ReqContext) {
 	} else {
 		c.Redirect(setting.AppSubUrl + "/login")
 	}
+}
+
+func tryGetEncryptedCookie(ctx *m.ReqContext, cookieName string) (string, bool) {
+	cookie := ctx.GetCookie(cookieName)
+	if cookie == "" {
+		return "", false
+	}
+
+	decoded, err := hex.DecodeString(cookie)
+	if err != nil {
+		return "", false
+	}
+
+	decryptedError, err := util.Decrypt([]byte(decoded), setting.SecretKey)
+	return string(decryptedError), err == nil
+}
+
+func deleteCookie(ctx *m.ReqContext, cookieName string) {
+	ctx.SetCookie(cookieName, "", -1, setting.AppSubUrl+"/")
+}
+
+func (hs *HTTPServer) trySetEncryptedCookie(ctx *m.ReqContext, cookieName string, value string, maxAge int) error {
+	encryptedError, err := util.Encrypt([]byte(value), setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(ctx.Resp, &http.Cookie{
+		Name:     cookieName,
+		MaxAge:   60,
+		Value:    hex.EncodeToString(encryptedError),
+		HttpOnly: true,
+		Path:     setting.AppSubUrl + "/",
+		Secure:   hs.Cfg.LoginCookieSecure,
+	})
+
+	return nil
 }
