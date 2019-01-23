@@ -5,10 +5,23 @@ import { ColorPickerPopover } from './ColorPickerPopover';
 import { Themeable, GrafanaTheme } from '../../types';
 import { getColorFromHexRgbOrName } from '../../utils/colorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
+import propDeprecationWarning from '../../utils/propDeprecationWarning';
 
+type ColorPickerChangeHandler = (color: string) => void;
+
+export const handleColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
+  const { onColorChange } = props;
+  if (onColorChange) {
+    propDeprecationWarning(componentName, 'onColorChange', 'onChange');
+  }
+};
 export interface ColorPickerProps extends Themeable {
   color: string;
-  onChange: (color: string) => void;
+  onChange: ColorPickerChangeHandler;
+  /**
+   * @deprecated Use onChange instead
+   */
+  onColorChange?: ColorPickerChangeHandler;
   enableNamedColors?: boolean;
   withArrow?: boolean;
   children?: JSX.Element;
@@ -16,20 +29,18 @@ export interface ColorPickerProps extends Themeable {
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
-  displayName?: string,
+  displayName = 'ColorPicker',
   renderPopoverArrowFunction?: RenderPopperArrowFn
 ) => {
   return class ColorPicker extends Component<T, any> {
-    static displayName = displayName || 'ColorPicker';
+    static displayName = displayName;
     pickerTriggerRef = createRef<HTMLDivElement>();
 
     handleColorChange = (color: string) => {
-      const { enableNamedColors, onChange } = this.props;
+      const { onColorChange, onChange } = this.props;
+      const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
 
-      if (enableNamedColors) {
-        return onChange(color);
-      }
-      return onChange(getColorFromHexRgbOrName(color));
+      return changeHandler(color);
     };
 
     render() {
@@ -77,7 +88,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                       <div
                         className="sp-preview-inner"
                         style={{
-                          backgroundColor: getColorFromHexRgbOrName(this.props.color, theme),
+                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme),
                         }}
                       />
                     </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import NamedColorsPicker from './NamedColorsPalette';
-import { getColorName } from '../..//utils/colorsPalette';
-import { ColorPickerProps } from './ColorPicker';
+import { getColorName, getColorFromHexRgbOrName } from '../..//utils/colorsPalette';
+import { ColorPickerProps, handleColorPickerPropsDeprecation } from './ColorPicker';
 import { GrafanaTheme, Themeable } from '../../types';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import SpectrumPalette from './SpectrumPalette';
@@ -20,20 +20,27 @@ export class ColorPickerPopover extends React.Component<Props, State> {
     this.state = {
       activePicker: 'palette',
     };
+    handleColorPickerPropsDeprecation('ColorPickerPopover', props);
   }
 
-  handleSpectrumColorSelect = (color: any) => {
-    this.props.onChange(color);
+  handleChange = (color: any) => {
+    const { onColorChange, onChange, enableNamedColors } = this.props;
+    const changeHandler = onColorChange || onChange;
+
+    if (enableNamedColors) {
+      return changeHandler(color);
+    }
+    changeHandler(getColorFromHexRgbOrName(color));
   };
 
   renderPicker = () => {
     const { activePicker } = this.state;
-    const { color, onChange, theme } = this.props;
+    const { color, theme } = this.props;
 
     return activePicker === 'spectrum' ? (
-      <SpectrumPalette color={color} onChange={this.handleSpectrumColorSelect} />
+      <SpectrumPalette color={color} onChange={this.handleChange} />
     ) : (
-      <NamedColorsPicker color={getColorName(color)} onChange={onChange} theme={theme} />
+      <NamedColorsPicker color={getColorName(color)} onChange={this.handleChange} theme={theme} />
     );
   };
 
