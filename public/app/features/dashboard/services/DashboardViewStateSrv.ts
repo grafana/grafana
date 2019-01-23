@@ -2,11 +2,11 @@ import angular from 'angular';
 import _ from 'lodash';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
-import { DashboardModel } from './dashboard_model';
+import { DashboardModel } from '../dashboard_model';
 
 // represents the transient view state
 // like fullscreen panel & edit
-export class DashboardViewState {
+export class DashboardViewStateSrv {
   state: any;
   panelScopes: any;
   $scope: any;
@@ -168,7 +168,7 @@ export class DashboardViewState {
 export function dashboardViewStateSrv($location, $timeout) {
   return {
     create: $scope => {
-      return new DashboardViewState($scope, $location, $timeout);
+      return new DashboardViewStateSrv($scope, $location, $timeout);
     },
   };
 }

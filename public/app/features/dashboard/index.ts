@@ -7,7 +7,6 @@ import './save_provisioned_modal';
 import './shareModalCtrl';
 import './share_snapshot_ctrl';
 import './dashboard_srv';
-import './view_state_srv';
 import './validation_srv';
 import './time_srv';
 import './unsaved_changes_srv';
@@ -18,6 +17,11 @@ import './repeat_option/repeat_option';
 import './dashgrid/DashboardGridDirective';
 import './dashgrid/RowOptions';
 import './panellinks/module';
+
+// Services
+import './services/DashboardViewStateSrv';
+
+// Components
 import './components/DashLinks';
 import './components/DashExportModal';
 import './components/DashNav';

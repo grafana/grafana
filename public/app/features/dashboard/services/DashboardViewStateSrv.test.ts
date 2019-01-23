@@ -1,7 +1,5 @@
-//import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
-import 'app/features/dashboard/view_state_srv';
 import config from 'app/core/config';
-import { DashboardViewState } from '../view_state_srv';
+import { DashboardViewStateSrv } from './DashboardViewStateSrv';
 import { DashboardModel } from '../dashboard_model';
 
 describe('when updating view state', () => {
@@ -33,7 +31,7 @@ describe('when updating view state', () => {
       location.search = jest.fn(() => {
         return { fullscreen: true, edit: true, panelId: 1 };
       });
-      viewState = new DashboardViewState($scope, location, {});
+      viewState = new DashboardViewStateSrv($scope, location, {});
     });
 
     it('should update querystring and view state', () => {
@@ -55,7 +53,7 @@ describe('when updating view state', () => {
 
   describe('to fullscreen false', () => {
     beforeEach(() => {
-      viewState = new DashboardViewState($scope, location, {});
+      viewState = new DashboardViewStateSrv($scope, location, {});
     });
     it('should remove params from query string', () => {
       viewState.update({ fullscreen: true, panelId: 1, edit: true });
