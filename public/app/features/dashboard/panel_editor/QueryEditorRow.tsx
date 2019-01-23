@@ -166,6 +166,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   onDisableQuery = () => {
     this.props.query.hide = !this.props.query.hide;
+    this.onExecuteQuery();
     this.forceUpdate();
   };
 
