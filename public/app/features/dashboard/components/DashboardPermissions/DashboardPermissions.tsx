@@ -8,11 +8,11 @@ import {
   addDashboardPermission,
   removeDashboardPermission,
   updateDashboardPermission,
-} from '../state/actions';
+} from '../../state/actions';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 
 export interface Props {
   dashboardId: number;

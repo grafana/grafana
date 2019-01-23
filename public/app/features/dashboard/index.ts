@@ -27,10 +27,10 @@ import './components/DashNav';
 import './components/ExportDataModal';
 import './components/FolderPicker';
 import './components/VersionHistory';
+import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 
 // angular wrappers
 import { react2AngularDirective } from 'app/core/utils/react2angular';
-import DashboardPermissions from './permissions/DashboardPermissions';
 
 react2AngularDirective('dashboardPermissions', DashboardPermissions, ['dashboardId', 'folder']);
 
