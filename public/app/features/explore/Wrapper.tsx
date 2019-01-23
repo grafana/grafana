@@ -10,6 +10,7 @@ import { parseUrlState } from 'app/core/utils/explore';
 import { initializeExploreSplit } from './state/actions';
 import ErrorBoundary from './ErrorBoundary';
 import Explore from './Explore';
+import { CustomScrollbar } from '@grafana/ui';
 
 interface WrapperProps {
   initializeExploreSplit: typeof initializeExploreSplit;
@@ -46,15 +47,19 @@ export class Wrapper extends Component<WrapperProps> {
     const { leftState, rightState } = this.urlStates;
 
     return (
-      <div className="explore-wrapper">
-        <ErrorBoundary>
-          <Explore exploreId={ExploreId.left} urlState={leftState} />
-        </ErrorBoundary>
-        {split && (
-          <ErrorBoundary>
-            <Explore exploreId={ExploreId.right} urlState={rightState} />
-          </ErrorBoundary>
-        )}
+      <div className="page-scrollbar-wrapper">
+        <CustomScrollbar autoHeightMin={'100%'}>
+          <div className="explore-wrapper">
+            <ErrorBoundary>
+              <Explore exploreId={ExploreId.left} urlState={leftState} />
+            </ErrorBoundary>
+            {split && (
+              <ErrorBoundary>
+                <Explore exploreId={ExploreId.right} urlState={rightState} />
+              </ErrorBoundary>
+            )}
+          </div>
+        </CustomScrollbar>
       </div>
     );
   }
