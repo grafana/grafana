@@ -10,6 +10,8 @@ import ApiKeys from 'app/features/api-keys/ApiKeysPage';
 import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
+import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
+import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
@@ -100,8 +102,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards/folder/new', {
-      templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
-      controller: 'CreateFolderCtrl',
+      templateUrl: 'public/app/features/folders/partials/create_folder.html',
+      controller: CreateFolderCtrl,
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid/:slug/permissions', {
@@ -117,8 +119,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/dashboards/f/:uid/:slug', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-      controller: 'FolderDashboardsCtrl',
+      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
+      controller: FolderDashboardsCtrl,
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid', {

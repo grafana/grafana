@@ -1,7 +1,7 @@
 import appEvents from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 
-export class CreateFolderCtrl {
+export default class CreateFolderCtrl {
   title = '';
   navModel: any;
   titleTouched = false;
@@ -38,3 +38,4 @@ export class CreateFolderCtrl {
       });
   }
 }
+
