@@ -6,7 +6,7 @@ export default function getScrollbarWidth() {
   if (scrollbarWidth !== null) {
     return scrollbarWidth;
   }
-  /* istanbul ignore else */
+
   if (typeof document !== 'undefined') {
     const div = document.createElement('div');
     const newStyles = {
@@ -31,7 +31,7 @@ export default function getScrollbarWidth() {
   return scrollbarWidth || 0;
 }
 
-export const hasNoOverlayScrollbars = getScrollbarWidth() > 0;
+const hasNoOverlayScrollbars = getScrollbarWidth() > 0;
 
 export const addClassIfNoOverlayScrollbar = (classname: string, htmlElement: HTMLElement = document.body) => {
   if (hasNoOverlayScrollbars) {
