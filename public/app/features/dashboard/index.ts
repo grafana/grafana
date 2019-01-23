@@ -12,7 +12,6 @@ import './validation_srv';
 import './time_srv';
 import './unsaved_changes_srv';
 import './unsaved_changes_modal';
-import './timepicker/timepicker';
 import './upload';
 import './ad_hoc_filters';
 import './repeat_option/repeat_option';
@@ -27,6 +26,7 @@ import './components/FolderPicker';
 import './components/VersionHistory';
 import './components/DashboardSettings';
 import './components/SubMenu';
+import './components/TimePicker';
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 
 // angular wrappers

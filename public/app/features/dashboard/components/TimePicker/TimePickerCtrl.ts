@@ -159,7 +159,7 @@ export class TimePickerCtrl {
 export function settingsDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/timepicker/settings.html',
+    templateUrl: 'public/app/features/dashboard/components/TimePicker/settings.html',
     controller: TimePickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
@@ -172,7 +172,7 @@ export function settingsDirective() {
 export function timePickerDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/timepicker/timepicker.html',
+    templateUrl: 'public/app/features/dashboard/components/TimePicker/template.html',
     controller: TimePickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
@@ -185,5 +185,5 @@ export function timePickerDirective() {
 angular.module('grafana.directives').directive('gfTimePickerSettings', settingsDirective);
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
 
-import { inputDateDirective } from './input_date';
+import { inputDateDirective } from './validation';
 angular.module('grafana.directives').directive('inputDatetime', inputDateDirective);
