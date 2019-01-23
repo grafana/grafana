@@ -42,18 +42,18 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 		return
 	}
 
-	//if !hs.tryLoginUsingRememberCookie(c) {
-	c.HTML(200, ViewIndex, viewData)
-	return
-	//}
+	if !c.IsSignedIn {
+		c.HTML(200, ViewIndex, viewData)
+		return
+	}
 
-	// if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-	// 	c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-	// 	c.Redirect(redirectTo)
-	// 	return
-	// }
+	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		c.Redirect(redirectTo)
+		return
+	}
 
-	// c.Redirect(setting.AppSubUrl + "/")
+	c.Redirect(setting.AppSubUrl + "/")
 }
 
 func tryOAuthAutoLogin(c *m.ReqContext) bool {
@@ -74,48 +74,8 @@ func tryOAuthAutoLogin(c *m.ReqContext) bool {
 	return false
 }
 
-func (hs *HTTPServer) tryLoginUsingRememberCookie(c *m.ReqContext) bool {
-	// Check auto-login.
-	uname := c.GetCookie(setting.CookieUserName)
-	if len(uname) == 0 {
-		return false
-	}
-
-	isSucceed := false
-	defer func() {
-		if !isSucceed {
-			log.Trace("auto-login cookie cleared: %s", uname)
-			c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-			c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
-			return
-		}
-	}()
-
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
-	if err := bus.Dispatch(&userQuery); err != nil {
-		return false
-	}
-
-	user := userQuery.Result
-
-	// validate remember me cookie
-	signingKey := user.Rands + user.Password
-	if len(signingKey) < 10 {
-		c.Logger.Error("Invalid user signingKey")
-		return false
-	}
-
-	if val, _ := c.GetSuperSecureCookie(signingKey, setting.CookieRememberName); val != user.Login {
-		return false
-	}
-
-	isSucceed = true
-	hs.loginUserWithUser(user, c)
-	return true
-}
-
 func (hs *HTTPServer) LoginAPIPing(c *m.ReqContext) {
-	if !hs.tryLoginUsingRememberCookie(c) {
+	if !c.IsSignedIn || !c.IsAnonymous {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
 	}
