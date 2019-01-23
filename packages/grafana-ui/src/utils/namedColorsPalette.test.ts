@@ -1,8 +1,13 @@
-import { getColorName, getColorDefinition, getColorByName, SemiDarkBlue, getColorFromHexRgbOrName } from './colorsPalette';
-import { GrafanaTheme } from '../types';
+import {
+  getColorName,
+  getColorDefinition,
+  getColorByName,
+  SemiDarkBlue,
+  getColorFromHexRgbOrName,
+} from './namedColorsPalette';
+import { GrafanaTheme } from '../types/index';
 
 describe('colors', () => {
-
   describe('getColorDefinition', () => {
     it('returns undefined for unknown hex', () => {
       expect(getColorDefinition('#ff0000')).toBeUndefined();
@@ -33,7 +38,6 @@ describe('colors', () => {
     it('returns color definiton for known color', () => {
       expect(getColorByName(SemiDarkBlue.name)).toBe(SemiDarkBlue);
     });
-
   });
   describe('getColorFromHexRgbOrName', () => {
     it('returns undefined for unknown color', () => {
@@ -44,7 +48,7 @@ describe('colors', () => {
       expect(getColorFromHexRgbOrName(SemiDarkBlue.name)).toBe(SemiDarkBlue.variants.dark);
     });
 
-    it('returns correct variant\'s hex for known color if theme specified', () => {
+    it("returns correct variant's hex for known color if theme specified", () => {
       expect(getColorFromHexRgbOrName(SemiDarkBlue.name, GrafanaTheme.Light)).toBe(SemiDarkBlue.variants.light);
     });
 

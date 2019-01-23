@@ -1,18 +1,11 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import {
-  ValueMapping,
-  Threshold,
-  MappingType,
-  BasicGaugeColor,
-  ValueMap,
-  RangeMap,
-} from '../../types/panel';
+import { ValueMapping, Threshold, MappingType, BasicGaugeColor, ValueMap, RangeMap } from '../../types/panel';
 import { TimeSeriesVMs } from '../../types/series';
 import { getValueFormat } from '../../utils/valueFormats/valueFormats';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
-import { GrafanaTheme } from '@grafana/ui/src/types';
+import { GrafanaTheme } from '../../types';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 
 type TimeSeriesValue = string | number | null;
 

@@ -1,7 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
+import { getColorFromHexRgbOrName } from '@grafana/ui';
 
 export class ThresholdManager {
   plot: any;

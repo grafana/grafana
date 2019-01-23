@@ -5,8 +5,7 @@ import { contextSrv } from 'app/core/core';
 import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
 import coreModule from 'app/core/core_module';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
-import { GrafanaTheme } from '@grafana/ui';
+import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
 
 const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;

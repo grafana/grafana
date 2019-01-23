@@ -3,7 +3,7 @@ import { Threshold, Themeable } from '../../types';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { colors } from '../../utils';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
+import { getColorFromHexRgbOrName } from '@grafana/ui';
 
 export interface Props extends Themeable {
   thresholds: Threshold[];

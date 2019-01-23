@@ -1,8 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
 import moment from 'moment';
-import { GrafanaTheme } from '@grafana/ui';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
+import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
 
 type TimeRegionColorDefinition = {
   fill: string;

@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { Themeable, GrafanaTheme } from '../../types';
-import { ColorDefinition, getColorForTheme } from '../../utils/colorsPalette';
+import { ColorDefinition, getColorForTheme } from '../../utils/namedColorsPalette';
 import { Color } from 'csstype';
 import { find, upperFirst } from 'lodash';
 

@@ -3,7 +3,7 @@ import PopperController from '../Tooltip/PopperController';
 import Popper, { RenderPopperArrowFn } from '../Tooltip/Popper';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { Themeable, GrafanaTheme } from '../../types';
-import { getColorFromHexRgbOrName } from '../../utils/colorsPalette';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import propDeprecationWarning from '../../utils/propDeprecationWarning';
 
@@ -61,7 +61,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
       };
 
       return (
-        <PopperController content={popoverElement} hideAfter={500}>
+        <PopperController content={popoverElement} hideAfter={500000}>
           {(showPopper, hidePopper, popperProps) => {
             return (
               <>
@@ -83,7 +83,12 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     onMouseLeave: hidePopper,
                   })
                 ) : (
-                  <div ref={this.pickerTriggerRef} onClick={showPopper} onMouseLeave={hidePopper} className="sp-replacer sp-light">
+                  <div
+                    ref={this.pickerTriggerRef}
+                    onClick={showPopper}
+                    onMouseLeave={hidePopper}
+                    className="sp-replacer sp-light"
+                  >
                     <div className="sp-preview">
                       <div
                         className="sp-preview-inner"

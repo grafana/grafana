@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
 import NamedColorsPalette from './NamedColorsPalette';
-import { getColorName } from '@grafana/ui/src/utils/colorsPalette';
+import { getColorName } from '../../utils/namedColorsPalette';
 import { withKnobs, select } from '@storybook/addon-knobs';
 
 const CenteredStory: FunctionComponent<{}> = ({ children }) => {

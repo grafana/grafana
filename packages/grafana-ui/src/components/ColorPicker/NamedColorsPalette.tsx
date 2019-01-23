@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color, ColorsPalette } from '../../utils/colorsPalette';
+import { Color, ColorsPalette } from '../../utils/namedColorsPalette';
 import { Themeable } from '../../types/index';
 import NamedColorsGroup from './NamedColorsGroup';
 

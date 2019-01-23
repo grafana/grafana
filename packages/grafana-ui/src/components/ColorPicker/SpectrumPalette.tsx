@@ -2,7 +2,7 @@ import React from 'react';
 import { CustomPicker, ColorResult } from 'react-color';
 
 import { Saturation, Hue, Alpha } from 'react-color/lib/components/common';
-import { getColorFromHexRgbOrName } from '../../utils/colorsPalette';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
 import { Themeable, GrafanaTheme } from '../../types';

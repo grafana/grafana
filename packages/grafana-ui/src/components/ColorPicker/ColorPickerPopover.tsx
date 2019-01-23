@@ -1,6 +1,6 @@
 import React from 'react';
 import NamedColorsPicker from './NamedColorsPalette';
-import { getColorName, getColorFromHexRgbOrName } from '../..//utils/colorsPalette';
+import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { ColorPickerProps, handleColorPickerPropsDeprecation } from './ColorPicker';
 import { GrafanaTheme, Themeable } from '../../types';
 import { PopperContentProps } from '../Tooltip/PopperController';

@@ -8,7 +8,7 @@ import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
+import { getColorFromHexRgbOrName } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/ui';
 
 class SingleStatCtrl extends MetricsPanelCtrl {

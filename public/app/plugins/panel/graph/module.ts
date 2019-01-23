@@ -9,9 +9,8 @@ import _ from 'lodash';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils/colorsPalette';
 import config from 'app/core/config';
-import { GrafanaTheme } from '@grafana/ui';
+import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
