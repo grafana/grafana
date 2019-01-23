@@ -95,6 +95,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                   isSelected={color.name === selectedColor}
                   color={getColorForTheme(color, theme)}
                   onClick={() => onColorSelect(color)}
+                  theme={theme}
                 />
               </div>
             )
