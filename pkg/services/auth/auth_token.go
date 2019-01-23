@@ -86,7 +86,7 @@ func (s *UserAuthTokenServiceImpl) InitContextWithToken(ctx *models.ReqContext, 
 
 func (s *UserAuthTokenServiceImpl) writeSessionCookie(ctx *models.ReqContext, value string, maxAge int) {
 	if setting.Env == setting.DEV {
-		ctx.Logger.Info("new token", "unhashed token", value, "cookieName", s.Cfg.LoginCookieName, "secure", s.Cfg.LoginCookieSecure)
+		ctx.Logger.Info("new token", "unhashed token", value)
 	}
 
 	ctx.Resp.Header().Del("Set-Cookie")
