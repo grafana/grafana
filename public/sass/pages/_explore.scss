@@ -4,9 +4,23 @@
   display: none;
 }
 
+.timepicker {
+  display: flex;
+}
+
+.timepicker-rangestring {
+  margin-left: 0.5em;
+}
+
 .datasource-picker {
   min-width: 200px;
   max-width: 200px;
+}
+
+.sidemenu-open {
+  .toolbar {
+    margin-left: 0;
+  }
 }
 
 .toolbar-splitted,
@@ -15,7 +29,8 @@
   background: inherit;
   justify-content: space-between;
   height: auto;
-  padding: 2px $dashboard-padding;
+  padding: 0px $dashboard-padding;
+  margin-left: $panel-margin * 3;
 }
 
 .toolbar {
@@ -100,6 +115,11 @@
 
   .small-screens {
     display: inline-block;
+  }
+
+  .toolbar-splitted,
+  .toolbar {
+    margin-left: 0;
   }
 
   .toolbar {
