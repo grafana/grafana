@@ -20,11 +20,7 @@ $popper-margin-from-ref: 5px;
   background: $tooltipBackground;
   border-radius: $border-radius;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  padding: 0px 8px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  //border: 1px #333333 solid;
+  padding: 3px 8px;
   color: $tooltipColor;
   font-weight: 500;
 
@@ -45,7 +41,6 @@ $popper-margin-from-ref: 5px;
   border-style: solid;
   position: absolute;
   margin: 0px;
-  display: none;
 }
 
 .popper__arrow {

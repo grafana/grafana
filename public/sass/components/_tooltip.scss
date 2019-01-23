@@ -8,8 +8,8 @@
   z-index: $zindex-tooltip;
   display: block;
   visibility: visible;
-  font-size: 11px;
   line-height: 1.4;
+  font-weight: 500;
   @include opacity(0);
 
   &.in {
