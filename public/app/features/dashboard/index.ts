@@ -2,7 +2,6 @@ import './dashboard_ctrl';
 import './time_srv';
 import './repeat_option/repeat_option';
 import './dashgrid/DashboardGridDirective';
-import './dashgrid/RowOptions';
 import './panellinks/module';
 
 // Services
@@ -25,6 +24,7 @@ import './components/UnsavedChangesModal';
 import './components/SaveModals';
 import './components/ShareModal';
 import './components/AdHocFilters';
+import './components/RowOptions';
 
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 
