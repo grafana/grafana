@@ -1,5 +1,4 @@
 import './dashboard_ctrl';
-import './alerting_srv';
 import './dashboard_loader_srv';
 import './save_as_modal';
 import './save_modal';
