@@ -1,6 +1,4 @@
 import './dashboard_ctrl';
-import './share_snapshot_ctrl';
-import './dashboard_srv';
 import './validation_srv';
 import './time_srv';
 import './ad_hoc_filters';
@@ -14,6 +12,7 @@ import './panellinks/module';
 import './services/DashboardViewStateSrv';
 import './services/UnsavedChangesSrv';
 import './services/DashboardLoaderSrv';
+import './services/DashboardSrv';
 
 // Components
 import './components/DashLinks';

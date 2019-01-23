@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import { DashboardModel } from './dashboard_model';
+import { DashboardModel } from '../dashboard_model';
 import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardSrv {
