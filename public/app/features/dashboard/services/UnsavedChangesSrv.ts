@@ -1,5 +1,5 @@
 import angular from 'angular';
-import { ChangeTracker } from './change_tracker';
+import { ChangeTracker } from './ChangeTracker';
 
 /** @ngInject */
 export function unsavedChangesSrv(this: any, $rootScope, $q, $location, $timeout, contextSrv, dashboardSrv, $window) {

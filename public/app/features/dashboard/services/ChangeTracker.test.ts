@@ -1,4 +1,4 @@
-import { ChangeTracker } from 'app/features/dashboard/change_tracker';
+import { ChangeTracker } from './ChangeTracker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../dashboard_model';
 import { PanelModel } from '../panel_model';
