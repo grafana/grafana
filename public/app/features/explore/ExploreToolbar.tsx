@@ -88,7 +88,7 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
           <div className={toolbarHeader}>
             <div className="toolbar-header-title">
               {exploreId === 'left' && (
-                <a className="navbar-page-btn">
+                <a>
                   <i className="fa fa-rocket fa-fw" />
                   Explore
                 </a>
