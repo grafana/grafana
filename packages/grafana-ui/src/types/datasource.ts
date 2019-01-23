@@ -3,7 +3,7 @@ import { TimeSeries } from './series';
 import { PluginMeta } from './plugin';
 
 export interface DataQueryResponse {
-  data: TimeSeries[];
+  data: TimeSeries[] | any;
 }
 
 export interface DataQuery {

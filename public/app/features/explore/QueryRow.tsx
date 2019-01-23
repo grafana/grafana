@@ -65,6 +65,10 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     }
   };
 
+  componentWillUnmount() {
+    console.log('QueryRow will unmount');
+  }
+
   onClickAddButton = () => {
     const { exploreId, index } = this.props;
     this.props.addQueryRow(exploreId, index);

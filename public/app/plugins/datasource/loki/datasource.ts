@@ -32,7 +32,7 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export default class LokiDatasource {
+export class LokiDatasource {
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -173,3 +173,5 @@ export default class LokiDatasource {
       });
   }
 }
+
+export default LokiDatasource;

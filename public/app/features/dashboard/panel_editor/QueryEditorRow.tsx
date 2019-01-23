@@ -107,10 +107,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   onQueryChange = (query: DataQuery) => {
     Object.assign(this.props.query, query);
-    this.onExecuteQuery();
   };
 
-  onExecuteQuery = () => {
+  onRunQuery = () => {
     this.props.panel.refresh();
   };
 
@@ -128,8 +127,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         <QueryEditor
           query={query}
           datasource={datasource}
-          onQueryChange={this.onQueryChange}
-          onExecuteQuery={this.onExecuteQuery}
+          onChange={this.onQueryChange}
+          onRunQuery={this.onRunQuery}
         />
       );
     }
