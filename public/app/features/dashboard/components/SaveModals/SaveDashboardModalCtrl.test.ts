@@ -1,4 +1,4 @@
-import { SaveDashboardModalCtrl } from '../save_modal';
+import { SaveDashboardModalCtrl } from './SaveDashboardModalCtrl';
 
 const setup = (timeChanged, variableValuesChanged, cb) => {
   const dash = {

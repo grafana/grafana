@@ -1,7 +1,4 @@
 import './dashboard_ctrl';
-import './dashboard_loader_srv';
-import './save_as_modal';
-import './save_modal';
 import './save_provisioned_modal';
 import './shareModalCtrl';
 import './share_snapshot_ctrl';
@@ -18,6 +15,7 @@ import './panellinks/module';
 // Services
 import './services/DashboardViewStateSrv';
 import './services/UnsavedChangesSrv';
+import './services/DashboardLoaderSrv';
 
 // Components
 import './components/DashLinks';
@@ -30,6 +28,7 @@ import './components/DashboardSettings';
 import './components/SubMenu';
 import './components/TimePicker';
 import './components/UnsavedChangesModal';
+import './components/SaveModals';
 
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 
