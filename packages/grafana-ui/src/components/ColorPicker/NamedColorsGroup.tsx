@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { Themeable } from '../../types';
+import { Themeable, GrafanaTheme } from '../../types';
 import { ColorDefinition, getColorForTheme } from '../../utils/colorsPalette';
 import { Color } from 'csstype';
 import { find, upperFirst } from 'lodash';
@@ -11,7 +11,7 @@ export enum ColorSwatchVariant {
   Large = 'large',
 }
 
-interface ColorSwatchProps extends React.DOMAttributes<HTMLDivElement> {
+interface ColorSwatchProps extends Themeable, React.DOMAttributes<HTMLDivElement> {
   color: string;
   label?: string;
   variant?: ColorSwatchVariant;
@@ -23,17 +23,19 @@ const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
   label,
   variant = ColorSwatchVariant.Small,
   isSelected,
+  theme,
   ...otherProps
 }) => {
   const isSmall = variant === ColorSwatchVariant.Small;
   const swatchSize = isSmall ? '16px' : '32px';
+  const selectedSwatchBorder = theme === GrafanaTheme.Light ? '#ffffff' : '#1A1B1F';
   const swatchStyles = {
     width: swatchSize,
     height: swatchSize,
     borderRadius: '50%',
     background: `${color}`,
     marginRight: isSmall ? '0px' : '8px',
-    boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px white` : 'none',
+    boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${selectedSwatchBorder}` : 'none',
     cursor: isSelected ? 'default' : 'pointer',
   };
 
@@ -76,6 +78,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
           color={getColorForTheme(primaryColor, theme)}
           label={upperFirst(primaryColor.hue)}
           onClick={() => onColorSelect(primaryColor)}
+          theme={theme}
         />
       )}
       <div

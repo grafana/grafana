@@ -10,7 +10,6 @@ interface NamedColorsPaletteProps extends Themeable {
 
 const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPaletteProps) => {
   const swatches: JSX.Element[] = [];
-
   ColorsPalette.forEach((colors, hue) => {
     swatches.push(
       <NamedColorsGroup
