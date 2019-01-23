@@ -18,7 +18,9 @@
 }
 
 .sidemenu-open {
-  .toolbar {
+  .toolbar-header-splitted,
+  .toolbar-header {
+    padding: 0;
     margin-left: 0;
   }
 }
@@ -30,7 +32,6 @@
   justify-content: space-between;
   height: auto;
   padding: 0px $dashboard-padding;
-  margin-left: $panel-margin * 3;
 }
 
 .toolbar {
@@ -59,10 +60,15 @@
   min-height: 55px;
   line-height: 55px;
   justify-content: space-between;
+  margin-left: $panel-margin * 3;
 }
 
 .toolbar-header {
   align-items: center;
+}
+
+.toolbar-header-title {
+  color: darken($link-color, 5%);
 }
 
 .toolbar-header-datasource {
@@ -71,7 +77,6 @@
 }
 
 .toolbar-header-close {
-  color: #d6d6d6;
   padding-right: 8px;
 }
 
@@ -117,9 +122,16 @@
     display: inline-block;
   }
 
-  .toolbar-splitted,
-  .toolbar {
-    margin-left: 0;
+  .sidemenu-open {
+    .toolbar-header-splitted,
+    .toolbar-header {
+      margin-left: $dashboard-padding;
+    }
+  }
+
+  .toolbar-header-splitted,
+  .toolbar-header {
+    margin-left: $dashboard-padding;
   }
 
   .toolbar {
