@@ -1,7 +1,6 @@
 import './dashboard_ctrl';
 import './alerting_srv';
 import './dashboard_loader_srv';
-import './submenu/submenu';
 import './save_as_modal';
 import './save_modal';
 import './save_provisioned_modal';
@@ -27,6 +26,7 @@ import './components/ExportDataModal';
 import './components/FolderPicker';
 import './components/VersionHistory';
 import './components/DashboardSettings';
+import './components/SubMenu';
 import DashboardPermissions from './components/DashboardPermissions/DashboardPermissions';
 
 // angular wrappers

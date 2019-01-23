@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 
-export class SubmenuCtrl {
+export class SubMenuCtrl {
   annotations: any;
   variables: any;
   dashboard: any;
@@ -29,8 +29,8 @@ export class SubmenuCtrl {
 export function submenuDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/submenu/submenu.html',
-    controller: SubmenuCtrl,
+    templateUrl: 'public/app/features/dashboard/components/SubMenu/template.html',
+    controller: SubMenuCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
