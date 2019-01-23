@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -223,8 +224,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler(hs.AuthTokenService))
-	m.Use(middleware.Sessioner(&setting.SessionOptions, setting.SessionConnMaxLifetime))
 	m.Use(middleware.OrgRedirect())
+	session.Init(&setting.SessionOptions, setting.SessionConnMaxLifetime)
 
 	// needs to be after context handler
 	if setting.EnforceDomain {

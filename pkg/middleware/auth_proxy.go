@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var AUTH_PROXY_SESSION_VAR = "authProxyHeaderValue"
+var (
+	AUTH_PROXY_SESSION_VAR = "authProxyHeaderValue"
+)
 
 func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	if !setting.AuthProxyEnabled {
@@ -161,6 +163,10 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	ctx.IsSignedIn = true
 	ctx.Session.Set(session.SESS_KEY_USERID, ctx.UserId)
 
+	if err := ctx.Session.Release(); err != nil {
+		ctx.Logger.Error("failed to save session data", "error", err)
+	}
+
 	return true
 }
 
@@ -190,6 +196,16 @@ var syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
 	}
 
 	return nil
+}
+
+func getRequestUserId(c *m.ReqContext) int64 {
+	userID := c.Session.Get(session.SESS_KEY_USERID)
+
+	if userID != nil {
+		return userID.(int64)
+	}
+
+	return 0
 }
 
 func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error {

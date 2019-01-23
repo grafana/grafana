@@ -14,6 +14,7 @@ type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
 
+	// This should only be used by the auth_proxy
 	Session session.SessionStore
 
 	IsSignedIn     bool

@@ -26,7 +26,7 @@ func GetContextHandler(ats auth.UserAuthTokenService) macaron.Handler {
 		ctx := &m.ReqContext{
 			Context:        c,
 			SignedInUser:   &m.SignedInUser{},
-			Session:        session.GetSession(),
+			Session:        session.GetSession(), // should only be used by auth_proxy
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,

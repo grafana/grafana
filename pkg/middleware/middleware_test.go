@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	ms "github.com/go-macaron/session"
+	msession "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
@@ -201,6 +201,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
+			setting.SessionOptions = msession.Options{}
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
 			sc.exec()
@@ -469,6 +470,7 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		sc := &scenarioContext{}
+
 		viewsPath, _ := filepath.Abs("../../public/views")
 
 		sc.m = macaron.New()
@@ -477,11 +479,13 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
 
+		session.Init(&msession.Options{}, 0)
 		sc.userAuthTokenService = newFakeUserAuthTokenService()
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService))
 		// mock out gc goroutine
 		session.StartSessionGC = func() {}
-		sc.m.Use(Sessioner(&ms.Options{}, 0))
+		setting.SessionOptions = msession.Options{}
+
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 

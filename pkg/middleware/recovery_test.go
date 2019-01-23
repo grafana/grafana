@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	ms "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
@@ -68,7 +67,7 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService))
 		// mock out gc goroutine
 		session.StartSessionGC = func() {}
-		sc.m.Use(Sessioner(&ms.Options{}, 0))
+		//sc.m.Use(Sessioner(&ms.Options{}, 0))
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 
