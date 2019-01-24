@@ -12,6 +12,7 @@ import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
 import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
+import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
@@ -68,8 +69,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'page-dashboard',
     })
     .when('/dashboard/import', {
-      templateUrl: 'public/app/features/dashboard/partials/dashboard_import.html',
-      controller: 'DashboardImportCtrl',
+      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',
+      controller: DashboardImportCtrl,
       controllerAs: 'ctrl',
     })
     .when('/datasources', {
