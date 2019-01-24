@@ -297,11 +297,11 @@ func createTestContext(t *testing.T) *testContext {
 			LoginCookieSecure:                 false,
 			LoginCookieMaxDays:                7,
 			LoginDeleteExpiredTokensAfterDays: 30,
+			LoginCookieRotation:               10 * time.Minute,
 		},
 		log: log.New("test-logger"),
 	}
 
-	RotateTime = 10 * time.Minute
 	UrgentRotateTime = time.Minute
 	setting.LogInRememberDays = 7
 

@@ -23,7 +23,6 @@ func init() {
 
 var (
 	getTime          = time.Now
-	RotateTime       = 2 * time.Minute
 	UrgentRotateTime = 20 * time.Second
 	oneYearInSeconds = 31557600 //used as default maxage for session cookies. We validate/rotate them more often.
 )
@@ -219,7 +218,7 @@ func (s *UserAuthTokenServiceImpl) RefreshToken(token *userAuthToken, clientIP, 
 	needsRotation := false
 	rotatedAt := time.Unix(token.RotatedAt, 0)
 	if token.AuthTokenSeen {
-		needsRotation = rotatedAt.Before(now.Add(-RotateTime))
+		needsRotation = rotatedAt.Before(now.Add(-s.Cfg.LoginCookieRotation))
 	} else {
 		needsRotation = rotatedAt.Before(now.Add(-UrgentRotateTime))
 	}
