@@ -176,7 +176,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *m.ReqContext, cookieName string
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.LoginCookieSecure,
+		Secure:   hs.Cfg.SecurityHTTPSCookies,
 	})
 
 	return nil

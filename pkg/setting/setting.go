@@ -223,10 +223,11 @@ type Cfg struct {
 	EnterpriseLicensePath            string
 
 	LoginCookieName                   string
-	LoginCookieSecure                 bool
 	LoginCookieMaxDays                int
 	LoginCookieRotation               int
 	LoginDeleteExpiredTokensAfterDays int
+
+	SecurityHTTPSCookies bool
 }
 
 type CommandLineArgs struct {
@@ -554,7 +555,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	login := iniFile.Section("login")
 	cfg.LoginCookieName = login.Key("cookie_name").MustString("grafana_session")
 	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
-	cfg.LoginCookieSecure = login.Key("cookie_secure").MustBool(false)
 	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
 	cfg.LoginCookieRotation = login.Key("rotate_token_minutes").MustInt(30)
 	if cfg.LoginCookieRotation < 2 {
@@ -603,6 +603,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	SecretKey = security.Key("secret_key").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.SecurityHTTPSCookies = security.Key("https_flag_cookies").MustBool(false)
 	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
 
 	// read snapshots settings
