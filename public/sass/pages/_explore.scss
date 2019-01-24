@@ -14,7 +14,6 @@
 }
 
 .sidemenu-open {
-  .toolbar-header-splitted,
   .toolbar-header {
     padding: 0;
     margin-left: 0;
@@ -27,7 +26,6 @@
   }
 }
 
-.toolbar-splitted,
 .toolbar {
   background: inherit;
   display: flex;
@@ -41,21 +39,26 @@
   transition-property: box-shadow, border-bottom;
 }
 
-.toolbar-item-splitted,
 .toolbar-item {
   position: relative;
   align-self: center;
 }
 
-.toolbar-item-splitted {
-  flex: 1 1 100%;
+.toolbar.splitted {
+  .toolbar-item {
+    flex: 1 1 100%;
+  }
+
+  .toolbar-content-item:first-child {
+    padding-left: 0;
+    margin-right: auto;
+  }
 }
 
 .toolbar-item:last-child {
   flex: auto;
 }
 
-.toolbar-header-splitted,
 .toolbar-header {
   display: flex;
   flex: 1 1 0;
@@ -90,7 +93,6 @@
   margin-left: auto;
 }
 
-.toolbar-content-splitted,
 .toolbar-content {
   display: flex;
   flex-flow: row wrap;
@@ -107,14 +109,11 @@
   margin-right: auto;
 }
 
-.toolbar-content-item-splitted:first-child {
-  padding-left: 0;
-  margin-right: auto;
-}
-
 @media only screen and (max-width: 1545px) {
-  .timepicker-rangestring {
-    display: none;
+  .toolbar.splitted {
+    .timepicker-rangestring {
+      display: none;
+    }
   }
 }
 
@@ -125,14 +124,15 @@
     }
   }
 
-  .toolbar-content-splitted,
   .toolbar-content {
     justify-content: flex-start;
   }
 
-  .toolbar-content-item-splitted {
-    padding: 2px 0;
-    margin: 0;
+  .toolbar.splitted {
+    .toolbar-content-item {
+      padding: 2px 0;
+      margin: 0;
+    }
   }
 
   .toolbar-content-item {
