@@ -3,6 +3,7 @@ import React, { FunctionComponent } from 'react';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { ColorPickerProps } from './ColorPicker';
 import { PopperContentProps } from '../Tooltip/PopperController';
+import { Switch } from '../Switch/Switch';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopperContentProps {
   yaxis?: number;
@@ -19,7 +20,20 @@ export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopove
       customPickers={{
         yaxis: {
           name: 'Y-Axis',
-          tabComponent: () => <div style={{ marginTop: '24px' }}>{yaxis && <AxisSelector yaxis={yaxis} onToggleAxis={onToggleAxis} />}</div>
+          tabComponent: () => (
+            <Switch
+              key="yaxisSwitch"
+              label="Use right y-axis"
+              className="ColorPicker__axisSwitch"
+              labelClass="ColorPicker__axisSwitchLabel"
+              checked={yaxis === 2}
+              onChange={() => {
+                if (onToggleAxis) {
+                  onToggleAxis();
+                }
+              }}
+            />
+          ),
         },
       }}
     />

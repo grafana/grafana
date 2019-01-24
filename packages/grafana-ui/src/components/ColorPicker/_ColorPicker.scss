@@ -130,12 +130,15 @@ $arrowSize: 15px;
 
 .ColorPickerPopover__content {
   width: 336px;
+  min-height: 184px;
   padding: 24px;
 }
 
 .ColorPickerPopover__tabs {
   display: flex;
   width: 100%;
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
 }
 
 .ColorPickerPopover__tab {
@@ -143,11 +146,19 @@ $arrowSize: 15px;
   text-align: center;
   padding: 8px 0;
   background: #dde4ed;
-  border-radius: 3px;
 }
 
 .ColorPickerPopover__tab--active {
   background: white;
+}
+
+.ColorPicker__axisSwitch {
+  width: 100%;
+}
+
+.ColorPicker__axisSwitchLabel {
+  display: flex;
+  flex-grow: 1;
 }
 
 .sp-replacer {
