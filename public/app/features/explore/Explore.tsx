@@ -231,6 +231,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
       ? exploreDatasources.find(d => d.name === datasourceInstance.name)
       : undefined;
 
+    const timepicker = <TimePicker ref={this.timepickerRef} range={range} onChangeTime={this.onChangeTime} />;
+
     return (
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar
@@ -241,6 +243,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
           range={range}
           selectedDatasource={selectedDatasource}
           splitted={split}
+          timepicker={timepicker}
           onChangeDatasource={this.onChangeDatasource}
           onClearAll={this.onClickClear}
           onCloseSplit={this.onClickCloseSplit}

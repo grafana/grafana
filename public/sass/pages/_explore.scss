@@ -2,6 +2,7 @@
   display: none;
 }
 
+.timepicker-splitted,
 .timepicker {
   display: flex;
 }
@@ -32,6 +33,10 @@
   justify-content: space-between;
   height: auto;
   padding: 0px $dashboard-padding;
+  border-bottom: 1px solid #0000;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-in-out;
+  transition-property: box-shadow, border-bottom;
 }
 
 .toolbar {
@@ -44,6 +49,7 @@
 
 .toolbar-item-splitted,
 .toolbar-item {
+  position: relative;
   align-self: center;
 }
 
