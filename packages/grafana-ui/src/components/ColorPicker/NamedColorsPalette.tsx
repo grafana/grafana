@@ -29,8 +29,8 @@ export const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPalett
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gridRowGap: '32px',
-        gridColumnGap: '32px',
+        gridRowGap: '24px',
+        gridColumnGap: '24px',
       }}
     >
       {swatches}

@@ -1,6 +1,7 @@
 $arrowSize: 15px;
 .ColorPicker {
   @extend .popper;
+  font-size: 12px;
 }
 
 .ColorPicker__arrow {
@@ -128,7 +129,7 @@ $arrowSize: 15px;
 }
 
 .ColorPickerPopover__content {
-  width: 360px;
+  width: 336px;
   padding: 24px;
 }
 
