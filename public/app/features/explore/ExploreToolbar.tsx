@@ -3,18 +3,6 @@ import { ExploreId } from 'app/types/explore';
 import { DataSourceSelectItem, RawTimeRange, TimeRange } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 
-const createDatasourcePicker = (props: Props) => {
-  const { exploreDatasources, selectedDatasource } = props;
-
-  return (
-    <DataSourcePicker
-      onChange={props.onChangeDatasource}
-      datasources={exploreDatasources}
-      current={selectedDatasource}
-    />
-  );
-};
-
 const createResponsiveButton = (options: {
   splitted: boolean;
   title: string;
@@ -30,12 +18,6 @@ const createResponsiveButton = (options: {
       {iconClassName ? <i className={iconClassName} /> : null}
     </button>
   );
-};
-
-const createSplittedClassName = (options: { splitted: boolean; className: string }) => {
-  const { className, splitted } = options;
-
-  return splitted ? `${className}-splitted` : className;
 };
 
 interface Props {
@@ -61,18 +43,20 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
   }
 
   render() {
-    const { datasourceMissing, exploreId, loading, splitted, timepicker } = this.props;
-    const toolbar = createSplittedClassName({ splitted, className: 'toolbar' });
-    const toolbarItem = createSplittedClassName({ splitted, className: 'toolbar-item' });
-    const toolbarHeader = createSplittedClassName({ splitted, className: 'toolbar-header' });
-    const toolbarContent = createSplittedClassName({ splitted, className: 'toolbar-content' });
-    const toolbarContentItem = createSplittedClassName({ splitted, className: 'toolbar-content-item' });
-    const timepickerClasses = createSplittedClassName({ splitted, className: 'timepicker toolbar-content-item' });
+    const {
+      datasourceMissing,
+      exploreDatasources,
+      exploreId,
+      loading,
+      selectedDatasource,
+      splitted,
+      timepicker,
+    } = this.props;
 
     return (
-      <div className={toolbar}>
-        <div className={toolbarItem}>
-          <div className={toolbarHeader}>
+      <div className={splitted ? 'toolbar splitted' : 'toolbar'}>
+        <div className="toolbar-item">
+          <div className="toolbar-header">
             <div className="toolbar-header-title">
               {exploreId === 'left' && (
                 <a className="navbar-page-btn">
@@ -90,15 +74,21 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
             </div>
           </div>
         </div>
-        <div className={toolbarItem}>
-          <div className={toolbarContent}>
+        <div className="toolbar-item">
+          <div className="toolbar-content">
             {!datasourceMissing ? (
-              <div className={toolbarContentItem}>
-                <div className="datasource-picker">{createDatasourcePicker(this.props)}</div>
+              <div className="toolbar-content-item">
+                <div className="datasource-picker">
+                  <DataSourcePicker
+                    onChange={this.props.onChangeDatasource}
+                    datasources={exploreDatasources}
+                    current={selectedDatasource}
+                  />
+                </div>
               </div>
             ) : null}
             {exploreId === 'left' && !splitted ? (
-              <div className={toolbarContentItem}>
+              <div className="toolbar-content-item">
                 {createResponsiveButton({
                   splitted,
                   title: 'Split',
@@ -107,13 +97,13 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
                 })}
               </div>
             ) : null}
-            <div className={timepickerClasses}>{timepicker}</div>
-            <div className={toolbarContentItem}>
+            <div className="toolbar-content-item timepicker">{timepicker}</div>
+            <div className="toolbar-content-item">
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.props.onClearAll}>
                 Clear All
               </button>
             </div>
-            <div className={toolbarContentItem}>
+            <div className="toolbar-content-item">
               {createResponsiveButton({
                 splitted,
                 title: 'Run Query',
