@@ -29,12 +29,12 @@
   .sidemenu-open {
     .sidemenu {
       background: $side-menu-bg;
-      position: initial;
       height: auto;
       box-shadow: $side-menu-shadow;
       position: relative;
       z-index: $zindex-sidemenu;
     }
+
     .sidemenu__top,
     .sidemenu__bottom {
       display: block;
@@ -149,6 +149,21 @@
   color: #ebedf2;
 }
 
+.side-menu-header > a {
+  // Removes left-brand-border-gradient from link
+  border: none !important;
+  padding: 0 !important;
+}
+
+.sidemenu-subtitle {
+  padding: 0.5rem 1rem 0.5rem;
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+  border-bottom: 1px solid $dropdownDividerBottom;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+}
+
 li.sidemenu-org-switcher {
   border-bottom: 1px solid $dropdownDividerBottom;
 }
@@ -203,7 +218,6 @@ li.sidemenu-org-switcher {
     .sidemenu {
       width: 100%;
       background: $side-menu-bg-mobile;
-      position: initial;
       height: auto;
       box-shadow: $side-menu-shadow;
       position: relative;

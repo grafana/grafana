@@ -28,10 +28,7 @@ func addDashboardVersionMigration(mg *Migrator) {
 
 	// before new dashboards where created with version 0, now they are always inserted with version 1
 	const setVersionTo1WhereZeroSQL = `UPDATE dashboard SET version = 1 WHERE version = 0`
-	mg.AddMigration("Set dashboard version to 1 where 0", new(RawSqlMigration).
-		Sqlite(setVersionTo1WhereZeroSQL).
-		Postgres(setVersionTo1WhereZeroSQL).
-		Mysql(setVersionTo1WhereZeroSQL))
+	mg.AddMigration("Set dashboard version to 1 where 0", NewRawSqlMigration(setVersionTo1WhereZeroSQL))
 
 	const rawSQL = `INSERT INTO dashboard_version
 (
@@ -54,14 +51,9 @@ SELECT
 	'',
 	dashboard.data
 FROM dashboard;`
-	mg.AddMigration("save existing dashboard data in dashboard_version table v1", new(RawSqlMigration).
-		Sqlite(rawSQL).
-		Postgres(rawSQL).
-		Mysql(rawSQL))
+	mg.AddMigration("save existing dashboard data in dashboard_version table v1", NewRawSqlMigration(rawSQL))
 
 	// change column type of dashboard_version.data
-	mg.AddMigration("alter dashboard_version.data to mediumtext v1", new(RawSqlMigration).
-		Sqlite("SELECT 0 WHERE 0;").
-		Postgres("SELECT 0;").
+	mg.AddMigration("alter dashboard_version.data to mediumtext v1", NewRawSqlMigration("").
 		Mysql("ALTER TABLE dashboard_version MODIFY data MEDIUMTEXT;"))
 }

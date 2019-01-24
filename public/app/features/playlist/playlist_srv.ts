@@ -1,50 +1,45 @@
 import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
 import appEvents from 'app/core/app_events';
+import _ from 'lodash';
+import { toUrlParams } from 'app/core/utils/url';
 
-class PlaylistSrv {
+export class PlaylistSrv {
   private cancelPromise: any;
-  private dashboards: any;
+  private dashboards: Array<{ uri: string }>;
   private index: number;
-  private interval: any;
+  private interval: number;
   private startUrl: string;
-  public isPlaying: boolean;
+  private numberOfLoops = 0;
+  isPlaying: boolean;
 
   /** @ngInject */
-  constructor(private $location: any, private $timeout: any, private backendSrv: any, private $routeParams: any) {}
+  constructor(private $location: any, private $timeout: any, private backendSrv: any) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
 
-    var playedAllDashboards = this.index > this.dashboards.length - 1;
-
+    const playedAllDashboards = this.index > this.dashboards.length - 1;
     if (playedAllDashboards) {
-      window.location.href = this.getUrlWithKioskMode();
-      return;
+      this.numberOfLoops++;
+
+      // This does full reload of the playlist to keep memory in check due to existing leaks but at the same time
+      // we do not want page to flicker after each full loop.
+      if (this.numberOfLoops >= 3) {
+        window.location.href = this.startUrl;
+        return;
+      }
+      this.index = 0;
     }
 
-    var dash = this.dashboards[this.index];
-    this.$location.url('dashboard/' + dash.uri);
+    const dash = this.dashboards[this.index];
+    const queryParams = this.$location.search();
+    const filteredParams = _.pickBy(queryParams, value => value !== null);
+
+    this.$location.url('dashboard/' + dash.uri + '?' + toUrlParams(filteredParams));
 
     this.index++;
     this.cancelPromise = this.$timeout(() => this.next(), this.interval);
-  }
-
-  getUrlWithKioskMode() {
-    const inKioskMode = document.body.classList.contains('page-kiosk-mode');
-
-    // check if should add kiosk query param
-    if (inKioskMode && this.startUrl.indexOf('kiosk') === -1) {
-      return this.startUrl + '?kiosk=true';
-    }
-
-    // check if should remove kiosk query param
-    if (!inKioskMode) {
-      return this.startUrl.split('?')[0];
-    }
-
-    // already has kiosk query param, just return startUrl
-    return this.startUrl;
   }
 
   prev() {
@@ -59,12 +54,8 @@ class PlaylistSrv {
     this.index = 0;
     this.isPlaying = true;
 
-    if (this.$routeParams.kiosk) {
-      appEvents.emit('toggle-kiosk-mode');
-    }
-
-    this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
-      this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
+    return this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
+      return this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
         this.dashboards = dashboards;
         this.interval = kbn.interval_to_ms(playlist.interval);
         this.next();
@@ -73,6 +64,13 @@ class PlaylistSrv {
   }
 
   stop() {
+    if (this.isPlaying) {
+      const queryParams = this.$location.search();
+      if (queryParams.kiosk) {
+        appEvents.emit('toggle-kiosk-mode', { exit: true });
+      }
+    }
+
     this.index = 0;
     this.isPlaying = false;
 

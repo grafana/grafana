@@ -1,12 +1,22 @@
 import _ from 'lodash';
+import { PanelPlugin } from 'app/types/plugins';
 
-class Settings {
+export interface BuildInfo {
+  version: string;
+  commit: string;
+  isEnterprise: boolean;
+  env: string;
+  latestVersion: string;
+  hasUpdate: boolean;
+}
+
+export class Settings {
   datasources: any;
-  panels: any;
+  panels: PanelPlugin[];
   appSubUrl: string;
-  window_title_prefix: string;
-  buildInfo: any;
-  new_panel_title: string;
+  windowTitlePrefix: string;
+  buildInfo: BuildInfo;
+  newPanelTitle: string;
   bootData: any;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
@@ -15,29 +25,47 @@ class Settings {
   disableLoginForm: boolean;
   defaultDatasource: string;
   alertingEnabled: boolean;
+  alertingErrorOrTimeout: string;
+  alertingNoDataOrNullValues: string;
   authProxyEnabled: boolean;
+  exploreEnabled: boolean;
   ldapEnabled: boolean;
   oauth: any;
   disableUserSignUp: boolean;
   loginHint: any;
   loginError: any;
+  viewersCanEdit: boolean;
+  disableSanitizeHtml: boolean;
 
-  constructor(options) {
-    var defaults = {
+  constructor(options: Settings) {
+    const defaults = {
       datasources: {},
-      window_title_prefix: 'Grafana - ',
+      windowTitlePrefix: 'Grafana - ',
       panels: {},
-      new_panel_title: 'Panel Title',
+      newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
       appSubUrl: '',
+      buildInfo: {
+        version: 'v1.0',
+        commit: '1',
+        env: 'production',
+        isEnterprise: false,
+      },
+      viewersCanEdit: false,
+      disableSanitizeHtml: false
     };
+
     _.extend(this, defaults, options);
   }
 }
 
-var bootData = (<any>window).grafanaBootData || { settings: {} };
-var options = bootData.settings;
+const bootData = (window as any).grafanaBootData || {
+  settings: {},
+  user: {},
+};
+
+const options = bootData.settings;
 options.bootData = bootData;
 
 const config = new Settings(options);

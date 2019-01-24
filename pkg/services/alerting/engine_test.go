@@ -10,7 +10,7 @@ import (
 )
 
 type FakeEvalHandler struct {
-	SuccessCallID int // 0 means never sucess
+	SuccessCallID int // 0 means never success
 	CallNb        int
 }
 
@@ -87,7 +87,7 @@ func TestEngineProcessJob(t *testing.T) {
 
 		Convey("Should trigger as many retries as needed", func() {
 
-			Convey("never sucess -> max retries number", func() {
+			Convey("never success -> max retries number", func() {
 				expectedAttempts := alertMaxAttempts
 				evalHandler := NewFakeEvalHandler(0)
 				engine.evalHandler = evalHandler
@@ -96,7 +96,7 @@ func TestEngineProcessJob(t *testing.T) {
 				So(evalHandler.CallNb, ShouldEqual, expectedAttempts)
 			})
 
-			Convey("always sucess -> never retry", func() {
+			Convey("always success -> never retry", func() {
 				expectedAttempts := 1
 				evalHandler := NewFakeEvalHandler(1)
 				engine.evalHandler = evalHandler
@@ -105,7 +105,7 @@ func TestEngineProcessJob(t *testing.T) {
 				So(evalHandler.CallNb, ShouldEqual, expectedAttempts)
 			})
 
-			Convey("some errors before sucess -> some retries", func() {
+			Convey("some errors before success -> some retries", func() {
 				expectedAttempts := int(math.Ceil(float64(alertMaxAttempts) / 2))
 				evalHandler := NewFakeEvalHandler(expectedAttempts)
 				engine.evalHandler = evalHandler

@@ -50,7 +50,8 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
   "annotations": {
     "list": []
   },
-  "schemaVersion": 16,
+  "refresh": "5s",
+  "schemaVersion": 17,
   "version": 0,
   "links": []
 }
@@ -71,6 +72,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **timepicker** | timepicker metadata, see [timepicker section](#timepicker) for details |
 | **templating** | templating metadata, see [templating section](#templating) for details |
 | **annotations** | annotations metadata, see [annotations section](#annotations) for details |
+| **refresh** | auto-refresh interval
 | **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema |
 | **version** | version of the dashboard (integer), incremented each time the dashboard is updated |
 | **panels** | panels array, see below for detail. |

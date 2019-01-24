@@ -6,6 +6,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,13 +16,17 @@ func runDbCommand(command func(commandLine CommandLine) error) func(context *cli
 	return func(context *cli.Context) {
 		cmd := &contextCommandLine{context}
 
-		setting.NewConfigContext(&setting.CommandLineArgs{
+		cfg := setting.NewCfg()
+		cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.String("config"),
 			HomePath: cmd.String("homepath"),
 			Args:     flag.Args(),
 		})
 
-		sqlstore.NewEngine()
+		engine := &sqlstore.SqlStore{}
+		engine.Cfg = cfg
+		engine.Bus = bus.GetBus()
+		engine.Init()
 
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))

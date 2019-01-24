@@ -14,10 +14,52 @@ weight = 2
 
 <img class="screenshot" src="/assets/img/features/table-panel.png">
 
-The new table panel is very flexible, supporting both multiple modes for time series as well as for
+The table panel is very flexible, supporting both multiple modes for time series as well as for
 table, annotation and raw JSON data. It also provides date formatting and value formatting and coloring options.
 
 To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](http://play.grafana.org/dashboard/db/table-panel-showcase).
+
+## Querying Data
+
+The table panel displays the results of a query specified in the **Metrics** tab.
+The result being displayed depends on the datasource and the query, but generally there is one row per datapoint, with extra columns for associated keys and values, as well as one column for the numeric value of the datapoint.
+You can change the behavior in the section **Data to Table** below.
+
+### Merge Multiple Queries per Table
+
+> Only available in Grafana v5.0+.
+
+Sometimes it is useful to display the results of multiple queries in the same table on corresponding rows, e.g., when comparing capacity and actual usage of resources.
+In this example usage and capacity are metrics that will have corresponding datapoints, while their associated keys and values can be used to match them.
+(This matching is only available with the **Table Transform** set to **Table**.)
+
+In its simplest case, both queries return time-series data with a numeric value and a timestamp.
+If the timestamps are the same, datapoints will be matched and rendered on the same row.
+Some datasources return keys and values (labels, tags) associated with the datapoint.
+These are being matched as well if they are present in both results and have the same value.
+The following datapoints will end up on the same row with one time column, two label columns ("host" and "job") and two value columns:
+
+```
+Datapoint for query A: {time: 1, host: "node-2", job: "job-8", value: 3}
+Datapoint for query B: {time: 1, host: "node-2", value: 4}
+```
+
+The following two results cannot be matched and will be rendered on separate rows:
+
+```
+Different time
+Datapoint for query A: {time: 1, host: "node-2", job: "job-8", value: 3}
+Datapoint for query B: {time: 2, host: "node-2", value: 4}
+
+Different label "host"
+Datapoint for query A: {time: 1, host: "node-2", job: "job-8", value: 3}
+Datapoint for query B: {time: 1, host: "node-9", value: 4}
+```
+
+You can still merge both of the above cases by changing the conflicting column's **Type** to **hidden** in the **Column Styles**.
+
+Note that if each datapoint of your query results have multiple value fields like max, min, mean, etc., they will likely have different values and therefore will not match and render on separate rows.
+If you intend for rows to be merged but see them rendered on separate rows, check the query results in the **Query Inspector** for field values being identical across datapoints that should be merged into a row.
 
 ## Options overview
 
@@ -97,3 +139,14 @@ The column styles allow you control how dates and numbers are formatted.
 4. **Thresholds and Coloring**: Specify color mode and thresholds limits.
 5. **Type**: The three supported types of types are **Number**, **String** and **Date**. **Unit** and **Decimals**: Specify unit and decimal precision for numbers. **Format**: Specify date format for dates.
 
+
+### String
+#### Value/Range to text mapping
+
+> Only available in Grafana v5.1+.
+
+{{< docs-imagebox img="/img/docs/v51/table-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
+
+Value/range to text mapping allows you to translate numeric values into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the numeric values into a context-specific human-readable word or message.
+
+<div class="clearfix"></div>

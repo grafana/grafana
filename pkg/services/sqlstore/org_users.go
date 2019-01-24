@@ -20,7 +20,14 @@ func init() {
 func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
-		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, cmd.UserId); err != nil {
+		var user m.User
+		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+			return err
+		} else if !exists {
+			return m.ErrUserNotFound
+		}
+
+		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, user.Id); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return m.ErrOrgUserAlreadyAdded
@@ -41,7 +48,26 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 		}
 
 		_, err := sess.Insert(&entity)
-		return err
+		if err != nil {
+			return err
+		}
+
+		var userOrgs []*m.UserOrgDTO
+		sess.Table("org_user")
+		sess.Join("INNER", "org", "org_user.org_id=org.id")
+		sess.Where("org_user.user_id=? AND org_user.org_id=?", user.Id, user.OrgId)
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		err = sess.Find(&userOrgs)
+
+		if err != nil {
+			return err
+		}
+
+		if len(userOrgs) == 0 {
+			return setUsingOrgInTransaction(sess, user.Id, cmd.OrgId)
+		}
+
+		return nil
 	})
 }
 
@@ -59,7 +85,7 @@ func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
 
 		orgUser.Role = cmd.Role
 		orgUser.Updated = time.Now()
-		_, err = sess.Id(orgUser.Id).Update(&orgUser)
+		_, err = sess.ID(orgUser.Id).Update(&orgUser)
 		if err != nil {
 			return err
 		}
@@ -110,6 +136,14 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 
 func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		// check if user exists
+		var user m.User
+		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+			return err
+		} else if !exists {
+			return m.ErrUserNotFound
+		}
+
 		deletes := []string{
 			"DELETE FROM org_user WHERE org_id=? and user_id=?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
@@ -123,7 +157,48 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 			}
 		}
 
-		return validateOneAdminLeftInOrg(cmd.OrgId, sess)
+		// validate that after delete there is at least one user with admin role in org
+		if err := validateOneAdminLeftInOrg(cmd.OrgId, sess); err != nil {
+			return err
+		}
+
+		// check user other orgs and update user current org
+		var userOrgs []*m.UserOrgDTO
+		sess.Table("org_user")
+		sess.Join("INNER", "org", "org_user.org_id=org.id")
+		sess.Where("org_user.user_id=?", user.Id)
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		err := sess.Find(&userOrgs)
+
+		if err != nil {
+			return err
+		}
+
+		if len(userOrgs) > 0 {
+			hasCurrentOrgSet := false
+			for _, userOrg := range userOrgs {
+				if user.OrgId == userOrg.OrgId {
+					hasCurrentOrgSet = true
+					break
+				}
+			}
+
+			if !hasCurrentOrgSet {
+				err = setUsingOrgInTransaction(sess, user.Id, userOrgs[0].OrgId)
+				if err != nil {
+					return err
+				}
+			}
+		} else if cmd.ShouldDeleteOrphanedUser {
+			// no other orgs, delete the full user
+			if err := deleteUserInTransaction(sess, &m.DeleteUserCommand{UserId: user.Id}); err != nil {
+				return err
+			}
+
+			cmd.UserWasDeleted = true
+		}
+
+		return nil
 	})
 }
 

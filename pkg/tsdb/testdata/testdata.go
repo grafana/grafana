@@ -21,7 +21,7 @@ func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, err
 }
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("grafana-testdata-datasource", NewTestDataExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("testdata", NewTestDataExecutor)
 }
 
 func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {

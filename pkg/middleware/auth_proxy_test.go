@@ -26,57 +26,71 @@ func TestAuthProxyWithLdapEnabled(t *testing.T) {
 			return &mockLdapAuther
 		}
 
-		signedInUser := m.SignedInUser{}
-		query := m.GetSignedInUserQuery{Result: &signedInUser}
-
-		Convey("When session variable lastLdapSync not set, call syncSignedInUser and set lastLdapSync", func() {
+		Convey("When user logs in, call SyncUser", func() {
 			// arrange
-			sess := mockSession{}
+			sess := newMockSession()
 			ctx := m.ReqContext{Session: &sess}
 			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldBeNil)
 
 			// act
-			syncGrafanaUserWithLdapUser(&ctx, &query)
+			syncGrafanaUserWithLdapUser(&m.LoginUserQuery{
+				ReqContext: &ctx,
+				Username:   "test",
+			})
 
 			// assert
-			So(mockLdapAuther.syncSignedInUserCalled, ShouldBeTrue)
+			So(mockLdapAuther.syncUserCalled, ShouldBeTrue)
 			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldBeGreaterThan, 0)
 		})
 
 		Convey("When session variable not expired, don't sync and don't change session var", func() {
 			// arrange
-			sess := mockSession{}
+			sess := newMockSession()
 			ctx := m.ReqContext{Session: &sess}
 			now := time.Now().Unix()
 			sess.Set(session.SESS_KEY_LASTLDAPSYNC, now)
+			sess.Set(AUTH_PROXY_SESSION_VAR, "test")
 
 			// act
-			syncGrafanaUserWithLdapUser(&ctx, &query)
+			syncGrafanaUserWithLdapUser(&m.LoginUserQuery{
+				ReqContext: &ctx,
+				Username:   "test",
+			})
 
 			// assert
 			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldEqual, now)
-			So(mockLdapAuther.syncSignedInUserCalled, ShouldBeFalse)
+			So(mockLdapAuther.syncUserCalled, ShouldBeFalse)
 		})
 
 		Convey("When lastldapsync is expired, session variable should be updated", func() {
 			// arrange
-			sess := mockSession{}
+			sess := newMockSession()
 			ctx := m.ReqContext{Session: &sess}
 			expiredTime := time.Now().Add(time.Duration(-120) * time.Minute).Unix()
 			sess.Set(session.SESS_KEY_LASTLDAPSYNC, expiredTime)
+			sess.Set(AUTH_PROXY_SESSION_VAR, "test")
 
 			// act
-			syncGrafanaUserWithLdapUser(&ctx, &query)
+			syncGrafanaUserWithLdapUser(&m.LoginUserQuery{
+				ReqContext: &ctx,
+				Username:   "test",
+			})
 
 			// assert
 			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldBeGreaterThan, expiredTime)
-			So(mockLdapAuther.syncSignedInUserCalled, ShouldBeTrue)
+			So(mockLdapAuther.syncUserCalled, ShouldBeTrue)
 		})
 	})
 }
 
 type mockSession struct {
-	value interface{}
+	value map[interface{}]interface{}
+}
+
+func newMockSession() mockSession {
+	session := mockSession{}
+	session.value = make(map[interface{}]interface{})
+	return session
 }
 
 func (s *mockSession) Start(c *macaron.Context) error {
@@ -84,15 +98,16 @@ func (s *mockSession) Start(c *macaron.Context) error {
 }
 
 func (s *mockSession) Set(k interface{}, v interface{}) error {
-	s.value = v
+	s.value[k] = v
 	return nil
 }
 
 func (s *mockSession) Get(k interface{}) interface{} {
-	return s.value
+	return s.value[k]
 }
 
 func (s *mockSession) Delete(k interface{}) interface{} {
+	delete(s.value, k)
 	return nil
 }
 
@@ -113,21 +128,18 @@ func (s *mockSession) RegenerateId(c *macaron.Context) error {
 }
 
 type mockLdapAuthenticator struct {
-	syncSignedInUserCalled bool
+	syncUserCalled bool
 }
 
-func (a *mockLdapAuthenticator) Login(query *login.LoginUserQuery) error {
+func (a *mockLdapAuthenticator) Login(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *mockLdapAuthenticator) SyncSignedInUser(signedInUser *m.SignedInUser) error {
-	a.syncSignedInUserCalled = true
+func (a *mockLdapAuthenticator) SyncUser(query *m.LoginUserQuery) error {
+	a.syncUserCalled = true
 	return nil
 }
 
-func (a *mockLdapAuthenticator) GetGrafanaUserFor(ldapUser *login.LdapUserInfo) (*m.User, error) {
+func (a *mockLdapAuthenticator) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *login.LdapUserInfo) (*m.User, error) {
 	return nil, nil
-}
-func (a *mockLdapAuthenticator) SyncOrgRoles(user *m.User, ldapUser *login.LdapUserInfo) error {
-	return nil
 }

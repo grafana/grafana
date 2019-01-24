@@ -133,16 +133,6 @@ func TestFoldersApiEndpoint(t *testing.T) {
 	})
 }
 
-func callGetFolderByUID(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderByUID
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-}
-
-func callDeleteFolder(sc *scenarioContext) {
-	sc.handlerFunc = DeleteFolder
-	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-}
-
 func callCreateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
@@ -152,7 +142,7 @@ func createFolderScenario(desc string, url string, routePattern string, mock *fa
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
 
@@ -181,7 +171,7 @@ func updateFolderScenario(desc string, url string, routePattern string, mock *fa
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
 

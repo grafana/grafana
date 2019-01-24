@@ -28,6 +28,10 @@
   }
 }
 
+.column-styles-heading {
+  border-bottom: 1px solid $gray-1;
+}
+
 @include media-breakpoint-down(sm) {
   .edit-tab-with-sidemenu {
     flex-direction: column;
@@ -42,6 +46,7 @@
     li {
       float: left;
     }
+
     a {
       margin: 0.3rem 1rem;
     }

@@ -2,7 +2,6 @@ package pluginproxy
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +11,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
@@ -26,18 +24,8 @@ import (
 
 var (
 	logger = log.New("data-proxy-log")
-	client = &http.Client{
-		Timeout:   time.Second * 30,
-		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
-	}
-	tokenCache = map[int64]*jwtToken{}
+	client = newHTTPClient()
 )
-
-type jwtToken struct {
-	ExpiresOn       time.Time `json:"-"`
-	ExpiresOnString string    `json:"expires_on"`
-	AccessToken     string    `json:"access_token"`
-}
 
 type DataSourceProxy struct {
 	ds        *m.DataSource
@@ -46,6 +34,10 @@ type DataSourceProxy struct {
 	proxyPath string
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
+}
+
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
@@ -57,6 +49,13 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		ctx:       ctx,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
+	}
+}
+
+func newHTTPClient() httpClient {
+	return &http.Client{
+		Timeout:   time.Second * 30,
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }
 
@@ -109,6 +108,28 @@ func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, hea
 	}
 }
 
+func (proxy *DataSourceProxy) useCustomHeaders(req *http.Request) {
+	decryptSdj := proxy.ds.SecureJsonData.Decrypt()
+	index := 1
+	for {
+		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
+		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+		if key := proxy.ds.JsonData.Get(headerNameSuffix).MustString(); key != "" {
+			if val, ok := decryptSdj[headerValueSuffix]; ok {
+				// remove if exists
+				if req.Header.Get(key) != "" {
+					req.Header.Del(key)
+				}
+				req.Header.Add(key, val)
+				logger.Debug("Using custom header ", "CustomHeaders", key)
+			}
+		} else {
+			break
+		}
+		index += 1
+	}
+}
+
 func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 	return func(req *http.Request) {
 		req.URL.Scheme = proxy.targetUrl.Scheme
@@ -132,10 +153,14 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		} else {
 			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
-
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
+		}
+
+		// Lookup and use custom headers
+		if proxy.ds.SecureJsonData != nil {
+			proxy.useCustomHeaders(req)
 		}
 
 		dsAuth := req.Header.Get("X-DS-Authorization")
@@ -168,6 +193,11 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		req.Header.Del("X-Forwarded-Host")
 		req.Header.Del("X-Forwarded-Port")
 		req.Header.Del("X-Forwarded-Proto")
+		req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
+		// Clear Origin and Referer to avoir CORS issues
+		req.Header.Del("Origin")
+		req.Header.Del("Referer")
 
 		// set X-Forwarded-For header
 		if req.RemoteAddr != "" {
@@ -183,18 +213,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		}
 
 		if proxy.route != nil {
-			proxy.applyRoute(req)
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 		}
 	}
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
-	if proxy.ds.Type == m.DS_INFLUXDB {
-		if proxy.ctx.Query("db") != proxy.ds.Database {
-			return errors.New("Datasource is not configured to allow this database")
-		}
-	}
-
 	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
 		return errors.New("Target url is not a valid target")
 	}
@@ -280,111 +304,4 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 	}
 
 	return true
-}
-
-func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
-	proxy.proxyPath = strings.TrimPrefix(proxy.proxyPath, proxy.route.Path)
-
-	data := templateData{
-		JsonData:       proxy.ds.JsonData.Interface().(map[string]interface{}),
-		SecureJsonData: proxy.ds.SecureJsonData.Decrypt(),
-	}
-
-	routeURL, err := url.Parse(proxy.route.Url)
-	if err != nil {
-		logger.Error("Error parsing plugin route url")
-		return
-	}
-
-	req.URL.Scheme = routeURL.Scheme
-	req.URL.Host = routeURL.Host
-	req.Host = routeURL.Host
-	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxy.proxyPath)
-
-	if err := addHeaders(&req.Header, proxy.route, data); err != nil {
-		logger.Error("Failed to render plugin headers", "error", err)
-	}
-
-	if proxy.route.TokenAuth != nil {
-		if token, err := proxy.getAccessToken(data); err != nil {
-			logger.Error("Failed to get access token", "error", err)
-		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-	}
-
-	logger.Info("Requesting", "url", req.URL.String())
-}
-
-func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	if cachedToken, found := tokenCache[proxy.ds.Id]; found {
-		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
-			logger.Info("Using token from cache")
-			return cachedToken.AccessToken, nil
-		}
-	}
-
-	urlInterpolated, err := interpolateString(proxy.route.TokenAuth.Url, data)
-	if err != nil {
-		return "", err
-	}
-
-	params := make(url.Values)
-	for key, value := range proxy.route.TokenAuth.Params {
-		interpolatedParam, err := interpolateString(value, data)
-		if err != nil {
-			return "", err
-		}
-		params.Add(key, interpolatedParam)
-	}
-
-	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
-	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
-
-	resp, err := client.Do(getTokenReq)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	var token jwtToken
-	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
-		return "", err
-	}
-
-	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
-	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	tokenCache[proxy.ds.Id] = &token
-
-	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
-	return token.AccessToken, nil
-}
-
-func interpolateString(text string, data templateData) (string, error) {
-	t, err := template.New("content").Parse(text)
-	if err != nil {
-		return "", fmt.Errorf("could not parse template %s", text)
-	}
-
-	var contentBuf bytes.Buffer
-	err = t.Execute(&contentBuf, data)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute template %s", text)
-	}
-
-	return contentBuf.String(), nil
-}
-
-func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
-	for _, header := range route.Headers {
-		interpolated, err := interpolateString(header.Content, data)
-		if err != nil {
-			return err
-		}
-		reqHeaders.Add(header.Name, interpolated)
-	}
-
-	return nil
 }

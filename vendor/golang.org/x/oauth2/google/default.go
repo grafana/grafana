@@ -18,20 +18,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// DefaultCredentials holds "Application Default Credentials".
-// For more details, see:
-// https://developers.google.com/accounts/docs/application-default-credentials
-type DefaultCredentials struct {
-	ProjectID   string // may be empty
-	TokenSource oauth2.TokenSource
-
-	// JSON contains the raw bytes from a JSON credentials file.
-	// This field may be nil if authentication is provided by the
-	// environment and not with a credentials file, e.g. when code is
-	// running on Google Cloud Platform.
-	JSON []byte
-}
-
 // DefaultClient returns an HTTP Client that uses the
 // DefaultTokenSource to obtain authentication credentials.
 func DefaultClient(ctx context.Context, scope ...string) (*http.Client, error) {
@@ -53,25 +39,12 @@ func DefaultTokenSource(ctx context.Context, scope ...string) (oauth2.TokenSourc
 	return creds.TokenSource, nil
 }
 
-// FindDefaultCredentials searches for "Application Default Credentials".
-//
-// It looks for credentials in the following places,
-// preferring the first location found:
-//
-//   1. A JSON file whose path is specified by the
-//      GOOGLE_APPLICATION_CREDENTIALS environment variable.
-//   2. A JSON file in a location known to the gcloud command-line tool.
-//      On Windows, this is %APPDATA%/gcloud/application_default_credentials.json.
-//      On other systems, $HOME/.config/gcloud/application_default_credentials.json.
-//   3. On Google App Engine it uses the appengine.AccessToken function.
-//   4. On Google Compute Engine and Google App Engine Managed VMs, it fetches
-//      credentials from the metadata server.
-//      (In this final case any provided scopes are ignored.)
-func FindDefaultCredentials(ctx context.Context, scope ...string) (*DefaultCredentials, error) {
+// Common implementation for FindDefaultCredentials.
+func findDefaultCredentials(ctx context.Context, scopes []string) (*DefaultCredentials, error) {
 	// First, try the environment variable.
 	const envVar = "GOOGLE_APPLICATION_CREDENTIALS"
 	if filename := os.Getenv(envVar); filename != "" {
-		creds, err := readCredentialsFile(ctx, filename, scope)
+		creds, err := readCredentialsFile(ctx, filename, scopes)
 		if err != nil {
 			return nil, fmt.Errorf("google: error getting credentials using %v environment variable: %v", envVar, err)
 		}
@@ -80,7 +53,7 @@ func FindDefaultCredentials(ctx context.Context, scope ...string) (*DefaultCrede
 
 	// Second, try a well-known file.
 	filename := wellKnownFile()
-	if creds, err := readCredentialsFile(ctx, filename, scope); err == nil {
+	if creds, err := readCredentialsFile(ctx, filename, scopes); err == nil {
 		return creds, nil
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("google: error getting credentials using well-known file (%v): %v", filename, err)
@@ -90,7 +63,7 @@ func FindDefaultCredentials(ctx context.Context, scope ...string) (*DefaultCrede
 	if appengineTokenFunc != nil && !appengineFlex {
 		return &DefaultCredentials{
 			ProjectID:   appengineAppIDFunc(ctx),
-			TokenSource: AppEngineTokenSource(ctx, scope...),
+			TokenSource: AppEngineTokenSource(ctx, scopes...),
 		}, nil
 	}
 
@@ -108,6 +81,23 @@ func FindDefaultCredentials(ctx context.Context, scope ...string) (*DefaultCrede
 	return nil, fmt.Errorf("google: could not find default credentials. See %v for more information.", url)
 }
 
+// Common implementation for CredentialsFromJSON.
+func credentialsFromJSON(ctx context.Context, jsonData []byte, scopes []string) (*DefaultCredentials, error) {
+	var f credentialsFile
+	if err := json.Unmarshal(jsonData, &f); err != nil {
+		return nil, err
+	}
+	ts, err := f.tokenSource(ctx, append([]string(nil), scopes...))
+	if err != nil {
+		return nil, err
+	}
+	return &DefaultCredentials{
+		ProjectID:   f.ProjectID,
+		TokenSource: ts,
+		JSON:        jsonData,
+	}, nil
+}
+
 func wellKnownFile() string {
 	const f = "application_default_credentials.json"
 	if runtime.GOOS == "windows" {
@@ -121,17 +111,5 @@ func readCredentialsFile(ctx context.Context, filename string, scopes []string) 
 	if err != nil {
 		return nil, err
 	}
-	var f credentialsFile
-	if err := json.Unmarshal(b, &f); err != nil {
-		return nil, err
-	}
-	ts, err := f.tokenSource(ctx, append([]string(nil), scopes...))
-	if err != nil {
-		return nil, err
-	}
-	return &DefaultCredentials{
-		ProjectID:   f.ProjectID,
-		TokenSource: ts,
-		JSON:        b,
-	}, nil
+	return CredentialsFromJSON(ctx, b, scopes...)
 }

@@ -10,7 +10,7 @@
 </div>
 
 <div class="gf-form-group">
-	<h5 class="section-heading">Field formats</h6>
+	<h5 class="section-heading">Field formats</h5>
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-5">Title</span>
@@ -25,6 +25,15 @@
 				<span class="gf-form-label width-5">Text</span>
 				<input type="text" class="gf-form-input max-width-9" ng-model='ctrl.annotation.textFormat' placeholder="instance"></input>
 			</div>
+		</div>
+	</div>
+
+	<h5 class="section-heading">Other options</h5>
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<gf-form-switch class="gf-form" label="Series value as timestamp" label-class="width-14" checked="ctrl.annotation.useValueForTime"
+			 tooltip="The unit of timestamp is milliseconds. If the unit of the series value is seconds, multiply its range vector by 1000.">
+			</gf-form-switch>
 		</div>
 	</div>
 </div>

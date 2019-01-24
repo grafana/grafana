@@ -7,40 +7,40 @@ import _ from 'lodash';
  * @param options
  */
 export function makeRegions(annotations, options) {
-  let [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
-  let regions = getRegions(regionEvents, options.range);
+  const [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
+  const regions = getRegions(regionEvents, options.range);
   annotations = _.concat(regions, singleEvents);
   return annotations;
 }
 
 function getRegions(events, range) {
-  let region_events = _.filter(events, event => {
+  const regionEvents = _.filter(events, event => {
     return event.regionId;
   });
-  let regions = _.groupBy(region_events, 'regionId');
+  let regions = _.groupBy(regionEvents, 'regionId');
   regions = _.compact(
-    _.map(regions, region_events => {
-      let region_obj = _.head(region_events);
-      if (region_events && region_events.length > 1) {
-        region_obj.timeEnd = region_events[1].time;
-        region_obj.isRegion = true;
-        return region_obj;
+    _.map(regions, regionEvents => {
+      const regionObj = _.head(regionEvents);
+      if (regionEvents && regionEvents.length > 1) {
+        regionObj.timeEnd = regionEvents[1].time;
+        regionObj.isRegion = true;
+        return regionObj;
       } else {
-        if (region_events && region_events.length) {
+        if (regionEvents && regionEvents.length) {
           // Don't change proper region object
-          if (!region_obj.time || !region_obj.timeEnd) {
+          if (!regionObj.time || !regionObj.timeEnd) {
             // This is cut region
-            if (isStartOfRegion(region_obj)) {
-              region_obj.timeEnd = range.to.valueOf() - 1;
+            if (isStartOfRegion(regionObj)) {
+              regionObj.timeEnd = range.to.valueOf() - 1;
             } else {
               // Start time = null
-              region_obj.timeEnd = region_obj.time;
-              region_obj.time = range.from.valueOf() + 1;
+              regionObj.timeEnd = regionObj.time;
+              regionObj.time = range.from.valueOf() + 1;
             }
-            region_obj.isRegion = true;
+            regionObj.isRegion = true;
           }
 
-          return region_obj;
+          return regionObj;
         }
       }
     })
@@ -56,10 +56,10 @@ function isStartOfRegion(event): boolean {
 export function dedupAnnotations(annotations) {
   let dedup = [];
 
-  // Split events by annotationId property existance
-  let events = _.partition(annotations, 'id');
+  // Split events by annotationId property existence
+  const events = _.partition(annotations, 'id');
 
-  let eventsById = _.groupBy(events[0], 'id');
+  const eventsById = _.groupBy(events[0], 'id');
   dedup = _.map(eventsById, eventGroup => {
     if (eventGroup.length > 1 && !_.every(eventGroup, isPanelAlert)) {
       // Get first non-panel alert

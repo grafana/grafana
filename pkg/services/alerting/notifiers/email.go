@@ -52,7 +52,7 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	})
 
 	return &EmailNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Addresses:    addresses,
 		log:          log.New("alerting.notifier.email"),
 	}, nil

@@ -5,16 +5,16 @@ import appEvents from 'app/core/app_events';
 export class SoloPanelCtrl {
   /** @ngInject */
   constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv, backendSrv) {
-    var panelId;
+    let panelId;
 
-    $scope.init = function() {
+    $scope.init = () => {
       contextSrv.sidemenu = false;
       appEvents.emit('toggle-sidemenu-hidden');
 
-      var params = $location.search();
-      panelId = parseInt(params.panelId);
+      const params = $location.search();
+      panelId = parseInt(params.panelId, 10);
 
-      $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
+      appEvents.on('dashboard-initialized', $scope.initPanelScope);
 
       // if no uid, redirect to new route based on slug
       if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
@@ -27,14 +27,14 @@ export class SoloPanelCtrl {
         return;
       }
 
-      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
+      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(result => {
         result.meta.soloMode = true;
         $scope.initDashboard(result, $scope);
       });
     };
 
-    $scope.initPanelScope = function() {
-      let panelInfo = $scope.dashboard.getPanelInfoById(panelId);
+    $scope.initPanelScope = () => {
+      const panelInfo = $scope.dashboard.getPanelInfoById(panelId);
 
       // fake row ctrl scope
       $scope.ctrl = {

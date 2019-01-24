@@ -118,6 +118,17 @@ const (
 	PathMax = C.PATH_MAX
 )
 
+// Advice to Fadvise
+
+const (
+	FADV_NORMAL     = C.POSIX_FADV_NORMAL
+	FADV_RANDOM     = C.POSIX_FADV_RANDOM
+	FADV_SEQUENTIAL = C.POSIX_FADV_SEQUENTIAL
+	FADV_WILLNEED   = C.POSIX_FADV_WILLNEED
+	FADV_DONTNEED   = C.POSIX_FADV_DONTNEED
+	FADV_NOREUSE    = C.POSIX_FADV_NOREUSE
+)
+
 // Sockets
 
 type RawSockaddrInet4 C.struct_sockaddr_in

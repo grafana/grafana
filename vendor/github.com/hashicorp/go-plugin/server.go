@@ -66,6 +66,10 @@ type ServeConfig struct {
 	// the gRPC health checking service. This is not optional since go-plugin
 	// relies on this to implement Ping().
 	GRPCServer func([]grpc.ServerOption) *grpc.Server
+
+	// Logger is used to pass a logger into the server. If none is provided the
+	// server will create a default logger.
+	Logger hclog.Logger
 }
 
 // Protocol returns the protocol that this server should speak.
@@ -106,12 +110,15 @@ func Serve(opts *ServeConfig) {
 	// Logging goes to the original stderr
 	log.SetOutput(os.Stderr)
 
-	// internal logger to os.Stderr
-	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
+	logger := opts.Logger
+	if logger == nil {
+		// internal logger to os.Stderr
+		logger = hclog.New(&hclog.LoggerOptions{
+			Level:      hclog.Trace,
+			Output:     os.Stderr,
+			JSONFormat: true,
+		})
+	}
 
 	// Create our new stdout, stderr files. These will override our built-in
 	// stdout/stderr so that it works across the stream boundary.

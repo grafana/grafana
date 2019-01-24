@@ -9,12 +9,14 @@ export class Profiler {
   digestCounter: any;
   $rootScope: any;
   scopeCount: any;
+  window: any;
 
   init(config, $rootScope) {
     this.enabled = config.buildInfo.env === 'development';
     this.timings = {};
     this.timings.appStart = { loadStart: new Date().getTime() };
     this.$rootScope = $rootScope;
+    this.window = window;
 
     if (!this.enabled) {
       return;
@@ -62,12 +64,12 @@ export class Profiler {
       console.log('Dashboard::Performance Total Watchers: ' + this.getTotalWatcherCount());
       console.log('Dashboard::Performance Total ScopeCount: ' + this.scopeCount);
 
-      var timeTaken = this.timings.lastPanelInitializedAt - this.timings.dashboardLoadStart;
+      const timeTaken = this.timings.lastPanelInitializedAt - this.timings.dashboardLoadStart;
       console.log('Dashboard::Performance All panels initialized in ' + timeTaken + ' ms');
 
       // measure digest performance
-      var rootDigestStart = window.performance.now();
-      for (var i = 0; i < 30; i++) {
+      const rootDigestStart = window.performance.now();
+      for (let i = 0; i < 30; i++) {
         this.$rootScope.$apply();
       }
 
@@ -76,19 +78,19 @@ export class Profiler {
   }
 
   getTotalWatcherCount() {
-    var count = 0;
-    var scopes = 0;
-    var root = $(document.getElementsByTagName('body'));
+    let count = 0;
+    let scopes = 0;
+    const root = $(document.getElementsByTagName('body'));
 
-    var f = function(element) {
+    const f = element => {
       if (element.data().hasOwnProperty('$scope')) {
         scopes++;
-        angular.forEach(element.data().$scope.$$watchers, function() {
+        angular.forEach(element.data().$scope.$$watchers, () => {
           count++;
         });
       }
 
-      angular.forEach(element.children(), function(childElement) {
+      angular.forEach(element.children(), childElement => {
         f($(childElement));
       });
     };
@@ -102,7 +104,10 @@ export class Profiler {
     // add render counter to root scope
     // used by phantomjs render.js to know when panel has rendered
     this.panelsRendered = (this.panelsRendered || 0) + 1;
-    this.$rootScope.panelsRendered = this.panelsRendered;
+
+    // this window variable is used by backend rendering tools to know
+    // all panels have completed rendering
+    this.window.panelsRendered = this.panelsRendered;
 
     if (this.enabled) {
       panelTimings.renderEnd = new Date().getTime();
@@ -121,5 +126,5 @@ export class Profiler {
   }
 }
 
-var profiler = new Profiler();
+const profiler = new Profiler();
 export { profiler };

@@ -49,13 +49,13 @@ type DeleteTeamCommand struct {
 type GetTeamByIdQuery struct {
 	OrgId  int64
 	Id     int64
-	Result *Team
+	Result *TeamDTO
 }
 
 type GetTeamsByUserQuery struct {
 	OrgId  int64
-	UserId int64   `json:"userId"`
-	Result []*Team `json:"teams"`
+	UserId int64      `json:"userId"`
+	Result []*TeamDTO `json:"teams"`
 }
 
 type SearchTeamsQuery struct {
@@ -68,7 +68,7 @@ type SearchTeamsQuery struct {
 	Result SearchTeamQueryResult
 }
 
-type SearchTeamDto struct {
+type TeamDTO struct {
 	Id          int64  `json:"id"`
 	OrgId       int64  `json:"orgId"`
 	Name        string `json:"name"`
@@ -78,8 +78,8 @@ type SearchTeamDto struct {
 }
 
 type SearchTeamQueryResult struct {
-	TotalCount int64            `json:"totalCount"`
-	Teams      []*SearchTeamDto `json:"teams"`
-	Page       int              `json:"page"`
-	PerPage    int              `json:"perPage"`
+	TotalCount int64      `json:"totalCount"`
+	Teams      []*TeamDTO `json:"teams"`
+	Page       int        `json:"page"`
+	PerPage    int        `json:"perPage"`
 }

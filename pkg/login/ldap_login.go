@@ -1,10 +1,11 @@
 package login
 
 import (
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var loginUsingLdap = func(query *LoginUserQuery) (bool, error) {
+var loginUsingLdap = func(query *m.LoginUserQuery) (bool, error) {
 	if !setting.LdapEnabled {
 		return false, nil
 	}

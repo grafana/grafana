@@ -50,11 +50,14 @@ func DecodeGob(encoded []byte) (out map[interface{}]interface{}, err error) {
 	return out, err
 }
 
+// NOTE: A local copy in case of underlying package change
+var alphanum = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+
 // generateRandomKey creates a random key with the given strength.
 func generateRandomKey(strength int) []byte {
 	k := make([]byte, strength)
 	if n, err := io.ReadFull(rand.Reader, k); n != strength || err != nil {
-		return com.RandomCreateBytes(strength)
+		return com.RandomCreateBytes(strength, alphanum...)
 	}
 	return k
 }

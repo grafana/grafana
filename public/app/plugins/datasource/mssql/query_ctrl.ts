@@ -33,7 +33,7 @@ export class MssqlQueryCtrl extends QueryCtrl {
   lastQueryError: string;
   showHelp: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
 
@@ -59,7 +59,7 @@ export class MssqlQueryCtrl extends QueryCtrl {
     this.lastQueryMeta = null;
     this.lastQueryError = null;
 
-    let anySeriesFromQuery = _.find(dataList, { refId: this.target.refId });
+    const anySeriesFromQuery = _.find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery) {
       this.lastQueryMeta = anySeriesFromQuery.meta;
     }
@@ -67,7 +67,7 @@ export class MssqlQueryCtrl extends QueryCtrl {
 
   onDataError(err) {
     if (err.data && err.data.results) {
-      let queryRes = err.data.results[this.target.refId];
+      const queryRes = err.data.results[this.target.refId];
       if (queryRes) {
         this.lastQueryMeta = queryRes.meta;
         this.lastQueryError = queryRes.error;

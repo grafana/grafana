@@ -13,7 +13,7 @@ func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "teams",
 		Name:        "Microsoft Teams",
-		Description: "Sends notifications using Incomming Webhook connector to Microsoft Teams",
+		Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",
 		Factory:     NewTeamsNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Teams settings</h3>
@@ -33,7 +33,7 @@ func NewTeamsNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &TeamsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		log:          log.New("alerting.notifier.teams"),
 	}, nil
@@ -41,10 +41,8 @@ func NewTeamsNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 
 type TeamsNotifier struct {
 	NotifierBase
-	Url       string
-	Recipient string
-	Mention   string
-	log       log.Logger
+	Url string
+	log log.Logger
 }
 
 func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -75,17 +73,17 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
-		message += " " + evalContext.Rule.Message
-	} else {
-		message += " " // summary must not be empty
+	message := ""
+	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
+		message = evalContext.Rule.Message
 	}
 
 	body := map[string]interface{}{
-		"@type":      "MessageCard",
-		"@context":   "http://schema.org/extensions",
-		"summary":    message,
+		"@type":    "MessageCard",
+		"@context": "http://schema.org/extensions",
+		// summary MUST not be empty or the webhook request fails
+		// summary SHOULD contain some meaningful information, since it is used for mobile notifications
+		"summary":    evalContext.GetNotificationTitle(),
 		"title":      evalContext.GetNotificationTitle(),
 		"themeColor": evalContext.GetStateModel().Color,
 		"sections": []map[string]interface{}{
@@ -98,14 +96,26 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 					},
 				},
 				"text": message,
-				"potentialAction": []map[string]interface{}{
+			},
+		},
+		"potentialAction": []map[string]interface{}{
+			{
+				"@context": "http://schema.org",
+				"@type":    "OpenUri",
+				"name":     "View Rule",
+				"targets": []map[string]interface{}{
 					{
-						"@context": "http://schema.org",
-						"@type":    "ViewAction",
-						"name":     "View Rule",
-						"target": []string{
-							ruleUrl,
-						},
+						"os": "default", "uri": ruleUrl,
+					},
+				},
+			},
+			{
+				"@context": "http://schema.org",
+				"@type":    "OpenUri",
+				"name":     "View Graph",
+				"targets": []map[string]interface{}{
+					{
+						"os": "default", "uri": evalContext.ImagePublicUrl,
 					},
 				},
 			},

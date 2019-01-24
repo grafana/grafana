@@ -5,7 +5,7 @@ type = "docs"
 [menu.docs]
 name = "Developing Datasource Plugins"
 parent = "developing"
-weight = 6
+weight = 5
 +++
 
 # Datasources
@@ -25,7 +25,6 @@ To interact with the rest of grafana the plugins module file can export 5 differ
 - Datasource (Required)
 - QueryCtrl (Required)
 - ConfigCtrl (Required)
-- QueryOptionsCtrl
 - AnnotationsQueryCtrl
 
 ## Plugin json
@@ -179,12 +178,6 @@ Requires a static template or templateUrl variable which will be rendered as the
 ## ConfigCtrl
 
 A JavaScript class that will be instantiated and treated as an Angular controller when a user tries to edit or create a new datasource of this type.
-
-Requires a static template or templateUrl variable which will be rendered as the view for this controller.
-
-## QueryOptionsCtrl
-
-A JavaScript class that will be instantiated and treated as an Angular controller when the user edits metrics in a panel. This controller is responsible for handling panel wide settings for the datasource, such as interval, rate and aggregations if needed.
 
 Requires a static template or templateUrl variable which will be rendered as the view for this controller.
 

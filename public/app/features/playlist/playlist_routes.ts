@@ -1,5 +1,6 @@
 import angular from 'angular';
 
+/** @ngInject */
 function grafanaRoutes($routeProvider) {
   $routeProvider
     .when('/playlists', {
@@ -18,12 +19,10 @@ function grafanaRoutes($routeProvider) {
       controller: 'PlaylistEditCtrl',
     })
     .when('/playlists/play/:id', {
-      templateUrl: 'public/app/features/playlist/partials/playlists.html',
-      controllerAs: 'ctrl',
-      controller: 'PlaylistsCtrl',
+      template: '',
       resolve: {
-        init: function(playlistSrv, $route) {
-          let playlistId = $route.current.params.id;
+        init: (playlistSrv, $route) => {
+          const playlistId = $route.current.params.id;
           playlistSrv.start(playlistId);
         },
       },

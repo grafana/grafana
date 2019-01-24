@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 export class LiveSrv {
   conn: any;
@@ -13,7 +13,7 @@ export class LiveSrv {
   }
 
   getWebSocketUrl() {
-    var l = window.location;
+    const l = window.location;
     return (l.protocol === 'https:' ? 'wss://' : 'ws://') + l.host + config.appSubUrl + '/ws';
   }
 
@@ -66,7 +66,7 @@ export class LiveSrv {
       return;
     }
 
-    var observer = this.observers[message.stream];
+    const observer = this.observers[message.stream];
     if (!observer) {
       this.removeObserver(message.stream, null);
       return;
@@ -128,5 +128,5 @@ export class LiveSrv {
   }
 }
 
-var instance = new LiveSrv();
+const instance = new LiveSrv();
 export { instance as liveSrv };

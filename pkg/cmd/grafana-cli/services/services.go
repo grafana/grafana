@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -42,7 +43,7 @@ func Init(version string, skipTLSVerify bool) {
 	}
 
 	HttpClient = http.Client{
-		Timeout:   time.Duration(10 * time.Second),
+		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
 }
@@ -62,7 +63,7 @@ func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
 	var data m.PluginRepo
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		logger.Info("Failed to unmarshal plugin repo response error:", err)
 		return m.PluginRepo{}, err
 	}
 
@@ -139,7 +140,7 @@ func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
 	var data m.Plugin
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		logger.Info("Failed to unmarshal plugin repo response error:", err)
 		return m.Plugin{}, err
 	}
 
@@ -155,6 +156,8 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 
 	req.Header.Set("grafana-version", grafanaVersion)
+	req.Header.Set("grafana-os", runtime.GOOS)
+	req.Header.Set("grafana-arch", runtime.GOARCH)
 	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
 
 	if err != nil {

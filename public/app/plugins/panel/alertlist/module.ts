@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import moment from 'moment';
-import alertDef from '../../../features/alerting/alert_def';
+import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
 import * as dateMath from 'app/core/utils/datemath';
@@ -21,6 +21,7 @@ class AlertListPanel extends PanelCtrl {
   currentAlerts: any = [];
   alertHistory: any = [];
   noAlertsMessage: string;
+
   // Set and populate defaults
   panelDefaults = {
     show: 'current',
@@ -28,6 +29,9 @@ class AlertListPanel extends PanelCtrl {
     stateFilter: [],
     onlyAlertsOnDashboard: false,
     sortOrder: 1,
+    dashboardFilter: '',
+    nameFilter: '',
+    folderId: null,
   };
 
   /** @ngInject */
@@ -38,7 +42,7 @@ class AlertListPanel extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
 
-    for (let key in this.panel.stateFilter) {
+    for (const key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
     }
   }
@@ -50,7 +54,7 @@ class AlertListPanel extends PanelCtrl {
       });
     }
 
-    var result = _.sortBy(alerts, a => {
+    const result = _.sortBy(alerts, a => {
       return a.name.toLowerCase();
     });
     if (this.panel.sortOrder === 2) {
@@ -61,9 +65,9 @@ class AlertListPanel extends PanelCtrl {
   }
 
   updateStateFilter() {
-    var result = [];
+    const result = [];
 
-    for (let key in this.stateFilter) {
+    for (const key in this.stateFilter) {
       if (this.stateFilter[key]) {
         result.push(key);
       }
@@ -89,8 +93,13 @@ class AlertListPanel extends PanelCtrl {
     });
   }
 
+  onFolderChange(folder: any) {
+    this.panel.folderId = folder.id;
+    this.refresh();
+  }
+
   getStateChanges() {
-    var params: any = {
+    const params: any = {
       limit: this.panel.limit,
       type: 'alert',
       newState: this.panel.stateFilter,
@@ -110,6 +119,7 @@ class AlertListPanel extends PanelCtrl {
         al.info = alertDef.getAlertAnnotationInfo(al);
         return al;
       });
+
       this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
       return this.alertHistory;
@@ -117,12 +127,28 @@ class AlertListPanel extends PanelCtrl {
   }
 
   getCurrentAlertState() {
-    var params: any = {
+    const params: any = {
       state: this.panel.stateFilter,
     };
 
+    if (this.panel.nameFilter) {
+      params.query = this.panel.nameFilter;
+    }
+
+    if (this.panel.folderId >= 0) {
+      params.folderId = this.panel.folderId;
+    }
+
+    if (this.panel.dashboardFilter) {
+      params.dashboardQuery = this.panel.dashboardFilter;
+    }
+
     if (this.panel.onlyAlertsOnDashboard) {
       params.dashboardId = this.dashboard.id;
+    }
+
+    if (this.panel.dashboardTags) {
+      params.dashboardTag = this.panel.dashboardTags;
     }
 
     return this.backendSrv.get(`/api/alerts`, params).then(res => {
@@ -135,6 +161,9 @@ class AlertListPanel extends PanelCtrl {
           return al;
         })
       );
+      if (this.currentAlerts.length > this.panel.limit) {
+        this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
+      }
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
 
       return this.currentAlerts;

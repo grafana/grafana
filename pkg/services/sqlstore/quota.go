@@ -31,14 +31,14 @@ func GetOrgQuotaByTarget(query *m.GetOrgQuotaByTargetQuery) error {
 	has, err := x.Get(&quota)
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		quota.Limit = query.Default
 	}
 
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.Sql(rawSql, query.OrgId).Find(&resp); err != nil {
+	if err := x.SQL(rawSql, query.OrgId).Find(&resp); err != nil {
 		return err
 	}
 
@@ -81,7 +81,7 @@ func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
 		//get quota used.
 		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 		resp := make([]*targetCount, 0)
-		if err := x.Sql(rawSql, q.OrgId).Find(&resp); err != nil {
+		if err := x.SQL(rawSql, q.OrgId).Find(&resp); err != nil {
 			return err
 		}
 		result[i] = &m.OrgQuotaDTO{
@@ -99,16 +99,16 @@ func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
-			Target:  cmd.Target,
-			OrgId:   cmd.OrgId,
-			Updated: time.Now(),
+			Target: cmd.Target,
+			OrgId:  cmd.OrgId,
 		}
 		has, err := sess.Get(&quota)
 		if err != nil {
 			return err
 		}
+		quota.Updated = time.Now()
 		quota.Limit = cmd.Limit
-		if has == false {
+		if !has {
 			quota.Created = time.Now()
 			//No quota in the DB for this target, so create a new one.
 			if _, err := sess.Insert(&quota); err != nil {
@@ -116,7 +116,7 @@ func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 			}
 		} else {
 			//update existing quota entry in the DB.
-			if _, err := sess.Id(quota.Id).Update(&quota); err != nil {
+			if _, err := sess.ID(quota.Id).Update(&quota); err != nil {
 				return err
 			}
 		}
@@ -133,14 +133,14 @@ func GetUserQuotaByTarget(query *m.GetUserQuotaByTargetQuery) error {
 	has, err := x.Get(&quota)
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		quota.Limit = query.Default
 	}
 
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.Sql(rawSql, query.UserId).Find(&resp); err != nil {
+	if err := x.SQL(rawSql, query.UserId).Find(&resp); err != nil {
 		return err
 	}
 
@@ -183,7 +183,7 @@ func GetUserQuotas(query *m.GetUserQuotasQuery) error {
 		//get quota used.
 		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 		resp := make([]*targetCount, 0)
-		if err := x.Sql(rawSql, q.UserId).Find(&resp); err != nil {
+		if err := x.SQL(rawSql, q.UserId).Find(&resp); err != nil {
 			return err
 		}
 		result[i] = &m.UserQuotaDTO{
@@ -201,16 +201,16 @@ func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
-			Target:  cmd.Target,
-			UserId:  cmd.UserId,
-			Updated: time.Now(),
+			Target: cmd.Target,
+			UserId: cmd.UserId,
 		}
 		has, err := sess.Get(&quota)
 		if err != nil {
 			return err
 		}
+		quota.Updated = time.Now()
 		quota.Limit = cmd.Limit
-		if has == false {
+		if !has {
 			quota.Created = time.Now()
 			//No quota in the DB for this target, so create a new one.
 			if _, err := sess.Insert(&quota); err != nil {
@@ -218,7 +218,7 @@ func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
 			}
 		} else {
 			//update existing quota entry in the DB.
-			if _, err := sess.Id(quota.Id).Update(&quota); err != nil {
+			if _, err := sess.ID(quota.Id).Update(&quota); err != nil {
 				return err
 			}
 		}
@@ -231,7 +231,7 @@ func GetGlobalQuotaByTarget(query *m.GetGlobalQuotaByTargetQuery) error {
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.Sql(rawSql).Find(&resp); err != nil {
+	if err := x.SQL(rawSql).Find(&resp); err != nil {
 		return err
 	}
 

@@ -1,15 +1,28 @@
+.add-panel-container {
+  height: 100%;
+}
+
 .add-panel {
   height: 100%;
 }
 
 .add-panel__header {
-  padding: 5px 15px;
+  top: 0;
+  position: absolute;
+  padding: 0 15px;
   display: flex;
   align-items: center;
+  width: 100%;
+  cursor: move;
 
   .gicon {
     font-size: 30px;
     margin-right: $spacer;
+  }
+
+  &:hover {
+    transition: background-color 0.1s ease-in-out;
+    background-color: $panel-header-hover-bg;
   }
 }
 
@@ -21,59 +34,14 @@
   margin-right: -10px;
 }
 
-.add-panel__title {
-  font-size: $font-size-md;
-  margin-right: $spacer/2;
-}
-
-.add-panel__sub-title {
-  font-style: italic;
-  color: $text-muted;
-  position: relative;
-  top: 1px;
-}
-
-.add-panel__items {
-  padding: 3px 8px;
+.add-panel-btn-container {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  overflow: auto;
-  height: calc(100% - 43px);
-  align-content: flex-start;
-  justify-content: space-around;
-  position: relative;
-}
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
 
-.add-panel__item {
-  background: $card-background;
-  box-shadow: $card-shadow;
-
-  border-radius: 3px;
-  padding: $spacer/3 $spacer;
-  width: 31%;
-  height: 60px;
-  text-align: center;
-  margin: $gf-form-margin;
-  cursor: pointer;
-
-  &.active,
-  &:hover {
-    background: $card-background-hover;
+  .btn {
+    margin-bottom: 10px;
   }
-}
-
-.add-panel__item-name {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: $font-size-sm;
-}
-
-.add-panel__item-img {
-  height: calc(100% - 15px);
-}
-
-.add-panel__item-icon {
-  padding: 2px;
 }

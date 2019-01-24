@@ -2,7 +2,7 @@
 
 	<div ng-if="ctrl.target.rawQuery">
     <div class="gf-form">
-      <textarea rows="3" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" placeholder="InfuxDB Query" ng-model-onblur ng-change="ctrl.refresh()"></textarea>
+      <textarea rows="3" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" placeholder="InfluxDB Query" ng-model-onblur ng-change="ctrl.refresh()"></textarea>
     </div>
     <div class="gf-form-inline">
       <div class="gf-form">
@@ -117,6 +117,16 @@
       <div class="gf-form gf-form--grow">
 				<div class="gf-form-label gf-form-label--grow"></div>
 			</div>
+    </div>
+
+    <div class="gf-form-inline" ng-if="ctrl.target.tz">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">tz</label>
+        <input type="text" class="gf-form-input width-9" ng-model="ctrl.target.tz" spellcheck='false' placeholder="No Timezone" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
     </div>
 
     <div class="gf-form-inline">

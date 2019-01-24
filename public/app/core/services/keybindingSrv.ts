@@ -3,9 +3,11 @@ import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
+import { getExploreUrl } from 'app/core/utils/explore';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -13,7 +15,14 @@ export class KeybindingSrv {
   timepickerOpen = false;
 
   /** @ngInject */
-  constructor(private $rootScope, private $location) {
+  constructor(
+    private $rootScope,
+    private $location,
+    private $timeout,
+    private datasourceSrv,
+    private timeSrv,
+    private contextSrv: ContextSrv
+  ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
       Mousetrap.reset();
@@ -23,8 +32,8 @@ export class KeybindingSrv {
 
     this.setupGlobal();
     appEvents.on('show-modal', () => (this.modalOpen = true));
-    $rootScope.onAppEvent('timepickerOpen', () => (this.timepickerOpen = true));
-    $rootScope.onAppEvent('timepickerClosed', () => (this.timepickerOpen = false));
+    appEvents.on('timepickerOpen', () => (this.timepickerOpen = true));
+    appEvents.on('timepickerClosed', () => (this.timepickerOpen = false));
   }
 
   setupGlobal() {
@@ -68,29 +77,39 @@ export class KeybindingSrv {
   }
 
   exit() {
-    var popups = $('.popover.in');
+    const popups = $('.popover.in');
     if (popups.length > 0) {
       return;
     }
 
     appEvents.emit('hide-modal');
 
-    if (!this.modalOpen) {
-      if (this.timepickerOpen) {
-        this.$rootScope.appEvent('closeTimepicker');
-        this.timepickerOpen = false;
-      } else {
-        this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
-      }
-    } else {
+    if (this.modalOpen) {
       this.modalOpen = false;
+      return;
+    }
+
+    if (this.timepickerOpen) {
+      this.$rootScope.appEvent('closeTimepicker');
+      this.timepickerOpen = false;
+      return;
     }
 
     // close settings view
-    var search = this.$location.search();
+    const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
       this.$location.search(search);
+      return;
+    }
+
+    if (search.fullscreen) {
+      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      return;
+    }
+
+    if (search.kiosk) {
+      this.$rootScope.appEvent('toggle-kiosk-mode', { exit: true });
     }
   }
 
@@ -121,7 +140,7 @@ export class KeybindingSrv {
   }
 
   showDashEditView() {
-    var search = _.extend(this.$location.search(), { editview: 'settings' });
+    const search = _.extend(this.$location.search(), { editview: 'settings' });
     this.$location.search(search);
   }
 
@@ -129,7 +148,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('mod+s', e => {
@@ -176,6 +195,20 @@ export class KeybindingSrv {
       }
     });
 
+    // jump to explore if permissions allow
+    if (this.contextSrv.hasAccessToExplore()) {
+      this.bind('x', async () => {
+        if (dashboard.meta.focusPanelId) {
+          const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          const datasource = await this.datasourceSrv.get(panel.datasource);
+          const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
+          if (url) {
+            this.$timeout(() => this.$location.url(url));
+          }
+        }
+      });
+    }
+
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
@@ -189,7 +222,7 @@ export class KeybindingSrv {
     // duplicate panel
     this.bind('p d', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        let panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
+        const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
     });
@@ -197,15 +230,27 @@ export class KeybindingSrv {
     // share panel
     this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {
-        var shareScope = scope.$new();
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        const shareScope = scope.$new();
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
         shareScope.panel = panelInfo.panel;
         shareScope.dashboard = dashboard;
 
         appEvents.emit('show-modal', {
-          src: 'public/app/features/dashboard/partials/shareModal.html',
+          src: 'public/app/features/dashboard/components/ShareModal/template.html',
           scope: shareScope,
         });
+      }
+    });
+
+    // toggle panel legend
+    this.bind('p l', () => {
+      if (dashboard.meta.focusPanelId) {
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        if (panelInfo.panel.legend) {
+          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          panelRef.legend.show = !panelRef.legend.show;
+          panelRef.refresh();
+        }
       }
     });
 
@@ -224,7 +269,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('d s', () => {
@@ -237,6 +282,12 @@ export class KeybindingSrv {
 
     this.bind('d v', () => {
       appEvents.emit('toggle-view-mode');
+    });
+
+    //Autofit panels
+    this.bind('d a', () => {
+      // this has to be a full page reload
+      window.location.href = window.location.href + '&autofitpanels';
     });
   }
 }

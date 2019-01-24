@@ -46,5 +46,13 @@ func TestDataSourcesProxy(t *testing.T) {
 				So(respJSON[3]["name"], ShouldEqual, "ZZZ")
 			})
 		})
+
+		Convey("Should be able to save a data source", func() {
+			loggedInUserScenario("When calling DELETE on non-existing", "/api/datasources/name/12345", func(sc *scenarioContext) {
+				sc.handlerFunc = DeleteDataSourceByName
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+				So(sc.resp.Code, ShouldEqual, 404)
+			})
+		})
 	})
 }

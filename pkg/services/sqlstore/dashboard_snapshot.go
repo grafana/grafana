@@ -47,16 +47,18 @@ func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 		}
 
 		snapshot := &m.DashboardSnapshot{
-			Name:      cmd.Name,
-			Key:       cmd.Key,
-			DeleteKey: cmd.DeleteKey,
-			OrgId:     cmd.OrgId,
-			UserId:    cmd.UserId,
-			External:  cmd.External,
-			Dashboard: cmd.Dashboard,
-			Expires:   expires,
-			Created:   time.Now(),
-			Updated:   time.Now(),
+			Name:              cmd.Name,
+			Key:               cmd.Key,
+			DeleteKey:         cmd.DeleteKey,
+			OrgId:             cmd.OrgId,
+			UserId:            cmd.UserId,
+			External:          cmd.External,
+			ExternalUrl:       cmd.ExternalUrl,
+			ExternalDeleteUrl: cmd.ExternalDeleteUrl,
+			Dashboard:         cmd.Dashboard,
+			Expires:           expires,
+			Created:           time.Now(),
+			Updated:           time.Now(),
 		}
 
 		_, err := sess.Insert(snapshot)
@@ -80,7 +82,7 @@ func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrDashboardSnapshotNotFound
 	}
 

@@ -20,8 +20,8 @@ func GetDataSources(c *m.ReqContext) Response {
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
 		dsItem := dtos.DataSourceListItemDTO{
-			Id:        ds.Id,
 			OrgId:     ds.OrgId,
+			Id:        ds.Id,
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
@@ -49,7 +49,7 @@ func GetDataSources(c *m.ReqContext) Response {
 	return JSON(200, &result)
 }
 
-func GetDataSourceByID(c *m.ReqContext) Response {
+func GetDataSourceById(c *m.ReqContext) Response {
 	query := m.GetDataSourceByIdQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
@@ -68,14 +68,14 @@ func GetDataSourceByID(c *m.ReqContext) Response {
 	return JSON(200, &dtos)
 }
 
-func DeleteDataSourceByID(c *m.ReqContext) Response {
+func DeleteDataSourceById(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
 		return Error(400, "Missing valid datasource id", nil)
 	}
 
-	ds, err := getRawDataSourceByID(id, c.OrgId)
+	ds, err := getRawDataSourceById(id, c.OrgId)
 	if err != nil {
 		return Error(400, "Failed to delete datasource", nil)
 	}
@@ -103,6 +103,9 @@ func DeleteDataSourceByName(c *m.ReqContext) Response {
 
 	getCmd := &m.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return Error(404, "Data source not found", nil)
+		}
 		return Error(500, "Failed to delete datasource", err)
 	}
 
@@ -155,12 +158,26 @@ func UpdateDataSource(c *m.ReqContext, cmd m.UpdateDataSourceCommand) Response {
 		}
 		return Error(500, "Failed to update datasource", err)
 	}
-	ds := convertModelToDtos(cmd.Result)
+
+	query := m.GetDataSourceByIdQuery{
+		Id:    cmd.Id,
+		OrgId: c.OrgId,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return Error(404, "Data source not found", nil)
+		}
+		return Error(500, "Failed to query datasources", err)
+	}
+
+	dtos := convertModelToDtos(query.Result)
+
 	return JSON(200, util.DynMap{
 		"message":    "Datasource updated",
 		"id":         cmd.Id,
 		"name":       cmd.Name,
-		"datasource": ds,
+		"datasource": dtos,
 	})
 }
 
@@ -169,7 +186,7 @@ func fillWithSecureJSONData(cmd *m.UpdateDataSourceCommand) error {
 		return nil
 	}
 
-	ds, err := getRawDataSourceByID(cmd.Id, cmd.OrgId)
+	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
 	if err != nil {
 		return err
 	}
@@ -189,7 +206,7 @@ func fillWithSecureJSONData(cmd *m.UpdateDataSourceCommand) error {
 	return nil
 }
 
-func getRawDataSourceByID(id int64, orgID int64) (*m.DataSource, error) {
+func getRawDataSourceById(id int64, orgID int64) (*m.DataSource, error) {
 	query := m.GetDataSourceByIdQuery{
 		Id:    id,
 		OrgId: orgID,
@@ -219,7 +236,7 @@ func GetDataSourceByName(c *m.ReqContext) Response {
 }
 
 // Get /api/datasources/id/:name
-func GetDataSourceIDByName(c *m.ReqContext) Response {
+func GetDataSourceIdByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {

@@ -11,27 +11,10 @@
   "links": [],
   "panels": [
     {
-      "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
-      "editable": true,
-      "id": 1,
-      "links": [],
-      "mode": "html",
-      "style": {},
-      "title": "",
-      "transparent": true,
-      "type": "text",
-      "gridPos": {
-        "w": 24,
-        "h": 3,
-        "x": 0,
-        "y": 0
-      }
-    },
-    {
       "folderId": 0,
       "headings": true,
       "id": 3,
-      "limit": 4,
+      "limit": 30,
       "links": [],
       "query": "",
       "recent": true,
@@ -45,7 +28,7 @@
         "w": 12,
         "h": 17,
         "x": 0,
-        "y": 6
+        "y": 1
       }
     },
     {
@@ -60,12 +43,12 @@
         "w": 12,
         "h": 17,
         "x": 12,
-        "y": 6
+        "y": 1
       }
     }
   ],
   "rows": [],
-  "schemaVersion": 16,
+  "schemaVersion": 17,
   "style": "dark",
   "tags": [],
   "templating": {

@@ -8,8 +8,8 @@ import { appEvents } from 'app/core/core';
 function tip($compile) {
   return {
     restrict: 'E',
-    link: function(scope, elem, attrs) {
-      var _t =
+    link: (scope, elem, attrs) => {
+      let _t =
         '<i class="grafana-tip fa fa-' +
         (attrs.icon || 'question-circle') +
         '" bs-tooltip="\'' +
@@ -26,9 +26,9 @@ function clipboardButton() {
     scope: {
       getText: '&clipboardButton',
     },
-    link: function(scope, elem) {
+    link: (scope, elem) => {
       scope.clipboard = new Clipboard(elem[0], {
-        text: function() {
+        text: () => {
           return scope.getText();
         },
       });
@@ -37,7 +37,7 @@ function clipboardButton() {
         appEvents.emit('alert-success', ['Content copied to clipboard']);
       });
 
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         if (scope.clipboard) {
           scope.clipboard.destroy();
         }
@@ -50,12 +50,12 @@ function clipboardButton() {
 function compile($compile) {
   return {
     restrict: 'A',
-    link: function(scope, element, attrs) {
+    link: (scope, element, attrs) => {
       scope.$watch(
-        function(scope) {
+        scope => {
           return scope.$eval(attrs.compile);
         },
-        function(value) {
+        value => {
           element.html(value);
           $compile(element.contents())(scope);
         }
@@ -67,9 +67,9 @@ function compile($compile) {
 function watchChange() {
   return {
     scope: { onchange: '&watchChange' },
-    link: function(scope, element) {
-      element.on('input', function() {
-        scope.$apply(function() {
+    link: (scope, element) => {
+      element.on('input', () => {
+        scope.$apply(() => {
           scope.onchange({ inputValue: element.val() });
         });
       });
@@ -81,12 +81,12 @@ function watchChange() {
 function editorOptBool($compile) {
   return {
     restrict: 'E',
-    link: function(scope, elem, attrs) {
-      var ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
-      var tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
-      var showIf = attrs.showIf ? ' ng-show="' + attrs.showIf + '" ' : '';
+    link: (scope, elem, attrs) => {
+      const ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
+      const tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
+      const showIf = attrs.showIf ? ' ng-show="' + attrs.showIf + '" ' : '';
 
-      var template =
+      const template =
         '<div class="editor-option gf-form-checkbox text-center"' +
         showIf +
         '>' +
@@ -118,14 +118,14 @@ function editorOptBool($compile) {
 function editorCheckbox($compile, $interpolate) {
   return {
     restrict: 'E',
-    link: function(scope, elem, attrs) {
-      var text = $interpolate(attrs.text)(scope);
-      var model = $interpolate(attrs.model)(scope);
-      var ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
-      var tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
-      var label = '<label for="' + scope.$id + model + '" class="checkbox-label">' + text + tip + '</label>';
+    link: (scope, elem, attrs) => {
+      const text = $interpolate(attrs.text)(scope);
+      const model = $interpolate(attrs.model)(scope);
+      const ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
+      const tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
+      const label = '<label for="' + scope.$id + model + '" class="checkbox-label">' + text + tip + '</label>';
 
-      var template =
+      let template =
         '<input class="cr1" id="' +
         scope.$id +
         model +
@@ -152,18 +152,18 @@ function editorCheckbox($compile, $interpolate) {
 /** @ngInject */
 function gfDropdown($parse, $compile, $timeout) {
   function buildTemplate(items, placement?) {
-    var upclass = placement === 'top' ? 'dropup' : '';
-    var ul = ['<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">', '</ul>'];
+    const upclass = placement === 'top' ? 'dropup' : '';
+    const ul = ['<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">', '</ul>'];
 
     for (let index = 0; index < items.length; index++) {
-      let item = items[index];
+      const item = items[index];
 
       if (item.divider) {
         ul.splice(index + 1, 0, '<li class="divider"></li>');
         continue;
       }
 
-      var li =
+      let li =
         '<li' +
         (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') +
         '>' +
@@ -192,11 +192,11 @@ function gfDropdown($parse, $compile, $timeout) {
     restrict: 'EA',
     scope: true,
     link: function postLink(scope, iElement, iAttrs) {
-      var getter = $parse(iAttrs.gfDropdown),
+      const getter = $parse(iAttrs.gfDropdown),
         items = getter(scope);
-      $timeout(function() {
-        var placement = iElement.data('placement');
-        var dropdown = angular.element(buildTemplate(items, placement).join(''));
+      $timeout(() => {
+        const placement = iElement.data('placement');
+        const dropdown = angular.element(buildTemplate(items, placement).join(''));
         dropdown.insertAfter(iElement);
         $compile(iElement.next('ul.dropdown-menu'))(scope);
       });

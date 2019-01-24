@@ -17,11 +17,7 @@ func init() {
 
 // IsValidShortUid checks if short unique identifier contains valid characters
 func IsValidShortUid(uid string) bool {
-	if !validUidPattern(uid) {
-		return false
-	}
-
-	return true
+	return validUidPattern(uid)
 }
 
 // GenerateShortUid generates a short unique identifier.

@@ -35,7 +35,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		})
 
-		Convey("Build metric with downsampling diabled", func() {
+		Convey("Build metric with downsampling disabled", func() {
 
 			query := &tsdb.Query{
 				Model: simplejson.New(),

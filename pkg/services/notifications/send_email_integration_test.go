@@ -12,23 +12,19 @@ import (
 
 func TestEmailIntegrationTest(t *testing.T) {
 	SkipConvey("Given the notifications service", t, func() {
-		bus.ClearBusHandlers()
-
 		setting.StaticRootPath = "../../../public/"
-		setting.Smtp.Enabled = true
-		setting.Smtp.TemplatesPattern = "emails/*.html"
-		setting.Smtp.FromAddress = "from@address.com"
-		setting.Smtp.FromName = "Grafana Admin"
 		setting.BuildVersion = "4.0.0"
 
-		err := Init()
-		So(err, ShouldBeNil)
+		ns := &NotificationService{}
+		ns.Bus = bus.New()
+		ns.Cfg = setting.NewCfg()
+		ns.Cfg.Smtp.Enabled = true
+		ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
+		ns.Cfg.Smtp.FromAddress = "from@address.com"
+		ns.Cfg.Smtp.FromName = "Grafana Admin"
 
-		addToMailQueue = func(msg *Message) {
-			So(msg.From, ShouldEqual, "Grafana Admin <from@address.com>")
-			So(msg.To[0], ShouldEqual, "asdf@asdf.com")
-			ioutil.WriteFile("../../../tmp/test_email.html", []byte(msg.Body), 0777)
-		}
+		err := ns.Init()
+		So(err, ShouldBeNil)
 
 		Convey("When sending reset email password", func() {
 			cmd := &m.SendEmailCommand{
@@ -59,8 +55,13 @@ func TestEmailIntegrationTest(t *testing.T) {
 				Template: "alert_notification.html",
 			}
 
-			err := sendEmailCommandHandler(cmd)
+			err := ns.sendEmailCommandHandler(cmd)
 			So(err, ShouldBeNil)
+
+			sentMsg := <-ns.mailQueue
+			So(sentMsg.From, ShouldEqual, "Grafana Admin <from@address.com>")
+			So(sentMsg.To[0], ShouldEqual, "asdf@asdf.com")
+			ioutil.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body), 0777)
 		})
 	})
 }

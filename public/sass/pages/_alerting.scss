@@ -32,7 +32,7 @@
   .panel-alert-icon:before {
     content: '\e611';
     position: relative;
-    top: 1px;
+    top: 5px;
     left: -3px;
   }
 }
@@ -63,6 +63,13 @@
   &--ok {
     .panel-alert-icon:before {
       color: $online;
+      content: '\e611';
+    }
+  }
+
+  &--pending {
+    .panel-alert-icon:before {
+      color: $warn;
       content: '\e611';
     }
   }
@@ -100,6 +107,7 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  justify-content: center;
   overflow: hidden;
 }
 

@@ -30,6 +30,8 @@ func AddMigrations(mg *Migrator) {
 	addDashboardAclMigrations(mg)
 	addTagMigration(mg)
 	addLoginAttemptMigrations(mg)
+	addUserAuthMigrations(mg)
+	addServerlockMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

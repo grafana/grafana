@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -20,6 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	anonString = "Anonymous"
 )
 
 func isDashboardStarredByUser(c *m.ReqContext, dashID int64) (bool, error) {
@@ -64,7 +69,7 @@ func GetDashboard(c *m.ReqContext) Response {
 	}
 
 	// Finding creator and last updater of the dashboard
-	updater, creator := "Anonymous", "Anonymous"
+	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
 		updater = getUserLogin(dash.UpdatedBy)
 	}
@@ -102,6 +107,16 @@ func GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
+	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
+	err = bus.Dispatch(isDashboardProvisioned)
+	if err != nil {
+		return Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
+	if isDashboardProvisioned.Result {
+		meta.Provisioned = true
+	}
+
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
@@ -118,7 +133,7 @@ func getUserLogin(userID int64) string {
 	query := m.GetUserByIdQuery{Id: userID}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		return "Anonymous"
+		return anonString
 	}
 	return query.Result.Login
 }
@@ -228,7 +243,8 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		err == m.ErrDashboardWithSameUIDExists ||
 		err == m.ErrFolderNotFound ||
 		err == m.ErrDashboardFolderCannotHaveParent ||
-		err == m.ErrDashboardFolderNameExists {
+		err == m.ErrDashboardFolderNameExists ||
+		err == m.ErrDashboardCannotSaveProvisionedDashboard {
 		return Error(400, err.Error(), nil)
 	}
 
@@ -236,8 +252,8 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		return Error(403, err.Error(), err)
 	}
 
-	if err == m.ErrDashboardContainsInvalidAlertData {
-		return Error(500, "Invalid alert data. Cannot save dashboard", err)
+	if validationErr, ok := err.(alerting.ValidationError); ok {
+		return Error(422, validationErr.Error(), nil)
 	}
 
 	if err != nil {
@@ -261,10 +277,6 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		return Error(500, "Failed to save dashboard", err)
 	}
 
-	if err == m.ErrDashboardFailedToUpdateAlertData {
-		return Error(500, "Invalid alert data. Cannot save dashboard", err)
-	}
-
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	return JSON(200, util.DynMap{
 		"status":  "success",
@@ -277,7 +289,7 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 }
 
 func GetHomeDashboard(c *m.ReqContext) Response {
-	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
+	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
 	}
@@ -324,7 +336,7 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 		"id":   123123,
 		"gridPos": map[string]interface{}{
 			"x": 0,
-			"y": 3,
+			"y": 0,
 			"w": 24,
 			"h": 4,
 		},
@@ -392,7 +404,7 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 		return Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
-	creator := "Anonymous"
+	creator := anonString
 	if query.Result.CreatedBy > 0 {
 		creator = getUserLogin(query.Result.CreatedBy)
 	}

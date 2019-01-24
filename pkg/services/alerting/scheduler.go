@@ -15,7 +15,7 @@ type SchedulerImpl struct {
 
 func NewScheduler() Scheduler {
 	return &SchedulerImpl{
-		jobs: make(map[int64]*Job, 0),
+		jobs: make(map[int64]*Job),
 		log:  log.New("alerting.scheduler"),
 	}
 }
@@ -23,7 +23,7 @@ func NewScheduler() Scheduler {
 func (s *SchedulerImpl) Update(rules []*Rule) {
 	s.log.Debug("Scheduling update", "ruleCount", len(rules))
 
-	jobs := make(map[int64]*Job, 0)
+	jobs := make(map[int64]*Job)
 
 	for i, rule := range rules {
 		var job *Job
@@ -58,7 +58,7 @@ func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 
 		if job.OffsetWait && now%job.Offset == 0 {
 			job.OffsetWait = false
-			s.enque(job, execQueue)
+			s.enqueue(job, execQueue)
 			continue
 		}
 
@@ -66,13 +66,13 @@ func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 			if job.Offset > 0 {
 				job.OffsetWait = true
 			} else {
-				s.enque(job, execQueue)
+				s.enqueue(job, execQueue)
 			}
 		}
 	}
 }
 
-func (s *SchedulerImpl) enque(job *Job, execQueue chan *Job) {
+func (s *SchedulerImpl) enqueue(job *Job, execQueue chan *Job) {
 	s.log.Debug("Scheduler: Putting job on to exec queue", "name", job.Rule.Name, "id", job.Rule.Id)
 	execQueue <- job
 }

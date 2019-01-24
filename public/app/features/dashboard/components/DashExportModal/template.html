@@ -1,0 +1,25 @@
+<div class="share-modal-header">
+	<div class="share-modal-big-icon">
+		<i class="fa fa-cloud-upload"></i>
+	</div>
+	<div>
+		<gf-form-switch
+			class="gf-form"
+			label="Export for sharing externally"
+			label-class="width-16"
+			checked="ctrl.shareExternally"
+			tooltip="Useful for sharing dashboard publicly on grafana.com. Will templatize data source names. Can then only be used with the specific dashboard import API.">
+		</gf-form-switch>
+
+		<div class="gf-form-button-row">
+			<button type="button" class="btn gf-form-btn width-10 btn-success" ng-click="ctrl.saveDashboardAsFile()">
+				<i class="fa fa-save"></i> Save to file
+			</button>
+			<button type="button" class="btn gf-form-btn width-10 btn-secondary" ng-click="ctrl.viewJson()">
+				<i class="fa fa-file-text-o"></i> View JSON
+			</button>
+			<a class="btn btn-link" ng-click="ctrl.dismiss()">Cancel</a>
+		</div>
+
+	</div>
+</div>

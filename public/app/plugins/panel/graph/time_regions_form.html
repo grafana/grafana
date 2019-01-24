@@ -1,0 +1,63 @@
+<div class="gf-form-group">
+  <div class="gf-form-inline" ng-repeat="timeRegion in ctrl.panel.timeRegions">
+    <div class="gf-form">
+      <label class="gf-form-label">T{{$index+1}}</label>
+    </div>
+
+    <div class="gf-form">
+      <label class="gf-form-label">From</label>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input width-6" ng-model="timeRegion.fromDayOfWeek" ng-options="f.d as f.value for f in [{d: undefined, value: 'Any'}, {d:1, value: 'Mon'}, {d:2, value: 'Tue'}, {d:3, value: 'Wed'}, {d:4, value: 'Thu'}, {d:5, value: 'Fri'}, {d:6, value: 'Sat'}, {d:7, value: 'Sun'}]"
+          ng-change="ctrl.render()"></select>
+      </div>
+      <input type="text" ng-maxlength="5" ng-model="timeRegion.from" class="gf-form-input width-5" ng-change="ctrl.render()" placeholder="hh:mm">
+      <label class="gf-form-label">To</label>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input width-6" ng-model="timeRegion.toDayOfWeek" ng-options="f.d as f.value for f in [{d: undefined, value: 'Any'}, {d:1, value: 'Mon'}, {d:2, value: 'Tue'}, {d:3, value: 'Wed'}, {d:4, value: 'Thu'}, {d:5, value: 'Fri'}, {d:6, value: 'Sat'}, {d:7, value: 'Sun'}]"
+          ng-change="ctrl.render()"></select>
+      </div>
+      <input type="text" ng-maxlength="5" ng-model="timeRegion.to" class="gf-form-input width-5" ng-change="ctrl.render()" placeholder="hh:mm"
+      >
+    </div>
+
+    <div class="gf-form">
+      <label class="gf-form-label">Color</label>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input" ng-model="timeRegion.colorMode" ng-options="f.key as f.value for f in ctrl.colorModes" ng-change="ctrl.render()">
+        </select>
+      </div>
+    </div>
+
+    <gf-form-switch class="gf-form" label="Fill" checked="timeRegion.fill" on-change="ctrl.render()"></gf-form-switch>
+
+    <div class="gf-form" ng-if="timeRegion.fill && timeRegion.colorMode === 'custom'">
+      <label class="gf-form-label">Fill color</label>
+      <span class="gf-form-label">
+        <color-picker color="timeRegion.fillColor" onChange="ctrl.onFillColorChange($index)"></color-picker>
+      </span>
+    </div>
+
+    <gf-form-switch class="gf-form" label="Line" checked="timeRegion.line" on-change="ctrl.render()"></gf-form-switch>
+
+    <div class="gf-form" ng-if="timeRegion.line && timeRegion.colorMode === 'custom'">
+      <label class="gf-form-label">Line color</label>
+      <span class="gf-form-label">
+        <color-picker color="timeRegion.lineColor" onChange="ctrl.onLineColorChange($index)"></color-picker>
+      </span>
+    </div>
+
+    <div class="gf-form">
+      <label class="gf-form-label">
+        <a class="pointer" ng-click="ctrl.removeTimeRegion($index)">
+          <i class="fa fa-trash"></i>
+        </a>
+      </label>
+    </div>
+  </div>
+
+  <div class="gf-form-button-row">
+    <button class="btn btn-inverse" ng-click="ctrl.addTimeRegion()">
+      <i class="fa fa-plus"></i>&nbsp;Add time region<tip>All configured time regions refers to UTC time</tip>
+    </button>
+  </div>
+</div>

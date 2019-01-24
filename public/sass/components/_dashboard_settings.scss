@@ -53,6 +53,13 @@
   margin-bottom: $spacer*2;
 }
 
+.dashboard-settings__subheader {
+  color: $text-muted;
+  font-style: italic;
+  position: relative;
+  top: -1.5rem;
+}
+
 .dashboard-settings__nav-item {
   padding: 7px 12px;
   color: $text-color;
@@ -64,8 +71,13 @@
     background: $page-bg;
   }
 
-  i {
-    padding-right: 5px;
+  .gicon {
+    margin-bottom: 2px;
+  }
+
+  .fa {
+    font-size: 17px;
+    width: 16px;
   }
 }
 
@@ -79,4 +91,8 @@
   button {
     margin-bottom: 10px;
   }
+}
+
+.dashboard-settings__json-save-button {
+  margin-top: $spacer;
 }

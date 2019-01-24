@@ -35,7 +35,7 @@ var (
 	slash     = []byte("/")
 )
 
-// stack returns a nicely formated stack frame, skipping skip frames
+// stack returns a nicely formatted stack frame, skipping skip frames
 func stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
 	// As we loop, we open files and read them. These variables record the currently
@@ -115,6 +115,7 @@ func Recovery() macaron.Handler {
 
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
+				c.Data["Theme"] = setting.DefaultTheme
 
 				if setting.Env == setting.DEV {
 					if theErr, ok := err.(error); ok {
@@ -138,7 +139,7 @@ func Recovery() macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, "error")
+					c.HTML(500, setting.ERR_TEMPLATE_NAME)
 				}
 			}
 		}()

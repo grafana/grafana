@@ -12,7 +12,7 @@ import (
 func AdminGetSettings(c *m.ReqContext) {
 	settings := make(map[string]interface{})
 
-	for _, section := range setting.Cfg.Sections() {
+	for _, section := range setting.Raw.Sections() {
 		jsonSec := make(map[string]interface{})
 		settings[section.Name()] = jsonSec
 

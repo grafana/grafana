@@ -32,7 +32,7 @@ const (
 
 	// Maximum allowed depth when recursively substituing variable names.
 	_DEPTH_VALUES = 99
-	_VERSION      = "1.32.0"
+	_VERSION      = "1.36.0"
 )
 
 // Version returns current package version literal.
@@ -52,6 +52,9 @@ var (
 	// Indicate whether to align "=" sign with spaces to produce pretty output
 	// or reduce all possible spaces for compact format.
 	PrettyFormat = true
+
+	// Place spaces around "=" sign even when PrettyFormat is false
+	PrettyEqual = false
 
 	// Explicitly write DEFAULT section header
 	DefaultHeader = false
@@ -137,6 +140,11 @@ type LoadOptions struct {
 	// AllowNestedValues indicates whether to allow AWS-like nested values.
 	// Docs: http://docs.aws.amazon.com/cli/latest/topic/config-vars.html#nested-values
 	AllowNestedValues bool
+	// AllowPythonMultilineValues indicates whether to allow Python-like multi-line values.
+	// Docs: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
+	// Relevant quote:  Values can also span multiple lines, as long as they are indented deeper
+	// than the first line of the value.
+	AllowPythonMultilineValues bool
 	// UnescapeValueDoubleQuotes indicates whether to unescape double quotes inside value to regular format
 	// when value is surrounded by double quotes, e.g. key="a \"value\"" => key=a "value"
 	UnescapeValueDoubleQuotes bool

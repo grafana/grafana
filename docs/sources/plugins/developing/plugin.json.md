@@ -5,7 +5,7 @@ type = "docs"
 [menu.docs]
 name = "plugin.json Schema"
 parent = "developing"
-weight = 6
+weight = 8
 +++
 
 # Plugin.json

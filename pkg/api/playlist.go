@@ -33,7 +33,7 @@ func ValidateOrgPlaylist(c *m.ReqContext) {
 		return
 	}
 
-	if len(items) == 0 {
+	if len(items) == 0 && c.Context.Req.Method != "DELETE" {
 		c.JsonApiErr(404, "Playlist is empty", itemsErr)
 		return
 	}
@@ -160,6 +160,7 @@ func CreatePlaylist(c *m.ReqContext, cmd m.CreatePlaylistCommand) Response {
 
 func UpdatePlaylist(c *m.ReqContext, cmd m.UpdatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
+	cmd.Id = c.ParamsInt64(":id")
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to save playlist", err)

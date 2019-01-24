@@ -15,7 +15,9 @@ weight = 1
 
 Description | Download
 ------------ | -------------
-Stable for Debian-based Linux | [grafana_5.0.4_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.4_amd64.deb)
+Stable for Debian-based Linux | [x86-64](https://grafana.com/grafana/download?platform=linux)
+Stable for Debian-based Linux | [ARM64](https://grafana.com/grafana/download?platform=arm)
+Stable for Debian-based Linux | [ARMv7](https://grafana.com/grafana/download?platform=arm)
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
@@ -24,32 +26,37 @@ installation.
 
 
 ```bash
-wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.4_amd64.deb
+wget <debian package url>
 sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.0.4_amd64.deb
+sudo dpkg -i grafana_<version>_amd64.deb
+```
+
+Example:
+
+```bash
+wget https://dl.grafana.com/oss/release/grafana_5.4.2_amd64.deb
+sudo apt-get install -y adduser libfontconfig
+sudo dpkg -i grafana_5.4.2_amd64.deb
 ```
 
 ## APT Repository
 
-Add the following line to your `/etc/apt/sources.list` file.
+Create a file `/etc/apt/sources.list.d/grafana.list` and add the following to it.
 
 ```bash
-deb https://packagecloud.io/grafana/stable/debian/ stretch main
+deb https://packages.grafana.com/oss/deb stable main
 ```
 
-Use the above line even if you are on Ubuntu or another Debian version.
-There is also a testing repository if you want beta or release
-candidates.
+There is a separate repository if you want beta releases.
 
 ```bash
-deb https://packagecloud.io/grafana/testing/debian/ stretch main
+deb https://packages.grafana.com/oss/deb beta main
 ```
 
-Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
-allows you to install signed packages.
+Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
 
 ```bash
-curl https://packagecloud.io/gpg.key | sudo apt-key add -
+curl https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Update your Apt repositories and install Grafana
@@ -89,6 +96,8 @@ sudo service grafana-server start
 This will start the `grafana-server` process as the `grafana` user,
 which was created during the package installation. The default HTTP port
 is `3000` and default user and group is `admin`.
+
+Default login and password `admin`/ `admin`
 
 To configure the Grafana server to start at boot time:
 
@@ -156,3 +165,8 @@ To configure Grafana add a configuration file named `custom.ini` to the
 Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
 binary needs the working directory to be the root install directory (where the
 binary and the `public` folder is located).
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+Then follow the instructions [here](/guides/getting_started/).

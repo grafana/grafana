@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -104,9 +105,8 @@ func TestDashboardDataAccess(t *testing.T) {
 					timesCalled += 1
 					if timesCalled <= 2 {
 						return savedDash.Uid
-					} else {
-						return util.GenerateShortUid()
 					}
+					return util.GenerateShortUid()
 				}
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
@@ -181,7 +181,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
 				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
-				So(query.Result.Created, ShouldEqual, savedDash.Created.Truncate(time.Second))
+				So(query.Result.Created, ShouldHappenWithin, 3*time.Second, savedDash.Created)
 				So(query.Result.UpdatedBy, ShouldEqual, 100)
 				So(query.Result.Updated.IsZero(), ShouldBeFalse)
 			})
@@ -387,10 +387,11 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 
 func createUser(name string, role string, isAdmin bool) m.User {
 	setting.AutoAssignOrg = true
+	setting.AutoAssignOrgId = 1
 	setting.AutoAssignOrgRole = role
 
 	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	err := CreateUser(&currentUserCmd)
+	err := CreateUser(context.Background(), &currentUserCmd)
 	So(err, ShouldBeNil)
 
 	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}

@@ -9,6 +9,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AuthOptions struct {
@@ -32,6 +33,11 @@ func getApiKey(c *m.ReqContext) string {
 	if len(parts) == 2 && parts[0] == "Bearer" {
 		key := parts[1]
 		return key
+	}
+
+	username, password, err := util.DecodeBasicAuthHeader(header)
+	if err == nil && username == "api_key" {
+		return password
 	}
 
 	return ""

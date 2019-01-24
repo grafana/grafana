@@ -17,7 +17,7 @@ class DashListCtrl extends PanelCtrl {
     search: false,
     starred: true,
     headings: true,
-    folderId: 0,
+    folderId: null,
   };
 
   /** @ngInject */
@@ -60,13 +60,12 @@ class DashListCtrl extends PanelCtrl {
   }
 
   onInitEditMode() {
-    this.editorTabIndex = 1;
     this.modes = ['starred', 'search', 'recently viewed'];
     this.addEditorTab('Options', 'public/app/plugins/panel/dashlist/editor.html');
   }
 
   onRefresh() {
-    var promises = [];
+    const promises = [];
 
     promises.push(this.getRecentDashboards());
     promises.push(this.getStarred());
@@ -81,11 +80,12 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var params = {
+    const params = {
       limit: this.panel.limit,
       query: this.panel.query,
       tag: this.panel.tags,
-      folderId: this.panel.folderId,
+      folderIds: this.panel.folderId,
+      type: 'dash-db',
     };
 
     return this.backendSrv.search(params).then(result => {
@@ -99,7 +99,7 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var params = { limit: this.panel.limit, starred: 'true' };
+    const params = { limit: this.panel.limit, starred: 'true' };
     return this.backendSrv.search(params).then(result => {
       this.groups[0].list = result;
     });
@@ -122,7 +122,7 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var dashIds = _.take(impressionSrv.getDashboardOpened(), this.panel.limit);
+    const dashIds = _.take(impressionSrv.getDashboardOpened(), this.panel.limit);
     return this.backendSrv.search({ dashboardIds: dashIds, limit: this.panel.limit }).then(result => {
       this.groups[1].list = dashIds
         .map(orderId => {

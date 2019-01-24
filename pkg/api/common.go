@@ -30,7 +30,7 @@ type NormalResponse struct {
 	err        error
 }
 
-func wrap(action interface{}) macaron.Handler {
+func Wrap(action interface{}) macaron.Handler {
 
 	return func(c *m.ReqContext) {
 		var res Response

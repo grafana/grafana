@@ -11,12 +11,17 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
 
-type Engine struct {
-	execQueue     chan *Job
-	clock         clock.Clock
+type AlertingService struct {
+	RenderService rendering.Service `inject:""`
+
+	execQueue chan *Job
+	//clock         clock.Clock
 	ticker        *Ticker
 	scheduler     Scheduler
 	evalHandler   EvalHandler
@@ -25,35 +30,41 @@ type Engine struct {
 	resultHandler ResultHandler
 }
 
-func NewEngine() *Engine {
-	e := &Engine{
-		ticker:        NewTicker(time.Now(), time.Second*0, clock.New()),
-		execQueue:     make(chan *Job, 1000),
-		scheduler:     NewScheduler(),
-		evalHandler:   NewEvalHandler(),
-		ruleReader:    NewRuleReader(),
-		log:           log.New("alerting.engine"),
-		resultHandler: NewResultHandler(),
-	}
+func init() {
+	registry.RegisterService(&AlertingService{})
+}
 
+func NewEngine() *AlertingService {
+	e := &AlertingService{}
+	e.Init()
 	return e
 }
 
-func (e *Engine) Run(ctx context.Context) error {
-	e.log.Info("Initializing Alerting")
+func (e *AlertingService) IsDisabled() bool {
+	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+}
 
+func (e *AlertingService) Init() error {
+	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New())
+	e.execQueue = make(chan *Job, 1000)
+	e.scheduler = NewScheduler()
+	e.evalHandler = NewEvalHandler()
+	e.ruleReader = NewRuleReader()
+	e.log = log.New("alerting.engine")
+	e.resultHandler = NewResultHandler(e.RenderService)
+	return nil
+}
+
+func (e *AlertingService) Run(ctx context.Context) error {
 	alertGroup, ctx := errgroup.WithContext(ctx)
-
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
 	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })
 
 	err := alertGroup.Wait()
-
-	e.log.Info("Stopped Alerting", "reason", err)
 	return err
 }
 
-func (e *Engine) alertingTicker(grafanaCtx context.Context) error {
+func (e *AlertingService) alertingTicker(grafanaCtx context.Context) error {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Scheduler Panic: stopping alertingTicker", "error", err, "stack", log.Stack(1))
@@ -78,7 +89,7 @@ func (e *Engine) alertingTicker(grafanaCtx context.Context) error {
 	}
 }
 
-func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
+func (e *AlertingService) runJobDispatcher(grafanaCtx context.Context) error {
 	dispatcherGroup, alertCtx := errgroup.WithContext(grafanaCtx)
 
 	for {
@@ -92,13 +103,13 @@ func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
 }
 
 var (
-	unfinishedWorkTimeout time.Duration = time.Second * 5
+	unfinishedWorkTimeout = time.Second * 5
 	// TODO: Make alertTimeout and alertMaxAttempts configurable in the config file.
-	alertTimeout     time.Duration = time.Second * 30
-	alertMaxAttempts int           = 3
+	alertTimeout     = time.Second * 30
+	alertMaxAttempts = 3
 )
 
-func (e *Engine) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
+func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
@@ -133,7 +144,7 @@ func (e *Engine) processJobWithRetry(grafanaCtx context.Context, job *Job) error
 	}
 }
 
-func (e *Engine) endJob(err error, cancelChan chan context.CancelFunc, job *Job) error {
+func (e *AlertingService) endJob(err error, cancelChan chan context.CancelFunc, job *Job) error {
 	job.Running = false
 	close(cancelChan)
 	for cancelFn := range cancelChan {
@@ -142,7 +153,7 @@ func (e *Engine) endJob(err error, cancelChan chan context.CancelFunc, job *Job)
 	return err
 }
 
-func (e *Engine) processJob(attemptID int, attemptChan chan int, cancelChan chan context.CancelFunc, job *Job) {
+func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancelChan chan context.CancelFunc, job *Job) {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))

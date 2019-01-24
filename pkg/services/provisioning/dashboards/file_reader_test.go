@@ -3,6 +3,7 @@ package dashboards
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -15,13 +16,62 @@ import (
 )
 
 var (
-	defaultDashboards = "./test-dashboards/folder-one"
-	brokenDashboards  = "./test-dashboards/broken-dashboards"
-	oneDashboard      = "./test-dashboards/one-dashboard"
-	containingId      = "./test-dashboards/containing-id"
+	defaultDashboards = "testdata/test-dashboards/folder-one"
+	brokenDashboards  = "testdata/test-dashboards/broken-dashboards"
+	oneDashboard      = "testdata/test-dashboards/one-dashboard"
+	containingId      = "testdata/test-dashboards/containing-id"
 
 	fakeService *fakeDashboardProvisioningService
 )
+
+func TestCreatingNewDashboardFileReader(t *testing.T) {
+	Convey("creating new dashboard file reader", t, func() {
+		cfg := &DashboardsAsConfig{
+			Name:    "Default",
+			Type:    "file",
+			OrgId:   1,
+			Folder:  "",
+			Options: map[string]interface{}{},
+		}
+
+		Convey("using path parameter", func() {
+			cfg.Options["path"] = defaultDashboards
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+			So(reader.Path, ShouldNotEqual, "")
+		})
+
+		Convey("using folder as options", func() {
+			cfg.Options["folder"] = defaultDashboards
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+			So(reader.Path, ShouldNotEqual, "")
+		})
+
+		Convey("using full path", func() {
+			fullPath := "/var/lib/grafana/dashboards"
+			if runtime.GOOS == "windows" {
+				fullPath = `c:\var\lib\grafana`
+			}
+
+			cfg.Options["folder"] = fullPath
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+
+			So(reader.Path, ShouldEqual, fullPath)
+			So(filepath.IsAbs(reader.Path), ShouldBeTrue)
+		})
+
+		Convey("using relative path", func() {
+			cfg.Options["folder"] = defaultDashboards
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			So(err, ShouldBeNil)
+
+			resolvedPath := reader.resolvePath(reader.Path)
+			So(filepath.IsAbs(resolvedPath), ShouldBeTrue)
+		})
+	})
+}
 
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
@@ -116,6 +166,36 @@ func TestDashboardFileReader(t *testing.T) {
 				_, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 			})
+
+			Convey("Two dashboard providers should be able to provisioned the same dashboard without uid", func() {
+				cfg1 := &DashboardsAsConfig{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingId}}
+				cfg2 := &DashboardsAsConfig{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingId}}
+
+				reader1, err := NewDashboardFileReader(cfg1, logger)
+				So(err, ShouldBeNil)
+
+				err = reader1.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				reader2, err := NewDashboardFileReader(cfg2, logger)
+				So(err, ShouldBeNil)
+
+				err = reader2.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				var folderCount int
+				var dashCount int
+				for _, o := range fakeService.inserted {
+					if o.Dashboard.IsFolder {
+						folderCount++
+					} else {
+						dashCount++
+					}
+				}
+
+				So(folderCount, ShouldEqual, 2)
+				So(dashCount, ShouldEqual, 2)
+			})
 		})
 
 		Convey("Should not create new folder if folder name is missing", func() {
@@ -170,30 +250,6 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 		})
 
-		Convey("Can use bpth path and folder as dashboard path", func() {
-			cfg := &DashboardsAsConfig{
-				Name:    "Default",
-				Type:    "file",
-				OrgId:   1,
-				Folder:  "",
-				Options: map[string]interface{}{},
-			}
-
-			Convey("using path parameter", func() {
-				cfg.Options["path"] = defaultDashboards
-				reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
-				So(err, ShouldBeNil)
-				So(reader.Path, ShouldEqual, defaultDashboards)
-			})
-
-			Convey("using folder as options", func() {
-				cfg.Options["folder"] = defaultDashboards
-				reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
-				So(err, ShouldBeNil)
-				So(reader.Path, ShouldEqual, defaultDashboards)
-			})
-		})
-
 		Reset(func() {
 			dashboards.NewProvisioningService = origNewDashboardProvisioningService
 		})
@@ -230,7 +286,9 @@ func (ffi FakeFileInfo) Sys() interface{} {
 }
 
 func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
-	mock := fakeDashboardProvisioningService{}
+	mock := fakeDashboardProvisioningService{
+		provisioned: map[string][]*models.DashboardProvisioning{},
+	}
 	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
 		return &mock
 	}
@@ -239,17 +297,26 @@ func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
 
 type fakeDashboardProvisioningService struct {
 	inserted     []*dashboards.SaveDashboardDTO
-	provisioned  []*models.DashboardProvisioning
+	provisioned  map[string][]*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
 func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	return s.provisioned, nil
+	if _, ok := s.provisioned[name]; !ok {
+		s.provisioned[name] = []*models.DashboardProvisioning{}
+	}
+
+	return s.provisioned[name], nil
 }
 
 func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	s.inserted = append(s.inserted, dto)
-	s.provisioned = append(s.provisioned, provisioning)
+
+	if _, ok := s.provisioned[provisioning.Name]; !ok {
+		s.provisioned[provisioning.Name] = []*models.DashboardProvisioning{}
+	}
+
+	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], provisioning)
 	return dto.Dashboard, nil
 }
 

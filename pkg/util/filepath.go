@@ -65,9 +65,8 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 			if _, ok := symlinkPathsFollowed[path2]; ok {
 				errMsg := "Potential SymLink Infinite Loop. Path: %v, Link To: %v"
 				return fmt.Errorf(errMsg, resolvedPath, path2)
-			} else {
-				symlinkPathsFollowed[path2] = true
 			}
+			symlinkPathsFollowed[path2] = true
 		}
 		info2, err := os.Lstat(path2)
 		if err != nil {

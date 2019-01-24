@@ -13,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.9.2](https://golang.org/dl/)
+- [Go (Latest Stable)](https://golang.org/dl/)
 - [Git](https://git-scm.com/downloads)
 - [NodeJS LTS](https://nodejs.org/download/)
 - node-gyp is the Node.js native addon build tool and it requires extra dependencies: python 2.7, make and GCC. These are already installed for most Linux distros and MacOS. See the Building On Windows section or the [node-gyp installation instructions](https://github.com/nodejs/node-gyp#installation) for more details.
@@ -57,7 +57,7 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run watch
+yarn watch
 ```
 
 ## Running Grafana Locally
@@ -66,13 +66,13 @@ You can run a local instance of Grafana by running:
 ```bash
 ./bin/grafana-server
 ```
-If you built the binary with `go run build.go build`, run `./bin/grafana-server`
+Or, if you built the binary with `go run build.go build`, run `./bin/<os>-<architecture>/grafana-server`
 
 If you built it with `go build .`, run `./grafana`
 
 Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
-## Developing Grafana
+# Developing Grafana
 
 To add features, customize your config, etc, you'll need to rebuild the backend when you change the source code. We use a tool named `bra` that
 does this.
@@ -83,21 +83,18 @@ go get github.com/Unknwon/bra
 bra run
 ```
 
-You'll also need to run `npm run watch` to watch for changes to the front-end (typescript, html, sass)
+You'll also need to run `yarn watch` to watch for changes to the front-end (typescript, html, sass)
 
 ### Running tests
 
-- You can run backend Golang tests using "go test ./pkg/...".
-- Execute all frontend tests with "npm run test"
+- You can run backend Golang tests using `go test ./pkg/...`.
+- Execute all frontend tests with `yarn test`
 
-Writing & watching frontend tests (we have two test runners)
+Writing & watching frontend tests
 
-- jest for all new tests that do not require browser context (React+more)
-   - Start watcher: `npm run jest`
-   - Jest will run all test files that end with the name ".jest.ts"
-- karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
-  - Start watcher: `npm run karma`
-  - Karma+Mocha runs all files that end with the name "_specs.ts".
+- Start watcher: `yarn jest`
+- Jest will run all test files that end with the name ".test.ts"
+
 
 ## Creating optimized release packages
 
@@ -124,7 +121,7 @@ Learn more about Grafana config options in the [Configuration section](/installa
 ## Create a pull requests
 Please contribute to the Grafana project and submit a pull request! Build new features, write or update documentation, fix bugs and generally make Grafana even more awesome.
 
-## Troubleshooting
+# Troubleshooting
 
 **Problem**: PhantomJS or node-sass errors when running grunt
 
@@ -144,3 +141,8 @@ Please contribute to the Grafana project and submit a pull request! Build new fe
 **Problem**: On Windows, getting errors about a tool not being installed even though you just installed that tool.
 
 **Solution**: It is usually because it got added to the path and you have to restart your command prompt to use it.
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to the default port http://localhost:3000 or the port you have configured.
+Then follow the instructions [here](/guides/getting_started/).

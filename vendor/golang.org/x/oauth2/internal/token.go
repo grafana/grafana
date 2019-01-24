@@ -103,7 +103,7 @@ var brokenAuthHeaderProviders = []string{
 	"https://api.twitch.tv/",
 	"https://app.box.com/",
 	"https://connect.stripe.com/",
-	"https://graph.facebook.com", // see https://github.com/golang/oauth2/issues/214
+	"https://login.mailchimp.com/",
 	"https://login.microsoftonline.com/",
 	"https://login.salesforce.com/",
 	"https://login.windows.net",
@@ -124,10 +124,15 @@ var brokenAuthHeaderProviders = []string{
 	"https://api.patreon.com/",
 	"https://sandbox.codeswholesale.com/oauth/token",
 	"https://api.sipgate.com/v1/authorization/oauth",
+	"https://api.medium.com/v1/tokens",
+	"https://log.finalsurge.com/oauth/token",
+	"https://multisport.todaysplan.com.au/rest/oauth/access_token",
+	"https://whats.todaysplan.com.au/rest/oauth/access_token",
 }
 
 // brokenAuthHeaderDomains lists broken providers that issue dynamic endpoints.
 var brokenAuthHeaderDomains = []string{
+	".auth0.com",
 	".force.com",
 	".myshopify.com",
 	".okta.com",
