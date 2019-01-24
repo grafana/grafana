@@ -13,9 +13,16 @@ export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopove
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
 
   return (
-    <ColorPickerPopover color={color || '#000000'} {...colorPickerProps}>
-      <div style={{ marginTop: '32px' }}>{yaxis && <AxisSelector yaxis={yaxis} onToggleAxis={onToggleAxis} />}</div>
-    </ColorPickerPopover>
+    <ColorPickerPopover
+      {...colorPickerProps}
+      color={color || '#000000'}
+      customPickers={{
+        yaxis: {
+          name: 'Y-Axis',
+          tabComponent: () => <div style={{ marginTop: '24px' }}>{yaxis && <AxisSelector yaxis={yaxis} onToggleAxis={onToggleAxis} />}</div>
+        },
+      }}
+    />
   );
 };
 

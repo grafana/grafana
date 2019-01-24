@@ -9,15 +9,10 @@ import propDeprecationWarning from '../../utils/propDeprecationWarning';
 
 type ColorPickerChangeHandler = (color: string) => void;
 
-export const handleColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
-  const { onColorChange } = props;
-  if (onColorChange) {
-    propDeprecationWarning(componentName, 'onColorChange', 'onChange');
-  }
-};
 export interface ColorPickerProps extends Themeable {
   color: string;
   onChange: ColorPickerChangeHandler;
+
   /**
    * @deprecated Use onChange instead
    */
@@ -26,6 +21,13 @@ export interface ColorPickerProps extends Themeable {
   withArrow?: boolean;
   children?: JSX.Element;
 }
+
+export const handleColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
+  const { onColorChange } = props;
+  if (onColorChange) {
+    propDeprecationWarning(componentName, 'onColorChange', 'onChange');
+  }
+};
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
