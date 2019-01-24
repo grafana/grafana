@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { ExploreId } from 'app/types/explore';
 import { DataSourceSelectItem, RawTimeRange, TimeRange } from '@grafana/ui';
-import TimePicker from './TimePicker';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 
 interface Props {
@@ -12,6 +11,7 @@ interface Props {
   range: RawTimeRange;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
+  timepicker: JSX.Element;
   onChangeDatasource: (option) => void;
   onClearAll: () => void;
   onCloseSplit: () => void;
@@ -56,22 +56,16 @@ const createSplittedClassName = (options: { splitted: boolean; className: string
 };
 
 export class ExploreToolbar extends PureComponent<Props, {}> {
-  /**
-   * Timepicker to control scanning
-   */
-  timepickerRef: React.RefObject<TimePicker>;
-
   constructor(props) {
     super(props);
-    this.timepickerRef = React.createRef();
   }
 
   render() {
-    const { datasourceMissing, exploreId, loading, range, splitted } = this.props;
+    const { datasourceMissing, exploreId, loading, splitted, timepicker } = this.props;
     const toolbar = createSplittedClassName({ splitted, className: 'toolbar' });
     const toolbarItem = createSplittedClassName({ splitted, className: 'toolbar-item' });
     const toolbarHeader = createSplittedClassName({ splitted, className: 'toolbar-header' });
-    const timepicker = createSplittedClassName({ splitted, className: 'toolbar-content-item timepicker' });
+    const timepickerClasses = createSplittedClassName({ splitted, className: 'toolbar-content-item timepicker' });
 
     return (
       <div className={toolbar}>
@@ -121,9 +115,7 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
                 })}
               </div>
             ) : null}
-            <div className={timepicker}>
-              <TimePicker ref={this.timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
-            </div>
+            <div className={timepickerClasses}>{timepicker}</div>
             <div className="toolbar-content-item">
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.props.onClearAll}>
                 Clear All
