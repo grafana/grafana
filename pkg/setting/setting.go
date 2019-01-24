@@ -223,7 +223,6 @@ type Cfg struct {
 	EnterpriseLicensePath            string
 
 	LoginCookieName                   string
-	LoginCookieUsername               string
 	LoginCookieSecure                 bool
 	LoginCookieMaxDays                int
 	LoginCookieRotation               time.Duration
@@ -556,7 +555,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.LoginCookieName = login.Key("cookie_name").MustString("grafana_session")
 	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
 	cfg.LoginCookieSecure = login.Key("cookie_secure").MustBool(false)
-	cfg.LoginCookieUsername = login.Key("cookie_username").MustString("grafana_username")
 	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
 	cfg.LoginCookieRotation = login.Key("rotate_cookie_every").MustDuration(time.Minute * 30)
 

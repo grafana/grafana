@@ -88,29 +88,6 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	return true
 }
 
-// func initContextWithUserSessionCookie(ctx *m.ReqContext, orgId int64) bool {
-// 	// initialize session
-// 	if err := ctx.Session.Start(ctx.Context); err != nil {
-// 		ctx.Logger.Error("Failed to start session", "error", err)
-// 		return false
-// 	}
-
-// 	var userId int64
-// 	if userId = getRequestUserId(ctx); userId == 0 {
-// 		return false
-// 	}
-
-// 	query := m.GetSignedInUserQuery{UserId: userId, OrgId: orgId}
-// 	if err := bus.Dispatch(&query); err != nil {
-// 		ctx.Logger.Error("Failed to get user with id", "userId", userId, "error", err)
-// 		return false
-// 	}
-
-// 	ctx.SignedInUser = query.Result
-// 	ctx.IsSignedIn = true
-// 	return true
-// }
-
 func initContextWithApiKey(ctx *m.ReqContext) bool {
 	var keyString string
 	if keyString = getApiKey(ctx); keyString == "" {
