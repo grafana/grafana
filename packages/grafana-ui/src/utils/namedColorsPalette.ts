@@ -1,4 +1,4 @@
-import { flatten, some, values } from 'lodash';
+import { flatten } from 'lodash';
 import { GrafanaTheme } from '../types';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
@@ -114,10 +114,8 @@ ColorsPalette.set('blue', blues);
 ColorsPalette.set('orange', oranges);
 ColorsPalette.set('purple', purples);
 
-export const getColorDefinition = (hex: string): ColorDefinition | undefined => {
-  return flatten(Array.from(ColorsPalette.values())).filter(definition =>
-    some(values(definition.variants), color => color === hex)
-  )[0];
+export const getColorDefinition = (hex: string, theme: GrafanaTheme): ColorDefinition | undefined => {
+  return flatten(Array.from(ColorsPalette.values())).filter(definition => definition.variants[theme]  === hex)[0];
 };
 
 const isHex = (color: string) => {
@@ -125,7 +123,7 @@ const isHex = (color: string) => {
   return hexRegex.test(color);
 };
 
-export const getColorName = (color?: string): Color | undefined => {
+export const getColorName = (color?: string, theme?: GrafanaTheme): Color | undefined => {
   if (!color) {
     return undefined;
   }
@@ -134,7 +132,7 @@ export const getColorName = (color?: string): Color | undefined => {
     return undefined;
   }
   if (isHex(color)) {
-    const definition = getColorDefinition(color);
+    const definition = getColorDefinition(color, theme || GrafanaTheme.Dark);
     return definition ? definition.name : undefined;
   }
 

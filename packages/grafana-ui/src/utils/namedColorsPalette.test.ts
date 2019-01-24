@@ -10,12 +10,13 @@ import { GrafanaTheme } from '../types/index';
 describe('colors', () => {
   describe('getColorDefinition', () => {
     it('returns undefined for unknown hex', () => {
-      expect(getColorDefinition('#ff0000')).toBeUndefined();
+      expect(getColorDefinition('#ff0000', GrafanaTheme.Light)).toBeUndefined();
+      expect(getColorDefinition('#ff0000', GrafanaTheme.Dark)).toBeUndefined();
     });
 
     it('returns definition for known hex', () => {
-      expect(getColorDefinition(SemiDarkBlue.variants.light)).toEqual(SemiDarkBlue);
-      expect(getColorDefinition(SemiDarkBlue.variants.dark)).toEqual(SemiDarkBlue);
+      expect(getColorDefinition(SemiDarkBlue.variants.light, GrafanaTheme.Light)).toEqual(SemiDarkBlue);
+      expect(getColorDefinition(SemiDarkBlue.variants.dark, GrafanaTheme.Dark)).toEqual(SemiDarkBlue);
     });
   });
 
@@ -25,8 +26,8 @@ describe('colors', () => {
     });
 
     it('returns name for known hex', () => {
-      expect(getColorName(SemiDarkBlue.variants.light)).toEqual(SemiDarkBlue.name);
-      expect(getColorName(SemiDarkBlue.variants.dark)).toEqual(SemiDarkBlue.name);
+      expect(getColorName(SemiDarkBlue.variants.light, GrafanaTheme.Light)).toEqual(SemiDarkBlue.name);
+      expect(getColorName(SemiDarkBlue.variants.dark, GrafanaTheme.Dark)).toEqual(SemiDarkBlue.name);
     });
   });
 
@@ -39,6 +40,7 @@ describe('colors', () => {
       expect(getColorByName(SemiDarkBlue.name)).toBe(SemiDarkBlue);
     });
   });
+
   describe('getColorFromHexRgbOrName', () => {
     it('returns undefined for unknown color', () => {
       expect(() => getColorFromHexRgbOrName('aruba-sunshine')).toThrow();
