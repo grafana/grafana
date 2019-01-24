@@ -293,7 +293,6 @@ func createTestContext(t *testing.T) *testContext {
 		SQLStore: sqlstore,
 		Cfg: &setting.Cfg{
 			LoginCookieName:                   "grafana_session",
-			LoginCookieUsername:               "grafana_username",
 			LoginCookieSecure:                 false,
 			LoginCookieMaxDays:                7,
 			LoginDeleteExpiredTokensAfterDays: 30,
