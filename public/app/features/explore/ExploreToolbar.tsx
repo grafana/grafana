@@ -20,6 +20,41 @@ interface Props {
   onSplit: () => void;
 }
 
+const createDatasourcePicker = (props: Props) => {
+  const { exploreDatasources, selectedDatasource } = props;
+
+  return (
+    <DataSourcePicker
+      onChange={props.onChangeDatasource}
+      datasources={exploreDatasources}
+      current={selectedDatasource}
+    />
+  );
+};
+
+const createResponsiveButton = (options: {
+  splitted: boolean;
+  title: string;
+  onClick: () => void;
+  buttonClassName?: string;
+  iconClassName?: string;
+}) => {
+  const { title, onClick, buttonClassName, iconClassName, splitted } = options;
+
+  return (
+    <button className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`} onClick={onClick}>
+      <span className="btn-title">{!splitted ? title : ''}</span>
+      {iconClassName ? <i className={iconClassName} /> : null}
+    </button>
+  );
+};
+
+const createSplittedClassName = (options: { splitted: boolean; className: string }) => {
+  const { className, splitted } = options;
+
+  return splitted ? `${className}-splitted` : className;
+};
+
 export class ExploreToolbar extends PureComponent<Props, {}> {
   /**
    * Timepicker to control scanning
@@ -29,58 +64,14 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
   constructor(props) {
     super(props);
     this.timepickerRef = React.createRef();
-    this.createResponsiveButton = this.createResponsiveButton.bind(this);
-    this.createDatasourcePicker = this.createDatasourcePicker.bind(this);
-    this.createSplittedClassName = this.createSplittedClassName.bind(this);
-  }
-
-  createDatasourcePicker() {
-    const { exploreDatasources, selectedDatasource } = this.props;
-
-    return (
-      <DataSourcePicker
-        onChange={this.props.onChangeDatasource}
-        datasources={exploreDatasources}
-        current={selectedDatasource}
-      />
-    );
-  }
-
-  createResponsiveButton(options: {
-    title: string;
-    onClick: () => void;
-    buttonClassName?: string;
-    iconClassName?: string;
-  }) {
-    const { splitted } = this.props;
-    const { title, onClick, buttonClassName, iconClassName } = options;
-
-    return (
-      <>
-        <button className={`btn navbar-button large-screens ${buttonClassName && buttonClassName}`} onClick={onClick}>
-          {!splitted ? title : ''}
-          {iconClassName && <i className={iconClassName} />}
-        </button>
-        <button className={`btn navbar-button small-screens ${buttonClassName && buttonClassName}`} onClick={onClick}>
-          {iconClassName && <i className={iconClassName} />}
-        </button>
-      </>
-    );
-  }
-
-  createSplittedClassName(className: string) {
-    const { splitted } = this.props;
-
-    return splitted ? `${className}-splitted` : className;
   }
 
   render() {
     const { datasourceMissing, exploreId, loading, range, splitted } = this.props;
-    const toolbar = this.createSplittedClassName('toolbar');
-    const toolbarItem = this.createSplittedClassName('toolbar-item');
-    const toolbarHeader = this.createSplittedClassName('toolbar-header');
-    const timepickerLarge = this.createSplittedClassName('toolbar-content-item timepicker-large-screens');
-    const timepickerSmall = this.createSplittedClassName('toolbar-content-item timepicker-small-screens');
+    const toolbar = createSplittedClassName({ splitted, className: 'toolbar' });
+    const toolbarItem = createSplittedClassName({ splitted, className: 'toolbar-item' });
+    const toolbarHeader = createSplittedClassName({ splitted, className: 'toolbar-header' });
+    const timepicker = createSplittedClassName({ splitted, className: 'toolbar-content-item timepicker' });
 
     return (
       <div className={toolbar}>
@@ -88,7 +79,7 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
           <div className={toolbarHeader}>
             <div className="toolbar-header-title">
               {exploreId === 'left' && (
-                <a>
+                <a className="navbar-page-btn">
                   <i className="fa fa-rocket fa-fw" />
                   Explore
                 </a>
@@ -96,7 +87,7 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
             </div>
             <div className="toolbar-header-datasource large-screens">
               <div className="datasource-picker">
-                {!datasourceMissing && !splitted ? this.createDatasourcePicker() : null}
+                {!datasourceMissing && !splitted ? createDatasourcePicker(this.props) : null}
               </div>
             </div>
             <div className="toolbar-header-close">
@@ -110,40 +101,28 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
         </div>
         <div className={toolbarItem}>
           {!datasourceMissing && splitted ? (
-            <div className="datasource-picker">{this.createDatasourcePicker()}</div>
+            <div className="datasource-picker">{createDatasourcePicker(this.props)}</div>
           ) : null}
         </div>
         <div className={toolbarItem}>
           <div className="toolbar-content">
             {!datasourceMissing && !splitted ? (
               <div className="toolbar-content-item small-screens">
-                <div className="datasource-picker">{this.createDatasourcePicker()}</div>
+                <div className="datasource-picker">{createDatasourcePicker(this.props)}</div>
               </div>
             ) : null}
             {exploreId === 'left' && !splitted ? (
               <div className="toolbar-content-item">
-                {this.createResponsiveButton({
+                {createResponsiveButton({
+                  splitted,
                   title: 'Split',
                   onClick: this.props.onSplit,
                   iconClassName: 'fa fa-fw fa-columns',
                 })}
               </div>
             ) : null}
-            <div className={timepickerLarge}>
-              <TimePicker
-                ref={this.timepickerRef}
-                range={range}
-                onChangeTime={this.props.onChangeTime}
-                iconOnly={false}
-              />
-            </div>
-            <div className={timepickerSmall}>
-              <TimePicker
-                ref={this.timepickerRef}
-                range={range}
-                onChangeTime={this.props.onChangeTime}
-                iconOnly={true}
-              />
+            <div className={timepicker}>
+              <TimePicker ref={this.timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
             </div>
             <div className="toolbar-content-item">
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.props.onClearAll}>
@@ -151,7 +130,8 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
               </button>
             </div>
             <div className="toolbar-content-item">
-              {this.createResponsiveButton({
+              {createResponsiveButton({
+                splitted,
                 title: 'Run Query',
                 onClick: this.props.onRunQuery,
                 buttonClassName: 'navbar-button--primary',

@@ -39,7 +39,6 @@ interface TimePickerProps {
   isUtc?: boolean;
   range?: RawTimeRange;
   onChangeTime?: (range: RawTimeRange, scanning?: boolean) => void;
-  iconOnly?: boolean;
 }
 
 interface TimePickerState {
@@ -293,7 +292,6 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
   }
 
   render() {
-    const { iconOnly } = this.props;
     const { isUtc, rangeString, refreshInterval } = this.state;
 
     return (
@@ -302,18 +300,12 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
           <button className="btn navbar-button navbar-button--tight timepicker-left" onClick={this.handleClickLeft}>
             <i className="fa fa-chevron-left" />
           </button>
-          {iconOnly ? (
-            <button className="btn navbar-button gf-timepicker-nav-btn" onClick={this.handleClickPicker}>
-              <i className="fa fa-clock-o" />
-            </button>
-          ) : (
-            <button className="btn navbar-button gf-timepicker-nav-btn" onClick={this.handleClickPicker}>
-              <i className="fa fa-clock-o" />
-              <span className="timepicker-rangestring">{rangeString}</span>
-              {isUtc ? <span className="gf-timepicker-utc">UTC</span> : null}
-              {refreshInterval ? <span className="text-warning">&nbsp; Refresh every {refreshInterval}</span> : null}
-            </button>
-          )}
+          <button className="btn navbar-button gf-timepicker-nav-btn" onClick={this.handleClickPicker}>
+            <i className="fa fa-clock-o" />
+            <span className="timepicker-rangestring">{rangeString}</span>
+            {isUtc ? <span className="gf-timepicker-utc">UTC</span> : null}
+            {refreshInterval ? <span className="text-warning">&nbsp; Refresh every {refreshInterval}</span> : null}
+          </button>
           <button className="btn navbar-button navbar-button--tight timepicker-right" onClick={this.handleClickRight}>
             <i className="fa fa-chevron-right" />
           </button>
