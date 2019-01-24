@@ -42,6 +42,12 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 		return false
 	}
 
+	defer func() {
+		if err := ctx.Session.Release(); err != nil {
+			ctx.Logger.Error("failed to save session data", "error", err)
+		}
+	}()
+
 	query := &m.GetSignedInUserQuery{OrgId: orgID}
 
 	// if this session has already been authenticated by authProxy just load the user
@@ -162,10 +168,6 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
 	ctx.Session.Set(session.SESS_KEY_USERID, ctx.UserId)
-
-	if err := ctx.Session.Release(); err != nil {
-		ctx.Logger.Error("failed to save session data", "error", err)
-	}
 
 	return true
 }

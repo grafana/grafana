@@ -65,6 +65,8 @@ func (hs *HTTPServer) Init() error {
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
 
+	session.Init(&setting.SessionOptions, setting.SessionConnMaxLifetime)
+
 	return nil
 }
 
@@ -225,7 +227,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler(hs.AuthTokenService))
 	m.Use(middleware.OrgRedirect())
-	session.Init(&setting.SessionOptions, setting.SessionConnMaxLifetime)
 
 	// needs to be after context handler
 	if setting.EnforceDomain {
