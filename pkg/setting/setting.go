@@ -83,9 +83,6 @@ var (
 
 	// Security settings.
 	SecretKey                        string
-	LogInRememberDays                int
-	CookieUserName                   string
-	CookieRememberName               string
 	DisableGravatar                  bool
 	EmailCodeValidMinutes            int
 	DataProxyWhiteList               map[string]bool
@@ -603,9 +600,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read security settings
 	security := iniFile.Section("security")
 	SecretKey = security.Key("secret_key").String()
-	LogInRememberDays = security.Key("login_remember_days").MustInt()
-	CookieUserName = security.Key("cookie_username").String()
-	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection

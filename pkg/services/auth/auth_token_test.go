@@ -303,7 +303,6 @@ func createTestContext(t *testing.T) *testContext {
 	}
 
 	UrgentRotateTime = time.Minute
-	setting.LogInRememberDays = 7
 
 	return &testContext{
 		sqlstore:     sqlstore,
