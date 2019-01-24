@@ -65,7 +65,9 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
     const toolbar = createSplittedClassName({ splitted, className: 'toolbar' });
     const toolbarItem = createSplittedClassName({ splitted, className: 'toolbar-item' });
     const toolbarHeader = createSplittedClassName({ splitted, className: 'toolbar-header' });
-    const timepickerClasses = createSplittedClassName({ splitted, className: 'toolbar-content-item timepicker' });
+    const toolbarContent = createSplittedClassName({ splitted, className: 'toolbar-content' });
+    const toolbarContentItem = createSplittedClassName({ splitted, className: 'toolbar-content-item' });
+    const timepickerClasses = createSplittedClassName({ splitted, className: 'timepicker toolbar-content-item' });
 
     return (
       <div className={toolbar}>
@@ -79,11 +81,6 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
                 </a>
               )}
             </div>
-            <div className="toolbar-header-datasource large-screens">
-              <div className="datasource-picker">
-                {!datasourceMissing && !splitted ? createDatasourcePicker(this.props) : null}
-              </div>
-            </div>
             <div className="toolbar-header-close">
               {exploreId === 'right' && (
                 <a onClick={this.props.onCloseSplit}>
@@ -94,19 +91,14 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
           </div>
         </div>
         <div className={toolbarItem}>
-          {!datasourceMissing && splitted ? (
-            <div className="datasource-picker">{createDatasourcePicker(this.props)}</div>
-          ) : null}
-        </div>
-        <div className={toolbarItem}>
-          <div className="toolbar-content">
-            {!datasourceMissing && !splitted ? (
-              <div className="toolbar-content-item small-screens">
+          <div className={toolbarContent}>
+            {!datasourceMissing ? (
+              <div className={toolbarContentItem}>
                 <div className="datasource-picker">{createDatasourcePicker(this.props)}</div>
               </div>
             ) : null}
             {exploreId === 'left' && !splitted ? (
-              <div className="toolbar-content-item">
+              <div className={toolbarContentItem}>
                 {createResponsiveButton({
                   splitted,
                   title: 'Split',
@@ -116,12 +108,12 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
               </div>
             ) : null}
             <div className={timepickerClasses}>{timepicker}</div>
-            <div className="toolbar-content-item">
+            <div className={toolbarContentItem}>
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.props.onClearAll}>
                 Clear All
               </button>
             </div>
-            <div className="toolbar-content-item">
+            <div className={toolbarContentItem}>
               {createResponsiveButton({
                 splitted,
                 title: 'Run Query',
