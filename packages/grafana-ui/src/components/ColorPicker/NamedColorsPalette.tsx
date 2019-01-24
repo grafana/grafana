@@ -8,7 +8,7 @@ interface NamedColorsPaletteProps extends Themeable {
   onChange: (colorName: string) => void;
 }
 
-const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPaletteProps) => {
+export const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPaletteProps) => {
   const swatches: JSX.Element[] = [];
   ColorsPalette.forEach((colors, hue) => {
     swatches.push(
@@ -38,4 +38,3 @@ const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPaletteProps)
   );
 };
 
-export default NamedColorsPalette;

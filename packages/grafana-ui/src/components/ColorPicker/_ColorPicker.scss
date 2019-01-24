@@ -189,13 +189,16 @@ $arrowSize: 15px;
   z-index: 0;
 }
 
-.sp-preview-inner, .sp-alpha-inner, .sp-thumb-inner
-{
-    display:block;
-    position:absolute;
-    top:0;left:0;bottom:0;right:0;
+.sp-preview-inner,
+.sp-alpha-inner,
+.sp-thumb-inner {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
 }
-
 
 .gf-color-picker__body {
   padding-bottom: $arrowSize;
