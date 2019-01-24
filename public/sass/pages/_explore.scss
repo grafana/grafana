@@ -70,6 +70,7 @@
 }
 
 .toolbar-header {
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -84,11 +85,10 @@
 
 .toolbar-header-datasource {
   padding-left: $dashboard-padding;
-  flex: 2 1 auto;
 }
 
 .toolbar-header-close {
-  padding-right: 8px;
+  margin-left: auto;
 }
 
 .toolbar-content-splitted,
