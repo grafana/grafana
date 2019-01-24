@@ -77,6 +77,7 @@ var (
 	SocketPath         string
 	RouterLogging      bool
 	DataProxyLogging   bool
+	DataProxyTimeout   int
 	StaticRootPath     string
 	EnableGzip         bool
 	EnforceDomain      bool
@@ -583,6 +584,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read data proxy settings
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
+	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
 
 	// read security settings
 	security := iniFile.Section("security")
