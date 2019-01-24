@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
-import NamedColorsPalette from './NamedColorsPalette';
+import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName } from '../../utils/namedColorsPalette';
 import { withKnobs, select } from '@storybook/addon-knobs';
 
@@ -35,7 +35,7 @@ export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T
   static getDerivedStateFromProps(props: StateHolderProps<{}>, state: { value: {} }) {
     return {
       value: props.initialState,
-      ...state
+      ...state,
     };
   }
 
@@ -64,12 +64,7 @@ storiesOf('UI/NamedColorsPalette', module)
     return (
       <UseState initialState={selectedColor}>
         {(selectedColor, updateSelectedColor) => {
-          return (
-            <NamedColorsPalette
-              color={selectedColor}
-              onChange={updateSelectedColor}
-            />
-          );
+          return <NamedColorsPalette color={selectedColor} onChange={updateSelectedColor} />;
         }}
       </UseState>
     );
@@ -78,12 +73,7 @@ storiesOf('UI/NamedColorsPalette', module)
     return (
       <UseState initialState="#00ff00">
         {(selectedColor, updateSelectedColor) => {
-          return (
-            <NamedColorsPalette
-              color={getColorName(selectedColor)}
-              onChange={updateSelectedColor}
-            />
-          );
+          return <NamedColorsPalette color={getColorName(selectedColor)} onChange={updateSelectedColor} />;
         }}
       </UseState>
     );
