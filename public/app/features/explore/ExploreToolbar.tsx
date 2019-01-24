@@ -3,23 +3,6 @@ import { ExploreId } from 'app/types/explore';
 import { DataSourceSelectItem, RawTimeRange, TimeRange } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 
-interface Props {
-  datasourceMissing: boolean;
-  exploreDatasources: DataSourceSelectItem[];
-  exploreId: ExploreId;
-  loading: boolean;
-  range: RawTimeRange;
-  selectedDatasource: DataSourceSelectItem;
-  splitted: boolean;
-  timepicker: JSX.Element;
-  onChangeDatasource: (option) => void;
-  onClearAll: () => void;
-  onCloseSplit: () => void;
-  onChangeTime: (range: TimeRange, changedByScanner?: boolean) => void;
-  onRunQuery: () => void;
-  onSplit: () => void;
-}
-
 const createDatasourcePicker = (props: Props) => {
   const { exploreDatasources, selectedDatasource } = props;
 
@@ -55,6 +38,23 @@ const createSplittedClassName = (options: { splitted: boolean; className: string
   return splitted ? `${className}-splitted` : className;
 };
 
+interface Props {
+  datasourceMissing: boolean;
+  exploreDatasources: DataSourceSelectItem[];
+  exploreId: ExploreId;
+  loading: boolean;
+  range: RawTimeRange;
+  selectedDatasource: DataSourceSelectItem;
+  splitted: boolean;
+  timepicker: JSX.Element;
+  onChangeDatasource: (option) => void;
+  onClearAll: () => void;
+  onCloseSplit: () => void;
+  onChangeTime: (range: TimeRange, changedByScanner?: boolean) => void;
+  onRunQuery: () => void;
+  onSplit: () => void;
+}
+
 export class ExploreToolbar extends PureComponent<Props, {}> {
   constructor(props) {
     super(props);
@@ -86,9 +86,9 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
             </div>
             <div className="toolbar-header-close">
               {exploreId === 'right' && (
-                <button className="btn navbar-button" onClick={this.props.onCloseSplit}>
-                  Close Split
-                </button>
+                <a onClick={this.props.onCloseSplit}>
+                  <i className="fa fa-window-close fa-fw" />
+                </a>
               )}
             </div>
           </div>
