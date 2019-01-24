@@ -78,13 +78,12 @@ func tryOAuthAutoLogin(c *m.ReqContext) bool {
 	return false
 }
 
-func (hs *HTTPServer) LoginAPIPing(c *m.ReqContext) {
-	if !c.IsSignedIn || !c.IsAnonymous {
-		c.JsonApiErr(401, "Unauthorized", nil)
-		return
+func (hs *HTTPServer) LoginAPIPing(c *m.ReqContext) Response {
+	if c.IsSignedIn || c.IsAnonymous {
+		return JSON(200, "Logged in")
 	}
 
-	c.JsonOK("Logged in")
+	return Error(401, "Unauthorized", nil)
 }
 
 func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
