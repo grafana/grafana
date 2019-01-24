@@ -1,7 +1,13 @@
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
+
 import { ExploreId } from 'app/types/explore';
 import { DataSourceSelectItem, RawTimeRange, TimeRange } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+import { StoreState } from 'app/types/store';
+import { changeDatasource, clearQueries, splitClose, runQueries, splitOpen } from './state/actions';
+import TimePicker from './TimePicker';
 
 const createResponsiveButton = (options: {
   splitted: boolean;
@@ -20,27 +26,47 @@ const createResponsiveButton = (options: {
   );
 };
 
-interface Props {
+interface OwnProps {
+  exploreId: ExploreId;
+  timepickerRef: React.RefObject<TimePicker>;
+  onChangeTime: (range: TimeRange, changedByScanner?: boolean) => void;
+}
+
+interface StateProps {
   datasourceMissing: boolean;
   exploreDatasources: DataSourceSelectItem[];
-  exploreId: ExploreId;
   loading: boolean;
   range: RawTimeRange;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
-  timepicker: JSX.Element;
-  onChangeDatasource: (option) => void;
-  onClearAll: () => void;
-  onCloseSplit: () => void;
-  onChangeTime: (range: TimeRange, changedByScanner?: boolean) => void;
-  onRunQuery: () => void;
-  onSplit: () => void;
 }
 
-export class ExploreToolbar extends PureComponent<Props, {}> {
+interface DispatchProps {
+  changeDatasource: typeof changeDatasource;
+  clearAll: typeof clearQueries;
+  runQuery: typeof runQueries;
+  closeSplit: typeof splitClose;
+  split: typeof splitOpen;
+}
+
+type Props = StateProps & DispatchProps & OwnProps;
+
+export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   constructor(props) {
     super(props);
   }
+
+  onChangeDatasource = async option => {
+    this.props.changeDatasource(this.props.exploreId, option.value);
+  };
+
+  onClearAll = () => {
+    this.props.clearAll(this.props.exploreId);
+  };
+
+  onRunQuery = () => {
+    this.props.runQuery(this.props.exploreId);
+  };
 
   render() {
     const {
@@ -48,9 +74,10 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
       exploreDatasources,
       exploreId,
       loading,
+      range,
       selectedDatasource,
       splitted,
-      timepicker,
+      timepickerRef,
     } = this.props;
 
     return (
@@ -67,7 +94,7 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
             </div>
             <div className="toolbar-header-close">
               {exploreId === 'right' && (
-                <a onClick={this.props.onCloseSplit}>
+                <a onClick={this.props.closeSplit}>
                   <i className="fa fa-window-close fa-fw" />
                 </a>
               )}
@@ -80,7 +107,7 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
               <div className="toolbar-content-item">
                 <div className="datasource-picker">
                   <DataSourcePicker
-                    onChange={this.props.onChangeDatasource}
+                    onChange={this.onChangeDatasource}
                     datasources={exploreDatasources}
                     current={selectedDatasource}
                   />
@@ -92,14 +119,16 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
                 {createResponsiveButton({
                   splitted,
                   title: 'Split',
-                  onClick: this.props.onSplit,
+                  onClick: this.props.split,
                   iconClassName: 'fa fa-fw fa-columns',
                 })}
               </div>
             ) : null}
-            <div className="toolbar-content-item timepicker">{timepicker}</div>
+            <div className="toolbar-content-item timepicker">
+              <TimePicker ref={timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
+            </div>
             <div className="toolbar-content-item">
-              <button className="btn navbar-button navbar-button--no-icon" onClick={this.props.onClearAll}>
+              <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClearAll}>
                 Clear All
               </button>
             </div>
@@ -107,7 +136,7 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
               {createResponsiveButton({
                 splitted,
                 title: 'Run Query',
-                onClick: this.props.onRunQuery,
+                onClick: this.onRunQuery,
                 buttonClassName: 'navbar-button--primary',
                 iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
               })}
@@ -118,3 +147,32 @@ export class ExploreToolbar extends PureComponent<Props, {}> {
     );
   }
 }
+
+const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
+  const splitted = state.explore.split;
+  const exploreItem = state.explore[exploreId];
+  const { datasourceInstance, datasourceMissing, exploreDatasources, queryTransactions, range } = exploreItem;
+  const selectedDatasource = datasourceInstance
+    ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
+    : undefined;
+  const loading = queryTransactions.some(qt => !qt.done);
+
+  return {
+    datasourceMissing,
+    exploreDatasources,
+    loading,
+    range,
+    selectedDatasource,
+    splitted,
+  };
+};
+
+const mapDispatchToProps: DispatchProps = {
+  changeDatasource,
+  clearAll: clearQueries,
+  runQuery: runQueries,
+  closeSplit: splitClose,
+  split: splitOpen,
+};
+
+export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
