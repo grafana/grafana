@@ -1,23 +1,23 @@
 import React from 'react';
 import _ from 'lodash';
 import config from 'app/core/config';
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../../panel_model';
+import { DashboardModel } from '../../dashboard_model';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { updateLocation } from 'app/core/actions';
 import { store as reduxStore } from 'app/store/store';
 
-export interface AddPanelPanelProps {
+export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
 }
 
-export interface AddPanelPanelState {
+export interface State {
   copiedPanelPlugins: any[];
 }
 
-export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelPanelState> {
+export class AddPanelWidget extends React.Component<Props, State> {
   constructor(props) {
     super(props);
     this.handleCloseAddPanel = this.handleCloseAddPanel.bind(this);
@@ -133,15 +133,15 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     }
 
     return (
-      <div className="panel-container add-panel-container">
-        <div className="add-panel">
-          <div className="add-panel__header grid-drag-handle">
+      <div className="panel-container add-panel-widget-container">
+        <div className="add-panel-widget">
+          <div className="add-panel-widget__header grid-drag-handle">
             <i className="gicon gicon-add-panel" />
-            <button className="add-panel__close" onClick={this.handleCloseAddPanel}>
+            <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
               <i className="fa fa-close" />
             </button>
           </div>
-          <div className="add-panel-btn-container">
+          <div className="add-panel-widget__btn-container">
             <button className="btn-success btn btn-large" onClick={this.onCreateNewPanel}>
               Edit Panel
             </button>
