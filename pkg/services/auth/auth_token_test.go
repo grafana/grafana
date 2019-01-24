@@ -296,7 +296,7 @@ func createTestContext(t *testing.T) *testContext {
 			LoginCookieSecure:                 false,
 			LoginCookieMaxDays:                7,
 			LoginDeleteExpiredTokensAfterDays: 30,
-			LoginCookieRotation:               10 * time.Minute,
+			LoginCookieRotation:               10,
 		},
 		log: log.New("test-logger"),
 	}

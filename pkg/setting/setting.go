@@ -225,7 +225,7 @@ type Cfg struct {
 	LoginCookieName                   string
 	LoginCookieSecure                 bool
 	LoginCookieMaxDays                int
-	LoginCookieRotation               time.Duration
+	LoginCookieRotation               int
 	LoginDeleteExpiredTokensAfterDays int
 }
 
@@ -556,7 +556,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
 	cfg.LoginCookieSecure = login.Key("cookie_secure").MustBool(false)
 	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
-	cfg.LoginCookieRotation = login.Key("rotate_cookie_every").MustDuration(time.Minute * 30)
+	cfg.LoginCookieRotation = login.Key("rotate_token_minutes").MustInt(30)
+	if cfg.LoginCookieRotation < 2 {
+		cfg.LoginCookieRotation = 2
+	}
 
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
