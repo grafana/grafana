@@ -99,7 +99,9 @@ export const BaseClient = class BaseClient {
   }
 
   withUrl(subUrl) {
-    return new BaseClient(this.url,  subUrl);
+    let c = new BaseClient(this.url,  subUrl);
+    c.onBeforeRequest = this.onBeforeRequest;
+    return c;
   }
 
   beforeRequest(params) {
@@ -163,7 +165,9 @@ export class BasicAuthClient extends BaseClient {
   }
 
   withUrl(subUrl) {
-    return new BasicAuthClient(this.url,  subUrl, this.username, this.password);
+    let c = new BasicAuthClient(this.url,  subUrl, this.username, this.password);
+    c.onBeforeRequest = this.onBeforeRequest;
+    return c;
   }
 
   beforeRequest(params) {

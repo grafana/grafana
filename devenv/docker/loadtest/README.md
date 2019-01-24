@@ -34,10 +34,10 @@ Example output:
      output: -
      script: src/auth_token_test.js
 
-    duration: 10s, iterations: -
-         vus: 2,   max: 2
+    duration: 15m0s, iterations: -
+         vus: 2,     max: 2
 
-    done [==========================================================] 10s / 10s
+    done [==========================================================] 15m0s / 15m0s
 
     █ user auth token test
 
@@ -50,20 +50,20 @@ Example output:
 
         ✓ response status is 200
 
-    checks.....................: 100.00% ✓ 364 ✗ 0
-    data_received..............: 4.0 MB  402 kB/s
-    data_sent..................: 120 kB  12 kB/s
-    group_duration.............: avg=84.95ms  min=31.49ms med=90.28ms  max=120.08ms p(90)=118.15ms p(95)=118.47ms
-    http_req_blocked...........: avg=1.63ms   min=2.18µs  med=1.1ms    max=10.94ms  p(90)=3.34ms   p(95)=4.28ms
-    http_req_connecting........: avg=1.37ms   min=0s      med=902.58µs max=10.47ms  p(90)=2.95ms   p(95)=3.82ms
-    http_req_duration..........: avg=58.61ms  min=3.86ms  med=60.49ms  max=114.21ms p(90)=92.61ms  p(95)=100.17ms
-    http_req_receiving.........: avg=36µs     min=9.78µs  med=31.17µs  max=234.69µs p(90)=61.58µs  p(95)=72.95µs
-    http_req_sending...........: avg=361.51µs min=19.57µs med=181.38µs max=10.56ms  p(90)=642.88µs p(95)=845.28µs
-    http_req_tls_handshaking...: avg=0s       min=0s      med=0s       max=0s       p(90)=0s       p(95)=0s
-    http_req_waiting...........: avg=58.22ms  min=3.8ms   med=59.7ms   max=114.09ms p(90)=92.45ms  p(95)=100.02ms
-    http_reqs..................: 382     38.199516/s
-    iteration_duration.........: avg=975.79ms min=7.98µs  med=1.08s    max=1.11s    p(90)=1.09s    p(95)=1.11s
-    iterations.................: 18      1.799977/s
-    vus........................: 2       min=2 max=2
-    vus_max....................: 2       min=2 max=2
+    checks.....................: 100.00% ✓ 32844 ✗ 0
+    data_received..............: 411 MB  457 kB/s
+    data_sent..................: 12 MB   14 kB/s
+    group_duration.............: avg=95.64ms  min=16.42ms  med=94.35ms  max=307.52ms p(90)=137.78ms p(95)=146.75ms
+    http_req_blocked...........: avg=1.27ms   min=942ns    med=610.08µs max=48.32ms  p(90)=2.92ms   p(95)=4.25ms
+    http_req_connecting........: avg=1.06ms   min=0s       med=456.79µs max=47.19ms  p(90)=2.55ms   p(95)=3.78ms
+    http_req_duration..........: avg=58.16ms  min=1ms      med=52.59ms  max=293.35ms p(90)=109.53ms p(95)=120.19ms
+    http_req_receiving.........: avg=38.98µs  min=6.43µs   med=32.55µs  max=16.2ms   p(90)=64.63µs  p(95)=78.8µs
+    http_req_sending...........: avg=328.66µs min=8.09µs   med=110.77µs max=44.13ms  p(90)=552.65µs p(95)=1.09ms
+    http_req_tls_handshaking...: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s
+    http_req_waiting...........: avg=57.79ms  min=935.02µs med=52.15ms  max=293.06ms p(90)=109.04ms p(95)=119.71ms
+    http_reqs..................: 34486   38.317775/s
+    iteration_duration.........: avg=1.09s    min=1.81µs   med=1.09s    max=1.3s     p(90)=1.13s    p(95)=1.14s
+    iterations.................: 1642    1.824444/s
+    vus........................: 2       min=2   max=2
+    vus_max....................: 2       min=2   max=2
 ```

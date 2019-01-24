@@ -11,9 +11,13 @@ const client = createClient(endpoint)
 
 export const setup = () => {
   const basicAuthClient = createBasicAuthClient(endpoint, 'admin', 'admin');
-  createTestOrgIfNotExists(basicAuthClient);
+  const orgId = createTestOrgIfNotExists(basicAuthClient);
   const datasourceId = createTestdataDatasourceIfNotExists(basicAuthClient);
-  return {datasourceId: datasourceId};
+  client.withOrgId(orgId);
+  return {
+    orgId: orgId,
+    datasourceId: datasourceId,
+  };
 }
 
 export default (data) => {
