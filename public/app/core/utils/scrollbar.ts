@@ -1,5 +1,5 @@
-﻿// Slightly modified: https://raw.githubusercontent.com/malte-wessel/react-custom-scrollbars/master/src/utils/getScrollbarWidth.js
-// No "dom-css" dependancy
+﻿// Slightly modified, but without dependancies:
+// https://raw.githubusercontent.com/malte-wessel/react-custom-scrollbars/master/src/utils/getScrollbarWidth.js
 let scrollbarWidth = null;
 
 export default function getScrollbarWidth() {
