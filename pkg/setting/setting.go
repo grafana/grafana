@@ -556,7 +556,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.LoginCookieName = login.Key("cookie_name").MustString("grafana_session")
 	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
 	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
-	cfg.LoginCookieRotation = login.Key("rotate_token_minutes").MustInt(30)
+	cfg.LoginCookieRotation = login.Key("rotate_token_minutes").MustInt(10)
 	if cfg.LoginCookieRotation < 2 {
 		cfg.LoginCookieRotation = 2
 	}
