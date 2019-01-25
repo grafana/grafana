@@ -46,13 +46,8 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     changeHandler(getColorFromHexRgbOrName(color, theme));
   };
 
-  handleTabChange = (tab: PickerType | keyof T, updatePopperPosition?: () => void) => {
-    return () =>
-      this.setState({ activePicker: tab }, () => {
-        if (updatePopperPosition) {
-          updatePopperPosition();
-        }
-      });
+  handleTabChange = (tab: PickerType | keyof T) => {
+    return () => this.setState({ activePicker: tab });
   };
 
   renderPicker = () => {
@@ -82,7 +77,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     });
   };
 
-  renderCustomPickerTabs = (updatePopperPosition?: () => void) => {
+  renderCustomPickerTabs = () => {
     const { customPickers } = this.props;
 
     if (!customPickers) {
@@ -95,7 +90,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
           return (
             <div
               className={this.getTabClassName(key)}
-              onClick={this.handleTabChange(key, updatePopperPosition)}
+              onClick={this.handleTabChange(key)}
               key={key}
             >
               {customPickers[key].name}
@@ -107,7 +102,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
   };
 
   render() {
-    const { theme, updatePopperPosition } = this.props;
+    const { theme } = this.props;
     const colorPickerTheme = theme || GrafanaTheme.Dark;
 
     return (
@@ -115,17 +110,17 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
         <div className="ColorPickerPopover__tabs">
           <div
             className={this.getTabClassName('palette')}
-            onClick={this.handleTabChange('palette', updatePopperPosition)}
+            onClick={this.handleTabChange('palette')}
           >
             Colors
           </div>
           <div
             className={this.getTabClassName('spectrum')}
-            onClick={this.handleTabChange('spectrum', updatePopperPosition)}
+            onClick={this.handleTabChange('spectrum')}
           >
             Custom
           </div>
-          {this.renderCustomPickerTabs(updatePopperPosition)}
+          {this.renderCustomPickerTabs()}
         </div>
 
         <div className="ColorPickerPopover__content">{this.renderPicker()}</div>
