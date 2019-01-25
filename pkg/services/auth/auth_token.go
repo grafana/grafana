@@ -93,7 +93,6 @@ func (s *UserAuthTokenServiceImpl) writeSessionCookie(ctx *models.ReqContext, va
 		Name:     s.Cfg.LoginCookieName,
 		Value:    url.QueryEscape(value),
 		HttpOnly: true,
-		Domain:   setting.Domain,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   s.Cfg.SecurityHTTPSCookies,
 		MaxAge:   maxAge,
