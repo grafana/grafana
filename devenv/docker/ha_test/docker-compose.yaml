@@ -49,6 +49,7 @@ services:
       - GF_DATABASE_HOST=db:3306
       - GF_SESSION_PROVIDER=mysql
       - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(db:3306)/grafana?allowNativePasswords=true
+      - GF_LOGIN_ROTATE_TOKEN_MINUTES=2
       # - GF_DATABASE_TYPE=postgres
       # - GF_DATABASE_HOST=db:5432
       # - GF_DATABASE_SSL_MODE=disable
