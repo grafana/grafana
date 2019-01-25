@@ -22,7 +22,7 @@ export interface ColorPickerProps extends Themeable {
   children?: JSX.Element;
 }
 
-export const handleColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
+export const warnAboutColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
   const { onColorChange } = props;
   if (onColorChange) {
     propDeprecationWarning(componentName, 'onColorChange', 'onChange');

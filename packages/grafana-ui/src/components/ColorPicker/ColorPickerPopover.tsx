@@ -1,7 +1,7 @@
 import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
-import { ColorPickerProps, handleColorPickerPropsDeprecation } from './ColorPicker';
+import { ColorPickerProps, warnAboutColorPickerPropsDeprecation } from './ColorPicker';
 import { GrafanaTheme } from '../../types';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import SpectrumPalette from './SpectrumPalette';
@@ -28,7 +28,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     this.state = {
       activePicker: 'palette',
     };
-    handleColorPickerPropsDeprecation('ColorPickerPopover', props);
+    warnAboutColorPickerPropsDeprecation('ColorPickerPopover', props);
   }
 
   getTabClassName = (tabName: PickerType | keyof T) => {
