@@ -1,5 +1,5 @@
 // tslint:disable:no-reference
-// ///<reference path="../../../../../../node_modules/@kusto/monaco-kusto/release/min/monaco.d.ts" />
+// ///<reference path="../../../../../../node_modules/@alexanderzobnin/monaco-kusto/release/min/monaco.d.ts" />
 
 // (1) Desired editor features:
 import "monaco-editor/esm/vs/editor/browser/controller/coreCommands.js";
@@ -15,7 +15,7 @@ import 'monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShow
 import "monaco-editor/esm/vs/editor/editor.api.js";
 
 // (2) Desired languages:
-import '@kusto/monaco-kusto/release/webpack/bridge.min.js';
-import '@kusto/monaco-kusto/release/webpack/Kusto.JavaScript.Client.min.js';
-import '@kusto/monaco-kusto/release/webpack/Kusto.Language.Bridge.min.js';
-import '@kusto/monaco-kusto/release/webpack/monaco.contribution.min.js';
+import '@alexanderzobnin/monaco-kusto/release/webpack/bridge.min.js';
+import '@alexanderzobnin/monaco-kusto/release/webpack/Kusto.JavaScript.Client.min.js';
+import '@alexanderzobnin/monaco-kusto/release/webpack/Kusto.Language.Bridge.min.js';
+import '@alexanderzobnin/monaco-kusto/release/webpack/monaco.contribution.min.js';
