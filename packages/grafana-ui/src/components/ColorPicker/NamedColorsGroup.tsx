@@ -18,7 +18,7 @@ interface ColorSwatchProps extends Themeable, React.DOMAttributes<HTMLDivElement
   isSelected?: boolean;
 }
 
-const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
+export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
   color,
   label,
   variant = ColorSwatchVariant.Small,
@@ -73,6 +73,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
     <div {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
       {primaryColor && (
         <ColorSwatch
+          key={primaryColor.name}
           isSelected={primaryColor.name === selectedColor}
           variant={ColorSwatchVariant.Large}
           color={getColorForTheme(primaryColor, theme)}
@@ -92,6 +93,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
             !color.isPrimary && (
               <div key={color.name} style={{ marginRight: '4px' }}>
                 <ColorSwatch
+                  key={color.name}
                   isSelected={color.name === selectedColor}
                   color={getColorForTheme(color, theme)}
                   onClick={() => onColorSelect(color)}
