@@ -37,13 +37,13 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
   };
 
   handleChange = (color: any) => {
-    const { onColorChange, onChange, enableNamedColors } = this.props;
+    const { onColorChange, onChange, enableNamedColors, theme } = this.props;
     const changeHandler = onColorChange || onChange;
 
     if (enableNamedColors) {
       return changeHandler(color);
     }
-    changeHandler(getColorFromHexRgbOrName(color));
+    changeHandler(getColorFromHexRgbOrName(color, theme));
   };
 
   handleTabChange = (tab: PickerType | keyof T, updatePopperPosition?: () => void) => {
