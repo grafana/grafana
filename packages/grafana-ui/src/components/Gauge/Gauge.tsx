@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import { ValueMapping, Threshold, ThemeName, BasicGaugeColor, ThemeNames } from '../../types/panel';
-import { TimeSeriesVMs } from '../../types/series';
-import { getValueFormat } from '../../utils/valueFormats/valueFormats';
-import { TimeSeriesValue, getMappedValue } from '../../utils/valueMappings';
+import { BasicGaugeColor, ThemeName, ThemeNames, Threshold, ValueMapping } from '../../types';
+import { TimeSeriesVMs } from '../../types';
+import { getValueFormat } from '../../utils';
+import { getMappedValue, TimeSeriesValue } from '../../utils/valueMappings';
 
 export interface Props {
   decimals: number;
@@ -23,6 +23,8 @@ export interface Props {
   width: number;
   theme?: ThemeName;
 }
+
+const FONT_SCALE = 1;
 
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
@@ -67,7 +69,7 @@ export class Gauge extends PureComponent<Props> {
     const formattedValue = formatFunc(value as number, decimals);
     const handleNoValueValue = formattedValue || 'no value';
 
-    return `${prefix} ${handleNoValueValue} ${suffix}`;
+    return `${prefix && prefix + ' '}${handleNoValueValue}${suffix && ' ' + suffix}`;
   }
 
   getFontColor(value: TimeSeriesValue) {
@@ -98,7 +100,7 @@ export class Gauge extends PureComponent<Props> {
     const thresholdsSortedByIndex = [...thresholds].sort((t1, t2) => t1.index - t2.index);
     const lastThreshold = thresholdsSortedByIndex[thresholdsSortedByIndex.length - 1];
 
-    const formattedThresholds = [
+    return [
       ...thresholdsSortedByIndex.map(threshold => {
         if (threshold.index === 0) {
           return { value: minValue, color: threshold.color };
@@ -109,8 +111,13 @@ export class Gauge extends PureComponent<Props> {
       }),
       { value: maxValue, color: lastThreshold.color },
     ];
+  }
 
-    return formattedThresholds;
+  getFontScale(length: number): number {
+    if (length > 12) {
+      return FONT_SCALE - length * 5 / 115;
+    }
+    return FONT_SCALE - length * 5 / 105;
   }
 
   draw() {
@@ -134,13 +141,15 @@ export class Gauge extends PureComponent<Props> {
       value = null;
     }
 
+    const formattedValue = this.formatValue(value) as string;
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = theme === ThemeNames.Light ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
-    const fontScale = parseInt('80', 10) / 100;
-    const fontSize = Math.min(dimension / 5, 100) * fontScale;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
+    const fontSize = Math.ceil(
+      Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1)
+    );
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options = {
