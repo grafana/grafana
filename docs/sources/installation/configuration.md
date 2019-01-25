@@ -391,6 +391,12 @@ value is `true`.
 If you want to track Grafana usage via Google analytics specify *your* Universal
 Analytics ID here. By default this feature is disabled.
 
+### check_for_updates
+
+Set to false to disable all checks to https://grafana.com for new versions of Grafana and installed plugins. Check is used
+in some UI views to notify that a Grafana or plugin update exists. This option does not cause any auto updates, nor
+send any sensitive information.
+
 <hr />
 
 ## [dashboards]
