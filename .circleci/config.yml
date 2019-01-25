@@ -148,9 +148,6 @@ jobs:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
       - run:
-          name: Build Grafana.com master publisher
-          command: 'go build -o scripts/publish scripts/build/publish.go'
-      - run:
           name: Test and build Grafana.com release publisher
           command: 'cd scripts/build/release_publisher && go test . && go build -o release_publisher .'
       - persist_to_workspace:
@@ -158,7 +155,6 @@ jobs:
           paths:
             - dist/grafana*
             - scripts/*.sh
-            - scripts/publish
             - scripts/build/release_publisher/release_publisher
             - scripts/build/publish.sh
 
@@ -393,7 +389,7 @@ jobs:
           name: Publish to Grafana.com
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
-            ./scripts/publish -apiKey ${GRAFANA_COM_API_KEY}
+            cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -from-local
 
   deploy-release:
     docker:

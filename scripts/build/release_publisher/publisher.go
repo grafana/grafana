@@ -128,9 +128,19 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 		urlPostfix: "_armhf.deb",
 	},
 	{
+		os:         "deb",
+		arch:       "armv6",
+		urlPostfix: "_armel.deb",
+	},
+	{
 		os:         "rhel",
 		arch:       "armv7",
 		urlPostfix: ".armhfp.rpm",
+	},
+	{
+		os:         "linux",
+		arch:       "armv6",
+		urlPostfix: ".linux-armv6.tar.gz",
 	},
 	{
 		os:         "linux",
