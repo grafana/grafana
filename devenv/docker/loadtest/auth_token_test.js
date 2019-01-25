@@ -6,8 +6,8 @@ export let options = {
   noCookiesReset: true
 };
 
-let endpoint = __ENV.URL || 'http://localhost:3000'
-const client = createClient(endpoint)
+let endpoint = __ENV.URL || 'http://localhost:3000';
+const client = createClient(endpoint);
 
 export const setup = () => {
   const basicAuthClient = createBasicAuthClient(endpoint, 'admin', 'admin');
