@@ -1,80 +1,48 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { getColorName } from '../../utils/namedColorsPalette';
+import { getColorName, BasicGreen, BasicBlue, LightBlue } from '../../utils/namedColorsPalette';
 import { withKnobs, select } from '@storybook/addon-knobs';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { UseState } from '../../utils/storybook/UseState';
 
-const CenteredStory: FunctionComponent<{}> = ({ children }) => {
-  return (
-    <div
-      style={{
-        height: '100vh  ',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {children}
-    </div>
+const NamedColorsPaletteStories = storiesOf('UI/ColorPicker/Palettes/NamedColorsPalette', module);
+
+NamedColorsPaletteStories.addDecorator(withKnobs).addDecorator(withCenteredStory);
+
+NamedColorsPaletteStories.add('Named colors swatch - support for named colors', () => {
+  const selectedColor = select(
+    'Selected color',
+    {
+      Green: 'green',
+      Red: 'red',
+      'Light blue': 'light-blue',
+    },
+    'red'
   );
-};
 
-interface StateHolderProps<T> {
-  initialState: T;
-  children: (currentState: T, updateState: (nextState: T) => void) => JSX.Element;
-}
-
-export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T }> {
-  constructor(props: StateHolderProps<T>) {
-    super(props);
-    this.state = {
-      value: props.initialState,
-    };
-  }
-
-  static getDerivedStateFromProps(props: StateHolderProps<{}>, state: { value: {} }) {
-    return {
-      value: props.initialState,
-      ...state,
-    };
-  }
-
-  handleStateUpdate = (nextState: T) => {
-    this.setState({ value: nextState });
-  };
-  render() {
-    return this.props.children(this.state.value, this.handleStateUpdate);
-  }
-}
-
-storiesOf('UI/NamedColorsPalette', module)
-  .addDecorator(withKnobs)
-  .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
-  .add('Named colors swatch - support for named colors', () => {
-    const selectedColor = select(
-      'Selected color',
-      {
-        Green: 'green',
-        Red: 'red',
-        'Light blue': 'light-blue',
-      },
-      'green'
-    );
-
-    return (
-      <UseState initialState={selectedColor}>
-        {(selectedColor, updateSelectedColor) => {
-          return <NamedColorsPalette color={selectedColor} onChange={updateSelectedColor} />;
-        }}
-      </UseState>
-    );
-  })
-  .add('Named colors swatch - support for hex values', () => {
-    return (
-      <UseState initialState="#00ff00">
-        {(selectedColor, updateSelectedColor) => {
-          return <NamedColorsPalette color={getColorName(selectedColor)} onChange={updateSelectedColor} />;
-        }}
-      </UseState>
-    );
-  });
+  return (
+    <UseState initialState={selectedColor}>
+      {(selectedColor, updateSelectedColor) => {
+        return <NamedColorsPalette color={selectedColor} onChange={updateSelectedColor} />;
+      }}
+    </UseState>
+  );
+}).add('Named colors swatch - support for hex values', () => {
+  const selectedColor = select(
+    'Selected color',
+    {
+      Green: BasicGreen.variants.dark,
+      Red: BasicBlue.variants.dark,
+      'Light blue': LightBlue.variants.dark,
+    },
+    'red'
+  );
+  return (
+    <UseState initialState={selectedColor}>
+      {(selectedColor, updateSelectedColor) => {
+        return <NamedColorsPalette color={getColorName(selectedColor)} onChange={updateSelectedColor} />;
+      }}
+    </UseState>
+  );
+});

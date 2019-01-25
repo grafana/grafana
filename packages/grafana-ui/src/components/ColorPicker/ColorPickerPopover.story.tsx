@@ -1,44 +1,40 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { withKnobs, select } from '@storybook/addon-knobs';
-import { GrafanaTheme } from '../../types';
+import { withKnobs } from '@storybook/addon-knobs';
 
-const CenteredStory: FunctionComponent<{}> = ({ children }) => {
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { getThemeKnob } from '../../utils/storybook/themeKnob';
+import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
+
+const ColorPickerPopoverStories = storiesOf('UI/ColorPicker/Popovers', module);
+
+ColorPickerPopoverStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
+
+ColorPickerPopoverStories.add('default', () => {
+  const selectedTheme = getThemeKnob();
+
   return (
-    <div
-      style={{
-        height: '100vh  ',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+    <ColorPickerPopover
+      color="#BC67E6"
+      onChange={color => {
+        console.log(color);
       }}
-    >
-      {children}
-    </div>
+      theme={selectedTheme || undefined}
+    />
   );
-};
+});
 
-storiesOf('UI/ColorPickerPopover', module)
-  .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
-  .addDecorator(withKnobs)
-  .add('default', () => {
-    const selectedTheme = select(
-      'Theme',
-      {
-        Default: '',
-        Light: GrafanaTheme.Light,
-        Dark: GrafanaTheme.Dark,
-      },
-      GrafanaTheme.Light
-    );
-    return (
-      <ColorPickerPopover
-        color="#BC67E6"
-        onChange={color => {
-          console.log(color);
-        }}
-        theme={selectedTheme || undefined}
-      />
-    );
-  });
+ColorPickerPopoverStories.add('SeriesColorPickerPopover', () => {
+  const selectedTheme = getThemeKnob();
+
+  return (
+    <SeriesColorPickerPopover
+      color="#BC67E6"
+      onChange={color => {
+        console.log(color);
+      }}
+      theme={selectedTheme || undefined}
+    />
+  );
+});
