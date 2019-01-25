@@ -2,6 +2,14 @@
 # yarn lockfile v1
 
 
+"@alexanderzobnin/monaco-kusto@^0.2.3-rc.1":
+  version "0.2.3-rc.1"
+  resolved "https://registry.yarnpkg.com/@alexanderzobnin/monaco-kusto/-/monaco-kusto-0.2.3-rc.1.tgz#1e96eef584d6173f19670afb3f122947329a840f"
+  integrity sha512-bppmiGfH7iXL4AdaKV2No4WqUoWBvS4bDejSYO0VjaK8zrNPFz9QhmGhnASHvQdmexcoPEqqQScA3udA2bQ68A==
+  dependencies:
+    "@kusto/language-service" "0.0.22-alpha"
+    "@kusto/language-service-next" "0.0.25-alpha1"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.0.0-beta.35":
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0.tgz#06e2ab19bdb535385559aabb5ba59729482800f8"
@@ -663,13 +671,6 @@
   version "0.0.22-alpha"
   resolved "https://registry.yarnpkg.com/@kusto/language-service/-/language-service-0.0.22-alpha.tgz#990bbfb82e8e8991c35a12aab00d890a05fff623"
   integrity sha512-oYiakH2Lq4j7ghahAtqxC+nuOKybH03H1o3IWyB3p8Ll4WkYQOrV8GWpqEjPtMfsuOt3t5k55OzzwDWFaX2zlw==
-
-"@kusto/monaco-kusto@https://github.com/grafana/monaco-kusto":
-  version "0.2.2"
-  resolved "https://github.com/grafana/monaco-kusto#877c1a5003510af51636281a7ce36ad3731c458a"
-  dependencies:
-    "@kusto/language-service" "0.0.22-alpha"
-    "@kusto/language-service-next" "0.0.25-alpha1"
 
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"

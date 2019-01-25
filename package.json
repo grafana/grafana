@@ -11,12 +11,12 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
+    "@alexanderzobnin/monaco-kusto": "^0.2.3-rc.1",
     "@babel/core": "^7.1.2",
     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.1.0",
-    "@kusto/monaco-kusto": "https://github.com/grafana/monaco-kusto",
     "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
     "@types/classnames": "^2.2.6",
     "@types/d3": "^4.10.1",
