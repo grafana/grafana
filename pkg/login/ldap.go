@@ -273,25 +273,28 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 	return nil
 }
 
+func appendIfNotEmpty(slice []string, values ...string) []string {
+	for _, v := range values {
+		if v != "" {
+			slice = append(slice, v)
+		}
+	}
+	return slice
+}
+
 func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 	var searchResult *ldap.SearchResult
 	var err error
 
 	for _, searchBase := range a.server.SearchBaseDNs {
 		attributes := make([]string, 0)
-
-		appendIfNotEmpty := func(slice []string, attr string) []string {
-			if attr == "" {
-				return slice
-			}
-			return append(slice, attr)
-		}
-
-		attributes = appendIfNotEmpty(attributes, a.server.Attr.Username)
-		attributes = appendIfNotEmpty(attributes, a.server.Attr.Surname)
-		attributes = appendIfNotEmpty(attributes, a.server.Attr.Email)
-		attributes = appendIfNotEmpty(attributes, a.server.Attr.Name)
-		attributes = appendIfNotEmpty(attributes, a.server.Attr.MemberOf)
+		inputs := a.server.Attr
+		attributes = appendIfNotEmpty(attributes,
+			inputs.Username,
+			inputs.Surname,
+			inputs.Email,
+			inputs.Name,
+			inputs.MemberOf)
 
 		searchReq := ldap.SearchRequest{
 			BaseDN:       searchBase,
