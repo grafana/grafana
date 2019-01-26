@@ -84,7 +84,7 @@ export async function getExploreUrl(
     }
 
     const exploreState = JSON.stringify(state);
-    url = renderUrl('/explore', { state: exploreState });
+    url = renderUrl('/explore', { left: exploreState });
   }
   return url;
 }
