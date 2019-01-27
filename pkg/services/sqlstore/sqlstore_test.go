@@ -9,60 +9,60 @@ import (
 )
 
 type sqlStoreTest struct {
-	name string
-	dbType string
-	dbHost string
+	name          string
+	dbType        string
+	dbHost        string
 	connStrValues []string
 }
 
-var sqlStoreTestCases = []sqlStoreTest {
-	sqlStoreTest {
-		name: "MySQL IPv4",
-		dbType: "mysql",
-		dbHost: "1.2.3.4:5678",
-		connStrValues: []string {"tcp(1.2.3.4:5678)"},
+var sqlStoreTestCases = []sqlStoreTest{
+	{
+		name:          "MySQL IPv4",
+		dbType:        "mysql",
+		dbHost:        "1.2.3.4:5678",
+		connStrValues: []string{"tcp(1.2.3.4:5678)"},
 	},
-	sqlStoreTest {
-		name: "Postgres IPv4",
-		dbType: "postgres",
-		dbHost: "1.2.3.4:5678",
-		connStrValues: []string {"host=1.2.3.4", "port=5678"},
+	{
+		name:          "Postgres IPv4",
+		dbType:        "postgres",
+		dbHost:        "1.2.3.4:5678",
+		connStrValues: []string{"host=1.2.3.4", "port=5678"},
 	},
-	sqlStoreTest {
-		name: "Postgres IPv4 (Default Port)",
-		dbType: "postgres",
-		dbHost: "1.2.3.4",
-		connStrValues: []string {"host=1.2.3.4", "port=5432"},
+	{
+		name:          "Postgres IPv4 (Default Port)",
+		dbType:        "postgres",
+		dbHost:        "1.2.3.4",
+		connStrValues: []string{"host=1.2.3.4", "port=5432"},
 	},
-	sqlStoreTest {
-		name: "MySQL IPv4 (Default Port)",
-		dbType: "mysql",
-		dbHost: "1.2.3.4",
-		connStrValues: []string {"tcp(1.2.3.4)"},
+	{
+		name:          "MySQL IPv4 (Default Port)",
+		dbType:        "mysql",
+		dbHost:        "1.2.3.4",
+		connStrValues: []string{"tcp(1.2.3.4)"},
 	},
-	sqlStoreTest {
-		name: "MySQL IPv6",
-		dbType: "mysql",
-		dbHost: "[fe80::24e8:31b2:91df:b177]:1234",
-		connStrValues: []string {"tcp([fe80::24e8:31b2:91df:b177]:1234)"},
+	{
+		name:          "MySQL IPv6",
+		dbType:        "mysql",
+		dbHost:        "[fe80::24e8:31b2:91df:b177]:1234",
+		connStrValues: []string{"tcp([fe80::24e8:31b2:91df:b177]:1234)"},
 	},
-	sqlStoreTest {
-		name: "Postgres IPv6",
-		dbType: "postgres",
-		dbHost: "[fe80::24e8:31b2:91df:b177]:1234",
-		connStrValues: []string {"host=fe80::24e8:31b2:91df:b177", "port=1234"},
+	{
+		name:          "Postgres IPv6",
+		dbType:        "postgres",
+		dbHost:        "[fe80::24e8:31b2:91df:b177]:1234",
+		connStrValues: []string{"host=fe80::24e8:31b2:91df:b177", "port=1234"},
 	},
-	sqlStoreTest {
-		name: "MySQL IPv6 (Default Port)",
-		dbType: "mysql",
-		dbHost: "::1",
-		connStrValues: []string {"tcp(::1)"},
+	{
+		name:          "MySQL IPv6 (Default Port)",
+		dbType:        "mysql",
+		dbHost:        "::1",
+		connStrValues: []string{"tcp(::1)"},
 	},
-	sqlStoreTest {
-		name: "Postgres IPv6 (Default Port)",
-		dbType: "postgres",
-		dbHost: "::1",
-		connStrValues: []string {"host=::1", "port=5432"},
+	{
+		name:          "Postgres IPv6 (Default Port)",
+		dbType:        "postgres",
+		dbHost:        "::1",
+		connStrValues: []string{"host=::1", "port=5432"},
 	},
 }
 
@@ -97,5 +97,5 @@ func makeSqlStoreTestConfig(dbType string, host string) *setting.Cfg {
 	sec.NewKey("name", "test_db")
 	sec.NewKey("password", "pass")
 
-	return cfg;
+	return cfg
 }
