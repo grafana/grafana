@@ -160,15 +160,18 @@ Content-Type: application/json
 }
 ```
 
-## Update Annotation
+## Replace Annotation
 
 `PUT /api/annotations/:id`
+
+Replaces the annotation that matches the specified id.
 
 **Example Request**:
 
 ```json
 PUT /api/annotations/1141 HTTP/1.1
 Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 Content-Type: application/json
 
 {
@@ -177,6 +180,28 @@ Content-Type: application/json
   "timeEnd":1507180805056,
   "text":"Annotation Description",
   "tags":["tag3","tag4","tag5"]
+}
+```
+
+## Update Annotation
+
+`PATCH /api/annotations/:id`
+
+Updates one or more properties of an annotation that matches the specified id.
+
+**Example Request**:
+
+```json
+PATCH /api/annotations/1145 HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Content-Type: application/json
+
+{
+  "time":1507037197000,
+  "timeEnd":1507180807095,
+  "text":"New Annotation Description",
+  "tags":["tag6","tag7","tag8"]
 }
 ```
 
