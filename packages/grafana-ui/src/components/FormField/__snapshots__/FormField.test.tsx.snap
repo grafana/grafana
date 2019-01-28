@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="form-field"
+>
+  <Component
+    width={11}
+  >
+    Test
+  </Component>
+  <input
+    className="gf-form-input width-12"
+    onChange={[MockFunction]}
+    type="text"
+    value={10}
+  />
+</div>
+`;

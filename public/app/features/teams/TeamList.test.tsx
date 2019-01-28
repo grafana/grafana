@@ -6,7 +6,14 @@ import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration'
+      },
+      node: {
+        text: 'Team List'
+      }
+    } as NavModel,
     teams: [] as Team[],
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),

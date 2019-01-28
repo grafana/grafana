@@ -1,4 +1,5 @@
 import { TextMatch } from 'app/types/explore';
+import xss from 'xss';
 
 /**
  * Adapt findMatchesInText for react-highlight-words findChunks handler.
@@ -22,7 +23,7 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
   }
   const matches = [];
   const cleaned = cleanNeedle(needle);
-  let regexp;
+  let regexp: RegExp;
   try {
     regexp = new RegExp(`(?:${cleaned})`, 'g');
   } catch (error) {
@@ -41,4 +42,29 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
     return '';
   });
   return matches;
+}
+
+const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
+  acc[element] = xss.whiteList[element].concat(['class', 'style']);
+  return acc;
+}, {});
+
+const sanitizeXSS = new xss.FilterXSS({
+  whiteList: XSSWL
+});
+
+/**
+ * Returns string safe from XSS attacks.
+ *
+ * Even though we allow the style-attribute, there's still default filtering applied to it
+ * Info: https://github.com/leizongmin/js-xss#customize-css-filter
+ * Whitelist: https://github.com/leizongmin/js-css-filter/blob/master/lib/default.js
+ */
+export function sanitize (unsanitizedString: string): string {
+  try {
+    return sanitizeXSS.process(unsanitizedString);
+  } catch (error) {
+    console.log('String could not be sanitized', unsanitizedString);
+    return unsanitizedString;
+  }
 }

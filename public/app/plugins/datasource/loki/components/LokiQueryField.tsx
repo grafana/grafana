@@ -1,16 +1,21 @@
+// Libraries
 import React from 'react';
 import Cascader from 'rc-cascader';
 import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
-import { TypeaheadOutput } from 'app/types/explore';
+// Components
+import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 
+// Utils & Services
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { DataQuery } from 'app/types';
+
+// Types
+import { LokiQuery } from '../types';
+import { TypeaheadOutput } from 'app/types/explore';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -63,10 +68,10 @@ interface LokiQueryFieldProps {
   error?: string | JSX.Element;
   hint?: any;
   history?: any[];
-  initialQuery?: DataQuery;
+  initialQuery?: LokiQuery;
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
-  onQueryChange?: (value: DataQuery, override?: boolean) => void;
+  onQueryChange?: (value: LokiQuery, override?: boolean) => void;
 }
 
 interface LokiQueryFieldState {

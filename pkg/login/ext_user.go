@@ -11,6 +11,10 @@ func init() {
 	bus.AddHandler("auth", UpsertUser)
 }
 
+var (
+	logger = log.New("login.ext_user")
+)
+
 func UpsertUser(cmd *m.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
@@ -135,7 +139,7 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 		return nil
 	}
 
-	log.Debug2("Syncing user info", "id", user.Id, "update", updateCmd)
+	logger.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
 	return bus.Dispatch(updateCmd)
 }
 

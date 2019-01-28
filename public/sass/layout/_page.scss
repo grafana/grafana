@@ -20,7 +20,23 @@
   }
 }
 
+.page-scrollbar-wrapper {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.page-scrollbar-content {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  width: 100%;
+}
+
 .page-container {
+  flex-grow: 1;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
   padding-left: $spacer*2;
@@ -78,7 +94,6 @@
 
 .page-body {
   padding-top: $spacer*2;
-  min-height: 500px;
 }
 
 .page-heading {

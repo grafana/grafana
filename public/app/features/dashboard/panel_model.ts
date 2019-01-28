@@ -1,7 +1,10 @@
-import { Emitter } from 'app/core/utils/emitter';
+// Libraries
 import _ from 'lodash';
+
+// Types
+import { Emitter } from 'app/core/utils/emitter';
 import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
-import { DataQuery } from 'app/types';
+import { DataQuery } from '@grafana/ui/src/types';
 
 export interface GridPos {
   x: number;
@@ -52,7 +55,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
-  nullPointMode: true,
   cachedPluginOptions: true,
   transparent: true,
 };
@@ -60,7 +62,7 @@ const mustKeepProps: { [str: string]: boolean } = {
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   datasource: null,
-  targets: [{}],
+  targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
 };
@@ -81,7 +83,7 @@ export class PanelModel {
   collapsed?: boolean;
   panels?: any;
   soloMode?: boolean;
-  targets: any[];
+  targets: DataQuery[];
   datasource: string;
   thresholds?: any;
 
@@ -116,6 +118,18 @@ export class PanelModel {
 
     // defaults
     _.defaultsDeep(this, _.cloneDeep(defaults));
+    // queries must have refId
+    this.ensureQueryIds();
+  }
+
+  ensureQueryIds() {
+    if (this.targets) {
+      for (const query of this.targets) {
+        if (!query.refId) {
+          query.refId = this.getNextQueryLetter();
+        }
+      }
+    }
   }
 
   getOptions(panelDefaults) {
@@ -241,9 +255,7 @@ export class PanelModel {
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = this.getNextQueryLetter();
-    query.isNew = true;
-
-    this.targets.push(query);
+    this.targets.push(query as DataQuery);
   }
 
   getNextQueryLetter(): string {

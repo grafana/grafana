@@ -42,9 +42,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
       Object {
         "display": "none",
         "height": 6,
-        "opacity": 0,
         "position": "absolute",
-        "transition": "opacity 200ms",
       }
     }
   >
@@ -64,9 +62,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     style={
       Object {
         "display": "none",
-        "opacity": 0,
         "position": "absolute",
-        "transition": "opacity 200ms",
         "width": 6,
       }
     }

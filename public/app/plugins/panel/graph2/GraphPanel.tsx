@@ -1,7 +1,6 @@
 // Libraries
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
-import { colors } from '@grafana/ui';
 
 // Utils
 import { processTimeSeries } from '@grafana/ui/src/utils';
@@ -23,7 +22,6 @@ export class GraphPanel extends PureComponent<Props> {
     const vmSeries = processTimeSeries({
       timeSeries: timeSeries,
       nullValueMode: NullValueMode.Ignore,
-      colorPalette: colors,
     });
 
     return (

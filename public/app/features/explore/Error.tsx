@@ -1,10 +1,10 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
 interface Props {
   message: any;
 }
 
-export const Alert: SFC<Props> = props => {
+export const Alert: FC<Props> = props => {
   const { message } = props;
   return (
     <div className="gf-form-group section">
