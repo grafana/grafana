@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/provisioning/alert_notifications"
+	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,8 +26,8 @@ func (ps *ProvisioningService) Init() error {
 		return fmt.Errorf("Datasource provisioning error: %v", err)
 	}
 
-	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "alert_notifications")
-	if err := alert_notifications.Provision(alertNotificationsPath); err != nil {
+	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "notifiers")
+	if err := notifiers.Provision(alertNotificationsPath); err != nil {
 		return fmt.Errorf("Alert notification provisioning error: %v", err)
 	}
 

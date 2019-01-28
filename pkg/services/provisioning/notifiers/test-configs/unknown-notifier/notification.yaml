@@ -1,4 +1,4 @@
-alert_notifications:
+notifiers:
   - name: unknown-notifier
     type: nonexisting
     uid: notifier1

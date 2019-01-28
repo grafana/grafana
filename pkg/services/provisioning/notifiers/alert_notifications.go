@@ -1,4 +1,4 @@
-package alert_notifications
+package notifiers
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ var (
 )
 
 func Provision(configDirectory string) error {
-	dc := newNotificationProvisioner(log.New("provisioning.alert_notifications"))
+	dc := newNotificationProvisioner(log.New("provisioning.notifiers"))
 	return dc.applyChanges(configDirectory)
 }
 
@@ -54,6 +54,7 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 		} else if notification.OrgId < 0 {
 			notification.OrgId = 1
 		}
+
 		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.Uid, OrgId: notification.OrgId}
 
 		if err := bus.Dispatch(getNotification); err != nil {
@@ -103,6 +104,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,
 			}
+
 			if err := bus.Dispatch(insertCmd); err != nil {
 				return err
 			}
@@ -119,6 +121,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,
 			}
+
 			if err := bus.Dispatch(updateCmd); err != nil {
 				return err
 			}

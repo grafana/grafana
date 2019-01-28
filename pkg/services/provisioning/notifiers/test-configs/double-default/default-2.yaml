@@ -1,4 +1,4 @@
-alert_notifications:
+notifiers:
   - name: second-default
     type: email
     uid: notifier2

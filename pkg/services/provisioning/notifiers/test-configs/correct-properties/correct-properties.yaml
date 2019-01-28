@@ -1,4 +1,4 @@
-alert_notifications:
+notifiers:
   - name: default-slack-notification
     type: slack
     uid: notifier1
@@ -29,7 +29,7 @@ alert_notifications:
     uid: "notifier4"
     settings:
       addresses: example@exmaple.com
-delete_alert_notifications:
+delete_notifiers:
   - name: default-slack-notification
     org_id: 2
     uid: notifier1

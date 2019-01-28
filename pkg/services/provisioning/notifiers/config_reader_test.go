@@ -1,4 +1,4 @@
-package alert_notifications
+package notifiers
 
 import (
 	"testing"
@@ -35,11 +35,13 @@ func TestNotificationAsConfig(t *testing.T) {
 			Name:    "slack",
 			Factory: notifiers.NewSlackNotifier,
 		})
+
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
 			Type:    "email",
 			Name:    "email",
 			Factory: notifiers.NewEmailNotifier,
 		})
+
 		Convey("Can read correct properties", func() {
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvifer.readConfig(correct_properties)
@@ -264,6 +266,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(errString, ShouldContainSubstring, "Added alert notification item 1 in configuration doesn't contain required field name")
 			So(errString, ShouldContainSubstring, "Added alert notification item 2 in configuration doesn't contain required field uid")
 		})
+
 		Convey("Empty yaml file", func() {
 			Convey("should have not changed repo", func() {
 				dc := newNotificationProvisioner(logger)
@@ -277,11 +280,13 @@ func TestNotificationAsConfig(t *testing.T) {
 				So(notificationsQuery.Result, ShouldBeEmpty)
 			})
 		})
+
 		Convey("Broken yaml should return error", func() {
 			reader := &configReader{log: log.New("test logger")}
 			_, err := reader.readConfig(brokenYaml)
 			So(err, ShouldNotBeNil)
 		})
+
 		Convey("Skip invalid directory", func() {
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvifer.readConfig(emptyFolder)
@@ -290,6 +295,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			}
 			So(len(cfg), ShouldEqual, 0)
 		})
+
 		Convey("Unknown notifier should return error", func() {
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			_, err := cfgProvifer.readConfig(unknownNotifier)
@@ -303,6 +309,5 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "Alert validation error: Could not find url property in settings")
 		})
-
 	})
 }

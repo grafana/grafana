@@ -1,4 +1,4 @@
-package alert_notifications
+package notifiers
 
 import (
 	"fmt"
@@ -94,8 +94,8 @@ func checkOrgIdAndOrgName(notifications []*notificationsAsConfig) {
 			}
 		}
 	}
-
 }
+
 func validateRequiredField(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		var errStrings []string
@@ -106,6 +106,7 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 					fmt.Sprintf("Added alert notification item %d in configuration doesn't contain required field name", index+1),
 				)
 			}
+
 			if notification.Uid == "" {
 				errStrings = append(
 					errStrings,
@@ -121,6 +122,7 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 					fmt.Sprintf("Deleted alert notification item %d in configuration doesn't contain required field name", index+1),
 				)
 			}
+
 			if notification.Uid == "" {
 				errStrings = append(
 					errStrings,
@@ -128,10 +130,12 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 				)
 			}
 		}
+
 		if len(errStrings) != 0 {
 			return fmt.Errorf(strings.Join(errStrings, "\n"))
 		}
 	}
+
 	return nil
 }
 
@@ -148,6 +152,7 @@ func validateNotifications(notifications []*notificationsAsConfig) error {
 				Settings: notification.SettingsToJson(),
 				Type:     notification.Type,
 			})
+
 			if err != nil {
 				return err
 			}

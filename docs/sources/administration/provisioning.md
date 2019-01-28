@@ -234,11 +234,11 @@ By default Grafana will delete dashboards in the database if the file is removed
 
 ## Alert Notification Channels
 
-Alert Notification Channels can be provisionned by adding one or more yaml config files in the [`provisioning/alert_notifications`](/installation/configuration/#provisioning) directory.
+Alert Notification Channels can be provisionned by adding one or more yaml config files in the [`provisioning/notifiers`](/installation/configuration/#provisioning) directory.
 
 Each config file can contain the following top-level fields:
-- `alert_notifications`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
-- `delete_alert_notifications`, a list of alert notifications to be deleted before before inserting/updating those in the `alert_notifications` list.
+- `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
+- `delete_notifiers`, a list of alert notifications to be deleted before before inserting/updating those in the `notifiers` list.
 
 Provisionning looks up alert notifications by name, and will update any existing notification with the provided name.
 
@@ -264,7 +264,7 @@ By default, exporting a dashboard as JSON will use a sequential identifier to re
 ### Example Alert Notification Channels Config File
 
 ```yaml
-alert_notifications:
+notifiers:
   - name: notification-channel-1
     type: slack
     uid: notifier1
@@ -281,7 +281,7 @@ alert_notifications:
       uploadImage: true
       url: https://slack.com
 
-delete_alert_notifications:
+delete_notifiers:
   - name: notification-channel-1
     uid: notifier1
     # either

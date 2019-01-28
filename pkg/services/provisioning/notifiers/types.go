@@ -1,10 +1,10 @@
-package alert_notifications
+package notifiers
 
 import "github.com/grafana/grafana/pkg/components/simplejson"
 
 type notificationsAsConfig struct {
-	Notifications       []*notificationFromConfig   `json:"alert_notifications" yaml:"alert_notifications"`
-	DeleteNotifications []*deleteNotificationConfig `json:"delete_alert_notifications" yaml:"delete_alert_notifications"`
+	Notifications       []*notificationFromConfig   `json:"notifiers" yaml:"notifiers"`
+	DeleteNotifications []*deleteNotificationConfig `json:"delete_notifiers" yaml:"delete_notifiers"`
 }
 
 type deleteNotificationConfig struct {

@@ -1,4 +1,4 @@
-alert_notifications:
+notifiers:
   - name: notification-channel-1
      type: slack
     org_id: 2

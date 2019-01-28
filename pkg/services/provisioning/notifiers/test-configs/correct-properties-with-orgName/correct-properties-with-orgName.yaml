@@ -1,4 +1,4 @@
-alert_notifications:
+notifiers:
   - name: default-notification-create
     type: email
     uid: notifier2
@@ -6,7 +6,7 @@ alert_notifications:
       addresses: example@example.com
     org_name: Main Org. 2
     is_default: false  
-delete_alert_notifications:
+delete_notifiers:
   - name: default-notification-delete
     org_name: Main Org. 2
     uid: notifier2

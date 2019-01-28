@@ -1,4 +1,4 @@
-alert_notifications:  
+notifiers:  
   - name: channel1
     type: email
     uid: notifier1
