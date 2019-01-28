@@ -1,9 +1,11 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
-import { SemiDarkOrange } from '@grafana/ui';
+import { getColorDefinitionByName } from '@grafana/ui';
 
 describe('when rendering table', () => {
+  const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
+
   describe('given 13 columns', () => {
     const table = new TableModel();
     table.columns = [

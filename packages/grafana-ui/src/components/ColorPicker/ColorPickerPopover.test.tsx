@@ -1,14 +1,17 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { ColorsPalette, BasicGreen, BasicBlue } from '../../utils/namedColorsPalette';
+import { getColorDefinitionByName, getNamedColorPalette } from '../../utils/namedColorsPalette';
 import { ColorSwatch } from './NamedColorsGroup';
 import { flatten } from 'lodash';
 import { GrafanaTheme } from '../../types';
 
-const allColors = flatten(Array.from(ColorsPalette.values()));
+const allColors = flatten(Array.from(getNamedColorPalette().values()));
 
 describe('ColorPickerPopover', () => {
+  const BasicGreen = getColorDefinitionByName('green');
+  const BasicBlue = getColorDefinitionByName('blue');
+
   describe('rendering', () => {
     it('should render provided color as selected if color provided by name', () => {
       const wrapper = mount(<ColorPickerPopover color={BasicGreen.name} onChange={() => {}} />);

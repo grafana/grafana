@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color, ColorsPalette } from '../../utils/namedColorsPalette';
+import { Color, getNamedColorPalette } from '../../utils/namedColorsPalette';
 import { Themeable } from '../../types/index';
 import NamedColorsGroup from './NamedColorsGroup';
 
@@ -10,7 +10,7 @@ interface NamedColorsPaletteProps extends Themeable {
 
 export const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPaletteProps) => {
   const swatches: JSX.Element[] = [];
-  ColorsPalette.forEach((colors, hue) => {
+  getNamedColorPalette().forEach((colors, hue) => {
     swatches.push(
       <NamedColorsGroup
         key={hue}
@@ -37,4 +37,3 @@ export const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPalett
     </div>
   );
 };
-

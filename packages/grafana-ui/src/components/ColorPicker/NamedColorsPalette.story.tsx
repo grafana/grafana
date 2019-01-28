@@ -1,10 +1,14 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { getColorName, BasicGreen, BasicBlue, LightBlue } from '../../utils/namedColorsPalette';
+import { getColorName, getColorDefinitionByName } from '../../utils/namedColorsPalette';
 import { withKnobs, select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
+
+const BasicGreen = getColorDefinitionByName('green');
+const BasicBlue = getColorDefinitionByName('blue');
+const LightBlue = getColorDefinitionByName('light-blue');
 
 const NamedColorsPaletteStories = storiesOf('UI/ColorPicker/Palettes/NamedColorsPalette', module);
 

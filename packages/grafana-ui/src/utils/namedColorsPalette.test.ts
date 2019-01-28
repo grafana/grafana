@@ -2,12 +2,14 @@ import {
   getColorName,
   getColorDefinition,
   getColorByName,
-  SemiDarkBlue,
   getColorFromHexRgbOrName,
+  getColorDefinitionByName,
 } from './namedColorsPalette';
 import { GrafanaTheme } from '../types/index';
 
 describe('colors', () => {
+  const SemiDarkBlue = getColorDefinitionByName('semi-dark-blue');
+
   describe('getColorDefinition', () => {
     it('returns undefined for unknown hex', () => {
       expect(getColorDefinition('#ff0000', GrafanaTheme.Light)).toBeUndefined();

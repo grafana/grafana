@@ -2,10 +2,13 @@ import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { ColorSwatch } from './NamedColorsGroup';
-import { BasicGreen } from '../../utils';
+import { getColorDefinitionByName } from '../../utils';
 import { GrafanaTheme } from '../../types';
 
 describe('NamedColorsPalette', () => {
+
+  const BasicGreen = getColorDefinitionByName('green');
+
   describe('theme support for named colors', () => {
     let wrapper: ReactWrapper, selectedSwatch;
 
