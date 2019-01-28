@@ -12,6 +12,7 @@ const initialState: DataSourcesState = {
   dataSourceTypes: [] as Plugin[],
   dataSourceTypeSearchQuery: '',
   hasFetched: false,
+  isLoadingDataSources: false,
   dataSourceMeta: {} as Plugin,
 };
 
@@ -30,7 +31,10 @@ export const dataSourcesReducer = (state = initialState, action: Action): DataSo
       return { ...state, layoutMode: action.payload };
 
     case ActionTypes.LoadDataSourceTypes:
-      return { ...state, dataSourceTypes: action.payload };
+      return { ...state, dataSourceTypes: [], isLoadingDataSources: true };
+
+    case ActionTypes.LoadedDataSourceTypes:
+      return { ...state, dataSourceTypes: action.payload, isLoadingDataSources: false };
 
     case ActionTypes.SetDataSourceTypeSearchQuery:
       return { ...state, dataSourceTypeSearchQuery: action.payload };
