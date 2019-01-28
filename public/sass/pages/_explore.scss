@@ -1,3 +1,15 @@
+.icon-margin-right {
+  margin-right: 0.25em;
+}
+
+.icon-margin-left {
+  margin-left: 0.25em;
+}
+
+.run-icon {
+  transform: rotate(90deg);
+}
+
 .timepicker {
   display: flex;
 }
@@ -14,19 +26,19 @@
 }
 
 .sidemenu-open {
-  .toolbar-header {
+  .explore-toolbar-header {
     padding: 0;
     margin-left: 0;
   }
 
-  .toolbar-header-title {
+  .explore-toolbar-header-title {
     .navbar-page-btn {
       padding-left: 0;
     }
   }
 }
 
-.toolbar {
+.explore-toolbar {
   background: inherit;
   display: flex;
   flex-flow: row wrap;
@@ -39,27 +51,27 @@
   transition-property: box-shadow, border-bottom;
 }
 
-.toolbar-item {
+.explore-toolbar-item {
   position: relative;
   align-self: center;
 }
 
-.toolbar.splitted {
-  .toolbar-item {
+.explore-toolbar.splitted {
+  .explore-toolbar-item {
     flex: 1 1 100%;
   }
 
-  .toolbar-content-item:first-child {
+  .explore-toolbar-content-item:first-child {
     padding-left: 0;
     margin-right: auto;
   }
 }
 
-.toolbar-item:last-child {
+.explore-toolbar-item:last-child {
   flex: auto;
 }
 
-.toolbar-header {
+.explore-toolbar-header {
   display: flex;
   flex: 1 1 0;
   flex-flow: row nowrap;
@@ -70,12 +82,12 @@
   margin-left: $panel-margin * 3;
 }
 
-.toolbar-header {
+.explore-toolbar-header {
   justify-content: space-between;
   align-items: center;
 }
 
-.toolbar-header-title {
+.explore-toolbar-header-title {
   color: darken($link-color, 5%);
 
   .navbar-page-btn {
@@ -89,28 +101,28 @@
   }
 }
 
-.toolbar-header-close {
+.explore-toolbar-header-close {
   margin-left: auto;
 }
 
-.toolbar-content {
+.explore-toolbar-content {
   display: flex;
   flex-flow: row wrap;
   align-items: center;
   justify-content: space-between;
 }
 
-.toolbar-content-item {
+.explore-toolbar-content-item {
   padding: 10px 2px;
 }
 
-.toolbar-content-item:first-child {
+.explore-toolbar-content-item:first-child {
   padding-left: $dashboard-padding;
   margin-right: auto;
 }
 
 @media only screen and (max-width: 1545px) {
-  .toolbar.splitted {
+  .explore-toolbar.splitted {
     .timepicker-rangestring {
       display: none;
     }
@@ -124,25 +136,25 @@
     }
   }
 
-  .toolbar-content {
+  .explore-toolbar-content {
     justify-content: flex-start;
   }
 
-  .toolbar.splitted {
-    .toolbar-content-item {
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
       padding: 2px 0;
       margin: 0;
     }
   }
 
-  .toolbar-content-item {
+  .explore-toolbar-content-item {
     padding: 2px 2px;
   }
 }
 
 @media only screen and (max-width: 803px) {
   .sidemenu-open {
-    .toolbar-header-title {
+    .explore-toolbar-header-title {
       .navbar-page-btn {
         padding-left: 0;
         margin-left: 0;
@@ -150,7 +162,7 @@
     }
   }
 
-  .toolbar-header-title {
+  .explore-toolbar-header-title {
     .navbar-page-btn {
       padding-left: 0;
       margin-left: $dashboard-padding;
@@ -163,7 +175,7 @@
 }
 
 @media only screen and (max-width: 702px) {
-  .toolbar-content-item:first-child {
+  .explore-toolbar-content-item:first-child {
     padding-left: 2px;
     margin-right: 0;
   }
@@ -171,7 +183,7 @@
 
 @media only screen and (max-width: 544px) {
   .sidemenu-open {
-    .toolbar-header-title {
+    .explore-toolbar-header-title {
       .navbar-page-btn {
         padding-left: 0;
         margin-left: $dashboard-padding;
@@ -179,7 +191,7 @@
     }
   }
 
-  .toolbar-header-title {
+  .explore-toolbar-header-title {
     .navbar-page-btn {
       padding-left: 0;
       margin-left: $dashboard-padding;

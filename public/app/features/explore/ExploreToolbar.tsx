@@ -9,19 +9,30 @@ import { StoreState } from 'app/types/store';
 import { changeDatasource, clearQueries, splitClose, runQueries, splitOpen } from './state/actions';
 import TimePicker from './TimePicker';
 
+enum IconSide {
+  left = 'left',
+  right = 'right',
+}
+
 const createResponsiveButton = (options: {
   splitted: boolean;
   title: string;
   onClick: () => void;
   buttonClassName?: string;
   iconClassName?: string;
+  iconSide?: IconSide;
 }) => {
-  const { title, onClick, buttonClassName, iconClassName, splitted } = options;
+  const defaultOptions = {
+    iconSide: IconSide.left,
+  };
+  const props = { ...options, defaultOptions };
+  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide } = props;
 
   return (
     <button className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`} onClick={onClick}>
+      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName} icon-margin-right`} /> : null}
       <span className="btn-title">{!splitted ? title : ''}</span>
-      {iconClassName ? <i className={iconClassName} /> : null}
+      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName} icon-margin-left`} /> : null}
     </button>
   );
 };
@@ -81,10 +92,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     } = this.props;
 
     return (
-      <div className={splitted ? 'toolbar splitted' : 'toolbar'}>
-        <div className="toolbar-item">
-          <div className="toolbar-header">
-            <div className="toolbar-header-title">
+      <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
+        <div className="explore-toolbar-item">
+          <div className="explore-toolbar-header">
+            <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
                 <a className="navbar-page-btn">
                   <i className="fa fa-rocket fa-fw" />
@@ -92,19 +103,19 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 </a>
               )}
             </div>
-            <div className="toolbar-header-close">
+            <div className="explore-toolbar-header-close">
               {exploreId === 'right' && (
                 <a onClick={this.props.closeSplit}>
-                  <i className="fa fa-window-close fa-fw" />
+                  <i className="fa fa-times fa-fw" />
                 </a>
               )}
             </div>
           </div>
         </div>
-        <div className="toolbar-item">
-          <div className="toolbar-content">
+        <div className="explore-toolbar-item">
+          <div className="explore-toolbar-content">
             {!datasourceMissing ? (
-              <div className="toolbar-content-item">
+              <div className="explore-toolbar-content-item">
                 <div className="datasource-picker">
                   <DataSourcePicker
                     onChange={this.onChangeDatasource}
@@ -115,30 +126,32 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </div>
             ) : null}
             {exploreId === 'left' && !splitted ? (
-              <div className="toolbar-content-item">
+              <div className="explore-toolbar-content-item">
                 {createResponsiveButton({
                   splitted,
                   title: 'Split',
                   onClick: this.props.split,
-                  iconClassName: 'fa fa-fw fa-columns',
+                  iconClassName: 'fa fa-fw fa-columns icon-margin-right',
+                  iconSide: IconSide.left,
                 })}
               </div>
             ) : null}
-            <div className="toolbar-content-item timepicker">
+            <div className="explore-toolbar-content-item timepicker">
               <TimePicker ref={timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
             </div>
-            <div className="toolbar-content-item">
+            <div className="explore-toolbar-content-item">
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClearAll}>
                 Clear All
               </button>
             </div>
-            <div className="toolbar-content-item">
+            <div className="explore-toolbar-content-item">
               {createResponsiveButton({
                 splitted,
                 title: 'Run Query',
                 onClick: this.onRunQuery,
                 buttonClassName: 'navbar-button--primary',
                 iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
+                iconSide: IconSide.right,
               })}
             </div>
           </div>
