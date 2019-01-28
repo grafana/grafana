@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import _ from 'lodash';
 
 import kbn from 'app/core/utils/kbn';
@@ -14,7 +14,7 @@ export interface Props {
   usedAlignmentPeriod: string;
 }
 
-export const AlignmentPeriods: SFC<Props> = ({
+export const AlignmentPeriods: FC<Props> = ({
   alignmentPeriod,
   templateSrv,
   onChange,

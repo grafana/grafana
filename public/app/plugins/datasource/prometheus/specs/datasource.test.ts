@@ -577,6 +577,79 @@ describe('PrometheusDatasource', () => {
         expect(results[0].time).toEqual(1);
       });
     });
+
+    describe('step parameter', () => {
+      beforeEach(() => {
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      });
+
+      it('should use default step for short range if no interval is given', () => {
+        const query = {
+          ...options,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ctx.ds.annotationQuery(query);
+        const req = backendSrv.datasourceRequest.mock.calls[0][0];
+        expect(req.url).toContain('step=60');
+      });
+
+      it('should use custom step for short range', () => {
+        const annotation = {
+          ...options.annotation,
+          step: '10s',
+        };
+        const query = {
+          ...options,
+          annotation,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ctx.ds.annotationQuery(query);
+        const req = backendSrv.datasourceRequest.mock.calls[0][0];
+        expect(req.url).toContain('step=10');
+      });
+
+      it('should use custom step for short range', () => {
+        const annotation = {
+          ...options.annotation,
+          step: '10s',
+        };
+        const query = {
+          ...options,
+          annotation,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ctx.ds.annotationQuery(query);
+        const req = backendSrv.datasourceRequest.mock.calls[0][0];
+        expect(req.url).toContain('step=10');
+      });
+
+      it('should use dynamic step on long ranges if no option was given', () => {
+        const query = {
+          ...options,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ hours: 24 * 30, seconds: 63 }),
+          },
+        };
+        ctx.ds.annotationQuery(query);
+        const req = backendSrv.datasourceRequest.mock.calls[0][0];
+        // Range in seconds: (to - from) / 1000
+        // Max_datapoints: 11000
+        // Step: range / max_datapoints
+        const step = 236;
+        expect(req.url).toContain(`step=${step}`);
+      });
+    });
   });
 
   describe('When resultFormat is table and instant = true', () => {

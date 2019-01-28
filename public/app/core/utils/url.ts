@@ -11,6 +11,16 @@ export function renderUrl(path: string, query: UrlQueryMap | undefined): string 
   return path;
 }
 
+export function encodeURIComponentAsAngularJS(val, pctEncodeSpaces) {
+  return encodeURIComponent(val).
+             replace(/%40/gi, '@').
+             replace(/%3A/gi, ':').
+             replace(/%24/g, '$').
+             replace(/%2C/gi, ',').
+             replace(/%3B/gi, ';').
+             replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+}
+
 export function toUrlParams(a) {
   const s = [];
   const rbracket = /\[\]$/;
@@ -22,9 +32,9 @@ export function toUrlParams(a) {
   const add = (k, v) => {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
     if (typeof v !== 'boolean') {
-      s[s.length] = encodeURIComponent(k) + '=' + encodeURIComponent(v);
+      s[s.length] = encodeURIComponentAsAngularJS(k, true) + '=' + encodeURIComponentAsAngularJS(v, true);
     } else {
-      s[s.length] = encodeURIComponent(k);
+      s[s.length] = encodeURIComponentAsAngularJS(k, true);
     }
   };
 

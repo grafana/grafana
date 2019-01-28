@@ -81,20 +81,9 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
-      - run: 'go get -u github.com/alecthomas/gometalinter'
-      - run: 'go get -u github.com/tsenart/deadcode'
-      - run: 'go get -u github.com/jgautheron/goconst/cmd/goconst'
-      - run: 'go get -u github.com/gordonklaus/ineffassign'
-      - run: 'go get -u honnef.co/go/tools/cmd/megacheck'
-      - run: 'go get -u github.com/opennota/check/cmd/structcheck'
-      - run: 'go get -u github.com/mdempsky/unconvert'
-      - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
-          name: run linters
-          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=goconst --enable=gofmt --enable=ineffassign --enable=megacheck --enable=structcheck --enable=unconvert --enable=varcheck ./...'
-      - run:
-          name: run go vet
-          command: 'go vet ./pkg/...'
+          name: Gometalinter tests
+          command: './scripts/gometalinter.sh'
 
   test-frontend:
     docker:
@@ -323,7 +312,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.1.0
+      - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - attach_workspace:
           at: .
@@ -346,7 +335,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.1.0
+    - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - attach_workspace:
          at: .
@@ -367,18 +356,18 @@ jobs:
           command: './scripts/build/publish.sh --enterprise'
       - run:
           name: Load GPG private key
-          comand: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/load-signing-key.sh'
       - run:
           name: Update Debian repository
-          command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
       - run:
           name: Update RPM repository
-          command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
 
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.1.0
+      - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - attach_workspace:
           at: .
@@ -408,7 +397,7 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.1.0
+      - image: grafana/grafana-ci-deploy:1.2.0
     steps:
       - checkout
       - attach_workspace:
@@ -430,13 +419,13 @@ jobs:
           command: './scripts/build/publish.sh'
       - run:
           name: Load GPG private key
-          comand: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/load-signing-key.sh'
       - run:
           name: Update Debian repository
-          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
       - run:
           name: Update RPM repository
-          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG"'
+          command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
 
 workflows:
   version: 2

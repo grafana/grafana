@@ -6,7 +6,14 @@ import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration'
+      },
+      node: {
+        text: 'Plugins'
+      }
+    } as NavModel,
     plugins: [] as Plugin[],
     searchQuery: '',
     setPluginsSearchQuery: jest.fn(),

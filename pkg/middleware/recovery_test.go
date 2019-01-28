@@ -4,13 +4,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	ms "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
@@ -64,10 +63,10 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
 
-		sc.m.Use(GetContextHandler())
+		sc.userAuthTokenService = newFakeUserAuthTokenService()
+		sc.m.Use(GetContextHandler(sc.userAuthTokenService))
 		// mock out gc goroutine
 		session.StartSessionGC = func() {}
-		sc.m.Use(Sessioner(&ms.Options{}, 0))
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 

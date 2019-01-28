@@ -51,7 +51,7 @@ func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error
 func saveProvionedData(sess *DBSession, cmd *models.DashboardProvisioning, dashboard *models.Dashboard) error {
 	result := &models.DashboardProvisioning{}
 
-	exist, err := sess.Where("dashboard_id=?", dashboard.Id).Get(result)
+	exist, err := sess.Where("dashboard_id=? AND name = ?", dashboard.Id, cmd.Name).Get(result)
 	if err != nil {
 		return err
 	}
