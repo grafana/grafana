@@ -28,11 +28,7 @@
 * **Prometheus**: Query for annotation always uses 60s step regardless of dashboard range, fixes [#14795](https://github.com/grafana/grafana/issues/14795)
 
 ### Breaking changes
-* **Text Panel**: The text panel does no longer by default allow unsantizied HTML.
-* [#4117](https://github.com/grafana/grafana/issues/4117). This means that if you have text panels with scripts tags
-* they will no longer work as before. To enable unsafe javascript execution in text panels enable the settings
-* `disable_sanitize_html` under the section `[panels]` in your Grafana ini file, or set env variable
-* `GF_PANELS_DISABLE_SANITIZE_HTML=true`.
+* **Text Panel**: The text panel does no longer by default allow unsantizied HTML. [#4117](https://github.com/grafana/grafana/issues/4117). This means that if you have text panels with scripts tags they will no longer work as before. To enable unsafe javascript execution in text panels enable the settings `disable_sanitize_html` under the section `[panels]` in your Grafana ini file, or set env variable  `GF_PANELS_DISABLE_SANITIZE_HTML=true`.
 
 # 5.4.3 (2019-01-14)
 
