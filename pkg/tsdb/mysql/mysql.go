@@ -2,14 +2,10 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"crypto/tls"
-	"crypto/x509"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -37,42 +33,13 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		datasource.Database,
 	)
 
-	var tlsSkipVerify, tlsAuth, tlsAuthWithCACert bool
-	if datasource.JsonData != nil {
-		tlsAuth = datasource.JsonData.Get("tlsAuth").MustBool(false)
-		tlsAuthWithCACert = datasource.JsonData.Get("tlsAuthWithCACert").MustBool(false)
-		tlsSkipVerify = datasource.JsonData.Get("tlsSkipVerify").MustBool(false)
+	tlsConfig, err := datasource.GetTLSConfig()
+	if err != nil {
+		return nil, err
 	}
 
-	if tlsAuth || tlsAuthWithCACert {
-
-		secureJsonData := datasource.SecureJsonData.Decrypt()
-		tlsConfig := tls.Config{
-			InsecureSkipVerify: tlsSkipVerify,
-		}
-
-		if tlsAuthWithCACert && len(secureJsonData["tlsCACert"]) > 0 {
-
-			caPool := x509.NewCertPool()
-			if ok := caPool.AppendCertsFromPEM([]byte(secureJsonData["tlsCACert"])); !ok {
-				return nil, errors.New("Failed to parse TLS CA PEM certificate")
-			}
-
-			tlsConfig.RootCAs = caPool
-		}
-
-		if tlsAuth {
-			certs, err := tls.X509KeyPair([]byte(secureJsonData["tlsClientCert"]), []byte(secureJsonData["tlsClientKey"]))
-			if err != nil {
-				return nil, err
-			}
-			clientCert := make([]tls.Certificate, 0, 1)
-			clientCert = append(clientCert, certs)
-
-			tlsConfig.Certificates = clientCert
-		}
-
-		mysql.RegisterTLSConfig(datasource.Name, &tlsConfig)
+	if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
+		mysql.RegisterTLSConfig(datasource.Name, tlsConfig)
 		cnnstr += "&tls=" + datasource.Name
 	}
 
