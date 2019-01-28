@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
-// import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
