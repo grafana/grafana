@@ -132,11 +132,11 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       if (this.placeholdersBuffer.hasPlaceholders()) {
         change.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
       }
-      this.onChange(change);
+      this.onChange(change, true);
     }
   }
 
-  onChange = ({ value }) => {
+  onChange = ({ value }, invokeParentOnValueChanged?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
 
@@ -144,7 +144,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     this.setState({ value }, () => {
       if (documentChanged) {
         const textChanged = Plain.serialize(prevValue) !== Plain.serialize(value);
-        if (textChanged) {
+        if (textChanged && invokeParentOnValueChanged) {
           this.handleChangeValue();
         }
       }
@@ -288,8 +288,37 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       .focus();
   }
 
-  onKeyDown = (event, change) => {
+  handleEnterAndTabKey = change => {
     const { typeaheadIndex, suggestions } = this.state;
+    if (this.menuEl) {
+      // Dont blur input
+      event.preventDefault();
+      if (!suggestions || suggestions.length === 0) {
+        return undefined;
+      }
+
+      const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
+      const nextChange = this.applyTypeahead(change, suggestion);
+
+      const insertTextOperation = nextChange.operations.find(operation => operation.type === 'insert_text');
+      if (insertTextOperation) {
+        const suggestionText = insertTextOperation.text;
+        this.placeholdersBuffer.setNextPlaceholderValue(suggestionText);
+        if (this.placeholdersBuffer.hasPlaceholders()) {
+          nextChange.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
+        }
+      }
+
+      return true;
+    } else {
+      this.handleChangeValue();
+
+      return undefined;
+    }
+  };
+
+  onKeyDown = (event, change) => {
+    const { typeaheadIndex } = this.state;
 
     switch (event.key) {
       case 'Escape': {
@@ -312,27 +341,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       }
       case 'Enter':
       case 'Tab': {
-        if (this.menuEl) {
-          // Dont blur input
-          event.preventDefault();
-          if (!suggestions || suggestions.length === 0) {
-            return undefined;
-          }
-
-          const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
-          const nextChange = this.applyTypeahead(change, suggestion);
-
-          const insertTextOperation = nextChange.operations.find(operation => operation.type === 'insert_text');
-          if (insertTextOperation) {
-            const suggestionText = insertTextOperation.text;
-            this.placeholdersBuffer.setNextPlaceholderValue(suggestionText);
-            if (this.placeholdersBuffer.hasPlaceholders()) {
-              nextChange.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
-            }
-          }
-
-          return true;
-        }
+        return this.handleEnterAndTabKey(change);
         break;
       }
 
@@ -364,12 +373,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
   resetTypeahead = () => {
     if (this.mounted) {
-      this.setState({
-        suggestions: [],
-        typeaheadIndex: 0,
-        typeaheadPrefix: '',
-        typeaheadContext: null,
-      });
+      this.setState({ suggestions: [], typeaheadIndex: 0, typeaheadPrefix: '', typeaheadContext: null });
       this.resetTimer = null;
     }
   };
@@ -396,7 +400,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   onClickMenu = (item: CompletionItem) => {
     // Manually triggering change
     const change = this.applyTypeahead(this.state.value.change(), item);
-    this.onChange(change);
+    this.onChange(change, true);
   };
 
   updateMenu = () => {
