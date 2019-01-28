@@ -1,25 +1,63 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { ColorPicker } from '@grafana/ui';
-import { withInfo } from '@storybook/addon-info';
+import { withKnobs, boolean } from '@storybook/addon-knobs';
+import { SeriesColorPicker, ColorPicker } from './ColorPicker';
+import { action } from '@storybook/addon-actions';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { UseState } from '../../utils/storybook/UseState';
+import { getThemeKnob } from '../../utils/storybook/themeKnob';
 
-const CenteredStory: FunctionComponent<{}> = ({ children }) => {
-  return (
-    <div
-      style={{
-        height: '100vh  ',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {children}
-    </div>
-  );
+const getColorPickerKnobs = () => {
+  return {
+    selectedTheme: getThemeKnob(),
+    enableNamedColors: boolean('Enable named colors', false),
+  };
 };
 
-storiesOf('UI/ColorPicker', module)
-  .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
-  .add('default', withInfo({inline: true})(() => {
-    return <ColorPicker color="#ff0000" onChange={() => {}} />;
-  }));
+const ColorPickerStories = storiesOf('UI/ColorPicker/Pickers', module);
+
+ColorPickerStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
+
+ColorPickerStories.add('default', () => {
+  const { selectedTheme, enableNamedColors } = getColorPickerKnobs();
+  return (
+    <UseState initialState="#00ff00">
+      {(selectedColor, updateSelectedColor) => {
+        return (
+          <ColorPicker
+            enableNamedColors={enableNamedColors}
+            color={selectedColor}
+            onChange={color => {
+              action('Color changed')(color);
+              updateSelectedColor(color);
+            }}
+            theme={selectedTheme || undefined}
+          />
+        );
+      }}
+    </UseState>
+  );
+});
+
+ColorPickerStories.add('Series color picker', () => {
+  const { selectedTheme, enableNamedColors } = getColorPickerKnobs();
+
+  return (
+    <UseState initialState="#00ff00">
+      {(selectedColor, updateSelectedColor) => {
+        return (
+          <SeriesColorPicker
+            enableNamedColors={enableNamedColors}
+            yaxis={1}
+            onToggleAxis={() => {}}
+            color={selectedColor}
+            onChange={color => updateSelectedColor(color)}
+            theme={selectedTheme || undefined}
+          >
+            <div style={{ color: selectedColor, cursor: 'pointer' }}>Open color picker</div>
+          </SeriesColorPicker>
+        );
+      }}
+    </UseState>
+  );
+});

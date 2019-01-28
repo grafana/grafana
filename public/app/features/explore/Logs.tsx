@@ -4,7 +4,7 @@ import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange } from '@grafana/ui';
+import { RawTimeRange, Switch } from '@grafana/ui';
 import {
   LogsDedupDescription,
   LogsDedupStrategy,
@@ -20,7 +20,6 @@ import {
   calculateFieldStats,
 } from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
-import { Switch } from 'app/core/components/Switch/Switch';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';

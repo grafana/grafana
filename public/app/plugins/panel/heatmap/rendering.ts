@@ -8,6 +8,7 @@ import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
+import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -521,7 +522,6 @@ export class HeatmapRenderer {
     const maxValueAuto = this.data.cardStats.max;
     const maxValue = this.panel.color.max || maxValueAuto;
     const minValue = this.panel.color.min || 0;
-
     const colorScheme = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
@@ -662,7 +662,10 @@ export class HeatmapRenderer {
 
   getCardColor(d) {
     if (this.panel.color.mode === 'opacity') {
-      return this.panel.color.cardColor;
+      return getColorFromHexRgbOrName(
+        this.panel.color.cardColor,
+        contextSrv.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
+      );
     } else {
       return this.colorScale(d.count);
     }

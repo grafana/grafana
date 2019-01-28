@@ -84,7 +84,7 @@ export class FolderPermissions extends PureComponent<Props, State> {
         <div className="page-container page-body">
           <div className="page-action-bar">
             <h3 className="page-sub-heading">Folder Permissions</h3>
-            <Tooltip placement="auto" content={PermissionsInfo}>
+            <Tooltip placement="auto" content={<PermissionsInfo />}>
               <div className="page-sub-heading-icon">
                 <i className="gicon gicon-question gicon--has-hover" />
               </div>

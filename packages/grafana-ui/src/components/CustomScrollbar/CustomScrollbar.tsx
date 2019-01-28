@@ -9,6 +9,8 @@ interface Props {
   autoHideDuration?: number;
   autoMaxHeight?: string;
   hideTracksWhenNotNeeded?: boolean;
+  renderTrackHorizontal?: React.FunctionComponent<any>;
+  renderTrackVertical?: React.FunctionComponent<any>;
   scrollTop?: number;
   setScrollTop: (value: React.MouseEvent<HTMLElement>) => void;
   autoHeightMin?: number | string;
@@ -26,7 +28,7 @@ export class CustomScrollbar extends PureComponent<Props> {
     autoMaxHeight: '100%',
     hideTracksWhenNotNeeded: false,
     setScrollTop: () => {},
-    autoHeightMin: '0'
+    autoHeightMin: '0',
   };
 
   private ref: React.RefObject<Scrollbars>;
@@ -45,7 +47,7 @@ export class CustomScrollbar extends PureComponent<Props> {
       } else {
         ref.scrollTop(this.props.scrollTop);
       }
-   }
+    }
   }
 
   componentDidMount() {
@@ -57,7 +59,7 @@ export class CustomScrollbar extends PureComponent<Props> {
   }
 
   render() {
-    const { customClassName, children, autoMaxHeight } = this.props;
+    const { customClassName, children, autoMaxHeight, renderTrackHorizontal, renderTrackVertical } = this.props;
 
     return (
       <Scrollbars
@@ -67,8 +69,8 @@ export class CustomScrollbar extends PureComponent<Props> {
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoMaxHeight}
-        renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
-        renderTrackVertical={props => <div {...props} className="track-vertical" />}
+        renderTrackHorizontal={renderTrackHorizontal || (props => <div {...props} className="track-horizontal" />)}
+        renderTrackVertical={renderTrackVertical || (props => <div {...props} className="track-vertical" />)}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
         renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
         renderView={props => <div {...props} className="view" />}
