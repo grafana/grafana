@@ -112,6 +112,40 @@
     flex-wrap: wrap;
   }
 
+  .explore-panel__loader {
+    height: 2px;
+    position: relative;
+    overflow: hidden;
+    background: none;
+    margin: $panel-margin / 2;
+    transition: background-color 1s ease;
+  }
+
+  .explore-panel__loader--active {
+    background: $text-color-faint;
+  }
+
+  .explore-panel__loader--active:after {
+    content: ' ';
+    display: block;
+    width: 25%;
+    top: 0;
+    top: -50%;
+    height: 250%;
+    position: absolute;
+    animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    animation-iteration-count: 100;
+    background: $blue;
+  }
+
+  @keyframes loader {
+    from {
+      left: -25%;
+    }
+    to {
+      left: 100%;
+    }
+  }
 
   .datasource-picker {
     min-width: 200px;

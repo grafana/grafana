@@ -144,8 +144,8 @@ div.flot-text {
 
 .panel-loading {
   position: absolute;
-  top: 0;
-  right: 3px;
+  top: -3px;
+  right: 0px;
   z-index: 800;
   font-size: $font-size-sm;
   color: $text-color-weak;
