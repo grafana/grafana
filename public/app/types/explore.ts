@@ -186,7 +186,7 @@ export interface ExploreItemState {
    * Allows the selection to be discarded if something went wrong during the asynchronous
    * loading of the datasource.
    */
-  requestedDatasourceId?: number;
+  requestedDatasourceName?: string;
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */

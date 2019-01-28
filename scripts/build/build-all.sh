@@ -32,10 +32,12 @@ echo "Build arguments: $OPT"
 
 # build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
+go run build.go -goarch armv6 -cc ${CCARMV7} ${OPT} build
   go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
   go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
   go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
 fi
+
 go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
 
 # Do not remove CC from the linux build, its there for compatibility with Centos6
@@ -67,6 +69,7 @@ rm tools/phantomjs/phantomjs
 
 # build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
+  go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
   go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
   go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
 

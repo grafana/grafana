@@ -1,7 +1,7 @@
 import './annotations/all';
 import './templating/all';
 import './plugins/all';
-import './dashboard/all';
+import './dashboard';
 import './playlist/all';
 import './panel/all';
 import './org/all';

@@ -91,7 +91,6 @@ interface PromQueryFieldProps {
   initialQuery: PromQuery;
   hint?: any;
   history?: any[];
-  metricsByPrefix?: CascaderOption[];
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
   onQueryChange?: (value: PromQuery, override?: boolean) => void;
@@ -99,7 +98,6 @@ interface PromQueryFieldProps {
 
 interface PromQueryFieldState {
   metricsOptions: any[];
-  metricsByPrefix: CascaderOption[];
   syntaxLoaded: boolean;
 }
 
@@ -124,7 +122,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     ];
 
     this.state = {
-      metricsByPrefix: [],
       metricsOptions: [],
       syntaxLoaded: false,
     };

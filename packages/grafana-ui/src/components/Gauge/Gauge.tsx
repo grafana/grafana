@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import { ValueMapping, Threshold, MappingType, BasicGaugeColor, ValueMap, RangeMap } from '../../types/panel';
+import { ValueMapping, Threshold, BasicGaugeColor } from '../../types/panel';
 import { TimeSeriesVMs } from '../../types/series';
-import { getValueFormat } from '../../utils/valueFormats/valueFormats';
 import { GrafanaTheme } from '../../types';
+import { getValueFormat } from '../../utils/valueFormats/valueFormats';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 
 type TimeSeriesValue = string | number | null;
@@ -52,70 +52,6 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  addValueToTextMappingText(allValueMappings: ValueMapping[], valueToTextMapping: ValueMap, value: TimeSeriesValue) {
-    if (!valueToTextMapping.value) {
-      return allValueMappings;
-    }
-
-    const valueAsNumber = parseFloat(value as string);
-    const valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
-
-    if (isNaN(valueAsNumber) || isNaN(valueToTextMappingAsNumber)) {
-      return allValueMappings;
-    }
-
-    if (valueAsNumber !== valueToTextMappingAsNumber) {
-      return allValueMappings;
-    }
-
-    return allValueMappings.concat(valueToTextMapping);
-  }
-
-  addRangeToTextMappingText(allValueMappings: ValueMapping[], rangeToTextMapping: RangeMap, value: TimeSeriesValue) {
-    if (!rangeToTextMapping.from || !rangeToTextMapping.to || !value) {
-      return allValueMappings;
-    }
-
-    const valueAsNumber = parseFloat(value as string);
-    const fromAsNumber = parseFloat(rangeToTextMapping.from as string);
-    const toAsNumber = parseFloat(rangeToTextMapping.to as string);
-
-    if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
-      return allValueMappings;
-    }
-
-    if (valueAsNumber >= fromAsNumber && valueAsNumber <= toAsNumber) {
-      return allValueMappings.concat(rangeToTextMapping);
-    }
-
-    return allValueMappings;
-  }
-
-  getAllFormattedValueMappings(valueMappings: ValueMapping[], value: TimeSeriesValue) {
-    const allFormattedValueMappings = valueMappings.reduce(
-      (allValueMappings, valueMapping) => {
-        if (valueMapping.type === MappingType.ValueToText) {
-          allValueMappings = this.addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
-        } else if (valueMapping.type === MappingType.RangeToText) {
-          allValueMappings = this.addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
-        }
-
-        return allValueMappings;
-      },
-      [] as ValueMapping[]
-    );
-
-    allFormattedValueMappings.sort((t1, t2) => {
-      return t1.id - t2.id;
-    });
-
-    return allFormattedValueMappings;
-  }
-
-  getFirstFormattedValueMapping(valueMappings: ValueMapping[], value: TimeSeriesValue) {
-    return this.getAllFormattedValueMappings(valueMappings, value)[0];
-  }
-
   formatValue(value: TimeSeriesValue) {
     const { decimals, valueMappings, prefix, suffix, unit } = this.props;
 
@@ -124,7 +60,7 @@ export class Gauge extends PureComponent<Props> {
     }
 
     if (valueMappings.length > 0) {
-      const valueMappedValue = this.getFirstFormattedValueMapping(valueMappings, value);
+      const valueMappedValue = getMappedValue(valueMappings, value);
       if (valueMappedValue) {
         return `${prefix} ${valueMappedValue.text} ${suffix}`;
       }
@@ -132,8 +68,9 @@ export class Gauge extends PureComponent<Props> {
 
     const formatFunc = getValueFormat(unit);
     const formattedValue = formatFunc(value as number, decimals);
+    const handleNoValueValue = formattedValue || 'no value';
 
-    return `${prefix} ${formattedValue} ${suffix}`;
+    return `${prefix} ${handleNoValueValue} ${suffix}`;
   }
 
   getFontColor(value: TimeSeriesValue) {
@@ -197,7 +134,7 @@ export class Gauge extends PureComponent<Props> {
     if (timeSeries[0]) {
       value = timeSeries[0].stats[stat];
     } else {
-      value = 'N/A';
+      value = null;
     }
 
     const dimension = Math.min(width, height * 1.3);

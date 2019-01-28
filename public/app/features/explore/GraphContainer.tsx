@@ -30,6 +30,11 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   render() {
     const { exploreId, graphResult, loading, onChangeTime, showingGraph, showingTable, range, split } = this.props;
     const graphHeight = showingGraph && showingTable ? '200px' : '400px';
+
+    if (!graphResult) {
+      return null;
+    }
+
     return (
       <Panel label="Graph" isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
         <Graph
