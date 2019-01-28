@@ -12,21 +12,21 @@ import (
 )
 
 var (
-	logger = log.New("fake.log")
-
-	correct_properties              = "./test-configs/correct-properties"
-	incorrect_settings              = "./test-configs/incorrect-settings"
-	no_required_fields              = "./test-configs/no-required-fields"
-	correct_properties_with_orgName = "./test-configs/correct-properties-with-orgName"
-	brokenYaml                      = "./test-configs/broken-yaml"
-	doubleNotificationsConfig       = "./test-configs/double-default"
-	emptyFolder                     = "./test-configs/empty_folder"
-	emptyFile                       = "./test-configs/empty"
-	twoNotificationsConfig          = "./test-configs/two-notifications"
-	unknownNotifier                 = "./test-configs/unknown-notifier"
+	correct_properties              = "./testdata/test-configs/correct-properties"
+	incorrect_settings              = "./testdata/test-configs/incorrect-settings"
+	no_required_fields              = "./testdata/test-configs/no-required-fields"
+	correct_properties_with_orgName = "./testdata/test-configs/correct-properties-with-orgName"
+	brokenYaml                      = "./testdata/test-configs/broken-yaml"
+	doubleNotificationsConfig       = "./testdata/test-configs/double-default"
+	emptyFolder                     = "./testdata/test-configs/empty_folder"
+	emptyFile                       = "./testdata/test-configs/empty"
+	twoNotificationsConfig          = "./testdata/test-configs/two-notifications"
+	unknownNotifier                 = "./testdata/test-configs/unknown-notifier"
 )
 
 func TestNotificationAsConfig(t *testing.T) {
+	logger := log.New("fake.log")
+
 	Convey("Testing notification as configuration", t, func() {
 		sqlstore.InitTestDB(t)
 
