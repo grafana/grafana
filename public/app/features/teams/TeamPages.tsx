@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import _ from 'lodash';
 import { hot } from 'react-hot-loader';
 import config from 'app/core/config';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import Page from 'app/core/components/Page/Page';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
@@ -24,6 +24,7 @@ export interface Props {
 
 interface State {
   isSyncEnabled: boolean;
+  isLoading: boolean;
 }
 
 enum PageTypes {
@@ -33,10 +34,11 @@ enum PageTypes {
 }
 
 export class TeamPages extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
+      isLoading: false,
       isSyncEnabled: config.buildInfo.isEnterprise,
     };
   }
@@ -47,8 +49,10 @@ export class TeamPages extends PureComponent<Props, State> {
 
   async fetchTeam() {
     const { loadTeam, teamId } = this.props;
-
-    return await loadTeam(teamId);
+    this.setState({isLoading: true});
+    const team = await loadTeam(teamId);
+    this.setState({isLoading: false});
+    return team;
   }
 
   getCurrentPage() {
@@ -78,10 +82,11 @@ export class TeamPages extends PureComponent<Props, State> {
     const { team, navModel } = this.props;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        {team && Object.keys(team).length !== 0 && <div className="page-container page-body">{this.renderPage()}</div>}
-      </div>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={this.state.isLoading}>
+          {team && Object.keys(team).length !== 0 && <div className="page-container page-body">{this.renderPage()}</div>}
+        </Page.Contents>
+      </Page>
     );
   }
 }

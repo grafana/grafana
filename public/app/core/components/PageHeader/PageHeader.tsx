@@ -80,7 +80,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
 };
 
 export default class PageHeader extends React.Component<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
