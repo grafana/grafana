@@ -36,7 +36,6 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
     background: `${color}`,
     marginRight: isSmall ? '0px' : '8px',
     boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${selectedSwatchBorder}` : 'none',
-    cursor: isSelected ? 'default' : 'pointer',
   };
 
   return (
@@ -44,6 +43,7 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
       style={{
         display: 'flex',
         alignItems: 'center',
+        cursor: 'pointer',
       }}
       {...otherProps}
     >
