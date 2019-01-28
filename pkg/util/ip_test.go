@@ -6,10 +6,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestSplitIpPort(t *testing.T) {
+func TestSplitIPPort(t *testing.T) {
 
 	Convey("When parsing an IPv4 without explicit port", t, func() {
-		ip, port, err := SplitIpPort("1.2.3.4", "5678")
+		ip, port, err := SplitIPPort("1.2.3.4", "5678")
 
 		So(err, ShouldEqual, nil)
 		So(ip, ShouldEqual, "1.2.3.4")
@@ -17,7 +17,7 @@ func TestSplitIpPort(t *testing.T) {
 	})
 
 	Convey("When parsing an IPv6 without explicit port", t, func() {
-		ip, port, err := SplitIpPort("::1", "5678")
+		ip, port, err := SplitIPPort("::1", "5678")
 
 		So(err, ShouldEqual, nil)
 		So(ip, ShouldEqual, "::1")
@@ -25,7 +25,7 @@ func TestSplitIpPort(t *testing.T) {
 	})
 
 	Convey("When parsing an IPv4 with explicit port", t, func() {
-		ip, port, err := SplitIpPort("1.2.3.4:56", "78")
+		ip, port, err := SplitIPPort("1.2.3.4:56", "78")
 
 		So(err, ShouldEqual, nil)
 		So(ip, ShouldEqual, "1.2.3.4")
@@ -33,7 +33,7 @@ func TestSplitIpPort(t *testing.T) {
 	})
 
 	Convey("When parsing an IPv6 with explicit port", t, func() {
-		ip, port, err := SplitIpPort("[::1]:56", "78")
+		ip, port, err := SplitIPPort("[::1]:56", "78")
 
 		So(err, ShouldEqual, nil)
 		So(ip, ShouldEqual, "::1")
