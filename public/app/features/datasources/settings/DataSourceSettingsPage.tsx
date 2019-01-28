@@ -21,7 +21,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
-import { NavModel, Plugin } from 'app/types/';
+import { NavModel, Plugin, StoreState } from 'app/types/';
 import { DataSourceSettings } from '@grafana/ui/src/types/';
 import { getDataSourceLoadingNav } from '../state/navModel';
 
@@ -232,7 +232,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
 
