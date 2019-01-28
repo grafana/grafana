@@ -1,12 +1,12 @@
-.add-panel-container {
+.add-panel-widget-container {
   height: 100%;
 }
 
-.add-panel {
+.add-panel-widget {
   height: 100%;
 }
 
-.add-panel__header {
+.add-panel-widget__header {
   top: 0;
   position: absolute;
   padding: 0 15px;
@@ -26,7 +26,7 @@
   }
 }
 
-.add-panel__close {
+.add-panel-widget__close {
   margin-left: auto;
   background-color: transparent;
   border: 0;
@@ -34,7 +34,7 @@
   margin-right: -10px;
 }
 
-.add-panel-btn-container {
+.add-panel-widget__btn-container {
   display: flex;
   justify-content: center;
   align-items: center;

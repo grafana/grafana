@@ -232,3 +232,5 @@ export class DashboardImportCtrl {
     this.gnetInfo = '';
   }
 }
+
+export default DashboardImportCtrl;

@@ -336,7 +336,7 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 		"id":   123123,
 		"gridPos": map[string]interface{}{
 			"x": 0,
-			"y": 0,
+			"y": 3,
 			"w": 24,
 			"h": 4,
 		},

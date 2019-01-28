@@ -436,25 +436,19 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
 export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
   switch (action.type) {
     case ActionTypes.SplitClose: {
-      return {
-        ...state,
-        split: false,
-      };
+      return { ...state, split: false };
     }
 
     case ActionTypes.SplitOpen: {
-      return {
-        ...state,
-        split: true,
-        right: action.payload.itemState,
-      };
+      return { ...state, split: true, right: action.payload.itemState };
     }
 
     case ActionTypes.InitializeExploreSplit: {
-      return {
-        ...state,
-        split: true,
-      };
+      return { ...state, split: true };
+    }
+
+    case ActionTypes.ResetExplore: {
+      return initialExploreState;
     }
   }
 

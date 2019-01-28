@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -95,13 +94,14 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 }
 
 type scenarioContext struct {
-	m              *macaron.Macaron
-	context        *m.ReqContext
-	resp           *httptest.ResponseRecorder
-	handlerFunc    handlerFunc
-	defaultHandler macaron.Handler
-	req            *http.Request
-	url            string
+	m                    *macaron.Macaron
+	context              *m.ReqContext
+	resp                 *httptest.ResponseRecorder
+	handlerFunc          handlerFunc
+	defaultHandler       macaron.Handler
+	req                  *http.Request
+	url                  string
+	userAuthTokenService *fakeUserAuthTokenService
 }
 
 func (sc *scenarioContext) exec() {
@@ -123,8 +123,30 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler())
-	sc.m.Use(middleware.Sessioner(&session.Options{}, 0))
+	sc.userAuthTokenService = newFakeUserAuthTokenService()
+	sc.m.Use(middleware.GetContextHandler(sc.userAuthTokenService))
 
 	return sc
 }
+
+type fakeUserAuthTokenService struct {
+	initContextWithTokenProvider func(ctx *m.ReqContext, orgID int64) bool
+}
+
+func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
+	return &fakeUserAuthTokenService{
+		initContextWithTokenProvider: func(ctx *m.ReqContext, orgID int64) bool {
+			return false
+		},
+	}
+}
+
+func (s *fakeUserAuthTokenService) InitContextWithToken(ctx *m.ReqContext, orgID int64) bool {
+	return s.initContextWithTokenProvider(ctx, orgID)
+}
+
+func (s *fakeUserAuthTokenService) UserAuthenticatedHook(user *m.User, c *m.ReqContext) error {
+	return nil
+}
+
+func (s *fakeUserAuthTokenService) UserSignedOutHook(c *m.ReqContext) {}

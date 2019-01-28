@@ -61,7 +61,7 @@ interface AsyncProps {
 export const MenuList = (props: any) => {
   return (
     <components.MenuList {...props}>
-      <CustomScrollbar autoHide={false} autoMaxHeight="inherit">{props.children}</CustomScrollbar>
+      <CustomScrollbar autoHide={false} autoHeightMax="inherit">{props.children}</CustomScrollbar>
     </components.MenuList>
   );
 };

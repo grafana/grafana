@@ -783,3 +783,12 @@ export function toggleTable(exploreId: ExploreId): ThunkResult<void> {
     }
   };
 }
+
+/**
+ * Resets state for explore.
+ */
+export function resetExplore(): ThunkResult<void> {
+  return dispatch => {
+    dispatch({ type: ActionTypes.ResetExplore, payload: {} });
+  };
+}

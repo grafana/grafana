@@ -1,6 +1,6 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi  } from '@grafana/ui/src/types';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi } from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreItemState,
@@ -42,6 +42,7 @@ export enum ActionTypes {
   ToggleLogs = 'explore/TOGGLE_LOGS',
   ToggleTable = 'explore/TOGGLE_TABLE',
   UpdateDatasourceInstance = 'explore/UPDATE_DATASOURCE_INSTANCE',
+  ResetExplore = 'explore/RESET_EXPLORE',
 }
 
 export interface AddQueryRowAction {
@@ -279,6 +280,11 @@ export interface UpdateDatasourceInstanceAction {
   };
 }
 
+export interface ResetExploreAction {
+  type: ActionTypes.ResetExplore;
+  payload: {};
+}
+
 export type Action =
   | AddQueryRowAction
   | ChangeQueryAction
@@ -307,4 +313,5 @@ export type Action =
   | ToggleGraphAction
   | ToggleLogsAction
   | ToggleTableAction
-  | UpdateDatasourceInstanceAction;
+  | UpdateDatasourceInstanceAction
+  | ResetExploreAction;
