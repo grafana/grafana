@@ -1,7 +1,7 @@
 import { FolderPageLoader } from './services/FolderPageLoader';
 import locationUtil from 'app/core/utils/location_util';
 
-export class FolderDashboardsCtrl {
+export default class FolderDashboardsCtrl {
   navModel: any;
   folderId: number;
   uid: string;
@@ -23,3 +23,4 @@ export class FolderDashboardsCtrl {
     }
   }
 }
+

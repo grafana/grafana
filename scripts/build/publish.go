@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-var apiUrl = flag.String("apiUrl", "https://grafana.com/api", "api url")
+var apiURL = flag.String("apiUrl", "https://grafana.com/api", "api url")
 var apiKey = flag.String("apiKey", "", "api key")
 var version = ""
 var versionRe = regexp.MustCompile(`grafana-(.*)(\.|_)(arm64|armhfp|aarch64|armv7|darwin|linux|windows|x86_64)`)
@@ -56,8 +56,8 @@ func main() {
 		Stable:          false,
 		Nightly:         true,
 		Beta:            false,
-		WhatsNewUrl:     "",
-		ReleaseNotesUrl: "",
+		WhatsNewURL:     "",
+		ReleaseNotesURL: "",
 		Builds:          builds,
 	}
 
@@ -118,7 +118,7 @@ func mapPackage(path string, name string, shaBytes []byte) (build, error) {
 	return build{
 		Os:     os,
 		Arch:   arch,
-		Url:    "https://s3-us-west-2.amazonaws.com/grafana-releases/master/" + name,
+		URL:    "https://s3-us-west-2.amazonaws.com/grafana-releases/master/" + name,
 		Sha256: string(shaBytes),
 	}, nil
 }
@@ -148,7 +148,7 @@ func packageWalker(path string, f os.FileInfo, err error) error {
 
 func postRequest(url string, obj interface{}, desc string) {
 	jsonBytes, _ := json.Marshal(obj)
-	req, _ := http.NewRequest(http.MethodPost, (*apiUrl)+url, bytes.NewReader(jsonBytes))
+	req, _ := http.NewRequest(http.MethodPost, (*apiURL)+url, bytes.NewReader(jsonBytes))
 	req.Header.Add("Authorization", "Bearer "+(*apiKey))
 	req.Header.Add("Content-Type", "application/json")
 
@@ -181,14 +181,14 @@ type release struct {
 	Stable          bool      `json:"stable"`
 	Beta            bool      `json:"beta"`
 	Nightly         bool      `json:"nightly"`
-	WhatsNewUrl     string    `json:"whatsNewUrl"`
-	ReleaseNotesUrl string    `json:"releaseNotesUrl"`
+	WhatsNewURL     string    `json:"whatsNewUrl"`
+	ReleaseNotesURL string    `json:"releaseNotesUrl"`
 	Builds          []build   `json:"-"`
 }
 
 type build struct {
 	Os     string `json:"os"`
-	Url    string `json:"url"`
+	URL    string `json:"url"`
 	Sha256 string `json:"sha256"`
 	Arch   string `json:"arch"`
 }

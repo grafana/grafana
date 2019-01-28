@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/hex"
+	"net/http"
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -9,12 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
-	ViewIndex = "index"
+	ViewIndex            = "index"
+	LoginErrorCookieName = "login_error"
 )
 
 func (hs *HTTPServer) LoginView(c *m.ReqContext) {
@@ -34,8 +37,8 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
 
-	if loginError, ok := c.Session.Get("loginError").(string); ok {
-		c.Session.Delete("loginError")
+	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
+		deleteCookie(c, LoginErrorCookieName)
 		viewData.Settings["loginError"] = loginError
 	}
 
@@ -43,7 +46,7 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 		return
 	}
 
-	if !tryLoginUsingRememberCookie(c) {
+	if !c.IsSignedIn {
 		c.HTML(200, ViewIndex, viewData)
 		return
 	}
@@ -75,56 +78,15 @@ func tryOAuthAutoLogin(c *m.ReqContext) bool {
 	return false
 }
 
-func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
-	// Check auto-login.
-	uname := c.GetCookie(setting.CookieUserName)
-	if len(uname) == 0 {
-		return false
+func (hs *HTTPServer) LoginAPIPing(c *m.ReqContext) Response {
+	if c.IsSignedIn || c.IsAnonymous {
+		return JSON(200, "Logged in")
 	}
 
-	isSucceed := false
-	defer func() {
-		if !isSucceed {
-			log.Trace("auto-login cookie cleared: %s", uname)
-			c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-			c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
-			return
-		}
-	}()
-
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
-	if err := bus.Dispatch(&userQuery); err != nil {
-		return false
-	}
-
-	user := userQuery.Result
-
-	// validate remember me cookie
-	signingKey := user.Rands + user.Password
-	if len(signingKey) < 10 {
-		c.Logger.Error("Invalid user signingKey")
-		return false
-	}
-
-	if val, _ := c.GetSuperSecureCookie(signingKey, setting.CookieRememberName); val != user.Login {
-		return false
-	}
-
-	isSucceed = true
-	loginUserWithUser(user, c)
-	return true
+	return Error(401, "Unauthorized", nil)
 }
 
-func LoginAPIPing(c *m.ReqContext) {
-	if !tryLoginUsingRememberCookie(c) {
-		c.JsonApiErr(401, "Unauthorized", nil)
-		return
-	}
-
-	c.JsonOK("Logged in")
-}
-
-func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
+func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	if setting.DisableLoginForm {
 		return Error(401, "Login is disabled", nil)
 	}
@@ -146,7 +108,7 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 
 	user := authQuery.User
 
-	loginUserWithUser(user, c)
+	hs.loginUserWithUser(user, c)
 
 	result := map[string]interface{}{
 		"message": "Logged in",
@@ -162,30 +124,60 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	return JSON(200, result)
 }
 
-func loginUserWithUser(user *m.User, c *m.ReqContext) {
+func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 	if user == nil {
-		log.Error(3, "User login with nil user")
+		hs.log.Error("User login with nil user")
 	}
 
-	c.Resp.Header().Del("Set-Cookie")
-
-	days := 86400 * setting.LogInRememberDays
-	if days > 0 {
-		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	err := hs.AuthTokenService.UserAuthenticatedHook(user, c)
+	if err != nil {
+		hs.log.Error("User auth hook failed", "error", err)
 	}
-
-	c.Session.RegenerateId(c.Context)
-	c.Session.Set(session.SESS_KEY_USERID, user.Id)
 }
 
-func Logout(c *m.ReqContext) {
-	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
-	c.Session.Destory(c.Context)
+func (hs *HTTPServer) Logout(c *m.ReqContext) {
+	hs.AuthTokenService.UserSignedOutHook(c)
+
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
 	} else {
 		c.Redirect(setting.AppSubUrl + "/login")
 	}
+}
+
+func tryGetEncryptedCookie(ctx *m.ReqContext, cookieName string) (string, bool) {
+	cookie := ctx.GetCookie(cookieName)
+	if cookie == "" {
+		return "", false
+	}
+
+	decoded, err := hex.DecodeString(cookie)
+	if err != nil {
+		return "", false
+	}
+
+	decryptedError, err := util.Decrypt([]byte(decoded), setting.SecretKey)
+	return string(decryptedError), err == nil
+}
+
+func deleteCookie(ctx *m.ReqContext, cookieName string) {
+	ctx.SetCookie(cookieName, "", -1, setting.AppSubUrl+"/")
+}
+
+func (hs *HTTPServer) trySetEncryptedCookie(ctx *m.ReqContext, cookieName string, value string, maxAge int) error {
+	encryptedError, err := util.Encrypt([]byte(value), setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(ctx.Resp, &http.Cookie{
+		Name:     cookieName,
+		MaxAge:   60,
+		Value:    hex.EncodeToString(encryptedError),
+		HttpOnly: true,
+		Path:     setting.AppSubUrl + "/",
+		Secure:   hs.Cfg.SecurityHTTPSCookies,
+	})
+
+	return nil
 }

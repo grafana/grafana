@@ -23,9 +23,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// not logged in views
 	r.Get("/", reqSignedIn, hs.Index)
-	r.Get("/logout", Logout)
-	r.Post("/login", quota("session"), bind(dtos.LoginCommand{}), Wrap(LoginPost))
-	r.Get("/login/:name", quota("session"), OAuthLogin)
+	r.Get("/logout", hs.Logout)
+	r.Post("/login", quota("session"), bind(dtos.LoginCommand{}), Wrap(hs.LoginPost))
+	r.Get("/login/:name", quota("session"), hs.OAuthLogin)
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
@@ -84,11 +84,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/signup", hs.Index)
 	r.Get("/api/user/signup/options", Wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", quota("user"), bind(dtos.SignUpForm{}), Wrap(SignUp))
-	r.Post("/api/user/signup/step2", bind(dtos.SignUpStep2Form{}), Wrap(SignUpStep2))
+	r.Post("/api/user/signup/step2", bind(dtos.SignUpStep2Form{}), Wrap(hs.SignUpStep2))
 
 	// invited
 	r.Get("/api/user/invite/:code", Wrap(GetInviteInfoByCode))
-	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), Wrap(CompleteInvite))
+	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), Wrap(hs.CompleteInvite))
 
 	// reset password
 	r.Get("/user/password/send-reset-email", hs.Index)
@@ -109,7 +109,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
 	// api renew session based on remember cookie
-	r.Get("/api/login/ping", quota("session"), LoginAPIPing)
+	r.Get("/api/login/ping", quota("session"), hs.LoginAPIPing)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
