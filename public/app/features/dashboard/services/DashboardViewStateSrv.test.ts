@@ -58,7 +58,6 @@ describe('when updating view state', () => {
     it('should remove params from query string', () => {
       viewState.update({ fullscreen: true, panelId: 1, edit: true });
       viewState.update({ fullscreen: false });
-      expect(viewState.dashboard.meta.fullscreen).toBe(true);
       expect(viewState.state.fullscreen).toBe(null);
     });
   });
