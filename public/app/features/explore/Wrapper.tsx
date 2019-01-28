@@ -7,7 +7,7 @@ import { StoreState } from 'app/types';
 import { ExploreId, ExploreUrlState } from 'app/types/explore';
 import { parseUrlState } from 'app/core/utils/explore';
 
-import { initializeExploreSplit } from './state/actions';
+import { initializeExploreSplit, resetExplore } from './state/actions';
 import ErrorBoundary from './ErrorBoundary';
 import Explore from './Explore';
 import { CustomScrollbar } from '@grafana/ui';
@@ -16,6 +16,7 @@ interface WrapperProps {
   initializeExploreSplit: typeof initializeExploreSplit;
   split: boolean;
   updateLocation: typeof updateLocation;
+  resetExplore: typeof resetExplore;
   urlStates: { [key: string]: string };
 }
 
@@ -40,6 +41,10 @@ export class Wrapper extends Component<WrapperProps> {
     if (this.initialSplit) {
       this.props.initializeExploreSplit();
     }
+  }
+
+  componentWillUnmount() {
+    this.props.resetExplore();
   }
 
   render() {
@@ -74,6 +79,7 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   initializeExploreSplit,
   updateLocation,
+  resetExplore,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));

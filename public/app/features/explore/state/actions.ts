@@ -21,7 +21,7 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { StoreState } from 'app/types';
-import { DataQuery, DataSourceSelectItem, QueryHint  } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceSelectItem, QueryHint } from '@grafana/ui/src/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   ExploreId,
@@ -47,7 +47,6 @@ import {
   QueryTransactionStartAction,
   ScanStopAction,
 } from './actionTypes';
-
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
 
@@ -539,6 +538,7 @@ export function runQueries(exploreId: ExploreId) {
 
     if (!hasNonEmptyQuery(modifiedQueries)) {
       dispatch({ type: ActionTypes.RunQueriesEmpty, payload: { exploreId } });
+      dispatch(stateSave()); // Remember to saves to state and update location
       return;
     }
 
@@ -764,5 +764,14 @@ export function toggleTable(exploreId: ExploreId): ThunkResult<void> {
     if (getState().explore[exploreId].showingTable) {
       dispatch(runQueries(exploreId));
     }
+  };
+}
+
+/**
+ * Resets state for explore.
+ */
+export function resetExplore(): ThunkResult<void> {
+  return dispatch => {
+    dispatch({ type: ActionTypes.ResetExplore, payload: {} });
   };
 }

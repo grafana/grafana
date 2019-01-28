@@ -718,7 +718,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
 
 	explore := iniFile.Section("explore")
-	ExploreEnabled = explore.Key("enabled").MustBool(false)
+	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
 	panels := iniFile.Section("panels")
 	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
