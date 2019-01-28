@@ -38,6 +38,14 @@
   }
 }
 
+.is-react .footer {
+  display: none;
+}
+
+.is-react .custom-scrollbars .footer {
+  display: block;
+}
+
 // Keeping footer inside the graphic on Login screen
 .login-page {
   .footer {

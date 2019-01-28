@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { PanelOptionsProps, PanelOptionsGroup, Label } from '@grafana/ui';
+import { FormField, PanelOptionsProps, PanelOptionsGroup } from '@grafana/ui';
 
 import { Switch } from 'app/core/components/Switch/Switch';
 import { GaugeOptions } from './types';
@@ -21,14 +21,8 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
 
     return (
       <PanelOptionsGroup title="Gauge">
-        <div className="gf-form">
-          <Label width={8}>Min value</Label>
-          <input type="text" className="gf-form-input width-12" onChange={this.onMinValueChange} value={minValue} />
-        </div>
-        <div className="gf-form">
-          <Label width={8}>Max value</Label>
-          <input type="text" className="gf-form-input width-12" onChange={this.onMaxValueChange} value={maxValue} />
-        </div>
+        <FormField label="Min value" labelWidth={8} onChange={this.onMinValueChange} value={minValue} />
+        <FormField label="Max value" labelWidth={8} onChange={this.onMaxValueChange} value={maxValue} />
         <Switch
           label="Show labels"
           labelClass="width-8"

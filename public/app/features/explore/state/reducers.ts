@@ -5,7 +5,7 @@ import {
   ensureQueries,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
-import { DataQuery } from 'app/types/series';
+import { DataQuery } from '@grafana/ui/src/types';
 
 import { Action, ActionTypes } from './actionTypes';
 
@@ -20,10 +20,11 @@ const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 /**
  * Returns a fresh Explore area state
  */
-const makeExploreItemState = (): ExploreItemState => ({
+export const makeExploreItemState = (): ExploreItemState => ({
   StartPage: undefined,
   containerWidth: 0,
   datasourceInstance: null,
+  requestedDatasourceName: null,
   datasourceError: null,
   datasourceLoading: null,
   datasourceMissing: false,
@@ -48,7 +49,7 @@ const makeExploreItemState = (): ExploreItemState => ({
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
-const initialExploreState: ExploreState = {
+export const initialExploreState: ExploreState = {
   split: null,
   left: makeExploreItemState(),
   right: makeExploreItemState(),
@@ -57,7 +58,7 @@ const initialExploreState: ExploreState = {
 /**
  * Reducer for an Explore area, to be used by the global Explore reducer.
  */
-const itemReducer = (state, action: Action): ExploreItemState => {
+export const itemReducer = (state, action: Action): ExploreItemState => {
   switch (action.type) {
     case ActionTypes.AddQueryRow: {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
@@ -162,17 +163,25 @@ const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.InitializeExplore: {
-      const { containerWidth, datasource, eventBridge, exploreDatasources, queries, range } = action.payload;
+      const { containerWidth, eventBridge, exploreDatasources, queries, range } = action.payload;
       return {
         ...state,
         containerWidth,
         eventBridge,
         exploreDatasources,
         range,
-        initialDatasource: datasource,
         initialQueries: queries,
         initialized: true,
         modifiedQueries: queries.slice(),
+      };
+    }
+
+    case ActionTypes.UpdateDatasourceInstance: {
+      const { datasourceInstance } = action.payload;
+      return {
+        ...state,
+        datasourceInstance,
+        datasourceName: datasourceInstance.name,
       };
     }
 
@@ -185,7 +194,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.LoadDatasourcePending: {
-      return { ...state, datasourceLoading: true, requestedDatasourceId: action.payload.datasourceId };
+      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.requestedDatasourceName };
     }
 
     case ActionTypes.LoadDatasourceSuccess: {
@@ -194,7 +203,6 @@ const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialDatasource,
         initialQueries,
         showingStartPage,
         supportsGraph,
@@ -209,7 +217,6 @@ const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialDatasource,
         initialQueries,
         showingStartPage,
         supportsGraph,
@@ -217,6 +224,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
         supportsTable,
         datasourceLoading: false,
         datasourceMissing: false,
+        datasourceError: null,
         logsHighlighterExpressions: undefined,
         modifiedQueries: initialQueries.slice(),
         queryTransactions: [],
@@ -277,7 +285,7 @@ const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.QueryTransactionStart: {
-      const { datasourceInstance, queryIntervals, queryTransactions } = state;
+      const { queryTransactions } = state;
       const { resultType, rowIndex, transaction } = action.payload;
       // Discarding existing transactions of same type
       const remainingTransactions = queryTransactions.filter(
@@ -287,15 +295,9 @@ const itemReducer = (state, action: Action): ExploreItemState => {
       // Append new transaction
       const nextQueryTransactions: QueryTransaction[] = [...remainingTransactions, transaction];
 
-      const results = calculateResultsFromQueryTransactions(
-        nextQueryTransactions,
-        datasourceInstance,
-        queryIntervals.intervalMs
-      );
 
       return {
         ...state,
-        ...results,
         queryTransactions: nextQueryTransactions,
         showingStartPage: false,
       };
@@ -359,13 +361,19 @@ const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.ScanStart: {
-      return { ...state, scanning: true };
+      return { ...state, scanning: true, scanner: action.payload.scanner };
     }
 
     case ActionTypes.ScanStop: {
       const { queryTransactions } = state;
       const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
-      return { ...state, queryTransactions: nextQueryTransactions, scanning: false, scanRange: undefined };
+      return {
+        ...state,
+        queryTransactions: nextQueryTransactions,
+        scanning: false,
+        scanRange: undefined,
+        scanner: undefined,
+      };
     }
 
     case ActionTypes.SetQueries: {
@@ -421,25 +429,19 @@ const itemReducer = (state, action: Action): ExploreItemState => {
 export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
   switch (action.type) {
     case ActionTypes.SplitClose: {
-      return {
-        ...state,
-        split: false,
-      };
+      return { ...state, split: false };
     }
 
     case ActionTypes.SplitOpen: {
-      return {
-        ...state,
-        split: true,
-        right: action.payload.itemState,
-      };
+      return { ...state, split: true, right: action.payload.itemState };
     }
 
     case ActionTypes.InitializeExploreSplit: {
-      return {
-        ...state,
-        split: true,
-      };
+      return { ...state, split: true };
+    }
+
+    case ActionTypes.ResetExplore: {
+      return initialExploreState;
     }
   }
 

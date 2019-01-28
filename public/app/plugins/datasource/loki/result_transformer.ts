@@ -5,7 +5,7 @@ import {
   LogLevel,
   LogsMetaItem,
   LogsModel,
-  LogRow,
+  LogRowModel,
   LogsStream,
   LogsStreamEntry,
   LogsStreamLabels,
@@ -115,7 +115,7 @@ export function processEntry(
   parsedLabels: LogsStreamLabels,
   uniqueLabels: LogsStreamLabels,
   search: string
-): LogRow {
+): LogRowModel {
   const { line } = entry;
   const ts = entry.ts || entry.timestamp;
   // Assumes unique-ness, needs nanosec precision for timestamp
@@ -156,9 +156,9 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LI
   }));
 
   // Merge stream entries into single list of log rows
-  const sortedRows: LogRow[] = _.chain(streams)
+  const sortedRows: LogRowModel[] = _.chain(streams)
     .reduce(
-      (acc: LogRow[], stream: LogsStream) => [
+      (acc: LogRowModel[], stream: LogsStream) => [
         ...acc,
         ...stream.entries.map(entry =>
           processEntry(entry, stream.labels, stream.parsedLabels, stream.uniqueLabels, stream.search)

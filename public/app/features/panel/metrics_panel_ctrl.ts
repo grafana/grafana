@@ -1,18 +1,18 @@
 import _ from 'lodash';
 
 import kbn from 'app/core/utils/kbn';
-import config from 'app/core/config';
 
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
+import { ContextSrv } from 'app/core/services/context_srv';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: any;
   $q: any;
   $timeout: any;
-  contextSrv: any;
+  contextSrv: ContextSrv;
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
@@ -231,7 +231,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   getAdditionalMenuItems() {
     const items = [];
-    if (config.exploreEnabled && this.contextSrv.isEditor && this.datasource) {
+    if (this.contextSrv.hasAccessToExplore() && this.datasource) {
       items.push({
         text: 'Explore',
         click: 'ctrl.explore();',

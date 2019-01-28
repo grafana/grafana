@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.11.4
+FROM golang:1.11.5
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
@@ -19,11 +19,13 @@ COPY package.json package.json
 RUN go run build.go build
 
 # Node build container
-FROM node:8
+FROM node:10.14.2
 
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
+COPY packages packages
+
 RUN yarn install --pure-lockfile --no-progress
 
 COPY Gruntfile.js tsconfig.json tslint.json ./

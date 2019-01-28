@@ -1,57 +1,24 @@
+// Libraries
 import _ from 'lodash';
-
 import $ from 'jquery';
+
+// Services & Utils
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
 import { BackendSrv } from 'app/core/services/backend_srv';
-
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
-import { DataQuery } from 'app/types';
+
+// Types
+import { PromQuery } from './types';
+import { DataQueryOptions, DataSourceApi } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
-export function alignRange(start, end, step) {
-  const alignedEnd = Math.ceil(end / step) * step;
-  const alignedStart = Math.floor(start / step) * step;
-  return {
-    end: alignedEnd,
-    start: alignedStart,
-  };
-}
-
-export function extractRuleMappingFromGroups(groups: any[]) {
-  return groups.reduce(
-    (mapping, group) =>
-      group.rules.filter(rule => rule.type === 'recording').reduce(
-        (acc, rule) => ({
-          ...acc,
-          [rule.name]: rule.query,
-        }),
-        mapping
-      ),
-    {}
-  );
-}
-
-export function prometheusRegularEscape(value) {
-  if (typeof value === 'string') {
-    return value.replace(/'/g, "\\\\'");
-  }
-  return value;
-}
-
-export function prometheusSpecialRegexEscape(value) {
-  if (typeof value === 'string') {
-    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
-  }
-  return value;
-}
-
-export class PrometheusDatasource {
+export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   type: string;
   editorSrc: string;
   name: string;
@@ -149,7 +116,7 @@ export class PrometheusDatasource {
     return this.templateSrv.variableExists(target.expr);
   }
 
-  query(options) {
+  query(options: DataQueryOptions<PromQuery>) {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 
@@ -423,7 +390,7 @@ export class PrometheusDatasource {
     });
   }
 
-  getExploreState(queries: DataQuery[]): Partial<ExploreUrlState> {
+  getExploreState(queries: PromQuery[]): Partial<ExploreUrlState> {
     let state: Partial<ExploreUrlState> = { datasource: this.name };
     if (queries && queries.length > 0) {
       const expandedQueries = queries.map(query => ({
@@ -438,7 +405,7 @@ export class PrometheusDatasource {
     return state;
   }
 
-  getQueryHints(query: DataQuery, result: any[]) {
+  getQueryHints(query: PromQuery, result: any[]) {
     return getQueryHints(query.expr || '', result, this);
   }
 
@@ -457,7 +424,7 @@ export class PrometheusDatasource {
       });
   }
 
-  modifyQuery(query: DataQuery, action: any): DataQuery {
+  modifyQuery(query: PromQuery, action: any): PromQuery {
     let expression = query.expr || '';
     switch (action.type) {
       case 'ADD_FILTER': {
@@ -506,4 +473,41 @@ export class PrometheusDatasource {
   getOriginalMetricName(labelData) {
     return this.resultTransformer.getOriginalMetricName(labelData);
   }
+}
+
+export function alignRange(start, end, step) {
+  const alignedEnd = Math.ceil(end / step) * step;
+  const alignedStart = Math.floor(start / step) * step;
+  return {
+    end: alignedEnd,
+    start: alignedStart,
+  };
+}
+
+export function extractRuleMappingFromGroups(groups: any[]) {
+  return groups.reduce(
+    (mapping, group) =>
+      group.rules.filter(rule => rule.type === 'recording').reduce(
+        (acc, rule) => ({
+          ...acc,
+          [rule.name]: rule.query,
+        }),
+        mapping
+      ),
+    {}
+  );
+}
+
+export function prometheusRegularEscape(value) {
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
+}
+
+export function prometheusSpecialRegexEscape(value) {
+  if (typeof value === 'string') {
+    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+  }
+  return value;
 }

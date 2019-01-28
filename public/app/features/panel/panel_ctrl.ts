@@ -290,17 +290,4 @@ export class PanelCtrl {
     html += '</div>';
     return sanitize(html);
   }
-
-  openInspector() {
-    const modalScope = this.$scope.$new();
-    modalScope.panel = this.panel;
-    modalScope.dashboard = this.dashboard;
-    modalScope.panelInfoHtml = this.getInfoContent({ mode: 'inspector' });
-
-    modalScope.inspector = $.extend(true, {}, this.inspector);
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/inspector.html',
-      scope: modalScope,
-    });
-  }
 }

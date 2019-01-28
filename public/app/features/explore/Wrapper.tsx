@@ -7,14 +7,16 @@ import { StoreState } from 'app/types';
 import { ExploreId, ExploreUrlState } from 'app/types/explore';
 import { parseUrlState } from 'app/core/utils/explore';
 
-import { initializeExploreSplit } from './state/actions';
+import { initializeExploreSplit, resetExplore } from './state/actions';
 import ErrorBoundary from './ErrorBoundary';
 import Explore from './Explore';
+import { CustomScrollbar } from '@grafana/ui';
 
 interface WrapperProps {
   initializeExploreSplit: typeof initializeExploreSplit;
   split: boolean;
   updateLocation: typeof updateLocation;
+  resetExplore: typeof resetExplore;
   urlStates: { [key: string]: string };
 }
 
@@ -41,20 +43,28 @@ export class Wrapper extends Component<WrapperProps> {
     }
   }
 
+  componentWillUnmount() {
+    this.props.resetExplore();
+  }
+
   render() {
     const { split } = this.props;
     const { leftState, rightState } = this.urlStates;
 
     return (
-      <div className="explore-wrapper">
-        <ErrorBoundary>
-          <Explore exploreId={ExploreId.left} urlState={leftState} />
-        </ErrorBoundary>
-        {split && (
-          <ErrorBoundary>
-            <Explore exploreId={ExploreId.right} urlState={rightState} />
-          </ErrorBoundary>
-        )}
+      <div className="page-scrollbar-wrapper">
+        <CustomScrollbar autoHeightMin={'100%'}>
+          <div className="explore-wrapper">
+            <ErrorBoundary>
+              <Explore exploreId={ExploreId.left} urlState={leftState} />
+            </ErrorBoundary>
+            {split && (
+              <ErrorBoundary>
+                <Explore exploreId={ExploreId.right} urlState={rightState} />
+              </ErrorBoundary>
+            )}
+          </div>
+        </CustomScrollbar>
       </div>
     );
   }
@@ -69,6 +79,7 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   initializeExploreSplit,
   updateLocation,
+  resetExplore,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));

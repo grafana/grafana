@@ -1,6 +1,6 @@
-import { RawTimeRange, TimeRange } from '@grafana/ui';
-
+// Types
 import { Emitter } from 'app/core/core';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi } from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreItemState,
@@ -9,8 +9,6 @@ import {
   ResultType,
   QueryTransaction,
 } from 'app/types/explore';
-import { DataSourceSelectItem } from 'app/types/datasources';
-import { DataQuery } from 'app/types';
 
 export enum ActionTypes {
   AddQueryRow = 'explore/ADD_QUERY_ROW',
@@ -43,6 +41,8 @@ export enum ActionTypes {
   ToggleGraph = 'explore/TOGGLE_GRAPH',
   ToggleLogs = 'explore/TOGGLE_LOGS',
   ToggleTable = 'explore/TOGGLE_TABLE',
+  UpdateDatasourceInstance = 'explore/UPDATE_DATASOURCE_INSTANCE',
+  ResetExplore = 'explore/RESET_EXPLORE',
 }
 
 export interface AddQueryRowAction {
@@ -101,7 +101,6 @@ export interface InitializeExploreAction {
   payload: {
     exploreId: ExploreId;
     containerWidth: number;
-    datasource: string;
     eventBridge: Emitter;
     exploreDatasources: DataSourceSelectItem[];
     queries: DataQuery[];
@@ -125,7 +124,7 @@ export interface LoadDatasourcePendingAction {
   type: ActionTypes.LoadDatasourcePending;
   payload: {
     exploreId: ExploreId;
-    datasourceId: number;
+    requestedDatasourceName: string;
   };
 }
 
@@ -143,7 +142,6 @@ export interface LoadDatasourceSuccessAction {
     StartPage?: any;
     datasourceInstance: any;
     history: HistoryItem[];
-    initialDatasource: string;
     initialQueries: DataQuery[];
     logsHighlighterExpressions?: any[];
     showingStartPage: boolean;
@@ -272,6 +270,19 @@ export interface ToggleLogsAction {
   };
 }
 
+export interface UpdateDatasourceInstanceAction {
+  type: ActionTypes.UpdateDatasourceInstance;
+  payload: {
+    exploreId: ExploreId;
+    datasourceInstance: DataSourceApi;
+  };
+}
+
+export interface ResetExploreAction {
+  type: ActionTypes.ResetExplore;
+  payload: {};
+}
+
 export type Action =
   | AddQueryRowAction
   | ChangeQueryAction
@@ -299,4 +310,6 @@ export type Action =
   | SplitOpenAction
   | ToggleGraphAction
   | ToggleLogsAction
-  | ToggleTableAction;
+  | ToggleTableAction
+  | UpdateDatasourceInstanceAction
+  | ResetExploreAction;

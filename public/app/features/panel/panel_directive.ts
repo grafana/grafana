@@ -192,11 +192,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
-      cornerInfoElem.on('click', () => {
-        infoDrop.close();
-        scope.$apply(ctrl.openInspector.bind(ctrl));
-      });
-
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
