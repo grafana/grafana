@@ -45,7 +45,6 @@ interface ExploreProps {
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
-  initialDatasource?: string;
   initialQueries: DataQuery[];
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
@@ -251,7 +250,6 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceInstance,
     datasourceLoading,
     datasourceMissing,
-    initialDatasource,
     initialQueries,
     initialized,
     range,
@@ -266,7 +264,6 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceInstance,
     datasourceLoading,
     datasourceMissing,
-    initialDatasource,
     initialQueries,
     initialized,
     range,

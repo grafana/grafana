@@ -110,7 +110,11 @@ export interface ExploreItemState {
   /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
-  datasourceInstance: DataSourceApi;
+  datasourceInstance: DataSourceApi | null;
+  /**
+   * Current data source name or null if default
+   */
+  requestedDatasourceName: string | null;
   /**
    * Error to be shown when datasource loading or testing failed.
    */
@@ -139,10 +143,6 @@ export interface ExploreItemState {
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
   history: HistoryItem[];
-  /**
-   * Initial datasource for this Explore, e.g., set via URL.
-   */
-  initialDatasource?: string;
   /**
    * Initial queries for this Explore, e.g., set via URL. Each query will be
    * converted to a query row. Query edits should be tracked in `modifiedQueries` though.
@@ -181,12 +181,6 @@ export interface ExploreItemState {
    * when query rows are removed.
    */
   queryTransactions: QueryTransaction[];
-  /**
-   * Tracks datasource when selected in the datasource selector.
-   * Allows the selection to be discarded if something went wrong during the asynchronous
-   * loading of the datasource.
-   */
-  requestedDatasourceName?: string;
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
