@@ -140,8 +140,13 @@ export class AlertTabCtrl {
       name: model.name,
       iconClass: this.getNotificationIcon(model.type),
       isDefault: false,
+      uid: model.uid
     });
-    this.alert.notifications.push({ id: model.id });
+
+    // avoid duplicates using both id and uid to be backwards compatible.
+    if (!_.find(this.alert.notifications, n => n.id === model.id || n.uid === model.uid)) {
+      this.alert.notifications.push({ uid: model.uid });
+    }
 
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
@@ -149,9 +154,11 @@ export class AlertTabCtrl {
     this.addNotificationSegment.fake = true;
   }
 
-  removeNotification(index) {
-    this.alert.notifications.splice(index, 1);
-    this.alertNotifications.splice(index, 1);
+  removeNotification(an) {
+    // remove notifiers refeered to by id and uid to support notifiers added
+    // before and after we added support for uid
+    _.remove(this.alert.notifications, n =>  n.uid === an.uid || n.id === an.id);
+    _.remove(this.alertNotifications, n =>  n.uid === an.uid || n.id === an.id);
   }
 
   initModel() {
@@ -187,7 +194,14 @@ export class AlertTabCtrl {
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const addedNotification of alert.notifications) {
-      const model = _.find(this.notifications, { id: addedNotification.id });
+      // lookup notifier type by uid
+      let model = _.find(this.notifications, { uid: addedNotification.uid });
+
+      // fallback to using id if uid is missing
+      if (!model) {
+        model = _.find(this.notifications, { id: addedNotification.id });
+      }
+
       if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
         this.alertNotifications.push(model);
