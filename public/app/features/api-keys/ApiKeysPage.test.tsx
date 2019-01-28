@@ -6,7 +6,14 @@ import { getMultipleMockKeys, getMockKey } from './__mocks__/apiKeysMock';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration'
+      },
+      node: {
+        text: 'Api Keys'
+      }
+    } as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
     hasFetched: false,

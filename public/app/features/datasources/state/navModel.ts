@@ -1,7 +1,8 @@
-import { DataSource, NavModel, NavModelItem, PluginMeta } from 'app/types';
+import { NavModel, NavModelItem } from 'app/types';
+import { PluginMeta, DataSourceSettings } from '@grafana/ui/src/types';
 import config from 'app/core/config';
 
-export function buildNavModel(dataSource: DataSource, pluginMeta: PluginMeta): NavModelItem {
+export function buildNavModel(dataSource: DataSourceSettings, pluginMeta: PluginMeta): NavModelItem {
   const navModel = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.id,

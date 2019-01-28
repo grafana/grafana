@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import { PluginDashboard } from '../../types';
 
 export interface Props {
@@ -7,7 +7,7 @@ export interface Props {
   onRemove: (dashboard) => void;
 }
 
-const DashboardsTable: SFC<Props> = ({ dashboards, onImport, onRemove }) => {
+const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
   function buttonText(dashboard: PluginDashboard) {
     return dashboard.revision !== dashboard.importedRevision ? 'Update' : 'Re-import';
   }

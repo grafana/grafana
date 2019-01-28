@@ -1,13 +1,18 @@
+// Libraries
 import _ from 'lodash';
 
+// Services & Utils
 import * as dateMath from 'app/core/utils/datemath';
-import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
-import { PluginMeta, DataQuery } from 'app/types';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
-
 import LanguageProvider from './language_provider';
 import { mergeStreamsToLogs } from './result_transformer';
 import { formatQuery, parseQuery } from './query_utils';
+import { makeSeriesForLogs } from 'app/core/logs_model';
+
+// Types
+import { LogsStream, LogsModel } from 'app/core/logs_model';
+import { PluginMeta, DataQueryOptions } from '@grafana/ui/src/types';
+import { LokiQuery } from './types';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -68,7 +73,7 @@ export default class LokiDatasource {
     };
   }
 
-  query(options): Promise<{ data: LogsStream[] }> {
+  query(options: DataQueryOptions<LokiQuery>): Promise<{ data: LogsStream[] }> {
     const queryTargets = options.targets
       .filter(target => target.expr)
       .map(target => this.prepareQueryTarget(target, options));
@@ -96,7 +101,7 @@ export default class LokiDatasource {
     });
   }
 
-  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]> {
+  async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
@@ -109,7 +114,7 @@ export default class LokiDatasource {
     });
   }
 
-  modifyQuery(query: DataQuery, action: any): DataQuery {
+  modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
     let selector = parsed.query;
     switch (action.type) {
@@ -124,7 +129,7 @@ export default class LokiDatasource {
     return { ...query, expr: expression };
   }
 
-  getHighlighterExpression(query: DataQuery): string {
+  getHighlighterExpression(query: LokiQuery): string {
     return parseQuery(query.expr).regexp;
   }
 

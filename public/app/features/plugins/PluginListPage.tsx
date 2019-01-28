@@ -1,15 +1,14 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import Page from 'app/core/components/Page/Page';
 import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import PluginList from './PluginList';
 import { NavModel, Plugin } from 'app/types';
 import { loadPlugins, setPluginsLayoutMode, setPluginsSearchQuery } from './state/actions';
-import { getNavModel } from '../../core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
-import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
+import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 
 export interface Props {
   navModel: NavModel;
@@ -48,23 +47,22 @@ export class PluginListPage extends PureComponent<Props> {
     };
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
-          <OrgActionBar
-            searchQuery={searchQuery}
-            layoutMode={layoutMode}
-            onSetLayoutMode={mode => setPluginsLayoutMode(mode)}
-            setSearchQuery={query => setPluginsSearchQuery(query)}
-            linkButton={linkButton}
-          />
-          {hasFetched ? (
-            plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />
-          ) : (
-            <PageLoader pageName="Plugins" />
-          )}
-        </div>
-      </div>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!hasFetched}>
+          <>
+            <OrgActionBar
+              searchQuery={searchQuery}
+              layoutMode={layoutMode}
+              onSetLayoutMode={mode => setPluginsLayoutMode(mode)}
+              setSearchQuery={query => setPluginsSearchQuery(query)}
+              linkButton={linkButton}
+            />
+            {hasFetched && plugins && (
+              plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />
+            )}
+          </>
+        </Page.Contents>
+      </Page>
     );
   }
 }

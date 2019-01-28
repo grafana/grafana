@@ -285,7 +285,7 @@ Content-Type: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{message: "User permissions updated"}
+{"message": "User permissions updated"}
 ```
 
 ## Delete global User
@@ -308,7 +308,7 @@ Content-Type: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{message: "User deleted"}
+{"message": "User deleted"}
 ```
 
 ## Pause all alerts
@@ -339,5 +339,5 @@ JSON Body schema:
 HTTP/1.1 200
 Content-Type: application/json
 
-{state: "new state", message: "alerts pause/un paused", "alertsAffected": 100}
+{"state": "new state", "message": "alerts pause/un paused", "alertsAffected": 100}
 ```

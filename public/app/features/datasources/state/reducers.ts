@@ -1,11 +1,12 @@
-import { DataSource, DataSourcesState, Plugin } from 'app/types';
+import { DataSourcesState, Plugin } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui/src/types';
 import { Action, ActionTypes } from './actions';
-import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
+import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 
 const initialState: DataSourcesState = {
-  dataSources: [] as DataSource[],
-  dataSource: {} as DataSource,
-  layoutMode: LayoutModes.Grid,
+  dataSources: [] as DataSourceSettings[],
+  dataSource: {} as DataSourceSettings,
+  layoutMode: LayoutModes.List,
   searchQuery: '',
   dataSourcesCount: 0,
   dataSourceTypes: [] as Plugin[],

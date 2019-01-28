@@ -5,11 +5,11 @@ import classNames from 'classnames';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
-import { AddPanelPanel } from './AddPanelPanel';
+import { AddPanelWidget } from '../components/AddPanelWidget';
 import { getPanelPluginNotFound } from './PanelPluginNotFound';
 import { DashboardRow } from './DashboardRow';
 import { PanelChrome } from './PanelChrome';
-import { PanelEditor } from './PanelEditor';
+import { PanelEditor } from '../panel_editor/PanelEditor';
 
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
@@ -53,7 +53,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   renderAddPanel() {
-    return <AddPanelPanel panel={this.props.panel} dashboard={this.props.dashboard} />;
+    return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
   onPluginTypeChanged = (plugin: PanelPlugin) => {

@@ -11,7 +11,7 @@ import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { DataQuery } from 'app/types';
+import { PromQuery } from '../types';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -88,18 +88,16 @@ interface CascaderOption {
 interface PromQueryFieldProps {
   datasource: any;
   error?: string | JSX.Element;
-  initialQuery: DataQuery;
+  initialQuery: PromQuery;
   hint?: any;
   history?: any[];
-  metricsByPrefix?: CascaderOption[];
   onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
-  onQueryChange?: (value: DataQuery, override?: boolean) => void;
+  onQueryChange?: (value: PromQuery, override?: boolean) => void;
 }
 
 interface PromQueryFieldState {
   metricsOptions: any[];
-  metricsByPrefix: CascaderOption[];
   syntaxLoaded: boolean;
 }
 
@@ -124,7 +122,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     ];
 
     this.state = {
-      metricsByPrefix: [],
       metricsOptions: [],
       syntaxLoaded: false,
     };
@@ -166,7 +163,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Send text change to parent
     const { initialQuery, onQueryChange } = this.props;
     if (onQueryChange) {
-      const query: DataQuery = {
+      const query: PromQuery = {
         ...initialQuery,
         expr: value,
       };

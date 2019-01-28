@@ -4,12 +4,13 @@ import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import { toUrlParams } from 'app/core/utils/url';
 
-class PlaylistSrv {
+export class PlaylistSrv {
   private cancelPromise: any;
-  private dashboards: any;
+  private dashboards: Array<{ uri: string }>;
   private index: number;
-  private interval: any;
+  private interval: number;
   private startUrl: string;
+  private numberOfLoops = 0;
   isPlaying: boolean;
 
   /** @ngInject */
@@ -20,8 +21,15 @@ class PlaylistSrv {
 
     const playedAllDashboards = this.index > this.dashboards.length - 1;
     if (playedAllDashboards) {
-      window.location.href = this.startUrl;
-      return;
+      this.numberOfLoops++;
+
+      // This does full reload of the playlist to keep memory in check due to existing leaks but at the same time
+      // we do not want page to flicker after each full loop.
+      if (this.numberOfLoops >= 3) {
+        window.location.href = this.startUrl;
+        return;
+      }
+      this.index = 0;
     }
 
     const dash = this.dashboards[this.index];
@@ -46,8 +54,8 @@ class PlaylistSrv {
     this.index = 0;
     this.isPlaying = true;
 
-    this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
-      this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
+    return this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
+      return this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
         this.dashboards = dashboards;
         this.interval = kbn.interval_to_ms(playlist.interval);
         this.next();

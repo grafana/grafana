@@ -1,13 +1,13 @@
 import $ from 'jquery';
 import _ from 'lodash';
 
-import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -21,7 +21,7 @@ export class KeybindingSrv {
     private $timeout,
     private datasourceSrv,
     private timeSrv,
-    private contextSrv
+    private contextSrv: ContextSrv
   ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
@@ -196,7 +196,7 @@ export class KeybindingSrv {
     });
 
     // jump to explore if permissions allow
-    if (this.contextSrv.isEditor && config.exploreEnabled) {
+    if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
@@ -236,7 +236,7 @@ export class KeybindingSrv {
         shareScope.dashboard = dashboard;
 
         appEvents.emit('show-modal', {
-          src: 'public/app/features/dashboard/partials/shareModal.html',
+          src: 'public/app/features/dashboard/components/ShareModal/template.html',
           scope: shareScope,
         });
       }

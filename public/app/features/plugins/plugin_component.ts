@@ -105,23 +105,17 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
-        const datasource = scope.target.datasource || scope.ctrl.panel.datasource;
-        return datasourceSrv.get(datasource).then(ds => {
-          scope.datasource = ds;
-
-          return importPluginModule(ds.meta.module).then(dsModule => {
-            return {
-              baseUrl: ds.meta.baseUrl,
-              name: 'query-ctrl-' + ds.meta.id,
-              bindings: { target: '=', panelCtrl: '=', datasource: '=' },
-              attrs: {
-                target: 'target',
-                'panel-ctrl': 'ctrl',
-                datasource: 'datasource',
-              },
-              Component: dsModule.QueryCtrl,
-            };
-          });
+        const ds = scope.ctrl.datasource;
+        return $q.when({
+          baseUrl: ds.meta.baseUrl,
+          name: 'query-ctrl-' + ds.meta.id,
+          bindings: { target: '=', panelCtrl: '=', datasource: '=' },
+          attrs: {
+            target: 'ctrl.target',
+            'panel-ctrl': 'ctrl',
+            datasource: 'ctrl.datasource',
+          },
+          Component: ds.pluginExports.QueryCtrl,
         });
       }
       // Annotations
