@@ -281,10 +281,12 @@ func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, erro
 		if err != nil {
 			return "", err
 		}
+
 		if !exists {
 			return uid, nil
 		}
 	}
+
 	return "", m.ErrAlertNotificationFailedGenerateUniqueUid
 }
 
