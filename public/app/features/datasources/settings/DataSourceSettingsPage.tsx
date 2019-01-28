@@ -4,8 +4,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 // Components
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import Page from 'app/core/components/Page/Page';
 import PluginSettings from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
@@ -51,7 +50,7 @@ enum DataSourceStates {
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -65,8 +64,8 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     await loadDataSource(pageId);
   }
 
-  onSubmit = async event => {
-    event.preventDefault();
+  onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
 
     await this.props.updateDataSource({ ...this.state.dataSource, name: this.props.dataSource.name });
 
@@ -89,7 +88,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     this.props.deleteDataSource();
   };
 
-  onModelChange = dataSource => {
+  onModelChange = (dataSource: DataSourceSettings) => {
     this.setState({
       dataSource: dataSource,
     });
@@ -170,17 +169,18 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     });
   }
 
+  get hasDataSource() {
+    return Object.keys(this.props.dataSource).length > 0;
+  }
+
   render() {
     const { dataSource, dataSourceMeta, navModel, setDataSourceName, setIsDefault } = this.props;
     const { testingMessage, testingStatus } = this.state;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        {Object.keys(dataSource).length === 0 ? (
-          <PageLoader pageName="Data source settings" />
-        ) : (
-          <div className="page-container page-body">
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!this.hasDataSource}>
+          {this.hasDataSource && <div className="page-container page-body">
             <div>
               <form onSubmit={this.onSubmit}>
                 {this.isReadOnly() && this.renderIsReadOnlyMessage()}
@@ -225,9 +225,9 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                 />
               </form>
             </div>
-          </div>
-        )}
-      </div>
+          </div>}
+        </Page.Contents>
+      </Page>
     );
   }
 }
