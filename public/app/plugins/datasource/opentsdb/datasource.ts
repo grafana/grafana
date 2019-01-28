@@ -36,18 +36,27 @@ export default class OpenTsDatasource {
     const start = this.convertToTSDBTime(options.rangeRaw.from, false);
     const end = this.convertToTSDBTime(options.rangeRaw.to, true);
     const qs = [];
+    const gExps = [];
 
     _.each(options.targets, target => {
-      if (!target.metric) {
+      if (!target.metric && !target.gexp) {
         return;
       }
+      if (!target.queryType) {
+        target.queryType = 'metric';
+      }
+      if (target.queryType === 'metric') {
       qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
+      } else if (target.queryType === 'gexp') {
+        gExps.push(this.convertGExpToQuery(target));
+      }
     });
 
     const queries = _.compact(qs);
+    const gExpressions = _.compact(gExps);
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(queries)) {
+    if (_.isEmpty(queries) && _.isEmpty(gExpressions)) {
       const d = this.$q.defer();
       d.resolve({ data: [] });
       return d.promise;
@@ -66,12 +75,16 @@ export default class OpenTsDatasource {
       }
     });
 
-    options.targets = _.filter(options.targets, query => {
-      return query.hide !== true;
+    let queriesPromise;
+    if (queries.length > 0) {
+      queriesPromise = this.performTimeSeriesQuery(queries, start, end).then(response => {
+        // only index into classic 'metrics' queries
+        const tsqTargets = options.targets.filter(target => {
+          return target.queryType === 'metric';
     });
 
-    return this.performTimeSeriesQuery(queries, start, end).then(response => {
-      const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
+        const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, tsqTargets, this.tsdbVersion);
+
       const result = _.map(response.data, (metricData, index) => {
         index = metricToTargetMapping[index];
         if (index === -1) {
@@ -79,9 +92,74 @@ export default class OpenTsDatasource {
         }
         this._saveTagKeys(metricData);
 
-        return this.transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+          return this.transformMetricData(metricData, groupByTags, tsqTargets[index], options, this.tsdbResolution);
+        });
+        return result;
       });
-      return { data: result };
+    }
+
+    // perform single gExp queries so that we can reliably map targets to results once all the promises are resolved
+    // (/query/gexp can perform combined queries but the result order is not determinate)
+    const gexpPromises = [];
+    if (gExpressions.length > 0) {
+      for (let gexpIndex = 0; gexpIndex < gExpressions.length; gexpIndex++) {
+        const gexpPromise = this.performGExpressionQuery(gexpIndex, gExpressions[gexpIndex], start, end, options).then(
+          response => {
+            // only index into gexp queries
+            const gexpTargets = options.targets.filter(target => {
+              return target.queryType === 'gexp';
+            });
+
+            const gExpTargetIndex = this.mapGExpToTargets(response.config.url);
+
+            const result = _.map(response.data, gexpData => {
+              let index = gExpTargetIndex;
+              if (index === -1) {
+                index = 0;
+              }
+              return this.transformGexpData(gexpData, gexpTargets[index], this.tsdbResolution);
+      });
+
+            return result.filter(value => {
+              return value !== false;
+            });
+          }
+        );
+
+        gexpPromises.push(gexpPromise);
+      }
+    }
+
+    // call all queries into an array and concaternate their data into a return object
+    const tsdbQueryPromises = [queriesPromise].concat(gexpPromises);
+
+    // q.all([]) resolves all promises while keeping order in the return array
+    // (see: https://docs.angularjs.org/api/ng/service/$q#all)
+    return this.$q.all(tsdbQueryPromises).then(responses => {
+      let data = [];
+
+      // response 0 from queriesPromise
+      const queriesData = responses[0];
+      if (queriesData && queriesData.length > 0) {
+        data = data.concat(queriesData);
+      }
+
+      // response 1+ from gexpPromises
+      for (const gexpData of responses.slice(1)) {
+        data = data.concat(gexpData);
+      }
+
+      // the return object must look like:
+      // {
+      //   'data': [
+      //     {'target': 'metric.a', datapoints: [etc]},
+      //     {'target': 'metric.b', datapoints: [etc]},
+      //   ]
+      // }
+      //console.log('query data back to grafana', data);
+      return {
+        data: data,
+      };
     });
   }
 
@@ -137,6 +215,7 @@ export default class OpenTsDatasource {
     return false;
   }
 
+  // retrieve classic Metrics via POST to /api/query
   performTimeSeriesQuery(queries, start, end) {
     let msResolution = false;
     if (this.tsdbResolution === 2) {
@@ -162,6 +241,24 @@ export default class OpenTsDatasource {
       url: this.url + '/api/query',
       data: reqBody,
     };
+
+    this._addCredentialOptions(options);
+    return this.backendSrv.datasourceRequest(options);
+  }
+
+  // retrieve a single gExp via GET to /api/query/gexp
+  performGExpressionQuery(idx, gExp, start, end, globalOptions) {
+    let urlParams = '?start=' + start + '&exp=' + gExp + '&gexpIndex=' + idx;
+    urlParams = this.templateSrv.replace(urlParams, globalOptions.scopedVars, 'pipe');
+    const options = {
+      method: 'GET',
+      url: this.url + '/api/query/gexp' + urlParams,
+    };
+
+    // Relative queries (e.g. last hour) don't include an end time
+    if (end) {
+      urlParams = '&end=' + end;
+    }
 
     this._addCredentialOptions(options);
     return this.backendSrv.datasourceRequest(options);
@@ -343,11 +440,29 @@ export default class OpenTsDatasource {
 
   transformMetricData(md, groupByTags, target, options, tsdbResolution) {
     const metricLabel = this.createMetricLabel(md, target, groupByTags, options);
+    const dps = this.getDatapointsAtCorrectResolution(md, tsdbResolution);
+
+    return { target: metricLabel, datapoints: dps };
+  }
+
+  transformGexpData(gExp, target, tsdbResolution) {
+    if (typeof target === 'undefined') {
+      // the metric is hidden
+      return false;
+    }
+
+    const metricLabel = this.createGexpLabel(gExp, target);
+    const dps = this.getDatapointsAtCorrectResolution(gExp, tsdbResolution);
+
+    return { target: metricLabel, datapoints: dps };
+  }
+
+  getDatapointsAtCorrectResolution(result, tsdbResolution) {
     const dps = [];
 
     // TSDB returns datapoints has a hash of ts => value.
     // Can't use _.pairs(invert()) because it stringifies keys/values
-    _.each(md.dps, (v, k) => {
+    _.each(result.dps, (v, k) => {
       if (tsdbResolution === 2) {
         dps.push([v, k * 1]);
       } else {
@@ -355,7 +470,7 @@ export default class OpenTsDatasource {
       }
     });
 
-    return { target: metricLabel, datapoints: dps };
+    return dps;
   }
 
   createMetricLabel(md, target, groupByTags, options) {
@@ -383,6 +498,23 @@ export default class OpenTsDatasource {
     }
 
     return label;
+  }
+
+  createGexpLabel(data, target) {
+    if (!target.gexpAlias) {
+      return target.gexp;
+    }
+
+    return target.gexpAlias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, (all, m1) => data.tags[m1]);
+  }
+
+  convertGExpToQuery(target) {
+    // filter out a target if it is 'hidden'
+    if (target.hide === true) {
+      return null;
+    }
+
+    return target.gexp;
   }
 
   convertTargetToQuery(target, options, tsdbVersion) {
@@ -460,13 +592,13 @@ export default class OpenTsDatasource {
     return query;
   }
 
-  mapMetricsToTargets(metrics, options, tsdbVersion) {
+  mapMetricsToTargets(metrics, targets, options, tsdbVersion) {
     let interpolatedTagValue, arrTagV;
     return _.map(metrics, metricData => {
       if (tsdbVersion === 3) {
         return metricData.query.index;
       } else {
-        return _.findIndex(options.targets, target => {
+        return _.findIndex(targets, target => {
           if (target.filters && target.filters.length > 0) {
             return target.metric === metricData.metric;
           } else {
@@ -482,6 +614,18 @@ export default class OpenTsDatasource {
         });
       }
     });
+  }
+
+  mapGExpToTargets(queryUrl) {
+    // extract gexpIndex from URL
+    const regex = /.+gexpIndex=(\d+).*/;
+    const gexpIndex = queryUrl.match(regex);
+
+    if (!gexpIndex) {
+      return -1;
+    }
+
+    return gexpIndex[1];
   }
 
   convertToTSDBTime(date, roundUp) {

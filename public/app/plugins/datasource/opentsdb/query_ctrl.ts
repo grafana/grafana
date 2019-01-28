@@ -18,6 +18,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   suggestTagValues: any;
   addTagMode: boolean;
   addFilterMode: boolean;
+  queryTypes: any;
 
   /** @ngInject */
   constructor($scope, $injector) {
@@ -35,8 +36,13 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       'literal_or',
       'regexp',
     ];
+    this.queryTypes = ['metric', 'gexp'];
 
     this.tsdbVersion = this.datasource.tsdbVersion;
+
+    if (!this.target.queryType) {
+      this.target.queryType = 'metric';
+    }
 
     if (!this.target.aggregator) {
       this.target.aggregator = 'sum';
