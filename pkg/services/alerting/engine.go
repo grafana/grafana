@@ -205,8 +205,14 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 			}
 		}
 
+		// create new context with timeout for notifications
 		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), resultHandleTimeout)
 		cancelChan <- resultHandleCancelFn
+
+		// override the context used for evaluation with a new context for notifications.
+		// This makes it possible for notifiers to execute when datasources
+		// dont respond within the timeout limit. We should rewrite this so notifications
+		// dont reuse the evalContext and get its own context.
 		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
 		e.resultHandler.Handle(evalContext)
