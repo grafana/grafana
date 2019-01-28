@@ -1,8 +1,6 @@
 import './dashboard_ctrl';
 import './time_srv';
-import './repeat_option/repeat_option';
 import './dashgrid/DashboardGridDirective';
-import './panellinks/module';
 
 // Services
 import './services/DashboardViewStateSrv';
