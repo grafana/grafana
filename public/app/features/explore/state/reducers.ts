@@ -176,6 +176,14 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       };
     }
 
+    case ActionTypes.UpdateDatasourceInstance: {
+      const { datasourceInstance } = action.payload;
+      return {
+        ...state,
+        datasourceInstance,
+      };
+    }
+
     case ActionTypes.LoadDatasourceFailure: {
       return { ...state, datasourceError: action.payload.error, datasourceLoading: false };
     }

@@ -21,7 +21,7 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { StoreState } from 'app/types';
-import { DataQuery, DataSourceSelectItem, QueryHint  } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceSelectItem, QueryHint } from '@grafana/ui/src/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   ExploreId,
@@ -46,8 +46,8 @@ import {
   LoadDatasourceSuccessAction,
   QueryTransactionStartAction,
   ScanStopAction,
+  UpdateDatasourceInstanceAction,
 } from './actionTypes';
-
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
 
@@ -65,6 +65,7 @@ export function addQueryRow(exploreId: ExploreId, index: number): AddQueryRowAct
 export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
   return async dispatch => {
     const instance = await getDatasourceSrv().get(datasource);
+    dispatch(updateDatasourceInstance(exploreId, instance));
     dispatch(loadDatasource(exploreId, instance));
   };
 }
@@ -262,6 +263,22 @@ export const loadDatasourceSuccess = (
     },
   };
 };
+
+/**
+ * Updates datasource instance before datasouce loading has started
+ */
+export function updateDatasourceInstance(
+  exploreId: ExploreId,
+  instance: DataSourceApi
+): UpdateDatasourceInstanceAction {
+  return {
+    type: ActionTypes.UpdateDatasourceInstance,
+    payload: {
+      exploreId,
+      datasourceInstance: instance,
+    },
+  };
+}
 
 /**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
