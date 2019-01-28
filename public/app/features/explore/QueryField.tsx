@@ -73,6 +73,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
   resetTimer: any;
+  mounted: boolean;
 
   constructor(props: QueryFieldProps, context) {
     super(props, context);
@@ -93,10 +94,12 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   componentDidMount() {
+    this.mounted = true;
     this.updateMenu();
   }
 
   componentWillUnmount() {
+    this.mounted = false;
     clearTimeout(this.resetTimer);
   }
 
@@ -347,13 +350,15 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   };
 
   resetTypeahead = () => {
-    this.setState({
-      suggestions: [],
-      typeaheadIndex: 0,
-      typeaheadPrefix: '',
-      typeaheadContext: null,
-    });
-    this.resetTimer = null;
+    if (this.mounted) {
+      this.setState({
+        suggestions: [],
+        typeaheadIndex: 0,
+        typeaheadPrefix: '',
+        typeaheadContext: null,
+      });
+      this.resetTimer = null;
+    }
   };
 
   handleBlur = () => {
