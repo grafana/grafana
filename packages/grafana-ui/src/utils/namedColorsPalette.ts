@@ -64,11 +64,11 @@ export const buildColorDefinition = (
   isPrimary: !!isPrimary,
 });
 
-export const BasicGreen = buildColorDefinition('green', 'green', ['#5AA64B', '#77BF69'], true);
-export const DarkGreen = buildColorDefinition('green', 'dark-green', ['#1E6910', '#388729']);
-export const SemiDarkGreen = buildColorDefinition('green', 'semi-dark-green', ['#388729', '#5AA64B']);
-export const LightGreen = buildColorDefinition('green', 'light-green', ['#77BF69', '#99D98D']);
-export const SuperLightGreen = buildColorDefinition('green', 'super-light-green', ['#99D98D', '#CAF2C2']);
+export const BasicGreen = buildColorDefinition('green', 'green', ['#56A64B', '#73BF69'], true);
+export const DarkGreen = buildColorDefinition('green', 'dark-green', ['#19730E', '#37872D']);
+export const SemiDarkGreen = buildColorDefinition('green', 'semi-dark-green', ['#37872D', '#56A64B']);
+export const LightGreen = buildColorDefinition('green', 'light-green', ['#73BF69', '#96D98D']);
+export const SuperLightGreen = buildColorDefinition('green', 'super-light-green', ['#96D98D', '#C8F2C2']);
 
 export const BasicYellow = buildColorDefinition('yellow', 'yellow', ['#F2CC0C', '#FADE2A'], true);
 export const DarkYellow = buildColorDefinition('yellow', 'dark-yellow', ['#CC9D00', '#E0B400']);
@@ -76,15 +76,15 @@ export const SemiDarkYellow = buildColorDefinition('yellow', 'semi-dark-yellow',
 export const LightYellow = buildColorDefinition('yellow', 'light-yellow', ['#FADE2A', '#FFEE52']);
 export const SuperLightYellow = buildColorDefinition('yellow', 'super-light-yellow', ['#FFEE52', '#FFF899']);
 
-export const BasicRed = buildColorDefinition('red', 'red', ['#DE314D', '#F24965'], true);
-export const DarkRed = buildColorDefinition('red', 'dark-red', ['#AB031F', '#C41834']);
-export const SemiDarkRed = buildColorDefinition('red', 'semi-dark-red', ['#C41834', '#DE314D']);
-export const LightRed = buildColorDefinition('red', 'light-red', ['#F24965', '#FF7389']);
-export const SuperLightRed = buildColorDefinition('red', 'super-light-red', ['#FF7389', '#FFA6B4']);
+export const BasicRed = buildColorDefinition('red', 'red', ['#E02F44', '#F2495C'], true);
+export const DarkRed = buildColorDefinition('red', 'dark-red', ['#AD0317', '#C4162A']);
+export const SemiDarkRed = buildColorDefinition('red', 'semi-dark-red', ['#C4162A', '#E02F44']);
+export const LightRed = buildColorDefinition('red', 'light-red', ['#F2495C', '#FF7383']);
+export const SuperLightRed = buildColorDefinition('red', 'super-light-red', ['#FF7383', '#FFA6B0']);
 
 export const BasicBlue = buildColorDefinition('blue', 'blue', ['#3274D9', '#5794F2'], true);
-export const DarkBlue = buildColorDefinition('blue', 'dark-blue', ['#144796', '#1857B8']);
-export const SemiDarkBlue = buildColorDefinition('blue', 'semi-dark-blue', ['#1857B8', '#3274D9']);
+export const DarkBlue = buildColorDefinition('blue', 'dark-blue', ['#1250B0', '#1F60C4']);
+export const SemiDarkBlue = buildColorDefinition('blue', 'semi-dark-blue', ['#1F60C4', '#3274D9']);
 export const LightBlue = buildColorDefinition('blue', 'light-blue', ['#5794F2', '#8AB8FF']);
 export const SuperLightBlue = buildColorDefinition('blue', 'super-light-blue', ['#8AB8FF', '#C0D8FF']);
 
@@ -95,8 +95,8 @@ export const LightOrange = buildColorDefinition('orange', 'light-orange', ['#FF9
 export const SuperLightOrange = buildColorDefinition('orange', 'super-light-orange', ['#FFB357', '#FFCB7D']);
 
 export const BasicPurple = buildColorDefinition('purple', 'purple', ['#A352CC', '#B877D9'], true);
-export const DarkPurple = buildColorDefinition('purple', 'dark-purple', ['#732699', '#8936B2']);
-export const SemiDarkPurple = buildColorDefinition('purple', 'semi-dark-purple', ['#8936B2', '#A352CC']);
+export const DarkPurple = buildColorDefinition('purple', 'dark-purple', ['#7C2EA3', '#8F3BB8']);
+export const SemiDarkPurple = buildColorDefinition('purple', 'semi-dark-purple', ['#8F3BB8', '#A352CC']);
 export const LightPurple = buildColorDefinition('purple', 'light-purple', ['#B877D9', '#CA95E5']);
 export const SuperLightPurple = buildColorDefinition('purple', 'super-light-purple', ['#CA95E5', '#DEB6F2']);
 
