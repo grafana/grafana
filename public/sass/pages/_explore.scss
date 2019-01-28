@@ -292,11 +292,6 @@
   overflow: hidden;
   background: none;
   margin: $panel-margin / 2;
-  transition: background-color 1s ease;
-}
-
-.explore-panel__loader--active {
-  background: $text-color-faint;
 }
 
 .explore-panel__loader--active:after {
@@ -307,17 +302,20 @@
   top: -50%;
   height: 250%;
   position: absolute;
-  animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
   animation-iteration-count: 100;
+  left: -25%;
   background: $blue;
 }
 
 @keyframes loader {
   from {
     left: -25%;
+    opacity: 0.1;
   }
   to {
     left: 100%;
+    opacity: 1;
   }
 }
 

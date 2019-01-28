@@ -49,7 +49,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  data: LogsModel;
+  data?: LogsModel;
   exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
@@ -165,6 +165,11 @@ export default class Logs extends PureComponent<Props, State> {
       scanning,
       scanRange,
     } = this.props;
+
+    if (!data) {
+      return null;
+    }
+
     const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
