@@ -36,7 +36,7 @@ export interface PanelMenuItem {
 export interface Threshold {
   index: number;
   value: number;
-  color?: string;
+  color: string;
 }
 
 export enum BasicGaugeColor {
@@ -65,11 +65,4 @@ export interface ValueMap extends BaseMap {
 export interface RangeMap extends BaseMap {
   from: string;
   to: string;
-}
-
-export type ThemeName = 'dark' | 'light';
-
-export enum ThemeNames {
-  Dark = 'dark',
-  Light = 'light',
 }

@@ -2,11 +2,9 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-// Components
-import { Switch } from 'app/core/components/Switch/Switch';
 
 // Types
-import { PanelOptionsProps } from '@grafana/ui';
+import { PanelOptionsProps, Switch } from '@grafana/ui';
 import { Options } from './types';
 
 export class GraphPanelOptions extends PureComponent<PanelOptionsProps<Options>> {

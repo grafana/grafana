@@ -9,6 +9,8 @@ interface Props {
   autoHideDuration?: number;
   autoHeightMax?: string;
   hideTracksWhenNotNeeded?: boolean;
+  renderTrackHorizontal?: React.FunctionComponent<any>;
+  renderTrackVertical?: React.FunctionComponent<any>;
   scrollTop?: number;
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
@@ -66,6 +68,8 @@ export class CustomScrollbar extends PureComponent<Props> {
       autoHide,
       autoHideTimeout,
       hideTracksWhenNotNeeded,
+      renderTrackHorizontal,
+      renderTrackVertical,
     } = this.props;
 
     return (
@@ -81,8 +85,8 @@ export class CustomScrollbar extends PureComponent<Props> {
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
-        renderTrackVertical={props => <div {...props} className="track-vertical" />}
+        renderTrackHorizontal={renderTrackHorizontal || (props => <div {...props} className="track-horizontal" />)}
+        renderTrackVertical={renderTrackVertical || (props => <div {...props} className="track-vertical" />)}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
         renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
         renderView={props => <div {...props} className="view" />}

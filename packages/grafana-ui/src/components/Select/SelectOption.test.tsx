@@ -3,6 +3,7 @@ import renderer from 'react-test-renderer';
 import SelectOption from './SelectOption';
 import { OptionProps } from 'react-select/lib/components/Option';
 
+// @ts-ignore
 const model: OptionProps<any> = {
   data: jest.fn(),
   cx: jest.fn(),

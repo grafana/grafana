@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
-import { FormField, PanelOptionsProps, PanelOptionsGroup } from '@grafana/ui';
+import { FormField, PanelOptionsProps, PanelOptionsGroup, Switch } from '@grafana/ui';
 
-import { Switch } from 'app/core/components/Switch/Switch';
 import { GaugeOptions } from './types';
 
 export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>> {
