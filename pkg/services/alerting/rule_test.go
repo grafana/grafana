@@ -77,13 +77,13 @@ func TestAlertRuleModel(t *testing.T) {
 					"noDataMode": "critical",
 					"enabled": true,
 					"frequency": "60s",
-			"conditions": [
-			{
-				"type": "test",
-				"prop": 123
+					"conditions": [
+						{
+							"type": "test",
+							"prop": 123
 						}
-			],
-			"notifications": [
+					],
+					"notifications": [
 						{"id": 1},
 						{"uid": "notifier2"}
 					]
@@ -123,8 +123,8 @@ func TestAlertRuleModel(t *testing.T) {
 				"noDataMode": "critical",
 				"enabled": true,
 				"frequency": "0s",
-        		"conditions": [ { "type": "test", "prop": 123 } ],
-        		"notifications": []
+				"conditions": [ { "type": "test", "prop": 123 } ],
+				"notifications": []
 			}`
 
 			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
@@ -153,13 +153,13 @@ func TestAlertRuleModel(t *testing.T) {
 				"noDataMode": "critical",
 				"enabled": true,
 				"frequency": "60s",
-        "conditions": [
-          {
-            "type": "test",
-            "prop": 123
+				"conditions": [
+					{
+						"type": "test",
+						"prop": 123
 					}
-        ],
-        "notifications": [
+				],
+				"notifications": [
 					{"not_id_uid": "1134"}
 				]
 			}
