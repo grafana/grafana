@@ -18,7 +18,7 @@ import (
 	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/ini.v1"
+	ini "gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -83,9 +83,6 @@ var (
 
 	// Security settings.
 	SecretKey                        string
-	LogInRememberDays                int
-	CookieUserName                   string
-	CookieRememberName               string
 	DisableGravatar                  bool
 	EmailCodeValidMinutes            int
 	DataProxyWhiteList               map[string]bool
@@ -222,7 +219,15 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	EnableAlphaPanels                bool
+	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
+
+	LoginCookieName                   string
+	LoginCookieMaxDays                int
+	LoginCookieRotation               int
+	LoginDeleteExpiredTokensAfterDays int
+
+	SecurityHTTPSCookies bool
 }
 
 type CommandLineArgs struct {
@@ -546,6 +551,16 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		ApplicationName = APP_NAME_ENTERPRISE
 	}
 
+	//login
+	login := iniFile.Section("login")
+	cfg.LoginCookieName = login.Key("cookie_name").MustString("grafana_session")
+	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
+	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
+	cfg.LoginCookieRotation = login.Key("rotate_token_minutes").MustInt(10)
+	if cfg.LoginCookieRotation < 2 {
+		cfg.LoginCookieRotation = 2
+	}
+
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(iniFile.Section("paths").Key("plugins").String(), HomePath)
@@ -586,11 +601,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read security settings
 	security := iniFile.Section("security")
 	SecretKey = security.Key("secret_key").String()
-	LogInRememberDays = security.Key("login_remember_days").MustInt()
-	CookieUserName = security.Key("cookie_username").String()
-	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.SecurityHTTPSCookies = security.Key("https_flag_cookies").MustBool(false)
 	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
 
 	// read snapshots settings
@@ -709,6 +722,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	panels := iniFile.Section("panels")
 	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
+	cfg.DisableSanitizeHtml = panels.Key("disable_sanitize_html").MustBool(false)
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()

@@ -1,12 +1,9 @@
 import { Value } from 'slate';
-import { RawTimeRange, TimeRange } from '@grafana/ui';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi, QueryHint } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
 import { LogsModel } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
-import { DataSourceSelectItem } from 'app/types/datasources';
-
-import { DataQuery } from './series';
 
 export interface CompletionItem {
   /**
@@ -113,7 +110,7 @@ export interface ExploreItemState {
   /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
-  datasourceInstance: any;
+  datasourceInstance: DataSourceApi;
   /**
    * Error to be shown when datasource loading or testing failed.
    */
@@ -189,7 +186,7 @@ export interface ExploreItemState {
    * Allows the selection to be discarded if something went wrong during the asynchronous
    * loading of the datasource.
    */
-  requestedDatasourceId?: number;
+  requestedDatasourceName?: string;
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
@@ -246,9 +243,9 @@ export interface ExploreUrlState {
   range: RawTimeRange;
 }
 
-export interface HistoryItem {
+export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   ts: number;
-  query: DataQuery;
+  query: TQuery;
 }
 
 export abstract class LanguageProvider {
@@ -274,28 +271,6 @@ export interface TypeaheadOutput {
   context?: string;
   refresher?: Promise<{}>;
   suggestions: CompletionItemGroup[];
-}
-
-export interface QueryFix {
-  type: string;
-  label: string;
-  action?: QueryFixAction;
-}
-
-export interface QueryFixAction {
-  type: string;
-  query?: string;
-  preventSubmit?: boolean;
-}
-
-export interface QueryHint {
-  type: string;
-  label: string;
-  fix?: QueryFix;
-}
-
-export interface QueryHintGetter {
-  (query: DataQuery, results: any[], ...rest: any): QueryHint[];
 }
 
 export interface QueryIntervals {

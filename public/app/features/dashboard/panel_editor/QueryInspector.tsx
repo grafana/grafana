@@ -177,7 +177,6 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   render() {
     const { response, isLoading } = this.state.dsQuery;
-    const { isMocking } = this.state;
     const openNodes = this.getNrOfOpenNodes();
 
     if (isLoading) {
@@ -199,20 +198,7 @@ export class QueryInspector extends PureComponent<Props, State> {
           </CopyToClipboard>
         </div>
 
-        {!isMocking && <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />}
-        {isMocking && (
-          <div className="query-troubleshooter__body">
-            <div className="gf-form p-l-1 gf-form--v-stretch">
-              <textarea
-                className="gf-form-input"
-                style={{ width: '95%' }}
-                rows={10}
-                onInput={this.setMockedResponse}
-                placeholder="JSON"
-              />
-            </div>
-          </div>
-        )}
+        <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
       </>
     );
   }

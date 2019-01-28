@@ -1,8 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { ChangeEvent, PureComponent } from 'react';
 
-import { MappingType, ValueMapping } from '../../types/panel';
-import { Label } from '../Label/Label';
-import { Select } from '../Select/Select';
+import { MappingType, ValueMapping } from '../../types';
+import { FormField, FormLabel, Select } from '..';
 
 export interface Props {
   valueMapping: ValueMapping;
@@ -32,19 +31,19 @@ export default class MappingRow extends PureComponent<Props, State> {
     this.state = { ...props.valueMapping };
   }
 
-  onMappingValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onMappingValueChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ value: event.target.value });
   };
 
-  onMappingFromChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onMappingFromChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ from: event.target.value });
   };
 
-  onMappingToChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onMappingToChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ to: event.target.value });
   };
 
-  onMappingTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onMappingTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ text: event.target.value });
   };
 
@@ -62,30 +61,28 @@ export default class MappingRow extends PureComponent<Props, State> {
     if (type === MappingType.RangeToText) {
       return (
         <>
-          <div className="gf-form">
-            <Label width={4}>From</Label>
+          <FormField
+            label="From"
+            labelWidth={4}
+            inputWidth={8}
+            onBlur={this.updateMapping}
+            onChange={this.onMappingFromChange}
+            value={from}
+          />
+          <FormField
+            label="To"
+            labelWidth={4}
+            inputWidth={8}
+            onBlur={this.updateMapping}
+            onChange={this.onMappingToChange}
+            value={to}
+          />
+          <div className="gf-form gf-form--grow">
+            <FormLabel width={4}>Text</FormLabel>
             <input
-              className="gf-form-input width-8"
-              value={from}
+              className="gf-form-input"
               onBlur={this.updateMapping}
-              onChange={this.onMappingFromChange}
-            />
-          </div>
-          <div className="gf-form">
-            <Label width={4}>To</Label>
-            <input
-              className="gf-form-input width-8"
-              value={to}
-              onBlur={this.updateMapping}
-              onChange={this.onMappingToChange}
-            />
-          </div>
-          <div className="gf-form">
-            <Label width={4}>Text</Label>
-            <input
-              className="gf-form-input width-10"
               value={text}
-              onBlur={this.updateMapping}
               onChange={this.onMappingTextChange}
             />
           </div>
@@ -95,17 +92,16 @@ export default class MappingRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className="gf-form">
-          <Label width={4}>Value</Label>
-          <input
-            className="gf-form-input width-8"
-            onBlur={this.updateMapping}
-            onChange={this.onMappingValueChange}
-            value={value}
-          />
-        </div>
+        <FormField
+          label="Value"
+          labelWidth={4}
+          onBlur={this.updateMapping}
+          onChange={this.onMappingValueChange}
+          value={value}
+          inputWidth={8}
+        />
         <div className="gf-form gf-form--grow">
-          <Label width={4}>Text</Label>
+          <FormLabel width={4}>Text</FormLabel>
           <input
             className="gf-form-input"
             onBlur={this.updateMapping}
@@ -123,7 +119,7 @@ export default class MappingRow extends PureComponent<Props, State> {
     return (
       <div className="gf-form-inline">
         <div className="gf-form">
-          <Label width={5}>Type</Label>
+          <FormLabel width={5}>Type</FormLabel>
           <Select
             placeholder="Choose type"
             isSearchable={false}

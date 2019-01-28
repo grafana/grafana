@@ -1,7 +1,6 @@
 import { Threshold, ValueMapping } from '@grafana/ui';
 
 export interface GaugeOptions {
-  baseColor: string;
   decimals: number;
   valueMappings: ValueMapping[];
   maxValue: number;

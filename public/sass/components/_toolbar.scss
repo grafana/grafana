@@ -16,6 +16,12 @@
   padding-right: 20px;
 }
 
+.toolbar__left {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+}
+
 .toolbar__main {
   padding: 0 $input-padding-x;
   font-size: $font-size-md;

@@ -1,4 +1,4 @@
-import React, { SFC, ReactNode, PureComponent } from 'react';
+import React, { FC, ReactNode, PureComponent } from 'react';
 import { Tooltip } from '@grafana/ui';
 
 interface ToggleButtonGroupProps {
@@ -29,7 +29,7 @@ interface ToggleButtonProps {
   tooltip?: string;
 }
 
-export const ToggleButton: SFC<ToggleButtonProps> = ({
+export const ToggleButton: FC<ToggleButtonProps> = ({
   children,
   selected,
   className = '',

@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import _ from 'lodash';
 import Scrollbars from 'react-custom-scrollbars';
 
 interface Props {
@@ -6,8 +7,11 @@ interface Props {
   autoHide?: boolean;
   autoHideTimeout?: number;
   autoHideDuration?: number;
-  autoMaxHeight?: string;
+  autoHeightMax?: string;
   hideTracksWhenNotNeeded?: boolean;
+  scrollTop?: number;
+  setScrollTop: (event: any) => void;
+  autoHeightMin?: number | string;
 }
 
 /**
@@ -16,24 +20,67 @@ interface Props {
 export class CustomScrollbar extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     customClassName: 'custom-scrollbars',
-    autoHide: true,
+    autoHide: false,
     autoHideTimeout: 200,
     autoHideDuration: 200,
-    autoMaxHeight: '100%',
+    setScrollTop: () => {},
     hideTracksWhenNotNeeded: false,
+    autoHeightMin: '0',
+    autoHeightMax: '100%',
   };
 
+  private ref: React.RefObject<Scrollbars>;
+
+  constructor(props: Props) {
+    super(props);
+    this.ref = React.createRef<Scrollbars>();
+  }
+
+  updateScroll() {
+    const ref = this.ref.current;
+
+    if (ref && !_.isNil(this.props.scrollTop)) {
+      if (this.props.scrollTop > 10000) {
+        ref.scrollToBottom();
+      } else {
+        ref.scrollTop(this.props.scrollTop);
+      }
+    }
+  }
+
+  componentDidMount() {
+    this.updateScroll();
+  }
+
+  componentDidUpdate() {
+    this.updateScroll();
+  }
+
   render() {
-    const { customClassName, children, autoMaxHeight } = this.props;
+    const {
+      customClassName,
+      children,
+      autoHeightMax,
+      autoHeightMin,
+      setScrollTop,
+      autoHide,
+      autoHideTimeout,
+      hideTracksWhenNotNeeded,
+    } = this.props;
 
     return (
       <Scrollbars
+        ref={this.ref}
         className={customClassName}
+        onScroll={setScrollTop}
         autoHeight={true}
+        autoHide={autoHide}
+        autoHideTimeout={autoHideTimeout}
+        hideTracksWhenNotNeeded={hideTracksWhenNotNeeded}
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
         // Before these where set to inhert but that caused problems with cut of legends in firefox
-        autoHeightMin={'0'}
-        autoHeightMax={autoMaxHeight}
+        autoHeightMax={autoHeightMax}
+        autoHeightMin={autoHeightMin}
         renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
         renderTrackVertical={props => <div {...props} className="track-vertical" />}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
