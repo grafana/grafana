@@ -6,7 +6,6 @@
   "alerting": true,
   "annotations": true,
   "tables": false,
-  "state": "beta",
   "queryOptions": {
     "maxDataPoints": true,
     "cacheTimeout": true
