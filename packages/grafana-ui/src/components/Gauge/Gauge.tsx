@@ -4,6 +4,7 @@ import $ from 'jquery';
 import { ValueMapping, Threshold, BasicGaugeColor } from '../../types/panel';
 import { TimeSeriesVMs } from '../../types/series';
 import { GrafanaTheme } from '../../types';
+import { getMappedValue } from '../../utils/valueMappings';
 import { getValueFormat } from '../../utils/valueFormats/valueFormats';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 
