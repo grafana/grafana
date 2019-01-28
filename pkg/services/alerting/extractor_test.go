@@ -200,8 +200,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		Convey("Alert notifications are in DB", func() {
 			sqlstore.InitTestDB(t)
-			err := sqlstore.CreateOrg(&m.CreateOrgCommand{Name: "Main Org."})
-			So(err, ShouldBeNil)
 			firstNotification := m.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 			err = sqlstore.CreateAlertNotificationCommand(&firstNotification)
 			So(err, ShouldBeNil)

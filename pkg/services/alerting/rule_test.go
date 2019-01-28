@@ -59,10 +59,8 @@ func TestAlertRuleModel(t *testing.T) {
 		})
 
 		Convey("can construct alert rule model", func() {
-			err := sqlstore.CreateOrg(&m.CreateOrgCommand{Name: "Main Org."})
-			So(err, ShouldBeNil)
 			firstNotification := m.CreateAlertNotificationCommand{OrgId: 1, Name: "1"}
-			err = sqlstore.CreateAlertNotificationCommand(&firstNotification)
+			err := sqlstore.CreateAlertNotificationCommand(&firstNotification)
 			So(err, ShouldBeNil)
 			secondNotification := m.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
 			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
@@ -182,6 +180,5 @@ func TestAlertRuleModel(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "Alert validation error: Neither id nor uid is specified, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 		})
-
 	})
 }
