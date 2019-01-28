@@ -144,7 +144,7 @@ export function highlightLogsExpression(exploreId: ExploreId, expressions: strin
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasource: string,
+  datasourceName: string,
   queries: DataQuery[],
   range: RawTimeRange,
   containerWidth: number,
@@ -164,7 +164,7 @@ export function initializeExplore(
       payload: {
         exploreId,
         containerWidth,
-        datasource,
+        datasourceName,
         eventBridge,
         exploreDatasources,
         queries,
@@ -174,9 +174,9 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       let instance;
-      if (datasource) {
+      if (datasourceName) {
         try {
-          instance = await getDatasourceSrv().get(datasource);
+          instance = await getDatasourceSrv().get(datasourceName);
         } catch (error) {
           console.error(error);
         }
@@ -185,6 +185,7 @@ export function initializeExplore(
       if (!instance) {
         instance = await getDatasourceSrv().get();
       }
+      dispatch(updateDatasourceInstance(exploreId, instance));
       dispatch(loadDatasource(exploreId, instance));
     } else {
       dispatch(loadDatasourceMissing(exploreId));
@@ -223,11 +224,11 @@ export const loadDatasourceMissing = (exploreId: ExploreId): LoadDatasourceMissi
 /**
  * Start the async process of loading a datasource to display a loading indicator
  */
-export const loadDatasourcePending = (exploreId: ExploreId, datasourceName: string): LoadDatasourcePendingAction => ({
+export const loadDatasourcePending = (exploreId: ExploreId, requestedDatasourceName: string): LoadDatasourcePendingAction => ({
   type: ActionTypes.LoadDatasourcePending,
   payload: {
     exploreId,
-    datasourceName,
+    requestedDatasourceName,
   },
 });
 
@@ -260,7 +261,6 @@ export const loadDatasourceSuccess = (
       StartPage,
       datasourceInstance: instance,
       history,
-      initialDatasource: instance.name,
       initialQueries: queries,
       showingStartPage: Boolean(StartPage),
       supportsGraph,

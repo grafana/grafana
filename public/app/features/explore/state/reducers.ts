@@ -24,6 +24,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   StartPage: undefined,
   containerWidth: 0,
   datasourceInstance: null,
+  requestedDatasourceName: null,
   datasourceError: null,
   datasourceLoading: null,
   datasourceMissing: false,
@@ -162,14 +163,13 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.InitializeExplore: {
-      const { containerWidth, datasource, eventBridge, exploreDatasources, queries, range } = action.payload;
+      const { containerWidth, eventBridge, exploreDatasources, queries, range } = action.payload;
       return {
         ...state,
         containerWidth,
         eventBridge,
         exploreDatasources,
         range,
-        initialDatasource: datasource,
         initialQueries: queries,
         initialized: true,
         modifiedQueries: queries.slice(),
@@ -181,6 +181,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       return {
         ...state,
         datasourceInstance,
+        datasourceName: datasourceInstance.name,
       };
     }
 
@@ -193,7 +194,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.LoadDatasourcePending: {
-      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.datasourceName };
+      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.requestedDatasourceName };
     }
 
     case ActionTypes.LoadDatasourceSuccess: {
@@ -202,7 +203,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialDatasource,
         initialQueries,
         showingStartPage,
         supportsGraph,
@@ -217,7 +217,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialDatasource,
         initialQueries,
         showingStartPage,
         supportsGraph,

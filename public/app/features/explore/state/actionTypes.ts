@@ -101,7 +101,6 @@ export interface InitializeExploreAction {
   payload: {
     exploreId: ExploreId;
     containerWidth: number;
-    datasource: string;
     eventBridge: Emitter;
     exploreDatasources: DataSourceSelectItem[];
     queries: DataQuery[];
@@ -125,7 +124,7 @@ export interface LoadDatasourcePendingAction {
   type: ActionTypes.LoadDatasourcePending;
   payload: {
     exploreId: ExploreId;
-    datasourceName: string;
+    requestedDatasourceName: string;
   };
 }
 
@@ -143,7 +142,6 @@ export interface LoadDatasourceSuccessAction {
     StartPage?: any;
     datasourceInstance: any;
     history: HistoryItem[];
-    initialDatasource: string;
     initialQueries: DataQuery[];
     logsHighlighterExpressions?: any[];
     showingStartPage: boolean;
