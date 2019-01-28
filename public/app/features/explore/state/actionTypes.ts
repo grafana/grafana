@@ -9,7 +9,6 @@ import {
   ResultType,
   QueryTransaction,
 } from 'app/types/explore';
-import { UpdateLocationAction } from 'app/core/actions/location';
 
 export enum ActionTypes {
   AddQueryRow = 'explore/ADD_QUERY_ROW',
@@ -42,6 +41,7 @@ export enum ActionTypes {
   ToggleGraph = 'explore/TOGGLE_GRAPH',
   ToggleLogs = 'explore/TOGGLE_LOGS',
   ToggleTable = 'explore/TOGGLE_TABLE',
+  ResetExplore = 'explore/RESET_EXPLORE',
 }
 
 export interface AddQueryRowAction {
@@ -271,6 +271,11 @@ export interface ToggleLogsAction {
   };
 }
 
+export interface ResetExploreAction {
+  type: ActionTypes.ResetExplore;
+  payload: {};
+}
+
 export type Action =
   | AddQueryRowAction
   | ChangeQueryAction
@@ -299,4 +304,4 @@ export type Action =
   | ToggleGraphAction
   | ToggleLogsAction
   | ToggleTableAction
-  | UpdateLocationAction;
+  | ResetExploreAction;
