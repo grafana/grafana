@@ -119,11 +119,11 @@ export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaTheme) =
 const buildNamedColorsPalette = () => {
   const palette = new Map<Hue, ColorDefinition[]>();
 
-  const BasicGreen = buildColorDefinition('green', 'green', ['#5AA64B', '#77BF69'], true);
-  const DarkGreen = buildColorDefinition('green', 'dark-green', ['#1E6910', '#388729']);
-  const SemiDarkGreen = buildColorDefinition('green', 'semi-dark-green', ['#388729', '#5AA64B']);
-  const LightGreen = buildColorDefinition('green', 'light-green', ['#77BF69', '#99D98D']);
-  const SuperLightGreen = buildColorDefinition('green', 'super-light-green', ['#99D98D', '#CAF2C2']);
+    const BasicGreen = buildColorDefinition('green', 'green', ['#56A64B', '#73BF69'], true);
+  const DarkGreen = buildColorDefinition('green', 'dark-green', ['#19730E', '#37872D']);
+  const SemiDarkGreen = buildColorDefinition('green', 'semi-dark-green', ['#37872D', '#56A64B']);
+  const LightGreen = buildColorDefinition('green', 'light-green', ['#73BF69', '#96D98D']);
+  const SuperLightGreen = buildColorDefinition('green', 'super-light-green', ['#96D98D', '#C8F2C2']);
 
   const BasicYellow = buildColorDefinition('yellow', 'yellow', ['#F2CC0C', '#FADE2A'], true);
   const DarkYellow = buildColorDefinition('yellow', 'dark-yellow', ['#CC9D00', '#E0B400']);
@@ -131,15 +131,15 @@ const buildNamedColorsPalette = () => {
   const LightYellow = buildColorDefinition('yellow', 'light-yellow', ['#FADE2A', '#FFEE52']);
   const SuperLightYellow = buildColorDefinition('yellow', 'super-light-yellow', ['#FFEE52', '#FFF899']);
 
-  const BasicRed = buildColorDefinition('red', 'red', ['#DE314D', '#F24965'], true);
-  const DarkRed = buildColorDefinition('red', 'dark-red', ['#AB031F', '#C41834']);
-  const SemiDarkRed = buildColorDefinition('red', 'semi-dark-red', ['#C41834', '#DE314D']);
-  const LightRed = buildColorDefinition('red', 'light-red', ['#F24965', '#FF7389']);
-  const SuperLightRed = buildColorDefinition('red', 'super-light-red', ['#FF7389', '#FFA6B4']);
+  const BasicRed = buildColorDefinition('red', 'red', ['#E02F44', '#F2495C'], true);
+  const DarkRed = buildColorDefinition('red', 'dark-red', ['#AD0317', '#C4162A']);
+  const SemiDarkRed = buildColorDefinition('red', 'semi-dark-red', ['#C4162A', '#E02F44']);
+  const LightRed = buildColorDefinition('red', 'light-red', ['#F2495C', '#FF7383']);
+  const SuperLightRed = buildColorDefinition('red', 'super-light-red', ['#FF7383', '#FFA6B0']);
 
   const BasicBlue = buildColorDefinition('blue', 'blue', ['#3274D9', '#5794F2'], true);
-  const DarkBlue = buildColorDefinition('blue', 'dark-blue', ['#144796', '#1857B8']);
-  const SemiDarkBlue = buildColorDefinition('blue', 'semi-dark-blue', ['#1857B8', '#3274D9']);
+  const DarkBlue = buildColorDefinition('blue', 'dark-blue', ['#1250B0', '#1F60C4']);
+  const SemiDarkBlue = buildColorDefinition('blue', 'semi-dark-blue', ['#1F60C4', '#3274D9']);
   const LightBlue = buildColorDefinition('blue', 'light-blue', ['#5794F2', '#8AB8FF']);
   const SuperLightBlue = buildColorDefinition('blue', 'super-light-blue', ['#8AB8FF', '#C0D8FF']);
 
@@ -150,8 +150,8 @@ const buildNamedColorsPalette = () => {
   const SuperLightOrange = buildColorDefinition('orange', 'super-light-orange', ['#FFB357', '#FFCB7D']);
 
   const BasicPurple = buildColorDefinition('purple', 'purple', ['#A352CC', '#B877D9'], true);
-  const DarkPurple = buildColorDefinition('purple', 'dark-purple', ['#732699', '#8936B2']);
-  const SemiDarkPurple = buildColorDefinition('purple', 'semi-dark-purple', ['#8936B2', '#A352CC']);
+  const DarkPurple = buildColorDefinition('purple', 'dark-purple', ['#7C2EA3', '#8F3BB8']);
+  const SemiDarkPurple = buildColorDefinition('purple', 'semi-dark-purple', ['#8F3BB8', '#A352CC']);
   const LightPurple = buildColorDefinition('purple', 'light-purple', ['#B877D9', '#CA95E5']);
   const SuperLightPurple = buildColorDefinition('purple', 'super-light-purple', ['#CA95E5', '#DEB6F2']);
 
