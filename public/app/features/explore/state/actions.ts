@@ -538,6 +538,7 @@ export function runQueries(exploreId: ExploreId) {
 
     if (!hasNonEmptyQuery(modifiedQueries)) {
       dispatch({ type: ActionTypes.RunQueriesEmpty, payload: { exploreId } });
+      dispatch(stateSave()); // Remember to saves to state and update location
       return;
     }
 

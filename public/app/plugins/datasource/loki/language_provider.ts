@@ -173,8 +173,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
         })
       );
     }
+    // Return a cleaned LokiQuery
     return queries.map(query => ({
-      ...query,
+      refId: query.refId,
       expr: '',
     }));
   }
