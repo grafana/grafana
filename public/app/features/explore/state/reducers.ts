@@ -8,6 +8,7 @@ import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/expl
 import { DataQuery } from '@grafana/ui/src/types';
 
 import { Action, ActionTypes } from './actionTypes';
+import { CoreActionTypes } from 'app/core/actions/location';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -428,25 +429,23 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
 export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
   switch (action.type) {
     case ActionTypes.SplitClose: {
-      return {
-        ...state,
-        split: false,
-      };
+      return { ...state, split: false };
     }
 
     case ActionTypes.SplitOpen: {
-      return {
-        ...state,
-        split: true,
-        right: action.payload.itemState,
-      };
+      return { ...state, split: true, right: action.payload.itemState };
     }
 
     case ActionTypes.InitializeExploreSplit: {
-      return {
-        ...state,
-        split: true,
-      };
+      return { ...state, split: true };
+    }
+
+    case CoreActionTypes.UpdateLocation: {
+      if (action.payload.path && action.payload.path !== '/explore') {
+        return initialExploreState;
+      }
+
+      return state;
     }
   }
 

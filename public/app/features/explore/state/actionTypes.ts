@@ -1,6 +1,6 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem  } from '@grafana/ui/src/types';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem } from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreItemState,
@@ -9,6 +9,7 @@ import {
   ResultType,
   QueryTransaction,
 } from 'app/types/explore';
+import { UpdateLocationAction } from 'app/core/actions/location';
 
 export enum ActionTypes {
   AddQueryRow = 'explore/ADD_QUERY_ROW',
@@ -297,4 +298,5 @@ export type Action =
   | SplitOpenAction
   | ToggleGraphAction
   | ToggleLogsAction
-  | ToggleTableAction;
+  | ToggleTableAction
+  | UpdateLocationAction;
