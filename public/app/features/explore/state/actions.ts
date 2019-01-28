@@ -4,6 +4,8 @@ import { ThunkAction } from 'redux-thunk';
 
 // Services & Utils
 import store from 'app/core/store';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { Emitter } from 'app/core/core';
 import {
   LAST_USED_DATASOURCE_KEY,
   clearQueryKeys,
@@ -21,8 +23,14 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { StoreState } from 'app/types';
-import { DataQuery, DataSourceSelectItem, QueryHint } from '@grafana/ui/src/types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import {
+  RawTimeRange,
+  TimeRange,
+  DataSourceApi,
+  DataQuery,
+  DataSourceSelectItem,
+  QueryHint,
+} from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreUrlState,
@@ -32,8 +40,6 @@ import {
   QueryTransaction,
 } from 'app/types/explore';
 
-import { Emitter } from 'app/core/core';
-import { RawTimeRange, TimeRange, DataSourceApi } from '@grafana/ui';
 import {
   Action as ThunkableAction,
   ActionTypes,
