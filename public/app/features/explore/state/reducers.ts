@@ -278,7 +278,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.QueryTransactionStart: {
-      const { datasourceInstance, queryIntervals, queryTransactions } = state;
+      const { queryTransactions } = state;
       const { resultType, rowIndex, transaction } = action.payload;
       // Discarding existing transactions of same type
       const remainingTransactions = queryTransactions.filter(
@@ -288,15 +288,9 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       // Append new transaction
       const nextQueryTransactions: QueryTransaction[] = [...remainingTransactions, transaction];
 
-      const results = calculateResultsFromQueryTransactions(
-        nextQueryTransactions,
-        datasourceInstance,
-        queryIntervals.intervalMs
-      );
 
       return {
         ...state,
-        ...results,
         queryTransactions: nextQueryTransactions,
         showingStartPage: false,
       };
