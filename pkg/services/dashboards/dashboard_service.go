@@ -80,7 +80,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, models.ErrDashboardFolderNameExists
 	}
 
-	if !util.IsValidShortUid(dash.Uid) {
+	if !util.IsValidShortUID(dash.Uid) {
 		return nil, models.ErrDashboardInvalidUid
 	} else if len(dash.Uid) > 40 {
 		return nil, models.ErrDashboardUidToLong
