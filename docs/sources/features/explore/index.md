@@ -27,23 +27,6 @@ For infrastructure monitoring and incident response, you no longer need to switc
 
 If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the datasource supports both graph and table data).
 
-## Turning the Explore Feature On
-
-Explore will be officially released in Grafana 6.0. It is however already in the latest nightly builds of Grafana and can be turned using a feature flag in the config file. Restart Grafana after making the config file change.
-
-```ini
-[explore]
-# Enable the Explore section
-enabled = true
-```
-
-Or if using docker:
-
-```bash
-docker pull grafana/grafana:master
-docker run --name grafana -p 3000:3000 -e "GF_EXPLORE_ENABLED=true" grafana/grafana:master
-```
-
 ## How to Start Exploring
 
 There is a new Explore icon on the menu bar to the left. This opens a new empty Explore tab.
