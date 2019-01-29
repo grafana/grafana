@@ -75,7 +75,8 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const modifiedQueries = getState().explore[exploreId].modifiedQueries;
 
-    dispatch(importQueries(exploreId, modifiedQueries, currentDataSourceInstance, newDataSourceInstance));
+    await dispatch(importQueries(exploreId, modifiedQueries, currentDataSourceInstance, newDataSourceInstance));
+
     dispatch(updateDatasourceInstance(exploreId, newDataSourceInstance));
     dispatch(loadDatasource(exploreId, newDataSourceInstance));
   };
