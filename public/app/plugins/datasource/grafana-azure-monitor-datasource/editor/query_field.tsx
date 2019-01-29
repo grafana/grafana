@@ -17,7 +17,6 @@ import ReactDOM from 'react-dom';
 import React from 'react';
 import _ from 'lodash';
 
-
 function flattenSuggestions(s) {
   return s ? s.reduce((acc, g) => acc.concat(g.items), []) : [];
 }
@@ -107,14 +106,14 @@ class QueryField extends React.Component<any, any> {
     });
 
     window.requestAnimationFrame(this.onTypeahead);
-  }
+  };
 
   request = (url?) => {
     if (this.props.request) {
       return this.props.request(url);
     }
     return fetch(url);
-  }
+  };
 
   onChangeQuery = () => {
     // Send text change to parent
@@ -122,7 +121,7 @@ class QueryField extends React.Component<any, any> {
     if (onQueryChange) {
       onQueryChange(Plain.serialize(this.state.value));
     }
-  }
+  };
 
   onKeyDown = (event, change) => {
     const { typeaheadIndex, suggestions } = this.state;
@@ -147,6 +146,7 @@ class QueryField extends React.Component<any, any> {
         break;
       }
 
+      case 'Tab':
       case 'Enter': {
         if (this.menuEl) {
           // Dont blur input
@@ -191,13 +191,15 @@ class QueryField extends React.Component<any, any> {
       }
     }
     return undefined;
-  }
+  };
 
   onTypeahead = (change?, item?) => {
     return change || this.state.value.change();
-  }
+  };
 
-  applyTypeahead(change?, suggestion?): { value: object } { return { value: {} }; }
+  applyTypeahead(change?, suggestion?): { value: object } {
+    return { value: {} };
+  }
 
   resetTypeahead = () => {
     this.setState({
@@ -206,7 +208,7 @@ class QueryField extends React.Component<any, any> {
       typeaheadPrefix: '',
       typeaheadContext: null,
     });
-  }
+  };
 
   handleBlur = () => {
     const { onBlur } = this.props;
@@ -216,14 +218,14 @@ class QueryField extends React.Component<any, any> {
     if (onBlur) {
       onBlur();
     }
-  }
+  };
 
   handleFocus = () => {
     const { onFocus } = this.props;
     if (onFocus) {
       onFocus();
     }
-  }
+  };
 
   onClickItem = item => {
     const { suggestions } = this.state;
@@ -241,7 +243,7 @@ class QueryField extends React.Component<any, any> {
     // Manually triggering change
     const change = this.applyTypeahead(this.state.value.change(), suggestion);
     this.onChange(change);
-  }
+  };
 
   updateMenu = () => {
     const { suggestions } = this.state;
@@ -275,11 +277,11 @@ class QueryField extends React.Component<any, any> {
         menu.style.left = `${rect.left + scrollX - 2}px`;
       });
     }
-  }
+  };
 
   menuRef = el => {
     this.menuEl = el;
-  }
+  };
 
   renderMenu = () => {
     const { portalPrefix } = this.props;
@@ -308,7 +310,7 @@ class QueryField extends React.Component<any, any> {
         />
       </Portal>
     );
-  }
+  };
 
   render() {
     return (

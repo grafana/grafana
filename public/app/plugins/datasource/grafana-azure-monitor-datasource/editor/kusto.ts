@@ -24,27 +24,53 @@ export const FUNCTIONS = [
   { text: 'min', display: 'min()', hint: '' },
   { text: 'max', display: 'max()', hint: '' },
   { text: 'avg', display: 'avg()', hint: '' },
+  {
+    text: '$__timeFilter',
+    display: '$__timeFilter()',
+    hint: 'Macro that uses the selected timerange in Grafana to filter the query.',
+  },
+  {
+    text: '$__escapeMulti',
+    display: '$__escapeMulti()',
+    hint: 'Macro to escape multi-value template variables that contain illegal characters.',
+  },
+  { text: '$__contains', display: '$__contains()', hint: 'Macro for multi-value template variables.' },
 ];
 
 export const KEYWORDS = [
-  'by', 'on', 'contains', 'notcontains', 'containscs', 'notcontainscs', 'startswith', 'has', 'matches', 'regex', 'true',
-  'false', 'and', 'or', 'typeof', 'int', 'string', 'date', 'datetime', 'time', 'long', 'real', '​boolean', 'bool',
+  'by',
+  'on',
+  'contains',
+  'notcontains',
+  'containscs',
+  'notcontainscs',
+  'startswith',
+  'has',
+  'matches',
+  'regex',
+  'true',
+  'false',
+  'and',
+  'or',
+  'typeof',
+  'int',
+  'string',
+  'date',
+  'datetime',
+  'time',
+  'long',
+  'real',
+  '​boolean',
+  'bool',
   // add some more keywords
-  'where', 'order'
+  'where',
+  'order',
 ];
 
 // Kusto operators
 // export const OPERATORS = ['+', '-', '*', '/', '>', '<', '==', '<>', '<=', '>=', '~', '!~'];
 
-export const DURATION = [
-  'SECONDS',
-  'MINUTES',
-  'HOURS',
-  'DAYS',
-  'WEEKS',
-  'MONTHS',
-  'YEARS'
-];
+export const DURATION = ['SECONDS', 'MINUTES', 'HOURS', 'DAYS', 'WEEKS', 'MONTHS', 'YEARS'];
 
 const tokenizer = {
   comment: {
@@ -70,7 +96,7 @@ const tokenizer = {
   number: /\b0x[\da-f]+\b|(?:\b\d+\.?\d*|\B\.\d+)(?:e[+-]?\d+)?/i,
   operator: /-|\+|\*|\/|>|<|==|<=?|>=?|<>|!~|~|=|\|/,
   punctuation: /[{};(),.:]/,
-  variable: /(\[\[(.+?)\]\])|(\$(.+?))\b/
+  variable: /(\[\[(.+?)\]\])|(\$(.+?))\b/,
 };
 
 tokenizer['function-context'].inside = {

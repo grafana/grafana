@@ -1,10 +1,8 @@
 import KustoQueryField from './KustoQueryField';
 import Kusto from './kusto';
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import coreModule from 'app/core/core_module';
-
-
 
 class Editor extends Component<any, any> {
   constructor(props) {
@@ -37,7 +35,7 @@ class Editor extends Component<any, any> {
     const { edited, query } = this.state;
 
     return (
-      <div className="gf-form-input" style={{height: 'auto'}}>
+      <div className="gf-form-input" style={{ height: 'auto' }}>
         <KustoQueryField
           initialQuery={edited ? null : query}
           onPressEnter={this.onPressEnter}
