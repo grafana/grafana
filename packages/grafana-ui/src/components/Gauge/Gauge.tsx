@@ -1,12 +1,9 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import { ValueMapping, Threshold, BasicGaugeColor } from '../../types/panel';
-import { TimeSeriesVMs } from '../../types/series';
-import { GrafanaTheme } from '../../types';
+import { ValueMapping, Threshold, BasicGaugeColor, TimeSeriesVMs, GrafanaTheme } from '../../types';
 import { getMappedValue } from '../../utils/valueMappings';
-import { getValueFormat } from '../../utils/valueFormats/valueFormats';
-import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { getColorFromHexRgbOrName, getValueFormat } from '../../utils';
 
 type TimeSeriesValue = string | number | null;
 
@@ -27,6 +24,8 @@ export interface Props {
   width: number;
   theme?: GrafanaTheme;
 }
+
+const FONT_SCALE = 1;
 
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
@@ -63,7 +62,7 @@ export class Gauge extends PureComponent<Props> {
     if (valueMappings.length > 0) {
       const valueMappedValue = getMappedValue(valueMappings, value);
       if (valueMappedValue) {
-        return `${prefix} ${valueMappedValue.text} ${suffix}`;
+        return `${prefix && prefix + ' '}${valueMappedValue.text}${suffix && ' ' + suffix}`;
       }
     }
 
@@ -71,7 +70,7 @@ export class Gauge extends PureComponent<Props> {
     const formattedValue = formatFunc(value as number, decimals);
     const handleNoValueValue = formattedValue || 'no value';
 
-    return `${prefix} ${handleNoValueValue} ${suffix}`;
+    return `${prefix && prefix + ' '}${handleNoValueValue}${suffix && ' ' + suffix}`;
   }
 
   getFontColor(value: TimeSeriesValue) {
@@ -102,7 +101,7 @@ export class Gauge extends PureComponent<Props> {
     const thresholdsSortedByIndex = [...thresholds].sort((t1, t2) => t1.index - t2.index);
     const lastThreshold = thresholdsSortedByIndex[thresholdsSortedByIndex.length - 1];
 
-    const formattedThresholds = [
+    return [
       ...thresholdsSortedByIndex.map(threshold => {
         if (threshold.index === 0) {
           return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme) };
@@ -113,8 +112,13 @@ export class Gauge extends PureComponent<Props> {
       }),
       { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme) },
     ];
+  }
 
-    return formattedThresholds;
+  getFontScale(length: number): number {
+    if (length > 12) {
+      return FONT_SCALE - length * 5 / 120;
+    }
+    return FONT_SCALE - length * 5 / 105;
   }
 
   draw() {
@@ -138,13 +142,14 @@ export class Gauge extends PureComponent<Props> {
       value = null;
     }
 
+    const formattedValue = this.formatValue(value) as string;
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = theme === GrafanaTheme.Light ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
-    const fontScale = parseInt('80', 10) / 100;
-    const fontSize = Math.min(dimension / 5, 100) * fontScale;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
+    const fontSize =
+      Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options = {
@@ -175,7 +180,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: this.getFontColor(value),
             formatter: () => {
-              return this.formatValue(value);
+              return formattedValue;
             },
             font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
           },

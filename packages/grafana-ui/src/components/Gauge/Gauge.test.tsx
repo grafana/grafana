@@ -116,7 +116,7 @@ describe('Format value', () => {
 
     const result = instance.formatValue(value);
 
-    expect(result).toEqual(' 6.0 ');
+    expect(result).toEqual('6.0');
   });
 
   it('should return formatted value if there are no matching value mappings', () => {
@@ -129,7 +129,7 @@ describe('Format value', () => {
 
     const result = instance.formatValue(value);
 
-    expect(result).toEqual(' 10.0 ');
+    expect(result).toEqual('10.0');
   });
 
   it('should return mapped value if there are matching value mappings', () => {
@@ -142,6 +142,6 @@ describe('Format value', () => {
 
     const result = instance.formatValue(value);
 
-    expect(result).toEqual(' 1-20 ');
+    expect(result).toEqual('1-20');
   });
 });
