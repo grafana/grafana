@@ -66,6 +66,14 @@ One of the goals of the Grafana v6.0 release is to add support for the three maj
 
 The Azure Monitor datasource integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
+### Other features
+
+- The ElasticSearch datasource now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per bucket computations like the difference or ratio between two metrics.
+
+- The way session storage works has been refactored to be more secure and to be more performant by doing fewer writes to the database.
+
+- Support for Google Hangouts Chat alert notifications
+
 #### Technical Work - moving from Angular to React
 
 The Grafana team is putting a huge amount of work into converting the frontend code in Grafana from Angular to React. Currently, all external plugins for Grafana are written in Angular but we are planning to also support plugins written in React very soon.
