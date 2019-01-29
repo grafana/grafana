@@ -9,9 +9,9 @@ import PageHeader from '../PageHeader/PageHeader';
 import Footer from '../Footer/Footer';
 import PageContents from './PageContents';
 import { CustomScrollbar } from '@grafana/ui';
+import { isEqual } from 'lodash';
 
 interface Props {
-  title?: string;
   children: JSX.Element[] | JSX.Element;
   navModel: NavModel;
 }
@@ -28,7 +28,7 @@ class Page extends Component<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (prevProps.title !== this.props.title) {
+    if (!isEqual(prevProps.navModel, this.props.navModel)) {
       this.updateTitle();
     }
   }
