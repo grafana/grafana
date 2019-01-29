@@ -143,7 +143,6 @@ export interface LoadDatasourceSuccessAction {
     StartPage?: any;
     datasourceInstance: any;
     history: HistoryItem[];
-    // initialQueries: DataQuery[];
     logsHighlighterExpressions?: any[];
     showingStartPage: boolean;
     supportsGraph: boolean;

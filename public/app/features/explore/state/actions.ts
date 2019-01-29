@@ -259,8 +259,7 @@ export const setInitialQueries = (exploreId: ExploreId, queries: DataQuery[]): S
  */
 export const loadDatasourceSuccess = (
   exploreId: ExploreId,
-  instance: any
-  // queries: DataQuery[]
+  instance: any,
 ): LoadDatasourceSuccessAction => {
   // Capabilities
   const supportsGraph = instance.meta.metrics;
@@ -281,7 +280,6 @@ export const loadDatasourceSuccess = (
       StartPage,
       datasourceInstance: instance,
       history,
-      // initialQueries: queries,
       showingStartPage: Boolean(StartPage),
       supportsGraph,
       supportsLogs,
@@ -368,13 +366,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
       return;
     }
 
-    // Reset edit state with new queries
-    // const nextQueries = importedQueries.map((q, i) => ({
-    //   ...importedQueries[i],
-    //   ...generateEmptyQuery(i),
-    // }));
-
-    dispatch(loadDatasourceSuccess(exploreId, instance /*, nextQueries*/));
+    dispatch(loadDatasourceSuccess(exploreId, instance));
     dispatch(runQueries(exploreId));
   };
 }
