@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { PanelOptionsProps, PanelOptionsGroup, Label, Select } from '@grafana/ui';
-
+import { FormField, FormLabel, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
 import UnitPicker from 'app/core/components/Select/UnitPicker';
 import { GaugeOptions } from './types';
 
@@ -41,7 +40,7 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
     return (
       <PanelOptionsGroup title="Value">
         <div className="gf-form">
-          <Label width={labelWidth}>Stat</Label>
+          <FormLabel width={labelWidth}>Stat</FormLabel>
           <Select
             width={12}
             options={statOptions}
@@ -50,27 +49,19 @@ export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeO
           />
         </div>
         <div className="gf-form">
-          <Label width={labelWidth}>Unit</Label>
+          <FormLabel width={labelWidth}>Unit</FormLabel>
           <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
         </div>
-        <div className="gf-form">
-          <Label width={labelWidth}>Decimals</Label>
-          <input
-            className="gf-form-input width-12"
-            type="number"
-            placeholder="auto"
-            value={decimals || ''}
-            onChange={this.onDecimalChange}
-          />
-        </div>
-        <div className="gf-form">
-          <Label width={labelWidth}>Prefix</Label>
-          <input className="gf-form-input width-12" type="text" value={prefix || ''} onChange={this.onPrefixChange} />
-        </div>
-        <div className="gf-form">
-          <Label width={labelWidth}>Suffix</Label>
-          <input className="gf-form-input width-12" type="text" value={suffix || ''} onChange={this.onSuffixChange} />
-        </div>
+        <FormField
+          label="Decimals"
+          labelWidth={labelWidth}
+          placeholder="auto"
+          onChange={this.onDecimalChange}
+          value={decimals || ''}
+          type="number"
+        />
+        <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />
+        <FormField label="Suffix" labelWidth={labelWidth} onChange={this.onSuffixChange} value={suffix || ''} />
       </PanelOptionsGroup>
     );
   }

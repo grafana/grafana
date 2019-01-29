@@ -1,14 +1,18 @@
+// Libraries
 import _ from 'lodash';
-import { colors, RawTimeRange, IntervalValues } from '@grafana/ui';
 
+// Services & Utils
 import * as dateMath from 'app/core/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
 import { parse as parseDate } from 'app/core/utils/datemath';
-
-import TimeSeries from 'app/core/time_series2';
+import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+
+// Types
+import { RawTimeRange, IntervalValues, DataQuery } from '@grafana/ui/src/types';
+import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -17,7 +21,6 @@ import {
   QueryIntervals,
   QueryOptions,
 } from 'app/types/explore';
-import { DataQuery } from 'app/types/series';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -81,7 +84,7 @@ export async function getExploreUrl(
     }
 
     const exploreState = JSON.stringify(state);
-    url = renderUrl('/explore', { state: exploreState });
+    url = renderUrl('/explore', { left: exploreState });
   }
   return url;
 }
@@ -200,7 +203,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 /**
  * A target is non-empty when it has keys (with non-empty values) other than refId and key.
  */
-export function hasNonEmptyQuery(queries: DataQuery[]): boolean {
+export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
   return (
     queries &&
     queries.some(
@@ -277,7 +280,11 @@ export function makeTimeSeriesList(dataList) {
 /**
  * Update the query history. Side-effect: store history in local storage
  */
-export function updateHistory(history: HistoryItem[], datasourceId: string, queries: DataQuery[]): HistoryItem[] {
+export function updateHistory<T extends DataQuery = any>(
+  history: Array<HistoryItem<T>>,
+  datasourceId: string,
+  queries: T[]
+): Array<HistoryItem<T>> {
   const ts = Date.now();
   queries.forEach(query => {
     history = [{ query, ts }, ...history];

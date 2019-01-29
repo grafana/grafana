@@ -101,3 +101,11 @@ func DecodeBasicAuthHeader(header string) (string, string, error) {
 
 	return userAndPass[0], userAndPass[1], nil
 }
+
+func RandomHex(n int) (string, error) {
+	bytes := make([]byte, n)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}

@@ -1,4 +1,4 @@
-import { Action } from 'app/core/actions/location';
+import { Action, CoreActionTypes } from 'app/core/actions/location';
 import { LocationState } from 'app/types';
 import { renderUrl } from 'app/core/utils/url';
 import _ from 'lodash';
@@ -12,7 +12,7 @@ export const initialState: LocationState = {
 
 export const locationReducer = (state = initialState, action: Action): LocationState => {
   switch (action.type) {
-    case 'UPDATE_LOCATION': {
+    case CoreActionTypes.UpdateLocation: {
       const { path, routeParams } = action.payload;
       let query = action.payload.query || state.query;
 
@@ -24,9 +24,7 @@ export const locationReducer = (state = initialState, action: Action): LocationS
       return {
         url: renderUrl(path || state.path, query),
         path: path || state.path,
-        query: {
-          ...query,
-        },
+        query: { ...query },
         routeParams: routeParams || state.routeParams,
       };
     }

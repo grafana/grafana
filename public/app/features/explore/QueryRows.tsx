@@ -1,10 +1,13 @@
+// Libraries
 import React, { PureComponent } from 'react';
 
-import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery } from 'app/types';
-import { ExploreId } from 'app/types/explore';
-
+// Components
 import QueryRow from './QueryRow';
+
+// Types
+import { Emitter } from 'app/core/utils/emitter';
+import { DataQuery } from '@grafana/ui/src/types';
+import { ExploreId } from 'app/types/explore';
 
 interface QueryRowsProps {
   className?: string;
@@ -12,6 +15,7 @@ interface QueryRowsProps {
   exploreId: ExploreId;
   initialQueries: DataQuery[];
 }
+
 export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
     const { className = '', exploreEvents, exploreId, initialQueries } = this.props;

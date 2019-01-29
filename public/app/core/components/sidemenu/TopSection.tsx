@@ -1,9 +1,9 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import _ from 'lodash';
 import TopSectionItem from './TopSectionItem';
 import config from '../../config';
 
-const TopSection: SFC<any> = () => {
+const TopSection: FC<any> = () => {
   const navTree = _.cloneDeep(config.bootData.navTree);
   const mainLinks = _.filter(navTree, item => !item.hideFromMenu);
 

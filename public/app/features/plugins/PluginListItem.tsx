@@ -1,11 +1,11 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import { Plugin } from 'app/types';
 
 interface Props {
   plugin: Plugin;
 }
 
-const PluginListItem: SFC<Props> = props => {
+const PluginListItem: FC<Props> = props => {
   const { plugin } = props;
 
   return (
