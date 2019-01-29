@@ -257,18 +257,18 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
-          {hint ? (
-            <div className="prom-query-field-info text-warning">
-              {hint.label}{' '}
-              {hint.fix ? (
-                <a className="text-link muted" onClick={this.onClickHintFix}>
-                  {hint.fix.label}
-                </a>
-              ) : null}
-            </div>
-          ) : null}
         </div>
+        {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
+        {hint ? (
+          <div className="prom-query-field-info text-warning">
+            {hint.label}{' '}
+            {hint.fix ? (
+              <a className="text-link muted" onClick={this.onClickHintFix}>
+                {hint.fix.label}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </>
     );
   }

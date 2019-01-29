@@ -9,7 +9,7 @@
   position: relative;
   display: inline-block;
   padding: $input-padding-y $input-padding-x;
-  height: $gf-form-input-height;
+  min-height: $gf-form-input-height;
   width: 100%;
   cursor: text;
   line-height: $line-height-base;
