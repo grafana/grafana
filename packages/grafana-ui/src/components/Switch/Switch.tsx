@@ -14,8 +14,7 @@ export interface Props {
 export interface State {
   id: any;
 }
-
-export class Switch extends PureComponent<Props, State> {
+ export class Switch extends PureComponent<Props, State> {
   state = {
     id: _.uniqueId(),
   };
@@ -23,7 +22,7 @@ export class Switch extends PureComponent<Props, State> {
   internalOnChange = (event: React.FormEvent<HTMLInputElement>) => {
     event.stopPropagation();
 
-    this.props.onChange();
+    this.props.onChange(event);
   };
 
   render() {
