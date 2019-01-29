@@ -322,6 +322,7 @@
 .query-row {
   display: flex;
   position: relative;
+  align-items: flex-start;
 
   & + & {
     margin-top: 0.5rem;
@@ -335,17 +336,17 @@
 .query-row-status {
   position: absolute;
   top: 0;
-  right: 90px;
+  right: 105px;
   z-index: 1015;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  height: 34px;
+  height: $input-height;
 }
 
 .query-row-field {
   margin-right: 3px;
-  width: 100%;
+  flex-grow: 1;
 }
 
 .query-transactions {
@@ -382,14 +383,6 @@
 // Prometheus-specifics, to be extracted to datasource soon
 
 .explore {
-  .prom-query-field {
-    display: flex;
-  }
-
-  .prom-query-field-wrapper {
-    width: 100%;
-  }
-
   .prom-query-field-info {
     margin: 0.25em 0.5em 0.5em;
     display: flex;

@@ -129,6 +129,11 @@ $input-border: 1px solid $input-border-color;
 
     &:hover {
       background: $list-item-hover-bg;
+      color: $link-color;
+    }
+
+    .fa-caret-down {
+      padding-left: 4px;
     }
   }
 
@@ -136,6 +141,7 @@ $input-border: 1px solid $input-border-color;
     color: $text-color-weak;
   }
 }
+
 
 .gf-form-label + .gf-form-label {
   margin-right: $gf-form-margin;
