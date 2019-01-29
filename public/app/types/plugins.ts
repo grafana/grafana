@@ -47,6 +47,7 @@ export interface PluginsState {
   layoutMode: string;
   hasFetched: boolean;
   dashboards: PluginDashboard[];
+  isLoadingPluginDashboards: boolean;
 }
 
 export interface VariableQueryProps {

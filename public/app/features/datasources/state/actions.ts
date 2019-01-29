@@ -12,6 +12,7 @@ import { Plugin, StoreState } from 'app/types';
 export enum ActionTypes {
   LoadDataSources = 'LOAD_DATA_SOURCES',
   LoadDataSourceTypes = 'LOAD_DATA_SOURCE_TYPES',
+  LoadedDataSourceTypes = 'LOADED_DATA_SOURCE_TYPES',
   LoadDataSource = 'LOAD_DATA_SOURCE',
   LoadDataSourceMeta = 'LOAD_DATA_SOURCE_META',
   SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
@@ -38,6 +39,10 @@ interface SetDataSourcesLayoutModeAction {
 
 interface LoadDataSourceTypesAction {
   type: ActionTypes.LoadDataSourceTypes;
+}
+
+interface LoadedDataSourceTypesAction {
+  type: ActionTypes.LoadedDataSourceTypes;
   payload: Plugin[];
 }
 
@@ -81,8 +86,12 @@ const dataSourceMetaLoaded = (dataSourceMeta: Plugin): LoadDataSourceMetaAction 
   payload: dataSourceMeta,
 });
 
-const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadDataSourceTypesAction => ({
+const dataSourceTypesLoad = (): LoadDataSourceTypesAction => ({
   type: ActionTypes.LoadDataSourceTypes,
+});
+
+const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadedDataSourceTypesAction => ({
+  type: ActionTypes.LoadedDataSourceTypes,
   payload: dataSourceTypes,
 });
 
@@ -117,6 +126,7 @@ export type Action =
   | SetDataSourcesLayoutModeAction
   | UpdateLocationAction
   | LoadDataSourceTypesAction
+  | LoadedDataSourceTypesAction
   | SetDataSourceTypeSearchQueryAction
   | LoadDataSourceAction
   | UpdateNavIndexAction
@@ -167,6 +177,7 @@ export function addDataSource(plugin: Plugin): ThunkResult<void> {
 
 export function loadDataSourceTypes(): ThunkResult<void> {
   return async dispatch => {
+    dispatch(dataSourceTypesLoad());
     const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
     dispatch(dataSourceTypesLoaded(result));
   };

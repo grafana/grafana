@@ -1,23 +1,44 @@
-import React from 'react';
-import { ColorPickerPopover } from './ColorPickerPopover';
+import React, { FunctionComponent } from 'react';
 
-export interface SeriesColorPickerPopoverProps {
-  color: string;
+import { ColorPickerPopover } from './ColorPickerPopover';
+import { ColorPickerProps } from './ColorPicker';
+import { PopperContentProps } from '../Tooltip/PopperController';
+import { Switch } from '../Switch/Switch';
+
+export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopperContentProps {
   yaxis?: number;
-  onColorChange: (color: string) => void;
   onToggleAxis?: () => void;
 }
 
-export class SeriesColorPickerPopover extends React.PureComponent<SeriesColorPickerPopoverProps, any> {
-  render() {
-    return (
-      <div className="graph-legend-popover">
-        {this.props.yaxis && <AxisSelector yaxis={this.props.yaxis} onToggleAxis={this.props.onToggleAxis} />}
-        <ColorPickerPopover color={this.props.color} onColorSelect={this.props.onColorChange} />
-      </div>
-    );
-  }
-}
+export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = props => {
+  const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
+
+  return (
+    <ColorPickerPopover
+      {...colorPickerProps}
+      color={color || '#000000'}
+      customPickers={{
+        yaxis: {
+          name: 'Y-Axis',
+          tabComponent: () => (
+            <Switch
+              key="yaxisSwitch"
+              label="Use right y-axis"
+              className="ColorPicker__axisSwitch"
+              labelClass="ColorPicker__axisSwitchLabel"
+              checked={yaxis === 2}
+              onChange={() => {
+                if (onToggleAxis) {
+                  onToggleAxis();
+                }
+              }}
+            />
+          ),
+        },
+      }}
+    />
+  );
+};
 
 interface AxisSelectorProps {
   yaxis: number;

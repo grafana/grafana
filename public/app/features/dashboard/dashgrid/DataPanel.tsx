@@ -1,7 +1,7 @@
 // Library
 import React, { Component } from 'react';
 import { Tooltip } from '@grafana/ui';
-import { Themes } from '@grafana/ui/src/components/Tooltip/Popper';
+import { Themes } from '@grafana/ui/src/components/Tooltip/Tooltip';
 
 import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 

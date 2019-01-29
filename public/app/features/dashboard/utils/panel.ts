@@ -80,7 +80,7 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   appEvents.emit('show-modal', {
-    src: 'public/app/features/dashboard/partials/shareModal.html',
+    src: 'public/app/features/dashboard/components/ShareModal/template.html',
     model: {
       dashboard: dashboard,
       panel: panel,

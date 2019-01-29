@@ -5,14 +5,17 @@
     "src/**/*.tsx"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "node_modules"
   ],
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDirs": [".", "stories"],
     "module": "esnext",
     "outDir": "dist",
     "declaration": true,
     "noImplicitAny": true,
-    "strictNullChecks": true
-  }
+    "strictNullChecks": true,
+    "typeRoots": ["./node_modules/@types", "types"],
+    "skipLibCheck": true // Temp workaround for Duplicate identifier tsc errors
+  },
 }

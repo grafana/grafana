@@ -8,7 +8,9 @@ exports[`Render should render children 1`] = `
   <li
     className="side-menu-header"
   >
-    <a>
+    <a
+      className="side-menu-header-link"
+    >
       <span
         className="sidemenu-item-text"
       >
@@ -51,7 +53,9 @@ exports[`Render should render component 1`] = `
   <li
     className="side-menu-header"
   >
-    <a>
+    <a
+      className="side-menu-header-link"
+    >
       <span
         className="sidemenu-item-text"
       >

@@ -30,7 +30,7 @@ type Rule struct {
 	ExecutionErrorState m.ExecutionErrorOption
 	State               m.AlertStateType
 	Conditions          []Condition
-	Notifications       []int64
+	Notifications       []string
 
 	StateChanges int64
 }
@@ -126,11 +126,15 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
-		id, err := jsonModel.Get("id").Int64()
-		if err != nil {
-			return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+		if id, err := jsonModel.Get("id").Int64(); err == nil {
+			model.Notifications = append(model.Notifications, fmt.Sprintf("%09d", id))
+		} else {
+			if uid, err := jsonModel.Get("uid").String(); err != nil {
+				return nil, ValidationError{Reason: "Neither id nor uid is specified, " + err.Error(), DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			} else {
+				model.Notifications = append(model.Notifications, uid)
+			}
 		}
-		model.Notifications = append(model.Notifications, id)
 	}
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {

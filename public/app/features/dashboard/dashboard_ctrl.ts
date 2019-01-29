@@ -22,7 +22,6 @@ export class DashboardCtrl {
     private keybindingSrv,
     private timeSrv,
     private variableSrv,
-    private alertingSrv,
     private dashboardSrv,
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
@@ -54,7 +53,6 @@ export class DashboardCtrl {
 
     // init services
     this.timeSrv.init(dashboard);
-    this.alertingSrv.init(dashboard, data.alerts);
     this.annotationsSrv.init(dashboard);
 
     // template values service needs to initialize completely before

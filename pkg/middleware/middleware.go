@@ -3,15 +3,15 @@ package middleware
 import (
 	"strconv"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 var (
@@ -21,12 +21,12 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler() macaron.Handler {
+func GetContextHandler(ats auth.UserAuthTokenService) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
 			SignedInUser:   &m.SignedInUser{},
-			Session:        session.GetSession(),
+			Session:        session.GetSession(), // should only be used by auth_proxy
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,
@@ -49,7 +49,7 @@ func GetContextHandler() macaron.Handler {
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
 		case initContextWithAuthProxy(ctx, orgId):
-		case initContextWithUserSessionCookie(ctx, orgId):
+		case ats.InitContextWithToken(ctx, orgId):
 		case initContextWithAnonymousUser(ctx):
 		}
 
@@ -85,29 +85,6 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
-	return true
-}
-
-func initContextWithUserSessionCookie(ctx *m.ReqContext, orgId int64) bool {
-	// initialize session
-	if err := ctx.Session.Start(ctx.Context); err != nil {
-		ctx.Logger.Error("Failed to start session", "error", err)
-		return false
-	}
-
-	var userId int64
-	if userId = getRequestUserId(ctx); userId == 0 {
-		return false
-	}
-
-	query := m.GetSignedInUserQuery{UserId: userId, OrgId: orgId}
-	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", userId, "error", err)
-		return false
-	}
-
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
 	return true
 }
 

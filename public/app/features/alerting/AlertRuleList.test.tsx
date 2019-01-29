@@ -18,6 +18,7 @@ const setup = (propOverrides?: object) => {
     togglePauseAlertRule: jest.fn(),
     stateFilter: '',
     search: '',
+    isLoading: false
   };
 
   Object.assign(props, propOverrides);
@@ -121,7 +122,7 @@ describe('Functions', () => {
   describe('State filter changed', () => {
     it('should update location', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'alerting' } };
+      const mockEvent = { target: { value: 'alerting' } } as React.ChangeEvent<HTMLSelectElement>;
 
       instance.onStateFilterChanged(mockEvent);
 
@@ -146,7 +147,7 @@ describe('Functions', () => {
   describe('Search query change', () => {
     it('should set search query', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'dashboard' } };
+      const mockEvent = { target: { value: 'dashboard' } } as React.ChangeEvent<HTMLInputElement>;
 
       instance.onSearchQueryChange(mockEvent);
 

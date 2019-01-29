@@ -1,16 +1,19 @@
 import React from 'react';
 import * as PopperJS from 'popper.js';
-import { Themes } from './Popper';
 
-type PopperContent = string | (() => JSX.Element);
+// This API allows popovers to update Popper's position when e.g. popover content changes
+// updatePopperPosition is delivered to content by react-popper
+export interface PopperContentProps {
+  updatePopperPosition?: () => void;
+}
+
+export type PopperContent<T extends PopperContentProps> = string | React.ReactElement<T>;
 
 export interface UsingPopperProps {
   show?: boolean;
   placement?: PopperJS.Placement;
-  content: PopperContent;
+  content: PopperContent<any>;
   children: JSX.Element;
-  renderContent?: (content: PopperContent) => JSX.Element;
-  theme?: Themes;
 }
 
 type PopperControllerRenderProp = (
@@ -19,18 +22,16 @@ type PopperControllerRenderProp = (
   popperProps: {
     show: boolean;
     placement: PopperJS.Placement;
-    content: string | ((props: any) => JSX.Element);
-    renderContent: (content: any) => any;
-    theme?: Themes;
+    content: PopperContent<any>;
   }
 ) => JSX.Element;
 
 interface Props {
   placement?: PopperJS.Placement;
-  content: PopperContent;
+  content: PopperContent<any>;
   className?: string;
   children: PopperControllerRenderProp;
-  theme?: Themes;
+  hideAfter?: number;
 }
 
 interface State {
@@ -39,6 +40,8 @@ interface State {
 }
 
 class PopperController extends React.Component<Props, State> {
+  private hideTimeout: any;
+
   constructor(props: Props) {
     super(props);
 
@@ -60,6 +63,10 @@ class PopperController extends React.Component<Props, State> {
   }
 
   showPopper = () => {
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+    }
+
     this.setState(prevState => ({
       ...prevState,
       show: true,
@@ -67,31 +74,29 @@ class PopperController extends React.Component<Props, State> {
   };
 
   hidePopper = () => {
+    if (this.props.hideAfter !== 0) {
+      this.hideTimeout = setTimeout(() => {
+        this.setState(prevState => ({
+          ...prevState,
+          show: false,
+        }));
+      }, this.props.hideAfter);
+      return;
+    }
     this.setState(prevState => ({
       ...prevState,
       show: false,
     }));
   };
 
-  renderContent(content: PopperContent) {
-    if (typeof content === 'function') {
-      // If it's a function we assume it's a React component
-      const ReactComponent = content;
-      return <ReactComponent />;
-    }
-    return content;
-  }
-
   render() {
-    const { children, content, theme } = this.props;
+    const { children, content } = this.props;
     const { show, placement } = this.state;
 
     return children(this.showPopper, this.hidePopper, {
       show,
       placement,
       content,
-      renderContent: this.renderContent,
-      theme,
     });
   }
 }

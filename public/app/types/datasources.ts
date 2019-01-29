@@ -12,4 +12,5 @@ export interface DataSourcesState {
   dataSource: DataSourceSettings;
   dataSourceMeta: Plugin;
   hasFetched: boolean;
+  isLoadingDataSources: boolean;
 }
