@@ -11,7 +11,7 @@ describe('VariableSrv init', function(this: any) {
       this.variables = vars;
     },
     variableInitialized: () => {},
-    updateTemplateData: () => {},
+    updateIndex: () => {},
     replace: str =>
       str.replace(this.regex, match => {
         return match;
@@ -53,6 +53,7 @@ describe('VariableSrv init', function(this: any) {
           templateSrv,
         };
 
+        // @ts-ignore
         ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv, timeSrv);
 
         $injector.instantiate = (variable, model) => {

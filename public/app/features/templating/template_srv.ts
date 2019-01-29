@@ -25,10 +25,10 @@ export class TemplateSrv {
   init(variables, timeRange?: TimeRange) {
     this.variables = variables;
     this.timeRange = timeRange;
-    this.updateTemplateData();
+    this.updateIndex();
   }
 
-  updateTemplateData() {
+  updateIndex() {
     const existsOrEmpty = value => value || value === '';
 
     this.index = this.variables.reduce((acc, currentValue) => {
@@ -54,9 +54,9 @@ export class TemplateSrv {
     }
   }
 
-  updateTimeVariables(timeRange: TimeRange) {
+  updateTimeRange(timeRange: TimeRange) {
     this.timeRange = timeRange;
-    this.updateTemplateData();
+    this.updateIndex();
   }
 
   variableInitialized(variable) {
@@ -289,7 +289,7 @@ export class TemplateSrv {
     });
   }
 
-  fillVariableValuesForUrl(params, scopedVars) {
+  fillVariableValuesForUrl(params, scopedVars?) {
     _.each(this.variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {

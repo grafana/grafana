@@ -23,7 +23,7 @@ describe('VariableSrv', function(this: any) {
       init: vars => {
         this.variables = vars;
       },
-      updateTemplateData: () => {},
+      updateIndex: () => {},
       replace: str =>
         str.replace(this.regex, match => {
           return match;
