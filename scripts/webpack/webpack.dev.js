@@ -2,7 +2,6 @@
 
 const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
-const monaco = require('./webpack.monaco.js');
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -10,7 +9,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-module.exports = merge(common, monaco, {
+module.exports = merge(common, {
   devtool: "cheap-module-source-map",
   mode: 'development',
 

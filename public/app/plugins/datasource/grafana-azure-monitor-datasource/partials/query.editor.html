@@ -118,8 +118,20 @@
       </div>
     </div>
 
-    <kusto-monaco-editor content="ctrl.target.azureLogAnalytics.query" on-change="ctrl.refresh()" get-schema="ctrl.getAzureLogAnalyticsSchema()"
-      default-time-field="TimeGenerated" plugin-base-url={{ctrl.datasource.meta.baseUrl}}></kusto-monaco-editor>
+    <!-- <kusto-monaco-editor content="ctrl.target.azureLogAnalytics.query" on-change="ctrl.refresh()" get-schema="ctrl.getAzureLogAnalyticsSchema()"
+      default-time-field="TimeGenerated" plugin-base-url={{ctrl.datasource.meta.baseUrl}}></kusto-monaco-editor> -->
+
+    <div class="gf-form gf-form--grow">
+      <kusto-editor
+        class="gf-form gf-form--grow"
+        request="ctrl.requestMetadata"
+        style="border: none"
+        query="ctrl.target.azureLogAnalytics.query"
+        change="ctrl.onLogAnalyticsQueryChange"
+        execute="ctrl.onLogAnalyticsQueryExecute"
+        variables="ctrl.templateVariables"
+      />
+    </div>
 
     <div class="gf-form-inline">
       <div class="gf-form">

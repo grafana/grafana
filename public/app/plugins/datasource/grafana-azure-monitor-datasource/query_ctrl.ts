@@ -2,7 +2,8 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 // import './css/query_editor.css';
 import TimegrainConverter from './time_grain_converter';
-import './monaco/kusto_monaco_editor';
+// import './monaco/kusto_monaco_editor';
+import './editor/editor_component';
 
 export interface ResultFormat {
   text: string;
@@ -321,6 +322,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         return this.datasource.azureLogAnalyticsDatasource.getSchema(this.target.azureLogAnalytics.workspace);
       })
       .catch(this.handleQueryCtrlError.bind(this));
+  }
+
+  onLogAnalyticsQueryChange = (nextQuery: string) => {
+    this.target.azureLogAnalytics.query = nextQuery;
+  }
+
+  onLogAnalyticsQueryExecute = () => {
+    this.panelCtrl.refresh();
+  }
+
+  get templateVariables() {
+    return this.templateSrv.variables.map(t => '$' + t.name);
   }
 
   /* Application Insights Section */
