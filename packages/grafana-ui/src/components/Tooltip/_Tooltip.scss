@@ -1,9 +1,11 @@
 $popper-margin-from-ref: 5px;
 
-@mixin popper-theme($backgroundColor, $arrowColor) {
+@mixin popper-theme($backgroundColor, $textColor) {
   background: $backgroundColor;
+  color: $textColor;
+
   .popper__arrow {
-    border-color: $arrowColor;
+    border-color: $backgroundColor;
   }
 }
 
@@ -19,7 +21,7 @@ $popper-margin-from-ref: 5px;
   background: $tooltipBackground;
   border-radius: $border-radius-sm;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  padding: 4px 8px;
+  padding: 6px 10px;
   color: $tooltipColor;
   font-weight: 500;
 
@@ -32,10 +34,9 @@ $popper-margin-from-ref: 5px;
     @include popper-theme($tooltipBackgroundError, $tooltipBackgroundError);
   }
 
-  /*&.popper__background--brand {
-    @include popper-theme($tooltipBackgroundBrand, $tooltipBackgroundBrand);
-    @include gradient-vertical($tooltipBackground, $tooltipBackground);
-  }*/
+  &.popper__background--info {
+    @include popper-theme($popover-help-bg, $popover-help-color);
+  }
 }
 
 .popper__arrow {

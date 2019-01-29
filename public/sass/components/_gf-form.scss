@@ -384,6 +384,10 @@ $input-border: 1px solid $input-border-color;
   &--no-padding {
     padding-left: 0;
   }
+
+  &:hover {
+    color: $text-color;
+  }
 }
 
 select.gf-form-input ~ .gf-form-help-icon {

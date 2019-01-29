@@ -1,6 +1,6 @@
 import React, { FunctionComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { Tooltip } from '..';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface Props {
   children: ReactNode;
@@ -31,9 +31,9 @@ export const FormLabel: FunctionComponent<Props> = ({
     <label className={classes} {...rest} htmlFor={htmlFor}>
       {children}
       {tooltip && (
-        <Tooltip placement="auto" content={tooltip}>
-          <div className="gf-form-help-icon--right-normal">
-            <i className="gicon gicon-question gicon--has-hover" />
+        <Tooltip placement="top" content={tooltip} theme={"info"}>
+          <div className="gf-form-help-icon gf-form-help-icon--right-normal">
+            <i className="fa fa-info-circle" />
           </div>
         </Tooltip>
       )}
