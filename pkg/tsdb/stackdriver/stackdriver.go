@@ -233,12 +233,12 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 }
 
 func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
-	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
+	crossSeriesReducer := query.Model.Get("crossSeriesReducer").MustString()
 	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
 	alignmentPeriod := query.Model.Get("alignmentPeriod").MustString()
 
-	if primaryAggregation == "" {
-		primaryAggregation = "REDUCE_NONE"
+	if crossSeriesReducer == "" {
+		crossSeriesReducer = "REDUCE_NONE"
 	}
 
 	if perSeriesAligner == "" {
@@ -267,7 +267,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 		alignmentPeriod = "+3600s"
 	}
 
-	params.Add("aggregation.crossSeriesReducer", primaryAggregation)
+	params.Add("aggregation.crossSeriesReducer", crossSeriesReducer)
 	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
 
