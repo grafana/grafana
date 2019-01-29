@@ -76,7 +76,7 @@ export default class KustoQueryField extends QueryField {
       if (wrapperClasses.contains('function-context')) {
         typeaheadContext = 'context-function';
         if (this.fields) {
-          suggestionGroups = this._getFieldsSuggestions();
+          suggestionGroups = this._getKeywordSuggestions();
         } else {
           this._fetchFields();
           return;
@@ -84,7 +84,7 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(facet\s$)/i)) {
         typeaheadContext = 'context-facet';
         if (this.fields) {
-          suggestionGroups = this._getFieldsSuggestions();
+          suggestionGroups = this._getKeywordSuggestions();
         } else {
           this._fetchFields();
           return;
@@ -92,7 +92,7 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(,\s*$)/)) {
         typeaheadContext = 'context-multiple-fields';
         if (this.fields) {
-          suggestionGroups = this._getFieldsSuggestions();
+          suggestionGroups = this._getKeywordSuggestions();
         } else {
           this._fetchFields();
           return;
@@ -100,7 +100,7 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(from\s$)/i)) {
         typeaheadContext = 'context-from';
         if (this.events) {
-          suggestionGroups = this._getAfterFromSuggestions();
+          suggestionGroups = this._getKeywordSuggestions();
         } else {
           this._fetchEvents();
           return;
@@ -108,27 +108,21 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(^select\s\w*$)/i)) {
         typeaheadContext = 'context-select';
         if (this.fields) {
-          suggestionGroups = this._getAfterSelectSuggestions();
+          suggestionGroups = this._getKeywordSuggestions();
         } else {
           this._fetchFields();
           return;
         }
-      } else if (
-        modelPrefix.match(/\)\s$/) ||
-        modelPrefix.match(/SELECT ((?:\$?\w+\(?\w*\)?\,?\s*)+)([\)]\s|\b)/gi)
-      ) {
-        typeaheadContext = 'context-after-function';
-        suggestionGroups = this._getAfterFunctionSuggestions();
       } else if (modelPrefix.match(/from\s\S+\s\w*$/i)) {
         prefix = '';
         typeaheadContext = 'context-since';
-        suggestionGroups = this._getAfterEventSuggestions();
+        suggestionGroups = this._getKeywordSuggestions();
       // } else if (modelPrefix.match(/\d+\s\w*$/)) {
       //   typeaheadContext = 'context-number';
       //   suggestionGroups = this._getAfterNumberSuggestions();
       } else if (modelPrefix.match(/ago\b/i) || modelPrefix.match(/facet\b/i) || modelPrefix.match(/\$__timefilter\b/i)) {
         typeaheadContext = 'context-timeseries';
-        suggestionGroups = this._getAfterAgoSuggestions();
+        suggestionGroups = this._getKeywordSuggestions();
       } else if (prefix && !wrapperClasses.contains('argument')) {
         typeaheadContext = 'context-builtin';
         suggestionGroups = this._getKeywordSuggestions();
@@ -204,145 +198,115 @@ export default class KustoQueryField extends QueryField {
       .focus();
   }
 
-  private _getFieldsSuggestions(): SuggestionGroup[] {
-    return [
-      {
-        prefixMatch: true,
-        label: 'Fields',
-        items: this.fields.map(wrapText)
-      },
-      {
-        prefixMatch: true,
-        label: 'Variables',
-        items: this.props.templateVariables.map(wrapText)
-      }
-    ];
-  }
+  // private _getFieldsSuggestions(): SuggestionGroup[] {
+  //   return [
+  //     {
+  //       prefixMatch: true,
+  //       label: 'Fields',
+  //       items: this.fields.map(wrapText)
+  //     },
+  //     {
+  //       prefixMatch: true,
+  //       label: 'Variables',
+  //       items: this.props.templateVariables.map(wrapText)
+  //     }
+  //   ];
+  // }
 
-  private _getAfterFromSuggestions(): SuggestionGroup[] {
-    return [
-      {
-        skipFilter: true,
-        label: 'Events',
-        items: this.events.map(wrapText)
-      },
-      {
-        prefixMatch: true,
-        label: 'Variables',
-        items: this.props.templateVariables
-          .map(wrapText)
-          .map(suggestion => {
-            suggestion.deleteBackwards = 0;
-            return suggestion;
-          })
-      }
-    ];
-  }
+  // private _getAfterFromSuggestions(): SuggestionGroup[] {
+  //   return [
+  //     {
+  //       skipFilter: true,
+  //       label: 'Events',
+  //       items: this.events.map(wrapText)
+  //     },
+  //     {
+  //       prefixMatch: true,
+  //       label: 'Variables',
+  //       items: this.props.templateVariables
+  //         .map(wrapText)
+  //         .map(suggestion => {
+  //           suggestion.deleteBackwards = 0;
+  //           return suggestion;
+  //         })
+  //     }
+  //   ];
+  // }
 
-  private _getAfterSelectSuggestions(): SuggestionGroup[] {
+  // private _getAfterSelectSuggestions(): SuggestionGroup[] {
+  //   return [
+  //     {
+  //       prefixMatch: true,
+  //       label: 'Fields',
+  //       items: this.fields.map(wrapText)
+  //     },
+  //     {
+  //       prefixMatch: true,
+  //       label: 'Functions',
+  //       items: FUNCTIONS.map((s: any) => { s.type = 'function'; return s; })
+  //     },
+  //     {
+  //       prefixMatch: true,
+  //       label: 'Variables',
+  //       items: this.props.templateVariables.map(wrapText)
+  //     }
+  //   ];
+  // }
+
+  private _getKeywordSuggestions(): SuggestionGroup[] {
     return [
       {
         prefixMatch: true,
-        label: 'Fields',
-        items: this.fields.map(wrapText)
+        label: 'Keywords',
+        items: KEYWORDS.map(wrapText)
       },
       {
         prefixMatch: true,
         label: 'Functions',
         items: FUNCTIONS.map((s: any) => { s.type = 'function'; return s; })
-      },
-      {
-        prefixMatch: true,
-        label: 'Variables',
-        items: this.props.templateVariables.map(wrapText)
       }
     ];
-  }
-
-  private _getAfterFunctionSuggestions(): SuggestionGroup[] {
-    return [{
-      prefixMatch: true,
-      label: 'Keywords',
-      items: ['FROM'].map(wrapText)
-    }];
-  }
-
-  private _getAfterEventSuggestions(): SuggestionGroup[] {
-    return [
-      {
-        skipFilter: true,
-        label: 'Keywords',
-        items: ['SINCE'].map(wrapText)
-          .map((suggestion: any) => {
-            suggestion.deleteBackwards = 0;
-            return suggestion;
-          })
-      },
-      {
-        skipFilter: true,
-        label: 'Macros',
-        items: ['$__timeFilter'].map(wrapText)
-          .map((suggestion: any) => {
-            suggestion.deleteBackwards = 0;
-            return suggestion;
-          })
-      }
-    ];
-  }
-
-  // private _getAfterNumberSuggestions(): SuggestionGroup[] {
-  //   return [{
-  //     prefixMatch: true,
-  //     label: 'Duration',
-  //     items: DURATION
-  //       .map(d => `${d} AGO`)
-  //       .map(wrapText)
-  //   }];
-  // }
-
-  private _getAfterAgoSuggestions(): SuggestionGroup[] {
-    return [{
-      prefixMatch: true,
-      label: 'Keywords',
-      items: ['TIMESERIES', 'COMPARE WITH', 'FACET'].map(wrapText)
-    }];
-  }
-
-  private _getKeywordSuggestions(): SuggestionGroup[] {
-    return [{
-      prefixMatch: true,
-      label: 'Keywords',
-      items: KEYWORDS.map(wrapText)
-    }];
   }
 
   private _getInitialSuggestions(): SuggestionGroup[] {
     // TODO: return datbase tables as an initial suggestion
-    return [{
-      prefixMatch: true,
-      label: 'Keywords',
-      items: KEYWORDS.map(wrapText)
-    }];
+    return [
+      {
+        prefixMatch: true,
+        label: 'Keywords',
+        items: KEYWORDS.map(wrapText)
+      },
+      {
+        prefixMatch: true,
+        label: 'Functions',
+        items: FUNCTIONS.map((s: any) => { s.type = 'function'; return s; })
+      }
+    ];
   }
 
   private async _fetchEvents() {
-    const query = 'events';
-    const result = await this.request(query);
+    // const query = 'events';
+    // const result = await this.request(query);
 
-    if (result === undefined) {
-      this.events = [];
-    } else {
-      this.events = result;
-    }
-    setTimeout(this.onTypeahead, 0);
+    // if (result === undefined) {
+    //   this.events = [];
+    // } else {
+    //   this.events = result;
+    // }
+    // setTimeout(this.onTypeahead, 0);
+
+    //Stub
+    this.events = [];
   }
 
   private async _fetchFields() {
-    const query = 'fields';
-    const result = await this.request(query);
+    // const query = 'fields';
+    // const result = await this.request(query);
 
-    this.fields = result || [];
+    // this.fields = result || [];
 
-    setTimeout(this.onTypeahead, 0);
+    // setTimeout(this.onTypeahead, 0);
+    // Stub
+    this.fields = [];
   }
 }
