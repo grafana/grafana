@@ -16,6 +16,7 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput } from 'app/types/explore';
+import { makePromiseCancelable, CancelablePromise } from 'app/core/utils/CancelablePromise';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -85,6 +86,7 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
   languageProvider: any;
   modifiedSearch: string;
   modifiedQuery: string;
+  languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: LokiQueryFieldProps, context) {
     super(props, context);
@@ -112,12 +114,24 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProvider
-        .start()
+      this.languageProviderInitializationPromise = makePromiseCancelable(this.languageProvider.start());
+
+      this.languageProviderInitializationPromise.promise
         .then(remaining => {
           remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
         })
-        .then(() => this.onUpdateLanguage());
+        .then(() => this.onUpdateLanguage())
+        .catch(({ isCanceled }) => {
+          if (isCanceled) {
+            console.warn('LokiQueryField has unmounted, language provider intialization was canceled');
+          }
+        });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.languageProviderInitializationPromise) {
+      this.languageProviderInitializationPromise.cancel();
     }
   }
 
