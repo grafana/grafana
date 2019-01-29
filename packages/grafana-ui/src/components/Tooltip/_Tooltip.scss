@@ -18,9 +18,9 @@ $popper-margin-from-ref: 5px;
 
 .popper__background {
   background: $tooltipBackground;
-  border-radius: $border-radius;
+  border-radius: $border-radius-sm;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  padding: 3px 8px;
+  padding: 4px 8px;
   color: $tooltipColor;
   font-weight: 500;
 
@@ -29,10 +29,10 @@ $popper-margin-from-ref: 5px;
     @include popper-theme($tooltipBackgroundError, $tooltipBackgroundError);
   }
 
-  &.popper__background--brand {
+  /*&.popper__background--brand {
     @include popper-theme($tooltipBackgroundBrand, $tooltipBackgroundBrand);
     @include gradient-vertical($tooltipBackground, $tooltipBackground);
-  }
+  }*/
 }
 
 .popper__arrow {
