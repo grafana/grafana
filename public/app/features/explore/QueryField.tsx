@@ -128,17 +128,21 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   onChange = ({ value }) => {
-    const textChanged = value.document !== this.state.value.document;
+    const documentChanged = value.document !== this.state.value.document;
+    const prevValue = this.state.value;
 
     // Control editor loop, then pass text change up to parent
     this.setState({ value }, () => {
-      if (textChanged) {
-        this.handleChangeValue();
+      if (documentChanged) {
+        const textChanged = Plain.serialize(prevValue) !== Plain.serialize(value);
+        if (textChanged) {
+          this.handleChangeValue();
+        }
       }
     });
 
     // Show suggest menu on text input
-    if (textChanged && value.selection.isCollapsed) {
+    if (documentChanged && value.selection.isCollapsed) {
       // Need one paint to allow DOM-based typeahead rules to work
       window.requestAnimationFrame(this.handleTypeahead);
     } else if (!this.resetTimer) {
