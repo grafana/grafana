@@ -4,7 +4,8 @@ import (
 	"net"
 )
 
-func SplitIpPort(ipStr string, portDefault string) (ip string, port string, err error) {
+// SplitIPPort splits the ip string and port.
+func SplitIPPort(ipStr string, portDefault string) (ip string, port string, err error) {
 	ipAddr := net.ParseIP(ipStr)
 
 	if ipAddr == nil {
