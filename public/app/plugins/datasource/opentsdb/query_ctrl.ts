@@ -36,7 +36,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       'literal_or',
       'regexp',
     ];
-    this.queryTypes = ['metric', 'gexp'];
+    this.queryTypes = ['metric', 'gexp', 'exp'];
 
     this.tsdbVersion = this.datasource.tsdbVersion;
 

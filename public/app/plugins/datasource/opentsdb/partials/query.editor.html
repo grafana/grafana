@@ -16,6 +16,22 @@
     </div>
   </div>
 
+  <div ng-if="ctrl.target.queryType == 'exp'">
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-8">
+          Exp
+        </label>
+        <textarea class="gf-form-input width-30" ng-model="ctrl.target.exp"
+                  spellcheck='false' placeholder="exp" ng-blur="ctrl.targetBlur()">
+        </textarea>
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+  </div>
+
   <div ng-if="ctrl.target.queryType == 'gexp'">
     <div class="gf-form-inline">
       <div class="gf-form">

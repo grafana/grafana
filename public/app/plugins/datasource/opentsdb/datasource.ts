@@ -37,28 +37,33 @@ export default class OpenTsDatasource {
     const end = this.convertToTSDBTime(options.rangeRaw.to, true);
     const qs = [];
     const gExps = [];
+    const exps = [];
 
     _.each(options.targets, target => {
-      if (!target.metric && !target.gexp) {
+      if (!target.metric && !target.gexp && !target.exp) {
         return;
       }
       if (!target.queryType) {
         target.queryType = 'metric';
       }
       if (target.queryType === 'metric') {
-      qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
+        qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
       } else if (target.queryType === 'gexp') {
         gExps.push(this.convertGExpToQuery(target));
+      } else if (target.queryType === 'exp') {
+
+        exps.push(this.convertExpToQuery(target));
       }
     });
 
     const queries = _.compact(qs);
     const gExpressions = _.compact(gExps);
+    const expressions = _.compact(exps);
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(queries) && _.isEmpty(gExpressions)) {
+    if (_.isEmpty(queries) && _.isEmpty(gExpressions) && _.isEmpty(expressions)) {
       const d = this.$q.defer();
-      d.resolve({ data: [] });
+      d.resolve({data: []});
       return d.promise;
     }
 
@@ -81,22 +86,55 @@ export default class OpenTsDatasource {
         // only index into classic 'metrics' queries
         const tsqTargets = options.targets.filter(target => {
           return target.queryType === 'metric';
-    });
+        });
 
         const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, tsqTargets, this.tsdbVersion);
 
-      const result = _.map(response.data, (metricData, index) => {
-        index = metricToTargetMapping[index];
-        if (index === -1) {
-          index = 0;
-        }
-        this._saveTagKeys(metricData);
+        const result = _.map(response.data, (metricData, index) => {
+          index = metricToTargetMapping[index];
+          if (index === -1) {
+            index = 0;
+          }
+          this._saveTagKeys(metricData);
 
           return this.transformMetricData(metricData, groupByTags, tsqTargets[index], options, this.tsdbResolution);
         });
         return result;
       });
     }
+
+    // perform single exp queries so that we can reliably map targets to results once all the promises are resolved
+    // (/query/exp can perform combined queries but the result order is not determinate)
+    const expPromises = [];
+    if (expressions.length > 0) {
+      for (let expIndex = 0; expIndex < expressions.length; expIndex++) {
+        const expPromise = this.performExpressionQuery(expIndex, expressions[expIndex], start, end, options).then(
+          response => {
+            // only index into exp queries
+            const expTargets = options.targets.filter(target => {
+              return target.queryType === 'exp';
+            });
+
+            const expTargetIndex = this.mapExpToTargets(response.config.url);
+
+            const result = _.map(response.data, expData => {
+              let index = expTargetIndex;
+              if (index === -1) {
+                index = 0;
+              }
+              return this.transformExpData(expData, expTargets[index], this.tsdbResolution);
+            });
+
+            return result.filter(value => {
+              return value !== false;
+            });
+          }
+        );
+
+        expPromises.push(expPromise);
+      }
+    }
+
 
     // perform single gExp queries so that we can reliably map targets to results once all the promises are resolved
     // (/query/gexp can perform combined queries but the result order is not determinate)
@@ -118,7 +156,7 @@ export default class OpenTsDatasource {
                 index = 0;
               }
               return this.transformGexpData(gexpData, gexpTargets[index], this.tsdbResolution);
-      });
+            });
 
             return result.filter(value => {
               return value !== false;
@@ -169,7 +207,7 @@ export default class OpenTsDatasource {
     const qs = [];
     const eventList = [];
 
-    qs.push({ aggregator: 'sum', metric: options.annotation.target });
+    qs.push({aggregator: 'sum', metric: options.annotation.target});
 
     const queries = _.compact(qs);
 
@@ -246,6 +284,28 @@ export default class OpenTsDatasource {
     return this.backendSrv.datasourceRequest(options);
   }
 
+  performExpressionQuery(idx, exp, start, end, globalOptions) {
+    let urlParams = '?expIndex=' + idx;
+    urlParams = this.templateSrv.replace(urlParams, globalOptions.scopedVars, 'pipe');
+
+    exp['time']['start'] = start;
+
+    const options = {
+      method: 'POST',
+      url: this.url + '/api/query/exp' + urlParams,
+      data: exp,
+    };
+    if (end) {
+      exp['time']['end'] = end;
+    }
+    // Relative queries (e.g. last hour) don't include an end time
+
+
+    this._addCredentialOptions(options);
+    return this.backendSrv.datasourceRequest(options);
+  }
+
+
   // retrieve a single gExp via GET to /api/query/gexp
   performGExpressionQuery(idx, gExp, start, end, globalOptions) {
     let urlParams = '?start=' + start + '&exp=' + gExp + '&gexpIndex=' + idx;
@@ -278,7 +338,7 @@ export default class OpenTsDatasource {
   }
 
   _performSuggestQuery(query, type) {
-    return this._get('/api/suggest', { type: type, q: query, max: 1000 }).then(result => {
+    return this._get('/api/suggest', {type: type, q: query, max: 1000}).then(result => {
       return result.data;
     });
   }
@@ -300,7 +360,7 @@ export default class OpenTsDatasource {
 
     const m = metric + '{' + keysQuery + '}';
 
-    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then(result => {
+    return this._get('/api/search/lookup', {m: m, limit: 3000}).then(result => {
       result = result.data.results;
       const tagvs = [];
       _.each(result, r => {
@@ -317,7 +377,7 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    return this._get('/api/search/lookup', { m: metric, limit: 1000 }).then(result => {
+    return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(result => {
       result = result.data.results;
       const tagks = [];
       _.each(result, r => {
@@ -348,7 +408,7 @@ export default class OpenTsDatasource {
       options.withCredentials = true;
     }
     if (this.basicAuth) {
-      options.headers = { Authorization: this.basicAuth };
+      options.headers = {Authorization: this.basicAuth};
     }
   }
 
@@ -366,7 +426,7 @@ export default class OpenTsDatasource {
 
     const responseTransform = result => {
       return _.map(result, value => {
-        return { text: value };
+        return {text: value};
       });
     };
 
@@ -406,7 +466,7 @@ export default class OpenTsDatasource {
 
   testDatasource() {
     return this._performSuggestQuery('cpu', 'metrics').then(() => {
-      return { status: 'success', message: 'Data source is working' };
+      return {status: 'success', message: 'Data source is working'};
     });
   }
 
@@ -442,8 +502,22 @@ export default class OpenTsDatasource {
     const metricLabel = this.createMetricLabel(md, target, groupByTags, options);
     const dps = this.getDatapointsAtCorrectResolution(md, tsdbResolution);
 
-    return { target: metricLabel, datapoints: dps };
+    return {target: metricLabel, datapoints: dps};
   }
+
+  transformExpData(exp, target, tsdbResolution) {
+    if (typeof target === 'undefined') {
+      // the metric is hidden
+      return false;
+    }
+
+    // const metricLabel = this.createGexpLabel(exp, target);
+    const metricLabel = "placeholder";
+    const dps = this.getDatapointsAtCorrectResolution(exp, tsdbResolution);
+
+    return {target: metricLabel, datapoints: dps};
+  }
+
 
   transformGexpData(gExp, target, tsdbResolution) {
     if (typeof target === 'undefined') {
@@ -454,7 +528,7 @@ export default class OpenTsDatasource {
     const metricLabel = this.createGexpLabel(gExp, target);
     const dps = this.getDatapointsAtCorrectResolution(gExp, tsdbResolution);
 
-    return { target: metricLabel, datapoints: dps };
+    return {target: metricLabel, datapoints: dps};
   }
 
   getDatapointsAtCorrectResolution(result, tsdbResolution) {
@@ -477,7 +551,7 @@ export default class OpenTsDatasource {
     if (target.alias) {
       const scopedVars = _.clone(options.scopedVars || {});
       _.each(md.tags, (value, key) => {
-        scopedVars['tag_' + key] = { value: value };
+        scopedVars['tag_' + key] = {value: value};
       });
       return this.templateSrv.replace(target.alias, scopedVars);
     }
@@ -500,6 +574,7 @@ export default class OpenTsDatasource {
     return label;
   }
 
+
   createGexpLabel(data, target) {
     if (!target.gexpAlias) {
       return target.gexp;
@@ -508,12 +583,20 @@ export default class OpenTsDatasource {
     return target.gexpAlias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, (all, m1) => data.tags[m1]);
   }
 
+  convertExpToQuery(target) {
+    // filter out a target if it is 'hidden'
+    if (target.hide === true) {
+      return null;
+    }
+    return JSON.parse(target.exp);
+  }
+
+
   convertGExpToQuery(target) {
     // filter out a target if it is 'hidden'
     if (target.hide === true) {
       return null;
     }
-
     return target.gexp;
   }
 
@@ -614,6 +697,18 @@ export default class OpenTsDatasource {
         });
       }
     });
+  }
+
+  mapExpToTargets(queryUrl) {
+    // extract gexpIndex from URL
+    const regex = /.+expIndex=(\d+).*/;
+    const expIndex = queryUrl.match(regex);
+
+    if (!expIndex) {
+      return -1;
+    }
+
+    return expIndex[1];
   }
 
   mapGExpToTargets(queryUrl) {
