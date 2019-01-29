@@ -10,6 +10,7 @@
   font-size: 1.1rem;
   background: $panel-options-group-header-bg;
   position: relative;
+  border-radius: $border-radius $border-radius 0 0;
 
   .btn {
     position: absolute;
