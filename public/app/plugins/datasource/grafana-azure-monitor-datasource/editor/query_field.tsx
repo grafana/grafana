@@ -147,7 +147,7 @@ class QueryField extends React.Component<any, any> {
         break;
       }
 
-      case 'Tab': {
+      case 'Enter': {
         if (this.menuEl) {
           // Dont blur input
           event.preventDefault();
