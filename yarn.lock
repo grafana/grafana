@@ -11535,6 +11535,11 @@ moment@^2.22.2:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
   integrity sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
 
+monaco-editor@^0.15.6:
+  version "0.15.6"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.15.6.tgz#d63b3b06f86f803464f003b252627c3eb4a09483"
+  integrity sha512-JoU9V9k6KqT9R9Tiw1RTU8ohZ+Xnf9DMg6Ktqqw5hILumwmq7xqa/KLXw513uTUsWbhtnHoSJYYR++u3pkyxJg==
+
 moo@^0.4.3:
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/moo/-/moo-0.4.3.tgz#3f847a26f31cf625a956a87f2b10fbc013bfd10e"
@@ -14627,6 +14632,13 @@ regex-not@^1.0.0, regex-not@^1.0.2:
   dependencies:
     extend-shallow "^3.0.2"
     safe-regex "^1.1.0"
+
+regexp-replace-loader@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/regexp-replace-loader/-/regexp-replace-loader-1.0.1.tgz#5dae73be9ee82a4d94d0955c2fa3fc923e134d7e"
+  integrity sha1-Xa5zvp7oKk2U0JVcL6P8kj4TTX4=
+  dependencies:
+    loader-utils "^1.0.2"
 
 regexp-tree@^0.1.0:
   version "0.1.0"
