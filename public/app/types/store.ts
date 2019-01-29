@@ -9,6 +9,7 @@ import { ExploreState } from './explore';
 import { UsersState, UserState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
+import { PluginsState } from './plugins';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -24,4 +25,5 @@ export interface StoreState {
   organization: OrganizationState;
   appNotifications: AppNotificationsState;
   user: UserState;
+  plugins: PluginsState;
 }

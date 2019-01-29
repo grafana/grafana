@@ -47,12 +47,13 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       scanning,
       scanRange,
     } = this.props;
+
     return (
       <Panel label="Logs" loading={loading} isOpen={showingLogs} onToggle={this.onClickLogsButton}>
         <Logs
           data={logsResult}
           exploreId={exploreId}
-          key={logsResult.id}
+          key={logsResult && logsResult.id}
           highlighterExpressions={logsHighlighterExpressions}
           loading={loading}
           onChangeTime={onChangeTime}

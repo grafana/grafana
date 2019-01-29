@@ -1,10 +1,12 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import config from 'app/core/config';
 import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
+import { GrafanaTheme } from '@grafana/ui';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -129,7 +131,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.table,
       this.dashboard.isTimezoneUtc(),
       this.$sanitize,
-      this.templateSrv
+      this.templateSrv,
+      config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark,
     );
 
     return super.render(this.table);

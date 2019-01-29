@@ -24,6 +24,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   StartPage: undefined,
   containerWidth: 0,
   datasourceInstance: null,
+  requestedDatasourceName: null,
   datasourceError: null,
   datasourceLoading: null,
   datasourceMissing: false,
@@ -162,17 +163,25 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.InitializeExplore: {
-      const { containerWidth, datasource, eventBridge, exploreDatasources, queries, range } = action.payload;
+      const { containerWidth, eventBridge, exploreDatasources, queries, range } = action.payload;
       return {
         ...state,
         containerWidth,
         eventBridge,
         exploreDatasources,
         range,
-        initialDatasource: datasource,
         initialQueries: queries,
         initialized: true,
         modifiedQueries: queries.slice(),
+      };
+    }
+
+    case ActionTypes.UpdateDatasourceInstance: {
+      const { datasourceInstance } = action.payload;
+      return {
+        ...state,
+        datasourceInstance,
+        datasourceName: datasourceInstance.name,
       };
     }
 
@@ -185,7 +194,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.LoadDatasourcePending: {
-      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.datasourceName };
+      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.requestedDatasourceName };
     }
 
     case ActionTypes.LoadDatasourceSuccess: {
@@ -194,7 +203,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialDatasource,
         initialQueries,
         showingStartPage,
         supportsGraph,
@@ -209,7 +217,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialDatasource,
         initialQueries,
         showingStartPage,
         supportsGraph,
@@ -278,7 +285,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.QueryTransactionStart: {
-      const { datasourceInstance, queryIntervals, queryTransactions } = state;
+      const { queryTransactions } = state;
       const { resultType, rowIndex, transaction } = action.payload;
       // Discarding existing transactions of same type
       const remainingTransactions = queryTransactions.filter(
@@ -288,15 +295,9 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       // Append new transaction
       const nextQueryTransactions: QueryTransaction[] = [...remainingTransactions, transaction];
 
-      const results = calculateResultsFromQueryTransactions(
-        nextQueryTransactions,
-        datasourceInstance,
-        queryIntervals.intervalMs
-      );
 
       return {
         ...state,
-        ...results,
         queryTransactions: nextQueryTransactions,
         showingStartPage: false,
       };
@@ -428,25 +429,19 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
 export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
   switch (action.type) {
     case ActionTypes.SplitClose: {
-      return {
-        ...state,
-        split: false,
-      };
+      return { ...state, split: false };
     }
 
     case ActionTypes.SplitOpen: {
-      return {
-        ...state,
-        split: true,
-        right: action.payload.itemState,
-      };
+      return { ...state, split: true, right: action.payload.itemState };
     }
 
     case ActionTypes.InitializeExploreSplit: {
-      return {
-        ...state,
-        split: true,
-      };
+      return { ...state, split: true };
+    }
+
+    case ActionTypes.ResetExplore: {
+      return initialExploreState;
     }
   }
 

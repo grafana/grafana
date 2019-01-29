@@ -9,7 +9,6 @@ export const ALERTING_COLOR = 'rgba(237, 46, 24, 1)';
 export const NO_DATA_COLOR = 'rgba(150, 150, 150, 1)';
 export const PENDING_COLOR = 'rgba(247, 149, 32, 1)';
 export const REGION_FILL_ALPHA = 0.09;
-
 export const colors = [
   '#7EB26D', // 0: pale green
   '#EAB839', // 1: mustard

@@ -26,6 +26,11 @@ export class TableContainer extends PureComponent<TableContainerProps> {
 
   render() {
     const { loading, onClickCell, showingTable, tableResult } = this.props;
+
+    if (!tableResult) {
+      return null;
+    }
+
     return (
       <Panel label="Table" loading={loading} isOpen={showingTable} onToggle={this.onClickTableButton}>
         <Table data={tableResult} loading={loading} onClickCell={onClickCell} />

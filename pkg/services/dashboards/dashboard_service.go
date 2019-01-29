@@ -164,11 +164,7 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 		User:      dto.User,
 	}
 
-	if err := bus.Dispatch(&alertCmd); err != nil {
-		return err
-	}
-
-	return nil
+	return bus.Dispatch(&alertCmd)
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {

@@ -14,3 +14,12 @@ describe('toUrlParams', () => {
     expect(url).toBe('server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=');
   });
 });
+
+describe('toUrlParams', () => {
+  it('should encode the same way as angularjs', () => {
+    const url = toUrlParams({
+      server: ':@',
+    });
+    expect(url).toBe('server=:@');
+  });
+});

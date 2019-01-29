@@ -72,7 +72,6 @@ export class DashboardViewStateSrv {
     }
 
     _.extend(this.state, state);
-    this.dashboard.meta.fullscreen = this.state.fullscreen;
 
     if (!this.state.fullscreen) {
       this.state.fullscreen = null;
@@ -117,10 +116,20 @@ export class DashboardViewStateSrv {
   }
 
   syncState() {
-    if (this.dashboard.meta.fullscreen) {
+    if (this.state.fullscreen) {
       const panel = this.dashboard.getPanelById(this.state.panelId);
 
       if (!panel) {
+        this.state.fullscreen = null;
+        this.state.panelId = null;
+        this.state.edit = null;
+
+        this.update(this.state);
+
+        setTimeout(() => {
+          appEvents.emit('alert-error', ['Error', 'Panel not found']);
+        }, 100);
+
         return;
       }
 

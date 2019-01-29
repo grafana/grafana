@@ -54,7 +54,8 @@ services:
       # - GF_DATABASE_SSL_MODE=disable
       # - GF_SESSION_PROVIDER=postgres
       # - GF_SESSION_PROVIDER_CONFIG=user=grafana password=password host=db port=5432 dbname=grafana sslmode=disable
-      - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug
+      - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug,auth:debug
+      - GF_LOGIN_ROTATE_TOKEN_MINUTES=2
     ports:
       - 3000
     depends_on:

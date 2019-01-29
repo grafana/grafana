@@ -26,6 +26,7 @@ import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
+import { GrafanaTheme } from '@grafana/ui';
 
 class GraphElement {
   ctrl: GraphCtrl;
@@ -51,7 +52,10 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.timeRegionManager = new TimeRegionManager(this.ctrl);
+    this.timeRegionManager = new TimeRegionManager(
+      this.ctrl,
+      config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
+    );
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });

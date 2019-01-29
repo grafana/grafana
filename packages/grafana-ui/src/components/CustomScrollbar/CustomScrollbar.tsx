@@ -7,10 +7,12 @@ interface Props {
   autoHide?: boolean;
   autoHideTimeout?: number;
   autoHideDuration?: number;
-  autoMaxHeight?: string;
+  autoHeightMax?: string;
   hideTracksWhenNotNeeded?: boolean;
+  renderTrackHorizontal?: React.FunctionComponent<any>;
+  renderTrackVertical?: React.FunctionComponent<any>;
   scrollTop?: number;
-  setScrollTop: (value: React.MouseEvent<HTMLElement>) => void;
+  setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
 }
 
@@ -20,13 +22,13 @@ interface Props {
 export class CustomScrollbar extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     customClassName: 'custom-scrollbars',
-    autoHide: true,
+    autoHide: false,
     autoHideTimeout: 200,
     autoHideDuration: 200,
-    autoMaxHeight: '100%',
-    hideTracksWhenNotNeeded: false,
     setScrollTop: () => {},
-    autoHeightMin: '0'
+    hideTracksWhenNotNeeded: false,
+    autoHeightMin: '0',
+    autoHeightMax: '100%',
   };
 
   private ref: React.RefObject<Scrollbars>;
@@ -45,7 +47,7 @@ export class CustomScrollbar extends PureComponent<Props> {
       } else {
         ref.scrollTop(this.props.scrollTop);
       }
-   }
+    }
   }
 
   componentDidMount() {
@@ -57,18 +59,34 @@ export class CustomScrollbar extends PureComponent<Props> {
   }
 
   render() {
-    const { customClassName, children, autoMaxHeight } = this.props;
+    const {
+      customClassName,
+      children,
+      autoHeightMax,
+      autoHeightMin,
+      setScrollTop,
+      autoHide,
+      autoHideTimeout,
+      hideTracksWhenNotNeeded,
+      renderTrackHorizontal,
+      renderTrackVertical,
+    } = this.props;
 
     return (
       <Scrollbars
         ref={this.ref}
         className={customClassName}
+        onScroll={setScrollTop}
         autoHeight={true}
+        autoHide={autoHide}
+        autoHideTimeout={autoHideTimeout}
+        hideTracksWhenNotNeeded={hideTracksWhenNotNeeded}
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
         // Before these where set to inhert but that caused problems with cut of legends in firefox
-        autoHeightMax={autoMaxHeight}
-        renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
-        renderTrackVertical={props => <div {...props} className="track-vertical" />}
+        autoHeightMax={autoHeightMax}
+        autoHeightMin={autoHeightMin}
+        renderTrackHorizontal={renderTrackHorizontal || (props => <div {...props} className="track-horizontal" />)}
+        renderTrackVertical={renderTrackVertical || (props => <div {...props} className="track-vertical" />)}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
         renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
         renderView={props => <div {...props} className="view" />}

@@ -7,6 +7,7 @@ import { PluginDashboard } from '../../../types/plugins';
 export enum ActionTypes {
   LoadPlugins = 'LOAD_PLUGINS',
   LoadPluginDashboards = 'LOAD_PLUGIN_DASHBOARDS',
+  LoadedPluginDashboards = 'LOADED_PLUGIN_DASHBOARDS',
   SetPluginsSearchQuery = 'SET_PLUGIN_SEARCH_QUERY',
   SetLayoutMode = 'SET_LAYOUT_MODE',
 }
@@ -18,6 +19,10 @@ export interface LoadPluginsAction {
 
 export interface LoadPluginDashboardsAction {
   type: ActionTypes.LoadPluginDashboards;
+}
+
+export interface LoadedPluginDashboardsAction {
+  type: ActionTypes.LoadedPluginDashboards;
   payload: PluginDashboard[];
 }
 
@@ -46,12 +51,20 @@ const pluginsLoaded = (plugins: Plugin[]): LoadPluginsAction => ({
   payload: plugins,
 });
 
-const pluginDashboardsLoaded = (dashboards: PluginDashboard[]): LoadPluginDashboardsAction => ({
+const pluginDashboardsLoad = (): LoadPluginDashboardsAction => ({
   type: ActionTypes.LoadPluginDashboards,
+});
+
+const pluginDashboardsLoaded = (dashboards: PluginDashboard[]): LoadedPluginDashboardsAction => ({
+  type: ActionTypes.LoadedPluginDashboards,
   payload: dashboards,
 });
 
-export type Action = LoadPluginsAction | LoadPluginDashboardsAction | SetPluginsSearchQueryAction | SetLayoutModeAction;
+export type Action = LoadPluginsAction
+  | LoadPluginDashboardsAction
+  | LoadedPluginDashboardsAction
+  | SetPluginsSearchQueryAction
+  | SetLayoutModeAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -64,8 +77,8 @@ export function loadPlugins(): ThunkResult<void> {
 
 export function loadPluginDashboards(): ThunkResult<void> {
   return async (dispatch, getStore) => {
+    dispatch(pluginDashboardsLoad());
     const dataSourceType = getStore().dataSources.dataSource.type;
-
     const response = await getBackendSrv().get(`api/plugins/${dataSourceType}/dashboards`);
     dispatch(pluginDashboardsLoaded(response));
   };
