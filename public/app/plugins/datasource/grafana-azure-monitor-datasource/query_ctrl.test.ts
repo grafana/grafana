@@ -2,8 +2,6 @@ jest.mock('./css/query_editor.css', () => {
   return {};
 });
 
-jest.mock('./monaco/kusto_monaco_editor');
-
 import { AzureMonitorQueryCtrl } from './query_ctrl';
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
