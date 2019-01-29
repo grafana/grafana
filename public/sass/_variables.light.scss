@@ -311,7 +311,8 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($popover-help-color, 5%);
 $graph-tooltip-bg: $gray-5;
 
-$tooltipBackground: $popover-help-bg;
+$tooltipBackground: $gray-1;
+$tooltipColor: $gray-7;
 $tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
 $tooltipBackgroundError: $brand-danger;
 $tooltipBackgroundBrand: $brand-primary;

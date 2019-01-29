@@ -21,12 +21,16 @@ export class AnnotationsSrv {
   constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {}
 
   init(dashboard: DashboardModel) {
+    // always clearPromiseCaches when loading new dashboard
+    this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on('refresh', () => {
-      this.globalAnnotationsPromise = null;
-      this.alertStatesPromise = null;
-      this.datasourcePromises = null;
-    });
+    dashboard.on('refresh', this.clearPromiseCaches.bind(this));
+  }
+
+  clearPromiseCaches() {
+    this.globalAnnotationsPromise = null;
+    this.alertStatesPromise = null;
+    this.datasourcePromises = null;
   }
 
   getAnnotations(options) {

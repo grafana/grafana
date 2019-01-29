@@ -1,10 +1,11 @@
 $popper-margin-from-ref: 5px;
 
-
-@mixin popper-theme($backgroundColor, $arrowColor) {
+@mixin popper-theme($backgroundColor, $textColor) {
   background: $backgroundColor;
+  color: $textColor;
+
   .popper__arrow {
-    border-color: $arrowColor;
+    border-color: $backgroundColor;
   }
 }
 
@@ -18,18 +19,23 @@ $popper-margin-from-ref: 5px;
 
 .popper__background {
   background: $tooltipBackground;
-  border-radius: $border-radius;
+  border-radius: $border-radius-sm;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  padding: 10px;
+  padding: 6px 10px;
+  color: $tooltipColor;
+  font-weight: 500;
+
+  .popper__arrow {
+    border-color: $tooltipBackground;
+  }
 
   // Themes
   &.popper__background--error {
     @include popper-theme($tooltipBackgroundError, $tooltipBackgroundError);
   }
 
-  &.popper__background--brand {
-    @include popper-theme($tooltipBackgroundBrand, $tooltipBackgroundBrand);
-    @include gradient-vertical($red, $orange);
+  &.popper__background--info {
+    @include popper-theme($popover-help-bg, $popover-help-color);
   }
 }
 
@@ -39,10 +45,6 @@ $popper-margin-from-ref: 5px;
   border-style: solid;
   position: absolute;
   margin: 0px;
-}
-
-.popper__arrow {
-  border-color: $tooltipBackground;
 }
 
 // Top

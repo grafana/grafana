@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { NavModel, Plugin } from 'app/types';
+import Page from 'app/core/components/Page/Page';
+import { NavModel, Plugin, StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
@@ -10,6 +10,7 @@ import { getDataSourceTypes } from './state/selectors';
 export interface Props {
   navModel: NavModel;
   dataSourceTypes: Plugin[];
+  isLoading: boolean;
   addDataSource: typeof addDataSource;
   loadDataSourceTypes: typeof loadDataSourceTypes;
   dataSourceTypeSearchQuery: string;
@@ -21,58 +22,59 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.loadDataSourceTypes();
   }
 
-  onDataSourceTypeClicked = type => {
-    this.props.addDataSource(type);
+  onDataSourceTypeClicked = (plugin: Plugin) => {
+    this.props.addDataSource(plugin);
   };
 
-  onSearchQueryChange = event => {
+  onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.props.setDataSourceTypeSearchQuery(event.target.value);
   };
 
   render() {
-    const { navModel, dataSourceTypes, dataSourceTypeSearchQuery } = this.props;
-
+    const { navModel, dataSourceTypes, dataSourceTypeSearchQuery, isLoading } = this.props;
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
-          <h2 className="add-data-source-header">Choose data source type</h2>
-          <div className="add-data-source-search">
-            <label className="gf-form--has-input-icon">
-              <input
-                type="text"
-                className="gf-form-input width-20"
-                value={dataSourceTypeSearchQuery}
-                onChange={this.onSearchQueryChange}
-                placeholder="Filter by name or type"
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={isLoading}>
+          <div className="page-container page-body">
+            <h2 className="add-data-source-header">Choose data source type</h2>
+            <div className="add-data-source-search">
+              <label className="gf-form--has-input-icon">
+                <input
+                  type="text"
+                  className="gf-form-input width-20"
+                  value={dataSourceTypeSearchQuery}
+                  onChange={this.onSearchQueryChange}
+                  placeholder="Filter by name or type"
+                />
+                <i className="gf-form-input-icon fa fa-search" />
+              </label>
+            </div>
+            <div className="add-data-source-grid">
+              {dataSourceTypes.map((plugin, index) => {
+                return (
+                  <div
+                    onClick={() => this.onDataSourceTypeClicked(plugin)}
+                    className="add-data-source-grid-item"
+                    key={`${plugin.id}-${index}`}
+                  >
+                    <img className="add-data-source-grid-item-logo" src={plugin.info.logos.small} />
+                    <span className="add-data-source-grid-item-text">{plugin.name}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="add-data-source-grid">
-            {dataSourceTypes.map((type, index) => {
-              return (
-                <div
-                  onClick={() => this.onDataSourceTypeClicked(type)}
-                  className="add-data-source-grid-item"
-                  key={`${type.id}-${index}`}
-                >
-                  <img className="add-data-source-grid-item-logo" src={type.info.logos.small} />
-                  <span className="add-data-source-grid-item-text">{type.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+        </Page.Contents>
+      </Page>
     );
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'datasources'),
     dataSourceTypes: getDataSourceTypes(state.dataSources),
+    isLoading: state.dataSources.isLoadingDataSources
   };
 }
 

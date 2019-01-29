@@ -307,7 +307,8 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: $popover-help-bg;
+$tooltipBackground: $black;
+$tooltipColor: $gray-4;
 $tooltipArrowColor: $tooltipBackground;
 $tooltipBackgroundError: $brand-danger;
 $tooltipBackgroundBrand: $brand-primary;

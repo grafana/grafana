@@ -1,7 +1,6 @@
 // Library
 import React, { Component } from 'react';
 import { Tooltip } from '@grafana/ui';
-import { Themes } from '@grafana/ui/src/components/Tooltip/Popper';
 
 import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
@@ -200,7 +199,7 @@ export class DataPanel extends Component<Props, State> {
       );
     } else if (loading === LoadingState.Error) {
       return (
-        <Tooltip content={errorMessage} placement="bottom-start" theme={Themes.Error}>
+        <Tooltip content={errorMessage} placement="bottom-start" theme="error">
           <div className="panel-info-corner panel-info-corner--error">
             <i className="fa" />
             <span className="panel-info-corner-inner" />

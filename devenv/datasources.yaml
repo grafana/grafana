@@ -152,4 +152,10 @@ datasources:
       authType: credentials
       defaultRegion: eu-west-2
 
+  - name: gdev-loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    editable: false
+
 

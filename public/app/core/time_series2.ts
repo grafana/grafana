@@ -356,7 +356,7 @@ export default class TimeSeries {
     return false;
   }
 
-  setColor(color) {
+  setColor(color: string) {
     this.color = color;
     this.bars.fillColor = color;
   }

@@ -1,61 +1,114 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import Drop from 'tether-drop';
+import React, { Component, createRef } from 'react';
+import PopperController from '../Tooltip/PopperController';
+import Popper, { RenderPopperArrowFn } from '../Tooltip/Popper';
 import { ColorPickerPopover } from './ColorPickerPopover';
+import { Themeable, GrafanaTheme } from '../../types';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
+import propDeprecationWarning from '../../utils/propDeprecationWarning';
 
-export interface Props {
+type ColorPickerChangeHandler = (color: string) => void;
+
+export interface ColorPickerProps extends Themeable {
   color: string;
-  onChange: (c: string) => void;
+  onChange: ColorPickerChangeHandler;
+
+  /**
+   * @deprecated Use onChange instead
+   */
+  onColorChange?: ColorPickerChangeHandler;
+  enableNamedColors?: boolean;
+  withArrow?: boolean;
+  children?: JSX.Element;
 }
 
-export class ColorPicker extends React.Component<Props, any> {
-  pickerElem: HTMLElement | null;
-  colorPickerDrop: any;
-
-  openColorPicker = () => {
-    const dropContent = <ColorPickerPopover color={this.props.color} onColorSelect={this.onColorSelect} />;
-
-    const dropContentElem = document.createElement('div');
-    ReactDOM.render(dropContent, dropContentElem);
-
-    const drop = new Drop({
-      target: this.pickerElem as Element,
-      content: dropContentElem,
-      position: 'top center',
-      classes: 'drop-popover',
-      openOn: 'click',
-      hoverCloseDelay: 200,
-      tetherOptions: {
-        constraints: [{ to: 'scrollParent', attachment: 'none both' }],
-        attachment: 'bottom center',
-      },
-    });
-
-    drop.on('close', this.closeColorPicker);
-
-    this.colorPickerDrop = drop;
-    this.colorPickerDrop.open();
-  };
-
-  closeColorPicker = () => {
-    setTimeout(() => {
-      if (this.colorPickerDrop && this.colorPickerDrop.tether) {
-        this.colorPickerDrop.destroy();
-      }
-    }, 100);
-  };
-
-  onColorSelect = (color: string) => {
-    this.props.onChange(color);
-  };
-
-  render() {
-    return (
-      <div className="sp-replacer sp-light" onClick={this.openColorPicker} ref={element => (this.pickerElem = element)}>
-        <div className="sp-preview">
-          <div className="sp-preview-inner" style={{ backgroundColor: this.props.color }} />
-        </div>
-      </div>
-    );
+export const warnAboutColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
+  const { onColorChange } = props;
+  if (onColorChange) {
+    propDeprecationWarning(componentName, 'onColorChange', 'onChange');
   }
-}
+};
+
+export const colorPickerFactory = <T extends ColorPickerProps>(
+  popover: React.ComponentType<T>,
+  displayName = 'ColorPicker',
+  renderPopoverArrowFunction?: RenderPopperArrowFn
+) => {
+  return class ColorPicker extends Component<T, any> {
+    static displayName = displayName;
+    pickerTriggerRef = createRef<HTMLDivElement>();
+
+    handleColorChange = (color: string) => {
+      const { onColorChange, onChange } = this.props;
+      const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
+
+      return changeHandler(color);
+    };
+
+    render() {
+      const popoverElement = React.createElement(popover, {
+        ...this.props,
+        onChange: this.handleColorChange,
+      });
+      const { theme, withArrow, children } = this.props;
+
+      const renderArrow: RenderPopperArrowFn = ({ arrowProps, placement }) => {
+        return (
+          <div
+            {...arrowProps}
+            data-placement={placement}
+            className={`ColorPicker__arrow ColorPicker__arrow--${theme === GrafanaTheme.Light ? 'light' : 'dark'}`}
+          />
+        );
+      };
+
+      return (
+        <PopperController content={popoverElement} hideAfter={300}>
+          {(showPopper, hidePopper, popperProps) => {
+            return (
+              <>
+                {this.pickerTriggerRef.current && (
+                  <Popper
+                    {...popperProps}
+                    referenceElement={this.pickerTriggerRef.current}
+                    wrapperClassName="ColorPicker"
+                    renderArrow={withArrow && (renderPopoverArrowFunction || renderArrow)}
+                    onMouseLeave={hidePopper}
+                    onMouseEnter={showPopper}
+                  />
+                )}
+
+                {children ? (
+                  React.cloneElement(children as JSX.Element, {
+                    ref: this.pickerTriggerRef,
+                    onClick: showPopper,
+                    onMouseLeave: hidePopper,
+                  })
+                ) : (
+                  <div
+                    ref={this.pickerTriggerRef}
+                    onClick={showPopper}
+                    onMouseLeave={hidePopper}
+                    className="sp-replacer sp-light"
+                  >
+                    <div className="sp-preview">
+                      <div
+                        className="sp-preview-inner"
+                        style={{
+                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme),
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          }}
+        </PopperController>
+      );
+    }
+  };
+};
+
+export const ColorPicker = colorPickerFactory(ColorPickerPopover, 'ColorPicker');
+export const SeriesColorPicker = colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker');

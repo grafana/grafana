@@ -135,7 +135,7 @@
         <div class="gf-form" ng-repeat="nc in ctrl.alertNotifications">
           <span class="gf-form-label" ng-style="{'background-color': nc.bgColor }">
             <i class="{{nc.iconClass}}"></i>&nbsp;{{nc.name}}&nbsp;
-            <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification($index)" ng-if="nc.isDefault === false"></i>
+            <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification(nc)" ng-if="nc.isDefault === false"></i>
           </span>
         </div>
         <div class="gf-form">

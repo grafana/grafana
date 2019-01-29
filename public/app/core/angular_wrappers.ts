@@ -28,6 +28,7 @@ export function registerAngularDirectives() {
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('seriesColorPickerPopover', SeriesColorPickerPopover, [
+    'color',
     'series',
     'onColorChange',
     'onToggleAxis',

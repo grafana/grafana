@@ -12,6 +12,7 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
+import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -104,6 +105,7 @@ interface PromQueryFieldState {
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
   languageProvider: any;
+  languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context) {
     super(props, context);
@@ -129,12 +131,23 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProvider
-        .start()
+      this.languageProviderInitializationPromise = makePromiseCancelable(this.languageProvider.start());
+      this.languageProviderInitializationPromise.promise
         .then(remaining => {
           remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
         })
-        .then(() => this.onUpdateLanguage());
+        .then(() => this.onUpdateLanguage())
+        .catch(({ isCanceled }) => {
+          if (isCanceled) {
+            console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+          }
+        });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.languageProviderInitializationPromise) {
+      this.languageProviderInitializationPromise.cancel();
     }
   }
 
