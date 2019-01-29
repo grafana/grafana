@@ -6,13 +6,14 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
+import { TimeRange } from '@grafana/ui/src';
 
 export class VariableSrv {
   dashboard: any;
   variables: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
+  constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv, private timeSrv) {
     $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
   }
 
@@ -22,7 +23,7 @@ export class VariableSrv {
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
-    this.templateSrv.init(this.variables);
+    this.templateSrv.init(this.variables, this.timeSrv.timeRange());
 
     // init variables
     for (const variable of this.variables) {
@@ -41,7 +42,8 @@ export class VariableSrv {
       });
   }
 
-  onTimeRangeUpdated() {
+  onTimeRangeUpdated(timeRange: TimeRange) {
+    this.templateSrv.updateTimeVariables(timeRange);
     const promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
       const previousOptions = variable.options.slice();
 

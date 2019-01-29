@@ -9,6 +9,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 
 import { PanelModel } from './panel_model';
 import { DashboardMigrator } from './dashboard_migration';
+import { TimeRange } from '@grafana/ui/src';
 
 export class DashboardModel {
   id: any;
@@ -200,8 +201,8 @@ export class DashboardModel {
     this.events.emit('view-mode-changed', panel);
   }
 
-  timeRangeUpdated() {
-    this.events.emit('time-range-updated');
+  timeRangeUpdated(timeRange: TimeRange) {
+    this.events.emit('time-range-updated', timeRange);
   }
 
   startRefresh() {
