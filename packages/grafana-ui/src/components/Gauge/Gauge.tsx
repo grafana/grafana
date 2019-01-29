@@ -61,7 +61,7 @@ export class Gauge extends PureComponent<Props> {
     if (valueMappings.length > 0) {
       const valueMappedValue = getMappedValue(valueMappings, value);
       if (valueMappedValue) {
-        return `${prefix} ${valueMappedValue.text} ${suffix}`;
+        return `${prefix && prefix + ' '}${valueMappedValue.text}${suffix && ' ' + suffix}`;
       }
     }
 
@@ -147,9 +147,8 @@ export class Gauge extends PureComponent<Props> {
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.ceil(
-      Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1)
-    );
+    const fontSize =
+      Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options = {
@@ -180,7 +179,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: this.getFontColor(value),
             formatter: () => {
-              return this.formatValue(value);
+              return formattedValue;
             },
             font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
           },
