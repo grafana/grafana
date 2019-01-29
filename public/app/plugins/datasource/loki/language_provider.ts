@@ -177,6 +177,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return queries.map(query => ({
       refId: query.refId,
       expr: '',
+      key: query.key,
     }));
   }
 

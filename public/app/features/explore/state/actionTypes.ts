@@ -43,6 +43,7 @@ export enum ActionTypes {
   ToggleTable = 'explore/TOGGLE_TABLE',
   UpdateDatasourceInstance = 'explore/UPDATE_DATASOURCE_INSTANCE',
   ResetExplore = 'explore/RESET_EXPLORE',
+  SetInitialQueries = 'explore/SET_INITIAL_QUERIES',
 }
 
 export interface AddQueryRowAction {
@@ -142,7 +143,7 @@ export interface LoadDatasourceSuccessAction {
     StartPage?: any;
     datasourceInstance: any;
     history: HistoryItem[];
-    initialQueries: DataQuery[];
+    // initialQueries: DataQuery[];
     logsHighlighterExpressions?: any[];
     showingStartPage: boolean;
     supportsGraph: boolean;
@@ -283,6 +284,14 @@ export interface ResetExploreAction {
   payload: {};
 }
 
+export interface SetInitialQueriesAction {
+  type: ActionTypes.SetInitialQueries;
+  payload: {
+    exploreId: ExploreId;
+    queries: DataQuery[];
+  };
+}
+
 export type Action =
   | AddQueryRowAction
   | ChangeQueryAction
@@ -312,4 +321,5 @@ export type Action =
   | ToggleLogsAction
   | ToggleTableAction
   | UpdateDatasourceInstanceAction
-  | ResetExploreAction;
+  | ResetExploreAction
+  | SetInitialQueriesAction;
