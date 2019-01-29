@@ -268,6 +268,19 @@ export class PanelModel {
     });
   }
 
+  changeQuery(query: DataQuery, index: number) {
+    // ensure refId is maintained
+    query.refId = this.targets[index].refId;
+
+    // update query in array
+    this.targets = this.targets.map((item, itemIndex) => {
+      if (itemIndex === index) {
+        return query;
+      }
+      return item;
+    });
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
