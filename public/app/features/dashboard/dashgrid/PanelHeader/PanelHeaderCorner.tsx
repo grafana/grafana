@@ -3,7 +3,7 @@ import Remarkable from 'remarkable';
 import { Tooltip } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import templateSrv from 'app/features/templating/template_srv';
-import { LinkSrv } from 'app/features/dashboard/panellinks/link_srv';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/time_srv';
 
 enum InfoModes {
@@ -77,7 +77,7 @@ export class PanelHeaderCorner extends Component<Props> {
       <>
         {infoMode === InfoModes.Info || infoMode === InfoModes.Links ? (
           <Tooltip
-            content={this.getInfoContent}
+            content={this.getInfoContent()}
             placement="bottom-start"
           >
             <div

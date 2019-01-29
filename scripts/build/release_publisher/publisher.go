@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,20 +13,20 @@ import (
 
 type publisher struct {
 	apiKey         string
-	apiUri         string
+	apiURI         string
 	product        string
 	dryRun         bool
 	enterprise     bool
-	baseArchiveUrl string
+	baseArchiveURL string
 	builder        releaseBuilder
 }
 
 type releaseBuilder interface {
-	prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error)
+	prepareRelease(baseArchiveURL, whatsNewURL string, releaseNotesURL string, nightly bool) (*release, error)
 }
 
-func (p *publisher) doRelease(whatsNewUrl string, releaseNotesUrl string, nightly bool) error {
-	currentRelease, err := p.builder.prepareRelease(p.baseArchiveUrl, whatsNewUrl, releaseNotesUrl, nightly)
+func (p *publisher) doRelease(whatsNewURL string, releaseNotesURL string, nightly bool) error {
+	currentRelease, err := p.builder.prepareRelease(p.baseArchiveURL, whatsNewURL, releaseNotesURL, nightly)
 	if err != nil {
 		return err
 	}
@@ -62,23 +61,26 @@ func (p *publisher) postRelease(r *release) error {
 	return nil
 }
 
-type ReleaseType int
+type releaseType int
 
 const (
-	STABLE ReleaseType = iota + 1
+	// STABLE is a release type constant
+	STABLE releaseType = iota + 1
+	// BETA is a release type constant
 	BETA
+	// NIGHTLY is a release type constant
 	NIGHTLY
 )
 
-func (rt ReleaseType) beta() bool {
+func (rt releaseType) beta() bool {
 	return rt == BETA
 }
 
-func (rt ReleaseType) stable() bool {
+func (rt releaseType) stable() bool {
 	return rt == STABLE
 }
 
-func (rt ReleaseType) nightly() bool {
+func (rt releaseType) nightly() bool {
 	return rt == NIGHTLY
 }
 
@@ -88,7 +90,7 @@ type buildArtifact struct {
 	urlPostfix string
 }
 
-func (t buildArtifact) getUrl(baseArchiveUrl, version string, releaseType ReleaseType) string {
+func (t buildArtifact) getURL(baseArchiveURL, version string, releaseType releaseType) string {
 	prefix := "-"
 	rhelReleaseExtra := ""
 
@@ -100,7 +102,7 @@ func (t buildArtifact) getUrl(baseArchiveUrl, version string, releaseType Releas
 		rhelReleaseExtra = "-1"
 	}
 
-	url := strings.Join([]string{baseArchiveUrl, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
+	url := strings.Join([]string{baseArchiveURL, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
 	return url
 }
 
@@ -126,9 +128,19 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 		urlPostfix: "_armhf.deb",
 	},
 	{
+		os:         "deb",
+		arch:       "armv6",
+		urlPostfix: "_armel.deb",
+	},
+	{
 		os:         "rhel",
 		arch:       "armv7",
 		urlPostfix: ".armhfp.rpm",
+	},
+	{
+		os:         "linux",
+		arch:       "armv6",
+		urlPostfix: ".linux-armv6.tar.gz",
 	},
 	{
 		os:         "linux",
@@ -181,23 +193,23 @@ func filterBuildArtifacts(filters []artifactFilter) ([]buildArtifact, error) {
 		}
 
 		if !matched {
-			return nil, errors.New(fmt.Sprintf("No buildArtifact for os=%v, arch=%v", f.os, f.arch))
+			return nil, fmt.Errorf("No buildArtifact for os=%v, arch=%v", f.os, f.arch)
 		}
 	}
 	return artifacts, nil
 }
 
-func newBuild(baseArchiveUrl string, ba buildArtifact, version string, rt ReleaseType, sha256 string) build {
+func newBuild(baseArchiveURL string, ba buildArtifact, version string, rt releaseType, sha256 string) build {
 	return build{
 		Os:     ba.os,
-		Url:    ba.getUrl(baseArchiveUrl, version, rt),
+		URL:    ba.getURL(baseArchiveURL, version, rt),
 		Sha256: sha256,
 		Arch:   ba.arch,
 	}
 }
 
-func (p *publisher) apiUrl(url string) string {
-	return fmt.Sprintf("%s/%s%s", p.apiUri, p.product, url)
+func (p *publisher) apiURL(url string) string {
+	return fmt.Sprintf("%s/%s%s", p.apiURI, p.product, url)
 }
 
 func (p *publisher) postRequest(url string, obj interface{}, desc string) error {
@@ -207,12 +219,12 @@ func (p *publisher) postRequest(url string, obj interface{}, desc string) error 
 	}
 
 	if p.dryRun {
-		log.Println(fmt.Sprintf("POST to %s:", p.apiUrl(url)))
+		log.Println(fmt.Sprintf("POST to %s:", p.apiURL(url)))
 		log.Println(string(jsonBytes))
 		return nil
 	}
 
-	req, err := http.NewRequest(http.MethodPost, p.apiUrl(url), bytes.NewReader(jsonBytes))
+	req, err := http.NewRequest(http.MethodPost, p.apiURL(url), bytes.NewReader(jsonBytes))
 	if err != nil {
 		return err
 	}
@@ -254,14 +266,14 @@ type release struct {
 	Stable          bool      `json:"stable"`
 	Beta            bool      `json:"beta"`
 	Nightly         bool      `json:"nightly"`
-	WhatsNewUrl     string    `json:"whatsNewUrl"`
-	ReleaseNotesUrl string    `json:"releaseNotesUrl"`
+	WhatsNewURL     string    `json:"whatsNewUrl"`
+	ReleaseNotesURL string    `json:"releaseNotesUrl"`
 	Builds          []build   `json:"-"`
 }
 
 type build struct {
 	Os     string `json:"os"`
-	Url    string `json:"url"`
+	URL    string `json:"url"`
 	Sha256 string `json:"sha256"`
 	Arch   string `json:"arch"`
 }

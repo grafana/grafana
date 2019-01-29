@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange } from '@grafana/ui';
+import { RawTimeRange, Switch } from '@grafana/ui';
 import {
   LogsDedupDescription,
   LogsDedupStrategy,
@@ -13,7 +13,6 @@ import {
   LogsMetaKind,
 } from 'app/core/logs_model';
 
-import { Switch } from 'app/core/components/Switch/Switch';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';
@@ -49,7 +48,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  data: LogsModel;
+  data?: LogsModel;
   exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
@@ -165,6 +164,11 @@ export default class Logs extends PureComponent<Props, State> {
       scanning,
       scanRange,
     } = this.props;
+
+    if (!data) {
+      return null;
+    }
+
     const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;

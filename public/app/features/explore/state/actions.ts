@@ -4,6 +4,8 @@ import { ThunkAction } from 'redux-thunk';
 
 // Services & Utils
 import store from 'app/core/store';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { Emitter } from 'app/core/core';
 import {
   LAST_USED_DATASOURCE_KEY,
   clearQueryKeys,
@@ -21,8 +23,14 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { StoreState } from 'app/types';
-import { DataQuery, DataSourceSelectItem, QueryHint  } from '@grafana/ui/src/types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import {
+  RawTimeRange,
+  TimeRange,
+  DataSourceApi,
+  DataQuery,
+  DataSourceSelectItem,
+  QueryHint,
+} from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreUrlState,
@@ -32,8 +40,6 @@ import {
   QueryTransaction,
 } from 'app/types/explore';
 
-import { Emitter } from 'app/core/core';
-import { RawTimeRange, TimeRange, DataSourceApi } from '@grafana/ui';
 import {
   Action as ThunkableAction,
   ActionTypes,
@@ -46,8 +52,8 @@ import {
   LoadDatasourceSuccessAction,
   QueryTransactionStartAction,
   ScanStopAction,
+  UpdateDatasourceInstanceAction,
 } from './actionTypes';
-
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
 
@@ -65,6 +71,7 @@ export function addQueryRow(exploreId: ExploreId, index: number): AddQueryRowAct
 export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
   return async dispatch => {
     const instance = await getDatasourceSrv().get(datasource);
+    dispatch(updateDatasourceInstance(exploreId, instance));
     dispatch(loadDatasource(exploreId, instance));
   };
 }
@@ -137,7 +144,7 @@ export function highlightLogsExpression(exploreId: ExploreId, expressions: strin
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasource: string,
+  datasourceName: string,
   queries: DataQuery[],
   range: RawTimeRange,
   containerWidth: number,
@@ -157,7 +164,7 @@ export function initializeExplore(
       payload: {
         exploreId,
         containerWidth,
-        datasource,
+        datasourceName,
         eventBridge,
         exploreDatasources,
         queries,
@@ -167,9 +174,9 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       let instance;
-      if (datasource) {
+      if (datasourceName) {
         try {
-          instance = await getDatasourceSrv().get(datasource);
+          instance = await getDatasourceSrv().get(datasourceName);
         } catch (error) {
           console.error(error);
         }
@@ -178,6 +185,7 @@ export function initializeExplore(
       if (!instance) {
         instance = await getDatasourceSrv().get();
       }
+      dispatch(updateDatasourceInstance(exploreId, instance));
       dispatch(loadDatasource(exploreId, instance));
     } else {
       dispatch(loadDatasourceMissing(exploreId));
@@ -216,11 +224,11 @@ export const loadDatasourceMissing = (exploreId: ExploreId): LoadDatasourceMissi
 /**
  * Start the async process of loading a datasource to display a loading indicator
  */
-export const loadDatasourcePending = (exploreId: ExploreId, datasourceName: string): LoadDatasourcePendingAction => ({
+export const loadDatasourcePending = (exploreId: ExploreId, requestedDatasourceName: string): LoadDatasourcePendingAction => ({
   type: ActionTypes.LoadDatasourcePending,
   payload: {
     exploreId,
-    datasourceName,
+    requestedDatasourceName,
   },
 });
 
@@ -253,7 +261,6 @@ export const loadDatasourceSuccess = (
       StartPage,
       datasourceInstance: instance,
       history,
-      initialDatasource: instance.name,
       initialQueries: queries,
       showingStartPage: Boolean(StartPage),
       supportsGraph,
@@ -262,6 +269,22 @@ export const loadDatasourceSuccess = (
     },
   };
 };
+
+/**
+ * Updates datasource instance before datasouce loading has started
+ */
+export function updateDatasourceInstance(
+  exploreId: ExploreId,
+  instance: DataSourceApi
+): UpdateDatasourceInstanceAction {
+  return {
+    type: ActionTypes.UpdateDatasourceInstance,
+    payload: {
+      exploreId,
+      datasourceInstance: instance,
+    },
+  };
+}
 
 /**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
@@ -539,6 +562,7 @@ export function runQueries(exploreId: ExploreId) {
 
     if (!hasNonEmptyQuery(modifiedQueries)) {
       dispatch({ type: ActionTypes.RunQueriesEmpty, payload: { exploreId } });
+      dispatch(stateSave()); // Remember to saves to state and update location
       return;
     }
 
@@ -764,5 +788,14 @@ export function toggleTable(exploreId: ExploreId): ThunkResult<void> {
     if (getState().explore[exploreId].showingTable) {
       dispatch(runQueries(exploreId));
     }
+  };
+}
+
+/**
+ * Resets state for explore.
+ */
+export function resetExplore(): ThunkResult<void> {
+  return dispatch => {
+    dispatch({ type: ActionTypes.ResetExplore, payload: {} });
   };
 }

@@ -254,7 +254,9 @@ export class TemplateSrv {
         return match;
       }
 
-      return this.grafanaVariables[variable.current.value] || variable.current.text;
+      const value = this.grafanaVariables[variable.current.value];
+
+      return typeof(value) === 'string' ? value : variable.current.text;
     });
   }
 

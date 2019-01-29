@@ -469,6 +469,11 @@ describe('templateSrv', () => {
           name: 'empty_on_init',
           current: { value: '', text: '' },
         },
+        {
+          type: 'custom',
+          name: 'foo',
+          current: { value: 'constructor', text: 'constructor' },
+        }
       ]);
       _templateSrv.setGrafanaVariable('$__auto_interval_interval', '13m');
       _templateSrv.updateTemplateData();
@@ -482,6 +487,12 @@ describe('templateSrv', () => {
     it('should replace empty string-values with an empty string', () => {
       const target = _templateSrv.replaceWithText('Hello $empty_on_init');
       expect(target).toBe('Hello ');
+    });
+
+    it('should not return a string representation of a constructor property', () => {
+      const target = _templateSrv.replaceWithText('$foo');
+      expect(target).not.toBe('function Object() { [native code] }');
+      expect(target).toBe('constructor');
     });
   });
 

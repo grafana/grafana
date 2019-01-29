@@ -1,112 +1,129 @@
 import React from 'react';
-import $ from 'jquery';
-import tinycolor from 'tinycolor2';
-import { ColorPalette } from './ColorPalette';
-import { SpectrumPicker } from './SpectrumPicker';
+import { NamedColorsPalette } from './NamedColorsPalette';
+import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { ColorPickerProps, warnAboutColorPickerPropsDeprecation } from './ColorPicker';
+import { GrafanaTheme } from '../../types';
+import { PopperContentProps } from '../Tooltip/PopperController';
+import SpectrumPalette from './SpectrumPalette';
 
-const DEFAULT_COLOR = '#000000';
-
-export interface Props {
-  color: string;
-  onColorSelect: (c: string) => void;
+export interface Props<T> extends ColorPickerProps, PopperContentProps {
+  customPickers?: T;
 }
 
-export class ColorPickerPopover extends React.Component<Props, any> {
-  pickerNavElem: any;
+type PickerType = 'palette' | 'spectrum';
 
-  constructor(props: Props) {
+interface CustomPickersDescriptor {
+  [key: string]: {
+    tabComponent: React.ComponentType<ColorPickerProps>;
+    name: string;
+  };
+}
+interface State<T> {
+  activePicker: PickerType | keyof T;
+}
+
+export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React.Component<Props<T>, State<T>> {
+  constructor(props: Props<T>) {
     super(props);
     this.state = {
-      tab: 'palette',
-      color: this.props.color || DEFAULT_COLOR,
-      colorString: this.props.color || DEFAULT_COLOR,
+      activePicker: 'palette',
     };
+    warnAboutColorPickerPropsDeprecation('ColorPickerPopover', props);
   }
 
-  setPickerNavElem(elem: any) {
-    this.pickerNavElem = $(elem);
-  }
+  getTabClassName = (tabName: PickerType | keyof T) => {
+    const { activePicker } = this.state;
+    return `ColorPickerPopover__tab ${activePicker === tabName && 'ColorPickerPopover__tab--active'}`;
+  };
 
-  setColor(color: string) {
-    const newColor = tinycolor(color);
-    if (newColor.isValid()) {
-      this.setState({ color: newColor.toString(), colorString: newColor.toString() });
-      this.props.onColorSelect(color);
+  handleChange = (color: any) => {
+    const { onColorChange, onChange, enableNamedColors, theme } = this.props;
+    const changeHandler = onColorChange || onChange;
+
+    if (enableNamedColors) {
+      return changeHandler(color);
     }
-  }
+    changeHandler(getColorFromHexRgbOrName(color, theme));
+  };
 
-  sampleColorSelected(color: string) {
-    this.setColor(color);
-  }
+  handleTabChange = (tab: PickerType | keyof T) => {
+    return () => this.setState({ activePicker: tab });
+  };
 
-  spectrumColorSelected(color: any) {
-    const rgbColor = color.toRgbString();
-    this.setColor(rgbColor);
-  }
+  renderPicker = () => {
+    const { activePicker } = this.state;
+    const { color, theme } = this.props;
 
-  onColorStringChange(e: any) {
-    const colorString = e.target.value;
-    this.setState({ colorString: colorString });
-
-    const newColor = tinycolor(colorString);
-    if (newColor.isValid()) {
-      // Update only color state
-      const newColorString = newColor.toString();
-      this.setState({ color: newColorString });
-      this.props.onColorSelect(newColorString);
+    switch (activePicker) {
+      case 'spectrum':
+        return <SpectrumPalette color={color} onChange={this.handleChange} theme={theme} />;
+      case 'palette':
+        return <NamedColorsPalette color={getColorName(color, theme)} onChange={this.handleChange} theme={theme} />;
+      default:
+        return this.renderCustomPicker(activePicker);
     }
-  }
+  };
 
-  onColorStringBlur(e: any) {
-    const colorString = e.target.value;
-    this.setColor(colorString);
-  }
+  renderCustomPicker = (tabKey: keyof T) => {
+    const { customPickers, color, theme } = this.props;
+    if (!customPickers) {
+      return null;
+    }
 
-  componentDidMount() {
-    this.pickerNavElem.find('li:first').addClass('active');
-    this.pickerNavElem.on('show', (e: any) => {
-      // use href attr (#name => name)
-      const tab = e.target.hash.slice(1);
-      this.setState({ tab: tab });
+    return React.createElement(customPickers[tabKey].tabComponent, {
+      color,
+      theme,
+      onChange: this.handleChange,
     });
-  }
+  };
 
-  render() {
-    const paletteTab = (
-      <div id="palette">
-        <ColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected.bind(this)} />
-      </div>
-    );
-    const spectrumTab = (
-      <div id="spectrum">
-        <SpectrumPicker color={this.state.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
-      </div>
-    );
-    const currentTab = this.state.tab === 'palette' ? paletteTab : spectrumTab;
+  renderCustomPickerTabs = () => {
+    const { customPickers } = this.props;
+
+    if (!customPickers) {
+      return null;
+    }
 
     return (
-      <div className="gf-color-picker">
-        <ul className="nav nav-tabs" id="colorpickernav" ref={this.setPickerNavElem.bind(this)}>
-          <li className="gf-tabs-item-colorpicker">
-            <a href="#palette" data-toggle="tab">
-              Colors
-            </a>
-          </li>
-          <li className="gf-tabs-item-colorpicker">
-            <a href="#spectrum" data-toggle="tab">
-              Custom
-            </a>
-          </li>
-        </ul>
-        <div className="gf-color-picker__body">{currentTab}</div>
-        <div>
-          <input
-            className="gf-form-input gf-form-input--small"
-            value={this.state.colorString}
-            onChange={this.onColorStringChange.bind(this)}
-            onBlur={this.onColorStringBlur.bind(this)}
-          />
+      <>
+        {Object.keys(customPickers).map(key => {
+          return (
+            <div
+              className={this.getTabClassName(key)}
+              onClick={this.handleTabChange(key)}
+              key={key}
+            >
+              {customPickers[key].name}
+            </div>
+          );
+        })}
+      </>
+    );
+  };
+
+  render() {
+    const { theme } = this.props;
+    const colorPickerTheme = theme || GrafanaTheme.Dark;
+
+    return (
+      <div className={`ColorPickerPopover ColorPickerPopover--${colorPickerTheme}`}>
+        <div className="ColorPickerPopover__tabs">
+          <div
+            className={this.getTabClassName('palette')}
+            onClick={this.handleTabChange('palette')}
+          >
+            Colors
+          </div>
+          <div
+            className={this.getTabClassName('spectrum')}
+            onClick={this.handleTabChange('spectrum')}
+          >
+            Custom
+          </div>
+          {this.renderCustomPickerTabs()}
         </div>
+
+        <div className="ColorPickerPopover__content">{this.renderPicker()}</div>
       </div>
     );
   }
