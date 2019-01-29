@@ -20,6 +20,6 @@ module.exports = function(config, grunt) {
     },
     jest: 'node ./node_modules/jest-cli/bin/jest.js --maxWorkers 2',
     webpack:
-      'node --max-old-space-size=4096 ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js',
+      'node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js',
   };
 };
