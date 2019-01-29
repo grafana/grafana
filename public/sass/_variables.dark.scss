@@ -392,8 +392,8 @@ $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue, 47%);
 $panel-editor-viz-item-bg-hover-active: darken($orange, 45%);
 
-$panel-options-group-border: 1px solid $dark-3;
-$panel-options-group-header-bg: linear-gradient(0deg, $gray-blue, $dark-1);
+$panel-options-group-border: none;
+$panel-options-group-header-bg: $gray-blue;
 
 $panel-grid-placeholder-bg: darken($blue, 47%);
 $panel-grid-placeholder-shadow: 0 0 4px $blue;
