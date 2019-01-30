@@ -32,7 +32,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 
 **Explore** is a new paradigm for Grafana. It creates a new interactive debugging workflow that integrates two pillars
 of observability - metrics and logs. Explore works with every datasource but for Prometheus we have customized the
-query editor and the experiance to provide the best possible exploration UX.
+query editor and the experience to provide the best possible exploration UX.
 
 #### Explore and Prometheus
 
@@ -79,7 +79,7 @@ video below to see the new Panel Editor in action.
 
 ### Gauge Panel
 
-We have created a new seperate Gauge panel as we felt having this visualization be a hidden option in the Singlestat panel
+We have created a new separate Gauge panel as we felt having this visualization be a hidden option in the Singlestat panel
 was not ideal. When it supports 100% of the Singlestat Gauge features we plan to add a migration so all
 singlestats that use it become Gauge panels instead. This new panel contains a new **Threshold** editor that we will
 continue to refine and start using in other panels.
