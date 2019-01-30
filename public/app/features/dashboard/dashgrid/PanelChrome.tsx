@@ -86,7 +86,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onDataResponse = (dataQueryResponse: DataQueryResponse) => {
     if (this.props.dashboard.isSnapshot()) {
-      this.props.panel.snapshotData = dataQueryResponse;
+      this.props.panel.snapshotData = dataQueryResponse.data;
     }
   };
 
