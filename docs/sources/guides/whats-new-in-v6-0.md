@@ -51,22 +51,46 @@ Loki is a horizontally-scalable, highly-available, multi-tenant log aggregation 
 
 Read more about Grafana Loki [here](https://github.com/grafana/loki) or [Grafana Labs hosted Loki](https://grafana.com/loki).
 
-The Explore feature allows you to query logs and features a new log panel.
+The Explore feature allows you to query logs and features a new log panel. In the near future, we will be adding support
+for other log sources to Explore and the next planned integration is Elasticsearch.
 
-In the near future, we will be adding support for other log sources to Explore and the next planned integration is ElasticSearch logs.
+{{< docs-imagebox img="/img/docs/v60/explore_loki.png" max-width="1200px" caption="Explore Loki Log Streams" >}}
 
-{{< docs-imagebox img="/img/docs/v60/explore_loki.png" max-width="1200px" class="docs-image--left" caption="Explore Loki Log Streams" >}}
+## New Panel Editor
 
-### Easily Switch Visualization with Panel Edit UX Update
-
-The UX for editing a panel has gotten an update and the major feature is being able to easily switch visualization using the new Visualization option. This means you can quickly switch from a Graph visualization to a Table visualization or any other visualization without having to create a new panel.
+Grafana v6.0 has a completely redesigned UX around editing panels. You can now resize the visualization area if you want
+more space for queries & options and vice versa. You can now also change visualization (panel type) from within the new
+panel edit mode. No need to add a new panel to try out different visualizations! Checkout the
+video below to see the new Panel Editor in action.
 
 <div class="medium-6 columns">
-   <video width="320" height="240" controls>
-    <source src="/assets/videos/new_panel_edit_ux.mp4" type="video/mp4">
+  <video width="800" height="500" controls>
+    <source src="/assets/videos/panel_change_viz.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
-  </div>
+</div>
+
+<br>
+
+### Gauge Panel
+
+We have created a new seperate Gauge panel as we felt having this visualization be a hidden option in the Singlestat panel
+was not ideal. When it supports 100% of the Singlestat Gauge features we plan to add a migration so all
+singlestats that use it become Gauge panels instead. This new panel contains a new **Threshold** editor that we will
+continue to refine and start using in other panels.
+
+{{< docs-imagebox img="/img/docs/v60/gauge_panel.png" max-width="600px" caption="Gauge Panel" >}}
+
+<br>
+
+### React Panels & Query Editors
+
+A major part of all the work that has gone into Grafana v6.0 has been on the migration to React. This investment
+is part of the future proofing of Grafana and it's code base and ecosystem. Starting in v6.0 **Panels** and **Data
+source** plugins can be written in React using our published `@grafana/ui` sdk library. More information on this
+will be shared closer to or just after release.
+
+{{< docs-imagebox img="/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
 
 ### Google Stackdriver Datasource
 
@@ -85,7 +109,7 @@ The Azure Monitor datasource integrates four Azure services with Grafana - Azure
 Grafana now added support for provisioning alert notifiers from configuration files. Allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. Same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers that exists in the instance.
 
 ### Auth and session token improvements
-The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request. 
+The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request.
 If you are using `Auth proxy` for authentication the session storage will still be used but our goal is to remove this ASAP as well.
 
 This release will force all users to log in again since their previous token is not valid anymore.
