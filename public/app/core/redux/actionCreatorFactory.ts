@@ -21,7 +21,7 @@ export const actionCreatorFactory = <Payload>(type: string): ActionCreatorFactor
     return Object.assign((payload: Payload): GrafanaAction<Payload> => ({ type, payload }), { type });
   };
 
-  if (allActionCreators.some(t => type === type)) {
+  if (allActionCreators.some(t => (t && type ? t.toLocaleUpperCase() === type.toLocaleUpperCase() : false))) {
     throw new Error(`There is already an actionCreator defined with the type ${type}`);
   }
 
@@ -30,4 +30,5 @@ export const actionCreatorFactory = <Payload>(type: string): ActionCreatorFactor
   return { create };
 };
 
+// Should only be used by tests
 export const resetAllActionCreatorTypes = () => (allActionCreators.length = 0);

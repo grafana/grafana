@@ -46,7 +46,7 @@ describe('actionCreatorFactory', () => {
       setup(payload);
 
       expect(() => {
-        actionCreatorFactory<Dummy>('dummy').create();
+        actionCreatorFactory<Dummy>('DuMmY').create();
       }).toThrow();
     });
   });
