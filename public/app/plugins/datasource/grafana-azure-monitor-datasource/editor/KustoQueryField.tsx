@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
@@ -25,21 +26,43 @@ interface SuggestionGroup {
   skipFilter?: boolean;
 }
 
+interface KustoSchema {
+  Databases: {
+    Default?: KustoDBSchema;
+  };
+  Plugins?: any[];
+}
+
+interface KustoDBSchema {
+  Name?: string;
+  Functions?: any;
+  Tables?: any;
+}
+
+const defaultSchema = () => ({
+  Databases: {
+    Default: {}
+  }
+});
+
 const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 const wrapText = text => ({ text });
 
 export default class KustoQueryField extends QueryField {
   fields: any;
   events: any;
+  schema: KustoSchema;
 
   constructor(props, context) {
     super(props, context);
+    this.schema = defaultSchema();
 
     this.onTypeahead = debounce(this.onTypeahead, TYPEAHEAD_DELAY);
   }
 
   componentDidMount() {
     this.updateMenu();
+    this.fetchSchema();
   }
 
   onTypeahead = () => {
@@ -128,7 +151,13 @@ export default class KustoQueryField extends QueryField {
         suggestionGroups = this._getKeywordSuggestions();
       } else if (Plain.serialize(this.state.value) === '') {
         typeaheadContext = 'context-new';
-        suggestionGroups = this._getInitialSuggestions();
+        if (this.schema) {
+          suggestionGroups = this._getInitialSuggestions();
+        } else {
+          this.fetchSchema();
+          setTimeout(this.onTypeahead, 0);
+          return;
+        }
       }
 
       let results = 0;
@@ -263,7 +292,7 @@ export default class KustoQueryField extends QueryField {
       {
         prefixMatch: true,
         label: 'Operators',
-        items: operatorTokens.map((s: any) => { s.type = 'function'; return s; })
+        items: operatorTokens
       },
       {
         prefixMatch: true,
@@ -274,34 +303,46 @@ export default class KustoQueryField extends QueryField {
         prefixMatch: true,
         label: 'Macros',
         items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
+        label: 'Tables',
+        items: _.map(this.schema.Databases.Default.Tables, (t: any) => ({ text: t.Name }))
       }
     ];
   }
 
   private _getInitialSuggestions(): SuggestionGroup[] {
-    // TODO: return datbase tables as an initial suggestion
     return [
       {
         prefixMatch: true,
-        label: 'Keywords',
-        items: KEYWORDS.map(wrapText)
-      },
-      {
-        prefixMatch: true,
-        label: 'Operators',
-        items: operatorTokens.map((s: any) => { s.type = 'function'; return s; })
-      },
-      {
-        prefixMatch: true,
-        label: 'Functions',
-        items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
-      },
-      {
-        prefixMatch: true,
-        label: 'Macros',
-        items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
+        label: 'Tables',
+        items: _.map(this.schema.Databases.Default.Tables, (t: any) => ({ text: t.Name }))
       }
     ];
+
+    // return [
+    //   {
+    //     prefixMatch: true,
+    //     label: 'Keywords',
+    //     items: KEYWORDS.map(wrapText)
+    //   },
+    //   {
+    //     prefixMatch: true,
+    //     label: 'Operators',
+    //     items: operatorTokens.map((s: any) => { s.type = 'function'; return s; })
+    //   },
+    //   {
+    //     prefixMatch: true,
+    //     label: 'Functions',
+    //     items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
+    //   },
+    //   {
+    //     prefixMatch: true,
+    //     label: 'Macros',
+    //     items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
+    //   }
+    // ];
   }
 
   private async _fetchEvents() {
@@ -328,5 +369,14 @@ export default class KustoQueryField extends QueryField {
     // setTimeout(this.onTypeahead, 0);
     // Stub
     this.fields = [];
+  }
+
+  private async fetchSchema() {
+    const schema = await this.props.getSchema();
+    if (schema) {
+      this.schema = schema;
+    } else {
+      this.schema = defaultSchema();
+    }
   }
 }

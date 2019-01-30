@@ -31,7 +31,7 @@ class Editor extends Component<any, any> {
   };
 
   render() {
-    const { request, variables } = this.props;
+    const { request, variables, getSchema } = this.props;
     const { edited, query } = this.state;
 
     return (
@@ -45,6 +45,7 @@ class Editor extends Component<any, any> {
           placeholder="Enter a query"
           request={request}
           templateVariables={variables}
+          getSchema={getSchema}
         />
       </div>
     );
@@ -54,6 +55,9 @@ class Editor extends Component<any, any> {
 coreModule.directive('kustoEditor', [
   'reactDirective',
   reactDirective => {
-    return reactDirective(Editor, ['change', 'database', 'execute', 'query', 'request', 'variables']);
+    return reactDirective(Editor, [
+      'change', 'database', 'execute', 'query', 'request', 'variables',
+      ['getSchema', { watchDepth: 'reference' }]
+    ]);
   },
 ]);

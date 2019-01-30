@@ -304,7 +304,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   /* Azure Log Analytics */
 
-  getWorkspaces() {
+  getWorkspaces = () => {
     return this.datasource.azureLogAnalyticsDatasource
       .getWorkspaces()
       .then(list => {
@@ -316,7 +316,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  getAzureLogAnalyticsSchema() {
+  getAzureLogAnalyticsSchema = () => {
     return this.getWorkspaces()
       .then(() => {
         return this.datasource.azureLogAnalyticsDatasource.getSchema(this.target.azureLogAnalytics.workspace);
