@@ -22,13 +22,13 @@ The main highlights are:
 - [Google Stackdriver Datasource]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
 - The [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
 
-### Explore
+## Explore
 
-Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query. Iterate until you have a working query and then think about building a dashboard.
+{{< docs-imagebox img="/img/docs/v60/explore_prometheus.png" max-width="800px" class="docs-image--right" caption="Screenshot of the new Explore option in the panel menu" >}}
+
+Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query & metric exploration. Iterate until you have a working query and then think about building a dashboard. You can also jump from a dashboard panel into **Explore** and from there do some ad-hoc query exporation with the panel queries as a starting point.
 
 For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. **Explore** allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging datasource, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side.
-
-{{< docs-imagebox img="/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 **Explore** is a new paradigm for Grafana. It creates a new interactive debugging workflow that integrates two pillars of observability - metrics and logs.
 
@@ -36,19 +36,26 @@ For infrastructure monitoring and incident response, you no longer need to switc
 
 The first version of Explore features a [custom querying experience for Prometheus](/features/explore/#prometheus-specific-features) and as well as an integration between Prometheus and Grafana Loki (see more about Loki below).
 
+### Explore splits
+
+Explore supports splitting the view so you can compare different queries, different datasources and metrics & logs side by side!
+
+{{< docs-imagebox img="/img/docs/v60/explore_split.png" max-width="800px" caption="Screenshot of the new Explore option in the panel menu" >}}
+
 ### Explore and Grafana Loki
 
-The Explore feature allows you to combine metric queries and log queries. The first log integration is for the new open source log aggregation system from Grafana Labs called [Grafana Loki](https://github.com/grafana/loki).
+The log exploration & visualization features in Explore are available to any data source but are currently only implemented by the new open source log
+aggregation system from Grafana Lab called [Grafana Loki](https://github.com/grafana/loki).
 
-Loki a horizontally-scalable, highly-available, multi-tenant log aggregation system inspired by Prometheus. It is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels.
+Loki is a horizontally-scalable, highly-available, multi-tenant log aggregation system inspired by Prometheus. It is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels.
 
 Read more about Grafana Loki [here](https://github.com/grafana/loki) or [Grafana Labs hosted Loki](https://grafana.com/loki).
 
 The Explore feature allows you to query logs and features a new log panel.
 
-{{< docs-imagebox img="/img/docs/v60/explore_loki.png" class="docs-image--no-shadow" caption="Explore Loki Log Streams" >}}
-
 In the near future, we will be adding support for other log sources to Explore and the next planned integration is ElasticSearch logs.
+
+{{< docs-imagebox img="/img/docs/v60/explore_loki.png" max-width="1200px" class="docs-image--left" caption="Explore Loki Log Streams" >}}
 
 ### Easily Switch Visualization with Panel Edit UX Update
 
