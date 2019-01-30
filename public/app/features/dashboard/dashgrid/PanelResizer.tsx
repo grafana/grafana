@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { throttle } from 'lodash';
-import Draggable from 'react-draggable';
+import Draggable, { DraggableEventHandler } from 'react-draggable';
 
 import { PanelModel } from '../panel_model';
 
@@ -42,7 +42,7 @@ export class PanelResizer extends PureComponent<Props, State> {
     return 100;
   }
 
-  changeHeight = height => {
+  changeHeight = (height: number) => {
     const sh = this.smallestHeight;
     const lh = this.largestHeight;
     height = height < sh ? sh : height;
@@ -54,7 +54,7 @@ export class PanelResizer extends PureComponent<Props, State> {
     });
   };
 
-  onDrag = (evt, data) => {
+  onDrag: DraggableEventHandler = (evt, data) => {
     const newHeight = this.state.editorHeight + data.y;
     this.throttledChangeHeight(newHeight);
     this.throttledResizeDone();
