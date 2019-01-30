@@ -1,5 +1,5 @@
 import { reducerFactory } from './reducerFactory';
-import { actionCreatorFactory, GrafanaAction } from './actionCreatorFactory';
+import { actionCreatorFactory, ActionOf } from './actionCreatorFactory';
 
 interface DummyReducerState {
   n: number;
@@ -37,7 +37,7 @@ describe('reducerFactory', () => {
     describe('when reducer is called with no state', () => {
       describe('and with an action that the handler can not handle', () => {
         it('then the resulting state should be intial state', () => {
-          const result = dummyReducer(undefined as DummyReducerState, {} as GrafanaAction<any>);
+          const result = dummyReducer(undefined as DummyReducerState, {} as ActionOf<any>);
 
           expect(result).toEqual(dummyReducerIntialState);
         });
@@ -56,7 +56,7 @@ describe('reducerFactory', () => {
     describe('when reducer is called with a state', () => {
       describe('and with an action that the handler can not handle', () => {
         it('then the resulting state should be intial state', () => {
-          const result = dummyReducer(dummyReducerIntialState, {} as GrafanaAction<any>);
+          const result = dummyReducer(dummyReducerIntialState, {} as ActionOf<any>);
 
           expect(result).toEqual(dummyReducerIntialState);
         });

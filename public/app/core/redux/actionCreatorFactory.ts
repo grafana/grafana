@@ -2,23 +2,23 @@ import { Action } from 'redux';
 
 const allActionCreators: string[] = [];
 
-export interface GrafanaAction<Payload> extends Action {
+export interface ActionOf<Payload> extends Action {
   readonly type: string;
   readonly payload: Payload;
 }
 
-export interface GrafanaActionCreator<Payload> {
+export interface ActionCreator<Payload> {
   readonly type: string;
-  (payload: Payload): GrafanaAction<Payload>;
+  (payload: Payload): ActionOf<Payload>;
 }
 
 export interface ActionCreatorFactory<Payload> {
-  create: () => GrafanaActionCreator<Payload>;
+  create: () => ActionCreator<Payload>;
 }
 
 export const actionCreatorFactory = <Payload>(type: string): ActionCreatorFactory<Payload> => {
-  const create = (): GrafanaActionCreator<Payload> => {
-    return Object.assign((payload: Payload): GrafanaAction<Payload> => ({ type, payload }), { type });
+  const create = (): ActionCreator<Payload> => {
+    return Object.assign((payload: Payload): ActionOf<Payload> => ({ type, payload }), { type });
   };
 
   if (allActionCreators.some(t => (t && type ? t.toLocaleUpperCase() === type.toLocaleUpperCase() : false))) {

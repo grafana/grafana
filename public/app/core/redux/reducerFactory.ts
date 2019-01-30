@@ -1,9 +1,9 @@
-import { GrafanaAction, GrafanaActionCreator } from './actionCreatorFactory';
+import { ActionOf, ActionCreator } from './actionCreatorFactory';
 import { Reducer } from 'redux';
 
 export interface HandlerConfig<State, Payload> {
-  filter: GrafanaActionCreator<Payload>;
-  handler: (state: State, action: GrafanaAction<Payload>) => State;
+  filter: ActionCreator<Payload>;
+  handler: (state: State, action: ActionOf<Payload>) => State;
 }
 
 export interface AddHandler<State> {
@@ -11,7 +11,7 @@ export interface AddHandler<State> {
 }
 
 export interface CreateReducer<State> extends AddHandler<State> {
-  create: () => Reducer<State, GrafanaAction<any>>;
+  create: () => Reducer<State, ActionOf<any>>;
 }
 
 export const reducerFactory = <State>(initialState: State): AddHandler<State> => {
@@ -27,8 +27,8 @@ export const reducerFactory = <State>(initialState: State): AddHandler<State> =>
     return instance;
   };
 
-  const create = (): Reducer<State, GrafanaAction<any>> => {
-    const reducer: Reducer<State, GrafanaAction<any>> = (state: State = initialState, action: GrafanaAction<any>) => {
+  const create = (): Reducer<State, ActionOf<any>> => {
+    const reducer: Reducer<State, ActionOf<any>> = (state: State = initialState, action: ActionOf<any>) => {
       const validHandlers = allHandlerConfigs
         .filter(config => config.filter.type === action.type)
         .map(config => config.handler);
