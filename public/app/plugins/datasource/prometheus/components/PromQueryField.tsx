@@ -248,39 +248,41 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
 
     return (
-      <div className="prom-query-field">
-        <div className="prom-query-field-tools">
-          <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-            <button className="btn navbar-button navbar-button--tight" disabled={!syntaxLoaded}>
-              {chooserText}
-            </button>
-          </Cascader>
+      <>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
+              <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
+                {chooserText} <i className="fa fa-caret-down" />
+              </button>
+            </Cascader>
+          </div>
+          <div className="gf-form gf-form--grow">
+            <QueryField
+              additionalPlugins={this.plugins}
+              cleanText={cleanText}
+              initialQuery={initialQuery.expr}
+              onTypeahead={this.onTypeahead}
+              onWillApplySuggestion={willApplySuggestion}
+              onValueChanged={this.onChangeQuery}
+              placeholder="Enter a PromQL query"
+              portalOrigin="prometheus"
+              syntaxLoaded={syntaxLoaded}
+            />
+          </div>
         </div>
-        <div className="prom-query-field-wrapper">
-          <QueryField
-            additionalPlugins={this.plugins}
-            cleanText={cleanText}
-            initialQuery={initialQuery.expr}
-            onTypeahead={this.onTypeahead}
-            onWillApplySuggestion={willApplySuggestion}
-            onValueChanged={this.onChangeQuery}
-            placeholder="Enter a PromQL query"
-            portalOrigin="prometheus"
-            syntaxLoaded={syntaxLoaded}
-          />
-          {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
-          {hint ? (
-            <div className="prom-query-field-info text-warning">
-              {hint.label}{' '}
-              {hint.fix ? (
-                <a className="text-link muted" onClick={this.onClickHintFix}>
-                  {hint.fix.label}
-                </a>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
+        {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
+        {hint ? (
+          <div className="prom-query-field-info text-warning">
+            {hint.label}{' '}
+            {hint.fix ? (
+              <a className="text-link muted" onClick={this.onClickHintFix}>
+                {hint.fix.label}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </>
     );
   }
 }

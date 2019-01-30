@@ -131,16 +131,22 @@ export class QueryRow extends PureComponent<QueryRowProps> {
             />
           )}
         </div>
-        <div className="query-row-tools">
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>
-            <i className="fa fa-times" />
-          </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickAddButton}>
-            <i className="fa fa-plus" />
-          </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickRemoveButton}>
-            <i className="fa fa-minus" />
-          </button>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
+              <i className="fa fa-times" />
+            </button>
+          </div>
+          <div className="gf-form">
+            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickAddButton}>
+              <i className="fa fa-plus" />
+            </button>
+          </div>
+          <div className="gf-form">
+            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickRemoveButton}>
+              <i className="fa fa-minus" />
+            </button>
+          </div>
         </div>
       </div>
     );
