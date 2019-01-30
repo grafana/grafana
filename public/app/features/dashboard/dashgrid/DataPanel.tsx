@@ -3,15 +3,12 @@ import React, { Component } from 'react';
 import { Tooltip } from '@grafana/ui';
 
 import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
-
 // Services
-import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
-
+import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Utils
 import kbn from 'app/core/utils/kbn';
-
 // Types
-import { TimeRange, TimeSeries, LoadingState, DataQueryResponse, DataQueryOptions } from '@grafana/ui/src/types';
+import { DataQueryOptions, DataQueryResponse, LoadingState, TimeRange, TimeSeries } from '@grafana/ui/src/types';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -32,6 +29,7 @@ export interface Props {
   minInterval?: string;
   maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
+  onDataResponse?: (data: DataQueryResponse) => void;
 }
 
 export interface State {
@@ -85,7 +83,17 @@ export class DataPanel extends Component<Props, State> {
   }
 
   private issueQueries = async () => {
-    const { isVisible, queries, datasource, panelId, dashboardId, timeRange, widthPixels, maxDataPoints } = this.props;
+    const {
+      isVisible,
+      queries,
+      datasource,
+      panelId,
+      dashboardId,
+      timeRange,
+      widthPixels,
+      maxDataPoints,
+      onDataResponse,
+    } = this.props;
 
     if (!isVisible) {
       return;
@@ -125,6 +133,10 @@ export class DataPanel extends Component<Props, State> {
 
       if (this.isUnmounted) {
         return;
+      }
+
+      if (onDataResponse) {
+        onDataResponse(resp);
       }
 
       this.setState({

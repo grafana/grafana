@@ -810,6 +810,10 @@ export class DashboardModel {
     return this.getTimezone() === 'utc';
   }
 
+  isSnapshot() {
+    return this.snapshot !== undefined;
+  }
+
   getTimezone() {
     return this.timezone ? this.timezone : contextSrv.user.timezone;
   }
