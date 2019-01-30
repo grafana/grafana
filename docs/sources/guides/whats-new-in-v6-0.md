@@ -64,19 +64,10 @@ panel edit mode. No need to add a new panel to try out different visualizations!
 video below to see the new Panel Editor in action.
 
 <div class="medium-6 columns">
-<<<<<<< HEAD
   <video width="800" height="500" controls>
     <source src="/assets/videos/panel_change_viz.mp4" type="video/mp4">
-||||||| merged common ancestors
-   <video width="320" height="240" controls>
-    <source src="/assets/videos/new_panel_edit_ux.mp4" type="video/mp4">
-=======
-  <video width="320" height="240" controls>
-    <source src="/assets/videos/new_panel_edit_ux.mp4" type="video/mp4">
->>>>>>> 3bb5930c54bacae7f78f00eacd440130d3ba23be
     Your browser does not support the video tag.
   </video>
-<<<<<<< HEAD
 </div>
 
 <br>
@@ -100,11 +91,6 @@ source** plugins can be written in React using our published `@grafana/ui` sdk l
 will be shared closer to or just after release.
 
 {{< docs-imagebox img="/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
-||||||| merged common ancestors
-  </div>
-=======
-</div>
->>>>>>> 3bb5930c54bacae7f78f00eacd440130d3ba23be
 
 ### Google Stackdriver Datasource
 
@@ -123,14 +109,8 @@ The Azure Monitor datasource integrates four Azure services with Grafana - Azure
 Grafana now added support for provisioning alert notifiers from configuration files. Allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. Same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers that exists in the instance.
 
 ### Auth and session token improvements
-<<<<<<< HEAD
-The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request.
-||||||| merged common ancestors
-The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request. 
-=======
 
 The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request. 
->>>>>>> 3bb5930c54bacae7f78f00eacd440130d3ba23be
 If you are using `Auth proxy` for authentication the session storage will still be used but our goal is to remove this ASAP as well.
 
 This release will force all users to log in again since their previous token is not valid anymore.
