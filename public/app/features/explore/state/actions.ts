@@ -324,7 +324,13 @@ export function importQueries(
       // Default is blank queries
       importedQueries = ensureQueries();
     }
-    dispatch(setInitialQueries(exploreId, importedQueries));
+
+    const nextQueries = importedQueries.map((q, i) => ({
+      ...importedQueries[i],
+      ...generateEmptyQuery(i),
+    }));
+
+    dispatch(setInitialQueries(exploreId, nextQueries));
   };
 }
 
@@ -359,8 +365,6 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     if (instance.init) {
       instance.init();
     }
-
-    // Check if queries can be imported from previously selected datasource
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
       // User already changed datasource again, discard results
