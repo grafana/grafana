@@ -11,7 +11,7 @@ interface Dummy {
   b: boolean;
 }
 
-const setup = payload => {
+const setup = (payload: Dummy) => {
   resetAllActionCreatorTypes();
   const actionCreator = actionCreatorFactory<Dummy>('dummy').create();
   const result = actionCreator(payload);
