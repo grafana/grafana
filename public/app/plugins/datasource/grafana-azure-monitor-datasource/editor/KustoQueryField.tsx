@@ -6,7 +6,7 @@ import QueryField from './query_field';
 import debounce from 'app/features/explore/utils/debounce';
 import { getNextCharacter } from 'app/features/explore/utils/dom';
 
-import { FUNCTIONS, KEYWORDS } from './kusto';
+import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
 // import '../sass/editor.base.scss';
 
 
@@ -262,8 +262,18 @@ export default class KustoQueryField extends QueryField {
       },
       {
         prefixMatch: true,
+        label: 'Operators',
+        items: operatorTokens.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
         label: 'Functions',
-        items: FUNCTIONS.map((s: any) => { s.type = 'function'; return s; })
+        items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
+        label: 'Macros',
+        items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
       }
     ];
   }
@@ -278,8 +288,18 @@ export default class KustoQueryField extends QueryField {
       },
       {
         prefixMatch: true,
+        label: 'Operators',
+        items: operatorTokens.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
         label: 'Functions',
-        items: FUNCTIONS.map((s: any) => { s.type = 'function'; return s; })
+        items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
+        label: 'Macros',
+        items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
       }
     ];
   }

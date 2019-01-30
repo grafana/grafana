@@ -1,5 +1,5 @@
 import KustoQueryField from './KustoQueryField';
-import Kusto from './kusto';
+import Kusto from './kusto/kusto';
 
 import React, { Component } from 'react';
 import coreModule from 'app/core/core_module';
