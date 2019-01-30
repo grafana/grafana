@@ -8,7 +8,9 @@ describe('VariableSrv', function(this: any) {
   const ctx = {
     datasourceSrv: {},
     timeSrv: {
-      timeRange: () => {},
+      timeRange: () => {
+        return { from: '2018-01-29', to: '2019-01-29' };
+      },
     },
     $rootScope: {
       $on: () => {},
@@ -21,7 +23,7 @@ describe('VariableSrv', function(this: any) {
       init: vars => {
         this.variables = vars;
       },
-      updateTemplateData: () => {},
+      updateIndex: () => {},
       replace: str =>
         str.replace(this.regex, match => {
           return match;
@@ -45,7 +47,14 @@ describe('VariableSrv', function(this: any) {
         const ds: any = {};
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
-        ctx.variableSrv = new VariableSrv(ctx.$rootScope, $q, ctx.$location, ctx.$injector, ctx.templateSrv);
+        ctx.variableSrv = new VariableSrv(
+          ctx.$rootScope,
+          $q,
+          ctx.$location,
+          ctx.$injector,
+          ctx.templateSrv,
+          ctx.timeSrv
+        );
 
         ctx.variableSrv.timeSrv = ctx.timeSrv;
         ctx.datasourceSrv = {

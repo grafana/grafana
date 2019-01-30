@@ -1,6 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
+import { TimeRange } from '@grafana/ui/src';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -13,6 +14,7 @@ export class TemplateSrv {
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
+  private timeRange: TimeRange = null;
 
   constructor() {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
@@ -20,12 +22,13 @@ export class TemplateSrv {
     this.variables = [];
   }
 
-  init(variables) {
+  init(variables, timeRange?: TimeRange) {
     this.variables = variables;
-    this.updateTemplateData();
+    this.timeRange = timeRange;
+    this.updateIndex();
   }
 
-  updateTemplateData() {
+  updateIndex() {
     const existsOrEmpty = value => value || value === '';
 
     this.index = this.variables.reduce((acc, currentValue) => {
@@ -34,6 +37,26 @@ export class TemplateSrv {
       }
       return acc;
     }, {});
+
+    if (this.timeRange) {
+      const from = this.timeRange.from.valueOf().toString();
+      const to = this.timeRange.to.valueOf().toString();
+
+      this.index = {
+        ...this.index,
+        ['__from']: {
+          current: { value: from, text: from },
+        },
+        ['__to']: {
+          current: { value: to, text: to },
+        },
+      };
+    }
+  }
+
+  updateTimeRange(timeRange: TimeRange) {
+    this.timeRange = timeRange;
+    this.updateIndex();
   }
 
   variableInitialized(variable) {
@@ -81,8 +104,14 @@ export class TemplateSrv {
   // also the sub-delims "!", "'", "(", ")" and "*" are encoded;
   // unicode handling uses UTF-8 as in ECMA-262.
   encodeURIComponentStrict(str) {
-    return encodeURIComponent(str).replace(/[!'()*]/g, (c) => {
-      return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+    return encodeURIComponent(str).replace(/[!'()*]/g, c => {
+      return (
+        '%' +
+        c
+          .charCodeAt(0)
+          .toString(16)
+          .toUpperCase()
+      );
     });
   }
 
@@ -256,11 +285,11 @@ export class TemplateSrv {
 
       const value = this.grafanaVariables[variable.current.value];
 
-      return typeof(value) === 'string' ? value : variable.current.text;
+      return typeof value === 'string' ? value : variable.current.text;
     });
   }
 
-  fillVariableValuesForUrl(params, scopedVars) {
+  fillVariableValuesForUrl(params, scopedVars?) {
     _.each(this.variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {

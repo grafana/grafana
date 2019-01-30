@@ -147,7 +147,7 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.dashboard.timeRangeUpdated();
+    this.dashboard.timeRangeUpdated(this.timeRange());
   }
 
   private startNextRefreshTimer(afterMs) {
