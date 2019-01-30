@@ -62,11 +62,11 @@ In the near future, we will be adding support for other log sources to Explore a
 The UX for editing a panel has gotten an update and the major feature is being able to easily switch visualization using the new Visualization option. This means you can quickly switch from a Graph visualization to a Table visualization or any other visualization without having to create a new panel.
 
 <div class="medium-6 columns">
-   <video width="320" height="240" controls>
+  <video width="320" height="240" controls>
     <source src="/assets/videos/new_panel_edit_ux.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
-  </div>
+</div>
 
 ### Google Stackdriver Datasource
 
@@ -85,6 +85,7 @@ The Azure Monitor datasource integrates four Azure services with Grafana - Azure
 Grafana now added support for provisioning alert notifiers from configuration files. Allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. Same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers that exists in the instance.
 
 ### Auth and session token improvements
+
 The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request. 
 If you are using `Auth proxy` for authentication the session storage will still be used but our goal is to remove this ASAP as well.
 
@@ -93,8 +94,6 @@ This release will force all users to log in again since their previous token is 
 ### Other features
 
 - The ElasticSearch datasource now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per bucket computations like the difference or ratio between two metrics.
-
-- The way session storage works has been refactored to be more secure and to be more performant by doing fewer writes to the database.
 
 - Support for Google Hangouts Chat alert notifications
 
