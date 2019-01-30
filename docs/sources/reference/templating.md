@@ -248,7 +248,7 @@ Grafana has global built-in variables that can be used in expressions in the que
 ### Time range variables
 
 Grafana has two built in time range variables in `$__from` and `$__to`. They are currently always interpolated
-as epoch milliseconds.
+as epoch milliseconds. These variables are only available in Grafana v6.0 and above.
 
 ### The $__interval Variable
 
