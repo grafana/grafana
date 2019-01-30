@@ -36,8 +36,7 @@ query editor and the experiance to provide the best possible exploration UX.
 
 #### Explore and Prometheus
 
-The first version of Explore features our new [query editor for
-Prometheus](/features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
+Explore features a new [Prometheus query editor](/features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
 integrations with the Explore table view for easy label filtering and useful query hints that can automatically apply
 functions to your query. There is also integration between Prometheus and Grafana Loki (see more about Loki below) that
 enabled jumping between metrics query and logs query with preserved label filters.
