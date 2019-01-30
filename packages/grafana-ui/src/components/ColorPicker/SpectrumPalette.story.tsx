@@ -1,7 +1,6 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { withKnobs } from '@storybook/addon-knobs';
-
 import SpectrumPalette from './SpectrumPalette';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
@@ -11,8 +10,9 @@ const SpectrumPaletteStories = storiesOf('UI/ColorPicker/Palettes/SpectrumPalett
 
 SpectrumPaletteStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
 
-SpectrumPaletteStories.add('Named colors swatch - support for named colors', () => {
+SpectrumPaletteStories.add('default', () => {
   const selectedTheme = getThemeKnob();
+
   return (
     <UseState initialState="red">
       {(selectedColor, updateSelectedColor) => {
