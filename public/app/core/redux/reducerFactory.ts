@@ -1,9 +1,10 @@
 import { ActionOf, ActionCreator } from './actionCreatorFactory';
-import { Reducer } from 'redux';
+
+export type Mapper<State, Payload> = (state: State, action: ActionOf<Payload>) => State;
 
 export interface HandlerConfig<State, Payload> {
   filter: ActionCreator<Payload>;
-  handler: (state: State, action: ActionOf<Payload>) => State;
+  mapper: Mapper<State, Payload>;
 }
 
 export interface AddHandler<State> {
@@ -11,7 +12,7 @@ export interface AddHandler<State> {
 }
 
 export interface CreateReducer<State> extends AddHandler<State> {
-  create: () => Reducer<State, ActionOf<any>>;
+  create: () => Mapper<State, any>;
 }
 
 export const reducerFactory = <State>(initialState: State): AddHandler<State> => {
@@ -27,18 +28,14 @@ export const reducerFactory = <State>(initialState: State): AddHandler<State> =>
     return instance;
   };
 
-  const create = (): Reducer<State, ActionOf<any>> => {
-    const reducer: Reducer<State, ActionOf<any>> = (state: State = initialState, action: ActionOf<any>) => {
-      const validHandlers = allHandlerConfigs
-        .filter(config => config.filter.type === action.type)
-        .map(config => config.handler);
+  const create = () => (state: State = initialState, action: ActionOf<any>): State => {
+    const handlerConfig = allHandlerConfigs.filter(config => config.filter.type === action.type)[0];
 
-      return validHandlers.reduce((currentState, handler) => {
-        return handler(currentState, action);
-      }, state || initialState);
-    };
+    if (handlerConfig) {
+      return handlerConfig.mapper(state, action);
+    }
 
-    return reducer;
+    return state;
   };
 
   const instance: CreateReducer<State> = {
