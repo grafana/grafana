@@ -54,6 +54,13 @@ In the near future, we will be adding support for other log sources to Explore a
 
 The UX for editing a panel has gotten an update and the major feature is being able to easily switch visualization using the new Visualization option. This means you can quickly switch from a Graph visualization to a Table visualization or any other visualization without having to create a new panel.
 
+<div class="medium-6 columns">
+   <video width="320" height="240" controls>
+    <source src="/assets/videos/new_panel_edit_ux.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  </div>
+
 ### Google Stackdriver Datasource
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
