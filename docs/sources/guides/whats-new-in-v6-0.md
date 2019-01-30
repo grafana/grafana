@@ -59,7 +59,12 @@ Read more about Grafana Loki [here](https://github.com/grafana/loki) or [Grafana
 The Explore feature allows you to query logs and features a new log panel. In the near future, we will be adding support
 for other log sources to Explore and the next planned integration is Elasticsearch.
 
-{{< docs-imagebox img="/img/docs/v60/explore_loki.png" max-width="1200px" caption="Explore Loki Log Streams" >}}
+<div class="medium-6 columns">
+  <video width="800" height="500" controls>
+    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
 
 ## New Panel Editor
 
