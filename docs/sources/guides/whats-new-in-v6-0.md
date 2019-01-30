@@ -16,11 +16,13 @@ This update to Grafana introduces a new way of exploring your data, support for 
 
 The main highlights are:
 
-- The new query-focused [Explore]({{< relref "#explore" >}}) workflow for troubleshooting and/or for data exploration.
-- [Support for Grafana Loki]({{< relref "#explore-and-grafana-loki" >}}) - a new open source log aggregation system from Grafana Labs.
-- [Easily Switch Visualization with the Panel Edit UX Update]({{< relref "#easily-switch-visualization-with-panel-edit-ux-update" >}})
+- [Explore]({{< relref "#explore" >}}) - A new query focused workflow for ad hoc data exploration and troubleshooting.
+- [Grafana Loki]({{< relref "#explore-and-grafana-loki" >}}) - Integration with the new open source log aggregation system from Grafana Labs.
+- [Gauge Panel]({{< relref "#gauge-panel" >}}) - A new standalone panel for gauges.
+- [New Panel Editor UX]({{< relref "#easily-switch-visualization-with-panel-edit-ux-update" >}}) improves panel editing
+    and enables easy switch between different visualizations.
 - [Google Stackdriver Datasource]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
-- The [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
+- [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
 
 ## Explore
 
