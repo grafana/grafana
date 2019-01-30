@@ -30,11 +30,17 @@ Grafana's dashboard UI is all about building dashboards for visualization. **Exp
 
 For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. **Explore** allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging datasource, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side.
 
-**Explore** is a new paradigm for Grafana. It creates a new interactive debugging workflow that integrates two pillars of observability - metrics and logs.
+**Explore** is a new paradigm for Grafana. It creates a new interactive debugging workflow that integrates two pillars
+of observability - metrics and logs. Explore works with every datasource but for Prometheus we have customized the
+query editor and the experiance to provide the best possible exploration UX.
 
 #### Explore and Prometheus
 
-The first version of Explore features a [custom querying experience for Prometheus](/features/explore/#prometheus-specific-features) and as well as an integration between Prometheus and Grafana Loki (see more about Loki below).
+The first version of Explore features our new [query editor for
+Prometheus](/features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
+integrations with the Explore table view for easy label filtering and useful query hints that can automatically apply
+functions to your query. There is also integration between Prometheus and Grafana Loki (see more about Loki below) that
+enabled jumping between metrics query and logs query with preserved label filters.
 
 ### Explore splits
 
@@ -110,7 +116,7 @@ Grafana now added support for provisioning alert notifiers from configuration fi
 
 ### Auth and session token improvements
 
-The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request. 
+The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request.
 If you are using `Auth proxy` for authentication the session storage will still be used but our goal is to remove this ASAP as well.
 
 This release will force all users to log in again since their previous token is not valid anymore.
