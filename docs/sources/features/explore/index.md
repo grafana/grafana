@@ -99,7 +99,14 @@ The Logs Explorer (the `Log labels` button) next to the query field shows a list
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
-{{< docs-imagebox img="/img/docs/v60/explore_loki.png" class="docs-image--no-shadow" caption="Explore Loki Log Streams" >}}
+<div class="medium-6 columns">
+  <video width="800" height="500" controls>
+    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+<br />
 
 #### Log Stream Selector
 

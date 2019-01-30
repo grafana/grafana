@@ -16,13 +16,14 @@ This update to Grafana introduces a new way of exploring your data, support for 
 
 The main highlights are:
 
-- [Explore]({{< relref "#explore" >}}) - A new query focused workflow for ad hoc data exploration and troubleshooting.
+- [Explore]({{< relref "#explore" >}}) - A new query focused workflow for ad-hoc data exploration and troubleshooting.
 - [Grafana Loki]({{< relref "#explore-and-grafana-loki" >}}) - Integration with the new open source log aggregation system from Grafana Labs.
 - [Gauge Panel]({{< relref "#gauge-panel" >}}) - A new standalone panel for gauges.
 - [New Panel Editor UX]({{< relref "#easily-switch-visualization-with-panel-edit-ux-update" >}}) improves panel editing
-    and enables easy switch between different visualizations.
+    and enables easy switching between different visualizations.
 - [Google Stackdriver Datasource]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
 - [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
+- [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 
 ## Explore
 
@@ -36,7 +37,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 of observability - metrics and logs. Explore works with every datasource but for Prometheus we have customized the
 query editor and the experience to provide the best possible exploration UX.
 
-#### Explore and Prometheus
+### Explore and Prometheus
 
 Explore features a new [Prometheus query editor](/features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
 integrations with the Explore table view for easy label filtering and useful query hints that can automatically apply
@@ -48,6 +49,8 @@ enabled jumping between metrics query and logs query with preserved label filter
 Explore supports splitting the view so you can compare different queries, different datasources and metrics & logs side by side!
 
 {{< docs-imagebox img="/img/docs/v60/explore_split.png" max-width="800px" caption="Screenshot of the new Explore option in the panel menu" >}}
+
+<br />
 
 ### Explore and Grafana Loki
 
@@ -67,6 +70,8 @@ for other log sources to Explore and the next planned integration is Elasticsear
     Your browser does not support the video tag.
   </video>
 </div>
+
+<br />
 
 ## New Panel Editor
 
@@ -132,10 +137,6 @@ This release will force all users to log in again since their previous token is 
 - The ElasticSearch datasource now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per bucket computations like the difference or ratio between two metrics.
 
 - Support for Google Hangouts Chat alert notifications
-
-#### Technical Work - moving from Angular to React
-
-The Grafana team is putting a huge amount of work into converting the frontend code in Grafana from Angular to React. Currently, all external plugins for Grafana are written in Angular but we are planning to also support plugins written in React very soon.
 
 ## Changelog
 
