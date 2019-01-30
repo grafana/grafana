@@ -53,7 +53,7 @@ import {
   QueryTransactionStartAction,
   ScanStopAction,
   UpdateDatasourceInstanceAction,
-  SetInitialQueriesAction,
+  QueriesImported,
 } from './actionTypes';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
@@ -243,9 +243,9 @@ export const loadDatasourcePending = (
   },
 });
 
-export const setInitialQueries = (exploreId: ExploreId, queries: DataQuery[]): SetInitialQueriesAction => {
+export const queriesImported = (exploreId: ExploreId, queries: DataQuery[]): QueriesImported => {
   return {
-    type: ActionTypes.SetInitialQueries,
+    type: ActionTypes.QueriesImported,
     payload: {
       exploreId,
       queries,
@@ -330,7 +330,7 @@ export function importQueries(
       ...generateEmptyQuery(i),
     }));
 
-    dispatch(setInitialQueries(exploreId, nextQueries));
+    dispatch(queriesImported(exploreId, nextQueries));
   };
 }
 

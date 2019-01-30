@@ -414,7 +414,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       return { ...state, ...results, queryTransactions: nextQueryTransactions, showingTable };
     }
 
-    case ActionTypes.SetInitialQueries: {
+    case ActionTypes.QueriesImported: {
       return {
         ...state,
         initialQueries: action.payload.queries,

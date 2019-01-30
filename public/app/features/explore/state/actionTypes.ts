@@ -43,7 +43,7 @@ export enum ActionTypes {
   ToggleTable = 'explore/TOGGLE_TABLE',
   UpdateDatasourceInstance = 'explore/UPDATE_DATASOURCE_INSTANCE',
   ResetExplore = 'explore/RESET_EXPLORE',
-  SetInitialQueries = 'explore/SET_INITIAL_QUERIES',
+  QueriesImported = 'explore/QueriesImported',
 }
 
 export interface AddQueryRowAction {
@@ -283,8 +283,8 @@ export interface ResetExploreAction {
   payload: {};
 }
 
-export interface SetInitialQueriesAction {
-  type: ActionTypes.SetInitialQueries;
+export interface QueriesImported {
+  type: ActionTypes.QueriesImported;
   payload: {
     exploreId: ExploreId;
     queries: DataQuery[];
@@ -321,4 +321,4 @@ export type Action =
   | ToggleTableAction
   | UpdateDatasourceInstanceAction
   | ResetExploreAction
-  | SetInitialQueriesAction;
+  | QueriesImported;
