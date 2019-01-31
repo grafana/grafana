@@ -162,14 +162,14 @@ export class DataPanel extends Component<Props, State> {
 
     if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
       return {
-        tableData: response.data,
-        timeSeries: [] as TimeSeries[],
+        tableData: response.data[0] as TableData,
+        timeSeries: null,
       };
     }
 
     return {
-      timeSeries: response.data,
-      tableData: {} as TableData,
+      timeSeries: response.data as TimeSeries[],
+      tableData: null,
     };
   };
 
