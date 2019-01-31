@@ -1,4 +1,4 @@
-export * from './series';
+export * from './data';
 export * from './time';
 export * from './panel';
 export * from './plugin';

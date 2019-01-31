@@ -121,12 +121,12 @@ export class PanelChrome extends PureComponent<Props, State> {
                 widthPixels={width}
                 refreshCounter={refreshCounter}
               >
-                {({ loading, timeSeries }) => {
+                {({ loading, panelData }) => {
                   return (
                     <div className="panel-content">
                       <PanelComponent
                         loading={loading}
-                        timeSeries={timeSeries}
+                        timeSeries={panelData.timeSeries}
                         timeRange={timeRange}
                         options={panel.getOptions(plugin.exports.PanelDefaults)}
                         width={width - 2 * variables.panelHorizontalPadding}

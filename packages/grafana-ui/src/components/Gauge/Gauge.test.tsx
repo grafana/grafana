@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import { Gauge, Props } from './Gauge';
-import { TimeSeriesVMs } from '../../types/series';
+import { TimeSeriesVMs } from '../../types/data';
 import { ValueMapping, MappingType } from '../../types';
 
 jest.mock('jquery', () => ({

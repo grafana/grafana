@@ -52,3 +52,20 @@ export interface TimeSeriesVMs {
   [index: number]: TimeSeriesVM;
   length: number;
 }
+
+interface Column {
+  text: string;
+  title?: string;
+  type?: string;
+  sort?: boolean;
+  desc?: boolean;
+  filterable?: boolean;
+  unit?: string;
+}
+
+export interface TableData {
+  columns: Column[];
+  rows: any[];
+  type: string;
+  columnMap: any;
+}

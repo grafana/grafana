@@ -1,9 +1,8 @@
 import { TimeRange, RawTimeRange } from './time';
-import { TimeSeries } from './series';
 import { PluginMeta } from './plugin';
 
 export interface DataQueryResponse {
-  data: TimeSeries[];
+  data: any;
 }
 
 export interface DataQuery {
