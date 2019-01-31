@@ -17,6 +17,13 @@ div.flot-text {
   height: 100%;
 }
 
+.dashboard-solo {
+  .footer,
+  .sidemenu {
+    display: none;
+  }
+}
+
 .panel-solo {
   position: fixed;
   bottom: 0;
