@@ -3,8 +3,7 @@ import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
-import { DashboardModel } from '../dashboard_model';
-import { PanelModel } from '../panel_model';
+import { DashboardModel, PanelModel } from '../state';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 

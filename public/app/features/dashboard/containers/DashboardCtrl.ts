@@ -8,7 +8,7 @@ import { removePanel } from 'app/features/dashboard/utils/panel';
 import { AnnotationsSrv } from '../../annotations/annotations_srv';
 
 // Types
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel } from '../state/DashboardModel';
 
 export class DashboardCtrl {
   dashboard: DashboardModel;

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { PanelModel } from '../panel_model';
+import { PanelModel } from '../state/PanelModel';
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {

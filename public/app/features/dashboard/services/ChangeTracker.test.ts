@@ -1,7 +1,7 @@
 import { ChangeTracker } from './ChangeTracker';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardModel } from '../dashboard_model';
-import { PanelModel } from '../panel_model';
+import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state/PanelModel';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

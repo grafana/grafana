@@ -8,7 +8,7 @@ import { variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 // Types
 import { TimeRange } from '@grafana/ui/src';

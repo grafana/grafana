@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DashboardRow } from './DashboardRow';
-import { PanelModel } from '../../panel_model';
+import { PanelModel } from '../../state/PanelModel';
 
 describe('DashboardRow', () => {
   let wrapper, panel, dashboardMock;

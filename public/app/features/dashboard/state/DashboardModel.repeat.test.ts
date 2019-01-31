@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel } from '../state/DashboardModel';
 import { expect } from 'test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));

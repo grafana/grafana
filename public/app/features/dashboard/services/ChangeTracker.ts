@@ -1,6 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel } from '../state/DashboardModel';
 
 export class ChangeTracker {
   current: any;

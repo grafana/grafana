@@ -2,7 +2,7 @@ import '../all';
 
 import _ from 'lodash';
 import { VariableSrv } from '../variable_srv';
-import { DashboardModel } from '../../dashboard/dashboard_model';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
 
 describe('VariableSrv init', function(this: any) {

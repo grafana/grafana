@@ -14,8 +14,8 @@ import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 
 // Types
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../state/PanelModel';
+import { DashboardModel } from '../state/DashboardModel';
 import { PanelPlugin } from 'app/types';
 import { TimeRange } from '@grafana/ui';
 

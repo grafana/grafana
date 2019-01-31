@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { throttle } from 'lodash';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 
-import { PanelModel } from '../panel_model';
+import { PanelModel } from '../state/PanelModel';
 
 interface Props {
   isEditing: boolean;

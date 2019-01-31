@@ -2,8 +2,8 @@
 import store from 'app/core/store';
 
 // Models
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { TimeRange } from '@grafana/ui';
 
 // Utils

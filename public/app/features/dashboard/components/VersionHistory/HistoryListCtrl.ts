@@ -3,7 +3,7 @@ import angular from 'angular';
 import moment from 'moment';
 
 import locationUtil from 'app/core/utils/location_util';
-import { DashboardModel } from '../../dashboard_model';
+import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
 
 export class HistoryListCtrl {

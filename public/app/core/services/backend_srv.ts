@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export class BackendSrv {
   private inFlightRequests = {};
