@@ -21,7 +21,7 @@ The main highlights are:
 - [Explore]({{< relref "#explore" >}}) - A new query focused workflow for ad-hoc data exploration and troubleshooting.
 - [Grafana Loki]({{< relref "#explore-and-grafana-loki" >}}) - Integration with the new open source log aggregation system from Grafana Labs.
 - [Gauge Panel]({{< relref "#gauge-panel" >}}) - A new standalone panel for gauges.
-- [New Panel Editor UX]({{< relref "#easily-switch-visualization-with-panel-edit-ux-update" >}}) improves panel editing
+- [New Panel Editor UX]({{< relref "#new-panel-editor" >}}) improves panel editing
     and enables easy switching between different visualizations.
 - [Google Stackdriver Datasource]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
 - [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
