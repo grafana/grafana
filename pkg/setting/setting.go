@@ -136,6 +136,16 @@ var (
 	// Basic Auth
 	BasicAuthEnabled bool
 
+	// JWT Auth settings
+	AuthJwtEnabled      bool
+	AuthJwtHeaderName   string
+	AuthJwtJwksUrl      string
+	AuthJwtAudience     string
+	AuthJwtIssuer       string
+	AuthJwtUserField    string
+	AuthJwtUserProperty string
+	AuthJwtAutoSignup   bool
+
 	// Plugin settings
 	PluginAppsSkipVerifyTLS bool
 
@@ -675,6 +685,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+
+	// jwt auth
+	jwtAuth := iniFile.Section("auth.jwt")
+	AuthJwtEnabled = jwtAuth.Key("enabled").MustBool(false)
+	AuthJwtHeaderName = jwtAuth.Key("header_name").String()
+	AuthJwtJwksUrl = jwtAuth.Key("jwks_url").String()
+	AuthJwtAudience = jwtAuth.Key("audience").String()
+	AuthJwtIssuer = jwtAuth.Key("issuer").String()
+	AuthJwtUserField = jwtAuth.Key("user_field").String()
+	AuthJwtUserProperty = jwtAuth.Key("user_property").String()
+	AuthJwtAutoSignup = jwtAuth.Key("auto_signup").MustBool(true)
 
 	// global plugin settings
 	PluginAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)

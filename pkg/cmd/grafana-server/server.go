@@ -75,6 +75,12 @@ func (g *GrafanaServerImpl) Run() error {
 	login.Init()
 	social.NewOAuthService()
 
+	if setting.AuthJwtEnabled {
+		g.log.Info("Initializing JWT Auth.")
+		middleware.JwtAuthInit()
+	}
+
+
 	serviceGraph := inject.Graph{}
 	err = serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
 	if err != nil {
@@ -92,7 +98,7 @@ func (g *GrafanaServerImpl) Run() error {
 	if err != nil {
 		return fmt.Errorf("Failed to provide object to the graph: %v", err)
 	}
-
+	
 	// self registered services
 	services := registry.GetServices()
 
