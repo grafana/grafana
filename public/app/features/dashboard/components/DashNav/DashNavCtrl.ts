@@ -1,7 +1,7 @@
 import moment from 'moment';
 import angular from 'angular';
 import { appEvents, NavModel } from 'app/core/core';
-import { DashboardModel } from '../../dashboard_model';
+import { DashboardModel } from '../../state/DashboardModel';
 
 export class DashNavCtrl {
   dashboard: DashboardModel;

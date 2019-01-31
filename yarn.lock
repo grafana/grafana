@@ -1773,6 +1773,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-grid-layout@^0.16.6":
+  version "0.16.6"
+  resolved "https://registry.yarnpkg.com/@types/react-grid-layout/-/react-grid-layout-0.16.6.tgz#9149efe128e05d59c54063c7781d18b8febe112c"
+  integrity sha512-Jp0VfCHJE4uxekPBPpRkADKOjoSHssF2ba1ZMMAfCEqkoSkE+K+3bhI39++fbd7MqGySaqADVHeOoxlBnA3p5g==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-select@^2.0.4":
   version "2.0.11"
   resolved "https://registry.yarnpkg.com/@types/react-select/-/react-select-2.0.11.tgz#9b2b1fdb12b67a5a617c5f572e15617636cc65af"
@@ -1794,6 +1801,14 @@
   resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-2.0.15.tgz#e5ee3fe558832e141cc6041bdd54caea7b787af8"
   integrity sha512-S0QnNzbHoWXDbKBl/xk5dxA4FT+BNlBcI3hku991cl8Cz3ytOkUMcCRtzdX11eb86E131bSsQqy5WrPCdJYblw==
   dependencies:
+    "@types/react" "*"
+
+"@types/react-virtualized@^9.18.12":
+  version "9.18.12"
+  resolved "https://registry.yarnpkg.com/@types/react-virtualized/-/react-virtualized-9.18.12.tgz#541e65c5e0b4629d6a1c6f339171c7943e016ecb"
+  integrity sha512-Msdpt9zvYlb5Ul4PA339QUkJ0/z2O+gaFxed1rG+2rZjbe6XdYo7jWfJe206KBnjj84DwPPIbPFQCtoGuNwNTQ==
+  dependencies:
+    "@types/prop-types" "*"
     "@types/react" "*"
 
 "@types/react@*", "@types/react@16.7.6", "@types/react@^16.7.6":

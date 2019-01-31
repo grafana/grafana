@@ -1,6 +1,6 @@
 import config from 'app/core/config';
 import { DashboardViewStateSrv } from './DashboardViewStateSrv';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel } from '../state/DashboardModel';
 
 describe('when updating view state', () => {
   const location = {

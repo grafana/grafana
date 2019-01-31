@@ -53,6 +53,7 @@ import {
   QueryTransactionStartAction,
   ScanStopAction,
   UpdateDatasourceInstanceAction,
+  QueriesImported,
 } from './actionTypes';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
@@ -69,10 +70,15 @@ export function addQueryRow(exploreId: ExploreId, index: number): AddQueryRowAct
  * Loads a new datasource identified by the given name.
  */
 export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
-  return async dispatch => {
-    const instance = await getDatasourceSrv().get(datasource);
-    dispatch(updateDatasourceInstance(exploreId, instance));
-    dispatch(loadDatasource(exploreId, instance));
+  return async (dispatch, getState) => {
+    const newDataSourceInstance = await getDatasourceSrv().get(datasource);
+    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
+    const modifiedQueries = getState().explore[exploreId].modifiedQueries;
+
+    await dispatch(importQueries(exploreId, modifiedQueries, currentDataSourceInstance, newDataSourceInstance));
+
+    dispatch(updateDatasourceInstance(exploreId, newDataSourceInstance));
+    dispatch(loadDatasource(exploreId, newDataSourceInstance));
   };
 }
 
@@ -174,6 +180,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       let instance;
+
       if (datasourceName) {
         try {
           instance = await getDatasourceSrv().get(datasourceName);
@@ -185,6 +192,7 @@ export function initializeExplore(
       if (!instance) {
         instance = await getDatasourceSrv().get();
       }
+
       dispatch(updateDatasourceInstance(exploreId, instance));
       dispatch(loadDatasource(exploreId, instance));
     } else {
@@ -224,13 +232,26 @@ export const loadDatasourceMissing = (exploreId: ExploreId): LoadDatasourceMissi
 /**
  * Start the async process of loading a datasource to display a loading indicator
  */
-export const loadDatasourcePending = (exploreId: ExploreId, requestedDatasourceName: string): LoadDatasourcePendingAction => ({
+export const loadDatasourcePending = (
+  exploreId: ExploreId,
+  requestedDatasourceName: string
+): LoadDatasourcePendingAction => ({
   type: ActionTypes.LoadDatasourcePending,
   payload: {
     exploreId,
     requestedDatasourceName,
   },
 });
+
+export const queriesImported = (exploreId: ExploreId, queries: DataQuery[]): QueriesImported => {
+  return {
+    type: ActionTypes.QueriesImported,
+    payload: {
+      exploreId,
+      queries,
+    },
+  };
+};
 
 /**
  * Datasource loading was successfully completed. The instance is stored in the state as well in case we need to
@@ -240,7 +261,6 @@ export const loadDatasourcePending = (exploreId: ExploreId, requestedDatasourceN
 export const loadDatasourceSuccess = (
   exploreId: ExploreId,
   instance: any,
-  queries: DataQuery[]
 ): LoadDatasourceSuccessAction => {
   // Capabilities
   const supportsGraph = instance.meta.metrics;
@@ -261,7 +281,6 @@ export const loadDatasourceSuccess = (
       StartPage,
       datasourceInstance: instance,
       history,
-      initialQueries: queries,
       showingStartPage: Boolean(StartPage),
       supportsGraph,
       supportsLogs,
@@ -283,6 +302,35 @@ export function updateDatasourceInstance(
       exploreId,
       datasourceInstance: instance,
     },
+  };
+}
+
+export function importQueries(
+  exploreId: ExploreId,
+  queries: DataQuery[],
+  sourceDataSource: DataSourceApi,
+  targetDataSource: DataSourceApi
+) {
+  return async dispatch => {
+    let importedQueries = queries;
+    // Check if queries can be imported from previously selected datasource
+    if (sourceDataSource.meta.id === targetDataSource.meta.id) {
+      // Keep same queries if same type of datasource
+      importedQueries = [...queries];
+    } else if (targetDataSource.importQueries) {
+      // Datasource-specific importers
+      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource.meta);
+    } else {
+      // Default is blank queries
+      importedQueries = ensureQueries();
+    }
+
+    const nextQueries = importedQueries.map((q, i) => ({
+      ...importedQueries[i],
+      ...generateEmptyQuery(i),
+    }));
+
+    dispatch(queriesImported(exploreId, nextQueries));
   };
 }
 
@@ -318,35 +366,12 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
       instance.init();
     }
 
-    // Check if queries can be imported from previously selected datasource
-    const queries = getState().explore[exploreId].modifiedQueries;
-    let importedQueries = queries;
-    const origin = getState().explore[exploreId].datasourceInstance;
-    if (origin) {
-      if (origin.meta.id === instance.meta.id) {
-        // Keep same queries if same type of datasource
-        importedQueries = [...queries];
-      } else if (instance.importQueries) {
-        // Datasource-specific importers
-        importedQueries = await instance.importQueries(queries, origin.meta);
-      } else {
-        // Default is blank queries
-        importedQueries = ensureQueries();
-      }
-    }
-
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
       // User already changed datasource again, discard results
       return;
     }
 
-    // Reset edit state with new queries
-    const nextQueries = importedQueries.map((q, i) => ({
-      ...importedQueries[i],
-      ...generateEmptyQuery(i),
-    }));
-
-    dispatch(loadDatasourceSuccess(exploreId, instance, nextQueries));
+    dispatch(loadDatasourceSuccess(exploreId, instance));
     dispatch(runQueries(exploreId));
   };
 }

@@ -12,8 +12,8 @@ weight = 11
 
 # Using Google Stackdriver in Grafana
 
-> Only available in Grafana v5.3+.
-> The datasource is currently a beta feature and is subject to change.
+> Available as a beta feature in Grafana v5.3.x and v5.4.x.
+> Officially released in Grafana v6.0.0
 
 Grafana ships with built-in support for Google Stackdriver. Just add it as a datasource and you are ready to build dashboards for your Stackdriver metrics.
 

@@ -9,7 +9,7 @@ import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoa
 import { Emitter } from 'app/core/utils/emitter';
 
 // Types
-import { PanelModel } from '../panel_model';
+import { PanelModel } from '../state/PanelModel';
 import { DataQuery, DataSourceApi } from '@grafana/ui';
 
 interface Props {

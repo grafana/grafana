@@ -5,10 +5,10 @@ import coreModule from 'app/core/core_module';
 import { removePanel } from 'app/features/dashboard/utils/panel';
 
 // Services
-import { AnnotationsSrv } from '../annotations/annotations_srv';
+import { AnnotationsSrv } from '../../annotations/annotations_srv';
 
 // Types
-import { DashboardModel } from './dashboard_model';
+import { DashboardModel } from '../state/DashboardModel';
 
 export class DashboardCtrl {
   dashboard: DashboardModel;

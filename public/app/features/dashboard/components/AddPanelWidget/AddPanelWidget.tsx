@@ -1,8 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
 import config from 'app/core/config';
-import { PanelModel } from '../../panel_model';
-import { DashboardModel } from '../../dashboard_model';
+import { PanelModel } from '../../state/PanelModel';
+import { DashboardModel } from '../../state/DashboardModel';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { updateLocation } from 'app/core/actions';

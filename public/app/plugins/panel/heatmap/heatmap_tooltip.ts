@@ -1,8 +1,8 @@
 import * as d3 from 'd3';
 import $ from 'jquery';
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
 import { getValueBucketBound } from './heatmap_data_converter';
+import { getValueFormat } from '@grafana/ui';
 
 const TOOLTIP_PADDING_X = 30;
 const TOOLTIP_PADDING_Y = 5;
@@ -268,7 +268,7 @@ export class HeatmapTooltip {
   countValueFormatter(decimals, scaledDecimals = null) {
     const format = 'short';
     return value => {
-      return kbn.valueFormats[format](value, decimals, scaledDecimals);
+      return getValueFormat(format)(value, decimals, scaledDecimals);
     };
   }
 }

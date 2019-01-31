@@ -1,5 +1,4 @@
-import { TimeSrv } from '../time_srv';
-import '../time_srv';
+import { TimeSrv } from './TimeSrv';
 import moment from 'moment';
 
 describe('timeSrv', () => {

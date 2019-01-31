@@ -13,7 +13,7 @@ import DataSourceOption from './DataSourceOption';
 import { FormLabel } from '@grafana/ui';
 
 // Types
-import { PanelModel } from '../panel_model';
+import { PanelModel } from '../state/PanelModel';
 import { DataSourceSelectItem } from '@grafana/ui/src/types';
 import { ValidationEvents } from 'app/types';
 

@@ -7,8 +7,8 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { PanelModel } from './panel_model';
-import { DashboardModel } from './dashboard_model';
+import { PanelModel } from './PanelModel';
+import { DashboardModel } from './DashboardModel';
 import getFactors from 'app/core/utils/factors';
 
 export class DashboardMigrator {
