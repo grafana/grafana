@@ -118,7 +118,8 @@
     "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
-    "precommit": "grunt precommit"
+    "precommit": "grunt precommit",
+    "storybook": "cd packages/grafana-ui && yarn storybook"
   },
   "husky": {
     "hooks": {
