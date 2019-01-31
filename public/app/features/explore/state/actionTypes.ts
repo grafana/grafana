@@ -44,6 +44,8 @@ export enum ActionTypes {
   UpdateDatasourceInstance = 'explore/UPDATE_DATASOURCE_INSTANCE',
   ResetExplore = 'explore/RESET_EXPLORE',
   QueriesImported = 'explore/QueriesImported',
+  DataSourceChangeStarted = 'explore/DataSourceChangeStarted',
+  DataSourceChangeEnded = 'explore/DataSourceChangeEnded',
 }
 
 export interface AddQueryRowAction {
@@ -291,6 +293,20 @@ export interface QueriesImported {
   };
 }
 
+export interface DataSourceChangeStarted {
+  type: ActionTypes.DataSourceChangeStarted;
+  payload: {
+    exploreId: ExploreId;
+  };
+}
+
+export interface DataSourceChangeEnded {
+  type: ActionTypes.DataSourceChangeEnded;
+  payload: {
+    exploreId: ExploreId;
+  };
+}
+
 export type Action =
   | AddQueryRowAction
   | ChangeQueryAction
@@ -321,4 +337,6 @@ export type Action =
   | ToggleTableAction
   | UpdateDatasourceInstanceAction
   | ResetExploreAction
-  | QueriesImported;
+  | QueriesImported
+  | DataSourceChangeStarted
+  | DataSourceChangeEnded;

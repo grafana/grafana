@@ -29,6 +29,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   datasourceLoading: null,
   datasourceMissing: false,
   exploreDatasources: [],
+  dataSourceChanging: false,
   history: [],
   initialQueries: [],
   initialized: false,
@@ -77,10 +78,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       // Ongoing transactions need to update their row indices
       const nextQueryTransactions = queryTransactions.map(qt => {
         if (qt.rowIndex > index) {
-          return {
-            ...qt,
-            rowIndex: qt.rowIndex + 1,
-          };
+          return { ...qt, rowIndex: qt.rowIndex + 1 };
         }
         return qt;
       });
@@ -95,24 +93,25 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.ChangeQuery: {
-      const { initialQueries, queryTransactions } = state;
+      const { initialQueries, queryTransactions, dataSourceChanging } = state;
+
+      // Hack to avoid a race condition between changeDataSource from ExploreToolbar and QueryRows changeQuery.
+      // Causes infinite loop (#15086) but remove when modifiedQueries are refactored away
+      if (dataSourceChanging) {
+        return state;
+      }
+
       let { modifiedQueries } = state;
       const { query, index, override } = action.payload;
 
       // Fast path: only change modifiedQueries to not trigger an update
       modifiedQueries[index] = query;
       if (!override) {
-        return {
-          ...state,
-          modifiedQueries,
-        };
+        return { ...state, modifiedQueries };
       }
 
       // Override path: queries are completely reset
-      const nextQuery: DataQuery = {
-        ...query,
-        ...generateEmptyQuery(index),
-      };
+      const nextQuery: DataQuery = { ...query, ...generateEmptyQuery(index) };
       const nextQueries = [...initialQueries];
       nextQueries[index] = nextQuery;
       modifiedQueries = [...nextQueries];
@@ -140,10 +139,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.ChangeTime: {
-      return {
-        ...state,
-        range: action.payload.range,
-      };
+      return { ...state, range: action.payload.range };
     }
 
     case ActionTypes.ClearQueries: {
@@ -178,11 +174,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
 
     case ActionTypes.UpdateDatasourceInstance: {
       const { datasourceInstance } = action.payload;
-      return {
-        ...state,
-        datasourceInstance,
-        datasourceName: datasourceInstance.name,
-      };
+      return { ...state, datasourceInstance, datasourceName: datasourceInstance.name };
     }
 
     case ActionTypes.LoadDatasourceFailure: {
@@ -246,12 +238,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         nextQueries = initialQueries.map((query, i) => {
           // Synchronize all queries with local query cache to ensure consistency
           // TODO still needed?
-          return i === index
-            ? {
-                ...modifier(modifiedQueries[i], modification),
-                ...generateEmptyQuery(i),
-              }
-            : query;
+          return i === index ? { ...modifier(modifiedQueries[i], modification), ...generateEmptyQuery(i) } : query;
         });
         nextQueryTransactions = queryTransactions
           // Consume the hint corresponding to the action
@@ -274,11 +261,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
 
     case ActionTypes.QueryTransactionFailure: {
       const { queryTransactions } = action.payload;
-      return {
-        ...state,
-        queryTransactions,
-        showingStartPage: false,
-      };
+      return { ...state, queryTransactions, showingStartPage: false };
     }
 
     case ActionTypes.QueryTransactionStart: {
@@ -292,11 +275,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       // Append new transaction
       const nextQueryTransactions: QueryTransaction[] = [...remainingTransactions, transaction];
 
-      return {
-        ...state,
-        queryTransactions: nextQueryTransactions,
-        showingStartPage: false,
-      };
+      return { ...state, queryTransactions: nextQueryTransactions, showingStartPage: false };
     }
 
     case ActionTypes.QueryTransactionSuccess: {
@@ -308,13 +287,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         queryIntervals.intervalMs
       );
 
-      return {
-        ...state,
-        ...results,
-        history,
-        queryTransactions,
-        showingStartPage: false,
-      };
+      return { ...state, ...results, history, queryTransactions, showingStartPage: false };
     }
 
     case ActionTypes.RemoveQueryRow: {
@@ -415,11 +388,15 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.QueriesImported: {
-      return {
-        ...state,
-        initialQueries: action.payload.queries,
-        modifiedQueries: action.payload.queries.slice(),
-      };
+      return { ...state, initialQueries: action.payload.queries, modifiedQueries: action.payload.queries.slice() };
+    }
+
+    case ActionTypes.DataSourceChangeStarted: {
+      return { ...state, dataSourceChanging: true };
+    }
+
+    case ActionTypes.DataSourceChangeEnded: {
+      return { ...state, dataSourceChanging: false };
     }
   }
 

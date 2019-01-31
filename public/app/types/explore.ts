@@ -229,6 +229,8 @@ export interface ExploreItemState {
    * Table model that combines all query table results into a single table.
    */
   tableResult?: TableModel;
+
+  dataSourceChanging: boolean;
 }
 
 export interface ExploreUrlState {

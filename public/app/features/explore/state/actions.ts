@@ -75,10 +75,22 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const modifiedQueries = getState().explore[exploreId].modifiedQueries;
 
+    dispatch({
+      type: ActionTypes.DataSourceChangeStarted,
+      payload: {
+        exploreId,
+      },
+    });
     await dispatch(importQueries(exploreId, modifiedQueries, currentDataSourceInstance, newDataSourceInstance));
 
     dispatch(updateDatasourceInstance(exploreId, newDataSourceInstance));
     dispatch(loadDatasource(exploreId, newDataSourceInstance));
+    dispatch({
+      type: ActionTypes.DataSourceChangeEnded,
+      payload: {
+        exploreId,
+      },
+    });
   };
 }
 
@@ -258,10 +270,7 @@ export const queriesImported = (exploreId: ExploreId, queries: DataQuery[]): Que
  * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
  * e.g., Prometheus -> Loki queries.
  */
-export const loadDatasourceSuccess = (
-  exploreId: ExploreId,
-  instance: any,
-): LoadDatasourceSuccessAction => {
+export const loadDatasourceSuccess = (exploreId: ExploreId, instance: any): LoadDatasourceSuccessAction => {
   // Capabilities
   const supportsGraph = instance.meta.metrics;
   const supportsLogs = instance.meta.logs;
