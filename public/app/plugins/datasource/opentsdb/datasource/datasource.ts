@@ -38,7 +38,6 @@ export default class OpenTsDatasource {
 
   // Called once per panel (graph)
   query(options) {
-
     const tq = new TsdbQuery(this);
     const eq = new ExpQuery(this);
     const gq = new GexpQuery(this);
@@ -62,7 +61,7 @@ export default class OpenTsDatasource {
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(tq.qs) && _.isEmpty(gq.qs) && _.isEmpty(eq.qs)) {
       const d = this.$q.defer();
-      d.resolve({data: []});
+      d.resolve({ data: [] });
       return d.promise;
     }
 
@@ -81,19 +80,16 @@ export default class OpenTsDatasource {
       }
     });
 
-
-    const tsdbQueryPromises = [];
-
+    let tsdbQueryPromises = [];
     if (tq.qs.length > 0) {
-      tsdbQueryPromises.push(tq.getPromises());
+      tsdbQueryPromises = [].concat(tq.getPromises());
     }
     if (gq.qs.length > 0) {
-      tsdbQueryPromises.push(gq.getPromises());
+      tsdbQueryPromises = tsdbQueryPromises.concat(gq.getPromises());
     }
     if (eq.qs.length > 0) {
-      tsdbQueryPromises.push(eq.getPromises());
+      tsdbQueryPromises = tsdbQueryPromises.concat(eq.getPromises());
     }
-
 
     // q.all([]) resolves all promises while keeping order in the return array
     // (see: https://docs.angularjs.org/api/ng/service/$q#all)
@@ -101,11 +97,9 @@ export default class OpenTsDatasource {
       let data = [];
 
       // response 0 from queriesPromise
-      const queriesData = responses[0];
-      if (queriesData && queriesData.length > 0) {
-        data = data.concat(queriesData);
+      for (let qdIdx = 0; qdIdx < responses.length; qdIdx++) {
+        data = data.concat(responses[qdIdx]);
       }
-
 
       // the return object must look like:
       // {
@@ -127,7 +121,7 @@ export default class OpenTsDatasource {
     const qs = [];
     const eventList = [];
 
-    qs.push({aggregator: 'sum', metric: options.annotation.target});
+    qs.push({ aggregator: 'sum', metric: options.annotation.target });
 
     const queries = _.compact(qs);
 
@@ -204,7 +198,6 @@ export default class OpenTsDatasource {
     return this.backendSrv.datasourceRequest(options);
   }
 
-
   // retrieve expression Metrics via POST to /api/query/exp
   performExpTimeSeriesQuery(metrics, expressions, outputs, start, end) {
     let msResolution = false;
@@ -240,7 +233,6 @@ export default class OpenTsDatasource {
 
   // retrieve a single gExp via GET to /api/query/gexp
 
-
   suggestTagKeys(metric) {
     return this.$q.when(this.tagKeys[metric] || []);
   }
@@ -255,7 +247,7 @@ export default class OpenTsDatasource {
   }
 
   _performSuggestQuery(query, type) {
-    return this._get('/api/suggest', {type: type, q: query, max: 1000}).then(result => {
+    return this._get('/api/suggest', { type: type, q: query, max: 1000 }).then(result => {
       return result.data;
     });
   }
@@ -277,7 +269,7 @@ export default class OpenTsDatasource {
 
     const m = metric + '{' + keysQuery + '}';
 
-    return this._get('/api/search/lookup', {m: m, limit: 3000}).then(result => {
+    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then(result => {
       result = result.data.results;
       const tagvs = [];
       _.each(result, r => {
@@ -294,7 +286,7 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(result => {
+    return this._get('/api/search/lookup', { m: metric, limit: 1000 }).then(result => {
       result = result.data.results;
       const tagks = [];
       _.each(result, r => {
@@ -325,7 +317,7 @@ export default class OpenTsDatasource {
       options.withCredentials = true;
     }
     if (this.basicAuth) {
-      options.headers = {Authorization: this.basicAuth};
+      options.headers = { Authorization: this.basicAuth };
     }
   }
 
@@ -343,7 +335,7 @@ export default class OpenTsDatasource {
 
     const responseTransform = result => {
       return _.map(result, value => {
-        return {text: value};
+        return { text: value };
       });
     };
 
@@ -383,7 +375,7 @@ export default class OpenTsDatasource {
 
   testDatasource() {
     return this._performSuggestQuery('cpu', 'metrics').then(() => {
-      return {status: 'success', message: 'Data source is working'};
+      return { status: 'success', message: 'Data source is working' };
     });
   }
 
@@ -419,9 +411,8 @@ export default class OpenTsDatasource {
     const metricLabel = this.createMetricLabel(md, target, groupByTags, options);
     const dps = this.getDatapointsAtCorrectResolution(md, tsdbResolution);
 
-    return {target: metricLabel, datapoints: dps};
+    return { target: metricLabel, datapoints: dps };
   }
-
 
   getDatapointsAtCorrectResolution(result, tsdbResolution) {
     const dps = [];
@@ -443,7 +434,7 @@ export default class OpenTsDatasource {
     if (target.alias) {
       const scopedVars = _.clone(options.scopedVars || {});
       _.each(md.tags, (value, key) => {
-        scopedVars['tag_' + key] = {value: value};
+        scopedVars['tag_' + key] = { value: value };
       });
       return this.templateSrv.replace(target.alias, scopedVars);
     }
@@ -465,7 +456,6 @@ export default class OpenTsDatasource {
 
     return label;
   }
-
 
   convertTargetToQuery(target, options, tsdbVersion) {
     if (!target.metric || target.hide) {

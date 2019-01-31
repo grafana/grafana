@@ -29,7 +29,7 @@ export default class GexpQuery {
       return d.promise;
     }
 
-    const queriesPromises = [];
+    const queriesPromises = [queries.length];
     if (queries.length > 0) {
       for (let qIndex = 0; qIndex < queries.length; qIndex++) {
         const queriesPromise = this.performTimeSeriesQuery(qIndex, queries[qIndex], start, end, this.options).then(
@@ -52,7 +52,7 @@ export default class GexpQuery {
           }
         );
 
-        queriesPromises.push(queriesPromise);
+        queriesPromises[qIndex] = queriesPromise;
       }
     }
     return queriesPromises;
