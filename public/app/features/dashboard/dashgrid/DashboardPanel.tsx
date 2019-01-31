@@ -7,7 +7,7 @@ import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { getPanelPluginNotFound } from './PanelPluginNotFound';
-import { DashboardRow } from './DashboardRow';
+import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 

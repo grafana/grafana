@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../../panel_model';
+import { DashboardModel } from '../../dashboard_model';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 
