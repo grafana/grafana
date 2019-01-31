@@ -20,11 +20,18 @@ import {
   ResultType,
   QueryIntervals,
   QueryOptions,
+  ExploreUrlUIState,
 } from 'app/types/explore';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
+};
+
+export const DEFAULT_UI_STATE = {
+  showingTable: true,
+  showingGraph: true,
+  showingLogs: true,
 };
 
 const MAX_HISTORY_ITEMS = 100;
@@ -151,6 +158,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   if (initial) {
     try {
       const parsed = JSON.parse(decodeURI(initial));
+      // debugger
       if (Array.isArray(parsed)) {
         if (parsed.length <= 3) {
           throw new Error('Error parsing compact URL state for Explore.');
@@ -161,19 +169,24 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
         };
         const datasource = parsed[2];
         const queries = parsed.slice(3);
-        return { datasource, queries, range };
+        return { datasource, queries, range, ui: DEFAULT_UI_STATE };
       }
       return parsed;
     } catch (e) {
       console.error(e);
     }
   }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE };
+  return { datasource: null, queries: [], range: DEFAULT_RANGE, ui: DEFAULT_UI_STATE };
 }
 
+const serializeUIState = (state: ExploreUrlUIState) => {
+  return Object.keys(state).map((key) => ({ [key]: state[key] }));
+};
+
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
+
   if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
+    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries, ...serializeUIState(urlState.ui)]);
   }
   return JSON.stringify(urlState);
 }

@@ -13,6 +13,11 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
   queries: [],
   range: DEFAULT_RANGE,
+  ui: {
+    showingGraph: true,
+    showingTable: true,
+    showingLogs: true,
+  }
 };
 
 describe('state functions', () => {
@@ -69,9 +74,11 @@ describe('state functions', () => {
           to: 'now',
         },
       };
+
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
-          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
+          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},' +
+          '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
       );
     });
 
