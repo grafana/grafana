@@ -11,7 +11,7 @@ import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto
 // import '../sass/editor.base.scss';
 
 
-const TYPEAHEAD_DELAY = 500;
+const TYPEAHEAD_DELAY = 100;
 
 interface Suggestion {
   text: string;
@@ -104,12 +104,13 @@ export default class KustoQueryField extends QueryField {
           this._fetchFields();
           return;
         }
-      } else if (modelPrefix.match(/(facet\s$)/i)) {
-        typeaheadContext = 'context-facet';
-        if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
+      } else if (modelPrefix.match(/(where\s$)/i)) {
+        typeaheadContext = 'context-where';
+        const fullQuery = Plain.serialize(this.state.value);
+        const table = this.getTableFromContext(fullQuery);
+        if (table) {
+          suggestionGroups = this.getWhereSuggestions(table);
         } else {
-          this._fetchFields();
           return;
         }
       } else if (modelPrefix.match(/(,\s*$)/)) {
@@ -345,6 +346,35 @@ export default class KustoQueryField extends QueryField {
     // ];
   }
 
+  private getWhereSuggestions(table: string): SuggestionGroup[] {
+    const tableSchema = this.schema.Databases.Default.Tables[table];
+    if (tableSchema) {
+      return [
+        {
+          prefixMatch: true,
+          label: 'Fields',
+          items: _.map(tableSchema.OrderedColumns, (f: any) => ({
+            text: f.Name,
+            hint: f.Type
+          }))
+        }
+      ];
+    } else {
+      return [];
+    }
+  }
+
+  private getTableFromContext(query: string) {
+    const tablePattern = /^\s*(\w+)\s*|/g;
+    const normalizedQuery = normalizeQuery(query);
+    const match = tablePattern.exec(normalizedQuery);
+    if (match && match.length > 1 && match[0] && match[1]) {
+      return match[1];
+    } else {
+      return null;
+    }
+  }
+
   private async _fetchEvents() {
     // const query = 'events';
     // const result = await this.request(query);
@@ -379,4 +409,11 @@ export default class KustoQueryField extends QueryField {
       this.schema = defaultSchema();
     }
   }
+}
+
+function normalizeQuery(query: string): string {
+  const commentPattern = /\/\/.*$/gm;
+  let normalizedQuery = query.replace(commentPattern, '');
+  normalizedQuery = normalizedQuery.replace('\n', ' ');
+  return normalizedQuery;
 }
