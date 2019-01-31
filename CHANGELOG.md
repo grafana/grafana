@@ -1,4 +1,6 @@
-# 6.0.0-beta1 (unreleased)
+# 6.0.0-beta2 (unreleased)
+
+# 6.0.0-beta1 (2019-01-30)
 
 ### New Features
 
