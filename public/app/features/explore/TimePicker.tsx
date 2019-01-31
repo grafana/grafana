@@ -293,6 +293,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
 
   render() {
     const { isUtc, rangeString, refreshInterval } = this.state;
+
     return (
       <div className="timepicker">
         <div className="navbar-buttons">

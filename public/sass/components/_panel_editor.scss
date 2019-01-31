@@ -35,6 +35,7 @@
   flex-grow: 1;
   background: $input-bg;
   margin: 0 20px 0 84px;
+  width: calc(100% - 84px);
   border-radius: 3px;
   box-shadow: $panel-editor-shadow;
   min-height: 0;
@@ -230,30 +231,3 @@
   min-width: 200px;
 }
 
-.panel-option-section {
-  margin-bottom: 10px;
-  border: $panel-option-section-border;
-  border-radius: $border-radius;
-}
-
-.panel-option-section__header {
-  padding: 4px 20px;
-  font-size: 1.1rem;
-  background: $panel-option-section-header-bg;
-  position: relative;
-
-  .btn {
-    position: absolute;
-    right: 0;
-    top: 0px;
-  }
-}
-
-.panel-option-section__body {
-  padding: 20px;
-  background: $page-bg;
-
-  &--queries {
-    min-height: 200px;
-  }
-}

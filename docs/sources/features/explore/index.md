@@ -1,5 +1,6 @@
 +++
 title = "Explore"
+keywords = ["explore", "loki", "logs"]
 type = "docs"
 [menu.docs]
 name = "Explore"
@@ -8,7 +9,11 @@ parent = "features"
 weight = 5
 +++
 
-# Introduction
+# Explore
+
+> Explore is only available in Grafana 6.0 and above.
+
+## Introduction
 
 One of the major new features of Grafana 6.0 is the new query-focused Explore workflow for troubleshooting and/or for data exploration.
 
@@ -21,23 +26,6 @@ For infrastructure monitoring and incident response, you no longer need to switc
 3. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
 If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the datasource supports both graph and table data).
-
-## Turning the Explore Feature On
-
-Explore will be officially released in Grafana 6.0. It is however already in the latest nightly builds of Grafana and can be turned using a feature flag in the config file. Restart Grafana after making the config file change.
-
-```ini
-[explore]
-# Enable the Explore section
-enabled = true
-```
-
-Or if using docker:
-
-```bash
-docker pull grafana/grafana:master
-docker run --name grafana -p 3000:3000 -e "GF_EXPLORE_ENABLED=true" grafana/grafana:master
-```
 
 ## How to Start Exploring
 
@@ -111,7 +99,14 @@ The Logs Explorer (the `Log labels` button) next to the query field shows a list
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
-{{< docs-imagebox img="/img/docs/v60/explore_loki.png" class="docs-image--no-shadow" caption="Explore Loki Log Streams" >}}
+<div class="medium-6 columns">
+  <video width="800" height="500" controls>
+    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+<br />
 
 #### Log Stream Selector
 

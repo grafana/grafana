@@ -5,6 +5,7 @@ import Remarkable from 'remarkable';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { Emitter } from 'app/core/core';
+import getFactors from 'app/core/utils/factors';
 import {
   duplicatePanel,
   copyPanel as copyPanelUtil,
@@ -12,7 +13,7 @@ import {
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
@@ -32,6 +33,7 @@ export class PanelCtrl {
   events: Emitter;
   timing: any;
   loading: boolean;
+  maxPanelsPerRowOptions: number[];
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -92,6 +94,7 @@ export class PanelCtrl {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
       this.events.emit('init-edit-mode', null);
+      this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
   }
 
@@ -286,18 +289,5 @@ export class PanelCtrl {
 
     html += '</div>';
     return sanitize(html);
-  }
-
-  openInspector() {
-    const modalScope = this.$scope.$new();
-    modalScope.panel = this.panel;
-    modalScope.dashboard = this.dashboard;
-    modalScope.panelInfoHtml = this.getInfoContent({ mode: 'inspector' });
-
-    modalScope.inspector = $.extend(true, {}, this.inspector);
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/inspector.html',
-      scope: modalScope,
-    });
   }
 }

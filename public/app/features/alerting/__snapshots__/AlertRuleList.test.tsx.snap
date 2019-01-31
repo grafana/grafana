@@ -1,12 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render alert rules 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={false}
   >
     <div
       className="page-action-bar"
@@ -151,17 +150,16 @@ exports[`Render should render alert rules 1`] = `
         />
       </ol>
     </section>
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;
 
 exports[`Render should render component 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={false}
   >
     <div
       className="page-action-bar"
@@ -263,6 +261,6 @@ exports[`Render should render component 1`] = `
         className="alert-rule-list"
       />
     </section>
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;

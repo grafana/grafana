@@ -50,6 +50,12 @@ describe('InfluxQueryBuilder', () => {
       expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ LIMIT 100');
     });
 
+    it('should escape the regex value in measurement query', () => {
+      const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
+      const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'abc/edf/');
+      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /abc\\/edf\\// LIMIT 100');
+    });
+
     it('should have WITH MEASUREMENT WHERE in measurement query for non-empty query with tags', () => {
       const builder = new InfluxQueryBuilder({
         measurement: '',

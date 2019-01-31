@@ -54,7 +54,7 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 
 func newHTTPClient() httpClient {
 	return &http.Client{
-		Timeout:   time.Second * 30,
+		Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }
@@ -139,19 +139,19 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		reqQueryVals := req.URL.Query()
 
 		if proxy.ds.Type == m.DS_INFLUXDB_08 {
-			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
+			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
 			reqQueryVals.Add("p", proxy.ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
 		} else if proxy.ds.Type == m.DS_INFLUXDB {
-			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, proxy.proxyPath)
+			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !proxy.ds.BasicAuth {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.User, proxy.ds.Password))
 			}
 		} else {
-			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, proxy.proxyPath)
+			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")

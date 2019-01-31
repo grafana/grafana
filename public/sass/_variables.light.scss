@@ -76,8 +76,7 @@ $textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
-$page-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
-//$page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
+$page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
@@ -102,6 +101,7 @@ $panel-bg: $white;
 $panel-border-color: $gray-5;
 $panel-border: solid 1px $panel-border-color;
 $panel-header-hover-bg: $gray-6;
+$panel-corner: $gray-4;
 
 // Page header
 $page-header-bg: linear-gradient(90deg, $white, $gray-7);
@@ -307,11 +307,15 @@ $popover-error-bg: $btn-danger-bg;
 // Tooltips and popovers
 // -------------------------
 $tooltipColor: $popover-help-color;
-$tooltipBackground: $popover-help-bg;
 $tooltipArrowWidth: 5px;
-$tooltipArrowColor: $tooltipBackground;
 $tooltipLinkColor: lighten($popover-help-color, 5%);
 $graph-tooltip-bg: $gray-5;
+
+$tooltipBackground: $gray-1;
+$tooltipColor: $gray-7;
+$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
+$tooltipBackgroundError: $brand-danger;
+$tooltipBackgroundBrand: $brand-primary;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
@@ -396,8 +400,8 @@ $panel-editor-tabs-line-color: $dark-5;
 $panel-editor-viz-item-bg-hover: lighten($blue, 62%);
 $panel-editor-viz-item-bg-hover-active: lighten($orange, 34%);
 
-$panel-option-section-border: 1px solid $gray-6;
-$panel-option-section-header-bg: linear-gradient(0deg, $gray-6, $gray-7);
+$panel-options-group-border: none;
+$panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: lighten($blue, 62%);
 $panel-grid-placeholder-shadow: 0 0 4px $blue-light;

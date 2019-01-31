@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import { TimeSeries } from 'app/core/core';
-import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '@grafana/ui';
 import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
 interface LegendProps {
@@ -311,7 +311,7 @@ class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & Legen
 export class Legend extends PureComponent<GraphLegendProps> {
   render() {
     return (
-      <CustomScrollbar>
+      <CustomScrollbar renderTrackHorizontal={(props) => <div {...props} style={{visibility: 'none'}} />}>
         <GraphLegend {...this.props} />
       </CustomScrollbar>
     );

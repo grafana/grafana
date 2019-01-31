@@ -5,7 +5,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.5.0-pre1",
+  "version": "6.0.0-prebeta2",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -24,9 +24,10 @@
     "@types/jquery": "^1.10.35",
     "@types/node": "^8.0.31",
     "@types/react": "^16.7.6",
-    "@types/react-custom-scrollbars": "^4.0.5",
     "@types/react-dom": "^16.0.9",
+    "@types/react-grid-layout": "^0.16.6",
     "@types/react-select": "^2.0.4",
+    "@types/react-virtualized": "^9.18.12",
     "angular-mocks": "1.6.6",
     "autoprefixer": "^6.4.0",
     "axios": "^0.17.1",
@@ -65,15 +66,17 @@
     "html-webpack-plugin": "^3.2.0",
     "husky": "^0.14.3",
     "jest": "^23.6.0",
+    "jest-date-mock": "^1.0.6",
     "lint-staged": "^6.0.0",
     "load-grunt-tasks": "3.5.2",
     "mini-css-extract-plugin": "^0.4.0",
     "mocha": "^4.0.1",
+    "monaco-editor": "^0.15.6",
     "ng-annotate-loader": "^0.6.1",
     "ng-annotate-webpack-plugin": "^0.3.0",
     "ngtemplate-loader": "^2.0.1",
-    "npm": "^5.4.2",
     "node-sass": "^4.11.0",
+    "npm": "^5.4.2",
     "optimize-css-assets-webpack-plugin": "^4.0.2",
     "phantomjs-prebuilt": "^2.1.15",
     "postcss-browser-reporter": "^0.5.0",
@@ -82,6 +85,7 @@
     "prettier": "1.9.2",
     "react-hot-loader": "^4.3.6",
     "react-test-renderer": "^16.5.0",
+    "regexp-replace-loader": "^1.0.1",
     "sass-lint": "^1.10.2",
     "sass-loader": "^7.0.1",
     "sinon": "1.17.6",
@@ -114,7 +118,8 @@
     "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
-    "precommit": "grunt precommit"
+    "precommit": "grunt precommit",
+    "storybook": "cd packages/grafana-ui && yarn storybook"
   },
   "husky": {
     "hooks": {
@@ -167,7 +172,6 @@
     "prop-types": "^15.6.2",
     "rc-cascader": "^0.14.0",
     "react": "^16.6.3",
-    "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.6.3",
     "react-grid-layout": "0.16.6",
     "react-highlight-words": "0.11.0",
@@ -189,7 +193,8 @@
     "slate-react": "^0.12.4",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
-    "tinycolor2": "^1.4.1"
+    "tinycolor2": "^1.4.1",
+    "xss": "^1.0.3"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772",

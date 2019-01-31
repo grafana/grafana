@@ -27,7 +27,7 @@ func init() {
 	bus.AddHandler("sql", HasEditPermissionInFolders)
 }
 
-var generateNewUid func() string = util.GenerateShortUid
+var generateNewUid func() string = util.GenerateShortUID
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {

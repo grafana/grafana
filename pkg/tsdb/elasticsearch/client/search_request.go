@@ -268,7 +268,7 @@ type AggBuilder interface {
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
-	Pipeline(key, pipelineType, bucketPath string, fn func(a *PipelineAggregation)) AggBuilder
+	Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder
 	Build() (AggArray, error)
 }
 
@@ -438,7 +438,7 @@ func (b *aggBuilderImpl) Metric(key, metricType, field string, fn func(a *Metric
 	return b
 }
 
-func (b *aggBuilderImpl) Pipeline(key, pipelineType, bucketPath string, fn func(a *PipelineAggregation)) AggBuilder {
+func (b *aggBuilderImpl) Pipeline(key, pipelineType string, bucketPath interface{}, fn func(a *PipelineAggregation)) AggBuilder {
 	innerAgg := &PipelineAggregation{
 		BucketPath: bucketPath,
 		Settings:   make(map[string]interface{}),

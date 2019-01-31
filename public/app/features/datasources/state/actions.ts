@@ -6,11 +6,13 @@ import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { UpdateLocationAction } from 'app/core/actions/location';
 import { buildNavModel } from './navModel';
-import { DataSource, Plugin, StoreState } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui/src/types';
+import { Plugin, StoreState } from 'app/types';
 
 export enum ActionTypes {
   LoadDataSources = 'LOAD_DATA_SOURCES',
   LoadDataSourceTypes = 'LOAD_DATA_SOURCE_TYPES',
+  LoadedDataSourceTypes = 'LOADED_DATA_SOURCE_TYPES',
   LoadDataSource = 'LOAD_DATA_SOURCE',
   LoadDataSourceMeta = 'LOAD_DATA_SOURCE_META',
   SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
@@ -22,7 +24,7 @@ export enum ActionTypes {
 
 interface LoadDataSourcesAction {
   type: ActionTypes.LoadDataSources;
-  payload: DataSource[];
+  payload: DataSourceSettings[];
 }
 
 interface SetDataSourcesSearchQueryAction {
@@ -37,6 +39,10 @@ interface SetDataSourcesLayoutModeAction {
 
 interface LoadDataSourceTypesAction {
   type: ActionTypes.LoadDataSourceTypes;
+}
+
+interface LoadedDataSourceTypesAction {
+  type: ActionTypes.LoadedDataSourceTypes;
   payload: Plugin[];
 }
 
@@ -47,7 +53,7 @@ interface SetDataSourceTypeSearchQueryAction {
 
 interface LoadDataSourceAction {
   type: ActionTypes.LoadDataSource;
-  payload: DataSource;
+  payload: DataSourceSettings;
 }
 
 interface LoadDataSourceMetaAction {
@@ -65,12 +71,12 @@ interface SetIsDefaultAction {
   payload: boolean;
 }
 
-const dataSourcesLoaded = (dataSources: DataSource[]): LoadDataSourcesAction => ({
+const dataSourcesLoaded = (dataSources: DataSourceSettings[]): LoadDataSourcesAction => ({
   type: ActionTypes.LoadDataSources,
   payload: dataSources,
 });
 
-const dataSourceLoaded = (dataSource: DataSource): LoadDataSourceAction => ({
+const dataSourceLoaded = (dataSource: DataSourceSettings): LoadDataSourceAction => ({
   type: ActionTypes.LoadDataSource,
   payload: dataSource,
 });
@@ -80,8 +86,12 @@ const dataSourceMetaLoaded = (dataSourceMeta: Plugin): LoadDataSourceMetaAction 
   payload: dataSourceMeta,
 });
 
-const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadDataSourceTypesAction => ({
+const dataSourceTypesLoad = (): LoadDataSourceTypesAction => ({
   type: ActionTypes.LoadDataSourceTypes,
+});
+
+const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadedDataSourceTypesAction => ({
+  type: ActionTypes.LoadedDataSourceTypes,
   payload: dataSourceTypes,
 });
 
@@ -116,6 +126,7 @@ export type Action =
   | SetDataSourcesLayoutModeAction
   | UpdateLocationAction
   | LoadDataSourceTypesAction
+  | LoadedDataSourceTypesAction
   | SetDataSourceTypeSearchQueryAction
   | LoadDataSourceAction
   | UpdateNavIndexAction
@@ -166,12 +177,13 @@ export function addDataSource(plugin: Plugin): ThunkResult<void> {
 
 export function loadDataSourceTypes(): ThunkResult<void> {
   return async dispatch => {
+    dispatch(dataSourceTypesLoad());
     const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
     dispatch(dataSourceTypesLoaded(result));
   };
 }
 
-export function updateDataSource(dataSource: DataSource): ThunkResult<void> {
+export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
     await updateFrontendSettings();

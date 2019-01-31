@@ -103,6 +103,7 @@ $panel-bg: #212124;
 $panel-border-color: $dark-1;
 $panel-border: solid 1px $panel-border-color;
 $panel-header-hover-bg: $dark-4;
+$panel-corner: $panel-bg;
 
 // page header
 $page-header-bg: linear-gradient(90deg, #292a2d, black);
@@ -302,11 +303,15 @@ $popover-error-bg: $btn-danger-bg;
 // Tooltips and popovers
 // -------------------------
 $tooltipColor: $popover-help-color;
-$tooltipBackground: $popover-help-bg;
 $tooltipArrowWidth: 5px;
-$tooltipArrowColor: $tooltipBackground;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
+
+$tooltipBackground: $black;
+$tooltipColor: $gray-4;
+$tooltipArrowColor: $tooltipBackground;
+$tooltipBackgroundError: $brand-danger;
+$tooltipBackgroundBrand: $brand-primary;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -387,8 +392,8 @@ $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue, 47%);
 $panel-editor-viz-item-bg-hover-active: darken($orange, 45%);
 
-$panel-option-section-border: 1px solid $dark-3;
-$panel-option-section-header-bg: linear-gradient(0deg, $gray-blue, $dark-1);
+$panel-options-group-border: none;
+$panel-options-group-header-bg: $gray-blue;
 
 $panel-grid-placeholder-bg: darken($blue, 47%);
 $panel-grid-placeholder-shadow: 0 0 4px $blue;

@@ -1,12 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Plugins",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={true}
   >
     <OrgActionBar
       layoutMode="grid"
@@ -20,20 +28,25 @@ exports[`Render should render component 1`] = `
       searchQuery=""
       setSearchQuery={[Function]}
     />
-    <PageLoader
-      pageName="Plugins"
-    />
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;
 
 exports[`Render should render list 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Plugins",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={false}
   >
     <OrgActionBar
       layoutMode="grid"
@@ -51,6 +64,6 @@ exports[`Render should render list 1`] = `
       layoutMode="grid"
       plugins={Array []}
     />
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;

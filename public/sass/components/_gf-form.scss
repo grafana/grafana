@@ -5,7 +5,7 @@ $input-border: 1px solid $input-border-color;
   margin-bottom: $gf-form-margin;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   text-align: left;
   position: relative;
 
@@ -129,6 +129,11 @@ $input-border: 1px solid $input-border-color;
 
     &:hover {
       background: $list-item-hover-bg;
+      color: $link-color;
+    }
+
+    .fa-caret-down {
+      padding-left: 4px;
     }
   }
 
@@ -136,6 +141,7 @@ $input-border: 1px solid $input-border-color;
     color: $text-color-weak;
   }
 }
+
 
 .gf-form-label + .gf-form-label {
   margin-right: $gf-form-margin;
@@ -383,6 +389,10 @@ $input-border: 1px solid $input-border-color;
 
   &--no-padding {
     padding-left: 0;
+  }
+
+  &:hover {
+    color: $text-color;
   }
 }
 

@@ -140,7 +140,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		Children: dashboardChildNavs,
 	})
 
-	if setting.ExploreEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
+	if setting.ExploreEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR || setting.ViewersCanEdit) {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:     "Explore",
 			Id:       "explore",

@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
-import { SeriesColorPicker } from 'app/core/components/colorpicker/SeriesColorPicker';
+import { SeriesColorPicker } from '@grafana/ui';
+import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -154,8 +155,8 @@ interface LegendSeriesIconState {
   color: string;
 }
 
-function SeriesIcon(props) {
-  return <i className="fa fa-minus pointer" style={{ color: props.color }} />;
+function SeriesIcon({ color }) {
+  return <i className="fa fa-minus pointer" style={{ color }} />;
 }
 
 class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeriesIconState> {
@@ -167,15 +168,24 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
 
   render() {
     return (
-      <SeriesColorPicker
-        optionalClass="graph-legend-icon"
-        yaxis={this.props.yaxis}
-        color={this.props.color}
-        onColorChange={this.props.onColorChange}
-        onToggleAxis={this.props.onToggleAxis}
-      >
-        <SeriesIcon color={this.props.color} />
-      </SeriesColorPicker>
+      <ThemeProvider>
+        {theme => {
+          return (
+            <SeriesColorPicker
+              yaxis={this.props.yaxis}
+              color={this.props.color}
+              onChange={this.props.onColorChange}
+              onToggleAxis={this.props.onToggleAxis}
+              theme={theme}
+              enableNamedColors
+            >
+              <span className="graph-legend-icon">
+                <SeriesIcon color={this.props.color} />
+              </span>
+            </SeriesColorPicker>
+          );
+        }}
+      </ThemeProvider>
     );
   }
 }

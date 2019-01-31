@@ -1,0 +1,28 @@
+.panel-options-group {
+  margin-bottom: 10px;
+  border: $panel-options-group-border;
+  border-radius: $border-radius;
+  background: $page-bg;
+}
+
+.panel-options-group__header {
+  padding: 4px 8px;
+  font-size: 1.1rem;
+  background: $panel-options-group-header-bg;
+  position: relative;
+  border-radius: $border-radius $border-radius 0 0;
+
+  .btn {
+    position: absolute;
+    right: 0;
+    top: 0px;
+  }
+}
+
+.panel-options-group__body {
+  padding: 20px;
+
+  &--queries {
+    min-height: 200px;
+  }
+}

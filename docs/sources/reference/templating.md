@@ -52,6 +52,7 @@ Filter Option | Example | Raw | Interpolated | Description
 `csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
 `distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
 `lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
+`percentencode` | ${servers:percentencode} |  `'foo()bar BAZ', 'test2'` | `{foo%28%29bar%20BAZ%2Ctest2}` | Formats multi-value variable into a glob, percent-encoded.
 
 Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
@@ -244,6 +245,11 @@ summarize($myinterval, sum, false)
 
 Grafana has global built-in variables that can be used in expressions in the query editor.
 
+### Time range variables
+
+Grafana has two built in time range variables in `$__from` and `$__to`. They are currently always interpolated
+as epoch milliseconds. These variables are only available in Grafana v6.0 and above.
+
 ### The $__interval Variable
 
 This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
@@ -292,9 +298,11 @@ The `direction` controls how the panels will be arranged.
 
 By choosing `horizontal` the panels will be arranged side-by-side. Grafana will automatically adjust the width
 of each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated
-panel. Each panel will never be smaller that the provided `Min width` if you have many selected values.
+panel.
 
-By choosing `vertical` the panels will be arranged from top to bottom in a column. The `Min width` doesn't have any effect in this case. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
+Set `Max per row` to tell grafana how many panels per row you want at most. It defaults to *4* if you don't set anything.
+
+By choosing `vertical` the panels will be arranged from top to bottom in a column. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
 
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.

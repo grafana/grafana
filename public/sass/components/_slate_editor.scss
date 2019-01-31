@@ -8,7 +8,8 @@
 .slate-query-field__wrapper {
   position: relative;
   display: inline-block;
-  padding: 6px 7px 4px;
+  padding: $input-padding-y $input-padding-x;
+  min-height: $gf-form-input-height;
   width: 100%;
   cursor: text;
   line-height: $line-height-base;

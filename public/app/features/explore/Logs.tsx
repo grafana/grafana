@@ -1,30 +1,23 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
-import Highlighter from 'react-highlight-words';
-import classnames from 'classnames';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange } from '@grafana/ui';
+import { RawTimeRange, Switch } from '@grafana/ui';
 import {
   LogsDedupDescription,
   LogsDedupStrategy,
   LogsModel,
   dedupLogRows,
   filterLogLevels,
-  getParser,
   LogLevel,
   LogsMetaKind,
-  LogsLabelStat,
-  LogsParser,
-  LogRow,
-  calculateFieldStats,
 } from 'app/core/logs_model';
-import { findHighlightChunksInText } from 'app/core/utils/text';
-import { Switch } from 'app/core/components/Switch/Switch';
+
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';
-import LogLabels, { Stats } from './LogLabels';
+import { LogLabels } from './LogLabels';
+import { LogRow } from './LogRow';
 
 const PREVIEW_LIMIT = 100;
 
@@ -43,191 +36,6 @@ const graphOptions = {
   },
 };
 
-/**
- * Renders a highlighted field.
- * When hovering, a stats icon is shown.
- */
-const FieldHighlight = onClick => props => {
-  return (
-    <span className={props.className} style={props.style}>
-      {props.children}
-      <span className="logs-row__field-highlight--icon fa fa-signal" onClick={() => onClick(props.children)} />
-    </span>
-  );
-};
-
-interface RowProps {
-  highlighterExpressions?: string[];
-  row: LogRow;
-  showDuplicates: boolean;
-  showLabels: boolean | null; // Tristate: null means auto
-  showLocalTime: boolean;
-  showUtc: boolean;
-  getRows: () => LogRow[];
-  onClickLabel?: (label: string, value: string) => void;
-}
-
-interface RowState {
-  fieldCount: number;
-  fieldLabel: string;
-  fieldStats: LogsLabelStat[];
-  fieldValue: string;
-  parsed: boolean;
-  parser?: LogsParser;
-  parsedFieldHighlights: string[];
-  showFieldStats: boolean;
-}
-
-/**
- * Renders a log line.
- *
- * When user hovers over it for a certain time, it lazily parses the log line.
- * Once a parser is found, it will determine fields, that will be highlighted.
- * When the user requests stats for a field, they will be calculated and rendered below the row.
- */
-class Row extends PureComponent<RowProps, RowState> {
-  mouseMessageTimer: NodeJS.Timer;
-
-  state = {
-    fieldCount: 0,
-    fieldLabel: null,
-    fieldStats: null,
-    fieldValue: null,
-    parsed: false,
-    parser: undefined,
-    parsedFieldHighlights: [],
-    showFieldStats: false,
-  };
-
-  componentWillUnmount() {
-    clearTimeout(this.mouseMessageTimer);
-  }
-
-  onClickClose = () => {
-    this.setState({ showFieldStats: false });
-  };
-
-  onClickHighlight = (fieldText: string) => {
-    const { getRows } = this.props;
-    const { parser } = this.state;
-    const allRows = getRows();
-
-    // Build value-agnostic row matcher based on the field label
-    const fieldLabel = parser.getLabelFromField(fieldText);
-    const fieldValue = parser.getValueFromField(fieldText);
-    const matcher = parser.buildMatcher(fieldLabel);
-    const fieldStats = calculateFieldStats(allRows, matcher);
-    const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
-
-    this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue, showFieldStats: true });
-  };
-
-  onMouseOverMessage = () => {
-    // Don't parse right away, user might move along
-    this.mouseMessageTimer = setTimeout(this.parseMessage, 500);
-  };
-
-  onMouseOutMessage = () => {
-    clearTimeout(this.mouseMessageTimer);
-    this.setState({ parsed: false });
-  };
-
-  parseMessage = () => {
-    if (!this.state.parsed) {
-      const { row } = this.props;
-      const parser = getParser(row.entry);
-      if (parser) {
-        // Use parser to highlight detected fields
-        const parsedFieldHighlights = parser.getFields(this.props.row.entry);
-        this.setState({ parsedFieldHighlights, parsed: true, parser });
-      }
-    }
-  };
-
-  render() {
-    const {
-      getRows,
-      highlighterExpressions,
-      onClickLabel,
-      row,
-      showDuplicates,
-      showLabels,
-      showLocalTime,
-      showUtc,
-    } = this.props;
-    const {
-      fieldCount,
-      fieldLabel,
-      fieldStats,
-      fieldValue,
-      parsed,
-      parsedFieldHighlights,
-      showFieldStats,
-    } = this.state;
-    const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
-    const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter = highlights && highlights.length > 0;
-    const highlightClassName = classnames('logs-row__match-highlight', {
-      'logs-row__match-highlight--preview': previewHighlights,
-    });
-    return (
-      <div className="logs-row">
-        {showDuplicates && (
-          <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
-        )}
-        <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
-        {showUtc && (
-          <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-            {row.timestamp}
-          </div>
-        )}
-        {showLocalTime && (
-          <div className="logs-row__time" title={`${row.timestamp} (${row.timeFromNow})`}>
-            {row.timeLocal}
-          </div>
-        )}
-        {showLabels && (
-          <div className="logs-row__labels">
-            <LogLabels getRows={getRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
-          </div>
-        )}
-        <div className="logs-row__message" onMouseEnter={this.onMouseOverMessage} onMouseLeave={this.onMouseOutMessage}>
-          {parsed && (
-            <Highlighter
-              autoEscape
-              highlightTag={FieldHighlight(this.onClickHighlight)}
-              textToHighlight={row.entry}
-              searchWords={parsedFieldHighlights}
-              highlightClassName="logs-row__field-highlight"
-            />
-          )}
-          {!parsed &&
-            needsHighlighter && (
-              <Highlighter
-                textToHighlight={row.entry}
-                searchWords={highlights}
-                findChunks={findHighlightChunksInText}
-                highlightClassName={highlightClassName}
-              />
-            )}
-          {!parsed && !needsHighlighter && row.entry}
-          {showFieldStats && (
-            <div className="logs-row__stats">
-              <Stats
-                stats={fieldStats}
-                label={fieldLabel}
-                value={fieldValue}
-                onClickClose={this.onClickClose}
-                rowCount={fieldCount}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-}
-
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
     return (
@@ -239,11 +47,11 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
   return value;
 }
 
-interface LogsProps {
-  data: LogsModel;
+interface Props {
+  data?: LogsModel;
+  exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
-  position: string;
   range?: RawTimeRange;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -253,7 +61,7 @@ interface LogsProps {
   onStopScanning?: () => void;
 }
 
-interface LogsState {
+interface State {
   dedup: LogsDedupStrategy;
   deferLogs: boolean;
   hiddenLogLevels: Set<LogLevel>;
@@ -263,7 +71,7 @@ interface LogsState {
   showUtc: boolean;
 }
 
-export default class Logs extends PureComponent<LogsProps, LogsState> {
+export default class Logs extends PureComponent<Props, State> {
   deferLogsTimer: NodeJS.Timer;
   renderAllTimer: NodeJS.Timer;
 
@@ -348,14 +156,19 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
   render() {
     const {
       data,
+      exploreId,
       highlighterExpressions,
       loading = false,
       onClickLabel,
-      position,
       range,
       scanning,
       scanRange,
     } = this.props;
+
+    if (!data) {
+      return null;
+    }
+
     const { dedup, deferLogs, hiddenLogLevels, renderAll, showLocalTime, showUtc } = this.state;
     let { showLabels } = this.state;
     const hasData = data && data.rows && data.rows.length > 0;
@@ -400,7 +213,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             data={data.series}
             height="100px"
             range={range}
-            id={`explore-logs-graph-${position}`}
+            id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}
             onToggleSeries={this.onToggleLogLevel}
             userOptions={graphOptions}
@@ -441,10 +254,9 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
 
         <div className="logs-rows">
           {hasData &&
-            !deferLogs &&
-            // Only inject highlighterExpression in the first set for performance reasons
+          !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
             firstRows.map(row => (
-              <Row
+              <LogRow
                 key={row.key + row.duplicates}
                 getRows={getRows}
                 highlighterExpressions={highlighterExpressions}
@@ -460,7 +272,7 @@ export default class Logs extends PureComponent<LogsProps, LogsState> {
             !deferLogs &&
             renderAll &&
             lastRows.map(row => (
-              <Row
+              <LogRow
                 key={row.key + row.duplicates}
                 getRows={getRows}
                 row={row}
