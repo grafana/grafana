@@ -10,6 +10,7 @@ import appEvents from 'app/core/app_events';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv, setDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
@@ -25,6 +26,7 @@ export class GrafanaCtrl {
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
     datasourceSrv: DatasourceSrv,
+    keybindingSrv: KeybindingSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
@@ -32,6 +34,7 @@ export class GrafanaCtrl {
     setBackendSrv(backendSrv);
     setDatasourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
+    setKeybindingSrv(keybindingSrv);
     configureStore();
 
     $scope.init = () => {

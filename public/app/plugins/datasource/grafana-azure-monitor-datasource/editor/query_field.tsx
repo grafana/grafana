@@ -9,6 +9,7 @@ import NewlinePlugin from './slate-plugins/newline';
 import RunnerPlugin from './slate-plugins/runner';
 
 import Typeahead from './typeahead';
+import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 
 import { Block, Document, Text, Value } from 'slate';
 import { Editor } from 'slate-react';
@@ -61,6 +62,7 @@ class QueryField extends React.Component<any, any> {
   menuEl: any;
   plugins: any;
   resetTimer: any;
+  keybindingSrv: KeybindingSrv = getKeybindingSrv();
 
   constructor(props, context) {
     super(props, context);
@@ -90,6 +92,7 @@ class QueryField extends React.Component<any, any> {
   }
 
   componentWillUnmount() {
+    this.restoreEscapeKeyBinding();
     clearTimeout(this.resetTimer);
   }
 
@@ -218,6 +221,7 @@ class QueryField extends React.Component<any, any> {
     if (onBlur) {
       onBlur();
     }
+    this.restoreEscapeKeyBinding();
   };
 
   handleFocus = () => {
@@ -225,7 +229,17 @@ class QueryField extends React.Component<any, any> {
     if (onFocus) {
       onFocus();
     }
+    // Don't go back to dashboard if Escape pressed inside the editor.
+    this.removeEscapeKeyBinding();
   };
+
+  removeEscapeKeyBinding() {
+    this.keybindingSrv.unbind('esc', 'keydown');
+  }
+
+  restoreEscapeKeyBinding() {
+    this.keybindingSrv.setupGlobal();
+  }
 
   onClickItem = item => {
     const { suggestions } = this.state;

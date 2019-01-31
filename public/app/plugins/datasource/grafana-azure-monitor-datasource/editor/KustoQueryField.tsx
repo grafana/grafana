@@ -61,7 +61,7 @@ export default class KustoQueryField extends QueryField {
   }
 
   componentDidMount() {
-    this.updateMenu();
+    super.componentDidMount();
     this.fetchSchema();
   }
 
