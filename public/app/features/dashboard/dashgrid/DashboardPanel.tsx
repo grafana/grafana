@@ -7,12 +7,11 @@ import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { getPanelPluginNotFound } from './PanelPluginNotFound';
-import { DashboardRow } from './DashboardRow';
+import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { PanelResizer } from './PanelResizer';
 

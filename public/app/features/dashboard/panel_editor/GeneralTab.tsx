@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
 
-import { PanelModel } from '../panel_model';
+import { PanelModel } from '../state/PanelModel';
 import './../../panel/GeneralTabCtrl';
 
 interface Props {

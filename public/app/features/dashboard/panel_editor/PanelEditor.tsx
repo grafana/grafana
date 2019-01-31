@@ -11,8 +11,8 @@ import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
 import { AngularComponent } from 'app/core/services/AngularLoader';
 
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../state/PanelModel';
+import { DashboardModel } from '../state/DashboardModel';
 import { PanelPlugin } from 'app/types/plugins';
 
 import { Tooltip } from '@grafana/ui';

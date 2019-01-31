@@ -1,6 +1,6 @@
 import '../all';
 import { VariableSrv } from '../variable_srv';
-import { DashboardModel } from '../../dashboard/dashboard_model';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import moment from 'moment';
 import $q from 'q';
 

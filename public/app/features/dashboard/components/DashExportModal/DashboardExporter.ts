@@ -1,6 +1,6 @@
 import config from 'app/core/config';
 import _ from 'lodash';
-import { DashboardModel } from '../../dashboard_model';
+import { DashboardModel } from '../../state/DashboardModel';
 
 export class DashboardExporter {
   constructor(private datasourceSrv) {}

@@ -6,8 +6,8 @@ import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
 import templateSrv from 'app/features/templating/template_srv';
 
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface Props {
