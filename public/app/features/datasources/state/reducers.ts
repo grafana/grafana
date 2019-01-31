@@ -15,7 +15,7 @@ import {
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { reducerFactory } from 'app/core/redux';
 
-const initialState: DataSourcesState = {
+export const initialState: DataSourcesState = {
   dataSources: [],
   dataSource: {} as DataSourceSettings,
   layoutMode: LayoutModes.List,
