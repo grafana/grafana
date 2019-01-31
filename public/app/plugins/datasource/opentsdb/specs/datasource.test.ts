@@ -1,4 +1,4 @@
-import OpenTsDatasource from '../datasource';
+import OpenTsDatasource from '../datasource/datasource';
 import $q from 'q';
 
 describe('opentsdb', () => {
