@@ -22,6 +22,7 @@ const newVariable = index => {
 };
 
 export class ElasticPipelineVariablesCtrl {
+  /** @ngInject */
   constructor($scope) {
     $scope.variables = $scope.variables || [newVariable(1)];
 
