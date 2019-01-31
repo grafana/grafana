@@ -32,7 +32,7 @@ var (
 type UserAuthTokenService interface {
 	InitContextWithToken(ctx *models.ReqContext, orgID int64) bool
 	UserAuthenticatedHook(user *models.User, c *models.ReqContext) error
-	UserSignedOutHook(c *models.ReqContext) error
+	SignOutUser(c *models.ReqContext) error
 }
 
 type UserAuthTokenServiceImpl struct {
@@ -112,7 +112,7 @@ func (s *UserAuthTokenServiceImpl) UserAuthenticatedHook(user *models.User, c *m
 	return nil
 }
 
-func (s *UserAuthTokenServiceImpl) UserSignedOutHook(c *models.ReqContext) error {
+func (s *UserAuthTokenServiceImpl) SignOutUser(c *models.ReqContext) error {
 	unhashedToken := c.GetCookie(s.Cfg.LoginCookieName)
 	if unhashedToken == "" {
 		return errors.New("cannot logout without session token")
