@@ -39,8 +39,7 @@ describe('reducerTester', () => {
       expect(() => {
         reducerTester()
           .givenReducer(mutatingReducer, initialState)
-          .whenActionIsDispatched(dummyAction('some string'))
-          .thenStateShouldEqual({ ...initialState, data: ['some string'] });
+          .whenActionIsDispatched(dummyAction('some string'));
       }).toThrow();
     });
   });
@@ -50,8 +49,7 @@ describe('reducerTester', () => {
       expect(() => {
         reducerTester()
           .givenReducer(okReducer, initialState)
-          .whenActionIsDispatched(dummyAction('some string'))
-          .thenStateShouldEqual({ ...initialState, data: ['some string'] });
+          .whenActionIsDispatched(dummyAction('some string'));
       }).not.toThrow();
     });
   });
