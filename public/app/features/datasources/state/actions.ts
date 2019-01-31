@@ -9,51 +9,42 @@ import { buildNavModel } from './navModel';
 import { DataSourceSettings } from '@grafana/ui/src/types';
 import { Plugin, StoreState } from 'app/types';
 import { actionCreatorFactory } from 'app/core/redux';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
 
-export enum ActionTypes {
-  LoadDataSources = 'LOAD_DATA_SOURCES',
-  LoadDataSourceTypes = 'LOAD_DATA_SOURCE_TYPES',
-  LoadedDataSourceTypes = 'LOADED_DATA_SOURCE_TYPES',
-  LoadDataSource = 'LOAD_DATA_SOURCE',
-  LoadDataSourceMeta = 'LOAD_DATA_SOURCE_META',
-  SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
-  SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
-  SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
-  SetDataSourceName = 'SET_DATA_SOURCE_NAME',
-  SetIsDefault = 'SET_IS_DEFAULT',
-}
+export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
 
-export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>(ActionTypes.LoadDataSource).create();
+export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
 
-export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>(ActionTypes.LoadDataSources).create();
+export const dataSourceMetaLoaded = actionCreatorFactory<Plugin>('LOAD_DATA_SOURCE_META').create();
 
-export const dataSourceMetaLoaded = actionCreatorFactory<Plugin>(ActionTypes.LoadDataSourceMeta).create();
+export const dataSourceTypesLoad = noPayloadActionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
 
-export const dataSourceTypesLoad = actionCreatorFactory(ActionTypes.LoadDataSourceTypes).create();
+export const dataSourceTypesLoaded = actionCreatorFactory<Plugin[]>('LOADED_DATA_SOURCE_TYPES').create();
 
-export const dataSourceTypesLoaded = actionCreatorFactory<Plugin[]>(ActionTypes.LoadedDataSourceTypes).create();
+export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
 
-export const setDataSourcesSearchQuery = actionCreatorFactory<string>(ActionTypes.SetDataSourcesSearchQuery).create();
+export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE').create();
 
-export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>(ActionTypes.SetDataSourcesLayoutMode).create();
+export const setDataSourceTypeSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCE_TYPE_SEARCH_QUERY').create();
 
-export const setDataSourceTypeSearchQuery = actionCreatorFactory<string>(
-  ActionTypes.SetDataSourceTypeSearchQuery
-).create();
+export const setDataSourceName = actionCreatorFactory<string>('SET_DATA_SOURCE_NAME').create();
 
-export const setDataSourceName = actionCreatorFactory<string>(ActionTypes.SetDataSourceName).create();
+export const setIsDefault = actionCreatorFactory<boolean>('SET_IS_DEFAULT').create();
 
-export const setIsDefault = actionCreatorFactory<boolean>(ActionTypes.SetIsDefault).create();
-
-export type Action = UpdateLocationAction | UpdateNavIndexAction | ActionOf<any>;
+export type Action =
+  | UpdateLocationAction
+  | UpdateNavIndexAction
+  | ActionOf<DataSourceSettings>
+  | ActionOf<DataSourceSettings[]>
+  | ActionOf<Plugin>
+  | ActionOf<Plugin[]>;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
 export function loadDataSources(): ThunkResult<void> {
   return async dispatch => {
     const response = await getBackendSrv().get('/api/datasources');
-    dataSourcesLoaded(response);
+    dispatch(dataSourcesLoaded(response));
   };
 }
 
@@ -91,7 +82,7 @@ export function addDataSource(plugin: Plugin): ThunkResult<void> {
 
 export function loadDataSourceTypes(): ThunkResult<void> {
   return async dispatch => {
-    dispatch(dataSourceTypesLoad({}));
+    dispatch(dataSourceTypesLoad());
     const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
     dispatch(dataSourceTypesLoaded(result));
   };

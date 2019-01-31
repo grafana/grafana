@@ -12,13 +12,36 @@ export interface ActionCreator<Payload> {
   (payload: Payload): ActionOf<Payload>;
 }
 
+export interface NoPayloadActionCreator {
+  readonly type: string;
+  (): ActionOf<undefined>;
+}
+
 export interface ActionCreatorFactory<Payload> {
   create: () => ActionCreator<Payload>;
+}
+
+export interface NoPayloadActionCreatorFactory {
+  create: () => NoPayloadActionCreator;
 }
 
 export const actionCreatorFactory = <Payload>(type: string): ActionCreatorFactory<Payload> => {
   const create = (): ActionCreator<Payload> => {
     return Object.assign((payload: Payload): ActionOf<Payload> => ({ type, payload }), { type });
+  };
+
+  if (allActionCreators.some(t => (t && type ? t.toLocaleUpperCase() === type.toLocaleUpperCase() : false))) {
+    throw new Error(`There is already an actionCreator defined with the type ${type}`);
+  }
+
+  allActionCreators.push(type);
+
+  return { create };
+};
+
+export const noPayloadActionCreatorFactory = (type: string): NoPayloadActionCreatorFactory => {
+  const create = (): NoPayloadActionCreator => {
+    return Object.assign((): ActionOf<undefined> => ({ type, payload: undefined }), { type });
   };
 
   if (allActionCreators.some(t => (t && type ? t.toLocaleUpperCase() === type.toLocaleUpperCase() : false))) {

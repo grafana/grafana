@@ -26,7 +26,7 @@ const dummyReducerIntialState: DummyReducerState = {
 const dummyActionCreator = actionCreatorFactory<DummyReducerState>('dummy').create();
 
 const dummyReducer = reducerFactory(dummyReducerIntialState)
-  .addHandler({
+  .addMapper({
     filter: dummyActionCreator,
     mapper: (state, action) => ({ ...state, ...action.payload }),
   })
@@ -76,7 +76,7 @@ describe('reducerFactory', () => {
   describe('given a handler is added', () => {
     describe('when a handler with the same creator is added', () => {
       it('then is should throw', () => {
-        const faultyReducer = reducerFactory(dummyReducerIntialState).addHandler({
+        const faultyReducer = reducerFactory(dummyReducerIntialState).addMapper({
           filter: dummyActionCreator,
           mapper: (state, action) => {
             return { ...state, ...action.payload };
@@ -84,7 +84,7 @@ describe('reducerFactory', () => {
         });
 
         expect(() => {
-          faultyReducer.addHandler({
+          faultyReducer.addMapper({
             filter: dummyActionCreator,
             mapper: state => {
               return state;

@@ -29,7 +29,7 @@ const initialState: DataSourcesState = {
 };
 
 export const dataSourcesReducer = reducerFactory(initialState)
-  .addHandler({
+  .addMapper({
     filter: dataSourcesLoaded,
     mapper: (state, action) => ({
       ...state,
@@ -38,23 +38,23 @@ export const dataSourcesReducer = reducerFactory(initialState)
       dataSourcesCount: action.payload.length,
     }),
   })
-  .addHandler({
+  .addMapper({
     filter: dataSourceLoaded,
     mapper: (state, action) => ({ ...state, dataSource: action.payload }),
   })
-  .addHandler({
+  .addMapper({
     filter: setDataSourcesSearchQuery,
     mapper: (state, action) => ({ ...state, searchQuery: action.payload }),
   })
-  .addHandler({
+  .addMapper({
     filter: setDataSourcesLayoutMode,
     mapper: (state, action) => ({ ...state, layoutMode: action.payload }),
   })
-  .addHandler({
+  .addMapper({
     filter: dataSourceTypesLoad,
     mapper: state => ({ ...state, dataSourceTypes: [], isLoadingDataSources: true }),
   })
-  .addHandler({
+  .addMapper({
     filter: dataSourceTypesLoaded,
     mapper: (state, action) => ({
       ...state,
@@ -62,19 +62,19 @@ export const dataSourcesReducer = reducerFactory(initialState)
       isLoadingDataSources: false,
     }),
   })
-  .addHandler({
+  .addMapper({
     filter: setDataSourceTypeSearchQuery,
     mapper: (state, action) => ({ ...state, dataSourceTypeSearchQuery: action.payload }),
   })
-  .addHandler({
+  .addMapper({
     filter: dataSourceMetaLoaded,
     mapper: (state, action) => ({ ...state, dataSourceMeta: action.payload }),
   })
-  .addHandler({
+  .addMapper({
     filter: setDataSourceName,
     mapper: (state, action) => ({ ...state, dataSource: { ...state.dataSource, name: action.payload } }),
   })
-  .addHandler({
+  .addMapper({
     filter: setIsDefault,
     mapper: (state, action) => ({
       ...state,

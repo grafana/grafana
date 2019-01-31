@@ -1,4 +1,8 @@
-import { actionCreatorFactory, resetAllActionCreatorTypes } from './actionCreatorFactory';
+import {
+  actionCreatorFactory,
+  resetAllActionCreatorTypes,
+  noPayloadActionCreatorFactory,
+} from './actionCreatorFactory';
 
 interface Dummy {
   n: number;
@@ -11,15 +15,14 @@ interface Dummy {
   b: boolean;
 }
 
-const setup = (payload: Dummy) => {
+const setup = (payload?: Dummy) => {
   resetAllActionCreatorTypes();
   const actionCreator = actionCreatorFactory<Dummy>('dummy').create();
+  const noPayloadactionCreator = noPayloadActionCreatorFactory('NoPayload').create();
   const result = actionCreator(payload);
+  const noPayloadResult = noPayloadactionCreator();
 
-  return {
-    actionCreator,
-    result,
-  };
+  return { actionCreator, noPayloadactionCreator, result, noPayloadResult };
 };
 
 describe('actionCreatorFactory', () => {
@@ -46,7 +49,34 @@ describe('actionCreatorFactory', () => {
       setup(payload);
 
       expect(() => {
-        actionCreatorFactory<Dummy>('DuMmY').create();
+        noPayloadActionCreatorFactory('DuMmY').create();
+      }).toThrow();
+    });
+  });
+});
+
+describe('noPayloadActionCreatorFactory', () => {
+  describe('when calling create', () => {
+    it('then it should create correct type string', () => {
+      const { noPayloadResult, noPayloadactionCreator } = setup();
+
+      expect(noPayloadactionCreator.type).toEqual('NoPayload');
+      expect(noPayloadResult.type).toEqual('NoPayload');
+    });
+
+    it('then it should create correct payload', () => {
+      const { noPayloadResult } = setup();
+
+      expect(noPayloadResult.payload).toBeUndefined();
+    });
+  });
+
+  describe('when calling create with existing type', () => {
+    it('then it should throw error', () => {
+      setup();
+
+      expect(() => {
+        actionCreatorFactory<Dummy>('nOpAyLoAd').create();
       }).toThrow();
     });
   });
