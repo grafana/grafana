@@ -1,33 +1,39 @@
 package middleware
 
 import (
-	"context"
-	"errors"
-	"fmt"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var remoteKeySet *xjwt.RemoteKeyset
+// var remoteKeySet *xjwt.RemoteKeyset
+
+var keyFunc jwt.Keyfunc
 
 func JwtAuthInit() {
-	keyset, err := xjwt.NewRemoteKeyset(context.TODO(), xjwt.KeysetOptions{
-		UserAgent: fmt.Sprintf("grafana/%s", setting.BuildVersion),
-		URL:       setting.AuthJwtJwksUrl,
-	})
-	if err != nil {
-		panic(err)
+
+	log.Info("Initializing JWT Auth!!! load the function?")
+
+	// Simple static bytes
+	keyFunc = func(token *jwt.Token) (interface{}, error) {
+		return []byte("AllYourBase"), nil
 	}
 
-	remoteKeySet = keyset
+	// keyset, err := xjwt.NewRemoteKeyset(context.TODO(), xjwt.KeysetOptions{
+	// 	UserAgent: fmt.Sprintf("grafana/%s", setting.BuildVersion),
+	// 	URL:       setting.AuthJwtJwksUrl,
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// remoteKeySet = keyset
 }
 
-func initContextWithJwtAuth(ctx *Context, orgId int64) bool {
+
+func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
 	if !setting.AuthJwtEnabled {
 		return false
 	}
@@ -37,25 +43,23 @@ func initContextWithJwtAuth(ctx *Context, orgId int64) bool {
 		return false
 	}
 
-	jwtUser, err := verifyJwt(jwtHeaderValue)
-	if err != nil {
-		log.Error(3, "Unable to verify auth JWT", err)
-		return false
+	// Parse and validate the token
+	token, err := jwt.Parse(jwtHeaderValue, keyFunc)
+	if !token.Valid {
+		ctx.Handle(400, "JWT Error", err)
+		return true
 	}
-
-	query := getSignedInUserQueryForJwtAuth(jwtUser)
-	query.OrgId = orgId
+	claims := token.Claims.(jwt.MapClaims);
+	
+	query := getSignedInUserQueryForClaims(claims, orgId)
 	if err := bus.Dispatch(query); err != nil {
 		if err != m.ErrUserNotFound {
-			ctx.Handle(500, "Failed to find user specified in the auth JWT", err)
+			ctx.Handle(500, "User query failed for JWT", err)
 			return true
 		}
 
 		if setting.AuthJwtAutoSignup {
-			cmd := getCreateUserCommandForJwtAuth(jwtUser)
-			if setting.LdapEnabled {
-				cmd.SkipOrgSetup = true
-			}
+			cmd := getCreateUserCommandForClaims(claims)
 
 			if err := bus.Dispatch(cmd); err != nil {
 				ctx.Handle(500, "Failed to create user specified in auth JWT", err)
@@ -67,73 +71,24 @@ func initContextWithJwtAuth(ctx *Context, orgId int64) bool {
 				ctx.Handle(500, "Failed to find user after creation", err)
 				return true
 			}
+
 		} else {
-			return false
+			// Valid JWT, but user not in the database
+			ctx.Handle(403, "User Not Found", err)
+			return true
 		}
-	}
-
-	if err := ctx.Session.Start(ctx); err != nil {
-		log.Error(3, "Failed to start session", err)
-		return false
-	}
-
-	requestUserId := getRequestUserId(ctx)
-	if requestUserId > 0 && requestUserId != query.Result.UserId {
-		if err := ctx.Session.Destory(ctx); err != nil {
-			log.Error(3, "Failed to destroy session", err)
-		}
-
-		if err := ctx.Session.Start(ctx); err != nil {
-			log.Error(3, "Failed to start session", err)
-		}
-	}
-
-	if err := syncGrafanaUserWithLdapUser(ctx, query); err != nil {
-		if err == login.ErrInvalidCredentials {
-			ctx.Handle(500, "Unable to authenticate user", err)
-			return false
-		}
-
-		ctx.Handle(500, "Failed to sync user", err)
-		return false
 	}
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
-	ctx.Session.Set(SESS_KEY_USERID, ctx.UserId)
-
 	return true
 }
 
-func verifyJwt(jwt string) (string, error) {
-	keyset, err := remoteKeySet.Get()
-	if err != nil {
-		return "", err
-	}
-
-	payload, err := xjwt.Verify([]byte(jwt), xjwt.VerifyConfig{
-		ExpectedAudience: setting.AuthJwtAudience,
-		ExpectedIssuer:   setting.AuthJwtIssuer,
-		KeySet:           keyset,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	if userField, ok := payload[setting.AuthJwtUserField]; ok {
-		if user, ok := userField.(string); ok {
-			return user, nil
-		} else {
-			return "", errors.New(fmt.Sprintf("Unable to convert user value to string."))
-		}
-	} else {
-		return "", errors.New(fmt.Sprintf("JWT does not have expected user field(%s).", setting.AuthJwtUserField))
-	}
-}
-
-func getSignedInUserQueryForJwtAuth(jwtUser string) *m.GetSignedInUserQuery {
+func getSignedInUserQueryForClaims(claims jwt.Claims, orgId int64) *m.GetSignedInUserQuery {
 	query := &m.GetSignedInUserQuery{}
+	query.OrgId = orgId
 
+	/**
 	if setting.AuthJwtUserProperty == "username" {
 		query.Login = jwtUser
 	} else if setting.AuthJwtUserProperty == "email" {
@@ -141,20 +96,19 @@ func getSignedInUserQueryForJwtAuth(jwtUser string) *m.GetSignedInUserQuery {
 	} else {
 		panic("JWT Auth property invalid")
 	}
+	**/
 
 	return query
 }
 
-func getCreateUserCommandForJwtAuth(jwtUser string) *m.CreateUserCommand {
+func getCreateUserCommandForClaims(claims jwt.Claims) *m.CreateUserCommand {
 	cmd := m.CreateUserCommand{}
-	if setting.AuthJwtUserProperty == "username" {
-		cmd.Login = jwtUser
-		cmd.Email = jwtUser
-	} else if setting.AuthJwtUserProperty == "email" {
-		cmd.Email = jwtUser
-		cmd.Login = jwtUser
-	} else {
-		panic("JWT Auth property invalid")
-	}
+	// if setting.AuthJwtUserProperty == "username" {
+	// 	cmd.Login = jwtUser
+	// 	cmd.Email = jwtUser
+	// } else if setting.AuthJwtUserProperty == "email" {
+	// 	cmd.Email = jwtUser
+	// 	cmd.Login = jwtUser
+	// }
 	return &cmd
 }
