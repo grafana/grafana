@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { getTimeSrv } from 'app/features/dashboard/time_srv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';

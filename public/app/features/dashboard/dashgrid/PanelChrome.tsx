@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { AutoSizer } from 'react-virtualized';
 
 // Services
-import { getTimeSrv, TimeSrv } from '../time_srv';
+import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';

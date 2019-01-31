@@ -1,5 +1,4 @@
 import './containers/DashboardCtrl';
-import './time_srv';
 import './dashgrid/DashboardGridDirective';
 
 // Services
