@@ -1,5 +1,8 @@
 # 6.0.0-beta2 (unreleased)
 
+### Minor
+* **Pushover**: Adds support for images in pushover notifier [#10780](https://github.com/grafana/grafana/issues/10780), thx [@jpenalbae](https://github.com/jpenalbae)
+
 # 6.0.0-beta1 (2019-01-30)
 
 ### New Features
