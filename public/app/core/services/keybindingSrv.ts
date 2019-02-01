@@ -249,7 +249,7 @@ export class KeybindingSrv {
         if (panelInfo.panel.legend) {
           const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
           panelRef.legend.show = !panelRef.legend.show;
-          panelRef.refresh();
+          panelRef.render();
         }
       }
     });
