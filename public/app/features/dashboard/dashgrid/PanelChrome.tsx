@@ -94,7 +94,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
-  renderPanel(loading, timeSeries, width, height): JSX.Element {
+  renderPanel(loading, panelData, width, height): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.Panel;
@@ -109,7 +109,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       <div className="panel-content">
         <PanelComponent
           loading={loading}
-          timeSeries={timeSeries}
+          panelData={panelData}
           timeRange={timeRange}
           options={panel.getOptions(plugin.exports.PanelDefaults)}
           width={width - 2 * variables.panelHorizontalPadding}
@@ -158,7 +158,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                   onDataResponse={this.onDataResponse}
                 >
                   {({ loading, panelData }) => {
-                    return this.renderPanel(loading, panelData.timeSeries, width, height);
+                    return this.renderPanel(loading, panelData, width, height);
                   }}
                 </DataPanel>
               )}
