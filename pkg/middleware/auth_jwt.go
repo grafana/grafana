@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"encoding/base64"
+	"fmt"
+	"strings"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -10,24 +13,31 @@ import (
 
 var keyFunc jwt.Keyfunc
 
-func JwtAuthInit() {
+func InitAuthJwtKey() {
+	fmt.Println("JwtAuthInit!!!")
 
 	log.Info("Initializing JWT Auth!!! load the function?")
 
-	// Simple static bytes
-	keyFunc = func(token *jwt.Token) (interface{}, error) {
-		return []byte("AllYourBase"), nil
+	if( strings.HasPrefix(setting.AuthJwtSigningKey, "http") ) {
+		// TODO, we will want to read keys from sites like:
+		// https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
+		// https://www.gstatic.com/iap/verify/public_key-jwk
+		log.Error(3, "Reading JWT key from URL not yet supported")
+		keyFunc = nil
+		return
 	}
 
-	// keyset, err := xjwt.NewRemoteKeyset(context.TODO(), xjwt.KeysetOptions{
-	// 	UserAgent: fmt.Sprintf("grafana/%s", setting.BuildVersion),
-	// 	URL:       setting.AuthJwtJwksUrl,
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
+	key,err := base64.StdEncoding.DecodeString(setting.AuthJwtSigningKey)
+	if( err != nil ) {
+		log.Error(3, "Unalbe to read JWT key.  Expects base64")
+		keyFunc = nil
+		return
+	}
 
-	// remoteKeySet = keyset
+	// Use the same key for every request
+	keyFunc = func(token *jwt.Token) (interface{}, error) {
+		return key, nil
+	}
 }
 
 
@@ -36,7 +46,7 @@ func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
 		return false
 	}
 
-	jwtHeaderValue := ctx.Req.Header.Get(setting.AuthJwtHeaderName)
+	jwtHeaderValue := ctx.Req.Header.Get(setting.AuthJwtHeader)
 	if len(jwtHeaderValue) == 0 {
 		return false
 	}

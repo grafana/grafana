@@ -74,12 +74,9 @@ func (g *GrafanaServerImpl) Run() error {
 
 	login.Init()
 	social.NewOAuthService()
-
 	if setting.AuthJwtEnabled {
-		g.log.Info("Initializing JWT Auth.")
-		middleware.JwtAuthInit()
+		middleware.InitAuthJwtKey()
 	}
-
 
 	serviceGraph := inject.Graph{}
 	err = serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})

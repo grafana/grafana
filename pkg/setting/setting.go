@@ -138,12 +138,12 @@ var (
 
 	// JWT Auth settings
 	AuthJwtEnabled      bool
-	AuthJwtHeaderName   string
-	AuthJwtJwksUrl      string
+	AuthJwtHeader       string
+	AuthJwtSigningKey   string
 	AuthJwtAudience     string
 	AuthJwtIssuer       string
-	AuthJwtUserField    string
-	AuthJwtUserProperty string
+	AuthJwtEmailClaim   string
+	AuthJwtUserClaim    string
 	AuthJwtAutoSignup   bool
 
 	// Plugin settings
@@ -689,12 +689,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// jwt auth
 	jwtAuth := iniFile.Section("auth.jwt")
 	AuthJwtEnabled = jwtAuth.Key("enabled").MustBool(false)
-	AuthJwtHeaderName = jwtAuth.Key("header_name").String()
-	AuthJwtJwksUrl = jwtAuth.Key("jwks_url").String()
+	AuthJwtHeader = jwtAuth.Key("header").String()
+	AuthJwtSigningKey = jwtAuth.Key("signing_key").String()
 	AuthJwtAudience = jwtAuth.Key("audience").String()
 	AuthJwtIssuer = jwtAuth.Key("issuer").String()
-	AuthJwtUserField = jwtAuth.Key("user_field").String()
-	AuthJwtUserProperty = jwtAuth.Key("user_property").String()
+	AuthJwtEmailClaim = jwtAuth.Key("email_claim").String()
+	AuthJwtUserClaim = jwtAuth.Key("user_claim").String()
 	AuthJwtAutoSignup = jwtAuth.Key("auto_signup").MustBool(true)
 
 	// global plugin settings
