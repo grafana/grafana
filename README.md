@@ -25,49 +25,71 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Dependencies
 
 - Go (Latest Stable)
+  - bra [`go get github.com/Unknwon/bra`]
 - Node.js LTS
+  - yarn [`npm install -g yarn`]
 
-### Building the backend
+### Get the project
+
+**The project located in the go-path will be your working directory.**
+
 ```bash
 go get github.com/grafana/grafana
 cd $GOPATH/src/github.com/grafana/grafana
+```
+
+### Building
+
+#### The backend
+
+```bash
 go run build.go setup
 go run build.go build
 ```
 
-### Building frontend assets
+#### Frontend assets
 
-For this you need Node.js (LTS version).
+*For this you need Node.js (LTS version).*
 
-To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
-npm install -g yarn
 yarn install --pure-lockfile
+```
+
+### Run and rebuild on source change
+
+#### Backend
+
+To run the backend and rebuild on source change:
+
+```bash
+$GOPATH/bin/bra run
+```
+
+#### Frontend
+
+Rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
+
+```bash
 yarn watch
 ```
 
 Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
+
 ```bash
 yarn start
 # OR set a theme
 env GRAFANA_THEME=light yarn start
 ```
-Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.
 
-Run tests
+*Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.*
+
+Run tests and rebuild on source change:
+
 ```bash
 yarn jest
 ```
 
-### Recompile backend on source change
-
-To rebuild on source change.
-```bash
-go get github.com/Unknwon/bra
-bra run
-```
-
-Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
+**Open grafana in your browser (default: e.g. `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).**
 
 ### Building a Docker image
 
