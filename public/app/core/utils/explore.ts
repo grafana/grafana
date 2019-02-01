@@ -157,6 +157,8 @@ const isMetricSegment = (segment: { [key: string]: string }) => segment.hasOwnPr
 const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
+  let uiState = DEFAULT_UI_STATE;
+
   if (initial) {
     try {
       const parsed = JSON.parse(decodeURI(initial));
@@ -169,8 +171,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           to: parsed[1],
         };
         const datasource = parsed[2];
-        let queries = [],
-          ui;
+        let queries = [];
 
         parsed.slice(3).forEach(segment => {
           if (isMetricSegment(segment)) {
@@ -178,7 +179,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           }
 
           if (isUISegment(segment)) {
-            ui = {
+            uiState = {
               showingGraph: segment.ui[0],
               showingLogs: segment.ui[1],
               showingTable: segment.ui[2],
@@ -186,14 +187,14 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           }
         });
 
-        return { datasource, queries, range, ui };
+        return { datasource, queries, range, ui: uiState };
       }
       return parsed;
     } catch (e) {
       console.error(e);
     }
   }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE, ui: DEFAULT_UI_STATE };
+  return { datasource: null, queries: [], range: DEFAULT_RANGE, ui: uiState };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
