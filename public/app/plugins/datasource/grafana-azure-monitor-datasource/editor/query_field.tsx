@@ -1,12 +1,9 @@
-import PluginPrism from './slate-plugins/prism';
-// import PluginPrism from 'slate-prism';
-// import Prism from 'prismjs';
+import PluginPrism from 'app/features/explore/slate-plugins/prism';
 
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import ClearPlugin from 'app/features/explore/slate-plugins/clear';
-// Custom plugins (new line on Enter and run on Shift+Enter)
-import NewlinePlugin from './slate-plugins/newline';
-import RunnerPlugin from './slate-plugins/runner';
+import NewlinePlugin from 'app/features/explore/slate-plugins/newline';
+import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 
 import Typeahead from './typeahead';
 
