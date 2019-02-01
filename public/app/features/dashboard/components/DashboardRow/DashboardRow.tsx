@@ -18,13 +18,18 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       collapsed: this.props.panel.collapsed,
     };
 
-    this.toggle = this.toggle.bind(this);
-    this.openSettings = this.openSettings.bind(this);
-    this.delete = this.delete.bind(this);
-    this.update = this.update.bind(this);
+    appEvents.on('template-variable-value-updated', this.onVariableUpdated);
   }
 
-  toggle() {
+  componentWillUnmount() {
+    appEvents.off('template-variable-value-updated', this.onVariableUpdated);
+  }
+
+  onVariableUpdated = () => {
+    this.forceUpdate();
+  }
+
+  onToggle = () => {
     this.props.dashboard.toggleRow(this.props.panel);
 
     this.setState(prevState => {
@@ -32,23 +37,23 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   }
 
-  update() {
+  onUpdate = () => {
     this.props.dashboard.processRepeats();
     this.forceUpdate();
   }
 
-  openSettings() {
+  onOpenSettings = () => {
     appEvents.emit('show-modal', {
       templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
       model: {
         row: this.props.panel,
-        onUpdated: this.update.bind(this),
+        onUpdated: this.onUpdate,
       },
     });
   }
 
-  delete() {
+  onDelete = () => {
     appEvents.emit('confirm-modal', {
       title: 'Delete Row',
       text: 'Are you sure you want to remove this row and all its panels?',
@@ -81,7 +86,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
     return (
       <div className={classes}>
-        <a className="dashboard-row__title pointer" onClick={this.toggle}>
+        <a className="dashboard-row__title pointer" onClick={this.onToggle}>
           <i className={chevronClass} />
           {title}
           <span className="dashboard-row__panel_count">
@@ -90,16 +95,16 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         </a>
         {canEdit && (
           <div className="dashboard-row__actions">
-            <a className="pointer" onClick={this.openSettings}>
+            <a className="pointer" onClick={this.onOpenSettings}>
               <i className="fa fa-cog" />
             </a>
-            <a className="pointer" onClick={this.delete}>
+            <a className="pointer" onClick={this.onDelete}>
               <i className="fa fa-trash" />
             </a>
           </div>
         )}
         {this.state.collapsed === true && (
-          <div className="dashboard-row__toggle-target" onClick={this.toggle}>
+          <div className="dashboard-row__toggle-target" onClick={this.onToggle}>
             &nbsp;
           </div>
         )}

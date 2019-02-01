@@ -5,6 +5,7 @@ import { NavModel } from 'app/types';
 import { DataSourceSettings } from '@grafana/ui';
 import { getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { setDataSourceName, setIsDefault } from '../state/actions';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -14,9 +15,9 @@ const setup = (propOverrides?: object) => {
     pageId: 1,
     deleteDataSource: jest.fn(),
     loadDataSource: jest.fn(),
-    setDataSourceName: jest.fn(),
+    setDataSourceName,
     updateDataSource: jest.fn(),
-    setIsDefault: jest.fn(),
+    setIsDefault,
   };
 
   Object.assign(props, propOverrides);
