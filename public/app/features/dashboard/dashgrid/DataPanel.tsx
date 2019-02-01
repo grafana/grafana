@@ -1,24 +1,28 @@
 // Library
 import React, { Component } from 'react';
 import { Tooltip } from '@grafana/ui';
-import { Themes } from '@grafana/ui/src/components/Tooltip/Tooltip';
 
 import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
-
 // Services
-import { getDatasourceSrv, DatasourceSrv } from 'app/features/plugins/datasource_srv';
-
+import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Utils
 import kbn from 'app/core/utils/kbn';
-
 // Types
-import { TimeRange, TimeSeries, LoadingState, DataQueryResponse, DataQueryOptions } from '@grafana/ui/src/types';
+import {
+  DataQueryOptions,
+  DataQueryResponse,
+  LoadingState,
+  PanelData,
+  TableData,
+  TimeRange,
+  TimeSeries,
+} from '@grafana/ui';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 interface RenderProps {
   loading: LoadingState;
-  timeSeries: TimeSeries[];
+  panelData: PanelData;
 }
 
 export interface Props {
@@ -33,6 +37,7 @@ export interface Props {
   minInterval?: string;
   maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
+  onDataResponse?: (data: DataQueryResponse) => void;
 }
 
 export interface State {
@@ -86,7 +91,17 @@ export class DataPanel extends Component<Props, State> {
   }
 
   private issueQueries = async () => {
-    const { isVisible, queries, datasource, panelId, dashboardId, timeRange, widthPixels, maxDataPoints } = this.props;
+    const {
+      isVisible,
+      queries,
+      datasource,
+      panelId,
+      dashboardId,
+      timeRange,
+      widthPixels,
+      maxDataPoints,
+      onDataResponse,
+    } = this.props;
 
     if (!isVisible) {
       return;
@@ -120,12 +135,14 @@ export class DataPanel extends Component<Props, State> {
         cacheTimeout: null,
       };
 
-      console.log('Issuing DataPanel query', queryOptions);
       const resp = await ds.query(queryOptions);
-      console.log('Issuing DataPanel query Resp', resp);
 
       if (this.isUnmounted) {
         return;
+      }
+
+      if (onDataResponse) {
+        onDataResponse(resp);
       }
 
       this.setState({
@@ -149,11 +166,27 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
+  getPanelData = () => {
+    const { response } = this.state;
+
+    if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
+      return {
+        tableData: response.data[0] as TableData,
+        timeSeries: null,
+      };
+    }
+
+    return {
+      timeSeries: response.data as TimeSeries[],
+      tableData: null,
+    };
+  };
+
   render() {
     const { queries } = this.props;
-    const { response, loading, isFirstLoad } = this.state;
+    const { loading, isFirstLoad } = this.state;
 
-    const timeSeries = response.data;
+    const panelData = this.getPanelData();
 
     if (isFirstLoad && loading === LoadingState.Loading) {
       return this.renderLoadingStates();
@@ -179,8 +212,8 @@ export class DataPanel extends Component<Props, State> {
             return (
               <>
                 {this.props.children({
-                  timeSeries,
                   loading,
+                  panelData,
                 })}
               </>
             );
@@ -200,7 +233,7 @@ export class DataPanel extends Component<Props, State> {
       );
     } else if (loading === LoadingState.Error) {
       return (
-        <Tooltip content={errorMessage} placement="bottom-start" theme={Themes.Error}>
+        <Tooltip content={errorMessage} placement="bottom-start" theme="error">
           <div className="panel-info-corner panel-info-corner--error">
             <i className="fa" />
             <span className="panel-info-corner-inner" />

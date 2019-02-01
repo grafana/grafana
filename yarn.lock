@@ -1773,6 +1773,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-grid-layout@^0.16.6":
+  version "0.16.6"
+  resolved "https://registry.yarnpkg.com/@types/react-grid-layout/-/react-grid-layout-0.16.6.tgz#9149efe128e05d59c54063c7781d18b8febe112c"
+  integrity sha512-Jp0VfCHJE4uxekPBPpRkADKOjoSHssF2ba1ZMMAfCEqkoSkE+K+3bhI39++fbd7MqGySaqADVHeOoxlBnA3p5g==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-select@^2.0.4":
   version "2.0.11"
   resolved "https://registry.yarnpkg.com/@types/react-select/-/react-select-2.0.11.tgz#9b2b1fdb12b67a5a617c5f572e15617636cc65af"
@@ -1794,6 +1801,14 @@
   resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-2.0.15.tgz#e5ee3fe558832e141cc6041bdd54caea7b787af8"
   integrity sha512-S0QnNzbHoWXDbKBl/xk5dxA4FT+BNlBcI3hku991cl8Cz3ytOkUMcCRtzdX11eb86E131bSsQqy5WrPCdJYblw==
   dependencies:
+    "@types/react" "*"
+
+"@types/react-virtualized@^9.18.12":
+  version "9.18.12"
+  resolved "https://registry.yarnpkg.com/@types/react-virtualized/-/react-virtualized-9.18.12.tgz#541e65c5e0b4629d6a1c6f339171c7943e016ecb"
+  integrity sha512-Msdpt9zvYlb5Ul4PA339QUkJ0/z2O+gaFxed1rG+2rZjbe6XdYo7jWfJe206KBnjj84DwPPIbPFQCtoGuNwNTQ==
+  dependencies:
+    "@types/prop-types" "*"
     "@types/react" "*"
 
 "@types/react@*", "@types/react@16.7.6", "@types/react@^16.7.6":
@@ -6077,7 +6092,7 @@ debug@^4.1.0:
   dependencies:
     ms "^2.1.1"
 
-debuglog@*, debuglog@^1.0.1:
+debuglog@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/debuglog/-/debuglog-1.0.1.tgz#aa24ffb9ac3df9a2351837cfb2d279360cd78492"
   integrity sha1-qiT/uaw9+aI1GDfPstJ5NgzXhJI=
@@ -8991,7 +9006,7 @@ import-local@^2.0.0:
     pkg-dir "^3.0.0"
     resolve-cwd "^2.0.0"
 
-imurmurhash@*, imurmurhash@^0.1.4:
+imurmurhash@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/imurmurhash/-/imurmurhash-0.1.4.tgz#9218b9b2b928a238b13dc4fb6b6d576f231453ea"
   integrity sha1-khi5srkoojixPcT7a21XbyMUU+o=
@@ -10763,11 +10778,6 @@ lockfile@^1.0.4:
   dependencies:
     signal-exit "^3.0.2"
 
-lodash._baseindexof@*:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/lodash._baseindexof/-/lodash._baseindexof-3.1.0.tgz#fe52b53a1c6761e42618d654e4a25789ed61822c"
-  integrity sha1-/lK1OhxnYeQmGNZU5KJXie1hgiw=
-
 lodash._baseuniq@~4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/lodash._baseuniq/-/lodash._baseuniq-4.6.0.tgz#0ebb44e456814af7905c6212fa2c9b2d51b841e8"
@@ -10776,29 +10786,12 @@ lodash._baseuniq@~4.6.0:
     lodash._createset "~4.0.0"
     lodash._root "~3.0.0"
 
-lodash._bindcallback@*:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/lodash._bindcallback/-/lodash._bindcallback-3.0.1.tgz#e531c27644cf8b57a99e17ed95b35c748789392e"
-  integrity sha1-5THCdkTPi1epnhftlbNcdIeJOS4=
-
-lodash._cacheindexof@*:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/lodash._cacheindexof/-/lodash._cacheindexof-3.0.2.tgz#3dc69ac82498d2ee5e3ce56091bafd2adc7bde92"
-  integrity sha1-PcaayCSY0u5ePOVgkbr9Ktx73pI=
-
-lodash._createcache@*:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/lodash._createcache/-/lodash._createcache-3.1.2.tgz#56d6a064017625e79ebca6b8018e17440bdcf093"
-  integrity sha1-VtagZAF2JeeevKa4AY4XRAvc8JM=
-  dependencies:
-    lodash._getnative "^3.0.0"
-
 lodash._createset@~4.0.0:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/lodash._createset/-/lodash._createset-4.0.3.tgz#0f4659fbb09d75194fa9e2b88a6644d363c9fe26"
   integrity sha1-D0ZZ+7CddRlPqeK4imZE02PJ/iY=
 
-lodash._getnative@*, lodash._getnative@^3.0.0:
+lodash._getnative@^3.0.0:
   version "3.9.1"
   resolved "https://registry.yarnpkg.com/lodash._getnative/-/lodash._getnative-3.9.1.tgz#570bc7dede46d61cdcde687d65d3eecbaa3aaff5"
   integrity sha1-VwvH3t5G1hzc3mh9ZdPuy6o6r/U=
@@ -10891,11 +10884,6 @@ lodash.mergewith@^4.6.0:
   version "4.6.1"
   resolved "https://registry.yarnpkg.com/lodash.mergewith/-/lodash.mergewith-4.6.1.tgz#639057e726c3afbdb3e7d42741caa8d6e4335927"
   integrity sha512-eWw5r+PYICtEBgrBE5hhlT6aAa75f411bgDz/ZL2KZqYV03USvucsxcHUIlGTDTECs1eunpI7HOV7U+WLDvNdQ==
-
-lodash.restparam@*:
-  version "3.6.1"
-  resolved "https://registry.yarnpkg.com/lodash.restparam/-/lodash.restparam-3.6.1.tgz#936a4e309ef330a7645ed4145986c85ae5b20805"
-  integrity sha1-k2pOMJ7zMKdkXtQUWYbIWuWyCAU=
 
 lodash.some@^4.6.0:
   version "4.6.0"
@@ -11561,6 +11549,11 @@ moment@^2.22.2:
   version "2.24.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
   integrity sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
+
+monaco-editor@^0.15.6:
+  version "0.15.6"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.15.6.tgz#d63b3b06f86f803464f003b252627c3eb4a09483"
+  integrity sha512-JoU9V9k6KqT9R9Tiw1RTU8ohZ+Xnf9DMg6Ktqqw5hILumwmq7xqa/KLXw513uTUsWbhtnHoSJYYR++u3pkyxJg==
 
 moo@^0.4.3:
   version "0.4.3"
@@ -14463,7 +14456,7 @@ readable-stream@~1.1.10:
     isarray "0.0.1"
     string_decoder "~0.10.x"
 
-readdir-scoped-modules@*, readdir-scoped-modules@^1.0.0:
+readdir-scoped-modules@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/readdir-scoped-modules/-/readdir-scoped-modules-1.0.2.tgz#9fafa37d286be5d92cbaebdee030dc9b5f406747"
   integrity sha1-n6+jfShr5dksuuve4DDcm19AZ0c=
@@ -14654,6 +14647,13 @@ regex-not@^1.0.0, regex-not@^1.0.2:
   dependencies:
     extend-shallow "^3.0.2"
     safe-regex "^1.1.0"
+
+regexp-replace-loader@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/regexp-replace-loader/-/regexp-replace-loader-1.0.1.tgz#5dae73be9ee82a4d94d0955c2fa3fc923e134d7e"
+  integrity sha1-Xa5zvp7oKk2U0JVcL6P8kj4TTX4=
+  dependencies:
+    loader-utils "^1.0.2"
 
 regexp-tree@^0.1.0:
   version "0.1.0"

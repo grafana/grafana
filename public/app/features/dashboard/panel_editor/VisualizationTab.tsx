@@ -11,8 +11,8 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 // Types
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../state/PanelModel';
+import { DashboardModel } from '../state/DashboardModel';
 import { PanelPlugin } from 'app/types/plugins';
 
 interface Props {

@@ -1,20 +1,14 @@
-﻿import React, { createRef } from 'react';
+import React, { createRef } from 'react';
 import * as PopperJS from 'popper.js';
 import Popper from './Popper';
 import PopperController, { UsingPopperProps } from './PopperController';
 
-export enum Themes {
-  Default = 'popper__background--default',
-  Error = 'popper__background--error',
-  Brand = 'popper__background--brand',
-}
-
 interface TooltipProps extends UsingPopperProps {
-  theme?: Themes;
+  theme?: 'info' | 'error';
 }
 export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
-  const popperBackgroundClassName = 'popper__background' + (theme ? ' ' + theme : '');
+  const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');
 
   return (
     <PopperController {...controllerProps}>

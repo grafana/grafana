@@ -1,6 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
+import { getValueFormat } from '@grafana/ui';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) {
@@ -31,13 +32,13 @@ export function updateLegendValues(data: TimeSeries[], panel, height) {
     const yaxes = panel.yaxes;
     const seriesYAxis = series.yaxis || 1;
     const axis = yaxes[seriesYAxis - 1];
-    const formater = kbn.valueFormats[axis.format];
+    const formatter = getValueFormat(axis.format);
 
     // decimal override
     if (_.isNumber(panel.decimals)) {
-      series.updateLegendValues(formater, panel.decimals, null);
+      series.updateLegendValues(formatter, panel.decimals, null);
     } else if (_.isNumber(axis.decimals)) {
-      series.updateLegendValues(formater, axis.decimals + 1, null);
+      series.updateLegendValues(formatter, axis.decimals + 1, null);
     } else {
       // auto decimals
       // legend and tooltip gets one more decimal precision
@@ -45,7 +46,7 @@ export function updateLegendValues(data: TimeSeries[], panel, height) {
       const { datamin, datamax } = getDataMinMax(data);
       const { tickDecimals, scaledDecimals } = getFlotTickDecimals(datamin, datamax, axis, height);
       const tickDecimalsPlusOne = (tickDecimals || -1) + 1;
-      series.updateLegendValues(formater, tickDecimalsPlusOne, scaledDecimals + 2);
+      series.updateLegendValues(formatter, tickDecimalsPlusOne, scaledDecimals + 2);
     }
   }
 }
@@ -105,7 +106,7 @@ export default class TimeSeries {
     this.aliasEscaped = _.escape(opts.alias);
     this.color = opts.color;
     this.bars = { fillColor: opts.color };
-    this.valueFormater = kbn.valueFormats.none;
+    this.valueFormater = getValueFormat('none');
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;

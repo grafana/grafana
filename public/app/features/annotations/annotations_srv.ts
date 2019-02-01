@@ -10,7 +10,7 @@ import coreModule from 'app/core/core_module';
 import { makeRegions, dedupAnnotations } from './events_processing';
 
 // Types
-import { DashboardModel } from '../dashboard/dashboard_model';
+import { DashboardModel } from '../dashboard/state/DashboardModel';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;

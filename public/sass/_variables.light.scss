@@ -311,7 +311,8 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($popover-help-color, 5%);
 $graph-tooltip-bg: $gray-5;
 
-$tooltipBackground: $popover-help-bg;
+$tooltipBackground: $gray-1;
+$tooltipColor: $gray-7;
 $tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
 $tooltipBackgroundError: $brand-danger;
 $tooltipBackgroundBrand: $brand-primary;
@@ -399,8 +400,8 @@ $panel-editor-tabs-line-color: $dark-5;
 $panel-editor-viz-item-bg-hover: lighten($blue, 62%);
 $panel-editor-viz-item-bg-hover-active: lighten($orange, 34%);
 
-$panel-options-group-border: 1px solid $gray-6;
-$panel-options-group-header-bg: linear-gradient(0deg, $gray-6, $gray-7);
+$panel-options-group-border: none;
+$panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: lighten($blue, 62%);
 $panel-grid-placeholder-shadow: 0 0 4px $blue-light;

@@ -203,7 +203,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialQueries,
         showingStartPage,
         supportsGraph,
         supportsLogs,
@@ -217,7 +216,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         StartPage,
         datasourceInstance,
         history,
-        initialQueries,
         showingStartPage,
         supportsGraph,
         supportsLogs,
@@ -226,7 +224,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         datasourceMissing: false,
         datasourceError: null,
         logsHighlighterExpressions: undefined,
-        modifiedQueries: initialQueries.slice(),
         queryTransactions: [],
       };
     }
@@ -294,7 +291,6 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
 
       // Append new transaction
       const nextQueryTransactions: QueryTransaction[] = [...remainingTransactions, transaction];
-
 
       return {
         ...state,
@@ -416,6 +412,14 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       );
 
       return { ...state, ...results, queryTransactions: nextQueryTransactions, showingTable };
+    }
+
+    case ActionTypes.QueriesImported: {
+      return {
+        ...state,
+        initialQueries: action.payload.queries,
+        modifiedQueries: action.payload.queries.slice(),
+      };
     }
   }
 

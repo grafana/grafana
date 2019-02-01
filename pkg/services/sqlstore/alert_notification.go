@@ -85,7 +85,7 @@ func GetAlertNotificationsWithUidToSend(query *m.GetAlertNotificationsWithUidToS
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(`SELECT										
+	sql.WriteString(`SELECT
 										alert_notification.id,
 										alert_notification.uid,
 										alert_notification.org_id,
@@ -276,7 +276,7 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 
 func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUid()
+		uid := util.GenerateShortUID()
 		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&m.AlertNotification{})
 		if err != nil {
 			return "", err

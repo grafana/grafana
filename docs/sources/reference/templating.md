@@ -245,6 +245,11 @@ summarize($myinterval, sum, false)
 
 Grafana has global built-in variables that can be used in expressions in the query editor.
 
+### Time range variables
+
+Grafana has two built in time range variables in `$__from` and `$__to`. They are currently always interpolated
+as epoch milliseconds. These variables are only available in Grafana v6.0 and above.
+
 ### The $__interval Variable
 
 This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import Page from 'app/core/components/Page/Page';
 import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
@@ -19,6 +19,7 @@ export interface Props {
   togglePauseAlertRule: typeof togglePauseAlertRule;
   stateFilter: string;
   search: string;
+  isLoading: boolean;
 }
 
 export class AlertRuleList extends PureComponent<Props, any> {
@@ -54,9 +55,9 @@ export class AlertRuleList extends PureComponent<Props, any> {
     return 'all';
   }
 
-  onStateFilterChanged = event => {
+  onStateFilterChanged = (evt: React.ChangeEvent<HTMLSelectElement>) => {
     this.props.updateLocation({
-      query: { state: event.target.value },
+      query: { state: evt.target.value },
     });
   };
 
@@ -68,8 +69,8 @@ export class AlertRuleList extends PureComponent<Props, any> {
     });
   };
 
-  onSearchQueryChange = event => {
-    const { value } = event.target;
+  onSearchQueryChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = evt.target;
     this.props.setSearchQuery(value);
   };
 
@@ -77,7 +78,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
     this.props.togglePauseAlertRule(rule.id, { paused: rule.state !== 'paused' });
   };
 
-  alertStateFilterOption = ({ text, value }) => {
+  alertStateFilterOption = ({ text, value }: { text: string; value: string; }) => {
     return (
       <option key={value} value={value}>
         {text}
@@ -86,12 +87,11 @@ export class AlertRuleList extends PureComponent<Props, any> {
   };
 
   render() {
-    const { navModel, alertRules, search } = this.props;
+    const { navModel, alertRules, search, isLoading } = this.props;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
               <label className="gf-form--has-input-icon gf-form--grow">
@@ -131,8 +131,8 @@ export class AlertRuleList extends PureComponent<Props, any> {
               ))}
             </ol>
           </section>
-        </div>
-      </div>
+        </Page.Contents>
+      </Page>
     );
   }
 }
@@ -142,6 +142,7 @@ const mapStateToProps = (state: StoreState) => ({
   alertRules: getAlertRuleItems(state.alertRules),
   stateFilter: state.location.query.state,
   search: getSearchQuery(state.alertRules),
+  isLoading: state.alertRules.isLoading
 });
 
 const mapDispatchToProps = {

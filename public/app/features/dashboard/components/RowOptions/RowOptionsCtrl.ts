@@ -24,7 +24,7 @@ export class RowOptionsCtrl {
 export function rowOptionsDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/partials/row_options.html',
+    templateUrl: 'public/app/features/dashboard/components/RowOptions/template.html',
     controller: RowOptionsCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

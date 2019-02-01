@@ -151,7 +151,7 @@ func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent
 func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*userAuthToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	if setting.Env == setting.DEV {
-		s.log.Info("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
+		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
 	}
 
 	expireBefore := getTime().Add(time.Duration(-86400*s.Cfg.LoginCookieMaxDays) * time.Second).Unix()

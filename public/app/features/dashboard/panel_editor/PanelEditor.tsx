@@ -11,12 +11,11 @@ import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
 import { AngularComponent } from 'app/core/services/AngularLoader';
 
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../state/PanelModel';
+import { DashboardModel } from '../state/DashboardModel';
 import { PanelPlugin } from 'app/types/plugins';
 
 import { Tooltip } from '@grafana/ui';
-import { Themes } from '@grafana/ui/src/components/Tooltip/Tooltip';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -102,17 +101,6 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
 
     return (
       <div className="panel-editor-container__editor">
-        {
-          // <div className="panel-editor__close">
-          //   <i className="fa fa-arrow-left" />
-          // </div>
-          // <div className="panel-editor-resizer">
-          //   <div className="panel-editor-resizer__handle">
-          //     <div className="panel-editor-resizer__handle-dots" />
-          //   </div>
-          // </div>
-        }
-
         <div className="panel-editor-tabs">
           {tabs.map(tab => {
             return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
@@ -139,7 +127,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
       <a className={tabClasses}>
-        <Tooltip content={`${tab.text}`} placement="auto" theme={Themes.Brand}>
+        <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>
       </a>

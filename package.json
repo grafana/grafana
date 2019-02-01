@@ -5,7 +5,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "6.0.0-pre1",
+  "version": "6.0.0-prebeta2",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -25,7 +25,9 @@
     "@types/node": "^8.0.31",
     "@types/react": "^16.7.6",
     "@types/react-dom": "^16.0.9",
+    "@types/react-grid-layout": "^0.16.6",
     "@types/react-select": "^2.0.4",
+    "@types/react-virtualized": "^9.18.12",
     "angular-mocks": "1.6.6",
     "autoprefixer": "^6.4.0",
     "axios": "^0.17.1",
@@ -69,6 +71,7 @@
     "load-grunt-tasks": "3.5.2",
     "mini-css-extract-plugin": "^0.4.0",
     "mocha": "^4.0.1",
+    "monaco-editor": "^0.15.6",
     "ng-annotate-loader": "^0.6.1",
     "ng-annotate-webpack-plugin": "^0.3.0",
     "ngtemplate-loader": "^2.0.1",
@@ -82,6 +85,7 @@
     "prettier": "1.9.2",
     "react-hot-loader": "^4.3.6",
     "react-test-renderer": "^16.5.0",
+    "regexp-replace-loader": "^1.0.1",
     "sass-lint": "^1.10.2",
     "sass-loader": "^7.0.1",
     "sinon": "1.17.6",
@@ -114,7 +118,8 @@
     "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
-    "precommit": "grunt precommit"
+    "precommit": "grunt precommit",
+    "storybook": "cd packages/grafana-ui && yarn storybook"
   },
   "husky": {
     "hooks": {

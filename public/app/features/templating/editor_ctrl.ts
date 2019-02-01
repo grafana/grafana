@@ -135,7 +135,7 @@ export class VariableEditorCtrl {
         $scope.runQuery().then(() => {
           $scope.reset();
           $scope.mode = 'list';
-          templateSrv.updateTemplateData();
+          templateSrv.updateIndex();
         });
       }
     };

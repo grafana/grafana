@@ -2,7 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel } from '../state/DashboardModel';
 
 // represents the transient view state
 // like fullscreen panel & edit

@@ -23,6 +23,7 @@ const (
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 	DS_STACKDRIVER   = "stackdriver"
+	DS_AZURE_MONITOR = "azure-monitor"
 )
 
 var (
@@ -73,6 +74,7 @@ var knownDatasourcePlugins = map[string]bool{
 	DS_MYSQL:                              true,
 	DS_MSSQL:                              true,
 	DS_STACKDRIVER:                        true,
+	DS_AZURE_MONITOR:                      true,
 	"opennms":                             true,
 	"abhisant-druid-datasource":           true,
 	"dalmatinerdb-datasource":             true,

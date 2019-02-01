@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { AutoSizer } from 'react-virtualized';
 
 // Services
-import { getTimeSrv, TimeSrv } from '../time_srv';
+import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -12,15 +12,16 @@ import { DataPanel } from './DataPanel';
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
+import { profiler } from 'app/core/profiler';
 
 // Types
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange } from '@grafana/ui';
+import { TimeRange, LoadingState } from '@grafana/ui';
 
 import variables from 'sass/_variables.scss';
 import templateSrv from 'app/features/templating/template_srv';
+import { DataQueryResponse } from '@grafana/ui/src';
 
 export interface Props {
   panel: PanelModel;
@@ -83,16 +84,48 @@ export class PanelChrome extends PureComponent<Props, State> {
     return templateSrv.replace(value, this.props.panel.scopedVars, format);
   };
 
+  onDataResponse = (dataQueryResponse: DataQueryResponse) => {
+    if (this.props.dashboard.isSnapshot()) {
+      this.props.panel.snapshotData = dataQueryResponse.data;
+    }
+  };
+
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
+  renderPanel(loading, timeSeries, width, height): JSX.Element {
+    const { panel, plugin } = this.props;
+    const { timeRange, renderCounter } = this.state;
+    const PanelComponent = plugin.exports.Panel;
+
+    // This is only done to increase a counter that is used by backend
+    // image rendering (phantomjs/headless chrome) to know when to capture image
+    if (loading === LoadingState.Done) {
+      profiler.renderingCompleted(panel.id);
+    }
+
+    return (
+      <div className="panel-content">
+        <PanelComponent
+          loading={loading}
+          timeSeries={timeSeries}
+          timeRange={timeRange}
+          options={panel.getOptions(plugin.exports.PanelDefaults)}
+          width={width - 2 * variables.panelHorizontalPadding}
+          height={height - PANEL_HEADER_HEIGHT - variables.panelVerticalPadding}
+          renderCounter={renderCounter}
+          onInterpolate={this.onInterpolate}
+        />
+      </div>
+    );
+  }
+
   render() {
-    const { panel, dashboard, plugin } = this.props;
-    const { refreshCounter, timeRange, timeInfo, renderCounter } = this.state;
+    const { panel, dashboard } = this.props;
+    const { refreshCounter, timeRange, timeInfo } = this.state;
 
     const { datasource, targets, transparent } = panel;
-    const PanelComponent = plugin.exports.Panel;
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
     return (
       <AutoSizer>
@@ -112,32 +145,23 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
               />
-
-              <DataPanel
-                datasource={datasource}
-                queries={targets}
-                timeRange={timeRange}
-                isVisible={this.isVisible}
-                widthPixels={width}
-                refreshCounter={refreshCounter}
-              >
-                {({ loading, timeSeries }) => {
-                  return (
-                    <div className="panel-content">
-                      <PanelComponent
-                        loading={loading}
-                        timeSeries={timeSeries}
-                        timeRange={timeRange}
-                        options={panel.getOptions(plugin.exports.PanelDefaults)}
-                        width={width - 2 * variables.panelHorizontalPadding}
-                        height={height - PANEL_HEADER_HEIGHT - variables.panelVerticalPadding}
-                        renderCounter={renderCounter}
-                        onInterpolate={this.onInterpolate}
-                      />
-                    </div>
-                  );
-                }}
-              </DataPanel>
+              {panel.snapshotData ? (
+                this.renderPanel(false, panel.snapshotData, width, height)
+              ) : (
+                <DataPanel
+                  datasource={datasource}
+                  queries={targets}
+                  timeRange={timeRange}
+                  isVisible={this.isVisible}
+                  widthPixels={width}
+                  refreshCounter={refreshCounter}
+                  onDataResponse={this.onDataResponse}
+                >
+                  {({ loading, panelData }) => {
+                    return this.renderPanel(loading, panelData.timeSeries, width, height);
+                  }}
+                </DataPanel>
+              )}
             </div>
           );
         }}

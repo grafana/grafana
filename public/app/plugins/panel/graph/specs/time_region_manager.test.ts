@@ -43,6 +43,25 @@ describe('TimeRegionManager', () => {
     });
   }
 
+  describe('When colors missing in config', () => {
+    plotOptionsScenario('should not throw an error when fillColor is undefined', ctx => {
+      const regions = [
+        { fromDayOfWeek: 1, toDayOfWeek: 1, fill: true, line: true, lineColor: '#ffffff', colorMode: 'custom' },
+      ];
+      const from = moment('2018-01-01T00:00:00+01:00');
+      const to = moment('2018-01-01T23:59:00+01:00');
+      expect(() => ctx.setup(regions, from, to)).not.toThrow();
+    });
+    plotOptionsScenario('should not throw an error when lineColor is undefined', ctx => {
+      const regions = [
+        { fromDayOfWeek: 1, toDayOfWeek: 1, fill: true, fillColor: '#ffffff', line: true, colorMode: 'custom' },
+      ];
+      const from = moment('2018-01-01T00:00:00+01:00');
+      const to = moment('2018-01-01T23:59:00+01:00');
+      expect(() => ctx.setup(regions, from, to)).not.toThrow();
+    });
+  });
+
   describe('When creating plot markings using local time', () => {
     plotOptionsScenario('for day of week region', ctx => {
       const regions = [{ fromDayOfWeek: 1, toDayOfWeek: 1, fill: true, line: true, colorMode: 'red' }];

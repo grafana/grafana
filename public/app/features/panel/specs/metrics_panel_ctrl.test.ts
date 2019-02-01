@@ -11,7 +11,7 @@ jest.mock('app/core/config', () => {
 });
 
 import q from 'q';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 
 describe('MetricsPanelCtrl', () => {

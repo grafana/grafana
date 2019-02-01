@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { DashboardModel } from '../dashboard/dashboard_model';
+import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { Props, TestRuleResult } from './TestRuleResult';
 
 jest.mock('app/core/services/backend_srv', () => ({

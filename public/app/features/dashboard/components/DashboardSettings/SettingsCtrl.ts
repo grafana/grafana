@@ -1,5 +1,5 @@
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DashboardModel } from '../../dashboard_model';
+import { DashboardModel } from '../../state/DashboardModel';
 import $ from 'jquery';
 import _ from 'lodash';
 import angular from 'angular';

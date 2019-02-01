@@ -196,6 +196,23 @@ func (ss *SqlStore) ensureAdminUser() error {
 	return err
 }
 
+func (ss *SqlStore) buildExtraConnectionString(sep rune) string {
+	if ss.dbCfg.UrlQueryParams == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	for key, values := range ss.dbCfg.UrlQueryParams {
+		for _, value := range values {
+			sb.WriteRune(sep)
+			sb.WriteString(key)
+			sb.WriteRune('=')
+			sb.WriteString(value)
+		}
+	}
+	return sb.String()
+}
+
 func (ss *SqlStore) buildConnectionString() (string, error) {
 	cnnstr := ss.dbCfg.ConnectionString
 
@@ -222,8 +239,10 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			mysql.RegisterTLSConfig("custom", tlsCert)
 			cnnstr += "&tls=custom"
 		}
+
+		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.POSTGRES:
-		host, port, err := util.SplitIpPort(ss.dbCfg.Host, "5432")
+		host, port, err := util.SplitIPPort(ss.dbCfg.Host, "5432")
 		if err != nil {
 			return "", err
 		}
@@ -234,6 +253,8 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			ss.dbCfg.User = "''"
 		}
 		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.dbCfg.User, ss.dbCfg.Pwd, host, port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
+
+		cnnstr += ss.buildExtraConnectionString(' ')
 	case migrator.SQLITE:
 		// special case for tests
 		if !filepath.IsAbs(ss.dbCfg.Path) {
@@ -241,6 +262,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
+		cnnstr += ss.buildExtraConnectionString('&')
 	default:
 		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
 	}
@@ -297,6 +319,8 @@ func (ss *SqlStore) readConfig() {
 			ss.dbCfg.User = userInfo.Username()
 			ss.dbCfg.Pwd, _ = userInfo.Password()
 		}
+
+		ss.dbCfg.UrlQueryParams = dbURL.Query()
 	} else {
 		ss.dbCfg.Type = sec.Key("type").String()
 		ss.dbCfg.Host = sec.Key("host").String()
@@ -406,4 +430,5 @@ type DatabaseConfig struct {
 	MaxIdleConn      int
 	ConnMaxLifetime  int
 	CacheMode        string
+	UrlQueryParams   map[string][]string
 }

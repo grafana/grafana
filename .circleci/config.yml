@@ -333,6 +333,7 @@ jobs:
     docker:
     - image: grafana/grafana-ci-deploy:1.2.0
     steps:
+      - checkout
       - attach_workspace:
          at: .
       - run:

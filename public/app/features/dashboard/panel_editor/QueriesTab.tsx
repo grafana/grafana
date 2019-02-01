@@ -16,8 +16,8 @@ import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 
 // Types
-import { PanelModel } from '../panel_model';
-import { DashboardModel } from '../dashboard_model';
+import { PanelModel } from '../state/PanelModel';
+import { DashboardModel } from '../state/DashboardModel';
 import { DataQuery, DataSourceSelectItem } from '@grafana/ui/src/types';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 

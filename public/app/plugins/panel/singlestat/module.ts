@@ -8,8 +8,7 @@ import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { getColorFromHexRgbOrName } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/ui';
+import { GrafanaTheme, getValueFormat, getColorFromHexRgbOrName } from '@grafana/ui';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -192,7 +191,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data.valueRounded = 0;
     } else {
       const decimalInfo = this.getDecimalsForValue(data.value);
-      const formatFunc = kbn.valueFormats[this.panel.format];
+      const formatFunc = getValueFormat(this.panel.format);
+
       data.valueFormatted = formatFunc(
         datapoint[this.panel.tableColumn],
         decimalInfo.decimals,
@@ -301,6 +301,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     if (this.series && this.series.length > 0) {
       const lastPoint = _.last(this.series[0].datapoints);
       const lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
+      const formatFunc = getValueFormat(this.panel.format);
 
       if (this.panel.valueName === 'name') {
         data.value = 0;
@@ -311,7 +312,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueFormatted = _.escape(lastValue);
         data.valueRounded = 0;
       } else if (this.panel.valueName === 'last_time') {
-        const formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
         data.valueFormatted = formatFunc(data.value, 0, 0, this.dashboard.isTimezoneUtc());
@@ -320,7 +320,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.flotpairs = this.series[0].flotpairs;
 
         const decimalInfo = this.getDecimalsForValue(data.value);
-        const formatFunc = kbn.valueFormats[this.panel.format];
 
         data.valueFormatted = formatFunc(
           data.value,

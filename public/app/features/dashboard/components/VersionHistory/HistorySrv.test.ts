@@ -1,6 +1,6 @@
 import { versions, restore } from './__mocks__/history';
 import { HistorySrv } from './HistorySrv';
-import { DashboardModel } from '../../dashboard_model';
+import { DashboardModel } from '../../state/DashboardModel';
 jest.mock('app/core/store');
 
 describe('historySrv', () => {

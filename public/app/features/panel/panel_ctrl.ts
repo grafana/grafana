@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import $ from 'jquery';
 import Remarkable from 'remarkable';
 
 import config from 'app/core/config';
@@ -13,7 +12,7 @@ import {
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
@@ -31,8 +30,8 @@ export class PanelCtrl {
   height: any;
   containerHeight: any;
   events: Emitter;
-  timing: any;
   loading: boolean;
+  timing: any;
   maxPanelsPerRowOptions: number[];
 
   constructor($scope, $injector) {
@@ -42,7 +41,7 @@ export class PanelCtrl {
     this.$timeout = $injector.get('$timeout');
     this.editorTabs = [];
     this.events = this.panel.events;
-    this.timing = {};
+    this.timing = {}; // not used but here to not break plugins
 
     const plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -59,7 +58,7 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    profiler.renderingCompleted(this.panel.id, this.timing);
+    profiler.renderingCompleted(this.panel.id);
   }
 
   refresh() {
@@ -200,24 +199,12 @@ export class PanelCtrl {
     return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
-  calculatePanelHeight() {
-    if (this.panel.isEditing) {
-      this.containerHeight = $('.panel-wrapper--edit').height();
-    } else if (this.panel.fullscreen)  {
-      this.containerHeight = $('.panel-wrapper--view').height();
-    } else {
-      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
-    }
-
-    if (this.panel.soloMode) {
-      this.containerHeight = $(window).height();
-    }
-
+  calculatePanelHeight(containerHeight) {
+    this.containerHeight = containerHeight;
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);
   }
 
   render(payload?) {
-    this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 

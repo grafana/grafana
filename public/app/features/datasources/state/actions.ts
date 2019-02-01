@@ -8,121 +8,36 @@ import { UpdateLocationAction } from 'app/core/actions/location';
 import { buildNavModel } from './navModel';
 import { DataSourceSettings } from '@grafana/ui/src/types';
 import { Plugin, StoreState } from 'app/types';
+import { actionCreatorFactory } from 'app/core/redux';
+import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
 
-export enum ActionTypes {
-  LoadDataSources = 'LOAD_DATA_SOURCES',
-  LoadDataSourceTypes = 'LOAD_DATA_SOURCE_TYPES',
-  LoadDataSource = 'LOAD_DATA_SOURCE',
-  LoadDataSourceMeta = 'LOAD_DATA_SOURCE_META',
-  SetDataSourcesSearchQuery = 'SET_DATA_SOURCES_SEARCH_QUERY',
-  SetDataSourcesLayoutMode = 'SET_DATA_SOURCES_LAYOUT_MODE',
-  SetDataSourceTypeSearchQuery = 'SET_DATA_SOURCE_TYPE_SEARCH_QUERY',
-  SetDataSourceName = 'SET_DATA_SOURCE_NAME',
-  SetIsDefault = 'SET_IS_DEFAULT',
-}
+export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
 
-interface LoadDataSourcesAction {
-  type: ActionTypes.LoadDataSources;
-  payload: DataSourceSettings[];
-}
+export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
 
-interface SetDataSourcesSearchQueryAction {
-  type: ActionTypes.SetDataSourcesSearchQuery;
-  payload: string;
-}
+export const dataSourceMetaLoaded = actionCreatorFactory<Plugin>('LOAD_DATA_SOURCE_META').create();
 
-interface SetDataSourcesLayoutModeAction {
-  type: ActionTypes.SetDataSourcesLayoutMode;
-  payload: LayoutMode;
-}
+export const dataSourceTypesLoad = noPayloadActionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
 
-interface LoadDataSourceTypesAction {
-  type: ActionTypes.LoadDataSourceTypes;
-  payload: Plugin[];
-}
+export const dataSourceTypesLoaded = actionCreatorFactory<Plugin[]>('LOADED_DATA_SOURCE_TYPES').create();
 
-interface SetDataSourceTypeSearchQueryAction {
-  type: ActionTypes.SetDataSourceTypeSearchQuery;
-  payload: string;
-}
+export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
 
-interface LoadDataSourceAction {
-  type: ActionTypes.LoadDataSource;
-  payload: DataSourceSettings;
-}
+export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE').create();
 
-interface LoadDataSourceMetaAction {
-  type: ActionTypes.LoadDataSourceMeta;
-  payload: Plugin;
-}
+export const setDataSourceTypeSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCE_TYPE_SEARCH_QUERY').create();
 
-interface SetDataSourceNameAction {
-  type: ActionTypes.SetDataSourceName;
-  payload: string;
-}
+export const setDataSourceName = actionCreatorFactory<string>('SET_DATA_SOURCE_NAME').create();
 
-interface SetIsDefaultAction {
-  type: ActionTypes.SetIsDefault;
-  payload: boolean;
-}
-
-const dataSourcesLoaded = (dataSources: DataSourceSettings[]): LoadDataSourcesAction => ({
-  type: ActionTypes.LoadDataSources,
-  payload: dataSources,
-});
-
-const dataSourceLoaded = (dataSource: DataSourceSettings): LoadDataSourceAction => ({
-  type: ActionTypes.LoadDataSource,
-  payload: dataSource,
-});
-
-const dataSourceMetaLoaded = (dataSourceMeta: Plugin): LoadDataSourceMetaAction => ({
-  type: ActionTypes.LoadDataSourceMeta,
-  payload: dataSourceMeta,
-});
-
-const dataSourceTypesLoaded = (dataSourceTypes: Plugin[]): LoadDataSourceTypesAction => ({
-  type: ActionTypes.LoadDataSourceTypes,
-  payload: dataSourceTypes,
-});
-
-export const setDataSourcesSearchQuery = (searchQuery: string): SetDataSourcesSearchQueryAction => ({
-  type: ActionTypes.SetDataSourcesSearchQuery,
-  payload: searchQuery,
-});
-
-export const setDataSourcesLayoutMode = (layoutMode: LayoutMode): SetDataSourcesLayoutModeAction => ({
-  type: ActionTypes.SetDataSourcesLayoutMode,
-  payload: layoutMode,
-});
-
-export const setDataSourceTypeSearchQuery = (query: string): SetDataSourceTypeSearchQueryAction => ({
-  type: ActionTypes.SetDataSourceTypeSearchQuery,
-  payload: query,
-});
-
-export const setDataSourceName = (name: string) => ({
-  type: ActionTypes.SetDataSourceName,
-  payload: name,
-});
-
-export const setIsDefault = (state: boolean) => ({
-  type: ActionTypes.SetIsDefault,
-  payload: state,
-});
+export const setIsDefault = actionCreatorFactory<boolean>('SET_IS_DEFAULT').create();
 
 export type Action =
-  | LoadDataSourcesAction
-  | SetDataSourcesSearchQueryAction
-  | SetDataSourcesLayoutModeAction
   | UpdateLocationAction
-  | LoadDataSourceTypesAction
-  | SetDataSourceTypeSearchQueryAction
-  | LoadDataSourceAction
   | UpdateNavIndexAction
-  | LoadDataSourceMetaAction
-  | SetDataSourceNameAction
-  | SetIsDefaultAction;
+  | ActionOf<DataSourceSettings>
+  | ActionOf<DataSourceSettings[]>
+  | ActionOf<Plugin>
+  | ActionOf<Plugin[]>;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -167,6 +82,7 @@ export function addDataSource(plugin: Plugin): ThunkResult<void> {
 
 export function loadDataSourceTypes(): ThunkResult<void> {
   return async dispatch => {
+    dispatch(dataSourceTypesLoad());
     const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
     dispatch(dataSourceTypesLoaded(result));
   };

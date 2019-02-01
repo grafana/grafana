@@ -49,7 +49,7 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 		}
 	}
 
-	server, port, err := util.SplitIpPort(datasource.Url, "1433")
+	server, port, err := util.SplitIPPort(datasource.Url, "1433")
 	if err != nil {
 		return "", err
 	}
