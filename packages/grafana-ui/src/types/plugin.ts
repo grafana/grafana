@@ -41,11 +41,27 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   pluginExports?: PluginExports;
 }
 
+export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
+  modifyQuery?(query: TQuery, action: any): TQuery;
+  getHighlighterExpression?(query: TQuery): string;
+  languageProvider?: any;
+}
+
 export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
   datasource: DSType;
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
+}
+
+export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
+  datasource: DSType;
+  initialQuery: TQuery;
+  error?: string | JSX.Element;
+  hint?: QueryHint;
+  history: any[];
+  onExecuteQuery?: () => void;
+  onQueryChange?: (value: TQuery) => void;
 }
 
 export interface PluginExports {
@@ -55,7 +71,7 @@ export interface PluginExports {
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
-  ExploreQueryField?: any;
+  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, DataQuery>>;
   ExploreStartPage?: any;
 
   // Panel plugin

@@ -12,12 +12,12 @@ import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explor
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import LokiDatasource from '../datasource';
 
 // Types
 import { LokiQuery } from '../types';
-import { TypeaheadOutput } from 'app/types/explore';
+import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 import { makePromiseCancelable, CancelablePromise } from 'app/core/utils/CancelablePromise';
+import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -65,15 +65,8 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface LokiQueryFieldProps {
-  datasource: LokiDatasource;
-  error?: string | JSX.Element;
-  hint?: any;
-  history?: any[];
-  initialQuery?: LokiQuery;
-  onClickHintFix?: (action: any) => void;
-  onPressEnter?: () => void;
-  onQueryChange?: (value: LokiQuery, override?: boolean) => void;
+interface LokiQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, LokiQuery> {
+  history: HistoryItem[];
 }
 
 interface LokiQueryFieldState {
@@ -98,14 +91,14 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onPressEnter }),
+      RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
         onlyIn: node => node.type === 'code_block',
         getSyntax: node => 'promql',
       }),
     ];
 
-    this.pluginsSearch = [RunnerPlugin({ handler: props.onPressEnter })];
+    this.pluginsSearch = [RunnerPlugin({ handler: props.onExecuteQuery })];
 
     this.state = {
       logLabelOptions: [],
@@ -169,21 +162,25 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialQuery, onQueryChange } = this.props;
+    const { initialQuery, onQueryChange, onExecuteQuery } = this.props;
     if (onQueryChange) {
       const query = {
         ...initialQuery,
         expr: value,
       };
-      onQueryChange(query, override);
+      onQueryChange(query);
+
+      if (override && onExecuteQuery) {
+        onExecuteQuery();
+      }
     }
   };
 
   onClickHintFix = () => {
-    const { hint, onClickHintFix } = this.props;
-    if (onClickHintFix && hint && hint.fix) {
-      onClickHintFix(hint.fix.action);
-    }
+    // const { hint, onClickHintFix } = this.props;
+    // if (onClickHintFix && hint && hint.fix) {
+    //   onClickHintFix(hint.fix.action);
+    // }
   };
 
   onUpdateLanguage = () => {
@@ -243,7 +240,8 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               initialQuery={initialQuery.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
-              onValueChanged={this.onChangeQuery}
+              onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.props.onExecuteQuery}
               placeholder="Enter a Loki query"
               portalOrigin="loki"
               syntaxLoaded={syntaxLoaded}

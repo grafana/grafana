@@ -4,7 +4,7 @@ import Cascader from 'rc-cascader';
 import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
-import { TypeaheadOutput } from 'app/types/explore';
+import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
@@ -13,6 +13,7 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
+import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -86,15 +87,8 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface PromQueryFieldProps {
-  datasource: any;
-  error?: string | JSX.Element;
-  initialQuery: PromQuery;
-  hint?: any;
-  history?: any[];
-  onClickHintFix?: (action: any) => void;
-  onPressEnter?: () => void;
-  onQueryChange?: (value: PromQuery, override?: boolean) => void;
+interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, PromQuery> {
+  history: HistoryItem[];
 }
 
 interface PromQueryFieldState {
@@ -116,7 +110,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onPressEnter }),
+      RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
         onlyIn: node => node.type === 'code_block',
         getSyntax: node => 'promql',
@@ -174,21 +168,25 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialQuery, onQueryChange } = this.props;
+    const { initialQuery, onQueryChange, onExecuteQuery } = this.props;
     if (onQueryChange) {
       const query: PromQuery = {
         ...initialQuery,
         expr: value,
       };
-      onQueryChange(query, override);
+      onQueryChange(query);
+
+      if (override && onExecuteQuery) {
+        onExecuteQuery();
+      }
     }
   };
 
   onClickHintFix = () => {
-    const { hint, onClickHintFix } = this.props;
-    if (onClickHintFix && hint && hint.fix) {
-      onClickHintFix(hint.fix.action);
-    }
+    // const { hint, onClickHintFix } = this.props;
+    // if (onClickHintFix && hint && hint.fix) {
+    //   onClickHintFix(hint.fix.action);
+    // }
   };
 
   onUpdateLanguage = () => {
@@ -264,7 +262,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               initialQuery={initialQuery.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
-              onValueChanged={this.onChangeQuery}
+              onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.props.onExecuteQuery}
               placeholder="Enter a PromQL query"
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}

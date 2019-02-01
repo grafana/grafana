@@ -33,10 +33,9 @@ export interface QueryFieldProps {
   cleanText?: (text: string) => string;
   disabled?: boolean;
   initialQuery: string | null;
-  onBlur?: () => void;
-  onFocus?: () => void;
+  onExecuteQuery?: () => void;
+  onQueryChange?: (value: string) => void;
   onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
-  onValueChanged?: (value: string) => void;
   onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
   placeholder?: string;
   portalOrigin?: string;
@@ -145,7 +144,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       if (documentChanged) {
         const textChanged = Plain.serialize(prevValue) !== Plain.serialize(value);
         if (textChanged && invokeParentOnValueChanged) {
-          this.handleChangeValue();
+          this.executeOnQueryChangeAndExecuteQueries();
         }
       }
     });
@@ -159,11 +158,15 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  handleChangeValue = () => {
+  executeOnQueryChangeAndExecuteQueries = () => {
     // Send text change to parent
-    const { onValueChanged } = this.props;
-    if (onValueChanged) {
-      onValueChanged(Plain.serialize(this.state.value));
+    const { onQueryChange, onExecuteQuery } = this.props;
+    if (onQueryChange) {
+      onQueryChange(Plain.serialize(this.state.value));
+    }
+
+    if (onExecuteQuery) {
+      onExecuteQuery();
     }
   };
 
@@ -311,7 +314,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
       return true;
     } else {
-      this.handleChangeValue();
+      this.executeOnQueryChangeAndExecuteQueries();
 
       return undefined;
     }
@@ -379,23 +382,16 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   };
 
   handleBlur = () => {
-    const { onBlur } = this.props;
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
     this.resetTimer = setTimeout(this.resetTypeahead, 100);
     // Disrupting placeholder entry wipes all remaining placeholders needing input
     this.placeholdersBuffer.clearPlaceholders();
-    if (onBlur) {
-      onBlur();
-    }
+
+    this.executeOnQueryChangeAndExecuteQueries();
   };
 
-  handleFocus = () => {
-    const { onFocus } = this.props;
-    if (onFocus) {
-      onFocus();
-    }
-  };
+  handleFocus = () => {};
 
   onClickMenu = (item: CompletionItem) => {
     // Manually triggering change

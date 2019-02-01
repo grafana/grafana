@@ -20,7 +20,7 @@ import {
 
 // Types
 import { StoreState } from 'app/types';
-import { RawTimeRange, DataQuery, QueryHint } from '@grafana/ui';
+import { RawTimeRange, DataQuery, ExploreDataSourceApi, QueryHint } from '@grafana/ui';
 import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 
@@ -37,7 +37,7 @@ interface QueryRowProps {
   changeQuery: typeof changeQuery;
   className?: string;
   exploreId: ExploreId;
-  datasourceInstance: any;
+  datasourceInstance: ExploreDataSourceApi;
   highlightLogsExpression: typeof highlightLogsExpression;
   history: HistoryItem[];
   index: number;
@@ -115,13 +115,15 @@ export class QueryRow extends PureComponent<QueryRowProps> {
           {QueryField ? (
             <QueryField
               datasource={datasourceInstance}
+              initialQuery={initialQuery}
+              onExecuteQuery={this.onExecuteQuery}
+              onQueryChange={this.onChangeQuery}
               error={queryError}
               hint={hint}
-              initialQuery={initialQuery}
               history={history}
-              onClickHintFix={this.onClickHintFix}
-              onPressEnter={this.onExecuteQuery}
-              onQueryChange={this.onChangeQuery}
+              // onClickHintFix={this.onClickHintFix}
+              // onPressEnter={this.onExecuteQuery}
+              // onQueryChange={this.onChangeQuery}
             />
           ) : (
             <QueryEditor
