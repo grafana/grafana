@@ -16,6 +16,8 @@ import (
 	"strings"
 )
 
+var logger log.Logger = log.New("middleware.jwt")
+
 // Read bytes from a URL, File, or directly from the string
 func getBytesForKeyfunc(cfg string) ([]byte, error) {
 	// Check if it points to a URL
@@ -58,28 +60,30 @@ func createKeyFunc(cfg string) (jwt.Keyfunc, error) {
 	// Try to parse as json
 	var parsed map[string]interface{}
 	if err := json.Unmarshal(bytes, &parsed); err == nil {
-
-		// The Google JWK format
-		if val, ok := parsed["keys"]; ok {
-			fmt.Printf("TODO Support JWK %+v\n", val)
-			return nil, fmt.Errorf("JWK Format not yet supported")
-		}
-
-		// The firebase format
+		// KID -> PublicKey
 		reg := make(map[string]*rsa.PublicKey)
-		for key, value := range parsed {
-			pkey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(value.(string)))
-			if err == nil {
-				reg[key] = pkey
+
+		// Check the standard JWK format
+		if val, ok := parsed["keys"]; ok {
+			// See: https://github.com/dgrijalva/jwt-go/issues/249
+			for _, v := range val.([]interface{}) {
+				fmt.Printf("TODO, get key from: %v\n", v)
+			}
+			return nil, fmt.Errorf("JWK not yet supported")
+
+			// Or the firebase style: KID -> PublicKey
+		} else {
+			for key, value := range parsed {
+				pkey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(value.(string)))
+				if err == nil {
+					reg[key] = pkey
+				}
 			}
 		}
+
 		if len(reg) > 0 {
 			return func(token *jwt.Token) (interface{}, error) {
 				kid := token.Header["kid"].(string)
-				if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-					alg := token.Header["alg"].(string)
-					return nil, fmt.Errorf("Unexpected signing method: %v", alg)
-				}
 				pkey, ok := reg[kid]
 				if !ok {
 					return nil, fmt.Errorf("Can not find KEY: %v", kid)
@@ -122,12 +126,20 @@ var keyFunc jwt.Keyfunc
 
 // Initialized once at startup
 func InitAuthJwtKey() {
-	log.Info("Initializing JWT Auth")
+	logger.Info("Initializing JWT Auth")
 
 	var err error
 	keyFunc, err = createKeyFunc(setting.AuthJwtSigningKey)
 	if err != nil {
-		log.Error(3, "Error Initializing JWT: %v", err)
+		logger.Error("Error Initializing JWT: %v", err)
+	}
+
+	if setting.AuthJwtHeader == "" && setting.AuthJwtCookie == "" {
+		logger.Error("JWT Auth must have either a header or cookie configured")
+	}
+
+	if setting.AuthJwtLoginClaim == "" && setting.AuthJwtEmailClaim == "" {
+		logger.Error("JWT Auth must have either a login or email claim configured")
 	}
 }
 
