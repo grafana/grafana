@@ -100,7 +100,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true]}]'
       );
     });
   });
@@ -125,7 +125,28 @@ describe('state functions', () => {
       };
       const serialized = serializeStateToUrlParam(state);
       const parsed = parseUrlState(serialized);
+      expect(state).toMatchObject(parsed);
+    });
 
+    it('can parse the compact serialized state into the original state', () => {
+      const state = {
+        ...DEFAULT_EXPLORE_STATE,
+        datasource: 'foo',
+        queries: [
+          {
+            expr: 'metric{test="a/b"}',
+          },
+          {
+            expr: 'super{foo="x/z"}',
+          },
+        ],
+        range: {
+          from: 'now - 5h',
+          to: 'now',
+        },
+      };
+      const serialized = serializeStateToUrlParam(state, true);
+      const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
   });

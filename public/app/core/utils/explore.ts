@@ -20,7 +20,6 @@ import {
   ResultType,
   QueryIntervals,
   QueryOptions,
-  ExploreUrlUIState,
 } from 'app/types/explore';
 
 export const DEFAULT_RANGE = {
@@ -154,11 +153,13 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: ((query: DataQuery) => object) = ({ key, refId, ...rest }) => rest;
 
+const isMetricSegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('expr');
+const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
+
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   if (initial) {
     try {
       const parsed = JSON.parse(decodeURI(initial));
-      // debugger
       if (Array.isArray(parsed)) {
         if (parsed.length <= 3) {
           throw new Error('Error parsing compact URL state for Explore.');
@@ -168,8 +169,24 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           to: parsed[1],
         };
         const datasource = parsed[2];
-        const queries = parsed.slice(3);
-        return { datasource, queries, range, ui: DEFAULT_UI_STATE };
+        let queries = [],
+          ui;
+
+        parsed.slice(3).forEach(segment => {
+          if (isMetricSegment(segment)) {
+            queries = [...queries, segment];
+          }
+
+          if (isUISegment(segment)) {
+            ui = {
+              showingGraph: segment.ui[0],
+              showingLogs: segment.ui[1],
+              showingTable: segment.ui[2],
+            };
+          }
+        });
+
+        return { datasource, queries, range, ui };
       }
       return parsed;
     } catch (e) {
@@ -179,14 +196,15 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   return { datasource: null, queries: [], range: DEFAULT_RANGE, ui: DEFAULT_UI_STATE };
 }
 
-const serializeUIState = (state: ExploreUrlUIState) => {
-  return Object.keys(state).map((key) => ({ [key]: state[key] }));
-};
-
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
-
   if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries, ...serializeUIState(urlState.ui)]);
+    return JSON.stringify([
+      urlState.range.from,
+      urlState.range.to,
+      urlState.datasource,
+      ...urlState.queries,
+      { ui: [!!urlState.ui.showingGraph, !!urlState.ui.showingLogs, !!urlState.ui.showingTable] },
+    ]);
   }
   return JSON.stringify(urlState);
 }

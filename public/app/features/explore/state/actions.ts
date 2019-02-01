@@ -38,6 +38,7 @@ import {
   ResultType,
   QueryOptions,
   QueryTransaction,
+  ExploreUIState,
 } from 'app/types/explore';
 
 import {
@@ -154,7 +155,8 @@ export function initializeExplore(
   queries: DataQuery[],
   range: RawTimeRange,
   containerWidth: number,
-  eventBridge: Emitter
+  eventBridge: Emitter,
+  ui: ExploreUIState
 ): ThunkResult<void> {
   return async dispatch => {
     const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
@@ -175,6 +177,7 @@ export function initializeExplore(
         exploreDatasources,
         queries,
         range,
+        ui,
       },
     });
 
@@ -258,10 +261,7 @@ export const queriesImported = (exploreId: ExploreId, queries: DataQuery[]): Que
  * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
  * e.g., Prometheus -> Loki queries.
  */
-export const loadDatasourceSuccess = (
-  exploreId: ExploreId,
-  instance: any,
-): LoadDatasourceSuccessAction => {
+export const loadDatasourceSuccess = (exploreId: ExploreId, instance: any): LoadDatasourceSuccessAction => {
   // Capabilities
   const supportsGraph = instance.meta.metrics;
   const supportsLogs = instance.meta.logs;
@@ -766,6 +766,11 @@ export function stateSave() {
       datasource: left.datasourceInstance.name,
       queries: left.modifiedQueries.map(clearQueryKeys),
       range: left.range,
+      ui: {
+        showingGraph: left.showingGraph,
+        showingLogs: left.showingLogs,
+        showingTable: left.showingTable,
+      },
     };
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
@@ -773,48 +778,64 @@ export function stateSave() {
         datasource: right.datasourceInstance.name,
         queries: right.modifiedQueries.map(clearQueryKeys),
         range: right.range,
+        ui: {
+          showingGraph: right.showingGraph,
+          showingLogs: right.showingLogs,
+          showingTable: right.showingTable,
+        },
       };
+
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
     }
+
     dispatch(updateLocation({ query: urlStates }));
   };
 }
 
 /**
- * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
+ * Creates action to collapse graph/logs/table panel. When panel is collapsed,
+ * queries won't be run
  */
-export function toggleGraph(exploreId: ExploreId): ThunkResult<void> {
+const togglePanelActionCreator = (type: ActionTypes.ToggleGraph | ActionTypes.ToggleTable | ActionTypes.ToggleLogs) => (
+  exploreId: ExploreId
+) => {
   return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.ToggleGraph, payload: { exploreId } });
-    if (getState().explore[exploreId].showingGraph) {
+    let shouldRunQueries;
+    dispatch({ type, payload: { exploreId } });
+    dispatch(stateSave());
+
+    switch (type) {
+      case ActionTypes.ToggleGraph:
+        shouldRunQueries = getState().explore[exploreId].showingGraph;
+        break;
+      case ActionTypes.ToggleLogs:
+        shouldRunQueries = getState().explore[exploreId].showingLogs;
+        break;
+      case ActionTypes.ToggleTable:
+        shouldRunQueries = getState().explore[exploreId].showingTable;
+        break;
+    }
+
+    if (shouldRunQueries) {
       dispatch(runQueries(exploreId));
     }
   };
-}
+};
+
+/**
+ * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
+ */
+export const toggleGraph = togglePanelActionCreator(ActionTypes.ToggleGraph);
 
 /**
  * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
  */
-export function toggleLogs(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.ToggleLogs, payload: { exploreId } });
-    if (getState().explore[exploreId].showingLogs) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
+export const toggleLogs = togglePanelActionCreator(ActionTypes.ToggleLogs);
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
  */
-export function toggleTable(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.ToggleTable, payload: { exploreId } });
-    if (getState().explore[exploreId].showingTable) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
+export const toggleTable = togglePanelActionCreator(ActionTypes.ToggleTable);
 
 /**
  * Resets state for explore.
