@@ -5,6 +5,7 @@ import { NavModel } from 'app/types';
 import { DataSourceSettings } from '@grafana/ui/src/types';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';
+import { setDataSourcesSearchQuery, setDataSourcesLayoutMode } from './state/actions';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -13,16 +14,16 @@ const setup = (propOverrides?: object) => {
     loadDataSources: jest.fn(),
     navModel: {
       main: {
-        text: 'Configuration'
+        text: 'Configuration',
       },
       node: {
-        text: 'Data Sources'
-      }
+        text: 'Data Sources',
+      },
     } as NavModel,
     dataSourcesCount: 0,
     searchQuery: '',
-    setDataSourcesSearchQuery: jest.fn(),
-    setDataSourcesLayoutMode: jest.fn(),
+    setDataSourcesSearchQuery,
+    setDataSourcesLayoutMode,
     hasFetched: false,
   };
 
