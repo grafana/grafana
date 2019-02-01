@@ -81,7 +81,7 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
     const { valueMappings } = this.state;
 
     return (
-      <PanelOptionsGroup title="Add mapping" onAdd={this.addMapping}>
+      <PanelOptionsGroup title="Add value mapping" onAdd={this.addMapping}>
           {valueMappings.length > 0 &&
             valueMappings.map((valueMapping, index) => (
               <MappingRow
