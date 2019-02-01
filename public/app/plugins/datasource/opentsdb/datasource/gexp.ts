@@ -34,7 +34,9 @@ export default class GexpQuery {
       for (let qIndex = 0; qIndex < queries.length; qIndex++) {
         const queriesPromise = this.performTimeSeriesQuery(qIndex, queries[qIndex], start, end, this.options).then(
           response => {
-            const targets = this.options.targets;
+            const targets = this.options.targets.filter(target => {
+              return target.queryType === 'gexp';
+            });
 
             const targetIndex = this.mapMetricsToTargets(response.config.url);
 

@@ -20,21 +20,8 @@ export default class TsdbQuery {
   getPromises() {
     const start = this.convertToTSDBTime(this.options.rangeRaw.from, false);
     const end = this.convertToTSDBTime(this.options.rangeRaw.to, true);
-    const qs = [];
 
-    _.each(this.options.targets, target => {
-      if (!target.metric && !target.gexp && !target.exp) {
-        return;
-      }
-      if (!target.queryType) {
-        target.queryType = 'metric';
-      }
-      if (target.queryType === 'metric') {
-        qs.push(this.convertTargetToQuery(target, this.options));
-      }
-    });
-
-    const queries = _.compact(qs);
+    const queries = _.compact(this.qs);
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {

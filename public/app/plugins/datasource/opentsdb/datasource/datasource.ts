@@ -43,7 +43,7 @@ export default class OpenTsDatasource {
     const gq = new GexpQuery(this);
 
     _.each(options.targets, target => {
-      if (!target.metric && !target.gexp) {
+      if (!target.metric && !target.gexp && !target.exp) {
         return;
       }
       if (!target.queryType) {
@@ -64,21 +64,6 @@ export default class OpenTsDatasource {
       d.resolve({ data: [] });
       return d.promise;
     }
-
-    const queries = [tq.qs].concat(gq.qs).concat(eq.qs);
-
-    const groupByTags = {};
-    _.each(queries, query => {
-      if (query.filters && query.filters.length > 0) {
-        _.each(query.filters, val => {
-          groupByTags[val.tagk] = true;
-        });
-      } else {
-        _.each(query.tags, (val, key) => {
-          groupByTags[key] = true;
-        });
-      }
-    });
 
     let tsdbQueryPromises = [];
     if (tq.qs.length > 0) {
