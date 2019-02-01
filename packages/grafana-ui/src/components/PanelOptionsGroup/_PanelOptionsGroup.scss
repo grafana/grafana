@@ -11,12 +11,25 @@
   background: $panel-options-group-header-bg;
   position: relative;
   border-radius: $border-radius $border-radius 0 0;
+  display: flex;
 
   .btn {
     position: absolute;
     right: 0;
-    top: 0px;
+    top: 0;
   }
+}
+.panel-options-group__add {
+  background-color: $btn-success-bg;
+  border-radius: 50px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.panel-options-group__title {
+  margin-left: 8px;
 }
 
 .panel-options-group__body {
