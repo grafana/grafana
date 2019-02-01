@@ -73,7 +73,7 @@ func TestUserAuthToken(t *testing.T) {
 
 			Convey("signing out an none existing session should return an error", func() {
 				httpreq := &http.Request{Header: make(http.Header)}
-				httpreq.AddCookie(&http.Cookie{Name: userAuthTokenService.Cfg.LoginCookieName, Value: "missing-session-cookie"})
+				httpreq.AddCookie(&http.Cookie{Name: userAuthTokenService.Cfg.LoginCookieName, Value: ""})
 
 				ctx := &models.ReqContext{Context: &macaron.Context{
 					Req:  macaron.Request{Request: httpreq},

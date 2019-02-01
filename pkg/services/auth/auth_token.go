@@ -121,18 +121,10 @@ func (s *UserAuthTokenServiceImpl) SignOutUser(c *models.ReqContext) error {
 	hashedToken := hashToken(unhashedToken)
 
 	sql := `DELETE FROM user_auth_token WHERE auth_token = ?`
-	res, err := s.SQLStore.NewSession().Exec(sql, hashedToken)
-	if err != nil {
-		return err
-	}
+	_, err := s.SQLStore.NewSession().Exec(sql, hashedToken)
 
-	affected, _ := res.RowsAffected()
-	if affected > 0 {
-		s.writeSessionCookie(c, "", -1)
-		return nil
-	}
-
-	return errors.New("failed to delete session")
+	s.writeSessionCookie(c, "", -1)
+	return err
 }
 
 func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (*userAuthToken, error) {

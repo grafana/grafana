@@ -20,3 +20,5 @@ services:
       -config.file=/etc/promtail/docker-config.yaml
     networks:
       - loki
+    depends_on:
+      - loki
