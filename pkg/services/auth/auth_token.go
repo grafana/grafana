@@ -96,6 +96,7 @@ func (s *UserAuthTokenServiceImpl) writeSessionCookie(ctx *models.ReqContext, va
 		Path:     setting.AppSubUrl + "/",
 		Secure:   s.Cfg.SecurityHTTPSCookies,
 		MaxAge:   maxAge,
+		SameSite: s.Cfg.LoginCookieSameSite,
 	}
 
 	http.SetCookie(ctx.Resp, &cookie)
