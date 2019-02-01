@@ -577,9 +577,9 @@ export function runQueries(exploreId: ExploreId) {
     const {
       datasourceInstance,
       modifiedQueries,
-      showingLogs,
-      showingGraph,
-      showingTable,
+      // showingLogs,
+      // showingGraph,
+      // showingTable,
       supportsGraph,
       supportsLogs,
       supportsTable,
@@ -596,7 +596,7 @@ export function runQueries(exploreId: ExploreId) {
     const interval = datasourceInstance.interval;
 
     // Keep table queries first since they need to return quickly
-    if (showingTable && supportsTable) {
+    if (/*showingTable &&*/ supportsTable) {
       dispatch(
         runQueriesForType(
           exploreId,
@@ -611,7 +611,7 @@ export function runQueries(exploreId: ExploreId) {
         )
       );
     }
-    if (showingGraph && supportsGraph) {
+    if (/*showingGraph &&*/ supportsGraph) {
       dispatch(
         runQueriesForType(
           exploreId,
@@ -625,7 +625,7 @@ export function runQueries(exploreId: ExploreId) {
         )
       );
     }
-    if (showingLogs && supportsLogs) {
+    if (/*showingLogs &&*/ supportsLogs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
     dispatch(stateSave());
