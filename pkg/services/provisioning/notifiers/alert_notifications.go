@@ -92,7 +92,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 		}
 
 		if cmd.Result == nil {
-			dc.log.Info("Inserting alert notification from configuration ", "name", notification.Name, "uid", notification.Uid)
+			dc.log.Debug("inserting alert notification from configuration", "name", notification.Name, "uid", notification.Uid)
 			insertCmd := &models.CreateAlertNotificationCommand{
 				Uid:                   notification.Uid,
 				Name:                  notification.Name,
@@ -109,7 +109,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				return err
 			}
 		} else {
-			dc.log.Info("Updating alert notification from configuration", "name", notification.Name)
+			dc.log.Debug("updating alert notification from configuration", "name", notification.Name)
 			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
 				Uid:                   notification.Uid,
 				Name:                  notification.Name,

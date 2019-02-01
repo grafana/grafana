@@ -8,13 +8,21 @@ import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource
 // Utils
 import kbn from 'app/core/utils/kbn';
 // Types
-import { DataQueryOptions, DataQueryResponse, LoadingState, TimeRange, TimeSeries } from '@grafana/ui/src/types';
+import {
+  DataQueryOptions,
+  DataQueryResponse,
+  LoadingState,
+  PanelData,
+  TableData,
+  TimeRange,
+  TimeSeries,
+} from '@grafana/ui';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 interface RenderProps {
   loading: LoadingState;
-  timeSeries: TimeSeries[];
+  panelData: PanelData;
 }
 
 export interface Props {
@@ -129,6 +137,7 @@ export class DataPanel extends Component<Props, State> {
 
       console.log('Issuing DataPanel query', queryOptions);
       const resp = await ds.query(queryOptions);
+
       console.log('Issuing DataPanel query Resp', resp);
 
       if (this.isUnmounted) {
@@ -160,11 +169,27 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
+  getPanelData = () => {
+    const { response } = this.state;
+
+    if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
+      return {
+        tableData: response.data[0] as TableData,
+        timeSeries: null,
+      };
+    }
+
+    return {
+      timeSeries: response.data as TimeSeries[],
+      tableData: null,
+    };
+  };
+
   render() {
     const { queries } = this.props;
-    const { response, loading, isFirstLoad } = this.state;
+    const { loading, isFirstLoad } = this.state;
 
-    const timeSeries = response.data;
+    const panelData = this.getPanelData();
 
     if (isFirstLoad && loading === LoadingState.Loading) {
       return this.renderLoadingStates();
@@ -190,8 +215,8 @@ export class DataPanel extends Component<Props, State> {
             return (
               <>
                 {this.props.children({
-                  timeSeries,
                   loading,
+                  panelData,
                 })}
               </>
             );

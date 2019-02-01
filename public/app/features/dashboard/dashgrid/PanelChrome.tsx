@@ -14,8 +14,7 @@ import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 
 // Types
-import { PanelModel } from '../state/PanelModel';
-import { DashboardModel } from '../state/DashboardModel';
+import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { TimeRange } from '@grafana/ui';
 
@@ -139,7 +138,6 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
               />
-
               {panel.snapshotData ? (
                 this.renderPanel(false, panel.snapshotData, width, height)
               ) : (
@@ -152,8 +150,8 @@ export class PanelChrome extends PureComponent<Props, State> {
                   refreshCounter={refreshCounter}
                   onDataResponse={this.onDataResponse}
                 >
-                  {({ loading, timeSeries }) => {
-                    return this.renderPanel(loading, timeSeries, width, height);
+                  {({ loading, panelData }) => {
+                    return this.renderPanel(loading, panelData.timeSeries, width, height);
                   }}
                 </DataPanel>
               )}

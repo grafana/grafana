@@ -50,8 +50,8 @@ function getColor(timeRegion, theme: GrafanaTheme): TimeRegionColorDefinition {
 
   if (timeRegion.colorMode === 'custom') {
     return {
-      fill: getColorFromHexRgbOrName(timeRegion.fillColor, theme),
-      line: getColorFromHexRgbOrName(timeRegion.lineColor, theme),
+      fill: timeRegion.fill && timeRegion.fillColor ? getColorFromHexRgbOrName(timeRegion.fillColor, theme) : null,
+      line: timeRegion.line && timeRegion.lineColor ? getColorFromHexRgbOrName(timeRegion.lineColor, theme) : null,
     };
   }
 
@@ -62,8 +62,8 @@ function getColor(timeRegion, theme: GrafanaTheme): TimeRegionColorDefinition {
   }
 
   return {
-    fill: getColorFromHexRgbOrName(colorMode.color.fill, theme),
-    line: getColorFromHexRgbOrName(colorMode.color.line, theme),
+    fill: timeRegion.fill ? getColorFromHexRgbOrName(colorMode.color.fill, theme) : null,
+    line: timeRegion.fill ? getColorFromHexRgbOrName(colorMode.color.line, theme) : null,
   };
 }
 

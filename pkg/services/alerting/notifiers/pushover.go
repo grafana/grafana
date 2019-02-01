@@ -1,8 +1,11 @@
 package notifiers
 
 import (
+	"bytes"
 	"fmt"
-	"net/url"
+	"io"
+	"mime/multipart"
+	"os"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -91,6 +94,7 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())
 	expire, _ := strconv.Atoi(model.Settings.Get("expire").MustString())
 	sound := model.Settings.Get("sound").MustString()
+	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if userKey == "" {
 		return nil, alerting.ValidationError{Reason: "User key not given"}
@@ -107,6 +111,7 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		Expire:       expire,
 		Device:       device,
 		Sound:        sound,
+		Upload:       uploadImage,
 		log:          log.New("alerting.notifier.pushover"),
 	}, nil
 }
@@ -120,6 +125,7 @@ type PushoverNotifier struct {
 	Expire   int
 	Device   string
 	Sound    string
+	Upload   bool
 	log      log.Logger
 }
 
@@ -140,38 +146,22 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Error != nil {
 		message += fmt.Sprintf("\n<b>Error message:</b> %s", evalContext.Error.Error())
 	}
-	if evalContext.ImagePublicUrl != "" {
-		message += fmt.Sprintf("\n<a href=\"%s\">Show graph image</a>", evalContext.ImagePublicUrl)
-	}
+
 	if message == "" {
 		message = "Notification message missing (Set a notification message to replace this text.)"
 	}
 
-	q := url.Values{}
-	q.Add("user", this.UserKey)
-	q.Add("token", this.ApiToken)
-	q.Add("priority", strconv.Itoa(this.Priority))
-	if this.Priority == 2 {
-		q.Add("retry", strconv.Itoa(this.Retry))
-		q.Add("expire", strconv.Itoa(this.Expire))
+	headers, uploadBody, err := this.genPushoverBody(evalContext, message, ruleUrl)
+	if err != nil {
+		this.log.Error("Failed to generate body for pushover", "error", err)
+		return err
 	}
-	if this.Device != "" {
-		q.Add("device", this.Device)
-	}
-	if this.Sound != "default" {
-		q.Add("sound", this.Sound)
-	}
-	q.Add("title", evalContext.GetNotificationTitle())
-	q.Add("url", ruleUrl)
-	q.Add("url_title", "Show dashboard with alert")
-	q.Add("message", message)
-	q.Add("html", "1")
 
 	cmd := &m.SendWebhookSync{
 		Url:        PUSHOVER_ENDPOINT,
 		HttpMethod: "POST",
-		HttpHeader: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-		Body:       q.Encode(),
+		HttpHeader: headers,
+		Body:       uploadBody.String(),
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
@@ -180,4 +170,110 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	return nil
+}
+
+func (this *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext, message string, ruleUrl string) (map[string]string, bytes.Buffer, error) {
+	var b bytes.Buffer
+	var err error
+	w := multipart.NewWriter(&b)
+
+	// Add image only if requested and available
+	if this.Upload && evalContext.ImageOnDiskPath != "" {
+		f, err := os.Open(evalContext.ImageOnDiskPath)
+		if err != nil {
+			return nil, b, err
+		}
+		defer f.Close()
+
+		fw, err := w.CreateFormFile("attachment", evalContext.ImageOnDiskPath)
+		if err != nil {
+			return nil, b, err
+		}
+
+		_, err = io.Copy(fw, f)
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add the user token
+	err = w.WriteField("user", this.UserKey)
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add the api token
+	err = w.WriteField("token", this.ApiToken)
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add priority
+	err = w.WriteField("priority", strconv.Itoa(this.Priority))
+	if err != nil {
+		return nil, b, err
+	}
+
+	if this.Priority == 2 {
+		err = w.WriteField("retry", strconv.Itoa(this.Retry))
+		if err != nil {
+			return nil, b, err
+		}
+
+		err = w.WriteField("expire", strconv.Itoa(this.Expire))
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add device
+	if this.Device != "" {
+		err = w.WriteField("device", this.Device)
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add sound
+	if this.Sound != "default" {
+		err = w.WriteField("sound", this.Sound)
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add title
+	err = w.WriteField("title", evalContext.GetNotificationTitle())
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add URL
+	err = w.WriteField("url", ruleUrl)
+	if err != nil {
+		return nil, b, err
+	}
+	// Add URL title
+	err = w.WriteField("url_title", "Show dashboard with alert")
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add message
+	err = w.WriteField("message", message)
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Mark as html message
+	err = w.WriteField("html", "1")
+	if err != nil {
+		return nil, b, err
+	}
+
+	w.Close()
+	headers := map[string]string{
+		"Content-Type": w.FormDataContentType(),
+	}
+	return headers, b, nil
 }
