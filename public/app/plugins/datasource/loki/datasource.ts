@@ -32,7 +32,7 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export default class LokiDatasource {
+export class LokiDatasource {
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -73,10 +73,11 @@ export default class LokiDatasource {
     };
   }
 
-  query(options: DataQueryOptions<LokiQuery>): Promise<{ data: LogsStream[] }> {
+  async query(options: DataQueryOptions<LokiQuery>) {
     const queryTargets = options.targets
-      .filter(target => target.expr)
+      .filter(target => target.expr && !target.hide)
       .map(target => this.prepareQueryTarget(target, options));
+
     if (queryTargets.length === 0) {
       return Promise.resolve({ data: [] });
     }
@@ -84,20 +85,29 @@ export default class LokiDatasource {
     const queries = queryTargets.map(target => this._request('/api/prom/query', target));
 
     return Promise.all(queries).then((results: any[]) => {
-      // Flatten streams from multiple queries
-      const allStreams: LogsStream[] = results.reduce((acc, response, i) => {
-        if (!response) {
-          return acc;
+      const allStreams: LogsStream[] = [];
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const query = queryTargets[i];
+
+        // add search term to stream & add to array
+        if (result.data)  {
+          for (const stream of (result.data.streams || [])) {
+            stream.search = query.regexp;
+            allStreams.push(stream);
+          }
         }
-        const streams: LogsStream[] = response.data.streams || [];
-        // Inject search for match highlighting
-        const search: string = queryTargets[i].regexp;
-        streams.forEach(s => {
-          s.search = search;
-        });
-        return [...acc, ...streams];
-      }, []);
-      return { data: allStreams };
+      }
+
+      // check resultType
+      if (options.targets[0].resultFormat === 'time_series') {
+        const logs = mergeStreamsToLogs(allStreams, this.maxLines);
+        logs.series = makeSeriesForLogs(logs.rows, options.intervalMs);
+        return { data: logs.series };
+      } else {
+        return { data: allStreams };
+      }
     });
   }
 
@@ -142,34 +152,36 @@ export default class LokiDatasource {
 
   testDatasource() {
     return this._request('/api/prom/label')
-      .then(res => {
-        if (res && res.data && res.data.values && res.data.values.length > 0) {
-          return { status: 'success', message: 'Data source connected and labels found.' };
-        }
-        return {
-          status: 'error',
-          message:
-            'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-        };
-      })
-      .catch(err => {
-        let message = 'Loki: ';
-        if (err.statusText) {
-          message += err.statusText;
-        } else {
-          message += 'Cannot connect to Loki';
-        }
+    .then(res => {
+      if (res && res.data && res.data.values && res.data.values.length > 0) {
+        return { status: 'success', message: 'Data source connected and labels found.' };
+      }
+      return {
+        status: 'error',
+        message:
+          'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+      };
+    })
+    .catch(err => {
+      let message = 'Loki: ';
+      if (err.statusText) {
+        message += err.statusText;
+      } else {
+        message += 'Cannot connect to Loki';
+      }
 
-        if (err.status) {
-          message += `. ${err.status}`;
-        }
+      if (err.status) {
+        message += `. ${err.status}`;
+      }
 
-        if (err.data && err.data.message) {
-          message += `. ${err.data.message}`;
-        } else if (err.data) {
-          message += `. ${err.data}`;
-        }
-        return { status: 'error', message: message };
-      });
+      if (err.data && err.data.message) {
+        message += `. ${err.data.message}`;
+      } else if (err.data) {
+        message += `. ${err.data}`;
+      }
+      return { status: 'error', message: message };
+    });
   }
 }
+
+export default LokiDatasource;

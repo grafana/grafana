@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import { ValueMapping, Threshold, BasicGaugeColor, TimeSeriesVMs, GrafanaTheme } from '../../types';
+import { ValueMapping, Threshold, BasicGaugeColor, GrafanaTheme } from '../../types';
 import { getMappedValue } from '../../utils/valueMappings';
 import { getColorFromHexRgbOrName, getValueFormat } from '../../utils';
 
@@ -14,7 +14,6 @@ export interface Props {
   maxValue: number;
   minValue: number;
   prefix: string;
-  timeSeries: TimeSeriesVMs;
   thresholds: Threshold[];
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
@@ -22,6 +21,7 @@ export interface Props {
   suffix: string;
   unit: string;
   width: number;
+  value: number;
   theme?: GrafanaTheme;
 }
 
@@ -122,25 +122,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const {
-      maxValue,
-      minValue,
-      timeSeries,
-      showThresholdLabels,
-      showThresholdMarkers,
-      width,
-      height,
-      stat,
-      theme,
-    } = this.props;
-
-    let value: TimeSeriesValue = '';
-
-    if (timeSeries[0]) {
-      value = timeSeries[0].stats[stat];
-    } else {
-      value = null;
-    }
+    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const formattedValue = this.formatValue(value) as string;
     const dimension = Math.min(width, height * 1.3);
@@ -194,7 +176,7 @@ export class Gauge extends PureComponent<Props> {
     try {
       $.plot(this.canvasElement, [plotSeries], options);
     } catch (err) {
-      console.log('Gauge rendering error', err, options, timeSeries);
+      console.log('Gauge rendering error', err, options, value);
     }
   }
 

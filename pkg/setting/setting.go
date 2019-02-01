@@ -6,6 +6,7 @@ package setting
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -238,6 +239,7 @@ type Cfg struct {
 	LoginCookieMaxDays                int
 	LoginCookieRotation               int
 	LoginDeleteExpiredTokensAfterDays int
+	LoginCookieSameSite               http.SameSite
 
 	SecurityHTTPSCookies bool
 }
@@ -568,6 +570,20 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.LoginCookieName = login.Key("cookie_name").MustString("grafana_session")
 	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
 	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
+
+	samesiteString := login.Key("cookie_samesite").MustString("lax")
+	validSameSiteValues := map[string]http.SameSite{
+		"lax":    http.SameSiteLaxMode,
+		"strict": http.SameSiteStrictMode,
+		"none":   http.SameSiteDefaultMode,
+	}
+
+	if samesite, ok := validSameSiteValues[samesiteString]; ok {
+		cfg.LoginCookieSameSite = samesite
+	} else {
+		cfg.LoginCookieSameSite = http.SameSiteLaxMode
+	}
+
 	cfg.LoginCookieRotation = login.Key("rotate_token_minutes").MustInt(10)
 	if cfg.LoginCookieRotation < 2 {
 		cfg.LoginCookieRotation = 2

@@ -4,7 +4,7 @@ import { TimeRange } from './time';
 export type InterpolateFunction = (value: string, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
-  timeSeries: TimeSeries[];
+  panelData: PanelData;
   timeRange: TimeRange;
   loading: LoadingState;
   options: T;
