@@ -3,7 +3,7 @@
 exports[`Render should render component 1`] = `
 <Component
   onAdd={[Function]}
-  title="Add mapping"
+  title="Add value mapping"
 >
   <MappingRow
     key="Ok-0"
