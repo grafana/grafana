@@ -30,6 +30,7 @@ import {
   DataQuery,
   DataSourceSelectItem,
   QueryHint,
+  QueryFixAction,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -54,6 +55,7 @@ import {
   ScanStopAction,
   UpdateDatasourceInstanceAction,
   QueriesImported,
+  ModifyQueriesAction,
 } from './actionTypes';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
@@ -385,12 +387,16 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
  */
 export function modifyQueries(
   exploreId: ExploreId,
-  modification: any,
+  modification: QueryFixAction,
   index: number,
   modifier: any
 ): ThunkResult<void> {
   return dispatch => {
-    dispatch({ type: ActionTypes.ModifyQueries, payload: { exploreId, modification, index, modifier } });
+    const modifyQueryAction: ModifyQueriesAction = {
+      type: ActionTypes.ModifyQueries,
+      payload: { exploreId, modification, index, modifier },
+    };
+    dispatch(modifyQueryAction);
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
     }

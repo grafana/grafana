@@ -387,8 +387,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     this.resetTimer = setTimeout(this.resetTypeahead, 100);
     // Disrupting placeholder entry wipes all remaining placeholders needing input
     this.placeholdersBuffer.clearPlaceholders();
-
-    this.executeOnQueryChangeAndExecuteQueries();
   };
 
   handleFocus = () => {};

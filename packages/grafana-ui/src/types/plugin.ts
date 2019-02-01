@@ -1,6 +1,6 @@
 import { ComponentClass } from 'react';
 import { PanelProps, PanelOptionsProps } from './panel';
-import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint } from './datasource';
+import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint, QueryFixAction } from './datasource';
 
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
@@ -42,7 +42,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
 }
 
 export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
-  modifyQuery?(query: TQuery, action: any): TQuery;
+  modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
   getHighlighterExpression?(query: TQuery): string;
   languageProvider?: any;
 }
@@ -62,6 +62,7 @@ export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery ext
   history: any[];
   onExecuteQuery?: () => void;
   onQueryChange?: (value: TQuery) => void;
+  onExecuteHint?: (action: QueryFixAction) => void;
 }
 
 export interface PluginExports {

@@ -1,6 +1,6 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi } from '@grafana/ui/src/types';
+import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction } from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreItemState,
@@ -155,9 +155,9 @@ export interface ModifyQueriesAction {
   type: ActionTypes.ModifyQueries;
   payload: {
     exploreId: ExploreId;
-    modification: any;
+    modification: QueryFixAction;
     index: number;
-    modifier: (queries: DataQuery[], modification: any) => DataQuery[];
+    modifier: (queries: DataQuery[], modification: QueryFixAction) => DataQuery[];
   };
 }
 

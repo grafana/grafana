@@ -183,10 +183,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onClickHintFix = () => {
-    // const { hint, onClickHintFix } = this.props;
-    // if (onClickHintFix && hint && hint.fix) {
-    //   onClickHintFix(hint.fix.action);
-    // }
+    const { hint, onExecuteHint } = this.props;
+    if (onExecuteHint && hint && hint.fix) {
+      onExecuteHint(hint.fix.action);
+    }
   };
 
   onUpdateLanguage = () => {

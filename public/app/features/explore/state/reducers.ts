@@ -230,7 +230,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
 
     case ActionTypes.ModifyQueries: {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
-      const { modification, index, modifier } = action.payload as any;
+      const { modification, index, modifier } = action.payload;
       let nextQueries: DataQuery[];
       let nextQueryTransactions;
       if (index === undefined) {

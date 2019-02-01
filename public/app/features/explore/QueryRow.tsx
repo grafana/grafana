@@ -20,7 +20,7 @@ import {
 
 // Types
 import { StoreState } from 'app/types';
-import { RawTimeRange, DataQuery, ExploreDataSourceApi, QueryHint } from '@grafana/ui';
+import { RawTimeRange, DataQuery, ExploreDataSourceApi, QueryHint, QueryFixAction } from '@grafana/ui';
 import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 
@@ -78,10 +78,10 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     this.onChangeQuery(null, true);
   };
 
-  onClickHintFix = action => {
+  onClickHintFix = (action: QueryFixAction) => {
     const { datasourceInstance, exploreId, index } = this.props;
     if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, action: any) => datasourceInstance.modifyQuery(queries, action);
+      const modifier = (queries: DataQuery, action: QueryFixAction) => datasourceInstance.modifyQuery(queries, action);
       this.props.modifyQueries(exploreId, action, index, modifier);
     }
   };
@@ -116,14 +116,12 @@ export class QueryRow extends PureComponent<QueryRowProps> {
             <QueryField
               datasource={datasourceInstance}
               initialQuery={initialQuery}
-              onExecuteQuery={this.onExecuteQuery}
-              onQueryChange={this.onChangeQuery}
               error={queryError}
               hint={hint}
               history={history}
-              // onClickHintFix={this.onClickHintFix}
-              // onPressEnter={this.onExecuteQuery}
-              // onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.onExecuteQuery}
+              onExecuteHint={this.onClickHintFix}
+              onQueryChange={this.onChangeQuery}
             />
           ) : (
             <QueryEditor
