@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"testing"
-	"fmt"
 	"encoding/base64"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"testing"
 
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/bus"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -28,13 +28,13 @@ func TestAuthJWT(t *testing.T) {
 		mySigningKey := []byte("AllYourBase")
 
 		setting.AuthJwtEnabled = true
-		setting.AuthJwtHeader  = "X-MyJWT"
+		setting.AuthJwtHeader = "X-MyJWT"
 		setting.AuthJwtSigningKey = base64.StdEncoding.EncodeToString(mySigningKey)
 		setting.AuthJwtEmailClaim = "email"
 
 		// Create the Claims
 		claims := &jwt.MapClaims{
-			"sub": "name",
+			"sub":   "name",
 			"email": "test@grafana.com",
 		}
 
@@ -49,7 +49,7 @@ func TestAuthJWT(t *testing.T) {
 			So(err, ShouldEqual, nil)
 			So(token.Valid, ShouldEqual, true)
 
-			parsed := token.Claims.(jwt.MapClaims);
+			parsed := token.Claims.(jwt.MapClaims)
 			So(parsed["email"], ShouldEqual, "test@grafana.com")
 			So(parsed["sub"], ShouldEqual, "name")
 		})
@@ -67,23 +67,19 @@ func TestAuthJWT(t *testing.T) {
 			So(err, ShouldEqual, nil)
 			So(token.Valid, ShouldEqual, true)
 
-			parsed := token.Claims.(jwt.MapClaims);
+			parsed := token.Claims.(jwt.MapClaims)
 			fmt.Printf("FIREBASE: %+v\n", parsed)
 		})
 
-
-
 		middlewareScenario("Error with invalid JWT", func(sc *scenarioContext) {
-		
 
 			fmt.Printf("//SC: %+v\n", sc)
 
-
-		//	initContextWithJwtAuth(&sc.ctx, orgId)
+			//	initContextWithJwtAuth(&sc.ctx, orgId)
 
 			// It is a bad request
 			//So(ctx.resp.Code, ShouldEqual, 400)
-			So( orgId, ShouldEqual, 1)
+			So(orgId, ShouldEqual, 1)
 		})
 	})
 }

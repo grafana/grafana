@@ -137,14 +137,12 @@ var (
 	BasicAuthEnabled bool
 
 	// JWT Auth settings
-	AuthJwtEnabled      bool
-	AuthJwtHeader       string
-	AuthJwtSigningKey   string
-	AuthJwtAudience     string
-	AuthJwtIssuer       string
-	AuthJwtLoginClaim   string
-	AuthJwtEmailClaim   string
-	AuthJwtAutoSignup   bool
+	AuthJwtEnabled    bool
+	AuthJwtHeader     string
+	AuthJwtSigningKey string
+	AuthJwtLoginClaim string
+	AuthJwtEmailClaim string
+	AuthJwtAutoSignup bool
 
 	// Plugin settings
 	PluginAppsSkipVerifyTLS bool
@@ -691,8 +689,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthJwtEnabled = jwtAuth.Key("enabled").MustBool(false)
 	AuthJwtHeader = jwtAuth.Key("header").String()
 	AuthJwtSigningKey = jwtAuth.Key("signing_key").String()
-	AuthJwtAudience = jwtAuth.Key("audience").String()
-	AuthJwtIssuer = jwtAuth.Key("issuer").String()
 	AuthJwtLoginClaim = jwtAuth.Key("login_claim").String()
 	AuthJwtEmailClaim = jwtAuth.Key("email_claim").String()
 	AuthJwtAutoSignup = jwtAuth.Key("auto_signup").MustBool(true)

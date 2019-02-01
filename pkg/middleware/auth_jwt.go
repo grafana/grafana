@@ -3,16 +3,16 @@ package middleware
 import (
 	"bytes"
 	"crypto/rsa"
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"strings"
-	"net/http"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"net/http"
+	"strings"
 )
 
 // global cache
@@ -41,10 +41,10 @@ func CreateKeyFunc(cfg string) (jwt.Keyfunc, error) {
 	// read keys from sites like:
 	// https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
 	// https://www.gstatic.com/iap/verify/public_key-jwk
-	if( strings.HasPrefix(cfg, "http") ) {
+	if strings.HasPrefix(cfg, "http") {
 
 		json, err := readJSONFromUrl(setting.AuthJwtSigningKey)
-		if( err != nil ) {
+		if err != nil {
 			return nil, fmt.Errorf("Error reading JSON from URL")
 		}
 
@@ -58,18 +58,18 @@ func CreateKeyFunc(cfg string) (jwt.Keyfunc, error) {
 		// The firebase format
 		reg := make(map[string]*rsa.PublicKey)
 		for key, value := range json {
-			pkey, err := jwt.ParseRSAPublicKeyFromPEM( []byte(value.(string)) )
-			if( err == nil ) {
+			pkey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(value.(string)))
+			if err == nil {
 				reg[key] = pkey
 			}
 		}
-		if( len(reg) > 0 ) {
+		if len(reg) > 0 {
 			return func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 				}
 				kid := token.Header["kid"].(string)
-				pkey, ok := reg[kid]; 
+				pkey, ok := reg[kid]
 				if !ok {
 					return nil, fmt.Errorf("Can not find KEY: %v", kid)
 				}
@@ -80,8 +80,8 @@ func CreateKeyFunc(cfg string) (jwt.Keyfunc, error) {
 	}
 
 	// Base64 encoded key
-	key,err := base64.StdEncoding.DecodeString(setting.AuthJwtSigningKey)
-	if( err != nil ) {
+	key, err := base64.StdEncoding.DecodeString(setting.AuthJwtSigningKey)
+	if err != nil {
 		return nil, fmt.Errorf("Unalbe to read JWT key.  Expects base64")
 	}
 	return func(token *jwt.Token) (interface{}, error) {
@@ -93,7 +93,7 @@ func InitAuthJwtKey() {
 	log.Info("Initializing JWT Auth")
 
 	kfunk, err := CreateKeyFunc(setting.AuthJwtSigningKey)
-	if (err != nil) {
+	if err != nil {
 		log.Error(3, "Error Initializing JWT: %v", err)
 	} else {
 		keyFunc = kfunk
@@ -116,8 +116,8 @@ func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
 		ctx.Handle(400, "JWT Error", err)
 		return true
 	}
-	claims := token.Claims.(jwt.MapClaims);
-	
+	claims := token.Claims.(jwt.MapClaims)
+
 	query := getSignedInUserQueryForClaims(claims, orgId)
 	if err := bus.Dispatch(query); err != nil {
 		if err != m.ErrUserNotFound {
@@ -160,14 +160,14 @@ func getSignedInUserQueryForClaims(claims jwt.MapClaims, orgId int64) *m.GetSign
 			query.Login = val
 			return &query
 		}
-	} 
+	}
 
 	if setting.AuthJwtEmailClaim != "" {
 		if val, ok := claims[setting.AuthJwtEmailClaim].(string); ok {
 			query.Email = val
 			return &query
 		}
-	} 
+	}
 
 	return nil
 }
@@ -179,13 +179,13 @@ func getCreateUserCommandForClaims(claims jwt.MapClaims) *m.CreateUserCommand {
 		if val, ok := claims[setting.AuthJwtLoginClaim].(string); ok {
 			cmd.Login = val
 		}
-	} 
+	}
 
 	if setting.AuthJwtEmailClaim != "" {
 		if val, ok := claims[setting.AuthJwtEmailClaim].(string); ok {
 			cmd.Email = val
 		}
-	} 
+	}
 
 	return &cmd
 }

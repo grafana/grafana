@@ -95,7 +95,7 @@ func (g *GrafanaServerImpl) Run() error {
 	if err != nil {
 		return fmt.Errorf("Failed to provide object to the graph: %v", err)
 	}
-	
+
 	// self registered services
 	services := registry.GetServices()
 
