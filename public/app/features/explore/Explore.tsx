@@ -216,7 +216,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                       {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                       {!showingStartPage && (
                         <>
-                          {supportsGraph && <GraphContainer exploreId={exploreId} />}
+                          {supportsGraph && !supportsLogs && <GraphContainer exploreId={exploreId} />}
                           {supportsTable && <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />}
                           {supportsLogs && (
                             <LogsContainer

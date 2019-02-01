@@ -165,6 +165,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ isAddingMixed: false });
   };
 
+  onQueryChange = (query: DataQuery, index) => {
+    this.props.panel.changeQuery(query, index);
+    this.forceUpdate();
+  };
+
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     this.setState({ scrollTop: target.scrollTop });
@@ -201,6 +206,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                 key={query.refId}
                 panel={panel}
                 query={query}
+                onChange={query => this.onQueryChange(query, index)}
                 onRemoveQuery={this.onRemoveQuery}
                 onAddQuery={this.onAddQuery}
                 onMoveQuery={this.onMoveQuery}
