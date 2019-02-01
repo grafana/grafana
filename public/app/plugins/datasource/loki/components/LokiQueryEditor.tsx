@@ -50,7 +50,6 @@ export class LokiQueryEditor extends PureComponent<Props> {
     const formatOptions: SelectOptionItem[] = [
       { label: 'Time Series', value: 'time_series' },
       { label: 'Table', value: 'table' },
-      { label: 'Logs', value: 'logs' },
     ];
 
     query.resultFormat = query.resultFormat || 'time_series';
@@ -64,9 +63,14 @@ export class LokiQueryEditor extends PureComponent<Props> {
           onQueryChange={this.onFieldChange}
           onPressEnter={this.onRunQuery}
         />
-        <div className="gf-form">
-          <div className="gf-form-label">Format as</div>
-          <Select isSearchable={false} options={formatOptions} onChange={this.onFormatChanged} value={currentFormat} />
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <div className="gf-form-label">Format as</div>
+            <Select isSearchable={false} options={formatOptions} onChange={this.onFormatChanged} value={currentFormat} />
+          </div>
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label gf-form-label--grow" />
+          </div>
         </div>
       </div>
     );
