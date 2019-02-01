@@ -1,9 +1,13 @@
 package middleware
 
 import (
+	"bytes"
+	"crypto/rsa"
+	"encoding/json"
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"net/http"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -11,38 +15,93 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// global cache
 var keyFunc jwt.Keyfunc
 
-func InitAuthJwtKey() {
-	fmt.Println("JwtAuthInit!!!")
-
-	log.Info("Initializing JWT Auth!!! load the function?")
-
-	if( strings.HasPrefix(setting.AuthJwtSigningKey, "http") ) {
-		// TODO, we will want to read keys from sites like:
-		// https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
-		// https://www.gstatic.com/iap/verify/public_key-jwk
-		log.Error(3, "Reading JWT key from URL not yet supported")
-		keyFunc = nil
-		return
+func readJSONFromUrl(url string) (map[string]interface{}, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
 	}
 
+	defer resp.Body.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	respByte := buf.Bytes()
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(respByte, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func CreateKeyFunc(cfg string) (jwt.Keyfunc, error) {
+	// read keys from sites like:
+	// https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
+	// https://www.gstatic.com/iap/verify/public_key-jwk
+	if( strings.HasPrefix(cfg, "http") ) {
+
+		json, err := readJSONFromUrl(setting.AuthJwtSigningKey)
+		if( err != nil ) {
+			return nil, fmt.Errorf("Error reading JSON from URL")
+		}
+
+		// The Google JWK format
+		if val, ok := json["keys"]; ok {
+			//do something here
+			fmt.Printf("TODO %+v\n", val)
+			return nil, fmt.Errorf("JWK Format not yet supported")
+		}
+
+		// The firebase format
+		reg := make(map[string]*rsa.PublicKey)
+		for key, value := range json {
+			pkey, err := jwt.ParseRSAPublicKeyFromPEM( []byte(value.(string)) )
+			if( err == nil ) {
+				reg[key] = pkey
+			}
+		}
+		if( len(reg) > 0 ) {
+			return func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				}
+				kid := token.Header["kid"].(string)
+				pkey, ok := reg[kid]; 
+				if !ok {
+					return nil, fmt.Errorf("Can not find KEY: %v", kid)
+				}
+				return pkey, nil
+			}, nil
+		}
+		return nil, fmt.Errorf("Unsupported Key File")
+	}
+
+	// Base64 encoded key
 	key,err := base64.StdEncoding.DecodeString(setting.AuthJwtSigningKey)
 	if( err != nil ) {
-		log.Error(3, "Unalbe to read JWT key.  Expects base64")
-		keyFunc = nil
-		return
+		return nil, fmt.Errorf("Unalbe to read JWT key.  Expects base64")
 	}
-
-	// Use the same key for every request
-	keyFunc = func(token *jwt.Token) (interface{}, error) {
+	return func(token *jwt.Token) (interface{}, error) {
 		return key, nil
+	}, nil
+}
+
+func InitAuthJwtKey() {
+	log.Info("Initializing JWT Auth")
+
+	kfunk, err := CreateKeyFunc(setting.AuthJwtSigningKey)
+	if (err != nil) {
+		log.Error(3, "Error Initializing JWT: %v", err)
+	} else {
+		keyFunc = kfunk
 	}
 }
 
-
 func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
-	if !setting.AuthJwtEnabled {
+	if !setting.AuthJwtEnabled || keyFunc == nil {
 		return false
 	}
 
