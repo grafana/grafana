@@ -48,8 +48,8 @@ func GetContextHandler(ats auth.UserAuthTokenService) macaron.Handler {
 		case initContextWithRenderAuth(ctx):
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
-		case initContextWithAuthProxy(ctx, orgId):
 		case initContextWithJwtAuth(ctx, orgId):
+		case initContextWithAuthProxy(ctx, orgId):
 		case ats.InitContextWithToken(ctx, orgId):
 		case initContextWithAnonymousUser(ctx):
 		}

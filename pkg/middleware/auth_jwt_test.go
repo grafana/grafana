@@ -31,7 +31,6 @@ func TestAuthJWT(t *testing.T) {
 
 		// A simple key
 		mySigningKey := []byte("AllYourBase")
-
 		setting.AuthJwtEnabled = true
 		setting.AuthJwtHeader = "X-MyJWT"
 		setting.AuthJwtSigningKey = base64.StdEncoding.EncodeToString(mySigningKey)
@@ -44,13 +43,12 @@ func TestAuthJWT(t *testing.T) {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		ss, err := token.SignedString(mySigningKey)
-		fmt.Println(ss, err)
-
+		signed, err := token.SignedString(mySigningKey)
+		So(err, ShouldEqual, nil)
 		InitAuthJwtKey()
 
 		Convey("Should be able to decode directly", func() {
-			token, err := jwt.Parse(ss, keyFunc)
+			token, err := jwt.Parse(signed, keyFunc)
 			So(err, ShouldEqual, nil)
 			So(token.Valid, ShouldEqual, true)
 
@@ -59,9 +57,9 @@ func TestAuthJWT(t *testing.T) {
 			So(parsed["sub"], ShouldEqual, "name")
 		})
 
-		Convey("Should fail with a bad JWT", func() {
+		Convey("Context should read it from header and get a user", func() {
 			httpreq := &http.Request{Header: make(http.Header)}
-			httpreq.Header.Add(setting.AuthJwtHeader, ss) //"NotAnJWT")
+			httpreq.Header.Add(setting.AuthJwtHeader, signed)
 
 			ctx := &m.ReqContext{Context: &macaron.Context{
 				Req:  macaron.Request{Request: httpreq},
@@ -71,24 +69,32 @@ func TestAuthJWT(t *testing.T) {
 			}
 
 			initContextWithJwtAuth(ctx, orgId)
-
-			fmt.Printf("AFTER: %+v\n", ctx)
 			So(ctx.SignedInUser, ShouldNotBeNil)
 		})
 
-		setting.AuthJwtSigningKey = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
-		Convey("Should parse firebase URL", func() {
+		Convey("Should parse firebase tokens", func() {
+
+			// Firebase public keys
+			setting.AuthJwtSigningKey = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+			setting.AuthJwtIssuer = "https://securetoken.google.com/safetronx"
 			InitAuthJwtKey()
 			So(keyFunc, ShouldNotBeNil)
 
 			// Expired token
-			fbtoken := "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg1OWE2NDFhMWI4MmNjM2I1MGE4MDFiZjUwNjQwZjM4MjU3ZDEyOTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbW9uaXRyb24tZGV2IiwibmFtZSI6IlJ5YW4gTWNLaW5sZXkiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDYuZ29vZ2xldXNlcmNvbnRlbnQuY29tLy1WVVZEODZxRzZkQS9BQUFBQUFBQUFBSS9BQUFBQUFBQUFCRS9JV1VfbXdBdV9HSS9waG90by5qcGciLCJhdWQiOiJtb25pdHJvbi1kZXYiLCJhdXRoX3RpbWUiOjE1NDM0MzkyMTcsInVzZXJfaWQiOiJ3SDJXelhOS0dHUnRaZzl5bVRlS0tYbTlOaGIyIiwic3ViIjoid0gyV3pYTktHR1J0Wmc5eW1UZUtLWG05TmhiMiIsImlhdCI6MTU0OTAwOTkyMCwiZXhwIjoxNTQ5MDEzNTIwLCJlbWFpbCI6InJ5YW5AbmF0ZWxlbmVyZ3kuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDg0NzkxMjI2MjIxNjMzOTU5NTgiXSwiZW1haWwiOlsicnlhbkBuYXRlbGVuZXJneS5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.ceaGDDnyvJ4kgpAGEHvdqGOF2hO2S0pVWRVimFwezNh05Q8PWv-_Ke36SS2bAm04-65k5xfxxAf48m83uwb3QIOvF7HHlSCaX1rKrJlqwXIKDuHR0O54gk_rcmbJf_F0ZnZNgGUQOnXVG-bn9W7WOGtCr2jY5e9yzm7CJOWcqQBD0ozdOZ1BEajNHloWKOA31eOIIkfArfgHoDwbs8EsJrlPb5eBWDHmF9fBKrUnUZcEpwVY8eo5_XgxCxkq2keCHqWwa_NzpONk0gMs2Pmo5G3E_vRJFqLnUcer2lgQDtmBFo2BuweIRSQXRSPtxENtitZtGiydrkf6VKRsCejKSQ"
+			fbjwt := "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg1OWE2NDFhMWI4MmNjM2I1MGE4MDFiZjUwNjQwZjM4MjU3ZDEyOTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vc2FmZXRyb254IiwibmFtZSI6IlJ5YW4gTWNLaW5sZXkiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDUuZ29vZ2xldXNlcmNvbnRlbnQuY29tLy12M0diUy1namhlcy9BQUFBQUFBQUFBSS9BQUFBQUFBQUNIZy94ZE5VbDRmMUdEZy9waG90by5qcGciLCJhdWQiOiJzYWZldHJvbngiLCJhdXRoX3RpbWUiOjE1NDkwNDIzNzUsInVzZXJfaWQiOiJyalNaZm9LYnZYU1pyRGg3SUVmOGRid0Mxa2kxIiwic3ViIjoicmpTWmZvS2J2WFNackRoN0lFZjhkYndDMWtpMSIsImlhdCI6MTU0OTA0MjM3NSwiZXhwIjoxNTQ5MDQ1OTc1LCJlbWFpbCI6InJ5YW50eHVAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDM3Nzg4NDE3Nzk5OTQ4ODI1MTIiXSwiZW1haWwiOlsicnlhbnR4dUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.YPgqDMZAXUQPPR3ofDBl4vIK1amQQLsmo9OQvM0v9f98hDWcwVIPBh34CWFum40DA-H6JDqiGMbqcPl8LPUewRU01GdbR1QV7FvL_n2UQOLSJWcRnyi-LBK2TtkQ6fRpNNrX-E3lwgNq_GnegkEW1NZnPqpLZsN67kflGh5c7tC45v0osvFT-X8LjWxww4PijoZZsTdF2GRkuRYGLWQ1v99dhr9y8QhXHtTiHS6D9bjZ53K7t8CBKiZ5Ibkr4wZhz5-mW-6PibzTX-u2JeIzQFZo9tQM7-T526oVU19d7O-P5PU_kNmHe99PyDt2drtBbUPNn9IeenvIrz6rOKau6g"
 
-			token, err := jwt.Parse(fbtoken, keyFunc)
-			So(err, ShouldNotEqual, nil)
-			So(token.Valid, ShouldEqual, false)
-
+			token, err := jwt.Parse(fbjwt, keyFunc)
+			if token.Valid {
+				So(token.Valid, ShouldEqual, true)
+			} else {
+				So(err, ShouldNotEqual, nil)
+				So(token.Valid, ShouldEqual, false)
+			}
 			parsed := token.Claims.(jwt.MapClaims)
+
+			So(parsed["email"], ShouldEqual, "ryantxu@gmail.com")
+			So(parsed["email_verified"], ShouldBeTrue)
+
 			fmt.Printf("FIREBASE: %+v\n", parsed)
 		})
 	})
