@@ -1,5 +1,4 @@
 import PluginPrism from 'app/features/explore/slate-plugins/prism';
-
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import ClearPlugin from 'app/features/explore/slate-plugins/clear';
 import NewlinePlugin from 'app/features/explore/slate-plugins/newline';
