@@ -51,7 +51,7 @@ export default class ExpQuery {
 
             const targetIndex = this.mapMetricsToTargets(response.outputs, response.config.url);
 
-            const result = _.map(response.data, queryData => {
+            const result = _.map(response.data.outputs, queryData => {
               let index = targetIndex;
               if (index === -1) {
                 index = 0;
@@ -104,7 +104,7 @@ export default class ExpQuery {
 
     // TSDB returns datapoints has a hash of ts => value.
     // Can't use _.pairs(invert()) because it stringifies keys/values
-    _.each(result.outputs.dps, (v, k) => {
+    _.each(result.dps, (v, k) => {
       if (tsdbResolution === 2) {
         dps.push([v, k * 1]);
       } else {
@@ -115,9 +115,11 @@ export default class ExpQuery {
     return dps;
   }
 
-  createMetricLabel(md) {
-    const label = md.id;
-    return label;
+  createMetricLabel(target) {
+    if (!target.alias) {
+      return target.id;
+    }
+    return target.alias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, (all, m1) => data.tags[m1]);
   }
 
   convertTargetToQuery(target) {
