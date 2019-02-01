@@ -79,7 +79,15 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     await dispatch(importQueries(exploreId, modifiedQueries, currentDataSourceInstance, newDataSourceInstance));
 
     dispatch(updateDatasourceInstance(exploreId, newDataSourceInstance));
-    dispatch(loadDatasource(exploreId, newDataSourceInstance));
+
+    try {
+      await dispatch(loadDatasource(exploreId, newDataSourceInstance));
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    dispatch(runQueries(exploreId));
   };
 }
 
@@ -197,7 +205,14 @@ export function initializeExplore(
       }
 
       dispatch(updateDatasourceInstance(exploreId, instance));
-      dispatch(loadDatasource(exploreId, instance));
+
+      try {
+        await dispatch(loadDatasource(exploreId, instance));
+      } catch (error) {
+        console.error(error);
+        return;
+      }
+      dispatch(runQueries(exploreId, true));
     } else {
       dispatch(loadDatasourceMissing(exploreId));
     }
@@ -343,8 +358,8 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
 
     // Keep ID to track selection
     dispatch(loadDatasourcePending(exploreId, datasourceName));
-
     let datasourceError = null;
+
     try {
       const testResult = await instance.testDatasource();
       datasourceError = testResult.status === 'success' ? null : testResult.message;
@@ -354,7 +369,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
 
     if (datasourceError) {
       dispatch(loadDatasourceFailure(exploreId, datasourceError));
-      return;
+      return Promise.reject(`${datasourceName} loading failed`);
     }
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
@@ -372,7 +387,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     }
 
     dispatch(loadDatasourceSuccess(exploreId, instance));
-    dispatch(runQueries(exploreId));
+    return Promise.resolve();
   };
 }
 
@@ -572,14 +587,14 @@ export function removeQueryRow(exploreId: ExploreId, index: number): ThunkResult
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId) {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
       modifiedQueries,
-      // showingLogs,
-      // showingGraph,
-      // showingTable,
+      showingLogs,
+      showingGraph,
+      showingTable,
       supportsGraph,
       supportsLogs,
       supportsTable,
@@ -596,7 +611,7 @@ export function runQueries(exploreId: ExploreId) {
     const interval = datasourceInstance.interval;
 
     // Keep table queries first since they need to return quickly
-    if (/*showingTable &&*/ supportsTable) {
+    if ((ignoreUIState || showingTable) && supportsTable) {
       dispatch(
         runQueriesForType(
           exploreId,
@@ -611,7 +626,7 @@ export function runQueries(exploreId: ExploreId) {
         )
       );
     }
-    if (/*showingGraph &&*/ supportsGraph) {
+    if ((ignoreUIState || showingGraph) && supportsGraph) {
       dispatch(
         runQueriesForType(
           exploreId,
@@ -625,9 +640,10 @@ export function runQueries(exploreId: ExploreId) {
         )
       );
     }
-    if (/*showingLogs &&*/ supportsLogs) {
+    if ((ignoreUIState || showingLogs) && supportsLogs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
+
     dispatch(stateSave());
   };
 }
