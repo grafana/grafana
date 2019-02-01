@@ -1,7 +1,6 @@
 import _ from 'lodash';
-import { colors } from '@grafana/ui';
 
-import { TimeSeries } from 'app/core/core';
+import { colors, TimeSeries } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 /**
@@ -341,6 +340,6 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       return a[1] - b[1];
     });
 
-    return new TimeSeries(series);
+    return { datapoints: series.datapoints, target: series.alias, color: series.color };
   });
 }
