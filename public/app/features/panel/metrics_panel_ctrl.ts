@@ -16,7 +16,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
-  timing: any;
   range: any;
   interval: any;
   intervalMs: any;
@@ -81,7 +80,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
-    this.setTimeQueryStart();
     this.datasourceSrv
       .get(this.panel.datasource)
       .then(this.updateTimeRange.bind(this))
@@ -110,14 +108,6 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.events.emit('data-error', err);
         console.log('Panel data error:', err);
       });
-  }
-
-  setTimeQueryStart() {
-    this.timing.queryStart = new Date().getTime();
-  }
-
-  setTimeQueryEnd() {
-    this.timing.queryEnd = new Date().getTime();
   }
 
   updateTimeRange(datasource?) {
@@ -181,7 +171,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   handleQueryResult(result) {
-    this.setTimeQueryEnd();
     this.loading = false;
 
     // check for if data source returns subject

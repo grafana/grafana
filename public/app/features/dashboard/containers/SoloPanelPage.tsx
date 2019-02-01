@@ -5,9 +5,14 @@ import { connect } from 'react-redux';
 
 // Utils & Services
 import appEvents from 'app/core/app_events';
+import locationUtil from 'app/core/utils/location_util';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 // Components
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
+
+// Redux
+import { updateLocation } from 'app/core/actions';
 
 // Types
 import { StoreState } from 'app/types';
@@ -15,11 +20,12 @@ import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 
 interface Props {
   panelId: string;
-  uid?: string;
-  slug?: string;
-  type?: string;
+  urlUid?: string;
+  urlSlug?: string;
+  urlType?: string;
   $scope: any;
   $injector: any;
+  updateLocation: typeof updateLocation;
 }
 
 interface State {
@@ -37,16 +43,31 @@ export class SoloPanelPage extends Component<Props, State> {
   };
 
   componentDidMount() {
-    const { $injector, $scope, uid } = this.props;
+    const { $injector, $scope, urlUid, urlType, urlSlug } = this.props;
+
+    // handle old urls with no uid
+    if (!urlUid && !(urlType === 'script' || urlType === 'snapshot')) {
+      this.redirectToNewUrl();
+      return;
+    }
 
     const dashboardLoaderSrv = $injector.get('dashboardLoaderSrv');
 
     // subscribe to event to know when dashboard controller is done with inititalization
     appEvents.on('dashboard-initialized', this.onDashoardInitialized);
 
-    dashboardLoaderSrv.loadDashboard('', '', uid).then(result => {
+    dashboardLoaderSrv.loadDashboard(urlType, urlSlug, urlUid).then(result => {
       result.meta.soloMode = true;
       $scope.initDashboard(result, $scope);
+    });
+  }
+
+  redirectToNewUrl() {
+    getBackendSrv().getDashboardBySlug(this.props.urlSlug).then(res => {
+      if (res) {
+        const url = locationUtil.stripBaseFromUrl(res.meta.url.replace('/d/', '/d-solo/'));
+        this.props.updateLocation(url);
+      }
     });
   }
 
@@ -89,13 +110,14 @@ export class SoloPanelPage extends Component<Props, State> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  uid: state.location.routeParams.uid,
-  slug: state.location.routeParams.slug,
-  type: state.location.routeParams.type,
+  urlUid: state.location.routeParams.uid,
+  urlSlug: state.location.routeParams.slug,
+  urlType: state.location.routeParams.type,
   panelId: state.location.query.panelId
 });
 
 const mapDispatchToProps = {
+  updateLocation
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SoloPanelPage));

@@ -59,10 +59,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/dashboard-solo/:type/:slug', {
-      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-      controller: 'SoloPanelCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      resolve: {
+        component: () => SoloPanelPage,
+      },
     })
     .when('/dashboard/new', {
       templateUrl: 'public/app/partials/dashboard.html',
