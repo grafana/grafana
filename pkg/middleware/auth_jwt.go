@@ -8,8 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// var remoteKeySet *xjwt.RemoteKeyset
-
 var keyFunc jwt.Keyfunc
 
 func JwtAuthInit() {
