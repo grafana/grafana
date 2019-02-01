@@ -142,8 +142,8 @@ var (
 	AuthJwtSigningKey   string
 	AuthJwtAudience     string
 	AuthJwtIssuer       string
+	AuthJwtLoginClaim   string
 	AuthJwtEmailClaim   string
-	AuthJwtUserClaim    string
 	AuthJwtAutoSignup   bool
 
 	// Plugin settings
@@ -693,8 +693,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthJwtSigningKey = jwtAuth.Key("signing_key").String()
 	AuthJwtAudience = jwtAuth.Key("audience").String()
 	AuthJwtIssuer = jwtAuth.Key("issuer").String()
+	AuthJwtLoginClaim = jwtAuth.Key("login_claim").String()
 	AuthJwtEmailClaim = jwtAuth.Key("email_claim").String()
-	AuthJwtUserClaim = jwtAuth.Key("user_claim").String()
 	AuthJwtAutoSignup = jwtAuth.Key("auto_signup").MustBool(true)
 
 	// global plugin settings

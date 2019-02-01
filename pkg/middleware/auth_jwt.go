@@ -92,31 +92,41 @@ func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
 	return true
 }
 
-func getSignedInUserQueryForClaims(claims jwt.Claims, orgId int64) *m.GetSignedInUserQuery {
-	query := &m.GetSignedInUserQuery{}
+func getSignedInUserQueryForClaims(claims jwt.MapClaims, orgId int64) *m.GetSignedInUserQuery {
+	query := m.GetSignedInUserQuery{}
 	query.OrgId = orgId
 
-	/**
-	if setting.AuthJwtUserProperty == "username" {
-		query.Login = jwtUser
-	} else if setting.AuthJwtUserProperty == "email" {
-		query.Email = jwtUser
-	} else {
-		panic("JWT Auth property invalid")
-	}
-	**/
+	if setting.AuthJwtLoginClaim != "" {
+		if val, ok := claims[setting.AuthJwtLoginClaim].(string); ok {
+			query.Login = val
+			return &query
+		}
+	} 
 
-	return query
+	if setting.AuthJwtEmailClaim != "" {
+		if val, ok := claims[setting.AuthJwtEmailClaim].(string); ok {
+			query.Email = val
+			return &query
+		}
+	} 
+
+	return nil
 }
 
-func getCreateUserCommandForClaims(claims jwt.Claims) *m.CreateUserCommand {
+func getCreateUserCommandForClaims(claims jwt.MapClaims) *m.CreateUserCommand {
 	cmd := m.CreateUserCommand{}
-	// if setting.AuthJwtUserProperty == "username" {
-	// 	cmd.Login = jwtUser
-	// 	cmd.Email = jwtUser
-	// } else if setting.AuthJwtUserProperty == "email" {
-	// 	cmd.Email = jwtUser
-	// 	cmd.Login = jwtUser
-	// }
+
+	if setting.AuthJwtLoginClaim != "" {
+		if val, ok := claims[setting.AuthJwtLoginClaim].(string); ok {
+			cmd.Login = val
+		}
+	} 
+
+	if setting.AuthJwtEmailClaim != "" {
+		if val, ok := claims[setting.AuthJwtEmailClaim].(string); ok {
+			cmd.Email = val
+		}
+	} 
+
 	return &cmd
 }
