@@ -12,11 +12,12 @@ import { DataPanel } from './DataPanel';
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
+import { profiler } from 'app/core/profiler';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange } from '@grafana/ui';
+import { TimeRange, LoadingState } from '@grafana/ui';
 
 import variables from 'sass/_variables.scss';
 import templateSrv from 'app/features/templating/template_srv';
@@ -97,6 +98,12 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.Panel;
+
+    // This is only done to increase a counter that is used by backend
+    // image rendering (phantomjs/headless chrome) to know when to capture image
+    if (loading === LoadingState.Done) {
+      profiler.renderingCompleted(panel.id);
+    }
 
     return (
       <div className="panel-content">

@@ -271,7 +271,7 @@ export class DashboardModel {
     }
   }
 
-  getPanelById(id) {
+  getPanelById(id): PanelModel {
     for (const panel of this.panels) {
       if (panel.id === id) {
         return panel;
