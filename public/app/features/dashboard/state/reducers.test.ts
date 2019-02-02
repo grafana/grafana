@@ -1,4 +1,4 @@
-import { Action, ActionTypes } from './actions';
+import { Action } from './actions';
 import { OrgRole, PermissionLevel, DashboardState } from 'app/types';
 import { initialState, dashboardReducer } from './reducers';
 
@@ -8,7 +8,7 @@ describe('dashboard reducer', () => {
 
     beforeEach(() => {
       const action: Action = {
-        type: ActionTypes.LoadDashboardPermissions,
+        type: 'LOAD_DASHBOARD_PERMISSIONS',
         payload: [
           { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
           { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },

@@ -1,8 +1,18 @@
+// Libaries
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
+
+// Services & Utils
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import appEvents from 'app/core/app_events';
+import { actionCreatorFactory } from 'app/core/redux';
+import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+
+// Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
+import { notifyApp } from 'app/core/actions';
+
+// Types
 import {
   DashboardAcl,
   DashboardAclDTO,
@@ -10,30 +20,14 @@ import {
   DashboardAclUpdateDTO,
   NewDashboardAclItem,
 } from 'app/types/acl';
+import { DashboardLoadingState } from 'app/types/dashboard';
 
-export enum ActionTypes {
-  LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
-  LoadStarredDashboards = 'LOAD_STARRED_DASHBOARDS',
-}
+export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
+export const setDashboardLoadingState = actionCreatorFactory<DashboardLoadingState>('SET_DASHBOARD_LOADING_STATE').create();
 
-export interface LoadDashboardPermissionsAction {
-  type: ActionTypes.LoadDashboardPermissions;
-  payload: DashboardAcl[];
-}
+export type Action = ActionOf<DashboardAclDTO[]>;
 
-export interface LoadStarredDashboardsAction {
-  type: ActionTypes.LoadStarredDashboards;
-  payload: DashboardAcl[];
-}
-
-export type Action = LoadDashboardPermissionsAction | LoadStarredDashboardsAction;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
-
-export const loadDashboardPermissions = (items: DashboardAclDTO[]): LoadDashboardPermissionsAction => ({
-  type: ActionTypes.LoadDashboardPermissions,
-  payload: items,
-});
+export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {
@@ -124,7 +118,7 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
 export function importDashboard(data, dashboardTitle: string): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().post('/api/dashboards/import', data);
-    appEvents.emit('alert-success', ['Dashboard Imported', dashboardTitle]);
+    dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboardTitle)));
     dispatch(loadPluginDashboards());
   };
 }
@@ -135,3 +129,4 @@ export function removeDashboard(uri: string): ThunkResult<void> {
     dispatch(loadPluginDashboards());
   };
 }
+
