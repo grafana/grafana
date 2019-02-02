@@ -20,10 +20,11 @@ import {
   DashboardAclUpdateDTO,
   NewDashboardAclItem,
 } from 'app/types/acl';
-import { DashboardLoadingState } from 'app/types/dashboard';
+import { DashboardLoadingState, MutableDashboard } from 'app/types/dashboard';
 
 export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
 export const setDashboardLoadingState = actionCreatorFactory<DashboardLoadingState>('SET_DASHBOARD_LOADING_STATE').create();
+export const setDashboardModel = actionCreatorFactory<MutableDashboard>('SET_DASHBOARD_MODEL').create();
 
 export type Action = ActionOf<DashboardAclDTO[]>;
 

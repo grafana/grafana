@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 
 // Components
 import { LoadingPlaceholder } from '@grafana/ui';
+import { DashboardGrid } from '../dashgrid/DashboardGrid';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
@@ -45,41 +46,7 @@ export class DashboardPage extends Component<Props, State> {
       urlUid: this.props.urlUid,
       urlType: this.props.urlType,
     })
-
-    // const { $injector, urlUid, urlType, urlSlug } = this.props;
-    //
-    // // handle old urls with no uid
-    // if (!urlUid && !(urlType === 'script' || urlType === 'snapshot')) {
-    //   this.redirectToNewUrl();
-    //   return;
-    // }
-    //
-    // const loaderSrv = $injector.get('dashboardLoaderSrv');
-    // const dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
-    //
-    // try {
-    //   this.initDashboard(dashDTO);
-    // } catch (err) {
-    //   this.props.notifyApp(createErrorNotification('Failed to init dashboard', err.toString()));
-    //   console.log(err);
-    // }
   }
-
-  // redirectToNewUrl() {
-  //   getBackendSrv()
-  //     .getDashboardBySlug(this.props.urlSlug)
-  //     .then(res => {
-  //       if (res) {
-  //         const url = locationUtil.stripBaseFromUrl(res.meta.url.replace('/d/', '/d-solo/'));
-  //         this.props.updateLocation(url);
-  //       }
-  //     });
-  // }
-  //
-  // initDashboard(dashDTO: any) {
-  //   const dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
-  //   this.setState({ dashboard });
-  // }
 
   render() {
     const { loadingState, dashboard } = this.props;
@@ -88,7 +55,8 @@ export class DashboardPage extends Component<Props, State> {
       return <LoadingPlaceholder text={loadingState.toString()} />;
     }
 
-    return <div>title: {dashboard.title}</div>;
+    console.log(dashboard);
+    return <DashboardGrid dashboard={dashboard} />
   }
 }
 
@@ -98,7 +66,7 @@ const mapStateToProps = (state: StoreState) => ({
   urlType: state.location.routeParams.type,
   panelId: state.location.query.panelId,
   loadingState: state.dashboard.loadingState,
-  dashboard: state.dashboard as DashboardModel,
+  dashboard: state.dashboard.model as DashboardModel,
 });
 
 const mapDispatchToProps = {

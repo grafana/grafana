@@ -1,6 +1,6 @@
 import { DashboardAcl } from './acl';
 
-export interface Dashboard {
+export interface MutableDashboard {
 }
 
 export enum DashboardLoadingState {
@@ -12,7 +12,7 @@ export enum DashboardLoadingState {
 }
 
 export interface DashboardState {
-  dashboard: Dashboard | null;
+  model: MutableDashboard | null;
   loadingState: DashboardLoadingState;
   permissions: DashboardAcl[] | null;
 }
