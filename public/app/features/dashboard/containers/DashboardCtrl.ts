@@ -31,12 +31,6 @@ export class DashboardCtrl {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
     $scope.ctrl = this;
-
-    // TODO: break out settings view to separate view & controller
-    this.editTab = 0;
-
-    // funcs called from React component bindings and needs this binding
-    this.getPanelContainer = this.getPanelContainer.bind(this);
   }
 
   setupDashboard(data) {

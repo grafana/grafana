@@ -20,6 +20,7 @@ import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards'
 import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
+import DashboardPage from '../features/dashboard/containers/DashboardPage';
 import config from 'app/core/config';
 
 /** @ngInject */
@@ -34,10 +35,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'page-dashboard',
     })
     .when('/d/:uid/:slug', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d/:uid', {
       templateUrl: 'public/app/partials/dashboard.html',
