@@ -3,6 +3,7 @@ package notifiers
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -99,8 +100,8 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyStr = `{
 			"msgtype": "actionCard",
 			"actionCard": {
-				"text": "` + message + `",
-				"title": "` + title + `",
+				"text": "` + strings.Replace(message, `"`, "'", -1) + `",
+				"title": "` + strings.Replace(title, `"`, "'", -1) + `",
 				"singleTitle": "More",
 				"singleURL": "` + messageUrl + `"
 			}
