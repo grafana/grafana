@@ -6,13 +6,13 @@ func addUserAuthOAuthMigrations(mg *Migrator) {
 	userAuthV2 := Table{Name: "user_auth"}
 
 	mg.AddMigration("Add OAuth access token to user_auth", NewAddColumnMigration(userAuthV2, &Column{
-		Name: "o_auth_access_token", Type: DB_Text, Nullable: true, Length: 255,
+		Name: "o_auth_access_token", Type: DB_Text, Nullable: true,
 	}))
 	mg.AddMigration("Add OAuth refresh token to user_auth", NewAddColumnMigration(userAuthV2, &Column{
-		Name: "o_auth_refresh_token", Type: DB_Text, Nullable: true, Length: 255,
+		Name: "o_auth_refresh_token", Type: DB_Text, Nullable: true,
 	}))
 	mg.AddMigration("Add OAuth token type to user_auth", NewAddColumnMigration(userAuthV2, &Column{
-		Name: "o_auth_token_type", Type: DB_Text, Nullable: true, Length: 255,
+		Name: "o_auth_token_type", Type: DB_Text, Nullable: true,
 	}))
 	mg.AddMigration("Add OAuth expiry to user_auth", NewAddColumnMigration(userAuthV2, &Column{
 		Name: "o_auth_expiry", Type: DB_DateTime, Nullable: true,
