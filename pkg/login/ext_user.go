@@ -51,11 +51,12 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 			return err
 		}
 
-		if extUser.AuthModule != "" && extUser.AuthId != "" {
+		if extUser.AuthModule != "" {
 			cmd2 := &m.SetAuthInfoCommand{
 				UserId:     cmd.Result.Id,
 				AuthModule: extUser.AuthModule,
 				AuthId:     extUser.AuthId,
+				OAuthToken: extUser.OAuthToken,
 			}
 			if err := bus.Dispatch(cmd2); err != nil {
 				return err
@@ -68,6 +69,14 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		err = updateUser(cmd.Result, extUser)
 		if err != nil {
 			return err
+		}
+
+		// Always persist the latest token at log-in
+		if extUser.AuthModule != "" && extUser.OAuthToken != nil {
+			err = updateUserAuth(cmd.Result, extUser)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -140,6 +149,18 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 	}
 
 	logger.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
+	return bus.Dispatch(updateCmd)
+}
+
+func updateUserAuth(user *m.User, extUser *m.ExternalUserInfo) error {
+	updateCmd := &m.UpdateAuthInfoCommand{
+		AuthModule: extUser.AuthModule,
+		AuthId:     extUser.AuthId,
+		UserId:     user.Id,
+		OAuthToken: extUser.OAuthToken,
+	}
+
+	log.Debug("Updating user_auth info for user_id %d", user.Id)
 	return bus.Dispatch(updateCmd)
 }
 

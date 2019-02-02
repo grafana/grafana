@@ -5,12 +5,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
 	bus.AddHandler("sql", GetUserByAuthInfo)
 	bus.AddHandler("sql", GetAuthInfo)
 	bus.AddHandler("sql", SetAuthInfo)
+	bus.AddHandler("sql", UpdateAuthInfo)
 	bus.AddHandler("sql", DeleteAuthInfo)
 }
 
@@ -94,7 +97,7 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 	}
 
 	// create authInfo record to link accounts
-	if authQuery.Result == nil && query.AuthModule != "" && query.AuthId != "" {
+	if authQuery.Result == nil && query.AuthModule != "" {
 		cmd2 := &m.SetAuthInfoCommand{
 			UserId:     user.Id,
 			AuthModule: query.AuthModule,
@@ -111,6 +114,7 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 
 func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 	userAuth := &m.UserAuth{
+		UserId:     query.UserId, // TODO this doesn't have an index in the db
 		AuthModule: query.AuthModule,
 		AuthId:     query.AuthId,
 	}
@@ -120,6 +124,28 @@ func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 	}
 	if !has {
 		return m.ErrUserNotFound
+	}
+
+	if userAuth.OAuthAccessToken != "" {
+		accessToken, err := util.Decrypt([]byte(userAuth.OAuthAccessToken), setting.SecretKey)
+		if err != nil {
+			return err
+		}
+		userAuth.OAuthAccessToken = string(accessToken)
+	}
+	if userAuth.OAuthRefreshToken != "" {
+		refreshToken, err := util.Decrypt([]byte(userAuth.OAuthRefreshToken), setting.SecretKey)
+		if err != nil {
+			return err
+		}
+		userAuth.OAuthRefreshToken = string(refreshToken)
+	}
+	if userAuth.OAuthTokenType != "" {
+		tokenType, err := util.Decrypt([]byte(userAuth.OAuthTokenType), setting.SecretKey)
+		if err != nil {
+			return err
+		}
+		userAuth.OAuthTokenType = string(tokenType)
 	}
 
 	query.Result = userAuth
@@ -135,7 +161,65 @@ func SetAuthInfo(cmd *m.SetAuthInfoCommand) error {
 			Created:    time.Now(),
 		}
 
+		if cmd.OAuthToken != nil {
+			secretAccessToken, err := util.Encrypt([]byte(cmd.OAuthToken.AccessToken), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+			secretRefreshToken, err := util.Encrypt([]byte(cmd.OAuthToken.RefreshToken), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+			secretTokenType, err := util.Encrypt([]byte(cmd.OAuthToken.TokenType), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+
+			authUser.OAuthAccessToken = string(secretAccessToken)
+			authUser.OAuthRefreshToken = string(secretRefreshToken)
+			authUser.OAuthTokenType = string(secretTokenType)
+			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
+		}
+
 		_, err := sess.Insert(authUser)
+		return err
+	})
+}
+
+func UpdateAuthInfo(cmd *m.UpdateAuthInfoCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		authUser := &m.UserAuth{
+			UserId:     cmd.UserId,
+			AuthModule: cmd.AuthModule,
+			AuthId:     cmd.AuthId,
+			Created:    time.Now(),
+		}
+
+		if cmd.OAuthToken != nil {
+			secretAccessToken, err := util.Encrypt([]byte(cmd.OAuthToken.AccessToken), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+			secretRefreshToken, err := util.Encrypt([]byte(cmd.OAuthToken.RefreshToken), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+			secretTokenType, err := util.Encrypt([]byte(cmd.OAuthToken.TokenType), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+			authUser.OAuthAccessToken = string(secretAccessToken)
+			authUser.OAuthRefreshToken = string(secretRefreshToken)
+			authUser.OAuthTokenType = string(secretTokenType)
+			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
+		}
+
+		cond := &m.UserAuth{
+			UserId:     cmd.UserId,
+			AuthModule: cmd.AuthModule,
+		}
+
+		_, err := sess.Update(authUser, cond)
 		return err
 	})
 }

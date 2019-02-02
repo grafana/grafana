@@ -165,6 +165,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	extUser := &m.ExternalUserInfo{
 		AuthModule: "oauth_" + name,
+		OAuthToken: token,
 		AuthId:     userInfo.Id,
 		Name:       userInfo.Name,
 		Login:      userInfo.Login,

@@ -2,17 +2,24 @@ package models
 
 import (
 	"time"
+
+	"golang.org/x/oauth2"
 )
 
 type UserAuth struct {
-	Id         int64
-	UserId     int64
-	AuthModule string
-	AuthId     string
-	Created    time.Time
+	Id                int64
+	UserId            int64
+	AuthModule        string
+	AuthId            string
+	Created           time.Time
+	OAuthAccessToken  string
+	OAuthRefreshToken string
+	OAuthTokenType    string
+	OAuthExpiry       time.Time
 }
 
 type ExternalUserInfo struct {
+	OAuthToken     *oauth2.Token
 	AuthModule     string
 	AuthId         string
 	UserId         int64
@@ -39,6 +46,14 @@ type SetAuthInfoCommand struct {
 	AuthModule string
 	AuthId     string
 	UserId     int64
+	OAuthToken *oauth2.Token
+}
+
+type UpdateAuthInfoCommand struct {
+	AuthModule string
+	AuthId     string
+	UserId     int64
+	OAuthToken *oauth2.Token
 }
 
 type DeleteAuthInfoCommand struct {
@@ -67,6 +82,7 @@ type GetUserByAuthInfoQuery struct {
 }
 
 type GetAuthInfoQuery struct {
+	UserId     int64
 	AuthModule string
 	AuthId     string
 

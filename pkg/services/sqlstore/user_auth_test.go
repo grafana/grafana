@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"golang.org/x/oauth2"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -125,6 +127,47 @@ func TestUserAuth(t *testing.T) {
 
 			So(err, ShouldEqual, m.ErrUserNotFound)
 			So(query.Result, ShouldBeNil)
+		})
+
+		Convey("Can set & retrieve oauth token information", func() {
+			token := &oauth2.Token{
+				AccessToken:  "testaccess",
+				RefreshToken: "testrefresh",
+				Expiry:       time.Now(),
+				TokenType:    "Bearer",
+			}
+
+			// Find a user to set tokens on
+			login := "loginuser0"
+
+			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
+			query := &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test", AuthId: "test"}
+			err = GetUserByAuthInfo(query)
+
+			So(err, ShouldBeNil)
+			So(query.Result.Login, ShouldEqual, login)
+
+			cmd := &m.UpdateAuthInfoCommand{
+				UserId:     query.Result.Id,
+				AuthId:     query.AuthId,
+				AuthModule: query.AuthModule,
+				OAuthToken: token,
+			}
+			err = UpdateAuthInfo(cmd)
+
+			So(err, ShouldBeNil)
+
+			getAuthQuery := &m.GetAuthInfoQuery{
+				UserId: query.Result.Id,
+			}
+
+			err = GetAuthInfo(getAuthQuery)
+
+			So(err, ShouldBeNil)
+			So(getAuthQuery.Result.OAuthAccessToken, ShouldEqual, token.AccessToken)
+			So(getAuthQuery.Result.OAuthRefreshToken, ShouldEqual, token.RefreshToken)
+			So(getAuthQuery.Result.OAuthTokenType, ShouldEqual, token.TokenType)
+
 		})
 	})
 }

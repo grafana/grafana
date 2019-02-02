@@ -14,11 +14,14 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -214,6 +217,44 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 		if proxy.route != nil {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+		}
+
+		if proxy.ds.JsonData != nil && proxy.ds.JsonData.Get("oauthPassThru").MustBool() {
+			provider := proxy.ds.JsonData.Get("oauthPassThruProvider").MustString()
+			connect, ok := social.SocialMap[strings.TrimPrefix(provider, "oauth_")] // The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+			if !ok {
+				logger.Error("Failed to find oauth provider with given name", "provider", provider)
+			}
+			cmd := &m.GetAuthInfoQuery{UserId: proxy.ctx.UserId, AuthModule: provider}
+			if err := bus.Dispatch(cmd); err != nil {
+				logger.Error("Error feching oauth information for user", "error", err)
+			}
+
+			// TokenSource handles refreshing the token if it has expired
+			token, err := connect.TokenSource(proxy.ctx.Req.Context(), &oauth2.Token{
+				AccessToken:  cmd.Result.OAuthAccessToken,
+				Expiry:       cmd.Result.OAuthExpiry,
+				RefreshToken: cmd.Result.OAuthRefreshToken,
+				TokenType:    cmd.Result.OAuthTokenType,
+			}).Token()
+			if err != nil {
+				logger.Error("Failed to retrieve access token from oauth provider", "provider", cmd.Result.AuthModule)
+			}
+
+			// If the tokens are not the same, update the entry in the DB
+			if token.AccessToken != cmd.Result.OAuthAccessToken {
+				cmd2 := &m.UpdateAuthInfoCommand{
+					UserId:     cmd.Result.Id,
+					AuthModule: cmd.Result.AuthModule,
+					AuthId:     cmd.Result.AuthId,
+					OAuthToken: token,
+				}
+				if err := bus.Dispatch(cmd2); err != nil {
+					logger.Error("Failed to update access token during token refresh", "error", err)
+				}
+			}
+			req.Header.Del("Authorization")
+			req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 		}
 	}
 }
