@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"encoding/base64"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -127,25 +128,38 @@ func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 	}
 
 	if userAuth.OAuthAccessToken != "" {
-		accessToken, err := util.Decrypt([]byte(userAuth.OAuthAccessToken), setting.SecretKey)
+		decodedAccessToken, err := base64.StdEncoding.DecodeString(userAuth.OAuthAccessToken)
 		if err != nil {
 			return err
 		}
-		userAuth.OAuthAccessToken = string(accessToken)
+		decryptedAccessToken, err := util.Decrypt(decodedAccessToken, setting.SecretKey)
+		if err != nil {
+			return err
+		}
+		userAuth.OAuthAccessToken = string(decryptedAccessToken)
+
 	}
 	if userAuth.OAuthRefreshToken != "" {
-		refreshToken, err := util.Decrypt([]byte(userAuth.OAuthRefreshToken), setting.SecretKey)
+		decodedRefreshToken, err := base64.StdEncoding.DecodeString(userAuth.OAuthRefreshToken)
 		if err != nil {
 			return err
 		}
-		userAuth.OAuthRefreshToken = string(refreshToken)
+		decryptedRefreshToken, err := util.Decrypt(decodedRefreshToken, setting.SecretKey)
+		if err != nil {
+			return err
+		}
+		userAuth.OAuthRefreshToken = string(decryptedRefreshToken)
 	}
 	if userAuth.OAuthTokenType != "" {
-		tokenType, err := util.Decrypt([]byte(userAuth.OAuthTokenType), setting.SecretKey)
+		decodedTokenType, err := base64.StdEncoding.DecodeString(userAuth.OAuthTokenType)
 		if err != nil {
 			return err
 		}
-		userAuth.OAuthTokenType = string(tokenType)
+		decryptedTokenType, err := util.Decrypt(decodedTokenType, setting.SecretKey)
+		if err != nil {
+			return err
+		}
+		userAuth.OAuthTokenType = string(decryptedTokenType)
 	}
 
 	query.Result = userAuth
@@ -175,9 +189,9 @@ func SetAuthInfo(cmd *m.SetAuthInfoCommand) error {
 				return err
 			}
 
-			authUser.OAuthAccessToken = string(secretAccessToken)
-			authUser.OAuthRefreshToken = string(secretRefreshToken)
-			authUser.OAuthTokenType = string(secretTokenType)
+			authUser.OAuthAccessToken = base64.StdEncoding.EncodeToString(secretAccessToken)
+			authUser.OAuthRefreshToken = base64.StdEncoding.EncodeToString(secretRefreshToken)
+			authUser.OAuthTokenType = base64.StdEncoding.EncodeToString(secretTokenType)
 			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 		}
 
@@ -208,9 +222,9 @@ func UpdateAuthInfo(cmd *m.UpdateAuthInfoCommand) error {
 			if err != nil {
 				return err
 			}
-			authUser.OAuthAccessToken = string(secretAccessToken)
-			authUser.OAuthRefreshToken = string(secretRefreshToken)
-			authUser.OAuthTokenType = string(secretTokenType)
+			authUser.OAuthAccessToken = base64.StdEncoding.EncodeToString(secretAccessToken)
+			authUser.OAuthRefreshToken = base64.StdEncoding.EncodeToString(secretRefreshToken)
+			authUser.OAuthTokenType = base64.StdEncoding.EncodeToString(secretTokenType)
 			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 		}
 
