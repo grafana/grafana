@@ -165,6 +165,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         for (const drop of Drop.drops) {
           drop.destroy();
         }
+
+        appEvents.emit('hide-dash-search');
       });
 
       // handle kiosk mode

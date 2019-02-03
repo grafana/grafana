@@ -5,6 +5,9 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
+// Services & Utils
+import { createErrorNotification } from 'app/core/copy/appNotification';
+
 // Components
 import { LoadingPlaceholder } from '@grafana/ui';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
@@ -14,34 +17,45 @@ import { DashboardSettings } from '../components/DashboardSettings';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { setDashboardModel } from '../state/actions';
+import { updateLocation } from 'app/core/actions';
+import { notifyApp } from 'app/core/actions';
 
 // Types
 import { StoreState } from 'app/types';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardLoadingState } from 'app/types/dashboard';
 
 interface Props {
-  panelId: string;
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  editview: string;
+  editview?: string;
+  urlPanelId?: string;
   $scope: any;
   $injector: any;
-  initDashboard: typeof initDashboard;
-  setDashboardModel: typeof setDashboardModel;
+  urlEdit: boolean;
+  urlFullscreen: boolean;
   loadingState: DashboardLoadingState;
   dashboard: DashboardModel;
+  initDashboard: typeof initDashboard;
+  setDashboardModel: typeof setDashboardModel;
+  notifyApp: typeof notifyApp;
+  updateLocation: typeof updateLocation;
 }
 
 interface State {
   isSettingsOpening: boolean;
+  isEditing: boolean;
+  isFullscreen: boolean;
+  fullscreenPanel: PanelModel | null;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
   state: State = {
     isSettingsOpening: false,
-    isSettingsOpen: false,
+    isEditing: false,
+    isFullscreen: false,
+    fullscreenPanel: null,
   };
 
   async componentDidMount() {
@@ -55,30 +69,66 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, editview } = this.props;
+    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId } = this.props;
 
-    // when dashboard has loaded subscribe to somme events
-    if (prevProps.dashboard === null && dashboard) {
-      dashboard.events.on('view-mode-changed', this.onViewModeChanged);
-
-      // set initial fullscreen class state
-      this.setPanelFullscreenClass();
+    if (!dashboard) {
+      return;
     }
 
+    // handle animation states when opening dashboard settings
     if (!prevProps.editview && editview) {
       this.setState({ isSettingsOpening: true });
       setTimeout(() => {
-        this.setState({ isSettingsOpening: false});
+        this.setState({ isSettingsOpening: false });
       }, 10);
+    }
+
+    // // when dashboard has loaded subscribe to somme events
+    // if (prevProps.dashboard === null) {
+    //   // set initial fullscreen class state
+    //   this.setPanelFullscreenClass();
+    // }
+
+    // Sync url state with model
+    if (urlFullscreen !== dashboard.meta.isFullscreen || urlEdit !== dashboard.meta.isEditing) {
+      // entering fullscreen/edit mode
+      if (urlPanelId) {
+        const panel = dashboard.getPanelById(parseInt(urlPanelId, 10));
+
+        if (panel) {
+          dashboard.setViewMode(panel, urlFullscreen, urlEdit);
+          this.setState({ isEditing: urlEdit, isFullscreen: urlFullscreen, fullscreenPanel: panel });
+        } else {
+          this.handleFullscreenPanelNotFound(urlPanelId);
+        }
+      } else {
+        // handle leaving fullscreen mode
+        if (this.state.fullscreenPanel) {
+          dashboard.setViewMode(this.state.fullscreenPanel, urlFullscreen, urlEdit);
+        }
+        this.setState({ isEditing: urlEdit, isFullscreen: urlFullscreen, fullscreenPanel: null });
+      }
+
+      this.setPanelFullscreenClass(urlFullscreen);
     }
   }
 
-  onViewModeChanged = () => {
-    this.setPanelFullscreenClass();
-  };
+  handleFullscreenPanelNotFound(urlPanelId: string) {
+    // Panel not found
+    this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
+    // Clear url state
+    this.props.updateLocation({
+      query: {
+        edit: null,
+        fullscreen: null,
+        panelId: null,
+      },
+      partial: true
+    });
+  }
 
-  setPanelFullscreenClass() {
-    $('body').toggleClass('panel-in-fullscreen', this.props.dashboard.meta.fullscreen === true);
+  setPanelFullscreenClass(isFullscreen: boolean) {
+    $('body').toggleClass('panel-in-fullscreen', isFullscreen);
   }
 
   componentWillUnmount() {
@@ -94,10 +144,11 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   renderDashboard() {
     const { dashboard, editview } = this.props;
+    const { isEditing, isFullscreen } = this.state;
 
     const classes = classNames({
       'dashboard-container': true,
-      'dashboard-container--has-submenu': dashboard.meta.submenuEnabled
+      'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
 
     return (
@@ -105,7 +156,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         {dashboard && editview && <DashboardSettings dashboard={dashboard} />}
 
         <div className={classes}>
-          <DashboardGrid dashboard={dashboard} />
+          <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
         </div>
       </div>
     );
@@ -113,7 +164,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, editview } = this.props;
-    const { isSettingsOpening } = this.state;
+    const { isSettingsOpening, isEditing, isFullscreen } = this.state;
 
     const classes = classNames({
       'dashboard-page--settings-opening': isSettingsOpening,
@@ -122,7 +173,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className={classes}>
-        <DashNav dashboard={dashboard} />
+        <DashNav dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} editview={editview} />
         {!dashboard && this.renderLoadingState()}
         {dashboard && this.renderDashboard()}
       </div>
@@ -130,19 +181,26 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  urlUid: state.location.routeParams.uid,
-  urlSlug: state.location.routeParams.slug,
-  urlType: state.location.routeParams.type,
-  panelId: state.location.query.panelId,
-  editview: state.location.query.editview,
-  loadingState: state.dashboard.loadingState,
-  dashboard: state.dashboard.model as DashboardModel,
-});
+const mapStateToProps = (state: StoreState) => {
+  console.log('state location', state.location.query);
+  return {
+    urlUid: state.location.routeParams.uid,
+    urlSlug: state.location.routeParams.slug,
+    urlType: state.location.routeParams.type,
+    editview: state.location.query.editview,
+    urlPanelId: state.location.query.panelId,
+    urlFullscreen: state.location.query.fullscreen === true,
+    urlEdit: state.location.query.edit === true,
+    loadingState: state.dashboard.loadingState,
+    dashboard: state.dashboard.model as DashboardModel,
+  };
+};
 
 const mapDispatchToProps = {
   initDashboard,
-  setDashboardModel
+  setDashboardModel,
+  notifyApp,
+  updateLocation,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

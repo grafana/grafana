@@ -98,8 +98,6 @@ export class DashboardViewStateSrv {
     if (fromRouteUpdated !== true) {
       this.$location.search(this.serializeToUrl());
     }
-
-    this.syncState();
   }
 
   toggleCollapsedPanelRow(panelId) {
@@ -112,34 +110,6 @@ export class DashboardViewStateSrv {
           }
         }
       }
-    }
-  }
-
-  syncState() {
-    if (this.state.fullscreen) {
-      const panel = this.dashboard.getPanelById(this.state.panelId);
-
-      if (!panel) {
-        this.state.fullscreen = null;
-        this.state.panelId = null;
-        this.state.edit = null;
-
-        this.update(this.state);
-
-        setTimeout(() => {
-          appEvents.emit('alert-error', ['Error', 'Panel not found']);
-        }, 100);
-
-        return;
-      }
-
-      if (!panel.fullscreen) {
-        this.enterFullscreen(panel);
-      } else if (this.dashboard.meta.isEditing !== this.state.edit) {
-        this.dashboard.setViewMode(panel, this.state.fullscreen, this.state.edit);
-      }
-    } else if (this.fullscreenPanel) {
-      this.leaveFullscreen();
     }
   }
 

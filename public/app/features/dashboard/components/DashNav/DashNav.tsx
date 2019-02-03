@@ -13,6 +13,9 @@ import { DashboardModel } from '../../state/DashboardModel';
 
 export interface Props {
   dashboard: DashboardModel | null;
+  editview: string;
+  isEditing: boolean;
+  isFullscreen: boolean;
   updateLocation: typeof updateLocation;
 }
 

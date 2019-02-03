@@ -1,6 +1,10 @@
 import { DashboardAcl } from './acl';
 
 export interface MutableDashboard {
+  meta: {
+    fullscreen: boolean;
+    isEditing: boolean;
+  }
 }
 
 export enum DashboardLoadingState {
