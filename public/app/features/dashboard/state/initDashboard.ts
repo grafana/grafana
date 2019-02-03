@@ -67,6 +67,7 @@ export function initDashboard({ injector, scope, urlUid, urlSlug, urlType }: Ini
       dashboard.updateSubmenuVisibility();
       dashboard.autoFitPanels(window.innerHeight);
 
+      // init unsaved changes tracking
       injector.get('unsavedChangesSrv').init(dashboard, scope);
 
       scope.dashboard = dashboard;

@@ -31,7 +31,7 @@ export const dashboardReducer = reducerFactory(initialState)
       model: action.payload
     }),
   })
-  .create()
+  .create();
 
 export default {
   dashboard: dashboardReducer,
