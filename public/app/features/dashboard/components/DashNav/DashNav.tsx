@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 // Utils & Services
+import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { appEvents } from 'app/core/app_events';
 
 // Components
@@ -24,6 +25,24 @@ export interface Props {
 }
 
 export class DashNav extends PureComponent<Props> {
+  timePickerEl: HTMLElement;
+  timepickerCmp: AngularComponent;
+
+  componentDidMount() {
+    const loader = getAngularLoader();
+
+    const template = '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
+    const scopeProps = { dashboard: this.props.dashboard };
+
+    this.timepickerCmp = loader.load(this.timePickerEl, scopeProps, template);
+  }
+
+  componentWillUnmount() {
+    if (this.timepickerCmp) {
+      this.timepickerCmp.destroy();
+    }
+  }
+
   onOpenSearch = () => {
     appEvents.emit('show-dash-search');
   };
@@ -98,7 +117,7 @@ export class DashNav extends PureComponent<Props> {
 
   render() {
     const { dashboard, isFullscreen, editview } = this.props;
-    const { canEdit, canStar, canSave, canShare, folderTitle, showSettings, isStarred } = dashboard.meta;
+    const { canStar, canSave, canShare, folderTitle, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
 
     const haveFolder = dashboard.meta.folderId > 0;
@@ -125,7 +144,7 @@ export class DashNav extends PureComponent<Props> {
         */}
 
         <div className="navbar-buttons navbar-buttons--actions">
-          {canEdit && (
+          {canSave && (
             <DashNavButton
               tooltip="Add panel"
               classSuffix="add-panel"
@@ -166,8 +185,12 @@ export class DashNav extends PureComponent<Props> {
           )}
 
           {showSettings && (
-            <DashNavButton tooltip="Dashboard settings" classSuffix="settings" icon="fa fa-cog"
-            onClick={this.onOpenSettings} />
+            <DashNavButton
+              tooltip="Dashboard settings"
+              classSuffix="settings"
+              icon="fa fa-cog"
+              onClick={this.onOpenSettings}
+            />
           )}
         </div>
 
@@ -180,9 +203,7 @@ export class DashNav extends PureComponent<Props> {
           />
         </div>
 
-        {
-          // <gf-time-picker class="gf-timepicker-nav" dashboard="ctrl.dashboard" ng-if="!ctrl.dashboard.timepicker.hidden"></gf-time-picker>
-        }
+        <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
 
         {(isFullscreen || editview) && (
           <div className="navbar-buttons navbar-buttons--close">

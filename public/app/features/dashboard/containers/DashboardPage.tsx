@@ -200,20 +200,17 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => {
-  console.log('state location', state.location.query);
-  return {
-    urlUid: state.location.routeParams.uid,
-    urlSlug: state.location.routeParams.slug,
-    urlType: state.location.routeParams.type,
-    editview: state.location.query.editview,
-    urlPanelId: state.location.query.panelId,
-    urlFullscreen: state.location.query.fullscreen === true,
-    urlEdit: state.location.query.edit === true,
-    loadingState: state.dashboard.loadingState,
-    dashboard: state.dashboard.model as DashboardModel,
-  };
-};
+const mapStateToProps = (state: StoreState) => ({
+  urlUid: state.location.routeParams.uid,
+  urlSlug: state.location.routeParams.slug,
+  urlType: state.location.routeParams.type,
+  editview: state.location.query.editview,
+  urlPanelId: state.location.query.panelId,
+  urlFullscreen: state.location.query.fullscreen === true,
+  urlEdit: state.location.query.edit === true,
+  loadingState: state.dashboard.loadingState,
+  dashboard: state.dashboard.model as DashboardModel,
+});
 
 const mapDispatchToProps = {
   initDashboard,
