@@ -29,10 +29,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
 
   $routeProvider
     .when('/', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d/:uid/:slug', {
       template: '<react-container />',
@@ -43,16 +45,20 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/d/:uid', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/dashboard/:type/:slug', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d-solo/:uid/:slug', {
       template: '<react-container />',

@@ -16,6 +16,7 @@ export interface Props {
   editview: string;
   isEditing: boolean;
   isFullscreen: boolean;
+  $injector: any;
   updateLocation: typeof updateLocation;
 }
 
@@ -25,13 +26,29 @@ export class DashNav extends PureComponent<Props> {
   };
 
   onAddPanel = () => {};
+
+  onClose = () => {
+    this.props.updateLocation({
+      query: { editview: null, panelId: null, edit: null, fullscreen: null },
+      partial: true,
+    });
+  };
+
   onOpenSettings = () => {
     this.props.updateLocation({
-      query: {
-        editview: 'settings',
-      },
+      query: { editview: 'settings' },
       partial: true,
-    })
+    });
+  };
+
+  onStarDashboard = () => {
+    const { $injector, dashboard } = this.props;
+    const dashboardSrv = $injector.get('dashboardSrv');
+
+    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then(newState => {
+      dashboard.meta.isStarred = newState;
+      this.forceUpdate();
+    });
   };
 
   renderLoadingState() {
@@ -48,15 +65,16 @@ export class DashNav extends PureComponent<Props> {
     );
   }
 
+
   render() {
-    let { dashboard } = this.props;
+    const { dashboard, isFullscreen, editview } = this.props;
 
     if (!dashboard) {
       return this.renderLoadingState();
     }
 
     const haveFolder = dashboard.meta.folderId > 0;
-    const { canEdit, canSave, folderTitle, showSettings } = dashboard.meta;
+    const { canEdit, canStar, canSave, folderTitle, showSettings, isStarred } = dashboard.meta;
 
     return (
       <div className="navbar">
@@ -95,53 +113,66 @@ export class DashNav extends PureComponent<Props> {
             </button>
           )}
 
+          {canStar && (
+            <button
+              className="btn navbar-button navbar-button--star"
+              onClick={this.onStarDashboard}
+              title="Mark as favorite"
+            >
+              {isStarred && <i className="fa fa-star" />}
+              {!isStarred && <i className="fa fa-star-o" />}
+            </button>
+          )}
+
           {
-            // 	<button class="btn navbar-button navbar-button--star" ng-show="::ctrl.dashboard.meta.canStar" ng-click="ctrl.starDashboard()" bs-tooltip="'Mark as favorite'" data-placement="bottom">
-              // 		<i class="fa" ng-class="{'fa-star-o': !ctrl.dashboard.meta.isStarred, 'fa-star': ctrl.dashboard.meta.isStarred}"></i>
-              // 	</button>
             //
             //   <button class="btn navbar-button navbar-button--share" ng-show="::ctrl.dashboard.meta.canShare" ng-click="ctrl.shareDashboard(0)" bs-tooltip="'Share dashboard'" data-placement="bottom">
-              // 		<i class="fa fa-share-square-o"></i></a>
+            // 		<i class="fa fa-share-square-o"></i></a>
             // 	</button>
-          //
-          //   <button class="btn navbar-button navbar-button--save" ng-show="ctrl.dashboard.meta.canSave" ng-click="ctrl.saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom">
-              // 		<i class="fa fa-save"></i>
-              // 	</button>
+            //
+            //   <button class="btn navbar-button navbar-button--save" ng-show="ctrl.dashboard.meta.canSave" ng-click="ctrl.saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom">
+            // 		<i class="fa fa-save"></i>
+            // 	</button>
             //
             // 	<a class="btn navbar-button navbar-button--snapshot-origin" ng-if="::ctrl.dashboard.snapshot.originalUrl" href="{{ctrl.dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom">
-              // 		<i class="fa fa-link"></i>
-              // 	</a>
+            // 		<i class="fa fa-link"></i>
+            // 	</a>
             //
             // 	<button class="btn navbar-button navbar-button--settings" ng-click="ctrl.toggleSettings()" bs-tooltip="'Dashboard Settings'" data-placement="bottom" ng-show="ctrl.dashboard.meta.showSettings">
-              // 		<i class="fa fa-cog"></i>
-              // 	</button>
-            // </div>
-          //
-          // <div class="navbar-buttons navbar-buttons--tv">
-            //   <button class="btn navbar-button navbar-button--tv" ng-click="ctrl.toggleViewMode()" bs-tooltip="'Cycle view mode'" data-placement="bottom">
-              //     <i class="fa fa-desktop"></i>
-              //   </button>
-            // </div>
-          //
-          // <gf-time-picker class="gf-timepicker-nav" dashboard="ctrl.dashboard" ng-if="!ctrl.dashboard.timepicker.hidden"></gf-time-picker>
-          //
-          // <div class="navbar-buttons navbar-buttons--close">
-            // 	<button class="btn navbar-button navbar-button--primary" ng-click="ctrl.close()" bs-tooltip="'Back to dashboard'" data-placement="bottom">
-            // 		<i class="fa fa-reply"></i>
+            // 		<i class="fa fa-cog"></i>
             // 	</button>
             // </div>
+            //
+            // <div class="navbar-buttons navbar-buttons--tv">
+            //   <button class="btn navbar-button navbar-button--tv" ng-click="ctrl.toggleViewMode()" bs-tooltip="'Cycle view mode'" data-placement="bottom">
+            //     <i class="fa fa-desktop"></i>
+            //   </button>
+            // </div>
+            //
+            // <gf-time-picker class="gf-timepicker-nav" dashboard="ctrl.dashboard" ng-if="!ctrl.dashboard.timepicker.hidden"></gf-time-picker>
+            //
           }
+          {(isFullscreen || editview) && (
+            <div className="navbar-buttons navbar-buttons--close">
+              <button
+                className="btn navbar-button navbar-button--primary"
+                onClick={this.onClose}
+                title="Back to dashboard"
+              >
+                <i className="fa fa-reply" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 }
 
-const mapStateToProps = () => ({
-});
+const mapStateToProps = () => ({});
 
 const mapDispatchToProps = {
-  updateLocation
+  updateLocation,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DashNav);

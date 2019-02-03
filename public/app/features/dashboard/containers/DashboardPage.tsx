@@ -60,8 +60,8 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   async componentDidMount() {
     this.props.initDashboard({
-      injector: this.props.$injector,
-      scope: this.props.$scope,
+      $injector: this.props.$injector,
+      $scope: this.props.$scope,
       urlSlug: this.props.urlSlug,
       urlUid: this.props.urlUid,
       urlType: this.props.urlType,
@@ -123,7 +123,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         fullscreen: null,
         panelId: null,
       },
-      partial: true
+      partial: true,
     });
   }
 
@@ -163,7 +163,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview } = this.props;
+    const { dashboard, editview, $injector } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen } = this.state;
 
     const classes = classNames({
@@ -173,7 +173,13 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className={classes}>
-        <DashNav dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} editview={editview} />
+        <DashNav
+          dashboard={dashboard}
+          isEditing={isEditing}
+          isFullscreen={isFullscreen}
+          editview={editview}
+          $injector={$injector}
+        />
         {!dashboard && this.renderLoadingState()}
         {dashboard && this.renderDashboard()}
       </div>

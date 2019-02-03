@@ -1,5 +1,6 @@
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
@@ -12,24 +13,53 @@ import { DashboardLoadingState } from 'app/types/dashboard';
 import { DashboardModel } from './DashboardModel';
 
 export interface InitDashboardArgs {
-  injector: any;
-  scope: any;
+  $injector: any;
+  $scope: any;
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
 }
 
-export function initDashboard({ injector, scope, urlUid, urlSlug, urlType }: InitDashboardArgs): ThunkResult<void> {
-  return async dispatch => {
-    const loaderSrv = injector.get('dashboardLoaderSrv');
+async function redirectToNewUrl(slug: string, dispatch: any) {
+  const res = await getBackendSrv().getDashboardBySlug(slug);
 
-    dispatch(setDashboardLoadingState(DashboardLoadingState.Fetching));
+  if (res) {
+    const url = locationUtil.stripBaseFromUrl(res.meta.url.replace('/d/', '/d-solo/'));
+    dispatch(updateLocation(url));
+  }
+}
+
+export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: InitDashboardArgs): ThunkResult<void> {
+  return async dispatch => {
+    // handle old urls with no uid
+    if (!urlUid && urlSlug) {
+      redirectToNewUrl(urlSlug, dispatch);
+      return;
+    }
 
     let dashDTO = null;
 
+    // set fetching state
+    dispatch(setDashboardLoadingState(DashboardLoadingState.Fetching));
+
     try {
-      // fetch dashboard from api
-      dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
+      // if no uid or slug, load home dashboard
+      if (!urlUid && !urlSlug) {
+        dashDTO = await getBackendSrv().get('/api/dashboards/home');
+
+        if (dashDTO.redirectUri) {
+          const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
+          dispatch(updateLocation({ path: newUrl }));
+          return;
+        } else {
+          dashDTO.meta.canSave = false;
+          dashDTO.meta.canShare = false;
+          dashDTO.meta.canStar = false;
+        }
+      } else {
+        const loaderSrv = $injector.get('dashboardLoaderSrv');
+        dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
+      }
     } catch (err) {
       dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
       console.log(err);
@@ -50,13 +80,13 @@ export function initDashboard({ injector, scope, urlUid, urlSlug, urlType }: Ini
     }
 
     // init services
-    injector.get('timeSrv').init(dashboard);
-    injector.get('annotationsSrv').init(dashboard);
+    $injector.get('timeSrv').init(dashboard);
+    $injector.get('annotationsSrv').init(dashboard);
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
-      await injector.get('variableSrv').init(dashboard);
+      await $injector.get('variableSrv').init(dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err.toString())));
       console.log(err);
@@ -68,11 +98,11 @@ export function initDashboard({ injector, scope, urlUid, urlSlug, urlType }: Ini
       dashboard.autoFitPanels(window.innerHeight);
 
       // init unsaved changes tracking
-      injector.get('unsavedChangesSrv').init(dashboard, scope);
+      $injector.get('unsavedChangesSrv').init(dashboard, $scope);
 
-      scope.dashboard = dashboard;
-      injector.get('dashboardViewStateSrv').create(scope);
-      injector.get('keybindingSrv').setupDashboardBindings(scope, dashboard);
+      $scope.dashboard = dashboard;
+      $injector.get('dashboardViewStateSrv').create($scope);
+      $injector.get('keybindingSrv').setupDashboardBindings($scope, dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err.toString())));
       console.log(err);

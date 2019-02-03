@@ -1,5 +1,4 @@
 // Libaries
-import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 
 // Services & Utils
@@ -13,6 +12,7 @@ import { loadPluginDashboards } from '../../plugins/state/actions';
 import { notifyApp } from 'app/core/actions';
 
 // Types
+import { StoreState } from 'app/types';
 import {
   DashboardAcl,
   DashboardAclDTO,
@@ -27,7 +27,6 @@ export const setDashboardLoadingState = actionCreatorFactory<DashboardLoadingSta
 export const setDashboardModel = actionCreatorFactory<MutableDashboard>('SET_DASHBOARD_MODEL').create();
 
 export type Action = ActionOf<DashboardAclDTO[]>;
-
 export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {

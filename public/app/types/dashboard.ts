@@ -4,7 +4,7 @@ export interface MutableDashboard {
   meta: {
     fullscreen: boolean;
     isEditing: boolean;
-  }
+  };
 }
 
 export enum DashboardLoadingState {
