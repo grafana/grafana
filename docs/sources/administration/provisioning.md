@@ -63,7 +63,7 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 ## Configuration Management Tools
 
-Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
+Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily rely on the expertise of the community.
 
 Tool | Project
 -----|------------
