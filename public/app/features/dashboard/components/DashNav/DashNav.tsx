@@ -5,6 +5,9 @@ import { connect } from 'react-redux';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 
+// Components
+import { DashNavButton } from './DashNavButton';
+
 // State
 import { updateLocation } from 'app/core/actions';
 
@@ -41,10 +44,17 @@ export class DashNav extends PureComponent<Props> {
   };
 
   onClose = () => {
-    this.props.updateLocation({
-      query: { editview: null, panelId: null, edit: null, fullscreen: null },
-      partial: true,
-    });
+    if (this.props.editview) {
+      this.props.updateLocation({
+        query: { editview: null },
+        partial: true,
+      });
+    } else {
+      this.props.updateLocation({
+        query: { panelId: null, edit: null, fullscreen: null },
+        partial: true,
+      });
+    }
   };
 
   onToggleTVMode = () => {
@@ -116,19 +126,12 @@ export class DashNav extends PureComponent<Props> {
 
         <div className="navbar-buttons navbar-buttons--actions">
           {canEdit && (
-            <button className="btn navbar-button navbar-button--add-panel" title="Add panel" onClick={this.onAddPanel}>
-              <i className="gicon gicon-add-panel" />
-            </button>
-          )}
-
-          {showSettings && (
-            <button
-              className="btn navbar-button navbar-button--settings"
-              onClick={this.onOpenSettings}
-              title="Dashboard Settings"
-            >
-              <i className="fa fa-cog" />
-            </button>
+            <DashNavButton
+              tooltip="Add panel"
+              classSuffix="add-panel"
+              icon="gicon gicon-add-panel"
+              onClick={this.onAddPanel}
+            />
           )}
 
           {canStar && (
@@ -170,6 +173,16 @@ export class DashNav extends PureComponent<Props> {
             >
               <i className="fa fa-link" />
             </a>
+          )}
+
+          {showSettings && (
+            <button
+              className="btn navbar-button navbar-button--settings"
+              onClick={this.onOpenSettings}
+              title="Dashboard Settings"
+            >
+              <i className="fa fa-cog" />
+            </button>
           )}
         </div>
 

@@ -33,7 +33,7 @@ async function redirectToNewUrl(slug: string, dispatch: any) {
 export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: InitDashboardArgs): ThunkResult<void> {
   return async dispatch => {
     // handle old urls with no uid
-    if (!urlUid && urlSlug) {
+    if (!urlUid && urlSlug && !urlType) {
       redirectToNewUrl(urlSlug, dispatch);
       return;
     }
