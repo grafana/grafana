@@ -1,6 +1,11 @@
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
+import { VariableSrv } from 'app/features/templating/variable_srv';
+import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
@@ -81,13 +86,21 @@ export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: I
     }
 
     // init services
-    $injector.get('timeSrv').init(dashboard);
-    $injector.get('annotationsSrv').init(dashboard);
+    const timeSrv: TimeSrv = $injector.get('timeSrv');
+    const annotationsSrv: AnnotationsSrv = $injector.get('annotationsSrv');
+    const variableSrv: VariableSrv = $injector.get('variableSrv');
+    const keybindingSrv: KeybindingSrv = $injector.get('keybindingSrv');
+    const unsavedChangesSrv = $injector.get('unsavedChangesSrv');
+    const viewStateSrv = $injector.get('dashboardViewStateSrv');
+    const dashboardSrv: DashboardSrv = $injector.get('dashboardSrv');
+
+    timeSrv.init(dashboard);
+    annotationsSrv.init(dashboard);
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
-      await $injector.get('variableSrv').init(dashboard);
+      await variableSrv.init(dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed')));
       console.log(err);
@@ -99,10 +112,10 @@ export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: I
       dashboard.autoFitPanels(window.innerHeight);
 
       // init unsaved changes tracking
-      $injector.get('unsavedChangesSrv').init(dashboard, $scope);
+      unsavedChangesSrv.init(dashboard, $scope);
 
       $scope.dashboard = dashboard;
-      $injector.get('dashboardViewStateSrv').create($scope);
+      viewStateSrv.create($scope);
 
       // dashboard keybindings should not live in core, this needs a bigger refactoring
       // So declaring this here so it can depend on the removePanel util function
@@ -111,12 +124,15 @@ export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: I
         removePanel(dashboard, dashboard.getPanelById(panelId), true);
       };
 
-      $injector.get('keybindingSrv').setupDashboardBindings($scope, dashboard, onRemovePanel);
+      keybindingSrv.setupDashboardBindings($scope, dashboard, onRemovePanel);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err.toString())));
       console.log(err);
     }
 
+    // legacy srv state
+    dashboardSrv.setCurrent(dashboard);
+    // set model in redux (even though it's mutable)
     dispatch(setDashboardModel(dashboard));
   };
 }

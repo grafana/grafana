@@ -8,15 +8,26 @@ interface Props {
   icon: string;
   tooltip: string;
   classSuffix: string;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
 }
 
-export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSuffix, onClick }) => {
+export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSuffix, onClick, href }) => {
+  if (onClick) {
+    return (
+      <Tooltip content={tooltip}>
+        <button className={`btn navbar-button navbar-button--${classSuffix}`} onClick={onClick}>
+          <i className={icon} />
+        </button>
+      </Tooltip>
+    );
+  }
+
   return (
-    <Tooltip content={tooltip} placement="bottom">
-      <button className={`btn navbar-button navbar-button--${classSuffix}`} onClick={onClick}>
+    <Tooltip content={tooltip}>
+      <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
         <i className={icon} />
-      </button>
+      </a>
     </Tooltip>
   );
 };

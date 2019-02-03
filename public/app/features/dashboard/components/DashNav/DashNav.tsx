@@ -135,61 +135,49 @@ export class DashNav extends PureComponent<Props> {
           )}
 
           {canStar && (
-            <button
-              className="btn navbar-button navbar-button--star"
+            <DashNavButton
+              tooltip="Mark as favorite"
+              classSuffix="star"
+              icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
               onClick={this.onStarDashboard}
-              title="Mark as favorite"
-            >
-              {isStarred && <i className="fa fa-star" />}
-              {!isStarred && <i className="fa fa-star-o" />}
-            </button>
+            />
           )}
 
           {canShare && (
-            <button
-              className="btn navbar-button navbar-button--share"
+            <DashNavButton
+              tooltip="Share dashboard"
+              classSuffix="share"
+              icon="fa fa-share-square-o"
               onClick={this.onOpenShare}
-              title="Share Dashboard"
-            >
-              <i className="fa fa-share-square-o" />
-            </button>
+            />
           )}
 
           {canSave && (
-            <button
-              className="btn navbar-button navbar-button--save"
-              onClick={this.onSave}
-              title="Save dashboard <br> CTRL+S"
-            >
-              <i className="fa fa-save" />
-            </button>
+            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
           )}
 
           {snapshotUrl && (
-            <a
-              className="btn navbar-button navbar-button--snapshot-origin"
+            <DashNavButton
+              tooltip="Open original dashboard"
+              classSuffix="snapshot-origin"
+              icon="fa fa-link"
               href={snapshotUrl}
-              title="Open original dashboard"
-            >
-              <i className="fa fa-link" />
-            </a>
+            />
           )}
 
           {showSettings && (
-            <button
-              className="btn navbar-button navbar-button--settings"
-              onClick={this.onOpenSettings}
-              title="Dashboard Settings"
-            >
-              <i className="fa fa-cog" />
-            </button>
+            <DashNavButton tooltip="Dashboard settings" classSuffix="settings" icon="fa fa-cog"
+            onClick={this.onOpenSettings} />
           )}
         </div>
 
         <div className="navbar-buttons navbar-buttons--tv">
-          <button className="btn navbar-button navbar-button--tv" onClick={this.onToggleTVMode} title="Cycle view mode">
-            <i className="fa fa-desktop" />
-          </button>
+          <DashNavButton
+            tooltip="Cycke view mode"
+            classSuffix="tv"
+            icon="fa fa-desktop"
+            onClick={this.onToggleTVMode}
+          />
         </div>
 
         {
@@ -198,13 +186,12 @@ export class DashNav extends PureComponent<Props> {
 
         {(isFullscreen || editview) && (
           <div className="navbar-buttons navbar-buttons--close">
-            <button
-              className="btn navbar-button navbar-button--primary"
+            <DashNavButton
+              tooltip="Back to dashboard"
+              classSuffix="primary"
+              icon="fa fa-reply"
               onClick={this.onClose}
-              title="Back to dashboard"
-            >
-              <i className="fa fa-reply" />
-            </button>
+            />
           </div>
         )}
       </div>
