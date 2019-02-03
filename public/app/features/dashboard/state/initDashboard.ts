@@ -88,7 +88,7 @@ export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: I
     try {
       await $injector.get('variableSrv').init(dashboard);
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Templating init failed', err.toString())));
+      dispatch(notifyApp(createErrorNotification('Templating init failed')));
       console.log(err);
     }
 

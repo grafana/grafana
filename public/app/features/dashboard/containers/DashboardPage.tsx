@@ -166,11 +166,19 @@ export class DashboardPage extends PureComponent<Props, State> {
     const { dashboard, editview, $injector } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen } = this.state;
 
+    if (!dashboard) {
+      return null;
+    }
+
     const classes = classNames({
       'dashboard-page--settings-opening': isSettingsOpening,
       'dashboard-page--settings-open': !isSettingsOpening && editview,
     });
 
+    const gridWrapperClasses = classNames({
+      'dashboard-container': true,
+      'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
+    });
     return (
       <div className={classes}>
         <DashNav
@@ -180,8 +188,13 @@ export class DashboardPage extends PureComponent<Props, State> {
           editview={editview}
           $injector={$injector}
         />
-        {!dashboard && this.renderLoadingState()}
-        {dashboard && this.renderDashboard()}
+        <div className="scroll-canvas scroll-canvas--dashboard">
+          {dashboard && editview && <DashboardSettings dashboard={dashboard} />}
+
+          <div className={gridWrapperClasses}>
+            <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
+          </div>
+        </div>
       </div>
     );
   }
