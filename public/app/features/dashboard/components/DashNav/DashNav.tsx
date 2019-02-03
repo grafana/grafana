@@ -171,33 +171,29 @@ export class DashNav extends PureComponent<Props> {
               <i className="fa fa-link" />
             </a>
           )}
+        </div>
 
-          <div className="navbar-buttons navbar-buttons--tv">
+        <div className="navbar-buttons navbar-buttons--tv">
+          <button className="btn navbar-button navbar-button--tv" onClick={this.onToggleTVMode} title="Cycle view mode">
+            <i className="fa fa-desktop" />
+          </button>
+        </div>
+
+        {
+          // <gf-time-picker class="gf-timepicker-nav" dashboard="ctrl.dashboard" ng-if="!ctrl.dashboard.timepicker.hidden"></gf-time-picker>
+        }
+
+        {(isFullscreen || editview) && (
+          <div className="navbar-buttons navbar-buttons--close">
             <button
-              className="btn navbar-button navbar-button--tv"
-              onClick={this.onToggleTVMode}
-              title="Cycle view mode"
+              className="btn navbar-button navbar-button--primary"
+              onClick={this.onClose}
+              title="Back to dashboard"
             >
-              <i className="fa fa-desktop" />
+              <i className="fa fa-reply" />
             </button>
           </div>
-
-          {
-            // <gf-time-picker class="gf-timepicker-nav" dashboard="ctrl.dashboard" ng-if="!ctrl.dashboard.timepicker.hidden"></gf-time-picker>
-          }
-
-          {(isFullscreen || editview) && (
-            <div className="navbar-buttons navbar-buttons--close">
-              <button
-                className="btn navbar-button navbar-button--primary"
-                onClick={this.onClose}
-                title="Back to dashboard"
-              >
-                <i className="fa fa-reply" />
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     );
   }

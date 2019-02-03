@@ -7,6 +7,7 @@ import { updateLocation } from 'app/core/actions';
 import { notifyApp } from 'app/core/actions';
 import locationUtil from 'app/core/utils/location_util';
 import { setDashboardLoadingState, ThunkResult, setDashboardModel } from './actions';
+import { removePanel } from '../utils/panel';
 
 // Types
 import { DashboardLoadingState } from 'app/types/dashboard';
@@ -102,7 +103,15 @@ export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: I
 
       $scope.dashboard = dashboard;
       $injector.get('dashboardViewStateSrv').create($scope);
-      $injector.get('keybindingSrv').setupDashboardBindings($scope, dashboard);
+
+      // dashboard keybindings should not live in core, this needs a bigger refactoring
+      // So declaring this here so it can depend on the removePanel util function
+      // Long term onRemovePanel should be handled via react prop callback
+      const onRemovePanel = (panelId: number) => {
+        removePanel(dashboard, dashboard.getPanelById(panelId), true);
+      };
+
+      $injector.get('keybindingSrv').setupDashboardBindings($scope, dashboard, onRemovePanel);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err.toString())));
       console.log(err);
