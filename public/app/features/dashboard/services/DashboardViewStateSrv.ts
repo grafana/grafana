@@ -30,7 +30,7 @@ export class DashboardViewStateSrv {
     });
 
     $scope.onAppEvent('panel-change-view', (evt, payload) => {
-      self.update(payload);
+      // self.update(payload);
     });
 
     // this marks changes to location during this digest cycle as not to add history item

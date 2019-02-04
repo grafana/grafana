@@ -132,6 +132,8 @@ export class DashboardModel {
     meta.canEdit = meta.canEdit !== false;
     meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
+    meta.fullscreen = false;
+    meta.isEditing = false;
 
     if (!this.editable) {
       meta.canEdit = false;

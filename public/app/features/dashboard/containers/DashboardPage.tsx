@@ -94,7 +94,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     // }
 
     // Sync url state with model
-    if (urlFullscreen !== dashboard.meta.isFullscreen || urlEdit !== dashboard.meta.isEditing) {
+    if (urlFullscreen !== dashboard.meta.fullscreen || urlEdit !== dashboard.meta.isEditing) {
       // entering fullscreen/edit mode
       if (urlPanelId) {
         const panel = dashboard.getPanelById(parseInt(urlPanelId, 10));
@@ -102,6 +102,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         if (panel) {
           dashboard.setViewMode(panel, urlFullscreen, urlEdit);
           this.setState({ isEditing: urlEdit, isFullscreen: urlFullscreen, fullscreenPanel: panel });
+          this.setPanelFullscreenClass(urlFullscreen);
         } else {
           this.handleFullscreenPanelNotFound(urlPanelId);
         }
@@ -110,10 +111,9 @@ export class DashboardPage extends PureComponent<Props, State> {
         if (this.state.fullscreenPanel) {
           dashboard.setViewMode(this.state.fullscreenPanel, urlFullscreen, urlEdit);
         }
-        this.setState({ isEditing: urlEdit, isFullscreen: urlFullscreen, fullscreenPanel: null });
+        this.setState({ isEditing: false, isFullscreen: false, fullscreenPanel: null });
+        this.setPanelFullscreenClass(false);
       }
-
-      this.setPanelFullscreenClass(urlFullscreen);
     }
   }
 

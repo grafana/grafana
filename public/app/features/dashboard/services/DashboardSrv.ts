@@ -10,6 +10,7 @@ export class DashboardSrv {
   constructor(private backendSrv, private $rootScope, private $location) {
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
+    appEvents.on('panel-change-view', this.onPanelChangeView);
   }
 
   create(dashboard, meta) {
@@ -23,6 +24,44 @@ export class DashboardSrv {
   getCurrent() {
     return this.dash;
   }
+
+  onPanelChangeView = (options) => {
+    const urlParams = this.$location.search();
+
+    // handle toggle logic
+    if (options.fullscreen === urlParams.fullscreen) {
+      // I hate using these truthy converters (!!) but in this case
+      // I think it's appropriate. edit can be null/false/undefined and
+      // here i want all of those to compare the same
+      if (!!options.edit === !!urlParams.edit) {
+        delete urlParams.fullscreen;
+        delete urlParams.edit;
+        delete urlParams.panelId;
+        this.$location.search(urlParams);
+        return;
+      }
+    }
+
+    if (options.fullscreen) {
+      urlParams.fullscreen = true;
+    } else {
+      delete urlParams.fullscreen;
+    }
+
+    if (options.edit) {
+      urlParams.edit = true;
+    } else {
+      delete urlParams.edit;
+    }
+
+    if (options.panelId) {
+      urlParams.panelId = options.panelId;
+    } else {
+      delete urlParams.panelId;
+    }
+
+    this.$location.search(urlParams);
+  };
 
   handleSaveDashboardError(clone, options, err) {
     options = options || {};
