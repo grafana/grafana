@@ -76,6 +76,7 @@
     "ng-annotate-webpack-plugin": "^0.3.0",
     "ngtemplate-loader": "^2.0.1",
     "node-sass": "^4.11.0",
+    "node-sass-utils": "^1.1.2",
     "npm": "^5.4.2",
     "optimize-css-assets-webpack-plugin": "^4.0.2",
     "phantomjs-prebuilt": "^2.1.15",

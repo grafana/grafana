@@ -3,73 +3,69 @@
 
 $theme-name: dark;
 
-// Grays
 // -------------------------
-$black: #000;
+$black: getThemeVariable('colors.black', $theme-name);
+$dark-1: getThemeVariable('colors.dark1', $theme-name);
+$dark-2: getThemeVariable('colors.dark2', $theme-name);
+$dark-3: getThemeVariable('colors.dark3', $theme-name);
+$dark-4: getThemeVariable('colors.dark4', $theme-name);
+$dark-5: getThemeVariable('colors.dark5', $theme-name);
+$gray-1: getThemeVariable('colors.gray1', $theme-name);
+$gray-2: getThemeVariable('colors.gray2', $theme-name);
+$gray-3: getThemeVariable('colors.gray3', $theme-name);
+$gray-4: getThemeVariable('colors.gray4', $theme-name);
+$gray-5: getThemeVariable('colors.gray5', $theme-name);
+$gray-6: getThemeVariable('colors.gray6', $theme-name);
+$gray-7: getThemeVariable('colors.gray7', $theme-name);
 
-// -------------------------
-$black: #000;
-$dark-1: #141414;
-$dark-2: #1f1f20;
-$dark-3: #262628;
-$dark-4: #333333;
-$dark-5: #444444;
-$gray-1: #555555;
-$gray-2: #8e8e8e;
-$gray-3: #b3b3b3;
-$gray-4: #d8d9da;
-$gray-5: #ececec;
-$gray-6: #f4f5f8;
-$gray-7: #fbfbfb;
+$gray-blue: getThemeVariable('colors.grayBlue', $theme-name);
+$input-black: getThemeVariable('colors.inputBlack', $theme-name);
 
-$gray-blue: #212327;
-$input-black: #09090b;
-
-$white: #fff;
+$white: getThemeVariable('colors.white', $theme-name);
 
 // Accent colors
 // -------------------------
-$blue: #33b5e5;
-$blue-dark: #005f81;
-$green: #299c46;
-$red: #d44a3a;
-$yellow: #ecbb13;
-$pink: #ff4444;
-$purple: #9933cc;
-$variable: #32d1df;
-$orange: #eb7b18;
+$blue: getThemeVariable('colors.blue', $theme-name);
+$blue-dark: getThemeVariable('colors.blueDark', $theme-name);
+$green: getThemeVariable('colors.green', $theme-name);
+$red: getThemeVariable('colors.red', $theme-name);
+$yellow: getThemeVariable('colors.yellow', $theme-name);
+$pink: getThemeVariable('colors.pink', $theme-name);
+$purple: getThemeVariable('colors.purple', $theme-name);
+$variable: getThemeVariable('colors.variable', $theme-name);
+$orange: getThemeVariable('colors.orange', $theme-name);
 
 $brand-primary: $orange;
 $brand-success: $green;
 $brand-warning: $brand-primary;
 $brand-danger: $red;
 
-$query-red: #e24d42;
-$query-green: #74e680;
-$query-purple: #fe85fc;
-$query-keyword: #66d9ef;
-$query-orange: $orange;
+$query-red: getThemeVariable('colors.queryRed', $theme-name);
+$query-green: getThemeVariable('colors.queryGreen', $theme-name);
+$query-purple: getThemeVariable('colors.queryPurple', $theme-name);
+$query-keyword: getThemeVariable('colors.queryKeyword', $theme-name);
+$query-orange: getThemeVariable('colors.queryOrange', $theme-name);
 
 // Status colors
 // -------------------------
-$online: #10a345;
-$warn: #f79520;
-$critical: #ed2e18;
+$online: getThemeVariable('colors.online', $theme-name);
+$warn: getThemeVariable('colors.warn', $theme-name);
+$critical: getThemeVariable('colors.critical', $theme-name);
 
 // Scaffolding
 // -------------------------
-$body-bg: rgb(23, 24, 25);
-$page-bg: rgb(22, 23, 25);
+$body-bg: getThemeVariable('colors.bodyBg', $theme-name);
+$page-bg: getThemeVariable('colors.pageBg', $theme-name);
 
-$body-color: $gray-4;
-$text-color: $gray-4;
-$text-color-strong: $white;
-$text-color-weak: $gray-2;
-$text-color-faint: $dark-5;
-$text-color-emphasis: $gray-5;
+$body-color: getThemeVariable('colors.bodyColor', $theme-name);
+$text-color: getThemeVariable('colors.textColor', $theme-name);
+$text-color-strong: getThemeVariable('colors.textColorStrong', $theme-name);
+$text-color-weak: getThemeVariable('colors.textColorWeak', $theme-name);
+$text-color-faint: getThemeVariable('colors.textColorFaint', $theme-name);
+$text-color-emphasis: getThemeVariable('colors.textColorEmphasis', $theme-name);
 
-$text-shadow-strong: 1px 1px 4px $black;
-$text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
+$text-shadow-strong: 1px 1px 4px getThemeVariable('colors.black', $theme-name);
+$text-shadow-faint: 1px 1px 4px #2d2d2d;
 
 // gradients
 $brand-gradient: linear-gradient(
@@ -84,10 +80,11 @@ $edit-gradient: linear-gradient(180deg, rgb(22, 23, 25) 50%, #090909);
 
 // Links
 // -------------------------
-$link-color: darken($white, 11%);
-$link-color-disabled: darken($link-color, 30%);
-$link-hover-color: $white;
-$external-link-color: $blue;
+$link-color: getThemeVariable('colors.linkColor', $theme-name);
+$link-color-disabled: getThemeVariable('colors.linkColorDisabled', $theme-name);
+$link-hover-color: getThemeVariable('colors.linkColorHover', $theme-name);
+
+$external-link-color: getThemeVariable('colors.linkColorExternal', $theme-name);
 
 // Typography
 // -------------------------
@@ -135,7 +132,7 @@ $list-item-shadow: $card-shadow;
 $empty-list-cta-bg: $gray-blue;
 
 // Scrollbars
-$scrollbarBackground: #404357;
+$scrollbarBackground: #aeb5df;
 $scrollbarBackground2: #3a3a3a;
 
 $scrollbarBorder: black;
