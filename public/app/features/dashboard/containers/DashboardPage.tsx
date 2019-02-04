@@ -12,6 +12,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { LoadingPlaceholder } from '@grafana/ui';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
+import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 
 // Redux
@@ -192,6 +193,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           {dashboard && editview && <DashboardSettings dashboard={dashboard} />}
 
           <div className={gridWrapperClasses}>
+            {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
             <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
           </div>
         </div>

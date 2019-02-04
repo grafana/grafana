@@ -10,8 +10,6 @@ export class DashNavCtrl {
 
   /** @ngInject */
   constructor(private $scope, private dashboardSrv, private $location, public playlistSrv) {
-    appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
-
     if (this.dashboard.meta.isSnapshot) {
       const meta = this.dashboard.meta;
       this.titleTooltip = 'Created: &nbsp;' + moment(meta.created).calendar();

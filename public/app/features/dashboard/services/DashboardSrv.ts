@@ -1,12 +1,15 @@
 import coreModule from 'app/core/core_module';
-import { DashboardModel } from '../state/DashboardModel';
+import { appEvents } from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
+import { DashboardModel } from '../state/DashboardModel';
 
 export class DashboardSrv {
   dash: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $rootScope, private $location) {}
+  constructor(private backendSrv, private $rootScope, private $location) {
+    appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
+  }
 
   create(dashboard, meta) {
     return new DashboardModel(dashboard, meta);
