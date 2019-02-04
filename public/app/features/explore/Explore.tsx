@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react';
+import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import _ from 'lodash';
@@ -21,7 +21,7 @@ import TimePicker, { parseTime } from './TimePicker';
 import { changeSize, changeTime, initializeExplore, modifyQueries, scanStart, setQueries } from './state/actions';
 
 // Types
-import { RawTimeRange, TimeRange, DataQuery } from '@grafana/ui';
+import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps } from '@grafana/ui';
 import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE } from 'app/core/utils/explore';
@@ -30,7 +30,7 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
 
 interface ExploreProps {
-  StartPage?: any;
+  StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
   datasourceError: string;

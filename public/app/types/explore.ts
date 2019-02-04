@@ -1,5 +1,14 @@
+import { ComponentClass } from 'react';
 import { Value } from 'slate';
-import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi, QueryHint } from '@grafana/ui';
+import {
+  RawTimeRange,
+  TimeRange,
+  DataQuery,
+  DataSourceSelectItem,
+  DataSourceApi,
+  QueryHint,
+  ExploreStartPageProps,
+} from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
 import { LogsModel } from 'app/core/logs_model';
@@ -102,7 +111,7 @@ export interface ExploreItemState {
   /**
    * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
    */
-  StartPage?: any;
+  StartPage?: ComponentClass<ExploreStartPageProps>;
   /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */

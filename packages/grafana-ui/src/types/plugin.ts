@@ -65,15 +65,19 @@ export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery ext
   onExecuteHint?: (action: QueryFixAction) => void;
 }
 
+export interface ExploreStartPageProps {
+  onClickExample: (query: DataQuery) => void;
+}
+
 export interface PluginExports {
   Datasource?: DataSourceApi;
   QueryCtrl?: any;
-  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi,DataQuery>>;
+  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, DataQuery>>;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, DataQuery>>;
-  ExploreStartPage?: any;
+  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
 
   // Panel plugin
   PanelCtrl?: any;
@@ -131,5 +135,3 @@ export interface PluginMetaInfo {
   updated: string;
   version: string;
 }
-
-
