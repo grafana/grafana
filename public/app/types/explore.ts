@@ -145,7 +145,7 @@ export interface ExploreItemState {
   history: HistoryItem[];
   /**
    * Initial queries for this Explore, e.g., set via URL. Each query will be
-   * converted to a query row. Query edits should be tracked in `modifiedQueries` though.
+   * converted to a query row.
    */
   initialQueries: DataQuery[];
   /**
@@ -162,12 +162,6 @@ export interface ExploreItemState {
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult?: LogsModel;
-  /**
-   * Copy of `initialQueries` that tracks user edits.
-   * Don't connect this property to a react component as it is updated on every query change.
-   * Used when running queries. Needs to be reset to `initialQueries` when those are reset as well.
-   */
-  modifiedQueries: DataQuery[];
   /**
    * Query intervals for graph queries to determine how many datapoints to return.
    * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.

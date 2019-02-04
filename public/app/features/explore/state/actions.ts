@@ -84,9 +84,9 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
   return async (dispatch, getState) => {
     const newDataSourceInstance = await getDatasourceSrv().get(datasource);
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
-    const modifiedQueries = getState().explore[exploreId].modifiedQueries;
+    const queries = getState().explore[exploreId].initialQueries;
 
-    await dispatch(importQueries(exploreId, modifiedQueries, currentDataSourceInstance, newDataSourceInstance));
+    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
     dispatch(loadDatasource(exploreId, newDataSourceInstance));
@@ -254,7 +254,7 @@ export function importQueries(
     }
 
     const nextQueries = importedQueries.map((q, i) => ({
-      ...importedQueries[i],
+      ...q,
       ...generateEmptyQuery(i),
     }));
 
@@ -474,7 +474,7 @@ export function runQueries(exploreId: ExploreId) {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
-      modifiedQueries,
+      initialQueries,
       showingLogs,
       showingGraph,
       showingTable,
@@ -483,7 +483,7 @@ export function runQueries(exploreId: ExploreId) {
       supportsTable,
     } = getState().explore[exploreId];
 
-    if (!hasNonEmptyQuery(modifiedQueries)) {
+    if (!hasNonEmptyQuery(initialQueries)) {
       dispatch(runQueriesEmptyAction({ exploreId }));
       dispatch(stateSave()); // Remember to saves to state and update location
       return;
@@ -547,7 +547,7 @@ function runQueriesForType(
     const {
       datasourceInstance,
       eventBridge,
-      modifiedQueries: queries,
+      initialQueries: queries,
       queryIntervals,
       range,
       scanning,
@@ -632,7 +632,7 @@ export function splitOpen(): ThunkResult<void> {
     const itemState = {
       ...leftState,
       queryTransactions: [],
-      initialQueries: leftState.modifiedQueries.slice(),
+      initialQueries: leftState.initialQueries.slice(),
     };
     dispatch(splitOpenAction({ itemState }));
     dispatch(stateSave());
@@ -649,14 +649,14 @@ export function stateSave() {
     const urlStates: { [index: string]: string } = {};
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance.name,
-      queries: left.modifiedQueries.map(clearQueryKeys),
+      queries: left.initialQueries.map(clearQueryKeys),
       range: left.range,
     };
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
       const rightUrlState: ExploreUrlState = {
         datasource: right.datasourceInstance.name,
-        queries: right.modifiedQueries.map(clearQueryKeys),
+        queries: right.initialQueries.map(clearQueryKeys),
         range: right.range,
       };
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
