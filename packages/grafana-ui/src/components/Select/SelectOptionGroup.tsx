@@ -49,7 +49,7 @@ export default class SelectOptionGroup extends PureComponent<ExtendedGroupProps,
     return (
       <div className="gf-form-select-box__option-group">
         <div className="gf-form-select-box__option-group__header" onClick={this.onToggleChildren}>
-          <span className="flex-grow">{label}</span>
+          <span className="flex-grow-1">{label}</span>
           <i className={`fa ${expanded ? 'fa-caret-left' : 'fa-caret-down'}`} />{' '}
         </div>
         {expanded && children}
