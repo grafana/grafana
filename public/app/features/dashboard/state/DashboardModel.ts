@@ -15,6 +15,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 import { PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
+import { UrlQueryValue } from 'app/types';
 
 export class DashboardModel {
   id: any;
@@ -867,11 +868,7 @@ export class DashboardModel {
     return !_.isEqual(updated, this.originalTemplating);
   }
 
-  autoFitPanels(viewHeight: number) {
-    if (!this.meta.autofitpanels) {
-      return;
-    }
-
+  autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
     const currentGridHeight = Math.max(
       ...this.panels.map(panel => {
         return panel.gridPos.h + panel.gridPos.y;
@@ -885,12 +882,12 @@ export class DashboardModel {
     let visibleHeight = viewHeight - navbarHeight - margin;
 
     // Remove submenu height if visible
-    if (this.meta.submenuEnabled && !this.meta.kiosk) {
+    if (this.meta.submenuEnabled && !kioskMode) {
       visibleHeight -= submenuHeight;
     }
 
     // add back navbar height
-    if (this.meta.kiosk === 'b') {
+    if (kioskMode === 'tv') {
       visibleHeight += 55;
     }
 

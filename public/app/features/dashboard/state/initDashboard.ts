@@ -56,10 +56,6 @@ export function initDashboard({
     try {
       switch (routeInfo) {
         // handle old urls with no uid
-        case DashboardRouteInfo.Old: {
-          redirectToNewUrl(urlSlug, dispatch);
-          return;
-        }
         case DashboardRouteInfo.Home: {
           // load home dash
           dashDTO = await getBackendSrv().get('/api/dashboards/home');
@@ -78,20 +74,27 @@ export function initDashboard({
           break;
         }
         case DashboardRouteInfo.Normal: {
+          // for old db routes we redirect
+          if (urlType === 'db') {
+            redirectToNewUrl(urlSlug, dispatch);
+            return;
+          }
+
           const loaderSrv = $injector.get('dashboardLoaderSrv');
           dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
 
-          // check if the current url is correct (might be old slug)
-          const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
-          const currentPath = getState().location.path;
-          console.log('loading dashboard: currentPath', currentPath);
-          console.log('loading dashboard: dashboardUrl', dashboardUrl);
+          if (dashDTO.meta.url) {
+            // check if the current url is correct (might be old slug)
+            const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
+            const currentPath = getState().location.path;
 
-          if (dashboardUrl !== currentPath) {
-            // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
-            dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
-            return;
+            if (dashboardUrl !== currentPath) {
+              // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
+              dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
+              return;
+            }
           }
+
           break;
         }
         case DashboardRouteInfo.New: {
@@ -129,7 +132,6 @@ export function initDashboard({
     const variableSrv: VariableSrv = $injector.get('variableSrv');
     const keybindingSrv: KeybindingSrv = $injector.get('keybindingSrv');
     const unsavedChangesSrv = $injector.get('unsavedChangesSrv');
-    const viewStateSrv = $injector.get('dashboardViewStateSrv');
     const dashboardSrv: DashboardSrv = $injector.get('dashboardSrv');
 
     timeSrv.init(dashboard);
@@ -147,13 +149,15 @@ export function initDashboard({
     try {
       dashboard.processRepeats();
       dashboard.updateSubmenuVisibility();
-      dashboard.autoFitPanels(window.innerHeight);
+
+      // handle auto fix experimental feature
+      const queryParams = getState().location.query;
+      if (queryParams.autofitpanels) {
+        dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
+      }
 
       // init unsaved changes tracking
       unsavedChangesSrv.init(dashboard, $scope);
-
-      $scope.dashboard = dashboard;
-      viewStateSrv.create($scope);
 
       // dashboard keybindings should not live in core, this needs a bigger refactoring
       // So declaring this here so it can depend on the removePanel util function

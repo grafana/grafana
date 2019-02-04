@@ -62,7 +62,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/dashboard/:type/:slug', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
-      routeInfo: DashboardRouteInfo.Old,
+      routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
         component: () => DashboardPage,
@@ -88,7 +88,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
-      routeInfo: DashboardRouteInfo.Old,
+      routeInfo: DashboardRouteInfo.Normal,
       resolve: {
         component: () => SoloPanelPage,
       },

@@ -8,10 +8,10 @@ export interface MutableDashboard {
 }
 
 export enum DashboardRouteInfo {
-  Old = 'old-dashboard',
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
+  Scripted = 'scripted-dashboard',
 }
 
 export enum DashboardLoadingState {
