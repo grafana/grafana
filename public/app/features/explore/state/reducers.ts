@@ -331,7 +331,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: removeQueryRowAction,
     mapper: (state, action): ExploreItemState => {
-      const { datasourceInstance, initialQueries, queryIntervals, queryTransactions } = state;
+      const { datasourceInstance, initialQueries, queryIntervals, queryTransactions, queryKeys } = state;
       const { index } = action.payload;
 
       if (initialQueries.length <= 1) {
@@ -339,9 +339,10 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       }
 
       const nextQueries = [...initialQueries.slice(0, index), ...initialQueries.slice(index + 1)];
+      const nextQueryKeys = [...queryKeys.slice(0, index), ...queryKeys.slice(index + 1)];
 
       // Discard transactions related to row query
-      const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
+      const nextQueryTransactions = queryTransactions.filter(qt => nextQueries.some(nq => nq.key === qt.query.key));
       const results = calculateResultsFromQueryTransactions(
         nextQueryTransactions,
         datasourceInstance,
@@ -354,7 +355,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialQueries: nextQueries,
         logsHighlighterExpressions: undefined,
         queryTransactions: nextQueryTransactions,
-        queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
+        queryKeys: nextQueryKeys,
       };
     },
   })
