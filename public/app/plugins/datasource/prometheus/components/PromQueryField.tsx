@@ -249,15 +249,15 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
+        <div className="gf-form-inline gf-form-inline--nowrap">
+          <div className="gf-form flex-shrink-0">
             <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
               <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
                 {chooserText} <i className="fa fa-caret-down" />
               </button>
             </Cascader>
           </div>
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
