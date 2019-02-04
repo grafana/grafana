@@ -18,6 +18,10 @@ import (
 
 var logger log.Logger = log.New("middleware.jwt")
 
+//
+// Utility Functions (general JWT functions)
+//
+
 // Read bytes from a URL, File, or directly from the string
 func getBytesForKeyfunc(cfg string) ([]byte, error) {
 	// Check if it points to a URL
@@ -44,12 +48,8 @@ func getBytesForKeyfunc(cfg string) ([]byte, error) {
 	return []byte(cfg), nil
 }
 
-// Take the configured signature and make a jwt.Keyfunc
-// This supports a few options
-// - base64 encoded key
-// - read file from HTTP, like
-//   * https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
-//   * https://www.gstatic.com/iap/verify/public_key-jwk
+// Build a keyFunc from the contents of key locator.  The locator may be:
+// - URL, File, base64 bytes, or raw bytes from the string
 func createKeyFunc(cfg string) (jwt.Keyfunc, error) {
 	// Read the bytes
 	bytes, err := getBytesForKeyfunc(cfg)
@@ -121,99 +121,9 @@ func createKeyFunc(cfg string) (jwt.Keyfunc, error) {
 	}, nil
 }
 
-// used by every request
-var keyFunc jwt.Keyfunc
-
-// Initialized once at startup
-func InitAuthJwtKey() {
-	logger.Info("Initializing JWT Auth")
-
-	var err error
-	keyFunc, err = createKeyFunc(setting.AuthJwtSigningKey)
-	if err != nil {
-		logger.Error("Error Initializing JWT: %v", err)
-	}
-
-	if setting.AuthJwtHeader == "" && setting.AuthJwtCookie == "" {
-		logger.Error("JWT Auth must have either a header or cookie configured")
-	}
-
-	if setting.AuthJwtLoginClaim == "" && setting.AuthJwtEmailClaim == "" {
-		logger.Error("JWT Auth must have either a login or email claim configured")
-	}
-}
-
-// Called in chain from middleware.GetContextHandler
-func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
-	if !setting.AuthJwtEnabled || keyFunc == nil {
-		return false
-	}
-
-	// Check the header and cookie
-	jwtText := ctx.Req.Header.Get(setting.AuthJwtHeader)
-	if len(jwtText) == 0 {
-		jwtText := ctx.GetCookie(setting.AuthJwtCookie)
-		if len(jwtText) == 0 {
-			return false
-		}
-	}
-
-	// Parse and validate the token
-	token, err := jwt.Parse(jwtText, keyFunc)
-	if !token.Valid {
-		ctx.Handle(400, "JWT Error", err)
-		return true
-	}
-	claims := token.Claims.(jwt.MapClaims)
-
-	if setting.AuthJwtAudience != "" {
-		val, ok := claims["aud"].(string)
-		if !ok || val != setting.AuthJwtAudience {
-			ctx.Handle(400, "Bad JWT Audience", err)
-			return true
-		}
-	}
-
-	if setting.AuthJwtIssuer != "" {
-		val, ok := claims["iss"].(string)
-		if !ok || val != setting.AuthJwtIssuer {
-			ctx.Handle(400, "Bad JWT Issuer", err)
-			return true
-		}
-	}
-
-	query := getSignedInUserQueryForClaims(claims, orgId)
-	if err := bus.Dispatch(query); err != nil {
-		if err != m.ErrUserNotFound {
-			ctx.Handle(500, "User query failed for JWT", err)
-			return true
-		}
-
-		if setting.AuthJwtAutoSignup {
-			cmd := getCreateUserCommandForClaims(claims)
-
-			if err := bus.Dispatch(cmd); err != nil {
-				ctx.Handle(500, "Failed to create user specified in auth JWT", err)
-				return true
-			}
-
-			query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id, OrgId: orgId}
-			if err := bus.Dispatch(query); err != nil {
-				ctx.Handle(500, "Failed to find user after creation", err)
-				return true
-			}
-
-		} else {
-			// Valid JWT, but user not in the database
-			ctx.Handle(403, "User Not Found", err)
-			return true
-		}
-	}
-
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
-	return true
-}
+//
+// Claims SQL Functions
+//
 
 func getSignedInUserQueryForClaims(claims jwt.MapClaims, orgId int64) *m.GetSignedInUserQuery {
 	query := m.GetSignedInUserQuery{}
@@ -248,8 +158,113 @@ func getCreateUserCommandForClaims(claims jwt.MapClaims) *m.CreateUserCommand {
 	if setting.AuthJwtEmailClaim != "" {
 		if val, ok := claims[setting.AuthJwtEmailClaim].(string); ok {
 			cmd.Email = val
+
+			// Use email for the login if one is not configured
+			if cmd.Login == "" {
+				cmd.Login = val
+			}
 		}
 	}
 
 	return &cmd
+}
+
+// used by every request
+var keyFunc jwt.Keyfunc
+
+// Initialized once at startup
+func InitAuthJwtKey() error {
+	logger.Info("Initializing JWT Auth")
+
+	var err error
+	keyFunc, err = createKeyFunc(setting.AuthJwtSigningKey)
+	if err != nil {
+		logger.Error("Error Initializing Key: %v", err)
+		return err
+	}
+
+	if setting.AuthJwtHeader == "" && setting.AuthJwtCookie == "" {
+		err = fmt.Errorf("JWT Auth must have either a header or cookie configured")
+		logger.Error("Error", err)
+		return err
+	}
+
+	if setting.AuthJwtLoginClaim == "" && setting.AuthJwtEmailClaim == "" {
+		err = fmt.Errorf("JWT Auth must have either a login or email claim configured")
+		logger.Error("Error", err)
+		return err
+	}
+
+	return nil
+}
+
+// Called in chain from middleware.GetContextHandler
+func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
+	if !setting.AuthJwtEnabled || keyFunc == nil {
+		return false
+	}
+
+	// Check the header and cookie
+	jwtText := ctx.Req.Header.Get(setting.AuthJwtHeader)
+	if len(jwtText) == 0 {
+		return false
+	}
+
+	// Parse and validate the token
+	token, err := jwt.Parse(jwtText, keyFunc)
+	if err != nil || !token.Valid {
+		ctx.JsonApiErr(400, "JWT Error", err)
+		return true
+	}
+	claims := token.Claims.(jwt.MapClaims)
+
+	if setting.AuthJwtAudience != "" {
+		val, ok := claims["aud"].(string)
+		if !ok || val != setting.AuthJwtAudience {
+			ctx.JsonApiErr(400, "Bad JWT Audience", err)
+			return true
+		}
+	}
+
+	if setting.AuthJwtIssuer != "" {
+		val, ok := claims["iss"].(string)
+		if !ok || val != setting.AuthJwtIssuer {
+			ctx.JsonApiErr(400, "Bad JWT Issuer", err)
+			return true
+		}
+	}
+
+	query := getSignedInUserQueryForClaims(claims, orgId)
+	if err := bus.Dispatch(query); err != nil {
+		if err != m.ErrUserNotFound {
+			ctx.JsonApiErr(500, "User query failed for JWT", err)
+			return true
+		}
+
+		if setting.AuthJwtAutoSignup {
+			cmd := getCreateUserCommandForClaims(claims)
+
+			logger.Info("Create User from JWT", "claims", claims)
+
+			if err := bus.Dispatch(cmd); err != nil {
+				ctx.JsonApiErr(500, "Failed to create user specified in auth JWT", err)
+				return true
+			}
+
+			query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id, OrgId: orgId}
+			if err := bus.Dispatch(query); err != nil {
+				ctx.JsonApiErr(500, "Failed to find user after creation", err)
+				return true
+			}
+
+		} else {
+			// Valid JWT, but user not in the database
+			ctx.JsonApiErr(403, "User Not Found", err)
+			return true
+		}
+	}
+
+	ctx.SignedInUser = query.Result
+	ctx.IsSignedIn = true
+	return true
 }
