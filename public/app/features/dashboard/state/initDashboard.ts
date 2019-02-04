@@ -25,16 +25,24 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId: string;
+  urlFolderId?: string;
   routeInfo: string;
+  fixUrl: boolean;
 }
 
-async function redirectToNewUrl(slug: string, dispatch: any) {
+async function redirectToNewUrl(slug: string, dispatch: any, currentPath: string) {
   const res = await getBackendSrv().getDashboardBySlug(slug);
 
   if (res) {
-    const url = locationUtil.stripBaseFromUrl(res.meta.url.replace('/d/', '/d-solo/'));
-    dispatch(updateLocation(url));
+    let newUrl = res.meta.url;
+
+    // fix solo route urls
+    if (currentPath.indexOf('dashboard-solo') !== -1) {
+      newUrl = newUrl.replace('/d/', '/d-solo/');
+    }
+
+    const url = locationUtil.stripBaseFromUrl(newUrl);
+    dispatch(updateLocation({ path: url, partial: true, replace: true }));
   }
 }
 
@@ -46,6 +54,7 @@ export function initDashboard({
   urlType,
   urlFolderId,
   routeInfo,
+  fixUrl,
 }: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
     let dashDTO = null;
@@ -76,14 +85,14 @@ export function initDashboard({
         case DashboardRouteInfo.Normal: {
           // for old db routes we redirect
           if (urlType === 'db') {
-            redirectToNewUrl(urlSlug, dispatch);
+            redirectToNewUrl(urlSlug, dispatch, getState().location.path);
             return;
           }
 
           const loaderSrv = $injector.get('dashboardLoaderSrv');
           dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
 
-          if (dashDTO.meta.url) {
+          if (fixUrl && dashDTO.meta.url) {
             // check if the current url is correct (might be old slug)
             const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
             const currentPath = getState().location.path;

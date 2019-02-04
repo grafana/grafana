@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { appEvents } from 'app/core/app_events';
+import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
 // Components
 import { DashNavButton } from './DashNavButton';
@@ -116,12 +117,13 @@ export class DashNav extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, isFullscreen, editview } = this.props;
+    const { dashboard, isFullscreen, editview, $injector } = this.props;
     const { canStar, canSave, canShare, folderTitle, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
 
     const haveFolder = dashboard.meta.folderId > 0;
     const snapshotUrl = snapshot && snapshot.originalUrl;
+    const playlistSrv: PlaylistSrv = $injector.get('playlistSrv');
 
     return (
       <div className="navbar">
@@ -135,13 +137,29 @@ export class DashNav extends PureComponent<Props> {
         </div>
 
         <div className="navbar__spacer" />
-        {/*
-        <div class="navbar-buttons navbar-buttons--playlist" ng-if="ctrl.playlistSrv.isPlaying">
-          <a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.prev()"><i class="fa fa-step-backward"></i></a>
-          <a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.stop()"><i class="fa fa-stop"></i></a>
-          <a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.next()"><i class="fa fa-step-forward"></i></a>
-        </div>
-        */}
+
+        {playlistSrv.isPlaying && (
+          <div className="navbar-buttons navbar-buttons--playlist">
+            <DashNavButton
+              tooltip="Jump to previous dashboard"
+              classSuffix="tight"
+              icon="fa fa-step-backward"
+              onClick={() => playlistSrv.prev()}
+            />
+            <DashNavButton
+              tooltip="Stop playlist"
+              classSuffix="tight"
+              icon="fa fa-stop"
+              onClick={() => playlistSrv.stop()}
+            />
+            <DashNavButton
+              tooltip="Jump forward"
+              classSuffix="tight"
+              icon="fa fa-forward"
+              onClick={() => playlistSrv.next()}
+            />
+          </div>
+        )}
 
         <div className="navbar-buttons navbar-buttons--actions">
           {canSave && (
@@ -151,71 +169,71 @@ export class DashNav extends PureComponent<Props> {
               icon="gicon gicon-add-panel"
               onClick={this.onAddPanel}
             />
-          )}
+            )}
 
-          {canStar && (
-            <DashNavButton
-              tooltip="Mark as favorite"
-              classSuffix="star"
-              icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
-              onClick={this.onStarDashboard}
-            />
-          )}
+            {canStar && (
+              <DashNavButton
+                tooltip="Mark as favorite"
+                classSuffix="star"
+                icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
+                onClick={this.onStarDashboard}
+              />
+              )}
 
-          {canShare && (
-            <DashNavButton
-              tooltip="Share dashboard"
-              classSuffix="share"
-              icon="fa fa-share-square-o"
-              onClick={this.onOpenShare}
-            />
-          )}
+              {canShare && (
+                <DashNavButton
+                  tooltip="Share dashboard"
+                  classSuffix="share"
+                  icon="fa fa-share-square-o"
+                  onClick={this.onOpenShare}
+                />
+                )}
 
-          {canSave && (
-            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
-          )}
+                {canSave && (
+                  <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
+                  )}
 
-          {snapshotUrl && (
-            <DashNavButton
-              tooltip="Open original dashboard"
-              classSuffix="snapshot-origin"
-              icon="fa fa-link"
-              href={snapshotUrl}
-            />
-          )}
+                  {snapshotUrl && (
+                    <DashNavButton
+                      tooltip="Open original dashboard"
+                      classSuffix="snapshot-origin"
+                      icon="fa fa-link"
+                      href={snapshotUrl}
+                    />
+                    )}
 
-          {showSettings && (
-            <DashNavButton
-              tooltip="Dashboard settings"
-              classSuffix="settings"
-              icon="fa fa-cog"
-              onClick={this.onOpenSettings}
-            />
-          )}
-        </div>
+                    {showSettings && (
+                      <DashNavButton
+                        tooltip="Dashboard settings"
+                        classSuffix="settings"
+                        icon="fa fa-cog"
+                        onClick={this.onOpenSettings}
+                      />
+                      )}
+                    </div>
 
-        <div className="navbar-buttons navbar-buttons--tv">
-          <DashNavButton
-            tooltip="Cycke view mode"
-            classSuffix="tv"
-            icon="fa fa-desktop"
-            onClick={this.onToggleTVMode}
-          />
-        </div>
+                    <div className="navbar-buttons navbar-buttons--tv">
+                      <DashNavButton
+                        tooltip="Cycke view mode"
+                        classSuffix="tv"
+                        icon="fa fa-desktop"
+                        onClick={this.onToggleTVMode}
+                      />
+                    </div>
 
-        <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+                    <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
 
-        {(isFullscreen || editview) && (
-          <div className="navbar-buttons navbar-buttons--close">
-            <DashNavButton
-              tooltip="Back to dashboard"
-              classSuffix="primary"
-              icon="fa fa-reply"
-              onClick={this.onClose}
-            />
-          </div>
-        )}
-      </div>
+                    {(isFullscreen || editview) && (
+                      <div className="navbar-buttons navbar-buttons--close">
+                        <DashNavButton
+                          tooltip="Back to dashboard"
+                          classSuffix="primary"
+                          icon="fa fa-reply"
+                          onClick={this.onClose}
+                        />
+                      </div>
+                    )}
+                  </div>
     );
   }
 }

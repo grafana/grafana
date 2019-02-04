@@ -69,6 +69,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       urlType: this.props.urlType,
       urlFolderId: this.props.urlFolderId,
       routeInfo: this.props.routeInfo,
+      fixUrl: true,
     });
   }
 
