@@ -239,10 +239,17 @@ export interface ExploreItemState {
   queryKeys: string[];
 }
 
+export interface ExploreUIState {
+  showingTable: boolean;
+  showingGraph: boolean;
+  showingLogs: boolean;
+}
+
 export interface ExploreUrlState {
   datasource: string;
   queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
   range: RawTimeRange;
+  ui: ExploreUIState;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {

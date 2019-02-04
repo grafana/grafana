@@ -15,6 +15,7 @@ import {
   RangeScanner,
   ResultType,
   QueryTransaction,
+  ExploreUIState,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
@@ -93,6 +94,7 @@ export interface InitializeExplorePayload {
   exploreDatasources: DataSourceSelectItem[];
   queries: DataQuery[];
   range: RawTimeRange;
+  ui: ExploreUIState;
 }
 
 export interface LoadDatasourceFailurePayload {

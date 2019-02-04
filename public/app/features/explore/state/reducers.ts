@@ -179,7 +179,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, exploreDatasources, queries, range } = action.payload;
+      const { containerWidth, eventBridge, exploreDatasources, queries, range, ui } = action.payload;
       return {
         ...state,
         containerWidth,
@@ -189,6 +189,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialQueries: queries,
         initialized: true,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
+        ...ui,
       };
     },
   })

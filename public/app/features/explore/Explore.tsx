@@ -24,7 +24,7 @@ import { changeSize, changeTime, initializeExplore, modifyQueries, scanStart, se
 import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps } from '@grafana/ui';
 import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE } from 'app/core/utils/explore';
+import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
@@ -100,18 +100,20 @@ export class Explore extends React.PureComponent<ExploreProps> {
     // Don't initialize on split, but need to initialize urlparameters when present
     if (!initialized) {
       // Load URL state and parse range
-      const { datasource, queries, range = DEFAULT_RANGE } = (urlState || {}) as ExploreUrlState;
+      const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
       const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
       const initialQueries: DataQuery[] = ensureQueries(queries);
       const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
       const width = this.el ? this.el.offsetWidth : 0;
+
       this.props.initializeExplore(
         exploreId,
         initialDatasource,
         initialQueries,
         initialRange,
         width,
-        this.exploreEvents
+        this.exploreEvents,
+        ui
       );
     }
   }

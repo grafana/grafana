@@ -32,7 +32,7 @@ import {
   QueryHint,
   QueryFixAction,
 } from '@grafana/ui/src/types';
-import { ExploreId, ExploreUrlState, RangeScanner, ResultType, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreUrlState, RangeScanner, ResultType, QueryOptions, ExploreUIState } from 'app/types/explore';
 import {
   Action,
   updateDatasourceInstanceAction,
@@ -59,13 +59,16 @@ import {
   setQueriesAction,
   splitCloseAction,
   splitOpenAction,
+  addQueryRowAction,
+  AddQueryRowPayload,
   toggleGraphAction,
   toggleLogsAction,
   toggleTableAction,
-  addQueryRowAction,
-  AddQueryRowPayload,
+  ToggleGraphPayload,
+  ToggleLogsPayload,
+  ToggleTablePayload,
 } from './actionTypes';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -89,7 +92,15 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
-    dispatch(loadDatasource(exploreId, newDataSourceInstance));
+
+    try {
+      await dispatch(loadDatasource(exploreId, newDataSourceInstance));
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    dispatch(runQueries(exploreId));
   };
 }
 
@@ -158,7 +169,8 @@ export function initializeExplore(
   queries: DataQuery[],
   range: RawTimeRange,
   containerWidth: number,
-  eventBridge: Emitter
+  eventBridge: Emitter,
+  ui: ExploreUIState
 ): ThunkResult<void> {
   return async dispatch => {
     const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
@@ -177,6 +189,7 @@ export function initializeExplore(
         exploreDatasources,
         queries,
         range,
+        ui,
       })
     );
 
@@ -196,7 +209,14 @@ export function initializeExplore(
       }
 
       dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: instance }));
-      dispatch(loadDatasource(exploreId, instance));
+
+      try {
+        await dispatch(loadDatasource(exploreId, instance));
+      } catch (error) {
+        console.error(error);
+        return;
+      }
+      dispatch(runQueries(exploreId, true));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
     }
@@ -271,8 +291,8 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
 
     // Keep ID to track selection
     dispatch(loadDatasourcePendingAction({ exploreId, requestedDatasourceName: datasourceName }));
-
     let datasourceError = null;
+
     try {
       const testResult = await instance.testDatasource();
       datasourceError = testResult.status === 'success' ? null : testResult.message;
@@ -282,7 +302,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
 
     if (datasourceError) {
       dispatch(loadDatasourceFailureAction({ exploreId, error: datasourceError }));
-      return;
+      return Promise.reject(`${datasourceName} loading failed`);
     }
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
@@ -300,7 +320,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     }
 
     dispatch(loadDatasourceSuccess(exploreId, instance));
-    dispatch(runQueries(exploreId));
+    return Promise.resolve();
   };
 }
 
@@ -470,7 +490,7 @@ export function queryTransactionSuccess(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId) {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
@@ -494,7 +514,7 @@ export function runQueries(exploreId: ExploreId) {
     const interval = datasourceInstance.interval;
 
     // Keep table queries first since they need to return quickly
-    if (showingTable && supportsTable) {
+    if ((ignoreUIState || showingTable) && supportsTable) {
       dispatch(
         runQueriesForType(
           exploreId,
@@ -509,7 +529,7 @@ export function runQueries(exploreId: ExploreId) {
         )
       );
     }
-    if (showingGraph && supportsGraph) {
+    if ((ignoreUIState || showingGraph) && supportsGraph) {
       dispatch(
         runQueriesForType(
           exploreId,
@@ -523,9 +543,10 @@ export function runQueries(exploreId: ExploreId) {
         )
       );
     }
-    if (showingLogs && supportsLogs) {
+    if ((ignoreUIState || showingLogs) && supportsLogs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
+
     dispatch(stateSave());
   };
 }
@@ -651,6 +672,11 @@ export function stateSave() {
       datasource: left.datasourceInstance.name,
       queries: left.initialQueries.map(clearQueryKeys),
       range: left.range,
+      ui: {
+        showingGraph: left.showingGraph,
+        showingLogs: left.showingLogs,
+        showingTable: left.showingTable,
+      },
     };
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
@@ -658,45 +684,64 @@ export function stateSave() {
         datasource: right.datasourceInstance.name,
         queries: right.initialQueries.map(clearQueryKeys),
         range: right.range,
+        ui: {
+          showingGraph: right.showingGraph,
+          showingLogs: right.showingLogs,
+          showingTable: right.showingTable,
+        },
       };
+
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
     }
+
     dispatch(updateLocation({ query: urlStates }));
   };
 }
 
 /**
- * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
+ * Creates action to collapse graph/logs/table panel. When panel is collapsed,
+ * queries won't be run
  */
-export function toggleGraph(exploreId: ExploreId): ThunkResult<void> {
+const togglePanelActionCreator = (
+  actionCreator:
+    | ActionCreator<ToggleGraphPayload>
+    | ActionCreator<ToggleLogsPayload>
+    | ActionCreator<ToggleTablePayload>
+) => (exploreId: ExploreId) => {
   return (dispatch, getState) => {
-    dispatch(toggleGraphAction({ exploreId }));
-    if (getState().explore[exploreId].showingGraph) {
+    let shouldRunQueries;
+    dispatch(actionCreator);
+    dispatch(stateSave());
+
+    switch (actionCreator.type) {
+      case toggleGraphAction.type:
+        shouldRunQueries = getState().explore[exploreId].showingGraph;
+        break;
+      case toggleLogsAction.type:
+        shouldRunQueries = getState().explore[exploreId].showingLogs;
+        break;
+      case toggleTableAction.type:
+        shouldRunQueries = getState().explore[exploreId].showingTable;
+        break;
+    }
+
+    if (shouldRunQueries) {
       dispatch(runQueries(exploreId));
     }
   };
-}
+};
+
+/**
+ * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
+ */
+export const toggleGraph = togglePanelActionCreator(toggleGraphAction);
 
 /**
  * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
  */
-export function toggleLogs(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(toggleLogsAction({ exploreId }));
-    if (getState().explore[exploreId].showingLogs) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
+export const toggleLogs = togglePanelActionCreator(toggleLogsAction);
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
  */
-export function toggleTable(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(toggleTableAction({ exploreId }));
-    if (getState().explore[exploreId].showingTable) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
+export const toggleTable = togglePanelActionCreator(toggleTableAction);
