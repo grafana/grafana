@@ -100,12 +100,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       }, 10);
     }
 
-    // // when dashboard has loaded subscribe to somme events
-    // if (prevProps.dashboard === null) {
-    //   // set initial fullscreen class state
-    //   this.setPanelFullscreenClass();
-    // }
-
     // Sync url state with model
     if (urlFullscreen !== dashboard.meta.fullscreen || urlEdit !== dashboard.meta.isEditing) {
       // entering fullscreen/edit mode

@@ -26,6 +26,7 @@ func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]i
 				Slug:  item.Slug,
 				Title: item.Title,
 				Uri:   "db/" + item.Slug,
+				Url:   m.GetDashboardUrl(item.Uid, item.Slug),
 				Order: dashboardIDOrder[item.Id],
 			})
 		}

@@ -1,12 +1,16 @@
-import coreModule from '../../core/core_module';
-import kbn from 'app/core/utils/kbn';
-import appEvents from 'app/core/app_events';
+// Libraries
 import _ from 'lodash';
+
+// Utils
 import { toUrlParams } from 'app/core/utils/url';
+import coreModule from '../../core/core_module';
+import appEvents from 'app/core/app_events';
+import locationUtil from 'app/core/utils/location_util';
+import kbn from 'app/core/utils/kbn';
 
 export class PlaylistSrv {
   private cancelPromise: any;
-  private dashboards: Array<{ uri: string }>;
+  private dashboards: Array<{ url: string }>;
   private index: number;
   private interval: number;
   private startUrl: string;
@@ -36,7 +40,12 @@ export class PlaylistSrv {
     const queryParams = this.$location.search();
     const filteredParams = _.pickBy(queryParams, value => value !== null);
 
-    this.$location.url('dashboard/' + dash.uri + '?' + toUrlParams(filteredParams));
+    // this is done inside timeout to make sure digest happens after
+    // as this can be called from react
+    this.$timeout(() => {
+      const stripedUrl = locationUtil.stripBaseFromUrl(dash.url);
+      this.$location.url(stripedUrl  + '?' + toUrlParams(filteredParams));
+    });
 
     this.index++;
     this.cancelPromise = this.$timeout(() => this.next(), this.interval);
@@ -53,6 +62,8 @@ export class PlaylistSrv {
     this.startUrl = window.location.href;
     this.index = 0;
     this.isPlaying = true;
+
+    appEvents.emit('playlist-started');
 
     return this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
       return this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
@@ -77,6 +88,8 @@ export class PlaylistSrv {
     if (this.cancelPromise) {
       this.$timeout.cancel(this.cancelPromise);
     }
+
+    appEvents.emit('playlist-stopped');
   }
 }
 

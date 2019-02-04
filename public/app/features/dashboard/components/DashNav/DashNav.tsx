@@ -28,6 +28,13 @@ export interface Props {
 export class DashNav extends PureComponent<Props> {
   timePickerEl: HTMLElement;
   timepickerCmp: AngularComponent;
+  playlistSrv: PlaylistSrv;
+
+  constructor(props: Props) {
+    super(props);
+
+    this.playlistSrv = this.props.$injector.get('playlistSrv');
+  }
 
   componentDidMount() {
     const loader = getAngularLoader();
@@ -95,13 +102,26 @@ export class DashNav extends PureComponent<Props> {
   };
 
   onStarDashboard = () => {
-    const { $injector, dashboard } = this.props;
+    const { dashboard, $injector } = this.props;
     const dashboardSrv = $injector.get('dashboardSrv');
 
     dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then(newState => {
       dashboard.meta.isStarred = newState;
       this.forceUpdate();
     });
+  };
+
+  onPlaylistPrev = () => {
+    this.playlistSrv.prev();
+  };
+
+  onPlaylistNext = () => {
+    this.playlistSrv.next();
+  };
+
+  onPlaylistStop = () => {
+    this.playlistSrv.stop();
+    this.forceUpdate();
   };
 
   onOpenShare = () => {
@@ -117,13 +137,12 @@ export class DashNav extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, isFullscreen, editview, $injector } = this.props;
+    const { dashboard, isFullscreen, editview } = this.props;
     const { canStar, canSave, canShare, folderTitle, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
 
     const haveFolder = dashboard.meta.folderId > 0;
     const snapshotUrl = snapshot && snapshot.originalUrl;
-    const playlistSrv: PlaylistSrv = $injector.get('playlistSrv');
 
     return (
       <div className="navbar">
@@ -138,25 +157,25 @@ export class DashNav extends PureComponent<Props> {
 
         <div className="navbar__spacer" />
 
-        {playlistSrv.isPlaying && (
+        {this.playlistSrv.isPlaying && (
           <div className="navbar-buttons navbar-buttons--playlist">
             <DashNavButton
-              tooltip="Jump to previous dashboard"
+              tooltip="Go to previous dashboard"
               classSuffix="tight"
               icon="fa fa-step-backward"
-              onClick={() => playlistSrv.prev()}
+              onClick={this.onPlaylistPrev}
             />
             <DashNavButton
               tooltip="Stop playlist"
               classSuffix="tight"
               icon="fa fa-stop"
-              onClick={() => playlistSrv.stop()}
+              onClick={this.onPlaylistStop}
             />
             <DashNavButton
-              tooltip="Jump forward"
+              tooltip="Go to next dashboard"
               classSuffix="tight"
               icon="fa fa-forward"
-              onClick={() => playlistSrv.next()}
+              onClick={this.onPlaylistNext}
             />
           </div>
         )}
