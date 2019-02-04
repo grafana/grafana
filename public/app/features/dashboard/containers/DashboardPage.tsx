@@ -72,11 +72,23 @@ export class DashboardPage extends PureComponent<Props, State> {
     });
   }
 
+  componentWillUnmount() {
+    if (this.props.dashboard) {
+      this.props.dashboard.destroy();
+      this.props.setDashboardModel(null);
+    }
+  }
+
   componentDidUpdate(prevProps: Props) {
     const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId } = this.props;
 
     if (!dashboard) {
       return;
+    }
+
+    // if we just got dashboard update title
+    if (!prevProps.dashboard) {
+      document.title = dashboard.title + ' - Grafana';
     }
 
     // handle animation states when opening dashboard settings
@@ -133,13 +145,6 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   setPanelFullscreenClass(isFullscreen: boolean) {
     $('body').toggleClass('panel-in-fullscreen', isFullscreen);
-  }
-
-  componentWillUnmount() {
-    if (this.props.dashboard) {
-      this.props.dashboard.destroy();
-      this.props.setDashboardModel(null);
-    }
   }
 
   renderLoadingState() {
