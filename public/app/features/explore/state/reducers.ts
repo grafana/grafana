@@ -163,7 +163,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
     }
 
     case ActionTypes.InitializeExplore: {
-      const { containerWidth, eventBridge, exploreDatasources, queries, range } = action.payload;
+      const { containerWidth, eventBridge, exploreDatasources, queries, range, ui } = action.payload;
       return {
         ...state,
         containerWidth,
@@ -173,6 +173,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         initialQueries: queries,
         initialized: true,
         modifiedQueries: queries.slice(),
+        ...ui,
       };
     }
 
