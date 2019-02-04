@@ -900,4 +900,9 @@ export class DashboardModel {
       panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
     });
   }
+
+  templateVariableValueUpdated() {
+    this.processRepeats();
+    this.events.emit('template-variable-value-updated');
+  }
 }

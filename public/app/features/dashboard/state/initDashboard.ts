@@ -91,7 +91,6 @@ export function initDashboard({
             dispatch(updateLocation({path: dashboardUrl, partial: true, replace: true}));
             return;
           }
-
           break;
         }
         case DashboardRouteInfo.New: {
