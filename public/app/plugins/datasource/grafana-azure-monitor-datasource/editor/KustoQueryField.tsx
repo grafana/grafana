@@ -99,12 +99,12 @@ export default class KustoQueryField extends QueryField {
       if (wrapperClasses.contains('function-context')) {
         typeaheadContext = 'context-function';
         if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
+          suggestionGroups = this.getKeywordSuggestions();
         } else {
           this._fetchFields();
           return;
         }
-      } else if (modelPrefix.match(/(where\s$)/i)) {
+      } else if (modelPrefix.match(/(where\s(\w+\b)?$)/i)) {
         typeaheadContext = 'context-where';
         const fullQuery = Plain.serialize(this.state.value);
         const table = this.getTableFromContext(fullQuery);
@@ -116,7 +116,7 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(,\s*$)/)) {
         typeaheadContext = 'context-multiple-fields';
         if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
+          suggestionGroups = this.getKeywordSuggestions();
         } else {
           this._fetchFields();
           return;
@@ -124,7 +124,7 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(from\s$)/i)) {
         typeaheadContext = 'context-from';
         if (this.events) {
-          suggestionGroups = this._getKeywordSuggestions();
+          suggestionGroups = this.getKeywordSuggestions();
         } else {
           this._fetchEvents();
           return;
@@ -132,7 +132,7 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(^select\s\w*$)/i)) {
         typeaheadContext = 'context-select';
         if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
+          suggestionGroups = this.getKeywordSuggestions();
         } else {
           this._fetchFields();
           return;
@@ -140,16 +140,19 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/from\s\S+\s\w*$/i)) {
         prefix = '';
         typeaheadContext = 'context-since';
-        suggestionGroups = this._getKeywordSuggestions();
+        suggestionGroups = this.getKeywordSuggestions();
       // } else if (modelPrefix.match(/\d+\s\w*$/)) {
       //   typeaheadContext = 'context-number';
       //   suggestionGroups = this._getAfterNumberSuggestions();
       } else if (modelPrefix.match(/ago\b/i) || modelPrefix.match(/facet\b/i) || modelPrefix.match(/\$__timefilter\b/i)) {
         typeaheadContext = 'context-timeseries';
-        suggestionGroups = this._getKeywordSuggestions();
+        suggestionGroups = this.getKeywordSuggestions();
       } else if (prefix && !wrapperClasses.contains('argument')) {
+        if (modelPrefix.match(/\s$/i)) {
+          prefix = '';
+        }
         typeaheadContext = 'context-builtin';
-        suggestionGroups = this._getKeywordSuggestions();
+        suggestionGroups = this.getKeywordSuggestions();
       } else if (Plain.serialize(this.state.value) === '') {
         typeaheadContext = 'context-new';
         if (this.schema) {
@@ -159,6 +162,12 @@ export default class KustoQueryField extends QueryField {
           setTimeout(this.onTypeahead, 0);
           return;
         }
+      } else {
+        typeaheadContext = 'context-builtin';
+        if (modelPrefix.match(/\s$/i)) {
+          prefix = '';
+        }
+        suggestionGroups = this.getKeywordSuggestions();
       }
 
       let results = 0;
@@ -178,6 +187,7 @@ export default class KustoQueryField extends QueryField {
         .filter(group => group.items.length > 0);
 
       // console.log('onTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, typeaheadContext);
+      // console.log('onTypeahead', modelPrefix, prefix, typeaheadContext);
 
       this.setState({
         typeaheadPrefix: prefix,
@@ -283,7 +293,7 @@ export default class KustoQueryField extends QueryField {
   //   ];
   // }
 
-  private _getKeywordSuggestions(): SuggestionGroup[] {
+  private getKeywordSuggestions(): SuggestionGroup[] {
     return [
       {
         prefixMatch: true,
