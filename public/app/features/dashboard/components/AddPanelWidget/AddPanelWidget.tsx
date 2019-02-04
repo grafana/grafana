@@ -17,6 +17,17 @@ export interface State {
   copiedPanelPlugins: any[];
 }
 
+type Location = {
+  query: {
+    panelId: number;
+    edit: boolean;
+    fullscreen: boolean;
+    tab?: string;
+    isVizPickerOpen?: boolean;
+  };
+  partial: boolean;
+};
+
 export class AddPanelWidget extends React.Component<Props, State> {
   constructor(props) {
     super(props);
@@ -62,18 +73,8 @@ export class AddPanelWidget extends React.Component<Props, State> {
     );
   }
 
-  moveToEdit(panel, tab) {
-    reduxStore.dispatch(
-      updateLocation({
-        query: {
-          panelId: panel.id,
-          edit: true,
-          fullscreen: true,
-          tab: tab,
-        },
-        partial: true,
-      })
-    );
+  moveToEdit(location) {
+    reduxStore.dispatch(updateLocation(location));
   }
 
   onCreateNewPanel = (tab = 'queries') => {
@@ -89,7 +90,28 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.addPanel(newPanel);
     dashboard.removePanel(this.props.panel);
 
-    this.moveToEdit(newPanel, tab);
+    let location: Location = {
+      query: {
+        panelId: newPanel.id,
+        edit: true,
+        fullscreen: true,
+      },
+      partial: true,
+    };
+
+    if (tab === 'visualization') {
+      location = {
+        ...location,
+        query: {
+          ...location.query,
+          tab: 'visualization',
+          isVizPickerOpen: true,
+        },
+      };
+      this.moveToEdit(location);
+    } else {
+      this.moveToEdit(location);
+    }
   };
 
   onPasteCopiedPanel = panelPluginInfo => {

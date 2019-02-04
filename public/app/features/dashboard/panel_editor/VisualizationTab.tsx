@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
-//TODO: See PanelEdit
+import { store } from 'app/store/store';
 
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
@@ -39,7 +39,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      isVizPickerOpen: false,
+      isVizPickerOpen: store.getState().location.query.isVizPickerOpen === true,
       searchQuery: '',
       scrollTop: 0,
     };
