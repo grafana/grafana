@@ -710,7 +710,7 @@ const togglePanelActionCreator = (
 ) => (exploreId: ExploreId) => {
   return (dispatch, getState) => {
     let shouldRunQueries;
-    dispatch(actionCreator);
+    dispatch(actionCreator({ exploreId }));
     dispatch(stateSave());
 
     switch (actionCreator.type) {
