@@ -38,7 +38,6 @@ interface ExploreProps {
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
-  initialQueries: DataQuery[];
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
@@ -55,6 +54,7 @@ interface ExploreProps {
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
   urlState: ExploreUrlState;
+  queryKeys: string[];
 }
 
 /**
@@ -175,12 +175,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
       datasourceLoading,
       datasourceMissing,
       exploreId,
-      initialQueries,
       showingStartPage,
       split,
       supportsGraph,
       supportsLogs,
       supportsTable,
+      queryKeys,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -201,7 +201,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance &&
           !datasourceError && (
             <div className="explore-container">
-              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} initialQueries={initialQueries} />
+              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
               <AutoSizer onResize={this.onResize} disableHeight>
                 {({ width }) => (
                   <main className="m-t-2" style={{ width }}>
@@ -243,13 +243,13 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceInstance,
     datasourceLoading,
     datasourceMissing,
-    initialQueries,
     initialized,
     range,
     showingStartPage,
     supportsGraph,
     supportsLogs,
     supportsTable,
+    queryKeys,
   } = item;
   return {
     StartPage,
@@ -257,7 +257,6 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceInstance,
     datasourceLoading,
     datasourceMissing,
-    initialQueries,
     initialized,
     range,
     showingStartPage,
@@ -265,6 +264,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     supportsGraph,
     supportsLogs,
     supportsTable,
+    queryKeys,
   };
 }
 

@@ -3,6 +3,7 @@ import {
   generateEmptyQuery,
   getIntervals,
   ensureQueries,
+  getQueryKeys,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
@@ -72,6 +73,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   supportsGraph: null,
   supportsLogs: null,
   supportsTable: null,
+  queryKeys: [],
 });
 
 /**
@@ -109,6 +111,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialQueries: nextQueries,
         logsHighlighterExpressions: undefined,
         queryTransactions: nextQueryTransactions,
+        queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
       };
     },
   })
@@ -130,6 +133,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         initialQueries: nextQueries,
         queryTransactions: nextQueryTransactions,
+        queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
       };
     },
   })
@@ -161,6 +165,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialQueries: queries.slice(),
         queryTransactions: [],
         showingStartPage: Boolean(state.StartPage),
+        queryKeys: getQueryKeys(queries, state.datasourceInstance),
       };
     },
   })
@@ -183,6 +188,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         range,
         initialQueries: queries,
         initialized: true,
+        queryKeys: getQueryKeys(queries, state.datasourceInstance),
       };
     },
   })
@@ -190,8 +196,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
-      return { ...state, datasourceInstance };
-      /*datasourceName: datasourceInstance.name removed after refactor, datasourceName does not exists on ExploreItemState */
+      return { ...state, datasourceInstance, queryKeys: getQueryKeys(state.initialQueries, datasourceInstance) };
     },
   })
   .addMapper({
@@ -281,6 +286,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         initialQueries: nextQueries,
+        queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
         queryTransactions: nextQueryTransactions,
       };
     },
@@ -348,6 +354,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialQueries: nextQueries,
         logsHighlighterExpressions: undefined,
         queryTransactions: nextQueryTransactions,
+        queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
       };
     },
   })
@@ -387,7 +394,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: setQueriesAction,
     mapper: (state, action): ExploreItemState => {
       const { queries } = action.payload;
-      return { ...state, initialQueries: queries.slice() };
+      return {
+        ...state,
+        initialQueries: queries.slice(),
+        queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      };
     },
   })
   .addMapper({
@@ -436,7 +447,12 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: queriesImportedAction,
     mapper: (state, action): ExploreItemState => {
-      return { ...state, initialQueries: action.payload.queries };
+      const { queries } = action.payload;
+      return {
+        ...state,
+        initialQueries: queries,
+        queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      };
     },
   })
   .create();

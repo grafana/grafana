@@ -232,6 +232,11 @@ export interface ExploreItemState {
    * Table model that combines all query table results into a single table.
    */
   tableResult?: TableModel;
+
+  /**
+   * React keys for rendering of QueryRows
+   */
+  queryKeys: string[];
 }
 
 export interface ExploreUrlState {
