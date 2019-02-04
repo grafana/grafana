@@ -16,12 +16,12 @@ export class DataSourcesListItem extends PureComponent<Props> {
           </div>
           <div className="card-item-body">
             <figure className="card-item-figure">
-              <img src={dataSource.typeLogoUrl} />
+              <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
             </figure>
             <div className="card-item-details">
               <div className="card-item-name">
                 {dataSource.name}
-                {dataSource.isDefault && <span className="btn btn-secondary btn-mini">default</span>}
+                {dataSource.isDefault && <span className="btn btn-secondary btn-mini card-item-label">default</span>}
               </div>
               <div className="card-item-sub-name">{dataSource.url}</div>
             </div>

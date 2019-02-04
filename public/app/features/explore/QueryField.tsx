@@ -104,11 +104,20 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
+    const { initialQuery, syntax } = this.props;
+    const { value, suggestions } = this.state;
+
+    // if query changed from the outside
+    if (initialQuery !== prevProps.initialQuery) {
+      // and we have a version that differs
+      if (initialQuery !== Plain.serialize(value)) {
+        this.placeholdersBuffer = new PlaceholdersBuffer(initialQuery || '');
+        this.setState({ value: makeValue(this.placeholdersBuffer.toString(), syntax) });
+      }
+    }
+
     // Only update menu location when suggestion existence or text/selection changed
-    if (
-      this.state.value !== prevState.value ||
-      hasSuggestions(this.state.suggestions) !== hasSuggestions(prevState.suggestions)
-    ) {
+    if (value !== prevState.value || hasSuggestions(suggestions) !== hasSuggestions(prevState.suggestions)) {
       this.updateMenu();
     }
   }

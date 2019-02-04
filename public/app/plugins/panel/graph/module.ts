@@ -281,7 +281,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
-    this.refresh();
+    this.render();
   }
 
   legendValuesOptionChanged() {

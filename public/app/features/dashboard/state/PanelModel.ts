@@ -5,6 +5,7 @@ import _ from 'lodash';
 import { Emitter } from 'app/core/utils/emitter';
 import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
 import { DataQuery, TimeSeries } from '@grafana/ui';
+import { TableData } from '@grafana/ui/src';
 
 export interface GridPos {
   x: number;
@@ -87,7 +88,7 @@ export class PanelModel {
   datasource: string;
   thresholds?: any;
 
-  snapshotData?: TimeSeries[];
+  snapshotData?: TimeSeries[] | [TableData];
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
@@ -265,6 +266,19 @@ export class PanelModel {
       return _.every(this.targets, other => {
         return other.refId !== refId;
       });
+    });
+  }
+
+  changeQuery(query: DataQuery, index: number) {
+    // ensure refId is maintained
+    query.refId = this.targets[index].refId;
+
+    // update query in array
+    this.targets = this.targets.map((item, itemIndex) => {
+      if (itemIndex === index) {
+        return query;
+      }
+      return item;
     });
   }
 

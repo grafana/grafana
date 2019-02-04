@@ -44,8 +44,8 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
 export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
   datasource: DSType;
   query: TQuery;
-  onExecuteQuery?: () => void;
-  onQueryChange?: (value: TQuery) => void;
+  onRunQuery: () => void;
+  onChange: (value: TQuery) => void;
 }
 
 export interface PluginExports {

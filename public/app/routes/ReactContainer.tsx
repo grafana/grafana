@@ -18,6 +18,8 @@ function WrapInProvider(store, Component, props) {
 export function reactContainer(
   $route,
   $location,
+  $injector,
+  $rootScope,
   contextSrv: ContextSrv
 ) {
   return {
@@ -38,7 +40,11 @@ export function reactContainer(
         component = component.default;
       }
 
-      const props = { };
+      const props = {
+        $injector: $injector,
+        $rootScope: $rootScope,
+        $scope: scope,
+      };
 
       ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
 
