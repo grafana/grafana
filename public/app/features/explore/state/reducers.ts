@@ -7,7 +7,36 @@ import {
 import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 
-import { Action, ActionTypes } from './actionTypes';
+import { HigherOrderAction, ActionTypes } from './actionTypes';
+import { reducerFactory } from 'app/core/redux';
+import {
+  addQueryRowAction,
+  changeQueryAction,
+  changeSizeAction,
+  changeTimeAction,
+  clearQueriesAction,
+  highlightLogsExpressionAction,
+  initializeExploreAction,
+  updateDatasourceInstanceAction,
+  loadDatasourceFailureAction,
+  loadDatasourceMissingAction,
+  loadDatasourcePendingAction,
+  loadDatasourceSuccessAction,
+  modifyQueriesAction,
+  queryTransactionFailureAction,
+  queryTransactionStartAction,
+  queryTransactionSuccessAction,
+  removeQueryRowAction,
+  runQueriesEmptyAction,
+  scanRangeAction,
+  scanStartAction,
+  scanStopAction,
+  setQueriesAction,
+  toggleGraphAction,
+  toggleLogsAction,
+  toggleTableAction,
+  queriesImportedAction,
+} from './actionTypes';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -58,9 +87,10 @@ export const initialExploreState: ExploreState = {
 /**
  * Reducer for an Explore area, to be used by the global Explore reducer.
  */
-export const itemReducer = (state, action: Action): ExploreItemState => {
-  switch (action.type) {
-    case ActionTypes.AddQueryRow: {
+export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemState)
+  .addMapper({
+    filter: addQueryRowAction,
+    mapper: (state, action): ExploreItemState => {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
       const { index, query } = action.payload;
 
@@ -77,10 +107,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       // Ongoing transactions need to update their row indices
       const nextQueryTransactions = queryTransactions.map(qt => {
         if (qt.rowIndex > index) {
-          return {
-            ...qt,
-            rowIndex: qt.rowIndex + 1,
-          };
+          return { ...qt, rowIndex: qt.rowIndex + 1 };
         }
         return qt;
       });
@@ -92,9 +119,11 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         modifiedQueries: nextModifiedQueries,
         queryTransactions: nextQueryTransactions,
       };
-    }
-
-    case ActionTypes.ChangeQuery: {
+    },
+  })
+  .addMapper({
+    filter: changeQueryAction,
+    mapper: (state, action): ExploreItemState => {
       const { initialQueries, queryTransactions } = state;
       let { modifiedQueries } = state;
       const { query, index, override } = action.payload;
@@ -102,17 +131,11 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       // Fast path: only change modifiedQueries to not trigger an update
       modifiedQueries[index] = query;
       if (!override) {
-        return {
-          ...state,
-          modifiedQueries,
-        };
+        return { ...state, modifiedQueries };
       }
 
       // Override path: queries are completely reset
-      const nextQuery: DataQuery = {
-        ...query,
-        ...generateEmptyQuery(index),
-      };
+      const nextQuery: DataQuery = { ...query, ...generateEmptyQuery(index) };
       const nextQueries = [...initialQueries];
       nextQueries[index] = nextQuery;
       modifiedQueries = [...nextQueries];
@@ -126,9 +149,11 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         modifiedQueries: nextQueries.slice(),
         queryTransactions: nextQueryTransactions,
       };
-    }
-
-    case ActionTypes.ChangeSize: {
+    },
+  })
+  .addMapper({
+    filter: changeSizeAction,
+    mapper: (state, action): ExploreItemState => {
       const { range, datasourceInstance } = state;
       let interval = '1s';
       if (datasourceInstance && datasourceInstance.interval) {
@@ -137,16 +162,17 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       const containerWidth = action.payload.width;
       const queryIntervals = getIntervals(range, interval, containerWidth);
       return { ...state, containerWidth, queryIntervals };
-    }
-
-    case ActionTypes.ChangeTime: {
-      return {
-        ...state,
-        range: action.payload.range,
-      };
-    }
-
-    case ActionTypes.ClearQueries: {
+    },
+  })
+  .addMapper({
+    filter: changeTimeAction,
+    mapper: (state, action): ExploreItemState => {
+      return { ...state, range: action.payload.range };
+    },
+  })
+  .addMapper({
+    filter: clearQueriesAction,
+    mapper: (state): ExploreItemState => {
       const queries = ensureQueries();
       return {
         ...state,
@@ -155,14 +181,18 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         queryTransactions: [],
         showingStartPage: Boolean(state.StartPage),
       };
-    }
-
-    case ActionTypes.HighlightLogsExpression: {
+    },
+  })
+  .addMapper({
+    filter: highlightLogsExpressionAction,
+    mapper: (state, action): ExploreItemState => {
       const { expressions } = action.payload;
       return { ...state, logsHighlighterExpressions: expressions };
-    }
-
-    case ActionTypes.InitializeExplore: {
+    },
+  })
+  .addMapper({
+    filter: initializeExploreAction,
+    mapper: (state, action): ExploreItemState => {
       const { containerWidth, eventBridge, exploreDatasources, queries, range } = action.payload;
       return {
         ...state,
@@ -174,30 +204,37 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         initialized: true,
         modifiedQueries: queries.slice(),
       };
-    }
-
-    case ActionTypes.UpdateDatasourceInstance: {
+    },
+  })
+  .addMapper({
+    filter: updateDatasourceInstanceAction,
+    mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
-      return {
-        ...state,
-        datasourceInstance,
-        datasourceName: datasourceInstance.name,
-      };
-    }
-
-    case ActionTypes.LoadDatasourceFailure: {
+      return { ...state, datasourceInstance };
+      /*datasourceName: datasourceInstance.name removed after refactor, datasourceName does not exists on ExploreItemState */
+    },
+  })
+  .addMapper({
+    filter: loadDatasourceFailureAction,
+    mapper: (state, action): ExploreItemState => {
       return { ...state, datasourceError: action.payload.error, datasourceLoading: false };
-    }
-
-    case ActionTypes.LoadDatasourceMissing: {
+    },
+  })
+  .addMapper({
+    filter: loadDatasourceMissingAction,
+    mapper: (state): ExploreItemState => {
       return { ...state, datasourceMissing: true, datasourceLoading: false };
-    }
-
-    case ActionTypes.LoadDatasourcePending: {
+    },
+  })
+  .addMapper({
+    filter: loadDatasourcePendingAction,
+    mapper: (state, action): ExploreItemState => {
       return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.requestedDatasourceName };
-    }
-
-    case ActionTypes.LoadDatasourceSuccess: {
+    },
+  })
+  .addMapper({
+    filter: loadDatasourceSuccessAction,
+    mapper: (state, action): ExploreItemState => {
       const { containerWidth, range } = state;
       const {
         StartPage,
@@ -226,9 +263,11 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         logsHighlighterExpressions: undefined,
         queryTransactions: [],
       };
-    }
-
-    case ActionTypes.ModifyQueries: {
+    },
+  })
+  .addMapper({
+    filter: modifyQueriesAction,
+    mapper: (state, action): ExploreItemState => {
       const { initialQueries, modifiedQueries, queryTransactions } = state;
       const { modification, index, modifier } = action.payload;
       let nextQueries: DataQuery[];
@@ -246,12 +285,7 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         nextQueries = initialQueries.map((query, i) => {
           // Synchronize all queries with local query cache to ensure consistency
           // TODO still needed?
-          return i === index
-            ? {
-                ...modifier(modifiedQueries[i], modification),
-                ...generateEmptyQuery(i),
-              }
-            : query;
+          return i === index ? { ...modifier(modifiedQueries[i], modification), ...generateEmptyQuery(i) } : query;
         });
         nextQueryTransactions = queryTransactions
           // Consume the hint corresponding to the action
@@ -270,18 +304,18 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         modifiedQueries: nextQueries.slice(),
         queryTransactions: nextQueryTransactions,
       };
-    }
-
-    case ActionTypes.QueryTransactionFailure: {
+    },
+  })
+  .addMapper({
+    filter: queryTransactionFailureAction,
+    mapper: (state, action): ExploreItemState => {
       const { queryTransactions } = action.payload;
-      return {
-        ...state,
-        queryTransactions,
-        showingStartPage: false,
-      };
-    }
-
-    case ActionTypes.QueryTransactionStart: {
+      return { ...state, queryTransactions, showingStartPage: false };
+    },
+  })
+  .addMapper({
+    filter: queryTransactionStartAction,
+    mapper: (state, action): ExploreItemState => {
       const { queryTransactions } = state;
       const { resultType, rowIndex, transaction } = action.payload;
       // Discarding existing transactions of same type
@@ -292,14 +326,12 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       // Append new transaction
       const nextQueryTransactions: QueryTransaction[] = [...remainingTransactions, transaction];
 
-      return {
-        ...state,
-        queryTransactions: nextQueryTransactions,
-        showingStartPage: false,
-      };
-    }
-
-    case ActionTypes.QueryTransactionSuccess: {
+      return { ...state, queryTransactions: nextQueryTransactions, showingStartPage: false };
+    },
+  })
+  .addMapper({
+    filter: queryTransactionSuccessAction,
+    mapper: (state, action): ExploreItemState => {
       const { datasourceInstance, queryIntervals } = state;
       const { history, queryTransactions } = action.payload;
       const results = calculateResultsFromQueryTransactions(
@@ -308,16 +340,12 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         queryIntervals.intervalMs
       );
 
-      return {
-        ...state,
-        ...results,
-        history,
-        queryTransactions,
-        showingStartPage: false,
-      };
-    }
-
-    case ActionTypes.RemoveQueryRow: {
+      return { ...state, ...results, history, queryTransactions, showingStartPage: false };
+    },
+  })
+  .addMapper({
+    filter: removeQueryRowAction,
+    mapper: (state, action): ExploreItemState => {
       const { datasourceInstance, initialQueries, queryIntervals, queryTransactions } = state;
       let { modifiedQueries } = state;
       const { index } = action.payload;
@@ -346,21 +374,29 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         modifiedQueries: nextQueries.slice(),
         queryTransactions: nextQueryTransactions,
       };
-    }
-
-    case ActionTypes.RunQueriesEmpty: {
+    },
+  })
+  .addMapper({
+    filter: runQueriesEmptyAction,
+    mapper: (state): ExploreItemState => {
       return { ...state, queryTransactions: [] };
-    }
-
-    case ActionTypes.ScanRange: {
+    },
+  })
+  .addMapper({
+    filter: scanRangeAction,
+    mapper: (state, action): ExploreItemState => {
       return { ...state, scanRange: action.payload.range };
-    }
-
-    case ActionTypes.ScanStart: {
+    },
+  })
+  .addMapper({
+    filter: scanStartAction,
+    mapper: (state, action): ExploreItemState => {
       return { ...state, scanning: true, scanner: action.payload.scanner };
-    }
-
-    case ActionTypes.ScanStop: {
+    },
+  })
+  .addMapper({
+    filter: scanStopAction,
+    mapper: (state): ExploreItemState => {
       const { queryTransactions } = state;
       const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
       return {
@@ -370,14 +406,18 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         scanRange: undefined,
         scanner: undefined,
       };
-    }
-
-    case ActionTypes.SetQueries: {
+    },
+  })
+  .addMapper({
+    filter: setQueriesAction,
+    mapper: (state, action): ExploreItemState => {
       const { queries } = action.payload;
       return { ...state, initialQueries: queries.slice(), modifiedQueries: queries.slice() };
-    }
-
-    case ActionTypes.ToggleGraph: {
+    },
+  })
+  .addMapper({
+    filter: toggleGraphAction,
+    mapper: (state): ExploreItemState => {
       const showingGraph = !state.showingGraph;
       let nextQueryTransactions = state.queryTransactions;
       if (!showingGraph) {
@@ -385,9 +425,11 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Graph');
       }
       return { ...state, queryTransactions: nextQueryTransactions, showingGraph };
-    }
-
-    case ActionTypes.ToggleLogs: {
+    },
+  })
+  .addMapper({
+    filter: toggleLogsAction,
+    mapper: (state): ExploreItemState => {
       const showingLogs = !state.showingLogs;
       let nextQueryTransactions = state.queryTransactions;
       if (!showingLogs) {
@@ -395,9 +437,11 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
         nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Logs');
       }
       return { ...state, queryTransactions: nextQueryTransactions, showingLogs };
-    }
-
-    case ActionTypes.ToggleTable: {
+    },
+  })
+  .addMapper({
+    filter: toggleTableAction,
+    mapper: (state): ExploreItemState => {
       const showingTable = !state.showingTable;
       if (showingTable) {
         return { ...state, showingTable, queryTransactions: state.queryTransactions };
@@ -412,25 +456,21 @@ export const itemReducer = (state, action: Action): ExploreItemState => {
       );
 
       return { ...state, ...results, queryTransactions: nextQueryTransactions, showingTable };
-    }
-
-    case ActionTypes.QueriesImported: {
-      return {
-        ...state,
-        initialQueries: action.payload.queries,
-        modifiedQueries: action.payload.queries.slice(),
-      };
-    }
-  }
-
-  return state;
-};
+    },
+  })
+  .addMapper({
+    filter: queriesImportedAction,
+    mapper: (state, action): ExploreItemState => {
+      return { ...state, initialQueries: action.payload.queries, modifiedQueries: action.payload.queries.slice() };
+    },
+  })
+  .create();
 
 /**
  * Global Explore reducer that handles multiple Explore areas (left and right).
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
  */
-export const exploreReducer = (state = initialExploreState, action: Action): ExploreState => {
+export const exploreReducer = (state = initialExploreState, action: HigherOrderAction): ExploreState => {
   switch (action.type) {
     case ActionTypes.SplitClose: {
       return { ...state, split: false };
@@ -453,10 +493,7 @@ export const exploreReducer = (state = initialExploreState, action: Action): Exp
     const { exploreId } = action.payload as any;
     if (exploreId !== undefined) {
       const exploreItemState = state[exploreId];
-      return {
-        ...state,
-        [exploreId]: itemReducer(exploreItemState, action),
-      };
+      return { ...state, [exploreId]: itemReducer(exploreItemState, action) };
     }
   }
 
