@@ -84,6 +84,10 @@ $input-border: 1px solid $input-border-color;
   .gf-form + .gf-form {
     margin-left: $gf-form-margin;
   }
+
+  &--nowrap {
+    flex-wrap: nowrap;
+  }
 }
 
 .gf-form-button-row {
