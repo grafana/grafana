@@ -62,20 +62,21 @@ export class AddPanelWidget extends React.Component<Props, State> {
     );
   }
 
-  moveToEdit(panel) {
+  moveToEdit(panel, tab) {
     reduxStore.dispatch(
       updateLocation({
         query: {
           panelId: panel.id,
           edit: true,
           fullscreen: true,
+          tab: tab,
         },
         partial: true,
       })
     );
   }
 
-  onCreateNewPanel = () => {
+  onCreateNewPanel = (tab = 'queries') => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
@@ -88,7 +89,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.addPanel(newPanel);
     dashboard.removePanel(this.props.panel);
 
-    this.moveToEdit(newPanel);
+    this.moveToEdit(newPanel, tab);
   };
 
   onPasteCopiedPanel = panelPluginInfo => {
@@ -150,7 +151,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
           </div>
           <div className="add-panel-widget__btn-container">
             {this.renderOptionLink('queries', 'Add query', this.onCreateNewPanel)}
-            {this.renderOptionLink('visualization', 'Choose Panel type', this.onCreateNewPanel)}
+            {this.renderOptionLink('visualization', 'Choose Panel type', () => this.onCreateNewPanel('visualization'))}
             {this.renderOptionLink('queries', 'Convert to row', this.onCreateNewRow)}
           </div>
         </div>

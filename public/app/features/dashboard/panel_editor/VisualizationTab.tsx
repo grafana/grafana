@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+//TODO: See PanelEdit
 
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
