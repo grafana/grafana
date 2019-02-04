@@ -3,8 +3,6 @@
   "name": "Gauge",
   "id": "gauge",
 
-  "state": "alpha",
-
   "info": {
     "author": {
       "name": "Grafana Project",

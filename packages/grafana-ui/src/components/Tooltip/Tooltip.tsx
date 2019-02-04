@@ -1,10 +1,14 @@
-﻿import React, { createRef } from 'react';
+import React, { createRef } from 'react';
 import * as PopperJS from 'popper.js';
 import Popper from './Popper';
 import PopperController, { UsingPopperProps } from './PopperController';
 
-export const Tooltip = ({ children, renderContent, ...controllerProps }: UsingPopperProps) => {
+interface TooltipProps extends UsingPopperProps {
+  theme?: 'info' | 'error';
+}
+export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
+  const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');
 
   return (
     <PopperController {...controllerProps}>
@@ -17,6 +21,11 @@ export const Tooltip = ({ children, renderContent, ...controllerProps }: UsingPo
                 onMouseEnter={showPopper}
                 onMouseLeave={hidePopper}
                 referenceElement={tooltipTriggerRef.current}
+                wrapperClassName='popper'
+                className={popperBackgroundClassName}
+                renderArrow={({ arrowProps, placement }) => (
+                  <div className="popper__arrow" data-placement={placement} {...arrowProps} />
+                )}
               />
             )}
             {React.cloneElement(children, {

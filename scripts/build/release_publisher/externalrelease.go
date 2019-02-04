@@ -14,10 +14,10 @@ type releaseFromExternalContent struct {
 	artifactConfigurations []buildArtifact
 }
 
-func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
+func (re releaseFromExternalContent) prepareRelease(baseArchiveURL, whatsNewURL string, releaseNotesURL string, nightly bool) (*release, error) {
 	version := re.rawVersion[1:]
 	beta := strings.Contains(version, "beta")
-	var rt ReleaseType
+	var rt releaseType
 	if beta {
 		rt = BETA
 	} else if nightly {
@@ -28,11 +28,11 @@ func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl 
 
 	builds := []build{}
 	for _, ba := range re.artifactConfigurations {
-		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", ba.getUrl(baseArchiveUrl, version, rt)))
+		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", ba.getURL(baseArchiveURL, version, rt)))
 		if err != nil {
 			return nil, err
 		}
-		builds = append(builds, newBuild(baseArchiveUrl, ba, version, rt, sha256))
+		builds = append(builds, newBuild(baseArchiveURL, ba, version, rt, sha256))
 	}
 
 	r := release{
@@ -41,8 +41,8 @@ func (re releaseFromExternalContent) prepareRelease(baseArchiveUrl, whatsNewUrl 
 		Stable:          rt.stable(),
 		Beta:            rt.beta(),
 		Nightly:         rt.nightly(),
-		WhatsNewUrl:     whatsNewUrl,
-		ReleaseNotesUrl: releaseNotesUrl,
+		WhatsNewURL:     whatsNewURL,
+		ReleaseNotesURL: releaseNotesURL,
 		Builds:          builds,
 	}
 	return &r, nil
@@ -52,9 +52,9 @@ type urlGetter interface {
 	getContents(url string) (string, error)
 }
 
-type getHttpContents struct{}
+type getHTTPContents struct{}
 
-func (getHttpContents) getContents(url string) (string, error) {
+func (getHTTPContents) getContents(url string) (string, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return "", err

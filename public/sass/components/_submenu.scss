@@ -40,9 +40,9 @@
   background-color: $input-bg;
   border: 1px solid $input-border-color;
   border-radius: $input-border-radius;
-  box-sizing: content-box;
   display: inline-block;
   color: $text-color;
+  height: $gf-form-input-height;
 
   .label-tag {
     margin: 0 5px;

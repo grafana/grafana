@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import Remarkable from 'remarkable';
 import { Tooltip } from '@grafana/ui';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
-import { LinkSrv } from 'app/features/dashboard/panellinks/link_srv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/time_srv';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 enum InfoModes {
   Error = 'Error',
@@ -77,7 +77,7 @@ export class PanelHeaderCorner extends Component<Props> {
       <>
         {infoMode === InfoModes.Info || infoMode === InfoModes.Links ? (
           <Tooltip
-            content={this.getInfoContent}
+            content={this.getInfoContent()}
             placement="bottom-start"
           >
             <div

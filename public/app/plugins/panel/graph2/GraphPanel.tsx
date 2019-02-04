@@ -1,7 +1,6 @@
 // Libraries
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
-import { colors } from '@grafana/ui';
 
 // Utils
 import { processTimeSeries } from '@grafana/ui/src/utils';
@@ -17,14 +16,16 @@ interface Props extends PanelProps<Options> {}
 
 export class GraphPanel extends PureComponent<Props> {
   render() {
-    const { timeSeries, timeRange, width, height } = this.props;
+    const { panelData, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    const vmSeries = processTimeSeries({
-      timeSeries: timeSeries,
-      nullValueMode: NullValueMode.Ignore,
-      colorPalette: colors,
-    });
+    let vmSeries;
+    if (panelData.timeSeries) {
+      vmSeries = processTimeSeries({
+        timeSeries: panelData.timeSeries,
+        nullValueMode: NullValueMode.Ignore,
+      });
+    }
 
     return (
       <Graph

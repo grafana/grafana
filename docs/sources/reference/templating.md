@@ -52,6 +52,7 @@ Filter Option | Example | Raw | Interpolated | Description
 `csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
 `distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
 `lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
+`percentencode` | ${servers:percentencode} |  `'foo()bar BAZ', 'test2'` | `{foo%28%29bar%20BAZ%2Ctest2}` | Formats multi-value variable into a glob, percent-encoded.
 
 Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
@@ -243,6 +244,11 @@ summarize($myinterval, sum, false)
 ## Global Built-in Variables
 
 Grafana has global built-in variables that can be used in expressions in the query editor.
+
+### Time range variables
+
+Grafana has two built in time range variables in `$__from` and `$__to`. They are currently always interpolated
+as epoch milliseconds. These variables are only available in Grafana v6.0 and above.
 
 ### The $__interval Variable
 

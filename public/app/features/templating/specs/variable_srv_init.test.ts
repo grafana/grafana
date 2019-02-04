@@ -2,7 +2,7 @@ import '../all';
 
 import _ from 'lodash';
 import { VariableSrv } from '../variable_srv';
-import { DashboardModel } from '../../dashboard/dashboard_model';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
 
 describe('VariableSrv init', function(this: any) {
@@ -11,11 +11,17 @@ describe('VariableSrv init', function(this: any) {
       this.variables = vars;
     },
     variableInitialized: () => {},
-    updateTemplateData: () => {},
+    updateIndex: () => {},
     replace: str =>
       str.replace(this.regex, match => {
         return match;
       }),
+  };
+
+  const timeSrv = {
+    timeRange: () => {
+      return { from: '2018-01-29', to: '2019-01-29' };
+    },
   };
 
   const $injector = {} as any;
@@ -47,7 +53,8 @@ describe('VariableSrv init', function(this: any) {
           templateSrv,
         };
 
-        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv);
+        // @ts-ignore
+        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv, timeSrv);
 
         $injector.instantiate = (variable, model) => {
           return getVarMockConstructor(variable, model, ctx);

@@ -12,8 +12,8 @@ import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
 
 // Types
-import { DashboardModel } from '../dashboard/dashboard_model';
-import { PanelModel } from '../dashboard/panel_model';
+import { DashboardModel } from '../dashboard/state/DashboardModel';
+import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 
 interface Props {

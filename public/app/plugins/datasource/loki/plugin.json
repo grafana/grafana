@@ -2,12 +2,14 @@
   "type": "datasource",
   "name": "Loki",
   "id": "loki",
-  "metrics": false,
+
+  "metrics": true,
   "alerting": false,
   "annotations": false,
   "logs": true,
   "explore": true,
   "tables": false,
+
   "info": {
     "description": "Loki Logging Data Source for Grafana",
     "author": {

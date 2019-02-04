@@ -1,5 +1,5 @@
-﻿import React, { SFC } from 'react';
-import { Tooltip } from '@grafana/ui';
+import React, { FC } from 'react';
+import { FormLabel } from '@grafana/ui';
 
 interface Props {
   label: string;
@@ -10,10 +10,10 @@ interface Props {
   tooltipInfo?: any;
 }
 
-export const DataSourceOptions: SFC<Props> = ({ label, placeholder, name, value, onChange, tooltipInfo }) => {
-  const dsOption = (
+export const DataSourceOptions: FC<Props> = ({ label, placeholder, name, value, onChange, tooltipInfo }) => {
+  return (
     <div className="gf-form gf-form--flex-end">
-      <label className="gf-form-label">{label}</label>
+      <FormLabel tooltip={tooltipInfo}>{label}</FormLabel>
       <input
         type="text"
         className="gf-form-input width-6"
@@ -24,8 +24,6 @@ export const DataSourceOptions: SFC<Props> = ({ label, placeholder, name, value,
       />
     </div>
   );
-
-  return tooltipInfo ? <Tooltip content={tooltipInfo}>{dsOption}</Tooltip> : dsOption;
 };
 
 export default DataSourceOptions;

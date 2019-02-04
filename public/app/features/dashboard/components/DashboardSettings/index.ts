@@ -1,0 +1,1 @@
+export { SettingsCtrl } from './SettingsCtrl';

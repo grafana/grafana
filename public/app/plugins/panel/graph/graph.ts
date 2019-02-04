@@ -11,7 +11,6 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
 import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
@@ -26,6 +25,7 @@ import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
+import { GrafanaTheme, getValueFormat } from '@grafana/ui';
 
 class GraphElement {
   ctrl: GraphCtrl;
@@ -51,7 +51,10 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.timeRegionManager = new TimeRegionManager(this.ctrl);
+    this.timeRegionManager = new TimeRegionManager(
+      this.ctrl,
+      config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
+    );
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
@@ -726,10 +729,12 @@ class GraphElement {
 
   configureAxisMode(axis, format) {
     axis.tickFormatter = (val, axis) => {
-      if (!kbn.valueFormats[format]) {
+      const formatter = getValueFormat(format);
+
+      if (!formatter) {
         throw new Error(`Unit '${format}' is not supported`);
       }
-      return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
+      return formatter(val, axis.tickDecimals, axis.scaledDecimals);
     };
   }
 

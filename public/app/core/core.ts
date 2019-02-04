@@ -1,5 +1,6 @@
 import './directives/dash_class';
 import './directives/dropdown_typeahead';
+import './directives/autofill_event_fix';
 import './directives/metric_segment';
 import './directives/misc';
 import './directives/ng_model_on_blur';

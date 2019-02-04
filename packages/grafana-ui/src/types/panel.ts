@@ -1,14 +1,22 @@
-import { TimeSeries, LoadingState } from './series';
+import { TimeSeries, LoadingState, TableData } from './data';
 import { TimeRange } from './time';
 
+export type InterpolateFunction = (value: string, format?: string | Function) => string;
+
 export interface PanelProps<T = any> {
-  timeSeries: TimeSeries[];
+  panelData: PanelData;
   timeRange: TimeRange;
   loading: LoadingState;
   options: T;
   renderCounter: number;
   width: number;
   height: number;
+  onInterpolate: InterpolateFunction;
+}
+
+export interface PanelData {
+  timeSeries?: TimeSeries[];
+  tableData?: TableData;
 }
 
 export interface PanelOptionsProps<T = any> {
@@ -33,7 +41,7 @@ export interface PanelMenuItem {
 export interface Threshold {
   index: number;
   value: number;
-  color?: string;
+  color: string;
 }
 
 export enum BasicGaugeColor {
@@ -52,6 +60,8 @@ interface BaseMap {
   text: string;
   type: MappingType;
 }
+
+export type ValueMapping = ValueMap | RangeMap;
 
 export interface ValueMap extends BaseMap {
   value: string;

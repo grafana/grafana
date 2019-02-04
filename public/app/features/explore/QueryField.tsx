@@ -73,6 +73,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
   resetTimer: any;
+  mounted: boolean;
 
   constructor(props: QueryFieldProps, context) {
     super(props, context);
@@ -93,19 +94,30 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   componentDidMount() {
+    this.mounted = true;
     this.updateMenu();
   }
 
   componentWillUnmount() {
+    this.mounted = false;
     clearTimeout(this.resetTimer);
   }
 
   componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
+    const { initialQuery, syntax } = this.props;
+    const { value, suggestions } = this.state;
+
+    // if query changed from the outside
+    if (initialQuery !== prevProps.initialQuery) {
+      // and we have a version that differs
+      if (initialQuery !== Plain.serialize(value)) {
+        this.placeholdersBuffer = new PlaceholdersBuffer(initialQuery || '');
+        this.setState({ value: makeValue(this.placeholdersBuffer.toString(), syntax) });
+      }
+    }
+
     // Only update menu location when suggestion existence or text/selection changed
-    if (
-      this.state.value !== prevState.value ||
-      hasSuggestions(this.state.suggestions) !== hasSuggestions(prevState.suggestions)
-    ) {
+    if (value !== prevState.value || hasSuggestions(suggestions) !== hasSuggestions(prevState.suggestions)) {
       this.updateMenu();
     }
   }
@@ -125,17 +137,21 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   onChange = ({ value }) => {
-    const textChanged = value.document !== this.state.value.document;
+    const documentChanged = value.document !== this.state.value.document;
+    const prevValue = this.state.value;
 
     // Control editor loop, then pass text change up to parent
     this.setState({ value }, () => {
-      if (textChanged) {
-        this.handleChangeValue();
+      if (documentChanged) {
+        const textChanged = Plain.serialize(prevValue) !== Plain.serialize(value);
+        if (textChanged) {
+          this.handleChangeValue();
+        }
       }
     });
 
     // Show suggest menu on text input
-    if (textChanged && value.selection.isCollapsed) {
+    if (documentChanged && value.selection.isCollapsed) {
       // Need one paint to allow DOM-based typeahead rules to work
       window.requestAnimationFrame(this.handleTypeahead);
     } else if (!this.resetTimer) {
@@ -347,13 +363,15 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   };
 
   resetTypeahead = () => {
-    this.setState({
-      suggestions: [],
-      typeaheadIndex: 0,
-      typeaheadPrefix: '',
-      typeaheadContext: null,
-    });
-    this.resetTimer = null;
+    if (this.mounted) {
+      this.setState({
+        suggestions: [],
+        typeaheadIndex: 0,
+        typeaheadPrefix: '',
+        typeaheadContext: null,
+      });
+      this.resetTimer = null;
+    }
   };
 
   handleBlur = () => {
