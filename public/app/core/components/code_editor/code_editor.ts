@@ -30,20 +30,20 @@
 
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import ace from 'brace';
+import * as ace from 'ace-builds/src-noconflict/ace';
 import './theme-grafana-dark';
-import 'brace/ext/language_tools';
-import 'brace/theme/textmate';
-import 'brace/mode/text';
-import 'brace/snippets/text';
-import 'brace/mode/sql';
-import 'brace/snippets/sql';
-import 'brace/mode/sqlserver';
-import 'brace/snippets/sqlserver';
-import 'brace/mode/markdown';
-import 'brace/snippets/markdown';
-import 'brace/mode/json';
-import 'brace/snippets/json';
+import 'ace-builds/src-noconflict/ext-language_tools';
+import 'ace-builds/src-noconflict/theme-textmate';
+import 'ace-builds/src-noconflict/mode-text';
+import 'ace-builds/src-noconflict/snippets/text';
+import 'ace-builds/src-noconflict/mode-sql';
+import 'ace-builds/src-noconflict/snippets/sql';
+import 'ace-builds/src-noconflict/mode-sqlserver';
+import 'ace-builds/src-noconflict/snippets/sqlserver';
+import 'ace-builds/src-noconflict/mode-markdown';
+import 'ace-builds/src-noconflict/snippets/markdown';
+import 'ace-builds/src-noconflict/mode-json';
+import 'ace-builds/src-noconflict/snippets/json';
 
 const DEFAULT_THEME_DARK = 'ace/theme/grafana-dark';
 const DEFAULT_THEME_LIGHT = 'ace/theme/textmate';
@@ -143,7 +143,7 @@ function link(scope, elem, attrs) {
   });
 
   function setLangMode(lang) {
-    ace.acequire('ace/ext/language_tools');
+    // ace.acequire('ace/ext/language_tools'); // TODO: Do we need this?
     codeEditor.setOptions({
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
