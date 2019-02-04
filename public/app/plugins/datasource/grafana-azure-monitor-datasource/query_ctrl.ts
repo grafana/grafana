@@ -345,6 +345,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
     return interval;
   }
+
   getAppInsightsMetricNames() {
     if (!this.datasource.appInsightsDatasource.isConfigured()) {
       return;
@@ -374,6 +375,19 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.appInsights.aggregation = aggData.primaryAggType;
         return this.refresh();
       })
+      .catch(this.handleQueryCtrlError.bind(this));
+  }
+
+  onAppInsightsQueryChange = (nextQuery: string) => {
+    this.target.appInsights.rawQueryString = nextQuery;
+  }
+
+  onAppInsightsQueryExecute = () => {
+    return this.refresh();
+  }
+
+  getAppInsightsQuerySchema = () => {
+    return this.datasource.appInsightsDatasource.getQuerySchema()
       .catch(this.handleQueryCtrlError.bind(this));
   }
 

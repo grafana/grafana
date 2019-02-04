@@ -224,4 +224,13 @@ export default class AppInsightsDatasource {
       return new ResponseParser(result).parseGroupBys();
     });
   }
+
+  getQuerySchema() {
+    const url = `${this.baseUrl}/query/schema`;
+    return this.doRequest(url).then(result => {
+      const schema = new ResponseParser(result).parseQuerySchema();
+      // console.log(schema);
+      return schema;
+    });
+  }
 }

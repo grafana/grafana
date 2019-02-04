@@ -402,13 +402,25 @@ export default class KustoQueryField extends QueryField {
   }
 
   private async fetchSchema() {
-    const schema = await this.props.getSchema();
+    let schema = await this.props.getSchema();
     if (schema) {
+      if (schema.Type === 'AppInsights') {
+        schema = castSchema(schema);
+      }
       this.schema = schema;
     } else {
       this.schema = defaultSchema();
     }
   }
+}
+
+/**
+ * Cast schema from App Insights to default Kusto schema
+ */
+function castSchema(schema) {
+  const defaultSchemaTemplate = defaultSchema();
+  defaultSchemaTemplate.Databases.Default = schema;
+  return defaultSchemaTemplate;
 }
 
 function normalizeQuery(query: string): string {
