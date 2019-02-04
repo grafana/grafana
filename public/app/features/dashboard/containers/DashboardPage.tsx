@@ -102,26 +102,44 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // Sync url state with model
     if (urlFullscreen !== dashboard.meta.fullscreen || urlEdit !== dashboard.meta.isEditing) {
-      // entering fullscreen/edit mode
       if (urlPanelId) {
-        const panel = dashboard.getPanelById(parseInt(urlPanelId, 10));
-
-        if (panel) {
-          dashboard.setViewMode(panel, urlFullscreen, urlEdit);
-          this.setState({ isEditing: urlEdit, isFullscreen: urlFullscreen, fullscreenPanel: panel });
-          this.setPanelFullscreenClass(urlFullscreen);
-        } else {
-          this.handleFullscreenPanelNotFound(urlPanelId);
-        }
+        this.onEnterFullscreen();
       } else {
-        // handle leaving fullscreen mode
-        if (this.state.fullscreenPanel) {
-          dashboard.setViewMode(this.state.fullscreenPanel, urlFullscreen, urlEdit);
-        }
-        this.setState({ isEditing: false, isFullscreen: false, fullscreenPanel: null });
-        this.setPanelFullscreenClass(false);
+        this.onLeaveFullscreen();
       }
     }
+  }
+
+  onEnterFullscreen() {
+    const { dashboard, urlEdit, urlFullscreen, urlPanelId } = this.props;
+
+    const panel = dashboard.getPanelById(parseInt(urlPanelId, 10));
+
+    if (panel) {
+      dashboard.setViewMode(panel, urlFullscreen, urlEdit);
+      this.setState({
+        isEditing: urlEdit,
+        isFullscreen: urlFullscreen,
+        fullscreenPanel: panel,
+      });
+      this.setPanelFullscreenClass(urlFullscreen);
+    } else {
+      this.handleFullscreenPanelNotFound(urlPanelId);
+    }
+  }
+
+  onLeaveFullscreen() {
+    const { dashboard } = this.props;
+
+    if (this.state.fullscreenPanel) {
+      dashboard.setViewMode(this.state.fullscreenPanel, false, false);
+    }
+
+    this.setState({ isEditing: false, isFullscreen: false, fullscreenPanel: null }, () => {
+      dashboard.render();
+    });
+
+    this.setPanelFullscreenClass(false);
   }
 
   handleFullscreenPanelNotFound(urlPanelId: string) {
