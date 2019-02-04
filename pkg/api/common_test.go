@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"gopkg.in/macaron.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -129,24 +130,70 @@ func setupScenarioContext(url string) *scenarioContext {
 	return sc
 }
 
+type fakeUserToken interface {
+	auth.UserToken
+	SetToken(token string)
+}
+
+type userTokenImpl struct {
+	userId int64
+	token  string
+}
+
+func (ut *userTokenImpl) GetUserId() int64 {
+	return ut.userId
+}
+
+func (ut *userTokenImpl) GetToken() string {
+	return ut.token
+}
+
+func (ut *userTokenImpl) SetToken(token string) {
+	ut.token = token
+}
+
 type fakeUserAuthTokenService struct {
-	initContextWithTokenProvider func(ctx *m.ReqContext, orgID int64) bool
+	createTokenProvider    func(userId int64, clientIP, userAgent string) (auth.UserToken, error)
+	tryRotateTokenProvider func(token auth.UserToken, clientIP, userAgent string) (bool, error)
+	lookupTokenProvider    func(unhashedToken string) (auth.UserToken, error)
+	revokeTokenProvider    func(token auth.UserToken) error
 }
 
 func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
 	return &fakeUserAuthTokenService{
-		initContextWithTokenProvider: func(ctx *m.ReqContext, orgID int64) bool {
-			return false
+		createTokenProvider: func(userId int64, clientIP, userAgent string) (auth.UserToken, error) {
+			return &userTokenImpl{
+				userId: 0,
+				token:  "",
+			}, nil
+		},
+		tryRotateTokenProvider: func(token auth.UserToken, clientIP, userAgent string) (bool, error) {
+			return false, nil
+		},
+		lookupTokenProvider: func(unhashedToken string) (auth.UserToken, error) {
+			return &userTokenImpl{
+				userId: 0,
+				token:  "",
+			}, nil
+		},
+		revokeTokenProvider: func(token auth.UserToken) error {
+			return nil
 		},
 	}
 }
 
-func (s *fakeUserAuthTokenService) InitContextWithToken(ctx *m.ReqContext, orgID int64) bool {
-	return s.initContextWithTokenProvider(ctx, orgID)
+func (s *fakeUserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (auth.UserToken, error) {
+	return s.createTokenProvider(userId, clientIP, userAgent)
 }
 
-func (s *fakeUserAuthTokenService) UserAuthenticatedHook(user *m.User, c *m.ReqContext) error {
-	return nil
+func (s *fakeUserAuthTokenService) LookupToken(unhashedToken string) (auth.UserToken, error) {
+	return s.lookupTokenProvider(unhashedToken)
 }
 
-func (s *fakeUserAuthTokenService) SignOutUser(c *m.ReqContext) error { return nil }
+func (s *fakeUserAuthTokenService) TryRotateToken(token auth.UserToken, clientIP, userAgent string) (bool, error) {
+	return s.tryRotateTokenProvider(token, clientIP, userAgent)
+}
+
+func (s *fakeUserAuthTokenService) RevokeToken(token auth.UserToken) error {
+	return s.revokeTokenProvider(token)
+}

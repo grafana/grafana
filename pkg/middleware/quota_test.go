@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
@@ -74,10 +75,17 @@ func TestMiddlewareQuota(t *testing.T) {
 		})
 
 		middlewareScenario("with user logged in", func(sc *scenarioContext) {
-			sc.userAuthTokenService.initContextWithTokenProvider = func(ctx *m.ReqContext, orgId int64) bool {
-				ctx.SignedInUser = &m.SignedInUser{OrgId: 2, UserId: 12}
-				ctx.IsSignedIn = true
-				return true
+			sc.withTokenSessionCookie("token")
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
+				return &userTokenImpl{
+					userId: 12,
+					token:  "",
+				}, nil
 			}
 
 			bus.AddHandler("globalQuota", func(query *m.GetGlobalQuotaByTargetQuery) error {

@@ -10,6 +10,8 @@ import (
 	msession "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtoken"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -146,17 +148,91 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("Auth token service", func(sc *scenarioContext) {
-			var wasCalled bool
-			sc.userAuthTokenService.initContextWithTokenProvider = func(ctx *m.ReqContext, orgId int64) bool {
-				wasCalled = true
-				return false
+		middlewareScenario("Non-expired auth token in cookie which not are being rotated", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
+				return &userTokenImpl{
+					userId: 12,
+					token:  unhashedToken,
+				}, nil
 			}
 
 			sc.fakeReq("GET", "/").exec()
 
-			Convey("should call middleware", func() {
-				So(wasCalled, ShouldBeTrue)
+			Convey("should init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeTrue)
+				So(sc.context.UserId, ShouldEqual, 12)
+				So(sc.context.UserToken.GetUserId(), ShouldEqual, 12)
+				So(sc.context.UserToken.GetToken(), ShouldEqual, "token")
+			})
+
+			Convey("should not set cookie", func() {
+				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, "")
+			})
+		})
+
+		middlewareScenario("Non-expired auth token in cookie which are being rotated", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
+				return &userTokenImpl{
+					userId: 12,
+					token:  unhashedToken,
+				}, nil
+			}
+
+			sc.userAuthTokenService.tryRotateTokenProvider = func(userToken auth.UserToken, clientIP, userAgent string) (bool, error) {
+				userToken.(fakeUserToken).SetToken("rotated")
+				return true, nil
+			}
+
+			expectedCookie := &http.Cookie{
+				Name:     cookieName,
+				Value:    "rotated",
+				Path:     setting.AppSubUrl + "/",
+				HttpOnly: true,
+				MaxAge:   OneYearInSeconds,
+				SameSite: http.SameSiteLaxMode,
+			}
+
+			sc.fakeReq("GET", "/").exec()
+
+			Convey("should init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeTrue)
+				So(sc.context.UserId, ShouldEqual, 12)
+				So(sc.context.UserToken.GetUserId(), ShouldEqual, 12)
+				So(sc.context.UserToken.GetToken(), ShouldEqual, "rotated")
+			})
+
+			Convey("should set cookie", func() {
+				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
+			})
+		})
+
+		middlewareScenario("Invalid/expired auth token in cookie", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
+
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
+				return nil, authtoken.ErrAuthTokenNotFound
+			}
+
+			sc.fakeReq("GET", "/").exec()
+
+			Convey("should not init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeFalse)
+				So(sc.context.UserId, ShouldEqual, 0)
+				So(sc.context.UserToken, ShouldBeNil)
 			})
 		})
 
@@ -508,6 +584,7 @@ type scenarioContext struct {
 	resp                 *httptest.ResponseRecorder
 	apiKey               string
 	authHeader           string
+	tokenSessionCookie   string
 	respJson             map[string]interface{}
 	handlerFunc          handlerFunc
 	defaultHandler       macaron.Handler
@@ -519,6 +596,11 @@ type scenarioContext struct {
 
 func (sc *scenarioContext) withValidApiKey() *scenarioContext {
 	sc.apiKey = "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9"
+	return sc
+}
+
+func (sc *scenarioContext) withTokenSessionCookie(unhashedToken string) *scenarioContext {
+	sc.tokenSessionCookie = unhashedToken
 	return sc
 }
 
@@ -571,6 +653,13 @@ func (sc *scenarioContext) exec() {
 		sc.req.Header.Add("Authorization", sc.authHeader)
 	}
 
+	if sc.tokenSessionCookie != "" {
+		sc.req.AddCookie(&http.Cookie{
+			Name:  cookieName,
+			Value: sc.tokenSessionCookie,
+		})
+	}
+
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
@@ -582,24 +671,70 @@ func (sc *scenarioContext) exec() {
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *m.ReqContext)
 
+type fakeUserToken interface {
+	auth.UserToken
+	SetToken(token string)
+}
+
+type userTokenImpl struct {
+	userId int64
+	token  string
+}
+
+func (ut *userTokenImpl) GetUserId() int64 {
+	return ut.userId
+}
+
+func (ut *userTokenImpl) GetToken() string {
+	return ut.token
+}
+
+func (ut *userTokenImpl) SetToken(token string) {
+	ut.token = token
+}
+
 type fakeUserAuthTokenService struct {
-	initContextWithTokenProvider func(ctx *m.ReqContext, orgID int64) bool
+	createTokenProvider    func(userId int64, clientIP, userAgent string) (auth.UserToken, error)
+	tryRotateTokenProvider func(token auth.UserToken, clientIP, userAgent string) (bool, error)
+	lookupTokenProvider    func(unhashedToken string) (auth.UserToken, error)
+	revokeTokenProvider    func(token auth.UserToken) error
 }
 
 func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
 	return &fakeUserAuthTokenService{
-		initContextWithTokenProvider: func(ctx *m.ReqContext, orgID int64) bool {
-			return false
+		createTokenProvider: func(userId int64, clientIP, userAgent string) (auth.UserToken, error) {
+			return &userTokenImpl{
+				userId: 0,
+				token:  "",
+			}, nil
+		},
+		tryRotateTokenProvider: func(token auth.UserToken, clientIP, userAgent string) (bool, error) {
+			return false, nil
+		},
+		lookupTokenProvider: func(unhashedToken string) (auth.UserToken, error) {
+			return &userTokenImpl{
+				userId: 0,
+				token:  "",
+			}, nil
+		},
+		revokeTokenProvider: func(token auth.UserToken) error {
+			return nil
 		},
 	}
 }
 
-func (s *fakeUserAuthTokenService) InitContextWithToken(ctx *m.ReqContext, orgID int64) bool {
-	return s.initContextWithTokenProvider(ctx, orgID)
+func (s *fakeUserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (auth.UserToken, error) {
+	return s.createTokenProvider(userId, clientIP, userAgent)
 }
 
-func (s *fakeUserAuthTokenService) UserAuthenticatedHook(user *m.User, c *m.ReqContext) error {
-	return nil
+func (s *fakeUserAuthTokenService) LookupToken(unhashedToken string) (auth.UserToken, error) {
+	return s.lookupTokenProvider(unhashedToken)
 }
 
-func (s *fakeUserAuthTokenService) SignOutUser(c *m.ReqContext) error { return nil }
+func (s *fakeUserAuthTokenService) TryRotateToken(token auth.UserToken, clientIP, userAgent string) (bool, error) {
+	return s.tryRotateTokenProvider(token, clientIP, userAgent)
+}
+
+func (s *fakeUserAuthTokenService) RevokeToken(token auth.UserToken) error {
+	return s.revokeTokenProvider(token)
+}

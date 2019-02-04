@@ -5,11 +5,14 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/grafana/grafana/pkg/services/auth/authtoken"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -126,17 +129,23 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 
 func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 	if user == nil {
-		hs.log.Error("User login with nil user")
+		hs.log.Error("user login with nil user")
 	}
 
-	err := hs.AuthTokenService.UserAuthenticatedHook(user, c)
+	userToken, err := hs.AuthTokenService.CreateToken(user.Id, c.RemoteAddr(), c.Req.UserAgent())
 	if err != nil {
-		hs.log.Error("User auth hook failed", "error", err)
+		hs.log.Error("failed to create auth token", "error", err)
 	}
+
+	middleware.WriteSessionCookie(c, userToken.GetToken(), middleware.OneYearInSeconds)
 }
 
 func (hs *HTTPServer) Logout(c *m.ReqContext) {
-	hs.AuthTokenService.SignOutUser(c)
+	if err := hs.AuthTokenService.RevokeToken(c.UserToken); err != nil && err != authtoken.ErrAuthTokenNotFound {
+		hs.log.Error("failed to revoke auth token", "error", err)
+	}
+
+	middleware.WriteSessionCookie(c, "", -1)
 
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
