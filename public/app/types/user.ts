@@ -1,4 +1,4 @@
-﻿import { DashboardSearchHit } from './search';
+import { DashboardSearchHit } from './search';
 
 export interface OrgUser {
   avatarUrl: string;

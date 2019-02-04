@@ -25,7 +25,6 @@ describe('VariableSrv init', function(this: any) {
   };
 
   const $injector = {} as any;
-
   let ctx = {} as any;
 
   function describeInitScenario(desc, fn) {

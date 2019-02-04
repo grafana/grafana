@@ -9,6 +9,7 @@ export class DashboardSrv {
   /** @ngInject */
   constructor(private backendSrv, private $rootScope, private $location) {
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
+    appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
   }
 
   create(dashboard, meta) {

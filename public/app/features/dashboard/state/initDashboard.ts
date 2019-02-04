@@ -6,6 +6,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
 import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
+import { config } from 'app/core/config';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
@@ -88,7 +89,7 @@ export function initDashboard({
 
           if (dashboardUrl !== currentPath) {
             // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
-            dispatch(updateLocation({path: dashboardUrl, partial: true, replace: true}));
+            dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
             return;
           }
           break;
@@ -115,6 +116,11 @@ export function initDashboard({
       dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
       console.log(err);
       return;
+    }
+
+    // add missing orgId query param
+    if (!getState().location.query.orgId) {
+      dispatch(updateLocation({ query: { orgId: config.bootData.user.orgId }, partial: true, replace: true }));
     }
 
     // init services
