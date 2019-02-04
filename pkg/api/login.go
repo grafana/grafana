@@ -136,7 +136,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 }
 
 func (hs *HTTPServer) Logout(c *m.ReqContext) {
-	hs.AuthTokenService.UserSignedOutHook(c)
+	hs.AuthTokenService.SignOutUser(c)
 
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
