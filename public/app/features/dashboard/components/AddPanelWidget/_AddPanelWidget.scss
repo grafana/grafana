@@ -26,6 +26,26 @@
   }
 }
 
+.add-panel-widget__link {
+  display: block;
+  margin: 0 8px;
+  width: 130px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.add-panel-widget__icon {
+  margin-bottom: 8px;
+
+  .gicon {
+    color: white;
+    height: 44px;
+    width: 53px;
+    position: relative;
+    left: 5px;
+  }
+}
+
 .add-panel-widget__close {
   margin-left: auto;
   background-color: transparent;
@@ -39,7 +59,7 @@
   justify-content: center;
   align-items: center;
   height: 100%;
-  flex-direction: column;
+  flex-direction: row;
 
   .btn {
     margin-bottom: 10px;

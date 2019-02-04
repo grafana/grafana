@@ -125,13 +125,20 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.removePanel(this.props.panel);
   };
 
+  renderOptionLink = (icon, text, onClick) => {
+    return (
+      <div>
+        <a href="#" onClick={onClick} className="add-panel-widget__link btn-inverse">
+          <div className="add-panel-widget__icon">
+            <i className={`gicon gicon-${icon}`} />
+          </div>
+          <span>{text}</span>
+        </a>
+      </div>
+    );
+  };
+
   render() {
-    let addCopyButton;
-
-    if (this.state.copiedPanelPlugins.length === 1) {
-      addCopyButton = this.copyButton(this.state.copiedPanelPlugins[0]);
-    }
-
     return (
       <div className="panel-container add-panel-widget-container">
         <div className="add-panel-widget">
@@ -142,13 +149,9 @@ export class AddPanelWidget extends React.Component<Props, State> {
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
-            <button className="btn-success btn btn-large" onClick={this.onCreateNewPanel}>
-              Edit Panel
-            </button>
-            {addCopyButton}
-            <button className="btn-inverse btn" onClick={this.onCreateNewRow}>
-              Add Row
-            </button>
+            {this.renderOptionLink('queries', 'Add query', this.onCreateNewPanel)}
+            {this.renderOptionLink('visualization', 'Choose Panel type', this.onCreateNewPanel)}
+            {this.renderOptionLink('queries', 'Convert to row', this.onCreateNewRow)}
           </div>
         </div>
       </div>
