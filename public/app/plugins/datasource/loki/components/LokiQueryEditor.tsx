@@ -33,7 +33,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
       query: {
         ...this.state.query,
         expr: query.expr,
-      }
+      },
     });
   };
 
@@ -61,12 +61,18 @@ export class LokiQueryEditor extends PureComponent<Props> {
           datasource={datasource}
           initialQuery={query}
           onQueryChange={this.onFieldChange}
-          onPressEnter={this.onRunQuery}
+          onExecuteQuery={this.onRunQuery}
+          history={[]}
         />
         <div className="gf-form-inline">
           <div className="gf-form">
             <div className="gf-form-label">Format as</div>
-            <Select isSearchable={false} options={formatOptions} onChange={this.onFormatChanged} value={currentFormat} />
+            <Select
+              isSearchable={false}
+              options={formatOptions}
+              onChange={this.onFormatChanged}
+              value={currentFormat}
+            />
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
