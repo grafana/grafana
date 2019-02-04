@@ -7,9 +7,16 @@ export interface MutableDashboard {
   };
 }
 
+export enum DashboardRouteInfo {
+  Old = 'old-dashboard',
+  Home = 'home-dashboard',
+  New = 'new-dashboard',
+  Normal = 'normal-dashboard',
+}
+
 export enum DashboardLoadingState {
   NotStarted = 'Not started',
-  Fetching  = 'Fetching',
+  Fetching = 'Fetching',
   Initializing = 'Initializing',
   Error = 'Error',
   Done = 'Done',

@@ -2,6 +2,7 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 
+// Pages
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
@@ -23,6 +24,9 @@ import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import DashboardPage from '../features/dashboard/containers/DashboardPage';
 import config from 'app/core/config';
 
+// Types
+import { DashboardRouteInfo } from 'app/types';
+
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
@@ -31,6 +35,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
       resolve: {
         component: () => DashboardPage,
@@ -39,6 +44,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/d/:uid/:slug', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
         component: () => DashboardPage,
@@ -48,6 +54,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       pageClass: 'page-dashboard',
       reloadOnSearch: false,
+      routeInfo: DashboardRouteInfo.Normal,
       resolve: {
         component: () => DashboardPage,
       },
@@ -55,6 +62,16 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/dashboard/:type/:slug', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Old,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
+    })
+    .when('/dashboard/new', {
+      template: '<react-container />',
+      pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
       resolve: {
         component: () => DashboardPage,
@@ -63,6 +80,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/d-solo/:uid/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
       resolve: {
         component: () => SoloPanelPage,
       },
@@ -70,15 +88,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Old,
       resolve: {
         component: () => SoloPanelPage,
       },
-    })
-    .when('/dashboard/new', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'NewDashboardCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
     })
     .when('/dashboard/import', {
       templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',

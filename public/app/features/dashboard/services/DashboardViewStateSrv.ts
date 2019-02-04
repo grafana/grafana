@@ -23,10 +23,10 @@ export class DashboardViewStateSrv {
     self.dashboard = $scope.dashboard;
 
     $scope.onAppEvent('$routeUpdate', () => {
-      const urlState = self.getQueryStringState();
-      if (self.needsSync(urlState)) {
-        self.update(urlState, true);
-      }
+      // const urlState = self.getQueryStringState();
+      // if (self.needsSync(urlState)) {
+      //   self.update(urlState, true);
+      // }
     });
 
     $scope.onAppEvent('panel-change-view', (evt, payload) => {
@@ -35,8 +35,8 @@ export class DashboardViewStateSrv {
 
     // this marks changes to location during this digest cycle as not to add history item
     // don't want url changes like adding orgId to add browser history
-    $location.replace();
-    this.update(this.getQueryStringState());
+    // $location.replace();
+    // this.update(this.getQueryStringState());
   }
 
   needsSync(urlState) {

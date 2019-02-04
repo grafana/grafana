@@ -8,12 +8,13 @@ export const initialState: LocationState = {
   path: '',
   query: {},
   routeParams: {},
+  replace: false,
 };
 
 export const locationReducer = (state = initialState, action: Action): LocationState => {
   switch (action.type) {
     case CoreActionTypes.UpdateLocation: {
-      const { path, routeParams } = action.payload;
+      const { path, routeParams, replace } = action.payload;
       let query = action.payload.query || state.query;
 
       if (action.payload.partial) {
@@ -26,6 +27,7 @@ export const locationReducer = (state = initialState, action: Action): LocationS
         path: path || state.path,
         query: { ...query },
         routeParams: routeParams || state.routeParams,
+        replace: replace === true,
       };
     }
   }

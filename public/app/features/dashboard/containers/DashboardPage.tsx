@@ -22,9 +22,8 @@ import { updateLocation } from 'app/core/actions';
 import { notifyApp } from 'app/core/actions';
 
 // Types
-import { StoreState } from 'app/types';
+import { StoreState, DashboardLoadingState, DashboardRouteInfo } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { DashboardLoadingState } from 'app/types/dashboard';
 
 interface Props {
   urlUid?: string;
@@ -32,8 +31,10 @@ interface Props {
   urlType?: string;
   editview?: string;
   urlPanelId?: string;
+  urlFolderId?: string;
   $scope: any;
   $injector: any;
+  routeInfo: DashboardRouteInfo;
   urlEdit: boolean;
   urlFullscreen: boolean;
   loadingState: DashboardLoadingState;
@@ -66,6 +67,8 @@ export class DashboardPage extends PureComponent<Props, State> {
       urlSlug: this.props.urlSlug,
       urlUid: this.props.urlUid,
       urlType: this.props.urlType,
+      urlFolderId: this.props.urlFolderId,
+      routeInfo: this.props.routeInfo,
     });
   }
 
@@ -208,6 +211,7 @@ const mapStateToProps = (state: StoreState) => ({
   urlType: state.location.routeParams.type,
   editview: state.location.query.editview,
   urlPanelId: state.location.query.panelId,
+  urlFolderId: state.location.query.folderId,
   urlFullscreen: state.location.query.fullscreen === true,
   urlEdit: state.location.query.edit === true,
   loadingState: state.dashboard.loadingState,

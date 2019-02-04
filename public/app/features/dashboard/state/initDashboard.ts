@@ -15,7 +15,7 @@ import { setDashboardLoadingState, ThunkResult, setDashboardModel } from './acti
 import { removePanel } from '../utils/panel';
 
 // Types
-import { DashboardLoadingState } from 'app/types/dashboard';
+import { DashboardLoadingState, DashboardRouteInfo } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 
 export interface InitDashboardArgs {
@@ -24,6 +24,8 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
+  urlFolderId: string;
+  routeInfo: string;
 }
 
 async function redirectToNewUrl(slug: string, dispatch: any) {
@@ -35,36 +37,67 @@ async function redirectToNewUrl(slug: string, dispatch: any) {
   }
 }
 
-export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: InitDashboardArgs): ThunkResult<void> {
-  return async dispatch => {
-    // handle old urls with no uid
-    if (!urlUid && urlSlug && !urlType) {
-      redirectToNewUrl(urlSlug, dispatch);
-      return;
-    }
-
+export function initDashboard({
+  $injector,
+  $scope,
+  urlUid,
+  urlSlug,
+  urlType,
+  urlFolderId,
+  routeInfo,
+}: InitDashboardArgs): ThunkResult<void> {
+  return async (dispatch, getState) => {
     let dashDTO = null;
 
     // set fetching state
     dispatch(setDashboardLoadingState(DashboardLoadingState.Fetching));
 
     try {
-      // if no uid or slug, load home dashboard
-      if (!urlUid && !urlSlug) {
-        dashDTO = await getBackendSrv().get('/api/dashboards/home');
-
-        if (dashDTO.redirectUri) {
-          const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
-          dispatch(updateLocation({ path: newUrl }));
+      switch (routeInfo) {
+        // handle old urls with no uid
+        case DashboardRouteInfo.Old: {
+          redirectToNewUrl(urlSlug, dispatch);
           return;
-        } else {
+        }
+        case DashboardRouteInfo.Home: {
+          // load home dash
+          dashDTO = await getBackendSrv().get('/api/dashboards/home');
+
+          // if user specified a custom home dashboard redirect to that
+          if (dashDTO.redirectUri) {
+            const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
+            dispatch(updateLocation({ path: newUrl, replace: true }));
+            return;
+          }
+
+          // disable some actions on the default home dashboard
           dashDTO.meta.canSave = false;
           dashDTO.meta.canShare = false;
           dashDTO.meta.canStar = false;
+          break;
         }
-      } else {
-        const loaderSrv = $injector.get('dashboardLoaderSrv');
-        dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
+        case DashboardRouteInfo.Normal: {
+          const loaderSrv = $injector.get('dashboardLoaderSrv');
+          dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
+
+          // check if the current url is correct (might be old slug)
+          const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
+          const currentPath = getState().location.path;
+          console.log('loading dashboard: currentPath', currentPath);
+          console.log('loading dashboard: dashboardUrl', dashboardUrl);
+
+          if (dashboardUrl !== currentPath) {
+            // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
+            dispatch(updateLocation({path: dashboardUrl, partial: true, replace: true}));
+            return;
+          }
+
+          break;
+        }
+        case DashboardRouteInfo.New: {
+          dashDTO = getNewDashboardModelData(urlFolderId);
+          break;
+        }
       }
     } catch (err) {
       dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
@@ -135,4 +168,31 @@ export function initDashboard({ $injector, $scope, urlUid, urlSlug, urlType }: I
     // set model in redux (even though it's mutable)
     dispatch(setDashboardModel(dashboard));
   };
+}
+
+function getNewDashboardModelData(urlFolderId?: string): any {
+  const data = {
+    meta: {
+      canStar: false,
+      canShare: false,
+      isNew: true,
+      folderId: 0,
+    },
+    dashboard: {
+      title: 'New dashboard',
+      panels: [
+        {
+          type: 'add-panel',
+          gridPos: { x: 0, y: 0, w: 12, h: 9 },
+          title: 'Panel Title',
+        },
+      ],
+    },
+  };
+
+  if (urlFolderId) {
+    data.meta.folderId = parseInt(urlFolderId, 10);
+  }
+
+  return data;
 }

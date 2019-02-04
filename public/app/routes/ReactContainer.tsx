@@ -44,6 +44,7 @@ export function reactContainer(
         $injector: $injector,
         $rootScope: $rootScope,
         $scope: scope,
+        routeInfo: $route.current.$$route.routeInfo,
       };
 
       ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
