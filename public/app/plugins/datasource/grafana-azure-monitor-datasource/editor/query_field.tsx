@@ -104,11 +104,11 @@ class QueryField extends React.Component<any, any> {
     const changed = value.document !== this.state.value.document;
     this.setState({ value }, () => {
       if (changed) {
+        // call typeahead only if query changed
+        window.requestAnimationFrame(this.onTypeahead);
         this.onChangeQuery();
       }
     });
-
-    window.requestAnimationFrame(this.onTypeahead);
   };
 
   request = (url?) => {
@@ -143,7 +143,7 @@ class QueryField extends React.Component<any, any> {
       case ' ': {
         if (event.ctrlKey) {
           event.preventDefault();
-          this.onTypeahead();
+          this.onTypeahead(true);
           return true;
         }
         break;

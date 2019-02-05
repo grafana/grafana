@@ -65,7 +65,7 @@ export default class KustoQueryField extends QueryField {
     this.fetchSchema();
   }
 
-  onTypeahead = () => {
+  onTypeahead = (force = false) => {
     const selection = window.getSelection();
     if (selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
@@ -140,14 +140,8 @@ export default class KustoQueryField extends QueryField {
         suggestionGroups = this.getTableSuggestions(db);
         prefix = prefix.replace('.', '');
 
-      // built-in
-      } else if (prefix && !wrapperClasses.contains('argument')) {
-        if (modelPrefix.match(/\s$/i)) {
-          prefix = '';
-        }
-        typeaheadContext = 'context-builtin';
-        suggestionGroups = this.getKeywordSuggestions();
-      } else if (Plain.serialize(this.state.value) === '') {
+      // new
+      } else if (normalizeQuery(Plain.serialize(this.state.value)).match(/^\s*\w*$/i)) {
         typeaheadContext = 'context-new';
         if (this.schema) {
           suggestionGroups = this.getInitialSuggestions();
@@ -156,7 +150,15 @@ export default class KustoQueryField extends QueryField {
           setTimeout(this.onTypeahead, 0);
           return;
         }
-      } else {
+
+      // built-in
+      } else if (prefix && !wrapperClasses.contains('argument')) {
+        if (modelPrefix.match(/\s$/i)) {
+          prefix = '';
+        }
+        typeaheadContext = 'context-builtin';
+        suggestionGroups = this.getKeywordSuggestions();
+      } else if (force === true) {
         typeaheadContext = 'context-builtin';
         if (modelPrefix.match(/\s$/i)) {
           prefix = '';
@@ -181,7 +183,7 @@ export default class KustoQueryField extends QueryField {
         .filter(group => group.items.length > 0);
 
       // console.log('onTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, typeaheadContext);
-      console.log('onTypeahead', modelPrefix, prefix, typeaheadContext);
+      // console.log('onTypeahead', prefix, typeaheadContext);
 
       this.setState({
         typeaheadPrefix: prefix,
