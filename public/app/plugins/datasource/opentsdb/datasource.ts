@@ -1,9 +1,9 @@
 import angular from 'angular';
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
-import TsdbQuery from './query';
-import GexpQuery from './gexp';
-import ExpQuery from './exp';
+import TsdbQuery from './apis/query';
+import GexpQuery from './apis/gexp';
+import ExpQuery from './apis/exp';
 
 export default class OpenTsDatasource {
   type: any;
