@@ -1,3 +1,5 @@
+import { DataQuery } from '@grafana/ui/src/types';
+
 export enum MetricFindQueryTypes {
   Services = 'services',
   MetricTypes = 'metricTypes',
@@ -20,20 +22,22 @@ export interface VariableQueryData {
   services: Array<{ value: string; name: string }>;
 }
 
-export interface Target {
-  defaultProject: string;
-  unit: string;
+export interface StackdriverQuery extends DataQuery {
+  defaultProject?: string;
+  unit?: string;
   metricType: string;
-  service: string;
+  service?: string;
   refId: string;
   crossSeriesReducer: string;
-  alignmentPeriod: string;
+  alignmentPeriod?: string;
   perSeriesAligner: string;
-  groupBys: string[];
-  filters: string[];
-  aliasBy: string;
+  groupBys?: string[];
+  filters?: string[];
+  aliasBy?: string;
   metricKind: string;
   valueType: string;
+  datasourceId?: number;
+  view?: string;
 }
 
 export interface AnnotationTarget {

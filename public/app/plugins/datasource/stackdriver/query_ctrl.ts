@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { QueryCtrl } from 'app/plugins/sdk';
-import { Target } from './types';
+import { StackdriverQuery } from './types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class StackdriverQueryCtrl extends QueryCtrl {
@@ -16,7 +16,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.onExecuteQuery = this.onExecuteQuery.bind(this);
   }
 
-  onQueryChange(target: Target) {
+  onQueryChange(target: StackdriverQuery) {
     Object.assign(this.target, target);
   }
 
