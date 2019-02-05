@@ -265,17 +265,19 @@ export class Graph extends PureComponent<SizedGraphProps, GraphState> {
 }
 
 export default (props: GraphProps) => (
-  <AutoSizer>
-    {({width, height}) => {
-      return (
-        <Graph
-          size={{
-            width: width,
-            height: height
-          }}
-          {...props}
-        />
-      );
-    }}
-  </AutoSizer>
+  <div>{/* div needed for AutoSizer to calculate, https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#observation */}
+    <AutoSizer disableHeight>
+      {({width, height}) => (
+        <div style={{width}}>
+          {width > 0 && <Graph
+            size={{
+              width: width,
+              height: height
+            }}
+            {...props}
+          />}
+        </div>
+      )}
+    </AutoSizer>
+  </div>
 );
