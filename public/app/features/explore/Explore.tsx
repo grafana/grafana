@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react';
+import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import _ from 'lodash';
@@ -18,34 +18,26 @@ import TableContainer from './TableContainer';
 import TimePicker, { parseTime } from './TimePicker';
 
 // Actions
-import {
-  changeSize,
-  changeTime,
-  initializeExplore,
-  modifyQueries,
-  scanStart,
-  scanStop,
-  setQueries,
-} from './state/actions';
+import { changeSize, changeTime, initializeExplore, modifyQueries, scanStart, setQueries } from './state/actions';
 
 // Types
-import { RawTimeRange, TimeRange, DataQuery } from '@grafana/ui';
+import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
 import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
+import { scanStopAction } from './state/actionTypes';
 
 interface ExploreProps {
-  StartPage?: any;
+  StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
   datasourceError: string;
-  datasourceInstance: any;
+  datasourceInstance: ExploreDataSourceApi;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
-  initialQueries: DataQuery[];
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
@@ -54,14 +46,15 @@ interface ExploreProps {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
-  scanStop: typeof scanStop;
+  scanStopAction: typeof scanStopAction;
   setQueries: typeof setQueries;
   split: boolean;
   showingStartPage?: boolean;
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
-  urlState?: ExploreUrlState;
+  urlState: ExploreUrlState;
+  queryKeys: string[];
 }
 
 /**
@@ -173,7 +166,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onStopScanning = () => {
-    this.props.scanStop(this.props.exploreId);
+    this.props.scanStopAction({ exploreId: this.props.exploreId });
   };
 
   render() {
@@ -184,12 +177,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
       datasourceLoading,
       datasourceMissing,
       exploreId,
-      initialQueries,
       showingStartPage,
       split,
       supportsGraph,
       supportsLogs,
       supportsTable,
+      queryKeys,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -210,7 +203,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance &&
           !datasourceError && (
             <div className="explore-container">
-              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} initialQueries={initialQueries} />
+              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
               <AutoSizer onResize={this.onResize} disableHeight>
                 {({ width }) => (
                   <main className="m-t-2" style={{ width }}>
@@ -252,13 +245,13 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceInstance,
     datasourceLoading,
     datasourceMissing,
-    initialQueries,
     initialized,
     range,
     showingStartPage,
     supportsGraph,
     supportsLogs,
     supportsTable,
+    queryKeys,
   } = item;
   return {
     StartPage,
@@ -266,7 +259,6 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     datasourceInstance,
     datasourceLoading,
     datasourceMissing,
-    initialQueries,
     initialized,
     range,
     showingStartPage,
@@ -274,6 +266,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     supportsGraph,
     supportsLogs,
     supportsTable,
+    queryKeys,
   };
 }
 
@@ -283,7 +276,7 @@ const mapDispatchToProps = {
   initializeExplore,
   modifyQueries,
   scanStart,
-  scanStop,
+  scanStopAction,
   setQueries,
 };
 

@@ -6,25 +6,23 @@ import QueryRow from './QueryRow';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery } from '@grafana/ui/src/types';
 import { ExploreId } from 'app/types/explore';
 
 interface QueryRowsProps {
   className?: string;
   exploreEvents: Emitter;
   exploreId: ExploreId;
-  initialQueries: DataQuery[];
+  queryKeys: string[];
 }
 
 export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', exploreEvents, exploreId, initialQueries } = this.props;
+    const { className = '', exploreEvents, exploreId, queryKeys } = this.props;
     return (
       <div className={className}>
-        {initialQueries.map((query, index) => (
-          // TODO instead of relying on initialQueries, move to react key list in redux
-          <QueryRow key={query.key} exploreEvents={exploreEvents} exploreId={exploreId} index={index} />
-        ))}
+        {queryKeys.map((key, index) => {
+          return <QueryRow key={key} exploreEvents={exploreEvents} exploreId={exploreId} index={index} />;
+        })}
       </div>
     );
   }
