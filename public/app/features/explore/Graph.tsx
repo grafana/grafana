@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import moment from 'moment';
-import { withSize } from 'react-sizeme';
+import { AutoSizer } from 'react-virtualized';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
@@ -80,10 +80,13 @@ interface GraphProps {
   id?: string;
   range: RawTimeRange;
   split?: boolean;
-  size?: { width: number; height: number };
   userOptions?: any;
   onChangeTime?: (range: RawTimeRange) => void;
   onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
+}
+
+interface SizedGraphProps extends GraphProps {
+  size: { width: number; height: number };
 }
 
 interface GraphState {
@@ -95,7 +98,7 @@ interface GraphState {
   showAllTimeSeries: boolean;
 }
 
-export class Graph extends PureComponent<GraphProps, GraphState> {
+export class Graph extends PureComponent<SizedGraphProps, GraphState> {
   $el: any;
   dynamicOptions = null;
 
@@ -116,7 +119,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     this.$el.bind('plotselected', this.onPlotSelected);
   }
 
-  componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
+  componentDidUpdate(prevProps: SizedGraphProps, prevState: GraphState) {
     if (
       prevProps.data !== this.props.data ||
       prevProps.range !== this.props.range ||
@@ -261,4 +264,18 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 }
 
-export default withSize()(Graph);
+export default (props: GraphProps) => (
+  <AutoSizer>
+    {({width, height}) => {
+      return (
+        <Graph
+          size={{
+            width: width,
+            height: height
+          }}
+          {...props}
+        />
+      );
+    }}
+  </AutoSizer>
+);
