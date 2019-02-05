@@ -5,13 +5,12 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import classNames from 'classnames';
-import sizeMe from 'react-sizeme';
+import { AutoSizer } from 'react-virtualized';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
 
-interface GridWrapperProps {
-  size: { width: number; };
+interface SizedReactLayoutGridProps {
   layout: ReactGridLayout.Layout[];
   onLayoutChange: (layout: ReactGridLayout.Layout[]) => void;
   children: JSX.Element | JSX.Element[];
@@ -25,8 +24,12 @@ interface GridWrapperProps {
   isFullscreen?: boolean;
 }
 
+interface GridWrapperProps extends SizedReactLayoutGridProps {
+  sizedWidth: number;
+}
+
 function GridWrapper({
-  size,
+  sizedWidth,
   layout,
   onLayoutChange,
   children,
@@ -38,8 +41,8 @@ function GridWrapper({
   isResizable,
   isDraggable,
   isFullscreen,
-}: GridWrapperProps)  {
-  const width = size.width > 0 ? size.width : lastGridWidth;
+}: GridWrapperProps) {
+  const width = sizedWidth > 0 ? sizedWidth : lastGridWidth;
 
   // logic to ignore width changes (optimization)
   if (width !== lastGridWidth) {
@@ -74,7 +77,16 @@ function GridWrapper({
   );
 }
 
-const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
+const SizedReactLayoutGrid = (props: SizedReactLayoutGridProps) => (
+  <AutoSizer disableHeight>
+    {({width}) => (
+      <GridWrapper
+        sizedWidth={width}
+        {...props}
+      />
+    )}
+  </AutoSizer>
+);
 
 export interface DashboardGridProps {
   dashboard: DashboardModel;
