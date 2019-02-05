@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export class BackendSrv {
@@ -103,10 +104,17 @@ export class BackendSrv {
       err => {
         // handle unauthorized
         if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt) {
-          return this.loginPing().then(() => {
-            options.retry = 1;
-            return this.request(options);
-          });
+          return this.loginPing()
+            .then(() => {
+              options.retry = 1;
+              return this.request(options);
+            })
+            .catch(err => {
+              if (err.status === 401) {
+                window.location.href = config.appSubUrl + '/logout';
+                throw err;
+              }
+            });
         }
 
         this.$timeout(this.requestErrorHandler.bind(this, err), 50);
@@ -184,13 +192,20 @@ export class BackendSrv {
 
         // handle unauthorized for backend requests
         if (requestIsLocal && firstAttempt && err.status === 401) {
-          return this.loginPing().then(() => {
-            options.retry = 1;
-            if (canceler) {
-              canceler.resolve();
-            }
-            return this.datasourceRequest(options);
-          });
+          return this.loginPing()
+            .then(() => {
+              options.retry = 1;
+              if (canceler) {
+                canceler.resolve();
+              }
+              return this.datasourceRequest(options);
+            })
+            .catch(err => {
+              if (err.status === 401) {
+                window.location.href = config.appSubUrl + '/logout';
+                throw err;
+              }
+            });
         }
 
         // populate error obj on Internal Error

@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"net/url"
 	"time"
@@ -31,7 +32,7 @@ var (
 type UserAuthTokenService interface {
 	InitContextWithToken(ctx *models.ReqContext, orgID int64) bool
 	UserAuthenticatedHook(user *models.User, c *models.ReqContext) error
-	UserSignedOutHook(c *models.ReqContext)
+	SignOutUser(c *models.ReqContext) error
 }
 
 type UserAuthTokenServiceImpl struct {
@@ -85,7 +86,7 @@ func (s *UserAuthTokenServiceImpl) InitContextWithToken(ctx *models.ReqContext, 
 
 func (s *UserAuthTokenServiceImpl) writeSessionCookie(ctx *models.ReqContext, value string, maxAge int) {
 	if setting.Env == setting.DEV {
-		ctx.Logger.Info("new token", "unhashed token", value)
+		ctx.Logger.Debug("new token", "unhashed token", value)
 	}
 
 	ctx.Resp.Header().Del("Set-Cookie")
@@ -112,8 +113,19 @@ func (s *UserAuthTokenServiceImpl) UserAuthenticatedHook(user *models.User, c *m
 	return nil
 }
 
-func (s *UserAuthTokenServiceImpl) UserSignedOutHook(c *models.ReqContext) {
+func (s *UserAuthTokenServiceImpl) SignOutUser(c *models.ReqContext) error {
+	unhashedToken := c.GetCookie(s.Cfg.LoginCookieName)
+	if unhashedToken == "" {
+		return errors.New("cannot logout without session token")
+	}
+
+	hashedToken := hashToken(unhashedToken)
+
+	sql := `DELETE FROM user_auth_token WHERE auth_token = ?`
+	_, err := s.SQLStore.NewSession().Exec(sql, hashedToken)
+
 	s.writeSessionCookie(c, "", -1)
+	return err
 }
 
 func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (*userAuthToken, error) {

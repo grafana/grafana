@@ -8,6 +8,7 @@ import {
   RangeScanner,
   ResultType,
   QueryTransaction,
+  ExploreUIState,
 } from 'app/types/explore';
 
 export enum ActionTypes {
@@ -106,6 +107,7 @@ export interface InitializeExploreAction {
     exploreDatasources: DataSourceSelectItem[];
     queries: DataQuery[];
     range: RawTimeRange;
+    ui: ExploreUIState;
   };
 }
 

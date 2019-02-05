@@ -108,8 +108,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots-delete/:deleteKey", Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
-	// api renew session based on remember cookie
-	r.Get("/api/login/ping", quota("session"), hs.LoginAPIPing)
+	// api renew session based on cookie
+	r.Get("/api/login/ping", quota("session"), Wrap(hs.LoginAPIPing))
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {

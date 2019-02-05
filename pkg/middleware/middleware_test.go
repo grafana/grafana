@@ -602,4 +602,4 @@ func (s *fakeUserAuthTokenService) UserAuthenticatedHook(user *m.User, c *m.ReqC
 	return nil
 }
 
-func (s *fakeUserAuthTokenService) UserSignedOutHook(c *m.ReqContext) {}
+func (s *fakeUserAuthTokenService) SignOutUser(c *m.ReqContext) error { return nil }
