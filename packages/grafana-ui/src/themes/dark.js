@@ -4,7 +4,7 @@ const defaultTheme = require('./default');
 const tinycolor = require('tinycolor2');
 
 const basicColors = {
-  black: '#00ff00',
+  black: '#000000',
   white: '#ffffff',
   dark1: '#141414',
   dark2: '#1f1f20',
@@ -33,6 +33,7 @@ const basicColors = {
 
 const darkTheme = {
   ...defaultTheme,
+  type: 'dark',
   name: 'Grafana Dark',
   colors:  {
     ...basicColors,

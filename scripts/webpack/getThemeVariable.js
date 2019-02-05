@@ -1,8 +1,8 @@
 const sass = require('node-sass');
 const sassUtils = require('node-sass-utils')(sass);
-const { getTheme } = require('../../packages/grafana-ui/src/theme');
 const { get } = require('lodash');
 const tinycolor = require('tinycolor2');
+const { getTheme } = require('@grafana/ui/src/themes');
 
 const units = ['rem', 'em', 'vh', 'vw', 'vmin', 'vmax', 'ex', '%', 'px', 'cm', 'mm', 'in', 'pt', 'pc', 'ch'];
 const matchDimension = value => value.match(/[a-zA-Z]+|[0-9]+/g);
@@ -13,12 +13,11 @@ const isHex = value => {
 };
 
 const isDimension = value => {
-  if( typeof value !== "string") {
+  if (typeof value !== 'string') {
     return false;
   }
-
   const [val, unit] = matchDimension(value);
-  return units.indexOf(unit) > -1
+  return units.indexOf(unit) > -1;
 };
 
 /**
@@ -40,11 +39,9 @@ function getThemeVariable(variablePath, themeName) {
   }
 
   if (isDimension(variable)) {
-    const [value, unit] = matchDimension(variable)
-
-    const tmp = new sassUtils.SassDimension(parseInt(value,10), unit);
-    // debugger
-    return sassUtils.castToSass(tmp)
+    const [value, unit] = matchDimension(variable);
+    const dimension = new sassUtils.SassDimension(parseInt(value, 10), unit);
+    return sassUtils.castToSass(dimension);
   }
 
   return sassUtils.castToSass(variable);

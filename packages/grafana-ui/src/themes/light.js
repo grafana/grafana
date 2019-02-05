@@ -33,6 +33,7 @@ const basicColors = {
 
 const lightTheme/*: GrafanaThemeType*/ = {
   ...defaultTheme,
+  type: 'light',
   name: 'Grafana Light',
   colors:  {
     ...basicColors,

@@ -1,4 +1,10 @@
-export interface GrafanaThemeType {
+export enum GrafanaThemeType {
+  Light = 'light',
+  Dark = 'dark',
+}
+
+export interface GrafanaTheme {
+  type: GrafanaThemeType;
   name: string;
   // TODO: not sure if should be a part of theme
   brakpoints: {
@@ -112,5 +118,7 @@ export interface GrafanaThemeType {
     headingColor: string;
   };
 }
-export function getTheme(): GrafanaThemeType
-export function mockTheme(themeMock: Partial<GrafanaThemeType>): () => void
+
+export interface Themeable {
+  theme: GrafanaTheme;
+}

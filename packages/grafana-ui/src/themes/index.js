@@ -1,5 +1,5 @@
-const darkTheme = require('./themes/dark');
-const lightTheme = require('./themes/light');
+const darkTheme = require('./dark');
+const lightTheme = require('./light');
 
 const getTheme = name => (name === 'light' ? lightTheme : darkTheme);
 
@@ -11,5 +11,5 @@ const mockTheme = mock => {
 
 module.exports = {
   getTheme,
-  mockTheme,
+  mockTheme
 };
