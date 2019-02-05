@@ -127,18 +127,9 @@
     }
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "prettier --write",
-      "git add"
-    ],
-    "*.scss": [
-      "prettier --write",
-      "git add"
-    ],
-    "*pkg/**/*.go": [
-      "gofmt -w -s",
-      "git add"
-    ]
+    "*.{ts,tsx}": ["prettier --write", "git add"],
+    "*.scss": ["prettier --write", "git add"],
+    "*pkg/**/*.go": ["gofmt -w -s", "git add"]
   },
   "prettier": {
     "trailingComma": "es5",
@@ -187,10 +178,10 @@
     "remarkable": "^1.7.1",
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^6.3.3",
-    "slate": "^0.33.4",
-    "slate-plain-serializer": "^0.5.10",
+    "slate": "^0.36.2",
+    "slate-plain-serializer": "^0.5.26",
     "slate-prism": "^0.5.0",
-    "slate-react": "^0.12.4",
+    "slate-react": "^0.14.3",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "^1.4.1",
@@ -201,12 +192,7 @@
     "**/@types/react": "16.7.6"
   },
   "workspaces": {
-    "packages": [
-      "packages/*"
-    ],
-    "nohoist": [
-      "**/@types/*",
-      "**/@types/*/**"
-    ]
+    "packages": ["packages/*"],
+    "nohoist": ["**/@types/*", "**/@types/*/**"]
   }
 }

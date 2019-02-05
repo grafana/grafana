@@ -459,6 +459,14 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     );
   };
 
+  handlePaste = (event: ClipboardEvent, change: Editor) => {
+    const pastedValue = event.clipboardData.getData('Text');
+    const newValue = change.value.change().insertText(pastedValue);
+    this.onChange(newValue);
+
+    return true;
+  };
+
   render() {
     const { disabled } = this.props;
     const wrapperClassName = classnames('slate-query-field__wrapper', {
@@ -478,6 +486,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             placeholder={this.props.placeholder}
             plugins={this.plugins}
             spellCheck={false}
+            onPaste={this.handlePaste}
             value={this.state.value}
           />
         </div>
