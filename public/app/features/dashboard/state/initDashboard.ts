@@ -46,6 +46,15 @@ async function redirectToNewUrl(slug: string, dispatch: any, currentPath: string
   }
 }
 
+/**
+ * This action (or saga) does everything needed to bootstrap a dashboard & dashboard model.
+ * First it handles the process of fetching the dashboard, correcting the url if required (causing redirects/url updates)
+ *
+ * This is used both for single dashboard & solo panel routes, home & new dashboard routes.
+ *
+ * Then it handles the initializing of the old angular services that the dashboard components & panels still depend on
+ *
+ */
 export function initDashboard({
   $injector,
   $scope,
