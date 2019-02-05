@@ -287,6 +287,14 @@ Default is `false`.
 
 Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
 
+### cookie_secure
+
+Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### cookie_samesite
+
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+
 <hr />
 
 ## [users]
