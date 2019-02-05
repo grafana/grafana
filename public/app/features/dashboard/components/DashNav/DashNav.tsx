@@ -23,6 +23,7 @@ export interface Props {
   isFullscreen: boolean;
   $injector: any;
   updateLocation: typeof updateLocation;
+  onAddPanel: () => void;
 }
 
 export class DashNav extends PureComponent<Props> {
@@ -39,7 +40,8 @@ export class DashNav extends PureComponent<Props> {
   componentDidMount() {
     const loader = getAngularLoader();
 
-    const template = '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
+    const template =
+      '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
     const scopeProps = { dashboard: this.props.dashboard };
 
     this.timepickerCmp = loader.load(this.timePickerEl, scopeProps, template);
@@ -53,21 +55,6 @@ export class DashNav extends PureComponent<Props> {
 
   onOpenSearch = () => {
     appEvents.emit('show-dash-search');
-  };
-
-  onAddPanel = () => {
-    const { dashboard } = this.props;
-
-    // Return if the "Add panel" exists already
-    if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
-      return;
-    }
-
-    dashboard.addPanel({
-      type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: 8 },
-      title: 'Panel Title',
-    });
   };
 
   onClose = () => {
@@ -137,7 +124,7 @@ export class DashNav extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, isFullscreen, editview } = this.props;
+    const { dashboard, isFullscreen, editview, onAddPanel } = this.props;
     const { canStar, canSave, canShare, folderTitle, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
 
@@ -186,73 +173,73 @@ export class DashNav extends PureComponent<Props> {
               tooltip="Add panel"
               classSuffix="add-panel"
               icon="gicon gicon-add-panel"
-              onClick={this.onAddPanel}
+              onClick={onAddPanel}
             />
-            )}
+          )}
 
-            {canStar && (
-              <DashNavButton
-                tooltip="Mark as favorite"
-                classSuffix="star"
-                icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
-                onClick={this.onStarDashboard}
-              />
-              )}
+          {canStar && (
+            <DashNavButton
+              tooltip="Mark as favorite"
+              classSuffix="star"
+              icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
+              onClick={this.onStarDashboard}
+            />
+          )}
 
-              {canShare && (
-                <DashNavButton
-                  tooltip="Share dashboard"
-                  classSuffix="share"
-                  icon="fa fa-share-square-o"
-                  onClick={this.onOpenShare}
-                />
-                )}
+          {canShare && (
+            <DashNavButton
+              tooltip="Share dashboard"
+              classSuffix="share"
+              icon="fa fa-share-square-o"
+              onClick={this.onOpenShare}
+            />
+          )}
 
-                {canSave && (
-                  <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
-                  )}
+          {canSave && (
+            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
+          )}
 
-                  {snapshotUrl && (
-                    <DashNavButton
-                      tooltip="Open original dashboard"
-                      classSuffix="snapshot-origin"
-                      icon="fa fa-link"
-                      href={snapshotUrl}
-                    />
-                    )}
+          {snapshotUrl && (
+            <DashNavButton
+              tooltip="Open original dashboard"
+              classSuffix="snapshot-origin"
+              icon="fa fa-link"
+              href={snapshotUrl}
+            />
+          )}
 
-                    {showSettings && (
-                      <DashNavButton
-                        tooltip="Dashboard settings"
-                        classSuffix="settings"
-                        icon="fa fa-cog"
-                        onClick={this.onOpenSettings}
-                      />
-                      )}
-                    </div>
+          {showSettings && (
+            <DashNavButton
+              tooltip="Dashboard settings"
+              classSuffix="settings"
+              icon="fa fa-cog"
+              onClick={this.onOpenSettings}
+            />
+          )}
+        </div>
 
-                    <div className="navbar-buttons navbar-buttons--tv">
-                      <DashNavButton
-                        tooltip="Cycke view mode"
-                        classSuffix="tv"
-                        icon="fa fa-desktop"
-                        onClick={this.onToggleTVMode}
-                      />
-                    </div>
+        <div className="navbar-buttons navbar-buttons--tv">
+          <DashNavButton
+            tooltip="Cycke view mode"
+            classSuffix="tv"
+            icon="fa fa-desktop"
+            onClick={this.onToggleTVMode}
+          />
+        </div>
 
-                    <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+        <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
 
-                    {(isFullscreen || editview) && (
-                      <div className="navbar-buttons navbar-buttons--close">
-                        <DashNavButton
-                          tooltip="Back to dashboard"
-                          classSuffix="primary"
-                          icon="fa fa-reply"
-                          onClick={this.onClose}
-                        />
-                      </div>
-                    )}
-                  </div>
+        {(isFullscreen || editview) && (
+          <div className="navbar-buttons navbar-buttons--close">
+            <DashNavButton
+              tooltip="Back to dashboard"
+              classSuffix="primary"
+              icon="fa fa-reply"
+              onClick={this.onClose}
+            />
+          </div>
+        )}
+      </div>
     );
   }
 }

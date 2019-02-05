@@ -178,25 +178,23 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  renderDashboard() {
-    const { dashboard, editview } = this.props;
-    const { isEditing, isFullscreen } = this.state;
+  onAddPanel = () => {
+    const { dashboard } = this.props;
 
-    const classes = classNames({
-      'dashboard-container': true,
-      'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
+    // Return if the "Add panel" exists already
+    if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
+      return;
+    }
+
+    dashboard.addPanel({
+      type: 'add-panel',
+      gridPos: { x: 0, y: 0, w: 12, h: 8 },
+      title: 'Panel Title',
     });
 
-    return (
-      <div className="scroll-canvas scroll-canvas--dashboard">
-        {dashboard && editview && <DashboardSettings dashboard={dashboard} />}
-
-        <div className={classes}>
-          <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
-        </div>
-      </div>
-    );
-  }
+    // scroll to top after adding panel
+    this.setState({ scrollTop: 0 });
+  };
 
   render() {
     const { dashboard, editview, $injector } = this.props;
@@ -224,6 +222,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           isFullscreen={isFullscreen}
           editview={editview}
           $injector={$injector}
+          onAddPanel={this.onAddPanel}
         />
         <div className="scroll-canvas scroll-canvas--dashboard">
           <CustomScrollbar autoHeightMin={'100%'} setScrollTop={this.setScrollTop} scrollTop={scrollTop}>
