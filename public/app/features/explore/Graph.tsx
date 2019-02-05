@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import moment from 'moment';
-import { AutoSizer } from 'react-virtualized';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
@@ -76,17 +75,14 @@ const FLOT_OPTIONS = {
 
 interface GraphProps {
   data: any[];
-  height?: string; // e.g., '200px'
+  height?: number;
+  width?: number;
   id?: string;
   range: RawTimeRange;
   split?: boolean;
   userOptions?: any;
   onChangeTime?: (range: RawTimeRange) => void;
   onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
-}
-
-interface SizedGraphProps extends GraphProps {
-  size: { width: number; height: number };
 }
 
 interface GraphState {
@@ -98,7 +94,7 @@ interface GraphState {
   showAllTimeSeries: boolean;
 }
 
-export class Graph extends PureComponent<SizedGraphProps, GraphState> {
+export class Graph extends PureComponent<GraphProps, GraphState> {
   $el: any;
   dynamicOptions = null;
 
@@ -119,13 +115,13 @@ export class Graph extends PureComponent<SizedGraphProps, GraphState> {
     this.$el.bind('plotselected', this.onPlotSelected);
   }
 
-  componentDidUpdate(prevProps: SizedGraphProps, prevState: GraphState) {
+  componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
     if (
       prevProps.data !== this.props.data ||
       prevProps.range !== this.props.range ||
       prevProps.split !== this.props.split ||
       prevProps.height !== this.props.height ||
-      (prevProps.size && prevProps.size.width !== this.props.size.width) ||
+      prevProps.width !== this.props.width ||
       !equal(prevState.hiddenSeries, this.state.hiddenSeries)
     ) {
       this.draw();
@@ -147,8 +143,8 @@ export class Graph extends PureComponent<SizedGraphProps, GraphState> {
   };
 
   getDynamicOptions() {
-    const { range, size } = this.props;
-    const ticks = (size.width || 0) / 100;
+    const { range, width } = this.props;
+    const ticks = (width || 0) / 100;
     let { from, to } = range;
     if (!moment.isMoment(from)) {
       from = dateMath.parse(from, false);
@@ -240,7 +236,7 @@ export class Graph extends PureComponent<SizedGraphProps, GraphState> {
   }
 
   render() {
-    const { height = '100px', id = 'graph' } = this.props;
+    const { height = 100, id = 'graph' } = this.props;
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
 
@@ -264,20 +260,4 @@ export class Graph extends PureComponent<SizedGraphProps, GraphState> {
   }
 }
 
-export default (props: GraphProps) => (
-  <div>{/* div needed for AutoSizer to calculate, https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#observation */}
-    <AutoSizer disableHeight>
-      {({width, height}) => (
-        <div style={{width}}>
-          {width > 0 && <Graph
-            size={{
-              width: width,
-              height: height
-            }}
-            {...props}
-          />}
-        </div>
-      )}
-    </AutoSizer>
-  </div>
-);
+export default Graph;
