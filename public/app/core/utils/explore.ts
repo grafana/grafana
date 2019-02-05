@@ -11,7 +11,7 @@ import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
 // Types
-import { RawTimeRange, IntervalValues, DataQuery } from '@grafana/ui/src/types';
+import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui/src/types';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -336,3 +336,12 @@ export function clearHistory(datasourceId: string) {
   const historyKey = `grafana.explore.history.${datasourceId}`;
   store.delete(historyKey);
 }
+
+export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourceApi): string[] => {
+  const queryKeys = queries.reduce((newQueryKeys, query, index) => {
+    const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
+    return newQueryKeys.concat(`${primaryKey}-${index}`);
+  }, []);
+
+  return queryKeys;
+};
