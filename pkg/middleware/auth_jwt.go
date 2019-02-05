@@ -183,12 +183,6 @@ func InitAuthJwtKey() error {
 		return err
 	}
 
-	if setting.AuthJwtHeader == "" && setting.AuthJwtCookie == "" {
-		err = fmt.Errorf("JWT Auth must have either a header or cookie configured")
-		logger.Error("Error", err)
-		return err
-	}
-
 	if setting.AuthJwtLoginClaim == "" && setting.AuthJwtEmailClaim == "" {
 		err = fmt.Errorf("JWT Auth must have either a login or email claim configured")
 		logger.Error("Error", err)

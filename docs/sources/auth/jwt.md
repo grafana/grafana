@@ -21,13 +21,12 @@ Grafana can use JWT tokens for authentication
 [auth.jwt]
 enabled = false
 header = X-Your-JWT-Header
-cookie = Your-Cookie-Name
 
 # Signing key locator.  This config value can be either:
 # 1. URL: ie https://www.gstatic.com/iap/verify/public_key-jwk
 # 2. File: ie /var/lib/grafana/yourkeyfile
 # 3. String: directly set the key
-# The content will be checked for: 
+# The content will be checked for:
 # 1. Keys within a JSON structure
 # 2. RSA Public Key PEM
 # 3. Base64 encoded bytes
@@ -35,13 +34,13 @@ cookie = Your-Cookie-Name
 signing_key = {url | path to file | string}
 
 # if set, verify a matching 'aud' claim
-audience = 
+audience =
 
 # if set, verify a matching 'iss' claim
 issuer =
 
 # Check for the login name at this claim
-login_claim =  
+login_claim =
 
 # Check for an email address at this claim
 email_claim = email
