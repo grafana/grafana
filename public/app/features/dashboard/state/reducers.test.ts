@@ -1,4 +1,4 @@
-import { Action } from './actions';
+import { loadDashboardPermissions } from './actions';
 import { OrgRole, PermissionLevel, DashboardState } from 'app/types';
 import { initialState, dashboardReducer } from './reducers';
 
@@ -7,13 +7,10 @@ describe('dashboard reducer', () => {
     let state: DashboardState;
 
     beforeEach(() => {
-      const action: Action = {
-        type: 'LOAD_DASHBOARD_PERMISSIONS',
-        payload: [
-          { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
-          { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
-        ],
-      };
+      const action = loadDashboardPermissions([
+        { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
+        { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
+      ]);
       state = dashboardReducer(initialState, action);
     });
 

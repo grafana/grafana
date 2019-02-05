@@ -1,3 +1,6 @@
+// Libraries
+import { ThunkDispatch } from 'redux-thunk';
+
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -15,8 +18,10 @@ import locationUtil from 'app/core/utils/location_util';
 import { setDashboardLoadingState, ThunkResult, setDashboardModel, setDashboardLoadingSlow } from './actions';
 
 // Types
-import { DashboardLoadingState, DashboardRouteInfo } from 'app/types';
+import { DashboardLoadingState, DashboardRouteInfo, StoreState } from 'app/types';
 import { DashboardModel } from './DashboardModel';
+
+export type Dispatch = ThunkDispatch<StoreState, undefined, any>;
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -25,11 +30,11 @@ export interface InitDashboardArgs {
   urlSlug?: string;
   urlType?: string;
   urlFolderId?: string;
-  routeInfo: string;
+  routeInfo: DashboardRouteInfo;
   fixUrl: boolean;
 }
 
-async function redirectToNewUrl(slug: string, dispatch: any, currentPath: string) {
+async function redirectToNewUrl(slug: string, dispatch: Dispatch, currentPath: string) {
   const res = await getBackendSrv().getDashboardBySlug(slug);
 
   if (res) {
@@ -45,6 +50,61 @@ async function redirectToNewUrl(slug: string, dispatch: any, currentPath: string
   }
 }
 
+async function fetchDashboard(args: InitDashboardArgs, dispatch: Dispatch, getState: () => StoreState): Promise<any> {
+  try {
+    switch (args.routeInfo) {
+      case DashboardRouteInfo.Home: {
+        // load home dash
+        const dashDTO = await getBackendSrv().get('/api/dashboards/home');
+
+        // if user specified a custom home dashboard redirect to that
+        if (dashDTO.redirectUri) {
+          const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
+          dispatch(updateLocation({ path: newUrl, replace: true }));
+          return;
+        }
+
+        // disable some actions on the default home dashboard
+        dashDTO.meta.canSave = false;
+        dashDTO.meta.canShare = false;
+        dashDTO.meta.canStar = false;
+        return dashDTO;
+      }
+      case DashboardRouteInfo.Normal: {
+        // for old db routes we redirect
+        if (args.urlType === 'db') {
+          redirectToNewUrl(args.urlSlug, dispatch, getState().location.path);
+          return null;
+        }
+
+        const loaderSrv = args.$injector.get('dashboardLoaderSrv');
+        const dashDTO = await loaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+
+        if (args.fixUrl && dashDTO.meta.url) {
+          // check if the current url is correct (might be old slug)
+          const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
+          const currentPath = getState().location.path;
+
+          if (dashboardUrl !== currentPath) {
+            // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
+            dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
+            return null;
+          }
+        }
+        return dashDTO;
+      }
+      case DashboardRouteInfo.New: {
+        return getNewDashboardModelData(args.urlFolderId);
+      }
+    }
+  } catch (err) {
+    dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
+    dispatch(notifyApp(createErrorNotification('Dashboard fetch failed', err)));
+    console.log(err);
+    return null;
+  }
+}
+
 /**
  * This action (or saga) does everything needed to bootstrap a dashboard & dashboard model.
  * First it handles the process of fetching the dashboard, correcting the url if required (causing redirects/url updates)
@@ -54,19 +114,8 @@ async function redirectToNewUrl(slug: string, dispatch: any, currentPath: string
  * Then it handles the initializing of the old angular services that the dashboard components & panels still depend on
  *
  */
-export function initDashboard({
-  $injector,
-  $scope,
-  urlUid,
-  urlSlug,
-  urlType,
-  urlFolderId,
-  routeInfo,
-  fixUrl,
-}: InitDashboardArgs): ThunkResult<void> {
+export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
-    let dashDTO = null;
-
     // set fetching state
     dispatch(setDashboardLoadingState(DashboardLoadingState.Fetching));
 
@@ -78,58 +127,11 @@ export function initDashboard({
       }
     }, 500);
 
-    try {
-      switch (routeInfo) {
-        case DashboardRouteInfo.Home: {
-          // load home dash
-          dashDTO = await getBackendSrv().get('/api/dashboards/home');
+    // fetch dashboard data
+    const dashDTO = await fetchDashboard(args, dispatch, getState);
 
-          // if user specified a custom home dashboard redirect to that
-          if (dashDTO.redirectUri) {
-            const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
-            dispatch(updateLocation({ path: newUrl, replace: true }));
-            return;
-          }
-
-          // disable some actions on the default home dashboard
-          dashDTO.meta.canSave = false;
-          dashDTO.meta.canShare = false;
-          dashDTO.meta.canStar = false;
-          break;
-        }
-        case DashboardRouteInfo.Normal: {
-          // for old db routes we redirect
-          if (urlType === 'db') {
-            redirectToNewUrl(urlSlug, dispatch, getState().location.path);
-            return;
-          }
-
-          const loaderSrv = $injector.get('dashboardLoaderSrv');
-          dashDTO = await loaderSrv.loadDashboard(urlType, urlSlug, urlUid);
-
-          if (fixUrl && dashDTO.meta.url) {
-            // check if the current url is correct (might be old slug)
-            const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
-            const currentPath = getState().location.path;
-
-            if (dashboardUrl !== currentPath) {
-              // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
-              dispatch(updateLocation({ path: dashboardUrl, partial: true, replace: true }));
-              return;
-            }
-          }
-
-          break;
-        }
-        case DashboardRouteInfo.New: {
-          dashDTO = getNewDashboardModelData(urlFolderId);
-          break;
-        }
-      }
-    } catch (err) {
-      dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
-      dispatch(notifyApp(createErrorNotification('Dashboard fetch failed', err)));
-      console.log(err);
+    // returns null if there was a redirect or error
+    if (!dashDTO) {
       return;
     }
 
@@ -153,12 +155,12 @@ export function initDashboard({
     }
 
     // init services
-    const timeSrv: TimeSrv = $injector.get('timeSrv');
-    const annotationsSrv: AnnotationsSrv = $injector.get('annotationsSrv');
-    const variableSrv: VariableSrv = $injector.get('variableSrv');
-    const keybindingSrv: KeybindingSrv = $injector.get('keybindingSrv');
-    const unsavedChangesSrv = $injector.get('unsavedChangesSrv');
-    const dashboardSrv: DashboardSrv = $injector.get('dashboardSrv');
+    const timeSrv: TimeSrv = args.$injector.get('timeSrv');
+    const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
+    const variableSrv: VariableSrv = args.$injector.get('variableSrv');
+    const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
+    const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
+    const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
 
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
@@ -183,9 +185,8 @@ export function initDashboard({
       }
 
       // init unsaved changes tracking
-      unsavedChangesSrv.init(dashboard, $scope);
-      keybindingSrv.setupDashboardBindings($scope, dashboard);
-
+      unsavedChangesSrv.init(dashboard, args.$scope);
+      keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
       console.log(err);
