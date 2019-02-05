@@ -144,7 +144,7 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
-  setupDashboardBindings(scope, dashboard, onRemovePanel) {
+  setupDashboardBindings(scope, dashboard) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
@@ -212,7 +212,7 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        onRemovePanel(dashboard.meta.focusPanelId);
+        appEvents.emit('remove-panel', dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
     });

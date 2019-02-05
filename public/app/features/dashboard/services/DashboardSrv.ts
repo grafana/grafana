@@ -2,27 +2,34 @@ import coreModule from 'app/core/core_module';
 import { appEvents } from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../state/DashboardModel';
+import { removePanel } from '../utils/panel';
 
 export class DashboardSrv {
-  dash: any;
+  dash: DashboardModel;
 
   /** @ngInject */
   constructor(private backendSrv, private $rootScope, private $location) {
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
     appEvents.on('panel-change-view', this.onPanelChangeView);
+    appEvents.on('remove-panel', this.onRemovePanel);
   }
 
   create(dashboard, meta) {
     return new DashboardModel(dashboard, meta);
   }
 
-  setCurrent(dashboard) {
+  setCurrent(dashboard: DashboardModel) {
     this.dash = dashboard;
   }
 
-  getCurrent() {
+  getCurrent(): DashboardModel {
     return this.dash;
   }
+
+  onRemovePanel = (panelId: number) => {
+    const dashboard = this.getCurrent();
+    removePanel(dashboard, dashboard.getPanelById(panelId), true);
+  };
 
   onPanelChangeView = (options) => {
     const urlParams = this.$location.search();
