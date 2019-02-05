@@ -81,7 +81,7 @@ func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (auth.UserT
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
 	}
 
-	expireBefore := getTime().Add(time.Duration(-86400*s.Cfg.LoginCookieMaxDays) * time.Second).Unix()
+	expireBefore := getTime().Add(time.Duration(-86400*s.Cfg.LoginMaxInactiveLifetimeDays) * time.Second).Unix()
 
 	var model userAuthToken
 	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ?", hashedToken, hashedToken, expireBefore).Get(&model)
@@ -148,7 +148,7 @@ func (s *UserAuthTokenServiceImpl) TryRotateToken(token auth.UserToken, clientIP
 	needsRotation := false
 	rotatedAt := time.Unix(model.RotatedAt, 0)
 	if model.AuthTokenSeen {
-		needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.Cfg.LoginCookieRotation) * time.Minute))
+		needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute))
 	} else {
 		needsRotation = rotatedAt.Before(now.Add(-urgentRotateTime))
 	}

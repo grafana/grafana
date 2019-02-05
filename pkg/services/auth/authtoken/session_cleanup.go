@@ -7,12 +7,12 @@ import (
 
 func (srv *UserAuthTokenServiceImpl) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Hour * 12)
-	deleteSessionAfter := time.Hour * 24 * time.Duration(srv.Cfg.LoginDeleteExpiredTokensAfterDays)
+	deleteSessionAfter := time.Hour * 24 * time.Duration(srv.Cfg.ExpiredTokensCleanupIntervalDays)
 
 	for {
 		select {
 		case <-ticker.C:
-			srv.ServerLockService.LockAndExecute(ctx, "delete old sessions", time.Hour*12, func() {
+			srv.ServerLockService.LockAndExecute(ctx, "delete expired auth tokens", time.Hour*12, func() {
 				srv.deleteOldSession(deleteSessionAfter)
 			})
 

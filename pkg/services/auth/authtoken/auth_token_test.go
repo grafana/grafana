@@ -341,10 +341,10 @@ func createTestContext(t *testing.T) *testContext {
 	tokenService := &UserAuthTokenServiceImpl{
 		SQLStore: sqlstore,
 		Cfg: &setting.Cfg{
-			LoginCookieName:                   "grafana_session",
-			LoginCookieMaxDays:                7,
-			LoginDeleteExpiredTokensAfterDays: 30,
-			LoginCookieRotation:               10,
+			LoginMaxInactiveLifetimeDays:     7,
+			LoginMaxLifetimeDays:             30,
+			TokenRotationIntervalMinutes:     10,
+			ExpiredTokensCleanupIntervalDays: 1,
 		},
 		log: log.New("test-logger"),
 	}
