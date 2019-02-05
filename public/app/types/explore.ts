@@ -153,10 +153,10 @@ export interface ExploreItemState {
    */
   history: HistoryItem[];
   /**
-   * Initial queries for this Explore, e.g., set via URL. Each query will be
+   * Queries for this Explore, e.g., set via URL. Each query will be
    * converted to a query row.
    */
-  initialQueries: DataQuery[];
+  queries: DataQuery[];
   /**
    * True if this Explore area has been initialized.
    * Used to distinguish URL state injection versus split view state injection.

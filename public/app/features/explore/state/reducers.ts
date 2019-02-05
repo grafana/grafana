@@ -60,7 +60,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   datasourceMissing: false,
   exploreDatasources: [],
   history: [],
-  initialQueries: [],
+  queries: [],
   initialized: false,
   queryTransactions: [],
   queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
@@ -92,23 +92,26 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: addQueryRowAction,
     mapper: (state, action): ExploreItemState => {
-      const { initialQueries, queryTransactions } = state;
+      const { queries, queryTransactions } = state;
       const { index, query } = action.payload;
 
-      // Add to initialQueries, which will cause a new row to be rendered
-      const nextQueries = [...initialQueries.slice(0, index + 1), { ...query }, ...initialQueries.slice(index + 1)];
+      // Add to queries, which will cause a new row to be rendered
+      const nextQueries = [...queries.slice(0, index + 1), { ...query }, ...queries.slice(index + 1)];
 
       // Ongoing transactions need to update their row indices
       const nextQueryTransactions = queryTransactions.map(qt => {
         if (qt.rowIndex > index) {
-          return { ...qt, rowIndex: qt.rowIndex + 1 };
+          return {
+            ...qt,
+            rowIndex: qt.rowIndex + 1,
+          };
         }
         return qt;
       });
 
       return {
         ...state,
-        initialQueries: nextQueries,
+        queries: nextQueries,
         logsHighlighterExpressions: undefined,
         queryTransactions: nextQueryTransactions,
         queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
@@ -118,12 +121,12 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeQueryAction,
     mapper: (state, action): ExploreItemState => {
-      const { initialQueries, queryTransactions } = state;
+      const { queries, queryTransactions } = state;
       const { query, index } = action.payload;
 
       // Override path: queries are completely reset
       const nextQuery: DataQuery = { ...query, ...generateEmptyQuery(index) };
-      const nextQueries = [...initialQueries];
+      const nextQueries = [...queries];
       nextQueries[index] = nextQuery;
 
       // Discard ongoing transaction related to row query
@@ -131,7 +134,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
-        initialQueries: nextQueries,
+        queries: nextQueries,
         queryTransactions: nextQueryTransactions,
         queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
       };
@@ -162,7 +165,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const queries = ensureQueries();
       return {
         ...state,
-        initialQueries: queries.slice(),
+        queries: queries.slice(),
         queryTransactions: [],
         showingStartPage: Boolean(state.StartPage),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
@@ -186,7 +189,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         eventBridge,
         exploreDatasources,
         range,
-        initialQueries: queries,
+        queries,
         initialized: true,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         ...ui,
@@ -197,7 +200,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
-      return { ...state, datasourceInstance, queryKeys: getQueryKeys(state.initialQueries, datasourceInstance) };
+      return { ...state, datasourceInstance, queryKeys: getQueryKeys(state.queries, datasourceInstance) };
     },
   })
   .addMapper({
@@ -254,13 +257,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: modifyQueriesAction,
     mapper: (state, action): ExploreItemState => {
-      const { initialQueries, queryTransactions } = state;
+      const { queries, queryTransactions } = state;
       const { modification, index, modifier } = action.payload;
       let nextQueries: DataQuery[];
       let nextQueryTransactions;
       if (index === undefined) {
         // Modify all queries
-        nextQueries = initialQueries.map((query, i) => ({
+        nextQueries = queries.map((query, i) => ({
           ...modifier({ ...query }, modification),
           ...generateEmptyQuery(i),
         }));
@@ -268,7 +271,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         nextQueryTransactions = [];
       } else {
         // Modify query only at index
-        nextQueries = initialQueries.map((query, i) => {
+        nextQueries = queries.map((query, i) => {
           // Synchronize all queries with local query cache to ensure consistency
           // TODO still needed?
           return i === index ? { ...modifier({ ...query }, modification), ...generateEmptyQuery(i) } : query;
@@ -286,7 +289,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       }
       return {
         ...state,
-        initialQueries: nextQueries,
+        queries: nextQueries,
         queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
         queryTransactions: nextQueryTransactions,
       };
@@ -332,14 +335,14 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: removeQueryRowAction,
     mapper: (state, action): ExploreItemState => {
-      const { datasourceInstance, initialQueries, queryIntervals, queryTransactions, queryKeys } = state;
+      const { datasourceInstance, queries, queryIntervals, queryTransactions, queryKeys } = state;
       const { index } = action.payload;
 
-      if (initialQueries.length <= 1) {
+      if (queries.length <= 1) {
         return state;
       }
 
-      const nextQueries = [...initialQueries.slice(0, index), ...initialQueries.slice(index + 1)];
+      const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
       const nextQueryKeys = [...queryKeys.slice(0, index), ...queryKeys.slice(index + 1)];
 
       // Discard transactions related to row query
@@ -353,7 +356,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         ...results,
-        initialQueries: nextQueries,
+        queries: nextQueries,
         logsHighlighterExpressions: undefined,
         queryTransactions: nextQueryTransactions,
         queryKeys: nextQueryKeys,
@@ -398,7 +401,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { queries } = action.payload;
       return {
         ...state,
-        initialQueries: queries.slice(),
+        queries: queries.slice(),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
       };
     },
@@ -452,7 +455,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { queries } = action.payload;
       return {
         ...state,
-        initialQueries: queries,
+        queries,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
       };
     },

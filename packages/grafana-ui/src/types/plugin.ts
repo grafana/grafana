@@ -56,7 +56,7 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
 
 export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
   datasource: DSType;
-  initialQuery: TQuery;
+  query: TQuery;
   error?: string | JSX.Element;
   hint?: QueryHint;
   history: any[];

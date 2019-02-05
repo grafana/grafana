@@ -59,7 +59,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
       <div>
         <LokiQueryField
           datasource={datasource}
-          initialQuery={query}
+          query={query}
           onQueryChange={this.onFieldChange}
           onExecuteQuery={this.onRunQuery}
           history={[]}

@@ -168,13 +168,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialQuery, onQueryChange, onExecuteQuery } = this.props;
+    const { query, onQueryChange, onExecuteQuery } = this.props;
     if (onQueryChange) {
-      const query: PromQuery = {
-        ...initialQuery,
-        expr: value,
-      };
-      onQueryChange(query);
+      const nextQuery: PromQuery = { ...query, expr: value };
+      onQueryChange(nextQuery);
 
       if (override && onExecuteQuery) {
         onExecuteQuery();
@@ -240,7 +237,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, initialQuery } = this.props;
+    const { error, hint, query } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
@@ -259,7 +256,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={initialQuery.expr}
+              initialQuery={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onQueryChange={this.onChangeQuery}

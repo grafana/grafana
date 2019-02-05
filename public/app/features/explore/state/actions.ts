@@ -87,7 +87,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
   return async (dispatch, getState) => {
     const newDataSourceInstance = await getDatasourceSrv().get(datasource);
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
-    const queries = getState().explore[exploreId].initialQueries;
+    const queries = getState().explore[exploreId].queries;
 
     await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
@@ -494,7 +494,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
-      initialQueries,
+      queries,
       showingLogs,
       showingGraph,
       showingTable,
@@ -503,7 +503,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
       supportsTable,
     } = getState().explore[exploreId];
 
-    if (!hasNonEmptyQuery(initialQueries)) {
+    if (!hasNonEmptyQuery(queries)) {
       dispatch(runQueriesEmptyAction({ exploreId }));
       dispatch(stateSave()); // Remember to saves to state and update location
       return;
@@ -565,14 +565,7 @@ function runQueriesForType(
   resultGetter?: any
 ) {
   return async (dispatch, getState) => {
-    const {
-      datasourceInstance,
-      eventBridge,
-      initialQueries: queries,
-      queryIntervals,
-      range,
-      scanning,
-    } = getState().explore[exploreId];
+    const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
     const datasourceId = datasourceInstance.meta.id;
 
     // Run all queries concurrently
@@ -653,7 +646,7 @@ export function splitOpen(): ThunkResult<void> {
     const itemState = {
       ...leftState,
       queryTransactions: [],
-      initialQueries: leftState.initialQueries.slice(),
+      queries: leftState.queries.slice(),
     };
     dispatch(splitOpenAction({ itemState }));
     dispatch(stateSave());
@@ -670,7 +663,7 @@ export function stateSave() {
     const urlStates: { [index: string]: string } = {};
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance.name,
-      queries: left.initialQueries.map(clearQueryKeys),
+      queries: left.queries.map(clearQueryKeys),
       range: left.range,
       ui: {
         showingGraph: left.showingGraph,
@@ -682,13 +675,9 @@ export function stateSave() {
     if (split) {
       const rightUrlState: ExploreUrlState = {
         datasource: right.datasourceInstance.name,
-        queries: right.initialQueries.map(clearQueryKeys),
+        queries: right.queries.map(clearQueryKeys),
         range: right.range,
-        ui: {
-          showingGraph: right.showingGraph,
-          showingLogs: right.showingLogs,
-          showingTable: right.showingTable,
-        },
+        ui: { showingGraph: right.showingGraph, showingLogs: right.showingLogs, showingTable: right.showingTable },
       };
 
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);

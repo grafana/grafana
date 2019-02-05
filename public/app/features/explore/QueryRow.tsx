@@ -35,7 +35,7 @@ interface QueryRowProps {
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
   index: number;
-  initialQuery: DataQuery;
+  query: DataQuery;
   modifyQueries: typeof modifyQueries;
   queryTransactions: QueryTransaction[];
   exploreEvents: Emitter;
@@ -95,7 +95,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
   }, 500);
 
   render() {
-    const { datasourceInstance, history, index, initialQuery, queryTransactions, exploreEvents, range } = this.props;
+    const { datasourceInstance, history, index, query, queryTransactions, exploreEvents, range } = this.props;
     const transactions = queryTransactions.filter(t => t.rowIndex === index);
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
@@ -110,7 +110,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
           {QueryField ? (
             <QueryField
               datasource={datasourceInstance}
-              initialQuery={initialQuery}
+              query={query}
               error={queryError}
               hint={hint}
               history={history}
@@ -124,7 +124,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
               error={queryError}
               onQueryChange={this.onChangeQuery}
               onExecuteQuery={this.onExecuteQuery}
-              initialQuery={initialQuery}
+              initialQuery={query}
               exploreEvents={exploreEvents}
               range={range}
             />
@@ -155,9 +155,9 @@ export class QueryRow extends PureComponent<QueryRowProps> {
 function mapStateToProps(state: StoreState, { exploreId, index }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, initialQueries, queryTransactions, range } = item;
-  const initialQuery = initialQueries[index];
-  return { datasourceInstance, history, initialQuery, queryTransactions, range };
+  const { datasourceInstance, history, queries, queryTransactions, range } = item;
+  const query = queries[index];
+  return { datasourceInstance, history, query, queryTransactions, range };
 }
 
 const mapDispatchToProps = {

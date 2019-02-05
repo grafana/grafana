@@ -162,13 +162,10 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialQuery, onQueryChange, onExecuteQuery } = this.props;
+    const { query, onQueryChange, onExecuteQuery } = this.props;
     if (onQueryChange) {
-      const query = {
-        ...initialQuery,
-        expr: value,
-      };
-      onQueryChange(query);
+      const nextQuery = { ...query, expr: value };
+      onQueryChange(nextQuery);
 
       if (override && onExecuteQuery) {
         onExecuteQuery();
@@ -217,7 +214,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { error, hint, initialQuery } = this.props;
+    const { error, hint, query } = this.props;
     const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
@@ -237,7 +234,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={initialQuery.expr}
+              initialQuery={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onQueryChange={this.onChangeQuery}
