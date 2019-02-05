@@ -25,7 +25,7 @@ export default class ExpQuery {
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
       const d = this.datasource.$q.defer();
-      d.resolve({ data: [] });
+      d.resolve({data: []});
       return d.promise;
     }
 
@@ -50,13 +50,13 @@ export default class ExpQuery {
             const targets = this.options.targets;
 
             const targetIndex = this.mapMetricsToTargets(response.outputs, response.config.url);
-
-            const result = _.map(response.data.outputs, queryData => {
+            let result = [];
+            _.map(response.data.outputs, queryData => {
               let index = targetIndex;
               if (index === -1) {
                 index = 0;
               }
-              return this.transformMetricData(queryData, targets[index], this.datasource.tsdbResolution);
+              result = result.concat(this.transformMetricData(queryData, targets[index], this.datasource.tsdbResolution));
             });
 
             return result.filter(value => {
@@ -74,7 +74,7 @@ export default class ExpQuery {
   performTimeSeriesQuery(idx, exp, start, end, globalOptions) {
     let urlParams = '?expIndex=' + idx;
     urlParams = this.datasource.templateSrv.replace(urlParams, globalOptions.scopedVars, 'pipe');
-    exp['time']['start'] = start;
+    exp['time']['start'] = start * 1;
     const options = {
       method: 'POST',
       url: this.datasource.url + '/api/query/exp' + urlParams,
@@ -100,22 +100,42 @@ export default class ExpQuery {
   }
 
   getDatapointsAtCorrectResolution(result, tsdbResolution) {
-    const target = {};
-    _.map(result.meta, (metaData, index) => {
-      if (index > 0) {
-        _.map(result.dps, (valuesForTimeSlot, timeSlotIndex) => {
-          if (timeSlotIndex === 1) {
-            target['dps'] = [];
-            target['target'] = result.id + '-' + this.nameSeries(metaData.commonTags);
-            // target['tags'] = metaData.commonTags;
-          }
-          if (timeSlotIndex > 0) {
-            target['dps'].push([valuesForTimeSlot[index], Math.round(valuesForTimeSlot[0] / 1000)]);
-          }
-        });
+    const targets = {};
+
+    _.map(result.meta, (seriesMeta, seriesIndex) => {
+      if (seriesIndex > 0) {
+        let targetName = '';
+        const target = {};
+        targetName = this.createMetricLabel(seriesMeta, result.alias);
+        target['target'] = targetName;
+        target['datapoints'] = [];
+        targets[targetName] = target;
+
+        if (seriesIndex > 0) {
+          _.map(result.dps, (valuesForTimeSlot, timeSlotIndex) => {
+
+            if (timeSlotIndex > 0) {
+              if (targetName in targets) {
+                if (!('datapoints' in targets[targetName])) {
+                  console.log(targets[targetName]);
+                } else {
+                  if (tsdbResolution === 2) {
+                    targets[targetName]['datapoints'].push([1 * valuesForTimeSlot[seriesIndex], valuesForTimeSlot[0] * 1]);
+                  } else {
+                    targets[targetName]['datapoints'].push([1 * valuesForTimeSlot[seriesIndex], valuesForTimeSlot[0] * 1000]);
+                  }
+                }
+              }
+            }
+
+
+          });
+        }
       }
     });
-    return target;
+    return _.map(targets, (target, key) => {
+      return target;
+    });
 
     // const dps = [];
     //
@@ -132,20 +152,28 @@ export default class ExpQuery {
     // return dps;
   }
 
-  nameSeries(commonTags) {
-    const arr = new Array();
-    for (const i in commonTags) {
-      arr.push(commonTags[i]);
+  nameSeries(seriesMeta) {
+    let name = seriesMeta.id;
+    if (Object.keys(seriesMeta.commonTags).length > 0) {
+
+      name += '{';
+      const arr = new Array();
+      for (const i in seriesMeta.commonTags) {
+        arr.push(i + '=' + seriesMeta.commonTags[i]);
+      }
+      name += arr.join(',');
+      name += '}';
     }
-    return arr.join('-');
+    return name;
   }
 
-  // createMetricLabel(target) {
-  //   if (!target.alias) {
-  //     return target.id;
-  //   }
-  //   return target.alias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, (all, m1) => data.tags[m1]);
-  // }
+  createMetricLabel(seriesMeta, alias) {
+    if (alias.length === 0) {
+      return this.nameSeries(seriesMeta);
+    } else {
+      return alias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, (all, m1) => seriesMeta.commonTags[m1]);
+    }
+  }
 
   convertTargetToQuery(target) {
     // filter out a target if it is 'hidden'
