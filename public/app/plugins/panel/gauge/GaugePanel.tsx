@@ -16,6 +16,7 @@ interface Props extends PanelProps<GaugeOptions> {}
 
 export class GaugePanel extends PureComponent<Props> {
   render() {
+    console.log('renduru');
     const { panelData, width, height, onInterpolate, options } = this.props;
 
     const prefix = onInterpolate(options.prefix);
@@ -28,7 +29,33 @@ export class GaugePanel extends PureComponent<Props> {
         nullValueMode: NullValueMode.Null,
       });
 
-      if (vmSeries[0]) {
+      const gauges = [];
+      if (vmSeries.length > 1) {
+        for (let i = 0; i < vmSeries.length; i++) {
+          gauges.push(
+            <ThemeProvider key={`gauge-${i}`}>
+              {theme => (
+                <div
+                  className="singlestat-panel"
+                  style={{ display: 'inline-block', width: `${Math.floor(1 / vmSeries.length * 100)}%` }}
+                >
+                  <Gauge
+                    value={vmSeries[i].stats[options.stat]}
+                    {...this.props.options}
+                    width={Math.floor(width / vmSeries.length) - 10}
+                    height={height}
+                    prefix={prefix}
+                    suffix={suffix}
+                    theme={theme}
+                  />
+                  <div style={{ textAlign: 'center' }}>Gauge {i}</div>
+                </div>
+              )}
+            </ThemeProvider>
+          );
+        }
+        return [gauges];
+      } else if (vmSeries.length > 0) {
         value = vmSeries[0].stats[options.stat];
       } else {
         value = null;
@@ -40,15 +67,17 @@ export class GaugePanel extends PureComponent<Props> {
     return (
       <ThemeProvider>
         {theme => (
-          <Gauge
-            value={value}
-            {...this.props.options}
-            width={width}
-            height={height}
-            prefix={prefix}
-            suffix={suffix}
-            theme={theme}
-          />
+          <div className="singlestat-panel">
+            <Gauge
+              value={value}
+              {...this.props.options}
+              width={width}
+              height={height}
+              prefix={prefix}
+              suffix={suffix}
+              theme={theme}
+            />
+          </div>
         )}
       </ThemeProvider>
     );
