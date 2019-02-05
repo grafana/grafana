@@ -1,8 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
 import config from 'app/core/config';
-import { PanelModel } from '../../state/PanelModel';
-import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state';
+import { DashboardModel } from '../../state';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { updateLocation } from 'app/core/actions';
@@ -57,20 +57,13 @@ export class AddPanelWidget extends React.Component<Props, State> {
         copiedPanels.push(pluginCopy);
       }
     }
+
     return _.sortBy(copiedPanels, 'sort');
   }
 
   handleCloseAddPanel(evt) {
     evt.preventDefault();
     this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
-  }
-
-  copyButton(panel) {
-    return (
-      <button className="btn-inverse btn" onClick={() => this.onPasteCopiedPanel(panel)} title={panel.name}>
-        Paste copied Panel
-      </button>
-    );
   }
 
   moveToEdit(location) {
@@ -151,7 +144,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
   renderOptionLink = (icon, text, onClick) => {
     return (
       <div>
-        <a href="#" onClick={onClick} className="add-panel-widget__link btn-inverse">
+        <a href="#" onClick={onClick} className="add-panel-widget__link btn btn-inverse">
           <div className="add-panel-widget__icon">
             <i className={`gicon gicon-${icon}`} />
           </div>
@@ -162,6 +155,8 @@ export class AddPanelWidget extends React.Component<Props, State> {
   };
 
   render() {
+    const { copiedPanelPlugins } = this.state;
+
     return (
       <div className="panel-container add-panel-widget-container">
         <div className="add-panel-widget">
@@ -172,9 +167,25 @@ export class AddPanelWidget extends React.Component<Props, State> {
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
-            {this.renderOptionLink('queries', 'Add query', this.onCreateNewPanel)}
-            {this.renderOptionLink('visualization', 'Choose Panel type', () => this.onCreateNewPanel('visualization'))}
-            {this.renderOptionLink('queries', 'Convert to row', this.onCreateNewRow)}
+            <div className="add-panel-widget__create">
+              {this.renderOptionLink('queries', 'Add query', this.onCreateNewPanel)}
+              {this.renderOptionLink('visualization', 'Choose Panel type', () =>
+                this.onCreateNewPanel('visualization')
+              )}
+            </div>
+            <div className="add-panel-widget__actions">
+              <div className="add-panel-widget__action" onClick={this.onCreateNewRow}>
+                Convert to row
+              </div>
+              {copiedPanelPlugins.length === 1 && (
+                <div
+                  className="add-panel-widget__action"
+                  onClick={() => this.onPasteCopiedPanel(copiedPanelPlugins[0])}
+                >
+                  Paste copied panel
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

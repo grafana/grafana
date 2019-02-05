@@ -27,11 +27,8 @@
 }
 
 .add-panel-widget__link {
-  display: block;
   margin: 0 8px;
-  width: 130px;
-  text-align: center;
-  padding: 8px 0;
+  width: 150px;
 }
 
 .add-panel-widget__icon {
@@ -54,14 +51,24 @@
   margin-right: -10px;
 }
 
+.add-panel-widget__create {
+  display: inherit;
+  margin-bottom: 24px;
+}
+
+.add-panel-widget__actions {
+  display: inherit;
+}
+
+.add-panel-widget__action {
+  cursor: pointer;
+  margin: 0 4px;
+}
+
 .add-panel-widget__btn-container {
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
-  flex-direction: row;
-
-  .btn {
-    margin-bottom: 10px;
-  }
+  flex-direction: column;
 }
