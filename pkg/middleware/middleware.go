@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -168,11 +169,8 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 	return true
 }
 
-const cookieName = "grafana_session"
-const OneYearInSeconds = 31557600 //used as default maxage for session cookies. We validate/rotate them more often.
-
 func initContextWithToken(authTokenService authtoken.UserAuthTokenService, ctx *m.ReqContext, orgID int64) bool {
-	rawToken := ctx.GetCookie(cookieName)
+	rawToken := ctx.GetCookie(setting.LoginCookieName)
 	if rawToken == "" {
 		return false
 	}
@@ -200,26 +198,34 @@ func initContextWithToken(authTokenService authtoken.UserAuthTokenService, ctx *
 	}
 
 	if rotated {
-		WriteSessionCookie(ctx, token.GetToken(), OneYearInSeconds)
+		WriteSessionCookie(ctx, token.GetToken(), setting.LoginMaxLifetimeDays)
 	}
 
 	return true
 }
 
-func WriteSessionCookie(ctx *m.ReqContext, value string, maxAge int) {
+func WriteSessionCookie(ctx *m.ReqContext, value string, maxLifetimeDays int) {
 	if setting.Env == setting.DEV {
 		ctx.Logger.Info("new token", "unhashed token", value)
 	}
 
+	var maxAge int
+	if maxLifetimeDays <= 0 {
+		maxAge = -1
+	} else {
+		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+	}
+
 	ctx.Resp.Header().Del("Set-Cookie")
 	cookie := http.Cookie{
-		Name:     cookieName,
+		Name:     setting.LoginCookieName,
 		Value:    url.QueryEscape(value),
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
-		Secure:   false, // TODO: use setting SecurityHTTPSCookies
+		Secure:   setting.CookieSecure,
 		MaxAge:   maxAge,
-		SameSite: http.SameSiteLaxMode, // TODO: use setting LoginCookieSameSite
+		SameSite: setting.CookieSameSite,
 	}
 
 	http.SetCookie(ctx.Resp, &cookie)

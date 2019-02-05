@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
 	msession "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
@@ -197,13 +198,17 @@ func TestMiddlewareContext(t *testing.T) {
 				return true, nil
 			}
 
+			maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour)
+			maxAge := (maxAgeHours + time.Hour).Seconds()
+
 			expectedCookie := &http.Cookie{
-				Name:     cookieName,
+				Name:     setting.LoginCookieName,
 				Value:    "rotated",
 				Path:     setting.AppSubUrl + "/",
 				HttpOnly: true,
-				MaxAge:   OneYearInSeconds,
-				SameSite: http.SameSiteLaxMode,
+				MaxAge:   int(maxAge),
+				Secure:   setting.CookieSecure,
+				SameSite: setting.CookieSameSite,
 			}
 
 			sc.fakeReq("GET", "/").exec()
@@ -545,6 +550,9 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
+		setting.LoginCookieName = "grafana_session"
+		setting.LoginMaxLifetimeDays = 30
+
 		sc := &scenarioContext{}
 
 		viewsPath, _ := filepath.Abs("../../public/views")
@@ -655,7 +663,7 @@ func (sc *scenarioContext) exec() {
 
 	if sc.tokenSessionCookie != "" {
 		sc.req.AddCookie(&http.Cookie{
-			Name:  cookieName,
+			Name:  setting.LoginCookieName,
 			Value: sc.tokenSessionCookie,
 		})
 	}

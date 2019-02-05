@@ -137,7 +137,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 		hs.log.Error("failed to create auth token", "error", err)
 	}
 
-	middleware.WriteSessionCookie(c, userToken.GetToken(), middleware.OneYearInSeconds)
+	middleware.WriteSessionCookie(c, userToken.GetToken(), hs.Cfg.LoginMaxLifetimeDays)
 }
 
 func (hs *HTTPServer) Logout(c *m.ReqContext) {
@@ -185,7 +185,8 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *m.ReqContext, cookieName string
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.SecurityHTTPSCookies,
+		Secure:   hs.Cfg.CookieSecure,
+		SameSite: hs.Cfg.CookieSameSite,
 	})
 
 	return nil
