@@ -14,7 +14,7 @@ export const provideConfig = (component: React.ComponentType<any>) => {
 };
 
 interface ThemeProviderProps {
-  children: (theme: GrafanaTheme) => JSX.Element;
+  children: (theme: GrafanaTheme) => JSX.Element | JSX.Element[];
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {

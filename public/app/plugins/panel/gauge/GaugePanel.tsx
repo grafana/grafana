@@ -9,77 +9,82 @@ import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
+import { PanelProps, NullValueMode } from '@grafana/ui/src/types';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
 export class GaugePanel extends PureComponent<Props> {
-  render() {
-    console.log('renduru');
-    const { panelData, width, height, onInterpolate, options } = this.props;
+  renderMultipleGauge(vmSeries, theme) {
+    const { options, width } = this.props;
+    const gauges = [];
+
+    for (let i = 0; i < vmSeries.length; i++) {
+      const singleStatWidth = 1 / vmSeries.length * 100;
+      const gaugeWidth = Math.floor(width / vmSeries.length) - 10; // make Gauge slightly smaller than panel.
+
+      gauges.push(
+        <div
+          className="singlestat-panel"
+          key={`gauge-${i}`}
+          style={{ display: 'inline-block', width: `${singleStatWidth}%` }}
+        >
+          {this.renderGauge(vmSeries[i].stats[options.stat], gaugeWidth, theme)}
+
+          <div style={{ textAlign: 'center' }}>Gauge {i}</div>
+        </div>
+      );
+    }
+    return gauges;
+  }
+
+  renderGauge(value, width, theme) {
+    const { height, onInterpolate, options } = this.props;
 
     const prefix = onInterpolate(options.prefix);
     const suffix = onInterpolate(options.suffix);
-    let value: TimeSeriesValue;
+    return (
+      <Gauge value={value} {...options} width={width} height={height} prefix={prefix} suffix={suffix} theme={theme} />
+    );
+  }
+
+  renderSingleGauge(timeSeries, theme) {
+    const { options, width } = this.props;
+    const timeSeriesValue = timeSeries[0].stats[options.stat];
+    return <div className="singlestat-panel">{this.renderGauge(timeSeriesValue, width, theme)}</div>;
+  }
+
+  renderGaugeWithTableData(panelData, theme) {
+    const { width } = this.props;
+
+    const firstTableDataValue = panelData.tableData.rows[0].find(prop => prop > 0);
+    return <div className="singlestat-panel">{this.renderGauge(firstTableDataValue, width, theme)}</div>;
+  }
+
+  renderPanel(theme) {
+    const { panelData } = this.props;
 
     if (panelData.timeSeries) {
-      const vmSeries = processTimeSeries({
+      const timeSeries = processTimeSeries({
         timeSeries: panelData.timeSeries,
         nullValueMode: NullValueMode.Null,
       });
 
-      const gauges = [];
-      if (vmSeries.length > 1) {
-        for (let i = 0; i < vmSeries.length; i++) {
-          gauges.push(
-            <ThemeProvider key={`gauge-${i}`}>
-              {theme => (
-                <div
-                  className="singlestat-panel"
-                  style={{ display: 'inline-block', width: `${Math.floor(1 / vmSeries.length * 100)}%` }}
-                >
-                  <Gauge
-                    value={vmSeries[i].stats[options.stat]}
-                    {...this.props.options}
-                    width={Math.floor(width / vmSeries.length) - 10}
-                    height={height}
-                    prefix={prefix}
-                    suffix={suffix}
-                    theme={theme}
-                  />
-                  <div style={{ textAlign: 'center' }}>Gauge {i}</div>
-                </div>
-              )}
-            </ThemeProvider>
-          );
-        }
-        return [gauges];
-      } else if (vmSeries.length > 0) {
-        value = vmSeries[0].stats[options.stat];
+      if (timeSeries.length > 1) {
+        return this.renderMultipleGauge(timeSeries, theme);
+      } else if (timeSeries.length > 0) {
+        return this.renderSingleGauge(timeSeries, theme);
       } else {
-        value = null;
+        return null;
       }
     } else if (panelData.tableData) {
-      value = panelData.tableData.rows[0].find(prop => prop > 0);
+      return this.renderGaugeWithTableData(panelData, theme);
+    } else {
+      return <div className="singlestat-panel">No time series data available</div>;
     }
+  }
 
-    return (
-      <ThemeProvider>
-        {theme => (
-          <div className="singlestat-panel">
-            <Gauge
-              value={value}
-              {...this.props.options}
-              width={width}
-              height={height}
-              prefix={prefix}
-              suffix={suffix}
-              theme={theme}
-            />
-          </div>
-        )}
-      </ThemeProvider>
-    );
+  render() {
+    return <ThemeProvider>{theme => this.renderPanel(theme)}</ThemeProvider>;
   }
 }
