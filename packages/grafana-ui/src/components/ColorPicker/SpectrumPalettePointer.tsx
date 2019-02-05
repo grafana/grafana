@@ -1,5 +1,5 @@
 import React from 'react';
-import { GrafanaTheme, Themeable } from '../../types';
+import { GrafanaThemeType, Themeable } from '../../types';
 
 export interface SpectrumPalettePointerProps extends Themeable {
   direction?: string;
@@ -17,7 +17,7 @@ const SpectrumPalettePointer: React.FunctionComponent<SpectrumPalettePointerProp
     },
   };
 
-  const pointerColor = theme === GrafanaTheme.Light ? '#3F444D' : '#8E8E8E';
+  const pointerColor = theme.type === GrafanaThemeType.Light ? '#3F444D' : '#8E8E8E';
 
   let pointerStyles: React.CSSProperties = {
     position: 'absolute',

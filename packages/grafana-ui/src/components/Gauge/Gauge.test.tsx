@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 
 import { Gauge, Props } from './Gauge';
 import { ValueMapping, MappingType } from '../../types';
+import { getTheme } from '../../themes';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),
@@ -24,6 +25,7 @@ const setup = (propOverrides?: object) => {
     width: 300,
     value: 25,
     decimals: 0,
+    theme: getTheme()
   };
 
   Object.assign(props, propOverrides);

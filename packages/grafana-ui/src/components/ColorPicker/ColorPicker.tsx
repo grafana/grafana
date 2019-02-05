@@ -2,11 +2,11 @@ import React, { Component, createRef } from 'react';
 import PopperController from '../Tooltip/PopperController';
 import Popper, { RenderPopperArrowFn } from '../Tooltip/Popper';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { Themeable, GrafanaTheme } from '../../types';
+import { GrafanaThemeType, Themeable } from '../../types';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import propDeprecationWarning from '../../utils/propDeprecationWarning';
-
+import { withTheme } from '../../themes/ThemeContext';
 type ColorPickerChangeHandler = (color: string) => void;
 
 export interface ColorPickerProps extends Themeable {
@@ -57,7 +57,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
           <div
             {...arrowProps}
             data-placement={placement}
-            className={`ColorPicker__arrow ColorPicker__arrow--${theme === GrafanaTheme.Light ? 'light' : 'dark'}`}
+            className={`ColorPicker__arrow ColorPicker__arrow--${theme.type === GrafanaThemeType.Light ? 'light' : 'dark'}`}
           />
         );
       };
@@ -95,7 +95,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                       <div
                         className="sp-preview-inner"
                         style={{
-                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme),
+                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme.type),
                         }}
                       />
                     </div>
@@ -110,5 +110,5 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
-export const ColorPicker = colorPickerFactory(ColorPickerPopover, 'ColorPicker');
-export const SeriesColorPicker = colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker');
+export const ColorPicker = withTheme(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
+export const SeriesColorPicker = withTheme(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));

@@ -6,7 +6,7 @@ import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { GrafanaTheme } from '@grafana/ui';
+import { GrafanaThemeType } from '@grafana/ui';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -131,7 +131,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.dashboard.isTimezoneUtc(),
       this.$sanitize,
       this.templateSrv,
-      config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark,
+      config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark,
     );
 
     return super.render(this.table);

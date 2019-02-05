@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processTimeSeries } from '@grafana/ui';
+import { processTimeSeries, ThemeContext } from '@grafana/ui';
 
 // Components
 import { Gauge } from '@grafana/ui';
@@ -10,7 +10,6 @@ import { Gauge } from '@grafana/ui';
 // Types
 import { GaugeOptions } from './types';
 import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
@@ -38,7 +37,7 @@ export class GaugePanel extends PureComponent<Props> {
     }
 
     return (
-      <ThemeProvider>
+      <ThemeContext.Consumer>
         {theme => (
           <Gauge
             value={value}
@@ -50,7 +49,7 @@ export class GaugePanel extends PureComponent<Props> {
             theme={theme}
           />
         )}
-      </ThemeProvider>
+      </ThemeContext.Consumer>
     );
   }
 }
