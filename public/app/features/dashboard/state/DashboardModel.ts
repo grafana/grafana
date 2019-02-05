@@ -904,4 +904,18 @@ export class DashboardModel {
     this.processRepeats();
     this.events.emit('template-variable-value-updated');
   }
+
+  expandParentRowFor(panelId: number) {
+    for (const panel of this.panels) {
+      if (panel.collapsed) {
+        for (const rowPanel of panel.panels) {
+          if (rowPanel.id === panelId) {
+            this.toggleRow(panel);
+            return;
+          }
+        }
+      }
+    }
+  }
+
 }

@@ -120,7 +120,12 @@ export class DashboardPage extends PureComponent<Props, State> {
   onEnterFullscreen() {
     const { dashboard, urlEdit, urlFullscreen, urlPanelId } = this.props;
 
-    const panel = dashboard.getPanelById(parseInt(urlPanelId, 10));
+    const panelId = parseInt(urlPanelId, 10);
+
+    // need to expand parent row if this panel is inside a row
+    dashboard.expandParentRowFor(panelId);
+
+    const panel = dashboard.getPanelById(panelId);
 
     if (panel) {
       dashboard.setViewMode(panel, urlFullscreen, urlEdit);
