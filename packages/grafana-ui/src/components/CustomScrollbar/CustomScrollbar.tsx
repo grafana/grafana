@@ -45,6 +45,7 @@ export class CustomScrollbar extends PureComponent<Props> {
       if (this.props.scrollTop > 10000) {
         ref.scrollToBottom();
       } else {
+        console.log('scrollbar set scrollTop');
         ref.scrollTop(this.props.scrollTop);
       }
     }

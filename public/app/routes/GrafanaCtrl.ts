@@ -45,6 +45,7 @@ export class GrafanaCtrl {
     };
 
     $rootScope.colors = colors;
+
     $rootScope.onAppEvent = function(name, callback, localScope) {
       const unbind = $rootScope.$on(name, callback);
       let callerScope = this;

@@ -1,6 +1,6 @@
 // Libraries
 import $ from 'jquery';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, MouseEvent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
@@ -9,11 +9,11 @@ import classNames from 'classnames';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 
 // Components
-import { LoadingPlaceholder } from '@grafana/ui';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
+import { CustomScrollbar } from '@grafana/ui';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
@@ -50,6 +50,8 @@ interface State {
   isEditing: boolean;
   isFullscreen: boolean;
   fullscreenPanel: PanelModel | null;
+  scrollTop: number;
+  rememberScrollTop: number;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
@@ -58,6 +60,8 @@ export class DashboardPage extends PureComponent<Props, State> {
     isEditing: false,
     isFullscreen: false,
     fullscreenPanel: null,
+    scrollTop: 0,
+    rememberScrollTop: 0,
   };
 
   async componentDidMount() {
@@ -121,6 +125,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         isEditing: urlEdit,
         isFullscreen: urlFullscreen,
         fullscreenPanel: panel,
+        rememberScrollTop: this.state.scrollTop,
       });
       this.setPanelFullscreenClass(urlFullscreen);
     } else {
@@ -135,9 +140,17 @@ export class DashboardPage extends PureComponent<Props, State> {
       dashboard.setViewMode(this.state.fullscreenPanel, false, false);
     }
 
-    this.setState({ isEditing: false, isFullscreen: false, fullscreenPanel: null }, () => {
-      dashboard.render();
-    });
+    this.setState(
+      {
+        isEditing: false,
+        isFullscreen: false,
+        fullscreenPanel: null,
+        scrollTop: this.state.rememberScrollTop,
+      },
+      () => {
+        dashboard.render();
+      }
+    );
 
     this.setPanelFullscreenClass(false);
   }
@@ -160,9 +173,10 @@ export class DashboardPage extends PureComponent<Props, State> {
     $('body').toggleClass('panel-in-fullscreen', isFullscreen);
   }
 
-  renderLoadingState() {
-    return <LoadingPlaceholder text="Loading" />;
-  }
+  setScrollTop = (e: MouseEvent<HTMLElement>): void => {
+    const target = e.target as HTMLElement;
+    this.setState({ scrollTop: target.scrollTop });
+  };
 
   renderDashboard() {
     const { dashboard, editview } = this.props;
@@ -186,7 +200,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, editview, $injector } = this.props;
-    const { isSettingsOpening, isEditing, isFullscreen } = this.state;
+    const { isSettingsOpening, isEditing, isFullscreen, scrollTop } = this.state;
 
     if (!dashboard) {
       return null;
@@ -201,6 +215,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       'dashboard-container': true,
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
+
     return (
       <div className={classes}>
         <DashNav
@@ -211,12 +226,14 @@ export class DashboardPage extends PureComponent<Props, State> {
           $injector={$injector}
         />
         <div className="scroll-canvas scroll-canvas--dashboard">
-          {dashboard && editview && <DashboardSettings dashboard={dashboard} />}
+          <CustomScrollbar autoHeightMin={'100%'} setScrollTop={this.setScrollTop} scrollTop={scrollTop}>
+            {dashboard && editview && <DashboardSettings dashboard={dashboard} />}
 
-          <div className={gridWrapperClasses}>
-            {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
-            <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
-          </div>
+            <div className={gridWrapperClasses}>
+              {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
+              <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
+            </div>
+          </CustomScrollbar>
         </div>
       </div>
     );

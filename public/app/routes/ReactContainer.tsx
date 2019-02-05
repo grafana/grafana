@@ -47,9 +47,12 @@ export function reactContainer(
         routeInfo: $route.current.$$route.routeInfo,
       };
 
+      document.body.classList.add('is-react');
+
       ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
 
       scope.$on('$destroy', () => {
+        document.body.classList.remove('is-react');
         ReactDOM.unmountComponentAtNode(elem[0]);
       });
     },
