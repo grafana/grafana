@@ -50,6 +50,7 @@ export interface QueryFieldState {
   typeaheadPrefix: string;
   typeaheadText: string;
   value: Value;
+  lastExecutedValue: Value;
 }
 
 export interface TypeaheadInput {
@@ -89,6 +90,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadPrefix: '',
       typeaheadText: '',
       value: makeValue(this.placeholdersBuffer.toString(), props.syntax),
+      lastExecutedValue: null,
     };
   }
 
@@ -167,6 +169,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     if (onExecuteQuery) {
       onExecuteQuery();
+      this.setState({ lastExecutedValue: this.state.value });
     }
   };
 
@@ -381,12 +384,20 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  handleBlur = () => {
+  handleBlur = (event, change) => {
+    const { lastExecutedValue } = this.state;
+    const previousValue = lastExecutedValue ? Plain.serialize(this.state.lastExecutedValue) : null;
+    const currentValue = Plain.serialize(change.value);
+
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
     this.resetTimer = setTimeout(this.resetTypeahead, 100);
     // Disrupting placeholder entry wipes all remaining placeholders needing input
     this.placeholdersBuffer.clearPlaceholders();
+
+    if (previousValue !== currentValue) {
+      this.executeOnQueryChangeAndExecuteQueries();
+    }
   };
 
   handleFocus = () => {};
