@@ -120,12 +120,13 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         body.toggleClass('sidemenu-hidden');
       });
 
-      scope.$watch(
-        () => playlistSrv.isPlaying,
-        newValue => {
-          elem.toggleClass('view-mode--playlist', newValue === true);
-        }
-      );
+      appEvents.on('playlist-started', () => {
+        elem.toggleClass('view-mode--playlist', true);
+      });
+
+      appEvents.on('playlist-stopped', () => {
+        elem.toggleClass('view-mode--playlist', false);
+      });
 
       // check if we are in server side render
       if (document.cookie.indexOf('renderKey') !== -1) {
@@ -256,10 +257,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           setTimeout(() => {
             clickAutoHideParent.append(clickAutoHide);
           }, 100);
-        }
-
-        if (target.parents('.navbar-buttons--playlist').length === 0) {
-          playlistSrv.stop();
         }
 
         // hide search
