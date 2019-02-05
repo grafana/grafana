@@ -130,7 +130,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     if (panel) {
       dashboard.setViewMode(panel, urlFullscreen, urlEdit);
       this.setState({
-        isEditing: urlEdit,
+        isEditing: urlEdit && dashboard.meta.canEdit,
         isFullscreen: urlFullscreen,
         fullscreenPanel: panel,
         rememberScrollTop: this.state.scrollTop,
