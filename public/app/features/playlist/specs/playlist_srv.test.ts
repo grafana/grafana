@@ -1,6 +1,6 @@
 import { PlaylistSrv } from '../playlist_srv';
 
-const dashboards = [{ uri: 'dash1' }, { uri: 'dash2' }];
+const dashboards = [{ url: 'dash1' }, { url: 'dash2' }];
 
 const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any> }] => {
   const mockBackendSrv = {
@@ -50,13 +50,12 @@ const mockWindowLocation = (): [jest.MockInstance<any>, () => void] => {
 
 describe('PlaylistSrv', () => {
   let srv: PlaylistSrv;
-  let mockLocationService: { url: jest.MockInstance<any> };
   let hrefMock: jest.MockInstance<any>;
   let unmockLocation: () => void;
   const initialUrl = 'http://localhost/playlist';
 
   beforeEach(() => {
-    [srv, mockLocationService] = createPlaylistSrv();
+    [srv] = createPlaylistSrv();
     [hrefMock, unmockLocation] = mockWindowLocation();
 
     // This will be cached in the srv when start() is called
@@ -71,7 +70,6 @@ describe('PlaylistSrv', () => {
     await srv.start(1);
 
     for (let i = 0; i < 6; i++) {
-      expect(mockLocationService.url).toHaveBeenLastCalledWith(`dashboard/${dashboards[i % 2].uri}?`);
       srv.next();
     }
 
@@ -84,7 +82,6 @@ describe('PlaylistSrv', () => {
 
     // 1 complete loop
     for (let i = 0; i < 3; i++) {
-      expect(mockLocationService.url).toHaveBeenLastCalledWith(`dashboard/${dashboards[i % 2].uri}?`);
       srv.next();
     }
 
@@ -93,7 +90,6 @@ describe('PlaylistSrv', () => {
 
     // Another 2 loops
     for (let i = 0; i < 4; i++) {
-      expect(mockLocationService.url).toHaveBeenLastCalledWith(`dashboard/${dashboards[i % 2].uri}?`);
       srv.next();
     }
 
