@@ -12,7 +12,7 @@ import { config } from 'app/core/config';
 import { updateLocation } from 'app/core/actions';
 import { notifyApp } from 'app/core/actions';
 import locationUtil from 'app/core/utils/location_util';
-import { setDashboardLoadingState, ThunkResult, setDashboardModel } from './actions';
+import { setDashboardLoadingState, ThunkResult, setDashboardModel, setDashboardLoadingSlow } from './actions';
 import { removePanel } from '../utils/panel';
 
 // Types
@@ -70,6 +70,14 @@ export function initDashboard({
 
     // set fetching state
     dispatch(setDashboardLoadingState(DashboardLoadingState.Fetching));
+
+    // Detect slow loading / initializing and set state flag
+    // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
+    setTimeout(() => {
+      if (getState().dashboard.model === null) {
+        dispatch(setDashboardLoadingSlow());
+      }
+    }, 500);
 
     try {
       switch (routeInfo) {

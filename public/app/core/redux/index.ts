@@ -1,4 +1,2 @@
-import { actionCreatorFactory } from './actionCreatorFactory';
-import { reducerFactory } from './reducerFactory';
-
-export { actionCreatorFactory, reducerFactory };
+export { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from './actionCreatorFactory';
+export { reducerFactory } from './reducerFactory';

@@ -25,5 +25,6 @@ export enum DashboardLoadingState {
 export interface DashboardState {
   model: MutableDashboard | null;
   loadingState: DashboardLoadingState;
+  isLoadingSlow: boolean;
   permissions: DashboardAcl[] | null;
 }

@@ -3,8 +3,7 @@ import { ThunkAction } from 'redux-thunk';
 
 // Services & Utils
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { actionCreatorFactory } from 'app/core/redux';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 
 // Actions
@@ -25,6 +24,7 @@ import { DashboardLoadingState, MutableDashboard } from 'app/types/dashboard';
 export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
 export const setDashboardLoadingState = actionCreatorFactory<DashboardLoadingState>('SET_DASHBOARD_LOADING_STATE').create();
 export const setDashboardModel = actionCreatorFactory<MutableDashboard>('SET_DASHBOARD_MODEL').create();
+export const setDashboardLoadingSlow = noPayloadActionCreatorFactory('SET_DASHBOARD_LOADING_SLOW').create();
 
 export type Action = ActionOf<DashboardAclDTO[]>;
 export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;

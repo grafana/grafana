@@ -1,10 +1,11 @@
 import { DashboardState, DashboardLoadingState } from 'app/types/dashboard';
-import { loadDashboardPermissions, setDashboardLoadingState, setDashboardModel } from './actions';
+import { loadDashboardPermissions, setDashboardLoadingState, setDashboardModel, setDashboardLoadingSlow } from './actions';
 import { reducerFactory } from 'app/core/redux';
 import { processAclItems } from 'app/core/utils/acl';
 
 export const initialState: DashboardState = {
   loadingState: DashboardLoadingState.NotStarted,
+  isLoadingSlow: false,
   model: null,
   permissions: [],
 };
@@ -28,7 +29,15 @@ export const dashboardReducer = reducerFactory(initialState)
     filter: setDashboardModel,
     mapper: (state, action) => ({
       ...state,
-      model: action.payload
+      model: action.payload,
+      isLoadingSlow: false,
+    }),
+  })
+  .addMapper({
+    filter: setDashboardLoadingSlow,
+    mapper: (state, action) => ({
+      ...state,
+      isLoadingSlow: true,
     }),
   })
   .create();

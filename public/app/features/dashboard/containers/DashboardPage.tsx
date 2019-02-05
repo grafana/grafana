@@ -38,6 +38,7 @@ interface Props {
   urlEdit: boolean;
   urlFullscreen: boolean;
   loadingState: DashboardLoadingState;
+  isLoadingSlow: boolean;
   dashboard: DashboardModel;
   initDashboard: typeof initDashboard;
   setDashboardModel: typeof setDashboardModel;
@@ -52,6 +53,7 @@ interface State {
   fullscreenPanel: PanelModel | null;
   scrollTop: number;
   rememberScrollTop: number;
+  showLoadingState: boolean;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
@@ -59,6 +61,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     isSettingsOpening: false,
     isEditing: false,
     isFullscreen: false,
+    showLoadingState: false,
     fullscreenPanel: null,
     scrollTop: 0,
     rememberScrollTop: 0,
@@ -196,11 +199,24 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.setState({ scrollTop: 0 });
   };
 
+  renderLoadingState() {
+    return (
+      <div className="dashboard-loading">
+        <div className="dashboard-loading__text">
+          <i className="fa fa-spinner fa-spin" /> Dashboard {this.props.loadingState}
+        </div>
+      </div>
+    );
+  }
+
   render() {
-    const { dashboard, editview, $injector } = this.props;
+    const { dashboard, editview, $injector, isLoadingSlow } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop } = this.state;
 
     if (!dashboard) {
+      if (isLoadingSlow) {
+        return this.renderLoadingState();
+      }
       return null;
     }
 
@@ -249,6 +265,7 @@ const mapStateToProps = (state: StoreState) => ({
   urlFullscreen: state.location.query.fullscreen === true,
   urlEdit: state.location.query.edit === true,
   loadingState: state.dashboard.loadingState,
+  isLoadingSlow: state.dashboard.isLoadingSlow,
   dashboard: state.dashboard.model as DashboardModel,
 });
 
