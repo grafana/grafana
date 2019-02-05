@@ -14,6 +14,9 @@
   align-items: center;
   width: 100%;
   cursor: move;
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
 
   .gicon {
     font-size: 30px;
@@ -26,9 +29,15 @@
   }
 }
 
+.add-panel-widget__title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semi-bold;
+  margin-right: $spacer*2;
+}
+
 .add-panel-widget__link {
   margin: 0 8px;
-  width: 150px;
+  width: 154px;
 }
 
 .add-panel-widget__icon {
@@ -54,6 +63,8 @@
 .add-panel-widget__create {
   display: inherit;
   margin-bottom: 24px;
+  // this is to have the big button appear centered
+  margin-top: 55px;
 }
 
 .add-panel-widget__actions {
@@ -61,7 +72,6 @@
 }
 
 .add-panel-widget__action {
-  cursor: pointer;
   margin: 0 4px;
 }
 

@@ -13,6 +13,11 @@ exports[`Render should render component 1`] = `
       <i
         className="gicon gicon-add-panel"
       />
+      <span
+        className="add-panel-widget__title"
+      >
+        New Panel
+      </span>
       <button
         className="add-panel-widget__close"
         onClick={[Function]}
@@ -42,7 +47,7 @@ exports[`Render should render component 1`] = `
               />
             </div>
             <span>
-              Add query
+              Add Query
             </span>
           </a>
         </div>
@@ -60,7 +65,7 @@ exports[`Render should render component 1`] = `
               />
             </div>
             <span>
-              Choose Panel type
+              Choose Visualization
             </span>
           </a>
         </div>
@@ -68,12 +73,12 @@ exports[`Render should render component 1`] = `
       <div
         className="add-panel-widget__actions"
       >
-        <div
-          className="add-panel-widget__action"
+        <button
+          className="btn btn-inverse add-panel-widget__action"
           onClick={[Function]}
         >
           Convert to row
-        </div>
+        </button>
       </div>
     </div>
   </div>

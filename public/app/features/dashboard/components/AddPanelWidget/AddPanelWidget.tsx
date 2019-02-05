@@ -1,12 +1,20 @@
+// Libraries
 import React from 'react';
 import _ from 'lodash';
+
+// Utils
 import config from 'app/core/config';
+import store from 'app/core/store';
+
+// Store
+import { store as reduxStore } from 'app/store/store';
+import { updateLocation } from 'app/core/actions';
+
+// Types
 import { PanelModel } from '../../state';
 import { DashboardModel } from '../../state';
-import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { updateLocation } from 'app/core/actions';
-import { store as reduxStore } from 'app/store/store';
+import { LocationUpdate } from 'app/types';
 
 export interface Props {
   panel: PanelModel;
@@ -16,17 +24,6 @@ export interface Props {
 export interface State {
   copiedPanelPlugins: any[];
 }
-
-type Location = {
-  query: {
-    panelId: number;
-    edit: boolean;
-    fullscreen: boolean;
-    tab?: string;
-    isVizPickerOpen?: boolean;
-  };
-  partial: boolean;
-};
 
 export class AddPanelWidget extends React.Component<Props, State> {
   constructor(props) {
@@ -66,10 +63,6 @@ export class AddPanelWidget extends React.Component<Props, State> {
     this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
   }
 
-  moveToEdit(location) {
-    reduxStore.dispatch(updateLocation(location));
-  }
-
   onCreateNewPanel = (tab = 'queries') => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
@@ -83,7 +76,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.addPanel(newPanel);
     dashboard.removePanel(this.props.panel);
 
-    let location: Location = {
+    const location: LocationUpdate = {
       query: {
         panelId: newPanel.id,
         edit: true,
@@ -93,18 +86,11 @@ export class AddPanelWidget extends React.Component<Props, State> {
     };
 
     if (tab === 'visualization') {
-      location = {
-        ...location,
-        query: {
-          ...location.query,
-          tab: 'visualization',
-          isVizPickerOpen: true,
-        },
-      };
-      this.moveToEdit(location);
-    } else {
-      this.moveToEdit(location);
+      location.query.tab = 'visualization';
+      location.query.openVizPicker  = true;
     }
+
+    reduxStore.dispatch(updateLocation(location));
   };
 
   onPasteCopiedPanel = panelPluginInfo => {
@@ -162,28 +148,27 @@ export class AddPanelWidget extends React.Component<Props, State> {
         <div className="add-panel-widget">
           <div className="add-panel-widget__header grid-drag-handle">
             <i className="gicon gicon-add-panel" />
+            <span className="add-panel-widget__title">New Panel</span>
             <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
               <i className="fa fa-close" />
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
             <div className="add-panel-widget__create">
-              {this.renderOptionLink('queries', 'Add query', this.onCreateNewPanel)}
-              {this.renderOptionLink('visualization', 'Choose Panel type', () =>
+              {this.renderOptionLink('queries', 'Add Query', this.onCreateNewPanel)}
+              {this.renderOptionLink('visualization', 'Choose Visualization', () =>
                 this.onCreateNewPanel('visualization')
               )}
             </div>
             <div className="add-panel-widget__actions">
-              <div className="add-panel-widget__action" onClick={this.onCreateNewRow}>
-                Convert to row
-              </div>
+              <button className="btn btn-inverse add-panel-widget__action" onClick={this.onCreateNewRow}>Convert to row</button>
               {copiedPanelPlugins.length === 1 && (
-                <div
-                  className="add-panel-widget__action"
+                <button
+                  className="btn btn-inverse add-panel-widget__action"
                   onClick={() => this.onPasteCopiedPanel(copiedPanelPlugins[0])}
                 >
                   Paste copied panel
-                </div>
+                </button>
               )}
             </div>
           </div>
