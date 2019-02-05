@@ -94,33 +94,58 @@ export default class ExpQuery {
       return false;
     }
 
-    const metricLabel = this.createMetricLabel(exp);
-    const dps = this.getDatapointsAtCorrectResolution(exp, tsdbResolution);
-    return { target: metricLabel, datapoints: dps };
+    // const metricLabel = this.createMetricLabel(exp);
+    return this.getDatapointsAtCorrectResolution(exp, tsdbResolution);
+    // return {target: metricLabel, datapoints: dps};
   }
 
   getDatapointsAtCorrectResolution(result, tsdbResolution) {
-    const dps = [];
-
-    // TSDB returns datapoints has a hash of ts => value.
-    // Can't use _.pairs(invert()) because it stringifies keys/values
-    _.each(result.dps, (v, k) => {
-      if (tsdbResolution === 2) {
-        dps.push([v, k * 1]);
-      } else {
-        dps.push([v, k * 1000]);
+    const target = {};
+    _.map(result.meta, (metaData, index) => {
+      if (index > 0) {
+        _.map(result.dps, (valuesForTimeSlot, timeSlotIndex) => {
+          if (timeSlotIndex === 1) {
+            target['dps'] = [];
+            target['target'] = result.id + '-' + this.nameSeries(metaData.commonTags);
+            // target['tags'] = metaData.commonTags;
+          }
+          if (timeSlotIndex > 0) {
+            target['dps'].push([valuesForTimeSlot[index], Math.round(valuesForTimeSlot[0] / 1000)]);
+          }
+        });
       }
     });
+    return target;
 
-    return dps;
+    // const dps = [];
+    //
+    // // TSDB returns datapoints has a hash of ts => value.
+    // // Can't use _.pairs(invert()) because it stringifies keys/values
+    // _.each(result.dps, (v, k) => {
+    //   if (tsdbResolution === 2) {
+    //     dps.push([v, k * 1]);
+    //   } else {
+    //     dps.push([v, k * 1000]);
+    //   }
+    // });
+    //
+    // return dps;
   }
 
-  createMetricLabel(target) {
-    if (!target.alias) {
-      return target.id;
+  nameSeries(commonTags) {
+    const arr = new Array();
+    for (const i in commonTags) {
+      arr.push(commonTags[i]);
     }
-    return target.alias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, (all, m1) => data.tags[m1]);
+    return arr.join('-');
   }
+
+  // createMetricLabel(target) {
+  //   if (!target.alias) {
+  //     return target.id;
+  //   }
+  //   return target.alias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, (all, m1) => data.tags[m1]);
+  // }
 
   convertTargetToQuery(target) {
     // filter out a target if it is 'hidden'
