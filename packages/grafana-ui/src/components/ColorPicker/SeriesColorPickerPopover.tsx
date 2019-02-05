@@ -69,8 +69,8 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
   }
 
   render() {
-    const leftButtonClass = this.state.yaxis === 1 ? 'btn-success' : 'btn-inverse';
-    const rightButtonClass = this.state.yaxis === 2 ? 'btn-success' : 'btn-inverse';
+    const leftButtonClass = this.state.yaxis === 1 ? 'btn-primary' : 'btn-inverse';
+    const rightButtonClass = this.state.yaxis === 2 ? 'btn-primary' : 'btn-inverse';
 
     return (
       <div className="p-b-1">

@@ -142,7 +142,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
-            <button className="btn-success btn btn-large" onClick={this.onCreateNewPanel}>
+            <button className="btn-primary btn btn-large" onClick={this.onCreateNewPanel}>
               Edit Panel
             </button>
             {addCopyButton}

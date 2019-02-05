@@ -63,7 +63,7 @@ exports[`Render should render teams table 1`] = `
           className="page-action-bar__spacer"
         />
         <a
-          className="btn btn-success"
+          className="btn btn-primary"
           href="org/teams/new"
         >
           New team

@@ -89,7 +89,7 @@ export class FolderPermissions extends PureComponent<Props, State> {
               </div>
             </Tooltip>
             <div className="page-action-bar__spacer" />
-            <button className="btn btn-success pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+            <button className="btn btn-primary pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
               <i className="fa fa-plus" /> Add Permission
             </button>
           </div>

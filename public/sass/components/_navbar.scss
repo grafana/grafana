@@ -158,7 +158,7 @@
   }
 
   &--primary {
-    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   }
 }
 
