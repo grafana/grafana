@@ -133,7 +133,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     return (
       <>
         <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-        <div className="flex-grow" />
+        <div className="flex-grow-1" />
         {!isAddingMixed && (
           <button className="btn navbar-button navbar-button--primary" onClick={this.onAddQueryClick}>
             Add Query
@@ -163,6 +163,11 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onMixedPickerBlur = () => {
     this.setState({ isAddingMixed: false });
+  };
+
+  onQueryChange = (query: DataQuery, index) => {
+    this.props.panel.changeQuery(query, index);
+    this.forceUpdate();
   };
 
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
@@ -201,6 +206,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                 key={query.refId}
                 panel={panel}
                 query={query}
+                onChange={query => this.onQueryChange(query, index)}
                 onRemoveQuery={this.onRemoveQuery}
                 onAddQuery={this.onAddQuery}
                 onMoveQuery={this.onMoveQuery}

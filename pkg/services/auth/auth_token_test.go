@@ -1,10 +1,15 @@
 package auth
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -45,6 +50,40 @@ func TestUserAuthToken(t *testing.T) {
 				LookupToken, err := userAuthTokenService.LookupToken(token.AuthToken)
 				So(err, ShouldEqual, ErrAuthTokenNotFound)
 				So(LookupToken, ShouldBeNil)
+			})
+
+			Convey("signing out should delete token and cookie if present", func() {
+				httpreq := &http.Request{Header: make(http.Header)}
+				httpreq.AddCookie(&http.Cookie{Name: userAuthTokenService.Cfg.LoginCookieName, Value: token.UnhashedToken})
+
+				ctx := &models.ReqContext{Context: &macaron.Context{
+					Req:  macaron.Request{Request: httpreq},
+					Resp: macaron.NewResponseWriter("POST", httptest.NewRecorder()),
+				},
+					Logger: log.New("fakelogger"),
+				}
+
+				err = userAuthTokenService.SignOutUser(ctx)
+				So(err, ShouldBeNil)
+
+				// makes sure we tell the browser to overwrite the cookie
+				cookieHeader := fmt.Sprintf("%s=; Path=/; Max-Age=0; HttpOnly", userAuthTokenService.Cfg.LoginCookieName)
+				So(ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual, cookieHeader)
+			})
+
+			Convey("signing out an none existing session should return an error", func() {
+				httpreq := &http.Request{Header: make(http.Header)}
+				httpreq.AddCookie(&http.Cookie{Name: userAuthTokenService.Cfg.LoginCookieName, Value: ""})
+
+				ctx := &models.ReqContext{Context: &macaron.Context{
+					Req:  macaron.Request{Request: httpreq},
+					Resp: macaron.NewResponseWriter("POST", httptest.NewRecorder()),
+				},
+					Logger: log.New("fakelogger"),
+				}
+
+				err = userAuthTokenService.SignOutUser(ctx)
+				So(err, ShouldNotBeNil)
 			})
 		})
 

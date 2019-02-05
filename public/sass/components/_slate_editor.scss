@@ -19,6 +19,7 @@
   border: $panel-border;
   border-radius: $border-radius;
   transition: all 0.3s;
+  line-height: $input-line-height;
 }
 
 .slate-query-field__wrapper--disabled {

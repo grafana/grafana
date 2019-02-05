@@ -12,6 +12,7 @@ import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explor
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
+import LokiDatasource from '../datasource';
 
 // Types
 import { LokiQuery } from '../types';
@@ -65,7 +66,7 @@ interface CascaderOption {
 }
 
 interface LokiQueryFieldProps {
-  datasource: any;
+  datasource: LokiDatasource;
   error?: string | JSX.Element;
   hint?: any;
   history?: any[];
@@ -80,7 +81,7 @@ interface LokiQueryFieldState {
   syntaxLoaded: boolean;
 }
 
-class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
+export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: any[];
   pluginsSearch: any[];
   languageProvider: any;

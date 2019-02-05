@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
-import { MappingType } from '../../types/panel';
+import { MappingType } from '../../types';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

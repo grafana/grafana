@@ -3,6 +3,8 @@ import React, { PureComponent } from 'react';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange, Switch } from '@grafana/ui';
+import TimeSeries from 'app/core/time_series2';
+
 import {
   LogsDedupDescription,
   LogsDedupStrategy,
@@ -205,12 +207,13 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
+    const timeSeries = data.series.map(series => new TimeSeries(series));
 
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
           <Graph
-            data={data.series}
+            data={timeSeries}
             height="100px"
             range={range}
             id={`explore-logs-graph-${exploreId}`}

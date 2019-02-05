@@ -19,6 +19,7 @@ import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
 import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
+import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import config from 'app/core/config';
 
 /** @ngInject */
@@ -51,16 +52,18 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'page-dashboard',
     })
     .when('/d-solo/:uid/:slug', {
-      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-      controller: 'SoloPanelCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      resolve: {
+        component: () => SoloPanelPage,
+      },
     })
     .when('/dashboard-solo/:type/:slug', {
-      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-      controller: 'SoloPanelCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      resolve: {
+        component: () => SoloPanelPage,
+      },
     })
     .when('/dashboard/new', {
       templateUrl: 'public/app/partials/dashboard.html',

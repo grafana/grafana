@@ -65,6 +65,10 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     }
   };
 
+  componentWillUnmount() {
+    console.log('QueryRow will unmount');
+  }
+
   onClickAddButton = () => {
     const { exploreId, index } = this.props;
     this.props.addQueryRow(exploreId, index);
@@ -107,7 +111,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
         <div className="query-row-status">
           <QueryTransactionStatus transactions={transactions} />
         </div>
-        <div className="query-row-field">
+        <div className="query-row-field flex-shrink-1">
           {QueryField ? (
             <QueryField
               datasource={datasourceInstance}
@@ -131,7 +135,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
             />
           )}
         </div>
-        <div className="gf-form-inline">
+        <div className="gf-form-inline flex-shrink-0">
           <div className="gf-form">
             <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
               <i className="fa fa-times" />

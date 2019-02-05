@@ -12,11 +12,12 @@ import { DataPanel } from './DataPanel';
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
+import { profiler } from 'app/core/profiler';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange } from '@grafana/ui';
+import { TimeRange, LoadingState } from '@grafana/ui';
 
 import variables from 'sass/_variables.scss';
 import templateSrv from 'app/features/templating/template_srv';
@@ -93,16 +94,22 @@ export class PanelChrome extends PureComponent<Props, State> {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
-  renderPanel(loading, timeSeries, width, height): JSX.Element {
+  renderPanel(loading, panelData, width, height): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.Panel;
+
+    // This is only done to increase a counter that is used by backend
+    // image rendering (phantomjs/headless chrome) to know when to capture image
+    if (loading === LoadingState.Done) {
+      profiler.renderingCompleted(panel.id);
+    }
 
     return (
       <div className="panel-content">
         <PanelComponent
           loading={loading}
-          timeSeries={timeSeries}
+          panelData={panelData}
           timeRange={timeRange}
           options={panel.getOptions(plugin.exports.PanelDefaults)}
           width={width - 2 * variables.panelHorizontalPadding}
@@ -151,7 +158,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                   onDataResponse={this.onDataResponse}
                 >
                   {({ loading, panelData }) => {
-                    return this.renderPanel(loading, panelData.timeSeries, width, height);
+                    return this.renderPanel(loading, panelData, width, height);
                   }}
                 </DataPanel>
               )}

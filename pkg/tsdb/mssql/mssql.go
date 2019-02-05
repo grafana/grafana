@@ -49,10 +49,7 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 		}
 	}
 
-	server, port, err := util.SplitIPPort(datasource.Url, "1433")
-	if err != nil {
-		return "", err
-	}
+	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
 
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
