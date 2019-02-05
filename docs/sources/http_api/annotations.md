@@ -189,6 +189,8 @@ Content-Type: application/json
 
 Updates one or more properties of an annotation that matches the specified id.
 
+The `PATCH` operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties. It does not handle updating of the `isRegion` and `regionId` properties. To make an annotation regional or vice versa, consider using the `PUT` operation.
+
 **Example Request**:
 
 ```json
@@ -198,8 +200,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 Content-Type: application/json
 
 {
-  "time":1507037197000,
-  "timeEnd":1507180807095,
   "text":"New Annotation Description",
   "tags":["tag6","tag7","tag8"]
 }

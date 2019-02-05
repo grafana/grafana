@@ -222,7 +222,7 @@ func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
 
 	if err != nil || len(items) == 0 {
-		return Error(500, "Could not find annotation to update", err)
+		return Error(404, "Could not find annotation to update", err)
 	}
 
 	existing := annotations.Item{
