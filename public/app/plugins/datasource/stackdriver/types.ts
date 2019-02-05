@@ -30,14 +30,14 @@ export interface StackdriverQuery extends DataQuery {
   refId: string;
   crossSeriesReducer: string;
   alignmentPeriod?: string;
-  perSeriesAligner?: string;
+  perSeriesAligner: string;
   groupBys?: string[];
   filters?: string[];
   aliasBy?: string;
-  metricKind?: string;
-  valueType?: string;
-  datasourceId: number;
-  view: string;
+  metricKind: string;
+  valueType: string;
+  datasourceId?: number;
+  view?: string;
 }
 
 export interface AnnotationTarget {

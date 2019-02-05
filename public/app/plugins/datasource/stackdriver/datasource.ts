@@ -40,9 +40,7 @@ export default class StackdriverDatasource implements DataSourceApi<StackdriverQ
           alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod, options.scopedVars || {}),
           groupBys: this.interpolateGroupBys(t.groupBys, options.scopedVars),
           view: t.view || 'FULL',
-          filters: (t.filters || []).map(f => {
-            return this.templateSrv.replace(f, options.scopedVars || {});
-          }),
+          filters: this.interpolateFilters(t.filters, options.scopedVars),
           aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
           type: 'timeSeriesQuery',
         };
@@ -64,7 +62,13 @@ export default class StackdriverDatasource implements DataSourceApi<StackdriverQ
     }
   }
 
-  async getLabels(metricType, refId) {
+  interpolateFilters(filters: string[], scopedVars: object) {
+    return (filters || []).map(f => {
+      return this.templateSrv.replace(f, scopedVars || {}, 'regex');
+    });
+  }
+
+  async getLabels(metricType: string, refId: string) {
     const response = await this.getTimeSeries({
       targets: [
         {
