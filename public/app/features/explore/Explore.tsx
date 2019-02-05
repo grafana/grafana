@@ -21,7 +21,7 @@ import TimePicker, { parseTime } from './TimePicker';
 import { changeSize, changeTime, initializeExplore, modifyQueries, scanStart, setQueries } from './state/actions';
 
 // Types
-import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps } from '@grafana/ui';
+import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
 import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
@@ -34,7 +34,7 @@ interface ExploreProps {
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
   datasourceError: string;
-  datasourceInstance: any;
+  datasourceInstance: ExploreDataSourceApi;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
