@@ -8,6 +8,7 @@ import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import { changeDatasource, clearQueries, splitClose, runQueries, splitOpen } from './state/actions';
 import TimePicker from './TimePicker';
+import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 enum IconSide {
   left = 'left',
@@ -79,6 +80,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     this.props.runQuery(this.props.exploreId);
   };
 
+  onCloseTimePicker = () => {
+    this.props.timepickerRef.current.setState({ isOpen: false });
+  };
+
   render() {
     const {
       datasourceMissing,
@@ -137,7 +142,9 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </div>
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
-              <TimePicker ref={timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
+              <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
+                <TimePicker ref={timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
+              </ClickOutsideWrapper>
             </div>
             <div className="explore-toolbar-content-item">
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClearAll}>
