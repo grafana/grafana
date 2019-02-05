@@ -81,7 +81,6 @@ export function initDashboard({
 
     try {
       switch (routeInfo) {
-        // handle old urls with no uid
         case DashboardRouteInfo.Home: {
           // load home dash
           dashDTO = await getBackendSrv().get('/api/dashboards/home');
@@ -130,6 +129,7 @@ export function initDashboard({
       }
     } catch (err) {
       dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
+      dispatch(notifyApp(createErrorNotification('Dashboard fetch failed', err)));
       console.log(err);
       return;
     }
@@ -143,6 +143,7 @@ export function initDashboard({
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
       dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
+      dispatch(notifyApp(createErrorNotification('Dashboard model initializing failure', err)));
       console.log(err);
       return;
     }
@@ -168,7 +169,7 @@ export function initDashboard({
     try {
       await variableSrv.init(dashboard);
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Templating init failed')));
+      dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
       console.log(err);
     }
 
@@ -194,7 +195,7 @@ export function initDashboard({
 
       keybindingSrv.setupDashboardBindings($scope, dashboard, onRemovePanel);
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Dashboard init failed', err.toString())));
+      dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
       console.log(err);
     }
 
