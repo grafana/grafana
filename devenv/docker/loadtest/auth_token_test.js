@@ -65,7 +65,7 @@ export default (data) => {
     }
   });
 
-  sleep(1)
+  sleep(5)
 }
 
 export const teardown = (data) => {}
