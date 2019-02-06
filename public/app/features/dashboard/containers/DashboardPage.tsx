@@ -25,7 +25,7 @@ import { notifyApp } from 'app/core/actions';
 import { StoreState, DashboardLoadingState, DashboardRouteInfo } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-interface Props {
+export interface Props {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
@@ -46,7 +46,7 @@ interface Props {
   updateLocation: typeof updateLocation;
 }
 
-interface State {
+export interface State {
   isSettingsOpening: boolean;
   isEditing: boolean;
   isFullscreen: boolean;
