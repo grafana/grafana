@@ -1,15 +1,9 @@
-package authtoken
+package auth
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
-)
-
-// Typed errors
-var (
-	ErrAuthTokenNotFound = errors.New("user auth token not found")
 )
 
 type userAuthToken struct {
@@ -33,7 +27,11 @@ func userAuthTokenFromUserToken(ut *models.UserToken) *userAuthToken {
 	return &uat
 }
 
-func (uat *userAuthToken) fromUserToken(ut *models.UserToken) {
+func (uat *userAuthToken) fromUserToken(ut *models.UserToken) error {
+	if uat == nil {
+		return fmt.Errorf("needs pointer to userAuthToken struct")
+	}
+
 	uat.Id = ut.Id
 	uat.UserId = ut.UserId
 	uat.AuthToken = ut.AuthToken
@@ -46,6 +44,8 @@ func (uat *userAuthToken) fromUserToken(ut *models.UserToken) {
 	uat.CreatedAt = ut.CreatedAt
 	uat.UpdatedAt = ut.UpdatedAt
 	uat.UnhashedToken = ut.UnhashedToken
+
+	return nil
 }
 
 func (uat *userAuthToken) toUserToken(ut *models.UserToken) error {

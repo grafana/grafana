@@ -1,4 +1,4 @@
-package authtoken
+package auth
 
 import (
 	"encoding/json"
@@ -46,7 +46,7 @@ func TestUserAuthToken(t *testing.T) {
 
 			Convey("When lookup hashed token should return user auth token not found error", func() {
 				userToken, err := userAuthTokenService.LookupToken(userToken.AuthToken)
-				So(err, ShouldEqual, ErrAuthTokenNotFound)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 				So(userToken, ShouldBeNil)
 			})
 
@@ -61,13 +61,13 @@ func TestUserAuthToken(t *testing.T) {
 
 			Convey("revoking nil token should return error", func() {
 				err = userAuthTokenService.RevokeToken(nil)
-				So(err, ShouldEqual, ErrAuthTokenNotFound)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 
 			Convey("revoking non-existing token should return error", func() {
 				userToken.Id = 1000
 				err = userAuthTokenService.RevokeToken(userToken)
-				So(err, ShouldEqual, ErrAuthTokenNotFound)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 		})
 
@@ -112,7 +112,7 @@ func TestUserAuthToken(t *testing.T) {
 				}
 
 				notGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
-				So(err, ShouldEqual, ErrAuthTokenNotFound)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 				So(notGood, ShouldBeNil)
 			})
 
@@ -140,7 +140,7 @@ func TestUserAuthToken(t *testing.T) {
 				}
 
 				notGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
-				So(err, ShouldEqual, ErrAuthTokenNotFound)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 				So(notGood, ShouldBeNil)
 			})
 		})
@@ -164,7 +164,8 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			var tok models.UserToken
-			model.toUserToken(&tok)
+			err = model.toUserToken(&tok)
+			So(err, ShouldBeNil)
 
 			getTime = func() time.Time {
 				return t.Add(time.Hour)
@@ -419,7 +420,7 @@ func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 
 	sqlstore := sqlstore.InitTestDB(t)
-	tokenService := &UserAuthTokenServiceImpl{
+	tokenService := &UserAuthTokenService{
 		SQLStore: sqlstore,
 		Cfg: &setting.Cfg{
 			LoginMaxInactiveLifetimeDays:     7,
@@ -438,7 +439,7 @@ func createTestContext(t *testing.T) *testContext {
 
 type testContext struct {
 	sqlstore     *sqlstore.SqlStore
-	tokenService *UserAuthTokenServiceImpl
+	tokenService *UserAuthTokenService
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {

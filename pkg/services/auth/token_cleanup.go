@@ -1,11 +1,11 @@
-package authtoken
+package auth
 
 import (
 	"context"
 	"time"
 )
 
-func (srv *UserAuthTokenServiceImpl) Run(ctx context.Context) error {
+func (srv *UserAuthTokenService) Run(ctx context.Context) error {
 	if srv.Cfg.ExpiredTokensCleanupIntervalDays <= 0 {
 		srv.log.Debug("cleanup of expired auth tokens are disabled")
 		return nil
@@ -31,7 +31,7 @@ func (srv *UserAuthTokenServiceImpl) Run(ctx context.Context) error {
 	}
 }
 
-func (srv *UserAuthTokenServiceImpl) deleteExpiredTokens(maxInactiveLifetime, maxLifetime time.Duration) (int64, error) {
+func (srv *UserAuthTokenService) deleteExpiredTokens(maxInactiveLifetime, maxLifetime time.Duration) (int64, error) {
 	createdBefore := getTime().Add(-maxLifetime)
 	rotatedBefore := getTime().Add(-maxInactiveLifetime)
 

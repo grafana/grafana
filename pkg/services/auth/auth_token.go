@@ -1,4 +1,4 @@
-package authtoken
+package auth
 
 import (
 	"crypto/sha256"
@@ -16,30 +16,26 @@ import (
 )
 
 func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "AuthTokenService",
-		Instance:     &UserAuthTokenServiceImpl{},
-		InitPriority: registry.Low,
-	})
+	registry.RegisterService(&UserAuthTokenService{})
 }
 
 var getTime = time.Now
 
 const urgentRotateTime = 1 * time.Minute
 
-type UserAuthTokenServiceImpl struct {
+type UserAuthTokenService struct {
 	SQLStore          *sqlstore.SqlStore            `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
 	Cfg               *setting.Cfg                  `inject:""`
 	log               log.Logger
 }
 
-func (s *UserAuthTokenServiceImpl) Init() error {
+func (s *UserAuthTokenService) Init() error {
 	s.log = log.New("auth")
 	return nil
 }
 
-func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (*models.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
 	token, err := util.RandomHex(16)
 	if err != nil {
@@ -77,7 +73,7 @@ func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent
 	return &userToken, err
 }
 
-func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*models.UserToken, error) {
+func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	if setting.Env == setting.DEV {
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
@@ -95,7 +91,7 @@ func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*models.Us
 	}
 
 	if !exists {
-		return nil, ErrAuthTokenNotFound
+		return nil, models.ErrUserTokenNotFound
 	}
 
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {
@@ -142,7 +138,7 @@ func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*models.Us
 	return &userToken, err
 }
 
-func (s *UserAuthTokenServiceImpl) TryRotateToken(token *models.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *UserAuthTokenService) TryRotateToken(token *models.UserToken, clientIP, userAgent string) (bool, error) {
 	if token == nil {
 		return false, nil
 	}
@@ -201,9 +197,9 @@ func (s *UserAuthTokenServiceImpl) TryRotateToken(token *models.UserToken, clien
 	return false, nil
 }
 
-func (s *UserAuthTokenServiceImpl) RevokeToken(token *models.UserToken) error {
+func (s *UserAuthTokenService) RevokeToken(token *models.UserToken) error {
 	if token == nil {
-		return ErrAuthTokenNotFound
+		return models.ErrUserTokenNotFound
 	}
 
 	model := userAuthTokenFromUserToken(token)
@@ -215,7 +211,7 @@ func (s *UserAuthTokenServiceImpl) RevokeToken(token *models.UserToken) error {
 
 	if rowsAffected == 0 {
 		s.log.Debug("user auth token not found/revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
-		return ErrAuthTokenNotFound
+		return models.ErrUserTokenNotFound
 	}
 
 	s.log.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
