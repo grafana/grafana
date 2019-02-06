@@ -1,7 +1,7 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
-import { DashboardRouteInfo, DashboardLoadingState } from 'app/types';
+import { DashboardRouteInfo } from 'app/types';
 
 const mockStore = configureMockStore([thunk]);
 
@@ -98,13 +98,11 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should send action to set loading state to fetching', () => {
-    expect(ctx.actions[0].type).toBe('SET_DASHBOARD_LOADING_STATE');
-    expect(ctx.actions[0].payload).toBe(DashboardLoadingState.Fetching);
+    expect(ctx.actions[0].type).toBe('DASHBOARD_INIT_FETCHING');
   });
 
   it('Should send action to set loading state to Initializing', () => {
-    expect(ctx.actions[1].type).toBe('SET_DASHBOARD_LOADING_STATE');
-    expect(ctx.actions[1].payload).toBe(DashboardLoadingState.Initializing);
+    expect(ctx.actions[1].type).toBe('DASHBOARD_INIT_SERVICES');
   });
 
   it('Should update location with orgId query param', () => {
@@ -113,7 +111,7 @@ describeInitScenario('Initializing new dashboard', ctx => {
   });
 
   it('Should send action to set dashboard model', () => {
-    expect(ctx.actions[3].type).toBe('SET_DASHBOARD_MODEL');
+    expect(ctx.actions[3].type).toBe('DASHBOARD_INIT_COMLETED');
     expect(ctx.actions[3].payload.title).toBe('New dashboard');
   });
 

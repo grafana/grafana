@@ -2,6 +2,7 @@ import { DashboardAcl } from './acl';
 
 export interface MutableDashboard {
   meta: DashboardMeta;
+  destroy: () => void;
 }
 
 export interface DashboardDTO {
@@ -44,12 +45,17 @@ export enum DashboardRouteInfo {
   Scripted = 'scripted-dashboard',
 }
 
-export enum DashboardLoadingState {
+export enum DashboardInitPhase {
   NotStarted = 'Not started',
   Fetching = 'Fetching',
-  Initializing = 'Initializing',
-  Error = 'Error',
-  Done = 'Done',
+  Services = 'Services',
+  Failed = 'Failed',
+  Completed = 'Completed',
+}
+
+export interface DashboardInitError {
+  message: string;
+  error: any;
 }
 
 export const KIOSK_MODE_TV = 'tv';
@@ -57,7 +63,8 @@ export type KioskUrlValue = 'tv' | '1' | true;
 
 export interface DashboardState {
   model: MutableDashboard | null;
-  loadingState: DashboardLoadingState;
-  isLoadingSlow: boolean;
+  initPhase: DashboardInitPhase;
+  isInitSlow: boolean;
+  initError?: DashboardInitError;
   permissions: DashboardAcl[] | null;
 }

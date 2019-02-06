@@ -2,8 +2,8 @@ import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
-import { setDashboardModel } from '../state/actions';
-import { DashboardRouteInfo, DashboardLoadingState } from 'app/types';
+import { cleanUpDashboard } from '../state/actions';
+import { DashboardRouteInfo, DashboardInitPhase } from 'app/types';
 
 jest.mock('sass/_variables.scss', () => ({
   panelhorizontalpadding: 10,
@@ -22,13 +22,13 @@ function setup(propOverrides?: Partial<Props>): ShallowWrapper<Props, State, Das
     routeInfo: DashboardRouteInfo.Normal,
     urlEdit: false,
     urlFullscreen: false,
-    loadingState: DashboardLoadingState.Done,
-    isLoadingSlow: false,
+    initPhase: DashboardInitPhase.Completed,
+    isInitSlow: false,
     initDashboard: jest.fn(),
     updateLocation: jest.fn(),
     notifyApp: jest.fn(),
     dashboard: null,
-    setDashboardModel: setDashboardModel,
+    cleanUpDashboard: cleanUpDashboard,
   };
 
   Object.assign(props, propOverrides);
@@ -66,7 +66,7 @@ describe('DashboardPage', () => {
         canEdit: true,
         canSave: true,
       });
-      wrapper.setProps({ dashboard, loadingState: DashboardLoadingState.Done });
+      wrapper.setProps({ dashboard, initPhase: DashboardInitPhase.Completed });
     });
 
     it('Should update title', () => {

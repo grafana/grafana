@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
@@ -14,15 +15,22 @@ import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { CustomScrollbar } from '@grafana/ui';
+import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
-import { setDashboardModel } from '../state/actions';
+import { cleanUpDashboard } from '../state/actions';
 import { updateLocation } from 'app/core/actions';
 import { notifyApp } from 'app/core/actions';
 
 // Types
-import { StoreState, DashboardLoadingState, DashboardRouteInfo } from 'app/types';
+import {
+  StoreState,
+  DashboardInitPhase,
+  DashboardRouteInfo,
+  DashboardInitError,
+  AppNotificationSeverity,
+} from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 export interface Props {
@@ -37,11 +45,12 @@ export interface Props {
   routeInfo: DashboardRouteInfo;
   urlEdit: boolean;
   urlFullscreen: boolean;
-  loadingState: DashboardLoadingState;
-  isLoadingSlow: boolean;
+  initPhase: DashboardInitPhase;
+  isInitSlow: boolean;
   dashboard: DashboardModel | null;
+  initError?: DashboardInitError;
   initDashboard: typeof initDashboard;
-  setDashboardModel: typeof setDashboardModel;
+  cleanUpDashboard: typeof cleanUpDashboard;
   notifyApp: typeof notifyApp;
   updateLocation: typeof updateLocation;
 }
@@ -83,7 +92,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   componentWillUnmount() {
     if (this.props.dashboard) {
       this.props.dashboard.destroy();
-      this.props.setDashboardModel(null);
+      this.props.cleanUpDashboard();
     }
   }
 
@@ -204,23 +213,37 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.setState({ scrollTop: 0 });
   };
 
-  renderLoadingState() {
+  renderSlowInitState() {
     return (
       <div className="dashboard-loading">
         <div className="dashboard-loading__text">
-          <i className="fa fa-spinner fa-spin" /> Dashboard {this.props.loadingState}
+          <i className="fa fa-spinner fa-spin" /> {this.props.initPhase}
         </div>
       </div>
     );
   }
 
+  renderInitFailedState() {
+    const { initError } = this.props;
+
+    return (
+      <div className="dashboard-loading">
+        <AlertBox
+          severity={AppNotificationSeverity.Error}
+          title={initError.message}
+          text={getMessageFromError(initError.error)}
+        />
+      </div>
+    );
+  }
+
   render() {
-    const { dashboard, editview, $injector, isLoadingSlow } = this.props;
+    const { dashboard, editview, $injector, isInitSlow, initError } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop } = this.state;
 
     if (!dashboard) {
-      if (isLoadingSlow) {
-        return this.renderLoadingState();
+      if (isInitSlow) {
+        return this.renderSlowInitState();
       }
       return null;
     }
@@ -249,6 +272,8 @@ export class DashboardPage extends PureComponent<Props, State> {
           <CustomScrollbar autoHeightMin={'100%'} setScrollTop={this.setScrollTop} scrollTop={scrollTop}>
             {editview && <DashboardSettings dashboard={dashboard} />}
 
+            {initError && this.renderInitFailedState()}
+
             <div className={gridWrapperClasses}>
               {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
               <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
@@ -269,14 +294,15 @@ const mapStateToProps = (state: StoreState) => ({
   urlFolderId: state.location.query.folderId,
   urlFullscreen: state.location.query.fullscreen === true,
   urlEdit: state.location.query.edit === true,
-  loadingState: state.dashboard.loadingState,
-  isLoadingSlow: state.dashboard.isLoadingSlow,
+  initPhase: state.dashboard.initPhase,
+  isInitSlow: state.dashboard.isInitSlow,
+  initError: state.dashboard.initError,
   dashboard: state.dashboard.model as DashboardModel,
 });
 
 const mapDispatchToProps = {
   initDashboard,
-  setDashboardModel,
+  cleanUpDashboard,
   notifyApp,
   updateLocation,
 };

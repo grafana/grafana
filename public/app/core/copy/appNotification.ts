@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 const defaultSuccessNotification: AppNotification = {
   title: '',
@@ -33,21 +33,10 @@ export const createSuccessNotification = (title: string, text?: string): AppNoti
 });
 
 export const createErrorNotification = (title: string, text?: any): AppNotification => {
-  // Handling if text is an error object
-  if (text && !_.isString(text)) {
-    if (text.message) {
-      text = text.message;
-    } else if (text.data && text.data.message) {
-      text = text.data.message;
-    } else {
-      text = text.toString();
-    }
-  }
-
   return {
     ...defaultErrorNotification,
     title: title,
-    text: text,
+    text: getMessageFromError(text),
     id: Date.now(),
   };
 };

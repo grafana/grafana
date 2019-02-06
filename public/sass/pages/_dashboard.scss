@@ -282,6 +282,11 @@ div.flot-text {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  .alert {
+    max-width: 600px;
+    min-width: 600px;
+  }
 }
 
 .dashboard-loading__text {

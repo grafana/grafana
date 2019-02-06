@@ -100,7 +100,6 @@ const mapStateToProps = (state: StoreState) => ({
   urlSlug: state.location.routeParams.slug,
   urlType: state.location.routeParams.type,
   urlPanelId: state.location.query.panelId,
-  loadingState: state.dashboard.loadingState,
   dashboard: state.dashboard.model as DashboardModel,
 });
 

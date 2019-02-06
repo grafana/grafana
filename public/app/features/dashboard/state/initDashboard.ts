@@ -12,17 +12,16 @@ import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { updateLocation } from 'app/core/actions';
 import { notifyApp } from 'app/core/actions';
 import locationUtil from 'app/core/utils/location_util';
-import { setDashboardLoadingState, setDashboardModel, setDashboardLoadingSlow } from './actions';
+import {
+  dashboardInitFetching,
+  dashboardInitCompleted,
+  dashboardInitFailed,
+  dashboardInitSlow,
+  dashboardInitServices,
+} from './actions';
 
 // Types
-import {
-  DashboardLoadingState,
-  DashboardRouteInfo,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-  DashboardDTO,
-} from 'app/types';
+import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 
 export interface InitDashboardArgs {
@@ -106,8 +105,7 @@ async function fetchDashboard(
         throw { message: 'Unknown route ' + args.routeInfo };
     }
   } catch (err) {
-    dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
-    dispatch(notifyApp(createErrorNotification('Dashboard fetch failed', err)));
+    dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
     console.log(err);
     return null;
   }
@@ -125,13 +123,13 @@ async function fetchDashboard(
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
     // set fetching state
-    dispatch(setDashboardLoadingState(DashboardLoadingState.Fetching));
+    dispatch(dashboardInitFetching());
 
     // Detect slow loading / initializing and set state flag
     // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
     setTimeout(() => {
       if (getState().dashboard.model === null) {
-        dispatch(setDashboardLoadingSlow());
+        dispatch(dashboardInitSlow());
       }
     }, 500);
 
@@ -144,15 +142,14 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // set initializing state
-    dispatch(setDashboardLoadingState(DashboardLoadingState.Initializing));
+    dispatch(dashboardInitServices());
 
     // create model
     let dashboard: DashboardModel;
     try {
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
-      dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
-      dispatch(notifyApp(createErrorNotification('Dashboard model initializing failure', err)));
+      dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
       console.log(err);
       return;
     }
@@ -203,8 +200,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // legacy srv state
     dashboardSrv.setCurrent(dashboard);
-    // set model in redux (even though it's mutable)
-    dispatch(setDashboardModel(dashboard));
+    // yay we are done
+    dispatch(dashboardInitCompleted(dashboard));
   };
 }
 

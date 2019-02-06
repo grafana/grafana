@@ -8,20 +8,36 @@ import { loadPluginDashboards } from '../../plugins/state/actions';
 import { notifyApp } from 'app/core/actions';
 
 // Types
-import { ThunkResult } from 'app/types';
 import {
+  ThunkResult,
   DashboardAcl,
   DashboardAclDTO,
   PermissionLevel,
   DashboardAclUpdateDTO,
   NewDashboardAclItem,
-} from 'app/types/acl';
-import { DashboardLoadingState, MutableDashboard } from 'app/types/dashboard';
+  MutableDashboard,
+  DashboardInitError,
+} from 'app/types';
 
 export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
-export const setDashboardLoadingState = actionCreatorFactory<DashboardLoadingState>('SET_DASHBOARD_LOADING_STATE').create();
-export const setDashboardModel = actionCreatorFactory<MutableDashboard>('SET_DASHBOARD_MODEL').create();
-export const setDashboardLoadingSlow = noPayloadActionCreatorFactory('SET_DASHBOARD_LOADING_SLOW').create();
+
+export const dashboardInitFetching = noPayloadActionCreatorFactory('DASHBOARD_INIT_FETCHING').create();
+
+export const dashboardInitServices = noPayloadActionCreatorFactory('DASHBOARD_INIT_SERVICES').create();
+
+export const dashboardInitSlow = noPayloadActionCreatorFactory('SET_DASHBOARD_INIT_SLOW').create();
+
+export const dashboardInitCompleted = actionCreatorFactory<MutableDashboard>('DASHBOARD_INIT_COMLETED').create();
+
+/*
+ * Unrecoverable init failure (fetch or model creation failed)
+ */
+export const dashboardInitFailed = actionCreatorFactory<DashboardInitError>('DASHBOARD_INIT_FAILED').create();
+
+/*
+ * When leaving dashboard, resets state
+ * */
+export const cleanUpDashboard = noPayloadActionCreatorFactory('DASHBOARD_CLEAN_UP').create();
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {
