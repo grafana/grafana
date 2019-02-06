@@ -39,7 +39,7 @@ export interface Props {
   urlFullscreen: boolean;
   loadingState: DashboardLoadingState;
   isLoadingSlow: boolean;
-  dashboard: DashboardModel;
+  dashboard: DashboardModel | null;
   initDashboard: typeof initDashboard;
   setDashboardModel: typeof setDashboardModel;
   notifyApp: typeof notifyApp;
