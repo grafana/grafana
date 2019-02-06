@@ -105,12 +105,56 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(stillGood, ShouldNotBeNil)
 
-			getTime = func() time.Time {
-				return t.Add(24 * 7 * time.Hour)
-			}
-			notGood, err := userAuthTokenService.LookupToken(model.UnhashedToken)
-			So(err, ShouldEqual, ErrAuthTokenNotFound)
-			So(notGood, ShouldBeNil)
+			model, err = ctx.getAuthTokenByID(model.Id)
+			So(err, ShouldBeNil)
+
+			Convey("when rotated_at is 6:59:59 ago should find token", func() {
+				getTime = func() time.Time {
+					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour).Add(-time.Second)
+				}
+
+				stillGood, err = userAuthTokenService.LookupToken(stillGood.GetToken())
+				So(err, ShouldBeNil)
+				So(stillGood, ShouldNotBeNil)
+			})
+
+			Convey("when rotated_at is 7:00:00 ago should not find token", func() {
+				getTime = func() time.Time {
+					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour)
+				}
+
+				notGood, err := userAuthTokenService.LookupToken(userToken.GetToken())
+				So(err, ShouldEqual, ErrAuthTokenNotFound)
+				So(notGood, ShouldBeNil)
+			})
+
+			Convey("when rotated_at is 5 days ago and created_at is 29 days and 23:59:59 ago should not find token", func() {
+				updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+				So(err, ShouldBeNil)
+				So(updated, ShouldBeTrue)
+
+				getTime = func() time.Time {
+					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour).Add(-time.Second)
+				}
+
+				stillGood, err = userAuthTokenService.LookupToken(stillGood.GetToken())
+				So(err, ShouldBeNil)
+				So(stillGood, ShouldNotBeNil)
+			})
+
+			Convey("when rotated_at is 5 days ago and created_at is 30 days ago should not find token", func() {
+				updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+				So(err, ShouldBeNil)
+				So(updated, ShouldBeTrue)
+
+				getTime = func() time.Time {
+					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
+				}
+
+				notGood, err := userAuthTokenService.LookupToken(userToken.GetToken())
+				So(err, ShouldEqual, ErrAuthTokenNotFound)
+				So(notGood, ShouldBeNil)
+			})
 		})
 
 		Convey("can properly rotate tokens", func() {
@@ -374,6 +418,20 @@ func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
 func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
 	sess := c.sqlstore.NewSession()
 	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
+	if err != nil {
+		return false, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected == 1, nil
+}
+
+func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
+	sess := c.sqlstore.NewSession()
+	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
 	if err != nil {
 		return false, err
 	}

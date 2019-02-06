@@ -81,10 +81,13 @@ func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (auth.UserT
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
 	}
 
-	expireBefore := getTime().Add(time.Duration(-86400*s.Cfg.LoginMaxInactiveLifetimeDays) * time.Second).Unix()
+	tokenMaxLifetime := time.Duration(s.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
+	tokenMaxInactiveLifetime := time.Duration(s.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
+	createdAfter := getTime().Add(-tokenMaxLifetime).Unix()
+	rotatedAfter := getTime().Add(-tokenMaxInactiveLifetime).Unix()
 
 	var model userAuthToken
-	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ?", hashedToken, hashedToken, expireBefore).Get(&model)
+	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ? AND rotated_at > ?", hashedToken, hashedToken, createdAfter, rotatedAfter).Get(&model)
 	if err != nil {
 		return nil, err
 	}
