@@ -52,7 +52,7 @@ export class GaugePanel extends PureComponent<Props> {
       gauges.push(
         <div className="singlestat-panel" key={`gauge-${i}`} style={style}>
           {this.renderGauge(timeSeries[i].stats[options.stat], gaugeWidth, gaugeHeight, theme)}
-          <div style={{ textAlign: 'center' }}>Gauge {i}</div>
+          <div style={{ textAlign: 'center' }}>{timeSeries[i].label}</div>
         </div>
       );
     }
