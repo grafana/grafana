@@ -40,7 +40,7 @@ func (s *UserAuthTokenServiceImpl) Init() error {
 	return nil
 }
 
-func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (auth.UserToken, error) {
+func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (*auth.UserToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
 	token, err := util.RandomHex(16)
 	if err != nil {
@@ -72,10 +72,13 @@ func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent
 
 	s.log.Debug("user auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
 
-	return userAuthToken.toUserToken()
+	var userToken auth.UserToken
+	err = userAuthToken.toUserToken(&userToken)
+
+	return &userToken, err
 }
 
-func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (auth.UserToken, error) {
+func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*auth.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	if setting.Env == setting.DEV {
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
@@ -133,18 +136,19 @@ func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (auth.UserT
 	}
 
 	model.UnhashedToken = unhashedToken
-	return model.toUserToken()
+
+	var userToken auth.UserToken
+	err = model.toUserToken(&userToken)
+
+	return &userToken, err
 }
 
-func (s *UserAuthTokenServiceImpl) TryRotateToken(token auth.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *UserAuthTokenServiceImpl) TryRotateToken(token *auth.UserToken, clientIP, userAgent string) (bool, error) {
 	if token == nil {
 		return false, nil
 	}
 
-	model, err := extractModelFromToken(token)
-	if err != nil {
-		return false, err
-	}
+	model := userAuthTokenFromUserToken(token)
 
 	now := getTime()
 
@@ -191,21 +195,19 @@ func (s *UserAuthTokenServiceImpl) TryRotateToken(token auth.UserToken, clientIP
 	s.log.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
 	if affected > 0 {
 		model.UnhashedToken = newToken
+		model.toUserToken(token)
 		return true, nil
 	}
 
 	return false, nil
 }
 
-func (s *UserAuthTokenServiceImpl) RevokeToken(token auth.UserToken) error {
+func (s *UserAuthTokenServiceImpl) RevokeToken(token *auth.UserToken) error {
 	if token == nil {
 		return ErrAuthTokenNotFound
 	}
 
-	model, err := extractModelFromToken(token)
-	if err != nil {
-		return err
-	}
+	model := userAuthTokenFromUserToken(token)
 
 	rowsAffected, err := s.SQLStore.NewSession().Delete(model)
 	if err != nil {

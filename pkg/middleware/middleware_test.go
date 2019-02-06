@@ -157,10 +157,10 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
-				return &userTokenImpl{
-					userId: 12,
-					token:  unhashedToken,
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
+				return &auth.UserToken{
+					UserId:        12,
+					UnhashedToken: unhashedToken,
 				}, nil
 			}
 
@@ -169,8 +169,8 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("should init context with user info", func() {
 				So(sc.context.IsSignedIn, ShouldBeTrue)
 				So(sc.context.UserId, ShouldEqual, 12)
-				So(sc.context.UserToken.GetUserId(), ShouldEqual, 12)
-				So(sc.context.UserToken.GetToken(), ShouldEqual, "token")
+				So(sc.context.UserToken.UserId, ShouldEqual, 12)
+				So(sc.context.UserToken.UnhashedToken, ShouldEqual, "token")
 			})
 
 			Convey("should not set cookie", func() {
@@ -186,15 +186,15 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
-				return &userTokenImpl{
-					userId: 12,
-					token:  unhashedToken,
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
+				return &auth.UserToken{
+					UserId:        12,
+					UnhashedToken: "",
 				}, nil
 			}
 
-			sc.userAuthTokenService.tryRotateTokenProvider = func(userToken auth.UserToken, clientIP, userAgent string) (bool, error) {
-				userToken.(fakeUserToken).SetToken("rotated")
+			sc.userAuthTokenService.tryRotateTokenProvider = func(userToken *auth.UserToken, clientIP, userAgent string) (bool, error) {
+				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
 
@@ -216,8 +216,8 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("should init context with user info", func() {
 				So(sc.context.IsSignedIn, ShouldBeTrue)
 				So(sc.context.UserId, ShouldEqual, 12)
-				So(sc.context.UserToken.GetUserId(), ShouldEqual, 12)
-				So(sc.context.UserToken.GetToken(), ShouldEqual, "rotated")
+				So(sc.context.UserToken.UserId, ShouldEqual, 12)
+				So(sc.context.UserToken.UnhashedToken, ShouldEqual, "rotated")
 			})
 
 			Convey("should set cookie", func() {
@@ -228,7 +228,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("Invalid/expired auth token in cookie", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
 				return nil, authtoken.ErrAuthTokenNotFound
 			}
 
@@ -679,70 +679,48 @@ func (sc *scenarioContext) exec() {
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *m.ReqContext)
 
-type fakeUserToken interface {
-	auth.UserToken
-	SetToken(token string)
-}
-
-type userTokenImpl struct {
-	userId int64
-	token  string
-}
-
-func (ut *userTokenImpl) GetUserId() int64 {
-	return ut.userId
-}
-
-func (ut *userTokenImpl) GetToken() string {
-	return ut.token
-}
-
-func (ut *userTokenImpl) SetToken(token string) {
-	ut.token = token
-}
-
 type fakeUserAuthTokenService struct {
-	createTokenProvider    func(userId int64, clientIP, userAgent string) (auth.UserToken, error)
-	tryRotateTokenProvider func(token auth.UserToken, clientIP, userAgent string) (bool, error)
-	lookupTokenProvider    func(unhashedToken string) (auth.UserToken, error)
-	revokeTokenProvider    func(token auth.UserToken) error
+	createTokenProvider    func(userId int64, clientIP, userAgent string) (*auth.UserToken, error)
+	tryRotateTokenProvider func(token *auth.UserToken, clientIP, userAgent string) (bool, error)
+	lookupTokenProvider    func(unhashedToken string) (*auth.UserToken, error)
+	revokeTokenProvider    func(token *auth.UserToken) error
 }
 
 func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
 	return &fakeUserAuthTokenService{
-		createTokenProvider: func(userId int64, clientIP, userAgent string) (auth.UserToken, error) {
-			return &userTokenImpl{
-				userId: 0,
-				token:  "",
+		createTokenProvider: func(userId int64, clientIP, userAgent string) (*auth.UserToken, error) {
+			return &auth.UserToken{
+				UserId:        0,
+				UnhashedToken: "",
 			}, nil
 		},
-		tryRotateTokenProvider: func(token auth.UserToken, clientIP, userAgent string) (bool, error) {
+		tryRotateTokenProvider: func(token *auth.UserToken, clientIP, userAgent string) (bool, error) {
 			return false, nil
 		},
-		lookupTokenProvider: func(unhashedToken string) (auth.UserToken, error) {
-			return &userTokenImpl{
-				userId: 0,
-				token:  "",
+		lookupTokenProvider: func(unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
+				UserId:        0,
+				UnhashedToken: "",
 			}, nil
 		},
-		revokeTokenProvider: func(token auth.UserToken) error {
+		revokeTokenProvider: func(token *auth.UserToken) error {
 			return nil
 		},
 	}
 }
 
-func (s *fakeUserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (auth.UserToken, error) {
+func (s *fakeUserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*auth.UserToken, error) {
 	return s.createTokenProvider(userId, clientIP, userAgent)
 }
 
-func (s *fakeUserAuthTokenService) LookupToken(unhashedToken string) (auth.UserToken, error) {
+func (s *fakeUserAuthTokenService) LookupToken(unhashedToken string) (*auth.UserToken, error) {
 	return s.lookupTokenProvider(unhashedToken)
 }
 
-func (s *fakeUserAuthTokenService) TryRotateToken(token auth.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *fakeUserAuthTokenService) TryRotateToken(token *auth.UserToken, clientIP, userAgent string) (bool, error) {
 	return s.tryRotateTokenProvider(token, clientIP, userAgent)
 }
 
-func (s *fakeUserAuthTokenService) RevokeToken(token auth.UserToken) error {
+func (s *fakeUserAuthTokenService) RevokeToken(token *auth.UserToken) error {
 	return s.revokeTokenProvider(token)
 }

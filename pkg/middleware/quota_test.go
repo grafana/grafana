@@ -81,10 +81,10 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (auth.UserToken, error) {
-				return &userTokenImpl{
-					userId: 12,
-					token:  "",
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
+				return &auth.UserToken{
+					UserId:        12,
+					UnhashedToken: "",
 				}, nil
 			}
 

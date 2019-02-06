@@ -27,50 +27,52 @@ type userAuthToken struct {
 	UnhashedToken string `xorm:"-"`
 }
 
-func (uat *userAuthToken) toUserToken() (auth.UserToken, error) {
+func userAuthTokenFromUserToken(ut *auth.UserToken) *userAuthToken {
+	var uat userAuthToken
+	uat.fromUserToken(ut)
+	return &uat
+}
+
+func (uat *userAuthToken) fromUserToken(ut *auth.UserToken) {
+	uat.Id = ut.Id
+	uat.UserId = ut.UserId
+	uat.AuthToken = ut.AuthToken
+	uat.PrevAuthToken = ut.PrevAuthToken
+	uat.UserAgent = ut.UserAgent
+	uat.ClientIp = ut.ClientIp
+	uat.AuthTokenSeen = ut.AuthTokenSeen
+	uat.SeenAt = ut.SeenAt
+	uat.RotatedAt = ut.RotatedAt
+	uat.CreatedAt = ut.CreatedAt
+	uat.UpdatedAt = ut.UpdatedAt
+	uat.UnhashedToken = ut.UnhashedToken
+}
+
+func (uat *userAuthToken) toUserToken(ut *auth.UserToken) error {
 	if uat == nil {
-		return nil, fmt.Errorf("needs pointer to userAuthToken struct")
+		return fmt.Errorf("needs pointer to userAuthToken struct")
 	}
 
-	return &userTokenImpl{
-		userAuthToken: uat,
-	}, nil
-}
+	ut.Id = uat.Id
+	ut.UserId = uat.UserId
+	ut.AuthToken = uat.AuthToken
+	ut.PrevAuthToken = uat.PrevAuthToken
+	ut.UserAgent = uat.UserAgent
+	ut.ClientIp = uat.ClientIp
+	ut.AuthTokenSeen = uat.AuthTokenSeen
+	ut.SeenAt = uat.SeenAt
+	ut.RotatedAt = uat.RotatedAt
+	ut.CreatedAt = uat.CreatedAt
+	ut.UpdatedAt = uat.UpdatedAt
+	ut.UnhashedToken = uat.UnhashedToken
 
-type userToken interface {
-	auth.UserToken
-	GetModel() *userAuthToken
-}
-
-type userTokenImpl struct {
-	*userAuthToken
-}
-
-func (ut *userTokenImpl) GetUserId() int64 {
-	return ut.UserId
-}
-
-func (ut *userTokenImpl) GetToken() string {
-	return ut.UnhashedToken
-}
-
-func (ut *userTokenImpl) GetModel() *userAuthToken {
-	return ut.userAuthToken
-}
-
-func extractModelFromToken(token auth.UserToken) (*userAuthToken, error) {
-	ut, ok := token.(userToken)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast token")
-	}
-
-	return ut.GetModel(), nil
+	return nil
 }
 
 // UserAuthTokenService are used for generating and validating user auth tokens
 type UserAuthTokenService interface {
-	CreateToken(userId int64, clientIP, userAgent string) (auth.UserToken, error)
-	LookupToken(unhashedToken string) (auth.UserToken, error)
-	TryRotateToken(token auth.UserToken, clientIP, userAgent string) (bool, error)
-	RevokeToken(token auth.UserToken) error
+	CreateToken(userId int64, clientIP, userAgent string) (*auth.UserToken, error)
+	LookupToken(unhashedToken string) (*auth.UserToken, error)
+	TryRotateToken(token *auth.UserToken, clientIP, userAgent string) (bool, error)
+	RevokeToken(token *auth.UserToken) error
 }

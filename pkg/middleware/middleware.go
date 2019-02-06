@@ -182,9 +182,9 @@ func initContextWithToken(authTokenService authtoken.UserAuthTokenService, ctx *
 		return false
 	}
 
-	query := m.GetSignedInUserQuery{UserId: token.GetUserId(), OrgId: orgID}
+	query := m.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
 	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("failed to get user with id", "userId", token.GetUserId(), "error", err)
+		ctx.Logger.Error("failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}
 
@@ -199,7 +199,7 @@ func initContextWithToken(authTokenService authtoken.UserAuthTokenService, ctx *
 	}
 
 	if rotated {
-		WriteSessionCookie(ctx, token.GetToken(), setting.LoginMaxLifetimeDays)
+		WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
 	}
 
 	return true

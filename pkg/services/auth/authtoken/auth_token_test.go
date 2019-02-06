@@ -1,12 +1,15 @@
 package authtoken
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -25,28 +28,24 @@ func TestUserAuthToken(t *testing.T) {
 		Convey("When creating token", func() {
 			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			model, err := extractModelFromToken(userToken)
-			So(err, ShouldBeNil)
-			So(model, ShouldNotBeNil)
-			So(model.AuthTokenSeen, ShouldBeFalse)
+			So(userToken, ShouldNotBeNil)
+			So(userToken.AuthTokenSeen, ShouldBeFalse)
 
 			Convey("When lookup unhashed token should return user auth token", func() {
-				userToken, err := userAuthTokenService.LookupToken(model.UnhashedToken)
+				userToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 				So(err, ShouldBeNil)
-				lookedUpModel, err := extractModelFromToken(userToken)
-				So(err, ShouldBeNil)
-				So(lookedUpModel, ShouldNotBeNil)
-				So(lookedUpModel.UserId, ShouldEqual, userID)
-				So(lookedUpModel.AuthTokenSeen, ShouldBeTrue)
+				So(userToken, ShouldNotBeNil)
+				So(userToken.UserId, ShouldEqual, userID)
+				So(userToken.AuthTokenSeen, ShouldBeTrue)
 
-				storedAuthToken, err := ctx.getAuthTokenByID(lookedUpModel.Id)
+				storedAuthToken, err := ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedAuthToken, ShouldNotBeNil)
 				So(storedAuthToken.AuthTokenSeen, ShouldBeTrue)
 			})
 
 			Convey("When lookup hashed token should return user auth token not found error", func() {
-				userToken, err := userAuthTokenService.LookupToken(model.AuthToken)
+				userToken, err := userAuthTokenService.LookupToken(userToken.AuthToken)
 				So(err, ShouldEqual, ErrAuthTokenNotFound)
 				So(userToken, ShouldBeNil)
 			})
@@ -55,7 +54,7 @@ func TestUserAuthToken(t *testing.T) {
 				err = userAuthTokenService.RevokeToken(userToken)
 				So(err, ShouldBeNil)
 
-				model, err := ctx.getAuthTokenByID(model.Id)
+				model, err := ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(model, ShouldBeNil)
 			})
@@ -66,10 +65,8 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			Convey("revoking non-existing token should return error", func() {
-				model.Id = 1000
-				nonExistingToken, err := model.toUserToken()
-				So(err, ShouldBeNil)
-				err = userAuthTokenService.RevokeToken(nonExistingToken)
+				userToken.Id = 1000
+				err = userAuthTokenService.RevokeToken(userToken)
 				So(err, ShouldEqual, ErrAuthTokenNotFound)
 			})
 		})
@@ -77,17 +74,8 @@ func TestUserAuthToken(t *testing.T) {
 		Convey("expires correctly", func() {
 			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			model, err := extractModelFromToken(userToken)
-			So(err, ShouldBeNil)
-			So(model, ShouldNotBeNil)
 
-			_, err = userAuthTokenService.LookupToken(model.UnhashedToken)
-			So(err, ShouldBeNil)
-
-			model, err = ctx.getAuthTokenByID(model.Id)
-			So(err, ShouldBeNil)
-
-			userToken, err = model.toUserToken()
+			userToken, err = userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 
 			getTime = func() time.Time {
@@ -98,14 +86,14 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(rotated, ShouldBeTrue)
 
-			_, err = userAuthTokenService.LookupToken(model.UnhashedToken)
+			userToken, err = userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 
-			stillGood, err := userAuthTokenService.LookupToken(model.UnhashedToken)
+			stillGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 			So(stillGood, ShouldNotBeNil)
 
-			model, err = ctx.getAuthTokenByID(model.Id)
+			model, err := ctx.getAuthTokenByID(userToken.Id)
 			So(err, ShouldBeNil)
 
 			Convey("when rotated_at is 6:59:59 ago should find token", func() {
@@ -113,7 +101,7 @@ func TestUserAuthToken(t *testing.T) {
 					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour).Add(-time.Second)
 				}
 
-				stillGood, err = userAuthTokenService.LookupToken(stillGood.GetToken())
+				stillGood, err = userAuthTokenService.LookupToken(stillGood.UnhashedToken)
 				So(err, ShouldBeNil)
 				So(stillGood, ShouldNotBeNil)
 			})
@@ -123,7 +111,7 @@ func TestUserAuthToken(t *testing.T) {
 					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour)
 				}
 
-				notGood, err := userAuthTokenService.LookupToken(userToken.GetToken())
+				notGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 				So(err, ShouldEqual, ErrAuthTokenNotFound)
 				So(notGood, ShouldBeNil)
 			})
@@ -137,7 +125,7 @@ func TestUserAuthToken(t *testing.T) {
 					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour).Add(-time.Second)
 				}
 
-				stillGood, err = userAuthTokenService.LookupToken(stillGood.GetToken())
+				stillGood, err = userAuthTokenService.LookupToken(stillGood.UnhashedToken)
 				So(err, ShouldBeNil)
 				So(stillGood, ShouldNotBeNil)
 			})
@@ -151,7 +139,7 @@ func TestUserAuthToken(t *testing.T) {
 					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
 				}
 
-				notGood, err := userAuthTokenService.LookupToken(userToken.GetToken())
+				notGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 				So(err, ShouldEqual, ErrAuthTokenNotFound)
 				So(notGood, ShouldBeNil)
 			})
@@ -160,37 +148,35 @@ func TestUserAuthToken(t *testing.T) {
 		Convey("can properly rotate tokens", func() {
 			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			model, err := extractModelFromToken(userToken)
-			So(err, ShouldBeNil)
-			So(model, ShouldNotBeNil)
 
-			prevToken := model.AuthToken
-			unhashedPrev := model.UnhashedToken
+			prevToken := userToken.AuthToken
+			unhashedPrev := userToken.UnhashedToken
 
 			rotated, err := userAuthTokenService.TryRotateToken(userToken, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
 			So(rotated, ShouldBeFalse)
 
-			updated, err := ctx.markAuthTokenAsSeen(model.Id)
+			updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
 			So(err, ShouldBeNil)
 			So(updated, ShouldBeTrue)
 
-			model, err = ctx.getAuthTokenByID(model.Id)
+			model, err := ctx.getAuthTokenByID(userToken.Id)
 			So(err, ShouldBeNil)
-			tok, err := model.toUserToken()
-			So(err, ShouldBeNil)
+
+			var tok auth.UserToken
+			model.toUserToken(&tok)
 
 			getTime = func() time.Time {
 				return t.Add(time.Hour)
 			}
 
-			rotated, err = userAuthTokenService.TryRotateToken(tok, "192.168.10.12:1234", "a new user agent")
+			rotated, err = userAuthTokenService.TryRotateToken(&tok, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
 			So(rotated, ShouldBeTrue)
 
-			unhashedToken := model.UnhashedToken
+			unhashedToken := tok.UnhashedToken
 
-			model, err = ctx.getAuthTokenByID(model.Id)
+			model, err = ctx.getAuthTokenByID(tok.Id)
 			So(err, ShouldBeNil)
 			model.UnhashedToken = unhashedToken
 
@@ -205,17 +191,15 @@ func TestUserAuthToken(t *testing.T) {
 
 			lookedUpUserToken, err := userAuthTokenService.LookupToken(model.UnhashedToken)
 			So(err, ShouldBeNil)
-			lookedUpModel, err := extractModelFromToken(lookedUpUserToken)
-			So(err, ShouldBeNil)
-			So(lookedUpModel, ShouldNotBeNil)
-			So(lookedUpModel.AuthTokenSeen, ShouldBeTrue)
-			So(lookedUpModel.SeenAt, ShouldEqual, getTime().Unix())
+			So(lookedUpUserToken, ShouldNotBeNil)
+			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
+			So(lookedUpUserToken.SeenAt, ShouldEqual, getTime().Unix())
 
 			lookedUpUserToken, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
-			So(lookedUpModel, ShouldNotBeNil)
-			So(lookedUpModel.Id, ShouldEqual, model.Id)
-			So(lookedUpModel.AuthTokenSeen, ShouldBeTrue)
+			So(lookedUpUserToken, ShouldNotBeNil)
+			So(lookedUpUserToken.Id, ShouldEqual, model.Id)
+			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
 
 			getTime = func() time.Time {
 				return t.Add(time.Hour + (2 * time.Minute))
@@ -223,12 +207,10 @@ func TestUserAuthToken(t *testing.T) {
 
 			lookedUpUserToken, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
-			lookedUpModel, err = extractModelFromToken(lookedUpUserToken)
-			So(err, ShouldBeNil)
-			So(lookedUpModel, ShouldNotBeNil)
-			So(lookedUpModel.AuthTokenSeen, ShouldBeTrue)
+			So(lookedUpUserToken, ShouldNotBeNil)
+			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
 
-			lookedUpModel, err = ctx.getAuthTokenByID(lookedUpModel.Id)
+			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
 			So(err, ShouldBeNil)
 			So(lookedUpModel, ShouldNotBeNil)
 			So(lookedUpModel.AuthTokenSeen, ShouldBeFalse)
@@ -237,7 +219,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(rotated, ShouldBeTrue)
 
-			model, err = ctx.getAuthTokenByID(model.Id)
+			model, err = ctx.getAuthTokenByID(userToken.Id)
 			So(err, ShouldBeNil)
 			So(model, ShouldNotBeNil)
 			So(model.SeenAt, ShouldEqual, 0)
@@ -246,11 +228,9 @@ func TestUserAuthToken(t *testing.T) {
 		Convey("keeps prev token valid for 1 minute after it is confirmed", func() {
 			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			model, err := extractModelFromToken(userToken)
-			So(err, ShouldBeNil)
-			So(model, ShouldNotBeNil)
+			So(userToken, ShouldNotBeNil)
 
-			lookedUpUserToken, err := userAuthTokenService.LookupToken(model.UnhashedToken)
+			lookedUpUserToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 			So(lookedUpUserToken, ShouldNotBeNil)
 
@@ -258,7 +238,7 @@ func TestUserAuthToken(t *testing.T) {
 				return t.Add(10 * time.Minute)
 			}
 
-			prevToken := model.UnhashedToken
+			prevToken := userToken.UnhashedToken
 			rotated, err := userAuthTokenService.TryRotateToken(userToken, "1.1.1.1", "firefox")
 			So(err, ShouldBeNil)
 			So(rotated, ShouldBeTrue)
@@ -267,7 +247,7 @@ func TestUserAuthToken(t *testing.T) {
 				return t.Add(20 * time.Minute)
 			}
 
-			currentUserToken, err := userAuthTokenService.LookupToken(model.UnhashedToken)
+			currentUserToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 			So(currentUserToken, ShouldNotBeNil)
 
@@ -279,23 +259,17 @@ func TestUserAuthToken(t *testing.T) {
 		Convey("will not mark token unseen when prev and current are the same", func() {
 			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			model, err := extractModelFromToken(userToken)
-			So(err, ShouldBeNil)
-			So(model, ShouldNotBeNil)
+			So(userToken, ShouldNotBeNil)
 
-			lookedUpUserToken, err := userAuthTokenService.LookupToken(model.UnhashedToken)
+			lookedUpUserToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
-			lookedUpModel, err := extractModelFromToken(lookedUpUserToken)
-			So(err, ShouldBeNil)
-			So(lookedUpModel, ShouldNotBeNil)
+			So(lookedUpUserToken, ShouldNotBeNil)
 
-			lookedUpUserToken, err = userAuthTokenService.LookupToken(model.UnhashedToken)
+			lookedUpUserToken, err = userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
-			lookedUpModel, err = extractModelFromToken(lookedUpUserToken)
-			So(err, ShouldBeNil)
-			So(lookedUpModel, ShouldNotBeNil)
+			So(lookedUpUserToken, ShouldNotBeNil)
 
-			lookedUpModel, err = ctx.getAuthTokenByID(lookedUpModel.Id)
+			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
 			So(err, ShouldBeNil)
 			So(lookedUpModel, ShouldNotBeNil)
 			So(lookedUpModel.AuthTokenSeen, ShouldBeTrue)
@@ -304,14 +278,12 @@ func TestUserAuthToken(t *testing.T) {
 		Convey("Rotate token", func() {
 			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			model, err := extractModelFromToken(userToken)
-			So(err, ShouldBeNil)
-			So(model, ShouldNotBeNil)
+			So(userToken, ShouldNotBeNil)
 
-			prevToken := model.AuthToken
+			prevToken := userToken.AuthToken
 
 			Convey("Should rotate current token and previous token when auth token seen", func() {
-				updated, err := ctx.markAuthTokenAsSeen(model.Id)
+				updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
 				So(err, ShouldBeNil)
 				So(updated, ShouldBeTrue)
 
@@ -323,7 +295,7 @@ func TestUserAuthToken(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(rotated, ShouldBeTrue)
 
-				storedToken, err := ctx.getAuthTokenByID(model.Id)
+				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedToken, ShouldNotBeNil)
 				So(storedToken.AuthTokenSeen, ShouldBeFalse)
@@ -332,7 +304,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				prevToken = storedToken.AuthToken
 
-				updated, err = ctx.markAuthTokenAsSeen(model.Id)
+				updated, err = ctx.markAuthTokenAsSeen(userToken.Id)
 				So(err, ShouldBeNil)
 				So(updated, ShouldBeTrue)
 
@@ -344,7 +316,7 @@ func TestUserAuthToken(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(rotated, ShouldBeTrue)
 
-				storedToken, err = ctx.getAuthTokenByID(model.Id)
+				storedToken, err = ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedToken, ShouldNotBeNil)
 				So(storedToken.AuthTokenSeen, ShouldBeFalse)
@@ -353,7 +325,7 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			Convey("Should rotate current token, but keep previous token when auth token not seen", func() {
-				model.RotatedAt = getTime().Add(-2 * time.Minute).Unix()
+				userToken.RotatedAt = getTime().Add(-2 * time.Minute).Unix()
 
 				getTime = func() time.Time {
 					return t.Add(2 * time.Minute)
@@ -363,13 +335,78 @@ func TestUserAuthToken(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(rotated, ShouldBeTrue)
 
-				storedToken, err := ctx.getAuthTokenByID(model.Id)
+				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedToken, ShouldNotBeNil)
 				So(storedToken.AuthTokenSeen, ShouldBeFalse)
 				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
 				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
 			})
+		})
+
+		Convey("When populating userAuthToken from UserToken should copy all properties", func() {
+			ut := auth.UserToken{
+				Id:            1,
+				UserId:        2,
+				AuthToken:     "a",
+				PrevAuthToken: "b",
+				UserAgent:     "c",
+				ClientIp:      "d",
+				AuthTokenSeen: true,
+				SeenAt:        3,
+				RotatedAt:     4,
+				CreatedAt:     5,
+				UpdatedAt:     6,
+				UnhashedToken: "e",
+			}
+			utBytes, err := json.Marshal(ut)
+			So(err, ShouldBeNil)
+			utJSON, err := simplejson.NewJson(utBytes)
+			So(err, ShouldBeNil)
+			utMap := utJSON.MustMap()
+
+			var uat userAuthToken
+			uat.fromUserToken(&ut)
+			uatBytes, err := json.Marshal(uat)
+			So(err, ShouldBeNil)
+			uatJSON, err := simplejson.NewJson(uatBytes)
+			So(err, ShouldBeNil)
+			uatMap := uatJSON.MustMap()
+
+			So(uatMap, ShouldResemble, utMap)
+		})
+
+		Convey("When populating userToken from userAuthToken should copy all properties", func() {
+			uat := userAuthToken{
+				Id:            1,
+				UserId:        2,
+				AuthToken:     "a",
+				PrevAuthToken: "b",
+				UserAgent:     "c",
+				ClientIp:      "d",
+				AuthTokenSeen: true,
+				SeenAt:        3,
+				RotatedAt:     4,
+				CreatedAt:     5,
+				UpdatedAt:     6,
+				UnhashedToken: "e",
+			}
+			uatBytes, err := json.Marshal(uat)
+			So(err, ShouldBeNil)
+			uatJSON, err := simplejson.NewJson(uatBytes)
+			So(err, ShouldBeNil)
+			uatMap := uatJSON.MustMap()
+
+			var ut auth.UserToken
+			err = uat.toUserToken(&ut)
+			So(err, ShouldBeNil)
+			utBytes, err := json.Marshal(ut)
+			So(err, ShouldBeNil)
+			utJSON, err := simplejson.NewJson(utBytes)
+			So(err, ShouldBeNil)
+			utMap := utJSON.MustMap()
+
+			So(utMap, ShouldResemble, uatMap)
 		})
 
 		Reset(func() {

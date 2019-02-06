@@ -14,7 +14,7 @@ import (
 type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
-	UserToken auth.UserToken
+	UserToken *auth.UserToken
 
 	// This should only be used by the auth_proxy
 	Session session.SessionStore

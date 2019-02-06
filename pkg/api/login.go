@@ -137,7 +137,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 		hs.log.Error("failed to create auth token", "error", err)
 	}
 
-	middleware.WriteSessionCookie(c, userToken.GetToken(), hs.Cfg.LoginMaxLifetimeDays)
+	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
 }
 
 func (hs *HTTPServer) Logout(c *m.ReqContext) {
