@@ -70,7 +70,9 @@ export const dashboardReducer = reducerFactory(initialState)
   .addMapper({
     filter: cleanUpDashboard,
     mapper: (state, action) => {
-      // tear down current dashboard
+
+      // Destroy current DashboardModel
+      // Very important as this removes all dashboard event listeners
       state.model.destroy();
 
       return {

@@ -90,8 +90,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    console.log('unmount', this.props.cleanUpDashboard);
     if (this.props.dashboard) {
-      this.props.dashboard.destroy();
       this.props.cleanUpDashboard();
     }
   }
