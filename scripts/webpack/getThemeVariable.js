@@ -29,7 +29,7 @@ function getThemeVariable(variablePath, themeName) {
   const variable = get(theme, variablePath.getValue());
 
   if (!variable) {
-    throw new Error(`${variablePath} is not defined fo ${themeName}`);
+    throw new Error(`${variablePath.getValue()} is not defined for ${themeName.getValue()} theme`);
   }
 
   if (isHex(variable)) {
