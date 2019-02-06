@@ -105,7 +105,7 @@ class QueryField extends React.Component<any, any> {
     this.setState({ value }, () => {
       if (changed) {
         // call typeahead only if query changed
-        window.requestAnimationFrame(this.onTypeahead);
+        requestAnimationFrame(() => this.onTypeahead());
         this.onChangeQuery();
       }
     });
@@ -283,12 +283,18 @@ class QueryField extends React.Component<any, any> {
       const rect = node.parentElement.getBoundingClientRect();
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
+      const screenHeight = window.innerHeight;
+
+      const menuLeft = rect.left + scrollX - 2;
+      const menuTop = rect.top + scrollY + rect.height + 4;
+      const menuHeight = screenHeight - menuTop - 10;
 
       // Write DOM
       requestAnimationFrame(() => {
         menu.style.opacity = 1;
-        menu.style.top = `${rect.top + scrollY + rect.height + 4}px`;
-        menu.style.left = `${rect.left + scrollX - 2}px`;
+        menu.style.top = `${menuTop}px`;
+        menu.style.left = `${menuLeft}px`;
+        menu.style.maxHeight = `${menuHeight}px`;
       });
     }
   };
