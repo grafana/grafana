@@ -44,6 +44,7 @@ describe('SemVersion', () => {
         { values: ['3.1.1-beta1', '3.1'], expected: true },
         { values: ['3.4.5', '4'], expected: false },
         { values: ['3.4.5', '3.5'], expected: false },
+        { values: ['6.0.0', '5.2.0'], expected: true },
       ];
       cases.forEach(testCase => {
         expect(isVersionGtOrEq(testCase.values[0], testCase.values[1])).toBe(testCase.expected);
