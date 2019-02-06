@@ -1,11 +1,11 @@
 .thresholds {
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .thresholds-row {
   display: flex;
   flex-direction: row;
-  height: 70px;
+  height: 62px;
 }
 
 .thresholds-row:first-child > .thresholds-row-color-indicator {
@@ -21,21 +21,21 @@
 }
 
 .thresholds-row-add-button {
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl, $text-color);
+
   align-self: center;
   margin-right: 5px;
-  color: $green;
   height: 24px;
   width: 24px;
-  background-color: $green;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
 
-.thresholds-row-add-button > i {
-  color: $white;
+  &:hover {
+    color: $text-color-strong;
+  }
 }
 
 .thresholds-row-color-indicator {

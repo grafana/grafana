@@ -18,6 +18,7 @@ interface Props {
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onMoveQuery: (query: DataQuery, direction: number) => void;
+  onChange: (query: DataQuery) => void;
   dataSourceValue: string | null;
   inMixedMode: boolean;
 }
@@ -105,17 +106,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.setState({ isCollapsed: !this.state.isCollapsed });
   };
 
-  onQueryChange = (query: DataQuery) => {
-    Object.assign(this.props.query, query);
-    this.onExecuteQuery();
-  };
-
-  onExecuteQuery = () => {
+  onRunQuery = () => {
     this.props.panel.refresh();
   };
 
   renderPluginEditor() {
-    const { query } = this.props;
+    const { query, onChange } = this.props;
     const { datasource } = this.state;
 
     if (datasource.pluginExports.QueryCtrl) {
@@ -128,8 +124,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         <QueryEditor
           query={query}
           datasource={datasource}
-          onQueryChange={this.onQueryChange}
-          onExecuteQuery={this.onExecuteQuery}
+          onChange={onChange}
+          onRunQuery={this.onRunQuery}
         />
       );
     }
@@ -166,7 +162,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   onDisableQuery = () => {
     this.props.query.hide = !this.props.query.hide;
-    this.onExecuteQuery();
+    this.onRunQuery();
     this.forceUpdate();
   };
 
