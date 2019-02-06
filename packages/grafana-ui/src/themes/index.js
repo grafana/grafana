@@ -1,15 +1,16 @@
 const darkTheme = require('./dark');
 const lightTheme = require('./light');
 
-const getTheme = name => (name === 'light' ? lightTheme : darkTheme);
+let mockedTheme;
+
+let getTheme = name => mockedTheme || (name === 'light' ? lightTheme : darkTheme);
 
 const mockTheme = mock => {
-  const originalGetTheme = getTheme;
-  getTheme = () => mock;
-  return () => (getTheme = originalGetTheme);
+  mockedTheme = mock;
+  return () => (mockedTheme = null);
 };
 
 module.exports = {
   getTheme,
-  mockTheme
+  mockTheme,
 };

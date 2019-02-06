@@ -29,12 +29,12 @@ function getThemeVariable(variablePath, themeName) {
   const variable = get(theme, variablePath.getValue());
 
   if (!variable) {
-    throw new Error(`${variablePath.getValue()} is not defined for ${themeName.getValue()} theme`);
+    throw new Error(`${variablePath.getValue()} is not defined for ${themeName.getValue()}`);
   }
 
   if (isHex(variable)) {
     const rgb = new tinycolor(variable).toRgb();
-    const color = sass.types.Color(rgb.r, rgb.g, rgb.b);
+    const color = new sass.types.Color(rgb.r, rgb.g, rgb.b);
     return color;
   }
 

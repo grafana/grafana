@@ -6,11 +6,13 @@ module.exports = {
   },
   "moduleDirectories": ["node_modules", "public"],
   "roots": [
+    "<rootDir>/scripts",
     "<rootDir>/public/app",
     "<rootDir>/public/test",
     "<rootDir>/packages"
   ],
   "testRegex": "(\\.|/)(test)\\.(jsx?|tsx?)$",
+  "testPathIgnorePatterns": ["webpack.test.js"],
   "moduleFileExtensions": [
     "ts",
     "tsx",
