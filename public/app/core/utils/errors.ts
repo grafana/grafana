@@ -6,6 +6,8 @@ export function getMessageFromError(err: any): string | null {
       return err.message;
     } else if (err.data && err.data.message) {
       return err.data.message;
+    } else if (err.statusText) {
+      return err.statusText;
     } else {
       return JSON.stringify(err);
     }
