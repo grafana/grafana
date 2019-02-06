@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-version=5.4.2
+version=5.4.3
 
 # wget https://dl.grafana.com/oss/release/grafana_${version}_amd64.deb
 #

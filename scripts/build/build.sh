@@ -28,7 +28,6 @@ fi
 
 echo "Build arguments: $OPT"
 
-go run build.go -goarch armv6 -cc ${CCARMV7} ${OPT} build
 go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
 go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
 
@@ -50,7 +49,6 @@ source /etc/profile.d/rvm.sh
 
 echo "Packaging"
 go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
-go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
 go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
 go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
 

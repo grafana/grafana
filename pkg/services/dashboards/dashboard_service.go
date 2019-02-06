@@ -76,11 +76,11 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, models.ErrDashboardFolderCannotHaveParent
 	}
 
-	if dash.IsFolder && strings.EqualFold(dash.Title, models.RootFolderName) {
+	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(models.RootFolderName) {
 		return nil, models.ErrDashboardFolderNameExists
 	}
 
-	if !util.IsValidShortUID(dash.Uid) {
+	if !util.IsValidShortUid(dash.Uid) {
 		return nil, models.ErrDashboardInvalidUid
 	} else if len(dash.Uid) > 40 {
 		return nil, models.ErrDashboardUidToLong
@@ -164,7 +164,11 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 		User:      dto.User,
 	}
 
-	return bus.Dispatch(&alertCmd)
+	if err := bus.Dispatch(&alertCmd); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {

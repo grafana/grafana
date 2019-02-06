@@ -1,16 +1,12 @@
-// Libraries
 import React, { Component } from 'react';
-import _ from 'lodash';
-
-// Components
-import { AsyncSelect } from '@grafana/ui';
-
-// Utils & Services
+import AsyncSelect from 'react-select/lib/Async';
+import PickerOption from './PickerOption';
 import { debounce } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-
-// Types
 import { User } from 'app/types';
+import ResetStyles from './ResetStyles';
+import IndicatorsContainer from './IndicatorsContainer';
+import NoOptionsMessage from './NoOptionsMessage';
 
 export interface Props {
   onSelected: (user: User) => void;
@@ -39,18 +35,13 @@ export class UserPicker extends Component<Props, State> {
     const backendSrv = getBackendSrv();
     this.setState({ isLoading: true });
 
-    if (_.isNil(query)) {
-      query = '';
-    }
-
     return backendSrv
       .get(`/api/org/users?query=${query}&limit=10`)
       .then(result => {
         return result.map(user => ({
           id: user.userId,
-          value: user.userId,
           label: user.login === user.email ? user.login : `${user.login} - ${user.email}`,
-          imgUrl: user.avatarUrl,
+          avatarUrl: user.avatarUrl,
           login: user.login,
         }));
       })
@@ -66,13 +57,24 @@ export class UserPicker extends Component<Props, State> {
     return (
       <div className="user-picker">
         <AsyncSelect
-          className={className}
+          classNamePrefix={`gf-form-select-box`}
+          isMulti={false}
           isLoading={isLoading}
           defaultOptions={true}
           loadOptions={this.debouncedSearch}
           onChange={onSelected}
+          className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
+          styles={ResetStyles}
+          components={{
+            Option: PickerOption,
+            IndicatorsContainer,
+            NoOptionsMessage,
+          }}
           placeholder="Select user"
+          loadingMessage={() => 'Loading...'}
           noOptionsMessage={() => 'No users found'}
+          getOptionValue={i => i.id}
+          getOptionLabel={i => i.label}
         />
       </div>
     );
