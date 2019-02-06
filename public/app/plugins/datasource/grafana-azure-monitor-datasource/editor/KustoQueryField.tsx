@@ -65,7 +65,7 @@ export default class KustoQueryField extends QueryField {
     this.fetchSchema();
   }
 
-  onTypeahead = (force = false) => {
+  onTypeahead = (force?: boolean) => {
     const selection = window.getSelection();
     if (selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
@@ -152,14 +152,17 @@ export default class KustoQueryField extends QueryField {
         }
 
       // built-in
-      } else if (prefix && !wrapperClasses.contains('argument')) {
+      } else if (prefix && !wrapperClasses.contains('argument') && !force) {
+        // Use only last typed word as a prefix for searching
         if (modelPrefix.match(/\s$/i)) {
           prefix = '';
+          return;
         }
+        prefix = getLastWord(prefix);
         typeaheadContext = 'context-builtin';
         suggestionGroups = this.getKeywordSuggestions();
       } else if (force === true) {
-        typeaheadContext = 'context-builtin';
+        typeaheadContext = 'context-builtin-forced';
         if (modelPrefix.match(/\s$/i)) {
           prefix = '';
         }
@@ -183,7 +186,7 @@ export default class KustoQueryField extends QueryField {
         .filter(group => group.items.length > 0);
 
       // console.log('onTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, typeaheadContext);
-      // console.log('onTypeahead', prefix, typeaheadContext);
+      // console.log('onTypeahead', prefix, typeaheadContext, force);
 
       this.setState({
         typeaheadPrefix: prefix,
@@ -421,4 +424,13 @@ function normalizeQuery(query: string): string {
   let normalizedQuery = query.replace(commentPattern, '');
   normalizedQuery = normalizedQuery.replace('\n', ' ');
   return normalizedQuery;
+}
+
+function getLastWord(str: string): string {
+  const lastWordPattern = /(?:.*\s)?([^\s]+\s*)$/gi;
+  const match = lastWordPattern.exec(str);
+  if (match && match.length > 1) {
+    return match[1];
+  }
+  return '';
 }
