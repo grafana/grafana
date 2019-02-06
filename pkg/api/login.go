@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/services/auth/authtoken"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -141,7 +139,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 }
 
 func (hs *HTTPServer) Logout(c *m.ReqContext) {
-	if err := hs.AuthTokenService.RevokeToken(c.UserToken); err != nil && err != authtoken.ErrAuthTokenNotFound {
+	if err := hs.AuthTokenService.RevokeToken(c.UserToken); err != nil && err != m.ErrUserTokenNotFound {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 

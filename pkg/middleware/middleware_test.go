@@ -11,7 +11,6 @@ import (
 	msession "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtoken"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
@@ -157,8 +156,8 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
-				return &auth.UserToken{
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: unhashedToken,
 				}, nil
@@ -186,14 +185,14 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
-				return &auth.UserToken{
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil
 			}
 
-			sc.userAuthTokenService.tryRotateTokenProvider = func(userToken *auth.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.tryRotateTokenProvider = func(userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -228,7 +227,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("Invalid/expired auth token in cookie", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
 				return nil, authtoken.ErrAuthTokenNotFound
 			}
 
@@ -680,47 +679,47 @@ type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *m.ReqContext)
 
 type fakeUserAuthTokenService struct {
-	createTokenProvider    func(userId int64, clientIP, userAgent string) (*auth.UserToken, error)
-	tryRotateTokenProvider func(token *auth.UserToken, clientIP, userAgent string) (bool, error)
-	lookupTokenProvider    func(unhashedToken string) (*auth.UserToken, error)
-	revokeTokenProvider    func(token *auth.UserToken) error
+	createTokenProvider    func(userId int64, clientIP, userAgent string) (*m.UserToken, error)
+	tryRotateTokenProvider func(token *m.UserToken, clientIP, userAgent string) (bool, error)
+	lookupTokenProvider    func(unhashedToken string) (*m.UserToken, error)
+	revokeTokenProvider    func(token *m.UserToken) error
 }
 
 func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
 	return &fakeUserAuthTokenService{
-		createTokenProvider: func(userId int64, clientIP, userAgent string) (*auth.UserToken, error) {
-			return &auth.UserToken{
+		createTokenProvider: func(userId int64, clientIP, userAgent string) (*m.UserToken, error) {
+			return &m.UserToken{
 				UserId:        0,
 				UnhashedToken: "",
 			}, nil
 		},
-		tryRotateTokenProvider: func(token *auth.UserToken, clientIP, userAgent string) (bool, error) {
+		tryRotateTokenProvider: func(token *m.UserToken, clientIP, userAgent string) (bool, error) {
 			return false, nil
 		},
-		lookupTokenProvider: func(unhashedToken string) (*auth.UserToken, error) {
-			return &auth.UserToken{
+		lookupTokenProvider: func(unhashedToken string) (*m.UserToken, error) {
+			return &m.UserToken{
 				UserId:        0,
 				UnhashedToken: "",
 			}, nil
 		},
-		revokeTokenProvider: func(token *auth.UserToken) error {
+		revokeTokenProvider: func(token *m.UserToken) error {
 			return nil
 		},
 	}
 }
 
-func (s *fakeUserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*auth.UserToken, error) {
+func (s *fakeUserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*m.UserToken, error) {
 	return s.createTokenProvider(userId, clientIP, userAgent)
 }
 
-func (s *fakeUserAuthTokenService) LookupToken(unhashedToken string) (*auth.UserToken, error) {
+func (s *fakeUserAuthTokenService) LookupToken(unhashedToken string) (*m.UserToken, error) {
 	return s.lookupTokenProvider(unhashedToken)
 }
 
-func (s *fakeUserAuthTokenService) TryRotateToken(token *auth.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *fakeUserAuthTokenService) TryRotateToken(token *m.UserToken, clientIP, userAgent string) (bool, error) {
 	return s.tryRotateTokenProvider(token, clientIP, userAgent)
 }
 
-func (s *fakeUserAuthTokenService) RevokeToken(token *auth.UserToken) error {
+func (s *fakeUserAuthTokenService) RevokeToken(token *m.UserToken) error {
 	return s.revokeTokenProvider(token)
 }

@@ -3,8 +3,6 @@ package middleware
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/auth"
-
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,8 +24,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
-				return &auth.UserToken{
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+				return &m.UserToken{
 					UserId:        0,
 					UnhashedToken: "",
 				}, nil
@@ -52,8 +50,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*auth.UserToken, error) {
-				return &auth.UserToken{
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil

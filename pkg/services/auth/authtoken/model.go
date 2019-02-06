@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // Typed errors
@@ -27,13 +27,13 @@ type userAuthToken struct {
 	UnhashedToken string `xorm:"-"`
 }
 
-func userAuthTokenFromUserToken(ut *auth.UserToken) *userAuthToken {
+func userAuthTokenFromUserToken(ut *models.UserToken) *userAuthToken {
 	var uat userAuthToken
 	uat.fromUserToken(ut)
 	return &uat
 }
 
-func (uat *userAuthToken) fromUserToken(ut *auth.UserToken) {
+func (uat *userAuthToken) fromUserToken(ut *models.UserToken) {
 	uat.Id = ut.Id
 	uat.UserId = ut.UserId
 	uat.AuthToken = ut.AuthToken
@@ -48,7 +48,7 @@ func (uat *userAuthToken) fromUserToken(ut *auth.UserToken) {
 	uat.UnhashedToken = ut.UnhashedToken
 }
 
-func (uat *userAuthToken) toUserToken(ut *auth.UserToken) error {
+func (uat *userAuthToken) toUserToken(ut *models.UserToken) error {
 	if uat == nil {
 		return fmt.Errorf("needs pointer to userAuthToken struct")
 	}
@@ -67,12 +67,4 @@ func (uat *userAuthToken) toUserToken(ut *auth.UserToken) error {
 	ut.UnhashedToken = uat.UnhashedToken
 
 	return nil
-}
-
-// UserAuthTokenService are used for generating and validating user auth tokens
-type UserAuthTokenService interface {
-	CreateToken(userId int64, clientIP, userAgent string) (*auth.UserToken, error)
-	LookupToken(unhashedToken string) (*auth.UserToken, error)
-	TryRotateToken(token *auth.UserToken, clientIP, userAgent string) (bool, error)
-	RevokeToken(token *auth.UserToken) error
 }

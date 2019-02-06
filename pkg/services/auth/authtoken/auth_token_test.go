@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -163,7 +163,7 @@ func TestUserAuthToken(t *testing.T) {
 			model, err := ctx.getAuthTokenByID(userToken.Id)
 			So(err, ShouldBeNil)
 
-			var tok auth.UserToken
+			var tok models.UserToken
 			model.toUserToken(&tok)
 
 			getTime = func() time.Time {
@@ -345,7 +345,7 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Convey("When populating userAuthToken from UserToken should copy all properties", func() {
-			ut := auth.UserToken{
+			ut := models.UserToken{
 				Id:            1,
 				UserId:        2,
 				AuthToken:     "a",
@@ -397,7 +397,7 @@ func TestUserAuthToken(t *testing.T) {
 			So(err, ShouldBeNil)
 			uatMap := uatJSON.MustMap()
 
-			var ut auth.UserToken
+			var ut models.UserToken
 			err = uat.toUserToken(&ut)
 			So(err, ShouldBeNil)
 			utBytes, err := json.Marshal(ut)

@@ -5,11 +5,10 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth"
-
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,7 +39,7 @@ func (s *UserAuthTokenServiceImpl) Init() error {
 	return nil
 }
 
-func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (*auth.UserToken, error) {
+func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent string) (*models.UserToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
 	token, err := util.RandomHex(16)
 	if err != nil {
@@ -72,13 +71,13 @@ func (s *UserAuthTokenServiceImpl) CreateToken(userId int64, clientIP, userAgent
 
 	s.log.Debug("user auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
 
-	var userToken auth.UserToken
+	var userToken models.UserToken
 	err = userAuthToken.toUserToken(&userToken)
 
 	return &userToken, err
 }
 
-func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*auth.UserToken, error) {
+func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*models.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	if setting.Env == setting.DEV {
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
@@ -137,13 +136,13 @@ func (s *UserAuthTokenServiceImpl) LookupToken(unhashedToken string) (*auth.User
 
 	model.UnhashedToken = unhashedToken
 
-	var userToken auth.UserToken
+	var userToken models.UserToken
 	err = model.toUserToken(&userToken)
 
 	return &userToken, err
 }
 
-func (s *UserAuthTokenServiceImpl) TryRotateToken(token *auth.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *UserAuthTokenServiceImpl) TryRotateToken(token *models.UserToken, clientIP, userAgent string) (bool, error) {
 	if token == nil {
 		return false, nil
 	}
@@ -202,7 +201,7 @@ func (s *UserAuthTokenServiceImpl) TryRotateToken(token *auth.UserToken, clientI
 	return false, nil
 }
 
-func (s *UserAuthTokenServiceImpl) RevokeToken(token *auth.UserToken) error {
+func (s *UserAuthTokenServiceImpl) RevokeToken(token *models.UserToken) error {
 	if token == nil {
 		return ErrAuthTokenNotFound
 	}

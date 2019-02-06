@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/authtoken"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,7 +23,7 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats authtoken.UserAuthTokenService) macaron.Handler {
+func GetContextHandler(ats m.UserTokenService) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
@@ -169,7 +168,7 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 	return true
 }
 
-func initContextWithToken(authTokenService authtoken.UserAuthTokenService, ctx *m.ReqContext, orgID int64) bool {
+func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext, orgID int64) bool {
 	rawToken := ctx.GetCookie(setting.LoginCookieName)
 	if rawToken == "" {
 		return false
