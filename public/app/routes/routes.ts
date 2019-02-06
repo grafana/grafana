@@ -10,12 +10,17 @@ import ApiKeys from 'app/features/api-keys/ApiKeysPage';
 import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
+import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
+import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
+import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
-import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
+import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
+import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
+import config from 'app/core/config';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -47,16 +52,18 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'page-dashboard',
     })
     .when('/d-solo/:uid/:slug', {
-      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-      controller: 'SoloPanelCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      resolve: {
+        component: () => SoloPanelPage,
+      },
     })
     .when('/dashboard-solo/:type/:slug', {
-      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-      controller: 'SoloPanelCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      resolve: {
+        component: () => SoloPanelPage,
+      },
     })
     .when('/dashboard/new', {
       templateUrl: 'public/app/partials/dashboard.html',
@@ -65,8 +72,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'page-dashboard',
     })
     .when('/dashboard/import', {
-      templateUrl: 'public/app/features/dashboard/partials/dashboard_import.html',
-      controller: 'DashboardImportCtrl',
+      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',
+      controller: DashboardImportCtrl,
       controllerAs: 'ctrl',
     })
     .when('/datasources', {
@@ -78,7 +85,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
       resolve: {
-        component: () => DataSourceSettings,
+        component: () => DataSourceSettingsPage,
       },
     })
     .when('/datasources/edit/:id/dashboards', {
@@ -99,8 +106,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards/folder/new', {
-      templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
-      controller: 'CreateFolderCtrl',
+      templateUrl: 'public/app/features/folders/partials/create_folder.html',
+      controller: CreateFolderCtrl,
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid/:slug/permissions', {
@@ -116,8 +123,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/dashboards/f/:uid/:slug', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-      controller: 'FolderDashboardsCtrl',
+      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
+      controller: FolderDashboardsCtrl,
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid', {
@@ -129,7 +136,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        roles: () => ['Editor', 'Admin'],
+        roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })

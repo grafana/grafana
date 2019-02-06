@@ -53,11 +53,13 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
       element: $element.find('.dropdown')[0],
       position: 'top center',
       openOn: 'click',
-      template: '<series-color-picker-popover series="series" onColorChange="colorSelected" />',
+      template: '<series-color-picker-popover color="color" onColorChange="colorSelected" />',
+      classNames: 'drop-popover drop-popover--transparent',
       model: {
         autoClose: true,
         colorSelected: $scope.colorSelected,
         series: fakeSeries,
+        color,
       },
       onClose: () => {
         $scope.ctrl.render();

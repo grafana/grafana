@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
 export interface Props {
   isReadOnly: boolean;
@@ -6,7 +6,7 @@ export interface Props {
   onSubmit: (event) => void;
 }
 
-const ButtonRow: SFC<Props> = ({ isReadOnly, onDelete, onSubmit }) => {
+const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit }) => {
   return (
     <div className="gf-form-button-row">
       <button type="submit" className="btn btn-success" disabled={isReadOnly} onClick={event => onSubmit(event)}>

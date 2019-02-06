@@ -44,7 +44,10 @@
               "noDataState": "no_data",
               "notifications": [
                 {
-                  "id": 6
+                  "uid": "notifier1"
+                },
+                {
+                  "id": 2
                 }
               ]
             },

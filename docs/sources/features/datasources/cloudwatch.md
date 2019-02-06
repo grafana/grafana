@@ -38,7 +38,7 @@ Name | Description
 
 ### IAM Roles
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you grafana
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If your Grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
@@ -74,6 +74,12 @@ Here is a minimal policy example:
                 "ec2:DescribeRegions"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowReadingResourcesForTags",
+            "Effect" : "Allow",      
+            "Action" : "tag:GetResources",      
+            "Resource" : "*"      
         }
     ]
 }
@@ -128,6 +134,7 @@ Name | Description
 *dimension_values(region, namespace, metric, dimension_key, [filters])* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well.
 *ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
 *ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
+*resource_arns(region, resource_type, tags)* | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -143,6 +150,8 @@ Query | Service
 *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
 *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
 *dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})* | CloudWatch Agent
+*resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | ELB
+*resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | EC2
 
 ## ec2_instance_attribute examples
 

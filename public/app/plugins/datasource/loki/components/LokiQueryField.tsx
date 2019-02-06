@@ -1,19 +1,35 @@
-import _ from 'lodash';
+// Libraries
 import React from 'react';
 import Cascader from 'rc-cascader';
 import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
-import { TypeaheadOutput } from 'app/types/explore';
+// Components
+import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 
+// Utils & Services
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { DataQuery } from 'app/types';
+
+// Types
+import { LokiQuery } from '../types';
+import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
+import { makePromiseCancelable, CancelablePromise } from 'app/core/utils/CancelablePromise';
+import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
 
 const PRISM_SYNTAX = 'promql';
+
+function getChooserText(hasSytax, hasLogLabels) {
+  if (!hasSytax) {
+    return 'Loading labels...';
+  }
+  if (!hasLogLabels) {
+    return '(No labels found)';
+  }
+  return 'Log labels';
+}
 
 export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
   // Modify suggestion based on context
@@ -49,15 +65,8 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface LokiQueryFieldProps {
-  datasource: any;
-  error?: string | JSX.Element;
-  hint?: any;
-  history?: any[];
-  initialQuery?: DataQuery;
-  onClickHintFix?: (action: any) => void;
-  onPressEnter?: () => void;
-  onQueryChange?: (value: DataQuery, override?: boolean) => void;
+interface LokiQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, LokiQuery> {
+  history: HistoryItem[];
 }
 
 interface LokiQueryFieldState {
@@ -65,9 +74,13 @@ interface LokiQueryFieldState {
   syntaxLoaded: boolean;
 }
 
-class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
+export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: any[];
+  pluginsSearch: any[];
   languageProvider: any;
+  modifiedSearch: string;
+  modifiedQuery: string;
+  languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: LokiQueryFieldProps, context) {
     super(props, context);
@@ -78,12 +91,14 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onPressEnter }),
+      RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
         onlyIn: node => node.type === 'code_block',
         getSyntax: node => 'promql',
       }),
     ];
+
+    this.pluginsSearch = [RunnerPlugin({ handler: props.onExecuteQuery })];
 
     this.state = {
       logLabelOptions: [],
@@ -93,12 +108,24 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProvider
-        .start()
+      this.languageProviderInitializationPromise = makePromiseCancelable(this.languageProvider.start());
+
+      this.languageProviderInitializationPromise.promise
         .then(remaining => {
           remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
         })
-        .then(() => this.onUpdateLanguage());
+        .then(() => this.onUpdateLanguage())
+        .catch(({ isCanceled }) => {
+          if (isCanceled) {
+            console.warn('LokiQueryField has unmounted, language provider intialization was canceled');
+          }
+        });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.languageProviderInitializationPromise) {
+      this.languageProviderInitializationPromise.cancel();
     }
   }
 
@@ -135,20 +162,21 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialQuery, onQueryChange } = this.props;
+    const { query, onQueryChange, onExecuteQuery } = this.props;
     if (onQueryChange) {
-      const query = {
-        ...initialQuery,
-        expr: value,
-      };
-      onQueryChange(query, override);
+      const nextQuery = { ...query, expr: value };
+      onQueryChange(nextQuery);
+
+      if (override && onExecuteQuery) {
+        onExecuteQuery();
+      }
     }
   };
 
   onClickHintFix = () => {
-    const { hint, onClickHintFix } = this.props;
-    if (onClickHintFix && hint && hint.fix) {
-      onClickHintFix(hint.fix.action);
+    const { hint, onExecuteHint } = this.props;
+    if (onExecuteHint && hint && hint.fix) {
+      onExecuteHint(hint.fix.action);
     }
   };
 
@@ -186,32 +214,38 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
   };
 
   render() {
-    const { error, hint, initialQuery } = this.props;
+    const { error, hint, query } = this.props;
     const { logLabelOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = syntaxLoaded ? 'Log labels' : 'Loading labels...';
+    const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
+    const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
 
     return (
-      <div className="prom-query-field">
-        <div className="prom-query-field-tools">
-          <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels} loadData={this.loadOptions}>
-            <button className="btn navbar-button navbar-button--tight" disabled={!syntaxLoaded}>
-              {chooserText}
-            </button>
-          </Cascader>
+      <>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels} loadData={this.loadOptions}>
+              <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
+                {chooserText} <i className="fa fa-caret-down" />
+              </button>
+            </Cascader>
+          </div>
+          <div className="gf-form gf-form--grow">
+            <QueryField
+              additionalPlugins={this.plugins}
+              cleanText={cleanText}
+              initialQuery={query.expr}
+              onTypeahead={this.onTypeahead}
+              onWillApplySuggestion={willApplySuggestion}
+              onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.props.onExecuteQuery}
+              placeholder="Enter a Loki query"
+              portalOrigin="loki"
+              syntaxLoaded={syntaxLoaded}
+            />
+          </div>
         </div>
-        <div className="prom-query-field-wrapper">
-          <QueryField
-            additionalPlugins={this.plugins}
-            cleanText={cleanText}
-            initialQuery={initialQuery.expr}
-            onTypeahead={this.onTypeahead}
-            onWillApplySuggestion={willApplySuggestion}
-            onValueChanged={this.onChangeQuery}
-            placeholder="Enter a Loki Log query"
-            portalOrigin="loki"
-            syntaxLoaded={syntaxLoaded}
-          />
+        <div>
           {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
           {hint ? (
             <div className="prom-query-field-info text-warning">
@@ -224,7 +258,7 @@ class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryF
             </div>
           ) : null}
         </div>
-      </div>
+      </>
     );
   }
 }

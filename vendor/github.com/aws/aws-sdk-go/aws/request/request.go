@@ -122,7 +122,6 @@ func New(cfg aws.Config, clientInfo metadata.ClientInfo, handlers Handlers,
 		Handlers:   handlers.Copy(),
 
 		Retryer:     retryer,
-		AttemptTime: time.Now(),
 		Time:        time.Now(),
 		ExpireTime:  0,
 		Operation:   operation,
@@ -266,7 +265,9 @@ func (r *Request) SetReaderBody(reader io.ReadSeeker) {
 }
 
 // Presign returns the request's signed URL. Error will be returned
-// if the signing fails.
+// if the signing fails. The expire parameter is only used for presigned Amazon
+// S3 API requests. All other AWS services will use a fixed expiration
+// time of 15 minutes.
 //
 // It is invalid to create a presigned URL with a expire duration 0 or less. An
 // error is returned if expire duration is 0 or less.
@@ -283,7 +284,9 @@ func (r *Request) Presign(expire time.Duration) (string, error) {
 }
 
 // PresignRequest behaves just like presign, with the addition of returning a
-// set of headers that were signed.
+// set of headers that were signed. The expire parameter is only used for
+// presigned Amazon S3 API requests. All other AWS services will use a fixed
+// expiration time of 15 minutes.
 //
 // It is invalid to create a presigned URL with a expire duration 0 or less. An
 // error is returned if expire duration is 0 or less.
@@ -462,80 +465,78 @@ func (r *Request) Send() error {
 		r.Handlers.Complete.Run(r)
 	}()
 
+	if err := r.Error; err != nil {
+		return err
+	}
+
 	for {
+		r.Error = nil
 		r.AttemptTime = time.Now()
-		if aws.BoolValue(r.Retryable) {
-			if r.Config.LogLevel.Matches(aws.LogDebugWithRequestRetries) {
-				r.Config.Logger.Log(fmt.Sprintf("DEBUG: Retrying Request %s/%s, attempt %d",
-					r.ClientInfo.ServiceName, r.Operation.Name, r.RetryCount))
-			}
 
-			// The previous http.Request will have a reference to the r.Body
-			// and the HTTP Client's Transport may still be reading from
-			// the request's body even though the Client's Do returned.
-			r.HTTPRequest = copyHTTPRequest(r.HTTPRequest, nil)
-			r.ResetBody()
-
-			// Closing response body to ensure that no response body is leaked
-			// between retry attempts.
-			if r.HTTPResponse != nil && r.HTTPResponse.Body != nil {
-				r.HTTPResponse.Body.Close()
-			}
+		if err := r.Sign(); err != nil {
+			debugLogReqError(r, "Sign Request", false, err)
+			return err
 		}
 
-		r.Sign()
-		if r.Error != nil {
-			return r.Error
-		}
-
-		r.Retryable = nil
-
-		r.Handlers.Send.Run(r)
-		if r.Error != nil {
-			if !shouldRetryCancel(r) {
-				return r.Error
-			}
-
-			err := r.Error
+		if err := r.sendRequest(); err == nil {
+			return nil
+		} else if !shouldRetryCancel(r) {
+			return err
+		} else {
 			r.Handlers.Retry.Run(r)
 			r.Handlers.AfterRetry.Run(r)
-			if r.Error != nil {
-				debugLogReqError(r, "Send Request", false, err)
+
+			if r.Error != nil || !aws.BoolValue(r.Retryable) {
 				return r.Error
 			}
-			debugLogReqError(r, "Send Request", true, err)
+
+			r.prepareRetry()
 			continue
 		}
-		r.Handlers.UnmarshalMeta.Run(r)
-		r.Handlers.ValidateResponse.Run(r)
-		if r.Error != nil {
-			r.Handlers.UnmarshalError.Run(r)
-			err := r.Error
+	}
+}
 
-			r.Handlers.Retry.Run(r)
-			r.Handlers.AfterRetry.Run(r)
-			if r.Error != nil {
-				debugLogReqError(r, "Validate Response", false, err)
-				return r.Error
-			}
-			debugLogReqError(r, "Validate Response", true, err)
-			continue
-		}
+func (r *Request) prepareRetry() {
+	if r.Config.LogLevel.Matches(aws.LogDebugWithRequestRetries) {
+		r.Config.Logger.Log(fmt.Sprintf("DEBUG: Retrying Request %s/%s, attempt %d",
+			r.ClientInfo.ServiceName, r.Operation.Name, r.RetryCount))
+	}
 
-		r.Handlers.Unmarshal.Run(r)
-		if r.Error != nil {
-			err := r.Error
-			r.Handlers.Retry.Run(r)
-			r.Handlers.AfterRetry.Run(r)
-			if r.Error != nil {
-				debugLogReqError(r, "Unmarshal Response", false, err)
-				return r.Error
-			}
-			debugLogReqError(r, "Unmarshal Response", true, err)
-			continue
-		}
+	// The previous http.Request will have a reference to the r.Body
+	// and the HTTP Client's Transport may still be reading from
+	// the request's body even though the Client's Do returned.
+	r.HTTPRequest = copyHTTPRequest(r.HTTPRequest, nil)
+	r.ResetBody()
 
-		break
+	// Closing response body to ensure that no response body is leaked
+	// between retry attempts.
+	if r.HTTPResponse != nil && r.HTTPResponse.Body != nil {
+		r.HTTPResponse.Body.Close()
+	}
+}
+
+func (r *Request) sendRequest() (sendErr error) {
+	defer r.Handlers.CompleteAttempt.Run(r)
+
+	r.Retryable = nil
+	r.Handlers.Send.Run(r)
+	if r.Error != nil {
+		debugLogReqError(r, "Send Request", r.WillRetry(), r.Error)
+		return r.Error
+	}
+
+	r.Handlers.UnmarshalMeta.Run(r)
+	r.Handlers.ValidateResponse.Run(r)
+	if r.Error != nil {
+		r.Handlers.UnmarshalError.Run(r)
+		debugLogReqError(r, "Validate Response", r.WillRetry(), r.Error)
+		return r.Error
+	}
+
+	r.Handlers.Unmarshal.Run(r)
+	if r.Error != nil {
+		debugLogReqError(r, "Unmarshal Response", r.WillRetry(), r.Error)
+		return r.Error
 	}
 
 	return nil

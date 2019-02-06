@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import Page from 'app/core/components/Page/Page';
+import { Tooltip } from '@grafana/ui';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, FolderState } from 'app/types';
@@ -35,7 +35,7 @@ export interface State {
 }
 
 export class FolderPermissions extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -73,19 +73,20 @@ export class FolderPermissions extends PureComponent<Props, State> {
     const { isAdding } = this.state;
 
     if (folder.id === 0) {
-      return <PageHeader model={navModel} />;
+      return <Page navModel={navModel}><Page.Contents isLoading={true}><span></span></Page.Contents></Page>;
     }
 
     const folderInfo = { title: folder.title, url: folder.url, id: folder.id };
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
+      <Page navModel={navModel}>
+        <Page.Contents>
           <div className="page-action-bar">
             <h3 className="page-sub-heading">Folder Permissions</h3>
-            <Tooltip className="page-sub-heading-icon" placement="auto" content={PermissionsInfo}>
-              <i className="gicon gicon-question gicon--has-hover" />
+            <Tooltip placement="auto" content={<PermissionsInfo />}>
+              <div className="page-sub-heading-icon">
+                <i className="gicon gicon-question gicon--has-hover" />
+              </div>
             </Tooltip>
             <div className="page-action-bar__spacer" />
             <button className="btn btn-success pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
@@ -102,8 +103,8 @@ export class FolderPermissions extends PureComponent<Props, State> {
             isFetching={false}
             folderInfo={folderInfo}
           />
-        </div>
-      </div>
+        </Page.Contents>
+      </Page>
     );
   }
 }

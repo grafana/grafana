@@ -250,6 +250,12 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 Set to `true` to log the sql calls and execution times.
 
+### cache_mode
+
+For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
+Defaults to private.
+
+
 <hr />
 
 ## [security]
@@ -384,6 +390,10 @@ value is `true`.
 
 If you want to track Grafana usage via Google analytics specify *your* Universal
 Analytics ID here. By default this feature is disabled.
+
+### check_for_updates
+
+Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
 
 <hr />
 
@@ -583,3 +593,14 @@ Default setting for how Grafana handles nodata or null values in alerting. (aler
 Alert notifications can include images, but rendering many images at the same time can overload the server.
 This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
 value is `5`.
+
+## [panels]
+
+### enable_alpha
+Set to true if you want to test panels that are not yet ready for general usage.
+
+### disable_sanitize_html
+If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default
+is false. This settings was introduced in Grafana v6.0.
+
+

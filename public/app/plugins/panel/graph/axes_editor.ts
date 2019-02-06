@@ -1,4 +1,4 @@
-import kbn from 'app/core/utils/kbn';
+import { getValueFormats } from '@grafana/ui';
 
 export class AxesEditorCtrl {
   panel: any;
@@ -15,7 +15,7 @@ export class AxesEditorCtrl {
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
 
-    this.unitFormats = kbn.getUnitFormats();
+    this.unitFormats = getValueFormats();
 
     this.logScales = {
       linear: 1,

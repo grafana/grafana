@@ -46,7 +46,7 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		req.URL.Host = targetURL.Host
 		req.Host = targetURL.Host
 
-		req.URL.Path = util.JoinUrlFragments(targetURL.Path, proxyPath)
+		req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")

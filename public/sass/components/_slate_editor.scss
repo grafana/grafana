@@ -5,10 +5,11 @@
   word-break: break-word;
 }
 
-.slate-query-field-wrapper {
+.slate-query-field__wrapper {
   position: relative;
   display: inline-block;
-  padding: 6px 7px 4px;
+  padding: $input-padding-y $input-padding-x;
+  min-height: $gf-form-input-height;
   width: 100%;
   cursor: text;
   line-height: $line-height-base;
@@ -18,6 +19,11 @@
   border: $panel-border;
   border-radius: $border-radius;
   transition: all 0.3s;
+  line-height: $input-line-height;
+}
+
+.slate-query-field__wrapper--disabled {
+  background-color: inherit;
 }
 
 .slate-typeahead {
@@ -28,7 +34,6 @@
     left: -10000px;
     opacity: 0;
     border-radius: $border-radius;
-    transition: opacity 0.75s;
     border: $panel-border;
     max-height: calc(66vh);
     overflow-y: scroll;

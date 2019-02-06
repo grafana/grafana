@@ -1,10 +1,10 @@
 import _ from 'lodash';
-import $ from 'jquery';
 import Remarkable from 'remarkable';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { Emitter } from 'app/core/core';
+import getFactors from 'app/core/utils/factors';
 import {
   duplicatePanel,
   copyPanel as copyPanelUtil,
@@ -12,7 +12,7 @@ import {
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
@@ -30,8 +30,9 @@ export class PanelCtrl {
   height: any;
   containerHeight: any;
   events: Emitter;
-  timing: any;
   loading: boolean;
+  timing: any;
+  maxPanelsPerRowOptions: number[];
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -40,7 +41,7 @@ export class PanelCtrl {
     this.$timeout = $injector.get('$timeout');
     this.editorTabs = [];
     this.events = this.panel.events;
-    this.timing = {};
+    this.timing = {}; // not used but here to not break plugins
 
     const plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -57,7 +58,7 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    profiler.renderingCompleted(this.panel.id, this.timing);
+    profiler.renderingCompleted(this.panel.id);
   }
 
   dynamicHeightChanged(height: number): boolean {
@@ -111,6 +112,7 @@ export class PanelCtrl {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
       this.events.emit('init-edit-mode', null);
+      this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
   }
 
@@ -216,25 +218,12 @@ export class PanelCtrl {
     return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
-  calculatePanelHeight() {
-    if (this.panel.fullscreen) {
-      const docHeight = $('.react-grid-layout').height();
-      const editHeight = Math.floor(docHeight * 0.35);
-      const fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
-    } else {
-      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
-    }
-
-    if (this.panel.soloMode) {
-      this.containerHeight = $(window).height();
-    }
-
+  calculatePanelHeight(containerHeight) {
+    this.containerHeight = containerHeight;
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);
   }
 
   render(payload?) {
-    this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 
@@ -306,18 +295,5 @@ export class PanelCtrl {
 
     html += '</div>';
     return sanitize(html);
-  }
-
-  openInspector() {
-    const modalScope = this.$scope.$new();
-    modalScope.panel = this.panel;
-    modalScope.dashboard = this.dashboard;
-    modalScope.panelInfoHtml = this.getInfoContent({ mode: 'inspector' });
-
-    modalScope.inspector = $.extend(true, {}, this.inspector);
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/inspector.html',
-      scope: modalScope,
-    });
   }
 }

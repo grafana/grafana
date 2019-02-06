@@ -2,12 +2,12 @@ import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
 import * as d3 from 'd3';
-import kbn from 'app/core/utils/kbn';
 import { appEvents, contextSrv } from 'app/core/core';
 import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
+import { GrafanaTheme, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -251,7 +251,6 @@ export class HeatmapRenderer {
     if (tickInterval === 0) {
       yMax = max * this.dataRangeWidingFactor;
       yMin = min - min * (this.dataRangeWidingFactor - 1);
-      tickInterval = (yMax - yMin) / 2;
     } else {
       yMax = Math.ceil((max + yWiding) / tickInterval) * tickInterval;
       yMin = Math.floor((min - yWiding) / tickInterval) * tickInterval;
@@ -389,9 +388,7 @@ export class HeatmapRenderer {
 
   // Adjust data range to log base
   adjustLogRange(min, max, logBase) {
-    let yMin, yMax;
-
-    yMin = this.data.heatmapStats.minLog;
+    let yMin = this.data.heatmapStats.minLog;
     if (this.data.heatmapStats.minLog > 1 || !this.data.heatmapStats.minLog) {
       yMin = 1;
     } else {
@@ -399,7 +396,7 @@ export class HeatmapRenderer {
     }
 
     // Adjust max Y value to log base
-    yMax = this.adjustLogMax(this.data.heatmapStats.max, logBase);
+    const yMax = this.adjustLogMax(this.data.heatmapStats.max, logBase);
 
     return { yMin, yMax };
   }
@@ -438,7 +435,7 @@ export class HeatmapRenderer {
     const format = this.panel.yAxis.format;
     return value => {
       try {
-        return format !== 'none' ? kbn.valueFormats[format](value, decimals, scaledDecimals) : value;
+        return format !== 'none' ? getValueFormat(format)(value, decimals, scaledDecimals) : value;
       } catch (err) {
         console.error(err.message || err);
         return value;
@@ -524,7 +521,6 @@ export class HeatmapRenderer {
     const maxValueAuto = this.data.cardStats.max;
     const maxValue = this.panel.color.max || maxValueAuto;
     const minValue = this.panel.color.min || 0;
-
     const colorScheme = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
@@ -665,7 +661,10 @@ export class HeatmapRenderer {
 
   getCardColor(d) {
     if (this.panel.color.mode === 'opacity') {
-      return this.panel.color.cardColor;
+      return getColorFromHexRgbOrName(
+        this.panel.color.cardColor,
+        contextSrv.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
+      );
     } else {
       return this.colorScale(d.count);
     }

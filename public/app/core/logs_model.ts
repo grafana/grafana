@@ -1,15 +1,25 @@
 import _ from 'lodash';
-import { TimeSeries } from 'app/core/core';
-import colors, { getThemeColor } from 'app/core/utils/colors';
 
+import { colors, TimeSeries } from '@grafana/ui';
+import { getThemeColor } from 'app/core/utils/colors';
+
+/**
+ * Mapping of log level abbreviation to canonical log level.
+ * Supported levels are reduce to limit color variation.
+ */
 export enum LogLevel {
+  emerg = 'critical',
+  alert = 'critical',
   crit = 'critical',
   critical = 'critical',
   warn = 'warning',
   warning = 'warning',
   err = 'error',
+  eror = 'error',
   error = 'error',
   info = 'info',
+  notice = 'info',
+  dbug = 'debug',
   debug = 'debug',
   trace = 'trace',
   unkown = 'unkown',
@@ -31,7 +41,7 @@ export interface LogSearchMatch {
   text: string;
 }
 
-export interface LogRow {
+export interface LogRowModel {
   duplicates?: number;
   entry: string;
   key: string; // timestamp + labels
@@ -45,7 +55,7 @@ export interface LogRow {
   uniqueLabels?: LogsStreamLabels;
 }
 
-export interface LogsLabelStat {
+export interface LogLabelStatsModel {
   active?: boolean;
   count: number;
   proportion: number;
@@ -67,7 +77,7 @@ export interface LogsMetaItem {
 export interface LogsModel {
   id: string; // Identify one logs result from another
   meta?: LogsMetaItem[];
-  rows: LogRow[];
+  rows: LogRowModel[];
   series?: TimeSeries[];
 }
 
@@ -81,7 +91,9 @@ export interface LogsStream {
 
 export interface LogsStreamEntry {
   line: string;
-  timestamp: string;
+  ts: string;
+  // Legacy, was renamed to ts
+  timestamp?: string;
 }
 
 export interface LogsStreamLabels {
@@ -175,13 +187,13 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   },
 };
 
-export function calculateFieldStats(rows: LogRow[], extractor: RegExp): LogsLabelStat[] {
+export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogLabelStatsModel[] {
   // Consider only rows that satisfy the matcher
   const rowsWithField = rows.filter(row => extractor.test(row.entry));
   const rowCount = rowsWithField.length;
 
   // Get field value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithField, row => (row as LogRow).entry.match(extractor)[1]);
+  const countsByValue = _.countBy(rowsWithField, row => (row as LogRowModel).entry.match(extractor)[1]);
   const sortedCounts = _.chain(countsByValue)
     .map((count, value) => ({ count, value, proportion: count / rowCount }))
     .sortBy('count')
@@ -191,13 +203,13 @@ export function calculateFieldStats(rows: LogRow[], extractor: RegExp): LogsLabe
   return sortedCounts;
 }
 
-export function calculateLogsLabelStats(rows: LogRow[], label: string): LogsLabelStat[] {
+export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
   // Consider only rows that have the given label
   const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
   const rowCount = rowsWithLabel.length;
 
   // Get label value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRow).labels[label]);
+  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
   const sortedCounts = _.chain(countsByValue)
     .map((count, value) => ({ count, value, proportion: count / rowCount }))
     .sortBy('count')
@@ -208,7 +220,7 @@ export function calculateLogsLabelStats(rows: LogRow[], label: string): LogsLabe
 }
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
-function isDuplicateRow(row: LogRow, other: LogRow, strategy: LogsDedupStrategy): boolean {
+function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedupStrategy): boolean {
   switch (strategy) {
     case LogsDedupStrategy.exact:
       // Exact still strips dates
@@ -230,7 +242,7 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
     return logs;
   }
 
-  const dedupedRows = logs.rows.reduce((result: LogRow[], row: LogRow, index, list) => {
+  const dedupedRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
       previous.duplicates++;
@@ -265,7 +277,7 @@ export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>)
     return logs;
   }
 
-  const filteredRows = logs.rows.reduce((result: LogRow[], row: LogRow, index, list) => {
+  const filteredRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
     if (!hiddenLogLevels.has(row.logLevel)) {
       result.push(row);
     }
@@ -278,7 +290,7 @@ export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>)
   };
 }
 
-export function makeSeriesForLogs(rows: LogRow[], intervalMs: number): TimeSeries[] {
+export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): TimeSeries[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
   // when executing queries & interval calculated and not here but this is a temporary fix.
@@ -328,6 +340,6 @@ export function makeSeriesForLogs(rows: LogRow[], intervalMs: number): TimeSerie
       return a[1] - b[1];
     });
 
-    return new TimeSeries(series);
+    return { datapoints: series.datapoints, target: series.alias, color: series.color };
   });
 }

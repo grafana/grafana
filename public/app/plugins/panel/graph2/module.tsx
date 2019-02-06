@@ -1,4 +1,4 @@
 import { GraphPanel } from './GraphPanel';
-import { GraphOptions } from './GraphOptions';
+import { GraphPanelOptions } from './GraphPanelOptions';
 
-export { GraphPanel as Panel, GraphOptions as PanelOptions };
+export { GraphPanel as Panel, GraphPanelOptions as PanelOptions };

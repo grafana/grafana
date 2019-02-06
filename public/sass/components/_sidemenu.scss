@@ -29,12 +29,12 @@
   .sidemenu-open {
     .sidemenu {
       background: $side-menu-bg;
-      position: initial;
       height: auto;
       box-shadow: $side-menu-shadow;
       position: relative;
       z-index: $zindex-sidemenu;
     }
+
     .sidemenu__top,
     .sidemenu__bottom {
       display: block;
@@ -149,6 +149,19 @@
   color: #ebedf2;
 }
 
+.side-menu-header-link {
+  // Removes left-brand-border-gradient from link
+  color: #ebedf2 !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.dropdown-menu--sidemenu > li > .side-menu-header-link:hover {
+  // Makes sure it looks good on light theme
+  color: #fff !important;
+  background-color: $side-menu-item-hover-bg !important;
+}
+
 .sidemenu-subtitle {
   padding: 0.5rem 1rem 0.5rem;
   font-size: $font-size-sm;
@@ -212,7 +225,6 @@ li.sidemenu-org-switcher {
     .sidemenu {
       width: 100%;
       background: $side-menu-bg-mobile;
-      position: initial;
       height: auto;
       box-shadow: $side-menu-shadow;
       position: relative;

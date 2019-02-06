@@ -14,7 +14,7 @@
 
   &--view {
     flex: 1 1 0;
-    height: 80%;
+    height: 90%;
     margin: 0 $dashboard-padding;
     padding-top: $dashboard-padding;
   }
@@ -26,6 +26,7 @@
   flex-direction: row;
   flex: 1 1 0;
   position: relative;
+  min-height: 0;
 }
 
 .panel-editor__right {
@@ -34,8 +35,10 @@
   flex-grow: 1;
   background: $input-bg;
   margin: 0 20px 0 84px;
+  width: calc(100% - 84px);
   border-radius: 3px;
   box-shadow: $panel-editor-shadow;
+  min-height: 0;
 }
 
 .panel-editor__close {
@@ -60,6 +63,7 @@
   flex-grow: 1;
   min-width: 0;
   display: flex;
+  min-height: 0;
 }
 
 .panel-editor__content {
@@ -171,7 +175,6 @@
 }
 
 .panel-editor-tabs {
-  position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -218,7 +221,6 @@
 
     &:hover {
       filter: $panel-editor-side-menu-shadow;
-      transform: translate(-2px, -2px);
       transform: scale(1.1);
     }
   }
@@ -229,30 +231,3 @@
   min-width: 200px;
 }
 
-.panel-option-section {
-  margin-bottom: 10px;
-  border: $panel-option-section-border;
-  border-radius: $border-radius;
-}
-
-.panel-option-section__header {
-  padding: 4px 20px;
-  font-size: 1.1rem;
-  background: $panel-option-section-header-bg;
-  position: relative;
-
-  .btn {
-    position: absolute;
-    right: 0;
-    top: 0px;
-  }
-}
-
-.panel-option-section__body {
-  padding: 20px;
-  background: $page-bg;
-
-  &--queries {
-    min-height: 200px;
-  }
-}

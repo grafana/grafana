@@ -391,6 +391,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.paused = false;
     this.panelCtrl.refresh();
   }
+
+  getCollapsedText() {
+    return this.target.target;
+  }
 }
 
 function mapToDropdownOptions(results) {

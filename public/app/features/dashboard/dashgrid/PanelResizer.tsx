@@ -1,12 +1,12 @@
-﻿import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { throttle } from 'lodash';
-import Draggable from 'react-draggable';
+import Draggable, { DraggableEventHandler } from 'react-draggable';
 
-import { PanelModel } from '../panel_model';
+import { PanelModel } from '../state/PanelModel';
 
 interface Props {
   isEditing: boolean;
-  render: (height: number | 'inherit') => JSX.Element;
+  render: (styles: object) => JSX.Element;
   panel: PanelModel;
 }
 
@@ -15,10 +15,11 @@ interface State {
 }
 
 export class PanelResizer extends PureComponent<Props, State> {
-  initialHeight: number = Math.floor(document.documentElement.scrollHeight * 0.4);
+  initialHeight: number = Math.floor(document.documentElement.scrollHeight * 0.3);
   prevEditorHeight: number;
   throttledChangeHeight: (height: number) => void;
   throttledResizeDone: () => void;
+  noStyles: object = {};
 
   constructor(props) {
     super(props);
@@ -41,7 +42,7 @@ export class PanelResizer extends PureComponent<Props, State> {
     return 100;
   }
 
-  changeHeight = height => {
+  changeHeight = (height: number) => {
     const sh = this.smallestHeight;
     const lh = this.largestHeight;
     height = height < sh ? sh : height;
@@ -53,7 +54,7 @@ export class PanelResizer extends PureComponent<Props, State> {
     });
   };
 
-  onDrag = (evt, data) => {
+  onDrag: DraggableEventHandler = (evt, data) => {
     const newHeight = this.state.editorHeight + data.y;
     this.throttledChangeHeight(newHeight);
     this.throttledResizeDone();
@@ -65,7 +66,7 @@ export class PanelResizer extends PureComponent<Props, State> {
 
     return (
       <>
-        {render(isEditing ? editorHeight : 'inherit')}
+        {render(isEditing ? {height: editorHeight} : this.noStyles)}
         {isEditing && (
           <div className="panel-editor-container__resizer">
             <Draggable axis="y" grid={[100, 1]} onDrag={this.onDrag} position={{ x: 0, y: 0 }}>

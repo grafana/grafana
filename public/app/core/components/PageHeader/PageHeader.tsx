@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FormEvent } from 'react';
 import { NavModel, NavModelItem } from 'app/types';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
@@ -12,8 +12,8 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
     return navItem.active === true;
   });
 
-  const gotoUrl = evt => {
-    const element = evt.target;
+  const gotoUrl = (evt: FormEvent) => {
+    const element = evt.target as HTMLSelectElement;
     const url = element.options[element.selectedIndex].value;
     appEvents.emit('location-change', { href: url });
   };
@@ -80,7 +80,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
 };
 
 export default class PageHeader extends React.Component<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 

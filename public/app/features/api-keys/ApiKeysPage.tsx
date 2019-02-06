@@ -6,14 +6,13 @@ import { NavModel, ApiKey, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import Page from 'app/core/components/Page/Page';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { DeleteButton } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -224,7 +223,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                     <td>{key.name}</td>
                     <td>{key.role}</td>
                     <td>
-                      <DeleteButton onConfirmDelete={() => this.onDeleteApiKey(key)} />
+                      <DeleteButton onConfirm={() => this.onDeleteApiKey(key)} />
                     </td>
                   </tr>
                 );
@@ -240,18 +239,17 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     const { hasFetched, navModel, apiKeysCount } = this.props;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        {hasFetched ? (
-          apiKeysCount > 0 ? (
-            this.renderApiKeyList()
-          ) : (
-            this.renderEmptyList()
-          )
-        ) : (
-          <PageLoader pageName="Api keys" />
-        )}
-      </div>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!hasFetched}>
+          {hasFetched && (
+            apiKeysCount > 0 ? (
+              this.renderApiKeyList()
+            ) : (
+              this.renderEmptyList()
+            )
+          )}
+        </Page.Contents>
+      </Page>
     );
   }
 }

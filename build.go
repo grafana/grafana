@@ -46,6 +46,8 @@ var (
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
 	enterprise            bool     = false
+	skipRpmGen            bool     = false
+	skipDebGen            bool     = false
 )
 
 func main() {
@@ -67,6 +69,8 @@ func main() {
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
+	flag.BoolVar(&skipRpmGen, "skipRpm", skipRpmGen, "skip rpm package generation (default: false)")
+	flag.BoolVar(&skipDebGen, "skipDeb", skipDebGen, "skip deb package generation (default: false)")
 	flag.Parse()
 
 	buildId = shortenBuildId(buildIdRaw)
@@ -164,6 +168,9 @@ func makeLatestDistCopies() {
 		"_amd64.deb":          "dist/grafana_latest_amd64.deb",
 		".x86_64.rpm":         "dist/grafana-latest-1.x86_64.rpm",
 		".linux-amd64.tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
+		".linux-armv7.tar.gz": "dist/grafana-latest.linux-armv7.tar.gz",
+		".linux-armv6.tar.gz": "dist/grafana-latest.linux-armv6.tar.gz",
+		".linux-arm64.tar.gz": "dist/grafana-latest.linux-arm64.tar.gz",
 	}
 
 	for _, file := range files {
@@ -237,6 +244,8 @@ func createDebPackages() {
 	previousPkgArch := pkgArch
 	if pkgArch == "armv7" {
 		pkgArch = "armhf"
+	} else if pkgArch == "armv6" {
+		pkgArch = "armel"
 	}
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
@@ -287,8 +296,13 @@ func createRpmPackages() {
 }
 
 func createLinuxPackages() {
-	createDebPackages()
-	createRpmPackages()
+	if !skipDebGen {
+		createDebPackages()
+	}
+
+	if !skipRpmGen {
+		createRpmPackages()
+	}
 }
 
 func createPackage(options linuxPackageOptions) {

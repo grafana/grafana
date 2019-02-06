@@ -204,7 +204,7 @@ exports[`Render should render team members 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -229,7 +229,7 @@ exports[`Render should render team members 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -254,7 +254,7 @@ exports[`Render should render team members 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -279,7 +279,7 @@ exports[`Render should render team members 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -304,7 +304,7 @@ exports[`Render should render team members 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -441,7 +441,7 @@ exports[`Render should render team members when sync enabled 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -482,7 +482,7 @@ exports[`Render should render team members when sync enabled 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -523,7 +523,7 @@ exports[`Render should render team members when sync enabled 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -564,7 +564,7 @@ exports[`Render should render team members when sync enabled 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>
@@ -605,7 +605,7 @@ exports[`Render should render team members when sync enabled 1`] = `
             className="text-right"
           >
             <DeleteButton
-              onConfirmDelete={[Function]}
+              onConfirm={[Function]}
             />
           </td>
         </tr>

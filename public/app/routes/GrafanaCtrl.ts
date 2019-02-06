@@ -1,14 +1,14 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
+import Drop from 'tether-drop';
+import { colors } from '@grafana/ui';
 
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
-import Drop from 'tether-drop';
-import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
-import { TimeSrv, setTimeSrv } from 'app/features/dashboard/time_srv';
+import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv, setDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
@@ -279,6 +279,28 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
+        }
+
+        // hide time picker
+        const timePickerDropDownIsOpen = elem.find('.gf-timepicker-dropdown').length > 0;
+        if (timePickerDropDownIsOpen) {
+          const targetIsInTimePickerDropDown = target.parents('.gf-timepicker-dropdown').length > 0;
+          const targetIsInTimePickerNav = target.parents('.gf-timepicker-nav').length > 0;
+          const targetIsDatePickerRowBtn = target.parents('td[id^="datepicker-"]').length > 0;
+          const targetIsDatePickerHeaderBtn = target.parents('button[id^="datepicker-"]').length > 0;
+
+          if (
+            targetIsInTimePickerNav ||
+            targetIsInTimePickerDropDown ||
+            targetIsDatePickerRowBtn ||
+            targetIsDatePickerHeaderBtn
+          ) {
+            return;
+          }
+
+          scope.$apply(() => {
+            scope.appEvent('closeTimepicker');
+          });
         }
       });
     },

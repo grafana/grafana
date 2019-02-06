@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 
 // Components
-import { AsyncSelect } from './Select';
+import { AsyncSelect } from '@grafana/ui';
 
 // Utils & Services
 import { debounce } from 'lodash';

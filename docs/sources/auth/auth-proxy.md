@@ -31,9 +31,10 @@ auto_sign_up = true
 ldap_sync_ttl = 60
 # Limit where auth proxy requests come from by configuring a list of IP addresses.
 # This can be used to prevent users spoofing the X-WEBAUTH-USER header.
+# Example `whitelist = 192.168.1.1, 192.168.1.0/24, 2001::23, 2001::0/120`
 whitelist =
 # Optionally define more headers to sync other user attributes
-# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL``
+# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`
 headers =
 ```
 
