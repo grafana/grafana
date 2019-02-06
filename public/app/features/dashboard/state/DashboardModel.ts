@@ -15,7 +15,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 import { PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
-import { UrlQueryValue } from 'app/types';
+import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
 
 export class DashboardModel {
   id: any;
@@ -49,7 +49,7 @@ export class DashboardModel {
 
   // repeat process cycles
   iteration: number;
-  meta: any;
+  meta: DashboardMeta;
   events: Emitter;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
@@ -887,7 +887,7 @@ export class DashboardModel {
     }
 
     // add back navbar height
-    if (kioskMode === 'tv') {
+    if (kioskMode === KIOSK_MODE_TV) {
       visibleHeight += 55;
     }
 

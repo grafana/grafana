@@ -5,7 +5,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
 
 export class DashboardSrv {
-  dash: DashboardModel;
+  dashboard: DashboardModel;
 
   /** @ngInject */
   constructor(private backendSrv, private $rootScope, private $location) {
@@ -19,11 +19,11 @@ export class DashboardSrv {
   }
 
   setCurrent(dashboard: DashboardModel) {
-    this.dash = dashboard;
+    this.dashboard = dashboard;
   }
 
   getCurrent(): DashboardModel {
-    return this.dash;
+    return this.dashboard;
   }
 
   onRemovePanel = (panelId: number) => {
@@ -124,10 +124,10 @@ export class DashboardSrv {
   }
 
   postSave(clone, data) {
-    this.dash.version = data.version;
+    this.dashboard.version = data.version;
 
     // important that these happens before location redirect below
-    this.$rootScope.appEvent('dashboard-saved', this.dash);
+    this.$rootScope.appEvent('dashboard-saved', this.dashboard);
     this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
 
     const newUrl = locationUtil.stripBaseFromUrl(data.url);
@@ -137,12 +137,12 @@ export class DashboardSrv {
       this.$location.url(newUrl).replace();
     }
 
-    return this.dash;
+    return this.dashboard;
   }
 
   save(clone, options) {
     options = options || {};
-    options.folderId = options.folderId >= 0 ? options.folderId : this.dash.meta.folderId || clone.folderId;
+    options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)
@@ -152,26 +152,26 @@ export class DashboardSrv {
 
   saveDashboard(options?, clone?) {
     if (clone) {
-      this.setCurrent(this.create(clone, this.dash.meta));
+      this.setCurrent(this.create(clone, this.dashboard.meta));
     }
 
-    if (this.dash.meta.provisioned) {
+    if (this.dashboard.meta.provisioned) {
       return this.showDashboardProvisionedModal();
     }
 
-    if (!this.dash.meta.canSave && options.makeEditable !== true) {
+    if (!this.dashboard.meta.canSave && options.makeEditable !== true) {
       return Promise.resolve();
     }
 
-    if (this.dash.title === 'New dashboard') {
+    if (this.dashboard.title === 'New dashboard') {
       return this.showSaveAsModal();
     }
 
-    if (this.dash.version > 0) {
+    if (this.dashboard.version > 0) {
       return this.showSaveModal();
     }
 
-    return this.save(this.dash.getSaveModelClone(), options);
+    return this.save(this.dashboard.getSaveModelClone(), options);
   }
 
   saveJSONDashboard(json: string) {
@@ -212,8 +212,8 @@ export class DashboardSrv {
     }
 
     return promise.then(res => {
-      if (this.dash && this.dash.id === dashboardId) {
-        this.dash.meta.isStarred = res;
+      if (this.dashboard && this.dashboard.id === dashboardId) {
+        this.dashboard.meta.isStarred = res;
       }
       return res;
     });

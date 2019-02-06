@@ -1,10 +1,8 @@
-// Libraries
-import { ThunkDispatch } from 'redux-thunk';
-
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
 import { VariableSrv } from 'app/features/templating/variable_srv';
@@ -14,13 +12,18 @@ import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { updateLocation } from 'app/core/actions';
 import { notifyApp } from 'app/core/actions';
 import locationUtil from 'app/core/utils/location_util';
-import { setDashboardLoadingState, ThunkResult, setDashboardModel, setDashboardLoadingSlow } from './actions';
+import { setDashboardLoadingState, setDashboardModel, setDashboardLoadingSlow } from './actions';
 
 // Types
-import { DashboardLoadingState, DashboardRouteInfo, StoreState } from 'app/types';
+import {
+  DashboardLoadingState,
+  DashboardRouteInfo,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+  DashboardDTO,
+} from 'app/types';
 import { DashboardModel } from './DashboardModel';
-
-export type Dispatch = ThunkDispatch<StoreState, undefined, any>;
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -33,7 +36,7 @@ export interface InitDashboardArgs {
   fixUrl: boolean;
 }
 
-async function redirectToNewUrl(slug: string, dispatch: Dispatch, currentPath: string) {
+async function redirectToNewUrl(slug: string, dispatch: ThunkDispatch, currentPath: string) {
   const res = await getBackendSrv().getDashboardBySlug(slug);
 
   if (res) {
@@ -49,18 +52,22 @@ async function redirectToNewUrl(slug: string, dispatch: Dispatch, currentPath: s
   }
 }
 
-async function fetchDashboard(args: InitDashboardArgs, dispatch: Dispatch, getState: () => StoreState): Promise<any> {
+async function fetchDashboard(
+  args: InitDashboardArgs,
+  dispatch: ThunkDispatch,
+  getState: () => StoreState
+): Promise<DashboardDTO | null> {
   try {
     switch (args.routeInfo) {
       case DashboardRouteInfo.Home: {
         // load home dash
-        const dashDTO = await getBackendSrv().get('/api/dashboards/home');
+        const dashDTO: DashboardDTO = await getBackendSrv().get('/api/dashboards/home');
 
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
           dispatch(updateLocation({ path: newUrl, replace: true }));
-          return;
+          return null;
         }
 
         // disable some actions on the default home dashboard
@@ -76,8 +83,8 @@ async function fetchDashboard(args: InitDashboardArgs, dispatch: Dispatch, getSt
           return null;
         }
 
-        const loaderSrv = args.$injector.get('dashboardLoaderSrv');
-        const dashDTO = await loaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+        const loaderSrv: DashboardLoaderSrv = args.$injector.get('dashboardLoaderSrv');
+        const dashDTO: DashboardDTO = await loaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
         if (args.fixUrl && dashDTO.meta.url) {
           // check if the current url is correct (might be old slug)
@@ -95,6 +102,8 @@ async function fetchDashboard(args: InitDashboardArgs, dispatch: Dispatch, getSt
       case DashboardRouteInfo.New: {
         return getNewDashboardModelData(args.urlFolderId);
       }
+      default:
+        throw { message: 'Unknown route ' + args.routeInfo };
     }
   } catch (err) {
     dispatch(setDashboardLoadingState(DashboardLoadingState.Error));
@@ -149,7 +158,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // add missing orgId query param
-    const storeState = getState() ;
+    const storeState = getState();
     if (!storeState.location.query.orgId) {
       dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
     }

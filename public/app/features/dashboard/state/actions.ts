@@ -1,6 +1,3 @@
-// Libaries
-import { ThunkAction } from 'redux-thunk';
-
 // Services & Utils
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
@@ -11,7 +8,7 @@ import { loadPluginDashboards } from '../../plugins/state/actions';
 import { notifyApp } from 'app/core/actions';
 
 // Types
-import { StoreState } from 'app/types';
+import { ThunkResult } from 'app/types';
 import {
   DashboardAcl,
   DashboardAclDTO,
@@ -25,8 +22,6 @@ export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>(
 export const setDashboardLoadingState = actionCreatorFactory<DashboardLoadingState>('SET_DASHBOARD_LOADING_STATE').create();
 export const setDashboardModel = actionCreatorFactory<MutableDashboard>('SET_DASHBOARD_MODEL').create();
 export const setDashboardLoadingSlow = noPayloadActionCreatorFactory('SET_DASHBOARD_LOADING_SLOW').create();
-
-export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {

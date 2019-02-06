@@ -1,10 +1,40 @@
 import { DashboardAcl } from './acl';
 
 export interface MutableDashboard {
-  meta: {
-    fullscreen: boolean;
-    isEditing: boolean;
-  };
+  meta: DashboardMeta;
+}
+
+export interface DashboardDTO {
+  redirectUri?: string;
+  dashboard: DashboardDataDTO;
+  meta: DashboardMeta;
+}
+
+export interface DashboardMeta {
+  canSave?: boolean;
+  canEdit?: boolean;
+  canShare?: boolean;
+  canStar?: boolean;
+  canAdmin?: boolean;
+  url?: string;
+  folderId?: number;
+  fullscreen?: boolean;
+  isEditing?: boolean;
+  canMakeEditable?: boolean;
+  submenuEnabled?: boolean;
+  provisioned?: boolean;
+  focusPanelId?: boolean;
+  isStarred?: boolean;
+  showSettings?: boolean;
+  expires: string;
+  isSnapshot?: boolean;
+  folderTitle?: string;
+  folderUrl?: string;
+  created?: string;
+}
+
+export interface DashboardDataDTO {
+  title: string;
 }
 
 export enum DashboardRouteInfo {
@@ -21,6 +51,9 @@ export enum DashboardLoadingState {
   Error = 'Error',
   Done = 'Done',
 }
+
+export const KIOSK_MODE_TV = 'tv';
+export type KioskUrlValue = 'tv' | '1' | true;
 
 export interface DashboardState {
   model: MutableDashboard | null;
