@@ -64,6 +64,7 @@ $text-color-faint: $dark-5;
 $text-color-emphasis: $gray-5;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
+$textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(
@@ -130,7 +131,6 @@ $empty-list-cta-bg: $gray-blue;
 // Scrollbars
 $scrollbarBackground: #404357;
 $scrollbarBackground2: #3a3a3a;
-
 $scrollbarBorder: black;
 
 // Tables
@@ -144,7 +144,6 @@ $table-bg-hover: $dark-3;
 
 // Buttons
 // -------------------------
-
 $btn-primary-bg: #ff6600;
 $btn-primary-bg-hl: #bc3e06;
 
@@ -189,6 +188,9 @@ $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-3;
 $input-color-select-arrow: $white;
 
+// Input placeholder text color
+$placeholderText: darken($text-color, 25%);
+
 // Search
 $search-shadow: 0 0 30px 0 $black;
 $search-filter-box-bg: $gray-blue;
@@ -211,19 +213,12 @@ $dropdownLinkColorActive: $white;
 
 $dropdownLinkBackgroundHover: $dark-4;
 
-// COMPONENT VARIABLES
-// --------------------------------------------------
-
-// -------------------------
-$placeholderText: darken($text-color, 25%);
-
 // Horizontal forms & lists
 // -------------------------
 $horizontalComponentOffset: 180px;
 
-// Wells
+// Navbar
 // -------------------------
-
 $navbarHeight: 55px;
 
 $navbarBackground: $panel-bg;
