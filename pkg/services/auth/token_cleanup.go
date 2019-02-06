@@ -6,24 +6,28 @@ import (
 )
 
 func (srv *UserAuthTokenService) Run(ctx context.Context) error {
-	if srv.Cfg.ExpiredTokensCleanupIntervalDays <= 0 {
-		srv.log.Debug("cleanup of expired auth tokens are disabled")
-		return nil
-	}
-
-	jobInterval := time.Duration(srv.Cfg.ExpiredTokensCleanupIntervalDays) * 24 * time.Hour
-	srv.log.Debug("cleanup of expired auth tokens are enabled", "intervalDays", srv.Cfg.ExpiredTokensCleanupIntervalDays)
-
+	jobInterval := time.Duration(srv.Cfg.ExpiredTokensCleanupIntervalHours) * time.Hour
 	ticker := time.NewTicker(jobInterval)
 	maxInactiveLifetime := time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
 	maxLifetime := time.Duration(srv.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
 
+	err := srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
+		srv.deleteExpiredTokens(maxInactiveLifetime, maxLifetime)
+	})
+	if err != nil {
+		srv.log.Error("failed to lock and execite cleanup of expired auth token", "erro", err)
+	}
+
 	for {
 		select {
 		case <-ticker.C:
-			srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
+			err := srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
 				srv.deleteExpiredTokens(maxInactiveLifetime, maxLifetime)
 			})
+
+			if err != nil {
+				srv.log.Error("failed to lock and execite cleanup of expired auth token", "erro", err)
+			}
 
 		case <-ctx.Done():
 			return ctx.Err()
