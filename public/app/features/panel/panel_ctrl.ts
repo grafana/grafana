@@ -12,7 +12,7 @@ import {
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 
-import { 
+import {
   GRID_COLUMN_COUNT,
   PANEL_HEADER_HEIGHT,
   GRID_CELL_HEIGHT,
