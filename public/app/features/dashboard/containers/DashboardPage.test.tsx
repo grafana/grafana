@@ -89,7 +89,7 @@ describe('DashboardPage', () => {
       ctx.mount();
     });
 
-    it('should render nothing', () => {
+    it('Should render nothing', () => {
       expect(ctx.wrapper).toMatchSnapshot();
     });
   });
@@ -103,7 +103,7 @@ describe('DashboardPage', () => {
       });
     });
 
-    it('should render slow init state', () => {
+    it('Should render slow init state', () => {
       expect(ctx.wrapper).toMatchSnapshot();
     });
   });
@@ -123,7 +123,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("where user goes into panel edit", (ctx) => {
+  dashboardPageScenario("When user goes into panel edit", (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -143,11 +143,10 @@ describe('DashboardPage', () => {
       const state = ctx.wrapper.state();
       expect(state.isEditing).toBe(true);
       expect(state.isFullscreen).toBe(true);
-      expect(state.rememberScrollTop).toBe(100);
     });
   });
 
-  dashboardPageScenario("where user goes back to dashboard from panel edit", (ctx) => {
+  dashboardPageScenario("When user goes back to dashboard from panel edit", (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();

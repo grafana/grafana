@@ -217,7 +217,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
 </div>
 `;
 
-exports[`DashboardPage Dashboard is fetching slowly should render slow init state 1`] = `
+exports[`DashboardPage Dashboard is fetching slowly Should render slow init state 1`] = `
 <div
   className="dashboard-loading"
 >
@@ -233,7 +233,7 @@ exports[`DashboardPage Dashboard is fetching slowly should render slow init stat
 </div>
 `;
 
-exports[`DashboardPage Given initial state should render nothing 1`] = `""`;
+exports[`DashboardPage Given initial state Should render nothing 1`] = `""`;
 
 exports[`DashboardPage When dashboard has editview url state should render settings view 1`] = `
 <div
