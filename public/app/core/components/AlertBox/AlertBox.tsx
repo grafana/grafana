@@ -17,7 +17,8 @@ function getIconFromSeverity(severity: AppNotificationSeverity): string {
     case AppNotificationSeverity.Success: {
       return 'fa fa-check';
     }
-    default: return null;
+    default:
+      return null;
   }
 }
 

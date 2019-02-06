@@ -210,4 +210,24 @@ describe('DashboardPage', () => {
       expect(ctx.dashboard.panels[0].type).toBe('add-panel');
     });
   });
+
+  dashboardPageScenario("Given panel with id 0", (ctx) => {
+    ctx.setup(() => {
+      ctx.mount();
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph'}],
+        schemaVersion: 17,
+      });
+      ctx.wrapper.setProps({
+        urlEdit: true,
+        urlFullscreen: true,
+        urlPanelId: '0'
+      });
+    });
+
+    it('Should go into edit mode' , () => {
+      expect(ctx.wrapper.state().isEditing).toBe(true);
+      expect(ctx.wrapper.state().fullscreenPanel.id).toBe(0);
+    });
+  });
 });

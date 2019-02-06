@@ -90,7 +90,6 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    console.log('unmount', this.props.cleanUpDashboard);
     if (this.props.dashboard) {
       this.props.cleanUpDashboard();
     }
@@ -118,7 +117,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // Sync url state with model
     if (urlFullscreen !== dashboard.meta.fullscreen || urlEdit !== dashboard.meta.isEditing) {
-      if (urlPanelId) {
+      if (!isNaN(parseInt(urlPanelId, 10))) {
         this.onEnterFullscreen();
       } else {
         this.onLeaveFullscreen();
