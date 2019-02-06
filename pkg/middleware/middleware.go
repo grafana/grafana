@@ -178,6 +178,7 @@ func initContextWithToken(authTokenService authtoken.UserAuthTokenService, ctx *
 	token, err := authTokenService.LookupToken(rawToken)
 	if err != nil {
 		ctx.Logger.Error("failed to look up user based on cookie", "error", err)
+		WriteSessionCookie(ctx, "", -1)
 		return false
 	}
 
