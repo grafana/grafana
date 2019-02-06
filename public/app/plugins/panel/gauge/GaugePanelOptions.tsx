@@ -27,6 +27,7 @@ export const defaultProps = {
     valueMappings: [],
     thresholds: [],
     multiSeriesMode: 'repeat',
+    direction: 'auto',
   },
 };
 

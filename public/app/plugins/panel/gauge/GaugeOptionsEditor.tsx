@@ -12,9 +12,10 @@ import {
 import { GaugeOptions } from './types';
 
 export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>> {
-  multiSeriesOptions: SelectOptionItem[] = [
-    { value: 'repeat', label: 'Repeat' },
-    { value: 'combine', label: 'Combine' },
+  directionOptions: SelectOptionItem[] = [
+    { value: 'auto', label: 'Auto' },
+    { value: 'horizontal', label: 'Horizontal' },
+    { value: 'vertical', label: 'Vertical' },
   ];
 
   labelWidth = 9;
@@ -29,11 +30,11 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
 
   onMaxValueChange = ({ target }) => this.props.onChange({ ...this.props.options, maxValue: target.value });
 
-  onMultiSeriesModeChange = ({ value }) => this.props.onChange({ ...this.props.options, multiSeriesMode: value });
+  onDirectionChange = ({ value }) => this.props.onChange({ ...this.props.options, direction: value });
 
   render() {
     const { options } = this.props;
-    const { maxValue, minValue, multiSeriesMode, showThresholdLabels, showThresholdMarkers } = options;
+    const { direction, maxValue, minValue, showThresholdLabels, showThresholdMarkers } = options;
 
     return (
       <PanelOptionsGroup title="Gauge">
@@ -52,12 +53,12 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
           onChange={this.onToggleThresholdMarkers}
         />
         <div className="gf-form">
-          <FormLabel width={this.labelWidth}>Multi series mode</FormLabel>
+          <FormLabel width={this.labelWidth}>Direction</FormLabel>
           <Select
-            defaultValue={this.multiSeriesOptions[0]}
-            onChange={this.onMultiSeriesModeChange}
-            options={this.multiSeriesOptions}
-            value={this.multiSeriesOptions.find(option => option.value === multiSeriesMode)}
+            defaultValue={this.directionOptions[0]}
+            onChange={this.onDirectionChange}
+            options={this.directionOptions}
+            value={this.directionOptions.find(option => option.value === direction)}
             width={12}
           />
         </div>
