@@ -15,6 +15,8 @@ import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { PanelResizer } from './PanelResizer';
 
+import 'intersection-observer';
+
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
@@ -25,11 +27,15 @@ export interface Props {
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
+  inView: boolean; // Is the dashboard is within the browser window
+  load: boolean; // For lazy loading
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels = {};
+  observer: IntersectionObserver;
+  watching: HTMLElement;
 
   constructor(props) {
     super(props);
@@ -37,10 +43,41 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
+      inView: false,
+      load: false,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
+
+    // Check if the panel is within the browser viewport
+    this.observer = new IntersectionObserver(this.callback.bind(this), {
+      root: null, // the viewport
+      rootMargin: '250px', // buffer by 250
+      threshold: 0, // any pixel
+    });
+  }
+
+  private watch(e: HTMLElement) {
+    if (e && e !== this.watching) {
+      if (this.watching) {
+        this.observer.unobserve(this.watching);
+      }
+      this.observer.observe(e);
+      this.watching = e;
+    }
+  }
+
+  private callback(entries: IntersectionObserverEntry[]) {
+    // Fast scrolling can send multiple callbacks quickly
+    // !intersecting => intersecting => !intersecting in one callback.
+    const vis = entries[entries.length-1].isIntersecting;
+    if (vis !== this.state.inView) {
+      this.setState( {inView: vis} );
+      if (vis) {
+        this.setState( {load: true} );
+      }
+    }
   }
 
   isSpecial(pluginId: string) {
@@ -115,6 +152,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.cleanUpAngularPanel();
+    this.observer.disconnect();
   }
 
   onMouseEnter = () => {
@@ -127,9 +165,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   renderReactPanel() {
     const { dashboard, panel } = this.props;
-    const { plugin } = this.state;
+    const { plugin, inView } = this.state;
 
-    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} />;
+    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} inView={inView} />;
   }
 
   renderAngularPanel() {
@@ -138,7 +176,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel } = this.state;
+    const { plugin, angularPanel, load } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
@@ -157,7 +195,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClass}>
+      <div className={containerClass} ref={ e => this.watch(e) }>
         <PanelResizer
           isEditing={isEditing}
           panel={panel}
@@ -168,8 +206,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.exports.Panel && this.renderReactPanel()}
-              {plugin.exports.PanelCtrl && this.renderAngularPanel()}
+              {load && plugin.exports.Panel && this.renderReactPanel()}
+              {load && plugin.exports.PanelCtrl && this.renderAngularPanel()}
             </div>
           )}
         />
