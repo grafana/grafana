@@ -5476,6 +5476,11 @@ css-color-names@0.0.4:
   resolved "https://registry.yarnpkg.com/css-color-names/-/css-color-names-0.0.4.tgz#808adc2e79cf84738069b646cb20ec27beb629e0"
   integrity sha1-gIrcLnnPhHOAabZGyyDsJ762KeA=
 
+css-element-queries@1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/css-element-queries/-/css-element-queries-1.1.1.tgz#129e104ecb277aa6337b7302cbb6d511c2d1633a"
+  integrity sha512-/PX6Bkk77ShgbOx/mpawHdEvS3PGgy1mmMktcztDPndWdMJxcorcQiivrs+nEljqtBpvNEhAmQky9tQR6FSm8Q==
+
 css-loader@^0.28.7:
   version "0.28.11"
   resolved "https://registry.yarnpkg.com/css-loader/-/css-loader-0.28.11.tgz#c3f9864a700be2711bb5a2462b2389b1a392dab7"

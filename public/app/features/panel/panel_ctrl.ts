@@ -12,7 +12,13 @@ import {
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 
-import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+import { 
+  GRID_COLUMN_COUNT,
+  PANEL_HEADER_HEIGHT,
+  GRID_CELL_HEIGHT,
+  GRID_CELL_VMARGIN,
+  PANEL_BORDER
+} from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
