@@ -26,6 +26,7 @@ export const defaultProps = {
     unit: 'none',
     valueMappings: [],
     thresholds: [],
+    multiSeriesMode: 'repeat',
   },
 };
 
@@ -48,16 +49,12 @@ export default class GaugePanelOptions extends PureComponent<PanelOptionsProps<G
     const { onChange, options } = this.props;
     return (
       <ThemeProvider>
-        {(theme) => (
+        {theme => (
           <>
             <PanelOptionsGrid>
               <ValueOptions onChange={onChange} options={options} />
               <GaugeOptionsEditor onChange={onChange} options={options} />
-              <ThresholdsEditor
-                onChange={this.onThresholdsChanged}
-                thresholds={options.thresholds}
-                theme={theme}
-              />
+              <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} theme={theme} />
             </PanelOptionsGrid>
 
             <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />

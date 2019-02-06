@@ -50,7 +50,15 @@ export class GaugePanel extends PureComponent<Props> {
 
   renderSingleGauge(timeSeries, theme) {
     const { options, width } = this.props;
-    const timeSeriesValue = timeSeries[0].stats[options.stat];
+
+    let timeSeriesValue = timeSeries.reduce((accumulator, currentValue) => {
+      return { stats: { [options.stat]: accumulator.stats[options.stat] + currentValue.stats[options.stat] } };
+    });
+
+    if (options.stat === 'avg') {
+      timeSeriesValue = timeSeriesValue.stats[options.stat] / timeSeries.length;
+    }
+
     return <div className="singlestat-panel">{this.renderGauge(timeSeriesValue, width, theme)}</div>;
   }
 
@@ -62,7 +70,7 @@ export class GaugePanel extends PureComponent<Props> {
   }
 
   renderPanel(theme) {
-    const { panelData } = this.props;
+    const { panelData, options } = this.props;
 
     if (panelData.timeSeries) {
       const timeSeries = processTimeSeries({
@@ -71,7 +79,10 @@ export class GaugePanel extends PureComponent<Props> {
       });
 
       if (timeSeries.length > 1) {
-        return this.renderMultipleGauge(timeSeries, theme);
+        if (options.multiSeriesMode === 'repeat') {
+          return this.renderMultipleGauge(timeSeries, theme);
+        }
+        return this.renderSingleGauge(timeSeries, theme);
       } else if (timeSeries.length > 0) {
         return this.renderSingleGauge(timeSeries, theme);
       } else {

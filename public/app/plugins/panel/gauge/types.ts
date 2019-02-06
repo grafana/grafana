@@ -12,4 +12,5 @@ export interface GaugeOptions {
   suffix: string;
   thresholds: Threshold[];
   unit: string;
+  multiSeriesMode: string;
 }
