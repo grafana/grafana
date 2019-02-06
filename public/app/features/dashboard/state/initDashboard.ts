@@ -9,7 +9,6 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
 import { VariableSrv } from 'app/features/templating/variable_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
-import { config } from 'app/core/config';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
@@ -150,8 +149,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // add missing orgId query param
-    if (!getState().location.query.orgId) {
-      dispatch(updateLocation({ query: { orgId: config.bootData.user.orgId }, partial: true, replace: true }));
+    const storeState = getState() ;
+    if (!storeState.location.query.orgId) {
+      dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
     }
 
     // init services
