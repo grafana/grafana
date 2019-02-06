@@ -1,7 +1,7 @@
 const path = require('path');
+const getThemeVariable = require('../../../scripts/webpack/getThemeVariable');
 
 module.exports = (baseConfig, env, config) => {
-
   config.module.rules.push({
     test: /\.(ts|tsx)$/,
     use: [
@@ -33,7 +33,15 @@ module.exports = (baseConfig, env, config) => {
           config: { path: __dirname + '../../../../scripts/webpack/postcss.config.js' },
         },
       },
-      { loader: 'sass-loader', options: { sourceMap: false } },
+      {
+        loader: 'sass-loader',
+        options: {
+          sourceMap: false,
+          functions: {
+            'getThemeVariable($themeVar, $themeName: dark)': getThemeVariable,
+          },
+        },
+      },
     ],
   });
 
@@ -52,5 +60,9 @@ module.exports = (baseConfig, env, config) => {
   });
 
   config.resolve.extensions.push('.ts', '.tsx');
+
+  // Remove pure js loading rules as Storybook's Babel config is causing problems when mixing ES6 and CJS
+  // More about the problem we encounter: https://github.com/webpack/webpack/issues/4039
+  config.module.rules = config.module.rules.filter(rule => rule.test.toString() !== /\.(mjs|jsx?)$/.toString());
   return config;
 };
