@@ -1,5 +1,3 @@
-
-
 const defaultTheme = require('./default');
 const tinycolor = require('tinycolor2');
 
