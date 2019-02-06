@@ -61,7 +61,9 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRefresh = () => {
     console.log('onRefresh');
-    if (!this.isVisible) {
+    if (!this.props.inView) {
+      // TODO? if it is not visible when onRefresh() is hit,
+      // Should we call onRefresh when the panel comes back into view?
       return;
     }
 
@@ -91,11 +93,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
   };
 
-  get isVisible() {
-    return (this.props.inView)
-      && !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
-  }
-
   renderPanel(loading, panelData, width, height): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
@@ -124,7 +121,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard } = this.props;
+    const { panel, dashboard, inView } = this.props;
     const { refreshCounter, timeRange, timeInfo } = this.state;
 
     const { datasource, targets, transparent } = panel;
@@ -154,7 +151,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                   datasource={datasource}
                   queries={targets}
                   timeRange={timeRange}
-                  isVisible={this.isVisible}
+                  inView={inView}
                   widthPixels={width}
                   refreshCounter={refreshCounter}
                   onDataResponse={this.onDataResponse}

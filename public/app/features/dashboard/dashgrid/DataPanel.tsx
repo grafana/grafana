@@ -30,7 +30,7 @@ export interface Props {
   queries: any[];
   panelId?: number;
   dashboardId?: number;
-  isVisible?: boolean;
+  inView?: boolean;
   timeRange?: TimeRange;
   widthPixels: number;
   refreshCounter: number;
@@ -49,7 +49,7 @@ export interface State {
 
 export class DataPanel extends Component<Props, State> {
   static defaultProps = {
-    isVisible: true,
+    inView: true,
     panelId: 1,
     dashboardId: 1,
   };
@@ -92,7 +92,7 @@ export class DataPanel extends Component<Props, State> {
 
   private issueQueries = async () => {
     const {
-      isVisible,
+      inView,
       queries,
       datasource,
       panelId,
@@ -103,7 +103,7 @@ export class DataPanel extends Component<Props, State> {
       onDataResponse,
     } = this.props;
 
-    if (!isVisible) {
+    if (!inView) {
       return;
     }
 
