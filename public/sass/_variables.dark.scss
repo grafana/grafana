@@ -104,12 +104,12 @@ $page-header-bg: linear-gradient(90deg, #292a2d, black);
 $page-header-shadow: inset 0px -4px 14px $dark-2;
 $page-header-border-color: $dark-4;
 
-$divider-border-color: #555;
+$divider-border-color: $gray-1;
 
 // Graphite Target Editor
 $tight-form-bg: $dark-3;
-$tight-form-func-bg: #333334;
-$tight-form-func-highlight-bg: #444445;
+$tight-form-func-bg: $dark-4;
+$tight-form-func-highlight-bg: $dark-5;
 
 $modal-backdrop-bg: #353c42;
 $code-tag-bg: $dark-1;
