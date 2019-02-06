@@ -11,7 +11,6 @@ import (
 	msession "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/authtoken"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -228,7 +227,7 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.withTokenSessionCookie("token")
 
 			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
-				return nil, authtoken.ErrAuthTokenNotFound
+				return nil, m.ErrUserTokenNotFound
 			}
 
 			sc.fakeReq("GET", "/").exec()
