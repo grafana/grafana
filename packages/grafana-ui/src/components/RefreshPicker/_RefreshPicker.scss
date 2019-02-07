@@ -1,6 +1,10 @@
 .refresh-picker {
   .navbar-button {
-    margin-right: 0px;
+    margin-right: 0;
+  }
+  .navbar-button:last-child {
+    padding-left: 6px;
+    padding-right: 2px;
   }
 
   .btn {
