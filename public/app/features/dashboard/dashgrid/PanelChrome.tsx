@@ -27,7 +27,7 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  inView: boolean;
+  isInView: boolean;
 }
 
 export interface State {
@@ -121,7 +121,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { panel, dashboard, inView } = this.props;
+    const { panel, dashboard, isInView } = this.props;
     const { refreshCounter, timeRange, timeInfo } = this.state;
 
     const { datasource, targets, transparent } = panel;
@@ -151,7 +151,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                   datasource={datasource}
                   queries={targets}
                   timeRange={timeRange}
-                  inView={inView}
+                  isInView={isInView}
                   widthPixels={width}
                   refreshCounter={refreshCounter}
                   onDataResponse={this.onDataResponse}

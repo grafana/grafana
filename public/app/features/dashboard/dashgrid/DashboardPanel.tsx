@@ -27,7 +27,7 @@ export interface Props {
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
-  inView: boolean; // Is the dashboard is within the browser window
+  isInView: boolean; // Is the dashboard is within the browser window
   show: boolean; // For lazy loading
 }
 
@@ -43,7 +43,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
-      inView: false,
+      isInView: false,
       show: false, // Lazy load
     };
 
@@ -72,9 +72,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
     // Fast scrolling can send multiple callbacks quickly
     // !intersecting => intersecting => !intersecting in one callback.
     const intersecting = entries[entries.length-1].isIntersecting;
-    if (intersecting !== this.state.inView) {
-      this.setState( {inView: intersecting} );
-      if (intersecting) {
+    if (intersecting !== this.state.isInView) {
+      this.setState( {isInView: intersecting} );
+      if (intersecting && !this.state.show) {
         this.setState( {show: true} );
       }
     }
@@ -165,9 +165,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   renderReactPanel() {
     const { dashboard, panel } = this.props;
-    const { plugin, inView } = this.state;
+    const { plugin, isInView } = this.state;
 
-    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} inView={inView} />;
+    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} isInView={isInView} />;
   }
 
   renderAngularPanel() {
