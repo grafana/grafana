@@ -47,6 +47,7 @@ export interface CommonProps {
   isMulti?: boolean;
   backspaceRemovesValue?: boolean;
   menuIsOpen?: boolean;
+  components?: any;
 }
 
 export interface SelectProps {
@@ -83,6 +84,13 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
     menuIsOpen: false,
+    components: {
+      Option: SelectOption,
+      SingleValue,
+      IndicatorsContainer,
+      MenuList,
+      Group: SelectOptionGroup,
+    },
   };
 
   render() {
@@ -108,6 +116,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
       maxMenuHeight,
       noOptionsMessage,
       menuIsOpen,
+      components,
     } = this.props;
 
     let widthClass = '';
@@ -116,12 +125,13 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
     }
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
+    const selectComponents = { ...Select.defaultProps.components, ...components };
 
     return (
       <ReactSelect
         classNamePrefix="gf-form-select-box"
         className={selectClassNames}
-        components={{ Option: SelectOption, SingleValue, IndicatorsContainer, MenuList, Group: SelectOptionGroup }}
+        components={selectComponents}
         defaultValue={defaultValue}
         value={value}
         getOptionLabel={getOptionLabel}

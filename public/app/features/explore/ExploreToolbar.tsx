@@ -3,12 +3,11 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId } from 'app/types/explore';
-import { DataSourceSelectItem, RawTimeRange, TimeRange } from '@grafana/ui';
+import { DataSourceSelectItem, RawTimeRange, TimeRange, ClickOutsideWrapper } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import { changeDatasource, clearQueries, splitClose, runQueries, splitOpen } from './state/actions';
 import TimePicker from './TimePicker';
-import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 enum IconSide {
   left = 'left',

@@ -9,7 +9,7 @@ import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
+import { ClickOutsideWrapper } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;

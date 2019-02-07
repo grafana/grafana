@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { RefreshSelect, EMPTY_ITEM_TEXT } from './RefreshSelect';
 import { SelectButton } from '../Select/SelectButton';
 import { RefreshButton } from './RefreshButton';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface Props {
   initialValue: string | undefined;
@@ -30,20 +31,24 @@ export class RefreshPicker extends PureComponent<Props, State> {
     this.props.onIntervalChanged(interval);
   };
 
+  onClickOutside = () => this.setState({ isSelectOpen: false });
+
   render() {
     const { onRefreshClicked, intervals } = this.props;
     const { isSelectOpen, value } = this.state;
 
     return (
-      <div className={'refresh-picker'}>
-        <div className={'refresh-picker-buttons'}>
-          <RefreshButton onClick={onRefreshClicked} />
-          <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={EMPTY_ITEM_TEXT} value={value} />
+      <ClickOutsideWrapper onClick={this.onClickOutside}>
+        <div className={'refresh-picker'}>
+          <div className={'refresh-picker-buttons'}>
+            <RefreshButton onClick={onRefreshClicked} />
+            <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={EMPTY_ITEM_TEXT} value={value} />
+          </div>
+          <div className={'refresh-picker-select'}>
+            <RefreshSelect isOpen={isSelectOpen} intervals={intervals} onChange={this.onSelectChanged} value={value} />
+          </div>
         </div>
-        <div className={'refresh-picker-select'}>
-          <RefreshSelect isOpen={isSelectOpen} intervals={intervals} onChange={this.onSelectChanged} value={value} />
-        </div>
-      </div>
+      </ClickOutsideWrapper>
     );
   }
 }
