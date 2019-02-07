@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
 import Select, { SelectOptionItem } from '../Select/Select';
 
+export const EMPTY_ITEM_TEXT = 'Paused';
+
 export interface Props {
   value: string | undefined;
   intervals: string[];
@@ -9,7 +11,7 @@ export interface Props {
 }
 
 export class RefreshSelect extends PureComponent<Props> {
-  pausedItem = { label: 'Paused', value: undefined };
+  pausedItem = { label: EMPTY_ITEM_TEXT, value: undefined };
 
   mapStringToSelectOptionItem = (interval: string | undefined) => {
     return interval ? { label: interval, value: interval } : this.pausedItem;
