@@ -53,5 +53,20 @@ export const noPayloadActionCreatorFactory = (type: string): NoPayloadActionCrea
   return { create };
 };
 
+export interface NoPayloadActionCreatorMock extends NoPayloadActionCreator {
+  calls: number;
+}
+
+export const getNoPayloadActionCreatorMock = (creator: NoPayloadActionCreator): NoPayloadActionCreatorMock => {
+  const mock: NoPayloadActionCreatorMock = Object.assign(
+    (): ActionOf<undefined> => {
+      mock.calls++;
+      return { type: creator.type, payload: undefined };
+    },
+    { type: creator.type, calls: 0 }
+  );
+  return mock;
+};
+
 // Should only be used by tests
 export const resetAllActionCreatorTypes = () => (allActionCreators.length = 0);

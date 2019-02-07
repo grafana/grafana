@@ -18,11 +18,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       collapsed: this.props.panel.collapsed,
     };
 
-    appEvents.on('template-variable-value-updated', this.onVariableUpdated);
+    this.props.dashboard.on('template-variable-value-updated', this.onVariableUpdated);
   }
 
   componentWillUnmount() {
-    appEvents.off('template-variable-value-updated', this.onVariableUpdated);
+    this.props.dashboard.off('template-variable-value-updated', this.onVariableUpdated);
   }
 
   onVariableUpdated = () => {
