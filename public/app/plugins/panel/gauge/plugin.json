@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Gauge",
   "id": "gauge",
+  "isDataPanel": true,
 
   "info": {
     "author": {

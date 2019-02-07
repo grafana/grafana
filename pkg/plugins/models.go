@@ -47,6 +47,7 @@ type PluginBase struct {
 	BaseUrl      string             `json:"baseUrl"`
 	HideFromList bool               `json:"hideFromList,omitempty"`
 	State        PluginState        `json:"state,omitempty"`
+	IsDataPanel  bool               `json:"isDataPanel"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
