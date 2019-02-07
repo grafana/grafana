@@ -1,24 +1,10 @@
 import React, { PureComponent } from 'react';
-import {
-  FormField,
-  FormLabel,
-  PanelOptionsProps,
-  PanelOptionsGroup,
-  Select,
-  SelectOptionItem,
-  Switch,
-} from '@grafana/ui';
+import { FormField, PanelOptionsProps, PanelOptionsGroup, Switch } from '@grafana/ui';
 
 import { GaugeOptions } from './types';
 
 export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<GaugeOptions>> {
-  directionOptions: SelectOptionItem[] = [
-    { value: 'auto', label: 'Auto' },
-    { value: 'horizontal', label: 'Horizontal' },
-    { value: 'vertical', label: 'Vertical' },
-  ];
-
-  labelWidth = 9;
+  labelWidth = 8;
 
   onToggleThresholdLabels = () =>
     this.props.onChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
@@ -30,11 +16,9 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
 
   onMaxValueChange = ({ target }) => this.props.onChange({ ...this.props.options, maxValue: target.value });
 
-  onDirectionChange = ({ value }) => this.props.onChange({ ...this.props.options, direction: value });
-
   render() {
     const { options } = this.props;
-    const { direction, maxValue, minValue, showThresholdLabels, showThresholdMarkers } = options;
+    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers } = options;
 
     return (
       <PanelOptionsGroup title="Gauge">
@@ -52,16 +36,6 @@ export default class GaugeOptionsEditor extends PureComponent<PanelOptionsProps<
           checked={showThresholdMarkers}
           onChange={this.onToggleThresholdMarkers}
         />
-        <div className="gf-form">
-          <FormLabel width={this.labelWidth}>Direction</FormLabel>
-          <Select
-            defaultValue={this.directionOptions[0]}
-            onChange={this.onDirectionChange}
-            options={this.directionOptions}
-            value={this.directionOptions.find(option => option.value === direction)}
-            width={12}
-          />
-        </div>
       </PanelOptionsGroup>
     );
   }
