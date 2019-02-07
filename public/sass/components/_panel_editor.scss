@@ -86,6 +86,10 @@
   .panel-editor-container__panel {
     margin: 0 $dashboard-padding;
   }
+
+  .panel-title-text {
+    visibility: hidden;
+  }
 }
 
 .panel-editor-container__resizer {

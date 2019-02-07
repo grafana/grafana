@@ -1,6 +1,6 @@
 .navbar {
   position: relative;
-  padding-left: 40px;
+  padding-left: 20px;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
   padding-right: 20px;
@@ -177,5 +177,68 @@
     .gicon {
       display: inline-block;
     }
+  }
+}
+
+.navbar-edit {
+  display: flex;
+  height: $navbarHeight;
+  align-items: center;
+  padding-left: 7px;
+  flex-grow: 1;
+}
+
+.navbar-edit__back-btn  {
+  background: transparent;
+  border: 2px solid $white;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  margin-right: 7px;
+
+  i {
+    font-size: $font-size-lg;
+  }
+}
+
+.navbar-edit__input-wraper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+
+  &:hover {
+    i {
+      opacity: 1;
+    }
+
+    .navbar-edit__input {
+      background: $input-bg;
+      flex-grow: 1;
+      @include form-control-focus();
+    }
+  }
+
+  i {
+    left: -25px;
+    position: relative;
+    color: $text-color-weak;
+    opacity: 0;
+    transition: 200ms opacity ease-in-out;
+  }
+}
+
+.navbar-edit__input {
+  background: transparent;
+  transition: 200ms background ease-in-out;
+  width: auto;
+  font-size: $font-size-lg;
+  height: $gf-form-input-height;
+  padding: $input-padding-y $input-padding-x;
+  flex-grow: 1;
+
+  &:focus {
+    @include form-control-focus();
+    background: $input-bg;
   }
 }

@@ -14,10 +14,11 @@ import { DashNavButton } from './DashNavButton';
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel, PanelModel } from '../../state';
 
 export interface Props {
   dashboard: DashboardModel;
+  fullscreenPanel?: PanelModel;
   editview: string;
   isEditing: boolean;
   isFullscreen: boolean;
@@ -33,7 +34,6 @@ export class DashNav extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
-
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
@@ -123,16 +123,14 @@ export class DashNav extends PureComponent<Props> {
     });
   };
 
-  render() {
-    const { dashboard, isFullscreen, editview, onAddPanel } = this.props;
-    const { canStar, canSave, canShare, folderTitle, showSettings, isStarred } = dashboard.meta;
-    const { snapshot } = dashboard;
+  renderDashboardTitleSearchButton() {
+    const { dashboard } = this.props;
 
+    const folderTitle = dashboard.meta.folderTitle;
     const haveFolder = dashboard.meta.folderId > 0;
-    const snapshotUrl = snapshot && snapshot.originalUrl;
 
     return (
-      <div className="navbar">
+      <>
         <div>
           <a className="navbar-page-btn" onClick={this.onOpenSearch}>
             <i className="gicon gicon-dashboard" />
@@ -141,8 +139,38 @@ export class DashNav extends PureComponent<Props> {
             <i className="fa fa-caret-down" />
           </a>
         </div>
-
         <div className="navbar__spacer" />
+      </>
+    );
+  }
+
+  renderPanelFullscreeMode() {
+    const { fullscreenPanel } = this.props;
+
+    return (
+      <div className="navbar-edit">
+        <button className="navbar-edit__back-btn" onClick={this.onClose}>
+          <i className="fa fa-arrow-left" />
+        </button>
+        <div className="navbar-edit__input-wraper">
+          <input className="navbar-edit__input" type="text" value={fullscreenPanel.title} />
+          <i className="fa fa-pencil" />
+        </div>
+      </div>
+    );
+  }
+
+  render() {
+    const { dashboard, onAddPanel, fullscreenPanel } = this.props;
+    const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
+    const { snapshot } = dashboard;
+
+    const snapshotUrl = snapshot && snapshot.originalUrl;
+
+    return (
+      <div className="navbar">
+        {!fullscreenPanel && this.renderDashboardTitleSearchButton()}
+        {fullscreenPanel && this.renderPanelFullscreeMode()}
 
         {this.playlistSrv.isPlaying && (
           <div className="navbar-buttons navbar-buttons--playlist">
@@ -228,17 +256,6 @@ export class DashNav extends PureComponent<Props> {
         </div>
 
         <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
-
-        {(isFullscreen || editview) && (
-          <div className="navbar-buttons navbar-buttons--close">
-            <DashNavButton
-              tooltip="Back to dashboard"
-              classSuffix="primary"
-              icon="fa fa-reply"
-              onClick={this.onClose}
-            />
-          </div>
-        )}
       </div>
     );
   }
