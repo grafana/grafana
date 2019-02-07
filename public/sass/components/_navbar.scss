@@ -41,7 +41,7 @@
 
 .panel-in-fullscreen {
   .navbar {
-    padding-left: 15px;
+    padding-left: 20px;
   }
 
   .navbar-button--add-panel,
@@ -190,14 +190,22 @@
 
 .navbar-edit__back-btn  {
   background: transparent;
-  border: 2px solid $white;
+  border: 2px solid $text-color;
   border-radius: 50%;
   width: 34px;
   height: 34px;
-  margin-right: 7px;
+  transition: transform 0.1s ease 0.1s;
+  color: $text-color;
 
   i {
     font-size: $font-size-lg;
+    position: relative;
+    top: 2px;
+  }
+
+  &:hover {
+    color: $text-color-strong;
+    border-color: $text-color-strong;
   }
 }
 
