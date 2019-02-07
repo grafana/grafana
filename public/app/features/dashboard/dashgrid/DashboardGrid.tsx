@@ -14,7 +14,7 @@ let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
 
 interface GridWrapperProps {
-  size: { width: number; };
+  size: { width: number };
   layout: ReactGridLayout.Layout[];
   onLayoutChange: (layout: ReactGridLayout.Layout[]) => void;
   children: JSX.Element | JSX.Element[];
@@ -77,12 +77,13 @@ function GridWrapper({
   );
 }
 
-const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
+const SizedReactLayoutGrid = sizeMe({ monitorWidth: true, monitorHeight: true })(GridWrapper);
 
 export interface Props {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  scrollTop: number;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
@@ -187,10 +188,34 @@ export class DashboardGrid extends PureComponent<Props> {
     this.updateGridPos(newItem, layout);
   }
 
+  isInView = (panel: PanelModel): boolean => {
+  //  const buffer = 100;
+
+    const viewTop = this.props.scrollTop; // - buffer;
+    const viewH =
+      100
+      // Just use the whole browser window
+      //(isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight)
+      ;
+
+    const viewBot = viewTop + viewH; // + (buffer+buffer);
+
+    const top = (panel.gridPos.y) * GRID_CELL_HEIGHT;
+  //  const bottom = top + (panel.gridPos.h * GRID_CELL_HEIGHT);
+
+    const inView = !(top > viewBot); // bottom > viewTop || top < viewBot;
+
+    console.log( 'InView', panel.id, inView, ' // ', top, viewBot );
+    return true;
+  }
+
   renderPanels() {
     const panelElements = [];
 
+    console.log( '====================' );
+
     for (const panel of this.props.dashboard.panels) {
+      const inView = this.isInView(panel);
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses} id={`panel-${panel.id}`}>
@@ -199,6 +224,7 @@ export class DashboardGrid extends PureComponent<Props> {
             dashboard={this.props.dashboard}
             isEditing={panel.isEditing}
             isFullscreen={panel.fullscreen}
+            isInView={inView}
           />
         </div>
       );

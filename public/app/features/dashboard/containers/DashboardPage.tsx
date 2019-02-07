@@ -275,7 +275,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
             <div className={gridWrapperClasses}>
               {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
-              <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
+              <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} scrollTop={scrollTop}/>
             </div>
           </CustomScrollbar>
         </div>

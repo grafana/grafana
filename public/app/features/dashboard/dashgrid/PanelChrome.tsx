@@ -27,6 +27,7 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
+  isInView: boolean;
 }
 
 export interface State {
@@ -91,7 +92,8 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   get isVisible() {
-    return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
+    return this.props.isInView &&
+      !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
   renderPanel(loading, panelData, width, height): JSX.Element {
