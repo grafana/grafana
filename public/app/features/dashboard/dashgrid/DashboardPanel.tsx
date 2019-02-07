@@ -28,7 +28,7 @@ export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
   inView: boolean; // Is the dashboard is within the browser window
-  load: boolean; // For lazy loading
+  show: boolean; // For lazy loading
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -44,7 +44,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
       plugin: null,
       angularPanel: null,
       inView: false,
-      load: false,
+      show: false, // Lazy load
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -71,11 +71,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
   private callback(entries: IntersectionObserverEntry[]) {
     // Fast scrolling can send multiple callbacks quickly
     // !intersecting => intersecting => !intersecting in one callback.
-    const vis = entries[entries.length-1].isIntersecting;
-    if (vis !== this.state.inView) {
-      this.setState( {inView: vis} );
-      if (vis) {
-        this.setState( {load: true} );
+    const intersecting = entries[entries.length-1].isIntersecting;
+    if (intersecting !== this.state.inView) {
+      this.setState( {inView: intersecting} );
+      if (intersecting) {
+        this.setState( {show: true} );
       }
     }
   }
@@ -176,7 +176,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel, load } = this.state;
+    const { plugin, angularPanel, show } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
@@ -206,8 +206,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {load && plugin.exports.Panel && this.renderReactPanel()}
-              {load && plugin.exports.PanelCtrl && this.renderAngularPanel()}
+              {show && plugin.exports.Panel && this.renderReactPanel()}
+              {show && plugin.exports.PanelCtrl && this.renderAngularPanel()}
             </div>
           )}
         />
