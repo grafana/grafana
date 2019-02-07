@@ -60,7 +60,7 @@ export class DashboardSrv {
       delete urlParams.edit;
     }
 
-    if (options.panelId !== undefined) {
+    if (options.panelId || options.panelId === 0) {
       urlParams.panelId = options.panelId;
     } else {
       delete urlParams.panelId;
