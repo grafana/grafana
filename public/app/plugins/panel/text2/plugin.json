@@ -2,8 +2,8 @@
   "type": "panel",
   "name": "Text v2",
   "id": "text2",
-
   "state": "alpha",
+  "isDataPanel": false,
 
   "info": {
     "author": {

@@ -9,6 +9,7 @@ export interface PanelPlugin {
   info: any;
   sort: number;
   exports?: PluginExports;
+  isDataPanel?: boolean;
 }
 
 export interface Plugin {

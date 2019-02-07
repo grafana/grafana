@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "React Graph",
   "id": "graph2",
-
+  "isDataPanel": true,
   "state": "alpha",
 
   "info": {
