@@ -1,6 +1,7 @@
 import { DashboardAcl } from './acl';
 
 export interface MutableDashboard {
+  title: string;
   meta: DashboardMeta;
   destroy: () => void;
 }
@@ -27,7 +28,7 @@ export interface DashboardMeta {
   focusPanelId?: boolean;
   isStarred?: boolean;
   showSettings?: boolean;
-  expires: string;
+  expires?: string;
   isSnapshot?: boolean;
   folderTitle?: string;
   folderUrl?: string;
