@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/social"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -20,9 +20,9 @@ func init() {
 }
 
 type UsageStatsService struct {
-	Cfg          *setting.Cfg               `inject:""`
-	TokenService *auth.UserAuthTokenService `inject:""`
-	Bus          bus.Bus                    `inject:""`
+	Cfg      *setting.Cfg       `inject:""`
+	Bus      bus.Bus            `inject:""`
+	SQLStore *sqlstore.SqlStore `inject:""`
 
 	oauthProviders map[string]bool
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -22,7 +23,8 @@ import (
 func TestMetrics(t *testing.T) {
 	Convey("Test send usage stats", t, func() {
 		uss := &UsageStatsService{
-			Bus: bus.New(),
+			Bus:      bus.New(),
+			SQLStore: sqlstore.InitTestDB(t),
 		}
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
@@ -43,6 +45,7 @@ func TestMetrics(t *testing.T) {
 				ProvisionedDashboards: 12,
 				Snapshots:             13,
 				Teams:                 14,
+				Sessions:              15,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -226,6 +229,8 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.provisioned_dashboards.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.ProvisionedDashboards)
 				So(metrics.Get("stats.snapshots.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Snapshots)
 				So(metrics.Get("stats.teams.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Teams)
+				So(metrics.Get("stats.total_sessions.count").MustInt64(), ShouldEqual, 15)
+				So(metrics.Get("stats.avg_sessions_per_user.count").MustInt64(), ShouldEqual, 5)
 
 				So(metrics.Get("stats.ds."+models.DS_ES+".count").MustInt(), ShouldEqual, 9)
 				So(metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt(), ShouldEqual, 10)
@@ -251,6 +256,7 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
 
 				So(metrics.Get("stats.packaging.deb.count").MustInt(), ShouldEqual, 1)
+
 			})
 		})
 
