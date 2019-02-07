@@ -2,6 +2,14 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { DashboardRouteInfo } from 'app/types';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import {
+  dashboardInitFetching,
+  dashboardInitCompleted,
+  dashboardInitServices,
+} from './actions';
+
+jest.mock('app/core/services/backend_srv');
 
 const mockStore = configureMockStore([thunk]);
 
@@ -13,6 +21,7 @@ interface ScenarioContext {
   variableSrv: any;
   dashboardSrv: any;
   keybindingSrv: any;
+  backendSrv: any;
   setup: (fn: () => void) => void;
   actions: any[];
   storeState: any;
@@ -59,6 +68,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         fixUrl: false,
         routeInfo: DashboardRouteInfo.Normal,
       },
+      backendSrv: getBackendSrv(),
       timeSrv,
       annotationsSrv,
       unsavedChangesSrv,
@@ -97,12 +107,12 @@ describeInitScenario('Initializing new dashboard', ctx => {
     ctx.args.routeInfo = DashboardRouteInfo.New;
   });
 
-  it('Should send action to set loading state to fetching', () => {
-    expect(ctx.actions[0].type).toBe('DASHBOARD_INIT_FETCHING');
+  it('Should send action dashboardInitFetching', () => {
+    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
   });
 
-  it('Should send action to set loading state to Initializing', () => {
-    expect(ctx.actions[1].type).toBe('DASHBOARD_INIT_SERVICES');
+  it('Should send action dashboardInitServices ', () => {
+    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
   });
 
   it('Should update location with orgId query param', () => {
@@ -110,8 +120,8 @@ describeInitScenario('Initializing new dashboard', ctx => {
     expect(ctx.actions[2].payload.query.orgId).toBe(12);
   });
 
-  it('Should send action to set dashboard model', () => {
-    expect(ctx.actions[3].type).toBe('DASHBOARD_INIT_COMLETED');
+  it('Should send action dashboardInitCompleted', () => {
+    expect(ctx.actions[3].type).toBe(dashboardInitCompleted.type);
     expect(ctx.actions[3].payload.title).toBe('New dashboard');
   });
 
@@ -122,6 +132,20 @@ describeInitScenario('Initializing new dashboard', ctx => {
     expect(ctx.unsavedChangesSrv.init).toBeCalled();
     expect(ctx.keybindingSrv.setupDashboardBindings).toBeCalled();
     expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+  });
+});
+
+describeInitScenario('Initializing home dashboard', ctx => {
+  ctx.setup(() => {
+    ctx.args.routeInfo = DashboardRouteInfo.Home;
+    ctx.backendSrv.get.mockReturnValue(Promise.resolve({
+      redirectUri: '/u/123/my-home'
+    }));
+  });
+
+  it('Should redirect to custom home dashboard', () => {
+    expect(ctx.actions[1].type).toBe('UPDATE_LOCATION');
+    expect(ctx.actions[1].payload.path).toBe('/u/123/my-home');
   });
 });
 
