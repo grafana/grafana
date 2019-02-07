@@ -1,19 +1,23 @@
-.refresh-select {
-  display: flex;
-  flex-flow: column nowrap;
+.refresh-picker {
+  .navbar-button {
+    margin-right: 0px;
+  }
 
+  .btn {
+    border-radius: 0;
+  }
+
+  .btn:first-child {
+    border-right: 0;
+  }
+}
+
+.refresh-select {
   .gf-form-select-box__control {
     display: none;
   }
 
   .gf-form-input {
     height: 0;
-  }
-
-  .refresh-select-dropdown > div {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: space-between;
-    align-items: center;
   }
 }
