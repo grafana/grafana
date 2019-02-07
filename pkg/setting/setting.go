@@ -233,11 +233,10 @@ type Cfg struct {
 	EnterpriseLicensePath            string
 
 	// Auth
-	LoginCookieName                   string
-	LoginMaxInactiveLifetimeDays      int
-	LoginMaxLifetimeDays              int
-	TokenRotationIntervalMinutes      int
-	ExpiredTokensCleanupIntervalHours int
+	LoginCookieName              string
+	LoginMaxInactiveLifetimeDays int
+	LoginMaxLifetimeDays         int
+	TokenRotationIntervalMinutes int
 }
 
 type CommandLineArgs struct {
@@ -673,7 +672,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
-	cfg.ExpiredTokensCleanupIntervalHours = auth.Key("expired_tokens_cleanup_interval_hours").MustInt(1)
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)

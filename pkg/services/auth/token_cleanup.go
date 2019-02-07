@@ -6,8 +6,7 @@ import (
 )
 
 func (srv *UserAuthTokenService) Run(ctx context.Context) error {
-	jobInterval := time.Duration(srv.Cfg.ExpiredTokensCleanupIntervalHours) * time.Hour
-	ticker := time.NewTicker(jobInterval)
+	ticker := time.NewTicker(time.Hour)
 	maxInactiveLifetime := time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
 	maxLifetime := time.Duration(srv.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
 
