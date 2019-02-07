@@ -2,3 +2,44 @@
   display: flex;
   flex-flow: column nowrap;
 }
+
+.time-picker-popover {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+
+  .time-picker-popover-box {
+    border: 1px solid $popover-border-color;
+    border-radius: $border-radius;
+    max-width: 500px;
+    background-color: $popover-border-color;
+    padding: 20px;
+    color: $popover-color;
+
+    ul {
+      padding: 10px;
+      list-style-type: none;
+
+      li {
+        line-height: 22px;
+        display: list-item;
+        text-align: left;
+      }
+
+      li.active {
+        border-bottom: 1px solid $blue;
+        font-weight: 500;
+      }
+    }
+
+    .time-picker-popover-box-body {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: space-around;
+    }
+  }
+
+  .time-picker-popover-box:first-child {
+    border-right: 1px ridge;
+  }
+}
