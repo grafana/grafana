@@ -26,7 +26,7 @@ export interface SelectOptionItem {
   [key: string]: any;
 }
 
-interface CommonProps {
+export interface CommonProps {
   defaultValue?: any;
   getOptionLabel?: (item: SelectOptionItem) => string;
   getOptionValue?: (item: SelectOptionItem) => string;
@@ -42,14 +42,14 @@ interface CommonProps {
   openMenuOnFocus?: boolean;
   onBlur?: () => void;
   maxMenuHeight?: number;
-  isLoading: boolean;
+  isLoading?: boolean;
   noOptionsMessage?: () => string;
   isMulti?: boolean;
-  backspaceRemovesValue: boolean;
-  menuIsOpen: boolean;
+  backspaceRemovesValue?: boolean;
+  menuIsOpen?: boolean;
 }
 
-interface SelectProps {
+export interface SelectProps {
   options: SelectOptionItem[];
 }
 

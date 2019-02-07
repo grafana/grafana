@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import Select, { SelectOptionItem } from '../Select/Select';
+import { SelectOptionItem } from '../Select/Select';
+import { HeadlessSelect } from '../Select/HeadlessSelect';
 
 export const EMPTY_ITEM_TEXT = 'Off';
 
@@ -34,7 +35,7 @@ export class RefreshSelect extends PureComponent<Props> {
 
     return (
       <div className="refresh-select">
-        <Select
+        <HeadlessSelect
           autoFocus
           backspaceRemovesValue={false}
           isClearable={false}
