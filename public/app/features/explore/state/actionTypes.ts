@@ -180,6 +180,8 @@ export interface SplitOpenPayload {
   itemState: ExploreItemState;
 }
 
+//
+
 export interface ToggleTablePayload {
   exploreId: ExploreId;
 }
@@ -189,6 +191,10 @@ export interface ToggleGraphPayload {
 }
 
 export interface ToggleLogsPayload {
+  exploreId: ExploreId;
+}
+
+export interface UpdateUIStatePayload extends Partial<ExploreUIState>{
   exploreId: ExploreId;
 }
 
@@ -365,6 +371,11 @@ export const splitCloseAction = noPayloadActionCreatorFactory('explore/SPLIT_CLO
  */
 export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
 export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
+
+/**
+ * Update state of Explores UI
+ */
+export const updateUIStateAction = actionCreatorFactory<UpdateUIStatePayload>('explore/UPDATE_UI_STATE').create();
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
