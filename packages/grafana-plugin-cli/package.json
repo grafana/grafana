@@ -1,0 +1,36 @@
+{
+  "name": "@grafana/plugin-cli",
+  "version": "0.0.1",
+  "description": "CLI tool for generation Grafana plugin project in different confs",
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "tslint": "tslint -c tslint.json --project tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grafana/grafana.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/grafana/grafana/issues"
+  },
+  "homepage": "https://github.com/grafana/grafana#readme",
+  "devDependencies": {
+    "@types/jest": "^23.1.1",
+    "@types/lodash": "^4.14.119",
+    "jest": "^23.6.0",
+    "raw-loader": "^1.0.0",
+    "ts-loader": "^5.3.2",
+    "typescript": "^2.9.2",
+    "webpack": "^4.28.2",
+    "jest-cli": "^24.1.0"
+  },
+  "dependencies": {
+    "ejs": "^2.6.1",
+    "lodash": "^4.17.11",
+    "tslint": "^5.12.1"
+  }
+}

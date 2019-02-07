@@ -214,7 +214,7 @@ export default class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-graph">
           <Graph
             data={timeSeries}
-            height="100px"
+            height={100}
             range={range}
             id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}

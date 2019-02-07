@@ -156,6 +156,9 @@ export class TemplateSrv {
         }
         return value;
       }
+      case 'json': {
+        return JSON.stringify(value);
+      }
       case 'percentencode': {
         // like glob, but url escaped
         if (_.isArray(value)) {

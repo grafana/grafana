@@ -1,11 +1,14 @@
-import React from 'react';
+// Libaries
+import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
+import classNames from 'classnames';
+import sizeMe from 'react-sizeme';
+
+// Types
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
-import classNames from 'classnames';
-import sizeMe from 'react-sizeme';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
@@ -76,25 +79,34 @@ function GridWrapper({
 
 const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
 
-export interface DashboardGridProps {
+export interface Props {
   dashboard: DashboardModel;
+  isEditing: boolean;
+  isFullscreen: boolean;
 }
 
-export class DashboardGrid extends React.Component<DashboardGridProps> {
+export class DashboardGrid extends PureComponent<Props> {
   gridToPanelMap: any;
   panelMap: { [id: string]: PanelModel };
 
-  constructor(props: DashboardGridProps) {
-    super(props);
-
-    // subscribe to dashboard events
-    const dashboard = this.props.dashboard;
+  componentDidMount() {
+    const { dashboard } = this.props;
     dashboard.on('panel-added', this.triggerForceUpdate);
     dashboard.on('panel-removed', this.triggerForceUpdate);
     dashboard.on('repeats-processed', this.triggerForceUpdate);
     dashboard.on('view-mode-changed', this.onViewModeChanged);
     dashboard.on('row-collapsed', this.triggerForceUpdate);
     dashboard.on('row-expanded', this.triggerForceUpdate);
+  }
+
+  componentWillUnmount() {
+    const { dashboard } = this.props;
+    dashboard.off('panel-added', this.triggerForceUpdate);
+    dashboard.off('panel-removed', this.triggerForceUpdate);
+    dashboard.off('repeats-processed', this.triggerForceUpdate);
+    dashboard.off('view-mode-changed', this.onViewModeChanged);
+    dashboard.off('row-collapsed', this.triggerForceUpdate);
+    dashboard.off('row-expanded', this.triggerForceUpdate);
   }
 
   buildLayout() {
@@ -151,7 +163,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps> {
 
   onViewModeChanged = () => {
     ignoreNextWidthChange = true;
-    this.forceUpdate();
   }
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
@@ -197,18 +208,20 @@ export class DashboardGrid extends React.Component<DashboardGridProps> {
   }
 
   render() {
+    const { dashboard, isFullscreen } = this.props;
+
     return (
       <SizedReactLayoutGrid
         className={classNames({ layout: true })}
         layout={this.buildLayout()}
-        isResizable={this.props.dashboard.meta.canEdit}
-        isDraggable={this.props.dashboard.meta.canEdit}
+        isResizable={dashboard.meta.canEdit}
+        isDraggable={dashboard.meta.canEdit}
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}
         onDragStop={this.onDragStop}
         onResize={this.onResize}
         onResizeStop={this.onResizeStop}
-        isFullscreen={this.props.dashboard.meta.fullscreen}
+        isFullscreen={isFullscreen}
       >
         {this.renderPanels()}
       </SizedReactLayoutGrid>

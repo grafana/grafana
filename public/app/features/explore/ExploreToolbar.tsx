@@ -102,10 +102,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
           <div className="explore-toolbar-header">
             <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
-                <a className="navbar-page-btn">
+                <span className="navbar-page-btn">
                   <i className="fa fa-rocket fa-fw" />
                   Explore
-                </a>
+                </span>
               )}
             </div>
             <div className="explore-toolbar-header-close">

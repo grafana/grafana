@@ -85,6 +85,7 @@
     "prettier": "1.9.2",
     "react-hot-loader": "^4.3.6",
     "react-test-renderer": "^16.5.0",
+    "redux-mock-store": "^1.5.3",
     "regexp-replace-loader": "^1.0.1",
     "sass-lint": "^1.10.2",
     "sass-loader": "^7.0.1",

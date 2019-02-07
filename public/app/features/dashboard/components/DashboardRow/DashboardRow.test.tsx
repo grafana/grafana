@@ -9,6 +9,7 @@ describe('DashboardRow', () => {
   beforeEach(() => {
     dashboardMock = {
       toggleRow: jest.fn(),
+      on: jest.fn(),
       meta: {
         canEdit: true,
       },
