@@ -1,4 +1,4 @@
-package metrics
+package usagestats
 
 import (
 	"bytes"
@@ -21,8 +21,13 @@ import (
 
 func TestMetrics(t *testing.T) {
 	Convey("Test send usage stats", t, func() {
+		uss := &UsageStatsService{
+			Bus: bus.New(),
+		}
+
 		var getSystemStatsQuery *models.GetSystemStatsQuery
-		bus.AddHandler("test", func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+
 			query.Result = &models.SystemStats{
 				Dashboards:            1,
 				Datasources:           2,
@@ -44,7 +49,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceStatsQuery *models.GetDataSourceStatsQuery
-		bus.AddHandler("test", func(query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{
 				{
 					Type:  models.DS_ES,
@@ -68,7 +73,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceAccessStatsQuery *models.GetDataSourceAccessStatsQuery
-		bus.AddHandler("test", func(query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{
 				{
 					Type:   models.DS_ES,
@@ -116,7 +121,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getAlertNotifierUsageStatsQuery *models.GetAlertNotifierUsageStatsQuery
-		bus.AddHandler("test", func(query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{
 				{
 					Type:  "slack",
@@ -155,11 +160,11 @@ func TestMetrics(t *testing.T) {
 			"grafana_com":   true,
 		}
 
-		sendUsageStats(oauthProviders)
+		uss.sendUsageStats(oauthProviders)
 
 		Convey("Given reporting not enabled and sending usage stats", func() {
 			setting.ReportingEnabled = false
-			sendUsageStats(oauthProviders)
+			uss.sendUsageStats(oauthProviders)
 
 			Convey("Should not gather stats or call http endpoint", func() {
 				So(getSystemStatsQuery, ShouldBeNil)
@@ -179,7 +184,7 @@ func TestMetrics(t *testing.T) {
 			setting.Packaging = "deb"
 
 			wg.Add(1)
-			sendUsageStats(oauthProviders)
+			uss.sendUsageStats(oauthProviders)
 
 			Convey("Should gather stats and call http endpoint", func() {
 				if waitTimeout(&wg, 2*time.Second) {
