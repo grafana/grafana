@@ -39,10 +39,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
-      show: false,
+      show: props.isInView, // Lazy loading
     };
-
-    console.log( 'CONSTRUCTOR', props.panel.id, this.state.show );
 
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
@@ -99,8 +97,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    console.log( 'XUPDATE', this.props.panel.id, this.props.isInView, 'show: ', this.state.show );
-    if (!prevState.show && this.props.isInView) {
+    // Update the lazy loading
+    if (!this.state.show && this.props.isInView) {
+      console.log( 'Lazy Load:', this.props.panel.title, `(${this.props.panel.id})` );
       this.setState({show: true});
     }
 

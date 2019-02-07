@@ -77,7 +77,7 @@ function GridWrapper({
   );
 }
 
-const SizedReactLayoutGrid = sizeMe({ monitorWidth: true, monitorHeight: true })(GridWrapper);
+const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
 
 export interface Props {
   dashboard: DashboardModel;
@@ -189,33 +189,43 @@ export class DashboardGrid extends PureComponent<Props> {
   }
 
   isInView = (panel: PanelModel): boolean => {
-  //  const buffer = 100;
+    if (panel.fullscreen || panel.isEditing) {
+      return true;
+    }
 
-    const viewTop = this.props.scrollTop; // - buffer;
-    const viewH =
-      100
-      // Just use the whole browser window
-      //(isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight)
-      ;
-
-    const viewBot = viewTop + viewH; // + (buffer+buffer);
-
+    // NOTE: this is not totally accurate, since it does not
+    // know how many rows there are and include GRID_CELL_VMARGIN
     const top = (panel.gridPos.y) * GRID_CELL_HEIGHT;
-  //  const bottom = top + (panel.gridPos.h * GRID_CELL_HEIGHT);
+    const bot = top + (panel.gridPos.h * GRID_CELL_HEIGHT);
 
-    const inView = !(top > viewBot); // bottom > viewTop || top < viewBot;
+    // Assume things that are close are visible
+    const buffer = 50;
 
-    console.log( 'InView', panel.id, inView, ' // ', top, viewBot );
-    return true;
+    const viewTop = this.props.scrollTop;
+    if (viewTop > (bot+buffer)) {
+      //console.log( panel.id, 'Above', viewTop, bot );
+      return false; // The panel is above the viewport
+    }
+
+    // Use the whole browser height (larger than real value)
+    // TODO? is there a better way
+    const viewHeight = (isNaN(window.innerHeight)
+      ? (window as any).clientHeight
+      : window.innerHeight);
+
+    const viewBot = viewTop + viewHeight;
+    if (top > (viewBot+buffer)) {
+      //console.log( panel.id, 'Below', viewBot, top );
+      return false;
+    }
+
+    return !this.props.dashboard.otherPanelInFullscreen(panel);
   }
 
   renderPanels() {
     const panelElements = [];
 
-    console.log( '====================' );
-
     for (const panel of this.props.dashboard.panels) {
-      const inView = this.isInView(panel);
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses} id={`panel-${panel.id}`}>
@@ -224,7 +234,7 @@ export class DashboardGrid extends PureComponent<Props> {
             dashboard={this.props.dashboard}
             isEditing={panel.isEditing}
             isFullscreen={panel.fullscreen}
-            isInView={inView}
+            isInView={this.isInView(panel)}
           />
         </div>
       );
