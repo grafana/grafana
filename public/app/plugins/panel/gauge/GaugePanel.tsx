@@ -71,7 +71,7 @@ export class GaugePanel extends PureComponent<Props> {
     const { options, width, height } = this.props;
 
     return (
-      <div className="singlestat-panel">{this.renderGauge(timeSeries.stats[options.stat], width, height, theme)}</div>
+      <div className="singlestat-panel">{this.renderGauge(timeSeries[0].stats[options.stat], width, height, theme)}</div>
     );
   }
 
