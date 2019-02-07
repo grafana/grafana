@@ -63,9 +63,6 @@ login_maximum_lifetime_days = 30
 
 # How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
 token_rotation_interval_minutes = 10
-
-# How often should expired auth tokens be deleted from the database. The default is each hour.
-expired_tokens_cleanup_interval_hours = 1
 ```
 
 ### Anonymous authentication
