@@ -62,6 +62,11 @@ export interface GrafanaTheme {
       m: string;
     };
   };
+  background: {
+    dropdown: string;
+    scrollbar: string;
+    scrollbar2: string;
+  };
   colors: {
     black: string;
     white: string;
@@ -102,7 +107,7 @@ export interface GrafanaTheme {
     warn: string;
     critical: string;
 
-    // TODO: should this be a part of theme?
+    // TODO: move to background section
     bodyBg: string;
     pageBg: string;
     bodyColor: string;

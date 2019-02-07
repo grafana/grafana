@@ -33,7 +33,7 @@ const darkTheme = {
   ...defaultTheme,
   type: 'dark',
   name: 'Grafana Dark',
-  colors:  {
+  colors: {
     ...basicColors,
     inputBlack: '#09090b',
     queryRed: '#e24d42',
@@ -57,7 +57,12 @@ const darkTheme = {
     linkColorHover: basicColors.white,
     linkColorExternal: basicColors.blue,
     headingColor: new tinycolor(basicColors.white).darken(11).toString(),
-  }
-}
+  },
+  background: {
+    dropdown: basicColors.dark3,
+    scrollbar: '#aeb5df',
+    scrollbar2: '#3a3a3a',
+  },
+};
 
 module.exports = darkTheme;

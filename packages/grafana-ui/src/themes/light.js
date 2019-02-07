@@ -60,6 +60,11 @@ const lightTheme/*: GrafanaThemeType*/ = {
     linkColorHover: new tinycolor(basicColors.gray1).darken(20).toString(),
     linkColorExternal: basicColors.blueLight,
     headingColor: basicColors.gray1,
+  },
+  background: {
+    dropdown: basicColors.white,
+    scrollbar: basicColors.gray5,
+    scrollbar2: basicColors.gray5,
   }
 }
 

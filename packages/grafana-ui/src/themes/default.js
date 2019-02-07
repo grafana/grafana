@@ -41,6 +41,21 @@ const theme = {
     m: '768px',
     l: '992px',
     xl: '1200px'
+  },
+  spacing: {
+    xs: '0',
+    s: '0.2rem',
+    m: '1rem',
+    l: '1.5rem',
+    xl: '3rem',
+    gutter: '30px',
+  },
+  border: {
+    radius: {
+      xs: '2px',
+      s: '3px',
+      m: '5px',
+    }
   }
 };
 
