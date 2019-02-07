@@ -3,6 +3,7 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { cleanUpDashboard } from '../state/actions';
+import { getNoPayloadActionCreatorMock, NoPayloadActionCreatorMock  } from 'app/core/redux';
 import { DashboardRouteInfo, DashboardInitPhase } from 'app/types';
 
 jest.mock('sass/_variables.scss', () => ({
@@ -13,6 +14,7 @@ jest.mock('sass/_variables.scss', () => ({
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
 
 interface ScenarioContext {
+  cleanUpDashboardMock: NoPayloadActionCreatorMock;
   dashboard?: DashboardModel;
   setDashboardProp: (overrides?: any, metaOverrides?: any) => void;
   wrapper?: ShallowWrapper<Props, State, DashboardPage>;
@@ -42,6 +44,7 @@ function dashboardPageScenario(description, scenarioFn: (ctx: ScenarioContext) =
     let setupFn: () => void;
 
     const ctx: ScenarioContext = {
+      cleanUpDashboardMock: getNoPayloadActionCreatorMock(cleanUpDashboard),
       setup: fn => {
         setupFn = fn;
       },
@@ -63,7 +66,7 @@ function dashboardPageScenario(description, scenarioFn: (ctx: ScenarioContext) =
           initDashboard: jest.fn(),
           updateLocation: jest.fn(),
           notifyApp: jest.fn(),
-          cleanUpDashboard: cleanUpDashboard,
+          cleanUpDashboard: ctx.cleanUpDashboardMock,
           dashboard: null,
         };
 
@@ -228,6 +231,21 @@ describe('DashboardPage', () => {
     it('Should go into edit mode' , () => {
       expect(ctx.wrapper.state().isEditing).toBe(true);
       expect(ctx.wrapper.state().fullscreenPanel.id).toBe(0);
+    });
+  });
+
+  dashboardPageScenario("When dashboard unmounts", (ctx) => {
+    ctx.setup(() => {
+      ctx.mount();
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph'}],
+        schemaVersion: 17,
+      });
+      ctx.wrapper.unmount();
+    });
+
+    it('Should call clean up action' , () => {
+      expect(ctx.cleanUpDashboardMock.calls).toBe(1);
     });
   });
 });

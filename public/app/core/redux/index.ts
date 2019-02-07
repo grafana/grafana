@@ -1,2 +1,2 @@
-export { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf, ActionCreator } from './actionCreatorFactory';
-export { reducerFactory } from './reducerFactory';
+export * from './actionCreatorFactory';
+export * from './reducerFactory';
