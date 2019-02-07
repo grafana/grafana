@@ -1,17 +1,15 @@
 package auth
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httptest"
+	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -28,236 +26,265 @@ func TestUserAuthToken(t *testing.T) {
 		}
 
 		Convey("When creating token", func() {
-			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
-			So(token.AuthTokenSeen, ShouldBeFalse)
+			So(userToken, ShouldNotBeNil)
+			So(userToken.AuthTokenSeen, ShouldBeFalse)
 
 			Convey("When lookup unhashed token should return user auth token", func() {
-				LookupToken, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+				userToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 				So(err, ShouldBeNil)
-				So(LookupToken, ShouldNotBeNil)
-				So(LookupToken.UserId, ShouldEqual, userID)
-				So(LookupToken.AuthTokenSeen, ShouldBeTrue)
+				So(userToken, ShouldNotBeNil)
+				So(userToken.UserId, ShouldEqual, userID)
+				So(userToken.AuthTokenSeen, ShouldBeTrue)
 
-				storedAuthToken, err := ctx.getAuthTokenByID(LookupToken.Id)
+				storedAuthToken, err := ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedAuthToken, ShouldNotBeNil)
 				So(storedAuthToken.AuthTokenSeen, ShouldBeTrue)
 			})
 
 			Convey("When lookup hashed token should return user auth token not found error", func() {
-				LookupToken, err := userAuthTokenService.LookupToken(token.AuthToken)
-				So(err, ShouldEqual, ErrAuthTokenNotFound)
-				So(LookupToken, ShouldBeNil)
+				userToken, err := userAuthTokenService.LookupToken(userToken.AuthToken)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
+				So(userToken, ShouldBeNil)
 			})
 
-			Convey("signing out should delete token and cookie if present", func() {
-				httpreq := &http.Request{Header: make(http.Header)}
-				httpreq.AddCookie(&http.Cookie{Name: userAuthTokenService.Cfg.LoginCookieName, Value: token.UnhashedToken})
-
-				ctx := &models.ReqContext{Context: &macaron.Context{
-					Req:  macaron.Request{Request: httpreq},
-					Resp: macaron.NewResponseWriter("POST", httptest.NewRecorder()),
-				},
-					Logger: log.New("fakelogger"),
-				}
-
-				err = userAuthTokenService.SignOutUser(ctx)
+			Convey("revoking existing token should delete token", func() {
+				err = userAuthTokenService.RevokeToken(userToken)
 				So(err, ShouldBeNil)
 
-				// makes sure we tell the browser to overwrite the cookie
-				cookieHeader := fmt.Sprintf("%s=; Path=/; Max-Age=0; HttpOnly", userAuthTokenService.Cfg.LoginCookieName)
-				So(ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual, cookieHeader)
+				model, err := ctx.getAuthTokenByID(userToken.Id)
+				So(err, ShouldBeNil)
+				So(model, ShouldBeNil)
 			})
 
-			Convey("signing out an none existing session should return an error", func() {
-				httpreq := &http.Request{Header: make(http.Header)}
-				httpreq.AddCookie(&http.Cookie{Name: userAuthTokenService.Cfg.LoginCookieName, Value: ""})
+			Convey("revoking nil token should return error", func() {
+				err = userAuthTokenService.RevokeToken(nil)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
+			})
 
-				ctx := &models.ReqContext{Context: &macaron.Context{
-					Req:  macaron.Request{Request: httpreq},
-					Resp: macaron.NewResponseWriter("POST", httptest.NewRecorder()),
-				},
-					Logger: log.New("fakelogger"),
-				}
-
-				err = userAuthTokenService.SignOutUser(ctx)
-				So(err, ShouldNotBeNil)
+			Convey("revoking non-existing token should return error", func() {
+				userToken.Id = 1000
+				err = userAuthTokenService.RevokeToken(userToken)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 		})
 
 		Convey("expires correctly", func() {
-			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
-			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
-
-			_, err = userAuthTokenService.LookupToken(token.UnhashedToken)
+			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
 
-			token, err = ctx.getAuthTokenByID(token.Id)
+			userToken, err = userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 
 			getTime = func() time.Time {
 				return t.Add(time.Hour)
 			}
 
-			refreshed, err := userAuthTokenService.RefreshToken(token, "192.168.10.11:1234", "some user agent")
+			rotated, err := userAuthTokenService.TryRotateToken(userToken, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			So(refreshed, ShouldBeTrue)
+			So(rotated, ShouldBeTrue)
 
-			_, err = userAuthTokenService.LookupToken(token.UnhashedToken)
+			userToken, err = userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 
-			stillGood, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			stillGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
 			So(stillGood, ShouldNotBeNil)
 
-			getTime = func() time.Time {
-				return t.Add(24 * 7 * time.Hour)
-			}
-			notGood, err := userAuthTokenService.LookupToken(token.UnhashedToken)
-			So(err, ShouldEqual, ErrAuthTokenNotFound)
-			So(notGood, ShouldBeNil)
+			model, err := ctx.getAuthTokenByID(userToken.Id)
+			So(err, ShouldBeNil)
+
+			Convey("when rotated_at is 6:59:59 ago should find token", func() {
+				getTime = func() time.Time {
+					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour).Add(-time.Second)
+				}
+
+				stillGood, err = userAuthTokenService.LookupToken(stillGood.UnhashedToken)
+				So(err, ShouldBeNil)
+				So(stillGood, ShouldNotBeNil)
+			})
+
+			Convey("when rotated_at is 7:00:00 ago should not find token", func() {
+				getTime = func() time.Time {
+					return time.Unix(model.RotatedAt, 0).Add(24 * 7 * time.Hour)
+				}
+
+				notGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
+				So(notGood, ShouldBeNil)
+			})
+
+			Convey("when rotated_at is 5 days ago and created_at is 29 days and 23:59:59 ago should not find token", func() {
+				updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+				So(err, ShouldBeNil)
+				So(updated, ShouldBeTrue)
+
+				getTime = func() time.Time {
+					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour).Add(-time.Second)
+				}
+
+				stillGood, err = userAuthTokenService.LookupToken(stillGood.UnhashedToken)
+				So(err, ShouldBeNil)
+				So(stillGood, ShouldNotBeNil)
+			})
+
+			Convey("when rotated_at is 5 days ago and created_at is 30 days ago should not find token", func() {
+				updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+				So(err, ShouldBeNil)
+				So(updated, ShouldBeTrue)
+
+				getTime = func() time.Time {
+					return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
+				}
+
+				notGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
+				So(notGood, ShouldBeNil)
+			})
 		})
 
 		Convey("can properly rotate tokens", func() {
-			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
 
-			prevToken := token.AuthToken
-			unhashedPrev := token.UnhashedToken
+			prevToken := userToken.AuthToken
+			unhashedPrev := userToken.UnhashedToken
 
-			refreshed, err := userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
+			rotated, err := userAuthTokenService.TryRotateToken(userToken, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
-			So(refreshed, ShouldBeFalse)
+			So(rotated, ShouldBeFalse)
 
-			updated, err := ctx.markAuthTokenAsSeen(token.Id)
+			updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
 			So(err, ShouldBeNil)
 			So(updated, ShouldBeTrue)
 
-			token, err = ctx.getAuthTokenByID(token.Id)
+			model, err := ctx.getAuthTokenByID(userToken.Id)
+			So(err, ShouldBeNil)
+
+			var tok models.UserToken
+			err = model.toUserToken(&tok)
 			So(err, ShouldBeNil)
 
 			getTime = func() time.Time {
 				return t.Add(time.Hour)
 			}
 
-			refreshed, err = userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
+			rotated, err = userAuthTokenService.TryRotateToken(&tok, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
-			So(refreshed, ShouldBeTrue)
+			So(rotated, ShouldBeTrue)
 
-			unhashedToken := token.UnhashedToken
+			unhashedToken := tok.UnhashedToken
 
-			token, err = ctx.getAuthTokenByID(token.Id)
+			model, err = ctx.getAuthTokenByID(tok.Id)
 			So(err, ShouldBeNil)
-			token.UnhashedToken = unhashedToken
+			model.UnhashedToken = unhashedToken
 
-			So(token.RotatedAt, ShouldEqual, getTime().Unix())
-			So(token.ClientIp, ShouldEqual, "192.168.10.12")
-			So(token.UserAgent, ShouldEqual, "a new user agent")
-			So(token.AuthTokenSeen, ShouldBeFalse)
-			So(token.SeenAt, ShouldEqual, 0)
-			So(token.PrevAuthToken, ShouldEqual, prevToken)
+			So(model.RotatedAt, ShouldEqual, getTime().Unix())
+			So(model.ClientIp, ShouldEqual, "192.168.10.12")
+			So(model.UserAgent, ShouldEqual, "a new user agent")
+			So(model.AuthTokenSeen, ShouldBeFalse)
+			So(model.SeenAt, ShouldEqual, 0)
+			So(model.PrevAuthToken, ShouldEqual, prevToken)
 
 			// ability to auth using an old token
 
-			lookedUp, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			lookedUpUserToken, err := userAuthTokenService.LookupToken(model.UnhashedToken)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
-			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
-			So(lookedUp.SeenAt, ShouldEqual, getTime().Unix())
+			So(lookedUpUserToken, ShouldNotBeNil)
+			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
+			So(lookedUpUserToken.SeenAt, ShouldEqual, getTime().Unix())
 
-			lookedUp, err = userAuthTokenService.LookupToken(unhashedPrev)
+			lookedUpUserToken, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
-			So(lookedUp.Id, ShouldEqual, token.Id)
-			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
+			So(lookedUpUserToken, ShouldNotBeNil)
+			So(lookedUpUserToken.Id, ShouldEqual, model.Id)
+			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
 
 			getTime = func() time.Time {
 				return t.Add(time.Hour + (2 * time.Minute))
 			}
 
-			lookedUp, err = userAuthTokenService.LookupToken(unhashedPrev)
+			lookedUpUserToken, err = userAuthTokenService.LookupToken(unhashedPrev)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
-			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
+			So(lookedUpUserToken, ShouldNotBeNil)
+			So(lookedUpUserToken.AuthTokenSeen, ShouldBeTrue)
 
-			lookedUp, err = ctx.getAuthTokenByID(lookedUp.Id)
+			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
-			So(lookedUp.AuthTokenSeen, ShouldBeFalse)
+			So(lookedUpModel, ShouldNotBeNil)
+			So(lookedUpModel.AuthTokenSeen, ShouldBeFalse)
 
-			refreshed, err = userAuthTokenService.RefreshToken(token, "192.168.10.12:1234", "a new user agent")
+			rotated, err = userAuthTokenService.TryRotateToken(userToken, "192.168.10.12:1234", "a new user agent")
 			So(err, ShouldBeNil)
-			So(refreshed, ShouldBeTrue)
+			So(rotated, ShouldBeTrue)
 
-			token, err = ctx.getAuthTokenByID(token.Id)
+			model, err = ctx.getAuthTokenByID(userToken.Id)
 			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
-			So(token.SeenAt, ShouldEqual, 0)
+			So(model, ShouldNotBeNil)
+			So(model.SeenAt, ShouldEqual, 0)
 		})
 
 		Convey("keeps prev token valid for 1 minute after it is confirmed", func() {
-			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
+			So(userToken, ShouldNotBeNil)
 
-			lookedUp, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			lookedUpUserToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
+			So(lookedUpUserToken, ShouldNotBeNil)
 
 			getTime = func() time.Time {
 				return t.Add(10 * time.Minute)
 			}
 
-			prevToken := token.UnhashedToken
-			refreshed, err := userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+			prevToken := userToken.UnhashedToken
+			rotated, err := userAuthTokenService.TryRotateToken(userToken, "1.1.1.1", "firefox")
 			So(err, ShouldBeNil)
-			So(refreshed, ShouldBeTrue)
+			So(rotated, ShouldBeTrue)
 
 			getTime = func() time.Time {
 				return t.Add(20 * time.Minute)
 			}
 
-			current, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			currentUserToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
-			So(current, ShouldNotBeNil)
+			So(currentUserToken, ShouldNotBeNil)
 
-			prev, err := userAuthTokenService.LookupToken(prevToken)
+			prevUserToken, err := userAuthTokenService.LookupToken(prevToken)
 			So(err, ShouldBeNil)
-			So(prev, ShouldNotBeNil)
+			So(prevUserToken, ShouldNotBeNil)
 		})
 
 		Convey("will not mark token unseen when prev and current are the same", func() {
-			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
+			So(userToken, ShouldNotBeNil)
 
-			lookedUp, err := userAuthTokenService.LookupToken(token.UnhashedToken)
+			lookedUpUserToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
+			So(lookedUpUserToken, ShouldNotBeNil)
 
-			lookedUp, err = userAuthTokenService.LookupToken(token.UnhashedToken)
+			lookedUpUserToken, err = userAuthTokenService.LookupToken(userToken.UnhashedToken)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
+			So(lookedUpUserToken, ShouldNotBeNil)
 
-			lookedUp, err = ctx.getAuthTokenByID(lookedUp.Id)
+			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
 			So(err, ShouldBeNil)
-			So(lookedUp, ShouldNotBeNil)
-			So(lookedUp.AuthTokenSeen, ShouldBeTrue)
+			So(lookedUpModel, ShouldNotBeNil)
+			So(lookedUpModel.AuthTokenSeen, ShouldBeTrue)
 		})
 
 		Convey("Rotate token", func() {
-			token, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+			userToken, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
 			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
+			So(userToken, ShouldNotBeNil)
 
-			prevToken := token.AuthToken
+			prevToken := userToken.AuthToken
 
 			Convey("Should rotate current token and previous token when auth token seen", func() {
-				updated, err := ctx.markAuthTokenAsSeen(token.Id)
+				updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
 				So(err, ShouldBeNil)
 				So(updated, ShouldBeTrue)
 
@@ -265,11 +292,11 @@ func TestUserAuthToken(t *testing.T) {
 					return t.Add(10 * time.Minute)
 				}
 
-				refreshed, err := userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+				rotated, err := userAuthTokenService.TryRotateToken(userToken, "1.1.1.1", "firefox")
 				So(err, ShouldBeNil)
-				So(refreshed, ShouldBeTrue)
+				So(rotated, ShouldBeTrue)
 
-				storedToken, err := ctx.getAuthTokenByID(token.Id)
+				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedToken, ShouldNotBeNil)
 				So(storedToken.AuthTokenSeen, ShouldBeFalse)
@@ -278,7 +305,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				prevToken = storedToken.AuthToken
 
-				updated, err = ctx.markAuthTokenAsSeen(token.Id)
+				updated, err = ctx.markAuthTokenAsSeen(userToken.Id)
 				So(err, ShouldBeNil)
 				So(updated, ShouldBeTrue)
 
@@ -286,11 +313,11 @@ func TestUserAuthToken(t *testing.T) {
 					return t.Add(20 * time.Minute)
 				}
 
-				refreshed, err = userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+				rotated, err = userAuthTokenService.TryRotateToken(userToken, "1.1.1.1", "firefox")
 				So(err, ShouldBeNil)
-				So(refreshed, ShouldBeTrue)
+				So(rotated, ShouldBeTrue)
 
-				storedToken, err = ctx.getAuthTokenByID(token.Id)
+				storedToken, err = ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedToken, ShouldNotBeNil)
 				So(storedToken.AuthTokenSeen, ShouldBeFalse)
@@ -299,23 +326,88 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			Convey("Should rotate current token, but keep previous token when auth token not seen", func() {
-				token.RotatedAt = getTime().Add(-2 * time.Minute).Unix()
+				userToken.RotatedAt = getTime().Add(-2 * time.Minute).Unix()
 
 				getTime = func() time.Time {
 					return t.Add(2 * time.Minute)
 				}
 
-				refreshed, err := userAuthTokenService.RefreshToken(token, "1.1.1.1", "firefox")
+				rotated, err := userAuthTokenService.TryRotateToken(userToken, "1.1.1.1", "firefox")
 				So(err, ShouldBeNil)
-				So(refreshed, ShouldBeTrue)
+				So(rotated, ShouldBeTrue)
 
-				storedToken, err := ctx.getAuthTokenByID(token.Id)
+				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
 				So(err, ShouldBeNil)
 				So(storedToken, ShouldNotBeNil)
 				So(storedToken.AuthTokenSeen, ShouldBeFalse)
 				So(storedToken.PrevAuthToken, ShouldEqual, prevToken)
 				So(storedToken.AuthToken, ShouldNotEqual, prevToken)
 			})
+		})
+
+		Convey("When populating userAuthToken from UserToken should copy all properties", func() {
+			ut := models.UserToken{
+				Id:            1,
+				UserId:        2,
+				AuthToken:     "a",
+				PrevAuthToken: "b",
+				UserAgent:     "c",
+				ClientIp:      "d",
+				AuthTokenSeen: true,
+				SeenAt:        3,
+				RotatedAt:     4,
+				CreatedAt:     5,
+				UpdatedAt:     6,
+				UnhashedToken: "e",
+			}
+			utBytes, err := json.Marshal(ut)
+			So(err, ShouldBeNil)
+			utJSON, err := simplejson.NewJson(utBytes)
+			So(err, ShouldBeNil)
+			utMap := utJSON.MustMap()
+
+			var uat userAuthToken
+			uat.fromUserToken(&ut)
+			uatBytes, err := json.Marshal(uat)
+			So(err, ShouldBeNil)
+			uatJSON, err := simplejson.NewJson(uatBytes)
+			So(err, ShouldBeNil)
+			uatMap := uatJSON.MustMap()
+
+			So(uatMap, ShouldResemble, utMap)
+		})
+
+		Convey("When populating userToken from userAuthToken should copy all properties", func() {
+			uat := userAuthToken{
+				Id:            1,
+				UserId:        2,
+				AuthToken:     "a",
+				PrevAuthToken: "b",
+				UserAgent:     "c",
+				ClientIp:      "d",
+				AuthTokenSeen: true,
+				SeenAt:        3,
+				RotatedAt:     4,
+				CreatedAt:     5,
+				UpdatedAt:     6,
+				UnhashedToken: "e",
+			}
+			uatBytes, err := json.Marshal(uat)
+			So(err, ShouldBeNil)
+			uatJSON, err := simplejson.NewJson(uatBytes)
+			So(err, ShouldBeNil)
+			uatMap := uatJSON.MustMap()
+
+			var ut models.UserToken
+			err = uat.toUserToken(&ut)
+			So(err, ShouldBeNil)
+			utBytes, err := json.Marshal(ut)
+			So(err, ShouldBeNil)
+			utJSON, err := simplejson.NewJson(utBytes)
+			So(err, ShouldBeNil)
+			utMap := utJSON.MustMap()
+
+			So(utMap, ShouldResemble, uatMap)
 		})
 
 		Reset(func() {
@@ -328,18 +420,15 @@ func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 
 	sqlstore := sqlstore.InitTestDB(t)
-	tokenService := &UserAuthTokenServiceImpl{
+	tokenService := &UserAuthTokenService{
 		SQLStore: sqlstore,
 		Cfg: &setting.Cfg{
-			LoginCookieName:                   "grafana_session",
-			LoginCookieMaxDays:                7,
-			LoginDeleteExpiredTokensAfterDays: 30,
-			LoginCookieRotation:               10,
+			LoginMaxInactiveLifetimeDays: 7,
+			LoginMaxLifetimeDays:         30,
+			TokenRotationIntervalMinutes: 10,
 		},
 		log: log.New("test-logger"),
 	}
-
-	UrgentRotateTime = time.Minute
 
 	return &testContext{
 		sqlstore:     sqlstore,
@@ -349,7 +438,7 @@ func createTestContext(t *testing.T) *testContext {
 
 type testContext struct {
 	sqlstore     *sqlstore.SqlStore
-	tokenService *UserAuthTokenServiceImpl
+	tokenService *UserAuthTokenService
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
@@ -366,6 +455,20 @@ func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
 func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
 	sess := c.sqlstore.NewSession()
 	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
+	if err != nil {
+		return false, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected == 1, nil
+}
+
+func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
+	sess := c.sqlstore.NewSession()
+	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
 	if err != nil {
 		return false, err
 	}

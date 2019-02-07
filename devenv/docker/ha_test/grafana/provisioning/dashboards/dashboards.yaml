@@ -6,3 +6,9 @@ providers:
    type: file
    options:
      path: /etc/grafana/provisioning/dashboards/alerts
+
+ - name: 'MySQL'
+   folder: 'MySQL'
+   type: file
+   options:
+     path: /etc/grafana/provisioning/dashboards/mysql
