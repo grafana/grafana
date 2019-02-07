@@ -66,6 +66,7 @@ $text-color-emphasis: getThemeVariable('colors.textColorEmphasis', $theme-name);
 
 $text-shadow-strong: 1px 1px 4px getThemeVariable('colors.black', $theme-name);
 $text-shadow-faint: 1px 1px 4px #2d2d2d;
+$textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(
@@ -97,8 +98,7 @@ $hr-border-color: $dark-4;
 // Panel
 // -------------------------
 $panel-bg: #212124;
-$panel-border-color: $dark-1;
-$panel-border: solid 1px $panel-border-color;
+$panel-border: solid 1px $dark-1;
 $panel-header-hover-bg: $dark-4;
 $panel-corner: $panel-bg;
 
@@ -107,12 +107,12 @@ $page-header-bg: linear-gradient(90deg, #292a2d, black);
 $page-header-shadow: inset 0px -4px 14px $dark-2;
 $page-header-border-color: $dark-4;
 
-$divider-border-color: #555;
+$divider-border-color: $gray-1;
 
 // Graphite Target Editor
 $tight-form-bg: $dark-3;
-$tight-form-func-bg: #333334;
-$tight-form-func-highlight-bg: #444445;
+$tight-form-func-bg: $dark-4;
+$tight-form-func-highlight-bg: $dark-5;
 
 $modal-backdrop-bg: #353c42;
 $code-tag-bg: $dark-1;
@@ -134,14 +134,12 @@ $empty-list-cta-bg: $gray-blue;
 // Scrollbars
 $scrollbarBackground: #aeb5df;
 $scrollbarBackground2: #3a3a3a;
-
 $scrollbarBorder: black;
 
 // Tables
 // -------------------------
 $table-bg: transparent; // overall background-color
 $table-bg-accent: $dark-3; // for striping
-$table-bg-hover: $dark-4; // for hover
 $table-border: $dark-3; // table and cell border
 
 $table-bg-odd: $dark-2;
@@ -149,7 +147,6 @@ $table-bg-hover: $dark-3;
 
 // Buttons
 // -------------------------
-
 $btn-primary-bg: #ff6600;
 $btn-primary-bg-hl: #bc3e06;
 
@@ -169,9 +166,6 @@ $btn-inverse-bg: $dark-3;
 $btn-inverse-bg-hl: lighten($dark-3, 4%);
 $btn-inverse-text-color: $link-color;
 $btn-inverse-text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
-
-$btn-active-bg: $gray-4;
-$btn-active-text-color: $blue-dark;
 
 $btn-link-color: $gray-3;
 
@@ -197,6 +191,9 @@ $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-3;
 $input-color-select-arrow: $white;
 
+// Input placeholder text color
+$placeholderText: darken($text-color, 25%);
+
 // Search
 $search-shadow: 0 0 30px 0 $black;
 $search-filter-box-bg: $gray-blue;
@@ -212,28 +209,19 @@ $dropdownBackground: $dark-3;
 $dropdownBorder: rgba(0, 0, 0, 0.2);
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: #444;
-$dropdownDivider: $dropdownDividerBottom;
 
 $dropdownLinkColor: $text-color;
 $dropdownLinkColorHover: $white;
 $dropdownLinkColorActive: $white;
 
-$dropdownLinkBackgroundActive: $dark-4;
 $dropdownLinkBackgroundHover: $dark-4;
-
-// COMPONENT VARIABLES
-// --------------------------------------------------
-
-// -------------------------
-$placeholderText: darken($text-color, 25%);
 
 // Horizontal forms & lists
 // -------------------------
 $horizontalComponentOffset: 180px;
 
-// Wells
+// Navbar
 // -------------------------
-
 $navbarHeight: 55px;
 
 $navbarBackground: $panel-bg;
@@ -261,18 +249,12 @@ $menu-dropdown-bg: $body-bg;
 $menu-dropdown-hover-bg: $dark-2;
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
-// Breadcrumb
-// -------------------------
-
 // Tabs
 // -------------------------
 $tab-border-color: $dark-4;
 
 // Toolbar
 $toolbar-bg: $input-black;
-
-// Pagination
-// -------------------------
 
 // Form states and alerts
 // -------------------------
@@ -308,7 +290,6 @@ $tooltipBackground: $black;
 $tooltipColor: $gray-4;
 $tooltipArrowColor: $tooltipBackground;
 $tooltipBackgroundError: $brand-danger;
-$tooltipBackgroundBrand: $brand-primary;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -377,9 +358,7 @@ $checkbox-color: $dark-1;
 //Panel Edit
 // -------------------------
 $panel-editor-shadow: 0 0 20px black;
-$panel-editor-border: 1px solid $dark-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
-$panel-editor-toolbar-view-bg: $input-black;
 $panel-editor-viz-item-shadow: 0 0 8px $dark-5;
 $panel-editor-viz-item-border: 1px solid $dark-5;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue;
@@ -387,7 +366,6 @@ $panel-editor-viz-item-border-hover: 1px solid $blue;
 $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue, 47%);
-$panel-editor-viz-item-bg-hover-active: darken($orange, 45%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-blue;

@@ -280,6 +280,28 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
         }
+
+        // hide time picker
+        const timePickerDropDownIsOpen = elem.find('.gf-timepicker-dropdown').length > 0;
+        if (timePickerDropDownIsOpen) {
+          const targetIsInTimePickerDropDown = target.parents('.gf-timepicker-dropdown').length > 0;
+          const targetIsInTimePickerNav = target.parents('.gf-timepicker-nav').length > 0;
+          const targetIsDatePickerRowBtn = target.parents('td[id^="datepicker-"]').length > 0;
+          const targetIsDatePickerHeaderBtn = target.parents('button[id^="datepicker-"]').length > 0;
+
+          if (
+            targetIsInTimePickerNav ||
+            targetIsInTimePickerDropDown ||
+            targetIsDatePickerRowBtn ||
+            targetIsDatePickerHeaderBtn
+          ) {
+            return;
+          }
+
+          scope.$apply(() => {
+            scope.appEvent('closeTimepicker');
+          });
+        }
       });
     },
   };

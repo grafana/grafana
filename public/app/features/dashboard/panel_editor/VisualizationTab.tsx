@@ -3,6 +3,9 @@ import React, { PureComponent } from 'react';
 
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { StoreState } from 'app/types';
+import { updateLocation } from 'app/core/actions';
 
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
@@ -21,6 +24,8 @@ interface Props {
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
   onTypeChanged: (newType: PanelPlugin) => void;
+  updateLocation: typeof updateLocation;
+  urlOpenVizPicker: boolean;
 }
 
 interface State {
@@ -38,7 +43,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      isVizPickerOpen: false,
+      isVizPickerOpen: this.props.urlOpenVizPicker,
       searchQuery: '',
       scrollTop: 0,
     };
@@ -149,6 +154,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
   };
 
   onCloseVizPicker = () => {
+    if (this.props.urlOpenVizPicker) {
+      this.props.updateLocation({ query: { openVizPicker: null }, partial: true });
+    }
+
     this.setState({ isVizPickerOpen: false });
   };
 
@@ -236,3 +245,13 @@ export class VisualizationTab extends PureComponent<Props, State> {
     );
   }
 }
+
+const mapStateToProps = (state: StoreState) => ({
+  urlOpenVizPicker: !!state.location.query.openVizPicker
+});
+
+const mapDispatchToProps = {
+  updateLocation
+};
+
+export default connectWithStore(VisualizationTab, mapStateToProps, mapDispatchToProps);
