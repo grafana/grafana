@@ -214,6 +214,16 @@ Example `ec2_instance_attribute()` query
 ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
 ```
 
+## Using json format template variables
+
+Some of query takes JSON format filter. Grafana support to interpolate template variable to JSON format string, it can use as filter string.
+
+If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
+
+```
+resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
+```
+
 ## Cost
 
 Amazon provides 1 million CloudWatch API requests each month at no additional charge. Past this,

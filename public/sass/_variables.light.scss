@@ -1,7 +1,3 @@
-// Cosmo 2.3.2
-// Variables
-// --------------------------------------------------
-
 // Global values
 // --------------------------------------------------
 
@@ -10,10 +6,6 @@ $theme-name: light;
 // Grays
 // -------------------------
 $black: #000;
-
-// -------------------------
-$black: #000;
-$dark-1: #13161d;
 $dark-2: #1e2028;
 $dark-3: #303133;
 $dark-4: #35373f;
@@ -31,13 +23,11 @@ $white: #fff;
 // Accent colors
 // -------------------------
 $blue: #0083b3;
-$blue-dark: #005f81;
 $blue-light: #00a8e6;
 $green: #3aa655;
 $red: #d44939;
 $yellow: #ff851b;
 $orange: #ff7941;
-$pink: #e671b8;
 $purple: #9954bb;
 $variable: $blue;
 
@@ -60,9 +50,9 @@ $critical: #ec2128;
 
 // Scaffolding
 // -------------------------
-
 $body-bg: $gray-7;
 $page-bg: $gray-7;
+
 $body-color: $gray-1;
 $text-color: $gray-1;
 $text-color-strong: $dark-2;
@@ -70,12 +60,17 @@ $text-color-weak: $gray-2;
 $text-color-faint: $gray-4;
 $text-color-emphasis: $dark-5;
 
-$text-shadow-strong: none;
 $text-shadow-faint: none;
 $textShadow: none;
 
 // gradients
-$brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
+$brand-gradient: linear-gradient(
+  to right,
+  rgba(255, 213, 0, 1) 0%,
+  rgba(255, 68, 0, 1) 99%,
+  rgba(255, 68, 0, 1) 100%
+);
+
 $page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
@@ -96,10 +91,8 @@ $hr-border-color: $dark-3 !default;
 
 // Panel
 // -------------------------
-
 $panel-bg: $white;
-$panel-border-color: $gray-5;
-$panel-border: solid 1px $panel-border-color;
+$panel-border: solid 1px $gray-5;
 $panel-header-hover-bg: $gray-6;
 $panel-corner: $gray-4;
 
@@ -112,7 +105,6 @@ $divider-border-color: $gray-2;
 
 // Graphite Target Editor
 $tight-form-bg: #eaebee;
-
 $tight-form-func-bg: $gray-5;
 $tight-form-func-highlight-bg: $gray-6;
 
@@ -130,23 +122,22 @@ $list-item-bg: linear-gradient(135deg, $gray-5, $gray-6); //$card-background;
 $list-item-hover-bg: darken($gray-5, 5%);
 $list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
+
 $empty-list-cta-bg: $gray-6;
-
-// Tables
-// -------------------------
-$table-bg: transparent; // overall background-color
-$table-bg-accent: $gray-5; // for striping
-$table-bg-hover: $gray-5; // for hover
-$table-bg-active: $table-bg-hover !default;
-$table-border: $gray-3; // table and cell border
-
-$table-bg-odd: $gray-6;
-$table-bg-hover: $gray-5;
 
 // Scrollbars
 $scrollbarBackground: $gray-5;
 $scrollbarBackground2: $gray-5;
 $scrollbarBorder: $gray-4;
+
+// Tables
+// -------------------------
+$table-bg: transparent; // overall background-color
+$table-bg-accent: $gray-5; // for striping
+$table-border: $gray-3; // table and cell border
+
+$table-bg-odd: $gray-6;
+$table-bg-hover: $gray-5;
 
 // Buttons
 // -------------------------
@@ -170,16 +161,14 @@ $btn-inverse-bg-hl: darken($gray-6, 5%);
 $btn-inverse-text-color: $gray-1;
 $btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 
-$btn-active-bg: $white;
-$btn-active-text-color: $blue;
-
 $btn-link-color: $gray-1;
+
+$iconContainerBackground: $white;
 
 $btn-divider-left: $gray-4;
 $btn-divider-right: $gray-7;
-$btn-drag-image: '../img/grab_light.svg';
 
-$iconContainerBackground: $white;
+$btn-drag-image: '../img/grab_light.svg';
 
 // Forms
 // -------------------------
@@ -196,29 +185,8 @@ $input-label-bg: $gray-5;
 $input-label-border-color: $gray-5;
 $input-color-select-arrow: $gray-1;
 
-// Sidemenu
-// -------------------------
-$side-menu-bg: $dark-2;
-$side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: $gray-1;
-$side-menu-shadow: 5px 0px 10px -5px $gray-1;
-$side-menu-link-color: $gray-6;
-
-// Menu dropdowns
-// -------------------------
-$menu-dropdown-bg: $gray-7;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
-
-// Breadcrumb
-// -------------------------
-
-// Tabs
-// -------------------------
-$tab-border-color: $gray-5;
-
-// Toolbar
-$toolbar-bg: white;
+// Input placeholder text color
+$placeholderText: $gray-2;
 
 // search
 $search-shadow: 0 5px 30px 0 $gray-4;
@@ -235,52 +203,52 @@ $dropdownBackground: $white;
 $dropdownBorder: $gray-4;
 $dropdownDividerTop: $gray-6;
 $dropdownDividerBottom: $white;
-$dropdownDivider: $dropdownDividerTop;
 
 $dropdownLinkColor: $dark-3;
 $dropdownLinkColorHover: $link-color;
 $dropdownLinkColorActive: $link-color;
 
-$dropdownLinkBackgroundActive: $gray-6;
 $dropdownLinkBackgroundHover: $gray-6;
-
-// COMPONENT VARIABLES
-// --------------------------------------------------
-
-// Input placeholder text color
-// -------------------------
-$placeholderText: $gray-2;
-
-// Hr border color
-// -------------------------
-$hrBorder: $gray-3;
 
 // Horizontal forms & lists
 // -------------------------
 $horizontalComponentOffset: 180px;
 
-// Wells
-// -------------------------
-
 // Navbar
 // -------------------------
-
 $navbarHeight: 52px;
+
 $navbarBackground: $white;
 $navbarBorder: 1px solid $gray-4;
 $navbarShadow: 0 0 3px #c1c1c1;
 
 $navbarLinkColor: #444;
 
-$navbarBrandColor: $navbarLinkColor;
-
 $navbarButtonBackground: lighten($navbarBackground, 3%);
 $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
 $navbar-button-border: $gray-4;
 
-// Pagination
+// Sidemenu
 // -------------------------
+$side-menu-bg: $dark-2;
+$side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
+$side-menu-item-hover-bg: $gray-1;
+$side-menu-shadow: 5px 0px 10px -5px $gray-1;
+$side-menu-link-color: $gray-6;
+
+// Menu dropdowns
+// -------------------------
+$menu-dropdown-bg: $gray-7;
+$menu-dropdown-hover-bg: $gray-6;
+$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+
+// Tabs
+// -------------------------
+$tab-border-color: $gray-5;
+
+// Toolbar
+$toolbar-bg: white;
 
 // Form states and alerts
 // -------------------------
@@ -302,6 +270,7 @@ $popover-shadow: 0 0 20px $white;
 
 $popover-help-bg: $blue;
 $popover-help-color: $gray-6;
+
 $popover-error-bg: $btn-danger-bg;
 
 // Tooltips and popovers
@@ -315,7 +284,6 @@ $tooltipBackground: $gray-1;
 $tooltipColor: $gray-7;
 $tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
 $tooltipBackgroundError: $brand-danger;
-$tooltipBackgroundBrand: $brand-primary;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
@@ -326,8 +294,6 @@ $info-box-border-color: lighten($blue, 20%);
 // footer
 $footer-link-color: $gray-3;
 $footer-link-hover: $dark-5;
-
-// collapse box
 
 // json explorer
 $json-explorer-default-color: black;
@@ -348,9 +314,6 @@ $json-explorer-url-color: blue;
 $diff-label-bg: $gray-5;
 $diff-label-fg: $gray-2;
 
-$diff-switch-bg: $gray-7;
-$diff-switch-disabled: $gray-5;
-
 $diff-arrow-color: $dark-3;
 $diff-group-bg: $gray-7;
 
@@ -365,6 +328,7 @@ $diff-json-new: #664e33;
 
 $diff-json-changed-fg: $gray-6;
 $diff-json-changed-num: $gray-4;
+
 $diff-json-icon: $gray-4;
 
 //Submenu
@@ -388,9 +352,7 @@ $checkbox-color: $gray-7;
 //Panel Edit
 // -------------------------
 $panel-editor-shadow: 0px 0px 8px $gray-3;
-$panel-editor-border: 1px solid $dark-4;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 2px $gray-3);
-$panel-editor-toolbar-view-bg: $white;
 $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
@@ -398,7 +360,6 @@ $panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-5;
 $panel-editor-viz-item-bg-hover: lighten($blue, 62%);
-$panel-editor-viz-item-bg-hover-active: lighten($orange, 34%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;

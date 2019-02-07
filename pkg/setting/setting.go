@@ -89,6 +89,8 @@ var (
 	EmailCodeValidMinutes            int
 	DataProxyWhiteList               map[string]bool
 	DisableBruteForceLoginProtection bool
+	CookieSecure                     bool
+	CookieSameSite                   http.SameSite
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -118,8 +120,10 @@ var (
 	ViewersCanEdit          bool
 
 	// Http auth
-	AdminUser     string
-	AdminPassword string
+	AdminUser            string
+	AdminPassword        string
+	LoginCookieName      string
+	LoginMaxLifetimeDays int
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -215,7 +219,11 @@ type Cfg struct {
 	RendererLimit         int
 	RendererLimitAlerting int
 
+	// Security
 	DisableBruteForceLoginProtection bool
+	CookieSecure                     bool
+	CookieSameSite                   http.SameSite
+
 	TempDataLifetime                 time.Duration
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
@@ -224,13 +232,11 @@ type Cfg struct {
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
-	LoginCookieName                   string
-	LoginCookieMaxDays                int
-	LoginCookieRotation               int
-	LoginDeleteExpiredTokensAfterDays int
-	LoginCookieSameSite               http.SameSite
-
-	SecurityHTTPSCookies bool
+	// Auth
+	LoginCookieName              string
+	LoginMaxInactiveLifetimeDays int
+	LoginMaxLifetimeDays         int
+	TokenRotationIntervalMinutes int
 }
 
 type CommandLineArgs struct {
@@ -554,30 +560,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		ApplicationName = APP_NAME_ENTERPRISE
 	}
 
-	//login
-	login := iniFile.Section("login")
-	cfg.LoginCookieName = login.Key("cookie_name").MustString("grafana_session")
-	cfg.LoginCookieMaxDays = login.Key("login_remember_days").MustInt(7)
-	cfg.LoginDeleteExpiredTokensAfterDays = login.Key("delete_expired_token_after_days").MustInt(30)
-
-	samesiteString := login.Key("cookie_samesite").MustString("lax")
-	validSameSiteValues := map[string]http.SameSite{
-		"lax":    http.SameSiteLaxMode,
-		"strict": http.SameSiteStrictMode,
-		"none":   http.SameSiteDefaultMode,
-	}
-
-	if samesite, ok := validSameSiteValues[samesiteString]; ok {
-		cfg.LoginCookieSameSite = samesite
-	} else {
-		cfg.LoginCookieSameSite = http.SameSiteLaxMode
-	}
-
-	cfg.LoginCookieRotation = login.Key("rotate_token_minutes").MustInt(10)
-	if cfg.LoginCookieRotation < 2 {
-		cfg.LoginCookieRotation = 2
-	}
-
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(iniFile.Section("paths").Key("plugins").String(), HomePath)
@@ -621,8 +603,25 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	SecretKey = security.Key("secret_key").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
-	cfg.SecurityHTTPSCookies = security.Key("https_flag_cookies").MustBool(false)
 	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
+
+	CookieSecure = security.Key("cookie_secure").MustBool(false)
+	cfg.CookieSecure = CookieSecure
+
+	samesiteString := security.Key("cookie_samesite").MustString("lax")
+	validSameSiteValues := map[string]http.SameSite{
+		"lax":    http.SameSiteLaxMode,
+		"strict": http.SameSiteStrictMode,
+		"none":   http.SameSiteDefaultMode,
+	}
+
+	if samesite, ok := validSameSiteValues[samesiteString]; ok {
+		CookieSameSite = samesite
+		cfg.CookieSameSite = CookieSameSite
+	} else {
+		CookieSameSite = http.SameSiteLaxMode
+		cfg.CookieSameSite = CookieSameSite
+	}
 
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
@@ -661,6 +660,19 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// auth
 	auth := iniFile.Section("auth")
+
+	LoginCookieName = auth.Key("login_cookie_name").MustString("grafana_session")
+	cfg.LoginCookieName = LoginCookieName
+	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
+
+	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
+	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+
+	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
+	if cfg.TokenRotationIntervalMinutes < 2 {
+		cfg.TokenRotationIntervalMinutes = 2
+	}
+
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)

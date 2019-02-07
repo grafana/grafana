@@ -83,8 +83,7 @@
     font-size: 19px;
     line-height: 8px;
     opacity: 0.75;
-    margin-right: 8px;
-    // icon hidden on smaller screens
+    margin-right: 13px;
     display: none;
   }
 
@@ -102,7 +101,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-right: $spacer;
+  margin-left: 10px;
 
   &--close {
     display: none;

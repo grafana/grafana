@@ -68,5 +68,5 @@ const bootData = (window as any).grafanaBootData || {
 const options = bootData.settings;
 options.bootData = bootData;
 
-const config = new Settings(options);
+export const config = new Settings(options);
 export default config;

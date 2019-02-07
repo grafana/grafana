@@ -1,5 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 export let iconMap = {
   'external link': 'fa-external-link',
@@ -12,7 +13,7 @@ export let iconMap = {
 };
 
 export class DashLinksEditorCtrl {
-  dashboard: any;
+  dashboard: DashboardModel;
   iconMap: any;
   mode: any;
   link: any;
@@ -40,6 +41,7 @@ export class DashLinksEditorCtrl {
   addLink() {
     this.dashboard.links.push(this.link);
     this.mode = 'list';
+    this.dashboard.updateSubmenuVisibility();
   }
 
   editLink(link) {
