@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
+import { RefreshSelect, EMPTY_ITEM_TEXT } from './RefreshSelect';
+import { SelectButton } from '../Select/SelectButton';
 import { RefreshButton } from './RefreshButton';
-import { RefreshSelect } from './RefreshSelect';
-import { RefreshSelectButton } from './RefreshSelectButton';
 
 export interface Props {
   initialValue: string | undefined;
@@ -21,7 +21,7 @@ export class RefreshPicker extends PureComponent<Props, State> {
     this.state = { value: props.initialValue, isSelectOpen: false };
   }
 
-  onRefreshButtonClicked = () => {
+  onSelectButtonClicked = () => {
     this.setState({ isSelectOpen: !this.state.isSelectOpen });
   };
 
@@ -33,11 +33,12 @@ export class RefreshPicker extends PureComponent<Props, State> {
   render() {
     const { onRefreshClicked, intervals } = this.props;
     const { isSelectOpen, value } = this.state;
+
     return (
       <div className={'refresh-picker'}>
         <div className={'refresh-picker-buttons'}>
           <RefreshButton onClick={onRefreshClicked} />
-          <RefreshSelectButton value={value} onClick={this.onRefreshButtonClicked} />
+          <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={EMPTY_ITEM_TEXT} value={value} />
         </div>
         <div className={'refresh-picker-select'}>
           <RefreshSelect isOpen={isSelectOpen} intervals={intervals} onChange={this.onSelectChanged} value={value} />
