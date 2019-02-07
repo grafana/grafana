@@ -1,8 +1,9 @@
 import React, { FunctionComponent } from 'react';
-import { Themeable, GrafanaThemeType } from '../../types';
+import { Themeable } from '../../types';
 import { ColorDefinition, getColorForTheme } from '../../utils/namedColorsPalette';
 import { Color } from 'csstype';
 import { find, upperFirst } from 'lodash';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 type ColorChangeHandler = (color: ColorDefinition) => void;
 
@@ -28,7 +29,14 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
 }) => {
   const isSmall = variant === ColorSwatchVariant.Small;
   const swatchSize = isSmall ? '16px' : '32px';
-  const selectedSwatchBorder = theme.type === GrafanaThemeType.Light ? '#ffffff' : '#1A1B1F';
+
+  const selectedSwatchBorder = selectThemeVariant(
+    {
+      light: theme.colors.white,
+      dark: theme.colors.black,
+    },
+    theme.type
+  );
 
   const swatchStyles = {
     width: swatchSize,

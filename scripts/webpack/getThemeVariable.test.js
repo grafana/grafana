@@ -15,7 +15,7 @@ const themeMock = {
 };
 
 describe('Variables retrieval', () => {
-  const restoreTheme = mockTheme(themeMock);
+  const restoreTheme = mockTheme(() => themeMock);
 
   afterAll(() => {
     restoreTheme();
