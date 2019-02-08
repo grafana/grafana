@@ -255,6 +255,16 @@ export class DashNav extends PureComponent<Props> {
           />
         </div>
 
+        {/* <div className="navbar-buttons">
+          <TimePicker displayValue={''} value={{ from: '', to: '' }} onChange={() => {}} selectTimeOptions={[]} />
+          <RefreshPicker
+            onIntervalChanged={() => {}}
+            onRefreshClicked={() => {}}
+            intervals={[]}
+            initialValue={undefined}
+          />
+        </div> */}
+
         <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
       </div>
     );

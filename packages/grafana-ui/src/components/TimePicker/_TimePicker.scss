@@ -7,14 +7,14 @@
   display: flex;
   flex-flow: row nowrap;
   justify-content: space-around;
+  border: 1px solid $popover-border-color;
+  border-radius: $border-radius;
+  background-color: $popover-border-color;
+  color: $popover-color;
 
   .time-picker-popover-box {
-    border: 1px solid $popover-border-color;
-    border-radius: $border-radius;
     max-width: 500px;
-    background-color: $popover-border-color;
     padding: 20px;
-    color: $popover-color;
 
     ul {
       padding: 10px;

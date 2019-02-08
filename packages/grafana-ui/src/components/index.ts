@@ -32,3 +32,5 @@ export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
+export { RefreshPicker } from './RefreshPicker/RefreshPicker';
+export { TimePicker } from './TimePicker/TimePicker';
