@@ -1,13 +1,9 @@
-import React, { PureComponent } from 'react';
-import { Moment } from 'moment';
-import { SelectOptionItem, ClickOutsideWrapper, SelectButton, HeadlessSelect } from '@grafana/ui';
+import React, { PureComponent, createRef } from 'react';
+import { SelectOptionItem, ClickOutsideWrapper, SelectButton, HeadlessSelect, TimeRange } from '@grafana/ui';
 
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
-
-export interface TimeRaw {
-  from: string | Moment;
-  to: string | Moment;
-}
+import { TimePickerPopOver } from './TimePickerPopOver';
+import Popper from '@grafana/ui/src/components/Tooltip/Popper';
 
 export interface TimeOption {
   from: string;
@@ -22,21 +18,24 @@ export interface TimeOptions {
 }
 
 export interface Props {
-  value: TimeRaw;
+  value: TimeRange;
   displayValue: string;
-  popOverTimeOptions?: TimeOptions;
+  popOverTimeOptions: TimeOptions;
   selectTimeOptions: TimeOption[];
   onChange: (timeOption: TimeOption) => void;
 }
 
 export interface State {
+  isPopOverOpen: boolean;
   isSelectOpen: boolean;
 }
 
 export class TimePicker extends PureComponent<Props, State> {
+  pickerTriggerRef = createRef<HTMLDivElement>();
+
   constructor(props: Props) {
     super(props);
-    this.state = { isSelectOpen: false };
+    this.state = { isSelectOpen: false, isPopOverOpen: false };
   }
 
   mapTimeOptionsToSelectOptionItems = (selectTimeOptions: TimeOption[]) => {
@@ -44,7 +43,7 @@ export class TimePicker extends PureComponent<Props, State> {
       return { label: timeOption.display, value: timeOption };
     });
 
-    return [{ label: 'Custom', expanded: true, options, onCustomClick: () => this.onCustomClicked() }];
+    return [{ label: 'Custom', expanded: true, options, onCustomClick: (ref: any) => this.onCustomClicked() }];
   };
 
   toggleIsSelectOpen = () => this.setState({ isSelectOpen: !this.state.isSelectOpen });
@@ -59,22 +58,31 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   onCustomClicked = () => {
-    console.log('Custom clicked');
+    this.setState({ isSelectOpen: false, isPopOverOpen: true });
+  };
+
+  onPopOverLeave = () => {
+    this.setState({ isSelectOpen: true, isPopOverOpen: false });
   };
 
   onClickOutside = () => this.setState({ isSelectOpen: false });
 
   render() {
     const { displayValue, selectTimeOptions } = this.props;
-    const { isSelectOpen } = this.state;
+    const { isSelectOpen, isPopOverOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
-
+    const popover = TimePickerPopOver;
+    const popoverElement = React.createElement(popover, {
+      ...this.props,
+      onClick: (timeOption: TimeOption) => ({}),
+    });
     return (
       <ClickOutsideWrapper onClick={this.onClickOutside}>
         <div className={'time-picker'}>
           <div className={'time-picker-buttons'}>
             <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={'NaN'} value={displayValue} />
           </div>
+          <div className={'time-picker-picker'} ref={this.pickerTriggerRef} />
           <div className={'time-picker-select'}>
             <HeadlessSelect
               components={{ Group: TimePickerOptionGroup }}
@@ -82,6 +90,17 @@ export class TimePicker extends PureComponent<Props, State> {
               onChange={this.onSelectChanged}
               options={options}
             />
+          </div>
+          <div>
+            {this.pickerTriggerRef.current && (
+              <Popper
+                show={isPopOverOpen}
+                content={popoverElement}
+                referenceElement={this.pickerTriggerRef.current}
+                onMouseLeave={this.onPopOverLeave}
+                placement={'auto'}
+              />
+            )}
           </div>
         </div>
       </ClickOutsideWrapper>
