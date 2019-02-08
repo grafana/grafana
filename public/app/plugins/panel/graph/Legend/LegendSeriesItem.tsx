@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
 import { SeriesColorPicker } from '@grafana/ui';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -168,24 +167,17 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
 
   render() {
     return (
-      <ThemeProvider>
-        {theme => {
-          return (
-            <SeriesColorPicker
-              yaxis={this.props.yaxis}
-              color={this.props.color}
-              onChange={this.props.onColorChange}
-              onToggleAxis={this.props.onToggleAxis}
-              theme={theme}
-              enableNamedColors
-            >
-              <span className="graph-legend-icon">
-                <SeriesIcon color={this.props.color} />
-              </span>
-            </SeriesColorPicker>
-          );
-        }}
-      </ThemeProvider>
+      <SeriesColorPicker
+        yaxis={this.props.yaxis}
+        color={this.props.color}
+        onChange={this.props.onColorChange}
+        onToggleAxis={this.props.onToggleAxis}
+        enableNamedColors
+      >
+        <span className="graph-legend-icon">
+          <SeriesIcon color={this.props.color} />
+        </span>
+      </SeriesColorPicker>
     );
   }
 }
