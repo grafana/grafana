@@ -28,7 +28,7 @@
 
       li.active {
         border-bottom: 1px solid $blue;
-        font-weight: 500;
+        font-weight: $font-weight-semi-bold;
       }
     }
 
@@ -41,5 +41,55 @@
 
   .time-picker-popover-box:first-child {
     border-right: 1px ridge;
+  }
+
+  .time-picker-popover-box-body-custom-ranges:first-child {
+    margin-right: $spacer;
+  }
+}
+
+.time-picker-calendar {
+  border: 1px solid $popover-border-color;
+  max-width: 220px;
+  color: $black;
+
+  .react-calendar__navigation__label,
+  .react-calendar__navigation__arrow,
+  .react-calendar__navigation {
+    background-color: $white;
+    border: 0;
+  }
+
+  .react-calendar__month-view__weekdays {
+    background-color: $popover-border-color;
+    text-align: center;
+
+    abbr {
+      border: 0;
+      text-decoration: none;
+      cursor: default;
+      color: $popover-color;
+      font-weight: $font-weight-semi-bold;
+    }
+  }
+
+  .time-picker-calendar-tile {
+    background-color: $white;
+    border: 0;
+    line-height: 22px;
+  }
+
+  .react-calendar__navigation__label,
+  .time-picker-calendar-tile:focus {
+    outline: 0;
+  }
+
+  .react-calendar__tile--active {
+    border-bottom: 1px solid $blue;
+    font-weight: $font-weight-semi-bold;
+  }
+
+  .react-calendar__tile--now {
+    border-bottom: 1px solid $orange;
   }
 }

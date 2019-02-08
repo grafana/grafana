@@ -1,5 +1,6 @@
 import React, { FunctionComponent, SyntheticEvent } from 'react';
 import { TimeRaw, TimeOptions, TimeOption } from './TimePicker';
+import { TimePickerCalendar } from './TimePickerCalendar';
 
 export interface Props {
   value?: TimeRaw;
@@ -42,7 +43,14 @@ export const TimePickerPopOver: FunctionComponent<Props> = (props: Props) => {
         <div className={'time-picker-popover-box-header'}>
           <span className={'time-picker-popover-box-title'}>Custom range</span>
         </div>
-        <div className={'time-picker-popover-box-body'} />
+        <div className={'time-picker-popover-box-body'}>
+          <div className={'time-picker-popover-box-body-custom-ranges'}>
+            <TimePickerCalendar />
+          </div>
+          <div className={'time-picker-popover-box-body-custom-ranges'}>
+            <TimePickerCalendar />
+          </div>
+        </div>
       </div>
     </div>
   );
