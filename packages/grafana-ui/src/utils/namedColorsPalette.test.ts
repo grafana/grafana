@@ -59,6 +59,8 @@ describe('colors', () => {
     it('returns color if specified as hex or rgb/a', () => {
       expect(getColorFromHexRgbOrName('ff0000')).toBe('ff0000');
       expect(getColorFromHexRgbOrName('#ff0000')).toBe('#ff0000');
+      expect(getColorFromHexRgbOrName('#FF0000')).toBe('#FF0000');
+      expect(getColorFromHexRgbOrName('#CCC')).toBe('#CCC');
       expect(getColorFromHexRgbOrName('rgb(0,0,0)')).toBe('rgb(0,0,0)');
       expect(getColorFromHexRgbOrName('rgba(0,0,0,1)')).toBe('rgba(0,0,0,1)');
     });

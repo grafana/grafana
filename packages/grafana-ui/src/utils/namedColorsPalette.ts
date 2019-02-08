@@ -73,7 +73,7 @@ export const getColorDefinition = (hex: string, theme: GrafanaThemeType): ColorD
 };
 
 const isHex = (color: string) => {
-  const hexRegex = /^((0x){0,1}|#{0,1})([0-9A-F]{8}|[0-9A-F]{6})$/gi;
+  const hexRegex = /^((0x){0,1}|#{0,1})([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3})$/gi;
   return hexRegex.test(color);
 };
 
