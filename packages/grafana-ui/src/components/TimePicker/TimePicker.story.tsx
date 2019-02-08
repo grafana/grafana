@@ -13,8 +13,7 @@ TimePickerStories.add('default', () => {
   return (
     <TimePicker
       isTimezoneUtc={false}
-      displayValue={'Today'}
-      value={{ from: moment(), to: moment(), raw: { from: moment(), to: moment() } }}
+      value={{ from: moment(), to: moment(), raw: { from: 'now-6h', to: 'now' } }}
       selectTimeOptions={[
         { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3, active: false },
         { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3, active: false },

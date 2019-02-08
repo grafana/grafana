@@ -3,13 +3,14 @@ import React, { Component, SyntheticEvent } from 'react';
 import { TimePickerCalendar, CalendarType } from './TimePickerCalendar';
 import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
 import { TimePickerInput } from './TimePickerInput';
-import { stringToMoment } from '../../utils/time';
+import { mapTimeOptionToTimeRange } from '../../utils/time';
 
 export interface Props {
   value: TimeRange;
   popOverTimeOptions: TimeOptions;
   onChange: (timeRange: TimeRange) => void;
   isTimezoneUtc: boolean;
+  timezone?: string;
 }
 
 export interface State {
@@ -33,11 +34,9 @@ export class TimePickerPopOver extends Component<Props, State> {
   };
 
   onTimeOptionClick = (timeOption: TimeOption) => {
-    const { isTimezoneUtc } = this.props;
-    const fromMoment = stringToMoment(timeOption.from, isTimezoneUtc);
-    const toMoment = stringToMoment(timeOption.from, isTimezoneUtc);
+    const { isTimezoneUtc, timezone } = this.props;
 
-    this.props.onChange({ from: fromMoment, to: toMoment, raw: { from: timeOption.from, to: timeOption.to } });
+    this.props.onChange(mapTimeOptionToTimeRange(timeOption, isTimezoneUtc, timezone));
   };
 
   onApplyClick = () => {
@@ -112,7 +111,12 @@ export class TimePickerPopOver extends Component<Props, State> {
             </div>
           </div>
           <div className={'time-picker-popover-box-footer'}>
-            <button type="submit" className="btn gf-form-btn btn-success" disabled={!isValid}>
+            <button
+              type="submit"
+              className="btn gf-form-btn btn-success"
+              disabled={!isValid}
+              onClick={this.onApplyClick}
+            >
               Apply
             </button>
           </div>

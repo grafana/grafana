@@ -8,14 +8,14 @@ import { SelectOptionItem } from '../Select/Select';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { SelectButton } from '../Select/SelectButton';
 import { HeadlessSelect } from '../Select/HeadlessSelect';
-import { mapTimeOptionToTimeRange } from '../../utils/time';
+import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from '../../utils/time';
 
 export interface Props {
   value: TimeRange;
   isTimezoneUtc: boolean;
-  displayValue: string;
   popOverTimeOptions: TimeOptions;
   selectTimeOptions: TimeOption[];
+  timezone?: string;
   onChange: (timeRange: TimeRange) => void;
 }
 
@@ -47,35 +47,36 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   onSelectChanged = (item: SelectOptionItem) => {
-    const { isTimezoneUtc, onChange } = this.props;
+    const { isTimezoneUtc, onChange, timezone } = this.props;
     this.toggleIsSelectOpen();
-    onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc));
+    onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
   };
 
   onCustomClicked = () => {
     this.setState({ isSelectOpen: false, isPopOverOpen: true });
   };
 
-  onPopOverLeave = () => {
-    this.setState({ isSelectOpen: true, isPopOverOpen: false });
-  };
-
   onClickOutside = () => this.setState({ isSelectOpen: false });
 
   render() {
-    const { displayValue, selectTimeOptions, onChange } = this.props;
+    const { selectTimeOptions, onChange, value } = this.props;
     const { isSelectOpen, isPopOverOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const popover = TimePickerPopOver;
     const popoverElement = React.createElement(popover, {
       ...this.props,
-      onChange: onChange,
+      onChange: (timeRange: TimeRange) => {
+        onChange(timeRange);
+        this.setState({ isPopOverOpen: false });
+      },
     });
+    const rangeString = mapTimeRangeToRangeString(value);
+
     return (
       <ClickOutsideWrapper onClick={this.onClickOutside}>
         <div className={'time-picker'}>
           <div className={'time-picker-buttons'}>
-            <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={'NaN'} value={displayValue} />
+            <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={'NaN'} value={rangeString} />
           </div>
           <div className={'time-picker-picker'} ref={this.pickerTriggerRef} />
           <div className={'time-picker-select'}>
@@ -92,7 +93,6 @@ export class TimePicker extends PureComponent<Props, State> {
                 show={isPopOverOpen}
                 content={popoverElement}
                 referenceElement={this.pickerTriggerRef.current}
-                onMouseLeave={this.onPopOverLeave}
                 placement={'auto'}
               />
             )}
