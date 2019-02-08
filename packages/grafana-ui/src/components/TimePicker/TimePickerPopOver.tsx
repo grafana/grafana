@@ -1,7 +1,8 @@
 import React, { Component, SyntheticEvent } from 'react';
 import { TimeOptions, TimeOption } from './TimePicker';
 import { TimePickerCalendar } from './TimePickerCalendar';
-import { TimeRange } from '@grafana/ui';
+import { TimeRange } from '../../types/time';
+import { Input } from '../Input/Input';
 
 export interface Props {
   value?: TimeRange;
@@ -50,7 +51,7 @@ export class TimePickerPopOver extends Component<Props> {
           <div className={'time-picker-popover-box-body'}>
             <div className={'time-picker-popover-box-body-custom-ranges'}>
               <div className={'time-picker-popover-box-body-custom-ranges-input'}>
-                <input type="text" />
+                <Input />
               </div>
               <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
                 <TimePickerCalendar />
@@ -58,7 +59,7 @@ export class TimePickerPopOver extends Component<Props> {
             </div>
             <div className={'time-picker-popover-box-body-custom-ranges'}>
               <div className={'time-picker-popover-box-body-custom-ranges-input'}>
-                <input type="text" />
+                <Input />
               </div>
               <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
                 <TimePickerCalendar />

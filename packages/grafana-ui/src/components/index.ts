@@ -32,5 +32,5 @@ export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
-export { HeadlessSelect } from './Select/HeadlessSelect';
-export { SelectButton } from './Select/SelectButton';
+export { Input } from './Input/Input';
+export { InputStatus } from './Input/Input';

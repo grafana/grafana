@@ -1,9 +1,13 @@
 import React, { PureComponent, createRef } from 'react';
-import { SelectOptionItem, ClickOutsideWrapper, SelectButton, HeadlessSelect, TimeRange } from '@grafana/ui';
 
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimePickerPopOver } from './TimePickerPopOver';
-import Popper from '@grafana/ui/src/components/Tooltip/Popper';
+import Popper from '../Tooltip/Popper';
+import { TimeRange } from '../../types/time';
+import { SelectOptionItem } from '../Select/Select';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+import { SelectButton } from '../Select/SelectButton';
+import { HeadlessSelect } from '../Select/HeadlessSelect';
 
 export interface TimeOption {
   from: string;

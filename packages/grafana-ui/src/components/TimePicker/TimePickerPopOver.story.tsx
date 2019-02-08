@@ -1,8 +1,8 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TimePickerPopOver } from '../../../../../public/app/core/components/TimePicker/TimePickerPopOver';
-import { TimeOption } from '../../../../../public/app/core/components/TimePicker/TimePicker';
+import { TimePickerPopOver } from './TimePickerPopOver';
+import { TimeOption } from './TimePicker';
 
 import { action } from '@storybook/addon-actions';
 

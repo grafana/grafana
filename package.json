@@ -192,7 +192,6 @@
     "prop-types": "^15.6.2",
     "rc-cascader": "^0.14.0",
     "react": "^16.6.3",
-    "react-calendar": "^2.18.1",
     "react-dom": "^16.6.3",
     "react-grid-layout": "0.16.6",
     "react-highlight-words": "0.11.0",

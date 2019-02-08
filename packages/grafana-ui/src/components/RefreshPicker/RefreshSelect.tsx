@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { HeadlessSelect, SelectOptionItem } from '@grafana/ui';
+import { SelectOptionItem } from '../Select/Select';
+import { HeadlessSelect } from '../Select/HeadlessSelect';
 
 export const EMPTY_ITEM_TEXT = 'Off';
 

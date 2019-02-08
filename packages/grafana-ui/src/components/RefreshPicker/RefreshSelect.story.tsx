@@ -3,7 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { RefreshSelect } from '../../../../../public/app/core/components/RefreshPicker/RefreshSelect';
+import { RefreshSelect } from './RefreshSelect';
 
 const RefreshSelectStories = storiesOf('UI/RefreshPicker/RefreshSelect', module);
 
