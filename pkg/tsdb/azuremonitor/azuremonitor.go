@@ -11,8 +11,8 @@ import (
 	"path"
 	"time"
 
-	// "github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -113,10 +113,12 @@ func (e *AzureMonitorExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Azure
 
 		azureMonitorTarget := query.Model.Get("azureMonitor").MustMap()
 
-		resourceGroup := azureMonitorTarget["resourceGroup"].(string)
-		metricDefinition := azureMonitorTarget["metricDefinition"].(string)
-		resourceName := azureMonitorTarget["resourceName"].(string)
-		azureURL := fmt.Sprintf("resourceGroups/%s/providers/%s/%s/providers/microsoft.insights/metrics", resourceGroup, metricDefinition, resourceName)
+		urlComponents := make(map[string]string)
+		urlComponents["resourceGroup"] = azureMonitorTarget["resourceGroup"].(string)
+		urlComponents["metricDefinition"] = azureMonitorTarget["metricDefinition"].(string)
+		urlComponents["resourceName"] = azureMonitorTarget["resourceName"].(string)
+
+		azureURL := fmt.Sprintf("resourceGroups/%s/providers/%s/%s/providers/microsoft.insights/metrics", urlComponents["resourceGroup"], urlComponents["metricDefinition"], urlComponents["resourceName"])
 
 		alias := azureMonitorTarget["alias"].(string)
 
@@ -133,11 +135,12 @@ func (e *AzureMonitorExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Azure
 		}
 
 		azureMonitorQueries = append(azureMonitorQueries, &AzureMonitorQuery{
-			URL:    azureURL,
-			Target: target,
-			Params: params,
-			RefID:  query.RefId,
-			Alias:  alias,
+			URL:           azureURL,
+			UrlComponents: urlComponents,
+			Target:        target,
+			Params:        params,
+			RefID:         query.RefId,
+			Alias:         alias,
 		})
 	}
 
@@ -246,6 +249,22 @@ func (e *AzureMonitorExecutor) unmarshalResponse(res *http.Response) (AzureMonit
 
 func (e *AzureMonitorExecutor) parseResponse(queryRes *tsdb.QueryResult, data AzureMonitorResponse, query *AzureMonitorQuery) error {
 	slog.Info("AzureMonitor", "Response", data)
+
+	for _, series := range data.Value {
+		points := make([]tsdb.TimePoint, 0)
+
+		defaultMetricName := fmt.Sprintf("%s.%s", query.UrlComponents["resourceName"], series.Name.LocalizedValue)
+
+		for _, point := range series.Timeseries[0].Data {
+			value := point.Average
+			points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.TimeStamp).Unix())*1000))
+		}
+
+		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
+			Name:   defaultMetricName,
+			Points: points,
+		})
+	}
 
 	return nil
 }

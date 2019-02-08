@@ -1,7 +1,9 @@
 package azuremonitor
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"testing"
 	"time"
 
@@ -57,5 +59,37 @@ func TestAzureMonitor(t *testing.T) {
 				So(queries[0].Alias, ShouldEqual, "testalias")
 			})
 		})
+
+		Convey("Parse AzureMonitor API response in the time series format", func() {
+			Convey("when data from query aggregated to one time series", func() {
+				data, err := loadTestFile("./test-data/1-azure-monitor-response.json")
+				So(err, ShouldBeNil)
+				So(data.Interval, ShouldEqual, "PT1M")
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &AzureMonitorQuery{
+					UrlComponents: map[string]string{
+						"resourceName": "grafana",
+					},
+				}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				So(len(res.Series), ShouldEqual, 1)
+				So(res.Series[0].Name, ShouldEqual, "grafana.Percentage CPU")
+				So(len(res.Series[0].Points), ShouldEqual, 5)
+			})
+		})
 	})
+}
+
+func loadTestFile(path string) (AzureMonitorResponse, error) {
+	var data AzureMonitorResponse
+
+	jsonBody, err := ioutil.ReadFile(path)
+	if err != nil {
+		return data, err
+	}
+	err = json.Unmarshal(jsonBody, &data)
+	return data, err
 }
