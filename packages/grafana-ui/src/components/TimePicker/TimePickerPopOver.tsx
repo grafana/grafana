@@ -45,10 +45,20 @@ export const TimePickerPopOver: FunctionComponent<Props> = (props: Props) => {
         </div>
         <div className={'time-picker-popover-box-body'}>
           <div className={'time-picker-popover-box-body-custom-ranges'}>
-            <TimePickerCalendar />
+            <div className={'time-picker-popover-box-body-custom-ranges-input'}>
+              <input type="text" />
+            </div>
+            <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
+              <TimePickerCalendar />
+            </div>
           </div>
           <div className={'time-picker-popover-box-body-custom-ranges'}>
-            <TimePickerCalendar />
+            <div className={'time-picker-popover-box-body-custom-ranges-input'}>
+              <input type="text" />
+            </div>
+            <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
+              <TimePickerCalendar />
+            </div>
           </div>
         </div>
       </div>

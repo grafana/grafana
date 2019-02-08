@@ -84,12 +84,12 @@
     outline: 0;
   }
 
-  .react-calendar__tile--active {
-    border-bottom: 1px solid $blue;
-    font-weight: $font-weight-semi-bold;
+  .react-calendar__tile--now {
+    color: $orange;
   }
 
-  .react-calendar__tile--now {
-    border-bottom: 1px solid $orange;
+  .react-calendar__tile--active {
+    color: $blue;
+    font-weight: $font-weight-semi-bold;
   }
 }
