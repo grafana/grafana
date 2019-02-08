@@ -5,6 +5,7 @@ import { TimePickerPopOver } from './TimePickerPopOver';
 import { TimeOption } from './TimePicker';
 
 import { action } from '@storybook/addon-actions';
+import moment from 'moment';
 
 const TimePickerPopOverStories = storiesOf('UI/TimePicker/TimePickerPopOver', module);
 
@@ -13,6 +14,8 @@ TimePickerPopOverStories.addDecorator(withCenteredStory);
 TimePickerPopOverStories.add('default', () => {
   return (
     <TimePickerPopOver
+      value={{ from: moment(), to: moment(), raw: { from: moment(), to: moment() } }}
+      isTimezoneUtc={false}
       onClick={(timeOption: TimeOption) => {
         action('onClick fired')(timeOption);
       }}

@@ -23,6 +23,7 @@ export interface TimeOptions {
 
 export interface Props {
   value: TimeRange;
+  isTimezoneUtc: boolean;
   displayValue: string;
   popOverTimeOptions: TimeOptions;
   selectTimeOptions: TimeOption[];

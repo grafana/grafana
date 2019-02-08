@@ -1,18 +1,31 @@
 import React, { Component, SyntheticEvent } from 'react';
+import moment from 'moment';
+
 import { TimeOptions, TimeOption } from './TimePicker';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimeRange } from '../../types/time';
 import { Input } from '../Input/Input';
 
 export interface Props {
-  value?: TimeRange;
+  value: TimeRange;
   popOverTimeOptions: TimeOptions;
   onClick: (timeOption: TimeOption) => void;
+  isTimezoneUtc: boolean;
 }
 
 export class TimePickerPopOver extends Component<Props> {
+  getDateAsString(value: any) {
+    const format = 'YYYY-MM-DD HH:mm:ss';
+
+    if (moment.isMoment(value)) {
+      return value.format(format);
+    } else {
+      return value;
+    }
+  }
+
   render() {
-    const { popOverTimeOptions, onClick } = this.props;
+    const { popOverTimeOptions, onClick, value } = this.props;
 
     return (
       <div className={'time-picker-popover'}>
@@ -51,7 +64,15 @@ export class TimePickerPopOver extends Component<Props> {
           <div className={'time-picker-popover-box-body'}>
             <div className={'time-picker-popover-box-body-custom-ranges'}>
               <div className={'time-picker-popover-box-body-custom-ranges-input'}>
-                <Input />
+                <span>From:</span>
+                <Input
+                  type="text"
+                  // onChange={this.onRelativeTimeChange}
+                  // onBlur={this.onOverrideTime}
+                  // validationEvents={timeRangeValidationEvents}
+                  // hideErrorMessage={true}
+                  value={this.getDateAsString(value.from)}
+                />
               </div>
               <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
                 <TimePickerCalendar />
@@ -59,12 +80,25 @@ export class TimePickerPopOver extends Component<Props> {
             </div>
             <div className={'time-picker-popover-box-body-custom-ranges'}>
               <div className={'time-picker-popover-box-body-custom-ranges-input'}>
-                <Input />
+                <span>To:</span>
+                <Input
+                  type="text"
+                  // onChange={this.onRelativeTimeChange}
+                  // onBlur={this.onOverrideTime}
+                  // validationEvents={timeRangeValidationEvents}
+                  // hideErrorMessage={true}
+                  value={this.getDateAsString(value.from)}
+                />
               </div>
               <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
                 <TimePickerCalendar />
               </div>
             </div>
+          </div>
+          <div className={'time-picker-popover-box-footer'}>
+            <button type="submit" className="btn gf-form-btn btn-success">
+              Apply
+            </button>
           </div>
         </div>
       </div>

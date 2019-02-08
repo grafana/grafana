@@ -12,6 +12,7 @@ TimePickerStories.addDecorator(withCenteredStory);
 TimePickerStories.add('default', () => {
   return (
     <TimePicker
+      isTimezoneUtc={false}
       displayValue={'Today'}
       value={{ from: moment(), to: moment(), raw: { from: moment(), to: moment() } }}
       selectTimeOptions={[

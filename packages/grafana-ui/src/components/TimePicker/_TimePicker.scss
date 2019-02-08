@@ -46,6 +46,25 @@
   .time-picker-popover-box-body-custom-ranges:first-child {
     margin-right: $spacer;
   }
+
+  .time-picker-popover-box-body-custom-ranges-input {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    margin: $spacer 0;
+
+    .our-custom-wrapper-class {
+      margin-left: $spacer;
+      width: 100%;
+    }
+  }
+
+  .time-picker-popover-box-footer {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-end;
+    margin-top: $spacer;
+  }
 }
 
 .time-picker-calendar {
