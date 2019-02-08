@@ -1,9 +1,10 @@
+// @ts-ignore
 import _ from 'lodash';
 import moment from 'moment';
 
 const units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
-export function parse(text, roundUp?, timezone?) {
+export function parse(text: any, roundUp?: any, timezone?: any) {
   if (!text) {
     return undefined;
   }
@@ -46,7 +47,7 @@ export function parse(text, roundUp?, timezone?) {
   return parseDateMath(mathString, time, roundUp);
 }
 
-export function isValid(text) {
+export function isValid(text: any) {
   const date = parse(text);
   if (!date) {
     return false;
@@ -59,7 +60,7 @@ export function isValid(text) {
   return false;
 }
 
-export function parseDateMath(mathString, time, roundUp?) {
+export function parseDateMath(mathString: any, time: any, roundUp?: any) {
   const dateTime = time;
   let i = 0;
   const len = mathString.length;
