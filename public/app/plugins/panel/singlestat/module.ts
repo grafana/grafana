@@ -588,10 +588,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             fill: 1,
             zero: false,
             lineWidth: 1,
-            fillColor: getColorFromHexRgbOrName(
-              panel.sparkline.fillColor,
-              config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-            ),
+            fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
           },
         },
         yaxes: { show: false },
@@ -608,10 +605,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       const plotSeries = {
         data: data.flotpairs,
-        color: getColorFromHexRgbOrName(
-          panel.sparkline.lineColor,
-          config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-        ),
+        color: getColorFromHexRgbOrName(panel.sparkline.lineColor, config.theme.type),
       };
 
       $.plot(plotCanvas, [plotSeries], options);
