@@ -1,5 +1,3 @@
-﻿import { DashboardSearchHit } from './search';
-
 export interface OrgUser {
   avatarUrl: string;
   email: string;
@@ -47,5 +45,5 @@ export interface UsersState {
 }
 
 export interface UserState {
-  starredDashboards: DashboardSearchHit[];
+  orgId: number;
 }

@@ -214,7 +214,8 @@ func (hs *HTTPServer) writeCookie(w http.ResponseWriter, name string, value stri
 		Value:    value,
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.SecurityHTTPSCookies,
+		Secure:   hs.Cfg.CookieSecure,
+		SameSite: hs.Cfg.CookieSameSite,
 	})
 }
 
