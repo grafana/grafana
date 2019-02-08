@@ -1,10 +1,8 @@
 import React, { PureComponent } from 'react';
-import { SelectButton } from '../Select/SelectButton';
 import { Moment } from 'moment';
-import { HeadlessSelect } from '../Select/HeadlessSelect';
-import { SelectOptionItem } from '../Select/Select';
+import { SelectOptionItem, ClickOutsideWrapper, SelectButton, HeadlessSelect } from '@grafana/ui';
+
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface TimeRaw {
   from: string | Moment;

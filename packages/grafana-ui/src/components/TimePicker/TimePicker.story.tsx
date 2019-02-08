@@ -2,7 +2,7 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TimePicker } from './TimePicker';
+import { TimePicker } from '../../../../../public/app/core/components/TimePicker/TimePicker';
 
 const TimePickerStories = storiesOf('UI/TimePicker', module);
 
