@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -246,13 +247,17 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		return 0, newError("Auth proxy header property invalid", nil)
 	}
 
-	for _, field := range []string{"Name", "Email", "Login"} {
+	for _, field := range []string{"Name", "Email", "Login", "Groups"} {
 		if auth.headers[field] == "" {
 			continue
 		}
 
 		if val := auth.ctx.Req.Header.Get(auth.headers[field]); val != "" {
-			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
+			if field == "Groups" {
+				extUser.Groups = util.SplitString(val)
+			} else {
+				reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
+			}
 		}
 	}
 
