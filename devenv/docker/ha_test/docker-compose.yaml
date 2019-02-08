@@ -7,6 +7,10 @@ services:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    logging:
+      driver: "fluentd"
+      options:
+        tag: nginx
 
   db:
     image: mysql:5.6
@@ -73,6 +77,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: grafana
 
   prometheus:
     image: prom/prometheus:v2.4.2
@@ -82,3 +90,21 @@ services:
       - VIRTUAL_HOST=prometheus.loc
     ports:
       - 9090
+
+  loki:
+    image: grafana/loki:master
+    environment:
+      - VIRTUAL_HOST=loki.loc
+    ports:
+      - 3100
+    command: -config.file=/etc/loki/local-config.yaml
+
+  fluentd:
+    build: ./fluentd
+    volumes:
+      - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
+    links:
+      - loki
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
