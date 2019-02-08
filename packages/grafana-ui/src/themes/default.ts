@@ -59,4 +59,4 @@ const theme = {
   }
 };
 
-module.exports = theme;
+export default theme;

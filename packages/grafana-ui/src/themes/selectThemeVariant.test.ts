@@ -17,6 +17,7 @@ const darkThemeMock = {
 };
 
 describe('Theme variable variant selector', () => {
+  // @ts-ignore
   const restoreTheme = mockTheme(name => (name === GrafanaThemeType.Light ? lightThemeMock : darkThemeMock));
 
   afterAll(() => {

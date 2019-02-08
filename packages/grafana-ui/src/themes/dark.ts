@@ -1,5 +1,6 @@
-const defaultTheme = require('./default');
-const tinycolor = require('tinycolor2');
+import tinycolor  from 'tinycolor2';
+import defaultTheme from './default';
+import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 const basicColors = {
   black: '#000000',
@@ -29,9 +30,9 @@ const basicColors = {
   orange: '#eb7b18',
 };
 
-const darkTheme = {
+const darkTheme: GrafanaTheme = {
   ...defaultTheme,
-  type: 'dark',
+  type: GrafanaThemeType.Dark,
   name: 'Grafana Dark',
   colors: {
     ...basicColors,
@@ -65,4 +66,4 @@ const darkTheme = {
   },
 };
 
-module.exports = darkTheme;
+export default darkTheme;
