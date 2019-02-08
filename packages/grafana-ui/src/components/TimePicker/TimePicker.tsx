@@ -79,7 +79,7 @@ export class TimePicker extends PureComponent<Props, State> {
     const popover = TimePickerPopOver;
     const popoverElement = React.createElement(popover, {
       ...this.props,
-      onClick: (timeOption: TimeOption) => ({}),
+      onChange: (timeRange: TimeRange) => ({}),
     });
     return (
       <ClickOutsideWrapper onClick={this.onClickOutside}>
