@@ -6,66 +6,59 @@ $theme-name: light;
 // Grays
 // -------------------------
 $black: #000;
+$dark-2: #1e2028;
+$dark-3: #303133;
+$dark-4: #35373f;
+$dark-5: #41444b;
+$gray-1: #52545c;
+$gray-2: #767980;
+$gray-3: #acb6bf;
+$gray-4: #c7d0d9;
+$gray-5: #dde4ed;
+$gray-6: #e9edf2;
+$gray-7: #f7f8fa;
 
-// -------------------------
-$black: getThemeVariable('colors.black', $theme-name);
-$dark-1: getThemeVariable('colors.dark1', $theme-name);
-$dark-2: getThemeVariable('colors.dark2', $theme-name);
-$dark-3: getThemeVariable('colors.dark3', $theme-name);
-$dark-4: getThemeVariable('colors.dark4', $theme-name);
-$dark-5: getThemeVariable('colors.dark5', $theme-name);
-$gray-1: getThemeVariable('colors.gray1', $theme-name);
-$gray-2: getThemeVariable('colors.gray2', $theme-name);
-$gray-3: getThemeVariable('colors.gray3', $theme-name);
-$gray-4: getThemeVariable('colors.gray4', $theme-name);
-$gray-5: getThemeVariable('colors.gray5', $theme-name);
-$gray-6: getThemeVariable('colors.gray6', $theme-name);
-$gray-7: getThemeVariable('colors.gray7', $theme-name);
-
-$white: getThemeVariable('colors.white', $theme-name);
+$white: #fff;
 
 // Accent colors
 // -------------------------
-$blue: getThemeVariable('colors.blue', $theme-name);
-$blue-dark: getThemeVariable('colors.blueDark', $theme-name);
-$blue-light: getThemeVariable('colors.blueLight', $theme-name);
-$green: getThemeVariable('colors.green', $theme-name);
-$red: getThemeVariable('colors.red', $theme-name);
-$yellow: getThemeVariable('colors.yellow', $theme-name);
-$orange: getThemeVariable('colors.orange', $theme-name);
-$pink: getThemeVariable('colors.pink', $theme-name);
-$purple: getThemeVariable('colors.purple', $theme-name);
-$variable: getThemeVariable('colors.variable', $theme-name);
+$blue: #0083b3;
+$blue-light: #00a8e6;
+$green: #3aa655;
+$red: #d44939;
+$yellow: #ff851b;
+$orange: #ff7941;
+$purple: #9954bb;
+$variable: $blue;
 
 $brand-primary: $orange;
 $brand-success: $green;
 $brand-warning: $orange;
 $brand-danger: $red;
 
-$query-red: getThemeVariable('colors.queryRed', $theme-name);
-$query-green: getThemeVariable('colors.queryGreen', $theme-name);
-$query-purple: getThemeVariable('colors.queryPurple', $theme-name);
-$query-keyword: getThemeVariable('colors.queryKeyword', $theme-name);
-$query-orange: getThemeVariable('colors.queryOrange', $theme-name);
+$query-red: $red;
+$query-green: $green;
+$query-purple: $purple;
+$query-orange: $orange;
+$query-keyword: $blue;
 
 // Status colors
 // -------------------------
-$online: getThemeVariable('colors.online', $theme-name);
-$warn: getThemeVariable('colors.warn', $theme-name);
-$critical: getThemeVariable('colors.critical', $theme-name);
+$online: #01a64f;
+$warn: #f79520;
+$critical: #ec2128;
 
 // Scaffolding
 // -------------------------
+$body-bg: $gray-7;
+$page-bg: $gray-7;
 
-$body-bg: getThemeVariable('colors.bodyBg', $theme-name);
-$page-bg: getThemeVariable('colors.pageBg', $theme-name);
-
-$body-color: getThemeVariable('colors.bodyColor', $theme-name);
-$text-color: getThemeVariable('colors.textColor', $theme-name);
-$text-color-strong: getThemeVariable('colors.textColorStrong', $theme-name);
-$text-color-weak: getThemeVariable('colors.textColorWeak', $theme-name);
-$text-color-faint: getThemeVariable('colors.textColorFaint', $theme-name);
-$text-color-emphasis: getThemeVariable('colors.textColorEmphasis', $theme-name);
+$body-color: $gray-1;
+$text-color: $gray-1;
+$text-color-strong: $dark-2;
+$text-color-weak: $gray-2;
+$text-color-faint: $gray-4;
+$text-color-emphasis: $dark-5;
 
 $text-shadow-faint: none;
 $textShadow: none;
@@ -83,15 +76,14 @@ $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
-$link-color: getThemeVariable('colors.linkColor', $theme-name);
-$link-color-disabled: getThemeVariable('colors.linkColorDisabled', $theme-name);
-$link-hover-color: getThemeVariable('colors.linkColorHover', $theme-name);
-
-$external-link-color: getThemeVariable('colors.linkColorExternal', $theme-name);
+$link-color: $gray-1;
+$link-color-disabled: lighten($link-color, 30%);
+$link-hover-color: darken($link-color, 20%);
+$external-link-color: $blue-light;
 
 // Typography
 // -------------------------
-$headings-color: getThemeVariable('colors.headingColor', $theme-name);
+$headings-color: $text-color;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 

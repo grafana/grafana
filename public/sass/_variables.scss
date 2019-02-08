@@ -47,45 +47,45 @@ $enable-flex: true;
 // Typography
 // -------------------------
 
-$font-family-sans-serif: getThemeVariable('typography.fontFamily.sansSerif');
-$font-family-serif: getThemeVariable('typography.fontFamily.serif');
-$font-family-monospace: getThemeVariable('typography.fontFamily.monospace');
+$font-family-sans-serif: 'Roboto', Helvetica, Arial, sans-serif;
+$font-family-serif: Georgia, 'Times New Roman', Times, serif;
+$font-family-monospace: Menlo, Monaco, Consolas, 'Courier New', monospace;
 $font-family-base: $font-family-sans-serif !default;
 
-$font-size-root: getThemeVariable('typography.size.m') !default;
-$font-size-base: getThemeVariable('typography.size.base') !default;
+$font-size-root: 14px !default;
+$font-size-base: 13px !default;
 
-$font-size-lg: getThemeVariable('typography.size.l') !default;
-$font-size-md: getThemeVariable('typography.size.m') !default;
-$font-size-sm: getThemeVariable('typography.size.s') !default;
-$font-size-xs: getThemeVariable('typography.size.xs') !default;
+$font-size-lg: 18px !default;
+$font-size-md: 14px !default;
+$font-size-sm: 12px !default;
+$font-size-xs: 10px !default;
 
-$line-height-base: getThemeVariable('typography.lineHeight.l')  !default;
-$font-weight-semi-bold: getThemeVariable('typography.weight.semibold');
+$line-height-base: 1.5 !default;
+$font-weight-semi-bold: 500;
 
-$font-size-h1: getThemeVariable('typography.heading.h1') !default;
-$font-size-h2: getThemeVariable('typography.heading.h2') !default;
-$font-size-h3: getThemeVariable('typography.heading.h3') !default;
-$font-size-h4: getThemeVariable('typography.heading.h4') !default;
-$font-size-h5: getThemeVariable('typography.heading.h5') !default;
-$font-size-h6: getThemeVariable('typography.heading.h6') !default;
+$font-size-h1: 2rem !default;
+$font-size-h2: 1.75rem !default;
+$font-size-h3: 1.5rem !default;
+$font-size-h4: 1.3rem !default;
+$font-size-h5: 1.2rem !default;
+$font-size-h6: 1rem !default;
 
 $display1-size: 6rem !default;
 $display2-size: 5.5rem !default;
 $display3-size: 4.5rem !default;
 $display4-size: 3.5rem !default;
 
-$display1-weight: getThemeVariable('typography.weight.normal') !default;
-$display2-weight: getThemeVariable('typography.weight.normal') !default;
-$display3-weight: getThemeVariable('typography.weight.normal') !default;
-$display4-weight: getThe1meVariable('typography.weight.normal') !default;
+$display1-weight: 400 !default;
+$display2-weight: 400 !default;
+$display3-weight: 400 !default;
+$display4-weight: 400 !default;
 
 $lead-font-size: 1.25rem !default;
 $lead-font-weight: 300 !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-$headings-font-weight: getThemeVariable('typography.weight.normal') !default;
+$headings-font-weight: 400 !default;
 $headings-line-height: 1.1 !default;
 
 $hr-border-width: $border-width !default;

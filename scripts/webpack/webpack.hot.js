@@ -8,7 +8,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const IgnoreNotFoundExportPlugin = require("./IgnoreNotFoundExportPlugin.js");
-const getThemeVariable = require("./getThemeVariable");
 
 module.exports = merge(common, {
   entry: {
@@ -87,12 +86,7 @@ module.exports = merge(common, {
             },
           },
           {
-            loader: 'sass-loader',
-            options: {
-              functions: {
-                "getThemeVariable($themeVar, $themeName: dark)": getThemeVariable
-              }
-            }
+            loader: 'sass-loader'
           }
         ],
       },

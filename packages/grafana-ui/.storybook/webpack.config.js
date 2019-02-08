@@ -1,5 +1,4 @@
 const path = require('path');
-const getThemeVariable = require('../../../scripts/webpack/getThemeVariable');
 
 module.exports = (baseConfig, env, config) => {
   config.module.rules.push({
@@ -36,10 +35,7 @@ module.exports = (baseConfig, env, config) => {
       {
         loader: 'sass-loader',
         options: {
-          sourceMap: false,
-          functions: {
-            'getThemeVariable($themeVar, $themeName: dark)': getThemeVariable,
-          },
+          sourceMap: false
         },
       },
     ],

@@ -1,7 +1,6 @@
 'use strict';
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const getThemeVariable = require('./getThemeVariable');
 
 module.exports = function(options) {
   return {
@@ -27,10 +26,7 @@ module.exports = function(options) {
       {
         loader: 'sass-loader',
         options: {
-          sourceMap: options.sourceMap,
-          functions: {
-            'getThemeVariable($themeVar, $themeName: dark)': getThemeVariable,
-          },
+          sourceMap: options.sourceMap
         },
       },
     ],

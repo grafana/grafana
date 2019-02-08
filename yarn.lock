@@ -11910,11 +11910,6 @@ node-releases@^1.0.0-alpha.11, node-releases@^1.1.3:
   dependencies:
     semver "^5.3.0"
 
-node-sass-utils@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/node-sass-utils/-/node-sass-utils-1.1.2.tgz#d03639cfa4fc962398ba3648ab466f0db7cc2131"
-  integrity sha1-0DY5z6T8liOYujZIq0ZvDbfMITE=
-
 node-sass@^4.11.0:
   version "4.11.0"
   resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-4.11.0.tgz#183faec398e9cbe93ba43362e2768ca988a6369a"
