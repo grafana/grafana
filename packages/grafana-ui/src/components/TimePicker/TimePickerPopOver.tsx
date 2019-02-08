@@ -1,9 +1,9 @@
 import React, { Component, SyntheticEvent } from 'react';
 
-import { TimeOptions, TimeOption } from './TimePicker';
 import { TimePickerCalendar, CalendarType } from './TimePickerCalendar';
-import { TimeRange } from '../../types/time';
-import { TimePickerInput, stringToMoment } from './TimePickerInput';
+import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
+import { TimePickerInput } from './TimePickerInput';
+import { stringToMoment } from '../../utils/time';
 
 export interface Props {
   value: TimeRange;

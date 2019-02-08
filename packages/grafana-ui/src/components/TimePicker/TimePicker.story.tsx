@@ -187,8 +187,8 @@ TimePickerStories.add('default', () => {
           },
         ],
       }}
-      onChange={timeOption => {
-        action('onChange fired')(timeOption);
+      onChange={timeRange => {
+        action('onChange fired')(timeRange);
       }}
     />
   );

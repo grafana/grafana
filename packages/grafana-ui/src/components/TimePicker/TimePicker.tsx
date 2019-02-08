@@ -3,23 +3,12 @@ import React, { PureComponent, createRef } from 'react';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimePickerPopOver } from './TimePickerPopOver';
 import Popper from '../Tooltip/Popper';
-import { TimeRange } from '../../types/time';
+import { TimeRange, TimeOptions, TimeOption } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { SelectButton } from '../Select/SelectButton';
 import { HeadlessSelect } from '../Select/HeadlessSelect';
-
-export interface TimeOption {
-  from: string;
-  to: string;
-  display: string;
-  section: number;
-  active: boolean;
-}
-
-export interface TimeOptions {
-  [key: string]: TimeOption[];
-}
+import { mapTimeOptionToTimeRange } from '../../utils/time';
 
 export interface Props {
   value: TimeRange;
@@ -27,7 +16,7 @@ export interface Props {
   displayValue: string;
   popOverTimeOptions: TimeOptions;
   selectTimeOptions: TimeOption[];
-  onChange: (timeOption: TimeOption) => void;
+  onChange: (timeRange: TimeRange) => void;
 }
 
 export interface State {
@@ -58,8 +47,9 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   onSelectChanged = (item: SelectOptionItem) => {
+    const { isTimezoneUtc, onChange } = this.props;
     this.toggleIsSelectOpen();
-    this.props.onChange(item.value);
+    onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc));
   };
 
   onCustomClicked = () => {
@@ -73,13 +63,13 @@ export class TimePicker extends PureComponent<Props, State> {
   onClickOutside = () => this.setState({ isSelectOpen: false });
 
   render() {
-    const { displayValue, selectTimeOptions } = this.props;
+    const { displayValue, selectTimeOptions, onChange } = this.props;
     const { isSelectOpen, isPopOverOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const popover = TimePickerPopOver;
     const popoverElement = React.createElement(popover, {
       ...this.props,
-      onChange: (timeRange: TimeRange) => ({}),
+      onChange: onChange,
     });
     return (
       <ClickOutsideWrapper onClick={this.onClickOutside}>

@@ -1,20 +1,10 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import moment, { Moment } from 'moment';
+import moment from 'moment';
 
 import { Input } from '../Input/Input';
 import * as dateMath from '../../../../../public/app/core/utils/datemath';
-
-type TimeFragment = string | Moment;
-
-const format = 'YYYY-MM-DD HH:mm:ss';
-
-export const stringToMoment = (value: string, isTimezoneUtc: boolean): Moment => {
-  if (isTimezoneUtc) {
-    return moment.utc(value, format);
-  }
-
-  return moment(value, format);
-};
+import { TimeFragment, TIME_FORMAT } from '../../types/time';
+import { stringToMoment } from '../../utils/time';
 
 export interface Props {
   isTimezoneUtc: boolean;
@@ -59,7 +49,7 @@ export class TimePickerInput extends PureComponent<Props, State> {
 
   valueToString = (value: TimeFragment) => {
     if (moment.isMoment(value)) {
-      return value.format(format);
+      return value.format(TIME_FORMAT);
     } else {
       return value;
     }
