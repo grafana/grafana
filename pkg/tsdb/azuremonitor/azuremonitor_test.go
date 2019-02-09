@@ -178,6 +178,33 @@ func TestAzureMonitor(t *testing.T) {
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 4)
 				So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1549723440000)
 			})
+
+			Convey("when data from query aggregated as total and has dimension filter", func() {
+				data, err := loadTestFile("./test-data/6-azure-monitor-response-multi-dimension.json")
+				So(err, ShouldBeNil)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &AzureMonitorQuery{
+					UrlComponents: map[string]string{
+						"resourceName": "grafana",
+					},
+					Params: url.Values{
+						"aggregation": {"Average"},
+					},
+				}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+				So(len(res.Series), ShouldEqual, 3)
+
+				So(res.Series[0].Name, ShouldEqual, "grafana{blobtype=PageBlob}.Blob Count")
+				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 3)
+
+				So(res.Series[1].Name, ShouldEqual, "grafana{blobtype=BlockBlob}.Blob Count")
+				So(res.Series[1].Points[0][0].Float64, ShouldEqual, 1)
+
+				So(res.Series[2].Name, ShouldEqual, "grafana{blobtype=Azure Data Lake Storage}.Blob Count")
+				So(res.Series[2].Points[0][0].Float64, ShouldEqual, 0)
+			})
 		})
 	})
 }

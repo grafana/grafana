@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -24,7 +25,7 @@ import (
 )
 
 var (
-	slog log.Logger
+	azlog log.Logger
 )
 
 // AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
@@ -47,7 +48,7 @@ func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint,
 }
 
 func init() {
-	slog = log.New("tsdb.azuremonitor")
+	azlog = log.New("tsdb.azuremonitor")
 	tsdb.RegisterTsdbQueryEndpoint("grafana-azure-monitor-datasource", NewAzureMonitorExecutor)
 }
 
@@ -61,7 +62,6 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 	queryType := tsdbQuery.Queries[0].Model.Get("queryType").MustString("")
 
 	switch queryType {
-	case "azureMonitorTimeSeriesQuery":
 	case "Azure Monitor":
 		fallthrough
 	default:
@@ -112,26 +112,39 @@ func (e *AzureMonitorExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Azure
 		var target string
 
 		azureMonitorTarget := query.Model.Get("azureMonitor").MustMap()
+		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
 
 		urlComponents := make(map[string]string)
-		urlComponents["resourceGroup"] = azureMonitorTarget["resourceGroup"].(string)
-		urlComponents["metricDefinition"] = azureMonitorTarget["metricDefinition"].(string)
-		urlComponents["resourceName"] = azureMonitorTarget["resourceName"].(string)
+		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorTarget["resourceGroup"])
+		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorTarget["metricDefinition"])
+		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorTarget["resourceName"])
 
-		azureURL := fmt.Sprintf("resourceGroups/%s/providers/%s/%s/providers/microsoft.insights/metrics", urlComponents["resourceGroup"], urlComponents["metricDefinition"], urlComponents["resourceName"])
+		ub := URLBuilder{
+			ResourceGroup:    urlComponents["resourceGroup"],
+			MetricDefinition: urlComponents["metricDefinition"],
+			ResourceName:     urlComponents["resourceName"],
+		}
+		azureURL := ub.Build()
 
-		alias := azureMonitorTarget["alias"].(string)
+		alias := fmt.Sprintf("%v", azureMonitorTarget["alias"])
 
 		params := url.Values{}
 		params.Add("api-version", "2018-01-01")
 		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
-		params.Add("interval", azureMonitorTarget["timeGrain"].(string))
-		params.Add("aggregation", azureMonitorTarget["aggregation"].(string))
-		params.Add("metricnames", azureMonitorTarget["metricName"].(string))
+		params.Add("interval", fmt.Sprintf("%v", azureMonitorTarget["timeGrain"]))
+		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
+		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
+
+		dimension := fmt.Sprintf("%v", azureMonitorTarget["dimension"])
+		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))
+		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && dimensionFilter != "" {
+			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+		}
+
 		target = params.Encode()
 
 		if setting.Env == setting.DEV {
-			slog.Debug("Azuremonitor request", "params", params)
+			azlog.Debug("Azuremonitor request", "params", params)
 		}
 
 		azureMonitorQueries = append(azureMonitorQueries, &AzureMonitorQuery{
@@ -174,6 +187,7 @@ func (e *AzureMonitorExecutor) executeQuery(ctx context.Context, query *AzureMon
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header))
 
+	azlog.Debug("AzureMonitor", "Request URL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		queryResult.Error = err
@@ -213,7 +227,7 @@ func (e *AzureMonitorExecutor) createRequest(ctx context.Context, dsInfo *models
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		slog.Error("Failed to create request", "error", err)
+		azlog.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
 	}
 
@@ -233,14 +247,14 @@ func (e *AzureMonitorExecutor) unmarshalResponse(res *http.Response) (AzureMonit
 	}
 
 	if res.StatusCode/100 != 2 {
-		slog.Error("Request failed", "status", res.Status, "body", string(body))
+		azlog.Error("Request failed", "status", res.Status, "body", string(body))
 		return AzureMonitorResponse{}, fmt.Errorf(string(body))
 	}
 
 	var data AzureMonitorResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		slog.Error("Failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
+		azlog.Error("Failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
 		return AzureMonitorResponse{}, err
 	}
 
@@ -248,14 +262,24 @@ func (e *AzureMonitorExecutor) unmarshalResponse(res *http.Response) (AzureMonit
 }
 
 func (e *AzureMonitorExecutor) parseResponse(queryRes *tsdb.QueryResult, data AzureMonitorResponse, query *AzureMonitorQuery) error {
-	slog.Info("AzureMonitor", "Response", data)
+	azlog.Debug("AzureMonitor", "Response", data)
 
-	for _, series := range data.Value {
+	if len(data.Value) == 0 {
+		return nil
+	}
+
+	for _, series := range data.Value[0].Timeseries {
 		points := make([]tsdb.TimePoint, 0)
 
-		defaultMetricName := fmt.Sprintf("%s.%s", query.UrlComponents["resourceName"], series.Name.LocalizedValue)
+		metadataName := ""
+		metadataValue := ""
+		if len(series.Metadatavalues) > 0 {
+			metadataName = series.Metadatavalues[0].Name.LocalizedValue
+			metadataValue = series.Metadatavalues[0].Value
+		}
+		defaultMetricName := formatLegendKey(query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue)
 
-		for _, point := range series.Timeseries[0].Data {
+		for _, point := range series.Data {
 			var value float64
 			switch query.Params.Get("aggregation") {
 			case "Average":
