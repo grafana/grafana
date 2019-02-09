@@ -39,7 +39,11 @@ type AzureMonitorResponse struct {
 			} `json:"metadatavalues"`
 			Data []struct {
 				TimeStamp time.Time `json:"timeStamp"`
-				Average   float64   `json:"average"`
+				Average   float64   `json:"average,omitempty"`
+				Total     float64   `json:"total,omitempty"`
+				Count     float64   `json:"count,omitempty"`
+				Maximum   float64   `json:"maximum,omitempty"`
+				Minimum   float64   `json:"minimum,omitempty"`
 			} `json:"data"`
 		} `json:"timeseries"`
 	} `json:"value"`

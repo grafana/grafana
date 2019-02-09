@@ -256,7 +256,21 @@ func (e *AzureMonitorExecutor) parseResponse(queryRes *tsdb.QueryResult, data Az
 		defaultMetricName := fmt.Sprintf("%s.%s", query.UrlComponents["resourceName"], series.Name.LocalizedValue)
 
 		for _, point := range series.Timeseries[0].Data {
-			value := point.Average
+			var value float64
+			switch query.Params.Get("aggregation") {
+			case "Average":
+				value = point.Average
+			case "Total":
+				value = point.Total
+			case "Maximum":
+				value = point.Maximum
+			case "Minimum":
+				value = point.Minimum
+			case "Count":
+				value = point.Count
+			default:
+				value = point.Count
+			}
 			points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.TimeStamp).Unix())*1000))
 		}
 
