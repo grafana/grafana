@@ -16,7 +16,7 @@ import (
 
 func TestAzureMonitorDatasource(t *testing.T) {
 	Convey("AzureMonitorDatasource", t, func() {
-		executor := &AzureMonitorDatasource{}
+		datasource := &AzureMonitorDatasource{}
 
 		Convey("Parse queries from frontend and build AzureMonitor API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
@@ -44,7 +44,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				},
 			}
 			Convey("and is a normal query", func() {
-				queries, err := executor.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(len(queries), ShouldEqual, 1)
@@ -58,6 +58,29 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(queries[0].Params["metricnames"][0], ShouldEqual, "Percentage CPU")
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT1M")
 				So(queries[0].Alias, ShouldEqual, "testalias")
+			})
+
+			Convey("and has a dimension filter", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"azureMonitor": map[string]interface{}{
+						"timeGrain":        "PT1M",
+						"aggregation":      "Average",
+						"resourceGroup":    "grafanastaging",
+						"resourceName":     "grafana",
+						"metricDefinition": "Microsoft.Compute/virtualMachines",
+						"metricName":       "Percentage CPU",
+						"alias":            "testalias",
+						"queryType":        "Azure Monitor",
+						"dimension":        "blob",
+						"dimensionFilter":  "*",
+					},
+				})
+
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				So(err, ShouldBeNil)
+
+				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+
 			})
 		})
 
@@ -76,7 +99,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Average"},
 					},
 				}
-				err = executor.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
 				So(len(res.Series), ShouldEqual, 1)
@@ -112,7 +135,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Total"},
 					},
 				}
-				err = executor.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 8.26)
@@ -132,7 +155,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Maximum"},
 					},
 				}
-				err = executor.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 3.07)
@@ -152,7 +175,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Minimum"},
 					},
 				}
-				err = executor.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 1.51)
@@ -172,7 +195,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Count"},
 					},
 				}
-				err = executor.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 4)
@@ -192,7 +215,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"aggregation": {"Average"},
 					},
 				}
-				err = executor.parseResponse(res, data, query)
+				err = datasource.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 				So(len(res.Series), ShouldEqual, 3)
 

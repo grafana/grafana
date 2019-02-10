@@ -24,11 +24,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+// AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
 	httpClient *http.Client
 	dsInfo     *models.DataSource
 }
 
+// executeTimeSeriesQuery does the following:
+// 1. build the AzureMonitor url and querystring for each query
+// 2. executes each query by calling the Azure Monitor API
+// 3. parses the responses for each query into the timeseries format
 func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
@@ -95,9 +100,9 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
 		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
 
-		dimension := fmt.Sprintf("%v", azureMonitorTarget["dimension"])
+		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimension"]))
 		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))
-		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && dimensionFilter != "" {
+		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 {
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		}
 
