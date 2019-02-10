@@ -238,7 +238,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, editview, $injector, isInitSlow, initError } = this.props;
-    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, fullscreenPanel } = this.state;
+    const { isSettingsOpening, isEditing, isFullscreen, scrollTop } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -266,7 +266,6 @@ export class DashboardPage extends PureComponent<Props, State> {
           editview={editview}
           $injector={$injector}
           onAddPanel={this.onAddPanel}
-          fullscreenPanel={fullscreenPanel}
         />
         <div className="scroll-canvas scroll-canvas--dashboard">
           <CustomScrollbar autoHeightMin={'100%'} setScrollTop={this.setScrollTop} scrollTop={scrollTop}>

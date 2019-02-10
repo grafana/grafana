@@ -47,9 +47,6 @@
   .navbar-button--add-panel,
   .navbar-button--star,
   .navbar-button--tv,
-  .navbar-page-btn .fa-caret-down {
-    display: none;
-  }
 
   .navbar-buttons--close {
     display: flex;
@@ -185,7 +182,6 @@
   height: $navbarHeight;
   align-items: center;
   padding-left: 7px;
-  flex-grow: 1;
 }
 
 .navbar-edit__back-btn  {
@@ -209,44 +205,4 @@
   }
 }
 
-.navbar-edit__input-wraper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
 
-  &:hover {
-    i {
-      opacity: 1;
-    }
-
-    .navbar-edit__input {
-      background: $input-bg;
-      flex-grow: 1;
-      @include form-control-focus();
-    }
-  }
-
-  i {
-    left: -25px;
-    position: relative;
-    color: $text-color-weak;
-    opacity: 0;
-    transition: 200ms opacity ease-in-out;
-  }
-}
-
-.navbar-edit__input {
-  background: transparent;
-  transition: 200ms background ease-in-out;
-  width: auto;
-  font-size: $font-size-lg;
-  height: $gf-form-input-height;
-  padding: $input-padding-y $input-padding-x;
-  flex-grow: 1;
-
-  &:focus {
-    @include form-control-focus();
-    background: $input-bg;
-  }
-}

@@ -9,16 +9,16 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
 // Components
 import { DashNavButton } from './DashNavButton';
+import { Tooltip } from '@grafana/ui';
 
 // State
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state';
 
 export interface Props {
   dashboard: DashboardModel;
-  fullscreenPanel?: PanelModel;
   editview: string;
   isEditing: boolean;
   isFullscreen: boolean;
@@ -133,7 +133,7 @@ export class DashNav extends PureComponent<Props> {
       <>
         <div>
           <a className="navbar-page-btn" onClick={this.onOpenSearch}>
-            <i className="gicon gicon-dashboard" />
+            {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
             {haveFolder && <span className="navbar-page-btn--folder">{folderTitle} / </span>}
             {dashboard.title}
             <i className="fa fa-caret-down" />
@@ -144,24 +144,24 @@ export class DashNav extends PureComponent<Props> {
     );
   }
 
-  renderPanelFullscreeMode() {
-    const { fullscreenPanel } = this.props;
+  get isInFullscreenOrSettings() {
+    return this.props.editview || this.props.isFullscreen;
+  }
 
+  renderBackButton() {
     return (
       <div className="navbar-edit">
-        <button className="navbar-edit__back-btn" onClick={this.onClose}>
-          <i className="fa fa-arrow-left" />
-        </button>
-        <div className="navbar-edit__input-wraper">
-          <input className="navbar-edit__input" type="text" value={fullscreenPanel.title} />
-          <i className="fa fa-pencil" />
-        </div>
+        <Tooltip content="Go back (Esc)">
+          <button className="navbar-edit__back-btn" onClick={this.onClose}>
+            <i className="fa fa-arrow-left" />
+          </button>
+        </Tooltip>
       </div>
     );
   }
 
   render() {
-    const { dashboard, onAddPanel, fullscreenPanel } = this.props;
+    const { dashboard, onAddPanel } = this.props;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
 
@@ -169,8 +169,8 @@ export class DashNav extends PureComponent<Props> {
 
     return (
       <div className="navbar">
-        {!fullscreenPanel && this.renderDashboardTitleSearchButton()}
-        {fullscreenPanel && this.renderPanelFullscreeMode()}
+        {this.isInFullscreenOrSettings && this.renderBackButton()}
+        {this.renderDashboardTitleSearchButton()}
 
         {this.playlistSrv.isPlaying && (
           <div className="navbar-buttons navbar-buttons--playlist">
