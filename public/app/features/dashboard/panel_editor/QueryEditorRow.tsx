@@ -7,10 +7,11 @@ import _ from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { Emitter } from 'app/core/utils/emitter';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
@@ -43,7 +44,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.loadDatasource();
+    this.props.panel.events.on('refresh', this.onPanelRefresh);
   }
+
+  onPanelRefresh = () => {
+    if (this.state.angularScope) {
+      this.state.angularScope.range = getTimeSrv().timeRange();
+    }
+  };
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
     const { panel, query } = this.props;
@@ -56,6 +64,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       refresh: () => panel.refresh(),
       render: () => panel.render(),
       events: panel.events,
+      range: getTimeSrv().timeRange(),
     };
   }
 
@@ -97,6 +106,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    this.props.panel.events.off('refresh', this.onPanelRefresh);
+
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
     }
@@ -250,4 +261,5 @@ export interface AngularQueryComponentScope {
   datasource: DataSourceApi;
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
+  range: TimeRange;
 }
