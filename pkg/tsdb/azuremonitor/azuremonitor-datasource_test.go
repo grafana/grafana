@@ -14,9 +14,9 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestAzureMonitor(t *testing.T) {
-	Convey("AzureMonitor", t, func() {
-		executor := &AzureMonitorExecutor{}
+func TestAzureMonitorDatasource(t *testing.T) {
+	Convey("AzureMonitorDatasource", t, func() {
+		executor := &AzureMonitorDatasource{}
 
 		Convey("Parse queries from frontend and build AzureMonitor API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
@@ -44,7 +44,7 @@ func TestAzureMonitor(t *testing.T) {
 				},
 			}
 			Convey("and is a normal query", func() {
-				queries, err := executor.buildQueries(tsdbQuery)
+				queries, err := executor.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(len(queries), ShouldEqual, 1)
