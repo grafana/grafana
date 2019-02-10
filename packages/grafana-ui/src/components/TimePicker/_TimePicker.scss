@@ -17,7 +17,8 @@
     padding: 20px;
 
     ul {
-      padding: 10px;
+      padding-right: $spacer;
+      padding-top: $spacer;
       list-style-type: none;
 
       li {
@@ -37,6 +38,11 @@
       flex-flow: row nowrap;
       justify-content: space-around;
     }
+  }
+
+  .time-picker-popover-box-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semi-bold;
   }
 
   .time-picker-popover-box:first-child {

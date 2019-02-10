@@ -16,6 +16,8 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { DashboardModel } from '../../state';
+import { TimePicker, RefreshPicker } from '@grafana/ui';
+import moment from 'moment';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -255,10 +257,10 @@ export class DashNav extends PureComponent<Props> {
           />
         </div>
 
-        {/* <div className="navbar-buttons">
+        <div className="navbar-buttons">
           <TimePicker
-            displayValue={''}
-            value={null}
+            isTimezoneUtc={false}
+            value={{ from: moment(), to: moment(), raw: { from: 'now', to: 'now' } }}
             onChange={() => {}}
             selectTimeOptions={[
               { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3, active: false },
@@ -439,7 +441,7 @@ export class DashNav extends PureComponent<Props> {
             intervals={[]}
             initialValue={undefined}
           />
-        </div> */}
+        </div>
 
         <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
       </div>

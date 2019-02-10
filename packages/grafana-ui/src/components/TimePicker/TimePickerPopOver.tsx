@@ -1,36 +1,55 @@
 import React, { Component, SyntheticEvent } from 'react';
 
-import { TimePickerCalendar, CalendarType } from './TimePickerCalendar';
+import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
 import { TimePickerInput } from './TimePickerInput';
 import { mapTimeOptionToTimeRange } from '../../utils/time';
+import { Moment } from 'moment';
 
 export interface Props {
   value: TimeRange;
   popOverTimeOptions: TimeOptions;
-  onChange: (timeRange: TimeRange) => void;
   isTimezoneUtc: boolean;
   timezone?: string;
+  onChange: (timeRange: TimeRange) => void;
 }
 
 export interface State {
+  value: TimeRange;
   isFromInputValid: boolean;
   isToInputValid: boolean;
-  editValue: TimeRange;
 }
 
 export class TimePickerPopOver extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { editValue: props.value, isFromInputValid: true, isToInputValid: true };
+    this.state = { value: props.value, isFromInputValid: true, isToInputValid: true };
   }
 
-  onFromInputValidated = (valid: boolean) => {
-    this.setState({ isFromInputValid: valid });
+  onFromInputChanged = (value: string, valid: boolean) => {
+    this.setState({
+      value: { ...this.state.value, raw: { ...this.state.value.raw, from: value } },
+      isFromInputValid: valid,
+    });
   };
 
-  onToInputValidated = (valid: boolean) => {
-    this.setState({ isToInputValid: valid });
+  onToInputChanged = (value: string, valid: boolean) => {
+    this.setState({
+      value: { ...this.state.value, raw: { ...this.state.value.raw, to: value } },
+      isToInputValid: valid,
+    });
+  };
+
+  onFromCalendarChanged = (value: Moment) => {
+    this.setState({
+      value: { ...this.state.value, raw: { ...this.state.value.raw, from: value } },
+    });
+  };
+
+  onToCalendarChanged = (value: Moment) => {
+    this.setState({
+      value: { ...this.state.value, raw: { ...this.state.value.raw, to: value } },
+    });
   };
 
   onTimeOptionClick = (timeOption: TimeOption) => {
@@ -40,12 +59,12 @@ export class TimePickerPopOver extends Component<Props, State> {
   };
 
   onApplyClick = () => {
-    this.props.onChange(this.state.editValue);
+    this.props.onChange(this.state.value);
   };
 
   render() {
-    const { popOverTimeOptions, value, isTimezoneUtc } = this.props;
-    const { editValue, isFromInputValid, isToInputValid } = this.state;
+    const { popOverTimeOptions, isTimezoneUtc, timezone } = this.props;
+    const { isFromInputValid, isToInputValid, value } = this.state;
     const isValid = isFromInputValid && isToInputValid;
 
     return (
@@ -88,12 +107,20 @@ export class TimePickerPopOver extends Component<Props, State> {
                 <span>From:</span>
                 <TimePickerInput
                   isTimezoneUtc={isTimezoneUtc}
-                  initalValue={editValue.raw.from}
-                  onValidated={this.onFromInputValidated}
+                  roundup={false}
+                  timezone={timezone}
+                  value={value.raw.from}
+                  onChange={this.onFromInputChanged}
                 />
               </div>
               <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
-                <TimePickerCalendar calendarType={CalendarType.From} value={value} />
+                <TimePickerCalendar
+                  isTimezoneUtc={isTimezoneUtc}
+                  roundup={false}
+                  timezone={timezone}
+                  value={value.raw.from}
+                  onChange={this.onFromCalendarChanged}
+                />
               </div>
             </div>
             <div className={'time-picker-popover-box-body-custom-ranges'}>
@@ -101,12 +128,20 @@ export class TimePickerPopOver extends Component<Props, State> {
                 <span>To:</span>
                 <TimePickerInput
                   isTimezoneUtc={isTimezoneUtc}
-                  initalValue={editValue.raw.to}
-                  onValidated={this.onToInputValidated}
+                  roundup={true}
+                  timezone={timezone}
+                  value={value.raw.to}
+                  onChange={this.onToInputChanged}
                 />
               </div>
               <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
-                <TimePickerCalendar calendarType={CalendarType.To} value={value} />
+                <TimePickerCalendar
+                  isTimezoneUtc={isTimezoneUtc}
+                  roundup={true}
+                  timezone={timezone}
+                  value={value.raw.to}
+                  onChange={this.onToCalendarChanged}
+                />
               </div>
             </div>
           </div>

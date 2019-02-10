@@ -26,11 +26,7 @@ export interface State {
 
 export class TimePicker extends PureComponent<Props, State> {
   pickerTriggerRef = createRef<HTMLDivElement>();
-
-  constructor(props: Props) {
-    super(props);
-    this.state = { isSelectOpen: false, isPopOverOpen: false };
-  }
+  state = { isSelectOpen: false, isPopOverOpen: false };
 
   mapTimeOptionsToSelectOptionItems = (selectTimeOptions: TimeOption[]) => {
     const options = selectTimeOptions.map(timeOption => {
@@ -40,23 +36,25 @@ export class TimePicker extends PureComponent<Props, State> {
     return [{ label: 'Custom', expanded: true, options, onCustomClick: (ref: any) => this.onCustomClicked() }];
   };
 
-  toggleIsSelectOpen = () => this.setState({ isSelectOpen: !this.state.isSelectOpen });
-
   onSelectButtonClicked = () => {
-    this.toggleIsSelectOpen();
+    this.setState({ isSelectOpen: !this.state.isSelectOpen, isPopOverOpen: false });
   };
 
   onSelectChanged = (item: SelectOptionItem) => {
     const { isTimezoneUtc, onChange, timezone } = this.props;
-    this.toggleIsSelectOpen();
+    this.setState({ isSelectOpen: !this.state.isSelectOpen, isPopOverOpen: false });
     onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
   };
 
   onCustomClicked = () => {
-    this.setState({ isSelectOpen: false, isPopOverOpen: true });
+    this.setState({ isPopOverOpen: true });
   };
 
-  onClickOutside = () => this.setState({ isSelectOpen: false });
+  onClickOutside = () => {
+    if (!this.state.isPopOverOpen) {
+      this.setState({ isSelectOpen: false });
+    }
+  };
 
   render() {
     const { selectTimeOptions, onChange, value } = this.props;
@@ -78,8 +76,7 @@ export class TimePicker extends PureComponent<Props, State> {
           <div className={'time-picker-buttons'}>
             <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={'NaN'} value={rangeString} />
           </div>
-          <div className={'time-picker-picker'} ref={this.pickerTriggerRef} />
-          <div className={'time-picker-select'}>
+          <div className={'time-picker-select'} ref={this.pickerTriggerRef}>
             <HeadlessSelect
               components={{ Group: TimePickerOptionGroup }}
               menuIsOpen={isSelectOpen}
@@ -93,7 +90,7 @@ export class TimePicker extends PureComponent<Props, State> {
                 show={isPopOverOpen}
                 content={popoverElement}
                 referenceElement={this.pickerTriggerRef.current}
-                placement={'auto'}
+                placement={'left-start'}
               />
             )}
           </div>

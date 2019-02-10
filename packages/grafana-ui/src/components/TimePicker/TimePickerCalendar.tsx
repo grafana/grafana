@@ -1,29 +1,38 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { TimeRange } from '../../types/time';
-
-export enum CalendarType {
-  From,
-  To,
-}
+import moment, { Moment } from 'moment';
+import { TimeFragment } from '../../types/time';
+import { stringToMoment } from '../../utils/time';
 
 export interface Props {
-  calendarType: CalendarType;
-  value: TimeRange;
+  value: TimeFragment;
+  isTimezoneUtc: boolean;
+  roundup?: boolean;
+  timezone?: string;
+  onChange: (value: Moment) => void;
 }
 
 export class TimePickerCalendar extends PureComponent<Props> {
+  onCalendarChange = (date: Date) => {
+    const { onChange } = this.props;
+
+    onChange(moment(date));
+  };
+
   render() {
-    const { calendarType, value } = this.props;
-    const activeStartDate = calendarType === CalendarType.From ? value.from.toDate() : value.to.toDate();
+    const { value, isTimezoneUtc, roundup, timezone } = this.props;
+    const dateValue = moment.isMoment(value)
+      ? value.toDate()
+      : stringToMoment(value, isTimezoneUtc, roundup, timezone).toDate();
 
     return (
       <Calendar
-        activeStartDate={activeStartDate}
+        activeStartDate={dateValue}
         next2Label={null}
         prev2Label={null}
         className={'time-picker-calendar'}
         tileClassName={'time-picker-calendar-tile'}
+        onChange={this.onCalendarChange}
       />
     );
   }

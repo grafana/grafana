@@ -7,44 +7,32 @@ import { TimeFragment, TIME_FORMAT } from '../../types/time';
 import { stringToMoment } from '../../utils/time';
 
 export interface Props {
+  value: TimeFragment;
   isTimezoneUtc: boolean;
-  initalValue: TimeFragment;
-  onValidated: (isValid: boolean) => void;
+  roundup?: boolean;
+  timezone?: string;
+  onChange: (value: string, isValid: boolean) => void;
 }
 
-export interface State {
-  value: string;
-  error: boolean;
-}
-
-export class TimePickerInput extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { value: this.valueToString(props.initalValue), error: false };
-  }
-
-  onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    this.setState({ value });
-  };
-
-  onValidate = (event: ChangeEvent<HTMLInputElement>) => {
-    const { isTimezoneUtc, onValidated } = this.props;
-    const { value } = this.state;
+export class TimePickerInput extends PureComponent<Props> {
+  isValid = (value: string) => {
+    const { isTimezoneUtc } = this.props;
 
     if (value.indexOf('now') !== -1) {
       const isValid = dateMath.isValid(value);
-
-      onValidated(isValid);
-      this.setState({ error: !isValid });
-      return;
+      return isValid;
     }
 
     const parsed = stringToMoment(value, isTimezoneUtc);
     const isValid = parsed.isValid();
+    return isValid;
+  };
 
-    onValidated(isValid);
-    this.setState({ error: !isValid });
+  onChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onChange } = this.props;
+    const value = event.target.value;
+
+    onChange(value, this.isValid(value));
   };
 
   valueToString = (value: TimeFragment) => {
@@ -56,14 +44,17 @@ export class TimePickerInput extends PureComponent<Props, State> {
   };
 
   render() {
-    const { value, error } = this.state;
+    const { value } = this.props;
+    const valueString = this.valueToString(value);
+    const error = !this.isValid(valueString);
+
     return (
       <Input
         type="text"
         onChange={this.onChange}
-        onBlur={this.onValidate}
+        onBlur={this.onChange}
         hideErrorMessage={true}
-        value={value}
+        value={valueString}
         className={`time-picker-input${error ? '-error' : ''}`}
       />
     );
