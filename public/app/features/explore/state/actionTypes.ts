@@ -180,8 +180,6 @@ export interface SplitOpenPayload {
   itemState: ExploreItemState;
 }
 
-//
-
 export interface ToggleTablePayload {
   exploreId: ExploreId;
 }
@@ -373,7 +371,7 @@ export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/S
 export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
 
 /**
- * Update state of Explores UI
+ * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
 export const updateUIStateAction = actionCreatorFactory<UpdateUIStatePayload>('explore/UPDATE_UI_STATE').create();
 

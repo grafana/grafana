@@ -93,7 +93,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const { logsHighlighterExpressions, logsResult, queryTransactions, scanning, scanRange, range } = item;
   const loading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
   const {showingLogs, dedupStrategy} = selectItemUIState(item);
-  // const dedup = item.dedup;
+
   return {
     loading,
     logsHighlighterExpressions,
