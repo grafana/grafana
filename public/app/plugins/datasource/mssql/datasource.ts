@@ -8,7 +8,7 @@ export class MssqlDatasource {
   interval: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
@@ -107,13 +107,18 @@ export class MssqlDatasource {
       format: 'table',
     };
 
+    const range = this.timeSrv.timeRange();
+    const data = {
+      queries: [interpolatedQuery],
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
+    };
+
     return this.backendSrv
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
-        data: {
-          queries: [interpolatedQuery],
-        },
+        data: data,
       })
       .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }

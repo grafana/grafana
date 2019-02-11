@@ -1,40 +1,27 @@
-import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { withKnobs } from '@storybook/addon-knobs';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { getThemeKnob } from '../../utils/storybook/themeKnob';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
-
+import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 const ColorPickerPopoverStories = storiesOf('UI/ColorPicker/Popovers', module);
 
-ColorPickerPopoverStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
+ColorPickerPopoverStories.addDecorator(withCenteredStory);
 
 ColorPickerPopoverStories.add('default', () => {
-  const selectedTheme = getThemeKnob();
-
-  return (
-    <ColorPickerPopover
-      color="#BC67E6"
-      onChange={color => {
-        console.log(color);
-      }}
-      theme={selectedTheme || undefined}
-    />
-  );
+  return renderComponentWithTheme(ColorPickerPopover, {
+    color: '#BC67E6',
+    onChange: (color: any) => {
+      console.log(color);
+    },
+  });
 });
 
 ColorPickerPopoverStories.add('SeriesColorPickerPopover', () => {
-  const selectedTheme = getThemeKnob();
-
-  return (
-    <SeriesColorPickerPopover
-      color="#BC67E6"
-      onChange={color => {
-        console.log(color);
-      }}
-      theme={selectedTheme || undefined}
-    />
-  );
+  return renderComponentWithTheme(SeriesColorPickerPopover, {
+    color: '#BC67E6',
+    onChange: (color: any) => {
+      console.log(color);
+    },
+  });
 });

@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware, compose, combineReducers } from 'redux';
 import thunk from 'redux-thunk';
-import { createLogger } from 'redux-logger';
+// import { createLogger } from 'redux-logger';
 import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
@@ -41,7 +41,7 @@ export function configureStore() {
 
   if (process.env.NODE_ENV !== 'production') {
     // DEV builds we had the logger middleware
-    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, createLogger()))));
+    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk))));
   } else {
     setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk))));
   }

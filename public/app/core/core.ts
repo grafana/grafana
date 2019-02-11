@@ -1,4 +1,3 @@
-import './directives/dash_class';
 import './directives/dropdown_typeahead';
 import './directives/autofill_event_fix';
 import './directives/metric_segment';

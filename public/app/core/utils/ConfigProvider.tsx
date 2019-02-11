@@ -1,6 +1,6 @@
 import React from 'react';
 import config, { Settings } from 'app/core/config';
-import { GrafanaTheme } from '@grafana/ui';
+import { GrafanaThemeType, ThemeContext, getTheme } from '@grafana/ui';
 
 export const ConfigContext = React.createContext<Settings>(config);
 export const ConfigConsumer = ConfigContext.Consumer;
@@ -13,16 +13,20 @@ export const provideConfig = (component: React.ComponentType<any>) => {
   return ConfigProvider;
 };
 
-interface ThemeProviderProps {
-  children: (theme: GrafanaTheme) => JSX.Element;
-}
+export const getCurrentThemeName = () =>
+  config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark;
+export const getCurrentTheme = () => getTheme(getCurrentThemeName());
 
-export const ThemeProvider = ({ children }: ThemeProviderProps) => {
+export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <ConfigConsumer>
-      {({ bootData }) => {
-        return children(bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark);
+      {config => {
+        return <ThemeContext.Provider value={getCurrentTheme()}>{children}</ThemeContext.Provider>;
       }}
     </ConfigConsumer>
   );
+};
+
+export const provideTheme = (component: React.ComponentType<any>) => {
+  return provideConfig((props: any) => <ThemeProvider>{React.createElement(component, { ...props })}</ThemeProvider>);
 };

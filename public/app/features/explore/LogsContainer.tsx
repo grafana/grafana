@@ -27,6 +27,7 @@ interface LogsContainerProps {
   toggleLogs: typeof toggleLogs;
   changeDedupStrategy: typeof changeDedupStrategy;
   dedupStrategy: LogsDedupStrategy;
+  width: number;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -51,7 +52,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       range,
       showingLogs,
       scanning,
-      scanRange
+      scanRange,
+      width,
     } = this.props;
 
     return (
@@ -71,6 +73,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           range={range}
           scanning={scanning}
           scanRange={scanRange}
+          width={width}
         />
       </Panel>
     );
