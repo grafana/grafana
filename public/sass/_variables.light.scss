@@ -155,11 +155,14 @@ $table-bg-hover: $gray-5;
 
 // Buttons
 // -------------------------
-$btn-secondary-bg: $green-base;
-$btn-secondary-bg-hl: $green-shade;
+$btn-primary-bg: $green-base;
+$btn-primary-bg-hl: $green-shade;
 
-$btn-primary-bg: $sapphire-base;
-$btn-primary-bg-hl: $sapphire-shade;
+$btn-secondary-bg: $sapphire-base;
+$btn-secondary-bg-hl: $sapphire-shade;
+
+$btn-success-bg: $green-base;
+$btn-success-bg-hl: $green-shade;
 
 $btn-danger-bg: $lobster-base;
 $btn-danger-bg-hl: $lobster-shade;

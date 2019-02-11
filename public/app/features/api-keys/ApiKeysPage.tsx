@@ -200,7 +200,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
           <div className="page-action-bar__spacer" />
           <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
-            <i className="fa fa-plus" /> Add API Key
+            Add API Key
           </button>
         </div>
 
