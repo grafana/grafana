@@ -1,4 +1,6 @@
+import { GrafanaTheme } from '../types';
 
+export const darkThemeVarsTemplate = (theme: GrafanaTheme) => `
   // Global values
   // --------------------------------------------------
 
@@ -26,7 +28,7 @@
 
   // Accent colors
   // -------------------------
-  $blue: #ff0000;
+  $blue: ${theme.colors.blue};
   $blue-dark: #005f81;
   $green: #299c46;
   $red: #d44a3a;
@@ -382,3 +384,4 @@
   $vertical-resize-handle-bg: $dark-5;
   $vertical-resize-handle-dots: $gray-1;
 $vertical-resize-handle-dots-hover: $gray-2;
+`;
