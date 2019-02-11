@@ -201,6 +201,15 @@ TimePickerStories.add('default', () => {
               action('onChange fired')(timeRange);
               updateValue(timeRange);
             }}
+            onMoveBackward={() => {
+              action('onMoveBackward fired')();
+            }}
+            onMoveForward={() => {
+              action('onMoveForward fired')();
+            }}
+            onZoom={() => {
+              action('onZoom fired')();
+            }}
           />
         );
       }}

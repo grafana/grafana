@@ -1,4 +1,5 @@
 import React, { PureComponent, createRef } from 'react';
+import moment from 'moment';
 
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimePickerPopOver } from './TimePickerPopOver';
@@ -17,6 +18,9 @@ export interface Props {
   selectTimeOptions: TimeOption[];
   timezone?: string;
   onChange: (timeRange: TimeRange) => void;
+  onMoveBackward: () => void;
+  onMoveForward: () => void;
+  onZoom: () => void;
 }
 
 export interface State {
@@ -57,7 +61,7 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { selectTimeOptions, onChange, value } = this.props;
+    const { selectTimeOptions, onChange, value, onMoveBackward, onMoveForward, onZoom } = this.props;
     const { isSelectOpen, isPopOverOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const popover = TimePickerPopOver;
@@ -69,13 +73,28 @@ export class TimePicker extends PureComponent<Props, State> {
       },
     });
     const rangeString = mapTimeRangeToRangeString(value);
+    const isAbsolute = moment.isMoment(value.raw.to);
 
     return (
       <ClickOutsideWrapper onClick={this.onClickOutside}>
         <div className={'time-picker'}>
           <div className={'time-picker-buttons'}>
+            {isAbsolute && (
+              <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
+                <i className="fa fa-chevron-left" />
+              </button>
+            )}
             <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={'NaN'} value={rangeString} />
+            {isAbsolute && (
+              <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
+                <i className="fa fa-chevron-right" />
+              </button>
+            )}
+            <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
+              <i className="fa fa-search-minus" />
+            </button>
           </div>
+
           <div className={'time-picker-select'} ref={this.pickerTriggerRef}>
             <HeadlessSelect
               components={{ Group: TimePickerOptionGroup }}
