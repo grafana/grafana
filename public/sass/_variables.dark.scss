@@ -14,6 +14,9 @@ $lobster-shade: #C4162A;
 $forest-light: #96D98D;
 $forest-base: #37872D;
 $forest-shade: #19730E;
+$green-base: #299C46;
+$green-shade: #23843B;
+
 
 // Grays
 // -------------------------
@@ -46,7 +49,7 @@ $variable: #32d1df;
 $orange: #eb7b18;
 
 $brand-primary: $orange;
-$brand-success: $forest-base;
+$brand-success: $green-base;
 $brand-warning: $brand-primary;
 $brand-danger: $lobster-base;
 
@@ -58,7 +61,7 @@ $query-orange: $orange;
 
 // Status colors
 // -------------------------
-$online: $forest-base;
+$online: $green-base;
 $warn: #f79520;
 $critical: $lobster-base;
 
@@ -156,8 +159,8 @@ $table-bg-hover: $dark-3;
 // Buttons
 // -------------------------
 
-$btn-primary-bg: #ff6600;
-$btn-primary-bg-hl: #bc3e06;
+$btn-primary-bg: $green-base;
+$btn-primary-bg-hl: $green-shade;
 
 $btn-secondary-bg-hl: $sapphire-base;
 $btn-secondary-bg: $sapphire-shade;
@@ -269,10 +272,10 @@ $error-text-color: #e84d4d;
 $success-text-color: $forest-light;
 //$info-text-color: $blue-dark;
 
-$alert-error-bg: linear-gradient(90deg, #d44939, #e0603d);
-$alert-success-bg: linear-gradient(90deg, $forest-base, $forest-shade);
-$alert-warning-bg: linear-gradient(90deg, #d44939, #e0603d);
-$alert-info-bg: linear-gradient(100deg, #1a4552, #00374a);
+$alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
+$alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
 
 // popover
 $popover-bg: $page-bg;
