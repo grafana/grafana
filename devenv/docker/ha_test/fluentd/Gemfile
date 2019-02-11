@@ -1,1 +1,0 @@
-source 'https://rubygems.org'

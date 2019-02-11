@@ -7,10 +7,6 @@ services:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-    logging:
-      driver: "fluentd"
-      options:
-        tag: nginx
 
   db:
     image: mysql:5.6
@@ -51,7 +47,7 @@ services:
   #     retries: 10
 
   grafana:
-    image: grafana/grafana:dev
+    image: grafana/grafana:6.0.0-beta2
     volumes:
       - ./grafana/provisioning/:/etc/grafana/provisioning/
     environment:
@@ -70,6 +66,8 @@ services:
       # - GF_DATABASE_SSL_MODE=disable
       # - GF_SESSION_PROVIDER=postgres
       # - GF_SESSION_PROVIDER_CONFIG=user=grafana password=password host=db port=5432 dbname=grafana sslmode=disable
+      - GF_SERVER_ROUTER_LOGGING=true
+      - GF_LOG_CONSOLE_FORMAT=json
       - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug,auth:debug
       - GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES=2
     ports:
@@ -100,9 +98,9 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
 
   fluentd:
-    build: ./fluentd
+    image: grafana/fluent-plugin-loki:master
     volumes:
-      - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
+      - ./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf
     links:
       - loki
     ports:
