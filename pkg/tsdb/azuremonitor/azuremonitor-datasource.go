@@ -285,6 +285,9 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 	return nil
 }
 
+// findClosestAllowedIntervalMs is used for the auto time grain setting.
+// It finds the closest time grain from the list of allowed time grains for Azure Monitor
+// using the Grafana interval in milliseconds
 func (e *AzureMonitorDatasource) findClosestAllowedIntervalMs(intervalMs int64) int64 {
 	closest := allowedIntervalsMS[0]
 
@@ -298,4 +301,12 @@ func (e *AzureMonitorDatasource) findClosestAllowedIntervalMs(intervalMs int64) 
 		}
 	}
 	return closest
+}
+
+// formatLegendKey builds the legend key or timeseries name
+func formatLegendKey(resourceName string, metricName string, metadataName string, metadataValue string) string {
+	if len(metadataName) > 0 {
+		return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
+	}
+	return fmt.Sprintf("%s.%s", resourceName, metricName)
 }
