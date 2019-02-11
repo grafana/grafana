@@ -35,8 +35,16 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { show, placement, onMouseEnter, onMouseLeave, className, wrapperClassName, renderArrow } = this.props;
-    const { content } = this.props;
+    const {
+      content,
+      show,
+      placement,
+      onMouseEnter,
+      onMouseLeave,
+      className,
+      wrapperClassName,
+      renderArrow,
+    } = this.props;
 
     return (
       <Manager>
@@ -50,7 +58,7 @@ class Popper extends PureComponent<Props> {
                   // TODO: move modifiers config to popper controller
                   modifiers={{ preventOverflow: { enabled: true, boundariesElement: 'window' } }}
                 >
-                  {({ ref, style, placement, arrowProps, scheduleUpdate }) => {
+                  {({ ref, style, placement, arrowProps }) => {
                     return (
                       <div
                         onMouseEnter={onMouseEnter}
@@ -65,11 +73,7 @@ class Popper extends PureComponent<Props> {
                         className={`${wrapperClassName}`}
                       >
                         <div className={className}>
-                          {typeof content === 'string'
-                            ? content
-                            : React.cloneElement(content, {
-                                updatePopperPosition: scheduleUpdate,
-                              })}
+                          {typeof content === 'string' ? content : React.cloneElement(content)}
                           {renderArrow &&
                             renderArrow({
                               arrowProps,

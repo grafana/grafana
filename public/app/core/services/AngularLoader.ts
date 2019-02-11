@@ -27,7 +27,9 @@ export class AngularLoader {
         compiledElem.remove();
       },
       digest: () => {
-        scope.$digest();
+        if (!scope.$$phase) {
+          scope.$digest();
+        }
       },
       getScope: () => {
         return scope;
