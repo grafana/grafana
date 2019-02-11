@@ -151,6 +151,7 @@
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "@torkelo/react-select": "2.1.1",
+    "@types/reselect": "^2.2.0",
     "angular": "1.6.6",
     "angular-bindonce": "0.3.1",
     "angular-native-dragdrop": "1.2.2",
@@ -187,6 +188,7 @@
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
     "remarkable": "^1.7.1",
+    "reselect": "^4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^6.3.3",
     "slate": "^0.33.4",
