@@ -54,7 +54,7 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 
 func newHTTPClient() httpClient {
 	return &http.Client{
-		Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
+		Timeout:   30 * time.Second,
 		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }

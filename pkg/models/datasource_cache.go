@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type proxyTransportCache struct {
@@ -57,7 +59,7 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		TLSClientConfig: tlsConfig,
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
+			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: 30 * time.Second,
 			DualStack: true,
 		}).Dial,
