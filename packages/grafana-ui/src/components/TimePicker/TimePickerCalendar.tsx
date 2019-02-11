@@ -24,10 +24,11 @@ export class TimePickerCalendar extends PureComponent<Props> {
     const dateValue = moment.isMoment(value)
       ? value.toDate()
       : stringToMoment(value, isTimezoneUtc, roundup, timezone).toDate();
+    const calendarValue = dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : moment().toDate();
 
     return (
       <Calendar
-        activeStartDate={dateValue}
+        value={calendarValue}
         next2Label={null}
         prev2Label={null}
         className={'time-picker-calendar'}

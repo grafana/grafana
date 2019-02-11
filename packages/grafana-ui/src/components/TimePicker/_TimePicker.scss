@@ -85,7 +85,8 @@
   .react-calendar__navigation__label,
   .react-calendar__navigation__arrow,
   .react-calendar__navigation {
-    background-color: $white;
+    color: $input-color;
+    background-color: $input-bg;
     border: 0;
   }
 
@@ -103,9 +104,14 @@
   }
 
   .time-picker-calendar-tile {
-    background-color: $white;
+    color: $input-color;
+    background-color: $input-bg;
     border: 0;
     line-height: 22px;
+  }
+
+  button.time-picker-calendar-tile:hover {
+    font-weight: $font-weight-semi-bold;
   }
 
   .react-calendar__navigation__label,

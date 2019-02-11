@@ -17,6 +17,10 @@ export const mapTimeOptionToTimeRange = (
 
 export const stringToMoment = (value: string, isTimezoneUtc: boolean, roundUp?: boolean, timezone?: string): Moment => {
   if (value.indexOf('now') !== -1) {
+    if (!dateMath.isValid(value)) {
+      return moment();
+    }
+
     return dateMath.parse(value, roundUp, timezone);
   }
 
