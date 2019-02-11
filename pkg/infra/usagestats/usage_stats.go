@@ -59,15 +59,15 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.provisioned_dashboards.count"] = statsQuery.Result.ProvisionedDashboards
 	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
 	metrics["stats.teams.count"] = statsQuery.Result.Teams
-	metrics["stats.total_sessions.count"] = statsQuery.Result.Sessions
+	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
 
 	userCount := statsQuery.Result.Users
-	avgSessionsPerUser := statsQuery.Result.Sessions
+	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
 	if userCount != 0 {
-		avgSessionsPerUser = avgSessionsPerUser / userCount
+		avgAuthTokensPerUser = avgAuthTokensPerUser / userCount
 	}
 
-	metrics["stats.avg_sessions_per_user.count"] = avgSessionsPerUser
+	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsStats); err != nil {
