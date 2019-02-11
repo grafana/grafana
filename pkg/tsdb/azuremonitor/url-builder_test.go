@@ -10,7 +10,7 @@ func TestURLBuilder(t *testing.T) {
 	Convey("AzureMonitor URL Builder", t, func() {
 
 		Convey("when metric definition is in the short form", func() {
-			ub := &URLBuilder{
+			ub := &urlBuilder{
 				ResourceGroup:    "rg",
 				MetricDefinition: "Microsoft.Compute/virtualMachines",
 				ResourceName:     "rn",
@@ -21,7 +21,7 @@ func TestURLBuilder(t *testing.T) {
 		})
 
 		Convey("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func() {
-			ub := &URLBuilder{
+			ub := &urlBuilder{
 				ResourceGroup:    "rg",
 				MetricDefinition: "Microsoft.Storage/storageAccounts/blobServices",
 				ResourceName:     "rn1/default",
@@ -32,7 +32,7 @@ func TestURLBuilder(t *testing.T) {
 		})
 
 		Convey("when metric definition is Microsoft.Storage/storageAccounts/fileServices", func() {
-			ub := &URLBuilder{
+			ub := &urlBuilder{
 				ResourceGroup:    "rg",
 				MetricDefinition: "Microsoft.Storage/storageAccounts/fileServices",
 				ResourceName:     "rn1/default",

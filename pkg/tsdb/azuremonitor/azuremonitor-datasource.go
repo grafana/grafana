@@ -89,7 +89,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorTarget["metricDefinition"])
 		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorTarget["resourceName"])
 
-		ub := URLBuilder{
+		ub := urlBuilder{
 			ResourceGroup:    urlComponents["resourceGroup"],
 			MetricDefinition: urlComponents["metricDefinition"],
 			ResourceName:     urlComponents["resourceName"],
@@ -100,9 +100,9 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
 		if timeGrain == "auto" {
-			autoInSeconds := e.findClosestAllowedIntervalMs(query.IntervalMs) / 1000
+			autoInterval := e.findClosestAllowedIntervalMS(query.IntervalMs)
 			tg := &TimeGrain{}
-			timeGrain, err = tg.createISO8601DurationFromInterval(fmt.Sprintf("%vs", autoInSeconds))
+			timeGrain, err = tg.createISO8601DurationFromIntervalMS(autoInterval)
 			if err != nil {
 				return nil, err
 			}
@@ -288,7 +288,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 // findClosestAllowedIntervalMs is used for the auto time grain setting.
 // It finds the closest time grain from the list of allowed time grains for Azure Monitor
 // using the Grafana interval in milliseconds
-func (e *AzureMonitorDatasource) findClosestAllowedIntervalMs(intervalMs int64) int64 {
+func (e *AzureMonitorDatasource) findClosestAllowedIntervalMS(intervalMs int64) int64 {
 	closest := allowedIntervalsMS[0]
 
 	for i, allowed := range allowedIntervalsMS {

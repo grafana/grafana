@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// URLBuilder builds the URL for calling the Azure Monitor API
-type URLBuilder struct {
+// urlBuilder builds the URL for calling the Azure Monitor API
+type urlBuilder struct {
 	ResourceGroup    string
 	MetricDefinition string
 	ResourceName     string
@@ -14,7 +14,7 @@ type URLBuilder struct {
 
 // Build checks the metric definition property to see which form of the url
 // should be returned
-func (ub *URLBuilder) Build() string {
+func (ub *urlBuilder) Build() string {
 
 	if strings.Count(ub.MetricDefinition, "/") > 1 {
 		rn := strings.Split(ub.ResourceName, "/")

@@ -240,13 +240,13 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				"2d":  172800000,
 			}
 
-			closest := datasource.findClosestAllowedIntervalMs(intervals["3m"])
+			closest := datasource.findClosestAllowedIntervalMS(intervals["3m"])
 			So(closest, ShouldEqual, intervals["5m"])
 
-			closest = datasource.findClosestAllowedIntervalMs(intervals["10m"])
+			closest = datasource.findClosestAllowedIntervalMS(intervals["10m"])
 			So(closest, ShouldEqual, intervals["15m"])
 
-			closest = datasource.findClosestAllowedIntervalMs(intervals["2d"])
+			closest = datasource.findClosestAllowedIntervalMS(intervals["2d"])
 			So(closest, ShouldEqual, intervals["1d"])
 		})
 	})

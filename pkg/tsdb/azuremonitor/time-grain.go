@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // TimeGrain handles convertions between
@@ -15,28 +18,24 @@ var (
 	smallTimeUnits = []string{"hour", "minute", "h", "m"}
 )
 
-func (tg *TimeGrain) createISO8601DurationFromInterval(interval string) (string, error) {
-	if strings.Contains(interval, "ms") {
+func (tg *TimeGrain) createISO8601DurationFromIntervalMS(interval int64) (string, error) {
+	formatted := tsdb.FormatDuration(time.Duration(interval) * time.Millisecond)
+
+	if strings.Contains(formatted, "ms") {
 		return "PT1M", nil
 	}
 
-	timeValueString := interval[0 : len(interval)-1]
+	timeValueString := formatted[0 : len(formatted)-1]
 	timeValue, err := strconv.Atoi(timeValueString)
 	if err != nil {
 		return "", fmt.Errorf("Could not parse interval %v to an ISO 8061 duration", interval)
 	}
 
-	unit := interval[len(interval)-1:]
+	unit := formatted[len(formatted)-1:]
 
-	if unit == "s" {
-		toMinutes := (timeValue * 60) % 60
-
+	if unit == "s" && timeValue < 60 {
 		// mimumum interval is 1m for Azure Monitor
-		if toMinutes < 1 {
-			toMinutes = 1
-		}
-
-		return tg.createISO8601Duration(toMinutes, "m"), nil
+		return "PT1M", nil
 	}
 
 	return tg.createISO8601Duration(timeValue, unit), nil
