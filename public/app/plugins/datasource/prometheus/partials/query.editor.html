@@ -1,9 +1,17 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="false">
   <div class="gf-form-inline">
     <div class="gf-form gf-form--grow">
-      <code-editor content="ctrl.target.expr" datasource="ctrl.datasource" on-change="ctrl.refreshMetricData()" get-completer="ctrl.getCompleter()"
+        <prom-editor
+        datasource="ctrl.datasource"
+        style="border: none; width: 100%"
+        query="ctrl.target"
+        change="ctrl.onChange"
+        execute="ctrl.refreshMetricData"
+      ></prom-editor>
+
+      <!-- <code-editor content="ctrl.target.expr" datasource="ctrl.datasource" on-change="ctrl.refreshMetricData()" get-completer="ctrl.getCompleter()"
         data-mode="prometheus" code-editor-focus="ctrl.isLastQuery">
-      </code-editor>
+      </code-editor> -->
     </div>
   </div>
 

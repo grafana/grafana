@@ -1,6 +1,8 @@
 import { ComponentClass } from 'react';
 import { ReactPanelPlugin } from './panel';
 import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint, QueryFixAction } from './datasource';
+import { TimeRange } from './time';
+import { PanelModel } from 'app/features/dashboard/state';
 
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
@@ -49,6 +51,7 @@ export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> exte
 
 export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
   datasource: DSType;
+  panel?: PanelModel;
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;

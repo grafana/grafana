@@ -1,9 +1,9 @@
 import angular from 'angular';
 import _ from 'lodash';
+
 import { QueryCtrl } from 'app/plugins/sdk';
-import { PromCompleter } from './completer';
-import './mode-prometheus';
-import './snippets/prometheus';
+
+import { PromQuery } from './types';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -42,10 +42,6 @@ class PrometheusQueryCtrl extends QueryCtrl {
     this.updateLink();
   }
 
-  getCompleter(query) {
-    return new PromCompleter(this.datasource, this.templateSrv);
-  }
-
   getDefaultFormat() {
     if (this.panelCtrl.panel.type === 'table') {
       return 'table';
@@ -56,13 +52,18 @@ class PrometheusQueryCtrl extends QueryCtrl {
     return 'time_series';
   }
 
-  refreshMetricData() {
+  onChange = (nextQuery: PromQuery) => {
+    console.log('change expression', nextQuery.expr);
+    this.target = { ...nextQuery };
+  };
+
+  refreshMetricData = () => {
     if (!_.isEqual(this.oldTarget, this.target)) {
       this.oldTarget = angular.copy(this.target);
       this.panelCtrl.refresh();
       this.updateLink();
     }
-  }
+  };
 
   updateLink() {
     const range = this.panelCtrl.range;
