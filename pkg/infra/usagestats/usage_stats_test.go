@@ -45,7 +45,7 @@ func TestMetrics(t *testing.T) {
 				ProvisionedDashboards: 12,
 				Snapshots:             13,
 				Teams:                 14,
-				Sessions:              15,
+				AuthTokens:            15,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -229,8 +229,8 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.provisioned_dashboards.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.ProvisionedDashboards)
 				So(metrics.Get("stats.snapshots.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Snapshots)
 				So(metrics.Get("stats.teams.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Teams)
-				So(metrics.Get("stats.total_sessions.count").MustInt64(), ShouldEqual, 15)
-				So(metrics.Get("stats.avg_sessions_per_user.count").MustInt64(), ShouldEqual, 5)
+				So(metrics.Get("stats.total_auth_token.count").MustInt64(), ShouldEqual, 15)
+				So(metrics.Get("stats.avg_auth_token_per_user.count").MustInt64(), ShouldEqual, 5)
 
 				So(metrics.Get("stats.ds."+models.DS_ES+".count").MustInt(), ShouldEqual, 9)
 				So(metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt(), ShouldEqual, 10)

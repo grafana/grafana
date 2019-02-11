@@ -15,7 +15,7 @@ type SystemStats struct {
 	FolderPermissions     int64
 	Folders               int64
 	ProvisionedDashboards int64
-	Sessions              int64
+	AuthTokens            int64
 }
 
 type DataSourceStats struct {
