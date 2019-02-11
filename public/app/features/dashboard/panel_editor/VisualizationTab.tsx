@@ -149,6 +149,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   }
 
+  clearQuery = () => {
+    this.setState({ searchQuery: '' });
+  };
+
   onPanelOptionsChanged = (options: any) => {
     this.props.panel.updateOptions(options);
     this.forceUpdate();
@@ -241,7 +245,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
         setScrollTop={this.setScrollTop}
       >
         <>
-          <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
+          <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true} onExited={this.clearQuery}>
             <VizTypePicker
               current={plugin}
               onTypeChanged={this.onTypeChanged}
