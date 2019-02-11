@@ -14,6 +14,7 @@
 * **Templating**: Add json formatting to variable interpolation [#15291](https://github.com/grafana/grafana/issues/15291), thx [@mtanda](https://github.com/mtanda)
 * **Login**: Anonymous usage stats for token auth [#15288](https://github.com/grafana/grafana/issues/15288)
 * **AzureMonitor**: improve autocomplete for Log Analytics and App Insights editor [#15131](https://github.com/grafana/grafana/issues/15131)
+* **LDAP**: Fix IPA/FreeIPA v4.6.4 does not allow LDAP searches with empty attributes [#14432](https://github.com/grafana/grafana/issues/14432)
 
 ### 6.0.0-beta1 fixes
 
