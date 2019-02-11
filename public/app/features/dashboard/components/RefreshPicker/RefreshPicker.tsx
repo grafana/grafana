@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
+import { ClickOutsideWrapper, SelectButton } from '@grafana/ui';
 
 import { RefreshSelect, EMPTY_ITEM_TEXT } from './RefreshSelect';
 import { RefreshButton } from './RefreshButton';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { SelectButton } from '../Select/SelectButton';
 
 export interface Props {
   initialValue: string | undefined;

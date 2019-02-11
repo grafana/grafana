@@ -1,10 +1,8 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import moment from 'moment';
+import { TimeFragment, TIME_FORMAT, Input } from '@grafana/ui';
 
-import { Input } from '../Input/Input';
-import * as dateMath from '../../../../../public/app/core/utils/datemath';
-import { TimeFragment, TIME_FORMAT } from '../../types/time';
-import { stringToMoment } from '../../utils/time';
+import { stringToMoment, isValidTimeString } from './time';
 
 export interface Props {
   value: TimeFragment;
@@ -19,7 +17,7 @@ export class TimePickerInput extends PureComponent<Props> {
     const { isTimezoneUtc } = this.props;
 
     if (value.indexOf('now') !== -1) {
-      const isValid = dateMath.isValid(value);
+      const isValid = isValidTimeString(value);
       return isValid;
     }
 

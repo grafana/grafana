@@ -1,10 +1,10 @@
 import React from 'react';
+import moment, { Moment } from 'moment';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { TimePicker } from './TimePicker';
-import moment from 'moment';
+
+import { TimePicker } from '../../../../../public/app/features/dashboard/components/TimePicker/TimePicker';
 import { UseState } from '../../utils/storybook/UseState';
-import { TimeFragment } from '../../types/time';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
 
 const TimePickerStories = storiesOf('UI/TimePicker', module);
@@ -17,7 +17,7 @@ TimePickerStories.add('default', () => {
       initialState={{
         from: moment(),
         to: moment(),
-        raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
+        raw: { from: 'now-6h' as string | Moment, to: 'now' as string | Moment },
       }}
     >
       {(value, updateValue) => {

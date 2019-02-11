@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import moment, { Moment } from 'moment';
-import { TimeFragment } from '../../types/time';
-import { stringToMoment } from '../../utils/time';
+import { TimeFragment } from '@grafana/ui';
+
+import { stringToMoment } from './time';
 
 export interface Props {
   value: TimeFragment;

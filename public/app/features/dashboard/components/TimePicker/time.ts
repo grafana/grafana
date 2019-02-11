@@ -1,8 +1,8 @@
 import moment, { Moment } from 'moment';
-import * as dateMath from '../../../../public/app/core/utils/datemath';
-import { describeTimeRange } from '../../../../public/app/core/utils/rangeutil';
+import { TimeOption, TimeRange, TIME_FORMAT } from '@grafana/ui';
 
-import { TimeOption, TimeRange, TIME_FORMAT } from '../types/time';
+import * as dateMath from '../../../../../app/core/utils/datemath';
+import { describeTimeRange } from '../../../../../app/core/utils/rangeutil';
 
 export const mapTimeOptionToTimeRange = (
   timeOption: TimeOption,
@@ -34,3 +34,5 @@ export const stringToMoment = (value: string, isTimezoneUtc: boolean, roundUp?: 
 export const mapTimeRangeToRangeString = (timeRange: TimeRange): string => {
   return describeTimeRange(timeRange.raw);
 };
+
+export const isValidTimeString = (text: string) => dateMath.isValid(text);

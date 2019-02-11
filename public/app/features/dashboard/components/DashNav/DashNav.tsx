@@ -18,6 +18,8 @@ import { updateLocation } from 'app/core/actions';
 import { DashboardModel } from '../../state';
 // import { TimePicker, RefreshPicker } from '@grafana/ui';
 // import moment from 'moment';
+// import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
+// import { TimePicker } from '../TimePicker/TimePicker';
 
 export interface Props {
   dashboard: DashboardModel;

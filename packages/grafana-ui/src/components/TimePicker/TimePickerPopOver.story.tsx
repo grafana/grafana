@@ -1,11 +1,10 @@
 import React from 'react';
+import { action } from '@storybook/addon-actions';
+import moment, { Moment } from 'moment';
+
 import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TimePickerPopOver } from './TimePickerPopOver';
-
-import { action } from '@storybook/addon-actions';
-import moment from 'moment';
-import { TimeRange, TimeFragment } from '../../types/time';
+import { TimePickerPopOver } from '../../../../../public/app/features/dashboard/components/TimePicker/TimePickerPopOver';
 import { UseState } from '../../utils/storybook/UseState';
 
 const TimePickerPopOverStories = storiesOf('UI/TimePicker/TimePickerPopOver', module);
@@ -17,7 +16,7 @@ TimePickerPopOverStories.add('default', () => (
     initialState={{
       from: moment(),
       to: moment(),
-      raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
+      raw: { from: 'now-6h' as string | Moment, to: 'now' as string | Moment },
     }}
   >
     {(value, updateValue) => {
@@ -25,7 +24,7 @@ TimePickerPopOverStories.add('default', () => (
         <TimePickerPopOver
           value={value}
           isTimezoneUtc={false}
-          onChange={(timeRange: TimeRange) => {
+          onChange={timeRange => {
             action('onChange fired')(timeRange);
             updateValue(timeRange);
           }}

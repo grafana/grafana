@@ -1,15 +1,19 @@
 import React, { PureComponent, createRef } from 'react';
 import moment from 'moment';
+import {
+  TimeRange,
+  TimeOptions,
+  TimeOption,
+  SelectOptionItem,
+  ClickOutsideWrapper,
+  SelectButton,
+  HeadlessSelect,
+} from '@grafana/ui';
+import Popper from '@grafana/ui/src/components/Tooltip/Popper';
 
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimePickerPopOver } from './TimePickerPopOver';
-import Popper from '../Tooltip/Popper';
-import { TimeRange, TimeOptions, TimeOption } from '../../types/time';
-import { SelectOptionItem } from '../Select/Select';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { SelectButton } from '../Select/SelectButton';
-import { HeadlessSelect } from '../Select/HeadlessSelect';
-import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from '../../utils/time';
+import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 
 export interface Props {
   value: TimeRange;
