@@ -1,4 +1,6 @@
-# 6.0.0-beta2 (unreleased)
+# 6.0.0-beta3 (unreleased)
+
+# 6.0.0-beta2 (2019-02-11)
 
 ### New Features
 * **AzureMonitor**: Enable alerting by converting Azure Monitor API to Go [#14623](https://github.com/grafana/grafana/issues/14623)
