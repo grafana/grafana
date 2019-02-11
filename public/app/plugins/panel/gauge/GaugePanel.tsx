@@ -17,6 +17,7 @@ interface Props extends PanelProps<GaugeOptions> {}
 export class GaugePanel extends PureComponent<Props> {
   renderMultipleGauge(timeSeries, theme) {
     const { options, height, width } = this.props;
+    const { stat } = options;
 
     return timeSeries.map((series, index) => {
       const singleStatWidth = 1 / timeSeries.length * 100;
@@ -48,9 +49,11 @@ export class GaugePanel extends PureComponent<Props> {
         gaugeHeight = repeatingGaugeHeight;
       }
 
+      const value = stat !== 'name' ? series.stats[stat] : series.label;
+
       return (
         <div className="singlestat-panel" key={`${timeSeries.label}-${index}`} style={style}>
-          {this.renderGauge(series.stats[options.stat], gaugeWidth, gaugeHeight, theme)}
+          {this.renderGauge(value, gaugeWidth, gaugeHeight, theme)}
           <div style={{ textAlign: 'center' }}>{series.label}</div>
         </div>
       );
@@ -69,10 +72,9 @@ export class GaugePanel extends PureComponent<Props> {
 
   renderSingleGauge(timeSeries, theme) {
     const { options, width, height } = this.props;
+    const value = timeSeries[0].stats[options.stat];
 
-    return (
-      <div className="singlestat-panel">{this.renderGauge(timeSeries[0].stats[options.stat], width, height, theme)}</div>
-    );
+    return <div className="singlestat-panel">{this.renderGauge(value, width, height, theme)}</div>;
   }
 
   renderGaugeWithTableData(panelData, theme) {
