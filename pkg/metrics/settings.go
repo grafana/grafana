@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/social"
-
 	"github.com/grafana/grafana/pkg/metrics/graphitebridge"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,8 +21,6 @@ func (im *InternalMetricsService) readSettings() error {
 	if err := im.parseGraphiteSettings(); err != nil {
 		return fmt.Errorf("Unable to parse metrics graphite section, %v", err)
 	}
-
-	im.oauthProviders = social.GetOAuthProviders(im.Cfg)
 
 	return nil
 }
