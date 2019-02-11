@@ -27,6 +27,7 @@
     "@types/react-dom": "^16.0.9",
     "@types/react-grid-layout": "^0.16.6",
     "@types/react-select": "^2.0.4",
+    "@types/react-transition-group": "^2.0.15",
     "@types/react-virtualized": "^9.18.12",
     "angular-mocks": "1.6.6",
     "autoprefixer": "^6.4.0",
