@@ -51,6 +51,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 
 interface Props {
   data?: LogsModel;
+  width: number;
   exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
@@ -165,6 +166,7 @@ export default class Logs extends PureComponent<Props, State> {
       range,
       scanning,
       scanRange,
+      width,
     } = this.props;
 
     if (!data) {
@@ -215,6 +217,7 @@ export default class Logs extends PureComponent<Props, State> {
           <Graph
             data={timeSeries}
             height={100}
+            width={width}
             range={range}
             id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}
