@@ -33,8 +33,8 @@ export default class OpenTsDatasource {
 
   // Called once per panel (graph)
   query(options) {
-    const start = this.convertToTSDBTime(options.rangeRaw.from, false);
-    const end = this.convertToTSDBTime(options.rangeRaw.to, true);
+    const start = this.convertToTSDBTime(options.rangeRaw.from, false, options.timezone);
+    const end = this.convertToTSDBTime(options.rangeRaw.to, true, options.timezone);
     const qs = [];
 
     _.each(options.targets, target => {
@@ -86,8 +86,8 @@ export default class OpenTsDatasource {
   }
 
   annotationQuery(options) {
-    const start = this.convertToTSDBTime(options.rangeRaw.from, false);
-    const end = this.convertToTSDBTime(options.rangeRaw.to, true);
+    const start = this.convertToTSDBTime(options.rangeRaw.from, false, options.timezone);
+    const end = this.convertToTSDBTime(options.rangeRaw.to, true, options.timezone);
     const qs = [];
     const eventList = [];
 
@@ -484,12 +484,12 @@ export default class OpenTsDatasource {
     });
   }
 
-  convertToTSDBTime(date, roundUp) {
+  convertToTSDBTime(date, roundUp, timezone) {
     if (date === 'now') {
       return null;
     }
 
-    date = dateMath.parse(date, roundUp);
+    date = dateMath.parse(date, roundUp, timezone);
     return date.valueOf();
   }
 }
