@@ -682,6 +682,7 @@ type fakeUserAuthTokenService struct {
 	tryRotateTokenProvider func(token *m.UserToken, clientIP, userAgent string) (bool, error)
 	lookupTokenProvider    func(unhashedToken string) (*m.UserToken, error)
 	revokeTokenProvider    func(token *m.UserToken) error
+	activeAuthTokenCount   func() (int64, error)
 }
 
 func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
@@ -704,6 +705,9 @@ func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
 		revokeTokenProvider: func(token *m.UserToken) error {
 			return nil
 		},
+		activeAuthTokenCount: func() (int64, error) {
+			return 10, nil
+		},
 	}
 }
 
@@ -721,4 +725,8 @@ func (s *fakeUserAuthTokenService) TryRotateToken(token *m.UserToken, clientIP, 
 
 func (s *fakeUserAuthTokenService) RevokeToken(token *m.UserToken) error {
 	return s.revokeTokenProvider(token)
+}
+
+func (s *fakeUserAuthTokenService) ActiveTokenCount() (int64, error) {
+	return s.activeAuthTokenCount()
 }
