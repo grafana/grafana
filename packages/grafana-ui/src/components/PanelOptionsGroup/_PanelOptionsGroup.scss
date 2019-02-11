@@ -29,13 +29,14 @@
 
   &:hover {
     .panel-options-group__add-circle {
-      background-color: $btn-primary-bg;
-      color: $text-color-strong;
+      background-color: $btn-primary-bg;;
+      color: $white;
     }
   }
 }
 
 .panel-options-group__add-circle {
+
   @include gradientBar($btn-primary-bg, $btn-primary-bg-hl, #fff);
 
   border-radius: 50px;

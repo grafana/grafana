@@ -7,6 +7,7 @@ import { Emitter } from 'app/core/core';
 import getFactors from 'app/core/utils/factors';
 import {
   duplicatePanel,
+  removePanel,
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
@@ -213,9 +214,7 @@ export class PanelCtrl {
   }
 
   removePanel() {
-    this.publishAppEvent('panel-remove', {
-      panelId: this.panel.id,
-    });
+    removePanel(this.dashboard, this.panel, true);
   }
 
   editPanelJson() {

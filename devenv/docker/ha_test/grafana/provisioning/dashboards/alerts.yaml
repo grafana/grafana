@@ -1,8 +1,0 @@
-apiVersion: 1
-
-providers:
- - name: 'Alerts'
-   folder: 'Alerts'
-   type: file
-   options:
-     path: /etc/grafana/provisioning/dashboards/alerts

@@ -1,12 +1,12 @@
 import React, { Component, createRef } from 'react';
 import PopperController from '../Tooltip/PopperController';
-import Popper, { RenderPopperArrowFn } from '../Tooltip/Popper';
+import Popper from '../Tooltip/Popper';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { Themeable, GrafanaTheme } from '../../types';
+import { Themeable } from '../../types';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import propDeprecationWarning from '../../utils/propDeprecationWarning';
-
+import { withTheme } from '../../themes/ThemeContext';
 type ColorPickerChangeHandler = (color: string) => void;
 
 export interface ColorPickerProps extends Themeable {
@@ -18,7 +18,6 @@ export interface ColorPickerProps extends Themeable {
    */
   onColorChange?: ColorPickerChangeHandler;
   enableNamedColors?: boolean;
-  withArrow?: boolean;
   children?: JSX.Element;
 }
 
@@ -32,7 +31,6 @@ export const warnAboutColorPickerPropsDeprecation = (componentName: string, prop
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
   displayName = 'ColorPicker',
-  renderPopoverArrowFunction?: RenderPopperArrowFn
 ) => {
   return class ColorPicker extends Component<T, any> {
     static displayName = displayName;
@@ -50,17 +48,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
         ...this.props,
         onChange: this.handleColorChange,
       });
-      const { theme, withArrow, children } = this.props;
-
-      const renderArrow: RenderPopperArrowFn = ({ arrowProps, placement }) => {
-        return (
-          <div
-            {...arrowProps}
-            data-placement={placement}
-            className={`ColorPicker__arrow ColorPicker__arrow--${theme === GrafanaTheme.Light ? 'light' : 'dark'}`}
-          />
-        );
-      };
+      const { theme, children } = this.props;
 
       return (
         <PopperController content={popoverElement} hideAfter={300}>
@@ -72,7 +60,6 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     {...popperProps}
                     referenceElement={this.pickerTriggerRef.current}
                     wrapperClassName="ColorPicker"
-                    renderArrow={withArrow && (renderPopoverArrowFunction || renderArrow)}
                     onMouseLeave={hidePopper}
                     onMouseEnter={showPopper}
                   />
@@ -95,7 +82,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                       <div
                         className="sp-preview-inner"
                         style={{
-                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme),
+                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme.type),
                         }}
                       />
                     </div>
@@ -110,5 +97,5 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
-export const ColorPicker = colorPickerFactory(ColorPickerPopover, 'ColorPicker');
-export const SeriesColorPicker = colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker');
+export const ColorPicker = withTheme(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
+export const SeriesColorPicker = withTheme(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));

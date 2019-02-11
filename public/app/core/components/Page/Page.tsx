@@ -17,13 +17,10 @@ interface Props {
 }
 
 class Page extends Component<Props> {
-  private bodyClass = 'is-react';
-  private body = document.body;
   static Header = PageHeader;
   static Contents = PageContents;
 
   componentDidMount() {
-    this.body.classList.add(this.bodyClass);
     this.updateTitle();
   }
 
@@ -31,10 +28,6 @@ class Page extends Component<Props> {
     if (!isEqual(prevProps.navModel, this.props.navModel)) {
       this.updateTitle();
     }
-  }
-
-  componentWillUnmount() {
-    this.body.classList.remove(this.bodyClass);
   }
 
   updateTitle = () => {

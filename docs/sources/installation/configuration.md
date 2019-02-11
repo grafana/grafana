@@ -287,6 +287,14 @@ Default is `false`.
 
 Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
 
+### cookie_secure
+
+Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### cookie_samesite
+
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+
 <hr />
 
 ## [users]
@@ -393,9 +401,7 @@ Analytics ID here. By default this feature is disabled.
 
 ### check_for_updates
 
-Set to false to disable all checks to https://grafana.com for new versions of Grafana and installed plugins. Check is used
-in some UI views to notify that a Grafana or plugin update exists. This option does not cause any auto updates, nor
-send any sensitive information.
+Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
 
 <hr />
 

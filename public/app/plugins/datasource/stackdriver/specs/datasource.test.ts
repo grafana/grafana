@@ -1,7 +1,8 @@
 import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
 import moment from 'moment';
-import { TemplateSrvStub } from 'test/specs/helpers';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CustomVariable } from 'app/features/templating/all';
 
 describe('StackdriverDataSource', () => {
   const instanceSettings = {
@@ -9,7 +10,7 @@ describe('StackdriverDataSource', () => {
       defaultProject: 'testproject',
     },
   };
-  const templateSrv = new TemplateSrvStub();
+  const templateSrv = new TemplateSrv();
   const timeSrv = {};
 
   describe('when performing testDataSource', () => {
@@ -154,15 +155,41 @@ describe('StackdriverDataSource', () => {
     });
   });
 
+  describe('when interpolating a template variable for the filter', () => {
+    let interpolated;
+    describe('and is single value variable', () => {
+      beforeEach(() => {
+        const filterTemplateSrv = initTemplateSrv('filtervalue1');
+        const ds = new StackdriverDataSource(instanceSettings, {}, filterTemplateSrv, timeSrv);
+        interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
+      });
+
+      it('should replace the variable with the value', () => {
+        expect(interpolated.length).toBe(3);
+        expect(interpolated[2]).toBe('filtervalue1');
+      });
+    });
+
+    describe('and is multi value variable', () => {
+      beforeEach(() => {
+        const filterTemplateSrv = initTemplateSrv(['filtervalue1', 'filtervalue2'], true);
+        const ds = new StackdriverDataSource(instanceSettings, {}, filterTemplateSrv, timeSrv);
+        interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+      });
+
+      it('should replace the variable with a regex expression', () => {
+        expect(interpolated[2]).toBe('(filtervalue1|filtervalue2)');
+      });
+    });
+  });
+
   describe('when interpolating a template variable for group bys', () => {
     let interpolated;
 
     describe('and is single value variable', () => {
       beforeEach(() => {
-        templateSrv.data = {
-          test: 'groupby1',
-        };
-        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
+        const groupByTemplateSrv = initTemplateSrv('groupby1');
+        const ds = new StackdriverDataSource(instanceSettings, {}, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -174,10 +201,8 @@ describe('StackdriverDataSource', () => {
 
     describe('and is multi value variable', () => {
       beforeEach(() => {
-        templateSrv.data = {
-          test: 'groupby1,groupby2',
-        };
-        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
+        const groupByTemplateSrv = initTemplateSrv(['groupby1', 'groupby2'], true);
+        const ds = new StackdriverDataSource(instanceSettings, {}, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -241,3 +266,19 @@ describe('StackdriverDataSource', () => {
     });
   });
 });
+function initTemplateSrv(values: any, multi = false) {
+  const templateSrv = new TemplateSrv();
+  templateSrv.init([
+    new CustomVariable(
+      {
+        name: 'test',
+        current: {
+          value: values,
+        },
+        multi: multi,
+      },
+      {}
+    ),
+  ]);
+  return templateSrv;
+}

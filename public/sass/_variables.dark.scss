@@ -18,9 +18,6 @@ $forest-shade: #19730E;
 // Grays
 // -------------------------
 $black: #000;
-
-// -------------------------
-$black: #000;
 $dark-1: #141414;
 $dark-2: #1f1f20;
 $dark-3: #262628;
@@ -31,7 +28,6 @@ $gray-2: #8e8e8e;
 $gray-3: #b3b3b3;
 $gray-4: #d8d9da;
 $gray-5: #ececec;
-$gray-6: #f4f5f8;
 $gray-7: #fbfbfb;
 
 $gray-blue: #212327;
@@ -79,6 +75,7 @@ $text-color-faint: $dark-5;
 $text-color-emphasis: $gray-5;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
+$textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(
@@ -122,8 +119,8 @@ $divider-border-color: $gray-1;
 
 // Graphite Target Editor
 $tight-form-bg: $dark-3;
-$tight-form-func-bg: #333334;
-$tight-form-func-highlight-bg: #444445;
+$tight-form-func-bg: $dark-4;
+$tight-form-func-highlight-bg: $dark-5;
 
 $modal-backdrop-bg: #353c42;
 $code-tag-bg: $dark-1;
@@ -145,14 +142,12 @@ $empty-list-cta-bg: $gray-blue;
 // Scrollbars
 $scrollbarBackground: #404357;
 $scrollbarBackground2: #3a3a3a;
-
 $scrollbarBorder: black;
 
 // Tables
 // -------------------------
 $table-bg: transparent; // overall background-color
 $table-bg-accent: $dark-3; // for striping
-$table-bg-hover: $dark-4; // for hover
 $table-border: $dark-3; // table and cell border
 
 $table-bg-odd: $dark-2;
@@ -161,8 +156,11 @@ $table-bg-hover: $dark-3;
 // Buttons
 // -------------------------
 
-$btn-primary-bg: $sapphire-base;
-$btn-primary-bg-hl: $sapphire-shade;
+$btn-primary-bg: #ff6600;
+$btn-primary-bg-hl: #bc3e06;
+
+$btn-secondary-bg-hl: lighten($blue-dark, 5%);
+$btn-secondary-bg: $blue-dark;
 
 $btn-secondary-bg: $sapphire-base;
 $btn-secondary-bg-hl: $sapphire-shade;
@@ -199,6 +197,9 @@ $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-3;
 $input-color-select-arrow: $white;
 
+// Input placeholder text color
+$placeholderText: darken($text-color, 25%);
+
 // Search
 $search-shadow: 0 0 30px 0 $black;
 $search-filter-box-bg: $gray-blue;
@@ -214,28 +215,19 @@ $dropdownBackground: $dark-3;
 $dropdownBorder: rgba(0, 0, 0, 0.2);
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: #444;
-$dropdownDivider: $dropdownDividerBottom;
 
 $dropdownLinkColor: $text-color;
 $dropdownLinkColorHover: $white;
 $dropdownLinkColorActive: $white;
 
-$dropdownLinkBackgroundActive: $dark-4;
 $dropdownLinkBackgroundHover: $dark-4;
-
-// COMPONENT VARIABLES
-// --------------------------------------------------
-
-// -------------------------
-$placeholderText: darken($text-color, 25%);
 
 // Horizontal forms & lists
 // -------------------------
 $horizontalComponentOffset: 180px;
 
-// Wells
+// Navbar
 // -------------------------
-
 $navbarHeight: 55px;
 
 $navbarBackground: $panel-bg;
@@ -263,18 +255,12 @@ $menu-dropdown-bg: $body-bg;
 $menu-dropdown-hover-bg: $dark-2;
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
-// Breadcrumb
-// -------------------------
-
 // Tabs
 // -------------------------
 $tab-border-color: $dark-4;
 
 // Toolbar
 $toolbar-bg: $input-black;
-
-// Pagination
-// -------------------------
 
 // Form states and alerts
 // -------------------------
@@ -310,7 +296,6 @@ $tooltipBackground: $black;
 $tooltipColor: $gray-4;
 $tooltipArrowColor: $tooltipBackground;
 $tooltipBackgroundError: $brand-danger;
-$tooltipBackgroundBrand: $brand-primary;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -379,17 +364,15 @@ $checkbox-color: $dark-1;
 //Panel Edit
 // -------------------------
 $panel-editor-shadow: 0 0 20px black;
-$panel-editor-border: 1px solid $dark-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
-$panel-editor-toolbar-view-bg: $input-black;
 $panel-editor-viz-item-shadow: 0 0 8px $dark-5;
 $panel-editor-viz-item-border: 1px solid $dark-5;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-shade;
 $panel-editor-viz-item-border-hover: 1px solid $sapphire-shade;
 $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
-$panel-editor-viz-item-bg-hover: $sapphire-faint;
-$panel-editor-viz-item-bg-hover-active: darken($orange, 45%);
+
+$panel-editor-viz-item-bg-hover: darken($blue, 47%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-blue;

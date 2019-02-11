@@ -1,8 +1,9 @@
 import React, { FunctionComponent } from 'react';
-import { Themeable, GrafanaTheme } from '../../types';
+import { Themeable } from '../../types';
 import { ColorDefinition, getColorForTheme } from '../../utils/namedColorsPalette';
 import { Color } from 'csstype';
 import { find, upperFirst } from 'lodash';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 type ColorChangeHandler = (color: ColorDefinition) => void;
 
@@ -28,7 +29,15 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
 }) => {
   const isSmall = variant === ColorSwatchVariant.Small;
   const swatchSize = isSmall ? '16px' : '32px';
-  const selectedSwatchBorder = theme === GrafanaTheme.Light ? '#ffffff' : '#1A1B1F';
+
+  const selectedSwatchBorder = selectThemeVariant(
+    {
+      light: theme.colors.white,
+      dark: theme.colors.black,
+    },
+    theme.type
+  );
+
   const swatchStyles = {
     width: swatchSize,
     height: swatchSize,
@@ -76,7 +85,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
           key={primaryColor.name}
           isSelected={primaryColor.name === selectedColor}
           variant={ColorSwatchVariant.Large}
-          color={getColorForTheme(primaryColor, theme)}
+          color={getColorForTheme(primaryColor, theme.type)}
           label={upperFirst(primaryColor.hue)}
           onClick={() => onColorSelect(primaryColor)}
           theme={theme}
@@ -95,7 +104,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                 <ColorSwatch
                   key={color.name}
                   isSelected={color.name === selectedColor}
-                  color={getColorForTheme(color, theme)}
+                  color={getColorForTheme(color, theme.type)}
                   onClick={() => onColorSelect(color)}
                   theme={theme}
                 />

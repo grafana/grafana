@@ -104,7 +104,7 @@ export class KeybindingSrv {
     }
 
     if (search.fullscreen) {
-      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      appEvents.emit('panel-change-view', { fullscreen: false, edit: false });
       return;
     }
 
@@ -174,7 +174,7 @@ export class KeybindingSrv {
     // edit panel
     this.bind('e', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        this.$rootScope.appEvent('panel-change-view', {
+        appEvents.emit('panel-change-view', {
           fullscreen: true,
           edit: true,
           panelId: dashboard.meta.focusPanelId,
@@ -186,7 +186,7 @@ export class KeybindingSrv {
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        this.$rootScope.appEvent('panel-change-view', {
+        appEvents.emit('panel-change-view', {
           fullscreen: true,
           edit: null,
           panelId: dashboard.meta.focusPanelId,
@@ -212,9 +212,7 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        this.$rootScope.appEvent('panel-remove', {
-          panelId: dashboard.meta.focusPanelId,
-        });
+        appEvents.emit('remove-panel', dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
     });

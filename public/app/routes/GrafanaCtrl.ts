@@ -1,9 +1,11 @@
-import config from 'app/core/config';
+// Libraries
 import _ from 'lodash';
 import $ from 'jquery';
 import Drop from 'tether-drop';
-import { colors } from '@grafana/ui';
 
+// Utils and servies
+import { colors } from '@grafana/ui';
+import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
@@ -12,6 +14,9 @@ import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv, setDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
+
+// Types
+import { KioskUrlValue } from 'app/types';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -46,11 +51,6 @@ export class GrafanaCtrl {
 
     $rootScope.colors = colors;
 
-    $scope.initDashboard = (dashboardData, viewScope) => {
-      $scope.appEvent('dashboard-fetch-end', dashboardData);
-      $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
-    };
-
     $rootScope.onAppEvent = function(name, callback, localScope) {
       const unbind = $rootScope.$on(name, callback);
       let callerScope = this;
@@ -72,7 +72,7 @@ export class GrafanaCtrl {
   }
 }
 
-function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
+function setViewModeBodyClass(body, mode: KioskUrlValue, sidemenuOpen: boolean) {
   body.removeClass('view-mode--tv');
   body.removeClass('view-mode--kiosk');
   body.removeClass('view-mode--inactive');
@@ -126,12 +126,13 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         body.toggleClass('sidemenu-hidden');
       });
 
-      scope.$watch(
-        () => playlistSrv.isPlaying,
-        newValue => {
-          elem.toggleClass('view-mode--playlist', newValue === true);
-        }
-      );
+      appEvents.on('playlist-started', () => {
+        elem.toggleClass('view-mode--playlist', true);
+      });
+
+      appEvents.on('playlist-stopped', () => {
+        elem.toggleClass('view-mode--playlist', false);
+      });
 
       // check if we are in server side render
       if (document.cookie.indexOf('renderKey') !== -1) {
@@ -165,6 +166,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         for (const drop of Drop.drops) {
           drop.destroy();
         }
+
+        appEvents.emit('hide-dash-search');
       });
 
       // handle kiosk mode
@@ -262,10 +265,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           }, 100);
         }
 
-        if (target.parents('.navbar-buttons--playlist').length === 0) {
-          playlistSrv.stop();
-        }
-
         // hide search
         if (body.find('.search-container').length > 0) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
@@ -279,6 +278,28 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
+        }
+
+        // hide time picker
+        const timePickerDropDownIsOpen = elem.find('.gf-timepicker-dropdown').length > 0;
+        if (timePickerDropDownIsOpen) {
+          const targetIsInTimePickerDropDown = target.parents('.gf-timepicker-dropdown').length > 0;
+          const targetIsInTimePickerNav = target.parents('.gf-timepicker-nav').length > 0;
+          const targetIsDatePickerRowBtn = target.parents('td[id^="datepicker-"]').length > 0;
+          const targetIsDatePickerHeaderBtn = target.parents('button[id^="datepicker-"]').length > 0;
+
+          if (
+            targetIsInTimePickerNav ||
+            targetIsInTimePickerDropDown ||
+            targetIsDatePickerRowBtn ||
+            targetIsDatePickerHeaderBtn
+          ) {
+            return;
+          }
+
+          scope.$apply(() => {
+            scope.appEvent('closeTimepicker');
+          });
         }
       });
     },

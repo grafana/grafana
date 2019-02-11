@@ -1,14 +1,12 @@
 import React from 'react';
-import { GrafanaTheme, Themeable } from '../../types';
+import { Themeable } from '../../types';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 export interface SpectrumPalettePointerProps extends Themeable {
   direction?: string;
 }
 
-const SpectrumPalettePointer: React.FunctionComponent<SpectrumPalettePointerProps> = ({
-  theme,
-  direction,
-}) => {
+const SpectrumPalettePointer: React.FunctionComponent<SpectrumPalettePointerProps> = ({ theme, direction }) => {
   const styles = {
     picker: {
       width: '16px',
@@ -17,7 +15,14 @@ const SpectrumPalettePointer: React.FunctionComponent<SpectrumPalettePointerProp
     },
   };
 
-  const pointerColor = theme === GrafanaTheme.Light ? '#3F444D' : '#8E8E8E';
+
+  const pointerColor = selectThemeVariant(
+    {
+      light: theme.colors.dark3,
+      dark: theme.colors.gray2,
+    },
+    theme.type
+  );
 
   let pointerStyles: React.CSSProperties = {
     position: 'absolute',

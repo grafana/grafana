@@ -1,10 +1,12 @@
 import _ from 'lodash';
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 export class AdHocFiltersCtrl {
   segments: any;
   variable: any;
+  dashboard: DashboardModel;
   removeTagFilterSegment: any;
 
   /** @ngInject */
@@ -14,14 +16,13 @@ export class AdHocFiltersCtrl {
     private $q,
     private variableSrv,
     $scope,
-    private $rootScope
   ) {
     this.removeTagFilterSegment = uiSegmentSrv.newSegment({
       fake: true,
       value: '-- remove filter --',
     });
     this.buildSegmentModel();
-    this.$rootScope.onAppEvent('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
+    this.dashboard.events.on('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
   }
 
   buildSegmentModel() {
@@ -171,6 +172,7 @@ export function adHocFiltersComponent() {
     controllerAs: 'ctrl',
     scope: {
       variable: '=',
+      dashboard: '=',
     },
   };
 }
