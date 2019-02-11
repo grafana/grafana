@@ -16,6 +16,7 @@
   border-radius: $border-radius;
   display: flex;
   flex-direction: row;
+  align-items: center;
 }
 
 // Alternate styles
@@ -62,7 +63,6 @@
 
 .alert-title {
   font-weight: $font-weight-semi-bold;
-  padding-bottom: 2px;
 }
 
 .alert-icon {
