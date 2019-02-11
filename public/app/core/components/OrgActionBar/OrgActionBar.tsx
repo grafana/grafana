@@ -35,7 +35,7 @@ export default class OrgActionBar extends PureComponent<Props> {
           <LayoutSelector mode={layoutMode} onLayoutModeChanged={(mode: LayoutMode) => onSetLayoutMode(mode)} />
         </div>
         <div className="page-action-bar__spacer" />
-        <a className="btn btn-success" {...linkProps}>
+        <a className="btn btn-primary" {...linkProps}>
           {linkButton.title}
         </a>
       </div>

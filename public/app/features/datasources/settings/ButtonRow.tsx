@@ -9,7 +9,7 @@ export interface Props {
 const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit }) => {
   return (
     <div className="gf-form-button-row">
-      <button type="submit" className="btn btn-success" disabled={isReadOnly} onClick={event => onSubmit(event)}>
+      <button type="submit" className="btn btn-primary" disabled={isReadOnly} onClick={event => onSubmit(event)}>
         Save &amp; Test
       </button>
       <button type="submit" className="btn btn-danger" disabled={isReadOnly} onClick={onDelete}>

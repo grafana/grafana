@@ -82,7 +82,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
                   />
                 </div>
                 <div className="gf-form-button-row">
-                  <button type="submit" className="btn btn-success" disabled={!folder.canSave || !folder.hasChanged}>
+                  <button type="submit" className="btn btn-primary" disabled={!folder.canSave || !folder.hasChanged}>
                     <i className="fa fa-save" /> Save
                   </button>
                   <button className="btn btn-danger" onClick={this.onDelete} disabled={!folder.canSave}>

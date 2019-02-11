@@ -41,7 +41,7 @@ exports[`Render should enable save button 1`] = `
             className="gf-form-button-row"
           >
             <button
-              className="btn btn-success"
+              className="btn btn-primary"
               disabled={false}
               type="submit"
             >
@@ -109,7 +109,7 @@ exports[`Render should render component 1`] = `
             className="gf-form-button-row"
           >
             <button
-              className="btn btn-success"
+              className="btn btn-primary"
               disabled={true}
               type="submit"
             >

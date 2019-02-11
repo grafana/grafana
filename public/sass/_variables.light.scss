@@ -3,6 +3,21 @@
 
 $theme-name: light;
 
+// New Colors
+// -------------------------
+$sapphire-faint: #F5F9FF;
+$sapphire-light: #A8CAFF;
+$sapphire-base: #3274D9;
+$sapphire-shade: #1F60C4;
+$lobster-base: #E02F44;
+$lobster-shade: #C4162A;
+$green-base: #37872D;
+$green-shade: #19730E;
+$green-base: #3EB15B;
+$green-shade: #369B4F;
+$purple-shade: #8F3BB8;
+$yellow-base: #F2CC0C;
+
 // Grays
 // -------------------------
 $black: #000;
@@ -25,28 +40,28 @@ $white: #fff;
 $blue: #0083b3;
 $blue-light: #00a8e6;
 $green: #3aa655;
-$red: #d44939;
+$red: $lobster-base;
 $yellow: #ff851b;
 $orange: #ff7941;
 $purple: #9954bb;
-$variable: $blue;
+$variable: $purple-shade;
 
 $brand-primary: $orange;
 $brand-success: $green;
 $brand-warning: $orange;
-$brand-danger: $red;
+$brand-danger: $lobster-base;
 
-$query-red: $red;
+$query-red: $lobster-base;
 $query-green: $green;
 $query-purple: $purple;
 $query-orange: $orange;
-$query-keyword: $blue;
+$query-keyword: $sapphire-base;
 
 // Status colors
 // -------------------------
-$online: #01a64f;
+$online: $green-shade;
 $warn: #f79520;
-$critical: #ec2128;
+$critical: $lobster-shade;
 
 // Scaffolding
 // -------------------------
@@ -61,7 +76,6 @@ $text-color-faint: $gray-4;
 $text-color-emphasis: $dark-5;
 
 $text-shadow-faint: none;
-$textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(
@@ -79,7 +93,7 @@ $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 $link-color: $gray-1;
 $link-color-disabled: lighten($link-color, 30%);
 $link-hover-color: darken($link-color, 20%);
-$external-link-color: $blue-light;
+$external-link-color: $sapphire-shade;
 
 // Typography
 // -------------------------
@@ -141,20 +155,17 @@ $table-bg-hover: $gray-5;
 
 // Buttons
 // -------------------------
-$btn-primary-bg: $brand-primary;
-$btn-primary-bg-hl: lighten($brand-primary, 8%);
+$btn-primary-bg: $green-base;
+$btn-primary-bg-hl: $green-shade;
 
-$btn-secondary-bg: $blue;
-$btn-secondary-bg-hl: lighten($blue, 4%);
+$btn-secondary-bg: $sapphire-base;
+$btn-secondary-bg-hl: $sapphire-shade;
 
-$btn-success-bg: lighten($green, 3%);
-$btn-success-bg-hl: darken($green, 3%);
+$btn-success-bg: $green-base;
+$btn-success-bg-hl: $green-shade;
 
-$btn-warning-bg: lighten($orange, 3%);
-$btn-warning-bg-hl: darken($orange, 3%);
-
-$btn-danger-bg: lighten($red, 3%);
-$btn-danger-bg-hl: darken($red, 3%);
+$btn-danger-bg: $lobster-base;
+$btn-danger-bg-hl: $lobster-shade;
 
 $btn-inverse-bg: $gray-6;
 $btn-inverse-bg-hl: darken($gray-6, 5%);
@@ -178,8 +189,8 @@ $input-bg-disabled: $gray-5;
 $input-color: $dark-3;
 $input-border-color: $gray-5;
 $input-box-shadow: none;
-$input-border-focus: $blue !default;
-$input-box-shadow-focus: $blue !default;
+$input-border-focus: $sapphire-light !default;
+$input-box-shadow-focus: $sapphire-light !default;
 $input-color-placeholder: $gray-4 !default;
 $input-label-bg: $gray-5;
 $input-label-border-color: $gray-5;
@@ -253,14 +264,13 @@ $toolbar-bg: white;
 // Form states and alerts
 // -------------------------
 $warning-text-color: lighten($orange, 10%);
-$error-text-color: lighten($red, 10%);
+$error-text-color: $lobster-shade;
 $success-text-color: lighten($green, 10%);
-$info-text-color: $blue;
 
-$alert-error-bg: linear-gradient(90deg, #d44939, #e04d3d);
-$alert-success-bg: linear-gradient(90deg, #3aa655, #47b274);
-$alert-warning-bg: linear-gradient(90deg, #d44939, #e04d3d);
-$alert-info-bg: $blue;
+$alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
+$alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-info-bg: $sapphire-base;
 
 // popover
 $popover-bg: $page-bg;
@@ -268,7 +278,7 @@ $popover-color: $text-color;
 $popover-border-color: $gray-5;
 $popover-shadow: 0 0 20px $white;
 
-$popover-help-bg: $blue;
+$popover-help-bg: $sapphire-base;
 $popover-help-color: $gray-6;
 
 $popover-error-bg: $btn-danger-bg;
@@ -289,7 +299,7 @@ $tooltipBackgroundError: $brand-danger;
 $checkboxImageUrl: '../img/checkbox_white.png';
 
 // info box
-$info-box-border-color: lighten($blue, 20%);
+$info-box-border-color: $sapphire-base;
 
 // footer
 $footer-link-color: $gray-3;
@@ -298,16 +308,16 @@ $footer-link-hover: $dark-5;
 // json explorer
 $json-explorer-default-color: black;
 $json-explorer-string-color: green;
-$json-explorer-number-color: blue;
-$json-explorer-boolean-color: red;
+$json-explorer-number-color: $sapphire-base;
+$json-explorer-boolean-color: $lobster-base;
 $json-explorer-null-color: #855a00;
 $json-explorer-undefined-color: rgb(202, 11, 105);
 $json-explorer-function-color: #ff20ed;
 $json-explorer-rotate-time: 100ms;
 $json-explorer-toggler-opacity: 0.6;
-$json-explorer-bracket-color: blue;
+$json-explorer-bracket-color: $sapphire-base;
 $json-explorer-key-color: #00008b;
-$json-explorer-url-color: blue;
+$json-explorer-url-color: $sapphire-base;
 
 // Changelog and diff
 // -------------------------
@@ -318,35 +328,35 @@ $diff-arrow-color: $dark-3;
 $diff-group-bg: $gray-7;
 
 $diff-json-bg: $gray-5;
-$diff-json-fg: $gray-2;
+$diff-json-fg: $gray-1;
 
-$diff-json-added: lighten(desaturate($green, 30%), 10%);
-$diff-json-deleted: desaturate($red, 35%);
+$diff-json-added: $sapphire-shade;
+$diff-json-deleted: $lobster-shade;
 
 $diff-json-old: #5a372a;
 $diff-json-new: #664e33;
 
-$diff-json-changed-fg: $gray-6;
+$diff-json-changed-fg: $gray-7;
 $diff-json-changed-num: $gray-4;
 
 $diff-json-icon: $gray-4;
 
 //Submenu
-$variable-option-bg: $blue-light;
+$variable-option-bg: $dropdownLinkBackgroundHover;
 
 //Switch Slider
 // -------------------------
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: linear-gradient(90deg, $yellow, $red);
+$switch-slider-on-bg: linear-gradient(90deg, #FF9830, #E55400);
 $switch-slider-shadow: 0 0 3px $dark-5;
 
 //Checkbox
 // -------------------------
 $checkbox-bg: $gray-6;
 $checkbox-border: 1px solid $gray-3;
-$checkbox-checked-bg: linear-gradient(0deg, $yellow, $red);
+$checkbox-checked-bg: linear-gradient(0deg, #FF9830, #E55400);
 $checkbox-color: $gray-7;
 
 //Panel Edit
@@ -359,13 +369,11 @@ $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-5;
-$panel-editor-viz-item-bg-hover: lighten($blue, 62%);
-
-$panel-options-group-border: none;
+$panel-editor-viz-item-bg-hover: lighten($blue, 62%);$panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
-$panel-grid-placeholder-bg: lighten($blue, 62%);
-$panel-grid-placeholder-shadow: 0 0 4px $blue-light;
+$panel-grid-placeholder-bg: $sapphire-faint;
+$panel-grid-placeholder-shadow: 0 0 4px $sapphire-light;
 
 // logs
 $logs-color-unkown: $gray-5;

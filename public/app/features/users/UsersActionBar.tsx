@@ -65,12 +65,12 @@ export class UsersActionBar extends PureComponent<Props> {
           )}
           <div className="page-action-bar__spacer" />
           {canInvite && (
-            <a className="btn btn-success" href="org/users/invite">
+            <a className="btn btn-primary" href="org/users/invite">
               <span>Invite</span>
             </a>
           )}
           {externalUserMngLinkUrl && (
-            <a className="btn btn-success" href={externalUserMngLinkUrl} target="_blank">
+            <a className="btn btn-primary" href={externalUserMngLinkUrl} target="_blank">
               <i className="fa fa-external-link-square" /> {externalUserMngLinkName}
             </a>
           )}

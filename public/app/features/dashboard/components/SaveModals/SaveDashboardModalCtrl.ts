@@ -52,8 +52,8 @@ const template = `
       <button
         id="saveBtn"
         type="submit"
-        class="btn btn-success"
-        ng-class="{'btn-success--processing': ctrl.isSaving}"
+        class="btn btn-primary"
+        ng-class="{'btn-primary--processing': ctrl.isSaving}"
         ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
       >
         <span ng-if="!ctrl.isSaving">Save</span>
