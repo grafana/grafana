@@ -8,7 +8,7 @@ import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { GrafanaTheme, getValueFormat, getColorFromHexRgbOrName } from '@grafana/ui';
+import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName } from '@grafana/ui';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -588,10 +588,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             fill: 1,
             zero: false,
             lineWidth: 1,
-            fillColor: getColorFromHexRgbOrName(
-              panel.sparkline.fillColor,
-              config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
-            ),
+            fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
           },
         },
         yaxes: { show: false },
@@ -608,10 +605,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       const plotSeries = {
         data: data.flotpairs,
-        color: getColorFromHexRgbOrName(
-          panel.sparkline.lineColor,
-          config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
-        ),
+        color: getColorFromHexRgbOrName(panel.sparkline.lineColor, config.theme.type),
       };
 
       $.plot(plotCanvas, [plotSeries], options);
@@ -630,7 +624,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // Map panel colors to hex or rgb/a values
       data.colorMap = panel.colors.map(color =>
-        getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark)
+        getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark)
       );
 
       const body = panel.gauge.show ? '' : getBigValueHtml();

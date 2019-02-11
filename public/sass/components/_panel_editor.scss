@@ -86,6 +86,10 @@
   .panel-editor-container__panel {
     margin: 0 $dashboard-padding;
   }
+
+  .search-container {
+    left: 0 !important;
+  }
 }
 
 .panel-editor-container__resizer {
@@ -146,15 +150,17 @@
   padding-bottom: 6px;
   transition: transform 1 ease;
 
-  &--current {
-    box-shadow: 0 0 6px $orange;
-    border: 1px solid $orange;
-  }
-
   &:hover {
     box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
+
+  }
+
+  &--current {
+    box-shadow: 0 0 6px $orange !important;
+    border: 1px solid $orange !important;
+    background: $panel-editor-viz-item-bg !important;
   }
 }
 

@@ -25,7 +25,10 @@ import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { GrafanaTheme, getValueFormat } from '@grafana/ui';
+import { getValueFormat } from '@grafana/ui';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
+
+const LegendWithThemeProvider = provideTheme(Legend);
 
 class GraphElement {
   ctrl: GraphCtrl;
@@ -43,6 +46,7 @@ class GraphElement {
   legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
+
     this.ctrl = scope.ctrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;
@@ -51,10 +55,7 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.timeRegionManager = new TimeRegionManager(
-      this.ctrl,
-      config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
-    );
+    this.timeRegionManager = new TimeRegionManager(this.ctrl, config.theme.type);
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
@@ -109,7 +110,7 @@ class GraphElement {
       onToggleAxis: this.ctrl.onToggleAxis,
     };
 
-    const legendReactElem = React.createElement(Legend, legendProps);
+    const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
     ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 

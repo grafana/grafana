@@ -14,14 +14,21 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	Convey("Can redirect to correct org", t, func() {
 		middlewareScenario("when setting a correct org for the user", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
 			bus.AddHandler("test", func(query *m.SetUsingOrgCommand) error {
 				return nil
 			})
 
-			sc.userAuthTokenService.initContextWithTokenProvider = func(ctx *m.ReqContext, orgId int64) bool {
-				ctx.SignedInUser = &m.SignedInUser{OrgId: 1, UserId: 12}
-				ctx.IsSignedIn = true
-				return true
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 1, UserId: 12}
+				return nil
+			})
+
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+				return &m.UserToken{
+					UserId:        0,
+					UnhashedToken: "",
+				}, nil
 			}
 
 			sc.m.Get("/", sc.defaultHandler)
@@ -33,20 +40,22 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		})
 
 		middlewareScenario("when setting an invalid org for user", func(sc *scenarioContext) {
+			sc.withTokenSessionCookie("token")
 			bus.AddHandler("test", func(query *m.SetUsingOrgCommand) error {
 				return fmt.Errorf("")
 			})
-
-			sc.userAuthTokenService.initContextWithTokenProvider = func(ctx *m.ReqContext, orgId int64) bool {
-				ctx.SignedInUser = &m.SignedInUser{OrgId: 1, UserId: 12}
-				ctx.IsSignedIn = true
-				return true
-			}
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 1, UserId: 12}
 				return nil
 			})
+
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+				return &m.UserToken{
+					UserId:        12,
+					UnhashedToken: "",
+				}, nil
+			}
 
 			sc.m.Get("/", sc.defaultHandler)
 			sc.fakeReq("GET", "/?orgId=3").exec()

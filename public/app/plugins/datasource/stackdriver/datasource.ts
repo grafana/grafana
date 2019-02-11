@@ -2,9 +2,10 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
-import { MetricDescriptor } from './types';
+import { StackdriverQuery, MetricDescriptor } from './types';
+import { DataSourceApi, DataQueryOptions } from '@grafana/ui/src/types';
 
-export default class StackdriverDatasource {
+export default class StackdriverDatasource implements DataSourceApi<StackdriverQuery> {
   id: number;
   url: string;
   baseUrl: string;
@@ -39,9 +40,7 @@ export default class StackdriverDatasource {
           alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod, options.scopedVars || {}),
           groupBys: this.interpolateGroupBys(t.groupBys, options.scopedVars),
           view: t.view || 'FULL',
-          filters: (t.filters || []).map(f => {
-            return this.templateSrv.replace(f, options.scopedVars || {});
-          }),
+          filters: this.interpolateFilters(t.filters, options.scopedVars),
           aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
           type: 'timeSeriesQuery',
         };
@@ -63,7 +62,13 @@ export default class StackdriverDatasource {
     }
   }
 
-  async getLabels(metricType, refId) {
+  interpolateFilters(filters: string[], scopedVars: object) {
+    return (filters || []).map(f => {
+      return this.templateSrv.replace(f, scopedVars || {}, 'regex');
+    });
+  }
+
+  async getLabels(metricType: string, refId: string) {
     const response = await this.getTimeSeries({
       targets: [
         {
@@ -103,7 +108,7 @@ export default class StackdriverDatasource {
     return unit;
   }
 
-  async query(options) {
+  async query(options: DataQueryOptions<StackdriverQuery>) {
     const result = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {

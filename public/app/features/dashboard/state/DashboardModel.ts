@@ -1,20 +1,26 @@
+// Libaries
 import moment from 'moment';
 import _ from 'lodash';
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 
+// Constants
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+
+// Utils & Services
 import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
+// Types
 import { PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
+import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
 
 export class DashboardModel {
   id: any;
-  uid: any;
-  title: any;
+  uid: string;
+  title: string;
   autoUpdate: any;
   description: any;
   tags: any;
@@ -43,7 +49,7 @@ export class DashboardModel {
 
   // repeat process cycles
   iteration: number;
-  meta: any;
+  meta: DashboardMeta;
   events: Emitter;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
@@ -127,6 +133,8 @@ export class DashboardModel {
     meta.canEdit = meta.canEdit !== false;
     meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
+    meta.fullscreen = false;
+    meta.isEditing = false;
 
     if (!this.editable) {
       meta.canEdit = false;
@@ -860,11 +868,7 @@ export class DashboardModel {
     return !_.isEqual(updated, this.originalTemplating);
   }
 
-  autoFitPanels(viewHeight: number) {
-    if (!this.meta.autofitpanels) {
-      return;
-    }
-
+  autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
     const currentGridHeight = Math.max(
       ...this.panels.map(panel => {
         return panel.gridPos.h + panel.gridPos.y;
@@ -878,12 +882,12 @@ export class DashboardModel {
     let visibleHeight = viewHeight - navbarHeight - margin;
 
     // Remove submenu height if visible
-    if (this.meta.submenuEnabled && !this.meta.kiosk) {
+    if (this.meta.submenuEnabled && !kioskMode) {
       visibleHeight -= submenuHeight;
     }
 
     // add back navbar height
-    if (this.meta.kiosk === 'b') {
+    if (kioskMode === KIOSK_MODE_TV) {
       visibleHeight += 55;
     }
 
@@ -895,4 +899,23 @@ export class DashboardModel {
       panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
     });
   }
+
+  templateVariableValueUpdated() {
+    this.processRepeats();
+    this.events.emit('template-variable-value-updated');
+  }
+
+  expandParentRowFor(panelId: number) {
+    for (const panel of this.panels) {
+      if (panel.collapsed) {
+        for (const rowPanel of panel.panels) {
+          if (rowPanel.id === panelId) {
+            this.toggleRow(panel);
+            return;
+          }
+        }
+      }
+    }
+  }
+
 }

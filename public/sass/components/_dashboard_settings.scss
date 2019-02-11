@@ -16,6 +16,9 @@
     opacity: 1;
     transition: opacity 300ms ease-in-out;
   }
+  .dashboard-container {
+    display: none;
+  }
 }
 
 .dashboard-settings__content {

@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Services & Utils
 import { processTimeSeries } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 // Components
 import { Gauge } from '@grafana/ui';
@@ -10,12 +11,11 @@ import { Gauge } from '@grafana/ui';
 // Types
 import { GaugeOptions } from './types';
 import { PanelProps, NullValueMode } from '@grafana/ui/src/types';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
 export class GaugePanel extends PureComponent<Props> {
-  renderMultipleGauge(timeSeries, theme) {
+  renderMultipleGauge(timeSeries) {
     const { options, height, width } = this.props;
 
     return timeSeries.map((series, index) => {
@@ -50,39 +50,49 @@ export class GaugePanel extends PureComponent<Props> {
 
       return (
         <div className="singlestat-panel" key={`${timeSeries.label}-${index}`} style={style}>
-          {this.renderGauge(series.stats[options.stat], gaugeWidth, gaugeHeight, theme)}
+          {this.renderGauge(series.stats[options.stat], gaugeWidth, gaugeHeight)}
           <div style={{ textAlign: 'center' }}>{series.label}</div>
         </div>
       );
     });
   }
 
-  renderGauge(value, width, height, theme) {
+  renderGauge(value, width, height) {
     const { onInterpolate, options } = this.props;
     const prefix = onInterpolate(options.prefix);
     const suffix = onInterpolate(options.suffix);
 
     return (
-      <Gauge value={value} {...options} prefix={prefix} suffix={suffix} theme={theme} width={width} height={height} />
+      <Gauge
+        value={value}
+        {...options}
+        prefix={prefix}
+        suffix={suffix}
+        theme={config.theme}
+        width={width}
+        height={height}
+      />
     );
   }
 
-  renderSingleGauge(timeSeries, theme) {
+  renderSingleGauge(timeSeries) {
     const { options, width, height } = this.props;
 
     return (
-      <div className="singlestat-panel">{this.renderGauge(timeSeries[0].stats[options.stat], width, height, theme)}</div>
+      <div className="singlestat-panel">
+        {this.renderGauge(timeSeries[0].stats[options.stat], width, height)}
+      </div>
     );
   }
 
-  renderGaugeWithTableData(panelData, theme) {
+  renderGaugeWithTableData(panelData) {
     const { width, height } = this.props;
     const firstTableDataValue = panelData.tableData.rows[0].find(prop => prop > 0);
 
-    return <div className="singlestat-panel">{this.renderGauge(firstTableDataValue, width, height, theme)}</div>;
+    return <div className="singlestat-panel">{this.renderGauge(firstTableDataValue, width, height)}</div>;
   }
 
-  renderPanel(theme) {
+  render() {
     const { panelData } = this.props;
 
     if (panelData.timeSeries) {
@@ -92,20 +102,16 @@ export class GaugePanel extends PureComponent<Props> {
       });
 
       if (timeSeries.length > 1) {
-        return this.renderMultipleGauge(timeSeries, theme);
+        return this.renderMultipleGauge(timeSeries);
       } else if (timeSeries.length > 0) {
-        return this.renderSingleGauge(timeSeries, theme);
+        return this.renderSingleGauge(timeSeries);
       } else {
         return null;
       }
     } else if (panelData.tableData) {
-      return this.renderGaugeWithTableData(panelData, theme);
+      return this.renderGaugeWithTableData(panelData);
     } else {
       return <div className="singlestat-panel">No time series data available</div>;
     }
-  }
-
-  render() {
-    return <ThemeProvider>{theme => this.renderPanel(theme)}</ThemeProvider>;
   }
 }

@@ -4,6 +4,7 @@ import { ColorPickerPopover } from './ColorPickerPopover';
 import { ColorPickerProps } from './ColorPicker';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import { Switch } from '../Switch/Switch';
+import { withTheme } from '../../themes/ThemeContext';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopperContentProps {
   yaxis?: number;
@@ -12,7 +13,6 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopperC
 
 export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = props => {
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
-
   return (
     <ColorPickerPopover
       {...colorPickerProps}
@@ -85,3 +85,6 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
     );
   }
 }
+
+// This component is to enable SeriecColorPickerPopover usage via series-color-picker-popover directive
+export const SeriesColorPickerPopoverWithTheme = withTheme(SeriesColorPickerPopover);

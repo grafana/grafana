@@ -14,6 +14,9 @@
   align-items: center;
   width: 100%;
   cursor: move;
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
 
   .gicon {
     font-size: 30px;
@@ -26,6 +29,29 @@
   }
 }
 
+.add-panel-widget__title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semi-bold;
+  margin-right: $spacer*2;
+}
+
+.add-panel-widget__link {
+  margin: 0 8px;
+  width: 154px;
+}
+
+.add-panel-widget__icon {
+  margin-bottom: 8px;
+
+  .gicon {
+    color: white;
+    height: 44px;
+    width: 53px;
+    position: relative;
+    left: 5px;
+  }
+}
+
 .add-panel-widget__close {
   margin-left: auto;
   background-color: transparent;
@@ -34,14 +60,25 @@
   margin-right: -10px;
 }
 
+.add-panel-widget__create {
+  display: inherit;
+  margin-bottom: 24px;
+  // this is to have the big button appear centered
+  margin-top: 55px;
+}
+
+.add-panel-widget__actions {
+  display: inherit;
+}
+
+.add-panel-widget__action {
+  margin: 0 4px;
+}
+
 .add-panel-widget__btn-container {
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
   flex-direction: column;
-
-  .btn {
-    margin-bottom: 10px;
-  }
 }

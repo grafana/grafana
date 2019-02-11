@@ -21,9 +21,9 @@
 // Search
 .search-field-wrapper {
   width: 100%;
+  height: $navbarHeight;
   display: flex;
   background-color: $navbarBackground;
-  box-shadow: $navbarShadow;
   position: relative;
 
   & > input {

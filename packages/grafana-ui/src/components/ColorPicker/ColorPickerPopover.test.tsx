@@ -4,7 +4,8 @@ import { ColorPickerPopover } from './ColorPickerPopover';
 import { getColorDefinitionByName, getNamedColorPalette } from '../../utils/namedColorsPalette';
 import { ColorSwatch } from './NamedColorsGroup';
 import { flatten } from 'lodash';
-import { GrafanaTheme } from '../../types';
+import { GrafanaThemeType } from '../../types';
+import { getTheme } from '../../themes';
 
 const allColors = flatten(Array.from(getNamedColorPalette().values()));
 
@@ -14,7 +15,7 @@ describe('ColorPickerPopover', () => {
 
   describe('rendering', () => {
     it('should render provided color as selected if color provided by name', () => {
-      const wrapper = mount(<ColorPickerPopover color={BasicGreen.name} onChange={() => {}} />);
+      const wrapper = mount(<ColorPickerPopover color={BasicGreen.name} onChange={() => {}} theme={getTheme()}/>);
       const selectedSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === BasicGreen.name);
       const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere(node => node.prop('isSelected') === false);
 
@@ -24,7 +25,7 @@ describe('ColorPickerPopover', () => {
     });
 
     it('should render provided color as selected if color provided by hex', () => {
-      const wrapper = mount(<ColorPickerPopover color={BasicGreen.variants.dark} onChange={() => {}} />);
+      const wrapper = mount(<ColorPickerPopover color={BasicGreen.variants.dark} onChange={() => {}} theme={getTheme()} />);
       const selectedSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === BasicGreen.name);
       const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere(node => node.prop('isSelected') === false);
 
@@ -45,7 +46,7 @@ describe('ColorPickerPopover', () => {
 
     it('should pass hex color value to onChange prop by default', () => {
       wrapper = mount(
-        <ColorPickerPopover color={BasicGreen.variants.dark} onChange={onChangeSpy} theme={GrafanaTheme.Light} />
+        <ColorPickerPopover color={BasicGreen.variants.dark} onChange={onChangeSpy} theme={getTheme(GrafanaThemeType.Light)} />
       );
       const basicBlueSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === BasicBlue.name);
 
@@ -61,7 +62,7 @@ describe('ColorPickerPopover', () => {
           enableNamedColors
           color={BasicGreen.variants.dark}
           onChange={onChangeSpy}
-          theme={GrafanaTheme.Light}
+          theme={getTheme(GrafanaThemeType.Light)}
         />
       );
       const basicBlueSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === BasicBlue.name);
