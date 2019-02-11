@@ -44,10 +44,6 @@ describe('colors', () => {
   });
 
   describe('getColorFromHexRgbOrName', () => {
-    it('returns undefined for unknown color', () => {
-      expect(() => getColorFromHexRgbOrName('aruba-sunshine')).toThrow();
-    });
-
     it('returns dark hex variant for known color if theme not specified', () => {
       expect(getColorFromHexRgbOrName(SemiDarkBlue.name)).toBe(SemiDarkBlue.variants.dark);
     });
@@ -63,6 +59,10 @@ describe('colors', () => {
       expect(getColorFromHexRgbOrName('#CCC')).toBe('#CCC');
       expect(getColorFromHexRgbOrName('rgb(0,0,0)')).toBe('rgb(0,0,0)');
       expect(getColorFromHexRgbOrName('rgba(0,0,0,1)')).toBe('rgba(0,0,0,1)');
+    });
+
+    it('returns hex for named color that is not a part of named colors palette', () => {
+      expect(getColorFromHexRgbOrName('lime')).toBe('#00ff00');
     });
   });
 });
