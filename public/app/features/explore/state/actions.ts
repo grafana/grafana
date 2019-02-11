@@ -715,7 +715,7 @@ const togglePanelActionCreator = (
     | ActionCreator<ToggleLogsPayload>
     | ActionCreator<ToggleTablePayload>
 ) => (exploreId: ExploreId, isPanelVisible: boolean) => {
-  return (dispatch) => {
+  return dispatch => {
     let uiFragmentStateUpdate: Partial<ExploreUIState>;
     const shouldRunQueries = !isPanelVisible;
 
@@ -759,15 +759,6 @@ export const toggleTable = togglePanelActionCreator(toggleTableAction);
  * Change logs deduplication strategy and update URL.
  */
 export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy) => {
-  return dispatch => {
-    dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
-  };
-};
-
-/**
- * Change logs deduplication strategy and update URL.
- */
-export const hiddenLogLe = (exploreId, dedupStrategy: LogsDedupStrategy) => {
   return dispatch => {
     dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
   };
