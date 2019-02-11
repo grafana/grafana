@@ -150,8 +150,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-      controller: 'FolderDashboardsCtrl',
+      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
+      controller: FolderDashboardsCtrl,
       controllerAs: 'ctrl',
     })
     .when('/explore', {
