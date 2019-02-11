@@ -23,7 +23,7 @@ const (
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 	DS_STACKDRIVER   = "stackdriver"
-	DS_AZURE_MONITOR = "azure-monitor"
+	DS_AZURE_MONITOR = "grafana-azure-monitor-datasource"
 )
 
 var (

@@ -1,10 +1,23 @@
 import KustoQueryField from './KustoQueryField';
-import Kusto from './kusto';
+import Kusto from './kusto/kusto';
 
 import React, { Component } from 'react';
 import coreModule from 'app/core/core_module';
 
-class Editor extends Component<any, any> {
+interface EditorProps {
+  index: number;
+  placeholder?: string;
+  change: (value: string, index: number) => void;
+  variables: () => string[] | string[];
+  getSchema?: () => Promise<any>;
+  execute?: () => void;
+}
+
+class Editor extends Component<EditorProps, any> {
+  static defaultProps = {
+    placeholder: 'Enter a query'
+  };
+
   constructor(props) {
     super(props);
     this.state = {
@@ -31,7 +44,7 @@ class Editor extends Component<any, any> {
   };
 
   render() {
-    const { request, variables } = this.props;
+    const { variables, getSchema, placeholder } = this.props;
     const { edited, query } = this.state;
 
     return (
@@ -42,9 +55,9 @@ class Editor extends Component<any, any> {
           onQueryChange={this.onChangeQuery}
           prismLanguage="kusto"
           prismDefinition={Kusto}
-          placeholder="Enter a query"
-          request={request}
+          placeholder={placeholder}
           templateVariables={variables}
+          getSchema={getSchema}
         />
       </div>
     );
@@ -54,6 +67,9 @@ class Editor extends Component<any, any> {
 coreModule.directive('kustoEditor', [
   'reactDirective',
   reactDirective => {
-    return reactDirective(Editor, ['change', 'database', 'execute', 'query', 'request', 'variables']);
+    return reactDirective(Editor, [
+      'change', 'database', 'execute', 'query', 'variables', 'placeholder',
+      ['getSchema', { watchDepth: 'reference' }]
+    ]);
   },
 ]);

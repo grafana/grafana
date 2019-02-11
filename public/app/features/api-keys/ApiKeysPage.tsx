@@ -107,7 +107,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   renderEmptyList() {
     const { isAdding } = this.state;
     return (
-      <div className="page-container page-body">
+      <>
         {!isAdding && (
           <EmptyListCTA
             model={{
@@ -124,7 +124,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           />
         )}
         {this.renderAddApiKeyForm()}
-      </div>
+      </>
     );
   }
 
@@ -183,7 +183,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     const { apiKeys, searchQuery } = this.props;
 
     return (
-      <div className="page-container page-body">
+      <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <label className="gf-form--has-input-icon gf-form--grow">
@@ -231,7 +231,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             </tbody>
           ) : null}
         </table>
-      </div>
+      </>
     );
   }
 
