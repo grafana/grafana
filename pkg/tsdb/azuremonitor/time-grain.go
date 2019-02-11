@@ -34,7 +34,7 @@ func (tg *TimeGrain) createISO8601DurationFromIntervalMS(interval int64) (string
 	unit := formatted[len(formatted)-1:]
 
 	if unit == "s" && timeValue < 60 {
-		// mimumum interval is 1m for Azure Monitor
+		// minimum interval is 1m for Azure Monitor
 		return "PT1M", nil
 	}
 

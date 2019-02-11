@@ -41,7 +41,7 @@ var (
 // 3. parses the responses for each query into the timeseries format
 func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
 	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+		Results: map[string]*tsdb.QueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
@@ -84,7 +84,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		azureMonitorTarget := query.Model.Get("azureMonitor").MustMap()
 		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
 
-		urlComponents := make(map[string]string)
+		urlComponents := map[string]string{}
 		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorTarget["resourceGroup"])
 		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorTarget["metricDefinition"])
 		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorTarget["resourceName"])
@@ -247,7 +247,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 	}
 
 	for _, series := range data.Value[0].Timeseries {
-		points := make([]tsdb.TimePoint, 0)
+		points := []tsdb.TimePoint{}
 
 		metadataName := ""
 		metadataValue := ""

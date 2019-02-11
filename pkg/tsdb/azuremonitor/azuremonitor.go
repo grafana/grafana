@@ -46,7 +46,7 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 	var result *tsdb.Response
 	var err error
 
-	azureMonitorQueries := make([]*tsdb.Query, 0)
+	var azureMonitorQueries []*tsdb.Query
 
 	for _, query := range tsdbQuery.Queries {
 		queryType := query.Model.Get("queryType").MustString("")
