@@ -30,13 +30,13 @@
   &:hover {
     .panel-options-group__add-circle {
       background-color: $btn-success-bg;
-      color: $text-color-strong;
+      color: $white;
     }
   }
 }
 
 .panel-options-group__add-circle {
-  @include gradientBar($btn-success-bg, $btn-success-bg-hl, $text-color);
+  @include gradientBar($btn-success-bg, $btn-success-bg-hl);
 
   border-radius: 50px;
   width: 20px;

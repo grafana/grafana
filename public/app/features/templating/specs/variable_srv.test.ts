@@ -48,7 +48,6 @@ describe('VariableSrv', function(this: any) {
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
         ctx.variableSrv = new VariableSrv(
-          ctx.$rootScope,
           $q,
           ctx.$location,
           ctx.$injector,

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 import { QueriesTab } from './QueriesTab';
-import { VisualizationTab } from './VisualizationTab';
+import VisualizationTab from './VisualizationTab';
 import { GeneralTab } from './GeneralTab';
 import { AlertTab } from '../../alerting/AlertTab';
 
@@ -38,7 +38,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   onChangeTab = (tab: PanelEditorTab) => {
     store.dispatch(
       updateLocation({
-        query: { tab: tab.id },
+        query: { tab: tab.id, openVizPicker: null },
         partial: true,
       })
     );

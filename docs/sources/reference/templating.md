@@ -50,6 +50,7 @@ Filter Option | Example | Raw | Interpolated | Description
 `regex` | ${servers:regex} | `'test.', 'test2'` | <code>(test\.&#124;test2)</code> | Formats multi-value variable into a regex string
 `pipe` | ${servers:pipe} | `'test.', 'test2'` |  <code>test.&#124;test2</code> | Formats multi-value variable into a pipe-separated string
 `csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
+`json`| ${servers:json} |  `'test1', 'test2'` | `["test1","test2"]` | Formats multi-value variable as a JSON string
 `distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
 `lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
 `percentencode` | ${servers:percentencode} |  `'foo()bar BAZ', 'test2'` | `{foo%28%29bar%20BAZ%2Ctest2}` | Formats multi-value variable into a glob, percent-encoded.

@@ -1,4 +1,3 @@
-import './directives/dash_class';
 import './directives/dropdown_typeahead';
 import './directives/autofill_event_fix';
 import './directives/metric_segment';
@@ -43,8 +42,6 @@ import { helpModal } from './components/help/help';
 import { JsonExplorer } from './components/json_explorer/json_explorer';
 import { NavModelSrv, NavModel } from './nav_model_srv';
 import { geminiScrollbar } from './components/scroll/scroll';
-import { pageScrollbar } from './components/scroll/page_scroll';
-import { gfPageDirective } from './components/gf_page';
 import { orgSwitcher } from './components/org_switcher';
 import { profiler } from './profiler';
 import { registerAngularDirectives } from './angular_wrappers';
@@ -79,8 +76,6 @@ export {
   NavModelSrv,
   NavModel,
   geminiScrollbar,
-  pageScrollbar,
-  gfPageDirective,
   orgSwitcher,
   manageDashboardsDirective,
   TimeSeries,

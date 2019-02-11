@@ -32,6 +32,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/metrics"
 	_ "github.com/grafana/grafana/pkg/plugins"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
+	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"

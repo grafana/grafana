@@ -74,10 +74,17 @@ func TestMiddlewareQuota(t *testing.T) {
 		})
 
 		middlewareScenario("with user logged in", func(sc *scenarioContext) {
-			sc.userAuthTokenService.initContextWithTokenProvider = func(ctx *m.ReqContext, orgId int64) bool {
-				ctx.SignedInUser = &m.SignedInUser{OrgId: 2, UserId: 12}
-				ctx.IsSignedIn = true
-				return true
+			sc.withTokenSessionCookie("token")
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+				return &m.UserToken{
+					UserId:        12,
+					UnhashedToken: "",
+				}, nil
 			}
 
 			bus.AddHandler("globalQuota", func(query *m.GetGlobalQuotaByTargetQuery) error {

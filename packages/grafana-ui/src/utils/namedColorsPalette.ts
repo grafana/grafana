@@ -1,5 +1,5 @@
 import { flatten } from 'lodash';
-import { GrafanaTheme } from '../types';
+import { GrafanaThemeType } from '../types';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -68,16 +68,16 @@ export const getColorDefinitionByName = (name: Color): ColorDefinition => {
   return flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.name === name)[0];
 };
 
-export const getColorDefinition = (hex: string, theme: GrafanaTheme): ColorDefinition | undefined => {
+export const getColorDefinition = (hex: string, theme: GrafanaThemeType): ColorDefinition | undefined => {
   return flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.variants[theme] === hex)[0];
 };
 
 const isHex = (color: string) => {
-  const hexRegex = /^((0x){0,1}|#{0,1})([0-9A-F]{8}|[0-9A-F]{6})$/gi;
+  const hexRegex = /^((0x){0,1}|#{0,1})([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3})$/gi;
   return hexRegex.test(color);
 };
 
-export const getColorName = (color?: string, theme?: GrafanaTheme): Color | undefined => {
+export const getColorName = (color?: string, theme?: GrafanaThemeType): Color | undefined => {
   if (!color) {
     return undefined;
   }
@@ -86,7 +86,7 @@ export const getColorName = (color?: string, theme?: GrafanaTheme): Color | unde
     return undefined;
   }
   if (isHex(color)) {
-    const definition = getColorDefinition(color, theme || GrafanaTheme.Dark);
+    const definition = getColorDefinition(color, theme || GrafanaThemeType.Dark);
     return definition ? definition.name : undefined;
   }
 
@@ -98,7 +98,7 @@ export const getColorByName = (colorName: string) => {
   return definition.length > 0 ? definition[0] : undefined;
 };
 
-export const getColorFromHexRgbOrName = (color: string, theme?: GrafanaTheme): string => {
+export const getColorFromHexRgbOrName = (color: string, theme?: GrafanaThemeType): string => {
   if (color.indexOf('rgb') > -1 || isHex(color)) {
     return color;
   }
@@ -112,14 +112,14 @@ export const getColorFromHexRgbOrName = (color: string, theme?: GrafanaTheme): s
   return theme ? colorDefinition.variants[theme] : colorDefinition.variants.dark;
 };
 
-export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaTheme) => {
+export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaThemeType) => {
   return theme ? color.variants[theme] : color.variants.dark;
 };
 
 const buildNamedColorsPalette = () => {
   const palette = new Map<Hue, ColorDefinition[]>();
 
-    const BasicGreen = buildColorDefinition('green', 'green', ['#56A64B', '#73BF69'], true);
+  const BasicGreen = buildColorDefinition('green', 'green', ['#56A64B', '#73BF69'], true);
   const DarkGreen = buildColorDefinition('green', 'dark-green', ['#19730E', '#37872D']);
   const SemiDarkGreen = buildColorDefinition('green', 'semi-dark-green', ['#37872D', '#56A64B']);
   const LightGreen = buildColorDefinition('green', 'light-green', ['#73BF69', '#96D98D']);

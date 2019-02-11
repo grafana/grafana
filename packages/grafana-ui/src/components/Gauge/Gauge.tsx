@@ -1,13 +1,14 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import { ValueMapping, Threshold, BasicGaugeColor, GrafanaTheme } from '../../types';
+import { ValueMapping, Threshold, BasicGaugeColor, GrafanaThemeType } from '../../types';
 import { getMappedValue } from '../../utils/valueMappings';
 import { getColorFromHexRgbOrName, getValueFormat } from '../../utils';
+import { Themeable } from '../../index';
 
 type TimeSeriesValue = string | number | null;
 
-export interface Props {
+export interface Props extends Themeable {
   decimals: number;
   height: number;
   valueMappings: ValueMapping[];
@@ -22,7 +23,6 @@ export interface Props {
   unit: string;
   width: number;
   value: number;
-  theme?: GrafanaTheme;
 }
 
 const FONT_SCALE = 1;
@@ -41,7 +41,7 @@ export class Gauge extends PureComponent<Props> {
     thresholds: [],
     unit: 'none',
     stat: 'avg',
-    theme: GrafanaTheme.Dark,
+    theme: GrafanaThemeType.Dark,
   };
 
   componentDidMount() {
@@ -77,19 +77,19 @@ export class Gauge extends PureComponent<Props> {
     const { thresholds, theme } = this.props;
 
     if (thresholds.length === 1) {
-      return getColorFromHexRgbOrName(thresholds[0].color, theme);
+      return getColorFromHexRgbOrName(thresholds[0].color, theme.type);
     }
 
     const atThreshold = thresholds.filter(threshold => (value as number) === threshold.value)[0];
     if (atThreshold) {
-      return getColorFromHexRgbOrName(atThreshold.color, theme);
+      return getColorFromHexRgbOrName(atThreshold.color, theme.type);
     }
 
     const belowThreshold = thresholds.filter(threshold => (value as number) > threshold.value);
 
     if (belowThreshold.length > 0) {
       const nearestThreshold = belowThreshold.sort((t1, t2) => t2.value - t1.value)[0];
-      return getColorFromHexRgbOrName(nearestThreshold.color, theme);
+      return getColorFromHexRgbOrName(nearestThreshold.color, theme.type);
     }
 
     return BasicGaugeColor.Red;
@@ -104,13 +104,13 @@ export class Gauge extends PureComponent<Props> {
     return [
       ...thresholdsSortedByIndex.map(threshold => {
         if (threshold.index === 0) {
-          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme) };
+          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
         }
 
         const previousThreshold = thresholdsSortedByIndex[threshold.index - 1];
-        return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme) };
+        return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
       }),
-      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme) },
+      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
     ];
   }
 
@@ -126,7 +126,8 @@ export class Gauge extends PureComponent<Props> {
 
     const formattedValue = this.formatValue(value) as string;
     const dimension = Math.min(width, height * 1.3);
-    const backgroundColor = theme === GrafanaTheme.Light ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
+    const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
+
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
