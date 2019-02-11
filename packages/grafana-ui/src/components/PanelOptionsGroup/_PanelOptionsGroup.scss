@@ -37,7 +37,7 @@
 
 .panel-options-group__add-circle {
 
-  @include gradientBar($btn-primary-bg, $btn-primary-bg-hl, #fff);
+  @include gradientBar($btn-secondary-bg, $btn-secondary-bg-hl, #fff);
 
   border-radius: 50px;
   width: 20px;

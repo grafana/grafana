@@ -155,11 +155,11 @@ $table-bg-hover: $gray-5;
 
 // Buttons
 // -------------------------
-$btn-primary-bg: $green-base;
-$btn-primary-bg-hl: $green-shade;
+$btn-secondary-bg: $green-base;
+$btn-secondary-bg-hl: $green-shade;
 
-$btn-secondary-bg: $sapphire-base;
-$btn-secondary-bg-hl: $sapphire-shade;
+$btn-primary-bg: $sapphire-base;
+$btn-primary-bg-hl: $sapphire-shade;
 
 $btn-danger-bg: $lobster-base;
 $btn-danger-bg-hl: $lobster-shade;
@@ -263,7 +263,6 @@ $toolbar-bg: white;
 $warning-text-color: lighten($orange, 10%);
 $error-text-color: $lobster-shade;
 $success-text-color: lighten($green, 10%);
-$info-text-color: $sapphire-shade;
 
 $alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
 $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
@@ -340,7 +339,7 @@ $diff-json-changed-num: $gray-4;
 $diff-json-icon: $gray-4;
 
 //Submenu
-$variable-option-bg: $sapphire-light;
+$variable-option-bg: $dropdownLinkBackgroundHover;
 
 //Switch Slider
 // -------------------------
@@ -363,14 +362,11 @@ $panel-editor-shadow: 0px 0px 8px $gray-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 2px $gray-3);
 $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
-$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-5;
-$panel-editor-viz-item-bg-hover: lighten($blue, 62%);
-
-
-$panel-options-group-border: none;
+$panel-editor-viz-item-bg-hover: lighten($blue, 62%);$panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: $sapphire-faint;

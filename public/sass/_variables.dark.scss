@@ -6,7 +6,7 @@ $theme-name: dark;
 // New Colors
 // -------------------------
 $sapphire-faint: #041126;
-$sapphire-bright: #5794F2;
+$sapphire-light: #5794F2;
 $sapphire-base: #3274D9;
 $sapphire-shade: #1F60C4;
 $lobster-base: #E02F44;
@@ -96,7 +96,7 @@ $edit-gradient: linear-gradient(180deg, rgb(22, 23, 25) 50%, #090909);
 $link-color: darken($white, 11%);
 $link-color-disabled: darken($link-color, 30%);
 $link-hover-color: $white;
-$external-link-color: $sapphire-bright;
+$external-link-color: $sapphire-light;
 
 // Typography
 // -------------------------
@@ -159,14 +159,11 @@ $table-bg-hover: $dark-3;
 // Buttons
 // -------------------------
 
-$btn-primary-bg: $green-base;
-$btn-primary-bg-hl: $green-shade;
+$btn-primary-bg: $sapphire-base;
+$btn-primary-bg-hl: $sapphire-shade;
 
-$btn-secondary-bg-hl: $sapphire-base;
-$btn-secondary-bg: $sapphire-shade;
-
-$btn-secondary-bg: $sapphire-base;
-$btn-secondary-bg-hl: $sapphire-shade;
+$btn-secondary-bg: $green-base;
+$btn-secondary-bg-hl: $green-shade;
 
 $btn-danger-bg: $lobster-base;
 $btn-danger-bg-hl: $lobster-shade;
@@ -270,7 +267,6 @@ $toolbar-bg: $input-black;
 $warning-text-color: $warn;
 $error-text-color: #e84d4d;
 $success-text-color: $forest-light;
-//$info-text-color: $blue-dark;
 
 $alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
 $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
@@ -347,7 +343,7 @@ $diff-json-changed-num: $text-color;
 $diff-json-icon: $gray-7;
 
 //Submenu
-$variable-option-bg: $sapphire-shade;
+$variable-option-bg: $dropdownLinkBackgroundHover;
 
 //Switch Slider
 // -------------------------
@@ -370,12 +366,12 @@ $panel-editor-shadow: 0 0 20px black;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
 $panel-editor-viz-item-shadow: 0 0 8px $dark-5;
 $panel-editor-viz-item-border: 1px solid $dark-5;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-shade;
-$panel-editor-viz-item-border-hover: 1px solid $sapphire-shade;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
+$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
 $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
 
-$panel-editor-viz-item-bg-hover: darken($blue, 47%);
+$panel-editor-viz-item-bg-hover: darken($sapphire-base, 46%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-blue;
