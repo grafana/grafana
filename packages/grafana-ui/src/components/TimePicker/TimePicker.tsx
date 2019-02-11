@@ -26,11 +26,25 @@ export interface Props {
 export interface State {
   isPopOverOpen: boolean;
   isSelectOpen: boolean;
+  isSmallScreen: boolean;
 }
 
 export class TimePicker extends PureComponent<Props, State> {
   pickerTriggerRef = createRef<HTMLDivElement>();
-  state = { isSelectOpen: false, isPopOverOpen: false };
+  state = { isSelectOpen: false, isPopOverOpen: false, isSmallScreen: false };
+
+  componentWillMount() {
+    this.setIsSmallScreen();
+    window.addEventListener('resize', this.setIsSmallScreen);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.setIsSmallScreen);
+  }
+
+  setIsSmallScreen = () => {
+    this.setState({ isSmallScreen: window.innerWidth <= 1116 });
+  };
 
   mapTimeOptionsToSelectOptionItems = (selectTimeOptions: TimeOption[]) => {
     const options = selectTimeOptions.map(timeOption => {
@@ -51,7 +65,8 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   onCustomClicked = () => {
-    this.setState({ isPopOverOpen: true });
+    const { isSmallScreen } = this.state;
+    this.setState({ isSelectOpen: isSmallScreen ? false : true, isPopOverOpen: true });
   };
 
   onClickOutside = () => {
@@ -62,7 +77,7 @@ export class TimePicker extends PureComponent<Props, State> {
 
   render() {
     const { selectTimeOptions, onChange, value, onMoveBackward, onMoveForward, onZoom } = this.props;
-    const { isSelectOpen, isPopOverOpen } = this.state;
+    const { isSelectOpen, isPopOverOpen, isSmallScreen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const popover = TimePickerPopOver;
     const popoverElement = React.createElement(popover, {
@@ -84,7 +99,12 @@ export class TimePicker extends PureComponent<Props, State> {
                 <i className="fa fa-chevron-left" />
               </button>
             )}
-            <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={'NaN'} value={rangeString} />
+            <SelectButton
+              onClick={this.onSelectButtonClicked}
+              textWhenUndefined={'NaN'}
+              value={rangeString}
+              iconClass={'fa fa-clock-o'}
+            />
             {isAbsolute && (
               <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
                 <i className="fa fa-chevron-right" />
@@ -109,7 +129,7 @@ export class TimePicker extends PureComponent<Props, State> {
                 show={isPopOverOpen}
                 content={popoverElement}
                 referenceElement={this.pickerTriggerRef.current}
-                placement={'left-start'}
+                placement={isSmallScreen ? 'auto' : 'left-start'}
               />
             )}
           </div>

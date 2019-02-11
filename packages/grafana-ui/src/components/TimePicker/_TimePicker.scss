@@ -1,6 +1,10 @@
 .time-picker {
   display: flex;
   flex-flow: column nowrap;
+
+  .time-picker-buttons {
+    display: flex;
+  }
 }
 
 .time-picker-popover {
@@ -127,5 +131,51 @@
   .react-calendar__tile--active {
     color: $blue;
     font-weight: $font-weight-semi-bold;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .time-picker-popover {
+    margin-top: 38px;
+    margin-left: $spacer;
+    display: flex;
+    flex-flow: column nowrap;
+
+    .time-picker-popover-box {
+      padding: $spacer / 2 $spacer;
+
+      .time-picker-popover-box-title {
+        font-size: $font-size-md;
+        font-weight: $font-weight-semi-bold;
+      }
+    }
+
+    .time-picker-popover-box:first-child {
+      border-right: none;
+      border-bottom: 1px ridge;
+    }
+
+    .time-picker-popover-box:last-child {
+      .time-picker-popover-box-body {
+        display: flex;
+        flex-flow: column nowrap;
+
+        .time-picker-popover-box-body-custom-ranges:first-child {
+          margin: 0;
+        }
+      }
+    }
+
+    .time-picker-popover-box-footer {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: flex-end;
+      margin-top: $spacer;
+    }
+  }
+
+  .time-picker-calendar {
+    max-width: 500px;
+    width: 100%;
   }
 }

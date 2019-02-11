@@ -260,8 +260,11 @@ export class DashNav extends PureComponent<Props> {
         {/* <div className="navbar-buttons">
           <TimePicker
             isTimezoneUtc={false}
-            value={{ from: moment(), to: moment(), raw: { from: 'now', to: 'now' } }}
+            value={{ from: moment(), to: moment(), raw: { from: 'now/d', to: 'now/d' } }}
             onChange={() => {}}
+            onMoveBackward={() => {}}
+            onMoveForward={() => {}}
+            onZoom={() => {}}
             selectTimeOptions={[
               { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3, active: false },
               { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3, active: false },

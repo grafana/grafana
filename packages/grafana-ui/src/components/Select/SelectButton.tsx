@@ -9,9 +9,9 @@ export interface Props {
 
 export const SelectButton: FunctionComponent<Props> = (props: Props) => {
   return (
-    <button className={'btn navbar-button'} onClick={props.onClick}>
+    <button className={'btn navbar-button navbar-button--tight'} onClick={props.onClick}>
       <div className={'select-button'}>
-        {props.iconClass && <i className={props.iconClass} />}
+        {props.iconClass && <i className={`select-button-icon ${props.iconClass}`} />}
         <span className={'select-button-value'}>{props.value ? props.value : props.textWhenUndefined}</span>
         <i className={'fa fa-caret-down fa-fw'} />
       </div>
