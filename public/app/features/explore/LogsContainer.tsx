@@ -25,6 +25,7 @@ interface LogsContainerProps {
   scanRange?: RawTimeRange;
   showingLogs: boolean;
   toggleLogs: typeof toggleLogs;
+  width: number;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -46,6 +47,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       showingLogs,
       scanning,
       scanRange,
+      width,
     } = this.props;
 
     return (
@@ -63,6 +65,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           range={range}
           scanning={scanning}
           scanRange={scanRange}
+          width={width}
         />
       </Panel>
     );
