@@ -30,6 +30,11 @@ type AzureMonitorDatasource struct {
 	dsInfo     *models.DataSource
 }
 
+var (
+	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
+	allowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
+)
+
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
@@ -49,7 +54,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		if err != nil {
 			return nil, err
 		}
-		azlog.Debug("AzureMonitor", "Response", resp)
+		// azlog.Debug("AzureMonitor", "Response", resp)
 
 		err = e.parseResponse(queryRes, resp, query)
 		if err != nil {
@@ -93,10 +98,20 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		alias := fmt.Sprintf("%v", azureMonitorTarget["alias"])
 
+		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
+		if timeGrain == "auto" {
+			autoInSeconds := e.findClosestAllowedIntervalMs(query.IntervalMs) / 1000
+			tg := &TimeGrain{}
+			timeGrain, err = tg.createISO8601DurationFromInterval(fmt.Sprintf("%vs", autoInSeconds))
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		params := url.Values{}
 		params.Add("api-version", "2018-01-01")
 		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
-		params.Add("interval", fmt.Sprintf("%v", azureMonitorTarget["timeGrain"]))
+		params.Add("interval", timeGrain)
 		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
 		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
 
@@ -268,4 +283,19 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 	}
 
 	return nil
+}
+
+func (e *AzureMonitorDatasource) findClosestAllowedIntervalMs(intervalMs int64) int64 {
+	closest := allowedIntervalsMS[0]
+
+	for i, allowed := range allowedIntervalsMS {
+		if intervalMs > allowed {
+			if i+1 < len(allowedIntervalsMS) {
+				closest = allowedIntervalsMS[i+1]
+			} else {
+				closest = allowed
+			}
+		}
+	}
+	return closest
 }

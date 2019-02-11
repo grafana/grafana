@@ -229,6 +229,26 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(res.Series[2].Points[0][0].Float64, ShouldEqual, 0)
 			})
 		})
+
+		Convey("Find closest allowed interval for auto time grain", func() {
+			intervals := map[string]int64{
+				"3m":  180000,
+				"5m":  300000,
+				"10m": 600000,
+				"15m": 900000,
+				"1d":  86400000,
+				"2d":  172800000,
+			}
+
+			closest := datasource.findClosestAllowedIntervalMs(intervals["3m"])
+			So(closest, ShouldEqual, intervals["5m"])
+
+			closest = datasource.findClosestAllowedIntervalMs(intervals["10m"])
+			So(closest, ShouldEqual, intervals["15m"])
+
+			closest = datasource.findClosestAllowedIntervalMs(intervals["2d"])
+			So(closest, ShouldEqual, intervals["1d"])
+		})
 	})
 }
 
