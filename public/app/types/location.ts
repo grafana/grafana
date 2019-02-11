@@ -15,6 +15,7 @@ export interface LocationState {
   query: UrlQueryMap;
   routeParams: UrlQueryMap;
   replace: boolean;
+  lastUpdated: number;
 }
 
 export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[];
