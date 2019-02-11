@@ -8,6 +8,7 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
+import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -23,6 +24,8 @@ import variables from 'sass/_variables.scss';
 import templateSrv from 'app/features/templating/template_srv';
 import { DataQueryResponse } from '@grafana/ui/src';
 
+const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
+
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
@@ -34,6 +37,9 @@ export interface State {
   renderCounter: number;
   timeInfo?: string;
   timeRange?: TimeRange;
+  loading: LoadingState;
+  isFirstLoad: boolean;
+  errorMessage: string;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -43,8 +49,11 @@ export class PanelChrome extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
+      loading: LoadingState.NotStarted,
       refreshCounter: 0,
       renderCounter: 0,
+      isFirstLoad: false,
+      errorMessage: '',
     };
   }
 
@@ -93,6 +102,16 @@ export class PanelChrome extends PureComponent<Props, State> {
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
+
+  onError = (errorMessage: string) => {
+    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
+      this.setState({
+        loading: LoadingState.Error,
+        isFirstLoad: false,
+        errorMessage: errorMessage,
+      });
+    }
+  };
 
   renderPanel(loading, panelData, width, height): JSX.Element {
     const { panel, plugin } = this.props;
@@ -145,23 +164,32 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
               />
-              {panel.snapshotData ? (
-                this.renderPanel(false, panel.snapshotData, width, height)
-              ) : (
-                <DataPanel
-                  datasource={datasource}
-                  queries={targets}
-                  timeRange={timeRange}
-                  isVisible={this.isVisible}
-                  widthPixels={width}
-                  refreshCounter={refreshCounter}
-                  onDataResponse={this.onDataResponse}
-                >
-                  {({ loading, panelData }) => {
-                    return this.renderPanel(loading, panelData, width, height);
-                  }}
-                </DataPanel>
-              )}
+              <ErrorBoundary>
+                {({ error, errorInfo }) => {
+                  if (errorInfo) {
+                    this.onError(error.message || DEFAULT_PLUGIN_ERROR);
+                    return null;
+                  }
+
+                  return panel.snapshotData ? (
+                    this.renderPanel(false, panel.snapshotData, width, height)
+                  ) : (
+                    <DataPanel
+                      datasource={datasource}
+                      queries={targets}
+                      timeRange={timeRange}
+                      isVisible={this.isVisible}
+                      widthPixels={width}
+                      refreshCounter={refreshCounter}
+                      onDataResponse={this.onDataResponse}
+                    >
+                      {({ loading, panelData }) => {
+                        return this.renderPanel(loading, panelData, width, height);
+                      }}
+                    </DataPanel>
+                  );
+                }}
+              </ErrorBoundary>
             </div>
           );
         }}
