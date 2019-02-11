@@ -32,7 +32,7 @@ interface LogsContainerProps {
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
   onClickLogsButton = () => {
-    this.props.toggleLogs(this.props.exploreId);
+    this.props.toggleLogs(this.props.exploreId, this.props.showingLogs);
   };
 
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {

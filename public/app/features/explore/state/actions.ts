@@ -714,25 +714,20 @@ const togglePanelActionCreator = (
     | ActionCreator<ToggleGraphPayload>
     | ActionCreator<ToggleLogsPayload>
     | ActionCreator<ToggleTablePayload>
-) => (exploreId: ExploreId) => {
-  return (dispatch, getState) => {
-    let shouldRunQueries, uiFragmentStateUpdate: Partial<ExploreUIState>;
+) => (exploreId: ExploreId, isPanelVisible: boolean) => {
+  return (dispatch) => {
+    let uiFragmentStateUpdate: Partial<ExploreUIState>;
+    const shouldRunQueries = !isPanelVisible;
 
     switch (actionCreator.type) {
       case toggleGraphAction.type:
-        const isShowingGraph = getState().explore[exploreId].showingGraph;
-        shouldRunQueries = !isShowingGraph;
-        uiFragmentStateUpdate = { showingGraph: !isShowingGraph };
+        uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
         break;
       case toggleLogsAction.type:
-        const isShowingLogs = getState().explore[exploreId].showingLogs;
-        shouldRunQueries = !isShowingLogs;
-        uiFragmentStateUpdate = { showingLogs: !isShowingLogs };
+        uiFragmentStateUpdate = { showingLogs: !isPanelVisible };
         break;
       case toggleTableAction.type:
-        const isShowingTable = getState().explore[exploreId].showingTable;
-        shouldRunQueries = !isShowingTable;
-        uiFragmentStateUpdate = { showingTable: !isShowingTable };
+        uiFragmentStateUpdate = { showingTable: !isPanelVisible };
         break;
     }
 
@@ -764,6 +759,15 @@ export const toggleTable = togglePanelActionCreator(toggleTableAction);
  * Change logs deduplication strategy and update URL.
  */
 export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy) => {
+  return dispatch => {
+    dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
+  };
+};
+
+/**
+ * Change logs deduplication strategy and update URL.
+ */
+export const hiddenLogLe = (exploreId, dedupStrategy: LogsDedupStrategy) => {
   return dispatch => {
     dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
   };
