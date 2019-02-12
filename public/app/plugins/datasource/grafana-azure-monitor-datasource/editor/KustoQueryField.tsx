@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
@@ -6,11 +7,11 @@ import QueryField from './query_field';
 import debounce from 'app/features/explore/utils/debounce';
 import { getNextCharacter } from 'app/features/explore/utils/dom';
 
-import { FUNCTIONS, KEYWORDS } from './kusto';
+import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
 // import '../sass/editor.base.scss';
 
 
-const TYPEAHEAD_DELAY = 500;
+const TYPEAHEAD_DELAY = 100;
 
 interface Suggestion {
   text: string;
@@ -25,24 +26,46 @@ interface SuggestionGroup {
   skipFilter?: boolean;
 }
 
+interface KustoSchema {
+  Databases: {
+    Default?: KustoDBSchema;
+  };
+  Plugins?: any[];
+}
+
+interface KustoDBSchema {
+  Name?: string;
+  Functions?: any;
+  Tables?: any;
+}
+
+const defaultSchema = () => ({
+  Databases: {
+    Default: {}
+  }
+});
+
 const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 const wrapText = text => ({ text });
 
 export default class KustoQueryField extends QueryField {
   fields: any;
   events: any;
+  schema: KustoSchema;
 
   constructor(props, context) {
     super(props, context);
+    this.schema = defaultSchema();
 
     this.onTypeahead = debounce(this.onTypeahead, TYPEAHEAD_DELAY);
   }
 
   componentDidMount() {
-    this.updateMenu();
+    super.componentDidMount();
+    this.fetchSchema();
   }
 
-  onTypeahead = () => {
+  onTypeahead = (force?: boolean) => {
     const selection = window.getSelection();
     if (selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
@@ -73,62 +96,77 @@ export default class KustoQueryField extends QueryField {
       const wrapperClasses = wrapperNode.classList;
       let typeaheadContext: string | null = null;
 
+      // Built-in functions
       if (wrapperClasses.contains('function-context')) {
         typeaheadContext = 'context-function';
-        if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
-        } else {
-          this._fetchFields();
-          return;
-        }
-      } else if (modelPrefix.match(/(facet\s$)/i)) {
-        typeaheadContext = 'context-facet';
-        if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
-        } else {
-          this._fetchFields();
-          return;
-        }
-      } else if (modelPrefix.match(/(,\s*$)/)) {
-        typeaheadContext = 'context-multiple-fields';
-        if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
-        } else {
-          this._fetchFields();
-          return;
-        }
-      } else if (modelPrefix.match(/(from\s$)/i)) {
-        typeaheadContext = 'context-from';
-        if (this.events) {
-          suggestionGroups = this._getKeywordSuggestions();
-        } else {
-          this._fetchEvents();
-          return;
-        }
-      } else if (modelPrefix.match(/(^select\s\w*$)/i)) {
-        typeaheadContext = 'context-select';
-        if (this.fields) {
-          suggestionGroups = this._getKeywordSuggestions();
-        } else {
-          this._fetchFields();
-          return;
-        }
-      } else if (modelPrefix.match(/from\s\S+\s\w*$/i)) {
-        prefix = '';
-        typeaheadContext = 'context-since';
-        suggestionGroups = this._getKeywordSuggestions();
-      // } else if (modelPrefix.match(/\d+\s\w*$/)) {
-      //   typeaheadContext = 'context-number';
-      //   suggestionGroups = this._getAfterNumberSuggestions();
-      } else if (modelPrefix.match(/ago\b/i) || modelPrefix.match(/facet\b/i) || modelPrefix.match(/\$__timefilter\b/i)) {
-        typeaheadContext = 'context-timeseries';
-        suggestionGroups = this._getKeywordSuggestions();
-      } else if (prefix && !wrapperClasses.contains('argument')) {
-        typeaheadContext = 'context-builtin';
-        suggestionGroups = this._getKeywordSuggestions();
-      } else if (Plain.serialize(this.state.value) === '') {
+        suggestionGroups = this.getColumnSuggestions();
+
+      // where
+      } else if (modelPrefix.match(/(where\s(\w+\b)?$)/i)) {
+        typeaheadContext = 'context-where';
+        suggestionGroups = this.getColumnSuggestions();
+
+      // summarize by
+      } else if (modelPrefix.match(/(summarize\s(\w+\b)?$)/i)) {
+        typeaheadContext = 'context-summarize';
+        suggestionGroups = this.getFunctionSuggestions();
+      } else if (modelPrefix.match(/(summarize\s(.+\s)?by\s+([^,\s]+,\s*)*([^,\s]+\b)?$)/i)) {
+        typeaheadContext = 'context-summarize-by';
+        suggestionGroups = this.getColumnSuggestions();
+
+      // order by, top X by, ... by ...
+      } else if (modelPrefix.match(/(by\s+([^,\s]+,\s*)*([^,\s]+\b)?$)/i)) {
+        typeaheadContext = 'context-by';
+        suggestionGroups = this.getColumnSuggestions();
+
+      // join
+      } else if (modelPrefix.match(/(on\s(.+\b)?$)/i)) {
+        typeaheadContext = 'context-join-on';
+        suggestionGroups = this.getColumnSuggestions();
+      } else if (modelPrefix.match(/(join\s+(\(\s+)?(\w+\b)?$)/i)) {
+        typeaheadContext = 'context-join';
+        suggestionGroups = this.getTableSuggestions();
+
+      // distinct
+      } else if (modelPrefix.match(/(distinct\s(.+\b)?$)/i)) {
+        typeaheadContext = 'context-distinct';
+        suggestionGroups = this.getColumnSuggestions();
+
+      // database()
+      } else if (modelPrefix.match(/(database\(\"(\w+)\"\)\.(.+\b)?$)/i)) {
+        typeaheadContext = 'context-database-table';
+        const db = this.getDBFromDatabaseFunction(modelPrefix);
+        console.log(db);
+        suggestionGroups = this.getTableSuggestions(db);
+        prefix = prefix.replace('.', '');
+
+      // new
+      } else if (normalizeQuery(Plain.serialize(this.state.value)).match(/^\s*\w*$/i)) {
         typeaheadContext = 'context-new';
-        suggestionGroups = this._getInitialSuggestions();
+        if (this.schema) {
+          suggestionGroups = this.getInitialSuggestions();
+        } else {
+          this.fetchSchema();
+          setTimeout(this.onTypeahead, 0);
+          return;
+        }
+
+      // built-in
+      } else if (prefix && !wrapperClasses.contains('argument') && !force) {
+        // Use only last typed word as a prefix for searching
+        if (modelPrefix.match(/\s$/i)) {
+          prefix = '';
+          return;
+        }
+        prefix = getLastWord(prefix);
+        typeaheadContext = 'context-builtin';
+        suggestionGroups = this.getKeywordSuggestions();
+      } else if (force === true) {
+        typeaheadContext = 'context-builtin-forced';
+        if (modelPrefix.match(/\s$/i)) {
+          prefix = '';
+        }
+        suggestionGroups = this.getKeywordSuggestions();
       }
 
       let results = 0;
@@ -148,6 +186,7 @@ export default class KustoQueryField extends QueryField {
         .filter(group => group.items.length > 0);
 
       // console.log('onTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, typeaheadContext);
+      // console.log('onTypeahead', prefix, typeaheadContext, force);
 
       this.setState({
         typeaheadPrefix: prefix,
@@ -253,7 +292,11 @@ export default class KustoQueryField extends QueryField {
   //   ];
   // }
 
-  private _getKeywordSuggestions(): SuggestionGroup[] {
+  private getInitialSuggestions(): SuggestionGroup[] {
+    return this.getTableSuggestions();
+  }
+
+  private getKeywordSuggestions(): SuggestionGroup[] {
     return [
       {
         prefixMatch: true,
@@ -262,51 +305,132 @@ export default class KustoQueryField extends QueryField {
       },
       {
         prefixMatch: true,
-        label: 'Functions',
-        items: FUNCTIONS.map((s: any) => { s.type = 'function'; return s; })
-      }
-    ];
-  }
-
-  private _getInitialSuggestions(): SuggestionGroup[] {
-    // TODO: return datbase tables as an initial suggestion
-    return [
-      {
-        prefixMatch: true,
-        label: 'Keywords',
-        items: KEYWORDS.map(wrapText)
+        label: 'Operators',
+        items: operatorTokens
       },
       {
         prefixMatch: true,
         label: 'Functions',
-        items: FUNCTIONS.map((s: any) => { s.type = 'function'; return s; })
+        items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
+        label: 'Macros',
+        items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
+        label: 'Tables',
+        items: _.map(this.schema.Databases.Default.Tables, (t: any) => ({ text: t.Name }))
       }
     ];
   }
 
-  private async _fetchEvents() {
-    // const query = 'events';
-    // const result = await this.request(query);
-
-    // if (result === undefined) {
-    //   this.events = [];
-    // } else {
-    //   this.events = result;
-    // }
-    // setTimeout(this.onTypeahead, 0);
-
-    //Stub
-    this.events = [];
+  private getFunctionSuggestions(): SuggestionGroup[] {
+    return [
+      {
+        prefixMatch: true,
+        label: 'Functions',
+        items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
+      },
+      {
+        prefixMatch: true,
+        label: 'Macros',
+        items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
+      }
+    ];
   }
 
-  private async _fetchFields() {
-    // const query = 'fields';
-    // const result = await this.request(query);
-
-    // this.fields = result || [];
-
-    // setTimeout(this.onTypeahead, 0);
-    // Stub
-    this.fields = [];
+  getTableSuggestions(db = 'Default'): SuggestionGroup[] {
+    if (this.schema.Databases[db]) {
+      return [
+        {
+          prefixMatch: true,
+          label: 'Tables',
+          items: _.map(this.schema.Databases[db].Tables, (t: any) => ({ text: t.Name }))
+        }
+      ];
+    } else {
+      return [];
+    }
   }
+
+  private getColumnSuggestions(): SuggestionGroup[] {
+    const table = this.getTableFromContext();
+    if (table) {
+      const tableSchema = this.schema.Databases.Default.Tables[table];
+      if (tableSchema) {
+        return [
+          {
+            prefixMatch: true,
+            label: 'Fields',
+            items: _.map(tableSchema.OrderedColumns, (f: any) => ({
+              text: f.Name,
+              hint: f.Type
+            }))
+          }
+        ];
+      }
+    }
+    return [];
+  }
+
+  private getTableFromContext() {
+    const query = Plain.serialize(this.state.value);
+    const tablePattern = /^\s*(\w+)\s*|/g;
+    const normalizedQuery = normalizeQuery(query);
+    const match = tablePattern.exec(normalizedQuery);
+    if (match && match.length > 1 && match[0] && match[1]) {
+      return match[1];
+    } else {
+      return null;
+    }
+  }
+
+  private getDBFromDatabaseFunction(prefix: string) {
+    const databasePattern = /database\(\"(\w+)\"\)/gi;
+    const match = databasePattern.exec(prefix);
+    if (match && match.length > 1 && match[0] && match[1]) {
+      return match[1];
+    } else {
+      return null;
+    }
+  }
+
+  private async fetchSchema() {
+    let schema = await this.props.getSchema();
+    if (schema) {
+      if (schema.Type === 'AppInsights') {
+        schema = castSchema(schema);
+      }
+      this.schema = schema;
+    } else {
+      this.schema = defaultSchema();
+    }
+  }
+}
+
+/**
+ * Cast schema from App Insights to default Kusto schema
+ */
+function castSchema(schema) {
+  const defaultSchemaTemplate = defaultSchema();
+  defaultSchemaTemplate.Databases.Default = schema;
+  return defaultSchemaTemplate;
+}
+
+function normalizeQuery(query: string): string {
+  const commentPattern = /\/\/.*$/gm;
+  let normalizedQuery = query.replace(commentPattern, '');
+  normalizedQuery = normalizedQuery.replace('\n', ' ');
+  return normalizedQuery;
+}
+
+function getLastWord(str: string): string {
+  const lastWordPattern = /(?:.*\s)?([^\s]+\s*)$/gi;
+  const match = lastWordPattern.exec(str);
+  if (match && match.length > 1) {
+    return match[1];
+  }
+  return '';
 }

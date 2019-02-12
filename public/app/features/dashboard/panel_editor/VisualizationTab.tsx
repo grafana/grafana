@@ -119,7 +119,12 @@ export class VisualizationTab extends PureComponent<Props, State> {
       template +=
         `
       <div class="panel-options-group" ng-cloak>` +
-        (i > 0 ? `<div class="panel-options-group__header">{{ctrl.editorTabs[${i}].title}}</div>` : '') +
+        (i > 0
+          ? `<div class="panel-options-group__header">
+           <span class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}
+           </span>
+         </div>`
+          : '') +
         `<div class="panel-options-group__body">
           <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
         </div>
@@ -143,6 +148,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
       this.angularOptions = null;
     }
   }
+
+  clearQuery = () => {
+    this.setState({ searchQuery: '' });
+  };
 
   onPanelOptionsChanged = (options: any) => {
     this.props.panel.updateOptions(options);
@@ -228,10 +237,15 @@ export class VisualizationTab extends PureComponent<Props, State> {
     };
 
     return (
-      <EditorTabBody heading="Visualization" renderToolbar={this.renderToolbar} toolbarItems={[pluginHelp]}
-        scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
+      <EditorTabBody
+        heading="Visualization"
+        renderToolbar={this.renderToolbar}
+        toolbarItems={[pluginHelp]}
+        scrollTop={scrollTop}
+        setScrollTop={this.setScrollTop}
+      >
         <>
-          <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true}>
+          <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true} onExited={this.clearQuery}>
             <VizTypePicker
               current={plugin}
               onTypeChanged={this.onTypeChanged}
@@ -247,11 +261,11 @@ export class VisualizationTab extends PureComponent<Props, State> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  urlOpenVizPicker: !!state.location.query.openVizPicker
+  urlOpenVizPicker: !!state.location.query.openVizPicker,
 });
 
 const mapDispatchToProps = {
-  updateLocation
+  updateLocation,
 };
 
 export default connectWithStore(VisualizationTab, mapStateToProps, mapDispatchToProps);

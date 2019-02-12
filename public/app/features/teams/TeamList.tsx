@@ -86,7 +86,7 @@ export class TeamList extends PureComponent<Props, any> {
     const { teams, searchQuery } = this.props;
 
     return (
-      <div className="page-container page-body">
+      <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <label className="gf-form--has-input-icon gf-form--grow">
@@ -103,7 +103,7 @@ export class TeamList extends PureComponent<Props, any> {
 
           <div className="page-action-bar__spacer" />
 
-          <a className="btn btn-success" href="org/teams/new">
+          <a className="btn btn-primary" href="org/teams/new">
             New team
           </a>
         </div>
@@ -122,7 +122,7 @@ export class TeamList extends PureComponent<Props, any> {
             <tbody>{teams.map(team => this.renderTeam(team))}</tbody>
           </table>
         </div>
-      </div>
+      </>
     );
   }
 

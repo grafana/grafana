@@ -68,7 +68,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     // handle plugin loading & changing of plugin type
     if (!this.state.plugin || this.state.plugin.id !== pluginId) {
-      const plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
+      let plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
 
       // remember if this is from an angular panel
       const fromAngularPanel = this.state.angularPanel != null;
@@ -81,10 +81,15 @@ export class DashboardPanel extends PureComponent<Props, State> {
       }
 
       if (plugin.exports) {
-        this.setState({ plugin: plugin, angularPanel: null });
+        this.setState({ plugin, angularPanel: null });
       } else {
-        plugin.exports = await importPluginModule(plugin.module);
-        this.setState({ plugin: plugin, angularPanel: null });
+        try {
+          plugin.exports = await importPluginModule(plugin.module);
+        } catch (e) {
+          plugin = getPanelPluginNotFound(pluginId);
+        }
+
+        this.setState({ plugin, angularPanel: null });
       }
     }
   }

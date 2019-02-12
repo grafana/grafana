@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/ldap.v3"
@@ -322,11 +323,51 @@ func TestLdapAuther(t *testing.T) {
 			So(sc.addOrgUserCmd.Role, ShouldEqual, "Admin")
 		})
 	})
+
+	Convey("When searching for a user and not all five attributes are mapped", t, func() {
+		mockLdapConnection := &mockLdapConn{}
+		entry := ldap.Entry{
+			DN: "dn", Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"roelgerrits"}},
+				{Name: "surname", Values: []string{"Gerrits"}},
+				{Name: "email", Values: []string{"roel@test.com"}},
+				{Name: "name", Values: []string{"Roel"}},
+				{Name: "memberof", Values: []string{"admins"}},
+			}}
+		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+		mockLdapConnection.setSearchResult(&result)
+
+		// Set up attribute map without surname and email
+		ldapAuther := &ldapAuther{
+			server: &LdapServerConf{
+				Attr: LdapAttributeMap{
+					Username: "username",
+					Name:     "name",
+					MemberOf: "memberof",
+				},
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			conn: mockLdapConnection,
+			log:  log.New("test-logger"),
+		}
+
+		searchResult, err := ldapAuther.searchForUser("roelgerrits")
+
+		So(err, ShouldBeNil)
+		So(searchResult, ShouldNotBeNil)
+
+		// User should be searched in ldap
+		So(mockLdapConnection.searchCalled, ShouldBeTrue)
+
+		// No empty attributes should be added to the search request
+		So(len(mockLdapConnection.searchAttributes), ShouldEqual, 3)
+	})
 }
 
 type mockLdapConn struct {
-	result       *ldap.SearchResult
-	searchCalled bool
+	result           *ldap.SearchResult
+	searchCalled     bool
+	searchAttributes []string
 }
 
 func (c *mockLdapConn) Bind(username, password string) error {
@@ -339,8 +380,9 @@ func (c *mockLdapConn) setSearchResult(result *ldap.SearchResult) {
 	c.result = result
 }
 
-func (c *mockLdapConn) Search(*ldap.SearchRequest) (*ldap.SearchResult, error) {
+func (c *mockLdapConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
 	c.searchCalled = true
+	c.searchAttributes = sr.Attributes
 	return c.result, nil
 }
 

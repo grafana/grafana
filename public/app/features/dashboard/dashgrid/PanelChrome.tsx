@@ -94,6 +94,25 @@ export class PanelChrome extends PureComponent<Props, State> {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
+  get hasPanelSnapshot() {
+    const { panel } = this.props;
+    return panel.snapshotData && panel.snapshotData.length;
+  }
+
+  get hasDataPanel() {
+    return !this.props.plugin.noQueries && !this.hasPanelSnapshot;
+  }
+
+  get getDataForPanel() {
+    const { panel, plugin } = this.props;
+
+    if (plugin.noQueries) {
+      return null;
+    }
+
+    return this.hasPanelSnapshot ? snapshotDataToPanelData(panel) : null;
+  }
+
   renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
@@ -121,20 +140,15 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 
-  renderHelper = (width: number, height: number): JSX.Element => {
-    const { panel, plugin } = this.props;
+  renderPanelBody = (width: number, height: number): JSX.Element => {
+    const { panel } = this.props;
     const { refreshCounter, timeRange } = this.state;
     const { datasource, targets } = panel;
     return (
       <>
-      {panel.snapshotData && panel.snapshotData.length > 0 ? (
-        this.renderPanelPlugin(LoadingState.Done, snapshotDataToPanelData(panel), width, height)
-      ) : (
-        <>
-        {plugin.noQueries ?
-            this.renderPanelPlugin(LoadingState.Done, null, width, height)
-          : (
-            <DataPanel
+        {this.hasDataPanel ? (
+          <DataPanel
+            panelId={panel.id}
             datasource={datasource}
             queries={targets}
             timeRange={timeRange}
@@ -147,13 +161,12 @@ export class PanelChrome extends PureComponent<Props, State> {
               return this.renderPanelPlugin(loading, panelData, width, height);
             }}
           </DataPanel>
-          )}
-        </>
-      )}
+        ) : (
+          this.renderPanelPlugin(LoadingState.Done, this.getDataForPanel, width, height)
+        )}
       </>
     );
-  }
-
+  };
 
   render() {
     const { dashboard, panel } = this.props;
@@ -179,7 +192,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
               />
-              {this.renderHelper(width, height)}
+              {this.renderPanelBody(width, height)}
             </div>
           );
         }}

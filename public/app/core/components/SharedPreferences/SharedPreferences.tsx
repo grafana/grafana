@@ -126,7 +126,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           />
         </div>
         <div className="gf-form-button-row">
-          <button type="submit" className="btn btn-success">
+          <button type="submit" className="btn btn-primary">
             Save
           </button>
         </div>

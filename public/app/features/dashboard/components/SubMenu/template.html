@@ -7,7 +7,7 @@
       <value-select-dropdown ng-if="variable.type !== 'adhoc' && variable.type !== 'textbox'" variable="variable" on-updated="ctrl.variableUpdated(variable)"></value-select-dropdown>
       <input type="text" ng-if="variable.type === 'textbox'" ng-model="variable.query" class="gf-form-input width-12"  ng-blur="variable.current.value != variable.query && variable.updateOptions() && ctrl.variableUpdated(variable);" ng-keydown="$event.keyCode === 13 && variable.current.value != variable.query && variable.updateOptions() && ctrl.variableUpdated(variable);" ></input>
     </div>
-    <ad-hoc-filters ng-if="variable.type === 'adhoc'" variable="variable"></ad-hoc-filters>
+    <ad-hoc-filters ng-if="variable.type === 'adhoc'" variable="variable" dashboard="ctrl.dashboard"></ad-hoc-filters>
   </div>
 
   <div ng-if="ctrl.dashboard.annotations.list.length > 0">

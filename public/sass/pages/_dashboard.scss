@@ -276,3 +276,19 @@ div.flot-text {
 .panel-full-edit {
   padding-top: $dashboard-padding;
 }
+
+.dashboard-loading {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .alert {
+    max-width: 600px;
+    min-width: 600px;
+  }
+}
+
+.dashboard-loading__text {
+  font-size: $font-size-lg;
+}

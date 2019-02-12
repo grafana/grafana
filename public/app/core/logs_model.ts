@@ -340,6 +340,11 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       return a[1] - b[1];
     });
 
-    return { datapoints: series.datapoints, target: series.alias, color: series.color };
+    return {
+      datapoints: series.datapoints,
+      target: series.alias,
+      alias: series.alias,
+      color: series.color
+    };
   });
 }

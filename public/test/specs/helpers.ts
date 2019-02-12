@@ -143,7 +143,7 @@ export function DashboardViewStateStub(this: any) {
 }
 
 export function TimeSrvStub(this: any) {
-  this.init = sinon.spy();
+  this.init = () => {};
   this.time = { from: 'now-1h', to: 'now' };
   this.timeRange = function(parse) {
     if (parse === false) {

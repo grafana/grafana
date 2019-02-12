@@ -124,12 +124,11 @@
     <div class="gf-form gf-form--grow">
       <kusto-editor
         class="gf-form gf-form--grow"
-        request="ctrl.requestMetadata"
-        style="border: none"
         query="ctrl.target.azureLogAnalytics.query"
         change="ctrl.onLogAnalyticsQueryChange"
         execute="ctrl.onLogAnalyticsQueryExecute"
         variables="ctrl.templateVariables"
+        getSchema="ctrl.getAzureLogAnalyticsSchema"
       />
     </div>
 
@@ -285,9 +284,20 @@
       </div>
     </div>
     <div ng-show="ctrl.target.appInsights.rawQuery">
-      <div class="gf-form">
+      <!-- <div class="gf-form">
         <textarea rows="3" class="gf-form-input" ng-model="ctrl.target.appInsights.rawQueryString" spellcheck="false"
           placeholder="Application Insights Query" ng-model-onblur ng-change="ctrl.refresh()"></textarea>
+      </div> -->
+      <div class="gf-form gf-form--grow">
+        <kusto-editor
+          class="gf-form gf-form--grow"
+          query="ctrl.target.appInsights.rawQueryString"
+          placeholder="'Application Insights Query'"
+          change="ctrl.onAppInsightsQueryChange"
+          execute="ctrl.onAppInsightsQueryExecute"
+          variables="ctrl.templateVariables"
+          getSchema="ctrl.getAppInsightsQuerySchema"
+        />
       </div>
       <div class="gf-form-inline">
         <div class="gf-form">

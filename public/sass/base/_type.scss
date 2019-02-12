@@ -59,14 +59,6 @@ a.text-error:focus {
   color: darken($error-text-color, 10%);
 }
 
-.text-info {
-  color: $info-text-color;
-}
-a.text-info:hover,
-a.text-info:focus {
-  color: darken($info-text-color, 10%);
-}
-
 .text-success {
   color: $success-text-color;
 }

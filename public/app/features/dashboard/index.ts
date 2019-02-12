@@ -1,8 +1,6 @@
-import './containers/DashboardCtrl';
 import './dashgrid/DashboardGridDirective';
 
 // Services
-import './services/DashboardViewStateSrv';
 import './services/UnsavedChangesSrv';
 import './services/DashboardLoaderSrv';
 import './services/DashboardSrv';

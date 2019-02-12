@@ -124,7 +124,7 @@ input[type='text'].tight-form-func-param {
 
   &--disabled {
     .query-keyword {
-      color: darken($blue, 20%);
+      color: $text-color-weak;
     }
   }
 

@@ -3,10 +3,22 @@
 
 $theme-name: dark;
 
-// Grays
+// New Colors
 // -------------------------
-$black: #000;
+$sapphire-faint: #041126;
+$sapphire-light: #5794F2;
+$sapphire-base: #3274D9;
+$sapphire-shade: #1F60C4;
+$lobster-base: #E02F44;
+$lobster-shade: #C4162A;
+$forest-light: #96D98D;
+$forest-base: #37872D;
+$forest-shade: #19730E;
+$green-base: #299C46;
+$green-shade: #23843B;
 
+
+// Grays
 // -------------------------
 $black: #000;
 $dark-1: #141414;
@@ -19,7 +31,6 @@ $gray-2: #8e8e8e;
 $gray-3: #b3b3b3;
 $gray-4: #d8d9da;
 $gray-5: #ececec;
-$gray-6: #f4f5f8;
 $gray-7: #fbfbfb;
 
 $gray-blue: #212327;
@@ -30,31 +41,29 @@ $white: #fff;
 // Accent colors
 // -------------------------
 $blue: #33b5e5;
-$blue-dark: #005f81;
 $green: #299c46;
-$red: #d44a3a;
+$red: $lobster-base;
 $yellow: #ecbb13;
-$pink: #ff4444;
 $purple: #9933cc;
 $variable: #32d1df;
 $orange: #eb7b18;
 
 $brand-primary: $orange;
-$brand-success: $green;
+$brand-success: $green-base;
 $brand-warning: $brand-primary;
-$brand-danger: $red;
+$brand-danger: $lobster-base;
 
-$query-red: #e24d42;
-$query-green: #74e680;
+$query-red: $lobster-base;
+$query-green: $forest-light;
 $query-purple: #fe85fc;
 $query-keyword: #66d9ef;
 $query-orange: $orange;
 
 // Status colors
 // -------------------------
-$online: #10a345;
+$online: $green-base;
 $warn: #f79520;
-$critical: #ed2e18;
+$critical: $lobster-base;
 
 // Scaffolding
 // -------------------------
@@ -68,8 +77,8 @@ $text-color-weak: $gray-2;
 $text-color-faint: $dark-5;
 $text-color-emphasis: $gray-5;
 
-$text-shadow-strong: 1px 1px 4px $black;
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
+$textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(
@@ -87,7 +96,7 @@ $edit-gradient: linear-gradient(180deg, rgb(22, 23, 25) 50%, #090909);
 $link-color: darken($white, 11%);
 $link-color-disabled: darken($link-color, 30%);
 $link-hover-color: $white;
-$external-link-color: $blue;
+$external-link-color: $sapphire-light;
 
 // Typography
 // -------------------------
@@ -100,8 +109,7 @@ $hr-border-color: $dark-4;
 // Panel
 // -------------------------
 $panel-bg: #212124;
-$panel-border-color: $dark-1;
-$panel-border: solid 1px $panel-border-color;
+$panel-border: solid 1px $dark-1;
 $panel-header-hover-bg: $dark-4;
 $panel-corner: $panel-bg;
 
@@ -110,12 +118,12 @@ $page-header-bg: linear-gradient(90deg, #292a2d, black);
 $page-header-shadow: inset 0px -4px 14px $dark-2;
 $page-header-border-color: $dark-4;
 
-$divider-border-color: #555;
+$divider-border-color: $gray-1;
 
 // Graphite Target Editor
 $tight-form-bg: $dark-3;
-$tight-form-func-bg: #333334;
-$tight-form-func-highlight-bg: #444445;
+$tight-form-func-bg: $dark-4;
+$tight-form-func-highlight-bg: $dark-5;
 
 $modal-backdrop-bg: #353c42;
 $code-tag-bg: $dark-1;
@@ -137,14 +145,12 @@ $empty-list-cta-bg: $gray-blue;
 // Scrollbars
 $scrollbarBackground: #404357;
 $scrollbarBackground2: #3a3a3a;
-
 $scrollbarBorder: black;
 
 // Tables
 // -------------------------
 $table-bg: transparent; // overall background-color
 $table-bg-accent: $dark-3; // for striping
-$table-bg-hover: $dark-4; // for hover
 $table-border: $dark-3; // table and cell border
 
 $table-bg-odd: $dark-2;
@@ -153,28 +159,22 @@ $table-bg-hover: $dark-3;
 // Buttons
 // -------------------------
 
-$btn-primary-bg: #ff6600;
-$btn-primary-bg-hl: #bc3e06;
+$btn-secondary-bg: $sapphire-base;
+$btn-secondary-bg-hl: $sapphire-shade;
 
-$btn-secondary-bg-hl: lighten($blue-dark, 5%);
-$btn-secondary-bg: $blue-dark;
+$btn-primary-bg: $green-base;
+$btn-primary-bg-hl: $green-shade;
 
-$btn-success-bg: $green;
-$btn-success-bg-hl: darken($green, 6%);
+$btn-success-bg: $green-base;
+$btn-success-bg-hl: $green-shade;
 
-$btn-warning-bg: $brand-warning;
-$btn-warning-bg-hl: lighten($brand-warning, 8%);
-
-$btn-danger-bg: $red;
-$btn-danger-bg-hl: darken($red, 8%);
+$btn-danger-bg: $lobster-base;
+$btn-danger-bg-hl: $lobster-shade;
 
 $btn-inverse-bg: $dark-3;
 $btn-inverse-bg-hl: lighten($dark-3, 4%);
 $btn-inverse-text-color: $link-color;
 $btn-inverse-text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
-
-$btn-active-bg: $gray-4;
-$btn-active-text-color: $blue-dark;
 
 $btn-link-color: $gray-3;
 
@@ -200,6 +200,9 @@ $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-3;
 $input-color-select-arrow: $white;
 
+// Input placeholder text color
+$placeholderText: darken($text-color, 25%);
+
 // Search
 $search-shadow: 0 0 30px 0 $black;
 $search-filter-box-bg: $gray-blue;
@@ -215,28 +218,19 @@ $dropdownBackground: $dark-3;
 $dropdownBorder: rgba(0, 0, 0, 0.2);
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: #444;
-$dropdownDivider: $dropdownDividerBottom;
 
 $dropdownLinkColor: $text-color;
 $dropdownLinkColorHover: $white;
 $dropdownLinkColorActive: $white;
 
-$dropdownLinkBackgroundActive: $dark-4;
 $dropdownLinkBackgroundHover: $dark-4;
-
-// COMPONENT VARIABLES
-// --------------------------------------------------
-
-// -------------------------
-$placeholderText: darken($text-color, 25%);
 
 // Horizontal forms & lists
 // -------------------------
 $horizontalComponentOffset: 180px;
 
-// Wells
+// Navbar
 // -------------------------
-
 $navbarHeight: 55px;
 
 $navbarBackground: $panel-bg;
@@ -264,9 +258,6 @@ $menu-dropdown-bg: $body-bg;
 $menu-dropdown-hover-bg: $dark-2;
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
-// Breadcrumb
-// -------------------------
-
 // Tabs
 // -------------------------
 $tab-border-color: $dark-4;
@@ -274,20 +265,16 @@ $tab-border-color: $dark-4;
 // Toolbar
 $toolbar-bg: $input-black;
 
-// Pagination
-// -------------------------
-
 // Form states and alerts
 // -------------------------
 $warning-text-color: $warn;
 $error-text-color: #e84d4d;
-$success-text-color: #12d95a;
-$info-text-color: $blue-dark;
+$success-text-color: $forest-light;
 
-$alert-error-bg: linear-gradient(90deg, #d44939, #e0603d);
-$alert-success-bg: linear-gradient(90deg, #3aa655, #47b274);
-$alert-warning-bg: linear-gradient(90deg, #d44939, #e0603d);
-$alert-info-bg: linear-gradient(100deg, #1a4552, #00374a);
+$alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
+$alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
 
 // popover
 $popover-bg: $page-bg;
@@ -311,13 +298,12 @@ $tooltipBackground: $black;
 $tooltipColor: $gray-4;
 $tooltipArrowColor: $tooltipBackground;
 $tooltipBackgroundError: $brand-danger;
-$tooltipBackgroundBrand: $brand-primary;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
 
 // info box
-$info-box-border-color: darken($blue, 12%);
+$info-box-border-color: $sapphire-base;
 
 // footer
 $footer-link-color: $gray-2;
@@ -348,8 +334,8 @@ $diff-arrow-color: $white;
 $diff-json-bg: $dark-4;
 $diff-json-fg: $gray-5;
 
-$diff-json-added: #457740;
-$diff-json-deleted: #a04338;
+$diff-json-added: $sapphire-shade;
+$diff-json-deleted: $lobster-shade;
 
 $diff-json-old: #a04338;
 $diff-json-new: #457740;
@@ -360,49 +346,47 @@ $diff-json-changed-num: $text-color;
 $diff-json-icon: $gray-7;
 
 //Submenu
-$variable-option-bg: $blue-dark;
+$variable-option-bg: $dropdownLinkBackgroundHover;
 
 //Switch Slider
 // -------------------------
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-2;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: linear-gradient(90deg, $orange, $red);
+$switch-slider-on-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox
 // -------------------------
 $checkbox-bg: $dark-1;
 $checkbox-border: 1px solid $gray-1;
-$checkbox-checked-bg: linear-gradient(0deg, $orange, $red);
+$checkbox-checked-bg: linear-gradient(0deg, #eb7b18, #d44a3a);
 $checkbox-color: $dark-1;
 
 //Panel Edit
 // -------------------------
 $panel-editor-shadow: 0 0 20px black;
-$panel-editor-border: 1px solid $dark-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
-$panel-editor-toolbar-view-bg: $input-black;
 $panel-editor-viz-item-shadow: 0 0 8px $dark-5;
 $panel-editor-viz-item-border: 1px solid $dark-5;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $blue;
-$panel-editor-viz-item-border-hover: 1px solid $blue;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
+$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
 $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
-$panel-editor-viz-item-bg-hover: darken($blue, 47%);
-$panel-editor-viz-item-bg-hover-active: darken($orange, 45%);
+
+$panel-editor-viz-item-bg-hover: darken($sapphire-base, 46%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-blue;
 
-$panel-grid-placeholder-bg: darken($blue, 47%);
-$panel-grid-placeholder-shadow: 0 0 4px $blue;
+$panel-grid-placeholder-bg: $sapphire-faint;
+$panel-grid-placeholder-shadow: 0 0 4px $sapphire-shade;
 
 // logs
 $logs-color-unkown: $gray-2;
 
 // toggle-group
-$button-toggle-group-btn-active-bg: linear-gradient(90deg, $orange, $red);
+$button-toggle-group-btn-active-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $black;
 $button-toggle-group-btn-seperator-border: 1px solid $page-bg;
 

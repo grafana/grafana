@@ -199,6 +199,32 @@ export default class ResponseParser {
     return ResponseParser.toTextValueList(this.results.supportedGroupBy);
   }
 
+  parseQuerySchema() {
+    const result = {
+      Type: 'AppInsights',
+      Tables: {}
+    };
+    if (this.results && this.results.data && this.results.data.Tables) {
+      for (let i = 0; i < this.results.data.Tables[0].Rows.length; i++) {
+        const column = this.results.data.Tables[0].Rows[i];
+        const columnTable = column[0];
+        const columnName = column[1];
+        const columnType = column[2];
+        if (result.Tables[columnTable]) {
+          result.Tables[columnTable].OrderedColumns.push({ Name: columnName, Type: columnType });
+        } else {
+          result.Tables[columnTable] = {
+            Name: columnTable,
+            OrderedColumns: [
+              { Name: columnName, Type: columnType }
+            ]
+          };
+        }
+      }
+    }
+    return result;
+  }
+
   static toTextValueList(values) {
     const list: any[] = [];
     for (let i = 0; i < values.length; i++) {

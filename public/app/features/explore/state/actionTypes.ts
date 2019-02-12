@@ -192,6 +192,10 @@ export interface ToggleLogsPayload {
   exploreId: ExploreId;
 }
 
+export interface UpdateUIStatePayload extends Partial<ExploreUIState>{
+  exploreId: ExploreId;
+}
+
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
@@ -365,6 +369,11 @@ export const splitCloseAction = noPayloadActionCreatorFactory('explore/SPLIT_CLO
  */
 export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
 export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
+
+/**
+ * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
+ */
+export const updateUIStateAction = actionCreatorFactory<UpdateUIStatePayload>('explore/UPDATE_UI_STATE').create();
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
