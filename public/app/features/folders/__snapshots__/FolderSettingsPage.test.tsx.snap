@@ -42,20 +42,14 @@ exports[`Render should enable save button 1`] = `
             disabled={false}
             type="submit"
           >
-            <i
-              className="fa fa-save"
-            />
-             Save
+            Save
           </button>
           <button
             className="btn btn-danger"
             disabled={false}
             onClick={[Function]}
           >
-            <i
-              className="fa fa-trash"
-            />
-             Delete
+            Delete
           </button>
         </div>
       </form>
@@ -106,20 +100,14 @@ exports[`Render should render component 1`] = `
             disabled={true}
             type="submit"
           >
-            <i
-              className="fa fa-save"
-            />
-             Save
+            Save
           </button>
           <button
             className="btn btn-danger"
             disabled={false}
             onClick={[Function]}
           >
-            <i
-              className="fa fa-trash"
-            />
-             Delete
+            Delete
           </button>
         </div>
       </form>
