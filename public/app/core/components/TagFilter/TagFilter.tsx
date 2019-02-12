@@ -5,7 +5,7 @@ import AsyncSelect from '@torkelo/react-select/lib/Async';
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
 import { components } from '@torkelo/react-select';
-import { escapeStringForRegex } from '../RegExpSafeInput/RegExpSafeInput';
+import { escapeStringForRegex } from '../FilterInput/FilterInput';
 
 export interface Props {
   tags: string[];

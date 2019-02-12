@@ -9,7 +9,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, AlertRule } from 'app/types';
 import { getAlertRulesAsync, setSearchQuery, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
-import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
@@ -94,15 +94,13 @@ export class AlertRuleList extends PureComponent<Props, any> {
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
-              <label className="gf-form--has-input-icon gf-form--grow">
-                <RegExpSafeInput
-                  className="gf-form-input"
-                  placeholder="Search alerts"
-                  value={search}
-                  onChange={this.onSearchQueryChange}
-                />
-                <i className="gf-form-input-icon fa fa-search" />
-              </label>
+              <FilterInput
+                labelClassName="gf-form--has-input-icon gf-form--grow"
+                inputClassName="gf-form-input"
+                placeholder="Search alerts"
+                value={search}
+                onChange={this.onSearchQueryChange}
+              />
             </div>
             <div className="gf-form">
               <label className="gf-form-label">States</label>

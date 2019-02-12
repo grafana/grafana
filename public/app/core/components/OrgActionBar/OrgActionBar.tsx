@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import LayoutSelector, { LayoutMode } from '../LayoutSelector/LayoutSelector';
-import { RegExpSafeInput } from '../RegExpSafeInput/RegExpSafeInput';
+import { FilterInput } from '../FilterInput/FilterInput';
 
 export interface Props {
   searchQuery: string;
@@ -23,15 +23,13 @@ export default class OrgActionBar extends PureComponent<Props> {
     return (
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
-          <label className="gf-form--has-input-icon">
-            <RegExpSafeInput
-              className={'gf-form-input width-20'}
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder={'Filter by name or type'}
-            />
-            <i className="gf-form-input-icon fa fa-search" />
-          </label>
+          <FilterInput
+            labelClassName="gf-form--has-input-icon"
+            inputClassName="gf-form-input width-20"
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={'Filter by name or type'}
+          />
           <LayoutSelector mode={layoutMode} onLayoutModeChanged={(mode: LayoutMode) => onSetLayoutMode(mode)} />
         </div>
         <div className="page-action-bar__spacer" />

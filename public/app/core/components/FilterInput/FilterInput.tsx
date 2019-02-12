@@ -31,17 +31,21 @@ export const unEscapeStringFromRegex = (value: string) => {
 export interface Props {
   value: string | undefined;
   placeholder?: string;
-  className?: string;
+  labelClassName?: string;
+  inputClassName?: string;
   onChange: (value: string) => void;
 }
 
-export const RegExpSafeInput = forwardRef<HTMLInputElement, Props>((props, ref) => (
-  <input
-    ref={ref}
-    type="text"
-    className={props.className}
-    value={unEscapeStringFromRegex(props.value)}
-    onChange={event => props.onChange(escapeStringForRegex(event.target.value))}
-    placeholder={props.placeholder ? props.placeholder : null}
-  />
+export const FilterInput = forwardRef<HTMLInputElement, Props>((props, ref) => (
+  <label className={props.labelClassName}>
+    <input
+      ref={ref}
+      type="text"
+      className={props.inputClassName}
+      value={unEscapeStringFromRegex(props.value)}
+      onChange={event => props.onChange(escapeStringForRegex(event.target.value))}
+      placeholder={props.placeholder ? props.placeholder : null}
+    />
+    <i className="gf-form-input-icon fa fa-search" />
+  </label>
 ));

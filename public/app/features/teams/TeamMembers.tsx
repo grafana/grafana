@@ -7,7 +7,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
-import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   members: TeamMember[];
@@ -90,15 +90,13 @@ export class TeamMembers extends PureComponent<Props, State> {
       <div>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <RegExpSafeInput
-                className="gf-form-input"
-                placeholder="Search members"
-                value={searchMemberQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search members"
+              value={searchMemberQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />

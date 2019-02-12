@@ -17,7 +17,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelPlugin } from 'app/types/plugins';
-import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 interface Props {
   panel: PanelModel;
@@ -184,16 +184,14 @@ export class VisualizationTab extends PureComponent<Props, State> {
     if (this.state.isVizPickerOpen) {
       return (
         <>
-          <label className="gf-form--has-input-icon">
-            <RegExpSafeInput
-              className="gf-form-input width-13"
-              placeholder=""
-              onChange={this.onSearchQueryChange}
-              value={searchQuery}
-              ref={elem => elem && elem.focus()}
-            />
-            <i className="gf-form-input-icon fa fa-search" />
-          </label>
+          <FilterInput
+            labelClassName="gf-form--has-input-icon"
+            inputClassName="gf-form-input width-13"
+            placeholder=""
+            onChange={this.onSearchQueryChange}
+            value={searchQuery}
+            ref={elem => elem && elem.focus()}
+          />
           <button className="btn btn-link toolbar__close" onClick={this.onCloseVizPicker}>
             <i className="fa fa-chevron-up" />
           </button>

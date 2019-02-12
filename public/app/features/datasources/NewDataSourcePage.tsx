@@ -6,7 +6,7 @@ import { NavModel, Plugin, StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
-import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
@@ -39,15 +39,13 @@ class NewDataSourcePage extends PureComponent<Props> {
           <div className="page-container page-body">
             <h2 className="add-data-source-header">Choose data source type</h2>
             <div className="add-data-source-search">
-              <label className="gf-form--has-input-icon">
-                <RegExpSafeInput
-                  className="gf-form-input width-20"
-                  value={dataSourceTypeSearchQuery}
-                  onChange={this.onSearchQueryChange}
-                  placeholder="Filter by name or type"
-                />
-                <i className="gf-form-input-icon fa fa-search" />
-              </label>
+              <FilterInput
+                labelClassName="gf-form--has-input-icon"
+                inputClassName="gf-form-input width-20"
+                value={dataSourceTypeSearchQuery}
+                onChange={this.onSearchQueryChange}
+                placeholder="Filter by name or type"
+              />
             </div>
             <div className="add-data-source-grid">
               {dataSourceTypes.map((plugin, index) => {

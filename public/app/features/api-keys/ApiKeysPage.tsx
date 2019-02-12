@@ -13,7 +13,7 @@ import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DeleteButton } from '@grafana/ui';
-import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
@@ -187,15 +187,13 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <RegExpSafeInput
-                className="gf-form-input"
-                placeholder="Search keys"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search keys"
+              value={searchQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />
