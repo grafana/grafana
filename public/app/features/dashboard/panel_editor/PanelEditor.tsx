@@ -34,7 +34,7 @@ enum PanelEditorTabIds {
   Queries = 'queries',
   Visualization = 'visualization',
   Advanced = 'advanced',
-  Alert = 'alert'
+  Alert = 'alert',
 }
 
 interface PanelEditorTab {
@@ -52,7 +52,7 @@ const panelEditorTabTexts = {
 const getPanelEditorTab = (tabId: PanelEditorTabIds): PanelEditorTab => {
   return {
     id: tabId,
-    text: panelEditorTabTexts[tabId]
+    text: panelEditorTabTexts[tabId],
   };
 };
 
@@ -107,7 +107,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     ];
 
     // handle panels that do not have queries tab
-    if (plugin.noQueries) {
+    if (plugin.dataFormats.length === 0) {
       // remove queries tab
       tabs.shift();
       // switch tab

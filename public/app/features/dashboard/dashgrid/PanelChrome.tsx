@@ -99,18 +99,12 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
-  get hasDataPanel() {
-    return !this.props.plugin.noQueries && !this.hasPanelSnapshot;
+  get needsQueryExecution() {
+    return this.hasPanelSnapshot || this.props.plugin.dataFormats.length > 0;
   }
 
   get getDataForPanel() {
-    const { panel, plugin } = this.props;
-
-    if (plugin.noQueries) {
-      return null;
-    }
-
-    return this.hasPanelSnapshot ? snapshotDataToPanelData(panel) : null;
+    return this.hasPanelSnapshot ? snapshotDataToPanelData(this.props.panel) : null;
   }
 
   renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
@@ -146,7 +140,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { datasource, targets } = panel;
     return (
       <>
-        {this.hasDataPanel ? (
+        {this.needsQueryExecution ? (
           <DataPanel
             panelId={panel.id}
             datasource={datasource}
@@ -155,7 +149,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             isVisible={this.isVisible}
             widthPixels={width}
             refreshCounter={refreshCounter}
-            onDataResponse={this.onDataResponse} >
+            onDataResponse={this.onDataResponse}
+          >
             {({ loading, panelData }) => {
               return this.renderPanelPlugin(loading, panelData, width, height);
             }}
@@ -165,7 +160,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         )}
       </>
     );
-  }
+  };
 
   render() {
     const { dashboard, panel } = this.props;

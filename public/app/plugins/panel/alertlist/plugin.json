@@ -3,6 +3,8 @@
   "name": "Alert List",
   "id": "alertlist",
 
+  "dataFormats": [],
+
   "info": {
     "description": "Shows list of alerts and their current status",
     "author": {
