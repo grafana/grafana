@@ -97,6 +97,7 @@ exports[`Render should render alpha info text 1`] = `
             isReadOnly={false}
             onDelete={[Function]}
             onSubmit={[Function]}
+            onTest={[Function]}
           />
         </form>
       </div>
@@ -202,6 +203,7 @@ exports[`Render should render beta info text 1`] = `
             isReadOnly={false}
             onDelete={[Function]}
             onSubmit={[Function]}
+            onTest={[Function]}
           />
         </form>
       </div>
@@ -302,6 +304,7 @@ exports[`Render should render component 1`] = `
             isReadOnly={false}
             onDelete={[Function]}
             onSubmit={[Function]}
+            onTest={[Function]}
           />
         </form>
       </div>
@@ -407,6 +410,7 @@ exports[`Render should render is ready only message 1`] = `
             isReadOnly={true}
             onDelete={[Function]}
             onSubmit={[Function]}
+            onTest={[Function]}
           />
         </form>
       </div>

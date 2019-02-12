@@ -169,7 +169,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                 </span>
               </div>
               <div className="gf-form">
-                <button className="btn gf-form-btn btn-success">Add</button>
+                <button className="btn gf-form-btn btn-primary">Add</button>
               </div>
             </div>
           </form>
@@ -199,8 +199,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           </div>
 
           <div className="page-action-bar__spacer" />
-          <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
-            <i className="fa fa-plus" /> Add API Key
+          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+            Add API Key
           </button>
         </div>
 

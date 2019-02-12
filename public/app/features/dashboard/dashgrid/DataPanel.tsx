@@ -24,7 +24,7 @@ interface RenderProps {
 export interface Props {
   datasource: string | null;
   queries: any[];
-  panelId?: number;
+  panelId: number;
   dashboardId?: number;
   isVisible?: boolean;
   timeRange?: TimeRange;
@@ -46,7 +46,6 @@ export interface State {
 export class DataPanel extends Component<Props, State> {
   static defaultProps = {
     isVisible: true,
-    panelId: 1,
     dashboardId: 1,
   };
 

@@ -103,7 +103,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
           <div className="page-action-bar__spacer" />
 
-          <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
             <i className="fa fa-plus" /> Add a member
           </button>
         </div>
@@ -117,7 +117,7 @@ export class TeamMembers extends PureComponent<Props, State> {
             <div className="gf-form-inline">
               <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
-                <button className="btn btn-success gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
+                <button className="btn btn-primary gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
                   Add to team
                 </button>
               )}

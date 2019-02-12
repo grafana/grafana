@@ -83,41 +83,20 @@
 
 // Set the backgrounds
 // -------------------------
+.btn-success,
 .btn-primary {
   @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
 }
+
 .btn-secondary {
   @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
-}
-// Warning appears are orange
-.btn-warning {
-  @include buttonBackground($btn-warning-bg, $btn-warning-bg-hl);
 }
 
 // Danger and error appear as red
 .btn-danger {
   @include buttonBackground($btn-danger-bg, $btn-danger-bg-hl);
 }
-// Success appears as green
-.btn-success {
-  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
 
-  &--processing {
-    @include button-outline-variant($gray-1);
-    @include box-shadow(none);
-    cursor: default;
-
-    &:hover,
-    &:active,
-    &:active:hover,
-    &:focus,
-    &:disabled {
-      color: $gray-1;
-      background-color: transparent;
-      border-color: $gray-1;
-    }
-  }
-}
 // Info appears as a neutral blue
 .btn-secondary {
   @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
@@ -138,20 +117,15 @@
   @include button-outline-variant($btn-primary-bg);
 }
 .btn-outline-secondary {
-  @include button-outline-variant($btn-secondary-bg);
+  @include button-outline-variant($btn-secondary-bg-hl);
 }
 .btn-outline-inverse {
   @include button-outline-variant($btn-inverse-bg);
 }
-.btn-outline-success {
-  @include button-outline-variant($btn-success-bg);
-}
-.btn-outline-warning {
-  @include button-outline-variant($btn-warning-bg);
-}
 .btn-outline-danger {
-  @include button-outline-variant($btn-danger-bg);
+  @include button-outline-variant(green);
 }
+
 .btn-outline-disabled {
   @include button-outline-variant($gray-1);
   @include box-shadow(none);

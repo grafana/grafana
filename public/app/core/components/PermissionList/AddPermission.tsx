@@ -130,7 +130,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
             </div>
 
             <div className="gf-form">
-              <button data-save-permission className="btn btn-success" type="submit" disabled={!isValid}>
+              <button data-save-permission className="btn btn-primary" type="submit" disabled={!isValid}>
                 Save
               </button>
             </div>

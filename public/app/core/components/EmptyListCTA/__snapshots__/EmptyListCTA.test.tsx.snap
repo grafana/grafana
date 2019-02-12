@@ -10,7 +10,7 @@ exports[`EmptyListCTA renders correctly 1`] = `
     Title
   </div>
   <a
-    className="empty-list-cta__button btn btn-xlarge btn-success"
+    className="empty-list-cta__button btn btn-xlarge btn-primary"
     href="http://url/to/destination"
     onClick={[MockFunction]}
   >

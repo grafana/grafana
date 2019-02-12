@@ -134,7 +134,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
               className="gf-form"
             >
               <button
-                className="btn gf-form-btn btn-success"
+                className="btn gf-form-btn btn-primary"
               >
                 Add
               </button>

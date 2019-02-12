@@ -26,7 +26,7 @@ const template = `
         <code-editor content="ctrl.dashboardJson" data-mode="json" data-max-lines=15></code-editor>
       </div>
       <div class="gf-form-button-row">
-        <button class="btn btn-success" clipboard-button="ctrl.getJsonForClipboard()">
+        <button class="btn btn-primary" clipboard-button="ctrl.getJsonForClipboard()">
           <i class="fa fa-clipboard"></i>&nbsp;Copy JSON to Clipboard
         </button>
         <button class="btn btn-secondary" clipboard-button="ctrl.save()">

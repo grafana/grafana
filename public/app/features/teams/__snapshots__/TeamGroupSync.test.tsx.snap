@@ -62,7 +62,7 @@ exports[`Render should render component 1`] = `
           className="gf-form"
         >
           <button
-            className="btn btn-success gf-form-btn"
+            className="btn btn-primary gf-form-btn"
             disabled={true}
             type="submit"
           >
@@ -81,7 +81,7 @@ exports[`Render should render component 1`] = `
       There are no external groups to sync with
     </div>
     <button
-      className="empty-list-cta__button btn btn-xlarge btn-success"
+      className="empty-list-cta__button btn btn-xlarge btn-primary"
       onClick={[Function]}
     >
       <i
@@ -135,7 +135,7 @@ exports[`Render should render groups table 1`] = `
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       onClick={[Function]}
     >
       <i
@@ -180,7 +180,7 @@ exports[`Render should render groups table 1`] = `
           className="gf-form"
         >
           <button
-            className="btn btn-success gf-form-btn"
+            className="btn btn-primary gf-form-btn"
             disabled={true}
             type="submit"
           >
