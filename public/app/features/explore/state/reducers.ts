@@ -474,7 +474,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { hiddenLogLevels } = action.payload;
       return {
         ...state,
-        hiddenLogLevels: Array.from(hiddenLogLevels)
+        hiddenLogLevels: Array.from(hiddenLogLevels),
       };
     },
   })

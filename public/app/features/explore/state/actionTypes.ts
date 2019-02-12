@@ -193,7 +193,7 @@ export interface ToggleLogsPayload {
   exploreId: ExploreId;
 }
 
-export interface UpdateUIStatePayload extends Partial<ExploreUIState>{
+export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
   exploreId: ExploreId;
 }
 
@@ -403,9 +403,7 @@ export const updateDatasourceInstanceAction = actionCreatorFactory<UpdateDatasou
   'explore/UPDATE_DATASOURCE_INSTANCE'
 ).create();
 
-export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
-  'explore/TOGGLE_LOG_LEVEL'
-).create();
+export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>('explore/TOGGLE_LOG_LEVEL').create();
 
 /**
  * Resets state for explore.

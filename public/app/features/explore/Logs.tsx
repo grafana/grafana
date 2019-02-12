@@ -5,13 +5,7 @@ import * as rangeUtil from 'app/core/utils/rangeutil';
 import { RawTimeRange, Switch } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import {
-  LogsDedupDescription,
-  LogsDedupStrategy,
-  LogsModel,
-  LogLevel,
-  LogsMetaKind,
-} from 'app/core/logs_model';
+import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogLevel, LogsMetaKind } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
