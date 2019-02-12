@@ -4,14 +4,14 @@ import { connect } from 'react-redux';
 import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy, LogLevel, filterLogLevels, dedupLogRows } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { toggleLogs, changeDedupStrategy } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
-import { createLodashMemoizedSelector } from 'app/core/utils/reselect';
+import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 
 interface LogsContainerProps {
   exploreId: ExploreId;
@@ -98,37 +98,12 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 }
 
-const selectItemUIState = (itemState: ExploreItemState) => {
-  const { showingGraph, showingLogs, showingTable, showingStartPage, dedupStrategy } = itemState;
-  return {
-    showingGraph,
-    showingLogs,
-    showingTable,
-    showingStartPage,
-    dedupStrategy,
-  };
-};
-
-const logsSelector = (state: ExploreItemState) => state.logsResult;
-const hiddenLogLevelsSelector = (state: ExploreItemState) => state.hiddenLogLevels;
-const dedupStrategySelector = (state: ExploreItemState) => state.dedupStrategy;
-const deduplicatedLogsSelector = createLodashMemoizedSelector(
-  logsSelector, hiddenLogLevelsSelector, dedupStrategySelector,
-  (logs, hiddenLogLevels, dedupStrategy) => {
-    if (!logs) {
-      return null;
-    }
-    const filteredData = filterLogLevels(logs, new Set(hiddenLogLevels));
-    return dedupLogRows(filteredData, dedupStrategy);
-  }
-);
-
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
   const { logsHighlighterExpressions, logsResult, queryTransactions, scanning, scanRange, range } = item;
   const loading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
-  const { showingLogs, dedupStrategy } = selectItemUIState(item);
+  const { showingLogs, dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);
 
