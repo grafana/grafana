@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import { Tooltip } from '@grafana/ui';
 
+import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 // Services
 import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Utils
@@ -16,6 +17,8 @@ import {
   TimeRange,
   TimeSeries,
 } from '@grafana/ui';
+
+const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 interface RenderProps {
   loading: LoadingState;
@@ -200,10 +203,22 @@ export class DataPanel extends Component<Props, State> {
     return (
       <>
         {this.renderLoadingStates()}
-        {this.props.children({
-          loading,
-          panelData,
-        })}
+        <ErrorBoundary>
+          {({ error, errorInfo }) => {
+            if (errorInfo) {
+              this.onError(error.message || DEFAULT_PLUGIN_ERROR);
+              return null;
+            }
+            return (
+              <>
+                {this.props.children({
+                  loading,
+                  panelData,
+                })}
+              </>
+            );
+          }}
+        </ErrorBoundary>
       </>
     );
   }
