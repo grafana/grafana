@@ -1,9 +1,8 @@
-import React, { ChangeEvent, forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 
 const specialChars = ['(', '[', '{', '}', ']', ')', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
 
-export const escapeStringForRegex = (event: ChangeEvent<HTMLInputElement>) => {
-  const value = event.target.value;
+export const escapeStringForRegex = (value: string) => {
   if (!value) {
     return value;
   }
@@ -42,7 +41,7 @@ export const RegExpSafeInput = forwardRef<HTMLInputElement, Props>((props, ref) 
     type="text"
     className={props.className}
     value={unEscapeStringFromRegex(props.value)}
-    onChange={event => props.onChange(escapeStringForRegex(event))}
+    onChange={event => props.onChange(escapeStringForRegex(event.target.value))}
     placeholder={props.placeholder ? props.placeholder : null}
   />
 ));
