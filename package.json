@@ -65,7 +65,7 @@
     "html-loader": "^0.5.1",
     "html-webpack-harddisk-plugin": "^0.2.0",
     "html-webpack-plugin": "^3.2.0",
-    "husky": "^0.14.3",
+    "husky": "^1.3.1",
     "jest": "^23.6.0",
     "jest-date-mock": "^1.0.6",
     "lint-staged": "^8.1.3",
@@ -120,7 +120,6 @@
     "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
-    "precommit": "grunt precommit",
     "storybook": "cd packages/grafana-ui && yarn storybook"
   },
   "husky": {

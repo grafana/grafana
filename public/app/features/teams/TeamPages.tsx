@@ -49,9 +49,9 @@ export class TeamPages extends PureComponent<Props, State> {
 
   async fetchTeam() {
     const { loadTeam, teamId } = this.props;
-    this.setState({isLoading: true});
+    this.setState({ isLoading: true });
     const team = await loadTeam(teamId);
-    this.setState({isLoading: false});
+    this.setState({ isLoading: false });
     return team;
   }
 
