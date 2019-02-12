@@ -1,5 +1,6 @@
 import { flatten } from 'lodash';
 import { GrafanaThemeType } from '../types';
+import tinycolor from 'tinycolor2';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -106,7 +107,7 @@ export const getColorFromHexRgbOrName = (color: string, theme?: GrafanaThemeType
   const colorDefinition = getColorByName(color);
 
   if (!colorDefinition) {
-    throw new Error('Unknown color');
+    return new tinycolor(color).toHexString();
   }
 
   return theme ? colorDefinition.variants[theme] : colorDefinition.variants.dark;
