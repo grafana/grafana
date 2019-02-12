@@ -881,12 +881,16 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
+		hs := HTTPServer{
+			Bus: bus.GetBus(),
+		}
+
 		sc := setupScenarioContext(url)
 		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
-			return PostDashboard(c, cmd)
+			return hs.PostDashboard(c, cmd)
 		})
 
 		origNewDashboardService := dashboards.NewService
