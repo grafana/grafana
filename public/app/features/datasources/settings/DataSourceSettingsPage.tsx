@@ -187,52 +187,50 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
           {this.hasDataSource && (
-            <div className="page-container page-body">
-              <div>
-                <form onSubmit={this.onSubmit}>
-                  {this.isReadOnly() && this.renderIsReadOnlyMessage()}
-                  {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
+            <div>
+              <form onSubmit={this.onSubmit}>
+                {this.isReadOnly() && this.renderIsReadOnlyMessage()}
+                {this.shouldRenderInfoBox() && <div className="grafana-info-box">{this.getInfoText()}</div>}
 
-                  <BasicSettings
-                    dataSourceName={dataSource.name}
-                    isDefault={dataSource.isDefault}
-                    onDefaultChange={state => setIsDefault(state)}
-                    onNameChange={name => setDataSourceName(name)}
+                <BasicSettings
+                  dataSourceName={dataSource.name}
+                  isDefault={dataSource.isDefault}
+                  onDefaultChange={state => setIsDefault(state)}
+                  onNameChange={name => setDataSourceName(name)}
+                />
+
+                {dataSourceMeta.module && (
+                  <PluginSettings
+                    dataSource={dataSource}
+                    dataSourceMeta={dataSourceMeta}
+                    onModelChange={this.onModelChange}
                   />
+                )}
 
-                  {dataSourceMeta.module && (
-                    <PluginSettings
-                      dataSource={dataSource}
-                      dataSourceMeta={dataSourceMeta}
-                      onModelChange={this.onModelChange}
-                    />
-                  )}
-
-                  <div className="gf-form-group section">
-                    {testingMessage && (
-                      <div className={`alert-${testingStatus} alert`}>
-                        <div className="alert-icon">
-                          {testingStatus === 'error' ? (
-                            <i className="fa fa-exclamation-triangle" />
-                          ) : (
-                            <i className="fa fa-check" />
-                          )}
-                        </div>
-                        <div className="alert-body">
-                          <div className="alert-title">{testingMessage}</div>
-                        </div>
+                <div className="gf-form-group">
+                  {testingMessage && (
+                    <div className={`alert-${testingStatus} alert`}>
+                      <div className="alert-icon">
+                        {testingStatus === 'error' ? (
+                          <i className="fa fa-exclamation-triangle" />
+                        ) : (
+                          <i className="fa fa-check" />
+                        )}
                       </div>
-                    )}
-                  </div>
+                      <div className="alert-body">
+                        <div className="alert-title">{testingMessage}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                  <ButtonRow
-                    onSubmit={event => this.onSubmit(event)}
-                    isReadOnly={this.isReadOnly()}
-                    onDelete={this.onDelete}
-                    onTest={event => this.onTest(event)}
-                  />
-                </form>
-              </div>
+                <ButtonRow
+                  onSubmit={event => this.onSubmit(event)}
+                  isReadOnly={this.isReadOnly()}
+                  onDelete={this.onDelete}
+                  onTest={event => this.onTest(event)}
+                />
+              </form>
             </div>
           )}
         </Page.Contents>
