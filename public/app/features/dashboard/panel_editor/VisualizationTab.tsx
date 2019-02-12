@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
@@ -31,6 +31,7 @@ interface Props {
 interface State {
   isVizPickerOpen: boolean;
   searchQuery: string;
+  searchResults: PanelPlugin[];
   scrollTop: number;
 }
 
@@ -39,12 +40,13 @@ export class VisualizationTab extends PureComponent<Props, State> {
   angularOptions: AngularComponent;
   searchInput: HTMLElement;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
       isVizPickerOpen: this.props.urlOpenVizPicker,
       searchQuery: '',
+      searchResults: [],
       scrollTop: 0,
     };
   }
@@ -170,7 +172,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.setState({ isVizPickerOpen: false });
   };
 
-  onSearchQueryChange = evt => {
+  onSearchQueryChange = (evt: ChangeEvent<HTMLInputElement>) => {
     const value = evt.target.value;
     this.setState({
       searchQuery: value,
@@ -187,7 +189,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           <label className="gf-form--has-input-icon">
             <input
               type="text"
-              className="gf-form-input width-13"
+              className={`gf-form-input width-13 ${!this.hasSearchResults ? 'gf-form-input--invalid' : ''}`}
               placeholder=""
               onChange={this.onSearchQueryChange}
               value={searchQuery}
@@ -218,6 +220,16 @@ export class VisualizationTab extends PureComponent<Props, State> {
       this.props.onTypeChanged(plugin);
     }
   };
+
+  setSearchResults = (searchResults: PanelPlugin[]) => {
+    this.setState({
+      searchResults: searchResults
+    });
+  };
+
+  get hasSearchResults () {
+    return this.state.searchResults && this.state.searchResults.length > 0;
+  }
 
   renderHelp = () => <PluginHelp plugin={this.props.plugin} type="help" />;
 
@@ -251,6 +263,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
               onTypeChanged={this.onTypeChanged}
               searchQuery={searchQuery}
               onClose={this.onCloseVizPicker}
+              onPluginListChange={this.setSearchResults}
             />
           </FadeIn>
           {this.renderPanelOptions()}

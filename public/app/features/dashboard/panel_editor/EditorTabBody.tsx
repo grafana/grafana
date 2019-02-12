@@ -36,7 +36,7 @@ export class EditorTabBody extends PureComponent<Props, State> {
     toolbarItems: [],
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
