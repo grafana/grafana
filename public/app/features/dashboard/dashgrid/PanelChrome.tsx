@@ -8,6 +8,7 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
+import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
 import { applyPanelTimeOverrides, snapshotDataToPanelData } from 'app/features/dashboard/utils/panel';
@@ -17,11 +18,12 @@ import { profiler } from 'app/core/profiler';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, PanelData } from '@grafana/ui';
+import { DataQueryResponse, TimeRange, LoadingState, PanelData } from '@grafana/ui';
 
 import variables from 'sass/_variables.scss';
 import templateSrv from 'app/features/templating/template_srv';
-import { DataQueryResponse } from '@grafana/ui/src';
+
+const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 export interface Props {
   panel: PanelModel;
@@ -34,6 +36,8 @@ export interface State {
   renderCounter: number;
   timeInfo?: string;
   timeRange?: TimeRange;
+  loading: LoadingState;
+  errorMessage: string;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -45,6 +49,8 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.state = {
       refreshCounter: 0,
       renderCounter: 0,
+      loading: LoadingState.NotStarted,
+      errorMessage: '',
     };
   }
 
@@ -127,33 +133,41 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { datasource, targets } = panel;
     return (
       <>
-      {panel.snapshotData && panel.snapshotData.length > 0 ? (
-        this.renderPanelPlugin(LoadingState.Done, snapshotDataToPanelData(panel), width, height)
-      ) : (
-        <>
-        {plugin.noQueries ?
-            this.renderPanelPlugin(LoadingState.Done, null, width, height)
-          : (
-            <DataPanel
-            datasource={datasource}
-            queries={targets}
-            timeRange={timeRange}
-            isVisible={this.isVisible}
-            widthPixels={width}
-            refreshCounter={refreshCounter}
-            onDataResponse={this.onDataResponse}
-          >
-            {({ loading, panelData }) => {
-              return this.renderPanelPlugin(loading, panelData, width, height);
-            }}
-          </DataPanel>
-          )}
-        </>
-      )}
+        {panel.snapshotData && panel.snapshotData.length > 0 ? (
+          this.renderPanelPlugin(LoadingState.Done, snapshotDataToPanelData(panel), width, height)
+        ) : (
+          <>
+            {plugin.noQueries ? (
+              this.renderPanelPlugin(LoadingState.Done, null, width, height)
+            ) : (
+              <DataPanel
+                datasource={datasource}
+                queries={targets}
+                timeRange={timeRange}
+                isVisible={this.isVisible}
+                widthPixels={width}
+                refreshCounter={refreshCounter}
+                onDataResponse={this.onDataResponse}
+              >
+                {({ loading, panelData }) => {
+                  return this.renderPanelPlugin(loading, panelData, width, height);
+                }}
+              </DataPanel>
+            )}
+          </>
+        )}
       </>
     );
-  }
+  };
 
+  onError = (errorMessage: string) => {
+    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
+      this.setState({
+        loading: LoadingState.Error,
+        errorMessage: errorMessage,
+      });
+    }
+  };
 
   render() {
     const { dashboard, panel } = this.props;
@@ -179,7 +193,15 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
               />
-              {this.renderHelper(width, height)}
+              <ErrorBoundary>
+                {({ error, errorInfo }) => {
+                  if (errorInfo) {
+                    this.onError(error.message || DEFAULT_PLUGIN_ERROR);
+                    return null;
+                  }
+                  return this.renderHelper(width, height);
+                }}
+              </ErrorBoundary>
             </div>
           );
         }}
