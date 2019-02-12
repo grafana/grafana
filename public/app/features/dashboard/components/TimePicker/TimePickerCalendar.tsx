@@ -32,8 +32,8 @@ export class TimePickerCalendar extends PureComponent<Props> {
         value={calendarValue}
         next2Label={null}
         prev2Label={null}
-        className={'time-picker-calendar'}
-        tileClassName={'time-picker-calendar-tile'}
+        className="time-picker-calendar"
+        tileClassName="time-picker-calendar-tile"
         onChange={this.onCalendarChange}
       />
     );

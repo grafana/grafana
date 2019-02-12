@@ -68,12 +68,12 @@ export class TimePickerPopOver extends Component<Props, State> {
     const isValid = isFromInputValid && isToInputValid;
 
     return (
-      <div className={'time-picker-popover'}>
-        <div className={'time-picker-popover-box'}>
-          <div className={'time-picker-popover-box-header'}>
-            <span className={'time-picker-popover-box-title'}>Quick ranges</span>
+      <div className="time-picker-popover">
+        <div className="time-picker-popover-box">
+          <div className="time-picker-popover-box-header">
+            <span className="time-picker-popover-box-title">Quick ranges</span>
           </div>
-          <div className={'time-picker-popover-box-body'}>
+          <div className="time-picker-popover-box-body">
             {Object.keys(popOverTimeOptions).map(key => {
               return (
                 <ul key={`popover-quickranges-${key}`}>
@@ -97,13 +97,13 @@ export class TimePickerPopOver extends Component<Props, State> {
             })}
           </div>
         </div>
-        <div className={'time-picker-popover-box'}>
-          <div className={'time-picker-popover-box-header'}>
-            <span className={'time-picker-popover-box-title'}>Custom range</span>
+        <div className="time-picker-popover-box">
+          <div className="time-picker-popover-box-header">
+            <span className="time-picker-popover-box-title">Custom range</span>
           </div>
-          <div className={'time-picker-popover-box-body'}>
-            <div className={'time-picker-popover-box-body-custom-ranges'}>
-              <div className={'time-picker-popover-box-body-custom-ranges-input'}>
+          <div className="time-picker-popover-box-body">
+            <div className="time-picker-popover-box-body-custom-ranges">
+              <div className="time-picker-popover-box-body-custom-ranges-input">
                 <span>From:</span>
                 <TimePickerInput
                   isTimezoneUtc={isTimezoneUtc}
@@ -113,7 +113,7 @@ export class TimePickerPopOver extends Component<Props, State> {
                   onChange={this.onFromInputChanged}
                 />
               </div>
-              <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
+              <div className="time-picker-popover-box-body-custom-ranges-calendar">
                 <TimePickerCalendar
                   isTimezoneUtc={isTimezoneUtc}
                   roundup={false}
@@ -123,8 +123,8 @@ export class TimePickerPopOver extends Component<Props, State> {
                 />
               </div>
             </div>
-            <div className={'time-picker-popover-box-body-custom-ranges'}>
-              <div className={'time-picker-popover-box-body-custom-ranges-input'}>
+            <div className="time-picker-popover-box-body-custom-ranges">
+              <div className="time-picker-popover-box-body-custom-ranges-input">
                 <span>To:</span>
                 <TimePickerInput
                   isTimezoneUtc={isTimezoneUtc}
@@ -134,7 +134,7 @@ export class TimePickerPopOver extends Component<Props, State> {
                   onChange={this.onToInputChanged}
                 />
               </div>
-              <div className={'time-picker-popover-box-body-custom-ranges-calendar'}>
+              <div className="time-picker-popover-box-body-custom-ranges-calendar">
                 <TimePickerCalendar
                   isTimezoneUtc={isTimezoneUtc}
                   roundup={true}
@@ -145,7 +145,7 @@ export class TimePickerPopOver extends Component<Props, State> {
               </div>
             </div>
           </div>
-          <div className={'time-picker-popover-box-footer'}>
+          <div className="time-picker-popover-box-footer">
             <button
               type="submit"
               className="btn gf-form-btn btn-success"

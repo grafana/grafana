@@ -96,8 +96,8 @@ export class TimePicker extends PureComponent<Props, State> {
 
     return (
       <ClickOutsideWrapper onClick={this.onClickOutside}>
-        <div className={'time-picker'}>
-          <div className={'time-picker-buttons'}>
+        <div className="time-picker">
+          <div className="time-picker-buttons">
             {isAbsolute && (
               <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
                 <i className="fa fa-chevron-left" />
@@ -119,7 +119,7 @@ export class TimePicker extends PureComponent<Props, State> {
             </button>
           </div>
 
-          <div className={'time-picker-select'} ref={this.pickerTriggerRef}>
+          <div className="time-picker-select" ref={this.pickerTriggerRef}>
             <HeadlessSelect
               components={{ Group: TimePickerOptionGroup }}
               isOpen={isSelectOpen}

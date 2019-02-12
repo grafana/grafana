@@ -39,12 +39,12 @@ export class RefreshPicker extends PureComponent<Props, State> {
 
     return (
       <ClickOutsideWrapper onClick={this.onClickOutside}>
-        <div className={'refresh-picker'}>
-          <div className={'refresh-picker-buttons'}>
+        <div className="refresh-picker">
+          <div className="refresh-picker-buttons">
             <RefreshButton onClick={onRefreshClicked} />
             <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={EMPTY_ITEM_TEXT} value={value} />
           </div>
-          <div className={'refresh-picker-select'}>
+          <div className="refresh-picker-select">
             <RefreshSelect isOpen={isSelectOpen} intervals={intervals} onChange={this.onSelectChanged} value={value} />
           </div>
         </div>

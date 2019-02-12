@@ -22,7 +22,7 @@ export class TimePickerOptionGroup extends PureComponent<Props> {
       <div className="gf-form-select-box__option-group">
         <div className="gf-form-select-box__option-group__header" ref={this.pickerTriggerRef} onClick={this.onClick}>
           <span className="flex-grow-1">{label}</span>
-          <i className={'fa fa-calendar fa-fw'} />
+          <i className="fa fa-calendar fa-fw" />
         </div>
         {children}
       </div>
