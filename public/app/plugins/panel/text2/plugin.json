@@ -3,7 +3,8 @@
   "name": "Text v2",
   "id": "text2",
   "state": "alpha",
-  "noQueries": true,
+
+  "dataFormats": [],
 
   "info": {
     "author": {
