@@ -131,8 +131,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         this.renderPanelPlugin(LoadingState.Done, snapshotDataToPanelData(panel), width, height)
       ) : (
         <>
-
-        {plugin.noQueries === true ?
+        {plugin.noQueries ?
             this.renderPanelPlugin(LoadingState.Done, null, width, height)
           : (
             <DataPanel
