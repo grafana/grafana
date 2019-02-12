@@ -5,6 +5,7 @@ import AsyncSelect from '@torkelo/react-select/lib/Async';
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
 import { components } from '@torkelo/react-select';
+import { escapeStringForRegex } from '../FilterInput/FilterInput';
 
 export interface Props {
   tags: string[];
@@ -51,7 +52,7 @@ export class TagFilter extends React.Component<Props, any> {
       value: tags,
       styles: resetSelectStyles(),
       filterOption: (option, searchQuery) => {
-        const regex = RegExp(searchQuery, 'i');
+        const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
         return regex.test(option.value);
       },
       components: {

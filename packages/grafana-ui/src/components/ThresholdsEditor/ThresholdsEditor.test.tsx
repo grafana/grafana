@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { shallow } from 'enzyme';
 
 import { ThresholdsEditor, Props } from './ThresholdsEditor';
@@ -118,7 +118,7 @@ describe('change threshold value', () => {
     ];
     const instance = setup({ thresholds });
 
-    const mockEvent = { target: { value: 12 } };
+    const mockEvent = ({ target: { value: '12' } } as any) as ChangeEvent<HTMLInputElement>;
 
     instance.onChangeThresholdValue(mockEvent, thresholds[0]);
 
@@ -137,7 +137,7 @@ describe('change threshold value', () => {
       thresholds,
     };
 
-    const mockEvent = { target: { value: 78 } };
+    const mockEvent = ({ target: { value: '78' } } as any) as ChangeEvent<HTMLInputElement>;
 
     instance.onChangeThresholdValue(mockEvent, thresholds[1]);
 

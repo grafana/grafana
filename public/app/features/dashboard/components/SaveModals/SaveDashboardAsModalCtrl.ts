@@ -32,7 +32,7 @@ const template = `
 		</div>
 
 		<div class="gf-form-button-row text-center">
-			<button type="submit" class="btn btn-success" ng-click="ctrl.save()" ng-disabled="!ctrl.isValidFolderSelection">Save</button>
+			<button type="submit" class="btn btn-primary" ng-click="ctrl.save()" ng-disabled="!ctrl.isValidFolderSelection">Save</button>
 			<a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
 		</div>
 	</form>

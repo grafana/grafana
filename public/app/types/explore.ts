@@ -11,7 +11,7 @@ import {
 } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
-import { LogsModel } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
 export interface CompletionItem {
@@ -237,12 +237,23 @@ export interface ExploreItemState {
    * React keys for rendering of QueryRows
    */
   queryKeys: string[];
+
+  /**
+   * Current logs deduplication strategy
+   */
+  dedupStrategy?: LogsDedupStrategy;
+
+  /**
+   * Currently hidden log series
+   */
+  hiddenLogLevels?: LogLevel[];
 }
 
 export interface ExploreUIState {
   showingTable: boolean;
   showingGraph: boolean;
   showingLogs: boolean;
+  dedupStrategy?: LogsDedupStrategy;
 }
 
 export interface ExploreUrlState {

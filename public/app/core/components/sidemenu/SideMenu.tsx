@@ -3,9 +3,16 @@ import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
+import { store } from 'app/store/store';
 
 export class SideMenu extends PureComponent {
   toggleSideMenu = () => {
+    // ignore if we just made a location change, stops hiding sidemenu on double clicks of back button
+    const timeSinceLocationChanged = new Date().getTime() - store.getState().location.lastUpdated;
+    if (timeSinceLocationChanged < 1000) {
+      return;
+    }
+
     contextSrv.toggleSideMenu();
     appEvents.emit('toggle-sidemenu');
   };

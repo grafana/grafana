@@ -72,6 +72,12 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     this.testDataSource();
   };
 
+  onTest = async (evt: React.FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+
+    this.testDataSource();
+  };
+
   onDelete = () => {
     appEvents.emit('confirm-modal', {
       title: 'Delete',
@@ -180,7 +186,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
-          {this.hasDataSource && <div className="page-container page-body">
+          {this.hasDataSource && (
             <div>
               <form onSubmit={this.onSubmit}>
                 {this.isReadOnly() && this.renderIsReadOnlyMessage()}
@@ -201,7 +207,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                   />
                 )}
 
-                <div className="gf-form-group section">
+                <div className="gf-form-group">
                   {testingMessage && (
                     <div className={`alert-${testingStatus} alert`}>
                       <div className="alert-icon">
@@ -222,10 +228,11 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                   onSubmit={event => this.onSubmit(event)}
                   isReadOnly={this.isReadOnly()}
                   onDelete={this.onDelete}
+                  onTest={event => this.onTest(event)}
                 />
               </form>
             </div>
-          </div>}
+          )}
         </Page.Contents>
       </Page>
     );

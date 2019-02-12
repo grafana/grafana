@@ -18,6 +18,7 @@ import {
   ExploreUIState,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { LogLevel } from 'app/core/logs_model';
 
 /**  Higher order actions
  *
@@ -192,9 +193,18 @@ export interface ToggleLogsPayload {
   exploreId: ExploreId;
 }
 
+export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
+  exploreId: ExploreId;
+}
+
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
+}
+
+export interface ToggleLogLevelPayload {
+  exploreId: ExploreId;
+  hiddenLogLevels: Set<LogLevel>;
 }
 
 export interface QueriesImportedPayload {
@@ -367,6 +377,11 @@ export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/S
 export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
 
 /**
+ * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
+ */
+export const updateUIStateAction = actionCreatorFactory<UpdateUIStatePayload>('explore/UPDATE_UI_STATE').create();
+
+/**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
  */
 export const toggleTableAction = actionCreatorFactory<ToggleTablePayload>('explore/TOGGLE_TABLE').create();
@@ -387,6 +402,8 @@ export const toggleLogsAction = actionCreatorFactory<ToggleLogsPayload>('explore
 export const updateDatasourceInstanceAction = actionCreatorFactory<UpdateDatasourceInstancePayload>(
   'explore/UPDATE_DATASOURCE_INSTANCE'
 ).create();
+
+export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>('explore/TOGGLE_LOG_LEVEL').create();
 
 /**
  * Resets state for explore.
@@ -427,4 +444,5 @@ export type Action =
   | ActionOf<ToggleGraphPayload>
   | ActionOf<ToggleLogsPayload>
   | ActionOf<UpdateDatasourceInstancePayload>
-  | ActionOf<QueriesImportedPayload>;
+  | ActionOf<QueriesImportedPayload>
+  | ActionOf<ToggleLogLevelPayload>;

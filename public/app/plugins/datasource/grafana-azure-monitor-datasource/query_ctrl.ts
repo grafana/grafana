@@ -304,7 +304,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   /* Azure Log Analytics */
 
-  getWorkspaces() {
+  getWorkspaces = () => {
     return this.datasource.azureLogAnalyticsDatasource
       .getWorkspaces()
       .then(list => {
@@ -316,7 +316,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  getAzureLogAnalyticsSchema() {
+  getAzureLogAnalyticsSchema = () => {
     return this.getWorkspaces()
       .then(() => {
         return this.datasource.azureLogAnalyticsDatasource.getSchema(this.target.azureLogAnalytics.workspace);
@@ -345,6 +345,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
     return interval;
   }
+
   getAppInsightsMetricNames() {
     if (!this.datasource.appInsightsDatasource.isConfigured()) {
       return;
@@ -374,6 +375,19 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.appInsights.aggregation = aggData.primaryAggType;
         return this.refresh();
       })
+      .catch(this.handleQueryCtrlError.bind(this));
+  }
+
+  onAppInsightsQueryChange = (nextQuery: string) => {
+    this.target.appInsights.rawQueryString = nextQuery;
+  }
+
+  onAppInsightsQueryExecute = () => {
+    return this.refresh();
+  }
+
+  getAppInsightsQuerySchema = () => {
+    return this.datasource.appInsightsDatasource.getQuerySchema()
       .catch(this.handleQueryCtrlError.bind(this));
   }
 

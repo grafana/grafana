@@ -8,11 +8,11 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {
       main: {
-        text: 'Configuration'
+        text: 'Configuration',
       },
       node: {
-        text: 'Team List'
-      }
+        text: 'Team List',
+      },
     } as NavModel,
     teams: [] as Team[],
     loadTeams: jest.fn(),
@@ -74,9 +74,8 @@ describe('Functions', () => {
   describe('on search query change', () => {
     it('should call setSearchQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'test' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('test');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });

@@ -9,7 +9,7 @@
 	<div ng-if="ctrl.mode === 'list'">
 		<div class="page-action-bar" ng-if="ctrl.annotations.length > 1">
 			<div class="page-action-bar__spacer"></div>
-			<a type="button" class="btn btn-success" ng-click="ctrl.setupNew();"><i class="fa fa-plus" ></i> New</a>
+			<a type="button" class="btn btn-primary" ng-click="ctrl.setupNew();"><i class="fa fa-plus" ></i> New</a>
 		</div>
 
 		<table class="filter-table filter-table--hover">
@@ -48,7 +48,7 @@
 		<div ng-if="ctrl.annotations.length === 1" class="p-t-2">
 			<div class="empty-list-cta">
 				<div class="empty-list-cta__title">There are no custom annotation queries added yet</div>
-				<a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-success">
+				<a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-primary">
 					<i class="gicon gicon-add-annotation"></i>
 					Add Annotation Query
 				</a>
@@ -105,8 +105,8 @@
 
 		<div class="gf-form">
 			<div class="gf-form-button-row p-y-0">
-				<button ng-show="ctrl.mode === 'new'" type="button" class="btn gf-form-button btn-success" ng-click="ctrl.add()">Add</button>
-				<button ng-show="ctrl.mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="ctrl.update()">Update</button>
+				<button ng-show="ctrl.mode === 'new'" type="button" class="btn gf-form-button btn-primary" ng-click="ctrl.add()">Add</button>
+				<button ng-show="ctrl.mode === 'edit'" type="button" class="btn btn-primary pull-left" ng-click="ctrl.update()">Update</button>
 			</div>
 		</div>
 	</div>
