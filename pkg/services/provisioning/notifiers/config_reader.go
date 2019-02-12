@@ -23,7 +23,7 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		cr.log.Error("Can't read alert notification provisioning files from directory", "path", path)
+		cr.log.Error("Can't read alert notification provisioning files from directory", "path", path, "error", err)
 		return notifications, nil
 	}
 

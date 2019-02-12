@@ -21,7 +21,7 @@
 }
 
 .thresholds-row-add-button {
-  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl, #fff);
 
   align-self: center;
   margin-right: 5px;

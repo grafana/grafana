@@ -1,6 +1,6 @@
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import config from 'app/core/config';
-import { isVersionGtOrEq } from './version';
+import { isVersionGtOrEq } from 'app/core/utils/version';
 
 export class AzureMonitorConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/grafana-azure-monitor-datasource/partials/config.html';

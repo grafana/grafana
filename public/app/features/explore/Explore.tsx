@@ -220,6 +220,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                             {supportsTable && <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />}
                             {supportsLogs && (
                               <LogsContainer
+                                width={width}
                                 exploreId={exploreId}
                                 onChangeTime={this.onChangeTime}
                                 onClickLabel={this.onClickLabel}

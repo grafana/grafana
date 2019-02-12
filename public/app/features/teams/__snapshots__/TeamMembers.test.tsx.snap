@@ -27,7 +27,7 @@ exports[`Render should render component 1`] = `
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       disabled={false}
       onClick={[Function]}
     >
@@ -121,7 +121,7 @@ exports[`Render should render team members 1`] = `
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       disabled={false}
       onClick={[Function]}
     >
@@ -341,7 +341,7 @@ exports[`Render should render team members when sync enabled 1`] = `
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       disabled={false}
       onClick={[Function]}
     >

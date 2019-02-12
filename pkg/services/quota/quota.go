@@ -3,11 +3,23 @@ package quota
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func QuotaReached(c *m.ReqContext, target string) (bool, error) {
+func init() {
+	registry.RegisterService(&QuotaService{})
+}
+
+type QuotaService struct {
+	AuthTokenService m.UserTokenService `inject:""`
+}
+
+func (qs *QuotaService) Init() error {
+	return nil
+}
+
+func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, error) {
 	if !setting.Quota.Enabled {
 		return false, nil
 	}
@@ -30,7 +42,12 @@ func QuotaReached(c *m.ReqContext, target string) (bool, error) {
 				return true, nil
 			}
 			if target == "session" {
-				usedSessions := session.GetSessionCount()
+
+				usedSessions, err := qs.AuthTokenService.ActiveTokenCount()
+				if err != nil {
+					return false, err
+				}
+
 				if int64(usedSessions) > scope.DefaultLimit {
 					c.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
 					return true, nil

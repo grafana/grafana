@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics/graphitebridge"
@@ -30,7 +29,6 @@ type InternalMetricsService struct {
 
 	intervalSeconds int64
 	graphiteCfg     *graphitebridge.Config
-	oauthProviders  map[string]bool
 }
 
 func (im *InternalMetricsService) Init() error {
@@ -50,22 +48,6 @@ func (im *InternalMetricsService) Run(ctx context.Context) error {
 
 	M_Instance_Start.Inc()
 
-	// set the total stats gauges before we publishing metrics
-	updateTotalStats()
-
-	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	everyMinuteTicker := time.NewTicker(time.Minute)
-	defer onceEveryDayTick.Stop()
-	defer everyMinuteTicker.Stop()
-
-	for {
-		select {
-		case <-onceEveryDayTick.C:
-			sendUsageStats(im.oauthProviders)
-		case <-everyMinuteTicker.C:
-			updateTotalStats()
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
+	<-ctx.Done()
+	return ctx.Err()
 }

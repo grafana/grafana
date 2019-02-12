@@ -149,6 +149,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 this.renderPanel(false, panel.snapshotData, width, height)
               ) : (
                 <DataPanel
+                  panelId={panel.id}
                   datasource={datasource}
                   queries={targets}
                   timeRange={timeRange}

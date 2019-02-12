@@ -21,6 +21,7 @@ import {
   QueryIntervals,
   QueryOptions,
 } from 'app/types/explore';
+import { LogsDedupStrategy } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -31,6 +32,7 @@ export const DEFAULT_UI_STATE = {
   showingTable: true,
   showingGraph: true,
   showingLogs: true,
+  dedupStrategy: LogsDedupStrategy.none,
 };
 
 const MAX_HISTORY_ITEMS = 100;
@@ -183,6 +185,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
               showingGraph: segment.ui[0],
               showingLogs: segment.ui[1],
               showingTable: segment.ui[2],
+              dedupStrategy: segment.ui[3],
             };
           }
         });
@@ -204,7 +207,14 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.to,
       urlState.datasource,
       ...urlState.queries,
-      { ui: [!!urlState.ui.showingGraph, !!urlState.ui.showingLogs, !!urlState.ui.showingTable] },
+      {
+        ui: [
+          !!urlState.ui.showingGraph,
+          !!urlState.ui.showingLogs,
+          !!urlState.ui.showingTable,
+          urlState.ui.dedupStrategy,
+        ],
+      },
     ]);
   }
   return JSON.stringify(urlState);

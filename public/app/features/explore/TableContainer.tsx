@@ -21,7 +21,7 @@ interface TableContainerProps {
 
 export class TableContainer extends PureComponent<TableContainerProps> {
   onClickTableButton = () => {
-    this.props.toggleTable(this.props.exploreId);
+    this.props.toggleTable(this.props.exploreId, this.props.showingTable);
   };
 
   render() {

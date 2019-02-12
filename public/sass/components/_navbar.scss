@@ -1,6 +1,6 @@
 .navbar {
   position: relative;
-  padding-left: 40px;
+  padding-left: 20px;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
   padding-right: 20px;
@@ -41,16 +41,12 @@
 
 .panel-in-fullscreen {
   .navbar {
-    padding-left: 15px;
+    padding-left: 20px;
   }
 
   .navbar-button--add-panel,
   .navbar-button--star,
   .navbar-button--tv,
-  .navbar-page-btn .fa-caret-down {
-    display: none;
-  }
-
   .navbar-buttons--close {
     display: flex;
   }
@@ -120,7 +116,8 @@
 .navbar-button {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
 
-  display: inline-block;
+  display: flex;
+  align-items: center;
   font-weight: $btn-font-weight;
   padding: 6px 11px;
   line-height: 16px;
@@ -157,7 +154,7 @@
   }
 
   &--primary {
-    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   }
 }
 
@@ -177,5 +174,33 @@
     .gicon {
       display: inline-block;
     }
+  }
+}
+
+.navbar-edit {
+  display: flex;
+  height: $navbarHeight;
+  align-items: center;
+  padding-left: 7px;
+}
+
+.navbar-edit__back-btn {
+  background: transparent;
+  border: 2px solid $text-color;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  transition: transform 0.1s ease 0.1s;
+  color: $text-color;
+
+  i {
+    font-size: $font-size-lg;
+    position: relative;
+    top: 2px;
+  }
+
+  &:hover {
+    color: $text-color-strong;
+    border-color: $text-color-strong;
   }
 }

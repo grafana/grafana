@@ -86,6 +86,10 @@
   .panel-editor-container__panel {
     margin: 0 $dashboard-padding;
   }
+
+  .search-container {
+    left: 0 !important;
+  }
 }
 
 .panel-editor-container__resizer {
@@ -150,7 +154,6 @@
     box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
-
   }
 
   &--current {
@@ -232,4 +235,3 @@
   position: relative;
   min-width: 200px;
 }
-

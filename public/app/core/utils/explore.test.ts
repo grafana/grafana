@@ -8,6 +8,7 @@ import {
 } from './explore';
 import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
+import { LogsDedupStrategy } from 'app/core/logs_model';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -17,7 +18,8 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
     showingGraph: true,
     showingTable: true,
     showingLogs: true,
-  }
+    dedupStrategy: LogsDedupStrategy.none,
+  },
 };
 
 describe('state functions', () => {
@@ -78,7 +80,7 @@ describe('state functions', () => {
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
           '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},' +
-          '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
+          '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true,"dedupStrategy":"none"}}'
       );
     });
 
@@ -100,7 +102,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true]}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true,"none"]}]'
       );
     });
   });
