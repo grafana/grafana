@@ -9,6 +9,7 @@ export interface PanelPlugin {
   info: any;
   sort: number;
   exports?: PluginExports;
+  noQueries?: boolean;
 }
 
 export interface Plugin {

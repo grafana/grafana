@@ -10,14 +10,14 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 import { DataPanel } from './DataPanel';
 
 // Utils
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides, snapshotDataToPanelData } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState } from '@grafana/ui';
+import { TimeRange, LoadingState, PanelData } from '@grafana/ui';
 
 import variables from 'sass/_variables.scss';
 import templateSrv from 'app/features/templating/template_srv';
@@ -94,7 +94,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
 
-  renderPanel(loading, panelData, width, height): JSX.Element {
+  renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.Panel;
@@ -121,11 +121,45 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 
-  render() {
-    const { panel, dashboard } = this.props;
-    const { refreshCounter, timeRange, timeInfo } = this.state;
+  renderHelper = (width: number, height: number): JSX.Element => {
+    const { panel, plugin } = this.props;
+    const { refreshCounter, timeRange } = this.state;
+    const { datasource, targets } = panel;
+    return (
+      <>
+      {panel.snapshotData && panel.snapshotData.length > 0 ? (
+        this.renderPanelPlugin(LoadingState.Done, snapshotDataToPanelData(panel), width, height)
+      ) : (
+        <>
+        {plugin.noQueries ?
+            this.renderPanelPlugin(LoadingState.Done, null, width, height)
+          : (
+            <DataPanel
+            datasource={datasource}
+            queries={targets}
+            timeRange={timeRange}
+            isVisible={this.isVisible}
+            widthPixels={width}
+            refreshCounter={refreshCounter}
+            onDataResponse={this.onDataResponse}
+          >
+            {({ loading, panelData }) => {
+              return this.renderPanelPlugin(loading, panelData, width, height);
+            }}
+          </DataPanel>
+          )}
+        </>
+      )}
+      </>
+    );
+  }
 
-    const { datasource, targets, transparent } = panel;
+
+  render() {
+    const { dashboard, panel } = this.props;
+    const { timeInfo } = this.state;
+    const { transparent } = panel;
+
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
     return (
       <AutoSizer>
@@ -145,23 +179,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
               />
-              {panel.snapshotData ? (
-                this.renderPanel(false, panel.snapshotData, width, height)
-              ) : (
-                <DataPanel
-                  datasource={datasource}
-                  queries={targets}
-                  timeRange={timeRange}
-                  isVisible={this.isVisible}
-                  widthPixels={width}
-                  refreshCounter={refreshCounter}
-                  onDataResponse={this.onDataResponse}
-                >
-                  {({ loading, panelData }) => {
-                    return this.renderPanel(loading, panelData, width, height);
-                  }}
-                </DataPanel>
-              )}
+              {this.renderHelper(width, height)}
             </div>
           );
         }}
