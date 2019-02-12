@@ -18,13 +18,17 @@ interface Props {
   description?: string;
   scopedVars?: string;
   links?: [];
+  error?: string;
 }
 
 export class PanelHeaderCorner extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
 
   getInfoMode = () => {
-    const { panel } = this.props;
+    const { panel, error } = this.props;
+    if (error) {
+      return InfoModes.Error;
+    }
     if (!!panel.description) {
       return InfoModes.Info;
     }
@@ -42,7 +46,7 @@ export class PanelHeaderCorner extends Component<Props> {
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
     const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
 
-    const html = (
+    return (
       <div className="markdown-html">
         <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
         {panel.links &&
@@ -62,9 +66,18 @@ export class PanelHeaderCorner extends Component<Props> {
           )}
       </div>
     );
-
-    return html;
   };
+
+  renderCornerType(infoMode: InfoModes, content: string | JSX.Element) {
+    return (
+      <Tooltip content={content} placement="bottom-start">
+        <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}>
+          <i className="fa" />
+          <span className="panel-info-corner-inner" />
+        </div>
+      </Tooltip>
+    );
+  }
 
   render() {
     const infoMode: InfoModes | undefined = this.getInfoMode();
@@ -73,23 +86,15 @@ export class PanelHeaderCorner extends Component<Props> {
       return null;
     }
 
-    return (
-      <>
-        {infoMode === InfoModes.Info || infoMode === InfoModes.Links ? (
-          <Tooltip
-            content={this.getInfoContent()}
-            placement="bottom-start"
-          >
-            <div
-              className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}
-            >
-              <i className="fa" />
-              <span className="panel-info-corner-inner" />
-            </div>
-          </Tooltip>
-        ) : null}
-      </>
-    );
+    if (infoMode === InfoModes.Error) {
+      return this.renderCornerType(infoMode, this.props.error);
+    }
+
+    if (infoMode === InfoModes.Info) {
+      return this.renderCornerType(infoMode, this.getInfoContent());
+    }
+
+    return null;
   }
 }
 

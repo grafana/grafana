@@ -119,6 +119,15 @@ export class PanelChrome extends PureComponent<Props, State> {
     return this.hasPanelSnapshot ? snapshotDataToPanelData(panel) : null;
   }
 
+  onError = (errorMessage: string) => {
+    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
+      this.setState({
+        loading: LoadingState.Error,
+        errorMessage: errorMessage,
+      });
+    }
+  };
+
   renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
@@ -174,15 +183,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   };
 
-  onError = (errorMessage: string) => {
-    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
-      this.setState({
-        loading: LoadingState.Error,
-        errorMessage: errorMessage,
-      });
-    }
-  };
-
   render() {
     const { dashboard, panel } = this.props;
     const { timeInfo } = this.state;
@@ -206,6 +206,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 description={panel.description}
                 scopedVars={panel.scopedVars}
                 links={panel.links}
+                error={this.state.errorMessage}
               />
               <ErrorBoundary>
                 {({ error, errorInfo }) => {

@@ -18,6 +18,7 @@ export interface Props {
   description?: string;
   scopedVars?: string;
   links?: [];
+  error?: string;
 }
 
 interface ClickCoordinates {
@@ -71,7 +72,7 @@ export class PanelHeader extends Component<Props, State> {
     const isFullscreen = false;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
-    const { panel, dashboard, timeInfo, scopedVars } = this.props;
+    const { panel, dashboard, timeInfo, scopedVars, error } = this.props;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
     return (
@@ -82,6 +83,7 @@ export class PanelHeader extends Component<Props, State> {
           description={panel.description}
           scopedVars={panel.scopedVars}
           links={panel.links}
+          error={error}
         />
         <div className={panelHeaderClass}>
           {isLoading && (
