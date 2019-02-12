@@ -18,6 +18,7 @@ import {
   ExploreUIState,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { LogLevel } from 'app/core/logs_model';
 
 /**  Higher order actions
  *
@@ -199,6 +200,11 @@ export interface UpdateUIStatePayload extends Partial<ExploreUIState>{
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
+}
+
+export interface ToggleLogLevelPayload {
+  exploreId: ExploreId;
+  hiddenLogLevels: Set<LogLevel>;
 }
 
 export interface QueriesImportedPayload {
@@ -397,6 +403,10 @@ export const updateDatasourceInstanceAction = actionCreatorFactory<UpdateDatasou
   'explore/UPDATE_DATASOURCE_INSTANCE'
 ).create();
 
+export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
+  'explore/TOGGLE_LOG_LEVEL'
+).create();
+
 /**
  * Resets state for explore.
  */
@@ -436,4 +446,5 @@ export type Action =
   | ActionOf<ToggleGraphPayload>
   | ActionOf<ToggleLogsPayload>
   | ActionOf<UpdateDatasourceInstancePayload>
-  | ActionOf<QueriesImportedPayload>;
+  | ActionOf<QueriesImportedPayload>
+  | ActionOf<ToggleLogLevelPayload>;
