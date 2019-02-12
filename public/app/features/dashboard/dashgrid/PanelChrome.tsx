@@ -140,7 +140,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 
-  renderPanel = (width: number, height: number): JSX.Element => {
+  renderPanelBody = (width: number, height: number): JSX.Element => {
     const { panel } = this.props;
     const { refreshCounter, timeRange } = this.state;
     const { datasource, targets } = panel;
@@ -191,7 +191,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
               />
-              {this.renderPanel(width, height)}
+              {this.renderPanelBody(width, height)}
             </div>
           );
         }}
