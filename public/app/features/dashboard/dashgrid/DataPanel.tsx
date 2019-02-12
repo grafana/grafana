@@ -151,9 +151,6 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
-  // error som callback eller renderprop?
-  // ta bort error, bubbla till panelchrome
-
   getPanelData = () => {
     const { response } = this.state;
 
