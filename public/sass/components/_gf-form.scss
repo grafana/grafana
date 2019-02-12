@@ -203,7 +203,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   // Customize the `:focus` state to imitate native WebKit styles.
-  @include form-control-focus();
+  @include form-control-focus(false);
 
   // Placeholder
   &::placeholder {
@@ -250,6 +250,10 @@ $input-border: 1px solid $input-border-color;
 
   &--plaintext {
     white-space: unset;
+  }
+
+  &--invalid {
+    @include form-control-focus(true);
   }
 }
 
