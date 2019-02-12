@@ -7,19 +7,13 @@ exports[`Render should render component 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <label
-      className="gf-form--has-input-icon"
-    >
-      <ForwardRef
-        className="gf-form-input width-20"
-        onChange={[MockFunction]}
-        placeholder="Filter by name or type"
-        value=""
-      />
-      <i
-        className="gf-form-input-icon fa fa-search"
-      />
-    </label>
+    <ForwardRef
+      inputClassName="gf-form-input width-20"
+      labelClassName="gf-form--has-input-icon"
+      onChange={[MockFunction]}
+      placeholder="Filter by name or type"
+      value=""
+    />
     <LayoutSelector
       onLayoutModeChanged={[Function]}
     />
