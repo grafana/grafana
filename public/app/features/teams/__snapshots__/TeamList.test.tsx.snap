@@ -44,11 +44,10 @@ exports[`Render should render teams table 1`] = `
         <label
           className="gf-form--has-input-icon gf-form--grow"
         >
-          <input
+          <ForwardRef
             className="gf-form-input"
             onChange={[Function]}
             placeholder="Search teams"
-            type="text"
             value=""
           />
           <i
