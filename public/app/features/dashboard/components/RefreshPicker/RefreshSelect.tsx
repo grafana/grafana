@@ -43,7 +43,7 @@ export class RefreshSelect extends PureComponent<Props> {
           value={selectedValue}
           placeholder={' '}
           isSearchable={false}
-          menuIsOpen={isOpen}
+          isOpen={isOpen}
           maxMenuHeight={380}
         />
       </div>

@@ -19,7 +19,7 @@ HeadlessSelectStories.add('default', () => {
     { label: 'Another label', value: 'Another value' },
   ]);
 
-  const menuIsOpen = boolean('Is dropdown open', true);
+  const isOpen = boolean('Is dropdown open', true);
   return (
     <UseState initialState={value}>
       {(value, updateValue) => {
@@ -31,7 +31,7 @@ HeadlessSelectStories.add('default', () => {
               action('onChanged fired')(value);
               updateValue(value);
             }}
-            menuIsOpen={menuIsOpen}
+            isOpen={isOpen}
           />
         );
       }}

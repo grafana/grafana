@@ -46,7 +46,7 @@ export interface CommonProps {
   noOptionsMessage?: () => string;
   isMulti?: boolean;
   backspaceRemovesValue?: boolean;
-  menuIsOpen?: boolean;
+  isOpen?: boolean;
   components?: any;
 }
 
@@ -115,7 +115,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
       onBlur,
       maxMenuHeight,
       noOptionsMessage,
-      menuIsOpen,
+      isOpen,
       components,
     } = this.props;
 
@@ -152,7 +152,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         noOptionsMessage={noOptionsMessage}
         isMulti={isMulti}
         backspaceRemovesValue={backspaceRemovesValue}
-        menuIsOpen={menuIsOpen}
+        menuIsOpen={isOpen}
       />
     );
   }

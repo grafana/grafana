@@ -122,7 +122,7 @@ export class TimePicker extends PureComponent<Props, State> {
           <div className={'time-picker-select'} ref={this.pickerTriggerRef}>
             <HeadlessSelect
               components={{ Group: TimePickerOptionGroup }}
-              menuIsOpen={isSelectOpen}
+              isOpen={isSelectOpen}
               onChange={this.onSelectChanged}
               options={options}
             />
