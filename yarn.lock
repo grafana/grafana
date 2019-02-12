@@ -2265,11 +2265,6 @@ accepts@~1.3.4, accepts@~1.3.5:
     mime-types "~2.1.18"
     negotiator "0.6.1"
 
-ace-builds@^1.4.2:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/ace-builds/-/ace-builds-1.4.2.tgz#6afc2e43a7b5effdc44d8407436112852568e80d"
-  integrity sha512-M1JtZctO2Zg+1qeGUFZXtYKsyaRptqQtqpVzlj80I0NzGW9MF3um0DBuizIvQlrPYUlTdm+wcOPZpZoerkxQdA==
-
 acorn-dynamic-import@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/acorn-dynamic-import/-/acorn-dynamic-import-3.0.0.tgz#901ceee4c7faaef7e07ad2a47e890675da50a278"
@@ -4129,6 +4124,13 @@ brace-expansion@^1.0.0, brace-expansion@^1.1.7:
   dependencies:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
+
+brace@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/brace/-/brace-0.10.0.tgz#edef4eb9b0928ba1ee5f717ffc157749a6dd5d76"
+  integrity sha1-7e9OubCSi6HuX3F//BV3SabdXXY=
+  dependencies:
+    w3c-blob "0.0.1"
 
 braces@^1.8.2:
   version "1.8.5"
@@ -17280,6 +17282,11 @@ vm-browserify@0.0.4:
   integrity sha1-XX6kW7755Kb/ZflUOOCofDV9WnM=
   dependencies:
     indexof "0.0.1"
+
+w3c-blob@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/w3c-blob/-/w3c-blob-0.0.1.tgz#b0cd352a1a50f515563420ffd5861f950f1d85b8"
+  integrity sha1-sM01KhpQ9RVWNCD/1YYflQ8dhbg=
 
 w3c-hr-time@^1.0.1:
   version "1.0.1"
