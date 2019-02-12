@@ -26,7 +26,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      isLoading: false
+      isLoading: false,
     };
   }
 
@@ -41,9 +41,9 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
   onSave = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
     evt.stopPropagation();
-    this.setState({isLoading: true});
+    this.setState({ isLoading: true });
     await this.props.saveFolder(this.props.folder);
-    this.setState({isLoading: false});
+    this.setState({ isLoading: false });
   };
 
   onDelete = (evt: React.MouseEvent<HTMLButtonElement>) => {
@@ -67,30 +67,28 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={this.state.isLoading}>
-          <div className="page-container page-body">
-            <h2 className="page-sub-heading">Folder Settings</h2>
+          <h2 className="page-sub-heading">Folder Settings</h2>
 
-            <div className="section gf-form-group">
-              <form name="folderSettingsForm" onSubmit={this.onSave}>
-                <div className="gf-form">
-                  <label className="gf-form-label width-7">Name</label>
-                  <input
-                    type="text"
-                    className="gf-form-input width-30"
-                    value={folder.title}
-                    onChange={this.onTitleChange}
-                  />
-                </div>
-                <div className="gf-form-button-row">
-                  <button type="submit" className="btn btn-primary" disabled={!folder.canSave || !folder.hasChanged}>
-                    <i className="fa fa-save" /> Save
-                  </button>
-                  <button className="btn btn-danger" onClick={this.onDelete} disabled={!folder.canSave}>
-                    <i className="fa fa-trash" /> Delete
-                  </button>
-                </div>
-              </form>
-            </div>
+          <div className="section gf-form-group">
+            <form name="folderSettingsForm" onSubmit={this.onSave}>
+              <div className="gf-form">
+                <label className="gf-form-label width-7">Name</label>
+                <input
+                  type="text"
+                  className="gf-form-input width-30"
+                  value={folder.title}
+                  onChange={this.onTitleChange}
+                />
+              </div>
+              <div className="gf-form-button-row">
+                <button type="submit" className="btn btn-primary" disabled={!folder.canSave || !folder.hasChanged}>
+                  <i className="fa fa-save" /> Save
+                </button>
+                <button className="btn btn-danger" onClick={this.onDelete} disabled={!folder.canSave}>
+                  <i className="fa fa-trash" /> Delete
+                </button>
+              </div>
+            </form>
           </div>
         </Page.Contents>
       </Page>

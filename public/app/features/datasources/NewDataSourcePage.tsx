@@ -36,31 +36,29 @@ class NewDataSourcePage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-          <div className="page-container page-body">
-            <h2 className="add-data-source-header">Choose data source type</h2>
-            <div className="add-data-source-search">
-              <FilterInput
-                labelClassName="gf-form--has-input-icon"
-                inputClassName="gf-form-input width-20"
-                value={dataSourceTypeSearchQuery}
-                onChange={this.onSearchQueryChange}
-                placeholder="Filter by name or type"
-              />
-            </div>
-            <div className="add-data-source-grid">
-              {dataSourceTypes.map((plugin, index) => {
-                return (
-                  <div
-                    onClick={() => this.onDataSourceTypeClicked(plugin)}
-                    className="add-data-source-grid-item"
-                    key={`${plugin.id}-${index}`}
-                  >
-                    <img className="add-data-source-grid-item-logo" src={plugin.info.logos.small} />
-                    <span className="add-data-source-grid-item-text">{plugin.name}</span>
-                  </div>
-                );
-              })}
-            </div>
+          <h2 className="add-data-source-header">Choose data source type</h2>
+          <div className="add-data-source-search">
+            <FilterInput
+              labelClassName="gf-form--has-input-icon"
+              inputClassName="gf-form-input width-20"
+              value={dataSourceTypeSearchQuery}
+              onChange={this.onSearchQueryChange}
+              placeholder="Filter by name or type"
+            />
+          </div>
+          <div className="add-data-source-grid">
+            {dataSourceTypes.map((plugin, index) => {
+              return (
+                <div
+                  onClick={() => this.onDataSourceTypeClicked(plugin)}
+                  className="add-data-source-grid-item"
+                  key={`${plugin.id}-${index}`}
+                >
+                  <img className="add-data-source-grid-item-logo" src={plugin.info.logos.small} />
+                  <span className="add-data-source-grid-item-text">{plugin.name}</span>
+                </div>
+              );
+            })}
           </div>
         </Page.Contents>
       </Page>

@@ -38,6 +38,7 @@ import {
   toggleTableAction,
   queriesImportedAction,
   updateUIStateAction,
+  toggleLogLevelAction,
 } from './actionTypes';
 
 export const DEFAULT_RANGE = {
@@ -464,6 +465,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queries,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      };
+    },
+  })
+  .addMapper({
+    filter: toggleLogLevelAction,
+    mapper: (state, action): ExploreItemState => {
+      const { hiddenLogLevels } = action.payload;
+      return {
+        ...state,
+        hiddenLogLevels: Array.from(hiddenLogLevels),
       };
     },
   })
