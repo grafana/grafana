@@ -107,7 +107,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     ];
 
     // handle panels that do not have queries tab
-    if (!plugin.isDataPanel) {
+    if (plugin.noQueries === true) {
       // remove queries tab
       tabs.shift();
       // switch tab

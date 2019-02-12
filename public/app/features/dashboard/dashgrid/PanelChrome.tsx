@@ -131,8 +131,10 @@ export class PanelChrome extends PureComponent<Props, State> {
         this.renderPanelPlugin(LoadingState.Done, snapshotDataToPanelData(panel), width, height)
       ) : (
         <>
-        {plugin.isDataPanel === true ?
-          <DataPanel
+        {plugin.noQueries === true ?
+            this.renderPanelPlugin(LoadingState.Done, null, width, height)
+          : (
+            <DataPanel
             datasource={datasource}
             queries={targets}
             timeRange={timeRange}
@@ -145,8 +147,6 @@ export class PanelChrome extends PureComponent<Props, State> {
               return this.renderPanelPlugin(loading, panelData, width, height);
             }}
           </DataPanel>
-          : (
-            this.renderPanelPlugin(LoadingState.Done, null, width, height)
           )}
         </>
       )}
