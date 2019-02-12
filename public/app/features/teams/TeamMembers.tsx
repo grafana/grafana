@@ -7,6 +7,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
+import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
 
 export interface Props {
   members: TeamMember[];
@@ -33,8 +34,8 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.props.loadTeamMembers();
   }
 
-  onSearchQueryChange = event => {
-    this.props.setSearchMemberQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchMemberQuery(value);
   };
 
   onRemoveMember(member: TeamMember) {
@@ -90,8 +91,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
+              <RegExpSafeInput
                 className="gf-form-input"
                 placeholder="Search members"
                 value={searchMemberQuery}

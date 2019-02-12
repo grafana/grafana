@@ -13,6 +13,7 @@ import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DeleteButton } from '@grafana/ui';
+import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
 
 export interface Props {
   navModel: NavModel;
@@ -59,8 +60,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     this.props.deleteApiKey(key.id);
   }
 
-  onSearchQueryChange = evt => {
-    this.props.setSearchQuery(evt.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchQuery(value);
   };
 
   onToggleAdding = () => {
@@ -187,8 +188,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
+              <RegExpSafeInput
                 className="gf-form-input"
                 placeholder="Search keys"
                 value={searchQuery}
@@ -241,13 +241,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
-          {hasFetched && (
-            apiKeysCount > 0 ? (
-              this.renderApiKeyList()
-            ) : (
-              this.renderEmptyList()
-            )
-          )}
+          {hasFetched && (apiKeysCount > 0 ? this.renderApiKeyList() : this.renderEmptyList())}
         </Page.Contents>
       </Page>
     );

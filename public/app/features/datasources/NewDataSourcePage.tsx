@@ -6,6 +6,7 @@ import { NavModel, Plugin, StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
+import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
 
 export interface Props {
   navModel: NavModel;
@@ -26,8 +27,8 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.addDataSource(plugin);
   };
 
-  onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.setDataSourceTypeSearchQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setDataSourceTypeSearchQuery(value);
   };
 
   render() {
@@ -39,8 +40,7 @@ class NewDataSourcePage extends PureComponent<Props> {
             <h2 className="add-data-source-header">Choose data source type</h2>
             <div className="add-data-source-search">
               <label className="gf-form--has-input-icon">
-                <input
-                  type="text"
+                <RegExpSafeInput
                   className="gf-form-input width-20"
                   value={dataSourceTypeSearchQuery}
                   onChange={this.onSearchQueryChange}
@@ -74,7 +74,7 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'datasources'),
     dataSourceTypes: getDataSourceTypes(state.dataSources),
-    isLoading: state.dataSources.isLoadingDataSources
+    isLoading: state.dataSources.isLoadingDataSources,
   };
 }
 

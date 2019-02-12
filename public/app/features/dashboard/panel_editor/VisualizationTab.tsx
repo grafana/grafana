@@ -17,6 +17,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelPlugin } from 'app/types/plugins';
+import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
 
 interface Props {
   panel: PanelModel;
@@ -170,8 +171,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.setState({ isVizPickerOpen: false });
   };
 
-  onSearchQueryChange = evt => {
-    const value = evt.target.value;
+  onSearchQueryChange = (value: string) => {
     this.setState({
       searchQuery: value,
     });
@@ -185,8 +185,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       return (
         <>
           <label className="gf-form--has-input-icon">
-            <input
-              type="text"
+            <RegExpSafeInput
               className="gf-form-input width-13"
               placeholder=""
               onChange={this.onSearchQueryChange}

@@ -8,6 +8,7 @@ import { NavModel, Team } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
 
 export interface Props {
   navModel: NavModel;
@@ -33,8 +34,8 @@ export class TeamList extends PureComponent<Props, any> {
     this.props.deleteTeam(team.id);
   };
 
-  onSearchQueryChange = event => {
-    this.props.setSearchQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchQuery(value);
   };
 
   renderTeam(team: Team) {
@@ -90,8 +91,7 @@ export class TeamList extends PureComponent<Props, any> {
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
+              <RegExpSafeInput
                 className="gf-form-input"
                 placeholder="Search teams"
                 value={searchQuery}
@@ -141,9 +141,7 @@ export class TeamList extends PureComponent<Props, any> {
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>
-          {hasFetched && this.renderList()}
-        </Page.Contents>
+        <Page.Contents isLoading={!hasFetched}>{hasFetched && this.renderList()}</Page.Contents>
       </Page>
     );
   }

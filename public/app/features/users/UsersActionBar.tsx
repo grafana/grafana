@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/actions';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
+import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
 
 export interface Props {
   searchQuery: string;
@@ -44,11 +45,10 @@ export class UsersActionBar extends PureComponent<Props> {
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
           <label className="gf-form--has-input-icon">
-            <input
-              type="text"
+            <RegExpSafeInput
               className="gf-form-input width-20"
               value={searchQuery}
-              onChange={event => setUsersSearchQuery(event.target.value)}
+              onChange={setUsersSearchQuery}
               placeholder="Filter by name or type"
             />
             <i className="gf-form-input-icon fa fa-search" />

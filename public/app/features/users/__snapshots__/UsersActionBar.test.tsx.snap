@@ -10,11 +10,10 @@ exports[`Render should render component 1`] = `
     <label
       className="gf-form--has-input-icon"
     >
-      <input
+      <ForwardRef
         className="gf-form-input width-20"
-        onChange={[Function]}
+        onChange={[MockFunction]}
         placeholder="Filter by name or type"
-        type="text"
         value=""
       />
       <i
@@ -38,11 +37,10 @@ exports[`Render should render pending invites button 1`] = `
     <label
       className="gf-form--has-input-icon"
     >
-      <input
+      <ForwardRef
         className="gf-form-input width-20"
-        onChange={[Function]}
+        onChange={[MockFunction]}
         placeholder="Filter by name or type"
-        type="text"
         value=""
       />
       <i
@@ -90,11 +88,10 @@ exports[`Render should show external user management button 1`] = `
     <label
       className="gf-form--has-input-icon"
     >
-      <input
+      <ForwardRef
         className="gf-form-input width-20"
-        onChange={[Function]}
+        onChange={[MockFunction]}
         placeholder="Filter by name or type"
-        type="text"
         value=""
       />
       <i
@@ -128,11 +125,10 @@ exports[`Render should show invite button 1`] = `
     <label
       className="gf-form--has-input-icon"
     >
-      <input
+      <ForwardRef
         className="gf-form-input width-20"
-        onChange={[Function]}
+        onChange={[MockFunction]}
         placeholder="Filter by name or type"
-        type="text"
         value=""
       />
       <i

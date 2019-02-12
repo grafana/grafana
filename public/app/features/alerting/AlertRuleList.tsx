@@ -9,6 +9,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, AlertRule } from 'app/types';
 import { getAlertRulesAsync, setSearchQuery, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
+import { RegExpSafeInput } from 'app/core/components/RegExpSafeInput/RegExpSafeInput';
 
 export interface Props {
   navModel: NavModel;
@@ -69,8 +70,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
     });
   };
 
-  onSearchQueryChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = evt.target;
+  onSearchQueryChange = (value: string) => {
     this.props.setSearchQuery(value);
   };
 
@@ -78,7 +78,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
     this.props.togglePauseAlertRule(rule.id, { paused: rule.state !== 'paused' });
   };
 
-  alertStateFilterOption = ({ text, value }: { text: string; value: string; }) => {
+  alertStateFilterOption = ({ text, value }: { text: string; value: string }) => {
     return (
       <option key={value} value={value}>
         {text}
@@ -95,8 +95,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
               <label className="gf-form--has-input-icon gf-form--grow">
-                <input
-                  type="text"
+                <RegExpSafeInput
                   className="gf-form-input"
                   placeholder="Search alerts"
                   value={search}
@@ -142,7 +141,7 @@ const mapStateToProps = (state: StoreState) => ({
   alertRules: getAlertRuleItems(state.alertRules),
   stateFilter: state.location.query.state,
   search: getSearchQuery(state.alertRules),
-  isLoading: state.alertRules.isLoading
+  isLoading: state.alertRules.isLoading,
 });
 
 const mapDispatchToProps = {

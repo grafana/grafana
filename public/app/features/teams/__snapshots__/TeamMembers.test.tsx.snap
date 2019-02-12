@@ -11,11 +11,10 @@ exports[`Render should render component 1`] = `
       <label
         className="gf-form--has-input-icon gf-form--grow"
       >
-        <input
+        <ForwardRef
           className="gf-form-input"
           onChange={[Function]}
           placeholder="Search members"
-          type="text"
           value=""
         />
         <i
@@ -105,11 +104,10 @@ exports[`Render should render team members 1`] = `
       <label
         className="gf-form--has-input-icon gf-form--grow"
       >
-        <input
+        <ForwardRef
           className="gf-form-input"
           onChange={[Function]}
           placeholder="Search members"
-          type="text"
           value=""
         />
         <i
@@ -325,11 +323,10 @@ exports[`Render should render team members when sync enabled 1`] = `
       <label
         className="gf-form--has-input-icon gf-form--grow"
       >
-        <input
+        <ForwardRef
           className="gf-form-input"
           onChange={[Function]}
           placeholder="Search members"
-          type="text"
           value=""
         />
         <i

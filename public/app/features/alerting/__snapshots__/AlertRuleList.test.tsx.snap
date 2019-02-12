@@ -16,11 +16,10 @@ exports[`Render should render alert rules 1`] = `
         <label
           className="gf-form--has-input-icon gf-form--grow"
         >
-          <input
+          <ForwardRef
             className="gf-form-input"
             onChange={[Function]}
             placeholder="Search alerts"
-            type="text"
             value=""
           />
           <i
@@ -170,11 +169,10 @@ exports[`Render should render component 1`] = `
         <label
           className="gf-form--has-input-icon gf-form--grow"
         >
-          <input
+          <ForwardRef
             className="gf-form-input"
             onChange={[Function]}
             placeholder="Search alerts"
-            type="text"
             value=""
           />
           <i
