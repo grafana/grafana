@@ -17,13 +17,12 @@
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.1.0",
     "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
-    "@types/chokidar": "^1.7.5",
     "@types/classnames": "^2.2.6",
     "@types/d3": "^4.10.1",
     "@types/enzyme": "^3.1.13",
     "@types/jest": "^23.3.2",
     "@types/jquery": "^1.10.35",
-    "@types/node": "^10.12.24",
+    "@types/node": "^8.0.31",
     "@types/react": "^16.7.6",
     "@types/react-dom": "^16.0.9",
     "@types/react-grid-layout": "^0.16.6",
@@ -37,8 +36,8 @@
     "babel-jest": "^23.6.0",
     "babel-loader": "^8.0.4",
     "babel-plugin-angularjs-annotate": "^0.9.0",
-    "chokidar": "^2.1.0",
     "clean-webpack-plugin": "^0.1.19",
+    "concurrently": "^4.1.0",
     "css-loader": "^0.28.7",
     "enzyme": "^3.6.0",
     "enzyme-adapter-react-16": "^1.5.0",
@@ -72,7 +71,6 @@
     "jest-date-mock": "^1.0.6",
     "lint-staged": "^8.1.3",
     "load-grunt-tasks": "3.5.2",
-    "log-timestamp": "^0.2.1",
     "mini-css-extract-plugin": "^0.4.0",
     "mocha": "^4.0.1",
     "monaco-editor": "^0.15.6",
@@ -116,7 +114,7 @@
   },
   "scripts": {
     "dev": "webpack --progress --colors --mode development --config scripts/webpack/webpack.dev.js",
-    "start": "webpack-dev-server --progress --colors --mode development --config scripts/webpack/webpack.hot.js",
+    "start": "node ./scripts/cli/start.js",
     "watch": "webpack --progress --colors --watch --mode development --config scripts/webpack/webpack.dev.js",
     "build": "grunt build",
     "test": "grunt test",
@@ -126,8 +124,7 @@
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "precommit": "grunt precommit",
     "storybook": "cd packages/grafana-ui && yarn storybook",
-    "tmp": "nodemon -e ts -w ./packages/grafana-ui/src/themes -x yarn run tmp:exec",
-    "tmp:exec": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/watch.ts"
+    "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts"
   },
   "husky": {
     "hooks": {

@@ -8,23 +8,24 @@ export const darkThemeVarsTemplate = (theme: GrafanaTheme) => `
 
   // Grays
   // -------------------------
-  $black: #000;
-  $dark-1: #141414;
-  $dark-2: #1f1f20;
-  $dark-3: #262628;
-  $dark-4: #333333;
-  $dark-5: #444444;
-  $gray-1: #555555;
-  $gray-2: #8e8e8e;
-  $gray-3: #b3b3b3;
-  $gray-4: #d8d9da;
-  $gray-5: #ececec;
-  $gray-7: #fbfbfb;
+  $black: ${theme.colors.black};
+  $dark-1: ${theme.colors.dark2};
+  $dark-2: ${theme.colors.dark2};
+  $dark-3: ${theme.colors.dark3};
+  $dark-4: ${theme.colors.dark4};
+  $dark-5: ${theme.colors.dark5};
+  $gray-1: ${theme.colors.gray1};
+  $gray-2: ${theme.colors.gray2};
+  $gray-3: ${theme.colors.gray3};
+  $gray-4: ${theme.colors.gray4};
+  $gray-5: ${theme.colors.gray5};
+  $gray-6: ${theme.colors.gray6};
+  $gray-7: ${theme.colors.gray7};
 
   $gray-blue: #212327;
   $input-black: #09090b;
 
-  $white: #fff;
+  $white: ${theme.colors.white};
 
   // Accent colors
   // -------------------------
@@ -383,5 +384,5 @@ export const darkThemeVarsTemplate = (theme: GrafanaTheme) => `
 
   $vertical-resize-handle-bg: $dark-5;
   $vertical-resize-handle-dots: $gray-1;
-$vertical-resize-handle-dots-hover: $gray-2;
+  $vertical-resize-handle-dots-hover: $gray-2;
 `;
