@@ -38,7 +38,7 @@ export class SettingsCtrl {
       });
     });
 
-    this.canSaveAs = this.dashboard.meta.canEdit && contextSrv.hasEditPermissionInFolders;
+    this.canSaveAs = contextSrv.hasEditPermissionInFolders;
     this.canSave = this.dashboard.meta.canSave;
     this.canDelete = this.dashboard.meta.canSave;
 

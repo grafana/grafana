@@ -19,7 +19,7 @@ func (cr *configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) 
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		cr.log.Error("can't read datasource provisioning files from directory", "path", path)
+		cr.log.Error("can't read datasource provisioning files from directory", "path", path, "error", err)
 		return datasources, nil
 	}
 

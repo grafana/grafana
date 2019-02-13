@@ -16,13 +16,7 @@ function WrapInProvider(store, Component, props) {
 }
 
 /** @ngInject */
-export function reactContainer(
-  $route,
-  $location,
-  $injector,
-  $rootScope,
-  contextSrv: ContextSrv
-) {
+export function reactContainer($route, $location, $injector, $rootScope, contextSrv: ContextSrv) {
   return {
     restrict: 'E',
     template: '',

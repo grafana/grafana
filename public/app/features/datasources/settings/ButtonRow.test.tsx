@@ -7,6 +7,7 @@ const setup = (propOverrides?: object) => {
     isReadOnly: true,
     onSubmit: jest.fn(),
     onDelete: jest.fn(),
+    onTest: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

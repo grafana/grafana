@@ -25,7 +25,7 @@ interface GraphContainerProps {
 
 export class GraphContainer extends PureComponent<GraphContainerProps> {
   onClickGraphButton = () => {
-    this.props.toggleGraph(this.props.exploreId);
+    this.props.toggleGraph(this.props.exploreId, this.props.showingGraph);
   };
 
   onChangeTime = (timeRange: TimeRange) => {

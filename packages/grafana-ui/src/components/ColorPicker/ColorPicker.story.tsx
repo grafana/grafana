@@ -1,6 +1,6 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import {  boolean } from '@storybook/addon-knobs';
+import { boolean } from '@storybook/addon-knobs';
 import { SeriesColorPicker, ColorPicker } from './ColorPicker';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';

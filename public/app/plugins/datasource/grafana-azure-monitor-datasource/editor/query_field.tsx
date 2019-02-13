@@ -1,14 +1,11 @@
-import PluginPrism from './slate-plugins/prism';
-// import PluginPrism from 'slate-prism';
-// import Prism from 'prismjs';
-
+import PluginPrism from 'app/features/explore/slate-plugins/prism';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import ClearPlugin from 'app/features/explore/slate-plugins/clear';
-// Custom plugins (new line on Enter and run on Shift+Enter)
-import NewlinePlugin from './slate-plugins/newline';
-import RunnerPlugin from './slate-plugins/runner';
+import NewlinePlugin from 'app/features/explore/slate-plugins/newline';
+import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 
 import Typeahead from './typeahead';
+import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 
 import { Block, Document, Text, Value } from 'slate';
 import { Editor } from 'slate-react';
@@ -61,6 +58,7 @@ class QueryField extends React.Component<any, any> {
   menuEl: any;
   plugins: any;
   resetTimer: any;
+  keybindingSrv: KeybindingSrv = getKeybindingSrv();
 
   constructor(props, context) {
     super(props, context);
@@ -90,6 +88,7 @@ class QueryField extends React.Component<any, any> {
   }
 
   componentWillUnmount() {
+    this.restoreEscapeKeyBinding();
     clearTimeout(this.resetTimer);
   }
 
@@ -101,11 +100,11 @@ class QueryField extends React.Component<any, any> {
     const changed = value.document !== this.state.value.document;
     this.setState({ value }, () => {
       if (changed) {
+        // call typeahead only if query changed
+        requestAnimationFrame(() => this.onTypeahead());
         this.onChangeQuery();
       }
     });
-
-    window.requestAnimationFrame(this.onTypeahead);
   };
 
   request = (url?) => {
@@ -140,7 +139,7 @@ class QueryField extends React.Component<any, any> {
       case ' ': {
         if (event.ctrlKey) {
           event.preventDefault();
-          this.onTypeahead();
+          this.onTypeahead(true);
           return true;
         }
         break;
@@ -218,6 +217,7 @@ class QueryField extends React.Component<any, any> {
     if (onBlur) {
       onBlur();
     }
+    this.restoreEscapeKeyBinding();
   };
 
   handleFocus = () => {
@@ -225,7 +225,17 @@ class QueryField extends React.Component<any, any> {
     if (onFocus) {
       onFocus();
     }
+    // Don't go back to dashboard if Escape pressed inside the editor.
+    this.removeEscapeKeyBinding();
   };
+
+  removeEscapeKeyBinding() {
+    this.keybindingSrv.unbind('esc', 'keydown');
+  }
+
+  restoreEscapeKeyBinding() {
+    this.keybindingSrv.setupGlobal();
+  }
 
   onClickItem = item => {
     const { suggestions } = this.state;
@@ -269,12 +279,18 @@ class QueryField extends React.Component<any, any> {
       const rect = node.parentElement.getBoundingClientRect();
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
+      const screenHeight = window.innerHeight;
+
+      const menuLeft = rect.left + scrollX - 2;
+      const menuTop = rect.top + scrollY + rect.height + 4;
+      const menuHeight = screenHeight - menuTop - 10;
 
       // Write DOM
       requestAnimationFrame(() => {
         menu.style.opacity = 1;
-        menu.style.top = `${rect.top + scrollY + rect.height + 4}px`;
-        menu.style.left = `${rect.left + scrollX - 2}px`;
+        menu.style.top = `${menuTop}px`;
+        menu.style.left = `${menuLeft}px`;
+        menu.style.maxHeight = `${menuHeight}px`;
       });
     }
   };

@@ -8,11 +8,11 @@ const setup = (propOverrides?: object) => {
     organization: {} as Organization,
     navModel: {
       main: {
-        text: 'Configuration'
+        text: 'Configuration',
       },
       node: {
-        text: 'Org details'
-      }
+        text: 'Org details',
+      },
     } as NavModel,
     loadOrganization: jest.fn(),
     setOrganizationName: jest.fn(),

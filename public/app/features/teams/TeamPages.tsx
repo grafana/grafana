@@ -49,9 +49,9 @@ export class TeamPages extends PureComponent<Props, State> {
 
   async fetchTeam() {
     const { loadTeam, teamId } = this.props;
-    this.setState({isLoading: true});
+    this.setState({ isLoading: true });
     const team = await loadTeam(teamId);
-    this.setState({isLoading: false});
+    this.setState({ isLoading: false });
     return team;
   }
 
@@ -84,7 +84,7 @@ export class TeamPages extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={this.state.isLoading}>
-          {team && Object.keys(team).length !== 0 && <div className="page-container page-body">{this.renderPage()}</div>}
+          {team && Object.keys(team).length !== 0 && this.renderPage()}
         </Page.Contents>
       </Page>
     );

@@ -48,7 +48,7 @@
           <input type="text" class="gf-form-input input-large" ng-model="ctrl.editTimeRaw.from" input-datetime>
         </div>
         <div class="gf-form">
-          <button class="btn gf-form-btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
+          <button class="btn gf-form-btn btn-secondary" type="button" ng-click="openFromPicker=!openFromPicker">
             <i class="fa fa-calendar"></i>
           </button>
         </div>
@@ -65,7 +65,7 @@
           <input type="text" class="gf-form-input input-large" ng-model="ctrl.editTimeRaw.to" input-datetime>
         </div>
         <div class="gf-form">
-          <button class="btn gf-form-btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
+          <button class="btn gf-form-btn btn-secondary" type="button" ng-click="openToPicker=!openToPicker">
             <i class="fa fa-calendar"></i>
           </button>
         </div>
@@ -81,7 +81,7 @@
           <select ng-model="ctrl.refresh.value" class="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
         </div>
         <div class="gf-form">
-          <button type="submit" class="btn gf-form-btn btn-secondary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
+          <button type="submit" class="btn gf-form-btn btn-primary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
         </div>
       </div>
     </form>

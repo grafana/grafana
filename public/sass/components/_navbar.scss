@@ -47,7 +47,6 @@
   .navbar-button--add-panel,
   .navbar-button--star,
   .navbar-button--tv,
-
   .navbar-buttons--close {
     display: flex;
   }
@@ -117,7 +116,8 @@
 .navbar-button {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
 
-  display: inline-block;
+  display: flex;
+  align-items: center;
   font-weight: $btn-font-weight;
   padding: 6px 11px;
   line-height: 16px;
@@ -154,7 +154,7 @@
   }
 
   &--primary {
-    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   }
 }
 
@@ -184,7 +184,7 @@
   padding-left: 7px;
 }
 
-.navbar-edit__back-btn  {
+.navbar-edit__back-btn {
   background: transparent;
   border: 2px solid $text-color;
   border-radius: 50%;
@@ -204,5 +204,3 @@
     border-color: $text-color-strong;
   }
 }
-
-

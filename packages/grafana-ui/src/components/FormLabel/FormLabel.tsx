@@ -31,7 +31,7 @@ export const FormLabel: FunctionComponent<Props> = ({
     <label className={classes} {...rest} htmlFor={htmlFor}>
       {children}
       {tooltip && (
-        <Tooltip placement="top" content={tooltip} theme={"info"}>
+        <Tooltip placement="top" content={tooltip} theme={'info'}>
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
             <i className="fa fa-info-circle" />
           </div>

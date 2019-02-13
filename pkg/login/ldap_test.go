@@ -395,8 +395,11 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		sc := &scenarioContext{}
+		loginService := &LoginService{
+			Bus: bus.GetBus(),
+		}
 
-		bus.AddHandler("test", UpsertUser)
+		bus.AddHandler("test", loginService.UpsertUser)
 
 		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.SyncTeamsCommand) error {
 			return nil

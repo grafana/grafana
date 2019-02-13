@@ -49,7 +49,7 @@ describe('dashboard reducer', () => {
 
     beforeEach(() => {
       state = dashboardReducer(initialState, dashboardInitFetching());
-      state = dashboardReducer(state, dashboardInitFailed({message: 'Oh no', error: 'sad'}));
+      state = dashboardReducer(state, dashboardInitFailed({ message: 'Oh no', error: 'sad' }));
     });
 
     it('should set model', async () => {

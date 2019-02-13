@@ -3,6 +3,8 @@ package metrics
 import (
 	"runtime"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -282,7 +284,7 @@ func init() {
 		Name:      "build_info",
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built.",
 		Namespace: exporterName,
-	}, []string{"version", "revision", "branch", "goversion"})
+	}, []string{"version", "revision", "branch", "goversion", "edition"})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -291,8 +293,13 @@ func SetBuildInformation(version, revision, branch string) {
 	// Once this have been released for some time we should be able to remote `M_Grafana_Version`
 	// The reason we added a new one is that its common practice in the prometheus community
 	// to name this metric `*_build_info` so its easy to do aggregation on all programs.
+	edition := "oss"
+	if setting.IsEnterprise {
+		edition = "enterprise"
+	}
+
 	M_Grafana_Version.WithLabelValues(version).Set(1)
-	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version()).Set(1)
+	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
 }
 
 func initMetricVars() {

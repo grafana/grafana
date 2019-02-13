@@ -385,12 +385,16 @@ describe('CloudWatchDatasource', () => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
-            tables: [{
-              rows: [[
-                'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
-                'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321'
-              ]]
-            }],
+            tables: [
+              {
+                rows: [
+                  [
+                    'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
+                    'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
+                  ],
+                ],
+              },
+            ],
           },
         },
       };
