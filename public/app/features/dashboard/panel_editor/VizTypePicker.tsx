@@ -10,14 +10,13 @@ export interface Props {
   onTypeChanged: (newType: PanelPlugin) => void;
   searchQuery: string;
   onClose: () => void;
-  onPluginListChange: (searchResults: PanelPlugin[]) => void;
 }
 
 export class VizTypePicker extends PureComponent<Props> {
   searchInput: HTMLElement;
   pluginList = this.getPanelPlugins('');
 
-  constructor(props: Props) {
+  constructor(props) {
     super(props);
   }
 
@@ -51,7 +50,7 @@ export class VizTypePicker extends PureComponent<Props> {
   };
 
   getFilteredPluginList = (): PanelPlugin[] => {
-    const { searchQuery, onPluginListChange } = this.props;
+    const { searchQuery } = this.props;
     const regex = new RegExp(searchQuery, 'i');
     const pluginList = this.pluginList;
 
@@ -59,7 +58,6 @@ export class VizTypePicker extends PureComponent<Props> {
       return regex.test(item.name);
     });
 
-    onPluginListChange(filtered);
     return filtered;
   };
 
