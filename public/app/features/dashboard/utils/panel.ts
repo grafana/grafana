@@ -176,11 +176,11 @@ export const snapshotDataToPanelData = (panel: PanelModel): PanelData => {
   const snapshotData = panel.snapshotData;
   if (isTimeSeries(snapshotData[0])) {
     return {
-      timeSeries: snapshotData
+      timeSeries: snapshotData,
     } as PanelData;
   } else if (isTableData(snapshotData[0])) {
     return {
-      tableData: snapshotData[0]
+      tableData: snapshotData[0],
     } as PanelData;
   }
   throw new Error('snapshotData is invalid:' + snapshotData.toString());

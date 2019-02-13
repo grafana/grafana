@@ -21,7 +21,7 @@ export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) =
                 onMouseEnter={showPopper}
                 onMouseLeave={hidePopper}
                 referenceElement={tooltipTriggerRef.current}
-                wrapperClassName='popper'
+                wrapperClassName="popper"
                 className={popperBackgroundClassName}
                 renderArrow={({ arrowProps, placement }) => (
                   <div className="popper__arrow" data-placement={placement} {...arrowProps} />

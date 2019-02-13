@@ -301,7 +301,6 @@ export default class CloudWatchDatasource {
       return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
     }
 
-
     const resourceARNsQuery = query.match(/^resource_arns\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
     if (resourceARNsQuery) {
       region = resourceARNsQuery[1];

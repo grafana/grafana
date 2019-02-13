@@ -17,7 +17,7 @@ describe('ElasticDatasource', function(this: any) {
 
   const templateSrv = {
     replace: jest.fn(text => {
-      if (text.startsWith("$")) {
+      if (text.startsWith('$')) {
         return `resolvedVariable`;
       } else {
         return text;
@@ -94,7 +94,7 @@ describe('ElasticDatasource', function(this: any) {
         },
         targets: [
           {
-            alias: "$varAlias",
+            alias: '$varAlias',
             bucketAggs: [],
             metrics: [{ type: 'raw_document' }],
             query: 'escape\\:test',

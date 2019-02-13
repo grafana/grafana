@@ -140,7 +140,7 @@ export class AlertTabCtrl {
       name: model.name,
       iconClass: this.getNotificationIcon(model.type),
       isDefault: false,
-      uid: model.uid
+      uid: model.uid,
     });
 
     // avoid duplicates using both id and uid to be backwards compatible.
@@ -157,8 +157,8 @@ export class AlertTabCtrl {
   removeNotification(an) {
     // remove notifiers refeered to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, n =>  n.uid === an.uid || n.id === an.id);
-    _.remove(this.alertNotifications, n =>  n.uid === an.uid || n.id === an.id);
+    _.remove(this.alert.notifications, n => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alertNotifications, n => n.uid === an.uid || n.id === an.id);
   }
 
   initModel() {

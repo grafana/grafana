@@ -45,7 +45,7 @@ describe('colors', () => {
 
   describe('getColorFromHexRgbOrName', () => {
     it('returns black for unknown color', () => {
-      expect(getColorFromHexRgbOrName('aruba-sunshine')).toBe("#000000");
+      expect(getColorFromHexRgbOrName('aruba-sunshine')).toBe('#000000');
     });
 
     it('returns dark hex variant for known color if theme not specified', () => {
