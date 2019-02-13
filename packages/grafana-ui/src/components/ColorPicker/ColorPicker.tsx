@@ -30,7 +30,7 @@ export const warnAboutColorPickerPropsDeprecation = (componentName: string, prop
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
-  displayName = 'ColorPicker',
+  displayName = 'ColorPicker'
 ) => {
   return class ColorPicker extends Component<T, any> {
     static displayName = displayName;

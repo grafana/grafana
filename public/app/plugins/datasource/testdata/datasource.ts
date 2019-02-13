@@ -98,4 +98,3 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     return this.backendSrv.get('/api/tsdb/testdata/scenarios');
   }
 }
-

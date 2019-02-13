@@ -82,15 +82,15 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
 
     return (
       <PanelOptionsGroup title="Add value mapping" onAdd={this.addMapping}>
-          {valueMappings.length > 0 &&
-            valueMappings.map((valueMapping, index) => (
-              <MappingRow
-                key={`${valueMapping.text}-${index}`}
-                valueMapping={valueMapping}
-                updateValueMapping={this.updateGauge}
-                removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
-              />
-            ))}
+        {valueMappings.length > 0 &&
+          valueMappings.map((valueMapping, index) => (
+            <MappingRow
+              key={`${valueMapping.text}-${index}`}
+              valueMapping={valueMapping}
+              updateValueMapping={this.updateGauge}
+              removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
+            />
+          ))}
       </PanelOptionsGroup>
     );
   }

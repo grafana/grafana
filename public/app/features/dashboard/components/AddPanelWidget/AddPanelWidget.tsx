@@ -87,7 +87,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
 
     if (tab === 'visualization') {
       location.query.tab = 'visualization';
-      location.query.openVizPicker  = true;
+      location.query.openVizPicker = true;
     }
 
     reduxStore.dispatch(updateLocation(location));
@@ -161,7 +161,9 @@ export class AddPanelWidget extends React.Component<Props, State> {
               )}
             </div>
             <div className="add-panel-widget__actions">
-              <button className="btn btn-inverse add-panel-widget__action" onClick={this.onCreateNewRow}>Convert to row</button>
+              <button className="btn btn-inverse add-panel-widget__action" onClick={this.onCreateNewRow}>
+                Convert to row
+              </button>
               {copiedPanelPlugins.length === 1 && (
                 <button
                   className="btn btn-inverse add-panel-widget__action"

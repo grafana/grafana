@@ -1,4 +1,3 @@
-
 export default class AdminEditOrgCtrl {
   /** @ngInject */
   constructor($scope, $routeParams, backendSrv, $location, navModelSrv) {
@@ -46,4 +45,3 @@ export default class AdminEditOrgCtrl {
     $scope.init();
   }
 }
-

@@ -344,7 +344,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       datapoints: series.datapoints,
       target: series.alias,
       alias: series.alias,
-      color: series.color
+      color: series.color,
     };
   });
 }

@@ -311,7 +311,7 @@ class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & Legen
 export class Legend extends PureComponent<GraphLegendProps> {
   render() {
     return (
-      <CustomScrollbar renderTrackHorizontal={(props) => <div {...props} style={{visibility: 'none'}} />}>
+      <CustomScrollbar renderTrackHorizontal={props => <div {...props} style={{ visibility: 'none' }} />}>
         <GraphLegend {...this.props} />
       </CustomScrollbar>
     );
