@@ -47,7 +47,6 @@
   .navbar-button--add-panel,
   .navbar-button--star,
   .navbar-button--tv,
-
   .navbar-buttons--close {
     display: flex;
   }
@@ -185,7 +184,7 @@
   padding-left: 7px;
 }
 
-.navbar-edit__back-btn  {
+.navbar-edit__back-btn {
   background: transparent;
   border: 2px solid $text-color;
   border-radius: 50%;
@@ -205,5 +204,3 @@
     border-color: $text-color-strong;
   }
 }
-
-

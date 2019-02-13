@@ -4,18 +4,21 @@ import { connect } from 'react-redux';
 import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { toggleLogs, changeDedupStrategy } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
+import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
+import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 
 interface LogsContainerProps {
   exploreId: ExploreId;
   loading: boolean;
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
+  dedupedResult?: LogsModel;
   onChangeTime: (range: TimeRange) => void;
   onClickLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -25,8 +28,10 @@ interface LogsContainerProps {
   scanRange?: RawTimeRange;
   showingLogs: boolean;
   toggleLogs: typeof toggleLogs;
+  toggleLogLevelAction: typeof toggleLogLevelAction;
   changeDedupStrategy: typeof changeDedupStrategy;
   dedupStrategy: LogsDedupStrategy;
+  hiddenLogLevels: Set<LogLevel>;
   width: number;
 }
 
@@ -39,12 +44,21 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     this.props.changeDedupStrategy(this.props.exploreId, dedupStrategy);
   };
 
+  hangleToggleLogLevel = (hiddenLogLevels: Set<LogLevel>) => {
+    const { exploreId } = this.props;
+    this.props.toggleLogLevelAction({
+      exploreId,
+      hiddenLogLevels,
+    });
+  };
+
   render() {
     const {
       exploreId,
       loading,
       logsHighlighterExpressions,
       logsResult,
+      dedupedResult,
       onChangeTime,
       onClickLabel,
       onStartScanning,
@@ -54,6 +68,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       scanning,
       scanRange,
       width,
+      hiddenLogLevels,
     } = this.props;
 
     return (
@@ -61,6 +76,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         <Logs
           dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
           data={logsResult}
+          dedupedData={dedupedResult}
           exploreId={exploreId}
           key={logsResult && logsResult.id}
           highlighterExpressions={logsHighlighterExpressions}
@@ -70,32 +86,26 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           onStartScanning={onStartScanning}
           onStopScanning={onStopScanning}
           onDedupStrategyChange={this.handleDedupStrategyChange}
+          onToggleLogLevel={this.hangleToggleLogLevel}
           range={range}
           scanning={scanning}
           scanRange={scanRange}
           width={width}
+          hiddenLogLevels={hiddenLogLevels}
         />
       </Panel>
     );
   }
 }
 
-const selectItemUIState = (itemState: ExploreItemState) => {
-  const { showingGraph, showingLogs, showingTable, showingStartPage, dedupStrategy } = itemState;
-  return {
-    showingGraph,
-    showingLogs,
-    showingTable,
-    showingStartPage,
-    dedupStrategy,
-  };
-};
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
   const { logsHighlighterExpressions, logsResult, queryTransactions, scanning, scanRange, range } = item;
   const loading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
-  const {showingLogs, dedupStrategy} = selectItemUIState(item);
+  const { showingLogs, dedupStrategy } = exploreItemUIStateSelector(item);
+  const hiddenLogLevels = new Set(item.hiddenLogLevels);
+  const dedupedResult = deduplicatedLogsSelector(item);
 
   return {
     loading,
@@ -106,12 +116,15 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     showingLogs,
     range,
     dedupStrategy,
+    hiddenLogLevels,
+    dedupedResult,
   };
 }
 
 const mapDispatchToProps = {
   toggleLogs,
   changeDedupStrategy,
+  toggleLogLevelAction,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LogsContainer));

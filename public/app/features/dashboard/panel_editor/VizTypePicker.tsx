@@ -66,9 +66,11 @@ export class VizTypePicker extends PureComponent<Props> {
     return (
       <div className="viz-picker">
         <div className="viz-picker-list">
-          {hasResults ?
+          {hasResults ? (
             filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index))
-            : <EmptySearchResult>No panels matching your query were found</EmptySearchResult>}
+          ) : (
+            <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
+          )}
         </div>
       </div>
     );

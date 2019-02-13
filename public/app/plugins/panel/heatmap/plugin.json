@@ -3,6 +3,8 @@
   "name": "Heatmap",
   "id": "heatmap",
 
+  "dataFormats": ["time_series"],
+
   "info": {
     "description": "Heatmap Panel for Grafana",
     "author": {
@@ -14,8 +16,8 @@
       "large": "img/icn-heatmap-panel.svg"
     },
     "links": [
-      {"name": "Brendan Gregg - Heatmaps", "url": "http://www.brendangregg.com/heatmaps.html"},
-      {"name": "Brendan Gregg - Latency Heatmaps", "url": " http://www.brendangregg.com/HeatMaps/latency.html"}
+      { "name": "Brendan Gregg - Heatmaps", "url": "http://www.brendangregg.com/heatmaps.html" },
+      { "name": "Brendan Gregg - Latency Heatmaps", "url": " http://www.brendangregg.com/HeatMaps/latency.html" }
     ],
     "version": "5.0.0"
   }

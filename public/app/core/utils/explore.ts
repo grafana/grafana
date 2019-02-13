@@ -207,7 +207,14 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.to,
       urlState.datasource,
       ...urlState.queries,
-      { ui: [!!urlState.ui.showingGraph, !!urlState.ui.showingLogs, !!urlState.ui.showingTable, urlState.ui.dedupStrategy] },
+      {
+        ui: [
+          !!urlState.ui.showingGraph,
+          !!urlState.ui.showingLogs,
+          !!urlState.ui.showingTable,
+          urlState.ui.dedupStrategy,
+        ],
+      },
     ]);
   }
   return JSON.stringify(urlState);

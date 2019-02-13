@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import { importPluginModule } from './plugin_loader';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem  } from '@grafana/ui/src/types';
+import { DataSourceApi, DataSourceSelectItem } from '@grafana/ui/src/types';
 
 export class DatasourceSrv {
   datasources: { [name: string]: DataSourceApi };
