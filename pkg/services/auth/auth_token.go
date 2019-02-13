@@ -35,6 +35,13 @@ func (s *UserAuthTokenService) Init() error {
 	return nil
 }
 
+func (s *UserAuthTokenService) ActiveTokenCount() (int64, error) {
+	var model userAuthToken
+	count, err := s.SQLStore.NewSession().Where(`created_at > ? AND rotated_at > ?`, s.createdAfterParam(), s.rotatedAfterParam()).Count(&model)
+
+	return count, err
+}
+
 func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
 	token, err := util.RandomHex(16)
@@ -79,13 +86,8 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserTo
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
 	}
 
-	tokenMaxLifetime := time.Duration(s.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
-	tokenMaxInactiveLifetime := time.Duration(s.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
-	createdAfter := getTime().Add(-tokenMaxLifetime).Unix()
-	rotatedAfter := getTime().Add(-tokenMaxInactiveLifetime).Unix()
-
 	var model userAuthToken
-	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ? AND rotated_at > ?", hashedToken, hashedToken, createdAfter, rotatedAfter).Get(&model)
+	exists, err := s.SQLStore.NewSession().Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ? AND rotated_at > ?", hashedToken, hashedToken, s.createdAfterParam(), s.rotatedAfterParam()).Get(&model)
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +219,16 @@ func (s *UserAuthTokenService) RevokeToken(token *models.UserToken) error {
 	s.log.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
 
 	return nil
+}
+
+func (s *UserAuthTokenService) createdAfterParam() int64 {
+	tokenMaxLifetime := time.Duration(s.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
+	return getTime().Add(-tokenMaxLifetime).Unix()
+}
+
+func (s *UserAuthTokenService) rotatedAfterParam() int64 {
+	tokenMaxInactiveLifetime := time.Duration(s.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
+	return getTime().Add(-tokenMaxInactiveLifetime).Unix()
 }
 
 func hashToken(token string) string {

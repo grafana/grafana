@@ -10,7 +10,7 @@
       <div class="empty-list-cta__title">
         There are no dashboard links added yet
       </div>
-      <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-success">
+      <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-primary">
         <i class="gicon gicon-add-link"></i>
         Add Dashboard Link
       </a>
@@ -26,7 +26,7 @@
   <div ng-if="ctrl.dashboard.links.length > 0">
     <div class="page-action-bar">
       <div class="page-action-bar__spacer"></div>
-      <a type="button" class="btn btn-success" ng-click="ctrl.setupNew()">
+      <a type="button" class="btn btn-primary" ng-click="ctrl.setupNew()">
         <i class="fa fa-plus"></i> New</a>
     </div>
     <table class="filter-table filter-table--hover">
@@ -126,10 +126,10 @@
       </div>
     </div>
   </div>
-  <button class="btn btn-success" ng-if="ctrl.mode == 'new'" ng-click="ctrl.addLink()">
+  <button class="btn btn-primary" ng-if="ctrl.mode == 'new'" ng-click="ctrl.addLink()">
     Add
   </button>
-  <button class="btn btn-success" ng-if="ctrl.mode == 'edit'" ng-click="ctrl.saveLink()">
+  <button class="btn btn-primary" ng-if="ctrl.mode == 'edit'" ng-click="ctrl.saveLink()">
     Update
   </button>
 </div>

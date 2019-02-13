@@ -28,7 +28,7 @@ interface RenderProps {
 export interface Props {
   datasource: string | null;
   queries: any[];
-  panelId?: number;
+  panelId: number;
   dashboardId?: number;
   isInView?: boolean;
   timeRange?: TimeRange;

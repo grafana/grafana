@@ -84,7 +84,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <button className="btn btn-success pull-right" onClick={this.onToggleAdding}>
+            <button className="btn btn-primary pull-right" onClick={this.onToggleAdding}>
               <i className="fa fa-plus" /> Add group
             </button>
           )}
@@ -108,7 +108,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               </div>
 
               <div className="gf-form">
-                <button className="btn btn-success gf-form-btn" type="submit" disabled={!this.isNewGroupValid()}>
+                <button className="btn btn-primary gf-form-btn" type="submit" disabled={!this.isNewGroupValid()}>
                   Add group
                 </button>
               </div>
@@ -120,7 +120,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           !isAdding && (
             <div className="empty-list-cta">
               <div className="empty-list-cta__title">There are no external groups to sync with</div>
-              <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-xlarge btn-success">
+              <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-xlarge btn-primary">
                 <i className="gicon gicon-add-team" />
                 Add Group
               </button>

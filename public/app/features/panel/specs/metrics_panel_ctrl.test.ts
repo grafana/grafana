@@ -1,6 +1,9 @@
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/core/config', () => {
   return {
+    bootData: {
+      user: {},
+    },
     panels: {
       test: {
         id: 'test',

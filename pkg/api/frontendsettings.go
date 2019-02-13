@@ -145,6 +145,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"info":         panel.Info,
 			"hideFromList": panel.HideFromList,
 			"sort":         getPanelSort(panel.Id),
+			"dataFormats":  panel.DataFormats,
 		}
 	}
 

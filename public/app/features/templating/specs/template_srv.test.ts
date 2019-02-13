@@ -473,7 +473,7 @@ describe('templateSrv', () => {
           type: 'custom',
           name: 'foo',
           current: { value: 'constructor', text: 'constructor' },
-        }
+        },
       ]);
       _templateSrv.setGrafanaVariable('$__auto_interval_interval', '13m');
       _templateSrv.updateIndex();

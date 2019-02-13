@@ -917,5 +917,4 @@ export class DashboardModel {
       }
     }
   }
-
 }

@@ -7,13 +7,18 @@
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
+![](https://www.grafanacon.org/2019/images/grafanacon_la_nav-logo.png)
+
+Join us Feb 25-26 in Los Angeles, California for GrafanaCon - a two-day event with talks focused on Grafana and the surrounding open source monitoring ecosystem. Get deep dives into Loki, the Explore workflow and all of the new features of Grafana 6, plus participate in hands on workshops to help you get the most out of your data. 
+
+Time is running out - grab your ticket now! http://grafanacon.org
+
+<!---
 ![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
+-->
 
 ## Installation
-Head to [docs.grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
-the latest release.
-
-If you have any problems please read the [troubleshooting guide](http://docs.grafana.org/installation/troubleshooting/).
+Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [download](https://grafana.com/get) to get the latest release.
 
 ## Documentation & Support
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.

@@ -139,6 +139,10 @@ export class KeybindingSrv {
     );
   }
 
+  unbind(keyArg: string, keyType?: string) {
+    Mousetrap.unbind(keyArg, keyType);
+  }
+
   showDashEditView() {
     const search = _.extend(this.$location.search(), { editview: 'settings' });
     this.$location.search(search);
@@ -291,3 +295,17 @@ export class KeybindingSrv {
 }
 
 coreModule.service('keybindingSrv', KeybindingSrv);
+
+/**
+ * Code below exports the service to react components
+ */
+
+let singletonInstance: KeybindingSrv;
+
+export function setKeybindingSrv(instance: KeybindingSrv) {
+  singletonInstance = instance;
+}
+
+export function getKeybindingSrv(): KeybindingSrv {
+  return singletonInstance;
+}

@@ -31,6 +31,12 @@ func TestUserAuthToken(t *testing.T) {
 			So(userToken, ShouldNotBeNil)
 			So(userToken.AuthTokenSeen, ShouldBeFalse)
 
+			Convey("Can count active tokens", func() {
+				count, err := userAuthTokenService.ActiveTokenCount()
+				So(err, ShouldBeNil)
+				So(count, ShouldEqual, 1)
+			})
+
 			Convey("When lookup unhashed token should return user auth token", func() {
 				userToken, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 				So(err, ShouldBeNil)
@@ -114,6 +120,12 @@ func TestUserAuthToken(t *testing.T) {
 				notGood, err := userAuthTokenService.LookupToken(userToken.UnhashedToken)
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 				So(notGood, ShouldBeNil)
+
+				Convey("should not find active token when expired", func() {
+					count, err := userAuthTokenService.ActiveTokenCount()
+					So(err, ShouldBeNil)
+					So(count, ShouldEqual, 0)
+				})
 			})
 
 			Convey("when rotated_at is 5 days ago and created_at is 29 days and 23:59:59 ago should not find token", func() {

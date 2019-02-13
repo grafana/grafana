@@ -9,7 +9,7 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopover } from '@grafana/ui';
+import { ColorPicker, SeriesColorPickerPopoverWithTheme } from '@grafana/ui';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -27,7 +27,7 @@ export function registerAngularDirectives() {
     'color',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('seriesColorPickerPopover', SeriesColorPickerPopover, [
+  react2AngularDirective('seriesColorPickerPopover', SeriesColorPickerPopoverWithTheme, [
     'color',
     'series',
     'onColorChange',

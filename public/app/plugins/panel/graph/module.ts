@@ -10,7 +10,7 @@ import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
-import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
+import { getColorFromHexRgbOrName } from '@grafana/ui';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -244,7 +244,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series, color) => {
-    series.setColor(getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark));
+    series.setColor(getColorFromHexRgbOrName(color, config.theme.type));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };

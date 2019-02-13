@@ -44,7 +44,7 @@ export class PlaylistSrv {
     // as this can be called from react
     this.$timeout(() => {
       const stripedUrl = locationUtil.stripBaseFromUrl(dash.url);
-      this.$location.url(stripedUrl  + '?' + toUrlParams(filteredParams));
+      this.$location.url(stripedUrl + '?' + toUrlParams(filteredParams));
     });
 
     this.index++;

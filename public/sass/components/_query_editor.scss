@@ -124,10 +124,9 @@ input[type='text'].tight-form-func-param {
 
   &--disabled {
     .query-keyword {
-      color: darken($blue, 20%);
+      color: $text-color-weak;
     }
   }
-
 }
 
 .query-editor-row__header {
@@ -138,7 +137,6 @@ input[type='text'].tight-form-func-param {
   background: $page-bg;
   flex-wrap: nowrap;
   align-items: center;
-
 }
 .query-editor-row__ref-id {
   font-weight: $font-weight-semi-bold;
@@ -206,4 +204,3 @@ input[type='text'].tight-form-func-param {
   color: $text-muted;
   padding-left: 10px;
 }
-

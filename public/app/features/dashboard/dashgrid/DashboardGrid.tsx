@@ -41,7 +41,7 @@ function GridWrapper({
   isResizable,
   isDraggable,
   isFullscreen,
-}: GridWrapperProps)  {
+}: GridWrapperProps) {
   const width = size.width > 0 ? size.width : lastGridWidth;
 
   // logic to ignore width changes (optimization)
@@ -150,21 +150,21 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
-  }
+  };
 
   triggerForceUpdate = () => {
     this.forceUpdate();
-  }
+  };
 
   onWidthChange = () => {
     for (const panel of this.props.dashboard.panels) {
       panel.resizeDone();
     }
-  }
+  };
 
   onViewModeChanged = () => {
     ignoreNextWidthChange = true;
-  }
+  };
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
     this.panelMap[item.i].updateGridPos(item);
@@ -172,21 +172,21 @@ export class DashboardGrid extends PureComponent<Props> {
     // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
     // So it's required to call it explicitly when panel resized or moved to save layout changes.
     this.onLayoutChange(layout);
-  }
+  };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
     console.log();
     this.panelMap[newItem.i].updateGridPos(newItem);
-  }
+  };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
     this.panelMap[newItem.i].resizeDone();
-  }
+  };
 
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
-  }
+  };
 
   isInView = (panel: PanelModel): boolean => {
     if (panel.fullscreen || panel.isEditing) {
@@ -195,32 +195,30 @@ export class DashboardGrid extends PureComponent<Props> {
 
     // NOTE: this is not totally accurate, since it does not
     // know how many rows there are and include GRID_CELL_VMARGIN
-    const top = (panel.gridPos.y) * GRID_CELL_HEIGHT;
-    const bot = top + (panel.gridPos.h * GRID_CELL_HEIGHT);
+    const top = panel.gridPos.y * GRID_CELL_HEIGHT;
+    const bot = top + panel.gridPos.h * GRID_CELL_HEIGHT;
 
     // Assume things that are close are visible
     const buffer = 50;
 
     const viewTop = this.props.scrollTop;
-    if (viewTop > (bot+buffer)) {
+    if (viewTop > bot + buffer) {
       //console.log( panel.id, 'Above', viewTop, bot );
       return false; // The panel is above the viewport
     }
 
     // Use the whole browser height (larger than real value)
     // TODO? is there a better way
-    const viewHeight = (isNaN(window.innerHeight)
-      ? (window as any).clientHeight
-      : window.innerHeight);
+    const viewHeight = isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight;
 
     const viewBot = viewTop + viewHeight;
-    if (top > (viewBot+buffer)) {
+    if (top > viewBot + buffer) {
       //console.log( panel.id, 'Below', viewBot, top );
       return false;
     }
 
     return !this.props.dashboard.otherPanelInFullscreen(panel);
-  }
+  };
 
   renderPanels() {
     const panelElements = [];

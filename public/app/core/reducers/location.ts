@@ -9,6 +9,7 @@ export const initialState: LocationState = {
   query: {},
   routeParams: {},
   replace: false,
+  lastUpdated: 0,
 };
 
 export const locationReducer = (state = initialState, action: Action): LocationState => {
@@ -28,6 +29,7 @@ export const locationReducer = (state = initialState, action: Action): LocationS
         query: { ...query },
         routeParams: routeParams || state.routeParams,
         replace: replace === true,
+        lastUpdated: new Date().getTime(),
       };
     }
   }

@@ -18,7 +18,7 @@ const setup = (propOverrides?: object) => {
     togglePauseAlertRule: jest.fn(),
     stateFilter: '',
     search: '',
-    isLoading: false
+    isLoading: false,
   };
 
   Object.assign(props, propOverrides);
@@ -147,9 +147,8 @@ describe('Functions', () => {
   describe('Search query change', () => {
     it('should set search query', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'dashboard' } } as React.ChangeEvent<HTMLInputElement>;
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('dashboard');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('dashboard');
     });
