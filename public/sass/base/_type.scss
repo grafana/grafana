@@ -266,7 +266,7 @@ dd {
 // Abbreviations and acronyms
 abbr[title] {
   cursor: help;
-  border-bottom: 1px dotted $gray-2;
+  border-bottom: 1px dotted $abbr-border-color;
 }
 
 abbr.initialism {

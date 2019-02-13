@@ -5,25 +5,23 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$sapphire-faint: #F5F9FF;
-$sapphire-light: #A8CAFF;
-$sapphire-base: #3274D9;
-$sapphire-shade: #1F60C4;
-$lobster-base: #E02F44;
-$lobster-shade: #C4162A;
-$green-base: #37872D;
-$green-shade: #19730E;
-$green-base: #3EB15B;
-$green-shade: #369B4F;
-$purple-shade: #8F3BB8;
-$yellow-base: #F2CC0C;
+$sapphire-faint: #f5f9ff;
+$sapphire-light: #a8caff;
+$sapphire-base: #3274d9;
+$sapphire-shade: #1f60c4;
+$lobster-base: #e02f44;
+$lobster-shade: #c4162a;
+$green-base: #37872d;
+$green-shade: #19730e;
+$green-base: #3eb15b;
+$green-shade: #369b4f;
+$purple-shade: #8f3bb8;
+$yellow-base: #f2cc0c;
 
 // Grays
 // -------------------------
 $black: #000;
 $dark-2: #1e2028;
-$dark-3: #303133;
-$dark-4: #35373f;
 $dark-5: #41444b;
 $gray-1: #52545c;
 $gray-2: #767980;
@@ -78,12 +76,7 @@ $text-color-emphasis: $dark-5;
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient: linear-gradient(
-  to right,
-  rgba(255, 213, 0, 1) 0%,
-  rgba(255, 68, 0, 1) 99%,
-  rgba(255, 68, 0, 1) 100%
-);
+$brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
 
 $page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
@@ -101,7 +94,7 @@ $headings-color: $text-color;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
-$hr-border-color: $dark-3 !default;
+$hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
@@ -118,13 +111,12 @@ $page-header-border-color: $gray-4;
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-bg: #eaebee;
 $tight-form-func-bg: $gray-5;
 $tight-form-func-highlight-bg: $gray-6;
 
 $modal-backdrop-bg: $body-bg;
 $code-tag-bg: $gray-6;
-$code-tag-border: darken($code-tag-bg, 3%);
+$code-tag-border: $gray-4;
 
 // cards
 $card-background: linear-gradient(135deg, $gray-6, $gray-5);
@@ -146,7 +138,6 @@ $scrollbarBorder: $gray-4;
 
 // Tables
 // -------------------------
-$table-bg: transparent; // overall background-color
 $table-bg-accent: $gray-5; // for striping
 $table-border: $gray-3; // table and cell border
 
@@ -167,8 +158,9 @@ $btn-success-bg-hl: $green-shade;
 $btn-danger-bg: $lobster-base;
 $btn-danger-bg-hl: $lobster-shade;
 
-$btn-inverse-bg: $gray-6;
-$btn-inverse-bg-hl: darken($gray-6, 5%);
+$btn-inverse-bg: $gray-5;
+$btn-inverse-bg-hl: darken($gray-5, 5%);
+$btn-inverse-bg-hl: $gray-4;
 $btn-inverse-text-color: $gray-1;
 $btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 
@@ -186,7 +178,7 @@ $btn-drag-image: '../img/grab_light.svg';
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: $dark-3;
+$input-color: $dark-5;
 $input-border-color: $gray-5;
 $input-box-shadow: none;
 $input-border-focus: $sapphire-light !default;
@@ -215,7 +207,7 @@ $dropdownBorder: $gray-4;
 $dropdownDividerTop: $gray-6;
 $dropdownDividerBottom: $white;
 
-$dropdownLinkColor: $dark-3;
+$dropdownLinkColor: $dark-5;
 $dropdownLinkColorHover: $link-color;
 $dropdownLinkColorActive: $link-color;
 
@@ -230,7 +222,7 @@ $horizontalComponentOffset: 180px;
 $navbarHeight: 52px;
 
 $navbarBackground: $white;
-$navbarBorder: 1px solid $gray-4;
+$navbarBorder: 1px solid $gray-5;
 $navbarShadow: 0 0 3px #c1c1c1;
 
 $navbarLinkColor: #444;
@@ -270,7 +262,7 @@ $success-text-color: lighten($green, 10%);
 $alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
 $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
 $alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
-$alert-info-bg: $sapphire-base;
+$alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
 
 // popover
 $popover-bg: $page-bg;
@@ -278,7 +270,7 @@ $popover-color: $text-color;
 $popover-border-color: $gray-5;
 $popover-shadow: 0 0 20px $white;
 
-$popover-help-bg: $sapphire-base;
+$popover-help-bg: $btn-secondary-bg;
 $popover-help-color: $gray-6;
 
 $popover-error-bg: $btn-danger-bg;
@@ -324,10 +316,10 @@ $json-explorer-url-color: $sapphire-base;
 $diff-label-bg: $gray-5;
 $diff-label-fg: $gray-2;
 
-$diff-arrow-color: $dark-3;
-$diff-group-bg: $gray-7;
+$diff-arrow-color: $dark-5;
+$diff-group-bg: $gray-6;
 
-$diff-json-bg: $gray-5;
+$diff-json-bg: $gray-6;
 $diff-json-fg: $gray-1;
 
 $diff-json-added: $sapphire-shade;
@@ -349,14 +341,14 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: linear-gradient(90deg, #FF9830, #E55400);
+$switch-slider-on-bg: linear-gradient(90deg, #ff9830, #e55400);
 $switch-slider-shadow: 0 0 3px $dark-5;
 
 //Checkbox
 // -------------------------
 $checkbox-bg: $gray-6;
 $checkbox-border: 1px solid $gray-3;
-$checkbox-checked-bg: linear-gradient(0deg, #FF9830, #E55400);
+$checkbox-checked-bg: linear-gradient(0deg, #ff9830, #e55400);
 $checkbox-color: $gray-7;
 
 //Panel Edit
@@ -369,7 +361,10 @@ $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-5;
-$panel-editor-viz-item-bg-hover: lighten($blue, 62%);$panel-options-group-border: none;
+
+$panel-editor-viz-item-bg-hover: lighten($blue, 62%);
+
+$panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: $sapphire-faint;

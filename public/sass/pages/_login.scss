@@ -176,12 +176,6 @@ select:-webkit-autofill:focus {
   }
 }
 
-.login-tab-header {
-  background: $tight-form-bg;
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
 .login-change-password-info {
   padding-bottom: 1.5rem;
 
@@ -193,26 +187,6 @@ select:-webkit-autofill:focus {
   color: $white;
   border: 1px solid $login-border;
   background-color: $btn-semi-transparent;
-}
-
-.btn-login-tab {
-  background: transparent;
-  border: none;
-  font-size: 15px;
-  padding: 10px 10px;
-  font-weight: bold;
-  display: inline-block;
-  width: 170px;
-  color: $text-color;
-
-  &.active {
-    background: darken($tight-form-bg, 5%);
-    color: $white;
-  }
-
-  &:focus {
-    outline: 0;
-  }
 }
 
 .password-strength {
@@ -250,15 +224,6 @@ select:-webkit-autofill:focus {
 
 .login-oauth {
   width: 100%;
-}
-
-.password-recovery {
-  background: $tight-form-bg;
-  padding: 10px;
-
-  a {
-    color: $gray-2;
-  }
 }
 
 .login-divider {
