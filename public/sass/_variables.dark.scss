@@ -12,8 +12,6 @@ $sapphire-shade: #1f60c4;
 $lobster-base: #e02f44;
 $lobster-shade: #c4162a;
 $forest-light: #96d98d;
-$forest-base: #37872d;
-$forest-shade: #19730e;
 $green-base: #299c46;
 $green-shade: #23843b;
 
@@ -140,9 +138,9 @@ $list-item-shadow: $card-shadow;
 $empty-list-cta-bg: $dark-3;
 
 // Scrollbars
-$scrollbarBackground: $dark-5;
+$scrollbarBackground: $dark-4;
 $scrollbarBackground2: $dark-4;
-$scrollbarBorder: black;
+$scrollbarBorder: $dark-5;
 
 // Tables
 // -------------------------
@@ -189,8 +187,8 @@ $input-bg-disabled: $dark-3;
 $input-color: $gray-4;
 $input-border-color: $dark-3;
 $input-box-shadow: inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.1);
-$input-border-focus: $input-border-color;
-$input-box-shadow-focus: rgba(102, 175, 233, 0.6);
+$input-border-focus: $dark-3 !default;
+$input-box-shadow-focus: rgba(102, 175, 233, 0.6) !default;
 $input-color-placeholder: $gray-1 !default;
 $input-label-bg: $dark-3;
 $input-label-border-color: $dark-3;
@@ -231,9 +229,6 @@ $navbarHeight: 55px;
 
 $navbarBackground: $panel-bg;
 $navbarBorder: 1px solid $dark-3;
-$navbarShadow: 0 0 20px black;
-
-$navbarLinkColor: $gray-4;
 
 $navbarButtonBackground: $navbarBackground;
 $navbarButtonBackgroundHighlight: $body-bg;

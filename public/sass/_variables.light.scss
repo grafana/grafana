@@ -11,8 +11,6 @@ $sapphire-base: #3274d9;
 $sapphire-shade: #1f60c4;
 $lobster-base: #e02f44;
 $lobster-shade: #c4162a;
-$green-base: #37872d;
-$green-shade: #19730e;
 $green-base: #3eb15b;
 $green-shade: #369b4f;
 $purple-shade: #8f3bb8;
@@ -36,7 +34,6 @@ $white: #fff;
 // Accent colors
 // -------------------------
 $blue: #0083b3;
-$blue-light: #00a8e6;
 $green: #3aa655;
 $red: $lobster-base;
 $yellow: #ff851b;
@@ -132,9 +129,9 @@ $list-item-shadow: $card-shadow;
 $empty-list-cta-bg: $gray-6;
 
 // Scrollbars
-$scrollbarBackground: $gray-5;
-$scrollbarBackground2: $gray-5;
-$scrollbarBorder: $gray-4;
+$scrollbarBackground: $gray-4;
+$scrollbarBackground2: $gray-4;
+$scrollbarBorder: $gray-3;
 
 // Tables
 // -------------------------
@@ -181,7 +178,7 @@ $input-bg-disabled: $gray-5;
 $input-color: $dark-5;
 $input-border-color: $gray-5;
 $input-box-shadow: none;
-$input-border-focus: $sapphire-light !default;
+$input-border-focus: $gray-5 !default;
 $input-box-shadow-focus: $sapphire-light !default;
 $input-color-placeholder: $gray-4 !default;
 $input-label-bg: $gray-5;
@@ -223,9 +220,6 @@ $navbarHeight: 52px;
 
 $navbarBackground: $white;
 $navbarBorder: 1px solid $gray-5;
-$navbarShadow: 0 0 3px #c1c1c1;
-
-$navbarLinkColor: #444;
 
 $navbarButtonBackground: lighten($navbarBackground, 3%);
 $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
@@ -357,12 +351,12 @@ $panel-editor-shadow: 0px 0px 8px $gray-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 2px $gray-3);
 $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
-$panel-editor-viz-item-border-hover: 1px solid $blue-light;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
+$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
 $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-5;
 
-$panel-editor-viz-item-bg-hover: lighten($blue, 62%);
+$panel-editor-viz-item-bg-hover: lighten($sapphire-base, 45%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
