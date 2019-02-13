@@ -26,6 +26,8 @@ Grafana will now persist all long term data in the database. How to configure th
 
 ## User sessions
 
+> Beginning with Grafana v6.0 and above the following only applies when using [Auth Proxy Authentication](/auth/auth-proxy/).
+
 The second thing to consider is how to deal with user sessions and how to configure your load balancer in front of Grafana.
 Grafana supports two ways of storing session data: locally on disk or in a database/cache-server.
 If you want to store sessions on disk you can use `sticky sessions` in your load balancer. If you prefer to store session data in a database/cache-server
