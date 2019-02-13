@@ -20,7 +20,7 @@ export interface State {
   isToInputValid: boolean;
 }
 
-export class TimePickerPopOver extends Component<Props, State> {
+export class TimePickerPopover extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { value: props.value, isFromInputValid: true, isToInputValid: true };

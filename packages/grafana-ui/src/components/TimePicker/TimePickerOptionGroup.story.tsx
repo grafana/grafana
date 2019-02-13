@@ -7,7 +7,6 @@ import { TimePickerOptionGroup } from '../../../../../public/app/features/dashbo
 import { TimeRange } from '../../types/time';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
 import { popoverOptions } from './TimePicker.story';
-// import { UseState } from '../../utils/storybook/UseState';
 
 const TimePickerOptionGroupStories = storiesOf('UI/TimePicker/TimePickerOptionGroup', module);
 
@@ -15,8 +14,8 @@ TimePickerOptionGroupStories.addDecorator(withRighAlignedStory);
 
 const data = {
   isPopoverOpen: false,
-  onCustomClick: () => {
-    action('onCustomClick fired')();
+  onPopoverOpen: () => {
+    action('onPopoverOpen fired')();
   },
   onPopoverClose: (timeRange: TimeRange) => {
     action('onPopoverClose fired')(timeRange);

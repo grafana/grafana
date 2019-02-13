@@ -44,7 +44,7 @@ export class TimePicker extends PureComponent<Props, State> {
         label: 'Custom',
         expanded: true,
         options,
-        onCustomClick: (isSmallScreen: boolean) => this.onCustomClicked(isSmallScreen),
+        onPopoverOpen: () => this.onPopoverOpen(),
         onPopoverClose: (timeRange: TimeRange) => this.onPopoverClose(timeRange),
         popoverProps: {
           value,
@@ -66,8 +66,8 @@ export class TimePicker extends PureComponent<Props, State> {
     onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
   };
 
-  onCustomClicked = (isSmallScreen: boolean) => {
-    this.setState({ isSelectOpen: isSmallScreen ? false : true, isPopoverOpen: true });
+  onPopoverOpen = () => {
+    this.setState({ isPopoverOpen: true });
   };
 
   onPopoverClose = (timeRange: TimeRange) => {
@@ -116,7 +116,6 @@ export class TimePicker extends PureComponent<Props, State> {
               <i className="fa fa-search-minus" />
             </button>
           </div>
-
           <div className="time-picker-select">
             <HeadlessSelect
               components={{ Group: TimePickerOptionGroup }}

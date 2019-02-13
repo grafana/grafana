@@ -6,6 +6,9 @@
     display: flex;
   }
 }
+.time-picker-popover-popper {
+  z-index: $zindex-timepicker-popover;
+}
 
 .time-picker-popover {
   display: flex;
@@ -134,9 +137,8 @@
   }
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 1116px) {
   .time-picker-popover {
-    margin-top: 38px;
     margin-left: $spacer;
     display: flex;
     flex-flow: column nowrap;
@@ -177,5 +179,11 @@
   .time-picker-calendar {
     max-width: 500px;
     width: 100%;
+  }
+}
+
+@media only screen and (max-width: 746px) {
+  .time-picker-popover {
+    margin-top: 48px;
   }
 }

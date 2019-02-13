@@ -1,50 +1,40 @@
 import React, { PureComponent, createRef } from 'react';
 import { GroupProps } from 'react-select/lib/components/Group';
 import Popper from '@grafana/ui/src/components/Tooltip/Popper';
-import { Props as TimePickerProps, TimePickerPopOver } from './TimePickerPopOver';
+import { Props as TimePickerProps, TimePickerPopover } from './TimePickerPopover';
 import { TimeRange } from '@grafana/ui';
 
 interface Props extends GroupProps<any> {
   data: {
-    isPopoverOpen: boolean;
-    onCustomClick: (isSmallScreen: boolean) => void;
+    onPopoverOpen: () => void;
     onPopoverClose: (timeRange: TimeRange) => void;
     popoverProps: TimePickerProps;
   };
 }
 
 interface State {
-  isOpen: boolean;
-  isSmallScreen: boolean;
+  isPopoverOpen: boolean;
 }
 
 export class TimePickerOptionGroup extends PureComponent<Props, State> {
   pickerTriggerRef = createRef<HTMLDivElement>();
-  constructor(props: Props) {
-    super(props);
-    this.state = { isOpen: props.data.isPopoverOpen, isSmallScreen: false };
-  }
-
-  componentWillMount() {
-    this.setState({ isSmallScreen: window.innerWidth <= 1116 });
-  }
+  state: State = { isPopoverOpen: false };
 
   onClick = () => {
-    const { isSmallScreen } = this.state;
-    this.setState({ isOpen: !this.state.isOpen });
-    this.props.data.onCustomClick(isSmallScreen);
+    this.setState({ isPopoverOpen: true });
+    this.props.data.onPopoverOpen();
   };
 
   render() {
     const { children, label } = this.props;
-    const { isSmallScreen, isOpen } = this.state;
-    const { isPopoverOpen, onPopoverClose } = this.props.data;
-    const popover = TimePickerPopOver;
+    const { isPopoverOpen } = this.state;
+    const { onPopoverClose } = this.props.data;
+    const popover = TimePickerPopover;
     const popoverElement = React.createElement(popover, {
       ...this.props.data.popoverProps,
       onChange: (timeRange: TimeRange) => {
         onPopoverClose(timeRange);
-        this.setState({ isOpen: false });
+        this.setState({ isPopoverOpen: false });
       },
     });
 
@@ -60,10 +50,11 @@ export class TimePickerOptionGroup extends PureComponent<Props, State> {
         <div>
           {this.pickerTriggerRef.current && (
             <Popper
-              show={isPopoverOpen || isOpen}
+              show={isPopoverOpen}
               content={popoverElement}
               referenceElement={this.pickerTriggerRef.current}
-              placement={isSmallScreen ? 'auto' : 'left-start'}
+              placement={'left-start'}
+              wrapperClassName="time-picker-popover-popper"
             />
           )}
         </div>

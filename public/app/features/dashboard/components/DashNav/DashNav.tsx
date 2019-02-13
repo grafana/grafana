@@ -277,7 +277,7 @@ export class DashNav extends PureComponent<Props> {
               { from: 'now-12h', to: 'now', display: 'Last 12 hours', section: 3, active: false },
               { from: 'now-24h', to: 'now', display: 'Last 24 hours', section: 3, active: false },
             ]}
-            popOverTimeOptions={{
+            popoverTimeOptions={{
               '0': [
                 {
                   from: 'now-2d',
