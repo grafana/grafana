@@ -5,12 +5,11 @@ exports[`Render should render component 1`] = `
   className="gf-form-button-row"
 >
   <button
-    className="btn btn-primary"
-    disabled={true}
-    onClick={[Function]}
+    className="btn btn-success"
+    onClick={[MockFunction]}
     type="submit"
   >
-    Save & Test
+    Test
   </button>
   <button
     className="btn btn-danger"

@@ -8,11 +8,11 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {
       main: {
-        text: 'Configuration'
+        text: 'Configuration',
       },
       node: {
-        text: 'Api Keys'
-      }
+        text: 'Api Keys',
+      },
     } as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
@@ -78,9 +78,8 @@ describe('Functions', () => {
   describe('on search query change', () => {
     it('should call setSearchQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'test' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('test');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });

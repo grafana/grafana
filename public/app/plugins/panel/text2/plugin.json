@@ -2,8 +2,9 @@
   "type": "panel",
   "name": "Text v2",
   "id": "text2",
-
   "state": "alpha",
+
+  "dataFormats": [],
 
   "info": {
     "author": {

@@ -10,7 +10,6 @@ import { getNextCharacter } from 'app/features/explore/utils/dom';
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
 // import '../sass/editor.base.scss';
 
-
 const TYPEAHEAD_DELAY = 100;
 
 interface Suggestion {
@@ -41,8 +40,8 @@ interface KustoDBSchema {
 
 const defaultSchema = () => ({
   Databases: {
-    Default: {}
-  }
+    Default: {},
+  },
 });
 
 const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
@@ -101,12 +100,12 @@ export default class KustoQueryField extends QueryField {
         typeaheadContext = 'context-function';
         suggestionGroups = this.getColumnSuggestions();
 
-      // where
+        // where
       } else if (modelPrefix.match(/(where\s(\w+\b)?$)/i)) {
         typeaheadContext = 'context-where';
         suggestionGroups = this.getColumnSuggestions();
 
-      // summarize by
+        // summarize by
       } else if (modelPrefix.match(/(summarize\s(\w+\b)?$)/i)) {
         typeaheadContext = 'context-summarize';
         suggestionGroups = this.getFunctionSuggestions();
@@ -114,12 +113,12 @@ export default class KustoQueryField extends QueryField {
         typeaheadContext = 'context-summarize-by';
         suggestionGroups = this.getColumnSuggestions();
 
-      // order by, top X by, ... by ...
+        // order by, top X by, ... by ...
       } else if (modelPrefix.match(/(by\s+([^,\s]+,\s*)*([^,\s]+\b)?$)/i)) {
         typeaheadContext = 'context-by';
         suggestionGroups = this.getColumnSuggestions();
 
-      // join
+        // join
       } else if (modelPrefix.match(/(on\s(.+\b)?$)/i)) {
         typeaheadContext = 'context-join-on';
         suggestionGroups = this.getColumnSuggestions();
@@ -127,12 +126,12 @@ export default class KustoQueryField extends QueryField {
         typeaheadContext = 'context-join';
         suggestionGroups = this.getTableSuggestions();
 
-      // distinct
+        // distinct
       } else if (modelPrefix.match(/(distinct\s(.+\b)?$)/i)) {
         typeaheadContext = 'context-distinct';
         suggestionGroups = this.getColumnSuggestions();
 
-      // database()
+        // database()
       } else if (modelPrefix.match(/(database\(\"(\w+)\"\)\.(.+\b)?$)/i)) {
         typeaheadContext = 'context-database-table';
         const db = this.getDBFromDatabaseFunction(modelPrefix);
@@ -140,7 +139,7 @@ export default class KustoQueryField extends QueryField {
         suggestionGroups = this.getTableSuggestions(db);
         prefix = prefix.replace('.', '');
 
-      // new
+        // new
       } else if (normalizeQuery(Plain.serialize(this.state.value)).match(/^\s*\w*$/i)) {
         typeaheadContext = 'context-new';
         if (this.schema) {
@@ -151,7 +150,7 @@ export default class KustoQueryField extends QueryField {
           return;
         }
 
-      // built-in
+        // built-in
       } else if (prefix && !wrapperClasses.contains('argument') && !force) {
         // Use only last typed word as a prefix for searching
         if (modelPrefix.match(/\s$/i)) {
@@ -171,18 +170,19 @@ export default class KustoQueryField extends QueryField {
 
       let results = 0;
       prefix = prefix.toLowerCase();
-      const filteredSuggestions = suggestionGroups.map(group => {
-        if (group.items && prefix && !group.skipFilter) {
-          group.items = group.items.filter(c => c.text.length >= prefix.length);
-          if (group.prefixMatch) {
-            group.items = group.items.filter(c => c.text.toLowerCase().indexOf(prefix) === 0);
-          } else {
-            group.items = group.items.filter(c => c.text.toLowerCase().indexOf(prefix) > -1);
+      const filteredSuggestions = suggestionGroups
+        .map(group => {
+          if (group.items && prefix && !group.skipFilter) {
+            group.items = group.items.filter(c => c.text.length >= prefix.length);
+            if (group.prefixMatch) {
+              group.items = group.items.filter(c => c.text.toLowerCase().indexOf(prefix) === 0);
+            } else {
+              group.items = group.items.filter(c => c.text.toLowerCase().indexOf(prefix) > -1);
+            }
           }
-        }
-        results += group.items.length;
-        return group;
-      })
+          results += group.items.length;
+          return group;
+        })
         .filter(group => group.items.length > 0);
 
       // console.log('onTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, typeaheadContext);
@@ -195,7 +195,7 @@ export default class KustoQueryField extends QueryField {
         suggestions: results > 0 ? filteredSuggestions : [],
       });
     }
-  }
+  };
 
   applyTypeahead(change, suggestion) {
     const { typeaheadPrefix, typeaheadContext, typeaheadText } = this.state;
@@ -301,28 +301,34 @@ export default class KustoQueryField extends QueryField {
       {
         prefixMatch: true,
         label: 'Keywords',
-        items: KEYWORDS.map(wrapText)
+        items: KEYWORDS.map(wrapText),
       },
       {
         prefixMatch: true,
         label: 'Operators',
-        items: operatorTokens
+        items: operatorTokens,
       },
       {
         prefixMatch: true,
         label: 'Functions',
-        items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
+        items: functionTokens.map((s: any) => {
+          s.type = 'function';
+          return s;
+        }),
       },
       {
         prefixMatch: true,
         label: 'Macros',
-        items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
+        items: grafanaMacros.map((s: any) => {
+          s.type = 'function';
+          return s;
+        }),
       },
       {
         prefixMatch: true,
         label: 'Tables',
-        items: _.map(this.schema.Databases.Default.Tables, (t: any) => ({ text: t.Name }))
-      }
+        items: _.map(this.schema.Databases.Default.Tables, (t: any) => ({ text: t.Name })),
+      },
     ];
   }
 
@@ -331,13 +337,19 @@ export default class KustoQueryField extends QueryField {
       {
         prefixMatch: true,
         label: 'Functions',
-        items: functionTokens.map((s: any) => { s.type = 'function'; return s; })
+        items: functionTokens.map((s: any) => {
+          s.type = 'function';
+          return s;
+        }),
       },
       {
         prefixMatch: true,
         label: 'Macros',
-        items: grafanaMacros.map((s: any) => { s.type = 'function'; return s; })
-      }
+        items: grafanaMacros.map((s: any) => {
+          s.type = 'function';
+          return s;
+        }),
+      },
     ];
   }
 
@@ -347,8 +359,8 @@ export default class KustoQueryField extends QueryField {
         {
           prefixMatch: true,
           label: 'Tables',
-          items: _.map(this.schema.Databases[db].Tables, (t: any) => ({ text: t.Name }))
-        }
+          items: _.map(this.schema.Databases[db].Tables, (t: any) => ({ text: t.Name })),
+        },
       ];
     } else {
       return [];
@@ -366,9 +378,9 @@ export default class KustoQueryField extends QueryField {
             label: 'Fields',
             items: _.map(tableSchema.OrderedColumns, (f: any) => ({
               text: f.Name,
-              hint: f.Type
-            }))
-          }
+              hint: f.Type,
+            })),
+          },
         ];
       }
     }

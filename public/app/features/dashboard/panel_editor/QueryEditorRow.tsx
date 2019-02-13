@@ -131,14 +131,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     if (datasource.pluginExports.QueryEditor) {
       const QueryEditor = datasource.pluginExports.QueryEditor;
-      return (
-        <QueryEditor
-          query={query}
-          datasource={datasource}
-          onChange={onChange}
-          onRunQuery={this.onRunQuery}
-        />
-      );
+      return <QueryEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={this.onRunQuery} />;
     }
 
     return <div>Data source plugin does not export any Query Editor component</div>;

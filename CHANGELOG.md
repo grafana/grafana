@@ -1,4 +1,6 @@
-# 6.0.0-beta2 (unreleased)
+# 6.0.0-beta3 (unreleased)
+
+# 6.0.0-beta2 (2019-02-11)
 
 ### New Features
 * **AzureMonitor**: Enable alerting by converting Azure Monitor API to Go [#14623](https://github.com/grafana/grafana/issues/14623)
@@ -18,6 +20,10 @@
 * **Login**: Anonymous usage stats for token auth [#15288](https://github.com/grafana/grafana/issues/15288)
 * **AzureMonitor**: improve autocomplete for Log Analytics and App Insights editor [#15131](https://github.com/grafana/grafana/issues/15131)
 * **LDAP**: Fix IPA/FreeIPA v4.6.4 does not allow LDAP searches with empty attributes [#14432](https://github.com/grafana/grafana/issues/14432)
+
+### Breaking changes
+
+* **Internal Metrics** Edition has been added to the build_info metric. This will break any Graphite queries using this metric. Edition will be a new label for the Prometheus metric. [#15363](https://github.com/grafana/grafana/pull/15363)
 
 ### 6.0.0-beta1 fixes
 

@@ -3,11 +3,7 @@ import thunk from 'redux-thunk';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import {
-  dashboardInitFetching,
-  dashboardInitCompleted,
-  dashboardInitServices,
-} from './actions';
+import { dashboardInitFetching, dashboardInitCompleted, dashboardInitServices } from './actions';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -138,9 +134,11 @@ describeInitScenario('Initializing new dashboard', ctx => {
 describeInitScenario('Initializing home dashboard', ctx => {
   ctx.setup(() => {
     ctx.args.routeInfo = DashboardRouteInfo.Home;
-    ctx.backendSrv.get.mockReturnValue(Promise.resolve({
-      redirectUri: '/u/123/my-home'
-    }));
+    ctx.backendSrv.get.mockReturnValue(
+      Promise.resolve({
+        redirectUri: '/u/123/my-home',
+      })
+    );
   });
 
   it('Should redirect to custom home dashboard', () => {
@@ -148,5 +146,3 @@ describeInitScenario('Initializing home dashboard', ctx => {
     expect(ctx.actions[1].payload.path).toBe('/u/123/my-home');
   });
 });
-
-
