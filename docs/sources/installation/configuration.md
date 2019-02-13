@@ -454,6 +454,48 @@ Name to be used when sending out emails, defaults to `Grafana`
 ### ehlo_identity
 Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
 
+
+## [xmpp]
+xmpp server settings.
+
+### enabled
+defaults to false
+
+### host
+Host specifies what host to connect to, as either "hostname" or "hostname:port"
+If host is not specified, the DNS SRV should be used to find the host from the domainpart of the JID.
+Default the port to 5222.
+
+### username
+User specifies what user to authenticate to the remote server.
+
+### password
+Password supplies the password to use for authentication with the remote server.
+
+### resource
+Resource specifies an XMPP client resource, like "bot", instead of accepting one
+from the server.  Use "" to let the server generate one for your client.
+
+### no_tls
+directs xmpp to not use TLS initially to contact the server; instead, a plain old unencrypted
+TCP connection should be used. (Can be combined with StartTLS to support STARTTLS-based servers.)
+
+### start_tls
+directs xmpp to STARTTLS if the server supports it; xmpp will automatically STARTTLS
+if the server requires it regardless of this option.
+
+### debug
+Debug output
+
+### session
+Use server sessions
+
+### status
+Presence Status
+
+### status_message
+Status message
+
 ## [log]
 
 ### mode
