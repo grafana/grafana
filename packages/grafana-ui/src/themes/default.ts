@@ -4,9 +4,9 @@ const theme: GrafanaThemeCommons = {
   name: 'Grafana Default',
   typography: {
     fontFamily: {
-      sansSerif: "'Roboto', Helvetica, Arial, sans-serif;",
-      serif: "Georgia, 'Times New Roman', Times, serif;",
-      monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace;",
+      sansSerif: "'Roboto', Helvetica, Arial, sans-serif",
+      serif: "Georgia, 'Times New Roman', Times, serif",
+      monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
     },
     size: {
       base: '13px',
