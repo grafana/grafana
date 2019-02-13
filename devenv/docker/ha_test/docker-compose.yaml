@@ -54,7 +54,7 @@ services:
   #     retries: 10
 
   grafana:
-    image: grafana/grafana:6.0.0-beta2
+    image: grafana/grafana:dev
     volumes:
       - ./grafana/provisioning/:/etc/grafana/provisioning/
     environment:
