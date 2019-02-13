@@ -1,4 +1,6 @@
 .refresh-picker {
+  position: relative;
+
   .refresh-picker-buttons {
     display: flex;
   }
@@ -6,6 +8,7 @@
   .navbar-button {
     margin-right: 0;
   }
+
   .navbar-button:last-child {
     padding-left: 6px;
     padding-right: 2px;
@@ -17,5 +20,11 @@
 
   .btn:first-child {
     border-right: 0;
+  }
+
+  .refresh-picker-button-select-select {
+    position: absolute;
+    left: 0;
+    width: 100%;
   }
 }

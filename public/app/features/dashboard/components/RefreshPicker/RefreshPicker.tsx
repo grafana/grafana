@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { ClickOutsideWrapper, SelectButton } from '@grafana/ui';
+import { SelectOptionItem, ButtonSelect } from '@grafana/ui';
 
-import { RefreshSelect, EMPTY_ITEM_TEXT } from './RefreshSelect';
 import { RefreshButton } from './RefreshButton';
+
+export const EMPTY_ITEM_TEXT = 'Off';
 
 export interface Props {
   initialValue: string | undefined;
@@ -11,44 +12,49 @@ export interface Props {
   onIntervalChanged: (interval: string) => void;
 }
 
-export interface State {
-  value: string | undefined;
-  isSelectOpen: boolean;
-}
-
-export class RefreshPicker extends PureComponent<Props, State> {
+export class RefreshPicker extends PureComponent<Props> {
+  emptyItem = { label: EMPTY_ITEM_TEXT, value: undefined };
   constructor(props: Props) {
     super(props);
-    this.state = { value: props.initialValue, isSelectOpen: false };
   }
 
-  onSelectButtonClicked = () => {
-    this.setState({ isSelectOpen: !this.state.isSelectOpen });
+  mapStringToSelectOptionItem = (interval: string | undefined) => {
+    return interval ? { label: interval, value: interval } : this.emptyItem;
   };
 
-  onSelectChanged = (interval: string) => {
-    this.setState({ isSelectOpen: !this.state.isSelectOpen, value: interval });
-    this.props.onIntervalChanged(interval);
+  intervalsToOptions = (intervals: string[]): SelectOptionItem[] => {
+    const options = intervals.map(this.mapStringToSelectOptionItem);
+    options.unshift(this.emptyItem);
+
+    return options;
+  };
+
+  onSelectChanged = (item: SelectOptionItem) => {
+    this.props.onIntervalChanged(item.value);
   };
 
   onClickOutside = () => this.setState({ isSelectOpen: false });
 
   render() {
-    const { onRefreshClicked, intervals } = this.props;
-    const { isSelectOpen, value } = this.state;
+    const { onRefreshClicked, intervals, initialValue } = this.props;
+
+    const options = this.intervalsToOptions(intervals);
+    const selectedValue = this.mapStringToSelectOptionItem(initialValue);
 
     return (
-      <ClickOutsideWrapper onClick={this.onClickOutside}>
-        <div className="refresh-picker">
-          <div className="refresh-picker-buttons">
-            <RefreshButton onClick={onRefreshClicked} />
-            <SelectButton onClick={this.onSelectButtonClicked} textWhenUndefined={EMPTY_ITEM_TEXT} value={value} />
-          </div>
-          <div className="refresh-picker-select">
-            <RefreshSelect isOpen={isSelectOpen} intervals={intervals} onChange={this.onSelectChanged} value={value} />
-          </div>
+      <div className="refresh-picker">
+        <div className="refresh-picker-buttons">
+          <RefreshButton onClick={onRefreshClicked} />
+          <ButtonSelect
+            className="refresh-picker-button-select"
+            value={selectedValue}
+            label={selectedValue.label}
+            options={options}
+            onChange={this.onSelectChanged}
+            maxMenuHeight={380}
+          />
         </div>
-      </ClickOutsideWrapper>
+      </div>
     );
   }
 }

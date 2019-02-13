@@ -1,8 +1,9 @@
-import { PureComponent } from 'react';
+import { PureComponent, SyntheticEvent } from 'react';
 import ReactDOM from 'react-dom';
 
 export interface Props {
   onClick: () => void;
+  onOutsideClick?: (event: SyntheticEvent) => boolean;
 }
 
 interface State {
@@ -23,9 +24,10 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   }
 
   onOutsideClick = (event: any) => {
+    const { onOutsideClick } = this.props;
     const domNode = ReactDOM.findDOMNode(this) as Element;
 
-    if (!domNode || !domNode.contains(event.target)) {
+    if (!domNode || !domNode.contains(event.target) || (onOutsideClick && onOutsideClick(event))) {
       this.props.onClick();
     }
   };
