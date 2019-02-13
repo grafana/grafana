@@ -21,10 +21,11 @@ $green-shade: #23843b;
 // -------------------------
 $black: #000;
 $dark-1: #141414;
+$dark-1-5: #161719;
 $dark-2: #1f1f20;
 $dark-3: #222426;
-$dark-4: #333333;
-$dark-5: #444444;
+$dark-4: #343436;
+$dark-5: #424345;
 $gray-1: #555555;
 $gray-2: #8e8e8e;
 $gray-3: #b3b3b3;
@@ -64,8 +65,8 @@ $critical: $lobster-base;
 
 // Scaffolding
 // -------------------------
-$body-bg: rgb(23, 24, 25);
-$page-bg: rgb(22, 23, 25);
+$body-bg: $dark-1-5;
+$page-bg: $dark-1-5;
 
 $body-color: $gray-4;
 $text-color: $gray-4;
@@ -85,8 +86,8 @@ $brand-gradient: linear-gradient(
   rgba(255, 68, 0, 0.7) 100%
 );
 
-$page-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 100px);
-$edit-gradient: linear-gradient(180deg, rgb(22, 23, 25) 50%, #090909);
+$page-gradient: linear-gradient(180deg, $dark-3 10px, $dark-1-5 100px);
+$edit-gradient: linear-gradient(180deg, $dark-1-5 50%, $input-black);
 
 // Links
 // -------------------------
@@ -111,7 +112,7 @@ $panel-header-hover-bg: $dark-4;
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: linear-gradient(90deg, #292a2d, black);
+$page-header-bg: linear-gradient(90deg, $dark-3, $input-black);
 $page-header-shadow: inset 0px -4px 14px $dark-2;
 $page-header-border-color: $dark-4;
 
@@ -126,21 +127,21 @@ $code-tag-bg: $dark-1;
 $code-tag-border: $dark-4;
 
 // cards
-$card-background: linear-gradient(135deg, #2f2f32, #262628);
-$card-background-hover: linear-gradient(135deg, #343436, #262628);
+$card-background: linear-gradient(135deg, $dark-4, $dark-3);
+$card-background-hover: linear-gradient(135deg, $dark-5, $dark-4);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
 
 // Lists
 $list-item-bg: $card-background;
-$list-item-hover-bg: lighten($dark-3, 2%);
+$list-item-hover-bg: $card-background-hover;
 $list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
 $empty-list-cta-bg: $dark-3;
 
 // Scrollbars
-$scrollbarBackground: #404357;
-$scrollbarBackground2: #3a3a3a;
+$scrollbarBackground: $dark-5;
+$scrollbarBackground2: $dark-4;
 $scrollbarBorder: black;
 
 // Tables
