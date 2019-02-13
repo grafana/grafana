@@ -15,12 +15,7 @@ const ThemableStory: React.FunctionComponent<{}> = ({ children }) => {
     GrafanaThemeType.Dark
   );
 
-  return (
-    <ThemeContext.Provider value={getTheme(themeKnob)}>
-      {children}
-    </ThemeContext.Provider>
-
-  );
+  return <ThemeContext.Provider value={getTheme(themeKnob)}>{children}</ThemeContext.Provider>;
 };
 
 // Temporary solution. When we update to Storybook V5 we will be able to pass data from decorator to story

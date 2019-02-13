@@ -9,7 +9,7 @@ export const initialState: PluginsState = {
   layoutMode: LayoutModes.Grid,
   hasFetched: false,
   dashboards: [] as PluginDashboard[],
-  isLoadingPluginDashboards: false
+  isLoadingPluginDashboards: false,
 };
 
 export const pluginsReducer = (state = initialState, action: Action): PluginsState => {

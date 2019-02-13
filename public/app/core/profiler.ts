@@ -1,4 +1,3 @@
-
 export class Profiler {
   panelsRendered: number;
   enabled: boolean;

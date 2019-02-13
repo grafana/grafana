@@ -16,7 +16,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
-	quota := middleware.Quota
+	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
 	r := hs.RouteRegister
@@ -286,7 +286,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
 
-			dashboardRoute.Post("/db", bind(m.SaveDashboardCommand{}), Wrap(PostDashboard))
+			dashboardRoute.Post("/db", bind(m.SaveDashboardCommand{}), Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", Wrap(GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), Wrap(ImportDashboard))
@@ -294,7 +294,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", Wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", Wrap(GetDashboardVersion))
-				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), Wrap(RestoreDashboardVersion))
+				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", Wrap(GetDashboardPermissionList))

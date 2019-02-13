@@ -250,7 +250,10 @@ function drawSimpleOpacityLegend(elem, options) {
       .attr('stroke-width', 0)
       .attr(
         'fill',
-        getColorFromHexRgbOrName(options.cardColor, contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark)
+        getColorFromHexRgbOrName(
+          options.cardColor,
+          contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
+        )
       )
       .style('opacity', d => legendOpacityScale(d));
   }

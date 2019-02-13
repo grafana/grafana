@@ -15,7 +15,7 @@ interface EditorProps {
 
 class Editor extends Component<EditorProps, any> {
   static defaultProps = {
-    placeholder: 'Enter a query'
+    placeholder: 'Enter a query',
   };
 
   constructor(props) {
@@ -68,8 +68,13 @@ coreModule.directive('kustoEditor', [
   'reactDirective',
   reactDirective => {
     return reactDirective(Editor, [
-      'change', 'database', 'execute', 'query', 'variables', 'placeholder',
-      ['getSchema', { watchDepth: 'reference' }]
+      'change',
+      'database',
+      'execute',
+      'query',
+      'variables',
+      'placeholder',
+      ['getSchema', { watchDepth: 'reference' }],
     ]);
   },
 ]);

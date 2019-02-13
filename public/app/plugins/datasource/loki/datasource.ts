@@ -92,8 +92,8 @@ export class LokiDatasource {
         const query = queryTargets[i];
 
         // add search term to stream & add to array
-        if (result.data)  {
-          for (const stream of (result.data.streams || [])) {
+        if (result.data) {
+          for (const stream of result.data.streams || []) {
             stream.search = query.regexp;
             allStreams.push(stream);
           }
@@ -152,35 +152,35 @@ export class LokiDatasource {
 
   testDatasource() {
     return this._request('/api/prom/label')
-    .then(res => {
-      if (res && res.data && res.data.values && res.data.values.length > 0) {
-        return { status: 'success', message: 'Data source connected and labels found.' };
-      }
-      return {
-        status: 'error',
-        message:
-          'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-      };
-    })
-    .catch(err => {
-      let message = 'Loki: ';
-      if (err.statusText) {
-        message += err.statusText;
-      } else {
-        message += 'Cannot connect to Loki';
-      }
+      .then(res => {
+        if (res && res.data && res.data.values && res.data.values.length > 0) {
+          return { status: 'success', message: 'Data source connected and labels found.' };
+        }
+        return {
+          status: 'error',
+          message:
+            'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+        };
+      })
+      .catch(err => {
+        let message = 'Loki: ';
+        if (err.statusText) {
+          message += err.statusText;
+        } else {
+          message += 'Cannot connect to Loki';
+        }
 
-      if (err.status) {
-        message += `. ${err.status}`;
-      }
+        if (err.status) {
+          message += `. ${err.status}`;
+        }
 
-      if (err.data && err.data.message) {
-        message += `. ${err.data.message}`;
-      } else if (err.data) {
-        message += `. ${err.data}`;
-      }
-      return { status: 'error', message: message };
-    });
+        if (err.data && err.data.message) {
+          message += `. ${err.data.message}`;
+        } else if (err.data) {
+          message += `. ${err.data}`;
+        }
+        return { status: 'error', message: message };
+      });
   }
 }
 

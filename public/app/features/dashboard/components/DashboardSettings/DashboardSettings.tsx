@@ -31,6 +31,6 @@ export class DashboardSettings extends PureComponent<Props> {
   }
 
   render() {
-    return <div className="panel-height-helper" ref={element => this.element = element} />;
+    return <div className="panel-height-helper" ref={element => (this.element = element)} />;
   }
 }

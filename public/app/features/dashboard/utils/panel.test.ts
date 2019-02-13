@@ -39,7 +39,7 @@ describe('applyPanelTimeOverrides', () => {
 
   it('should apply time shift', () => {
     const panelModel = {
-      timeShift: '2h'
+      timeShift: '2h',
     };
 
     const expectedFromDate = moment([2019, 1, 11, 10, 0, 0]).toDate();
@@ -57,7 +57,7 @@ describe('applyPanelTimeOverrides', () => {
   it('should apply both relative time and time shift', () => {
     const panelModel = {
       timeFrom: '2h',
-      timeShift: '2h'
+      timeShift: '2h',
     };
 
     const expectedFromDate = moment([2019, 1, 11, 10, 0, 0]).toDate();

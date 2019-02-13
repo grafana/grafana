@@ -210,7 +210,7 @@ describe('MSSQLDatasource', () => {
     };
     const time = {
       from: moment(1521545610656),
-      to: moment(1521546251185)
+      to: moment(1521546251185),
     };
 
     beforeEach(() => {

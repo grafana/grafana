@@ -7,7 +7,6 @@ import { getTheme } from '../../themes';
 import { GrafanaThemeType } from '../../types';
 
 describe('NamedColorsPalette', () => {
-
   const BasicGreen = getColorDefinitionByName('green');
 
   describe('theme support for named colors', () => {
@@ -23,13 +22,15 @@ describe('NamedColorsPalette', () => {
       expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.dark);
 
       wrapper.unmount();
-      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} theme={getTheme(GrafanaThemeType.Light)} onChange={() => {}} />);
+      wrapper = mount(
+        <NamedColorsPalette color={BasicGreen.name} theme={getTheme(GrafanaThemeType.Light)} onChange={() => {}} />
+      );
       selectedSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === BasicGreen.name);
       expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.light);
     });
 
     it('should render dar variant of provided color when theme not provided', () => {
-      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} onChange={() => {}} theme={getTheme()}/>);
+      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} onChange={() => {}} theme={getTheme()} />);
       selectedSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === BasicGreen.name);
       expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.dark);
     });

@@ -10,13 +10,7 @@ export class AdHocFiltersCtrl {
   removeTagFilterSegment: any;
 
   /** @ngInject */
-  constructor(
-    private uiSegmentSrv,
-    private datasourceSrv,
-    private $q,
-    private variableSrv,
-    $scope,
-  ) {
+  constructor(private uiSegmentSrv, private datasourceSrv, private $q, private variableSrv, $scope) {
     this.removeTagFilterSegment = uiSegmentSrv.newSegment({
       fake: true,
       value: '-- remove filter --',
