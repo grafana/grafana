@@ -28,14 +28,6 @@ type keyHolder interface {
 	getVerificationKeys(header jose.Header) []interface{}
 }
 
-type keyHolderJSONWebKeySet struct {
-	keySet *jose.JSONWebKeySet
-}
-
-type keyHolderRSAPublicKeys struct {
-	keys map[string]*rsa.PublicKey
-}
-
 type JWTDecoder struct {
 	keys keyHolder
 }
@@ -75,11 +67,55 @@ func (d *JWTDecoder) Decode(text string) (map[string]interface{}, error) {
 
 	claims := make(map[string]interface{})
 	err = json.Unmarshal(payload, &claims)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse claims from JWT")
+	if err != nil || len(claims) < 1 {
+		return claims, fmt.Errorf("Unable to parse claims from JWT")
 	}
 
+	// expires := time.Time(idt.Expiry)
+	// if now.After(expires) {
+	//   return nil, &VerifyErr{
+	//     msg:    fmt.Sprintf("xjwt: JWT expired: now:'%s' is after jwt:'%s'", now.String(), expires.String()),
+	//     reason: JWT_EXPIRED,
+	//   }
+	// }
+
+	// maxExpires := vc.MaxExpirationFromNow
+	// if maxExpires == 0 {
+	//   maxExpires = defaultMaxExpirationFromNow
+	// }
+
+	// if expires.After(now.Add(maxExpires)) {
+	//   return nil, &VerifyErr{
+	//     msg:    fmt.Sprintf("xjwt: JWT has invalid expiration: jwt:'%s' is too far in the future (max:'%s')", expires.String(), now.Add(maxExpires).String()),
+	//     reason: JWT_EXPIRED,
+	//   }
+	// }
+
+	// nbf := time.Time(idt.NotBefore)
+	// if now.Before(nbf) {
+	//   return nil, &VerifyErr{
+	//     msg:    fmt.Sprintf("xjwt: JWT nbf is before now: jwt:'%s' now:'%s'", nbf.String(), now.String()),
+	//     reason: JWT_EXPIRED,
+	//   }
+	// }
+
 	return claims, nil
+}
+
+//-------------------------------------------------
+// 3 simple flavors
+//-------------------------------------------------
+
+type keyHolderJSONWebKeySet struct {
+	keySet *jose.JSONWebKeySet
+}
+
+type keyHolderRSAPublicKeys struct {
+	keys map[string]*rsa.PublicKey
+}
+
+type keyHolderStatic struct {
+	keys []interface{}
 }
 
 func (d *keyHolderRSAPublicKeys) getVerificationKeys(header jose.Header) []interface{} {
@@ -103,6 +139,10 @@ func (d *keyHolderJSONWebKeySet) getVerificationKeys(header jose.Header) []inter
 		}
 	}
 	return keys
+}
+
+func (d *keyHolderStatic) getVerificationKeys(header jose.Header) []interface{} {
+	return d.keys
 }
 
 /***
@@ -204,10 +244,10 @@ func newKeyHolder(source string) (keyHolder, error) {
 	}
 
 	// Try to parse as json
-	reg := make(map[string]*rsa.PublicKey)
 	var parsed map[string]interface{}
 	if err := json.Unmarshal(bytes, &parsed); err == nil {
 		// keyID -> Certificate (like firebase)
+		reg := make(map[string]*rsa.PublicKey)
 		for kid, value := range parsed {
 			key, err := parseRSAPublicKeyFromPEM([]byte(value.(string)))
 			if err == nil {
@@ -224,9 +264,9 @@ func newKeyHolder(source string) (keyHolder, error) {
 	// Is this a single certificaiton file
 	key, err := parseRSAPublicKeyFromPEM(bytes)
 	if err == nil {
-		reg["key"] = key
-		return &keyHolderRSAPublicKeys{
-			keys: reg,
+		var keys []interface{}
+		return &keyHolderStatic{
+			keys: append(keys, key),
 		}, nil
 	}
 

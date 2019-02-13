@@ -1,9 +1,6 @@
 package middleware
 
 import (
-	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
-	"net/http"
 	"testing"
 
 	macaron "gopkg.in/macaron.v1"
