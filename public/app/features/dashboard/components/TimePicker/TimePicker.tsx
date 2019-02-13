@@ -1,4 +1,4 @@
-import React, { PureComponent, createRef } from 'react';
+import React, { PureComponent } from 'react';
 import moment from 'moment';
 import {
   TimeRange,
@@ -9,16 +9,14 @@ import {
   SelectButton,
   HeadlessSelect,
 } from '@grafana/ui';
-import Popper from '@grafana/ui/src/components/Tooltip/Popper';
 
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
-import { TimePickerPopOver } from './TimePickerPopOver';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 
 export interface Props {
   value: TimeRange;
   isTimezoneUtc: boolean;
-  popOverTimeOptions: TimeOptions;
+  popoverTimeOptions: TimeOptions;
   selectTimeOptions: TimeOption[];
   timezone?: string;
   onChange: (timeRange: TimeRange) => void;
@@ -28,69 +26,69 @@ export interface Props {
 }
 
 export interface State {
-  isPopOverOpen: boolean;
+  isPopoverOpen: boolean;
   isSelectOpen: boolean;
-  isSmallScreen: boolean;
 }
 
 export class TimePicker extends PureComponent<Props, State> {
-  pickerTriggerRef = createRef<HTMLDivElement>();
-  state = { isSelectOpen: false, isPopOverOpen: false, isSmallScreen: false };
-
-  componentWillMount() {
-    this.setIsSmallScreen();
-    window.addEventListener('resize', this.setIsSmallScreen);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.setIsSmallScreen);
-  }
-
-  setIsSmallScreen = () => {
-    this.setState({ isSmallScreen: window.innerWidth <= 1116 });
-  };
+  state = { isSelectOpen: false, isPopoverOpen: false };
 
   mapTimeOptionsToSelectOptionItems = (selectTimeOptions: TimeOption[]) => {
+    const { value, popoverTimeOptions, isTimezoneUtc, timezone } = this.props;
     const options = selectTimeOptions.map(timeOption => {
       return { label: timeOption.display, value: timeOption };
     });
 
-    return [{ label: 'Custom', expanded: true, options, onCustomClick: (ref: any) => this.onCustomClicked() }];
+    return [
+      {
+        label: 'Custom',
+        expanded: true,
+        options,
+        onCustomClick: (isSmallScreen: boolean) => this.onCustomClicked(isSmallScreen),
+        onPopoverClose: (timeRange: TimeRange) => this.onPopoverClose(timeRange),
+        popoverProps: {
+          value,
+          popOverTimeOptions: popoverTimeOptions,
+          isTimezoneUtc,
+          timezone,
+        },
+      },
+    ];
   };
 
   onSelectButtonClicked = () => {
-    this.setState({ isSelectOpen: !this.state.isSelectOpen, isPopOverOpen: false });
+    this.setState({ isSelectOpen: !this.state.isSelectOpen });
   };
 
   onSelectChanged = (item: SelectOptionItem) => {
     const { isTimezoneUtc, onChange, timezone } = this.props;
-    this.setState({ isSelectOpen: !this.state.isSelectOpen, isPopOverOpen: false });
+    this.setState({ isSelectOpen: !this.state.isSelectOpen });
     onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
   };
 
-  onCustomClicked = () => {
-    const { isSmallScreen } = this.state;
-    this.setState({ isSelectOpen: isSmallScreen ? false : true, isPopOverOpen: true });
+  onCustomClicked = (isSmallScreen: boolean) => {
+    this.setState({ isSelectOpen: isSmallScreen ? false : true, isPopoverOpen: true });
+  };
+
+  onPopoverClose = (timeRange: TimeRange) => {
+    const { onChange } = this.props;
+
+    onChange(timeRange);
+    this.setState({ isPopoverOpen: false });
   };
 
   onClickOutside = () => {
-    if (!this.state.isPopOverOpen) {
+    const { isPopoverOpen } = this.state;
+
+    if (!isPopoverOpen) {
       this.setState({ isSelectOpen: false });
     }
   };
 
   render() {
-    const { selectTimeOptions, onChange, value, onMoveBackward, onMoveForward, onZoom } = this.props;
-    const { isSelectOpen, isPopOverOpen, isSmallScreen } = this.state;
+    const { selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom } = this.props;
+    const { isSelectOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
-    const popover = TimePickerPopOver;
-    const popoverElement = React.createElement(popover, {
-      ...this.props,
-      onChange: (timeRange: TimeRange) => {
-        onChange(timeRange);
-        this.setState({ isPopOverOpen: false });
-      },
-    });
     const rangeString = mapTimeRangeToRangeString(value);
     const isAbsolute = moment.isMoment(value.raw.to);
 
@@ -119,23 +117,13 @@ export class TimePicker extends PureComponent<Props, State> {
             </button>
           </div>
 
-          <div className="time-picker-select" ref={this.pickerTriggerRef}>
+          <div className="time-picker-select">
             <HeadlessSelect
               components={{ Group: TimePickerOptionGroup }}
               isOpen={isSelectOpen}
               onChange={this.onSelectChanged}
               options={options}
             />
-          </div>
-          <div>
-            {this.pickerTriggerRef.current && (
-              <Popper
-                show={isPopOverOpen}
-                content={popoverElement}
-                referenceElement={this.pickerTriggerRef.current}
-                placement={isSmallScreen ? 'auto' : 'left-start'}
-              />
-            )}
           </div>
         </div>
       </ClickOutsideWrapper>
