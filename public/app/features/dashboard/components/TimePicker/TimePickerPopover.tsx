@@ -21,6 +21,7 @@ export interface State {
 }
 
 export class TimePickerPopover extends Component<Props, State> {
+  static popoverClassName = 'time-picker-popover';
   constructor(props: Props) {
     super(props);
     this.state = { value: props.value, isFromInputValid: true, isToInputValid: true };
@@ -73,7 +74,7 @@ export class TimePickerPopover extends Component<Props, State> {
     const isValid = isFromInputValid && isToInputValid;
 
     return (
-      <div className="time-picker-popover">
+      <div className={TimePickerPopover.popoverClassName}>
         <div className="time-picker-popover-box">
           <div className="time-picker-popover-box-header">
             <span className="time-picker-popover-box-title">Quick ranges</span>

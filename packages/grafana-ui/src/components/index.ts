@@ -10,8 +10,6 @@ export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
-export { SelectButton } from './Select/SelectButton';
-export { HeadlessSelect } from './Select/HeadlessSelect';
 export { ButtonSelect } from './Select/ButtonSelect';
 
 // Forms

@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom';
 
 export interface Props {
   onClick: () => void;
+  /**
+   * Used to filter out certain elements besides the wrapper
+   */
   onOutsideClick?: (event: SyntheticEvent) => boolean;
 }
 
@@ -27,7 +30,11 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     const { onOutsideClick } = this.props;
     const domNode = ReactDOM.findDOMNode(this) as Element;
 
-    if (!domNode || !domNode.contains(event.target) || (onOutsideClick && onOutsideClick(event))) {
+    if (onOutsideClick && !onOutsideClick(event)) {
+      return;
+    }
+
+    if (!domNode || !domNode.contains(event.target)) {
       this.props.onClick();
     }
   };

@@ -1,18 +1,11 @@
 import React, { PureComponent } from 'react';
 import moment from 'moment';
-import {
-  TimeRange,
-  TimeOptions,
-  TimeOption,
-  SelectOptionItem,
-  ClickOutsideWrapper,
-  SelectButton,
-  HeadlessSelect,
-} from '@grafana/ui';
+import { TimeRange, TimeOptions, TimeOption, SelectOptionItem, ButtonSelect } from '@grafana/ui';
 
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
-import { Props as TimePickerPopoverProps } from './TimePickerPopover';
+import { Props as TimePickerPopoverProps, TimePickerPopover } from './TimePickerPopover';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
+import ReactDOM from 'react-dom';
 
 export interface Props {
   value: TimeRange;
@@ -26,14 +19,7 @@ export interface Props {
   onZoom: () => void;
 }
 
-export interface State {
-  isPopoverOpen: boolean;
-  isSelectOpen: boolean;
-}
-
-export class TimePicker extends PureComponent<Props, State> {
-  state = { isSelectOpen: false, isPopoverOpen: false };
-
+export class TimePicker extends PureComponent<Props> {
   mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
     const { value, popoverOptions, isTimezoneUtc, timezone } = this.props;
     const options = selectOptions.map(timeOption => {
@@ -52,83 +38,70 @@ export class TimePicker extends PureComponent<Props, State> {
         label: 'Custom',
         expanded: true,
         options,
-        onPopoverOpen: () => this.onPopoverOpen(),
+        onPopoverOpen: () => undefined,
         onPopoverClose: (timeRange: TimeRange) => this.onPopoverClose(timeRange),
         popoverProps,
       },
     ];
   };
 
-  onSelectButtonClicked = () => {
-    this.setState({ isSelectOpen: !this.state.isSelectOpen });
-  };
-
   onSelectChanged = (item: SelectOptionItem) => {
     const { isTimezoneUtc, onChange, timezone } = this.props;
-    this.setState({ isSelectOpen: !this.state.isSelectOpen });
     onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
-  };
-
-  onPopoverOpen = () => {
-    this.setState({ isPopoverOpen: true });
   };
 
   onPopoverClose = (timeRange: TimeRange) => {
     const { onChange } = this.props;
-
     onChange(timeRange);
-    this.setState({ isPopoverOpen: false });
+    // Here we should also close the Select but no sure how to solve this without introducing state in this component
   };
 
-  onClickOutside = () => {
-    const { isPopoverOpen } = this.state;
+  // Makes sure that we don't close the popover when user clicks inside the popover
+  onOutsideClick = (event: any): boolean => {
+    const popoverElement = document.getElementsByClassName(TimePickerPopover.popoverClassName)[0];
+    const popoverNode = ReactDOM.findDOMNode(popoverElement) as Element;
 
-    if (!isPopoverOpen) {
-      this.setState({ isSelectOpen: false });
+    if (popoverNode && popoverNode.contains(event.target)) {
+      return false;
     }
+
+    return true;
   };
 
   render() {
     const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom } = this.props;
-    const { isSelectOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const rangeString = mapTimeRangeToRangeString(value);
     const isAbsolute = moment.isMoment(value.raw.to);
 
     return (
-      <ClickOutsideWrapper onClick={this.onClickOutside}>
-        <div className="time-picker">
-          <div className="time-picker-buttons">
-            {isAbsolute && (
-              <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
-                <i className="fa fa-chevron-left" />
-              </button>
-            )}
-            <SelectButton
-              onClick={this.onSelectButtonClicked}
-              textWhenUndefined={'NaN'}
-              value={rangeString}
-              iconClass={'fa fa-clock-o'}
-            />
-            {isAbsolute && (
-              <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
-                <i className="fa fa-chevron-right" />
-              </button>
-            )}
-            <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
-              <i className="fa fa-search-minus" />
+      <div className="time-picker">
+        <div className="time-picker-buttons">
+          {isAbsolute && (
+            <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
+              <i className="fa fa-chevron-left" />
             </button>
-          </div>
-          <div className="time-picker-select">
-            <HeadlessSelect
-              components={{ Group: TimePickerOptionGroup }}
-              isOpen={isSelectOpen}
-              onChange={this.onSelectChanged}
-              options={options}
-            />
-          </div>
+          )}
+          <ButtonSelect
+            className="time-picker-button-select"
+            value={value}
+            label={rangeString}
+            options={options}
+            onChange={this.onSelectChanged}
+            components={{ Group: TimePickerOptionGroup }}
+            onOutsideClick={this.onOutsideClick}
+            iconClass={'fa fa-clock-o fa-fw'}
+          />
+          {isAbsolute && (
+            <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
+              <i className="fa fa-chevron-right" />
+            </button>
+          )}
+          <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
+            <i className="fa fa-search-minus" />
+          </button>
         </div>
-      </ClickOutsideWrapper>
+      </div>
     );
   }
 }

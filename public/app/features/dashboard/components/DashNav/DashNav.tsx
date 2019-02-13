@@ -267,7 +267,7 @@ export class DashNav extends PureComponent<Props> {
             onMoveBackward={() => {}}
             onMoveForward={() => {}}
             onZoom={() => {}}
-            selectTimeOptions={[
+            selectOptions={[
               { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3, active: false },
               { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3, active: false },
               { from: 'now-30m', to: 'now', display: 'Last 30 minutes', section: 3, active: false },
@@ -277,7 +277,7 @@ export class DashNav extends PureComponent<Props> {
               { from: 'now-12h', to: 'now', display: 'Last 12 hours', section: 3, active: false },
               { from: 'now-24h', to: 'now', display: 'Last 24 hours', section: 3, active: false },
             ]}
-            popoverTimeOptions={{
+            popoverOptions={{
               '0': [
                 {
                   from: 'now-2d',
@@ -443,7 +443,7 @@ export class DashNav extends PureComponent<Props> {
           <RefreshPicker
             onIntervalChanged={() => {}}
             onRefreshClicked={() => {}}
-            intervals={[]}
+            intervals={['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d']}
             initialValue={undefined}
           />
         </div> */}
