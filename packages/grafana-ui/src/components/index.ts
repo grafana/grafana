@@ -23,3 +23,4 @@ export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
 export { Gauge } from './Gauge/Gauge';
 export { Switch } from './Switch/Switch';
+export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
