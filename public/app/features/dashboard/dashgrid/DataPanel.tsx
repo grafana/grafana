@@ -34,6 +34,7 @@ export interface Props {
   maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data: DataQueryResponse) => void;
+  onError: (errorMessage: string) => void;
 }
 
 export interface State {
@@ -94,6 +95,7 @@ export class DataPanel extends Component<Props, State> {
       widthPixels,
       maxDataPoints,
       onDataResponse,
+      onError,
     } = this.props;
 
     if (!isVisible) {
@@ -146,7 +148,9 @@ export class DataPanel extends Component<Props, State> {
     } catch (err) {
       console.log('Loading error', err);
       this.setState({ isFirstLoad: false });
-      throw new Error('Request Error');
+      onError(`Query error
+      status: ${err.status}
+      message: ${err.statusText}`);
     }
   };
 
@@ -169,7 +173,6 @@ export class DataPanel extends Component<Props, State> {
   render() {
     const { queries } = this.props;
     const { loading, isFirstLoad } = this.state;
-
     const panelData = this.getPanelData();
 
     if (isFirstLoad && loading === LoadingState.Loading) {

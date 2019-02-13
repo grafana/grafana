@@ -35,8 +35,16 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { show, placement, onMouseEnter, onMouseLeave, className, wrapperClassName, renderArrow } = this.props;
-    const { content } = this.props;
+    const {
+      content,
+      show,
+      placement,
+      onMouseEnter,
+      onMouseLeave,
+      className,
+      wrapperClassName,
+      renderArrow,
+    } = this.props;
 
     return (
       <Manager>

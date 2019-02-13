@@ -171,6 +171,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             widthPixels={width}
             refreshCounter={refreshCounter}
             onDataResponse={this.onDataResponse}
+            onError={this.onError}
           >
             {({ loading, panelData }) => {
               return this.renderPanelPlugin(loading, panelData, width, height);
@@ -185,7 +186,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, panel } = this.props;
-    const { timeInfo } = this.state;
+    const { errorMessage, timeInfo } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
@@ -206,7 +207,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 description={panel.description}
                 scopedVars={panel.scopedVars}
                 links={panel.links}
-                error={this.state.errorMessage}
+                error={errorMessage}
               />
               <ErrorBoundary>
                 {({ error, errorInfo }) => {
