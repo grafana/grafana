@@ -142,7 +142,7 @@ export function dropdownTypeahead2($compile) {
       const $input = $(inputTemplate);
       const $button = $(buttonTemplate);
       const timeoutId = {
-        blur: null
+        blur: null,
       };
       $input.appendTo(elem);
       $button.appendTo(elem);

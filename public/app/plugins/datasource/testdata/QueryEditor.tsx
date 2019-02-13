@@ -45,7 +45,7 @@ export class QueryEditor extends PureComponent<Props> {
       ...this.props.query,
       scenarioId: item.value,
     });
-  }
+  };
 
   render() {
     const { query } = this.props;

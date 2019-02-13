@@ -1,4 +1,3 @@
-
 const backendSrv = {
   get: jest.fn(),
   getDashboard: jest.fn(),
@@ -10,5 +9,3 @@ const backendSrv = {
 export function getBackendSrv() {
   return backendSrv;
 }
-
-

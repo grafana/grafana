@@ -15,7 +15,6 @@ const SpectrumPalettePointer: React.FunctionComponent<SpectrumPalettePointerProp
     },
   };
 
-
   const pointerColor = selectThemeVariant(
     {
       light: theme.colors.dark3,

@@ -31,7 +31,7 @@ export class DashboardSrv {
     removePanel(dashboard, dashboard.getPanelById(panelId), true);
   };
 
-  onPanelChangeView = (options) => {
+  onPanelChangeView = options => {
     const urlParams = this.$location.search();
 
     // handle toggle logic

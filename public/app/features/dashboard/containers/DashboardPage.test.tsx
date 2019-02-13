@@ -3,7 +3,7 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { cleanUpDashboard } from '../state/actions';
-import { getNoPayloadActionCreatorMock, NoPayloadActionCreatorMock  } from 'app/core/redux';
+import { getNoPayloadActionCreatorMock, NoPayloadActionCreatorMock } from 'app/core/redux';
 import { DashboardRouteInfo, DashboardInitPhase } from 'app/types';
 
 jest.mock('sass/_variables.scss', () => ({
@@ -23,17 +23,20 @@ interface ScenarioContext {
 }
 
 function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel {
-  const data = Object.assign({
-    title: 'My dashboard',
-    panels: [
-      {
-        id: 1,
-        type: 'graph',
-        title: 'My graph',
-        gridPos: { x: 0, y: 0, w: 1, h: 1 },
-      },
-    ],
-  }, overrides);
+  const data = Object.assign(
+    {
+      title: 'My dashboard',
+      panels: [
+        {
+          id: 1,
+          type: 'graph',
+          title: 'My graph',
+          gridPos: { x: 0, y: 0, w: 1, h: 1 },
+        },
+      ],
+    },
+    overrides
+  );
 
   const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
   return new DashboardModel(data, meta);
@@ -74,7 +77,7 @@ function dashboardPageScenario(description, scenarioFn: (ctx: ScenarioContext) =
 
         ctx.dashboard = props.dashboard;
         ctx.wrapper = shallow(<DashboardPage {...props} />);
-      }
+      },
     };
 
     beforeEach(() => {
@@ -86,8 +89,7 @@ function dashboardPageScenario(description, scenarioFn: (ctx: ScenarioContext) =
 }
 
 describe('DashboardPage', () => {
-
-  dashboardPageScenario("Given initial state", (ctx) => {
+  dashboardPageScenario('Given initial state', ctx => {
     ctx.setup(() => {
       ctx.mount();
     });
@@ -97,7 +99,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("Dashboard is fetching slowly", (ctx) => {
+  dashboardPageScenario('Dashboard is fetching slowly', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.wrapper.setProps({
@@ -111,7 +113,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("Dashboard init completed ", (ctx) => {
+  dashboardPageScenario('Dashboard init completed ', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -126,7 +128,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("When user goes into panel edit", (ctx) => {
+  dashboardPageScenario('When user goes into panel edit', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -149,7 +151,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("When user goes back to dashboard from panel edit", (ctx) => {
+  dashboardPageScenario('When user goes back to dashboard from panel edit', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -179,7 +181,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("When dashboard has editview url state", (ctx) => {
+  dashboardPageScenario('When dashboard has editview url state', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -197,7 +199,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("When adding panel", (ctx) => {
+  dashboardPageScenario('When adding panel', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
@@ -214,37 +216,37 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario("Given panel with id 0", (ctx) => {
+  dashboardPageScenario('Given panel with id 0', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp({
-        panels: [{ id: 0, type: 'graph'}],
+        panels: [{ id: 0, type: 'graph' }],
         schemaVersion: 17,
       });
       ctx.wrapper.setProps({
         urlEdit: true,
         urlFullscreen: true,
-        urlPanelId: '0'
+        urlPanelId: '0',
       });
     });
 
-    it('Should go into edit mode' , () => {
+    it('Should go into edit mode', () => {
       expect(ctx.wrapper.state().isEditing).toBe(true);
       expect(ctx.wrapper.state().fullscreenPanel.id).toBe(0);
     });
   });
 
-  dashboardPageScenario("When dashboard unmounts", (ctx) => {
+  dashboardPageScenario('When dashboard unmounts', ctx => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp({
-        panels: [{ id: 0, type: 'graph'}],
+        panels: [{ id: 0, type: 'graph' }],
         schemaVersion: 17,
       });
       ctx.wrapper.unmount();
     });
 
-    it('Should call clean up action' , () => {
+    it('Should call clean up action', () => {
       expect(ctx.cleanUpDashboardMock.calls).toBe(1);
     });
   });

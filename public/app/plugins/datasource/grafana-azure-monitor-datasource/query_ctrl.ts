@@ -314,7 +314,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         }
       })
       .catch(this.handleQueryCtrlError.bind(this));
-  }
+  };
 
   getAzureLogAnalyticsSchema = () => {
     return this.getWorkspaces()
@@ -322,15 +322,15 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         return this.datasource.azureLogAnalyticsDatasource.getSchema(this.target.azureLogAnalytics.workspace);
       })
       .catch(this.handleQueryCtrlError.bind(this));
-  }
+  };
 
   onLogAnalyticsQueryChange = (nextQuery: string) => {
     this.target.azureLogAnalytics.query = nextQuery;
-  }
+  };
 
   onLogAnalyticsQueryExecute = () => {
     this.panelCtrl.refresh();
-  }
+  };
 
   get templateVariables() {
     return this.templateSrv.variables.map(t => '$' + t.name);
@@ -380,16 +380,15 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   onAppInsightsQueryChange = (nextQuery: string) => {
     this.target.appInsights.rawQueryString = nextQuery;
-  }
+  };
 
   onAppInsightsQueryExecute = () => {
     return this.refresh();
-  }
+  };
 
   getAppInsightsQuerySchema = () => {
-    return this.datasource.appInsightsDatasource.getQuerySchema()
-      .catch(this.handleQueryCtrlError.bind(this));
-  }
+    return this.datasource.appInsightsDatasource.getQuerySchema().catch(this.handleQueryCtrlError.bind(this));
+  };
 
   getAppInsightsGroupBySegments(query) {
     return _.map(this.target.appInsights.groupByOptions, option => {
