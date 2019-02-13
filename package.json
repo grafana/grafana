@@ -120,7 +120,7 @@
     "start": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --theme",
     "start:hot": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --hot --theme",
     "start:ignoreTheme": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --hot",
-    "watch": "webpack --progress --colors --watch --mode development --config scripts/webpack/webpack.dev.js",
+    "watch": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --theme -d watch,start",
     "build": "grunt build",
     "test": "grunt test",
     "tslint": "tslint -c tslint.json --project tsconfig.json",
