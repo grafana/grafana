@@ -8,10 +8,10 @@ import { mapTimeOptionToTimeRange } from './time';
 
 export interface Props {
   value: TimeRange;
-  popOverTimeOptions: TimeOptions;
+  options: TimeOptions;
   isTimezoneUtc: boolean;
   timezone?: string;
-  onChange: (timeRange: TimeRange) => void;
+  onChange?: (timeRange: TimeRange) => void;
 }
 
 export interface State {
@@ -53,17 +53,22 @@ export class TimePickerPopover extends Component<Props, State> {
   };
 
   onTimeOptionClick = (timeOption: TimeOption) => {
-    const { isTimezoneUtc, timezone } = this.props;
+    const { isTimezoneUtc, timezone, onChange } = this.props;
 
-    this.props.onChange(mapTimeOptionToTimeRange(timeOption, isTimezoneUtc, timezone));
+    if (onChange) {
+      onChange(mapTimeOptionToTimeRange(timeOption, isTimezoneUtc, timezone));
+    }
   };
 
   onApplyClick = () => {
-    this.props.onChange(this.state.value);
+    const { onChange } = this.props;
+    if (onChange) {
+      onChange(this.state.value);
+    }
   };
 
   render() {
-    const { popOverTimeOptions, isTimezoneUtc, timezone } = this.props;
+    const { options, isTimezoneUtc, timezone } = this.props;
     const { isFromInputValid, isToInputValid, value } = this.state;
     const isValid = isFromInputValid && isToInputValid;
 
@@ -74,10 +79,10 @@ export class TimePickerPopover extends Component<Props, State> {
             <span className="time-picker-popover-box-title">Quick ranges</span>
           </div>
           <div className="time-picker-popover-box-body">
-            {Object.keys(popOverTimeOptions).map(key => {
+            {Object.keys(options).map(key => {
               return (
                 <ul key={`popover-quickranges-${key}`}>
-                  {popOverTimeOptions[key].map(timeOption => (
+                  {options[key].map(timeOption => (
                     <li
                       key={`popover-timeoption-${timeOption.from}-${timeOption.to}`}
                       className={timeOption.active ? 'active' : ''}

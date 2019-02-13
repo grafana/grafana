@@ -10,14 +10,15 @@ import {
   HeadlessSelect,
 } from '@grafana/ui';
 
-import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
+import { Props as TimePickerPopoverProps } from './TimePickerPopover';
+import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 
 export interface Props {
   value: TimeRange;
   isTimezoneUtc: boolean;
-  popoverTimeOptions: TimeOptions;
-  selectTimeOptions: TimeOption[];
+  popoverOptions: TimeOptions;
+  selectOptions: TimeOption[];
   timezone?: string;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
@@ -33,11 +34,18 @@ export interface State {
 export class TimePicker extends PureComponent<Props, State> {
   state = { isSelectOpen: false, isPopoverOpen: false };
 
-  mapTimeOptionsToSelectOptionItems = (selectTimeOptions: TimeOption[]) => {
-    const { value, popoverTimeOptions, isTimezoneUtc, timezone } = this.props;
-    const options = selectTimeOptions.map(timeOption => {
+  mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
+    const { value, popoverOptions, isTimezoneUtc, timezone } = this.props;
+    const options = selectOptions.map(timeOption => {
       return { label: timeOption.display, value: timeOption };
     });
+
+    const popoverProps: TimePickerPopoverProps = {
+      value,
+      options: popoverOptions,
+      isTimezoneUtc,
+      timezone,
+    };
 
     return [
       {
@@ -46,12 +54,7 @@ export class TimePicker extends PureComponent<Props, State> {
         options,
         onPopoverOpen: () => this.onPopoverOpen(),
         onPopoverClose: (timeRange: TimeRange) => this.onPopoverClose(timeRange),
-        popoverProps: {
-          value,
-          popOverTimeOptions: popoverTimeOptions,
-          isTimezoneUtc,
-          timezone,
-        },
+        popoverProps,
       },
     ];
   };
@@ -86,7 +89,7 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom } = this.props;
+    const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom } = this.props;
     const { isSelectOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const rangeString = mapTimeRangeToRangeString(value);

@@ -4,12 +4,14 @@ import Popper from '@grafana/ui/src/components/Tooltip/Popper';
 import { Props as TimePickerProps, TimePickerPopover } from './TimePickerPopover';
 import { TimeRange } from '@grafana/ui';
 
+export interface DataProps {
+  onPopoverOpen: () => void;
+  onPopoverClose: (timeRange: TimeRange) => void;
+  popoverProps: TimePickerProps;
+}
+
 interface Props extends GroupProps<any> {
-  data: {
-    onPopoverOpen: () => void;
-    onPopoverClose: (timeRange: TimeRange) => void;
-    popoverProps: TimePickerProps;
-  };
+  data: DataProps;
 }
 
 interface State {

@@ -29,7 +29,7 @@ TimePickerPopoverStories.add('default', () => (
             action('onChange fired')(timeRange);
             updateValue(timeRange);
           }}
-          popOverTimeOptions={popoverOptions}
+          options={popoverOptions}
         />
       );
     }}

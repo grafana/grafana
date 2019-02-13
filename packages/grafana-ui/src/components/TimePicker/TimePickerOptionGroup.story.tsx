@@ -22,7 +22,7 @@ const data = {
   },
   popoverProps: {
     value: { from: moment(), to: moment(), raw: { from: 'now/d', to: 'now/d' } },
-    popOverTimeOptions: popoverOptions,
+    options: popoverOptions,
     isTimezoneUtc: false,
     onChange: (timeRange: TimeRange) => {
       action('onChange fired')(timeRange);
