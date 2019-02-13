@@ -3,8 +3,7 @@ export enum GrafanaThemeType {
   Dark = 'dark',
 }
 
-export interface GrafanaTheme {
-  type: GrafanaThemeType;
+export interface GrafanaThemeCommons {
   name: string;
   // TODO: not sure if should be a part of theme
   brakpoints: {
@@ -62,6 +61,10 @@ export interface GrafanaTheme {
       m: string;
     };
   };
+}
+
+export interface GrafanaTheme extends GrafanaThemeCommons {
+  type: GrafanaThemeType;
   background: {
     dropdown: string;
     scrollbar: string;

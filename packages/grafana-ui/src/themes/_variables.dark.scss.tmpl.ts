@@ -1,3 +1,5 @@
+/* tslint:disable:max-line-length */
+
 import { GrafanaTheme } from '../types';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme) => `

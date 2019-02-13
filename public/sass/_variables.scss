@@ -31,7 +31,7 @@ $grid-breakpoints: (xs: 0, sm: 544px, md: 768px, lg: 992px, xl: 1200px) !default
 
 // Grid containers
 //
-// Define the maximum width of `.container` for different screen sizes.
+// Define the maximum width of .container for different screen sizes.
 
 $container-max-widths: (sm: 576px, md: 720px, lg: 940px, xl: 1080px) !default;
 
@@ -114,7 +114,7 @@ $link-hover-decoration: none !default;
 
 // Tables
 //
-// Customizes the `.table` component with basic values, each used across all table variations.
+// Customizes the table component with basic values, each used across all table variations.
 
 $table-cell-padding: 4px 10px !default;
 
@@ -206,6 +206,6 @@ $external-services: (
   !default;
 
 :export {
-  panelHorizontalPadding: $panel-horizontal-padding;
-  panelVerticalPadding: $panel-vertical-padding;
+  panelhorizontalpadding: $panel-horizontal-padding;
+  panelverticalpadding: $panel-vertical-padding;
 }

@@ -1,11 +1,14 @@
 import fs from 'fs';
 import darkTheme from '@grafana/ui/src/themes/dark';
 import lightTheme from '@grafana/ui/src/themes/light';
+import defaultTheme from '@grafana/ui/src/themes/default';
 import { darkThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.dark.scss.tmpl';
 import { lightThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.light.scss.tmpl';
+import { commonThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.scss.tmpl';
 
 const darkThemeVariablesPath = __dirname + '/../../public/sass/_variables.dark.scss';
 const lightThemeVariablesPath = __dirname + '/../../public/sass/_variables.light.scss';
+const defaultThemeVariablesPath = __dirname + '/../../public/sass/_variables.scss';
 
 const writeVariablesFile = async (path: string, data: string) => {
   return new Promise((resolve, reject) => {
@@ -24,6 +27,7 @@ const generateSassVariableFiles = async () => {
     await Promise.all([
       writeVariablesFile(darkThemeVariablesPath, darkThemeVarsTemplate(darkTheme)),
       writeVariablesFile(lightThemeVariablesPath, lightThemeVarsTemplate(lightTheme)),
+      writeVariablesFile(defaultThemeVariablesPath, commonThemeVarsTemplate(defaultTheme)),
     ]);
     console.log('\nSASS variable files generated');
   } catch (error) {
