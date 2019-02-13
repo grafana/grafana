@@ -122,7 +122,6 @@
     "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
-    "precommit": "grunt precommit",
     "storybook": "cd packages/grafana-ui && yarn storybook",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts"
   },
