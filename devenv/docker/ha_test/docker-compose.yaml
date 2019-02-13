@@ -7,6 +7,13 @@ services:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: nginx
 
   db:
     image: mysql:5.6
