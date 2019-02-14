@@ -2536,6 +2536,11 @@ ansi-styles@~1.0.0:
   resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-1.0.0.tgz#cb102df1c56f5123eab8b67cd7b98027a0279178"
   integrity sha1-yxAt8cVvUSPquLZ817mAJ6AnkXg=
 
+ansicolor@1.1.78:
+  version "1.1.78"
+  resolved "https://registry.yarnpkg.com/ansicolor/-/ansicolor-1.1.78.tgz#4c1f1dbef81ff3e1292e6f95b4bfb8ba51212db9"
+  integrity sha512-mdNo/iRwUyb4Z0L8AthEV4BZ3TlSWr6YakKtItA48ufGBzYYtTVp+gX6bkweKTfs7wGpUepOz+qHrTPqfBus2Q==
+
 ansicolors@~0.3.2:
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/ansicolors/-/ansicolors-0.3.2.tgz#665597de86a9ffe3aa9bfbe6cae5c6ea426b4979"
