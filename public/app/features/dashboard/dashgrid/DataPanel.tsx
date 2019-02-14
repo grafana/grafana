@@ -157,6 +157,8 @@ export class DataPanel extends Component<Props, State> {
         message = err.data.message;
       } else if (err.data && err.data.error) {
         message = err.data.error;
+      } else if (err.status) {
+        message = `Query error: ${err.status} ${err.statusText}`;
       }
 
       onError(message, err);
