@@ -15,7 +15,7 @@ Setting up Grafana for high availability is fairly simple. It comes down to two 
   2. Decide how to store session data.
 
 <div class="text-center">
-  <img src="/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center"></img>
+  <img src="/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
 </div>
 
 ## Configure multiple servers to use the same database
@@ -23,6 +23,10 @@ Setting up Grafana for high availability is fairly simple. It comes down to two 
 First, you need to do is to setup MySQL or Postgres on another server and configure Grafana to use that database.
 You can find the configuration for doing that in the [[database]]({{< relref "configuration.md" >}}#database) section in the grafana config.
 Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database you're using.
+
+## Alerting
+
+Currently alerting supports a limited form of high availability. Since v4.2.0, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
 
 ## User sessions
 
@@ -43,6 +47,4 @@ If you use MySQL/Postgres for session storage, you first need a table to store t
 
 For Grafana itself it doesn't really matter if you store the session data on disk or database/redis/memcache. But we recommend using a database/redis/memcache since it makes it easier manage the grafana servers.
 
-## Alerting
 
-Currently alerting supports a limited form of high availability. Since v4.2.0, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support distributing the alert rule execution between servers. That might be added in the future but right now prefer to keep it simple.
