@@ -10,6 +10,9 @@ Contributions take the form of pull requests that will be reviewed by the core t
 
 * If you plan to do something more involved, discuss your idea on the respective [issue](https://github.com/grafana/grafana/issues) or create a [new issue](https://github.com/grafana/grafana/issues/new) if it does not exist. This will avoid unnecessary work and surely give you and us a good deal of inspiration.
 
+* Sign our [CLA](http://docs.grafana.org/contribute/cla/). 
+
+* For changes in the backend, follow the style guides used in Go [Code Review Comments](https://code.google.com/p/go-wiki/wiki/CodeReviewComments) and Peter Bourgon's [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style)
 
 ## Steps to Contribute
 
