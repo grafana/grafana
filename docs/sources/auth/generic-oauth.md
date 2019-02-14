@@ -211,6 +211,8 @@ allowed_organizations =
 
 ## Set up OAuth2 with non-compliant providers
 
+> Only available in Grafana v6.0 and above.
+
 Some OAuth2 providers might not support `client_id` and `client_secret` passed via Basic Authentication HTTP header, which
 results in `invalid_client` error. To allow Grafana to authenticate via these type of providers, the client identifiers must be
 send via POST body, which can be enabled via the following settings:
