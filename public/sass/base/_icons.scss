@@ -212,7 +212,8 @@
   padding-right: 5px;
 }
 
-.panel-editor-tabs, .add-panel-widget__icon {
+.panel-editor-tabs,
+.add-panel-widget__icon {
   .gicon-advanced-active {
     background-image: url('../img/icons_#{$theme-name}_theme/icon_advanced_active.svg');
   }

@@ -25,7 +25,7 @@ const setup = (propOverrides?: object) => {
     width: 300,
     value: 25,
     decimals: 0,
-    theme: getTheme()
+    theme: getTheme(),
   };
 
   Object.assign(props, propOverrides);

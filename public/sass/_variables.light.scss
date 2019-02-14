@@ -5,18 +5,18 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$sapphire-faint: #F5F9FF;
-$sapphire-light: #A8CAFF;
-$sapphire-base: #3274D9;
-$sapphire-shade: #1F60C4;
-$lobster-base: #E02F44;
-$lobster-shade: #C4162A;
-$green-base: #37872D;
-$green-shade: #19730E;
-$green-base: #3EB15B;
-$green-shade: #369B4F;
-$purple-shade: #8F3BB8;
-$yellow-base: #F2CC0C;
+$sapphire-faint: #f5f9ff;
+$sapphire-light: #a8caff;
+$sapphire-base: #3274d9;
+$sapphire-shade: #1f60c4;
+$lobster-base: #e02f44;
+$lobster-shade: #c4162a;
+$green-base: #37872d;
+$green-shade: #19730e;
+$green-base: #3eb15b;
+$green-shade: #369b4f;
+$purple-shade: #8f3bb8;
+$yellow-base: #f2cc0c;
 
 // Grays
 // -------------------------
@@ -78,12 +78,7 @@ $text-color-emphasis: $dark-5;
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient: linear-gradient(
-  to right,
-  rgba(255, 213, 0, 1) 0%,
-  rgba(255, 68, 0, 1) 99%,
-  rgba(255, 68, 0, 1) 100%
-);
+$brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
 
 $page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
@@ -349,14 +344,14 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: linear-gradient(90deg, #FF9830, #E55400);
+$switch-slider-on-bg: linear-gradient(90deg, #ff9830, #e55400);
 $switch-slider-shadow: 0 0 3px $dark-5;
 
 //Checkbox
 // -------------------------
 $checkbox-bg: $gray-6;
 $checkbox-border: 1px solid $gray-3;
-$checkbox-checked-bg: linear-gradient(0deg, #FF9830, #E55400);
+$checkbox-checked-bg: linear-gradient(0deg, #ff9830, #e55400);
 $checkbox-color: $gray-7;
 
 //Panel Edit
@@ -369,7 +364,8 @@ $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-5;
-$panel-editor-viz-item-bg-hover: lighten($blue, 62%);$panel-options-group-border: none;
+$panel-editor-viz-item-bg-hover: lighten($blue, 62%);
+$panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: $sapphire-faint;

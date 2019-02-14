@@ -13,11 +13,11 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {
       main: {
-        text: 'Configuration'
+        text: 'Configuration',
       },
       node: {
-        text: 'Users'
-      }
+        text: 'Users',
+      },
     } as NavModel,
     users: [] as OrgUser[],
     invitees: [] as Invitee[],

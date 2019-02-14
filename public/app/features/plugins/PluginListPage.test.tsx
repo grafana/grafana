@@ -8,11 +8,11 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {
       main: {
-        text: 'Configuration'
+        text: 'Configuration',
       },
       node: {
-        text: 'Plugins'
-      }
+        text: 'Plugins',
+      },
     } as NavModel,
     plugins: [] as Plugin[],
     searchQuery: '',

@@ -57,7 +57,7 @@ export class Settings {
         isEnterprise: false,
       },
       viewersCanEdit: false,
-      disableSanitizeHtml: false
+      disableSanitizeHtml: false,
     };
 
     _.extend(this, defaults, options);

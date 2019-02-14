@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { PanelProps } from '@grafana/ui';
 
 export class Text2 extends PureComponent<PanelProps> {
-  constructor(props) {
+  constructor(props: PanelProps) {
     super(props);
   }
 

@@ -18,13 +18,13 @@ export class VariableSrv {
   variables: any[];
 
   /** @ngInject */
-  constructor(private $q,
-              private $location,
-              private $injector,
-              private templateSrv: TemplateSrv,
-              private timeSrv: TimeSrv) {
-
-  }
+  constructor(
+    private $q,
+    private $location,
+    private $injector,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {}
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
