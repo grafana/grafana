@@ -7,6 +7,13 @@ services:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: nginx
 
   db:
     image: mysql:5.6
@@ -66,6 +73,8 @@ services:
       # - GF_DATABASE_SSL_MODE=disable
       # - GF_SESSION_PROVIDER=postgres
       # - GF_SESSION_PROVIDER_CONFIG=user=grafana password=password host=db port=5432 dbname=grafana sslmode=disable
+      - GF_SERVER_ROUTER_LOGGING=true
+      - GF_LOG_CONSOLE_FORMAT=json
       - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug,auth:debug
       - GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES=2
     ports:
@@ -73,6 +82,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: grafana
 
   prometheus:
     image: prom/prometheus:v2.4.2
@@ -82,3 +95,21 @@ services:
       - VIRTUAL_HOST=prometheus.loc
     ports:
       - 9090
+
+  loki:
+    image: grafana/loki:master
+    environment:
+      - VIRTUAL_HOST=loki.loc
+    ports:
+      - 3100
+    command: -config.file=/etc/loki/local-config.yaml
+
+  fluentd:
+    image: grafana/fluent-plugin-loki:master
+    volumes:
+      - ./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf
+    links:
+      - loki
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
