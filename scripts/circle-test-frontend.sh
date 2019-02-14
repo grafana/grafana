@@ -10,4 +10,5 @@ function exit_if_fail {
     fi
 }
 
+exit_if_fail npm run prettier:check
 exit_if_fail npm run test

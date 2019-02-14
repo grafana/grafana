@@ -9,10 +9,7 @@ describe('PanelModel', () => {
       model = new PanelModel({
         type: 'table',
         showColumns: true,
-        targets: [
-          {refId: 'A'},
-          {noRefId: true}
-        ]
+        targets: [{ refId: 'A' }, { noRefId: true }],
       });
     });
 

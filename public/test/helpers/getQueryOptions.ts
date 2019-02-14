@@ -1,10 +1,11 @@
 import { DataQueryOptions, DataQuery } from '@grafana/ui';
 import moment from 'moment';
 
-
-export function getQueryOptions<TQuery extends DataQuery>(options: Partial<DataQueryOptions<TQuery>>): DataQueryOptions<TQuery> {
-  const raw = {from: 'now', to: 'now-1h'};
-  const range = { from: moment(), to: moment(), raw: raw};
+export function getQueryOptions<TQuery extends DataQuery>(
+  options: Partial<DataQueryOptions<TQuery>>
+): DataQueryOptions<TQuery> {
+  const raw = { from: 'now', to: 'now-1h' };
+  const range = { from: moment(), to: moment(), raw: raw };
 
   const defaults: DataQueryOptions<TQuery> = {
     range: range,

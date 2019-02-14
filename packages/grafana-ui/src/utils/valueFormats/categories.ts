@@ -306,7 +306,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
       { name: 'miles/hour (mph)', id: 'velocitymph', fn: toFixedUnit('mph') },
       { name: 'knot (kn)', id: 'velocityknot', fn: toFixedUnit('kn') },
-    ]
+    ],
   },
   {
     name: 'Volume',
@@ -318,5 +318,5 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'cubic decimetre', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
     ],
-  }
+  },
 ];

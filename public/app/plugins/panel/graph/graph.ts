@@ -46,7 +46,6 @@ class GraphElement {
   legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
-
     this.ctrl = scope.ctrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;

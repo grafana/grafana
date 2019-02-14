@@ -2,7 +2,6 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-
 // Types
 import { PanelOptionsProps, Switch } from '@grafana/ui';
 import { Options } from './types';

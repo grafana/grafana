@@ -70,7 +70,9 @@ export const getColorDefinitionByName = (name: Color): ColorDefinition => {
 };
 
 export const getColorDefinition = (hex: string, theme: GrafanaThemeType): ColorDefinition | undefined => {
-  return flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.variants[theme] === hex)[0];
+  return flatten(Array.from(getNamedColorPalette().values())).filter(
+    definition => definition.variants[theme] === hex
+  )[0];
 };
 
 const isHex = (color: string) => {
@@ -95,7 +97,9 @@ export const getColorName = (color?: string, theme?: GrafanaThemeType): Color | 
 };
 
 export const getColorByName = (colorName: string) => {
-  const definition = flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.name === colorName);
+  const definition = flatten(Array.from(getNamedColorPalette().values())).filter(
+    definition => definition.name === colorName
+  );
   return definition.length > 0 ? definition[0] : undefined;
 };
 

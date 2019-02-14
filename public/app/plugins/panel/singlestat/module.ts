@@ -624,7 +624,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // Map panel colors to hex or rgb/a values
       data.colorMap = panel.colors.map(color =>
-        getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark)
+        getColorFromHexRgbOrName(
+          color,
+          config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
+        )
       );
 
       const body = panel.gauge.show ? '' : getBigValueHtml();

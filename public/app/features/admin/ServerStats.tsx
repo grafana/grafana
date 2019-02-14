@@ -22,7 +22,7 @@ export class ServerStats extends PureComponent<Props, State> {
 
     this.state = {
       stats: [],
-      isLoading: false
+      isLoading: false,
     };
   }
 

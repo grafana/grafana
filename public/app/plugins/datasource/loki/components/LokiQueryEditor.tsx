@@ -58,7 +58,9 @@ export class LokiQueryEditor extends PureComponent<Props> {
     return (
       <div>
         <div className="gf-form">
-          <div className="gf-form-label">Loki is currently not supported as dashboard data source. We are working on it!</div>
+          <div className="gf-form-label">
+            Loki is currently not supported as dashboard data source. We are working on it!
+          </div>
         </div>
         {/*
         <LokiQueryField

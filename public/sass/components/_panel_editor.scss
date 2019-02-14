@@ -123,7 +123,6 @@
 }
 
 .viz-picker {
-  padding: 0px 20px;
   position: relative;
 }
 
@@ -154,7 +153,6 @@
     box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
-
   }
 
   &--current {
@@ -236,4 +234,3 @@
   position: relative;
   min-width: 200px;
 }
-

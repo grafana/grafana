@@ -202,7 +202,7 @@ export default class ResponseParser {
   parseQuerySchema() {
     const result = {
       Type: 'AppInsights',
-      Tables: {}
+      Tables: {},
     };
     if (this.results && this.results.data && this.results.data.Tables) {
       for (let i = 0; i < this.results.data.Tables[0].Rows.length; i++) {
@@ -215,9 +215,7 @@ export default class ResponseParser {
         } else {
           result.Tables[columnTable] = {
             Name: columnTable,
-            OrderedColumns: [
-              { Name: columnName, Type: columnType }
-            ]
+            OrderedColumns: [{ Name: columnName, Type: columnType }],
           };
         }
       }

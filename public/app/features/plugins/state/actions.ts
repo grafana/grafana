@@ -60,7 +60,8 @@ const pluginDashboardsLoaded = (dashboards: PluginDashboard[]): LoadedPluginDash
   payload: dashboards,
 });
 
-export type Action = LoadPluginsAction
+export type Action =
+  | LoadPluginsAction
   | LoadPluginDashboardsAction
   | LoadedPluginDashboardsAction
   | SetPluginsSearchQueryAction
