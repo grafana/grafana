@@ -146,7 +146,7 @@ Besides these changes we have also introduced [SameSite](https://www.owasp.org/i
 > If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions setup and configured
 but our goal is to remove this requirements in a near future.
 
-We also disable script tags in text panels by defult to avoid Cross-site Scripting (XSS) attacks.
+We also disable script tags in text panels by default to avoid Cross-site Scripting (XSS) attacks.
 
 ## Named Colors
 
