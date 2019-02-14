@@ -3,7 +3,6 @@ package util
 import (
 	"gopkg.in/square/go-jose.v2"
 
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 
@@ -24,12 +23,30 @@ type VerifyConfig struct {
 	ExpectedAudience string
 }
 
-type keyHolder interface {
+type keySource interface {
 	getVerificationKeys(header jose.Header) []interface{}
 }
 
 type JWTDecoder struct {
-	keys keyHolder
+	keys keySource
+}
+
+// Check if the decoder is ready to decode
+func (d *JWTDecoder) IsReady() bool {
+	fmt.Printf("READY? %v", d)
+
+	if d == nil || d.keys == nil {
+		return false
+	}
+
+	h := &jose.Header{
+		// NO KID
+	}
+	if len(d.keys.getVerificationKeys(*h)) < 1 {
+		return false
+	}
+
+	return true
 }
 
 // Decode the claims.  Note: this does not validate!
@@ -103,35 +120,22 @@ func (d *JWTDecoder) Decode(text string) (map[string]interface{}, error) {
 }
 
 //-------------------------------------------------
-// 3 simple flavors
+// 3 simple flavors that hold keys
 //-------------------------------------------------
 
-type keyHolderJSONWebKeySet struct {
+type keySourceJSONWebKeySet struct {
 	keySet *jose.JSONWebKeySet
 }
 
-type keyHolderRSAPublicKeys struct {
-	keys map[string]*rsa.PublicKey
+type keySourceKeySet struct {
+	keys map[string]interface{}
 }
 
-type keyHolderStatic struct {
+type keySourceKeys struct {
 	keys []interface{}
 }
 
-func (d *keyHolderRSAPublicKeys) getVerificationKeys(header jose.Header) []interface{} {
-
-	var keys []interface{}
-	key := d.keys[header.KeyID]
-	if key == nil {
-		if header.KeyID != "" {
-			return nil
-		}
-		// TODO, array of all values?
-	}
-	return append(keys, key)
-}
-
-func (d *keyHolderJSONWebKeySet) getVerificationKeys(header jose.Header) []interface{} {
+func (d *keySourceJSONWebKeySet) getVerificationKeys(header jose.Header) []interface{} {
 	var keys []interface{}
 	for _, key := range d.keySet.Keys {
 		if header.KeyID == "" || key.KeyID == header.KeyID {
@@ -141,7 +145,23 @@ func (d *keyHolderJSONWebKeySet) getVerificationKeys(header jose.Header) []inter
 	return keys
 }
 
-func (d *keyHolderStatic) getVerificationKeys(header jose.Header) []interface{} {
+func (d *keySourceKeySet) getVerificationKeys(header jose.Header) []interface{} {
+
+	var keys []interface{}
+	key := d.keys[header.KeyID]
+	if key == nil {
+		if header.KeyID != "" {
+			return nil
+		}
+		// // Try all the keys
+		// for _, value := range d.keys {
+		//   append(keys, value)
+		// }
+	}
+	return append(keys, key)
+}
+
+func (d *keySourceKeys) getVerificationKeys(header jose.Header) []interface{} {
 	return d.keys
 }
 
@@ -226,7 +246,7 @@ func (d *keyHolderStatic) getVerificationKeys(header jose.Header) []interface{} 
 **/
 
 // The simplest decoder
-func newKeyHolder(source string) (keyHolder, error) {
+func newKeySource(source string) (keySource, error) {
 
 	// Read the bytes
 	bytes, err := getBytesForKeyfunc(source)
@@ -238,7 +258,7 @@ func newKeyHolder(source string) (keyHolder, error) {
 	ks := &jose.JSONWebKeySet{}
 	err = json.Unmarshal(bytes, ks)
 	if err == nil && len(ks.Keys) > 0 {
-		return &keyHolderJSONWebKeySet{
+		return &keySourceJSONWebKeySet{
 			keySet: ks,
 		}, nil
 	}
@@ -247,25 +267,25 @@ func newKeyHolder(source string) (keyHolder, error) {
 	var parsed map[string]interface{}
 	if err := json.Unmarshal(bytes, &parsed); err == nil {
 		// keyID -> Certificate (like firebase)
-		reg := make(map[string]*rsa.PublicKey)
+		reg := make(map[string]interface{})
 		for kid, value := range parsed {
-			key, err := parseRSAPublicKeyFromPEM([]byte(value.(string)))
+			key, err := LoadPublicKey([]byte(value.(string)))
 			if err == nil {
 				reg[kid] = key
 			}
 		}
 		if len(reg) > 0 {
-			return &keyHolderRSAPublicKeys{
+			return &keySourceKeySet{
 				keys: reg,
 			}, nil
 		}
 	}
 
-	// Is this a single certificaiton file
-	key, err := parseRSAPublicKeyFromPEM(bytes)
+	// Is this a single public key file
+	key, err := LoadPublicKey(bytes)
 	if err == nil {
 		var keys []interface{}
-		return &keyHolderStatic{
+		return &keySourceKeys{
 			keys: append(keys, key),
 		}, nil
 	}
@@ -276,15 +296,15 @@ func newKeyHolder(source string) (keyHolder, error) {
 
 // The simplest decoder
 func NewJWTDecoder(source string) (*JWTDecoder, error) {
-	holder, err := newKeyHolder(source)
+	keys, err := newKeySource(source)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO, add somethign to support a refresh
+	// TODO, add somethign to support a refresh/reload
 
 	return &JWTDecoder{
-		keys: holder,
+		keys: keys,
 	}, nil
 }
 
@@ -314,32 +334,83 @@ func getBytesForKeyfunc(cfg string) ([]byte, error) {
 	return []byte(cfg), nil
 }
 
-// https://github.com/dgrijalva/jwt-go/blob/master/rsa_utils.go#L75
-// Parse PEM encoded PKCS1 or PKCS8 public key
-func parseRSAPublicKeyFromPEM(key []byte) (*rsa.PublicKey, error) {
-	var err error
+//------------------------------------------------------------------
+// https://github.com/square/go-jose/blob/v2.2.2/jose-util/utils.go
+// TODO? is there a way to just import this???
+//------------------------------------------------------------------
 
-	// Parse PEM block
-	var block *pem.Block
-	if block, _ = pem.Decode(key); block == nil {
-		return nil, fmt.Errorf("not pem")
+func LoadJSONWebKey(json []byte, pub bool) (*jose.JSONWebKey, error) {
+	var jwk jose.JSONWebKey
+	err := jwk.UnmarshalJSON(json)
+	if err != nil {
+		return nil, err
+	}
+	if !jwk.Valid() {
+		return nil, fmt.Errorf("invalid JWK key")
+	}
+	if jwk.IsPublic() != pub {
+		return nil, fmt.Errorf("priv/pub JWK key mismatch")
+	}
+	return &jwk, nil
+}
+
+// LoadPublicKey loads a public key from PEM/DER/JWK-encoded data.
+func LoadPublicKey(data []byte) (interface{}, error) {
+	input := data
+
+	block, _ := pem.Decode(data)
+	if block != nil {
+		input = block.Bytes
 	}
 
-	// Parse the key
-	var parsedKey interface{}
-	if parsedKey, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
-		if cert, err := x509.ParseCertificate(block.Bytes); err == nil {
-			parsedKey = cert.PublicKey
-		} else {
-			return nil, err
-		}
+	// Try to load SubjectPublicKeyInfo
+	pub, err0 := x509.ParsePKIXPublicKey(input)
+	if err0 == nil {
+		return pub, nil
 	}
 
-	var pkey *rsa.PublicKey
-	var ok bool
-	if pkey, ok = parsedKey.(*rsa.PublicKey); !ok {
-		return nil, fmt.Errorf("NotRSAPublicKey")
+	cert, err1 := x509.ParseCertificate(input)
+	if err1 == nil {
+		return cert.PublicKey, nil
 	}
 
-	return pkey, nil
+	jwk, err2 := LoadJSONWebKey(data, true)
+	if err2 == nil {
+		return jwk, nil
+	}
+
+	return nil, fmt.Errorf("square/go-jose: parse error, got '%s', '%s' and '%s'", err0, err1, err2)
+}
+
+// LoadPrivateKey loads a private key from PEM/DER/JWK-encoded data.
+func LoadPrivateKey(data []byte) (interface{}, error) {
+	input := data
+
+	block, _ := pem.Decode(data)
+	if block != nil {
+		input = block.Bytes
+	}
+
+	var priv interface{}
+	priv, err0 := x509.ParsePKCS1PrivateKey(input)
+	if err0 == nil {
+		return priv, nil
+	}
+
+	priv, err1 := x509.ParsePKCS8PrivateKey(input)
+	if err1 == nil {
+		return priv, nil
+	}
+
+	priv, err2 := x509.ParseECPrivateKey(input)
+	if err2 == nil {
+		return priv, nil
+	}
+
+	jwk, err3 := LoadJSONWebKey(input, false)
+	if err3 == nil {
+		return jwk, nil
+	}
+
+	return nil, fmt.Errorf("square/go-jose: parse error, got '%s', '%s', '%s' and '%s'", err0, err1, err2, err3)
 }

@@ -9,10 +9,9 @@ import (
 )
 
 func TestJWTUtils(t *testing.T) {
-
 	pwd, err := os.Getwd()
 	if err != nil {
-		fmt.Printf("ERROR getting CWD: %v", err)
+		t.Fatal("Unable to get working directory", err)
 	}
 
 	Convey("Test reading google JWK", t, func() {
