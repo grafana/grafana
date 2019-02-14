@@ -53,12 +53,12 @@ go test -v ./pkg/...
 
 * Add tests relevant to the fixed bug or new feature.
 
-### New features
+### Pull requests with new features
 Commits should be as small as possible, while ensuring that each commit is correct independently (i.e., each commit should compile and pass tests).
 
 Make sure to include `closes #<issue>` or `fixes #<issue>` in the pull request description. 
 
-### Bug fixes
+### Pull requests with bug fixes
 Please make all changes in one commit if possible. Include `closes #12345` in bottom of the commit message.
 A commit message for a bug fix should look something like this.
 
