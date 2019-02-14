@@ -131,14 +131,17 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				break
 			}
 		}
-		// get the oldest point
-		points = points[0:i]
-		for i := 0; i < len(points); i++ {
-			if points[i][0].Valid {
-				allNull = false
-				val := (first - points[i][0].Float64) / points[i][0].Float64 * 100
-				value = math.Abs(val)
-				break
+
+		if i >= 1 {
+			// get the oldest point
+			points = points[0:i]
+			for i := 0; i < len(points); i++ {
+				if points[i][0].Valid {
+					allNull = false
+					val := (first - points[i][0].Float64) / points[i][0].Float64 * 100
+					value = math.Abs(val)
+					break
+				}
 			}
 		}
 	case "count_non_null":
