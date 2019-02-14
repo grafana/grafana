@@ -10,7 +10,7 @@ Contributions take the form of pull requests that will be reviewed by the core t
 
 * If you plan to do something more involved, discuss your idea on the respective [issue](https://github.com/grafana/grafana/issues) or create a [new issue](https://github.com/grafana/grafana/issues/new) if it does not exist. This will avoid unnecessary work and surely give you and us a good deal of inspiration.
 
-* Sign our [CLA](http://docs.grafana.org/contribute/cla/). 
+* Sign our [CLA](http://docs.grafana.org/contribute/cla/).
 
 * For changes in the backend, follow the style guides used in Go [Code Review Comments](https://code.google.com/p/go-wiki/wiki/CodeReviewComments) and Peter Bourgon's [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style)
 
@@ -34,7 +34,7 @@ To setup a local development environment we recommend reading [Building Grafana 
 ### Pull requests with new features
 Commits should be as small as possible, while ensuring that each commit is correct independently (i.e., each commit should compile and pass tests).
 
-Make sure to include `closes #<issue>` or `fixes #<issue>` in the pull request description. 
+Make sure to include `closes #<issue>` or `fixes #<issue>` in the pull request description.
 
 ### Pull requests with bug fixes
 Please make all changes in one commit if possible. Include `closes #12345` in bottom of the commit message.
@@ -51,4 +51,4 @@ default settings.
 closes #12864
 ```
 
-If the pull request needs changes before its merged the new commits should be rebased into one commit before its merged. 
+If the pull request needs changes before its merged the new commits should be rebased into one commit before its merged.
