@@ -17,34 +17,6 @@ Should you wish to work on a GitHub issue, check first if it is not already assi
 
 Please check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) label to find issues that are good for getting started. If you have questions about one of the issues, with or without the tag, please comment on them and one of the core team or the original poster will clarify it.
 
-
-
-## Setup
-
-Follow the setup guide in README.md
-
-### Rebuild frontend assets on source change
-```
-yarn watch
-```
-
-### Rerun tests on source change
-```
-yarn jest
-```
-
-### Run tests for backend assets before commit
-```
-test -z "$(gofmt -s -l . | grep -v -E 'vendor/(github.com|golang.org|gopkg.in)' | tee /dev/stderr)"
-```
-
-### Run tests for frontend assets before commit
-```
-yarn test
-go test -v ./pkg/...
-```
-
-
 ## Pull Request Checklist
 
 * Branch from the master branch and, if needed, rebase to the current master branch before submitting your pull request. If it doesn't merge cleanly with master you may be asked to rebase your changes.
