@@ -1,8 +1,7 @@
-/** @jsx jsx */
-import { jsx, css } from '@emotion/core';
+import {  css } from 'emotion';
 import styled from '@emotion/styled';
 
-import { SyntheticEvent, PureComponent } from 'react';
+import React, { SyntheticEvent, PureComponent } from 'react';
 
 interface Props {
   onConfirm(): void;
@@ -50,6 +49,7 @@ export class DeleteButton extends PureComponent<Props, State> {
         direction: rtl;
         display: flex;
         align-items: center;
+        box-shadow: 10px 10px 10px white;
       `,
       deleteButton: css`
         position: absolute;
@@ -82,13 +82,9 @@ export class DeleteButton extends PureComponent<Props, State> {
     const styles = this.getStyles();
 
     return (
-      <span css={styles.container}>
+      <div className={styles.container}>
         <a
-          css={css`
-            ${styles.deleteButton};
-            ${!this.state.showConfirm ? styles.deleteButtonVisible : ''};
-          `}
-          className="btn btn-danger btn-small"
+          // className={styles.coynfirmDelete}
           onClick={this.onClickDelete}
           data-test-id="deleteButton"
         >
@@ -111,7 +107,7 @@ export class DeleteButton extends PureComponent<Props, State> {
           </span>
         </ConfirmDeleteContainer>
 
-      </span>
+      </div>
     );
   }
 }

@@ -57,7 +57,6 @@ module.exports = merge(common, {
                 [require('@rtsao/plugin-proposal-class-properties'), { loose: true }],
                 'angularjs-annotate',
                 'syntax-dynamic-import', // needed for `() => import()` in routes.ts
-                'babel-plugin-emotion',
                 'react-hot-loader/babel',
               ],
               presets: [
