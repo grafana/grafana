@@ -5,9 +5,7 @@ export interface Props {
 }
 
 const EmptySearchResult: FC<Props> = ({ children }) => {
-  return (
-    <div className="empty-search-result">{children}</div>
-  );
+  return <div className="empty-search-result">{children}</div>;
 };
 
 export { EmptySearchResult };
