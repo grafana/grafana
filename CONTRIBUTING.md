@@ -56,11 +56,13 @@ go test -v ./pkg/...
 ### New features
 Commits should be as small as possible, while ensuring that each commit is correct independently (i.e., each commit should compile and pass tests).
 
+Make sure to include `closes #<issue>` or `fixes #<issue>` in the pull request description. 
+
 ### Bug fixes
 Please make all changes in one commit if possible. Include `closes #12345` in bottom of the commit message.
-A commit message for a bugfix should look something like this.
+A commit message for a bug fix should look something like this.
 
-```git
+```
 avoid infinite loop in the dashboard provisioner
 
 if one dashboard with an uid is refered to by two
@@ -71,4 +73,4 @@ default settings.
 closes #12864
 ```
 
-
+If the pull request needs changes before its merged the new commits should be rebased into one commit before its merged. 
