@@ -147,4 +147,4 @@ login_maximum_inactive_lifetime_days = 1
 login_maximum_lifetime_days = 1
 ```
 
-The default cookie name for storing the auth token is `grafana_sess`. you can configure this with `login_cookie_name` in `[auth]` settings.
+The default cookie name for storing the auth token is `grafana_session`. you can configure this with `login_cookie_name` in `[auth]` settings.

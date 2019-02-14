@@ -27,7 +27,7 @@ The main highlights are:
 - [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
-- [Removal of user session storage]({{< relref "#easier-to-deploy-more-secure" >}}) makes Grafana easier to deploy & more secure.
+- [Removal of user session storage]({{< relref "#easier-to-deploy-improved security" >}}) makes Grafana easier to deploy & improved security.
 
 ## Explore
 
@@ -130,7 +130,7 @@ The Azure Monitor datasource integrates four Azure services with Grafana - Azure
 
 Grafana now added support for provisioning alert notifiers from configuration files. Allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. Same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers that exists in the instance.
 
-## Easier to deploy & more secure authentication
+## Easier to deploy & improved security
 
 Grafana 6.0 removes the need of configuring and setup of additional storage for [user sessions](/tutorials/ha_setup/#user-sessions). This should make it easier to deploy and operate Grafana in a
 high availability setup and/or if you're using a stateless user session storage like Redis, Memcache, Postgres or MySQL.
@@ -141,10 +141,12 @@ Read more about the short-lived token solution and how to configure it [here](/a
 
 > Please note that due to these changes, all users will be required to login upon next visit after upgrade.
 
-Besides these changes we have also introduced [SameSite](https://www.owasp.org/index.php/SameSite) setting to protect against Cross-Site Request Forgery (CSRF) and Cross-site Scripting (XSS) attacks. This setting enables more control of when the browser include cookies in requests. Its set to `lax` by default but can be configured using `cookie_samesite` under `[security]`
+Besides these changes we have also introduced [SameSite](https://www.owasp.org/index.php/SameSite) setting to protect against Cross-Site Request Forgery (CSRF). This setting enables more control of when the browser include cookies in requests. Its set to `lax` by default but can be configured using `cookie_samesite` under `[security]`
 
 > If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions setup and configured
 but our goal is to remove this requirements in a near future.
+
+We also disable script tags in text panels by defult to avoid Cross-site Scripting (XSS) attacks.
 
 ## Named Colors
 
