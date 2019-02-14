@@ -140,8 +140,8 @@ export class PanelChrome extends PureComponent<Props, State> {
           panelData={panelData}
           timeRange={timeRange}
           options={panel.getOptions(plugin.exports.PanelDefaults)}
-          width={width - 2 * variables.panelHorizontalPadding}
-          height={height - PANEL_HEADER_HEIGHT - variables.panelVerticalPadding}
+          width={width - 2 * variables.panelhorizontalpadding}
+          height={height - PANEL_HEADER_HEIGHT - variables.panelverticalpadding}
           renderCounter={renderCounter}
           onInterpolate={this.onInterpolate}
         />
