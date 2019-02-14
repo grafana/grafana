@@ -4,7 +4,10 @@ import (
 	"gopkg.in/square/go-jose.v2"
 
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
+
+	"sync"
 
 	"bytes"
 	"encoding/json"
@@ -12,63 +15,157 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 )
 
-type VerifyConfig struct {
-	// "iss" claim
-	ExpectedIssuer string
-	// "sub" claim
-	ExpectedSubject string
-	// "aud" claim
-	ExpectedAudience string
+//------------------------------------------------------------------
+// Error Handling
+//------------------------------------------------------------------
+
+type JWTErrorCode uint8
+
+const (
+	JWT_ERROR_UnableToRead  JWTErrorCode = 1
+	JWT_ERROR_Unsupported   JWTErrorCode = 2
+	JWT_ERROR_UnknownKey    JWTErrorCode = 3
+	JWT_ERROR_DecryptFailed JWTErrorCode = 4
+	JWT_ERROR_Expired       JWTErrorCode = 5
+	JWT_ERROR_Unexpected    JWTErrorCode = 6
+)
+
+type JWTError struct {
+	msg  string
+	Code JWTErrorCode
 }
+
+func (e *JWTError) Error() string {
+	return e.msg
+}
+
+func newJWTError(code JWTErrorCode, format string, args ...interface{}) *JWTError {
+	return &JWTError{
+		Code: code,
+		msg:  fmt.Sprintf(format, args...),
+	}
+}
+
+//------------------------------------------------------------------
+// Key source - get a key for a given header
+//------------------------------------------------------------------
 
 type keySource interface {
 	getVerificationKeys(header jose.Header) []interface{}
 }
 
+//------------------------------------------------------------------
+// Key source - get a key for a given header
+//------------------------------------------------------------------
+
 type JWTDecoder struct {
+	// Path to Public Keys
+	source string
+
+	// Reload the public keys after this time
+	TTL time.Duration
+
+	// When the keys were loaded
+	loaded time.Time
+
+	// Used for key reload
+	mutex *sync.Mutex
+
+	// Public Key holder
 	keys keySource
+
+	// Verify tokens have these claims
+	ExpectClaims map[string]interface{}
+
+	// Used for testing
+	Now func() time.Time
+}
+
+func NewJWTDecoder(source string) *JWTDecoder {
+	return &JWTDecoder{
+		source: source,
+		mutex:  &sync.Mutex{},
+		Now:    time.Now,
+		loaded: time.Now(),
+	}
 }
 
 // Check if the decoder is ready to decode
-func (d *JWTDecoder) IsReady() bool {
-	fmt.Printf("READY? %v", d)
-
-	if d == nil || d.keys == nil {
+func (d *JWTDecoder) CheckReady() bool {
+	if d == nil {
 		return false
 	}
 
-	h := &jose.Header{
-		// NO KID
-	}
-	if len(d.keys.getVerificationKeys(*h)) < 1 {
-		return false
+	// Make sure the keys have been loaded
+	if d.keys == nil {
+		if d.source == "" {
+			return false
+		}
+		keys, err := newKeySource(d.source)
+		if err == nil {
+			d.keys = keys
+			d.loaded = d.Now()
+		} else {
+			return false
+		}
 	}
 
-	return true
+	// Make sure there are some keys
+	h := &jose.Header{}
+	return len(d.keys.getVerificationKeys(*h)) > 0
 }
 
-// Decode the claims.  Note: this does not validate!
-func (d *JWTDecoder) Decode(text string) (map[string]interface{}, error) {
+func getTimeFromClaim(val interface{}) time.Time {
+	unix, ok := val.(int64)
+	if !ok {
+		unix = int64(val.(float64))
+	}
+	return time.Unix(unix, 0)
+}
+
+// Read the claims and validate
+func (d *JWTDecoder) Decode(text string) (map[string]interface{}, *JWTError) {
 	object, err := jose.ParseSigned(text)
 	if err != nil {
-		return nil, err
+		return nil, newJWTError(JWT_ERROR_UnableToRead, "Could not parse")
 	}
 
 	if len(object.Signatures) != 1 {
-		return nil, fmt.Errorf("Only single signatures are supported")
+		return nil, newJWTError(JWT_ERROR_Unsupported,
+			"Only single signatures are supported")
 	}
 
+	// Check if we should reload the public keys
+	now := d.Now()
+	if d.TTL > 0 {
+		d.mutex.Lock()
+		if now.After(d.loaded.Add(d.TTL)) {
+			keys, err := newKeySource(d.source)
+			if err == nil {
+				d.keys = keys
+				d.loaded = d.Now()
+			} else {
+				// Try again in 30 seconds
+				d.loaded = now.Add(d.TTL).Add(time.Duration(-30) * time.Second)
+			}
+		}
+		d.mutex.Unlock()
+	}
+
+	// Validate the signature
 	signature := object.Signatures[0]
 
 	// algo := jose.SignatureAlgorithm(signature.Header.Algorithm)
 
 	keys := d.keys.getVerificationKeys(signature.Header)
 	if len(keys) == 0 {
-		return nil, fmt.Errorf("no matching keys")
+		return nil, newJWTError(JWT_ERROR_UnknownKey, "Key Not Found")
 	}
 
+	// Find the first payload that has a valid signature
 	var payload []byte
 	for _, key := range keys {
 		payload, err = object.Verify(key)
@@ -79,48 +176,42 @@ func (d *JWTDecoder) Decode(text string) (map[string]interface{}, error) {
 	}
 
 	if payload == nil {
-		return nil, fmt.Errorf("no matching key")
+		return nil, newJWTError(JWT_ERROR_DecryptFailed, "")
 	}
 
+	// Map th evalues to a claim
 	claims := make(map[string]interface{})
 	err = json.Unmarshal(payload, &claims)
 	if err != nil || len(claims) < 1 {
-		return claims, fmt.Errorf("Unable to parse claims from JWT")
+		return nil, newJWTError(JWT_ERROR_UnableToRead, "Missing Claims")
 	}
 
-	// expires := time.Time(idt.Expiry)
-	// if now.After(expires) {
-	//   return nil, &VerifyErr{
-	//     msg:    fmt.Sprintf("xjwt: JWT expired: now:'%s' is after jwt:'%s'", now.String(), expires.String()),
-	//     reason: JWT_EXPIRED,
-	//   }
-	// }
+	// Check expiration
+	if val, ok := claims["exp"]; ok {
+		if now.After(getTimeFromClaim(val)) {
+			return claims, newJWTError(JWT_ERROR_Expired, "Expired")
+		}
+	}
 
-	// maxExpires := vc.MaxExpirationFromNow
-	// if maxExpires == 0 {
-	//   maxExpires = defaultMaxExpirationFromNow
-	// }
+	// Not Before
+	if val, ok := claims["nbf"]; ok {
+		if now.Before(getTimeFromClaim(val)) {
+			return claims, newJWTError(JWT_ERROR_Expired, "Before Now")
+		}
+	}
 
-	// if expires.After(now.Add(maxExpires)) {
-	//   return nil, &VerifyErr{
-	//     msg:    fmt.Sprintf("xjwt: JWT has invalid expiration: jwt:'%s' is too far in the future (max:'%s')", expires.String(), now.Add(maxExpires).String()),
-	//     reason: JWT_EXPIRED,
-	//   }
-	// }
-
-	// nbf := time.Time(idt.NotBefore)
-	// if now.Before(nbf) {
-	//   return nil, &VerifyErr{
-	//     msg:    fmt.Sprintf("xjwt: JWT nbf is before now: jwt:'%s' now:'%s'", nbf.String(), now.String()),
-	//     reason: JWT_EXPIRED,
-	//   }
-	// }
-
+	if d.ExpectClaims != nil {
+		for k, v := range d.ExpectClaims {
+			if v != claims[k] {
+				return claims, newJWTError(JWT_ERROR_Unexpected, "Mismatch: "+k)
+			}
+		}
+	}
 	return claims, nil
 }
 
 //-------------------------------------------------
-// 3 simple flavors that hold keys
+// 3 flavors that hold keys
 //-------------------------------------------------
 
 type keySourceJSONWebKeySet struct {
@@ -165,91 +256,11 @@ func (d *keySourceKeys) getVerificationKeys(header jose.Header) []interface{} {
 	return d.keys
 }
 
-/***
-
-  claims := &idToken{}
-  err = json.Unmarshal(payload, idt)
-  if err != nil {
-    return nil, &VerifyErr{
-      msg:    fmt.Sprintf("xjwt: payload did not contain JSON: %v", err.Error()),
-      reason: JWT_MALFORMED,
-    }
-  }
-
-  if vc.ExpectedIssuer != "" {
-    if vc.ExpectedIssuer != idt.Issuer {
-      return nil, &VerifyErr{
-        msg:    fmt.Sprintf("xjwt: Issuer mismatch. '%s' != '%s'", vc.ExpectedIssuer, idt.Issuer),
-        reason: JWT_EXPECT_MISMATCH,
-      }
-    }
-  }
-
-  if vc.ExpectedSubject != "" {
-    if vc.ExpectedSubject != idt.Subject {
-      return nil, &VerifyErr{
-        msg:    fmt.Sprintf("xjwt: Subject mismatch. '%s' != '%s'", vc.ExpectedSubject, idt.Subject),
-        reason: JWT_EXPECT_MISMATCH,
-      }
-    }
-  }
-
-  if vc.ExpectedNonce != "" {
-    if vc.ExpectedNonce != idt.Nonce {
-      return nil, &VerifyErr{
-        msg:    fmt.Sprintf("xjwt: Nonce mismatch. '%s' != '%s'", vc.ExpectedNonce, idt.Nonce),
-        reason: JWT_EXPECT_MISMATCH,
-      }
-    }
-  }
-
-  if vc.ExpectedAudience != "" {
-    if len(idt.Audience) == 0 || !idt.Audience.contains(vc.ExpectedAudience) {
-      return nil, &VerifyErr{
-        msg:    fmt.Sprintf("xjwt: Audience mismatch. '%s' not in %v", vc.ExpectedAudience, idt.Audience),
-        reason: JWT_EXPECT_MISMATCH,
-      }
-    }
-  }
-
-  expires := time.Time(idt.Expiry)
-  if now.After(expires) {
-    return nil, &VerifyErr{
-      msg:    fmt.Sprintf("xjwt: JWT expired: now:'%s' is after jwt:'%s'", now.String(), expires.String()),
-      reason: JWT_EXPIRED,
-    }
-  }
-
-  maxExpires := vc.MaxExpirationFromNow
-  if maxExpires == 0 {
-    maxExpires = defaultMaxExpirationFromNow
-  }
-
-  if expires.After(now.Add(maxExpires)) {
-    return nil, &VerifyErr{
-      msg:    fmt.Sprintf("xjwt: JWT has invalid expiration: jwt:'%s' is too far in the future (max:'%s')", expires.String(), now.Add(maxExpires).String()),
-      reason: JWT_EXPIRED,
-    }
-  }
-
-  nbf := time.Time(idt.NotBefore)
-  if now.Before(nbf) {
-    return nil, &VerifyErr{
-      msg:    fmt.Sprintf("xjwt: JWT nbf is before now: jwt:'%s' now:'%s'", nbf.String(), now.String()),
-      reason: JWT_EXPIRED,
-    }
-  }
-
-
-  return nil,nil
-}
-**/
-
 // The simplest decoder
 func newKeySource(source string) (keySource, error) {
 
 	// Read the bytes
-	bytes, err := getBytesForKeyfunc(source)
+	bytes, err := getBytesForSource(source)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading JWT Source: %v", err)
 	}
@@ -290,29 +301,14 @@ func newKeySource(source string) (keySource, error) {
 		}, nil
 	}
 
-	// TODO, base64 encoded bytes?
 	return nil, fmt.Errorf("Unable to parse jwt keys")
 }
 
-// The simplest decoder
-func NewJWTDecoder(source string) (*JWTDecoder, error) {
-	keys, err := newKeySource(source)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO, add somethign to support a refresh/reload
-
-	return &JWTDecoder{
-		keys: keys,
-	}, nil
-}
-
 // Read bytes from a URL, File, or directly from the string
-func getBytesForKeyfunc(cfg string) ([]byte, error) {
+func getBytesForSource(source string) ([]byte, error) {
 	// Check if it points to a URL
-	if strings.HasPrefix(cfg, "http") {
-		resp, err := http.Get(cfg)
+	if strings.HasPrefix(source, "http") {
+		resp, err := http.Get(source)
 		if err != nil {
 			return nil, err
 		}
@@ -325,13 +321,19 @@ func getBytesForKeyfunc(cfg string) ([]byte, error) {
 	}
 
 	// Try to read it as a file
-	data, err := ioutil.ReadFile(cfg)
+	data, err := ioutil.ReadFile(source)
 	if err == nil {
 		return data, nil
 	}
 
+	// To to base64 encode it
+	data, err = base64.StdEncoding.DecodeString(source)
+	if err != nil {
+		return data, nil
+	}
+
 	// Otherwise use the string bytes directly
-	return []byte(cfg), nil
+	return []byte(source), nil
 }
 
 //------------------------------------------------------------------

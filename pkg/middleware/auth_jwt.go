@@ -66,18 +66,17 @@ var decoder *util.JWTDecoder
 func InitAuthJwtKey() error {
 	logger.Info("Initializing JWT Auth")
 
-	var err error
-	decoder, err = util.NewJWTDecoder(setting.AuthJwtSigningKey)
-	if err != nil {
+	decoder = util.NewJWTDecoder(setting.AuthJwtSigningKey)
+	// TODO, add other settings
+
+	if !decoder.CheckReady() {
+		err := fmt.Errorf("JWT Keys did not initialize")
 		fmt.Printf("ERROR InitAuthJwtKey: %v\n", err)
-		logger.Error("Error Initializing Key: %v\n", err)
 		return err
 	}
 
-	fmt.Printf("INIT InitAuthJwtKey: %v\n", decoder)
-
 	if setting.AuthJwtLoginClaim == "" && setting.AuthJwtEmailClaim == "" {
-		err = fmt.Errorf("JWT Auth must have either a login or email claim configured")
+		err := fmt.Errorf("JWT Auth must have either a login or email claim configured")
 		logger.Error("Error", err)
 		return err
 	}
