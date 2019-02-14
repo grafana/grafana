@@ -178,6 +178,7 @@
     "moment": "^2.22.2",
     "mousetrap": "^1.6.0",
     "mousetrap-global-bind": "^1.1.0",
+    "nodemon": "^1.18.10",
     "prismjs": "^1.6.0",
     "prop-types": "^15.6.2",
     "rc-cascader": "^0.14.0",
