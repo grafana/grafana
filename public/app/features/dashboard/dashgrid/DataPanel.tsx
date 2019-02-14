@@ -9,6 +9,7 @@ import kbn from 'app/core/utils/kbn';
 import {
   DataQueryOptions,
   DataQueryResponse,
+  DataQueryError,
   LoadingState,
   PanelData,
   TableData,
@@ -34,7 +35,7 @@ export interface Props {
   maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data: DataQueryResponse) => void;
-  onError: (errorMessage: string) => void;
+  onError: (message: string, error: DataQueryError) => void;
 }
 
 export interface State {
@@ -146,11 +147,20 @@ export class DataPanel extends Component<Props, State> {
         isFirstLoad: false,
       });
     } catch (err) {
-      console.log('Loading error', err);
+      console.log('DataPanel error', err);
+
+      let message = 'Query error';
+
+      if (err.message) {
+        message = err.message;
+      } else if (err.data && err.data.message) {
+        message = err.data.message;
+      } else if (err.data && err.data.error) {
+        message = err.data.error;
+      }
+
+      onError(message, err);
       this.setState({ isFirstLoad: false });
-      onError(`Query error
-      status: ${err.status}
-      message: ${err.statusText}`);
     }
   };
 

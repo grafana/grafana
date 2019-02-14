@@ -18,7 +18,7 @@ import { profiler } from 'app/core/profiler';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { DataQueryResponse, TimeRange, LoadingState, PanelData } from '@grafana/ui';
+import { DataQueryResponse, TimeRange, LoadingState, PanelData, DataQueryError } from '@grafana/ui';
 
 import variables from 'sass/_variables.scss';
 import templateSrv from 'app/features/templating/template_srv';
@@ -36,8 +36,7 @@ export interface State {
   renderCounter: number;
   timeInfo?: string;
   timeRange?: TimeRange;
-  loading: LoadingState;
-  errorMessage: string;
+  errorMessage: string | null;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -49,8 +48,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.state = {
       refreshCounter: 0,
       renderCounter: 0,
-      loading: LoadingState.NotStarted,
-      errorMessage: '',
+      errorMessage: null,
     };
   }
 
@@ -94,7 +92,32 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (this.props.dashboard.isSnapshot()) {
       this.props.panel.snapshotData = dataQueryResponse.data;
     }
+    // clear error state (if any)
+    this.clearErrorState();
+
+    // This event is used by old query editors and panel editor options
+    this.props.panel.events.emit('data-received', dataQueryResponse.data);
   };
+
+  onDataError = (message: string, error: DataQueryError) => {
+    if (this.state.errorMessage !== message) {
+      this.setState({ errorMessage: message });
+    }
+    // this event is used by old query editors
+    this.props.panel.events.emit('data-error', error);
+  };
+
+  onPanelError = (message: string) => {
+    if (this.state.errorMessage !== message) {
+      this.setState({ errorMessage: message });
+    }
+  };
+
+  clearErrorState() {
+    if (this.state.errorMessage) {
+      this.setState({ errorMessage: null });
+    }
+  }
 
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
@@ -112,15 +135,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   get getDataForPanel() {
     return this.hasPanelSnapshot ? snapshotDataToPanelData(this.props.panel) : null;
   }
-
-  onError = (errorMessage: string) => {
-    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
-      this.setState({
-        loading: LoadingState.Error,
-        errorMessage: errorMessage,
-      });
-    }
-  };
 
   renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
@@ -165,7 +179,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             widthPixels={width}
             refreshCounter={refreshCounter}
             onDataResponse={this.onDataResponse}
-            onError={this.onError}
+            onError={this.onDataError}
           >
             {({ loading, panelData }) => {
               return this.renderPanelPlugin(loading, panelData, width, height);
@@ -206,7 +220,7 @@ export class PanelChrome extends PureComponent<Props, State> {
               <ErrorBoundary>
                 {({ error, errorInfo }) => {
                   if (errorInfo) {
-                    this.onError(error.message || DEFAULT_PLUGIN_ERROR);
+                    this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
                     return null;
                   }
                   return this.renderPanelBody(width, height);

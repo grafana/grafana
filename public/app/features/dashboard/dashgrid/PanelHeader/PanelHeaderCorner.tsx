@@ -6,7 +6,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-enum InfoModes {
+enum InfoMode {
   Error = 'Error',
   Info = 'Info',
   Links = 'Links',
@@ -27,13 +27,13 @@ export class PanelHeaderCorner extends Component<Props> {
   getInfoMode = () => {
     const { panel, error } = this.props;
     if (error) {
-      return InfoModes.Error;
+      return InfoMode.Error;
     }
     if (!!panel.description) {
-      return InfoModes.Info;
+      return InfoMode.Info;
     }
     if (panel.links && panel.links.length) {
-      return InfoModes.Links;
+      return InfoMode.Links;
     }
 
     return undefined;
@@ -68,9 +68,10 @@ export class PanelHeaderCorner extends Component<Props> {
     );
   };
 
-  renderCornerType(infoMode: InfoModes, content: string | JSX.Element) {
+  renderCornerType(infoMode: InfoMode, content: string | JSX.Element) {
+    const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
-      <Tooltip content={content} placement="bottom-start">
+      <Tooltip content={content} placement="bottom-start" theme={theme}>
         <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}>
           <i className="fa" />
           <span className="panel-info-corner-inner" />
@@ -80,17 +81,17 @@ export class PanelHeaderCorner extends Component<Props> {
   }
 
   render() {
-    const infoMode: InfoModes | undefined = this.getInfoMode();
+    const infoMode: InfoMode | undefined = this.getInfoMode();
 
     if (!infoMode) {
       return null;
     }
 
-    if (infoMode === InfoModes.Error) {
+    if (infoMode === InfoMode.Error) {
       return this.renderCornerType(infoMode, this.props.error);
     }
 
-    if (infoMode === InfoModes.Info) {
+    if (infoMode === InfoMode.Info) {
       return this.renderCornerType(infoMode, this.getInfoContent());
     }
 
