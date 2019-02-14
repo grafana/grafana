@@ -175,7 +175,7 @@ $btn-link-color: $gray-3;
 $iconContainerBackground: $black;
 
 $btn-divider-left: $dark-4;
-$btn-divider-right: $dark-2;
+$btn-divider-right: $dark-1-5;
 
 $btn-drag-image: '../img/grab_dark.svg';
 
@@ -188,7 +188,7 @@ $input-color: $gray-4;
 $input-border-color: $dark-3;
 $input-box-shadow: inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-3 !default;
-$input-box-shadow-focus: rgba(102, 175, 233, 0.6) !default;
+$input-box-shadow-focus: $sapphire-light !default;
 $input-color-placeholder: $gray-1 !default;
 $input-label-bg: $dark-3;
 $input-label-border-color: $dark-3;
@@ -268,7 +268,7 @@ $alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
 $alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
 
 // popover
-$popover-bg: $page-bg;
+$popover-bg: $dark-1-5;
 $popover-color: $text-color;
 $popover-border-color: $dark-4;
 $popover-shadow: 0 0 20px black;
@@ -379,7 +379,7 @@ $logs-color-unkown: $gray-2;
 // toggle-group
 $button-toggle-group-btn-active-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $black;
-$button-toggle-group-btn-seperator-border: 1px solid $page-bg;
+$button-toggle-group-btn-seperator-border: 1px solid $dark-1-5;
 
 $vertical-resize-handle-bg: $dark-5;
 $vertical-resize-handle-dots: $gray-1;
