@@ -124,7 +124,7 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 		}
 	}
 
-	// kil backend plugins
+	// kill backend plugins
 	for _, p := range DataSources {
 		p.Kill()
 	}

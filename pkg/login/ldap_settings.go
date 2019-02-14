@@ -1,6 +1,7 @@
 package login
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -55,9 +56,9 @@ type LdapGroupToOrgRole struct {
 var LdapCfg LdapConfig
 var ldapLogger log.Logger = log.New("ldap")
 
-func loadLdapConfig() {
+func LoadLdapConfig(exitOnError bool) error {
 	if !setting.LdapEnabled {
-		return
+		return nil
 	}
 
 	ldapLogger.Info("Ldap enabled, reading config file", "file", setting.LdapConfigFile)
@@ -65,12 +66,18 @@ func loadLdapConfig() {
 	_, err := toml.DecodeFile(setting.LdapConfigFile, &LdapCfg)
 	if err != nil {
 		ldapLogger.Crit("Failed to load ldap config file", "error", err)
-		os.Exit(1)
+		if exitOnError {
+			os.Exit(1)
+		}
+		return errors.New("Failed to load ldap config file due to " + err.Error())
 	}
 
 	if len(LdapCfg.Servers) == 0 {
 		ldapLogger.Crit("ldap enabled but no ldap servers defined in config file")
-		os.Exit(1)
+		if exitOnError {
+			os.Exit(1)
+		}
+		return errors.New("ldap enabled but no ldap servers defined in config file")
 	}
 
 	// set default org id
@@ -84,6 +91,8 @@ func loadLdapConfig() {
 			}
 		}
 	}
+
+	return nil
 }
 
 func assertNotEmptyCfg(val interface{}, propName string) {

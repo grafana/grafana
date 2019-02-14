@@ -249,6 +249,11 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
 
+		// Reload Grafana components
+		apiRoute.Group("/reload", func(reloadRoute routing.RouteRegister) {
+			reloadRoute.Post("/ldapcfg", Wrap(ReloadLdapCfg))
+		}, reqGrafanaAdmin)
+
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))

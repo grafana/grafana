@@ -21,7 +21,7 @@ var (
 
 func Init() {
 	bus.AddHandler("auth", AuthenticateUser)
-	loadLdapConfig()
+	LoadLdapConfig(true)
 }
 
 func AuthenticateUser(query *m.LoginUserQuery) error {
