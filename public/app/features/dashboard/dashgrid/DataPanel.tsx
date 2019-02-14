@@ -50,7 +50,6 @@ export interface State {
 export class DataPanel extends Component<Props, State> {
   static defaultProps = {
     isInView: true,
-    panelId: 1,
     dashboardId: 1,
   };
 
