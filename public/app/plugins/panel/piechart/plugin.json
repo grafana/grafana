@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "PieChart",
+  "id": "piechart",
+
+  "dataFormats": ["time_series"],
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/piechart_logo_small.svg",
+      "large": "img/piechart_logo_large.svg"
+    }
+  }
+}
