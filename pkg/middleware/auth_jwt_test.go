@@ -114,7 +114,7 @@ func TestAuthJWT(t *testing.T) {
 
 		// Check Firebase Support
 		Convey("Should fail to parse invalid key sets", func() {
-			setting.AuthJwtSigningKey = "NOT A KEY"
+			setting.AuthJwtVerification = "NOT A KEY"
 			InitAuthJwtKey()
 			So(decoder.CheckReady(), ShouldBeFalse)
 		})
@@ -122,8 +122,9 @@ func TestAuthJWT(t *testing.T) {
 		// Check Firebase Support
 		Convey("Should parse firebase tokens", func() {
 
-			setting.AuthJwtSigningKey = pwd + "/jwt_test_data.firebase.json" //https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
-			setting.AuthJwtIssuer = "https://securetoken.google.com/safetronx"
+			setting.AuthJwtVerification = pwd + "/jwt_test_data.firebase.json" //https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+			setting.AuthJwtExpectClaims = make(map[string]string)
+			setting.AuthJwtExpectClaims["iss"] = "https://securetoken.google.com/safetronx"
 			InitAuthJwtKey()
 			So(decoder.CheckReady(), ShouldBeTrue)
 
@@ -147,8 +148,8 @@ func TestAuthJWT(t *testing.T) {
 
 		// Check Google JWK/IAP Support
 		Convey("Should parse JWK tokens", func() {
-			setting.AuthJwtSigningKey = "https://www.gstatic.com/iap/verify/public_key-jwk"
-			setting.AuthJwtIssuer = ""
+			setting.AuthJwtVerification = "https://www.gstatic.com/iap/verify/public_key-jwk"
+			setting.AuthJwtExpectClaims = nil
 			InitAuthJwtKey()
 
 			fmt.Printf("AFTER %v\n", decoder)

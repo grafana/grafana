@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -514,9 +515,18 @@ func pathExists(path string) bool {
 	return false
 }
 
-// Converts a string like: "a:A b:B" > { a:A, b:B }
 func toMap(text string) map[string]string {
 	vals := make(map[string]string)
+
+	// Try parsing JSON
+	if strings.HasPrefix("{", text) {
+		err := json.Unmarshal([]byte(text), &vals)
+		if err != nil {
+			return vals
+		}
+	}
+
+	// Otherwise key:value key2:value2
 	for _, propertyAndHeader := range util.SplitString(text) {
 		split := strings.SplitN(propertyAndHeader, ":", 2)
 		if len(split) == 2 {
