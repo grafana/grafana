@@ -1,36 +1,16 @@
+// Libraries
 import React, { PureComponent } from 'react';
-import {
-  PanelOptionsProps,
-  ThresholdsEditor,
-  Threshold,
-  PanelOptionsGrid,
-  ValueMappingsEditor,
-  ValueMapping,
-} from '@grafana/ui';
 
-import ValueOptions from 'app/plugins/panel/gauge/ValueOptions';
-import GaugeOptionsEditor from './GaugeOptionsEditor';
+// Components
+import { ValueOptions } from 'app/plugins/panel/gauge/ValueOptions';
+import { GaugeOptionsEditor } from './GaugeOptionsEditor';
+import { ThresholdsEditor, ValueMappingsEditor } from '@grafana/ui';
+
+// Types
+import { PanelOptionsProps, Threshold, PanelOptionsGrid, ValueMapping } from '@grafana/ui';
 import { GaugeOptions } from './types';
 
-export const defaultProps = {
-  options: {
-    minValue: 0,
-    maxValue: 100,
-    prefix: '',
-    showThresholdMarkers: true,
-    showThresholdLabels: false,
-    suffix: '',
-    decimals: 0,
-    stat: 'avg',
-    unit: 'none',
-    valueMappings: [],
-    thresholds: [],
-  },
-};
-
-export default class GaugePanelOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
-  static defaultProps = defaultProps;
-
+export class GaugePanelOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
     this.props.onChange({
       ...this.props.options,

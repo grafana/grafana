@@ -54,10 +54,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
     const { panel, plugin } = this.props;
 
     if (plugin.exports.PanelDefaults) {
-      return panel.getOptions(plugin.exports.PanelDefaults.options);
+      return panel.getOptions(plugin.exports.PanelDefaults);
     }
 
-    return panel.getOptions(plugin.exports.PanelDefaults);
+    return panel.getOptions({});
   };
 
   renderPanelOptions() {
