@@ -28,9 +28,10 @@ func TestJWTUtils(t *testing.T) {
 
 		key, err := decoder.Decode(txt)
 
-		fmt.Printf("FIREBASE: %+v\n", key)
+		fmt.Printf("Expired FIREBASE: %+v\n", key)
 		So(key, ShouldNotBeNil)
 		So(err, ShouldNotBeNil)
+		So(err.Code, ShouldEqual, JWT_ERROR_Expired)
 
 		So(1, ShouldEqual, 1)
 	})

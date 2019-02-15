@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"time"
 )
 
 var logger log.Logger = log.New("middleware.jwt")
@@ -63,25 +63,33 @@ func getCreateUserCommandForClaims(claims map[string]interface{}) *m.CreateUserC
 var decoder *util.JWTDecoder
 
 // Initialized once at startup
-func InitAuthJwtKey() error {
+func InitAuthJwtKey() bool {
 	logger.Info("Initializing JWT Auth")
 
-	decoder = util.NewJWTDecoder(setting.AuthJwtSigningKey)
-	// TODO, add other settings
-
-	if !decoder.CheckReady() {
-		err := fmt.Errorf("JWT Keys did not initialize")
-		fmt.Printf("ERROR InitAuthJwtKey: %v\n", err)
-		return err
-	}
-
+	// Make sure we have a login or email claim
 	if setting.AuthJwtLoginClaim == "" && setting.AuthJwtEmailClaim == "" {
-		err := fmt.Errorf("JWT Auth must have either a login or email claim configured")
-		logger.Error("Error", err)
-		return err
+		logger.Error("JWT Auth must have either a login or email claim configured")
+		return false
 	}
 
-	return nil
+	decoder = util.NewJWTDecoder(setting.AuthJwtVerification)
+	decoder.ExpectClaims = setting.AuthJwtExpectClaims
+	if setting.AuthJwtVerificationTTL != "" {
+		ttl, err := time.ParseDuration(setting.AuthJwtVerificationTTL)
+		if err == nil {
+			logger.Error("Invalid JWT TTL Configuraiton", err)
+		} else {
+			decoder.TTL = ttl
+		}
+	}
+
+	// Verify that it exists
+	if !decoder.CheckReady() {
+		logger.Error("JWT Keys did not initialize")
+		return false
+	}
+
+	return true
 }
 
 // Called in chain from middleware.GetContextHandler
@@ -99,26 +107,11 @@ func initContextWithJwtAuth(ctx *m.ReqContext, orgId int64) bool {
 	// Parse and validate the token
 	claims, err := decoder.Decode(jwtText)
 	if err != nil {
-		ctx.JsonApiErr(400, "JWT Error", err)
+		ctx.JsonApiErr(err.HttpStatusCode, "JWT Auth Failed", err)
 		return true
 	}
 
-	if setting.AuthJwtAudience != "" {
-		val, ok := claims["aud"].(string)
-		if !ok || val != setting.AuthJwtAudience {
-			ctx.JsonApiErr(400, "Bad JWT Audience", err)
-			return true
-		}
-	}
-
-	if setting.AuthJwtIssuer != "" {
-		val, ok := claims["iss"].(string)
-		if !ok || val != setting.AuthJwtIssuer {
-			ctx.JsonApiErr(400, "Bad JWT Issuer", err)
-			return true
-		}
-	}
-
+	// Find the user based on claims
 	query := getSignedInUserQueryForClaims(claims, orgId)
 	if err := bus.Dispatch(query); err != nil {
 		if err != m.ErrUserNotFound {

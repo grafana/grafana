@@ -211,4 +211,3 @@ ignored = [
 [[constraint]]
   name = "gopkg.in/ldap.v3"
   version = "3.0.0"
-

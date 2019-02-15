@@ -34,8 +34,9 @@ const (
 )
 
 type JWTError struct {
-	msg  string
-	Code JWTErrorCode
+	msg            string
+	HttpStatusCode int
+	Code           JWTErrorCode
 }
 
 func (e *JWTError) Error() string {
@@ -43,9 +44,26 @@ func (e *JWTError) Error() string {
 }
 
 func newJWTError(code JWTErrorCode, format string, args ...interface{}) *JWTError {
+	status := http.StatusUnauthorized
+	switch code {
+	case JWT_ERROR_UnableToRead:
+		status = http.StatusBadRequest
+	case JWT_ERROR_Unsupported:
+		status = http.StatusBadRequest
+	case JWT_ERROR_UnknownKey:
+		status = http.StatusUnauthorized
+	case JWT_ERROR_DecryptFailed:
+		status = http.StatusUnauthorized
+	case JWT_ERROR_Expired:
+		status = http.StatusUnauthorized
+	case JWT_ERROR_Unexpected:
+		status = http.StatusUnauthorized
+	}
+
 	return &JWTError{
-		Code: code,
-		msg:  fmt.Sprintf(format, args...),
+		Code:           code,
+		HttpStatusCode: status,
+		msg:            fmt.Sprintf(format, args...),
 	}
 }
 
@@ -78,7 +96,7 @@ type JWTDecoder struct {
 	keys keySource
 
 	// Verify tokens have these claims
-	ExpectClaims map[string]interface{}
+	ExpectClaims map[string]string
 
 	// Used for testing
 	Now func() time.Time
@@ -200,6 +218,7 @@ func (d *JWTDecoder) Decode(text string) (map[string]interface{}, *JWTError) {
 		}
 	}
 
+	// Checking all expected claims
 	if d.ExpectClaims != nil {
 		for k, v := range d.ExpectClaims {
 			if v != claims[k] {

@@ -142,14 +142,14 @@ var (
 	BasicAuthEnabled bool
 
 	// JWT Auth settings
-	AuthJwtEnabled    bool
-	AuthJwtHeader     string
-	AuthJwtSigningKey string
-	AuthJwtAudience   string
-	AuthJwtIssuer     string
-	AuthJwtLoginClaim string
-	AuthJwtEmailClaim string
-	AuthJwtAutoSignup bool
+	AuthJwtEnabled         bool
+	AuthJwtHeader          string
+	AuthJwtVerification    string
+	AuthJwtVerificationTTL string
+	AuthJwtExpectClaims    map[string]string
+	AuthJwtLoginClaim      string
+	AuthJwtEmailClaim      string
+	AuthJwtAutoSignup      bool
 
 	// Plugin settings
 	PluginAppsSkipVerifyTLS bool
@@ -514,6 +514,18 @@ func pathExists(path string) bool {
 	return false
 }
 
+// Converts a string like: "a:A b:B" > { a:A, b:B }
+func toMap(text string) map[string]string {
+	vals := make(map[string]string)
+	for _, propertyAndHeader := range util.SplitString(text) {
+		split := strings.SplitN(propertyAndHeader, ":", 2)
+		if len(split) == 2 {
+			vals[split[0]] = split[1]
+		}
+	}
+	return vals
+}
+
 func setHomePath(args *CommandLineArgs) {
 	if args.HomePath != "" {
 		HomePath = args.HomePath
@@ -701,14 +713,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist = authProxy.Key("whitelist").String()
-
-	AuthProxyHeaders = make(map[string]string)
-	for _, propertyAndHeader := range util.SplitString(authProxy.Key("headers").String()) {
-		split := strings.SplitN(propertyAndHeader, ":", 2)
-		if len(split) == 2 {
-			AuthProxyHeaders[split[0]] = split[1]
-		}
-	}
+	AuthProxyHeaders = toMap(authProxy.Key("headers").String())
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -718,9 +723,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	jwtAuth := iniFile.Section("auth.jwt")
 	AuthJwtEnabled = jwtAuth.Key("enabled").MustBool(false)
 	AuthJwtHeader = jwtAuth.Key("header").String()
-	AuthJwtSigningKey = jwtAuth.Key("signing_key").String()
-	AuthJwtAudience = jwtAuth.Key("audience").String()
-	AuthJwtIssuer = jwtAuth.Key("issuer").String()
+	AuthJwtVerification = jwtAuth.Key("verification").String()
+	AuthJwtVerificationTTL = jwtAuth.Key("verification_ttl").String()
+	AuthJwtExpectClaims = toMap(jwtAuth.Key("expect_claims").String())
 	AuthJwtLoginClaim = jwtAuth.Key("login_claim").String()
 	AuthJwtEmailClaim = jwtAuth.Key("email_claim").String()
 	AuthJwtAutoSignup = jwtAuth.Key("auto_signup").MustBool(true)
