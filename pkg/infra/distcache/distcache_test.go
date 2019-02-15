@@ -7,7 +7,6 @@ import (
 
 	"github.com/bmizerany/assert"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -20,20 +19,29 @@ func init() {
 	gob.Register(CacheableStruct{})
 }
 
-func createClient(t *testing.T) cacheStorage {
+func createTestClient(t *testing.T, name string) cacheStorage {
 	t.Helper()
 
 	sqlstore := sqlstore.InitTestDB(t)
-	dc := DistributedCache{log: log.New("test.logger"), SQLStore: sqlstore}
-	dc.Init()
-	return dc.Client
+	return createClient(CacheOpts{name: name}, sqlstore)
 }
 
-func TestCanPutIntoDatabaseStorage(t *testing.T) {
-	client := createClient(t)
+func TestAllCacheClients(t *testing.T) {
+	clients := []string{"database"} // add redis, memcache, memory
+
+	for _, v := range clients {
+		client := createTestClient(t, v)
+
+		CanPutGetAndDeleteCachedObjects(t, client)
+		CanNotFetchExpiredItems(t, client)
+		CanSetInfiniteCacheExpiration(t, client)
+	}
+}
+
+func CanPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
-	err := client.Put("key", cacheableStruct, 1000)
+	err := client.Put("key", cacheableStruct, 0)
 	assert.Equal(t, err, nil)
 
 	data, err := client.Get("key")
@@ -50,9 +58,7 @@ func TestCanPutIntoDatabaseStorage(t *testing.T) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func TestCanNotFetchExpiredItems(t *testing.T) {
-	client := createClient(t)
-
+func CanNotFetchExpiredItems(t *testing.T, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	// insert cache item one day back
@@ -66,9 +72,7 @@ func TestCanNotFetchExpiredItems(t *testing.T) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func TestCanSetInfiniteCacheExpiration(t *testing.T) {
-	client := createClient(t)
-
+func CanSetInfiniteCacheExpiration(t *testing.T, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	// insert cache item one day back

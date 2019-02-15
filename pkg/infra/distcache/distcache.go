@@ -23,13 +23,29 @@ func init() {
 func (ds *DistributedCache) Init() error {
 	ds.log = log.New("distributed.cache")
 
-	// memory
-	// redis
-	// memcache
-	// database. using SQLSTORE
-	ds.Client = &databaseCache{SQLStore: ds.SQLStore}
+	ds.Client = createClient(CacheOpts{}, ds.SQLStore)
 
 	return nil
+}
+
+type CacheOpts struct {
+	name string
+}
+
+func createClient(opts CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
+	if opts.name == "redis" {
+		return nil
+	}
+
+	if opts.name == "memcache" {
+		return nil
+	}
+
+	if opts.name == "memory" {
+		return nil
+	}
+
+	return &databaseCache{SQLStore: sqlstore}
 }
 
 // DistributedCache allows Grafana to cache data outside its own process
