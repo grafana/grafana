@@ -1,0 +1,15 @@
+{
+  "type": "panel",
+  "name": "Bar Gauge",
+  "id": "bargauge",
+
+  "dataFormats": ["time_series"],
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {}
+  }
+}

@@ -19,7 +19,7 @@ const statOptions = [
 
 const labelWidth = 6;
 
-export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
+export class ValueOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
   onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
 
   onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
