@@ -1,3 +1,5 @@
+import { Threshold, ValueMapping } from '@grafana/ui';
+
 export interface BarGaugeOptions {
   minValue: number;
   maxValue: number;
@@ -5,6 +7,8 @@ export interface BarGaugeOptions {
   stat: string;
   suffix: string;
   unit: string;
+  valueMappings: ValueMapping[];
+  thresholds: Threshold[];
 }
 
 export const PanelDefaults: BarGaugeOptions = {
@@ -14,4 +18,6 @@ export const PanelDefaults: BarGaugeOptions = {
   suffix: '',
   stat: 'avg',
   unit: 'none',
+  thresholds: [],
+  valueMappings: [],
 };

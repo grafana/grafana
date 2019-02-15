@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Bar Gauge",
   "id": "bargauge",
+  "state": "alpha",
 
   "dataFormats": ["time_series"],
 
