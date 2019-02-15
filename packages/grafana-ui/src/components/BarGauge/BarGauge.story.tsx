@@ -36,8 +36,8 @@ BarGaugeStories.add('Vertical, with basic thresholds', () => {
   } = getKnobs();
 
   return renderComponentWithTheme(BarGauge, {
-    width: 300,
-    height: 600,
+    width: 200,
+    height: 400,
     value: value,
     minValue: minValue,
     maxValue: maxValue,
@@ -46,7 +46,7 @@ BarGaugeStories.add('Vertical, with basic thresholds', () => {
     postfix: '',
     decimals: decimals,
     thresholds: [
-      { index: 0, value: null, color: 'green' },
+      { index: 0, value: -Infinity, color: 'green' },
       { index: 1, value: threshold1Value, color: threshold1Color },
       { index: 1, value: threshold2Value, color: threshold2Color },
     ],

@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render BarGauge with basic options should render 1`] = `
+<div
+  className="bar-gauge"
+  style={
+    Object {
+      "height": "300px",
+      "width": "300px",
+    }
+  }
+>
+  <div
+    className="bar-gauge__value"
+    style={
+      Object {
+        "color": "#7EB26D",
+        "fontSize": "40px",
+      }
+    }
+  >
+    25
+  </div>
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.3)",
+        "borderTop": "1px solid #7EB26D",
+        "height": "60px",
+        "width": "300px",
+      }
+    }
+  />
+</div>
+`;

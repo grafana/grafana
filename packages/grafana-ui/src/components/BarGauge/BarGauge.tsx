@@ -43,7 +43,6 @@ export class BarGauge extends PureComponent<Props> {
     const { thresholds, theme, value } = this.props;
 
     const activeThreshold = getThresholdForValue(thresholds, value);
-    console.log(thresholds, value);
 
     if (activeThreshold !== null) {
       const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
@@ -68,7 +67,7 @@ export class BarGauge extends PureComponent<Props> {
     const { width } = this.props;
 
     const guess = width / value.length;
-    const fontSize = Math.max(guess, 14);
+    const fontSize = Math.min(Math.max(guess, 14), 40);
 
     return {
       color: color,
@@ -82,7 +81,7 @@ export class BarGauge extends PureComponent<Props> {
     const numericValue = this.getNumericValue();
     const barMaxHeight = height * 0.8; // 20% for value & name
     const valuePercent = numericValue / (maxValue - minValue);
-    const barHeight = valuePercent * barMaxHeight;
+    const barHeight = Math.max(valuePercent * barMaxHeight, 0);
 
     const formatFunc = getValueFormat(unit);
     const valueFormatted = formatFunc(numericValue, decimals);
