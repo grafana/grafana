@@ -29,7 +29,7 @@ class AlertRuleItem extends PureComponent<Props> {
       'fa-pause': rule.state !== 'paused',
     });
 
-    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
+    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
 
     return (
       <li className="alert-rule-item">
