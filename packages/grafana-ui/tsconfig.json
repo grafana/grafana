@@ -1,21 +1,17 @@
 {
   "extends": "../../tsconfig.json",
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "rootDirs": [".", "stories"],
     "module": "esnext",
     "outDir": "dist",
     "declaration": true,
+    "strict": true,
+    "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "typeRoots": ["./node_modules/@types", "types"],
     "skipLibCheck": true // Temp workaround for Duplicate identifier tsc errors
-  },
+  }
 }
