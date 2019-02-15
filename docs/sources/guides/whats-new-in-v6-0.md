@@ -27,6 +27,7 @@ The main highlights are:
 - [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
+- [Removal of user session storage]({{< relref "#easier-to-deploy-improved-security" >}}) makes Grafana easier to deploy & improves security.
 
 ## Explore
 
@@ -113,30 +114,42 @@ will be shared closer to or just after release.
 {{< docs-imagebox img="/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
 <br />
 
-### Google Stackdriver Datasource
+## Google Stackdriver Datasource
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
 
 To get started read the guide: [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/).
 
-### Azure Monitor Datasource
+## Azure Monitor Datasource
 
 One of the goals of the Grafana v6.0 release is to add support for the three major clouds. Amazon Cloudwatch has been a core datasource for years and Google Stackdriver is also now supported. We developed an external plugin for Azure Monitor last year and for this release the [plugin](https://grafana.com/plugins/grafana-azure-monitor-datasource) is being moved into Grafana to be one of the built-in datasources. For users of the external plugin, Grafana will automatically start using the built-in version. As a core datasource, the Azure Monitor datasource will get alerting support for the official 6.0 release.
 
 The Azure Monitor datasource integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
-### Provisioning support for alert notifiers
+## Provisioning support for alert notifiers
 
 Grafana now added support for provisioning alert notifiers from configuration files. Allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. Same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers that exists in the instance.
 
-### Auth and session token improvements
+## Easier to deploy & improved security
 
-The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request.
-If you are using `Auth proxy` for authentication the session storage will still be used but our goal is to remove this ASAP as well.
+Grafana 6.0 removes the need of configuring and setup of additional storage for [user sessions](/tutorials/ha_setup/#user-sessions). This should make it easier to deploy and operate Grafana in a
+high availability setup and/or if you're using a stateless user session storage like Redis, Memcache, Postgres or MySQL.
 
-This release will force all users to log in again since their previous token is not valid anymore.
+Instead of user sessions a solution based on short-lived tokens that are rotated frequently have been implemented. This also replaces the old "remember me cookie"
+solution, which allowed a user to be logged in between browser sessions, and which have been subject to several security holes throughout the years.
+Read more about the short-lived token solution and how to configure it [here](/auth/overview/#login-and-short-lived-tokens).
 
-### Named Colors
+> Please note that due to these changes, all users will be required to login upon next visit after upgrade.
+
+Besides these changes we have also made security improvements regarding Cross-Site Request Forgery (CSRF) and Cross-site Scripting (XSS) vulnerabilities:
+
+* Cookies are per default using the [SameSite](/installation/configuration/#cookie-samesite) attribute to protect against CSRF attacks
+* Script tags in text panels are per default [disabled](/installation/configuration/#disable-sanitize-html) to protect against XSS attacks
+
+> If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions setup and configured
+but our goal is to remove this requirements in a near future.
+
+## Named Colors
 
 {{< docs-imagebox img="/img/docs/v60/named_colors.png" max-width="400px" class="docs-image--right" caption="Named Colors" >}}
 
@@ -148,11 +161,15 @@ Named colors also enables Grafana to adapt colors to the current theme.
 
 <div class="clearfix"></div>
 
-### Other features
+## Other features
 
 - The ElasticSearch datasource now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per bucket computations like the difference or ratio between two metrics.
 - Support for Google Hangouts Chat alert notifications
 - New built in template variables for the current time range in `$__from` and `$__to`
+
+## Upgrading
+
+See [upgrade notes](/installation/upgrading/#upgrading-to-v6-0).
 
 ## Changelog
 
