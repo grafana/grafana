@@ -3,18 +3,48 @@ package distcache
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type databaseCache struct {
 	SQLStore *sqlstore.SqlStore
+	log      log.Logger
+}
+
+func newDatabaseCache(sqlstore *sqlstore.SqlStore) *databaseCache {
+	dc := &databaseCache{
+		SQLStore: sqlstore,
+		log:      log.New("distcache.database"),
+	}
+
+	go dc.StartGC()
+	return dc
 }
 
 var getTime = time.Now
 
-func (dc *databaseCache) Get(key string) (interface{}, error) {
-	//now := getTime().Unix()
+func (dc *databaseCache) internalRunGC() {
+	now := getTime().Unix()
+	sql := `DELETE FROM cache_data WHERE (? - created) >= expire`
 
+	//EXTRACT(EPOCH FROM NOW()) - created >= expire
+	//UNIX_TIMESTAMP(NOW()) - created >= expire
+	_, err := dc.SQLStore.NewSession().Exec(sql, now)
+	if err != nil {
+		dc.log.Error("failed to run garbage collect", "error", err)
+	}
+}
+
+func (dc *databaseCache) StartGC() {
+	dc.internalRunGC()
+
+	time.AfterFunc(time.Second*10, func() {
+		dc.StartGC()
+	})
+}
+
+func (dc *databaseCache) Get(key string) (interface{}, error) {
 	cacheHits := []CacheData{}
 	err := dc.SQLStore.NewSession().Where(`key = ?`, key).Find(&cacheHits)
 	if err != nil {
@@ -65,7 +95,7 @@ func (dc *databaseCache) Put(key string, value interface{}, expire int64) error 
 	}
 
 	if len(cacheHits) > 0 {
-		_, err = dc.SQLStore.NewSession().Exec("UPDATE cached_data SET data=?, created=?, expire=? WHERE key=?", data, now, expire, key)
+		_, err = dc.SQLStore.NewSession().Exec("UPDATE cache_data SET data=?, created=?, expire=? WHERE key=?", data, now, expire, key)
 	} else {
 		_, err = dc.SQLStore.NewSession().Exec("INSERT INTO cache_data(key,data,created_at,expires) VALUES(?,?,?,?)", key, data, now, expire)
 	}
