@@ -38,17 +38,6 @@ export interface PanelMenuItem {
   subMenu?: PanelMenuItem[];
 }
 
-export interface Threshold {
-  index: number;
-  value: number;
-  color: string;
-}
-
-export enum BasicGaugeColor {
-  Green = '#299c46',
-  Red = '#d44a3a',
-}
-
 export enum MappingType {
   ValueToText = 1,
   RangeToText = 2,
