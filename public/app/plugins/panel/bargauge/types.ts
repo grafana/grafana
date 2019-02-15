@@ -18,10 +18,6 @@ export const PanelDefaults: BarGaugeOptions = {
   suffix: '',
   stat: 'avg',
   unit: 'none',
-  thresholds: [
-    { index: 2, value: 80, color: 'red' },
-    { index: 1, value: 50, color: 'orange' },
-    { index: 0, value: -Infinity, color: 'green' },
-  ],
+  thresholds: [{ index: 2, value: 80, color: 'red' }, { index: 0, value: -Infinity, color: 'green' }],
   valueMappings: [],
 };
