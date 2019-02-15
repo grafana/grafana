@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
-import { DashboardPage, Props, State } from './DashboardPage';
+import { DashboardPage, Props, State, mapStateToProps } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { cleanUpDashboard } from '../state/actions';
 import { getNoPayloadActionCreatorMock, NoPayloadActionCreatorMock } from 'app/core/redux';
@@ -249,5 +249,37 @@ describe('DashboardPage', () => {
     it('Should call clean up action', () => {
       expect(ctx.cleanUpDashboardMock.calls).toBe(1);
     });
+  });
+
+  describe('mapStateToProps with bool fullscreen', () => {
+    const props = mapStateToProps({
+      location: {
+        routeParams: {},
+        query: {
+          fullscreen: true,
+          edit: false,
+        },
+      },
+      dashboard: {},
+    } as any);
+
+    expect(props.urlFullscreen).toBe(true);
+    expect(props.urlEdit).toBe(false);
+  });
+
+  describe('mapStateToProps with string edit true', () => {
+    const props = mapStateToProps({
+      location: {
+        routeParams: {},
+        query: {
+          fullscreen: false,
+          edit: 'true',
+        },
+      },
+      dashboard: {},
+    } as any);
+
+    expect(props.urlFullscreen).toBe(false);
+    expect(props.urlEdit).toBe(true);
   });
 });
