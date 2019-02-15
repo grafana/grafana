@@ -27,7 +27,7 @@ The main highlights are:
 - [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
-- [Removal of user session storage]({{< relref "#easier-to-deploy-improved security" >}}) makes Grafana easier to deploy & improved security.
+- [Removal of user session storage]({{< relref "#easier-to-deploy-improved-security" >}}) makes Grafana easier to deploy & improves security.
 
 ## Explore
 
@@ -141,12 +141,13 @@ Read more about the short-lived token solution and how to configure it [here](/a
 
 > Please note that due to these changes, all users will be required to login upon next visit after upgrade.
 
-Besides these changes we have also introduced [SameSite](https://www.owasp.org/index.php/SameSite) setting to protect against Cross-Site Request Forgery (CSRF). This setting enables more control of when the browser include cookies in requests. Its set to `lax` by default but can be configured using `cookie_samesite` under `[security]`
+Besides these changes we have also made security improvements regarding Cross-Site Request Forgery (CSRF) and Cross-site Scripting (XSS) vulnerabilities:
+
+* Cookies are per default using the [SameSite](/installation/configuration/#cookie-samesite) attribute to protect against CSRF attacks
+* Script tags in text panels are per default [disabled](/installation/configuration/#disable-sanitize-html) to protect against XSS attacks
 
 > If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions setup and configured
 but our goal is to remove this requirements in a near future.
-
-We also disable script tags in text panels by default to avoid Cross-site Scripting (XSS) attacks.
 
 ## Named Colors
 
