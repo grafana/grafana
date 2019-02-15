@@ -29,6 +29,16 @@ export interface DataQuery {
   datasource?: string | null;
 }
 
+export interface DataQueryError {
+  data?: {
+    message?: string;
+    error?: string;
+  };
+  message?: string;
+  status?: string;
+  statusText?: string;
+}
+
 export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;

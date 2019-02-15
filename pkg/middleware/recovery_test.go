@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 	macaron "gopkg.in/macaron.v1"
@@ -66,7 +65,6 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 		sc.userAuthTokenService = newFakeUserAuthTokenService()
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService))
 		// mock out gc goroutine
-		session.StartSessionGC = func() {}
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 

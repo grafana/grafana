@@ -28,7 +28,7 @@ export function autofillEventFix($compile) {
         input.removeEventListener('animationstart', onAnimationStart);
         // input.removeEventListener('change', onChange);
       });
-    }
+    },
   };
 }
 

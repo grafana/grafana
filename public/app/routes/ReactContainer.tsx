@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import coreModule from 'app/core/core_module';
 import { store } from 'app/store/store';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
 
 function WrapInProvider(store, Component, props) {
   return (
@@ -15,13 +16,7 @@ function WrapInProvider(store, Component, props) {
 }
 
 /** @ngInject */
-export function reactContainer(
-  $route,
-  $location,
-  $injector,
-  $rootScope,
-  contextSrv: ContextSrv
-) {
+export function reactContainer($route, $location, $injector, $rootScope, contextSrv: ContextSrv) {
   return {
     restrict: 'E',
     template: '',
@@ -44,11 +39,15 @@ export function reactContainer(
         $injector: $injector,
         $rootScope: $rootScope,
         $scope: scope,
+        routeInfo: $route.current.$$route.routeInfo,
       };
 
-      ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
+      document.body.classList.add('is-react');
+
+      ReactDOM.render(WrapInProvider(store, provideTheme(component), props), elem[0]);
 
       scope.$on('$destroy', () => {
+        document.body.classList.remove('is-react');
         ReactDOM.unmountComponentAtNode(elem[0]);
       });
     },

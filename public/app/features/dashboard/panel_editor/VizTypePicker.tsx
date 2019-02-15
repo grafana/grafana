@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
 
 import config from 'app/core/config';
 import { PanelPlugin } from 'app/types/plugins';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
+import { EmptySearchResult } from '@grafana/ui';
 
 export interface Props {
   current: PanelPlugin;
@@ -14,9 +14,9 @@ export interface Props {
 
 export class VizTypePicker extends PureComponent<Props> {
   searchInput: HTMLElement;
-  pluginList = this.getPanelPlugins('');
+  pluginList = this.getPanelPlugins;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
@@ -25,14 +25,13 @@ export class VizTypePicker extends PureComponent<Props> {
     return filteredPluginList.length - 1;
   }
 
-  getPanelPlugins(filter): PanelPlugin[] {
-    const panels = _.chain(config.panels)
-      .filter({ hideFromList: false })
-      .map(item => item)
-      .value();
+  get getPanelPlugins(): PanelPlugin[] {
+    const allPanels = config.panels;
 
-    // add sort by sort property
-    return _.sortBy(panels, 'sort');
+    return Object.keys(allPanels)
+      .filter(key => allPanels[key]['hideFromList'] === false)
+      .map(key => allPanels[key])
+      .sort((a: PanelPlugin, b: PanelPlugin) => a.sort - b.sort);
   }
 
   renderVizPlugin = (plugin: PanelPlugin, index: number) => {
@@ -63,11 +62,15 @@ export class VizTypePicker extends PureComponent<Props> {
 
   render() {
     const filteredPluginList = this.getFilteredPluginList();
-
+    const hasResults = filteredPluginList.length > 0;
     return (
       <div className="viz-picker">
         <div className="viz-picker-list">
-          {filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index))}
+          {hasResults ? (
+            filteredPluginList.map((plugin, index) => this.renderVizPlugin(plugin, index))
+          ) : (
+            <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>
+          )}
         </div>
       </div>
     );

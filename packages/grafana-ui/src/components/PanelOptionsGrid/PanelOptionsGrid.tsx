@@ -6,10 +6,5 @@ interface Props {
 }
 
 export const PanelOptionsGrid: SFC<Props> = ({ children }) => {
-
-  return (
-    <div className="panel-options-grid">
-      {children}
-    </div>
-  );
+  return <div className="panel-options-grid">{children}</div>;
 };

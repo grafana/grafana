@@ -4,7 +4,7 @@ import angular from 'angular';
 
 const template = `
 <input type="file" id="dashupload" name="dashupload" class="hide" onchange="angular.element(this).scope().file_selected"/>
-<label class="btn btn-success" for="dashupload">
+<label class="btn btn-primary" for="dashupload">
   <i class="fa fa-upload"></i>
   {{btnText}}
 </label>

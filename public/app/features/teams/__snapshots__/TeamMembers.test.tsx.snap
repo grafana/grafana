@@ -8,33 +8,23 @@ exports[`Render should render component 1`] = `
     <div
       className="gf-form gf-form--grow"
     >
-      <label
-        className="gf-form--has-input-icon gf-form--grow"
-      >
-        <input
-          className="gf-form-input"
-          onChange={[Function]}
-          placeholder="Search members"
-          type="text"
-          value=""
-        />
-        <i
-          className="gf-form-input-icon fa fa-search"
-        />
-      </label>
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
     </div>
     <div
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       disabled={false}
       onClick={[Function]}
     >
-      <i
-        className="fa fa-plus"
-      />
-       Add a member
+      Add member
     </button>
   </div>
   <Component
@@ -52,7 +42,7 @@ exports[`Render should render component 1`] = `
         />
       </button>
       <h5>
-        Add Team Member
+        Add team member
       </h5>
       <div
         className="gf-form-inline"
@@ -102,33 +92,23 @@ exports[`Render should render team members 1`] = `
     <div
       className="gf-form gf-form--grow"
     >
-      <label
-        className="gf-form--has-input-icon gf-form--grow"
-      >
-        <input
-          className="gf-form-input"
-          onChange={[Function]}
-          placeholder="Search members"
-          type="text"
-          value=""
-        />
-        <i
-          className="gf-form-input-icon fa fa-search"
-        />
-      </label>
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
     </div>
     <div
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       disabled={false}
       onClick={[Function]}
     >
-      <i
-        className="fa fa-plus"
-      />
-       Add a member
+      Add member
     </button>
   </div>
   <Component
@@ -146,7 +126,7 @@ exports[`Render should render team members 1`] = `
         />
       </button>
       <h5>
-        Add Team Member
+        Add team member
       </h5>
       <div
         className="gf-form-inline"
@@ -322,33 +302,23 @@ exports[`Render should render team members when sync enabled 1`] = `
     <div
       className="gf-form gf-form--grow"
     >
-      <label
-        className="gf-form--has-input-icon gf-form--grow"
-      >
-        <input
-          className="gf-form-input"
-          onChange={[Function]}
-          placeholder="Search members"
-          type="text"
-          value=""
-        />
-        <i
-          className="gf-form-input-icon fa fa-search"
-        />
-      </label>
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
     </div>
     <div
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       disabled={false}
       onClick={[Function]}
     >
-      <i
-        className="fa fa-plus"
-      />
-       Add a member
+      Add member
     </button>
   </div>
   <Component
@@ -366,7 +336,7 @@ exports[`Render should render team members when sync enabled 1`] = `
         />
       </button>
       <h5>
-        Add Team Member
+        Add team member
       </h5>
       <div
         className="gf-form-inline"

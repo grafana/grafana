@@ -11,7 +11,6 @@ import {
 import ValueOptions from 'app/plugins/panel/gauge/ValueOptions';
 import GaugeOptionsEditor from './GaugeOptionsEditor';
 import { GaugeOptions } from './types';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 export const defaultProps = {
   options: {
@@ -46,24 +45,17 @@ export default class GaugePanelOptions extends PureComponent<PanelOptionsProps<G
 
   render() {
     const { onChange, options } = this.props;
-    return (
-      <ThemeProvider>
-        {(theme) => (
-          <>
-            <PanelOptionsGrid>
-              <ValueOptions onChange={onChange} options={options} />
-              <GaugeOptionsEditor onChange={onChange} options={options} />
-              <ThresholdsEditor
-                onChange={this.onThresholdsChanged}
-                thresholds={options.thresholds}
-                theme={theme}
-              />
-            </PanelOptionsGrid>
 
-            <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
-          </>
-        )}
-      </ThemeProvider>
+    return (
+      <>
+        <PanelOptionsGrid>
+          <ValueOptions onChange={onChange} options={options} />
+          <GaugeOptionsEditor onChange={onChange} options={options} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
+        </PanelOptionsGrid>
+
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
+      </>
     );
   }
 }

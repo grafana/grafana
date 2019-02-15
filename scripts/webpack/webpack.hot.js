@@ -85,7 +85,9 @@ module.exports = merge(common, {
               config: { path: __dirname + '/postcss.config.js' },
             },
           },
-          'sass-loader', // compiles Sass to CSS
+          {
+            loader: 'sass-loader'
+          }
         ],
       },
       {

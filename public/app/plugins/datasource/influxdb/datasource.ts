@@ -127,7 +127,7 @@ export default class InfluxDatasource {
       });
     }
 
-    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw });
+    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
@@ -184,7 +184,7 @@ export default class InfluxDatasource {
     }
 
     if (options && options.range) {
-      const timeFilter = this.getTimeFilter({ rangeRaw: options.range });
+      const timeFilter = this.getTimeFilter({ rangeRaw: options.range, timezone: options.timezone });
       query = query.replace('$timeFilter', timeFilter);
     }
 
@@ -291,8 +291,8 @@ export default class InfluxDatasource {
   }
 
   getTimeFilter(options) {
-    const from = this.getInfluxTime(options.rangeRaw.from, false);
-    const until = this.getInfluxTime(options.rangeRaw.to, true);
+    const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
+    const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
     const fromIsAbsolute = from[from.length - 1] === 'ms';
 
     if (until === 'now()' && !fromIsAbsolute) {
@@ -302,7 +302,7 @@ export default class InfluxDatasource {
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date, roundUp) {
+  getInfluxTime(date, roundUp, timezone) {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now()';
@@ -314,7 +314,7 @@ export default class InfluxDatasource {
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp, timezone);
     }
 
     return date.valueOf() + 'ms';

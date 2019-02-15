@@ -18,6 +18,7 @@ export interface Props {
   description?: string;
   scopedVars?: string;
   links?: [];
+  error?: string;
 }
 
 interface ClickCoordinates {
@@ -30,18 +31,18 @@ interface State {
 }
 
 export class PanelHeader extends Component<Props, State> {
-  clickCoordinates: ClickCoordinates = {x: 0, y: 0};
+  clickCoordinates: ClickCoordinates = { x: 0, y: 0 };
   state = {
     panelMenuOpen: false,
-    clickCoordinates: {x: 0, y: 0}
+    clickCoordinates: { x: 0, y: 0 },
   };
 
   eventToClickCoordinates = (event: React.MouseEvent<HTMLDivElement>) => {
     return {
       x: event.clientX,
-      y: event.clientY
+      y: event.clientY,
     };
-  }
+  };
 
   onMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     this.clickCoordinates = this.eventToClickCoordinates(event);
@@ -49,7 +50,7 @@ export class PanelHeader extends Component<Props, State> {
 
   isClick = (clickCoordinates: ClickCoordinates) => {
     return isEqual(clickCoordinates, this.clickCoordinates);
-  }
+  };
 
   onMenuToggle = (event: React.MouseEvent<HTMLDivElement>) => {
     if (this.isClick(this.eventToClickCoordinates(event))) {
@@ -71,7 +72,7 @@ export class PanelHeader extends Component<Props, State> {
     const isFullscreen = false;
     const isLoading = false;
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
-    const { panel, dashboard, timeInfo, scopedVars } = this.props;
+    const { panel, dashboard, timeInfo, scopedVars, error } = this.props;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
     return (
@@ -82,6 +83,7 @@ export class PanelHeader extends Component<Props, State> {
           description={panel.description}
           scopedVars={panel.scopedVars}
           links={panel.links}
+          error={error}
         />
         <div className={panelHeaderClass}>
           {isLoading && (

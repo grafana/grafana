@@ -1,8 +1,6 @@
-import './containers/DashboardCtrl';
 import './dashgrid/DashboardGridDirective';
 
 // Services
-import './services/DashboardViewStateSrv';
 import './services/UnsavedChangesSrv';
 import './services/DashboardLoaderSrv';
 import './services/DashboardSrv';
@@ -29,4 +27,3 @@ import DashboardPermissions from './components/DashboardPermissions/DashboardPer
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 react2AngularDirective('dashboardPermissions', DashboardPermissions, ['dashboardId', 'folder']);
-
