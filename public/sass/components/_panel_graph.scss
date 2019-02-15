@@ -91,6 +91,18 @@
   &.avg::before {
     content: 'Avg: ';
   }
+  &.p25::before {
+    content: 'P25: ';
+  }
+  &.p50::before {
+    content: 'P50: ';
+  }
+  &.p75::before {
+    content: 'P75: ';
+  }
+  &.p99::before {
+    content: 'P99: ';
+  }
 }
 
 .graph-legend-icon .fa {
@@ -203,6 +215,10 @@
     &.max,
     &.min,
     &.total,
+    &.p25,
+    &.p50,
+    &.p75,
+    &.p99,
     &.avg {
       &::before {
         content: '';

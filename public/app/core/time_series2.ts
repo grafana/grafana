@@ -19,6 +19,13 @@ function translateFillOption(fill: number) {
   return fill === 0 ? 0.001 : fill / 10;
 }
 
+function percentile(arr, percent) {
+  if (arr.length === 0) {
+    return 0.0;
+  }
+  return arr[Math.floor((arr.length - 1) * percent)];
+}
+
 /**
  * Calculate decimals for legend and update values for each series.
  * @param data series data
@@ -206,11 +213,16 @@ export default class TimeSeries {
     this.stats.diff = null;
     this.stats.range = null;
     this.stats.timeStep = Number.MAX_VALUE;
+    this.stats.p25 = null;
+    this.stats.p50 = null;
+    this.stats.p75 = null;
+    this.stats.p99 = null;
     this.allIsNull = true;
     this.allIsZero = true;
 
     const ignoreNulls = fillStyle === 'connected';
     const nullAsZero = fillStyle === 'null as zero';
+    const percentileValues = [];
     let currentTime;
     let currentValue;
     let nonNulls = 0;
@@ -246,6 +258,7 @@ export default class TimeSeries {
           this.stats.total += currentValue;
           this.allIsNull = false;
           nonNulls++;
+          percentileValues.push(currentValue);
         }
 
         if (currentValue > this.stats.max) {
@@ -299,6 +312,11 @@ export default class TimeSeries {
     if (result.length && !this.allIsNull) {
       this.stats.avg = this.stats.total / nonNulls;
       this.stats.current = result[result.length - 1][1];
+      percentileValues.sort((a, b) => a - b);
+      this.stats.p25 = percentile(percentileValues, 0.25);
+      this.stats.p50 = percentile(percentileValues, 0.50);
+      this.stats.p75 = percentile(percentileValues, 0.75);
+      this.stats.p99 = percentile(percentileValues, 0.99);
       if (this.stats.current === null && result.length > 1) {
         this.stats.current = result[result.length - 2][1];
       }

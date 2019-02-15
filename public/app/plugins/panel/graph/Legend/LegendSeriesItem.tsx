@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { TimeSeries } from 'app/core/core';
 import { SeriesColorPicker } from '@grafana/ui';
 
-export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
+export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total', 'p25', 'p50', 'p75', 'p99'];
 
 export interface LegendLabelProps {
   series: TimeSeries;
@@ -21,6 +21,10 @@ export interface LegendValuesProps {
   avg?: boolean;
   current?: boolean;
   total?: boolean;
+  p25?: boolean;
+  p50?: boolean;
+  p75?: boolean;
+  p99?: boolean;
 }
 
 type LegendItemProps = LegendLabelProps & LegendValuesProps;

@@ -94,10 +94,10 @@ class GraphElement {
       return;
     }
 
-    const { values, min, max, avg, current, total } = this.panel.legend;
+    const { values, min, max, avg, current, total, p25, p50, p75, p99 } = this.panel.legend;
     const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
     const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
-    const valueOptions = { values, min, max, avg, current, total };
+    const valueOptions = { values, min, max, avg, current, total, p25, p50, p75, p99 };
     const legendProps: GraphLegendProps = {
       seriesList: this.data,
       hiddenSeries: this.ctrl.hiddenSeries,
