@@ -104,7 +104,7 @@ func (c *EvalContext) GetDashboardUID() (*m.DashboardRef, error) {
 	return c.dashboardRef, nil
 }
 
-const urlFormat = "%s?fullscreen=true&edit=true&tab=alert&panelId=%d&orgId=%d"
+const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
 
 func (c *EvalContext) GetRuleUrl() (string, error) {
 	if c.IsTestRun {
