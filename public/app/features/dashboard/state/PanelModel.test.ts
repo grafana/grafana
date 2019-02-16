@@ -55,5 +55,19 @@ describe('PanelModel', () => {
         expect(model.alert).toBe(undefined);
       });
     });
+
+    describe('get panel options', () => {
+      it('should apply defaults', () => {
+        model.options = { existingProp: 10 };
+        const options = model.getOptions({
+          defaultProp: true,
+          existingProp: 0,
+        });
+
+        expect(options.defaultProp).toBe(true);
+        expect(options.existingProp).toBe(10);
+        expect(model.options).toBe(options);
+      });
+    });
   });
 });
