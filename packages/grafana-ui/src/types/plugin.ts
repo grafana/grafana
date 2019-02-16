@@ -37,8 +37,6 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    *  Set after constructor is called by Grafana
    */
   name?: string;
-  meta?: PluginMeta;
-  pluginExports?: PluginExports;
 }
 
 export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
@@ -93,6 +91,7 @@ export interface PluginMeta {
   includes: PluginInclude[];
 
   // Datasource-specific
+  builtIn?: boolean;
   metrics?: boolean;
   tables?: boolean;
   logs?: boolean;

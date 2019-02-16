@@ -1,4 +1,4 @@
-import { PluginExports, PluginMetaInfo } from '@grafana/ui/src/types';
+import { PluginExports, PluginMetaInfo, PluginMeta } from '@grafana/ui/src/types';
 
 export interface PanelPlugin {
   id: string;
@@ -15,6 +15,13 @@ export interface PanelPlugin {
 export enum PanelDataFormat {
   Table = 'table',
   TimeSeries = 'time_series',
+}
+
+export interface DataSourcePlugin {
+  type: string;
+  name: string;
+  meta: PluginMeta;
+  exports?: PluginExports;
 }
 
 export interface Plugin {
