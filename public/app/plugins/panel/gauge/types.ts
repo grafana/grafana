@@ -15,7 +15,7 @@ export interface SingleStatValueOptions {
   suffix: string;
   stat: string;
   prefix: string;
-  decimals: number;
+  decimals?: number | null;
 }
 
 export const defaults: GaugeOptions = {
@@ -26,7 +26,7 @@ export const defaults: GaugeOptions = {
   valueOptions: {
     prefix: '',
     suffix: '',
-    decimals: 0,
+    decimals: null,
     stat: 'avg',
     unit: 'none',
   },

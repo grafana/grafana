@@ -35,7 +35,15 @@ export class SingleStatValueEditor extends PureComponent<Props> {
 
   onDecimalChange = event => {
     if (!isNaN(event.target.value)) {
-      this.props.onChange({ ...this.props.options, decimals: event.target.value });
+      this.props.onChange({
+        ...this.props.options,
+        decimals: parseInt(event.target.value, 10),
+      });
+    } else {
+      this.props.onChange({
+        ...this.props.options,
+        decimals: null,
+      });
     }
   };
 
@@ -44,6 +52,11 @@ export class SingleStatValueEditor extends PureComponent<Props> {
 
   render() {
     const { stat, unit, decimals, prefix, suffix } = this.props.options;
+
+    let decimalsString = '';
+    if (Number.isFinite(decimals)) {
+      decimalsString = decimals.toString();
+    }
 
     return (
       <PanelOptionsGroup title="Value">
@@ -65,7 +78,7 @@ export class SingleStatValueEditor extends PureComponent<Props> {
           labelWidth={labelWidth}
           placeholder="auto"
           onChange={this.onDecimalChange}
-          value={decimals || ''}
+          value={decimalsString}
           type="number"
         />
         <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />
