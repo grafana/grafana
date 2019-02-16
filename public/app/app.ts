@@ -31,7 +31,7 @@ import { coreModule, angularModules } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
 import { setupAngularRoutes } from 'app/routes/routes';
 
-import 'app/routes/GrafanaCtrl';
+import "app/routes/GrafanaCtrl";
 import 'app/features/all';
 
 // import symlinked extensions
