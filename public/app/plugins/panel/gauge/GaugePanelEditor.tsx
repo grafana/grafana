@@ -8,9 +8,9 @@ import {
   ValueMapping,
 } from '@grafana/ui';
 
-import { ValueOptions } from 'app/plugins/panel/gauge/ValueOptions';
+import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEditor';
 import { GaugeOptionsBox } from './GaugeOptionsBox';
-import { GaugeOptions } from './types';
+import { GaugeOptions, SingleStatValueOptions } from './types';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
@@ -25,13 +25,19 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       valueMappings,
     });
 
+  onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
+    this.props.onChange({
+      ...this.props.options,
+      valueOptions,
+    });
+
   render() {
     const { onChange, options } = this.props;
 
     return (
       <>
         <PanelOptionsGrid>
-          <ValueOptions onChange={onChange} options={options} />
+          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
           <GaugeOptionsBox onChange={onChange} options={options} />
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
         </PanelOptionsGrid>

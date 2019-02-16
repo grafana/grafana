@@ -392,6 +392,18 @@ export class DashboardMigrator {
       panelUpgrades.push(panel => {
         if (panel['options-gauge']) {
           panel.options = panel['options-gauge'];
+          panel.options.valueOptions = {
+            unit: panel.options.unit,
+            stat: panel.options.stat,
+            decimals: panel.options.decimals,
+            prefix: panel.options.prefix,
+            suffix: panel.options.suffix,
+          };
+          delete panel.options.unit;
+          delete panel.options.stat;
+          delete panel.options.decimals;
+          delete panel.options.prefix;
+          delete panel.options.suffix;
           delete panel['options-gauge'];
         }
       });
