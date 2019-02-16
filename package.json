@@ -121,7 +121,7 @@
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook",
-    "prettier:check": "prettier -- --list-different \"**/*.{ts,tsx,scss}\""
+    "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\""
   },
   "husky": {
     "hooks": {
@@ -129,14 +129,8 @@
     }
   },
   "lint-staged": {
-    "*.{ts,tsx,json,scss}": [
-      "prettier --write",
-      "git add"
-    ],
-    "*pkg/**/*.go": [
-      "gofmt -w -s",
-      "git add"
-    ]
+    "*.{ts,tsx,json,scss}": ["prettier --write", "git add"],
+    "*pkg/**/*.go": ["gofmt -w -s", "git add"]
   },
   "prettier": {
     "trailingComma": "es5",
@@ -201,12 +195,7 @@
     "**/@types/react": "16.7.6"
   },
   "workspaces": {
-    "packages": [
-      "packages/*"
-    ],
-    "nohoist": [
-      "**/@types/*",
-      "**/@types/*/**"
-    ]
+    "packages": ["packages/*"],
+    "nohoist": ["**/@types/*", "**/@types/*/**"]
   }
 }
