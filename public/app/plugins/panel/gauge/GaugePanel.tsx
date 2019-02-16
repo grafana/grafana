@@ -50,6 +50,10 @@ export class GaugePanel extends PureComponent<Props> {
             decimals={valueOptions.decimals}
             thresholds={options.thresholds}
             valueMappings={options.valueMappings}
+            showThresholdLabels={options.showThresholdLabels}
+            showThresholdMarkers={options.showThresholdMarkers}
+            minValue={options.minValue}
+            maxValue={options.maxValue}
             theme={theme}
           />
         )}
