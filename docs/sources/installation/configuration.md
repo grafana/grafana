@@ -594,7 +594,7 @@ Default setting for new alert rules. Defaults to categorize error and timeouts a
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
 
-# concurrent_render_limit
+### concurrent_render_limit
 
 > Available in 5.3  and above
 

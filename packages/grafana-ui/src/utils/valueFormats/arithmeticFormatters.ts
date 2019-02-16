@@ -1,20 +1,20 @@
-import { toFixed } from './valueFormats';
+import { toFixed, DecimalCount } from './valueFormats';
 
-export function toPercent(size: number, decimals: number) {
+export function toPercent(size: number, decimals: DecimalCount) {
   if (size === null) {
     return '';
   }
   return toFixed(size, decimals) + '%';
 }
 
-export function toPercentUnit(size: number, decimals: number) {
+export function toPercentUnit(size: number, decimals: DecimalCount) {
   if (size === null) {
     return '';
   }
   return toFixed(100 * size, decimals) + '%';
 }
 
-export function toHex0x(value: number, decimals: number) {
+export function toHex0x(value: number, decimals: DecimalCount) {
   if (value == null) {
     return '';
   }
@@ -25,7 +25,7 @@ export function toHex0x(value: number, decimals: number) {
   return '0x' + hexString;
 }
 
-export function toHex(value: number, decimals: number) {
+export function toHex(value: number, decimals: DecimalCount) {
   if (value == null) {
     return '';
   }
@@ -34,9 +34,9 @@ export function toHex(value: number, decimals: number) {
     .toUpperCase();
 }
 
-export function sci(value: number, decimals: number) {
+export function sci(value: number, decimals: DecimalCount) {
   if (value == null) {
     return '';
   }
-  return value.toExponential(decimals);
+  return value.toExponential(decimals as number);
 }
