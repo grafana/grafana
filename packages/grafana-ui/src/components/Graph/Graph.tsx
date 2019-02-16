@@ -22,7 +22,7 @@ export class Graph extends PureComponent<GraphProps> {
     showBars: false,
   };
 
-  element: HTMLElement | null;
+  element: HTMLElement | null = null;
 
   componentDidUpdate() {
     this.draw();
