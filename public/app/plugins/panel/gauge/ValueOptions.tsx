@@ -1,7 +1,13 @@
+// Libraries
 import React, { PureComponent } from 'react';
-import { FormField, FormLabel, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
+
+// Components
 import UnitPicker from 'app/core/components/Select/UnitPicker';
+import { FormField, FormLabel, PanelOptionsGroup, Select } from '@grafana/ui';
+
+// Types
 import { GaugeOptions } from './types';
+import { PanelEditorProps } from '@grafana/ui';
 
 const statOptions = [
   { value: 'min', label: 'Min' },
@@ -19,7 +25,7 @@ const statOptions = [
 
 const labelWidth = 6;
 
-export default class ValueOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
+export class ValueOptions extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
 
   onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
