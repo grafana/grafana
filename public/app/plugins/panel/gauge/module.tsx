@@ -1,5 +1,10 @@
-import { GaugePanelOptions } from './GaugePanelOptions';
-import { GaugePanel } from './GaugePanel';
-import { PanelDefaults } from './types';
+import { ReactPanelPlugin } from '@grafana/ui';
 
-export { GaugePanel as Panel, GaugePanelOptions as PanelOptions, PanelDefaults };
+import { GaugePanelEditor } from './GaugePanelEditor';
+import { GaugePanel } from './GaugePanel';
+import { GaugeOptions, defaults } from './types';
+
+export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel);
+
+reactPanel.setEditor(GaugePanelEditor);
+reactPanel.setDefaults(defaults);

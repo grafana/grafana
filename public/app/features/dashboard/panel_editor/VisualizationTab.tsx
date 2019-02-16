@@ -50,33 +50,27 @@ export class VisualizationTab extends PureComponent<Props, State> {
     };
   }
 
-  getPanelDefaultOptions = () => {
+  getReactPanelOptions = () => {
     const { panel, plugin } = this.props;
-
-    if (plugin.exports.PanelDefaults) {
-      return panel.getOptions(plugin.exports.PanelDefaults);
-    }
-
-    return panel.getOptions({});
+    return panel.getOptions(plugin.exports.reactPanel.defaults);
   };
 
   renderPanelOptions() {
     const { plugin, angularPanel } = this.props;
-    const { PanelOptions } = plugin.exports;
 
     if (angularPanel) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    return (
-      <>
-        {PanelOptions ? (
-          <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />
-        ) : (
-          <p>Visualization has no options</p>
-        )}
-      </>
-    );
+    if (plugin.exports.reactPanel) {
+      const PanelEditor = plugin.exports.reactPanel.editor;
+
+      if (PanelEditor) {
+        return <PanelEditor options={this.getReactPanelOptions()} onChange={this.onPanelOptionsChanged} />;
+      }
+    }
+
+    return <p>Visualization has no options</p>;
   }
 
   componentDidMount() {

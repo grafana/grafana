@@ -3,7 +3,6 @@ import _ from 'lodash';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
 import { DataQuery, TimeSeries } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
 
@@ -92,6 +91,7 @@ export class PanelModel {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
+  options: object;
 
   maxDataPoints?: number;
   interval?: string;
@@ -105,8 +105,6 @@ export class PanelModel {
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
-
-  // cache props between plugins
   cachedPluginOptions?: any;
 
   constructor(model) {
@@ -134,18 +132,12 @@ export class PanelModel {
   }
 
   getOptions(panelDefaults) {
-    return _.defaultsDeep(this[this.getOptionsKey()] || {}, panelDefaults);
+    return _.defaultsDeep(this.options || {}, panelDefaults);
   }
 
   updateOptions(options: object) {
-    const update: any = {};
-    update[this.getOptionsKey()] = options;
-    Object.assign(this, update);
+    this.options = options;
     this.render();
-  }
-
-  private getOptionsKey() {
-    return PANEL_OPTIONS_KEY_PREFIX + this.type;
   }
 
   getSaveModel() {
