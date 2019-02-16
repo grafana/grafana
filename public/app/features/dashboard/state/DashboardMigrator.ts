@@ -399,6 +399,8 @@ export class DashboardMigrator {
             prefix: panel.options.prefix,
             suffix: panel.options.suffix,
           };
+          // this options prop was due to a bug
+          delete panel.options.options;
           delete panel.options.unit;
           delete panel.options.stat;
           delete panel.options.decimals;
