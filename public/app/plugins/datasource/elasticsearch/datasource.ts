@@ -200,7 +200,7 @@ export class ElasticDatasource {
   }
 
   testDatasource() {
-    this.timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
+    this.timeSrv.setTime({ from: 'now-1y', to: 'now' }, true);
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(
       function(dateFields) {
