@@ -266,7 +266,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled enabled and user exists", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.LdapEnabled = false
 
@@ -282,7 +282,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			setting.SessionOptions = msession.Options{}
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.exec()
 
 			Convey("should init context with user info", func() {
@@ -294,7 +294,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled enabled and user does not exists", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyAutoSignUp = true
 			setting.LdapEnabled = false
@@ -313,7 +313,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.exec()
 
 			Convey("Should create user if auto sign up is enabled", func() {
@@ -326,12 +326,12 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.req.RemoteAddr = "192.168.3.1:12345"
 			sc.exec()
 
@@ -343,12 +343,12 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.req.RemoteAddr = "192.168.3.1:12345"
 			sc.exec()
 
@@ -360,12 +360,12 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.req.RemoteAddr = "[2001:23]:12345"
 			sc.exec()
 
@@ -377,12 +377,12 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.req.RemoteAddr = "[2001:23]:12345"
 			sc.exec()
 
@@ -394,7 +394,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled and request RemoteAddr is trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
@@ -409,7 +409,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.req.RemoteAddr = "[2001::23]:12345"
 			sc.exec()
 
@@ -422,7 +422,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
@@ -437,7 +437,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.req.RemoteAddr = "192.168.1.10:12345"
 			sc.exec()
 
@@ -450,7 +450,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
@@ -465,7 +465,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.req.RemoteAddr = "[2001::23]:12345"
 			sc.exec()
 
@@ -478,7 +478,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When session exists for previous user, create a new session", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = ""
 
@@ -499,7 +499,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			oldSessionID := sc.context.Session.ID()
 
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.exec()
 
 			newSessionID := sc.context.Session.ID()
@@ -511,7 +511,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy and ldap enabled call sync with ldap user", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = ""
 			setting.LdapEnabled = true
@@ -534,7 +534,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
 			sc.exec()
 
 			Convey("Should call syncGrafanaUserWithLdapUser", func() {

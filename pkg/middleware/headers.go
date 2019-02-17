@@ -5,7 +5,10 @@ import (
 	macaron "gopkg.in/macaron.v1"
 )
 
-const HeaderNameNoBackendCache = "X-Grafana-NoCache"
+const (
+	HeaderNameNoBackendCache = "X-Grafana-NoCache"
+	HeaderWebAuthUser        = "X-WEBAUTH-USER"
+)
 
 func HandleNoCacheHeader() macaron.Handler {
 	return func(ctx *m.ReqContext) {
