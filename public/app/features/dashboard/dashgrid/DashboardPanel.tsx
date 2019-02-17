@@ -131,10 +131,10 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel } = this.props;
+    const { dashboard, panel, isFullscreen } = this.props;
     const { plugin } = this.state;
 
-    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} />;
+    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} isFullscreen={isFullscreen} />;
   }
 
   renderAngularPanel() {

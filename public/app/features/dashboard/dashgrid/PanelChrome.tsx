@@ -29,6 +29,7 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
+  isFullscreen: boolean;
 }
 
 export interface State {
@@ -193,7 +194,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, panel } = this.props;
+    const { dashboard, panel, isFullscreen } = this.props;
     const { errorMessage, timeInfo } = this.state;
     const { transparent } = panel;
 
@@ -216,6 +217,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
                 error={errorMessage}
+                isFullscreen={isFullscreen}
               />
               <ErrorBoundary>
                 {({ error, errorInfo }) => {
