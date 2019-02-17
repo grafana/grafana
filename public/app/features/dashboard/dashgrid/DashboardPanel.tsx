@@ -76,21 +76,19 @@ export class DashboardPanel extends PureComponent<Props, State> {
       // unmount angular panel
       this.cleanUpAngularPanel();
 
-      if (panel.type !== pluginId) {
-        this.props.panel.changeType(pluginId, fromAngularPanel);
-      }
-
-      if (plugin.exports) {
-        this.setState({ plugin, angularPanel: null });
-      } else {
+      if (!plugin.exports) {
         try {
           plugin.exports = await importPluginModule(plugin.module);
         } catch (e) {
           plugin = getPanelPluginNotFound(pluginId);
         }
-
-        this.setState({ plugin, angularPanel: null });
       }
+
+      if (panel.type !== pluginId) {
+        this.props.panel.changeType(pluginId, fromAngularPanel);
+      }
+
+      this.setState({ plugin, angularPanel: null });
     }
   }
 

@@ -19,6 +19,6 @@ export const defaults: BarGaugeOptions = {
     suffix: '',
     decimals: null,
   },
-  thresholds: [{ index: 2, value: 80, color: 'red' }, { index: 0, value: -Infinity, color: 'green' }],
+  thresholds: [{ index: 1, value: 80, color: 'red' }, { index: 0, value: -Infinity, color: 'green' }],
   valueMappings: [],
 };
