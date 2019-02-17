@@ -332,7 +332,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = HeaderUser
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = ipWhitelist
 
 			sc.fakeReq("GET", "/")
