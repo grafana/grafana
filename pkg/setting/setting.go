@@ -29,6 +29,7 @@ const (
 	HTTPS             Scheme = "https"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
+	windows           string = "windows"
 )
 
 const (
@@ -249,7 +250,7 @@ type CommandLineArgs struct {
 }
 
 func init() {
-	IsWindows = runtime.GOOS == "windows"
+	IsWindows = runtime.GOOS == windows
 	logger = log.New("settings")
 }
 
