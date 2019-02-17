@@ -66,7 +66,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			})
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/alerts?dashboardId=1", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
 			var searchQuery *search.Query
 			bus.AddHandler("test", func(query *search.Query) error {
 				searchQuery = query
@@ -80,13 +80,13 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			})
 
 			sc.handlerFunc = GetAlerts
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
 
 			So(searchQuery, ShouldBeNil)
 			So(getAlertsQuery, ShouldNotBeNil)
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
 			var searchQuery *search.Query
 			bus.AddHandler("test", func(query *search.Query) error {
 				searchQuery = query
@@ -104,7 +104,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			})
 
 			sc.handlerFunc = GetAlerts
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
 
 			So(searchQuery, ShouldNotBeNil)
 			So(searchQuery.DashboardIds[0], ShouldEqual, 1)
@@ -120,9 +120,9 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			So(getAlertsQuery.Query, ShouldEqual, "alertQuery")
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alert-notifications/1", "/alert-notifications/:notificationId", m.ROLE_ADMIN, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/alert-notifications/1", "/alert-notifications/:notificationId", m.ROLE_ADMIN, func(sc *scenarioContext) {
 			sc.handlerFunc = GetAlertNotificationByID
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
 			So(sc.resp.Code, ShouldEqual, 404)
 		})
 	})

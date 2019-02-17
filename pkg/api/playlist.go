@@ -33,7 +33,7 @@ func ValidateOrgPlaylist(c *m.ReqContext) {
 		return
 	}
 
-	if len(items) == 0 && c.Context.Req.Method != "DELETE" {
+	if len(items) == 0 && c.Context.Req.Method != deleteMethod {
 		c.JsonApiErr(404, "Playlist is empty", itemsErr)
 		return
 	}

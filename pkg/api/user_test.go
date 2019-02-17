@@ -33,7 +33,7 @@ func TestUserApiEndpoint(t *testing.T) {
 			})
 
 			sc.handlerFunc = SearchUsers
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
 
 			So(sentLimit, ShouldEqual, 1000)
 			So(sendPage, ShouldEqual, 1)
@@ -56,7 +56,7 @@ func TestUserApiEndpoint(t *testing.T) {
 			})
 
 			sc.handlerFunc = SearchUsers
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
+			sc.fakeReqWithParams(getMethod, sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
 			So(sentLimit, ShouldEqual, 10)
 			So(sendPage, ShouldEqual, 2)
@@ -75,7 +75,7 @@ func TestUserApiEndpoint(t *testing.T) {
 			})
 
 			sc.handlerFunc = SearchUsersWithPaging
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
 
 			So(sentLimit, ShouldEqual, 1000)
 			So(sendPage, ShouldEqual, 1)
@@ -100,7 +100,7 @@ func TestUserApiEndpoint(t *testing.T) {
 			})
 
 			sc.handlerFunc = SearchUsersWithPaging
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
+			sc.fakeReqWithParams(getMethod, sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
 			So(sentLimit, ShouldEqual, 10)
 			So(sendPage, ShouldEqual, 2)

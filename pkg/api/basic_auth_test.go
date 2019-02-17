@@ -15,7 +15,7 @@ func TestBasicAuthenticatedRequest(t *testing.T) {
 	expectedPass := "password"
 
 	Convey("Given a valid set of basic auth credentials", t, func() {
-		httpReq, err := http.NewRequest("GET", "http://localhost:3000/metrics", nil)
+		httpReq, err := http.NewRequest(getMethod, "http://localhost:3000/metrics", nil)
 		So(err, ShouldBeNil)
 		req := macaron.Request{
 			Request: httpReq,
@@ -27,7 +27,7 @@ func TestBasicAuthenticatedRequest(t *testing.T) {
 	})
 
 	Convey("Given an invalid set of basic auth credentials", t, func() {
-		httpReq, err := http.NewRequest("GET", "http://localhost:3000/metrics", nil)
+		httpReq, err := http.NewRequest(getMethod, "http://localhost:3000/metrics", nil)
 		So(err, ShouldBeNil)
 		req := macaron.Request{
 			Request: httpReq,
