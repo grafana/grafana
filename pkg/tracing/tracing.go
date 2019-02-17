@@ -1,68 +1,72 @@
 package tracing
 
 import (
+	"context"
 	"io"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
-	ini "gopkg.in/ini.v1"
 )
 
-var (
-	logger log.Logger = log.New("tracing")
-)
-
-type TracingSettings struct {
-	Enabled      bool
-	Address      string
-	CustomTags   map[string]string
-	SamplerType  string
-	SamplerParam float64
+func init() {
+	registry.RegisterService(&TracingService{})
 }
 
-func Init(file *ini.File) (io.Closer, error) {
-	settings := parseSettings(file)
-	return internalInit(settings)
+type TracingService struct {
+	enabled      bool
+	address      string
+	customTags   map[string]string
+	samplerType  string
+	samplerParam float64
+	log          log.Logger
+	closer       io.Closer
+
+	Cfg *setting.Cfg `inject:""`
 }
 
-func parseSettings(file *ini.File) *TracingSettings {
-	settings := &TracingSettings{}
+func (ts *TracingService) Init() error {
+	ts.log = log.New("tracing")
+	ts.parseSettings()
 
-	var section, err = setting.Cfg.GetSection("tracing.jaeger")
+	if ts.enabled {
+		ts.initGlobalTracer()
+	}
+
+	return nil
+}
+
+func (ts *TracingService) parseSettings() {
+	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
 	if err != nil {
-		return settings
+		return
 	}
 
-	settings.Address = section.Key("address").MustString("")
-	if settings.Address != "" {
-		settings.Enabled = true
+	ts.address = section.Key("address").MustString("")
+	if ts.address != "" {
+		ts.enabled = true
 	}
 
-	settings.CustomTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
-	settings.SamplerType = section.Key("sampler_type").MustString("")
-	settings.SamplerParam = section.Key("sampler_param").MustFloat64(1)
-
-	return settings
+	ts.customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
+	ts.samplerType = section.Key("sampler_type").MustString("")
+	ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
 }
 
-func internalInit(settings *TracingSettings) (io.Closer, error) {
-	if !settings.Enabled {
-		return &nullCloser{}, nil
-	}
-
+func (ts *TracingService) initGlobalTracer() error {
 	cfg := jaegercfg.Configuration{
-		Disabled: !settings.Enabled,
+		ServiceName: "grafana",
+		Disabled:    !ts.enabled,
 		Sampler: &jaegercfg.SamplerConfig{
-			Type:  settings.SamplerType,
-			Param: settings.SamplerParam,
+			Type:  ts.samplerType,
+			Param: ts.samplerParam,
 		},
 		Reporter: &jaegercfg.ReporterConfig{
 			LogSpans:           false,
-			LocalAgentHostPort: settings.Address,
+			LocalAgentHostPort: ts.address,
 		},
 	}
 
@@ -71,18 +75,31 @@ func internalInit(settings *TracingSettings) (io.Closer, error) {
 	options := []jaegercfg.Option{}
 	options = append(options, jaegercfg.Logger(jLogger))
 
-	for tag, value := range settings.CustomTags {
+	for tag, value := range ts.customTags {
 		options = append(options, jaegercfg.Tag(tag, value))
 	}
 
-	tracer, closer, err := cfg.New("grafana", options...)
+	tracer, closer, err := cfg.NewTracer(options...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	opentracing.InitGlobalTracer(tracer)
-	logger.Info("Initializing Jaeger tracer", "address", settings.Address)
-	return closer, nil
+
+	ts.closer = closer
+
+	return nil
+}
+
+func (ts *TracingService) Run(ctx context.Context) error {
+	<-ctx.Done()
+
+	if ts.closer != nil {
+		ts.log.Info("Closing tracing")
+		ts.closer.Close()
+	}
+
+	return nil
 }
 
 func splitTagSettings(input string) map[string]string {
@@ -110,7 +127,3 @@ func (jlw *jaegerLogWrapper) Error(msg string) {
 func (jlw *jaegerLogWrapper) Infof(msg string, args ...interface{}) {
 	jlw.logger.Info(msg, args)
 }
-
-type nullCloser struct{}
-
-func (*nullCloser) Close() error { return nil }

@@ -7,10 +7,12 @@ import (
 	"time"
 )
 
+// StringsFallback2 returns the first of two not empty strings.
 func StringsFallback2(val1 string, val2 string) string {
 	return stringsFallback(val1, val2)
 }
 
+// StringsFallback3 returns the first of three not empty strings.
 func StringsFallback3(val1 string, val2 string, val3 string) string {
 	return stringsFallback(val1, val2, val3)
 }
@@ -24,6 +26,7 @@ func stringsFallback(vals ...string) string {
 	return ""
 }
 
+// SplitString splits a string by commas or empty spaces.
 func SplitString(str string) []string {
 	if len(str) == 0 {
 		return []string{}
@@ -32,6 +35,7 @@ func SplitString(str string) []string {
 	return regexp.MustCompile("[, ]+").Split(str, -1)
 }
 
+// GetAgeString returns a string representing certain time from years to minutes.
 func GetAgeString(t time.Time) string {
 	if t.IsZero() {
 		return "?"

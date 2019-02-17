@@ -13,6 +13,7 @@ type AlertTestCommand struct {
 	Dashboard *simplejson.Json
 	PanelId   int64
 	OrgId     int64
+	User      *m.SignedInUser
 
 	Result *EvalContext
 }
@@ -25,7 +26,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 
 	dash := m.NewDashboardFromJson(cmd.Dashboard)
 
-	extractor := NewDashAlertExtractor(dash, cmd.OrgId)
+	extractor := NewDashAlertExtractor(dash, cmd.OrgId, cmd.User)
 	alerts, err := extractor.GetAlerts()
 	if err != nil {
 		return err
@@ -53,6 +54,7 @@ func testAlertRule(rule *Rule) *EvalContext {
 	context.IsTestRun = true
 
 	handler.Eval(context)
+	context.Rule.State = context.GetNewState()
 
 	return context
 }

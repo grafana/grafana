@@ -15,7 +15,7 @@ func (b *Builder) insertWriteTo(w Writer) error {
 		return errors.New("no table indicated")
 	}
 	if len(b.inserts) <= 0 {
-		return errors.New("no column to be update")
+		return errors.New("no column to be insert")
 	}
 
 	if _, err := fmt.Fprintf(w, "INSERT INTO %s (", b.tableName); err != nil {
@@ -26,7 +26,9 @@ func (b *Builder) insertWriteTo(w Writer) error {
 	var bs []byte
 	var valBuffer = bytes.NewBuffer(bs)
 	var i = 0
-	for col, value := range b.inserts {
+
+	for _, col := range b.inserts.sortedKeys() {
+		value := b.inserts[col]
 		fmt.Fprint(w, col)
 		if e, ok := value.(expr); ok {
 			fmt.Fprint(valBuffer, e.sql)

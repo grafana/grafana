@@ -32,6 +32,7 @@ import (
 	"golang.org/x/net/trace"
 	"google.golang.org/grpc/balancer"
 	_ "google.golang.org/grpc/balancer/roundrobin" // To register roundrobin.
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
@@ -40,17 +41,22 @@ import (
 	_ "google.golang.org/grpc/resolver/dns"         // To register dns resolver.
 	_ "google.golang.org/grpc/resolver/passthrough" // To register passthrough resolver.
 	"google.golang.org/grpc/stats"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/transport"
+)
+
+const (
+	// minimum time to give a connection to complete
+	minConnectTimeout = 20 * time.Second
 )
 
 var (
 	// ErrClientConnClosing indicates that the operation is illegal because
 	// the ClientConn is closing.
-	ErrClientConnClosing = errors.New("grpc: the client connection is closing")
-	// ErrClientConnTimeout indicates that the ClientConn cannot establish the
-	// underlying connections within the specified timeout.
-	// DEPRECATED: Please use context.DeadlineExceeded instead.
-	ErrClientConnTimeout = errors.New("grpc: timed out when dialing")
+	//
+	// Deprecated: this error should not be relied upon by users; use the status
+	// code of Canceled instead.
+	ErrClientConnClosing = status.Error(codes.Canceled, "grpc: the client connection is closing")
 	// errConnDrain indicates that the connection starts to be drained and does not accept any new RPCs.
 	errConnDrain = errors.New("grpc: the connection is drained")
 	// errConnClosing indicates that the connection is closing.
@@ -59,8 +65,11 @@ var (
 	errConnUnavailable = errors.New("grpc: the connection is unavailable")
 	// errBalancerClosed indicates that the balancer is closed.
 	errBalancerClosed = errors.New("grpc: balancer is closed")
-	// minimum time to give a connection to complete
-	minConnectTimeout = 20 * time.Second
+	// We use an accessor so that minConnectTimeout can be
+	// atomically read and updated while testing.
+	getMinConnectTimeout = func() time.Duration {
+		return minConnectTimeout
+	}
 )
 
 // The following errors are returned from Dial and DialContext
@@ -85,7 +94,6 @@ var (
 type dialOptions struct {
 	unaryInt    UnaryClientInterceptor
 	streamInt   StreamClientInterceptor
-	codec       Codec
 	cp          Compressor
 	dc          Decompressor
 	bs          backoffStrategy
@@ -99,10 +107,8 @@ type dialOptions struct {
 	// balancer, and also by WithBalancerName dial option.
 	balancerBuilder balancer.Builder
 	// This is to support grpclb.
-	resolverBuilder resolver.Builder
-	// Custom user options for resolver.Build.
-	resolverBuildUserOptions interface{}
-	waitForHandshake         bool
+	resolverBuilder  resolver.Builder
+	waitForHandshake bool
 }
 
 const (
@@ -167,10 +173,10 @@ func WithDefaultCallOptions(cos ...CallOption) DialOption {
 }
 
 // WithCodec returns a DialOption which sets a codec for message marshaling and unmarshaling.
+//
+// Deprecated: use WithDefaultCallOptions(CallCustomCodec(c)) instead.
 func WithCodec(c Codec) DialOption {
-	return func(o *dialOptions) {
-		o.codec = c
-	}
+	return WithDefaultCallOptions(CallCustomCodec(c))
 }
 
 // WithCompressor returns a DialOption which sets a Compressor to use for
@@ -233,14 +239,6 @@ func WithBalancerName(balancerName string) DialOption {
 func withResolverBuilder(b resolver.Builder) DialOption {
 	return func(o *dialOptions) {
 		o.resolverBuilder = b
-	}
-}
-
-// WithResolverUserOptions returns a DialOption which sets the UserOptions
-// field of resolver's BuildOption.
-func WithResolverUserOptions(userOpt interface{}) DialOption {
-	return func(o *dialOptions) {
-		o.resolverBuildUserOptions = userOpt
 	}
 }
 
@@ -407,6 +405,10 @@ func Dial(target string, opts ...DialOption) (*ClientConn, error) {
 // cancel or expire the pending connection. Once this function returns, the
 // cancellation and expiration of ctx will be noop. Users should call ClientConn.Close
 // to terminate all the pending operations after this function returns.
+//
+// The target name syntax is defined in
+// https://github.com/grpc/grpc/blob/master/doc/naming.md.
+// e.g. to use dns resolver, a "dns:///" prefix should be applied to the target.
 func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *ClientConn, err error) {
 	cc := &ClientConn{
 		target: target,
@@ -482,14 +484,28 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		default:
 		}
 	}
-	// Set defaults.
-	if cc.dopts.codec == nil {
-		cc.dopts.codec = protoCodec{}
-	}
 	if cc.dopts.bs == nil {
 		cc.dopts.bs = DefaultBackoffConfig
 	}
-	cc.parsedTarget = parseTarget(cc.target)
+	if cc.dopts.resolverBuilder == nil {
+		// Only try to parse target when resolver builder is not already set.
+		cc.parsedTarget = parseTarget(cc.target)
+		grpclog.Infof("parsed scheme: %q", cc.parsedTarget.Scheme)
+		cc.dopts.resolverBuilder = resolver.Get(cc.parsedTarget.Scheme)
+		if cc.dopts.resolverBuilder == nil {
+			// If resolver builder is still nil, the parse target's scheme is
+			// not registered. Fallback to default resolver and set Endpoint to
+			// the original unparsed target.
+			grpclog.Infof("scheme %q not registered, fallback to default scheme", cc.parsedTarget.Scheme)
+			cc.parsedTarget = resolver.Target{
+				Scheme:   resolver.GetDefaultScheme(),
+				Endpoint: target,
+			}
+			cc.dopts.resolverBuilder = resolver.Get(cc.parsedTarget.Scheme)
+		}
+	} else {
+		cc.parsedTarget = resolver.Target{Endpoint: target}
+	}
 	creds := cc.dopts.copts.TransportCredentials
 	if creds != nil && creds.Info().ServerName != "" {
 		cc.authority = creds.Info().ServerName
@@ -875,7 +891,7 @@ func (ac *addrConn) tryUpdateAddrs(addrs []resolver.Address) bool {
 // the corresponding MethodConfig.
 // If there isn't an exact match for the input method, we look for the default config
 // under the service (i.e /service/). If there is a default MethodConfig for
-// the serivce, we return it.
+// the service, we return it.
 // Otherwise, we return an empty MethodConfig.
 func (cc *ClientConn) GetMethodConfig(method string) MethodConfig {
 	// TODO: Avoid the locking here.
@@ -936,7 +952,7 @@ func (cc *ClientConn) resolveNow(o resolver.ResolveNowOption) {
 
 // Close tears down the ClientConn and all underlying connections.
 func (cc *ClientConn) Close() error {
-	cc.cancel()
+	defer cc.cancel()
 
 	cc.mu.Lock()
 	if cc.conns == nil {
@@ -1065,7 +1081,7 @@ func (ac *addrConn) resetTransport() error {
 			// connection.
 			backoffFor := ac.dopts.bs.backoff(connectRetryNum) // time.Duration.
 			// This will be the duration that dial gets to finish.
-			dialDuration := minConnectTimeout
+			dialDuration := getMinConnectTimeout()
 			if backoffFor > dialDuration {
 				// Give dial more time as we keep failing to connect.
 				dialDuration = backoffFor
@@ -1139,15 +1155,7 @@ func (ac *addrConn) createTransport(connectRetryNum, ridx int, backoffDeadline, 
 		newTr, err := transport.NewClientTransport(connectCtx, ac.cc.ctx, target, copts, onPrefaceReceipt)
 		if err != nil {
 			cancel()
-			if e, ok := err.(transport.ConnectionError); ok && !e.Temporary() {
-				ac.mu.Lock()
-				if ac.state != connectivity.Shutdown {
-					ac.state = connectivity.TransientFailure
-					ac.cc.handleSubConnStateChange(ac.acbw, ac.state)
-				}
-				ac.mu.Unlock()
-				return false, err
-			}
+			ac.cc.blockingpicker.updateConnectionError(err)
 			ac.mu.Lock()
 			if ac.state == connectivity.Shutdown {
 				// ac.tearDown(...) has been invoked.
@@ -1385,3 +1393,10 @@ func (ac *addrConn) getState() connectivity.State {
 	defer ac.mu.Unlock()
 	return ac.state
 }
+
+// ErrClientConnTimeout indicates that the ClientConn cannot establish the
+// underlying connections within the specified timeout.
+//
+// Deprecated: This error is never returned by grpc and should not be
+// referenced by users.
+var ErrClientConnTimeout = errors.New("grpc: timed out when dialing")

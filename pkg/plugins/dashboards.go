@@ -17,6 +17,7 @@ type PluginDashboardInfoDTO struct {
 	ImportedUrl      string `json:"importedUrl"`
 	Slug             string `json:"slug"`
 	DashboardId      int64  `json:"dashboardId"`
+	FolderId         int64  `json:"folderId"`
 	ImportedRevision int64  `json:"importedRevision"`
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`

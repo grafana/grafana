@@ -33,7 +33,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
 		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
-			return errors.New(fmt.Sprintf("pluginsDir (%s) is not a directory", pluginsDir))
+			return fmt.Errorf("pluginsDir (%s) is not a writable directory", pluginsDir)
 		}
 		return nil
 	}
@@ -112,7 +112,7 @@ func SelectVersion(plugin m.Plugin, version string) (m.Version, error) {
 		}
 	}
 
-	return m.Version{}, errors.New("Could not find the version your looking for")
+	return m.Version{}, errors.New("Could not find the version you're looking for")
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
@@ -152,7 +152,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		return err
 	}
 
-	r, err := zip.NewReader(bytes.NewReader(body), resp.ContentLength)
+	r, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
 		return err
 	}

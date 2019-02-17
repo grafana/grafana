@@ -18,7 +18,7 @@ import (
 
 var pluginProxyTransport *http.Transport
 
-func InitAppPluginRoutes(r *macaron.Macaron) {
+func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 	pluginProxyTransport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: setting.PluginAppsSkipVerifyTLS,
@@ -35,7 +35,7 @@ func InitAppPluginRoutes(r *macaron.Macaron) {
 
 	for _, plugin := range plugins.Apps {
 		for _, route := range plugin.Routes {
-			url := util.JoinUrlFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
+			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
 				ReqSignedIn: true,
@@ -55,11 +55,11 @@ func InitAppPluginRoutes(r *macaron.Macaron) {
 	}
 }
 
-func AppPluginRoute(route *plugins.AppPluginRoute, appId string) macaron.Handler {
+func AppPluginRoute(route *plugins.AppPluginRoute, appID string) macaron.Handler {
 	return func(c *m.ReqContext) {
 		path := c.Params("*")
 
-		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appId)
+		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID)
 		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
 	}

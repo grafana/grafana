@@ -17,6 +17,7 @@ export class SearchCtrl {
   isLoading: boolean;
   initialFolderFilterTitle: string;
   isEditor: string;
+  hasEditPermissionInFolders: boolean;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
@@ -24,9 +25,8 @@ export class SearchCtrl {
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
     this.initialFolderFilterTitle = 'All';
-    this.getTags = this.getTags.bind(this);
-    this.onTagSelect = this.onTagSelect.bind(this);
     this.isEditor = contextSrv.isEditor;
+    this.hasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
   }
 
   closeSearch() {
@@ -128,8 +128,8 @@ export class SearchCtrl {
     }
 
     const max = flattenedResult.length;
-    let newIndex = this.selectedIndex + direction;
-    this.selectedIndex = (newIndex %= max) < 0 ? newIndex + max : newIndex;
+    const newIndex = (this.selectedIndex + direction) % max;
+    this.selectedIndex = newIndex < 0 ? newIndex + max : newIndex;
     const selectedItem = flattenedResult[this.selectedIndex];
 
     if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
@@ -157,9 +157,13 @@ export class SearchCtrl {
 
   searchDashboards() {
     this.currentSearchId = this.currentSearchId + 1;
-    var localSearchId = this.currentSearchId;
+    const localSearchId = this.currentSearchId;
+    const query = {
+      ...this.query,
+      tag: this.query.tag,
+    };
 
-    return this.searchSrv.search(this.query).then(results => {
+    return this.searchSrv.search(query).then(results => {
       if (localSearchId < this.currentSearchId) {
         return;
       }
@@ -170,7 +174,7 @@ export class SearchCtrl {
   }
 
   queryHasNoFilters() {
-    var query = this.query;
+    const query = this.query;
     return query.query === '' && query.starred === false && query.tag.length === 0;
   }
 
@@ -189,14 +193,14 @@ export class SearchCtrl {
     evt.preventDefault();
   }
 
-  getTags() {
+  getTags = () => {
     return this.searchSrv.getDashboardTags();
-  }
+  };
 
-  onTagSelect(newTags) {
-    this.query.tag = _.map(newTags, tag => tag.value);
+  onTagFiltersChanged = (tags: string[]) => {
+    this.query.tag = tags;
     this.search();
-  }
+  };
 
   clearSearchFilter() {
     this.query.tag = [];

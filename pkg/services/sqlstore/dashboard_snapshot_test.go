@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -110,46 +109,43 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 }
 
 func TestDeleteExpiredSnapshots(t *testing.T) {
-	Convey("Testing dashboard snapshots clean up", t, func() {
-		x := InitTestDB(t)
+	sqlstore := InitTestDB(t)
 
+	Convey("Testing dashboard snapshots clean up", t, func() {
 		setting.SnapShotRemoveExpired = true
 
-		notExpiredsnapshot := createTestSnapshot(x, "key1", 1000)
-		createTestSnapshot(x, "key2", -1000)
-		createTestSnapshot(x, "key3", -1000)
+		notExpiredsnapshot := createTestSnapshot(sqlstore, "key1", 48000)
+		createTestSnapshot(sqlstore, "key2", -1200)
+		createTestSnapshot(sqlstore, "key3", -1200)
 
-		Convey("Clean up old dashboard snapshots", func() {
-			err := DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
-			So(err, ShouldBeNil)
+		err := DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
+		So(err, ShouldBeNil)
 
-			query := m.GetDashboardSnapshotsQuery{
-				OrgId:        1,
-				SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
-			}
-			err = SearchDashboardSnapshots(&query)
-			So(err, ShouldBeNil)
+		query := m.GetDashboardSnapshotsQuery{
+			OrgId:        1,
+			SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
+		}
+		err = SearchDashboardSnapshots(&query)
+		So(err, ShouldBeNil)
 
-			So(len(query.Result), ShouldEqual, 1)
-			So(query.Result[0].Key, ShouldEqual, notExpiredsnapshot.Key)
-		})
+		So(len(query.Result), ShouldEqual, 1)
+		So(query.Result[0].Key, ShouldEqual, notExpiredsnapshot.Key)
 
-		Convey("Don't delete anything if there are no expired snapshots", func() {
-			err := DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
-			So(err, ShouldBeNil)
+		err = DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
+		So(err, ShouldBeNil)
 
-			query := m.GetDashboardSnapshotsQuery{
-				OrgId:        1,
-				SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
-			}
-			SearchDashboardSnapshots(&query)
+		query = m.GetDashboardSnapshotsQuery{
+			OrgId:        1,
+			SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
+		}
+		SearchDashboardSnapshots(&query)
 
-			So(len(query.Result), ShouldEqual, 1)
-		})
+		So(len(query.Result), ShouldEqual, 1)
+		So(query.Result[0].Key, ShouldEqual, notExpiredsnapshot.Key)
 	})
 }
 
-func createTestSnapshot(x *xorm.Engine, key string, expires int64) *m.DashboardSnapshot {
+func createTestSnapshot(sqlstore *SqlStore, key string, expires int64) *m.DashboardSnapshot {
 	cmd := m.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
@@ -164,9 +160,11 @@ func createTestSnapshot(x *xorm.Engine, key string, expires int64) *m.DashboardS
 	So(err, ShouldBeNil)
 
 	// Set expiry date manually - to be able to create expired snapshots
-	expireDate := time.Now().Add(time.Second * time.Duration(expires))
-	_, err = x.Exec("update dashboard_snapshot set expires = ? where "+dialect.Quote("key")+" = ?", expireDate, key)
-	So(err, ShouldBeNil)
+	if expires < 0 {
+		expireDate := time.Now().Add(time.Second * time.Duration(expires))
+		_, err = sqlstore.engine.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
+		So(err, ShouldBeNil)
+	}
 
 	return cmd.Result
 }

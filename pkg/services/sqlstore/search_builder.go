@@ -92,7 +92,7 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
 
-	sb.sql.WriteString(" ORDER BY dashboard.title ASC LIMIT 5000")
+	sb.sql.WriteString(" ORDER BY dashboard.title ASC" + dialect.Limit(5000))
 
 	return sb.sql.String(), sb.params
 }
@@ -135,12 +135,11 @@ func (sb *SearchBuilder) buildTagQuery() {
 	// this ends the inner select (tag filtered part)
 	sb.sql.WriteString(`
 		GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
-		LIMIT ?) as ids
+		ORDER BY dashboard.id` + dialect.Limit(int64(sb.limit)) + `) as ids
 		INNER JOIN dashboard on ids.id = dashboard.id
 	`)
 
 	sb.params = append(sb.params, len(sb.tags))
-	sb.params = append(sb.params, sb.limit)
 }
 
 func (sb *SearchBuilder) buildMainQuery() {
@@ -153,8 +152,7 @@ func (sb *SearchBuilder) buildMainQuery() {
 	sb.sql.WriteString(` WHERE `)
 	sb.buildSearchWhereClause()
 
-	sb.sql.WriteString(` LIMIT ?) as ids INNER JOIN dashboard on ids.id = dashboard.id `)
-	sb.params = append(sb.params, sb.limit)
+	sb.sql.WriteString(` ORDER BY dashboard.title` + dialect.Limit(int64(sb.limit)) + `) as ids INNER JOIN dashboard on ids.id = dashboard.id `)
 }
 
 func (sb *SearchBuilder) buildSearchWhereClause() {

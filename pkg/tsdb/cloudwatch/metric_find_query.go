@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -35,6 +36,7 @@ type CustomMetricsCache struct {
 
 var customMetricsMetricsMap map[string]map[string]map[string]*CustomMetricsCache
 var customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
+var regionCache sync.Map
 
 func init() {
 	metricsMap = map[string][]string{
@@ -45,10 +47,15 @@ func init() {
 		"AWS/Billing":        {"EstimatedCharges"},
 		"AWS/CloudFront":     {"Requests", "BytesDownloaded", "BytesUploaded", "TotalErrorRate", "4xxErrorRate", "5xxErrorRate"},
 		"AWS/CloudSearch":    {"SuccessfulRequests", "SearchableDocuments", "IndexUtilization", "Partitions"},
+		"AWS/CloudHSM":       {"HsmUnhealthy", "HsmTemperature", "HsmKeysSessionOccupied", "HsmKeysTokenOccupied", "HsmSslCtxsOccupied", "HsmSessionCount", "HsmUsersAvailable", "HsmUsersMax", "InterfaceEth2OctetsInput", "InterfaceEth2OctetsOutput"},
+		"AWS/CodeBuild":      {"BuildDuration", "Builds", "DownloadSourceDuration", "Duration", "FailedBuilds", "FinalizingDuration", "InstallDuration", "PostBuildDuration", "PreBuildDuration", "ProvisioningDuration", "QueuedDuration", "SubmittedDuration", "SucceededBuilds", "UploadArtifactsDuration"},
+		"AWS/Connect":        {"CallsBreachingConcurrencyQuota", "CallBackNotDialableNumber", "CallRecordingUploadError", "CallsPerInterval", "ConcurrentCalls", "ConcurrentCallsPercentage", "ContactFlowErrors", "ContactFlowFatalErrors", "LongestQueueWaitTime", "MissedCalls", "MisconfiguredPhoneNumbers", "PublicSigningKeyUsage", "QueueCapacityExceededError", "QueueSize", "ThrottledCalls", "ToInstancePacketLossRate"},
 		"AWS/DMS":            {"FreeableMemory", "WriteIOPS", "ReadIOPS", "WriteThroughput", "ReadThroughput", "WriteLatency", "ReadLatency", "SwapUsage", "NetworkTransmitThroughput", "NetworkReceiveThroughput", "FullLoadThroughputBandwidthSource", "FullLoadThroughputBandwidthTarget", "FullLoadThroughputRowsSource", "FullLoadThroughputRowsTarget", "CDCIncomingChanges", "CDCChangesMemorySource", "CDCChangesMemoryTarget", "CDCChangesDiskSource", "CDCChangesDiskTarget", "CDCThroughputBandwidthTarget", "CDCThroughputRowsSource", "CDCThroughputRowsTarget", "CDCLatencySource", "CDCLatencyTarget"},
+		"AWS/DX":             {"ConnectionState", "ConnectionBpsEgress", "ConnectionBpsIngress", "ConnectionPpsEgress", "ConnectionPpsIngress", "ConnectionCRCErrorCount", "ConnectionLightLevelTx", "ConnectionLightLevelRx"},
 		"AWS/DynamoDB":       {"ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "OnlineIndexConsumedWriteCapacity", "OnlineIndexPercentageProgress", "OnlineIndexThrottleEvents", "ProvisionedReadCapacityUnits", "ProvisionedWriteCapacityUnits", "ReadThrottleEvents", "ReturnedBytes", "ReturnedItemCount", "ReturnedRecordsCount", "SuccessfulRequestLatency", "SystemErrors", "TimeToLiveDeletedItemCount", "ThrottledRequests", "UserErrors", "WriteThrottleEvents"},
 		"AWS/EBS":            {"VolumeReadBytes", "VolumeWriteBytes", "VolumeReadOps", "VolumeWriteOps", "VolumeTotalReadTime", "VolumeTotalWriteTime", "VolumeIdleTime", "VolumeQueueLength", "VolumeThroughputPercentage", "VolumeConsumedReadWriteOps", "BurstBalance"},
 		"AWS/EC2":            {"CPUCreditUsage", "CPUCreditBalance", "CPUUtilization", "DiskReadOps", "DiskWriteOps", "DiskReadBytes", "DiskWriteBytes", "NetworkIn", "NetworkOut", "NetworkPacketsIn", "NetworkPacketsOut", "StatusCheckFailed", "StatusCheckFailed_Instance", "StatusCheckFailed_System"},
+		"AWS/EC2/API":        {"ClientErrors", "RequestLimitExceeded", "ServerErrors", "SuccessfulCalls"},
 		"AWS/EC2Spot":        {"AvailableInstancePoolsCount", "BidsSubmittedForCapacity", "EligibleInstancePoolCount", "FulfilledCapacity", "MaxPercentCapacityAllocation", "PendingCapacity", "PercentCapacityAllocation", "TargetCapacity", "TerminatingCapacity"},
 		"AWS/ECS":            {"CPUReservation", "MemoryReservation", "CPUUtilization", "MemoryUtilization"},
 		"AWS/EFS":            {"BurstCreditBalance", "ClientConnections", "DataReadIOBytes", "DataWriteIOBytes", "MetadataIOBytes", "TotalIOBytes", "PermittedThroughput", "PercentIOLimit"},
@@ -86,16 +93,18 @@ func init() {
 		"AWS/Kinesis":          {"GetRecords.Bytes", "GetRecords.IteratorAge", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Records", "GetRecords.Success", "IncomingBytes", "IncomingRecords", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "ReadProvisionedThroughputExceeded", "WriteProvisionedThroughputExceeded", "IteratorAgeMilliseconds", "OutgoingBytes", "OutgoingRecords"},
 		"AWS/KinesisAnalytics": {"Bytes", "MillisBehindLatest", "Records", "Success"},
 		"AWS/Lambda":           {"Invocations", "Errors", "Duration", "Throttles", "IteratorAge"},
+		"AWS/AppSync":          {"Latency", "4XXError", "5XXError"},
 		"AWS/Logs":             {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
 		"AWS/ML":               {"PredictCount", "PredictFailureCount"},
 		"AWS/NATGateway":       {"PacketsOutToDestination", "PacketsOutToSource", "PacketsInFromSource", "PacketsInFromDestination", "BytesOutToDestination", "BytesOutToSource", "BytesInFromSource", "BytesInFromDestination", "ErrorPortAllocation", "ActiveConnectionCount", "ConnectionAttemptCount", "ConnectionEstablishedCount", "IdleTimeoutCount", "PacketsDropCount"},
+		"AWS/Neptune":          {"CPUUtilization", "ClusterReplicaLag", "ClusterReplicaLagMaximum", "ClusterReplicaLagMinimum", "EngineUptime", "FreeableMemory", "FreeLocalStorage", "GremlinHttp1xx", "GremlinHttp2xx", "GremlinHttp4xx", "GremlinHttp5xx", "GremlinErrors", "GremlinRequests", "GremlinRequestsPerSec", "GremlinWebSocketSuccess", "GremlinWebSocketClientErrors", "GremlinWebSocketServerErrors", "GremlinWebSocketAvailableConnections", "Http1xx", "Http2xx", "Http4xx", "Http5xx", "Http100", "Http101", "Http200", "Http400", "Http403", "Http405", "Http413", "Http429", "Http500", "Http501", "LoaderErrors", "LoaderRequests", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "SparqlHttp1xx", "SparqlHttp2xx", "SparqlHttp4xx", "SparqlHttp5xx", "SparqlErrors", "SparqlRequests", "SparqlRequestsPerSec", "StatusErrors", "StatusRequests", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs"},
 		"AWS/NetworkELB":       {"ActiveFlowCount", "ConsumedLCUs", "HealthyHostCount", "NewFlowCount", "ProcessedBytes", "TCP_Client_Reset_Count", "TCP_ELB_Reset_Count", "TCP_Target_Reset_Count", "UnHealthyHostCount"},
 		"AWS/OpsWorks":         {"cpu_idle", "cpu_nice", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_5", "load_15", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
-		"AWS/Redshift":         {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "ReadIOPS", "ReadLatency", "ReadThroughput", "WriteIOPS", "WriteLatency", "WriteThroughput"},
-		"AWS/RDS":              {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "CommitLatency", "CommitThroughput", "BinLogDiskUsage", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "DatabaseConnections", "DDLLatency", "DDLThroughput", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "DMLLatency", "DMLThroughput", "EngineUptime", "FailedSqlStatements", "FreeableMemory", "FreeLocalStorage", "FreeStorageSpace", "InsertLatency", "InsertThroughput", "LoginFailures", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "NetworkThroughput", "Queries", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "SwapUsage", "TotalConnections", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPS", "VolumeWriteIOPS", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+		"AWS/Redshift":         {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "QueriesCompletedPerSecond", "QueryDuration", "QueryRuntimeBreakdown", "ReadIOPS", "ReadLatency", "ReadThroughput", "WLMQueriesCompletedPerSecond", "WLMQueryDuration", "WLMQueueLength", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+		"AWS/RDS":              {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "BurstBalance", "CommitLatency", "CommitThroughput", "BinLogDiskUsage", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "DatabaseConnections", "DDLLatency", "DDLThroughput", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "DMLLatency", "DMLThroughput", "EngineUptime", "FailedSqlStatements", "FreeableMemory", "FreeLocalStorage", "FreeStorageSpace", "InsertLatency", "InsertThroughput", "LoginFailures", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "NetworkThroughput", "Queries", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "ServerlessDatabaseCapacity", "SwapUsage", "TotalConnections", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPS", "VolumeWriteIOPS", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/Route53":          {"ChildHealthCheckHealthyCount", "HealthCheckStatus", "HealthCheckPercentageHealthy", "ConnectionTime", "SSLHandshakeTime", "TimeToFirstByte"},
 		"AWS/S3":               {"BucketSizeBytes", "NumberOfObjects", "AllRequests", "GetRequests", "PutRequests", "DeleteRequests", "HeadRequests", "PostRequests", "ListRequests", "BytesDownloaded", "BytesUploaded", "4xxErrors", "5xxErrors", "FirstByteLatency", "TotalRequestLatency"},
-		"AWS/SES":              {"Bounce", "Complaint", "Delivery", "Reject", "Send"},
+		"AWS/SES":              {"Bounce", "Complaint", "Delivery", "Reject", "Send", "Reputation.BounceRate", "Reputation.ComplaintRate"},
 		"AWS/SNS":              {"NumberOfMessagesPublished", "PublishSize", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed"},
 		"AWS/SQS":              {"NumberOfMessagesSent", "SentMessageSize", "NumberOfMessagesReceived", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "ApproximateAgeOfOldestMessage", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesVisible", "ApproximateNumberOfMessagesNotVisible"},
 		"AWS/States":           {"ExecutionTime", "ExecutionThrottled", "ExecutionsAborted", "ExecutionsFailed", "ExecutionsStarted", "ExecutionsSucceeded", "ExecutionsTimedOut", "ActivityRunTime", "ActivityScheduleTime", "ActivityTime", "ActivitiesFailed", "ActivitiesHeartbeatTimedOut", "ActivitiesScheduled", "ActivitiesScheduled", "ActivitiesSucceeded", "ActivitiesTimedOut", "LambdaFunctionRunTime", "LambdaFunctionScheduleTime", "LambdaFunctionTime", "LambdaFunctionsFailed", "LambdaFunctionsHeartbeatTimedOut", "LambdaFunctionsScheduled", "LambdaFunctionsStarted", "LambdaFunctionsSucceeded", "LambdaFunctionsTimedOut"},
@@ -117,10 +126,15 @@ func init() {
 		"AWS/Billing":          {"ServiceName", "LinkedAccount", "Currency"},
 		"AWS/CloudFront":       {"DistributionId", "Region"},
 		"AWS/CloudSearch":      {},
+		"AWS/CloudHSM":         {"Region", "ClusterId", "HsmId"},
+		"AWS/CodeBuild":        {"ProjectName"},
+		"AWS/Connect":          {"InstanceId", "MetricGroup", "Participant", "QueueName", "Stream Type", "Type of Connection"},
 		"AWS/DMS":              {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
+		"AWS/DX":               {"ConnectionId"},
 		"AWS/DynamoDB":         {"TableName", "GlobalSecondaryIndexName", "Operation", "StreamLabel"},
 		"AWS/EBS":              {"VolumeId"},
 		"AWS/EC2":              {"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"},
+		"AWS/EC2/API":          {},
 		"AWS/EC2Spot":          {"AvailabilityZone", "FleetRequestId", "InstanceType"},
 		"AWS/ECS":              {"ClusterName", "ServiceName"},
 		"AWS/EFS":              {"FileSystemId"},
@@ -135,12 +149,14 @@ func init() {
 		"AWS/Kinesis":          {"StreamName", "ShardId"},
 		"AWS/KinesisAnalytics": {"Flow", "Id", "Application"},
 		"AWS/Lambda":           {"FunctionName", "Resource", "Version", "Alias"},
+		"AWS/AppSync":          {"GraphQLAPIId"},
 		"AWS/Logs":             {"LogGroupName", "DestinationType", "FilterName"},
 		"AWS/ML":               {"MLModelId", "RequestMode"},
 		"AWS/NATGateway":       {"NatGatewayId"},
+		"AWS/Neptune":          {"DBClusterIdentifier", "Role", "DatabaseClass", "EngineName"},
 		"AWS/NetworkELB":       {"LoadBalancer", "TargetGroup", "AvailabilityZone"},
 		"AWS/OpsWorks":         {"StackId", "LayerId", "InstanceId"},
-		"AWS/Redshift":         {"NodeID", "ClusterIdentifier"},
+		"AWS/Redshift":         {"NodeID", "ClusterIdentifier", "latency", "service class", "wmlid"},
 		"AWS/RDS":              {"DBInstanceIdentifier", "DBClusterIdentifier", "DbClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
 		"AWS/Route53":          {"HealthCheckId", "Region"},
 		"AWS/S3":               {"BucketName", "StorageType", "FilterId"},
@@ -175,25 +191,20 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	switch subType {
 	case "regions":
 		data, err = e.handleGetRegions(ctx, parameters, queryContext)
-		break
 	case "namespaces":
 		data, err = e.handleGetNamespaces(ctx, parameters, queryContext)
-		break
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, parameters, queryContext)
-		break
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
-		break
 	case "dimension_values":
 		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
-		break
 	case "ebs_volume_ids":
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
-		break
 	case "ec2_instance_attribute":
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
-		break
+	case "resource_arns":
+		data, err = e.handleGetResourceArns(ctx, parameters, queryContext)
 	}
 
 	transformToTable(data, queryResult)
@@ -229,23 +240,57 @@ func parseMultiSelectValue(input string) []string {
 			trimValues[i] = strings.TrimSpace(v)
 		}
 		return trimValues
-	} else {
-		return []string{trimmedInput}
 	}
+	return []string{trimmedInput}
 }
 
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	regions := []string{
-		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "ca-central-1", "cn-north-1",
-		"eu-central-1", "eu-west-1", "eu-west-2", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2",
+	dsInfo := e.getDsInfo("default")
+	profile := dsInfo.Profile
+	if cache, ok := regionCache.Load(profile); ok {
+		if cache2, ok2 := cache.([]suggestData); ok2 {
+			return cache2, nil
+		}
 	}
+
+	regions := []string{
+		"ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1",
+		"eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2",
+		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
+	}
+	err := e.ensureClientSession("default")
+	if err != nil {
+		return nil, err
+	}
+	r, err := e.ec2Svc.DescribeRegions(&ec2.DescribeRegionsInput{})
+	if err != nil {
+		// ignore error for backward compatibility
+		plog.Error("Failed to get regions", "error", err)
+	} else {
+		for _, region := range r.Regions {
+			exists := false
+
+			for _, existingRegion := range regions {
+				if existingRegion == *region.RegionName {
+					exists = true
+					break
+				}
+			}
+
+			if !exists {
+				regions = append(regions, *region.RegionName)
+			}
+		}
+	}
+	sort.Strings(regions)
 
 	result := make([]suggestData, 0)
 	for _, region := range regions {
 		result = append(result, suggestData{Text: region, Value: region})
 	}
+	regionCache.Store(profile, result)
 
 	return result, nil
 }
@@ -261,7 +306,7 @@ func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
-	sort.Sort(sort.StringSlice(keys))
+	sort.Strings(keys)
 
 	result := make([]suggestData, 0)
 	for _, key := range keys {
@@ -290,7 +335,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(namespaceMetrics))
+	sort.Strings(namespaceMetrics)
 
 	result := make([]suggestData, 0)
 	for _, name := range namespaceMetrics {
@@ -319,7 +364,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(dimensionValues))
+	sort.Strings(dimensionValues)
 
 	result := make([]suggestData, 0)
 	for _, name := range dimensionValues {
@@ -470,6 +515,9 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 						return nil, errors.New("invalid attribute path")
 					}
 					v = v.FieldByName(key)
+					if !v.IsValid() {
+						return nil, errors.New("invalid attribute path")
+					}
 				}
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
@@ -489,6 +537,65 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Text < result[j].Text
 	})
+
+	return result, nil
+}
+
+func (e *CloudWatchExecutor) ensureRGTAClientSession(region string) error {
+	if e.rgtaSvc == nil {
+		dsInfo := e.getDsInfo(region)
+		cfg, err := e.getAwsConfig(dsInfo)
+		if err != nil {
+			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
+		}
+		sess, err := session.NewSession(cfg)
+		if err != nil {
+			return fmt.Errorf("Failed to call ec2:NewSession, %v", err)
+		}
+		e.rgtaSvc = resourcegroupstaggingapi.New(sess, cfg)
+	}
+	return nil
+}
+
+func (e *CloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	resourceType := parameters.Get("resourceType").MustString()
+	filterJson := parameters.Get("tags").MustMap()
+
+	err := e.ensureRGTAClientSession(region)
+	if err != nil {
+		return nil, err
+	}
+
+	var filters []*resourcegroupstaggingapi.TagFilter
+	for k, v := range filterJson {
+		if vv, ok := v.([]interface{}); ok {
+			var vvvvv []*string
+			for _, vvv := range vv {
+				if vvvv, ok := vvv.(string); ok {
+					vvvvv = append(vvvvv, &vvvv)
+				}
+			}
+			filters = append(filters, &resourcegroupstaggingapi.TagFilter{
+				Key:    aws.String(k),
+				Values: vvvvv,
+			})
+		}
+	}
+
+	var resourceTypes []*string
+	resourceTypes = append(resourceTypes, &resourceType)
+
+	resources, err := e.resourceGroupsGetResources(region, filters, resourceTypes)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	for _, resource := range resources.ResourceTagMappingList {
+		data := *resource.ResourceARN
+		result = append(result, suggestData{Text: data, Value: data})
+	}
 
 	return result, nil
 }
@@ -544,6 +651,28 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	return &resp, nil
 }
 
+func (e *CloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter, resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+	params := &resourcegroupstaggingapi.GetResourcesInput{
+		ResourceTypeFilters: resourceTypes,
+		TagFilters:          filters,
+	}
+
+	var resp resourcegroupstaggingapi.GetResourcesOutput
+	err := e.rgtaSvc.GetResourcesPages(params,
+		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
+			resources, _ := awsutil.ValuesAtPath(page, "ResourceTagMappingList")
+			for _, resource := range resources {
+				resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, resource.(*resourcegroupstaggingapi.ResourceTagMapping))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return nil, errors.New("Failed to call tags:GetResources")
+	}
+
+	return &resp, nil
+}
+
 func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
 	creds, err := GetCredentials(cwData)
 	if err != nil {
@@ -573,11 +702,7 @@ func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error)
 			}
 			return !lastPage
 		})
-	if err != nil {
-		return resp, err
-	}
-
-	return resp, nil
+	return resp, err
 }
 
 var metricsCacheLock sync.Mutex

@@ -22,6 +22,8 @@ export class QueryVariable implements Variable {
   tagsQuery: string;
   tagValuesQuery: string;
   tags: any[];
+  skipUrlSync: boolean;
+  definition: string;
 
   defaults = {
     type: 'query',
@@ -42,9 +44,11 @@ export class QueryVariable implements Variable {
     useTags: false,
     tagsQuery: '',
     tagValuesQuery: '',
+    skipUrlSync: false,
+    definition: '',
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
@@ -89,7 +93,7 @@ export class QueryVariable implements Variable {
     if (this.useTags) {
       return this.metricFindQuery(datasource, this.tagsQuery).then(results => {
         this.tags = [];
-        for (var i = 0; i < results.length; i++) {
+        for (let i = 0; i < results.length; i++) {
           this.tags.push(results[i].text);
         }
         return datasource;
@@ -103,9 +107,9 @@ export class QueryVariable implements Variable {
 
   getValuesForTag(tagKey) {
     return this.datasourceSrv.get(this.datasource).then(datasource => {
-      var query = this.tagValuesQuery.replace('$tag', tagKey);
-      return this.metricFindQuery(datasource, query).then(function(results) {
-        return _.map(results, function(value) {
+      const query = this.tagValuesQuery.replace('$tag', tagKey);
+      return this.metricFindQuery(datasource, query).then(results => {
+        return _.map(results, value => {
           return value.text;
         });
       });
@@ -126,7 +130,7 @@ export class QueryVariable implements Variable {
   }
 
   metricFindQuery(datasource, query) {
-    var options = { range: undefined, variable: this };
+    const options = { range: undefined, variable: this };
 
     if (this.refresh === 2) {
       options.range = this.timeSrv.timeRange();
@@ -140,17 +144,17 @@ export class QueryVariable implements Variable {
   }
 
   metricNamesToVariableValues(metricNames) {
-    var regex, options, i, matches;
+    let regex, options, i, matches;
     options = [];
 
     if (this.regex) {
       regex = kbn.stringToJsRegex(this.templateSrv.replace(this.regex, {}, 'regex'));
     }
     for (i = 0; i < metricNames.length; i++) {
-      var item = metricNames[i];
-      var text = item.text === undefined || item.text === null ? item.value : item.text;
+      const item = metricNames[i];
+      let text = item.text === undefined || item.text === null ? item.value : item.text;
 
-      var value = item.value === undefined || item.value === null ? item.text : item.value;
+      let value = item.value === undefined || item.value === null ? item.text : item.value;
 
       if (_.isNumber(value)) {
         value = value.toString();
@@ -183,19 +187,23 @@ export class QueryVariable implements Variable {
       return options;
     }
 
-    var sortType = Math.ceil(sortOrder / 2);
-    var reverseSort = sortOrder % 2 === 0;
+    const sortType = Math.ceil(sortOrder / 2);
+    const reverseSort = sortOrder % 2 === 0;
 
     if (sortType === 1) {
       options = _.sortBy(options, 'text');
     } else if (sortType === 2) {
       options = _.sortBy(options, opt => {
-        var matches = opt.text.match(/.*?(\d+).*/);
+        const matches = opt.text.match(/.*?(\d+).*/);
         if (!matches || matches.length < 2) {
           return -1;
         } else {
           return parseInt(matches[1], 10);
         }
+      });
+    } else if (sortType === 3) {
+      options = _.sortBy(options, opt => {
+        return _.toLower(opt.text);
       });
     }
 
@@ -207,7 +215,7 @@ export class QueryVariable implements Variable {
   }
 
   dependsOn(variable) {
-    return containsVariable(this.query, this.datasource, variable.name);
+    return containsVariable(this.query, this.datasource, this.regex, variable.name);
   }
 }
 

@@ -1,9 +1,6 @@
 import { MssqlDatasource } from './datasource';
 import { MssqlQueryCtrl } from './query_ctrl';
-
-class MssqlConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
+import { MssqlConfigCtrl } from './config_ctrl';
 
 const defaultQuery = `SELECT
     <time_column> as time,
@@ -21,7 +18,7 @@ class MssqlAnnotationsQueryCtrl {
 
   annotation: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor() {
     this.annotation.rawQuery = this.annotation.rawQuery || defaultQuery;
   }

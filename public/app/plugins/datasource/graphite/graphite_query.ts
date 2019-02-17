@@ -33,8 +33,8 @@ export default class GraphiteQuery {
       return;
     }
 
-    var parser = new Parser(this.target.target);
-    var astNode = parser.getAst();
+    const parser = new Parser(this.target.target);
+    const astNode = parser.getAst();
     if (astNode === null) {
       this.checkOtherSegmentsIndex = 0;
       return;
@@ -59,21 +59,21 @@ export default class GraphiteQuery {
   }
 
   checkForSeriesByTag() {
-    let seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
+    const seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
     if (seriesByTagFunc) {
       this.seriesByTagUsed = true;
       seriesByTagFunc.hidden = true;
-      let tags = this.splitSeriesByTagParams(seriesByTagFunc);
+      const tags = this.splitSeriesByTagParams(seriesByTagFunc);
       this.tags = tags;
     }
   }
 
   getSegmentPathUpTo(index) {
-    var arr = this.segments.slice(0, index);
+    const arr = this.segments.slice(0, index);
 
     return _.reduce(
       arr,
-      function(result, segment) {
+      (result, segment) => {
         return result ? result + '.' + segment.value : segment.value;
       },
       ''
@@ -87,7 +87,7 @@ export default class GraphiteQuery {
 
     switch (astNode.type) {
       case 'function':
-        var innerFunc = this.datasource.createFuncInstance(astNode.name, {
+        const innerFunc = this.datasource.createFuncInstance(astNode.name, {
           withDefaultParams: false,
         });
         _.each(astNode.params, param => {
@@ -133,7 +133,7 @@ export default class GraphiteQuery {
   }
 
   moveAliasFuncLast() {
-    var aliasFunc = _.find(this.functions, function(func) {
+    const aliasFunc = _.find(this.functions, func => {
       return func.def.name.startsWith('alias');
     });
 
@@ -157,7 +157,7 @@ export default class GraphiteQuery {
   updateModelTarget(targets) {
     // render query
     if (!this.target.textEditor) {
-      var metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
+      const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
       this.target.target = _.reduce(this.functions, wrapFunction, metricPath);
     }
 
@@ -173,21 +173,21 @@ export default class GraphiteQuery {
 
   updateRenderedTarget(target, targets) {
     // render nested query
-    var targetsByRefId = _.keyBy(targets, 'refId');
+    const targetsByRefId = _.keyBy(targets, 'refId');
 
     // no references to self
     delete targetsByRefId[target.refId];
 
-    var nestedSeriesRefRegex = /\#([A-Z])/g;
-    var targetWithNestedQueries = target.target;
+    const nestedSeriesRefRegex = /\#([A-Z])/g;
+    let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
     function countTargetRefs(targetsByRefId, refId) {
       let refCount = 0;
       _.each(targetsByRefId, (t, id) => {
         if (id !== refId) {
-          let match = nestedSeriesRefRegex.exec(t.target);
-          let count = match && match.length ? match.length - 1 : 0;
+          const match = nestedSeriesRefRegex.exec(t.target);
+          const count = match && match.length ? match.length - 1 : 0;
           refCount += count;
         }
       });
@@ -200,8 +200,8 @@ export default class GraphiteQuery {
     // Keep interpolating until there are no query references
     // The reason for the loop is that the referenced query might contain another reference to another query
     while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
-      var updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match, g1) => {
-        var t = targetsByRefId[g1];
+      const updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match, g1) => {
+        const t = targetsByRefId[g1];
         if (!t) {
           return match;
         }
@@ -232,9 +232,9 @@ export default class GraphiteQuery {
     const tagPattern = /([^\!=~]+)(\!?=~?)(.*)/;
     return _.flatten(
       _.map(func.params, (param: string) => {
-        let matches = tagPattern.exec(param);
+        const matches = tagPattern.exec(param);
         if (matches) {
-          let tag = matches.slice(1);
+          const tag = matches.slice(1);
           if (tag.length === 3) {
             return {
               key: tag[0],
@@ -253,7 +253,7 @@ export default class GraphiteQuery {
   }
 
   getSeriesByTagFunc() {
-    let seriesByTagFuncIndex = this.getSeriesByTagFuncIndex();
+    const seriesByTagFuncIndex = this.getSeriesByTagFuncIndex();
     if (seriesByTagFuncIndex >= 0) {
       return this.functions[seriesByTagFuncIndex];
     } else {
@@ -262,7 +262,7 @@ export default class GraphiteQuery {
   }
 
   addTag(tag) {
-    let newTagParam = renderTagString(tag);
+    const newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc().params.push(newTagParam);
     this.tags.push(tag);
   }
@@ -280,7 +280,7 @@ export default class GraphiteQuery {
       return;
     }
 
-    let newTagParam = renderTagString(tag);
+    const newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc().params[tagIndex] = newTagParam;
     this.tags[tagIndex] = tag;
   }

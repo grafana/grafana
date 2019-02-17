@@ -15,7 +15,7 @@ func GetOrgCurrent(c *m.ReqContext) Response {
 }
 
 // GET /api/orgs/:orgId
-func GetOrgById(c *m.ReqContext) Response {
+func GetOrgByID(c *m.ReqContext) Response {
 	return getOrgHelper(c.ParamsInt64(":orgId"))
 }
 
@@ -24,10 +24,10 @@ func GetOrgByName(c *m.ReqContext) Response {
 	query := m.GetOrgByNameQuery{Name: c.Params(":name")}
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrOrgNotFound {
-			return ApiError(404, "Organization not found", err)
+			return Error(404, "Organization not found", err)
 		}
 
-		return ApiError(500, "Failed to get organization", err)
+		return Error(500, "Failed to get organization", err)
 	}
 	org := query.Result
 	result := m.OrgDetailsDTO{
@@ -43,18 +43,18 @@ func GetOrgByName(c *m.ReqContext) Response {
 		},
 	}
 
-	return Json(200, &result)
+	return JSON(200, &result)
 }
 
-func getOrgHelper(orgId int64) Response {
-	query := m.GetOrgByIdQuery{Id: orgId}
+func getOrgHelper(orgID int64) Response {
+	query := m.GetOrgByIdQuery{Id: orgID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrOrgNotFound {
-			return ApiError(404, "Organization not found", err)
+			return Error(404, "Organization not found", err)
 		}
 
-		return ApiError(500, "Failed to get organization", err)
+		return Error(500, "Failed to get organization", err)
 	}
 
 	org := query.Result
@@ -71,26 +71,26 @@ func getOrgHelper(orgId int64) Response {
 		},
 	}
 
-	return Json(200, &result)
+	return JSON(200, &result)
 }
 
 // POST /api/orgs
 func CreateOrg(c *m.ReqContext, cmd m.CreateOrgCommand) Response {
 	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
-		return ApiError(403, "Access denied", nil)
+		return Error(403, "Access denied", nil)
 	}
 
 	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
-			return ApiError(409, "Organization name taken", err)
+			return Error(409, "Organization name taken", err)
 		}
-		return ApiError(500, "Failed to create organization", err)
+		return Error(500, "Failed to create organization", err)
 	}
 
 	metrics.M_Api_Org_Create.Inc()
 
-	return Json(200, &util.DynMap{
+	return JSON(200, &util.DynMap{
 		"orgId":   cmd.Result.Id,
 		"message": "Organization created",
 	})
@@ -106,16 +106,16 @@ func UpdateOrg(c *m.ReqContext, form dtos.UpdateOrgForm) Response {
 	return updateOrgHelper(form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgHelper(form dtos.UpdateOrgForm, orgId int64) Response {
-	cmd := m.UpdateOrgCommand{Name: form.Name, OrgId: orgId}
+func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) Response {
+	cmd := m.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
-			return ApiError(400, "Organization name taken", err)
+			return Error(400, "Organization name taken", err)
 		}
-		return ApiError(500, "Failed to update organization", err)
+		return Error(500, "Failed to update organization", err)
 	}
 
-	return ApiSuccess("Organization updated")
+	return Success("Organization updated")
 }
 
 // PUT /api/org/address
@@ -128,9 +128,9 @@ func UpdateOrgAddress(c *m.ReqContext, form dtos.UpdateOrgAddressForm) Response 
 	return updateOrgAddressHelper(form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Response {
+func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) Response {
 	cmd := m.UpdateOrgAddressCommand{
-		OrgId: orgId,
+		OrgId: orgID,
 		Address: m.Address{
 			Address1: form.Address1,
 			Address2: form.Address2,
@@ -142,21 +142,21 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Respons
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to update org address", err)
+		return Error(500, "Failed to update org address", err)
 	}
 
-	return ApiSuccess("Address updated")
+	return Success("Address updated")
 }
 
 // GET /api/orgs/:orgId
-func DeleteOrgById(c *m.ReqContext) Response {
+func DeleteOrgByID(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
 		if err == m.ErrOrgNotFound {
-			return ApiError(404, "Failed to delete organization. ID not found", nil)
+			return Error(404, "Failed to delete organization. ID not found", nil)
 		}
-		return ApiError(500, "Failed to update organization", err)
+		return Error(500, "Failed to update organization", err)
 	}
-	return ApiSuccess("Organization deleted")
+	return Success("Organization deleted")
 }
 
 func SearchOrgs(c *m.ReqContext) Response {
@@ -168,8 +168,8 @@ func SearchOrgs(c *m.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to search orgs", err)
+		return Error(500, "Failed to search orgs", err)
 	}
 
-	return Json(200, query.Result)
+	return JSON(200, query.Result)
 }

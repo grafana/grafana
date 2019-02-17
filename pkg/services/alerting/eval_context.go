@@ -68,8 +68,13 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#D63232",
 			Text:  "Alerting",
 		}
+	case m.AlertStateUnknown:
+		return &StateDescription{
+			Color: "#888888",
+			Text:  "Unknown",
+		}
 	default:
-		panic("Unknown rule state " + c.Rule.State)
+		panic("Unknown rule state for alert " + c.Rule.State)
 	}
 }
 
@@ -99,16 +104,68 @@ func (c *EvalContext) GetDashboardUID() (*m.DashboardRef, error) {
 	return c.dashboardRef, nil
 }
 
-const urlFormat = "%s?fullscreen=true&edit=true&tab=alert&panelId=%d&orgId=%d"
+const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
 
 func (c *EvalContext) GetRuleUrl() (string, error) {
 	if c.IsTestRun {
 		return setting.AppUrl, nil
 	}
 
-	if ref, err := c.GetDashboardUID(); err != nil {
+	ref, err := c.GetDashboardUID()
+	if err != nil {
 		return "", err
-	} else {
-		return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 	}
+	return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
+}
+
+// GetNewState returns the new state from the alert rule evaluation
+func (c *EvalContext) GetNewState() m.AlertStateType {
+	ns := getNewStateInternal(c)
+	if ns != m.AlertStateAlerting || c.Rule.For == 0 {
+		return ns
+	}
+
+	since := time.Since(c.Rule.LastStateChange)
+	if c.PrevAlertState == m.AlertStatePending && since > c.Rule.For {
+		return m.AlertStateAlerting
+	}
+
+	if c.PrevAlertState == m.AlertStateAlerting {
+		return m.AlertStateAlerting
+	}
+
+	return m.AlertStatePending
+}
+
+func getNewStateInternal(c *EvalContext) m.AlertStateType {
+	if c.Error != nil {
+		c.log.Error("Alert Rule Result Error",
+			"ruleId", c.Rule.Id,
+			"name", c.Rule.Name,
+			"error", c.Error,
+			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
+
+		if c.Rule.ExecutionErrorState == m.ExecutionErrorKeepState {
+			return c.PrevAlertState
+		}
+		return c.Rule.ExecutionErrorState.ToAlertState()
+	}
+
+	if c.Firing {
+		return m.AlertStateAlerting
+	}
+
+	if c.NoDataFound {
+		c.log.Info("Alert Rule returned no data",
+			"ruleId", c.Rule.Id,
+			"name", c.Rule.Name,
+			"changing state to", c.Rule.NoDataState.ToAlertState())
+
+		if c.Rule.NoDataState == m.NoDataKeepState {
+			return c.PrevAlertState
+		}
+		return c.Rule.NoDataState.ToAlertState()
+	}
+
+	return m.AlertStateOK
 }

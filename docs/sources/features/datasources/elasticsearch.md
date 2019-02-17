@@ -29,13 +29,19 @@ Name | Description
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP, and port of your Elasticsearch server.
-*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 
-Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication to the browser.
+Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
-### Direct access
+### Server access mode (Default)
 
-If you select direct access you must update your Elasticsearch configuration to allow other domains to access
+All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
+
+### Browser (Direct) access
+
+All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
+
+If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
 Elasticsearch from the browser. You do this by specifying these to options in your **elasticsearch.yml** config file.
 
 ```bash
@@ -45,19 +51,35 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![](/img/docs/elasticsearch/elasticsearch_ds_details.png)
+![Elasticsearch Datasource Details](/img/docs/elasticsearch/elasticsearch_ds_details.png)
 
 Here you can specify a default for the `time field` and specify the name of your Elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
 
 ### Elasticsearch version
 
-Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences how queries are composed. Currently only 2.x and 5.x
-are supported.
+Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences how queries are composed.
+Currently the versions available is 2.x, 5.x, 5.6+ or 6.0+. 5.6+ means a version of 5.6 or less than 6.0. 6.0+ means a version of 6.0 or higher, 6.3.2 for example.
+
+### Min time interval
+A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
 
 ## Metric Query editor
 
-![](/img/docs/elasticsearch/query_editor.png)
+![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
 
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
@@ -93,7 +115,7 @@ The Elasticsearch data source supports two types of queries you can use in the *
 
 Query | Description
 ------------ | -------------
-*{"find": "fields", "type": "keyword"} | Returns a list of field names with the index type `keyword`.
+*{"find": "fields", "type": "keyword"}* | Returns a list of field names with the index type `keyword`.
 *{"find": "terms", "field": "@hostname", "size": 1000}* |  Returns a list of values for a field using term aggregation. Query will user current dashboard time range as time range for query.
 *{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation & and a specified lucene query filter. Query will use current dashboard time range as time range for query.
 
@@ -137,3 +159,23 @@ Query | You can leave the search query blank or specify a lucene query
 Time | The name of the time field, needs to be date field.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
+
+## Configure the Datasource with Provisioning
+
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Elastic
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+```

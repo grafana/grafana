@@ -12,7 +12,7 @@ import (
 
 // ssl generates a function to upgrade a net.Conn based on the "sslmode" and
 // related settings. The function is nil when no upgrade should take place.
-func ssl(o values) func(net.Conn) net.Conn {
+func ssl(o values) (func(net.Conn) (net.Conn, error), error) {
 	verifyCaOnly := false
 	tlsConf := tls.Config{}
 	switch mode := o["sslmode"]; mode {
@@ -45,29 +45,38 @@ func ssl(o values) func(net.Conn) net.Conn {
 	case "verify-full":
 		tlsConf.ServerName = o["host"]
 	case "disable":
-		return nil
+		return nil, nil
 	default:
-		errorf(`unsupported sslmode %q; only "require" (default), "verify-full", "verify-ca", and "disable" supported`, mode)
+		return nil, fmterrorf(`unsupported sslmode %q; only "require" (default), "verify-full", "verify-ca", and "disable" supported`, mode)
 	}
 
-	sslClientCertificates(&tlsConf, o)
-	sslCertificateAuthority(&tlsConf, o)
+	err := sslClientCertificates(&tlsConf, o)
+	if err != nil {
+		return nil, err
+	}
+	err = sslCertificateAuthority(&tlsConf, o)
+	if err != nil {
+		return nil, err
+	}
 	sslRenegotiation(&tlsConf)
 
-	return func(conn net.Conn) net.Conn {
+	return func(conn net.Conn) (net.Conn, error) {
 		client := tls.Client(conn, &tlsConf)
 		if verifyCaOnly {
-			sslVerifyCertificateAuthority(client, &tlsConf)
+			err := sslVerifyCertificateAuthority(client, &tlsConf)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return client
-	}
+		return client, nil
+	}, nil
 }
 
 // sslClientCertificates adds the certificate specified in the "sslcert" and
 // "sslkey" settings, or if they aren't set, from the .postgresql directory
 // in the user's home directory. The configured files must exist and have
 // the correct permissions.
-func sslClientCertificates(tlsConf *tls.Config, o values) {
+func sslClientCertificates(tlsConf *tls.Config, o values) error {
 	// user.Current() might fail when cross-compiling. We have to ignore the
 	// error and continue without home directory defaults, since we wouldn't
 	// know from where to load them.
@@ -82,13 +91,13 @@ func sslClientCertificates(tlsConf *tls.Config, o values) {
 	}
 	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L1045
 	if len(sslcert) == 0 {
-		return
+		return nil
 	}
 	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L1050:L1054
 	if _, err := os.Stat(sslcert); os.IsNotExist(err) {
-		return
+		return nil
 	} else if err != nil {
-		panic(err)
+		return err
 	}
 
 	// In libpq, the ssl key is only loaded if the setting is not blank.
@@ -101,19 +110,21 @@ func sslClientCertificates(tlsConf *tls.Config, o values) {
 
 	if len(sslkey) > 0 {
 		if err := sslKeyPermissions(sslkey); err != nil {
-			panic(err)
+			return err
 		}
 	}
 
 	cert, err := tls.LoadX509KeyPair(sslcert, sslkey)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
 	tlsConf.Certificates = []tls.Certificate{cert}
+	return nil
 }
 
 // sslCertificateAuthority adds the RootCA specified in the "sslrootcert" setting.
-func sslCertificateAuthority(tlsConf *tls.Config, o values) {
+func sslCertificateAuthority(tlsConf *tls.Config, o values) error {
 	// In libpq, the root certificate is only loaded if the setting is not blank.
 	//
 	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L950-L951
@@ -122,22 +133,24 @@ func sslCertificateAuthority(tlsConf *tls.Config, o values) {
 
 		cert, err := ioutil.ReadFile(sslrootcert)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		if !tlsConf.RootCAs.AppendCertsFromPEM(cert) {
-			errorf("couldn't parse pem in sslrootcert")
+			return fmterrorf("couldn't parse pem in sslrootcert")
 		}
 	}
+
+	return nil
 }
 
 // sslVerifyCertificateAuthority carries out a TLS handshake to the server and
 // verifies the presented certificate against the CA, i.e. the one specified in
 // sslrootcert or the system CA if sslrootcert was not specified.
-func sslVerifyCertificateAuthority(client *tls.Conn, tlsConf *tls.Config) {
+func sslVerifyCertificateAuthority(client *tls.Conn, tlsConf *tls.Config) error {
 	err := client.Handshake()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	certs := client.ConnectionState().PeerCertificates
 	opts := x509.VerifyOptions{
@@ -152,7 +165,5 @@ func sslVerifyCertificateAuthority(client *tls.Conn, tlsConf *tls.Config) {
 		opts.Intermediates.AddCert(cert)
 	}
 	_, err = certs[0].Verify(opts)
-	if err != nil {
-		panic(err)
-	}
+	return err
 }

@@ -28,10 +28,9 @@ Name | Description
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The http protocol, ip and port of you opentsdb server (default port is usually 4242)
-*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Version* | Version = opentsdb version, either <=2.1 or 2.2
 *Resolution* | Metrics from opentsdb may have datapoints with either second or millisecond resolution.
-
 
 ## Query editor
 
@@ -78,13 +77,32 @@ the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` o
 
 ### Nested Templating
 
-One template variable can be used to filter tag values for another template varible. First parameter is the metric name,
+One template variable can be used to filter tag values for another template variable. First parameter is the metric name,
 second parameter is the tag key for which you need to find tag values, and after that all other dependent template variables.
 Some examples are mentioned below to make nested template queries work successfully.
 
 Query | Description
 ------------ | -------------
 *tag_values(cpu, hostname, env=$env)*  | Return tag values for cpu metric, selected env tag value and tag key hostname
-*tag_values(cpu, hostanme, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
+*tag_values(cpu, hostname, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
 For details on OpenTSDB metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
+
+## Configure the Datasource with Provisioning
+
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: OpenTsdb
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    jsonData:
+      tsdbResolution: 1
+      tsdbVersion: 1
+```

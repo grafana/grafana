@@ -11,33 +11,26 @@ func init() {
 }
 
 func validateDashboardAlerts(cmd *m.ValidateDashboardAlertsCommand) error {
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
 
-	if _, err := extractor.GetAlerts(); err != nil {
-		return err
-	}
-
-	return nil
+	return extractor.ValidateAlerts()
 }
 
 func updateDashboardAlerts(cmd *m.UpdateDashboardAlertsCommand) error {
 	saveAlerts := m.SaveAlertsCommand{
 		OrgId:       cmd.OrgId,
-		UserId:      cmd.UserId,
+		UserId:      cmd.User.UserId,
 		DashboardId: cmd.Dashboard.Id,
 	}
 
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
 
-	if alerts, err := extractor.GetAlerts(); err != nil {
-		return err
-	} else {
-		saveAlerts.Alerts = alerts
-	}
-
-	if err := bus.Dispatch(&saveAlerts); err != nil {
+	alerts, err := extractor.GetAlerts()
+	if err != nil {
 		return err
 	}
 
-	return nil
+	saveAlerts.Alerts = alerts
+
+	return bus.Dispatch(&saveAlerts)
 }

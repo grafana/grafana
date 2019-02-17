@@ -108,7 +108,10 @@ func (cn *conn) cancel() error {
 		can := conn{
 			c: c,
 		}
-		can.ssl(cn.opts)
+		err = can.ssl(cn.opts)
+		if err != nil {
+			return err
+		}
 
 		w := can.writeBuf(0)
 		w.int32(80877102) // cancel request code

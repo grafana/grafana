@@ -13,10 +13,10 @@ import {
   sortSeriesByLabel,
 } from './heatmap_data_converter';
 
-let X_BUCKET_NUMBER_DEFAULT = 30;
-let Y_BUCKET_NUMBER_DEFAULT = 10;
+const X_BUCKET_NUMBER_DEFAULT = 30;
+const Y_BUCKET_NUMBER_DEFAULT = 10;
 
-let panelDefaults = {
+const panelDefaults = {
   heatmap: {},
   cards: {
     cardPadding: null,
@@ -57,12 +57,12 @@ let panelDefaults = {
   highlightCards: true,
 };
 
-let colorModes = ['opacity', 'spectrum'];
-let opacityScales = ['linear', 'sqrt'];
+const colorModes = ['opacity', 'spectrum'];
+const opacityScales = ['linear', 'sqrt'];
 
 // Schemes from d3-scale-chromatic
 // https://github.com/d3/d3-scale-chromatic
-let colorSchemes = [
+const colorSchemes = [
   // Diverging
   { name: 'Spectral', value: 'interpolateSpectral', invert: 'always' },
   { name: 'RdYlGn', value: 'interpolateRdYlGn', invert: 'always' },
@@ -76,6 +76,13 @@ let colorSchemes = [
   { name: 'Reds', value: 'interpolateReds', invert: 'dark' },
 
   // Sequential (Multi-Hue)
+  { name: 'Viridis', value: 'interpolateViridis', invert: 'light' },
+  { name: 'Magma', value: 'interpolateMagma', invert: 'light' },
+  { name: 'Inferno', value: 'interpolateInferno', invert: 'light' },
+  { name: 'Plasma', value: 'interpolatePlasma', invert: 'light' },
+  { name: 'Warm', value: 'interpolateWarm', invert: 'light' },
+  { name: 'Cool', value: 'interpolateCool', invert: 'light' },
+  { name: 'Cubehelix', value: 'interpolateCubehelixDefault', invert: 'light' },
   { name: 'BuGn', value: 'interpolateBuGn', invert: 'dark' },
   { name: 'BuPu', value: 'interpolateBuPu', invert: 'dark' },
   { name: 'GnBu', value: 'interpolateGnBu', invert: 'dark' },
@@ -87,10 +94,10 @@ let colorSchemes = [
   { name: 'YlGnBu', value: 'interpolateYlGnBu', invert: 'dark' },
   { name: 'YlGn', value: 'interpolateYlGn', invert: 'dark' },
   { name: 'YlOrBr', value: 'interpolateYlOrBr', invert: 'dark' },
-  { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'darm' },
+  { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'dark' },
 ];
 
-const ds_support_histogram_sort = ['prometheus', 'elasticsearch'];
+const dsSupportHistogramSort = ['prometheus', 'elasticsearch'];
 
 export class HeatmapCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -154,11 +161,11 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let xBucketSize, yBucketSize, bucketsData, heatmapStats;
     const logBase = this.panel.yAxis.logBase;
 
-    let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
-    let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
+    const xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
+    const xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
 
     // Parse X bucket size (number or interval)
-    let isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
+    const isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
     if (isIntervalString) {
       xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
     } else if (
@@ -173,7 +180,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     // Calculate Y bucket size
     heatmapStats = this.parseSeries(this.series);
-    let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
+    const yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
     if (logBase !== 1) {
       yBucketSize = this.panel.yAxis.splitFactor;
     } else {
@@ -197,7 +204,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       yBucketSize = 1;
     }
 
-    let { cards, cardStats } = convertToCards(bucketsData);
+    const { cards, cardStats } = convertToCards(bucketsData);
 
     this.data = {
       buckets: bucketsData,
@@ -214,7 +221,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
 
     // Try to sort series by bucket bound, if datasource doesn't do it.
-    if (!_.includes(ds_support_histogram_sort, panelDatasource)) {
+    if (!_.includes(dsSupportHistogramSort, panelDatasource)) {
       this.series.sort(sortSeriesByLabel);
     }
 
@@ -234,12 +241,12 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     }
 
     // Calculate bucket size based on heatmap data
-    let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
+    const xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
     xBucketSize = calculateBucketSize(xBucketBoundSet);
     // Always let yBucketSize=1 in 'tsbuckets' mode
     yBucketSize = 1;
 
-    let { cards, cardStats } = convertToCards(bucketsData);
+    const { cards, cardStats } = convertToCards(bucketsData);
 
     this.data = {
       buckets: bucketsData,
@@ -277,7 +284,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
         tip: 'No datapoints returned from data query',
       };
     } else {
-      for (let series of this.series) {
+      for (const series of this.series) {
         if (series.isOutsideRange) {
           this.dataWarning = {
             title: 'Data points outside time range',
@@ -302,17 +309,21 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   seriesHandler(seriesData) {
-    let series = new TimeSeries({
+    if (seriesData.datapoints === undefined) {
+      throw new Error('Heatmap error: data should be a time series');
+    }
+
+    const series = new TimeSeries({
       datapoints: seriesData.datapoints,
       alias: seriesData.target,
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
 
-    let datapoints = seriesData.datapoints || [];
+    const datapoints = seriesData.datapoints || [];
     if (datapoints && datapoints.length > 0) {
-      let last = datapoints[datapoints.length - 1][1];
-      let from = this.range.from;
+      const last = datapoints[datapoints.length - 1][1];
+      const from = this.range.from;
       if (last - from < -10000) {
         series.isOutsideRange = true;
       }
@@ -322,9 +333,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseSeries(series) {
-    let min = _.min(_.map(series, s => s.stats.min));
-    let minLog = _.min(_.map(series, s => s.stats.logmin));
-    let max = _.max(_.map(series, s => s.stats.max));
+    const min = _.min(_.map(series, s => s.stats.min));
+    const minLog = _.min(_.map(series, s => s.stats.logmin));
+    const max = _.max(_.map(series, s => s.stats.max));
 
     return {
       max: max,
@@ -334,10 +345,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseHistogramSeries(series) {
-    let bounds = _.map(series, s => Number(s.alias));
-    let min = _.min(bounds);
-    let minLog = _.min(bounds);
-    let max = _.max(bounds);
+    const bounds = _.map(series, s => Number(s.alias));
+    const min = _.min(bounds);
+    const minLog = _.min(bounds);
+    const max = _.max(bounds);
 
     return {
       max: max,

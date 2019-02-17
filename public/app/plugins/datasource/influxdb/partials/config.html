@@ -6,20 +6,34 @@
 <div class="gf-form-group">
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-30">
-			<span class="gf-form-label width-7">Database</span>
+			<span class="gf-form-label width-10">Database</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="" required></input>
 		</div>
 	</div>
 
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-15">
-			<span class="gf-form-label width-7">User</span>
+			<span class="gf-form-label width-10">User</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder=""></input>
 		</div>
 		<div class="gf-form max-width-15">
-			<span class="gf-form-label width-7">Password</span>
+			<span class="gf-form-label width-10">Password</span>
 			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder=""></input>
 		</div>
+	</div>
+</div>
+
+
+<div class="gf-form-group">
+	<div class="grafana-info-box">
+		<h5>Database Access</h5>
+		<p>
+			Setting the database for this datasource does not deny access to other databases.  The InfluxDB query syntax allows
+			switching the database in the query.  For example:
+			<code>SHOW MEASUREMENTS ON _internal</code> or <code>SELECT * FROM "_internal".."database" LIMIT 10</code>
+			<br/><br/>
+			To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+		</p>
 	</div>
 </div>
 

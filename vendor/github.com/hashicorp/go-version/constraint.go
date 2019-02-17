@@ -2,6 +2,7 @@ package version
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -113,6 +114,26 @@ func parseSingle(v string) (*Constraint, error) {
 	}, nil
 }
 
+func prereleaseCheck(v, c *Version) bool {
+	switch vPre, cPre := v.Prerelease() != "", c.Prerelease() != ""; {
+	case cPre && vPre:
+		// A constraint with a pre-release can only match a pre-release version
+		// with the same base segments.
+		return reflect.DeepEqual(c.Segments64(), v.Segments64())
+
+	case !cPre && vPre:
+		// A constraint without a pre-release can only match a version without a
+		// pre-release.
+		return false
+
+	case cPre && !vPre:
+		// OK, except with the pessimistic operator
+	case !cPre && !vPre:
+		// OK
+	}
+	return true
+}
+
 //-------------------------------------------------------------------
 // Constraint functions
 //-------------------------------------------------------------------
@@ -126,22 +147,27 @@ func constraintNotEqual(v, c *Version) bool {
 }
 
 func constraintGreaterThan(v, c *Version) bool {
-	return v.Compare(c) == 1
+	return prereleaseCheck(v, c) && v.Compare(c) == 1
 }
 
 func constraintLessThan(v, c *Version) bool {
-	return v.Compare(c) == -1
+	return prereleaseCheck(v, c) && v.Compare(c) == -1
 }
 
 func constraintGreaterThanEqual(v, c *Version) bool {
-	return v.Compare(c) >= 0
+	return prereleaseCheck(v, c) && v.Compare(c) >= 0
 }
 
 func constraintLessThanEqual(v, c *Version) bool {
-	return v.Compare(c) <= 0
+	return prereleaseCheck(v, c) && v.Compare(c) <= 0
 }
 
 func constraintPessimistic(v, c *Version) bool {
+	// Using a pessimistic constraint with a pre-release, restricts versions to pre-releases
+	if !prereleaseCheck(v, c) || (c.Prerelease() != "" && v.Prerelease() == "") {
+		return false
+	}
+
 	// If the version being checked is naturally less than the constraint, then there
 	// is no way for the version to be valid against the constraint
 	if v.LessThan(c) {

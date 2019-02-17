@@ -2,6 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 export class AnnotationsEditorCtrl {
   mode: any;
@@ -10,6 +11,7 @@ export class AnnotationsEditorCtrl {
   currentAnnotation: any;
   currentDatasource: any;
   currentIsNew: any;
+  dashboard: DashboardModel;
 
   annotationDefaults: any = {
     name: '',
@@ -26,9 +28,10 @@ export class AnnotationsEditorCtrl {
   constructor($scope, private datasourceSrv) {
     $scope.ctrl = this;
 
+    this.dashboard = $scope.dashboard;
     this.mode = 'list';
     this.datasources = datasourceSrv.getAnnotationSources();
-    this.annotations = $scope.dashboard.annotations.list;
+    this.annotations = this.dashboard.annotations.list;
     this.reset();
 
     this.onColorChange = this.onColorChange.bind(this);
@@ -70,15 +73,21 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
   }
 
+  move(index, dir) {
+    _.move(this.annotations, index, index + dir);
+  }
+
   add() {
     this.annotations.push(this.currentAnnotation);
     this.reset();
     this.mode = 'list';
+    this.dashboard.updateSubmenuVisibility();
   }
 
   removeAnnotation(annotation) {
-    var index = _.indexOf(this.annotations, annotation);
+    const index = _.indexOf(this.annotations, annotation);
     this.annotations.splice(index, 1);
+    this.dashboard.updateSubmenuVisibility();
   }
 
   onColorChange(newColor) {

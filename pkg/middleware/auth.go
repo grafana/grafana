@@ -7,23 +7,13 @@ import (
 	"gopkg.in/macaron.v1"
 
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
 	ReqSignedIn     bool
-}
-
-func getRequestUserId(c *m.ReqContext) int64 {
-	userId := c.Session.Get(session.SESS_KEY_USERID)
-
-	if userId != nil {
-		return userId.(int64)
-	}
-
-	return 0
 }
 
 func getApiKey(c *m.ReqContext) string {
@@ -32,6 +22,11 @@ func getApiKey(c *m.ReqContext) string {
 	if len(parts) == 2 && parts[0] == "Bearer" {
 		key := parts[1]
 		return key
+	}
+
+	username, password, err := util.DecodeBasicAuthHeader(header)
+	if err == nil && username == "api_key" {
+		return password
 	}
 
 	return ""

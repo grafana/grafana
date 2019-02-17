@@ -41,7 +41,7 @@ func init() {
 }
 
 var (
-	opsgenieAlertURL string = "https://api.opsgenie.com/v2/alerts"
+	opsgenieAlertURL = "https://api.opsgenie.com/v2/alerts"
 )
 
 func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -56,7 +56,7 @@ func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}
 
 	return &OpsGenieNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		ApiKey:       apiKey,
 		ApiUrl:       apiUrl,
 		AutoClose:    autoClose,
@@ -95,7 +95,7 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 		return err
 	}
 
-	customData := "Triggered metrics:\n\n"
+	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}

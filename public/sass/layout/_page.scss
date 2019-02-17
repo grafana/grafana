@@ -14,7 +14,29 @@
   background: $page-gradient;
 }
 
+.panel-in-fullscreen {
+  .main-view {
+    background: $edit-gradient;
+  }
+}
+
+.page-scrollbar-wrapper {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.page-scrollbar-content {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  width: 100%;
+}
+
 .page-container {
+  flex-grow: 1;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
   padding-left: $spacer*2;
@@ -23,20 +45,55 @@
   @include clearfix();
 }
 
+.page-full {
+  margin-left: $page-sidebar-margin;
+  padding-left: $spacer;
+  padding-right: $spacer;
+  @include clearfix();
+}
+
 .scroll-canvas {
   position: absolute;
   width: 100%;
   overflow: auto;
   height: 100%;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 
   &--dashboard {
     height: calc(100% - 56px);
+  }
+
+  > div {
+    flex-grow: 1;
+  }
+
+  > .footer {
+    flex-shrink: 0;
+  }
+
+  // Render in correct position even ng-view div is not rendered yet
+  > .footer:first-child {
+    flex-grow: 1;
+    display: flex;
+
+    > * {
+      width: 100%;
+      align-self: flex-end;
+    }
+  }
+}
+
+// fix for phantomjs
+.body--phantomjs {
+  .scroll-canvas {
+    overflow: hidden;
   }
 }
 
 .page-body {
   padding-top: $spacer*2;
-  min-height: 500px;
 }
 
 .page-heading {

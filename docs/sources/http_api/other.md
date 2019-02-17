@@ -83,3 +83,28 @@ Content-Type: application/json
 
 {"message": "Logged in"}
 ```
+
+# Health API
+
+## Returns health information about Grafana
+
+`GET /api/health`
+
+**Example Request**
+
+```http
+GET /api/health
+Accept: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200 OK
+
+{
+  "commit": "087143285",
+  "database": "ok",
+  "version": "5.1.3"
+}
+```

@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"bufio"
+	"context"
 	"crypto/subtle"
 	"crypto/tls"
 	"errors"
@@ -9,7 +10,6 @@ import (
 	"hash"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -79,6 +79,7 @@ type Client struct {
 	client      ClientProtocol
 	protocol    Protocol
 	logger      hclog.Logger
+	doneCtx     context.Context
 }
 
 // ClientConfig is the configuration used to initialize a new
@@ -232,7 +233,6 @@ func CleanupClients() {
 	}
 	managedClientsLock.Unlock()
 
-	log.Println("[DEBUG] plugin: waiting for all plugin processes to complete...")
 	wg.Wait()
 }
 
@@ -310,7 +310,7 @@ func (c *Client) Client() (ClientProtocol, error) {
 		c.client, err = newRPCClient(c)
 
 	case ProtocolGRPC:
-		c.client, err = newGRPCClient(c)
+		c.client, err = newGRPCClient(c.doneCtx, c)
 
 	default:
 		return nil, fmt.Errorf("unknown server protocol: %s", c.protocol)
@@ -423,6 +423,9 @@ func (c *Client) Start() (addr net.Addr, err error) {
 
 	// Create the logging channel for when we kill
 	c.doneLogging = make(chan struct{})
+	// Create a context for when we kill
+	var ctxCancel context.CancelFunc
+	c.doneCtx, ctxCancel = context.WithCancel(context.Background())
 
 	if c.config.Reattach != nil {
 		// Verify the process still exists. If not, then it is an error
@@ -457,6 +460,9 @@ func (c *Client) Start() (addr net.Addr, err error) {
 
 			// Close the logging channel since that doesn't work on reattach
 			close(c.doneLogging)
+
+			// Cancel the context
+			ctxCancel()
 		}(p.Pid)
 
 		// Set the address and process
@@ -535,6 +541,9 @@ func (c *Client) Start() (addr net.Addr, err error) {
 		// Mark that we exited
 		close(exitCh)
 
+		// Cancel the context, marking that we exited
+		ctxCancel()
+
 		// Set that we exited, which takes a lock
 		c.l.Lock()
 		defer c.l.Unlock()
@@ -606,7 +615,7 @@ func (c *Client) Start() (addr net.Addr, err error) {
 
 			if int(coreProtocol) != CoreProtocolVersion {
 				err = fmt.Errorf("Incompatible core API version with plugin. "+
-					"Plugin version: %s, Ours: %d\n\n"+
+					"Plugin version: %s, Core version: %d\n\n"+
 					"To fix this, the plugin usually only needs to be recompiled.\n"+
 					"Please report this to the plugin author.", parts[0], CoreProtocolVersion)
 				return
@@ -624,7 +633,7 @@ func (c *Client) Start() (addr net.Addr, err error) {
 		// Test the API version
 		if uint(protocol) != c.config.ProtocolVersion {
 			err = fmt.Errorf("Incompatible API version with plugin. "+
-				"Plugin version: %s, Ours: %d", parts[1], c.config.ProtocolVersion)
+				"Plugin version: %s, Core version: %d", parts[1], c.config.ProtocolVersion)
 			return
 		}
 
@@ -707,17 +716,28 @@ func (c *Client) Protocol() Protocol {
 	return c.protocol
 }
 
+func netAddrDialer(addr net.Addr) func(string, time.Duration) (net.Conn, error) {
+	return func(_ string, _ time.Duration) (net.Conn, error) {
+		// Connect to the client
+		conn, err := net.Dial(addr.Network(), addr.String())
+		if err != nil {
+			return nil, err
+		}
+		if tcpConn, ok := conn.(*net.TCPConn); ok {
+			// Make sure to set keep alive so that the connection doesn't die
+			tcpConn.SetKeepAlive(true)
+		}
+
+		return conn, nil
+	}
+}
+
 // dialer is compatible with grpc.WithDialer and creates the connection
 // to the plugin.
 func (c *Client) dialer(_ string, timeout time.Duration) (net.Conn, error) {
-	// Connect to the client
-	conn, err := net.Dial(c.address.Network(), c.address.String())
+	conn, err := netAddrDialer(c.address)("", timeout)
 	if err != nil {
 		return nil, err
-	}
-	if tcpConn, ok := conn.(*net.TCPConn); ok {
-		// Make sure to set keep alive so that the connection doesn't die
-		tcpConn.SetKeepAlive(true)
 	}
 
 	// If we have a TLS config we wrap our connection. We only do this
@@ -731,13 +751,13 @@ func (c *Client) dialer(_ string, timeout time.Duration) (net.Conn, error) {
 
 func (c *Client) logStderr(r io.Reader) {
 	bufR := bufio.NewReader(r)
+	l := c.logger.Named(filepath.Base(c.config.Cmd.Path))
+
 	for {
 		line, err := bufR.ReadString('\n')
 		if line != "" {
 			c.config.Stderr.Write([]byte(line))
 			line = strings.TrimRightFunc(line, unicode.IsSpace)
-
-			l := c.logger.Named(filepath.Base(c.config.Cmd.Path))
 
 			entry, err := parseJSON(line)
 			// If output is not JSON format, print directly to Debug
@@ -746,7 +766,7 @@ func (c *Client) logStderr(r io.Reader) {
 			} else {
 				out := flattenKVPairs(entry.KVPairs)
 
-				l = l.With("timestamp", entry.Timestamp.Format(hclog.TimeFormat))
+				out = append(out, "timestamp", entry.Timestamp.Format(hclog.TimeFormat))
 				switch hclog.LevelFromString(entry.Level) {
 				case hclog.Trace:
 					l.Trace(entry.Message, out...)

@@ -1,4 +1,3 @@
-import './inspect_ctrl';
 import './json_editor_ctrl';
 import './login_ctrl';
 import './invited_ctrl';

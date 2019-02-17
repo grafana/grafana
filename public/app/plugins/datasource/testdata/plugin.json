@@ -1,0 +1,20 @@
+{
+  "type": "datasource",
+  "name": "TestData DB",
+  "id": "testdata",
+
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "../../../../img/grafana_icon.svg",
+      "large": "../../../../img/grafana_icon.svg"
+    }
+  }
+}

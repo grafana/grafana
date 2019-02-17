@@ -50,26 +50,22 @@
 
       function checkIsReady() {
         var panelsRendered = page.evaluate(function() {
-          if (!window.angular) { return false; }
-          var body = window.angular.element(document.body);
-          if (!body.injector) { return false; }
-          if (!body.injector()) { return false; }
-
-          var rootScope = body.injector().get('$rootScope');
-          if (!rootScope) {return false;}
-          var panels = angular.element('div.panel:visible').length;
-          return rootScope.panelsRendered >= panels;
+          var panelCount = document.querySelectorAll('plugin-component').length;
+          return window.panelsRendered >= panelCount;
         });
 
         if (panelsRendered || totalWaitMs > timeoutMs) {
           var bb = page.evaluate(function () {
-            return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
+            var container = document.getElementsByClassName("dashboard-container")
+            if (container.length == 0) {
+               container = document.getElementsByClassName("panel-container")
+            }
+            return container[0].getBoundingClientRect();
           });
-
-          page.clipRect = {
-            top:    bb.top,
-            left:   bb.left,
-            width:  bb.width,
+          
+          // reset viewport to render full page
+          page.viewportSize = {
+            width: bb.width,
             height: bb.height
           };
 

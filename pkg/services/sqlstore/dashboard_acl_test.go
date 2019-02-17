@@ -26,6 +26,22 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Given dashboard folder with default permissions", func() {
+				Convey("When reading folder acl should include default acl", func() {
+					query := m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
+
+					err := GetDashboardAclInfoList(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+					defaultPermissionsId := -1
+					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
+					So(*query.Result[0].Role, ShouldEqual, m.ROLE_VIEWER)
+					So(query.Result[0].Inherited, ShouldBeFalse)
+					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
+					So(*query.Result[1].Role, ShouldEqual, m.ROLE_EDITOR)
+					So(query.Result[1].Inherited, ShouldBeFalse)
+				})
+
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
 					query := m.GetDashboardAclInfoListQuery{DashboardId: childDash.Id, OrgId: 1}
 
@@ -36,8 +52,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					defaultPermissionsId := -1
 					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
 					So(*query.Result[0].Role, ShouldEqual, m.ROLE_VIEWER)
+					So(query.Result[0].Inherited, ShouldBeTrue)
 					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
 					So(*query.Result[1].Role, ShouldEqual, m.ROLE_EDITOR)
+					So(query.Result[1].Inherited, ShouldBeTrue)
 				})
 			})
 
@@ -94,7 +112,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 						So(len(query.Result), ShouldEqual, 2)
 						So(query.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
+						So(query.Result[0].Inherited, ShouldBeTrue)
 						So(query.Result[1].DashboardId, ShouldEqual, childDash.Id)
+						So(query.Result[1].Inherited, ShouldBeFalse)
 					})
 				})
 			})
@@ -118,9 +138,12 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(len(query.Result), ShouldEqual, 3)
 					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
 					So(*query.Result[0].Role, ShouldEqual, m.ROLE_VIEWER)
+					So(query.Result[0].Inherited, ShouldBeTrue)
 					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
 					So(*query.Result[1].Role, ShouldEqual, m.ROLE_EDITOR)
+					So(query.Result[1].Inherited, ShouldBeTrue)
 					So(query.Result[2].DashboardId, ShouldEqual, childDash.Id)
+					So(query.Result[2].Inherited, ShouldBeFalse)
 				})
 			})
 
@@ -131,6 +154,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					DashboardId: savedFolder.Id,
 					Permission:  m.PERMISSION_EDIT,
 				})
+				So(err, ShouldBeNil)
 
 				q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 				err = GetDashboardAclInfoList(q1)
@@ -209,8 +233,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				defaultPermissionsId := -1
 				So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
 				So(*query.Result[0].Role, ShouldEqual, m.ROLE_VIEWER)
+				So(query.Result[0].Inherited, ShouldBeFalse)
 				So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
 				So(*query.Result[1].Role, ShouldEqual, m.ROLE_EDITOR)
+				So(query.Result[1].Inherited, ShouldBeFalse)
 			})
 		})
 	})

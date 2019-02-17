@@ -133,16 +133,6 @@ func TestFoldersApiEndpoint(t *testing.T) {
 	})
 }
 
-func callGetFolderByUid(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderByUid
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-}
-
-func callDeleteFolder(sc *scenarioContext) {
-	sc.handlerFunc = DeleteFolder
-	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-}
-
 func callCreateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
@@ -152,7 +142,7 @@ func createFolderScenario(desc string, url string, routePattern string, mock *fa
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
 
@@ -181,7 +171,7 @@ func updateFolderScenario(desc string, url string, routePattern string, mock *fa
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
 
@@ -204,10 +194,10 @@ func updateFolderScenario(desc string, url string, routePattern string, mock *fa
 type fakeFolderService struct {
 	GetFoldersResult     []*m.Folder
 	GetFoldersError      error
-	GetFolderByUidResult *m.Folder
-	GetFolderByUidError  error
-	GetFolderByIdResult  *m.Folder
-	GetFolderByIdError   error
+	GetFolderByUIDResult *m.Folder
+	GetFolderByUIDError  error
+	GetFolderByIDResult  *m.Folder
+	GetFolderByIDError   error
 	CreateFolderResult   *m.Folder
 	CreateFolderError    error
 	UpdateFolderResult   *m.Folder
@@ -221,12 +211,12 @@ func (s *fakeFolderService) GetFolders(limit int) ([]*m.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 
-func (s *fakeFolderService) GetFolderById(id int64) (*m.Folder, error) {
-	return s.GetFolderByIdResult, s.GetFolderByIdError
+func (s *fakeFolderService) GetFolderByID(id int64) (*m.Folder, error) {
+	return s.GetFolderByIDResult, s.GetFolderByIDError
 }
 
-func (s *fakeFolderService) GetFolderByUid(uid string) (*m.Folder, error) {
-	return s.GetFolderByUidResult, s.GetFolderByUidError
+func (s *fakeFolderService) GetFolderByUID(uid string) (*m.Folder, error) {
+	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
 func (s *fakeFolderService) CreateFolder(cmd *m.CreateFolderCommand) error {
@@ -234,7 +224,7 @@ func (s *fakeFolderService) CreateFolder(cmd *m.CreateFolderCommand) error {
 	return s.CreateFolderError
 }
 
-func (s *fakeFolderService) UpdateFolder(existingUid string, cmd *m.UpdateFolderCommand) error {
+func (s *fakeFolderService) UpdateFolder(existingUID string, cmd *m.UpdateFolderCommand) error {
 	cmd.Result = s.UpdateFolderResult
 	return s.UpdateFolderError
 }

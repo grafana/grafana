@@ -10,21 +10,21 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/ini.v1"
-
 	"github.com/go-stack/stack"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/inconshreveable/log15"
 	isatty "github.com/mattn/go-isatty"
-
-	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 var Root log15.Logger
 var loggersToClose []DisposableHandler
+var loggersToReload []ReloadableHandler
 var filters map[string]log15.Lvl
 
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
+	loggersToReload = make([]ReloadableHandler, 0)
 	Root = log15.Root()
 	Root.SetHandler(log15.DiscardHandler())
 }
@@ -56,10 +56,6 @@ func Debug(format string, v ...interface{}) {
 	Root.Debug(message)
 }
 
-func Debug2(message string, v ...interface{}) {
-	Root.Debug(message, v...)
-}
-
 func Info(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
@@ -69,10 +65,6 @@ func Info(format string, v ...interface{}) {
 	}
 
 	Root.Info(message)
-}
-
-func Info2(message string, v ...interface{}) {
-	Root.Info(message, v...)
 }
 
 func Warn(format string, v ...interface{}) {
@@ -86,16 +78,8 @@ func Warn(format string, v ...interface{}) {
 	Root.Warn(message)
 }
 
-func Warn2(message string, v ...interface{}) {
-	Root.Warn(message, v...)
-}
-
 func Error(skip int, format string, v ...interface{}) {
 	Root.Error(fmt.Sprintf(format, v...))
-}
-
-func Error2(message string, v ...interface{}) {
-	Root.Error(message, v...)
 }
 
 func Critical(skip int, format string, v ...interface{}) {
@@ -103,7 +87,7 @@ func Critical(skip int, format string, v ...interface{}) {
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
-	Root.Crit(fmt.Sprintf(format, v))
+	Root.Crit(fmt.Sprintf(format, v...))
 	Close()
 	os.Exit(1)
 }
@@ -113,6 +97,12 @@ func Close() {
 		logger.Close()
 	}
 	loggersToClose = make([]DisposableHandler, 0)
+}
+
+func Reload() {
+	for _, logger := range loggersToReload {
+		logger.Reload()
+	}
 }
 
 func GetLogLevelFor(name string) Lvl {
@@ -230,6 +220,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			fileHandler.Init()
 
 			loggersToClose = append(loggersToClose, fileHandler)
+			loggersToReload = append(loggersToReload, fileHandler)
 			handler = fileHandler
 		case "syslog":
 			sysLogHandler := NewSyslog(sec, format)

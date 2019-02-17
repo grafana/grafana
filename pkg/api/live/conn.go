@@ -70,7 +70,7 @@ func (c *connection) readPump() {
 func (c *connection) handleMessage(message []byte) {
 	json, err := simplejson.NewJson(message)
 	if err != nil {
-		log.Error(3, "Unreadable message on websocket channel:", err)
+		log.Error(3, "Unreadable message on websocket channel. error: %v", err)
 	}
 
 	msgType := json.Get("action").MustString()

@@ -32,7 +32,7 @@ type Folder struct {
 	HasAcl    bool
 }
 
-// GetDashboardModel turns the command into the savable model
+// GetDashboardModel turns the command into the saveable model
 func (cmd *CreateFolderCommand) GetDashboardModel(orgId int64, userId int64) *Dashboard {
 	dashFolder := NewDashboardFolder(strings.TrimSpace(cmd.Title))
 	dashFolder.OrgId = orgId
@@ -88,4 +88,13 @@ type UpdateFolderCommand struct {
 	Overwrite bool   `json:"overwrite"`
 
 	Result *Folder
+}
+
+//
+// QUERIES
+//
+
+type HasEditPermissionInFoldersQuery struct {
+	SignedInUser *SignedInUser
+	Result       bool
 }
