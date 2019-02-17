@@ -12,7 +12,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 	Convey("Pagerduty notifier tests", t, func() {
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
-				json := `{ }`
+				json := emptyJSON
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{

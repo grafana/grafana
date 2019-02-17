@@ -11,6 +11,7 @@ import (
 
 const (
 	triggMetrString = "Triggered metrics:\n\n"
+	emptyJSON       = `{ }`
 )
 
 type NotifierBase struct {

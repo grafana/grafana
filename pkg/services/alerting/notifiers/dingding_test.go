@@ -11,7 +11,7 @@ import (
 func TestDingDingNotifier(t *testing.T) {
 	Convey("Dingding notifier tests", t, func() {
 		Convey("empty settings should return error", func() {
-			json := `{ }`
+			json := emptyJSON
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
 			model := &m.AlertNotification{

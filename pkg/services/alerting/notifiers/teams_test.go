@@ -13,7 +13,7 @@ func TestTeamsNotifier(t *testing.T) {
 
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
-				json := `{ }`
+				json := emptyJSON
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{
