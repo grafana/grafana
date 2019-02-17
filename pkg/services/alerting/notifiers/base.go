@@ -12,6 +12,7 @@ import (
 const (
 	triggMetrString = "Triggered metrics:\n\n"
 	emptyJSON       = `{ }`
+	googleURLJSON   = `{ "url": "http://google.com" }`
 )
 
 type NotifierBase struct {

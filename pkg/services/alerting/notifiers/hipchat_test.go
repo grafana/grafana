@@ -27,10 +27,7 @@ func TestHipChatNotifier(t *testing.T) {
 			})
 
 			Convey("from settings", func() {
-				json := `
-				{
-          "url": "http://google.com"
-				}`
+				json := googleURLJSON
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{

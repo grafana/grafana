@@ -27,10 +27,7 @@ func TestTeamsNotifier(t *testing.T) {
 			})
 
 			Convey("from settings", func() {
-				json := `
-				{
-          "url": "http://google.com"
-				}`
+				json := googleURLJSON
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{
@@ -49,10 +46,7 @@ func TestTeamsNotifier(t *testing.T) {
 			})
 
 			Convey("from settings with Recipient and Mention", func() {
-				json := `
-				{
-          "url": "http://google.com"
-				}`
+				json := googleURLJSON
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{
