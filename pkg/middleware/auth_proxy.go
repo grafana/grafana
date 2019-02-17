@@ -104,7 +104,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 			AuthId:     proxyHeaderValue,
 		}
 
-		if setting.AuthProxyHeaderProperty == "username" {
+		if setting.AuthProxyHeaderProperty == HeaderUsername {
 			extUser.Login = proxyHeaderValue
 
 			// only set Email if it can be parsed as an email address
@@ -112,7 +112,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 			if emailErr == nil {
 				extUser.Email = emailAddr.Address
 			}
-		} else if setting.AuthProxyHeaderProperty == "email" {
+		} else if setting.AuthProxyHeaderProperty == HeaderEmail {
 			extUser.Email = proxyHeaderValue
 			extUser.Login = proxyHeaderValue
 		} else {

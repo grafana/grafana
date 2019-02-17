@@ -267,7 +267,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled enabled and user exists", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.LdapEnabled = false
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -295,7 +295,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled enabled and user does not exists", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyAutoSignUp = true
 			setting.LdapEnabled = false
 
@@ -327,7 +327,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUser
 			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			sc.fakeReq("GET", "/")
@@ -344,7 +344,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
 			sc.fakeReq("GET", "/")
@@ -361,7 +361,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			sc.fakeReq("GET", "/")
@@ -378,7 +378,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
 			sc.fakeReq("GET", "/")
@@ -395,7 +395,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and request RemoteAddr is trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -423,7 +423,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -451,7 +451,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is within trusted CIDR block", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -479,7 +479,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When session exists for previous user, create a new session", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = ""
 
 			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
@@ -512,7 +512,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("When auth_proxy and ldap enabled call sync with ldap user", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
-			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaderProperty = HeaderUsername
 			setting.AuthProxyWhitelist = ""
 			setting.LdapEnabled = true
 

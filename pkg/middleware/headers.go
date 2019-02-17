@@ -8,6 +8,8 @@ import (
 const (
 	HeaderNameNoBackendCache = "X-Grafana-NoCache"
 	HeaderWebAuthUser        = "X-WEBAUTH-USER"
+	HeaderUsername           = "username"
+	HeaderEmail              = "email"
 )
 
 func HandleNoCacheHeader() macaron.Handler {
