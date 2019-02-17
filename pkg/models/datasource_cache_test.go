@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const secretKeyWord = "password"
+
 func TestDataSourceCache(t *testing.T) {
 	Convey("When caching a datasource proxy", t, func() {
 		clearCache()
@@ -42,12 +44,12 @@ func TestDataSourceCache(t *testing.T) {
 
 	Convey("When caching a datasource proxy then updating it", t, func() {
 		clearCache()
-		setting.SecretKey = "password"
+		setting.SecretKey = secretKeyWord
 
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := util.Encrypt([]byte(caCert), secretKeyWord)
 		So(err, ShouldBeNil)
 		ds := DataSource{
 			Id:             1,
@@ -84,14 +86,14 @@ func TestDataSourceCache(t *testing.T) {
 
 	Convey("When caching a datasource proxy with TLS client authentication enabled", t, func() {
 		clearCache()
-		setting.SecretKey = "password"
+		setting.SecretKey = secretKeyWord
 
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
+		tlsClientCert, err := util.Encrypt([]byte(clientCert), secretKeyWord)
 		So(err, ShouldBeNil)
-		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
+		tlsClientKey, err := util.Encrypt([]byte(clientKey), secretKeyWord)
 		So(err, ShouldBeNil)
 
 		ds := DataSource{
@@ -118,12 +120,12 @@ func TestDataSourceCache(t *testing.T) {
 
 	Convey("When caching a datasource proxy with a user-supplied TLS CA", t, func() {
 		clearCache()
-		setting.SecretKey = "password"
+		setting.SecretKey = secretKeyWord
 
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := util.Encrypt([]byte(caCert), secretKeyWord)
 		So(err, ShouldBeNil)
 
 		ds := DataSource{

@@ -20,6 +20,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const secretKeyWord = "password"
+
 func TestDSRouteRule(t *testing.T) {
 
 	Convey("DataSourceProxy", t, func() {
@@ -59,8 +61,8 @@ func TestDSRouteRule(t *testing.T) {
 				},
 			}
 
-			setting.SecretKey = "password"
-			key, _ := util.Encrypt([]byte("123"), "password")
+			setting.SecretKey = secretKeyWord
+			key, _ := util.Encrypt([]byte("123"), secretKeyWord)
 
 			ds := &m.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -156,8 +158,8 @@ func TestDSRouteRule(t *testing.T) {
 				},
 			}
 
-			setting.SecretKey = "password"
-			key, _ := util.Encrypt([]byte("123"), "password")
+			setting.SecretKey = secretKeyWord
+			key, _ := util.Encrypt([]byte("123"), secretKeyWord)
 
 			ds := &m.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -257,7 +259,7 @@ func TestDSRouteRule(t *testing.T) {
 				Url:      "http://influxdb:8083",
 				Database: "site",
 				User:     "user",
-				Password: "password",
+				Password: secretKeyWord,
 			}
 
 			ctx := &m.ReqContext{}
@@ -275,7 +277,7 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("Should add username and password", func() {
 				queryVals := req.URL.Query()
 				So(queryVals["u"][0], ShouldEqual, "user")
-				So(queryVals["p"][0], ShouldEqual, "password")
+				So(queryVals["p"][0], ShouldEqual, secretKeyWord)
 			})
 		})
 

@@ -18,6 +18,11 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
+const (
+	ipWhitelist     = "192.168.1.1, 2001::23"
+	ipWhitelistMask = "192.168.1.0/24, 2001::0/120"
+)
+
 func TestMiddlewareContext(t *testing.T) {
 	setting.ERR_TEMPLATE_NAME = "error-template"
 
@@ -328,7 +333,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = HeaderUser
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+			setting.AuthProxyWhitelist = ipWhitelist
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
@@ -345,7 +350,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = HeaderUsername
-			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+			setting.AuthProxyWhitelist = ipWhitelistMask
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
@@ -362,7 +367,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = HeaderUsername
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+			setting.AuthProxyWhitelist = ipWhitelist
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
@@ -379,7 +384,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = HeaderUsername
-			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+			setting.AuthProxyWhitelist = ipWhitelistMask
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add(HeaderWebAuthUser, "torkelo")
@@ -396,7 +401,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = HeaderUsername
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+			setting.AuthProxyWhitelist = ipWhitelist
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
@@ -424,7 +429,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = HeaderUsername
-			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+			setting.AuthProxyWhitelist = ipWhitelistMask
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
@@ -452,7 +457,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = HeaderWebAuthUser
 			setting.AuthProxyHeaderProperty = HeaderUsername
-			setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+			setting.AuthProxyWhitelist = ipWhitelistMask
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
