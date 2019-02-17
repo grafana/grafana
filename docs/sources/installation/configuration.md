@@ -160,6 +160,13 @@ The path to the directory where the front end files (HTML, JS, and CSS
 files). Default to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
+### enable_gzip
+
+Set this option to `true` to enable HTTP compression, this can improve 
+transfer speed and bandwidth utilization. It is recommended that most 
+users set it to `true`. By default it is set to `false` for compatibility 
+reasons.
+
 ### cert_file
 
 Path to the certificate file (if `protocol` is set to `https`).
