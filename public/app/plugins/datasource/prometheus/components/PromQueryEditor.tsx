@@ -93,7 +93,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, panel, query } = this.props;
+    const { datasource, query } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -152,7 +152,6 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <FormLabel width={10} tooltip="Link to Graph in Prometheus">
               <PromLink
                 datasource={datasource}
-                panel={panel}
                 query={this.query} // Use modified query
                 />
             </FormLabel>
