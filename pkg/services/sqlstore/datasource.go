@@ -3,6 +3,8 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/go-xorm/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -36,6 +38,10 @@ func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
 		return m.ErrDataSourceNotFound
 	}
 
+	if datasource.JsonData == nil {
+		datasource.JsonData = simplejson.New()
+	}
+
 	query.Result = &datasource
 	return err
 }
@@ -48,6 +54,10 @@ func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
 		return m.ErrDataSourceNotFound
 	}
 
+	if datasource.JsonData == nil {
+		datasource.JsonData = simplejson.New()
+	}
+
 	query.Result = &datasource
 	return err
 }
@@ -56,14 +66,36 @@ func GetDataSources(query *m.GetDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
-	return sess.Find(&query.Result)
+	err := sess.Find(&query.Result)
+	if err != nil {
+		return err
+	}
+
+	for _, ds := range query.Result {
+		if ds.JsonData == nil {
+			ds.JsonData = simplejson.New()
+		}
+	}
+
+	return nil
 }
 
 func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
-	return sess.Find(&query.Result)
+	err := sess.Find(&query.Result)
+	if err != nil {
+		return err
+	}
+
+	for _, ds := range query.Result {
+		if ds.JsonData == nil {
+			ds.JsonData = simplejson.New()
+		}
+	}
+
+	return nil
 }
 
 func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
@@ -93,6 +125,10 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 		if has {
 			return m.ErrDataSourceNameExists
+		}
+
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
 		}
 
 		ds := &m.DataSource{
@@ -142,6 +178,10 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,
