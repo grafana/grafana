@@ -30,12 +30,6 @@
     padding: 0;
     margin-left: 0;
   }
-
-  .explore-toolbar-header-title {
-    .navbar-page-btn {
-      padding-left: 0;
-    }
-  }
 }
 
 .explore-toolbar {
@@ -87,22 +81,9 @@
   align-items: center;
 }
 
-.explore-toolbar-header-title {
-  color: darken($link-color, 5%);
-
-  .navbar-page-btn {
-    padding-left: $dashboard-padding;
-  }
-
-  .fa {
-    font-size: 100%;
-    opacity: 0.75;
-    margin-right: 0.5em;
-  }
-}
-
 .explore-toolbar-header-close {
   margin-left: auto;
+  color: $text-color-weak;
 }
 
 .explore-toolbar-content {
@@ -156,7 +137,6 @@
   .sidemenu-open {
     .explore-toolbar-header-title {
       .navbar-page-btn {
-        padding-left: 0;
         margin-left: 0;
       }
     }
@@ -164,7 +144,6 @@
 
   .explore-toolbar-header-title {
     .navbar-page-btn {
-      padding-left: 0;
       margin-left: $dashboard-padding;
     }
   }
@@ -185,7 +164,6 @@
   .sidemenu-open {
     .explore-toolbar-header-title {
       .navbar-page-btn {
-        padding-left: 0;
         margin-left: $dashboard-padding;
       }
     }
@@ -193,7 +171,6 @@
 
   .explore-toolbar-header-title {
     .navbar-page-btn {
-      padding-left: 0;
       margin-left: $dashboard-padding;
     }
   }
