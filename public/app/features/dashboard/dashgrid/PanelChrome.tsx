@@ -19,7 +19,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { TimeRange, LoadingState } from '@grafana/ui';
 
-import variables from 'sass/_variables.scss';
+import variables from 'sass/_variables.generated.scss';
 import templateSrv from 'app/features/templating/template_srv';
 import { DataQueryResponse } from '@grafana/ui/src';
 

@@ -1,9 +1,11 @@
 /* tslint:disable:max-line-length */
 
 import { GrafanaThemeCommons } from '../types';
+import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const commonThemeVarsTemplate = (theme: GrafanaThemeCommons) =>
-  `// Options
+  `${renderGeneratedFileBanner('grafana-ui/src/themes/default.ts', 'grafana-ui/src/themes/_variables.scss.tmpl.ts')}
+// Options
 //
 // Quickly modify global styling by enabling or disabling optional features.
 

@@ -1,9 +1,11 @@
 /* tslint:disable:max-line-length */
 
 import { GrafanaTheme } from '../types';
+import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const lightThemeVarsTemplate = (theme: GrafanaTheme) =>
-  `// Global values
+  `${renderGeneratedFileBanner('grafana-ui/src/themes/light.ts', 'grafana-ui/src/themes/_variable.light.scss.tmpl.ts')}
+// Global values
 // --------------------------------------------------
 
 $theme-name: light;
