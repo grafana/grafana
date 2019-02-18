@@ -110,8 +110,13 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
         <div className="gf-form-inline">
           <div className="gf-form">
-            <FormLabel width={7} tooltip="Controls the name of the time series, using name or pattern. For example
-        {{hostname}} will be replaced with label value for the label hostname.">Legend</FormLabel>
+            <FormLabel
+              width={7}
+              tooltip="Controls the name of the time series, using name or pattern. For example
+        {{hostname}} will be replaced with label value for the label hostname."
+            >
+              Legend
+            </FormLabel>
             <input
               type="text"
               className="gf-form-input"
@@ -122,9 +127,14 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           </div>
 
           <div className="gf-form">
-            <FormLabel width={7} tooltip="Leave blank for auto handling based on time range and panel width.
+            <FormLabel
+              width={7}
+              tooltip="Leave blank for auto handling based on time range and panel width.
             Note that the actual dates used in the query will be adjusted
-        to a multiple of the interval step.">Min step</FormLabel>
+        to a multiple of the interval step."
+            >
+              Min step
+            </FormLabel>
             <input
               type="text"
               className="gf-form-input width-8"
@@ -153,7 +163,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               <PromLink
                 datasource={datasource}
                 query={this.query} // Use modified query
-                />
+              />
             </FormLabel>
           </div>
         </div>
