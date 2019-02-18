@@ -425,6 +425,21 @@ jobs:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
 
+  build-oss-msi:
+    docker:
+      - image: grafana/grafana-oss-ci-msi-build
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - attach_workspace:
+        at: oss/dist
+      - run:
+          name: Create OSS MSI
+          command: |
+            ls -l oss
+            ls -l oss/dist
+            oss/ci-wrapper.sh
+
 workflows:
   version: 2
   build-master:
@@ -554,4 +569,8 @@ workflows:
               - gometalinter
               - mysql-integration-test
               - postgres-integration-test
+            filters: *filter-not-release-or-master
+        - build-oss-msi:
+            requires:
+              - grafana-docker-pr
             filters: *filter-not-release-or-master
