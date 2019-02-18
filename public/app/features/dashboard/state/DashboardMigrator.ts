@@ -399,6 +399,12 @@ export class DashboardMigrator {
             prefix: panel.options.prefix,
             suffix: panel.options.suffix,
           };
+
+          // correct order
+          if (panel.options.thresholds) {
+            panel.options.thresholds.reverse();
+          }
+
           // this options prop was due to a bug
           delete panel.options.options;
           delete panel.options.unit;
