@@ -1,4 +1,4 @@
-const concurrently = require('concurrently');
+import concurrently from 'concurrently';
 
 export const startTask = async ({ watchThemes, hot }: { watchThemes: boolean; hot: boolean }) => {
   const jobs = [];
