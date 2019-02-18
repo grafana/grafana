@@ -2,6 +2,7 @@
 
 ### Minor
 * **CLI**: Grafana CLI should preserve permissions for backend binaries for Linux and Darwin [#15500](https://github.com/grafana/grafana/issues/15500)
+* **Alerting**: Allow image rendering 90 percent of alertTimeout [#15395](https://github.com/grafana/grafana/pull/15395)
 
 # 6.0.0-beta2 (2019-02-11)
 
