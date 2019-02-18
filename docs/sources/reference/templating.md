@@ -106,7 +106,7 @@ Interpolation result: '("test1" OR "test2")'
 ```
 
 ### Percentencode
-Formats single & multi valued varaibles for use in URL parameters.
+Formats single & multi valued variables for use in URL parameters.
 
 ```bash
 servers = ['foo()bar BAZ', 'test2']
