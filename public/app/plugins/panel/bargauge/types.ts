@@ -1,23 +1,24 @@
 import { Threshold, ValueMapping } from '@grafana/ui';
+import { SingleStatValueOptions } from '../gauge/types';
 
 export interface BarGaugeOptions {
   minValue: number;
   maxValue: number;
-  prefix: string;
-  stat: string;
-  suffix: string;
-  unit: string;
+  valueOptions: SingleStatValueOptions;
   valueMappings: ValueMapping[];
   thresholds: Threshold[];
 }
 
-export const PanelDefaults: BarGaugeOptions = {
+export const defaults: BarGaugeOptions = {
   minValue: 0,
   maxValue: 100,
-  prefix: '',
-  suffix: '',
-  stat: 'avg',
-  unit: 'none',
+  valueOptions: {
+    prefix: '',
+    suffix: '',
+    decimals: null,
+    stat: 'avg',
+    unit: 'none',
+  },
   thresholds: [
     { index: 2, value: 80, color: 'red' },
     { index: 1, value: 50, color: 'orange' },

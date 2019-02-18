@@ -9,7 +9,7 @@ import { Themeable } from '../../index';
 type GaugeValue = string | number | null;
 
 export interface Props extends Themeable {
-  decimals: number;
+  decimals?: number | null;
   height: number;
   valueMappings: ValueMapping[];
   maxValue: number;

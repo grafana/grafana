@@ -1,7 +1,12 @@
+// Libraries
 import React, { PureComponent } from 'react';
-import { FormField, FormLabel, PanelOptionsProps, PanelOptionsGroup, Select } from '@grafana/ui';
+
+// Components
 import UnitPicker from 'app/core/components/Select/UnitPicker';
-import { GaugeOptions } from './types';
+import { FormField, FormLabel, PanelOptionsGroup, Select } from '@grafana/ui';
+
+// Types
+import { SingleStatValueOptions } from './types';
 
 const statOptions = [
   { value: 'min', label: 'Min' },
@@ -19,23 +24,39 @@ const statOptions = [
 
 const labelWidth = 6;
 
-export class ValueOptions extends PureComponent<PanelOptionsProps<GaugeOptions>> {
-  onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
+export interface Props {
+  options: SingleStatValueOptions;
+  onChange: (valueOptions: SingleStatValueOptions) => void;
+}
 
+export class SingleStatValueEditor extends PureComponent<Props> {
+  onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
   onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
 
   onDecimalChange = event => {
     if (!isNaN(event.target.value)) {
-      this.props.onChange({ ...this.props.options, decimals: event.target.value });
+      this.props.onChange({
+        ...this.props.options,
+        decimals: parseInt(event.target.value, 10),
+      });
+    } else {
+      this.props.onChange({
+        ...this.props.options,
+        decimals: null,
+      });
     }
   };
 
   onPrefixChange = event => this.props.onChange({ ...this.props.options, prefix: event.target.value });
-
   onSuffixChange = event => this.props.onChange({ ...this.props.options, suffix: event.target.value });
 
   render() {
     const { stat, unit, decimals, prefix, suffix } = this.props.options;
+
+    let decimalsString = '';
+    if (Number.isFinite(decimals)) {
+      decimalsString = decimals.toString();
+    }
 
     return (
       <PanelOptionsGroup title="Value">
@@ -57,7 +78,7 @@ export class ValueOptions extends PureComponent<PanelOptionsProps<GaugeOptions>>
           labelWidth={labelWidth}
           placeholder="auto"
           onChange={this.onDecimalChange}
-          value={decimals || ''}
+          value={decimalsString}
           type="number"
         />
         <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />

@@ -46,15 +46,15 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
     const parsed = ansicolor.parse(props.value);
 
     return {
-      chunks: parsed.spans.map((span) => {
-        return span.css ?
-          {
-            style: convertCSSToStyle(span.css),
-            text: span.text
-          } :
-          { text: span.text };
+      chunks: parsed.spans.map(span => {
+        return span.css
+          ? {
+              style: convertCSSToStyle(span.css),
+              text: span.text,
+            }
+          : { text: span.text };
       }),
-      prevValue: props.value
+      prevValue: props.value,
     };
   }
 
@@ -62,9 +62,14 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
     const { chunks } = this.state;
 
     return chunks.map(
-      (chunk, index) => chunk.style ?
-        <span key={index} style={chunk.style}>{chunk.text}</span> :
-        chunk.text
+      (chunk, index) =>
+        chunk.style ? (
+          <span key={index} style={chunk.style}>
+            {chunk.text}
+          </span>
+        ) : (
+          chunk.text
+        )
     );
   }
 }
