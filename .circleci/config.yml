@@ -432,12 +432,14 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: oss/dist
+          at: /dist
       - run:
           name: Create OSS MSI
           command: |
-            ls -l oss
-            ls -l oss/dist
+            ls -al /
+            ls -al /dist
+            ls -al
+            ls -al oss
             oss/ci-wrapper.sh
 
 workflows:
