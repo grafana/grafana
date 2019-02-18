@@ -284,15 +284,15 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
+export const mapStateToProps = (state: StoreState) => ({
   urlUid: state.location.routeParams.uid,
   urlSlug: state.location.routeParams.slug,
   urlType: state.location.routeParams.type,
   editview: state.location.query.editview,
   urlPanelId: state.location.query.panelId,
   urlFolderId: state.location.query.folderId,
-  urlFullscreen: state.location.query.fullscreen === true,
-  urlEdit: state.location.query.edit === true,
+  urlFullscreen: !!state.location.query.fullscreen,
+  urlEdit: !!state.location.query.edit,
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,

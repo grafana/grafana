@@ -16,9 +16,10 @@ interface Props extends PanelProps<GaugeOptions> {}
 export class GaugePanel extends PureComponent<Props> {
   render() {
     const { panelData, width, height, onInterpolate, options } = this.props;
+    const { valueOptions } = options;
 
-    const prefix = onInterpolate(options.prefix);
-    const suffix = onInterpolate(options.suffix);
+    const prefix = onInterpolate(valueOptions.prefix);
+    const suffix = onInterpolate(valueOptions.suffix);
     let value: TimeSeriesValue;
 
     if (panelData.timeSeries) {
@@ -28,7 +29,7 @@ export class GaugePanel extends PureComponent<Props> {
       });
 
       if (vmSeries[0]) {
-        value = vmSeries[0].stats[options.stat];
+        value = vmSeries[0].stats[valueOptions.stat];
       } else {
         value = null;
       }
@@ -41,11 +42,18 @@ export class GaugePanel extends PureComponent<Props> {
         {theme => (
           <Gauge
             value={value}
-            {...this.props.options}
             width={width}
             height={height}
             prefix={prefix}
             suffix={suffix}
+            unit={valueOptions.unit}
+            decimals={valueOptions.decimals}
+            thresholds={options.thresholds}
+            valueMappings={options.valueMappings}
+            showThresholdLabels={options.showThresholdLabels}
+            showThresholdMarkers={options.showThresholdMarkers}
+            minValue={options.minValue}
+            maxValue={options.maxValue}
             theme={theme}
           />
         )}

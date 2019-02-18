@@ -16,9 +16,21 @@ describe('<LogMessageAnsi />', () => {
     const wrapper = shallow(<LogMessageAnsi value={value} />);
 
     expect(wrapper.find('span')).toHaveLength(1);
-    expect(wrapper.find('span').first().prop('style')).toMatchObject(expect.objectContaining({
-      color: expect.any(String)
-    }));
-    expect(wrapper.find('span').first().text()).toBe('ipsum');
+    expect(
+      wrapper
+        .find('span')
+        .first()
+        .prop('style')
+    ).toMatchObject(
+      expect.objectContaining({
+        color: expect.any(String),
+      })
+    );
+    expect(
+      wrapper
+        .find('span')
+        .first()
+        .text()
+    ).toBe('ipsum');
   });
 });
