@@ -232,14 +232,15 @@ export class PanelModel {
     // for angular panels only we need to remove all events and let angular panels do some cleanup
     if (fromAngularPanel) {
       this.destroy();
+    }
 
-      for (const key of _.keys(this)) {
-        if (mustKeepProps[key]) {
-          continue;
-        }
-
-        delete this[key];
+    // remove panel type specific  options
+    for (const key of _.keys(this)) {
+      if (mustKeepProps[key]) {
+        continue;
       }
+
+      delete this[key];
     }
 
     this.restorePanelOptions(pluginId);
