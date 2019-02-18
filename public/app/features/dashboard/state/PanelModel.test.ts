@@ -10,6 +10,20 @@ describe('PanelModel', () => {
         type: 'table',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
+        options: {
+          thresholds: [
+            {
+              color: '#F2495C',
+              index: 1,
+              value: 50,
+            },
+            {
+              color: '#73BF69',
+              index: 0,
+              value: null,
+            },
+          ],
+        },
       });
     });
 
@@ -33,6 +47,21 @@ describe('PanelModel', () => {
     it('getSaveModel should remove nonPersistedProperties', () => {
       const saveModel = model.getSaveModel();
       expect(saveModel.events).toBe(undefined);
+    });
+
+    it('should restore -Infinity value for base threshold', () => {
+      expect(model.options.thresholds).toEqual([
+        {
+          color: '#F2495C',
+          index: 1,
+          value: 50,
+        },
+        {
+          color: '#73BF69',
+          index: 0,
+          value: -Infinity,
+        },
+      ]);
     });
 
     describe('when changing panel type', () => {

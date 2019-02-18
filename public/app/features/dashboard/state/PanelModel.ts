@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery, TimeSeries } from '@grafana/ui';
+import { DataQuery, TimeSeries, Threshold } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
 
 export interface GridPos {
@@ -91,7 +91,9 @@ export class PanelModel {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
-  options: object;
+  options: {
+    [key: string]: any;
+  };
 
   maxDataPoints?: number;
   interval?: string;
@@ -119,6 +121,8 @@ export class PanelModel {
     _.defaultsDeep(this, _.cloneDeep(defaults));
     // queries must have refId
     this.ensureQueryIds();
+
+    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
@@ -128,6 +132,19 @@ export class PanelModel {
           query.refId = this.getNextQueryLetter();
         }
       }
+    }
+  }
+
+  restoreInfintyForThresholds() {
+    if (this.options && this.options.thresholds) {
+      this.options.thresholds = this.options.thresholds.map((threshold: Threshold) => {
+        // JSON serialization of -Infinity is 'null' so lets convert it back to -Infinity
+        if (threshold.index === 0 && threshold.value === null) {
+          return { ...threshold, value: -Infinity };
+        }
+
+        return threshold;
+      });
     }
   }
 
