@@ -140,7 +140,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
-    const PanelComponent = plugin.exports.Panel;
+    const PanelComponent = plugin.exports.reactPanel.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
@@ -154,7 +154,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           loading={loading}
           panelData={panelData}
           timeRange={timeRange}
-          options={panel.getOptions(plugin.exports.PanelDefaults)}
+          options={panel.getOptions(plugin.exports.reactPanel.defaults)}
           width={width - 2 * variables.panelhorizontalpadding}
           height={height - PANEL_HEADER_HEIGHT - variables.panelverticalpadding}
           renderCounter={renderCounter}

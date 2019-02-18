@@ -173,7 +173,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.exports.Panel && this.renderReactPanel()}
+              {plugin.exports.reactPanel && this.renderReactPanel()}
               {plugin.exports.PanelCtrl && this.renderAngularPanel()}
             </div>
           )}
