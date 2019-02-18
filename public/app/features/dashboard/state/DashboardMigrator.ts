@@ -22,7 +22,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 17;
+    this.dashboard.schemaVersion = 18;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -384,6 +384,30 @@ export class DashboardMigrator {
             ];
         }
         delete panel.minSpan;
+      });
+    }
+
+    if (oldVersion < 18) {
+      // migrate change to gauge options
+      panelUpgrades.push(panel => {
+        if (panel['options-gauge']) {
+          panel.options = panel['options-gauge'];
+          panel.options.valueOptions = {
+            unit: panel.options.unit,
+            stat: panel.options.stat,
+            decimals: panel.options.decimals,
+            prefix: panel.options.prefix,
+            suffix: panel.options.suffix,
+          };
+          // this options prop was due to a bug
+          delete panel.options.options;
+          delete panel.options.unit;
+          delete panel.options.stat;
+          delete panel.options.decimals;
+          delete panel.options.prefix;
+          delete panel.options.suffix;
+          delete panel['options-gauge'];
+        }
       });
     }
 
