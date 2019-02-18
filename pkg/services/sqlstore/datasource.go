@@ -38,10 +38,6 @@ func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
 		return m.ErrDataSourceNotFound
 	}
 
-	if datasource.JsonData == nil {
-		datasource.JsonData = simplejson.New()
-	}
-
 	query.Result = &datasource
 	return err
 }
@@ -54,10 +50,6 @@ func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
 		return m.ErrDataSourceNotFound
 	}
 
-	if datasource.JsonData == nil {
-		datasource.JsonData = simplejson.New()
-	}
-
 	query.Result = &datasource
 	return err
 }
@@ -66,36 +58,14 @@ func GetDataSources(query *m.GetDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
-	err := sess.Find(&query.Result)
-	if err != nil {
-		return err
-	}
-
-	for _, ds := range query.Result {
-		if ds.JsonData == nil {
-			ds.JsonData = simplejson.New()
-		}
-	}
-
-	return nil
+	return sess.Find(&query.Result)
 }
 
 func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
-	err := sess.Find(&query.Result)
-	if err != nil {
-		return err
-	}
-
-	for _, ds := range query.Result {
-		if ds.JsonData == nil {
-			ds.JsonData = simplejson.New()
-		}
-	}
-
-	return nil
+	return sess.Find(&query.Result)
 }
 
 func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
