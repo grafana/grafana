@@ -51,8 +51,6 @@ export class BarGaugePanel extends PureComponent<Props> {
             decimals={valueOptions.decimals}
             thresholds={options.thresholds}
             valueMappings={options.valueMappings}
-            minValue={options.minValue}
-            maxValue={options.maxValue}
             theme={theme}
           />
         )}

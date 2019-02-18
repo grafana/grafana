@@ -25,10 +25,13 @@ export interface PanelEditorProps<T = any> {
   onChange: (options: T) => void;
 }
 
+export type PreservePanelOptionsHandler<TOptions> = (pluginId: string, prevOptions: any) => Partial<TOptions>;
+
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
+  preserveOptions?: PreservePanelOptionsHandler<TOptions>;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
     this.panel = panel;
@@ -40,6 +43,10 @@ export class ReactPanelPlugin<TOptions = any> {
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+  }
+
+  setPreserveOptionsHandler(handler: PreservePanelOptionsHandler<TOptions>) {
+    this.preserveOptions = handler;
   }
 }
 

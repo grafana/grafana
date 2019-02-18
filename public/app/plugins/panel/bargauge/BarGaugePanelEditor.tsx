@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { SingleStatValueEditor } from '../gauge/SingleStatValueEditor';
+import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEditor';
 import { ThresholdsEditor, ValueMappingsEditor, PanelOptionsGrid, PanelOptionsGroup, FormField } from '@grafana/ui';
 
 // Types
@@ -23,15 +23,14 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
       valueMappings,
     });
 
-  onMinValueChange = ({ target }) => this.props.onChange({ ...this.props.options, minValue: target.value });
-
-  onMaxValueChange = ({ target }) => this.props.onChange({ ...this.props.options, maxValue: target.value });
-
   onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
     this.props.onChange({
       ...this.props.options,
       valueOptions,
     });
+
+  onMinValueChange = ({ target }) => this.props.onChange({ ...this.props.options, minValue: target.value });
+  onMaxValueChange = ({ target }) => this.props.onChange({ ...this.props.options, maxValue: target.value });
 
   render() {
     const { options } = this.props;
