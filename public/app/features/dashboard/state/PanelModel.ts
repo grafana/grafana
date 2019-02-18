@@ -46,8 +46,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   timeFrom: true,
   timeShift: true,
   hideTimeOverride: true,
-  maxDataPoints: true,
-  interval: true,
   description: true,
   links: true,
   fullscreen: true,
