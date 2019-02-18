@@ -432,7 +432,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-        at: oss/dist
+          at: oss/dist
       - run:
           name: Create OSS MSI
           command: |
