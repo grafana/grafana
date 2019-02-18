@@ -191,6 +191,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Litre/hour', id: 'litreh', fn: toFixedUnit('l/h') },
       { name: 'Litre/min (l/min)', id: 'flowlpm', fn: toFixedUnit('l/min') },
       { name: 'milliLitre/min (mL/min)', id: 'flowmlpm', fn: toFixedUnit('mL/min') },
+      { name: 'Lux (lx)', id: 'lux', fn: toFixedUnit('lux') },
     ],
   },
   {
