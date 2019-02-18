@@ -1,5 +1,8 @@
 # 6.0.0-beta3 (unreleased)
 
+### Minor
+* **CLI**: Grafana CLI should preserve permissions for backend binaries for Linux and Darwin [#15500](https://github.com/grafana/grafana/issues/15500)
+
 # 6.0.0-beta2 (2019-02-11)
 
 ### New Features
