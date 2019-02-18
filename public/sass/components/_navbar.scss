@@ -1,9 +1,8 @@
 .navbar {
   position: relative;
-  padding-left: 20px;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
-  padding-right: 20px;
+  padding: 0 20px 0 50px;
   display: flex;
   flex-grow: 1;
   border-bottom: 1px solid transparent;
@@ -57,15 +56,14 @@
   white-space: nowrap;
   display: block;
   margin: 0;
-  color: darken($link-color, 5%);
+  color: $headings-color;
   font-size: $font-size-lg;
-  padding-left: 1rem;
   min-height: $navbarHeight;
   line-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 60%;
-    padding-left: 0.2rem;
+    padding-left: 6px;
   }
 
   &--search {
@@ -73,12 +71,12 @@
   }
 
   .gicon {
+    top: -2px;
     position: relative;
-    top: -1px;
-    font-size: 19px;
+    font-size: 17px;
     line-height: 8px;
     opacity: 0.75;
-    margin-right: 13px;
+    margin-right: 10px;
     display: none;
   }
 
@@ -123,7 +121,7 @@
   height: 30px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
-  margin-right: 3px;
+  margin-left: 3px;
   white-space: nowrap;
 
   .gicon {
@@ -152,19 +150,19 @@
     }
   }
 
-  &--primary {
-    @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+  &--secondary {
+    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   }
 }
 
 @include media-breakpoint-up(sm) {
   .navbar {
-    padding-left: 50px;
+    padding-left: 60px;
   }
 
   .sidemenu-open {
     .navbar {
-      padding-left: 15px;
+      padding-left: 20px;
       margin-left: 0;
     }
   }
