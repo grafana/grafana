@@ -145,7 +145,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			Text:     "Explore",
 			Id:       "explore",
 			SubTitle: "Explore your data",
-			Icon:     "fa fa-rocket",
+			Icon:     "gicon gicon-explore",
 			Url:      setting.AppSubUrl + "/explore",
 		})
 	}
