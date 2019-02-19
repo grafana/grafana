@@ -29,6 +29,7 @@
 * **Login**: Anonymous usage stats for token auth [#15288](https://github.com/grafana/grafana/issues/15288)
 * **AzureMonitor**: improve autocomplete for Log Analytics and App Insights editor [#15131](https://github.com/grafana/grafana/issues/15131)
 * **LDAP**: Fix IPA/FreeIPA v4.6.4 does not allow LDAP searches with empty attributes [#14432](https://github.com/grafana/grafana/issues/14432)
+* **Provisioning**: Allow testing data sources that were added by config [#12164](https://github.com/grafana/grafana/issues/12164)
 
 ### Breaking changes
 
@@ -40,7 +41,7 @@
 * **Gauge**: Accept decimal inputs for thresholds [#15372](https://github.com/grafana/grafana/issues/15372)
 * **UI**: Fix error caused by named colors that are not part of named colors palette [#15373](https://github.com/grafana/grafana/issues/15373)
 * **UI**: Bug pressing special regexp chars in input fields [#12972](https://github.com/grafana/grafana/issues/12972)
-
+* **Permissions**: No need to have edit permissions to be able to "Save as" [#13066](https://github.com/grafana/grafana/issues/13066)
 
 ### 6.0.0-beta1 fixes
 
