@@ -18,7 +18,7 @@ const basicColors = {
   gray6: '#f4f5f8',
   gray7: '#fbfbfb',
   grayBlue: '#212327',
-  blue: '#ff0000',
+  blue: '#33b5e5',
   blueDark: '#005f81',
   blueLight: '#00a8e6', // not used in dark theme
   green: '#299c46',
