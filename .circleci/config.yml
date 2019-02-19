@@ -566,7 +566,7 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - build:
+        - build-all:
             filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
@@ -582,7 +582,17 @@ workflows:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
-              - build
+              - build-all
+              - test-backend
+              - test-frontend
+              - codespell
+              - gometalinter
+              - mysql-integration-test
+              - postgres-integration-test
+            filters: *filter-not-release-or-master
+        - build-oss-msi:
+            requires:
+              - build-all
               - test-backend
               - test-frontend
               - codespell
