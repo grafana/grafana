@@ -3,9 +3,8 @@ import moment from 'moment';
 import { TimeRange, TimeOptions, TimeOption, SelectOptionItem, ButtonSelect } from '@grafana/ui';
 
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
-import { Props as TimePickerPopoverProps, TimePickerPopover } from './TimePickerPopover';
+import { Props as TimePickerPopoverProps } from './TimePickerPopover';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
-import ReactDOM from 'react-dom';
 
 export interface Props {
   value: TimeRange;
@@ -56,18 +55,6 @@ export class TimePicker extends PureComponent<Props> {
     // Here we should also close the Select but no sure how to solve this without introducing state in this component
   };
 
-  // Makes sure that we don't close the popover when user clicks inside the popover
-  onOutsideClick = (event: any): boolean => {
-    const popoverElement = document.getElementsByClassName(TimePickerPopover.popoverClassName)[0];
-    const popoverNode = ReactDOM.findDOMNode(popoverElement) as Element;
-
-    if (popoverNode && popoverNode.contains(event.target)) {
-      return false;
-    }
-
-    return true;
-  };
-
   render() {
     const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom } = this.props;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
@@ -89,7 +76,6 @@ export class TimePicker extends PureComponent<Props> {
             options={options}
             onChange={this.onSelectChanged}
             components={{ Group: TimePickerOptionGroup }}
-            onOutsideClick={this.onOutsideClick}
             iconClass={'fa fa-clock-o fa-fw'}
           />
           {isAbsolute && (

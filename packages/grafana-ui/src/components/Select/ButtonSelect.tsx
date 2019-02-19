@@ -1,8 +1,32 @@
-import React, { PureComponent, SyntheticEvent } from 'react';
-import { SelectOptionItem } from './Select';
-import { SelectButton } from './SelectButton';
-import { HeadlessSelect } from './HeadlessSelect';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+import React, { PureComponent } from 'react';
+import Select, { SelectOptionItem } from './Select';
+
+interface ButtonComponentProps {
+  label: string | undefined;
+  className: string | undefined;
+  iconClass?: string;
+}
+
+const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
+  const { label, className, iconClass } = buttonProps;
+
+  return (
+    <div className={`${className}-button`}>
+      <button
+        ref={props.innerRef}
+        className="btn navbar-button navbar-button--tight"
+        onClick={props.selectProps.menuIsOpen ? props.selectProps.onMenuClose : props.selectProps.onMenuOpen}
+        onBlur={props.selectProps.onMenuClose}
+      >
+        <div className="select-button">
+          {iconClass && <i className={`select-button-icon ${iconClass}`} />}
+          <span className="select-button-value">{label ? label : ''}</span>
+          <i className="fa fa-caret-down fa-fw" />
+        </div>
+      </button>
+    </div>
+  );
+};
 
 export interface Props {
   className: string | undefined;
@@ -13,51 +37,36 @@ export interface Props {
   components?: any;
   maxMenuHeight?: number;
   onChange: (item: SelectOptionItem) => void;
-  onOutsideClick?: (event: SyntheticEvent) => boolean;
 }
 
-export interface State {
-  isSelectOpen: boolean;
-}
-
-export class ButtonSelect extends PureComponent<Props, State> {
-  state: State = { isSelectOpen: false };
+export class ButtonSelect extends PureComponent<Props> {
   onChange = (item: SelectOptionItem) => {
     const { onChange } = this.props;
     onChange(item);
-    this.setState({ isSelectOpen: false });
-  };
-
-  onClick = () => {
-    this.setState({ isSelectOpen: !this.state.isSelectOpen });
-  };
-
-  onClickOutside = () => {
-    this.setState({ isSelectOpen: false });
   };
 
   render() {
-    const { className, options, value, label, iconClass, components, onOutsideClick, maxMenuHeight } = this.props;
-    const { isSelectOpen } = this.state;
+    const { className, options, value, label, iconClass, components, maxMenuHeight } = this.props;
+    const combinedComponents = {
+      ...components,
+      Control: ButtonComponent({ label, className, iconClass }),
+    };
 
     return (
-      <ClickOutsideWrapper onClick={this.onClickOutside} onOutsideClick={onOutsideClick}>
-        <div className={className}>
-          <div className={`${className}-button`}>
-            <SelectButton onClick={this.onClick} iconClass={iconClass} value={label} textWhenUndefined="" />
-          </div>
-          <div className={`${className}-select`}>
-            <HeadlessSelect
-              options={options}
-              onChange={this.onChange}
-              value={value}
-              components={components}
-              isOpen={isSelectOpen}
-              maxMenuHeight={maxMenuHeight}
-            />
-          </div>
-        </div>
-      </ClickOutsideWrapper>
+      <div className={className}>
+        <Select
+          autoFocus
+          backspaceRemovesValue={false}
+          isClearable={false}
+          isSearchable={false}
+          options={options}
+          onChange={this.onChange}
+          defaultValue={value}
+          maxMenuHeight={maxMenuHeight}
+          components={combinedComponents}
+          className="gf-form-select-box-button-select"
+        />
+      </div>
     );
   }
 }

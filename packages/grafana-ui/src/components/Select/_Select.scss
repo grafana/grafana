@@ -190,12 +190,6 @@ $select-input-bg-disabled: $input-bg-disabled;
   }
 }
 
-.headless-select {
-  .gf-form-select-box__control {
-    display: none;
-  }
-
-  .gf-form-input {
-    height: 0;
-  }
+.gf-form-select-box-button-select {
+  height: auto;
 }
