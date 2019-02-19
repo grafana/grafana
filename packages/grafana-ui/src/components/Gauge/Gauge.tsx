@@ -87,16 +87,15 @@ export class Gauge extends PureComponent<Props> {
   getFormattedThresholds() {
     const { maxValue, minValue, thresholds, theme } = this.props;
 
-    const thresholdsSortedByIndex = [...thresholds].sort((t1, t2) => t1.index - t2.index);
-    const lastThreshold = thresholdsSortedByIndex[thresholdsSortedByIndex.length - 1];
+    const lastThreshold = thresholds[thresholds.length - 1];
 
     return [
-      ...thresholdsSortedByIndex.map(threshold => {
+      ...thresholds.map(threshold => {
         if (threshold.index === 0) {
           return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
         }
 
-        const previousThreshold = thresholdsSortedByIndex[threshold.index - 1];
+        const previousThreshold = thresholds[threshold.index - 1];
         return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
       }),
       { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
