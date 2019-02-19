@@ -49,21 +49,20 @@ export class PanelHeaderCorner extends Component<Props> {
     return (
       <div className="markdown-html">
         <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
-        {panel.links &&
-          panel.links.length > 0 && (
-            <ul className="text-left">
-              {panel.links.map((link, idx) => {
-                const info = linkSrv.getPanelLinkAnchorInfo(link, panel.scopedVars);
-                return (
-                  <li key={idx}>
-                    <a className="panel-menu-link" href={info.href} target={info.target}>
-                      {info.title}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+        {panel.links && panel.links.length > 0 && (
+          <ul className="text-left">
+            {panel.links.map((link, idx) => {
+              const info = linkSrv.getPanelLinkAnchorInfo(link, panel.scopedVars);
+              return (
+                <li key={idx}>
+                  <a className="panel-menu-link" href={info.href} target={info.target}>
+                    {info.title}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     );
   };

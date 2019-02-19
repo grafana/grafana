@@ -62,7 +62,9 @@ export class TeamMembers extends PureComponent<Props, State> {
 
     return (
       <td>
-        {labels.map(label => <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />)}
+        {labels.map(label => (
+          <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
+        ))}
       </td>
     );
   }
@@ -156,4 +158,7 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TeamMembers);

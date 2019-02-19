@@ -70,4 +70,9 @@ const mapDispatchToProps = {
   changeTime,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(GraphContainer));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(GraphContainer)
+);

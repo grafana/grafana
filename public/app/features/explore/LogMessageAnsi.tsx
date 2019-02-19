@@ -61,15 +61,14 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
   render() {
     const { chunks } = this.state;
 
-    return chunks.map(
-      (chunk, index) =>
-        chunk.style ? (
-          <span key={index} style={chunk.style}>
-            {chunk.text}
-          </span>
-        ) : (
-          chunk.text
-        )
+    return chunks.map((chunk, index) =>
+      chunk.style ? (
+        <span key={index} style={chunk.style}>
+          {chunk.text}
+        </span>
+      ) : (
+        chunk.text
+      )
     );
   }
 }

@@ -161,4 +161,9 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(TeamList)
+);
