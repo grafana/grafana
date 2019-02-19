@@ -41,20 +41,13 @@ exports[`Render should render teams table 1`] = `
       <div
         className="gf-form gf-form--grow"
       >
-        <label
-          className="gf-form--has-input-icon gf-form--grow"
-        >
-          <input
-            className="gf-form-input"
-            onChange={[Function]}
-            placeholder="Search teams"
-            type="text"
-            value=""
-          />
-          <i
-            className="gf-form-input-icon fa fa-search"
-          />
-        </label>
+        <ForwardRef
+          inputClassName="gf-form-input"
+          labelClassName="gf-form--has-input-icon gf-form--grow"
+          onChange={[Function]}
+          placeholder="Search teams"
+          value=""
+        />
       </div>
       <div
         className="page-action-bar__spacer"

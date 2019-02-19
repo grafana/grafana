@@ -11,11 +11,11 @@ datasources:
   - name: gdev-prometheus
     type: prometheus
     access: proxy
-    isDefault: true
     url: http://localhost:9090
 
   - name: gdev-testdata
     type: testdata
+    isDefault: true
 
   - name: gdev-influxdb
     type: influxdb

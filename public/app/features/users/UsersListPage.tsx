@@ -107,11 +107,11 @@ export class UsersListPage extends PureComponent<Props, State> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-          <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
-          {externalUserMngInfoHtml && (
-            <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
-          )}
-          {hasFetched && this.renderTable()}
+            <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
+            {externalUserMngInfoHtml && (
+              <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+            )}
+            {hasFetched && this.renderTable()}
           </>
         </Page.Contents>
       </Page>
@@ -138,4 +138,9 @@ const mapDispatchToProps = {
   removeUser,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UsersListPage)
+);

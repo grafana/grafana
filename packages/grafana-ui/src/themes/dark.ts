@@ -1,4 +1,4 @@
-import tinycolor  from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import defaultTheme from './default';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 

@@ -1,5 +1,5 @@
 import { ComponentClass } from 'react';
-import { PanelProps, PanelOptionsProps } from './panel';
+import { ReactPanelPlugin } from './panel';
 import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint, QueryFixAction } from './datasource';
 
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
@@ -81,9 +81,7 @@ export interface PluginExports {
 
   // Panel plugin
   PanelCtrl?: any;
-  Panel?: ComponentClass<PanelProps>;
-  PanelOptions?: ComponentClass<PanelOptionsProps>;
-  PanelDefaults?: any;
+  reactPanel: ReactPanelPlugin;
 }
 
 export interface PluginMeta {

@@ -40,12 +40,10 @@ describe('Theme variable variant selector', () => {
   it('return dark theme variant if no theme given', () => {
     const theme = lightThemeMock;
 
-    const selectedValue = selectThemeVariant(
-      {
-        dark: theme.color.red,
-        light: theme.color.green,
-      }
-    );
+    const selectedValue = selectThemeVariant({
+      dark: theme.color.red,
+      light: theme.color.green,
+    });
 
     expect(selectedValue).toBe(lightThemeMock.color.red);
   });

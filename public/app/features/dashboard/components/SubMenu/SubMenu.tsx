@@ -31,6 +31,6 @@ export class SubMenu extends PureComponent<Props> {
   }
 
   render() {
-    return <div ref={element => this.element = element} />;
+    return <div ref={element => (this.element = element)} />;
   }
 }

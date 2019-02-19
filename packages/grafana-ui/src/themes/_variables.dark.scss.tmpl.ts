@@ -129,7 +129,6 @@ $page-header-border-color: $dark-9;
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-bg: $dark-3; //remove after merge!!!
 $tight-form-func-bg: $dark-9;
 $tight-form-func-highlight-bg: $dark-10;
 
@@ -157,7 +156,6 @@ $scrollbarBorder: $dark-10;
 
 // Tables
 // -------------------------
-$table-bg: transparent; // remove after merge!!!
 $table-bg-accent: $dark-6; // for striping
 $table-border: $dark-6; // table and cell border
 

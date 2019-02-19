@@ -14,7 +14,7 @@ const setup = (propOverrides?: object) => {
     loadDataSource: jest.fn(),
     loadPluginDashboards: jest.fn(),
     removeDashboard: jest.fn(),
-    isLoading: false
+    isLoading: false,
   };
 
   Object.assign(props, propOverrides);

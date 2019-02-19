@@ -139,4 +139,3 @@ export function removeDashboard(uri: string): ThunkResult<void> {
     dispatch(loadPluginDashboards());
   };
 }
-

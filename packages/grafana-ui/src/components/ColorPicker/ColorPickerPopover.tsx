@@ -119,4 +119,3 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     );
   }
 }
-

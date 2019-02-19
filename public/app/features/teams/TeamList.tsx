@@ -8,6 +8,7 @@ import { NavModel, Team } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
@@ -33,8 +34,8 @@ export class TeamList extends PureComponent<Props, any> {
     this.props.deleteTeam(team.id);
   };
 
-  onSearchQueryChange = event => {
-    this.props.setSearchQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchQuery(value);
   };
 
   renderTeam(team: Team) {
@@ -89,16 +90,13 @@ export class TeamList extends PureComponent<Props, any> {
       <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
-                className="gf-form-input"
-                placeholder="Search teams"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search teams"
+              value={searchQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />
@@ -163,4 +161,9 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(TeamList)
+);

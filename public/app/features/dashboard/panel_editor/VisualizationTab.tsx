@@ -17,6 +17,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelPlugin } from 'app/types/plugins';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 interface Props {
   panel: PanelModel;
@@ -49,33 +50,27 @@ export class VisualizationTab extends PureComponent<Props, State> {
     };
   }
 
-  getPanelDefaultOptions = () => {
+  getReactPanelOptions = () => {
     const { panel, plugin } = this.props;
-
-    if (plugin.exports.PanelDefaults) {
-      return panel.getOptions(plugin.exports.PanelDefaults.options);
-    }
-
-    return panel.getOptions(plugin.exports.PanelDefaults);
+    return panel.getOptions(plugin.exports.reactPanel.defaults);
   };
 
   renderPanelOptions() {
     const { plugin, angularPanel } = this.props;
-    const { PanelOptions } = plugin.exports;
 
     if (angularPanel) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    return (
-      <>
-        {PanelOptions ? (
-          <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />
-        ) : (
-          <p>Visualization has no options</p>
-        )}
-      </>
-    );
+    if (plugin.exports.reactPanel) {
+      const PanelEditor = plugin.exports.reactPanel.editor;
+
+      if (PanelEditor) {
+        return <PanelEditor options={this.getReactPanelOptions()} onChange={this.onPanelOptionsChanged} />;
+      }
+    }
+
+    return <p>Visualization has no options</p>;
   }
 
   componentDidMount() {
@@ -170,8 +165,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.setState({ isVizPickerOpen: false });
   };
 
-  onSearchQueryChange = evt => {
-    const value = evt.target.value;
+  onSearchQueryChange = (value: string) => {
     this.setState({
       searchQuery: value,
     });
@@ -184,17 +178,14 @@ export class VisualizationTab extends PureComponent<Props, State> {
     if (this.state.isVizPickerOpen) {
       return (
         <>
-          <label className="gf-form--has-input-icon">
-            <input
-              type="text"
-              className="gf-form-input width-13"
-              placeholder=""
-              onChange={this.onSearchQueryChange}
-              value={searchQuery}
-              ref={elem => elem && elem.focus()}
-            />
-            <i className="gf-form-input-icon fa fa-search" />
-          </label>
+          <FilterInput
+            labelClassName="gf-form--has-input-icon"
+            inputClassName="gf-form-input width-13"
+            placeholder=""
+            onChange={this.onSearchQueryChange}
+            value={searchQuery}
+            ref={elem => elem && elem.focus()}
+          />
           <button className="btn btn-link toolbar__close" onClick={this.onCloseVizPicker}>
             <i className="fa fa-chevron-up" />
           </button>

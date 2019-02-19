@@ -14,7 +14,7 @@ describe('grafana data source', () => {
 
     const templateSrvStub = {
       replace: val => {
-        return val.replace('$var2', 'replaced|replaced2').replace('$var', 'replaced');
+        return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
       },
     };
 

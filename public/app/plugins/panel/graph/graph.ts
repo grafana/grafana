@@ -46,7 +46,6 @@ class GraphElement {
   legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
-
     this.ctrl = scope.ctrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;
@@ -533,7 +532,7 @@ class GraphElement {
       // Expand ticks for pretty view
       min = Math.floor(min / tickStep) * tickStep;
       // 1.01 is 101% - ensure we have enough space for last bar
-      max = Math.ceil(max * 1.01 / tickStep) * tickStep;
+      max = Math.ceil((max * 1.01) / tickStep) * tickStep;
 
       ticks = [];
       for (let i = min; i <= max; i += tickStep) {

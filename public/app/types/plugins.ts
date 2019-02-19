@@ -9,6 +9,12 @@ export interface PanelPlugin {
   info: any;
   sort: number;
   exports?: PluginExports;
+  dataFormats: PanelDataFormat[];
+}
+
+export enum PanelDataFormat {
+  Table = 'table',
+  TimeSeries = 'time_series',
 }
 
 export interface Plugin {

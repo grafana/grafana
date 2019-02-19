@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/actions';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   searchQuery: string;
@@ -43,16 +44,13 @@ export class UsersActionBar extends PureComponent<Props> {
     return (
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
-          <label className="gf-form--has-input-icon">
-            <input
-              type="text"
-              className="gf-form-input width-20"
-              value={searchQuery}
-              onChange={event => setUsersSearchQuery(event.target.value)}
-              placeholder="Filter by name or type"
-            />
-            <i className="gf-form-input-icon fa fa-search" />
-          </label>
+          <FilterInput
+            labelClassName="gf-form--has-input-icon"
+            inputClassName="gf-form-input width-20"
+            value={searchQuery}
+            onChange={setUsersSearchQuery}
+            placeholder="Filter by name or type"
+          />
           {pendingInvitesCount > 0 && (
             <div style={{ marginLeft: '1rem' }}>
               <button className={usersButtonStyle} key="users" onClick={onShowInvites}>
@@ -94,4 +92,7 @@ const mapDispatchToProps = {
   setUsersSearchQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(UsersActionBar);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(UsersActionBar);

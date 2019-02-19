@@ -82,10 +82,10 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
               </div>
               <div className="gf-form-button-row">
                 <button type="submit" className="btn btn-primary" disabled={!folder.canSave || !folder.hasChanged}>
-                  <i className="fa fa-save" /> Save
+                  Save
                 </button>
                 <button className="btn btn-danger" onClick={this.onDelete} disabled={!folder.canSave}>
-                  <i className="fa fa-trash" /> Delete
+                  Delete
                 </button>
               </div>
             </form>
@@ -113,4 +113,9 @@ const mapDispatchToProps = {
   deleteFolder,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderSettingsPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(FolderSettingsPage)
+);

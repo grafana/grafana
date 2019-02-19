@@ -51,7 +51,7 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
       }
 
       if (currentValue !== null && typeof currentValue !== 'number') {
-        throw {message: 'Time series contains non number values'};
+        throw { message: 'Time series contains non number values' };
       }
 
       // Due to missing values we could have different timeStep all along the series

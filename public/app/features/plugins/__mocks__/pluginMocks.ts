@@ -1,4 +1,4 @@
-import { Plugin, PanelPlugin } from 'app/types';
+import { Plugin, PanelPlugin, PanelDataFormat } from 'app/types';
 
 export const getMockPlugins = (amount: number): Plugin[] => {
   const plugins = [];
@@ -38,6 +38,7 @@ export const getPanelPlugin = (options: { id: string; sort?: number; hideFromLis
     id: options.id,
     name: options.id,
     sort: options.sort || 1,
+    dataFormats: [PanelDataFormat.TimeSeries],
     info: {
       author: {
         name: options.id + 'name',

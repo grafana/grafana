@@ -37,7 +37,7 @@ export class TimeRegionFormCtrl {
       line: false,
       // Default colors for new
       fillColor: 'rgba(234, 112, 112, 0.12)',
-      lineColor: 'rgba(237, 46, 24, 0.60)'
+      lineColor: 'rgba(237, 46, 24, 0.60)',
     });
     this.panelCtrl.render();
   }

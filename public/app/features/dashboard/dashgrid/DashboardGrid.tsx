@@ -14,7 +14,7 @@ let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
 
 interface GridWrapperProps {
-  size: { width: number; };
+  size: { width: number };
   layout: ReactGridLayout.Layout[];
   onLayoutChange: (layout: ReactGridLayout.Layout[]) => void;
   children: JSX.Element | JSX.Element[];
@@ -41,7 +41,7 @@ function GridWrapper({
   isResizable,
   isDraggable,
   isFullscreen,
-}: GridWrapperProps)  {
+}: GridWrapperProps) {
   const width = size.width > 0 ? size.width : lastGridWidth;
 
   // logic to ignore width changes (optimization)
@@ -149,21 +149,21 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
-  }
+  };
 
   triggerForceUpdate = () => {
     this.forceUpdate();
-  }
+  };
 
   onWidthChange = () => {
     for (const panel of this.props.dashboard.panels) {
       panel.resizeDone();
     }
-  }
+  };
 
   onViewModeChanged = () => {
     ignoreNextWidthChange = true;
-  }
+  };
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
     this.panelMap[item.i].updateGridPos(item);
@@ -171,21 +171,21 @@ export class DashboardGrid extends PureComponent<Props> {
     // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
     // So it's required to call it explicitly when panel resized or moved to save layout changes.
     this.onLayoutChange(layout);
-  }
+  };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
     console.log();
     this.panelMap[newItem.i].updateGridPos(newItem);
-  }
+  };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
     this.panelMap[newItem.i].resizeDone();
-  }
+  };
 
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
-  }
+  };
 
   renderPanels() {
     const panelElements = [];

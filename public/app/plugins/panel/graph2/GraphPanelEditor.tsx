@@ -2,12 +2,11 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-
 // Types
-import { PanelOptionsProps, Switch } from '@grafana/ui';
+import { PanelEditorProps, Switch } from '@grafana/ui';
 import { Options } from './types';
 
-export class GraphPanelOptions extends PureComponent<PanelOptionsProps<Options>> {
+export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   onToggleLines = () => {
     this.props.onChange({ ...this.props.options, showLines: !this.props.options.showLines });
   };

@@ -87,7 +87,7 @@
     "postcss-browser-reporter": "^0.5.0",
     "postcss-loader": "^2.0.6",
     "postcss-reporter": "^5.0.0",
-    "prettier": "1.9.2",
+    "prettier": "1.16.4",
     "react-hot-loader": "^4.3.6",
     "react-test-renderer": "^16.5.0",
     "redux-mock-store": "^1.5.3",
@@ -128,7 +128,8 @@
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook",
-    "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts"
+    "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
+    "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\""
   },
   "husky": {
     "hooks": {
@@ -136,11 +137,7 @@
     }
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "prettier --write",
-      "git add"
-    ],
-    "*.scss": [
+    "*.{ts,tsx,json,scss}": [
       "prettier --write",
       "git add"
     ],
@@ -164,6 +161,7 @@
     "angular-native-dragdrop": "1.2.2",
     "angular-route": "1.6.6",
     "angular-sanitize": "1.6.6",
+    "ansicolor": "1.1.78",
     "baron": "^3.0.3",
     "brace": "^0.10.0",
     "classnames": "^2.2.6",

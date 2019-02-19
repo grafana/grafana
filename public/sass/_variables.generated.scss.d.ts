@@ -1,6 +1,6 @@
 export interface GrafanaVariables {
-  panelHorizontalPadding: number;
-  panelVerticalPadding: number;
+  panelhorizontalpadding: number;
+  panelverticalpadding: number;
 }
 
 declare const variables: GrafanaVariables;

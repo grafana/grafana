@@ -65,7 +65,7 @@ export class DashNav extends PureComponent<Props> {
       });
     } else {
       this.props.updateLocation({
-        query: { panelId: null, edit: null, fullscreen: null },
+        query: { panelId: null, edit: null, fullscreen: null, tab: null },
         partial: true,
       });
     }
@@ -248,7 +248,7 @@ export class DashNav extends PureComponent<Props> {
 
         <div className="navbar-buttons navbar-buttons--tv">
           <DashNavButton
-            tooltip="Cycke view mode"
+            tooltip="Cycle view mode"
             classSuffix="tv"
             icon="fa fa-desktop"
             onClick={this.onToggleTVMode}
@@ -267,4 +267,7 @@ const mapDispatchToProps = {
   updateLocation,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(DashNav);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(DashNav);

@@ -24,12 +24,31 @@ $spacer: 1rem !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
-    0: (x: 0, y: 0),
-    1: (x: $spacer-x, y: $spacer-y),
-    2: (x: ($spacer-x * 1.5), y: ($spacer-y * 1.5)),
-    3: (x: ($spacer-x * 3), y: ($spacer-y * 3))
-  )
-  !default;
+  0: (
+    x: 0,
+    y: 0,
+  ),
+  1: (
+    x: $spacer-x,
+    y: $spacer-y,
+  ),
+  2: (
+    x: (
+      $spacer-x * 1.5,
+    ),
+    y: (
+      $spacer-y * 1.5,
+    ),
+  ),
+  3: (
+    x: (
+      $spacer-x * 3,
+    ),
+    y: (
+      $spacer-y * 3,
+    ),
+  ),
+) !default;
 $border-width: 1px !default;
 
 // Grid breakpoints
@@ -37,13 +56,24 @@ $border-width: 1px !default;
 // Define the minimum and maximum dimensions at which your layout will change,
 // adapting to different screen sizes, for use in media queries.
 
-$grid-breakpoints: (xs: 0, sm: 544px, md: 768px, lg: 992px, xl: 1200px) !default;
+$grid-breakpoints: (
+  xs: 0,
+  sm: 544px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+) !default;
 
 // Grid containers
 //
-// Define the maximum width of .container for different screen sizes.
+// Define the maximum width of `.container` for different screen sizes.
 
-$container-max-widths: (sm: 576px, md: 720px, lg: 940px, xl: 1080px) !default;
+$container-max-widths: (
+  sm: 576px,
+  md: 720px,
+  lg: 940px,
+  xl: 1080px,
+) !default;
 
 // Grid columns
 //
@@ -110,7 +140,7 @@ $line-height-sm: 1.5 !default;
 
 $border-radius: 3px !default;
 $border-radius-lg: 5px !default;
-$border-radius-sm: 2px!default;
+$border-radius-sm: 2px !default;
 
 // Page
 
@@ -124,7 +154,7 @@ $link-hover-decoration: none !default;
 
 // Tables
 //
-// Customizes the table component with basic values, each used across all table variations.
+// Customizes the `.table` component with basic values, each used across all table variations.
 
 $table-cell-padding: 4px 10px !default;
 
@@ -153,12 +183,9 @@ $gf-form-input-height: 35px;
 $cursor-disabled: not-allowed !default;
 
 // Form validation icons
-$form-icon-success: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%235cb85c' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3E%3C/svg%3E")
-  !default;
-$form-icon-warning: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%23f0ad4e' d='M4.4 5.324h-.8v-2.46h.8zm0 1.42h-.8V5.89h.8zM3.76.63L.04 7.075c-.115.2.016.425.26.426h7.397c.242 0 .372-.226.258-.426C6.726 4.924 5.47 2.79 4.253.63c-.113-.174-.39-.174-.494 0z'/%3E%3C/svg%3E")
-  !default;
-$form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23d9534f' viewBox='-2 -2 7 7'%3E%3Cpath stroke='%23d9534f' d='M0 0l3 3m0-3L0 3'/%3E%3Ccircle r='.5'/%3E%3Ccircle cx='3' r='.5'/%3E%3Ccircle cy='3' r='.5'/%3E%3Ccircle cx='3' cy='3' r='.5'/%3E%3C/svg%3E")
-  !default;
+$form-icon-success: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%235cb85c' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3E%3C/svg%3E") !default;
+$form-icon-warning: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%23f0ad4e' d='M4.4 5.324h-.8v-2.46h.8zm0 1.42h-.8V5.89h.8zM3.76.63L.04 7.075c-.115.2.016.425.26.426h7.397c.242 0 .372-.226.258-.426C6.726 4.924 5.47 2.79 4.253.63c-.113-.174-.39-.174-.494 0z'/%3E%3C/svg%3E") !default;
+$form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23d9534f' viewBox='-2 -2 7 7'%3E%3Cpath stroke='%23d9534f' d='M0 0l3 3m0-3L0 3'/%3E%3Ccircle r='.5'/%3E%3Ccircle cx='3' r='.5'/%3E%3Ccircle cy='3' r='.5'/%3E%3Ccircle cx='3' cy='3' r='.5'/%3E%3C/svg%3E") !default;
 
 // Z-index master list
 // -------------------------
@@ -201,19 +228,38 @@ $panel-margin: 10px;
 $dashboard-padding: $panel-margin * 2;
 $panel-horizontal-padding: 10;
 $panel-vertical-padding: 5;
-$panel-padding: 0px $panel-horizontal-padding+0px $panel-vertical-padding+0px $panel-horizontal-padding+0px;
+$panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
 
 // tabs
 $tabs-padding: 10px 15px 9px;
 
 $external-services: (
-    github: (bgColor: #464646, borderColor: #393939, icon: ''),
-    gitlab: (bgColor: #fc6d26, borderColor: #e24329, icon: ''),
-    google: (bgColor: #e84d3c, borderColor: #b83e31, icon: ''),
-    grafanacom: (bgColor: #262628, borderColor: #393939, icon: ''),
-    oauth: (bgColor: #262628, borderColor: #393939, icon: '')
-  )
-  !default;
+  github: (
+    bgColor: #464646,
+    borderColor: #393939,
+    icon: '',
+  ),
+  gitlab: (
+    bgColor: #fc6d26,
+    borderColor: #e24329,
+    icon: '',
+  ),
+  google: (
+    bgColor: #e84d3c,
+    borderColor: #b83e31,
+    icon: '',
+  ),
+  grafanacom: (
+    bgColor: #262628,
+    borderColor: #393939,
+    icon: '',
+  ),
+  oauth: (
+    bgColor: #262628,
+    borderColor: #393939,
+    icon: '',
+  ),
+) !default;
 
 :export {
   panelhorizontalpadding: $panel-horizontal-padding;
