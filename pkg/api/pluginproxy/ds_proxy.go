@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/sylr/prometheus-azure-exporter/pkg/tools/sync"
 )
 
 var (
@@ -34,6 +36,7 @@ type DataSourceProxy struct {
 	proxyPath string
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
+	wg        sync.Waiter
 }
 
 type httpClient interface {
@@ -49,6 +52,7 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		ctx:       ctx,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
+		wg:        sync.NewWaiter(ds.ConcurentRequests),
 	}
 }
 
@@ -96,7 +100,9 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
 
+	proxy.wg.Add(1)
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
+	proxy.wg.Done()
 	proxy.ctx.Resp.Header().Del("Set-Cookie")
 }
 
