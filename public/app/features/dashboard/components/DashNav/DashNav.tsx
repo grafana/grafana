@@ -65,7 +65,7 @@ export class DashNav extends PureComponent<Props> {
       });
     } else {
       this.props.updateLocation({
-        query: { panelId: null, edit: null, fullscreen: null },
+        query: { panelId: null, edit: null, fullscreen: null, tab: null },
         partial: true,
       });
     }
