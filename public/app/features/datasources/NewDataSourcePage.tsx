@@ -80,4 +80,9 @@ const mapDispatchToProps = {
   setDataSourceTypeSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NewDataSourcePage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(NewDataSourcePage)
+);

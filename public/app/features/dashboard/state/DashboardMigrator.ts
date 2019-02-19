@@ -487,7 +487,7 @@ export class DashboardMigrator {
       for (const panel of row.panels) {
         panel.span = panel.span || DEFAULT_PANEL_SPAN;
         if (panel.minSpan) {
-          panel.minSpan = Math.min(GRID_COLUMN_COUNT, GRID_COLUMN_COUNT / 12 * panel.minSpan);
+          panel.minSpan = Math.min(GRID_COLUMN_COUNT, (GRID_COLUMN_COUNT / 12) * panel.minSpan);
         }
         const panelWidth = Math.floor(panel.span) * widthFactor;
         const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;

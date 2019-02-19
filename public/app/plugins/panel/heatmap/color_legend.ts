@@ -173,8 +173,7 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
   const posY = getSvgElemHeight(legendElem) + LEGEND_VALUE_MARGIN;
   const posX = getSvgElemX(colorRect);
 
-  d3
-    .select(legendElem.get(0))
+  d3.select(legendElem.get(0))
     .append('g')
     .attr('class', 'axis')
     .attr('transform', 'translate(' + posX + ',' + posY + ')')

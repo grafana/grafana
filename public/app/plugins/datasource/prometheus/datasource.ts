@@ -487,13 +487,15 @@ export function alignRange(start, end, step) {
 export function extractRuleMappingFromGroups(groups: any[]) {
   return groups.reduce(
     (mapping, group) =>
-      group.rules.filter(rule => rule.type === 'recording').reduce(
-        (acc, rule) => ({
-          ...acc,
-          [rule.name]: rule.query,
-        }),
-        mapping
-      ),
+      group.rules
+        .filter(rule => rule.type === 'recording')
+        .reduce(
+          (acc, rule) => ({
+            ...acc,
+            [rule.name]: rule.query,
+          }),
+          mapping
+        ),
     {}
   );
 }

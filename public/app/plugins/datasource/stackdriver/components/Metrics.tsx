@@ -92,12 +92,14 @@ export class Metrics extends React.Component<Props, State> {
     if (!selectedMetricDescriptor) {
       return [];
     }
-    const metricsByService = metricDescriptors.filter(m => m.service === selectedMetricDescriptor.service).map(m => ({
-      service: m.service,
-      value: m.type,
-      label: m.displayName,
-      description: m.description,
-    }));
+    const metricsByService = metricDescriptors
+      .filter(m => m.service === selectedMetricDescriptor.service)
+      .map(m => ({
+        service: m.service,
+        value: m.type,
+        label: m.displayName,
+        description: m.description,
+      }));
     return metricsByService;
   }
 
@@ -105,12 +107,14 @@ export class Metrics extends React.Component<Props, State> {
     const { metricDescriptors } = this.state;
     const { templateSrv, metricType } = this.props;
 
-    const metrics = metricDescriptors.filter(m => m.service === templateSrv.replace(service)).map(m => ({
-      service: m.service,
-      value: m.type,
-      label: m.displayName,
-      description: m.description,
-    }));
+    const metrics = metricDescriptors
+      .filter(m => m.service === templateSrv.replace(service))
+      .map(m => ({
+        service: m.service,
+        value: m.type,
+        label: m.displayName,
+        description: m.description,
+      }));
 
     this.setState({ service, metrics });
 

@@ -132,4 +132,9 @@ const mapDispatchToProps = {
   addFolderPermission,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderPermissions));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(FolderPermissions)
+);

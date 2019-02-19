@@ -6,7 +6,7 @@ $column-horizontal-spacing: 10px;
   padding: $panel-padding;
   padding-top: 10px;
   border-radius: $border-radius;
-  margin: 2*$panel-margin 0 $panel-margin;
+  margin: 2 * $panel-margin 0 $panel-margin;
   border: $panel-border;
   flex-direction: column;
 }
@@ -18,7 +18,7 @@ $column-horizontal-spacing: 10px;
   flex-wrap: wrap;
 
   > * {
-    margin-right: $spacer*2;
+    margin-right: $spacer * 2;
   }
 }
 

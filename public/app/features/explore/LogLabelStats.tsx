@@ -60,7 +60,9 @@ export class LogLabelStats extends PureComponent<Props> {
           <span className="logs-stats__close fa fa-remove" onClick={onClickClose} />
         </div>
         <div className="logs-stats__body">
-          {topRows.map(stat => <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />)}
+          {topRows.map(stat => (
+            <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
+          ))}
           {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}
           {otherCount > 0 && (
             <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />

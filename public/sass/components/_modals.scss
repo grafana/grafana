@@ -24,7 +24,7 @@
   z-index: $zindex-modal;
   width: 100%;
   background: $page-bg;
-  @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
+  @include box-shadow(0 3px 7px rgba(0, 0, 0, 0.3));
   @include background-clip(padding-box);
   outline: none;
 
@@ -47,7 +47,7 @@
   font-size: $font-size-h3;
   float: left;
   padding-top: $spacer * 0.75;
-  margin: 0 $spacer*3 0 $spacer*1.5;
+  margin: 0 $spacer * 3 0 $spacer * 1.5;
 
   .gicon {
     position: relative;
@@ -66,7 +66,7 @@
 }
 
 .modal-content {
-  padding: $spacer*2;
+  padding: $spacer * 2;
 
   &--has-scroll {
     max-height: calc(100vh - 400px);
@@ -105,7 +105,7 @@
   .confirm-modal-text {
     font-size: $font-size-h4;
     color: $link-color;
-    margin-bottom: $spacer*2;
+    margin-bottom: $spacer * 2;
     padding-top: $spacer;
   }
 
