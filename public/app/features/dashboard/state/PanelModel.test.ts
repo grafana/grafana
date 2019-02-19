@@ -10,6 +10,20 @@ describe('PanelModel', () => {
         type: 'table',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
+        options: {
+          thresholds: [
+            {
+              color: '#F2495C',
+              index: 1,
+              value: 50,
+            },
+            {
+              color: '#73BF69',
+              index: 0,
+              value: null,
+            },
+          ],
+        },
       });
     });
 
@@ -35,6 +49,21 @@ describe('PanelModel', () => {
       expect(saveModel.events).toBe(undefined);
     });
 
+    it('should restore -Infinity value for base threshold', () => {
+      expect(model.options.thresholds).toEqual([
+        {
+          color: '#F2495C',
+          index: 1,
+          value: 50,
+        },
+        {
+          color: '#73BF69',
+          index: 0,
+          value: -Infinity,
+        },
+      ]);
+    });
+
     describe('when changing panel type', () => {
       beforeEach(() => {
         model.changeType('graph', true);
@@ -53,6 +82,20 @@ describe('PanelModel', () => {
       it('should remove alert rule when changing type that does not support it', () => {
         model.changeType('table', true);
         expect(model.alert).toBe(undefined);
+      });
+    });
+
+    describe('get panel options', () => {
+      it('should apply defaults', () => {
+        model.options = { existingProp: 10 };
+        const options = model.getOptions({
+          defaultProp: true,
+          existingProp: 0,
+        });
+
+        expect(options.defaultProp).toBe(true);
+        expect(options.existingProp).toBe(10);
+        expect(model.options).toBe(options);
       });
     });
   });

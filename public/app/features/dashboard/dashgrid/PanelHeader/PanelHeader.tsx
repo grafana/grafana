@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 
-import PanelHeaderCorner from './PanelHeaderCorner';
+import { PanelHeaderCorner } from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
 import templateSrv from 'app/features/templating/template_srv';
 
@@ -18,6 +18,8 @@ export interface Props {
   description?: string;
   scopedVars?: string;
   links?: [];
+  error?: string;
+  isFullscreen: boolean;
 }
 
 interface ClickCoordinates {
@@ -68,10 +70,9 @@ export class PanelHeader extends Component<Props, State> {
   };
 
   render() {
-    const isFullscreen = false;
-    const isLoading = false;
+    const { panel, dashboard, timeInfo, scopedVars, error, isFullscreen } = this.props;
+
     const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
-    const { panel, dashboard, timeInfo, scopedVars } = this.props;
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
 
     return (
@@ -82,13 +83,9 @@ export class PanelHeader extends Component<Props, State> {
           description={panel.description}
           scopedVars={panel.scopedVars}
           links={panel.links}
+          error={error}
         />
         <div className={panelHeaderClass}>
-          {isLoading && (
-            <span className="panel-loading">
-              <i className="fa fa-spinner fa-spin" />
-            </span>
-          )}
           <div className="panel-title-container" onClick={this.onMenuToggle} onMouseDown={this.onMouseDown}>
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />

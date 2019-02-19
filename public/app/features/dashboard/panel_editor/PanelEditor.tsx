@@ -45,7 +45,7 @@ interface PanelEditorTab {
 const panelEditorTabTexts = {
   [PanelEditorTabIds.Queries]: 'Queries',
   [PanelEditorTabIds.Visualization]: 'Visualization',
-  [PanelEditorTabIds.Advanced]: 'Panel Options',
+  [PanelEditorTabIds.Advanced]: 'General',
   [PanelEditorTabIds.Alert]: 'Alert',
 };
 

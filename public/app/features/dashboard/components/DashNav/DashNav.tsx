@@ -248,7 +248,7 @@ export class DashNav extends PureComponent<Props> {
 
         <div className="navbar-buttons navbar-buttons--tv">
           <DashNavButton
-            tooltip="Cycke view mode"
+            tooltip="Cycle view mode"
             classSuffix="tv"
             icon="fa fa-desktop"
             onClick={this.onToggleTVMode}
