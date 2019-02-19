@@ -5,3 +5,10 @@ export interface PiechartOptions {
   strokeWidth: number;
   // TODO: Options for Legend / Combine components
 }
+
+export const defaults: PiechartOptions = {
+  pieType: 'pie',
+  unit: 'short',
+  stat: 'current',
+  strokeWidth: 1,
+};
