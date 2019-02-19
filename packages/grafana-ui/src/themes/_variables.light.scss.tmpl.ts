@@ -25,20 +25,6 @@ $yellow-base: #f2cc0c;
 
 // Grays
 // -------------------------
-$black: ${theme.colors.black};
-$dark-1: ${theme.colors.dark1};
-$dark-2: ${theme.colors.dark2};
-$dark-3: ${theme.colors.dark3};
-$dark-4: ${theme.colors.dark4};
-$dark-5: ${theme.colors.dark5};
-$gray-1: ${theme.colors.gray1};
-$gray-2: ${theme.colors.gray2};
-$gray-3: ${theme.colors.gray3};
-$gray-4: ${theme.colors.gray4};
-$gray-5: ${theme.colors.gray5};
-$gray-6: ${theme.colors.gray6};
-$gray-7: ${theme.colors.gray7};
-
 $black: #000;
 $dark-2: #1e2028;
 $dark-5: #41444b;
