@@ -54,15 +54,17 @@ export class VariableSrv {
 
   onTimeRangeUpdated(timeRange: TimeRange) {
     this.templateSrv.updateTimeRange(timeRange);
-    const promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
-      const previousOptions = variable.options.slice();
+    const promises = this.variables
+      .filter(variable => variable.refresh === 2)
+      .map(variable => {
+        const previousOptions = variable.options.slice();
 
-      return variable.updateOptions().then(() => {
-        if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
-          this.dashboard.templateVariableValueUpdated();
-        }
+        return variable.updateOptions().then(() => {
+          if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+            this.dashboard.templateVariableValueUpdated();
+          }
+        });
       });
-    });
 
     return this.$q.all(promises).then(() => {
       this.dashboard.startRefresh();

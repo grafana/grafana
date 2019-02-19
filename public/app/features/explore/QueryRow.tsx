@@ -169,4 +169,9 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(QueryRow));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(QueryRow)
+);

@@ -570,8 +570,7 @@ export class HeatmapRenderer {
   }
 
   resetCardHighLight(event) {
-    d3
-      .select(event.target)
+    d3.select(event.target)
       .style('fill', this.tooltip.originalFillColor)
       .style('stroke', this.tooltip.originalFillColor)
       .style('stroke-width', 0);

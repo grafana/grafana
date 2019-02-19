@@ -193,4 +193,9 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
 };
 
-export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
+export const ExploreToolbar = hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UnConnectedExploreToolbar)
+);

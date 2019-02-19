@@ -83,7 +83,7 @@
     "postcss-browser-reporter": "^0.5.0",
     "postcss-loader": "^2.0.6",
     "postcss-reporter": "^5.0.0",
-    "prettier": "1.9.2",
+    "prettier": "1.16.4",
     "react-hot-loader": "^4.3.6",
     "react-test-renderer": "^16.5.0",
     "redux-mock-store": "^1.5.3",
@@ -129,8 +129,14 @@
     }
   },
   "lint-staged": {
-    "*.{ts,tsx,json,scss}": ["prettier --write", "git add"],
-    "*pkg/**/*.go": ["gofmt -w -s", "git add"]
+    "*.{ts,tsx,json,scss}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*pkg/**/*.go": [
+      "gofmt -w -s",
+      "git add"
+    ]
   },
   "prettier": {
     "trailingComma": "es5",
@@ -196,7 +202,12 @@
     "**/@types/react": "16.7.6"
   },
   "workspaces": {
-    "packages": ["packages/*"],
-    "nohoist": ["**/@types/*", "**/@types/*/**"]
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/@types/*",
+      "**/@types/*/**"
+    ]
   }
 }

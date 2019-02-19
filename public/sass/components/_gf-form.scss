@@ -226,7 +226,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &--dropdown {
-    padding-right: $input-padding-x*2;
+    padding-right: $input-padding-x * 2;
 
     &::after {
       position: absolute;
@@ -276,7 +276,7 @@ $input-border: 1px solid $input-border-color;
     & + .gf-form-input {
       position: relative;
       z-index: 2;
-      padding-left: $input-padding-x*3;
+      padding-left: $input-padding-x * 3;
       background-color: transparent;
 
       option {
@@ -293,7 +293,7 @@ $input-border: 1px solid $input-border-color;
   select.gf-form-input {
     text-indent: 0.01px;
     text-overflow: '';
-    padding-right: $input-padding-x*3;
+    padding-right: $input-padding-x * 3;
     appearance: none;
 
     &:-moz-focusring {
@@ -321,7 +321,7 @@ $input-border: 1px solid $input-border-color;
 
   &--has-help-icon {
     &::after {
-      right: $input-padding-x*3;
+      right: $input-padding-x * 3;
     }
   }
 }

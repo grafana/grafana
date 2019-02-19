@@ -83,7 +83,7 @@ export class JsonExplorer {
 
   /*
    * is formatter open?
-  */
+   */
   private get isOpen(): boolean {
     if (this._isOpen !== null) {
       return this._isOpen;
@@ -94,14 +94,14 @@ export class JsonExplorer {
 
   /*
    * set open state (from toggler)
-  */
+   */
   private set isOpen(value: boolean) {
     this._isOpen = value;
   }
 
   /*
    * is this a date string?
-  */
+   */
   private get isDate(): boolean {
     return (
       this.type === 'string' &&
@@ -111,14 +111,14 @@ export class JsonExplorer {
 
   /*
    * is this a URL string?
-  */
+   */
   private get isUrl(): boolean {
     return this.type === 'string' && this.json.indexOf('http') === 0;
   }
 
   /*
    * is this an array?
-  */
+   */
   private get isArray(): boolean {
     return Array.isArray(this.json);
   }
@@ -126,21 +126,21 @@ export class JsonExplorer {
   /*
    * is this an object?
    * Note: In this context arrays are object as well
-  */
+   */
   private get isObject(): boolean {
     return isObject(this.json);
   }
 
   /*
    * is this an empty object with no properties?
-  */
+   */
   private get isEmptyObject(): boolean {
     return !this.keys.length && !this.isArray;
   }
 
   /*
    * is this an empty object or array?
-  */
+   */
   private get isEmpty(): boolean {
     return this.isEmptyObject || (this.keys && !this.keys.length && this.isArray);
   }
@@ -148,14 +148,14 @@ export class JsonExplorer {
   /*
    * did we receive a key argument?
    * This means that the formatter was called as a sub formatter of a parent formatter
-  */
+   */
   private get hasKey(): boolean {
     return typeof this.key !== 'undefined';
   }
 
   /*
    * if this is an object, get constructor function name
-  */
+   */
   private get constructorName(): string {
     return getObjectName(this.json);
   }
@@ -163,7 +163,7 @@ export class JsonExplorer {
   /*
    * get type of this value
    * Possible values: all JavaScript primitive types plus "array" and "null"
-  */
+   */
   private get type(): string {
     return getType(this.json);
   }
@@ -171,7 +171,7 @@ export class JsonExplorer {
   /*
    * get object keys
    * If there is an empty key we pad it wit quotes to make it visible
-  */
+   */
   private get keys(): string[] {
     if (this.isObject) {
       return Object.keys(this.json).map(key => (key ? key : '""'));

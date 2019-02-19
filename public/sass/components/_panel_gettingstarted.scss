@@ -57,7 +57,7 @@ $path-position: $marker-size-half - ($path-height / 2);
     z-index: 1;
     top: $path-position;
     bottom: $path-position;
-    right: - $marker-size-half;
+    right: -$marker-size-half;
     width: 100%;
     height: $path-height;
     border-top: 2px solid $progress-color-grey-light;
