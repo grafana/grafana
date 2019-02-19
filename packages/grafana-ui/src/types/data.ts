@@ -48,10 +48,7 @@ export enum NullValueMode {
 }
 
 /** View model projection of many time series */
-export interface TimeSeriesVMs {
-  [index: number]: TimeSeriesVM;
-  length: number;
-}
+export type TimeSeriesVMs = TimeSeriesVM[];
 
 interface Column {
   text: string;
