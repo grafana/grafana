@@ -159,8 +159,6 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   renderInput = (threshold: Threshold) => {
-    const value = threshold.index === 0 ? 'Base' : threshold.value;
-
     return (
       <div className="thresholds-row-input-inner">
         <span className="thresholds-row-input-inner-arrow" />
@@ -171,20 +169,27 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             </div>
           )}
         </div>
-        <div className="thresholds-row-input-inner-value">
-          <input
-            type="number"
-            step="0.0001"
-            onChange={event => this.onChangeThresholdValue(event, threshold)}
-            value={value}
-            onBlur={this.onBlur}
-            readOnly={threshold.index === 0}
-          />
-        </div>
-        {threshold.index > 0 && (
-          <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
-            <i className="fa fa-times" />
+        {threshold.index === 0 && (
+          <div className="thresholds-row-input-inner-value">
+            <input type="text" value="Base" readOnly />
           </div>
+        )}
+        {threshold.index > 0 && (
+          <>
+            <div className="thresholds-row-input-inner-value">
+              <input
+                type="number"
+                step="0.0001"
+                onChange={event => this.onChangeThresholdValue(event, threshold)}
+                value={threshold.value}
+                onBlur={this.onBlur}
+                readOnly={threshold.index === 0}
+              />
+            </div>
+            <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
+              <i className="fa fa-times" />
+            </div>
+          </>
         )}
       </div>
     );
