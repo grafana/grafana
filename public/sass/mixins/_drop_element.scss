@@ -41,7 +41,7 @@
       &:before {
         top: 100%;
         left: 50%;
-        margin-left: - $popover-arrow-size;
+        margin-left: -$popover-arrow-size;
         border-top-color: $border-color;
       }
     }
@@ -52,7 +52,7 @@
       &:before {
         bottom: 100%;
         left: 50%;
-        margin-left: - $popover-arrow-size;
+        margin-left: -$popover-arrow-size;
         border-bottom-color: $border-color;
       }
     }
@@ -63,7 +63,7 @@
       &:before {
         left: 100%;
         top: 50%;
-        margin-top: - $popover-arrow-size;
+        margin-top: -$popover-arrow-size;
         border-left-color: $border-color;
       }
     }
@@ -74,14 +74,14 @@
       &:before {
         right: 100%;
         top: 50%;
-        margin-top: - $popover-arrow-size;
+        margin-top: -$popover-arrow-size;
         border-right-color: $border-color;
       }
     }
 
     // Target middle/center, element corner
     &.drop-element-attached-left.drop-target-attached-center .drop-content {
-      left: - $popover-arrow-size * 2;
+      left: -$popover-arrow-size * 2;
     }
 
     &.drop-element-attached-right.drop-target-attached-center .drop-content {

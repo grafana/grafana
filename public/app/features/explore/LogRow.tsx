@@ -161,26 +161,23 @@ export class LogRow extends PureComponent<Props, State> {
         )}
         <div className="logs-row__message" onMouseEnter={this.onMouseOverMessage} onMouseLeave={this.onMouseOutMessage}>
           {containsAnsiCodes && <LogMessageAnsi value={row.entry} />}
-          {!containsAnsiCodes &&
-            parsed && (
-              <Highlighter
-                autoEscape
-                highlightTag={FieldHighlight(this.onClickHighlight)}
-                textToHighlight={row.entry}
-                searchWords={parsedFieldHighlights}
-                highlightClassName="logs-row__field-highlight"
-              />
-            )}
-          {!containsAnsiCodes &&
-            !parsed &&
-            needsHighlighter && (
-              <Highlighter
-                textToHighlight={row.entry}
-                searchWords={highlights}
-                findChunks={findHighlightChunksInText}
-                highlightClassName={highlightClassName}
-              />
-            )}
+          {!containsAnsiCodes && parsed && (
+            <Highlighter
+              autoEscape
+              highlightTag={FieldHighlight(this.onClickHighlight)}
+              textToHighlight={row.entry}
+              searchWords={parsedFieldHighlights}
+              highlightClassName="logs-row__field-highlight"
+            />
+          )}
+          {!containsAnsiCodes && !parsed && needsHighlighter && (
+            <Highlighter
+              textToHighlight={row.entry}
+              searchWords={highlights}
+              findChunks={findHighlightChunksInText}
+              highlightClassName={highlightClassName}
+            />
+          )}
           {!containsAnsiCodes && !parsed && !needsHighlighter && row.entry}
           {showFieldStats && (
             <div className="logs-row__stats">

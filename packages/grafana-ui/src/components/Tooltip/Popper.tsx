@@ -17,12 +17,7 @@ const transitionStyles: { [key: string]: object } = {
   exiting: { opacity: 0, transitionDelay: '500ms' },
 };
 
-export type RenderPopperArrowFn = (
-  props: {
-    arrowProps: PopperArrowProps;
-    placement: string;
-  }
-) => JSX.Element;
+export type RenderPopperArrowFn = (props: { arrowProps: PopperArrowProps; placement: string }) => JSX.Element;
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   show: boolean;
