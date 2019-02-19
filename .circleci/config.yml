@@ -460,6 +460,16 @@ workflows:
           filters: *filter-only-master
       - postgres-integration-test:
           filters: *filter-only-master
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
       - deploy-master:
           requires:
             - build-all
@@ -510,6 +520,16 @@ workflows:
       - mysql-integration-test:
           filters: *filter-only-release
       - postgres-integration-test:
+          filters: *filter-only-release
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
           filters: *filter-only-release
       - deploy-release:
           requires:
@@ -569,8 +589,4 @@ workflows:
               - gometalinter
               - mysql-integration-test
               - postgres-integration-test
-            filters: *filter-not-release-or-master
-        - build-oss-msi:
-            requires:
-              - grafana-docker-pr
             filters: *filter-not-release-or-master
