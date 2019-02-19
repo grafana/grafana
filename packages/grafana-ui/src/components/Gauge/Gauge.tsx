@@ -173,17 +173,15 @@ export class Gauge extends PureComponent<Props> {
     const { height, width } = this.props;
 
     return (
-      <div className="singlestat-panel">
-        <div
-          style={{
-            height: `${height * 0.9}px`,
-            width: `${Math.min(width, height * 1.3)}px`,
-            top: '10px',
-            margin: 'auto',
-          }}
-          ref={element => (this.canvasElement = element)}
-        />
-      </div>
+      <div
+        style={{
+          height: `${height * 0.9}px`,
+          width: `${Math.min(width, height * 1.3)}px`,
+          top: '10px',
+          margin: 'auto',
+        }}
+        ref={element => (this.canvasElement = element)}
+      />
     );
   }
 }

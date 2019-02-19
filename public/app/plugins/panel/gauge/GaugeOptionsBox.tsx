@@ -9,6 +9,8 @@ import { FormField, PanelEditorProps } from '@grafana/ui';
 import { GaugeOptions } from './types';
 
 export class GaugeOptionsBox extends PureComponent<PanelEditorProps<GaugeOptions>> {
+  labelWidth = 8;
+
   onToggleThresholdLabels = () =>
     this.props.onChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
 
@@ -25,17 +27,17 @@ export class GaugeOptionsBox extends PureComponent<PanelEditorProps<GaugeOptions
 
     return (
       <PanelOptionsGroup title="Gauge">
-        <FormField label="Min value" labelWidth={8} onChange={this.onMinValueChange} value={minValue} />
-        <FormField label="Max value" labelWidth={8} onChange={this.onMaxValueChange} value={maxValue} />
+        <FormField label="Min value" labelWidth={this.labelWidth} onChange={this.onMinValueChange} value={minValue} />
+        <FormField label="Max value" labelWidth={this.labelWidth} onChange={this.onMaxValueChange} value={maxValue} />
         <Switch
           label="Show labels"
-          labelClass="width-8"
+          labelClass={`width-${this.labelWidth}`}
           checked={showThresholdLabels}
           onChange={this.onToggleThresholdLabels}
         />
         <Switch
           label="Show markers"
-          labelClass="width-8"
+          labelClass={`width-${this.labelWidth}`}
           checked={showThresholdMarkers}
           onChange={this.onToggleThresholdMarkers}
         />
