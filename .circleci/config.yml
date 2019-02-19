@@ -437,8 +437,8 @@ jobs:
           name: Create OSS MSI
           command: |
             ls -al
-            ls -al oss
-            oss/ci-wrapper.sh
+            ls -al /
+            /master/oss/ci-wrapper.sh
 
 workflows:
   version: 2
