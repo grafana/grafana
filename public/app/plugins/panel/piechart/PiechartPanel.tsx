@@ -18,7 +18,7 @@ export class PiechartPanel extends PureComponent<Props> {
     const { panelData, width, height, options } = this.props;
     const { valueOptions } = options;
 
-    let datapoints: PieChartDataPoint[] = [];
+    const datapoints: PieChartDataPoint[] = [];
     if (panelData.timeSeries) {
       const vmSeries = processTimeSeries({
         timeSeries: panelData.timeSeries,

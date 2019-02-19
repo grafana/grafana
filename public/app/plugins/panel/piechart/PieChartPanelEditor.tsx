@@ -5,8 +5,6 @@ import ValueOptions from './ValueOptions';
 import { PiechartOptions } from './types';
 
 export default class PiechartPanelOptions extends PureComponent<PanelEditorProps<PiechartOptions>> {
-  static defaultProps = defaultProps;
-
   render() {
     const { onChange, options } = this.props;
 
