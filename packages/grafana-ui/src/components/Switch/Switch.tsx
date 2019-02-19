@@ -17,7 +17,7 @@ export interface State {
 
 export class Switch extends PureComponent<Props, State> {
   state = {
-    id: _.uniqueId(),
+    id: _.uniqueId('check-'),
   };
 
   internalOnChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -29,18 +29,20 @@ export class Switch extends PureComponent<Props, State> {
   render() {
     const { labelClass = '', switchClass = '', label, checked, transparent, className } = this.props;
 
-    const labelId = `check-${this.state.id}`;
+    const labelId = this.state.id;
     const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
     const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
 
     return (
-      <label htmlFor={labelId} className={`gf-form gf-form-switch-container ${className}`}>
-        {label && <div className={labelClassName}>{label}</div>}
-        <div className={switchClassName}>
-          <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
-          <span className="gf-form-switch__slider" />
-        </div>
-      </label>
+      <div className="gf-form-switch-container-react">
+        <label htmlFor={labelId} className={`gf-form gf-form-switch-container ${className || ''}`}>
+          {label && <div className={labelClassName}>{label}</div>}
+          <div className={switchClassName}>
+            <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
+            <span className="gf-form-switch__slider" />
+          </div>
+        </label>
+      </div>
     );
   }
 }
