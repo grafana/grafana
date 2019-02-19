@@ -3,12 +3,18 @@ import React, { PureComponent } from 'react';
 import { GrafanaThemeType } from '../../types';
 import { Themeable } from '../../index';
 
+export interface PieChartDataPoint {
+  value: number;
+  name: string;
+  color: string;
+}
+
 export interface Props extends Themeable {
   height: number;
   width: number;
+  datapoints: PieChartDataPoint[];
 
   unit: string;
-  value: number;
   pieType: string;
   format: string;
   stat: string;
@@ -21,7 +27,7 @@ export class Piechart extends PureComponent<Props> {
   static defaultProps = {
     pieType: 'pie',
     format: 'short',
-    valueName: 'current',
+    stat: 'current',
     strokeWidth: 1,
     theme: GrafanaThemeType.Dark,
   };
