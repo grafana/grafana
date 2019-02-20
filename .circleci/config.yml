@@ -442,6 +442,9 @@ jobs:
         root: /tmp/a
         paths:
         - grafana-*.msi
+      # TODO: REMOVE BEFORE MERGING
+      - store_artifacts:
+          path: /tmp/a
 
 workflows:
   version: 2
