@@ -1,5 +1,7 @@
 export { DeleteButton } from './DeleteButton/DeleteButton';
 export { Tooltip } from './Tooltip/Tooltip';
+export { PopperController } from './Tooltip/PopperController';
+export { Popper } from './Tooltip/Popper';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
