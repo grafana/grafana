@@ -18,7 +18,7 @@ export interface Props {
   onChange: (valueOptions: PiechartValueOptions) => void;
 }
 
-export default class ValueOptions extends PureComponent<Props> {
+export default class PiechartValueEditor extends PureComponent<Props> {
   onUnitChange = unit =>
     this.props.onChange({
       ...this.props.options,

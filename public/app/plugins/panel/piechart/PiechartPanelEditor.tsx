@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { PanelEditorProps, PanelOptionsGrid } from '@grafana/ui';
 
-import ValueOptions from './ValueOptions';
+import PiechartValueEditor from './PiechartValueEditor';
 import { PiechartOptions, PiechartValueOptions } from './types';
 
 export default class PiechartPanelEditor extends PureComponent<PanelEditorProps<PiechartOptions>> {
@@ -17,7 +17,7 @@ export default class PiechartPanelEditor extends PureComponent<PanelEditorProps<
     return (
       <>
         <PanelOptionsGrid>
-          <ValueOptions onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <PiechartValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
         </PanelOptionsGrid>
       </>
     );
