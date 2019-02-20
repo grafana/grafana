@@ -140,10 +140,18 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isInView } = this.props;
+    const { dashboard, panel, isFullscreen, isInView } = this.props;
     const { plugin } = this.state;
 
-    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} isInView={isInView} />;
+    return (
+      <PanelChrome
+        plugin={plugin}
+        panel={panel}
+        dashboard={dashboard}
+        isFullscreen={isFullscreen}
+        isInView={isInView}
+      />
+    );
   }
 
   renderAngularPanel() {
@@ -182,7 +190,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {show && plugin.exports.Panel && this.renderReactPanel()}
+              {show && plugin.exports.reactPanel && this.renderReactPanel()}
               {show && plugin.exports.PanelCtrl && this.renderAngularPanel()}
             </div>
           )}

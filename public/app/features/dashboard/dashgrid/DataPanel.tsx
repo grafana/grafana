@@ -162,7 +162,7 @@ export class DataPanel extends Component<Props, State> {
       }
 
       onError(message, err);
-      this.setState({ isFirstLoad: false });
+      this.setState({ isFirstLoad: false, loading: LoadingState.Error });
     }
   };
 
@@ -187,7 +187,8 @@ export class DataPanel extends Component<Props, State> {
     const { loading, isFirstLoad } = this.state;
     const panelData = this.getPanelData();
 
-    if (isFirstLoad && loading === LoadingState.Loading) {
+    // do not render component until we have first data
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
       return this.renderLoadingState();
     }
 
@@ -201,21 +202,17 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {this.renderLoadingState()}
+        {loading === LoadingState.Loading && this.renderLoadingState()}
         {this.props.children({ loading, panelData })}
       </>
     );
   }
 
   private renderLoadingState(): JSX.Element {
-    const { loading } = this.state;
-    if (loading === LoadingState.Loading) {
-      return (
-        <div className="panel-loading">
-          <i className="fa fa-spinner fa-spin" />
-        </div>
-      );
-    }
-    return null;
+    return (
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
+      </div>
+    );
   }
 }

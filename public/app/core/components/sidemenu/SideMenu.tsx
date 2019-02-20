@@ -29,7 +29,8 @@ export class SideMenu extends PureComponent {
       <div className="sidemenu__logo_small_breakpoint" onClick={this.toggleSideMenuSmallBreakpoint} key="hamburger">
         <i className="fa fa-bars" />
         <span className="sidemenu__close">
-          <i className="fa fa-times" />&nbsp;Close
+          <i className="fa fa-times" />
+          &nbsp;Close
         </span>
       </div>,
       <TopSection key="topsection" />,

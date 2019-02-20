@@ -29,6 +29,7 @@ export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
+  isFullscreen: boolean;
   isInView: boolean;
 }
 
@@ -136,7 +137,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
-    const PanelComponent = plugin.exports.Panel;
+    const PanelComponent = plugin.exports.reactPanel.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
@@ -150,7 +151,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           loading={loading}
           panelData={panelData}
           timeRange={timeRange}
-          options={panel.getOptions(plugin.exports.PanelDefaults)}
+          options={panel.getOptions(plugin.exports.reactPanel.defaults)}
           width={width - 2 * variables.panelhorizontalpadding}
           height={height - PANEL_HEADER_HEIGHT - variables.panelverticalpadding}
           renderCounter={renderCounter}
@@ -190,7 +191,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, panel } = this.props;
+    const { dashboard, panel, isFullscreen } = this.props;
     const { errorMessage, timeInfo } = this.state;
     const { transparent } = panel;
 
@@ -213,6 +214,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                 scopedVars={panel.scopedVars}
                 links={panel.links}
                 error={errorMessage}
+                isFullscreen={isFullscreen}
               />
               <ErrorBoundary>
                 {({ error, errorInfo }) => {

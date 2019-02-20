@@ -100,7 +100,7 @@ $line-height-sm: 1.5 !default;
 
 $border-radius: 3px !default;
 $border-radius-lg: 5px !default;
-$border-radius-sm: 2px!default;
+$border-radius-sm: 2px !default;
 
 // Page
 
@@ -191,7 +191,7 @@ $panel-margin: 10px;
 $dashboard-padding: $panel-margin * 2;
 $panel-horizontal-padding: 10;
 $panel-vertical-padding: 5;
-$panel-padding: 0px $panel-horizontal-padding+0px $panel-vertical-padding+0px $panel-horizontal-padding+0px;
+$panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

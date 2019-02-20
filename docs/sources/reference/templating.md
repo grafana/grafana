@@ -38,22 +38,81 @@ documentation article for details on value escaping during interpolation.
 
 ### Advanced Formatting Options
 
-> Only available in Grafana v5.1+.
-
 The formatting of the variable interpolation depends on the data source but there are some situations where you might want to change the default formatting. For example, the default for the MySql datasource is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases you might want to have a comma-separated string without quotes: `server01,server02`. This is now possible with the advanced formatting options.
 
 Syntax: `${var_name:option}`
 
-Filter Option | Example | Raw | Interpolated | Description
------------- | ------------- | ------------- | -------------  | -------------
-`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | (Default) Formats multi-value variable into a glob (for Graphite queries)
-`regex` | ${servers:regex} | `'test.', 'test2'` | <code>(test\.&#124;test2)</code> | Formats multi-value variable into a regex string
-`pipe` | ${servers:pipe} | `'test.', 'test2'` |  <code>test.&#124;test2</code> | Formats multi-value variable into a pipe-separated string
-`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
-`json`| ${servers:json} |  `'test1', 'test2'` | `["test1","test2"]` | Formats multi-value variable as a JSON string
-`distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
-`lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
-`percentencode` | ${servers:percentencode} |  `'foo()bar BAZ', 'test2'` | `{foo%28%29bar%20BAZ%2Ctest2}` | Formats multi-value variable into a glob, percent-encoded.
+#### Glob
+Formats multi-value variable into a glob (for Graphite queries).
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:glob}'
+Interpolation result: '{test1,test2}'
+```
+
+### Regex
+Formats multi-value variable into a regex string.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:regex}'
+Interpolation result: '(test\.|test2)'
+```
+
+### Pipe
+Formats multi-value variable into a pipe-separated string.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:pipe}'
+Interpolation result: 'test.|test2'
+```
+
+### Csv
+Formats multi-value variable as a comma-separated string.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:csv}'
+Interpolation result: 'test,test2'
+```
+
+### Json
+Formats multi-value variable as a comma-separated string.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:json}'
+Interpolation result: '["test1", "test2"]'
+```
+
+### Distributed
+Formats multi-value variable in custom format for OpenTSDB.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:distributed}'
+Interpolation result: 'test1,servers=test2'
+```
+
+### Lucene
+Formats multi-value variable in lucene format for Elasticsearch.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:lucene}'
+Interpolation result: '("test1" OR "test2")'
+```
+
+### Percentencode
+Formats single & multi valued variables for use in URL parameters.
+
+```bash
+servers = ['foo()bar BAZ', 'test2']
+String to interpolate: '${servers:lucene}'
+Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
+```
 
 Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 

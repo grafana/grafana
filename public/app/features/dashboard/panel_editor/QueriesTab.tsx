@@ -135,7 +135,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
         <div className="flex-grow-1" />
         {!isAddingMixed && (
-          <button className="btn navbar-button navbar-button--primary" onClick={this.onAddQueryClick}>
+          <button className="btn navbar-button" onClick={this.onAddQueryClick}>
             Add Query
           </button>
         )}
