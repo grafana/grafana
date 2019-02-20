@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { GrafanaThemeType } from '../../types';
 import { Themeable } from '../../index';
 
-export interface PieChartDataPoint {
+export interface PiechartDataPoint {
   value: number;
   name: string;
   color: string;
@@ -12,7 +12,7 @@ export interface PieChartDataPoint {
 export interface Props extends Themeable {
   height: number;
   width: number;
-  datapoints: PieChartDataPoint[];
+  datapoints: PiechartDataPoint[];
 
   unit: string;
   pieType: string;

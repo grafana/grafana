@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { processTimeSeries, ThemeContext } from '@grafana/ui';
 
 // Components
-import { Piechart, PieChartDataPoint } from '@grafana/ui';
+import { Piechart, PiechartDataPoint } from '@grafana/ui';
 
 // Types
 import { PiechartOptions } from './types';
@@ -18,7 +18,7 @@ export class PiechartPanel extends PureComponent<Props> {
     const { panelData, width, height, options } = this.props;
     const { valueOptions } = options;
 
-    const datapoints: PieChartDataPoint[] = [];
+    const datapoints: PiechartDataPoint[] = [];
     if (panelData.timeSeries) {
       const vmSeries = processTimeSeries({
         timeSeries: panelData.timeSeries,
