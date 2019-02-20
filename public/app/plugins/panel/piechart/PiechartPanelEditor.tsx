@@ -4,7 +4,7 @@ import { PanelEditorProps, PanelOptionsGrid } from '@grafana/ui';
 import ValueOptions from './ValueOptions';
 import { PiechartOptions } from './types';
 
-export default class PiechartPanelOptions extends PureComponent<PanelEditorProps<PiechartOptions>> {
+export default class PiechartPanelEditor extends PureComponent<PanelEditorProps<PiechartOptions>> {
   render() {
     const { onChange, options } = this.props;
 
