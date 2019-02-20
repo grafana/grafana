@@ -12,58 +12,56 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$sapphire-faint: #f5f9ff;
-$sapphire-light: #5794f2;
-$sapphire-base: #3274d9;
-$sapphire-shade: #1f60c4;
-$lobster-base: #e02f44;
-$lobster-shade: #c4162a;
-$green-base: #3eb15b;
-$green-shade: #369b4f;
-$purple-shade: #8f3bb8;
-$yellow-base: #f2cc0c;
+$blue-faint: ${theme.colors.blueFaint};
+$blue-light: ${theme.colors.blueLight};
+$blue-base: ${theme.colors.blueBase};
+$blue-shade: ${theme.colors.blueShade};
+$red-base: ${theme.colors.redBase};
+$red-shade: ${theme.colors.redShade};
+$green-base: ${theme.colors.greenBase};
+$green-shade: ${theme.colors.greenShade};
 
 // Grays
 // -------------------------
-$black: #000;
-$dark-2: #1e2028;
-$dark-5: #41444b;
-$gray-1: #52545c;
-$gray-2: #767980;
-$gray-3: #acb6bf;
-$gray-4: #c7d0d9;
-$gray-5: #dde4ed;
-$gray-6: #e9edf2;
-$gray-7: #f7f8fa;
+$black: ${theme.colors.black};
+
+$dark-1: ${theme.colors.dark1};
+$dark-2: ${theme.colors.dark2};
+$gray-1: ${theme.colors.gray1};
+$gray-2: ${theme.colors.gray2};
+$gray-3: ${theme.colors.gray3};
+$gray-4: ${theme.colors.gray4};
+$gray-5: ${theme.colors.gray5};
+$gray-6: ${theme.colors.gray6};
+$gray-7: ${theme.colors.gray7};
 
 $white: ${theme.colors.white};
 
 // Accent colors
 // -------------------------
 $blue: ${theme.colors.blue};
-$green: #3aa655;
-$red: $lobster-base;
-$yellow: #ff851b;
-$orange: #ff7941;
-$purple: #9954bb;
-$variable: $purple-shade;
+$red: $red-base;
+$yellow: ${theme.colors.yellow};
+$orange: ${theme.colors.orange};
+$purple: ${theme.colors.purple};
+$variable: ${theme.colors.variable};
 
 $brand-primary: $orange;
-$brand-success: $green;
+$brand-success: $green-base;
 $brand-warning: $orange;
-$brand-danger: $lobster-base;
+$brand-danger: $red-base;
 
-$query-red: $lobster-base;
-$query-green: $green;
+$query-red: $red-base;
+$query-green: $green-base;
 $query-purple: $purple;
 $query-orange: $orange;
-$query-keyword: $sapphire-base;
+$query-keyword: $blue-base;
 
 // Status colors
 // -------------------------
 $online: $green-shade;
 $warn: #f79520;
-$critical: $lobster-shade;
+$critical: $red-shade;
 
 // Scaffolding
 // -------------------------
@@ -72,10 +70,10 @@ $page-bg: $gray-7;
 
 $body-color: $gray-1;
 $text-color: $gray-1;
-$text-color-strong: $dark-2;
+$text-color-strong: $dark-1;
 $text-color-weak: $gray-2;
 $text-color-faint: $gray-4;
-$text-color-emphasis: $dark-5;
+$text-color-emphasis: $dark-2;
 
 $text-shadow-faint: none;
 
@@ -90,7 +88,7 @@ $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 $link-color: $gray-1;
 $link-color-disabled: lighten($link-color, 30%);
 $link-hover-color: darken($link-color, 20%);
-$external-link-color: $sapphire-shade;
+$external-link-color: $blue-shade;
 
 // Typography
 // -------------------------
@@ -153,14 +151,14 @@ $table-bg-hover: $gray-5;
 $btn-primary-bg: $green-base;
 $btn-primary-bg-hl: $green-shade;
 
-$btn-secondary-bg: $sapphire-base;
-$btn-secondary-bg-hl: $sapphire-shade;
+$btn-secondary-bg: $blue-base;
+$btn-secondary-bg-hl: $blue-shade;
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
 
-$btn-danger-bg: $lobster-base;
-$btn-danger-bg-hl: $lobster-shade;
+$btn-danger-bg: $red-base;
+$btn-danger-bg-hl: $red-shade;
 
 $btn-inverse-bg: $gray-5;
 $btn-inverse-bg-hl: darken($gray-5, 5%);
@@ -182,11 +180,11 @@ $btn-drag-image: '../img/grab_light.svg';
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: $dark-5;
+$input-color: $dark-2;
 $input-border-color: $gray-5;
 $input-box-shadow: none;
 $input-border-focus: $gray-5 !default;
-$input-box-shadow-focus: $sapphire-light !default;
+$input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: $gray-4 !default;
 $input-label-bg: $gray-5;
 $input-label-border-color: $gray-5;
@@ -211,7 +209,7 @@ $dropdownBorder: $gray-4;
 $dropdownDividerTop: $gray-6;
 $dropdownDividerBottom: $white;
 
-$dropdownLinkColor: $dark-5;
+$dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
 $dropdownLinkColorActive: $link-color;
 
@@ -235,7 +233,7 @@ $navbar-button-border: $gray-4;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: $dark-2;
+$side-menu-bg: $dark-1;
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: $gray-1;
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
@@ -257,13 +255,13 @@ $toolbar-bg: white;
 // Form states and alerts
 // -------------------------
 $warning-text-color: lighten($orange, 10%);
-$error-text-color: $lobster-shade;
-$success-text-color: lighten($green, 10%);
+$error-text-color: $red-shade;
+$success-text-color: lighten($green-base, 10%);
 
-$alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
-$alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
+$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
+$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // popover
 $popover-bg: $page-bg;
@@ -292,39 +290,39 @@ $tooltipBackgroundError: $brand-danger;
 $checkboxImageUrl: '../img/checkbox_white.png';
 
 // info box
-$info-box-border-color: $sapphire-base;
+$info-box-border-color: $blue-base;
 
 // footer
 $footer-link-color: $gray-3;
-$footer-link-hover: $dark-5;
+$footer-link-hover: $dark-2;
 
 // json explorer
 $json-explorer-default-color: black;
 $json-explorer-string-color: green;
-$json-explorer-number-color: $sapphire-base;
-$json-explorer-boolean-color: $lobster-base;
+$json-explorer-number-color: $blue-base;
+$json-explorer-boolean-color: $red-base;
 $json-explorer-null-color: #855a00;
 $json-explorer-undefined-color: rgb(202, 11, 105);
 $json-explorer-function-color: #ff20ed;
 $json-explorer-rotate-time: 100ms;
 $json-explorer-toggler-opacity: 0.6;
-$json-explorer-bracket-color: $sapphire-base;
+$json-explorer-bracket-color: $blue-base;
 $json-explorer-key-color: #00008b;
-$json-explorer-url-color: $sapphire-base;
+$json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
 $diff-label-bg: $gray-7;
 $diff-label-fg: $gray-2;
 
-$diff-arrow-color: $dark-5;
+$diff-arrow-color: $dark-2;
 $diff-group-bg: $gray-6;
 
 $diff-json-bg: $gray-6;
 $diff-json-fg: $gray-1;
 
-$diff-json-added: $sapphire-shade;
-$diff-json-deleted: $lobster-shade;
+$diff-json-added: $blue-shade;
+$diff-json-deleted: $red-shade;
 
 $diff-json-old: #5a372a;
 $diff-json-new: #664e33;
@@ -343,7 +341,7 @@ $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
 $switch-slider-on-bg: linear-gradient(90deg, #ff9830, #e55400);
-$switch-slider-shadow: 0 0 3px $dark-5;
+$switch-slider-shadow: 0 0 3px $dark-2;
 
 //Checkbox
 // -------------------------
@@ -358,18 +356,18 @@ $panel-editor-shadow: 0px 0px 8px $gray-3;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 2px $gray-3);
 $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
-$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $white;
-$panel-editor-tabs-line-color: $dark-5;
+$panel-editor-tabs-line-color: $dark-2;
 
-$panel-editor-viz-item-bg-hover: lighten($sapphire-base, 45%);
+$panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-5;
 
-$panel-grid-placeholder-bg: $sapphire-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $sapphire-light;
+$panel-grid-placeholder-bg: $blue-faint;
+$panel-grid-placeholder-shadow: 0 0 4px $blue-light;
 
 // logs
 $logs-color-unkown: $gray-5;

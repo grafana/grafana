@@ -78,6 +78,11 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     dark3: string;
     dark4: string;
     dark5: string;
+    dark6: string;
+    dark7: string;
+    dark8: string;
+    dark9: string;
+    dark10: string;
     gray1: string;
     gray2: string;
     gray3: string;
@@ -90,12 +95,16 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
 
     // Accent colors
     blue: string;
+    blueBase: string;
+    blueShade: string;
     blueLight: string;
-    blueDark: string;
-    green: string;
+    blueFaint: string;
+    redBase: string;
+    redShade: string;
+    greenBase: string;
+    greenShade: string;
     red: string;
     yellow: string;
-    pink: string;
     purple: string;
     variable: string;
     orange: string;

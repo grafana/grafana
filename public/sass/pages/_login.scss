@@ -196,7 +196,7 @@ select:-webkit-autofill:focus {
   white-space: nowrap;
   padding-top: 3px;
   color: darken($text-color, 20%);
-  border-top: 3px solid $red;
+  border-top: 3px solid $red-base;
 
   &.password-strength-ok {
     width: 40%;
@@ -205,7 +205,7 @@ select:-webkit-autofill:focus {
 
   &.password-strength-good {
     width: 100%;
-    border-top: 3px solid lighten($green, 10%);
+    border-top: 3px solid lighten($green-base, 10%);
   }
 }
 

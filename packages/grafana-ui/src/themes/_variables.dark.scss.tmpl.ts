@@ -12,36 +12,35 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$sapphire-faint: #041126;
-$sapphire-light: #5794f2;
-$sapphire-base: #3274d9;
-$sapphire-shade: #1f60c4;
-$lobster-base: #e02f44;
-$lobster-shade: #c4162a;
-$forest-light: #96d98d;
-$green-base: #299c46;
-$green-shade: #23843b;
+$blue-faint: ${theme.colors.blueFaint};
+$blue-light: ${theme.colors.blueLight};
+$blue-base: ${theme.colors.blueBase};
+$blue-shade: ${theme.colors.blueShade};
+$red-base: ${theme.colors.redBase};
+$red-shade: ${theme.colors.redShade};
+$green-base: ${theme.colors.greenBase};
+$green-shade: ${theme.colors.greenShade};
 
 // Grays
 // -------------------------
-$black: #000;
-$dark-1: #141414;
-$dark-2: #161719;
-$dark-3: #1f1f20;
-$dark-4: #212124;
-$dark-5: #222426;
-$dark-6: #262628;
-$dark-7: #292a2d;
-$dark-8: #2f2f32;
-$dark-9: #343436;
-$dark-10: #424345;
-$gray-1: #555555;
-$gray-2: #8e8e8e;
-$gray-3: #b3b3b3;
-$gray-4: #d8d9da;
-$gray-5: #ececec;
+$black: ${theme.colors.black};
+$dark-1: ${theme.colors.dark1};
+$dark-2: ${theme.colors.dark2};
+$dark-3: ${theme.colors.dark3};
+$dark-4: ${theme.colors.dark4};
+$dark-5: ${theme.colors.dark5};
+$dark-6: ${theme.colors.dark6};
+$dark-7: ${theme.colors.dark7};
+$dark-8: ${theme.colors.dark8};
+$dark-9:${theme.colors.dark9};
+$dark-10: ${theme.colors.dark10};
+$gray-1: ${theme.colors.gray1};
+$gray-2: ${theme.colors.gray2};
+$gray-3: ${theme.colors.gray3};
+$gray-4: ${theme.colors.gray4};
+$gray-5: ${theme.colors.gray5};
 
-$gray-blue: #212327;
+$gray-blue: ${theme.colors.grayBlue};
 $input-black: #09090b;
 
 $white: ${theme.colors.white};
@@ -49,20 +48,19 @@ $white: ${theme.colors.white};
 // Accent colors
 // -------------------------
 $blue: ${theme.colors.blue};
-$green: #299c46;
-$red: $lobster-base;
-$yellow: #ecbb13;
-$purple: #9933cc;
-$variable: #32d1df;
-$orange: #eb7b18;
+$red: $red-base;
+$yellow: ${theme.colors.yellow};
+$orange: ${theme.colors.orange};
+$purple: ${theme.colors.purple};
+$variable: ${theme.colors.variable};
 
 $brand-primary: $orange;
 $brand-success: $green-base;
 $brand-warning: $brand-primary;
-$brand-danger: $lobster-base;
+$brand-danger: $red-base;
 
-$query-red: $lobster-base;
-$query-green: $forest-light;
+$query-red: $red-base;
+$query-green: #74e680;
 $query-purple: #fe85fc;
 $query-keyword: #66d9ef;
 $query-orange: $orange;
@@ -71,7 +69,7 @@ $query-orange: $orange;
 // -------------------------
 $online: $green-base;
 $warn: #f79520;
-$critical: $lobster-base;
+$critical: $red-base;
 
 // Scaffolding
 // -------------------------
@@ -104,7 +102,7 @@ $edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 $link-color: darken($white, 11%);
 $link-color-disabled: darken($link-color, 30%);
 $link-hover-color: $white;
-$external-link-color: $sapphire-light;
+$external-link-color: $blue-light;
 
 // Typography
 // -------------------------
@@ -164,8 +162,8 @@ $table-bg-hover: $dark-6;
 
 // Buttons
 // -------------------------
-$btn-secondary-bg: $sapphire-base;
-$btn-secondary-bg-hl: $sapphire-shade;
+$btn-secondary-bg: $blue-base;
+$btn-secondary-bg-hl: $blue-shade;
 
 $btn-primary-bg: $green-base;
 $btn-primary-bg-hl: $green-shade;
@@ -173,8 +171,8 @@ $btn-primary-bg-hl: $green-shade;
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
 
-$btn-danger-bg: $lobster-base;
-$btn-danger-bg-hl: $lobster-shade;
+$btn-danger-bg: $red-base;
+$btn-danger-bg-hl: $red-shade;
 
 $btn-inverse-bg: $dark-6;
 $btn-inverse-bg-hl: lighten($dark-6, 4%);
@@ -199,7 +197,7 @@ $input-color: $gray-4;
 $input-border-color: $dark-6;
 $input-box-shadow: inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-6 !default;
-$input-box-shadow-focus: $sapphire-light !default;
+$input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: $gray-1 !default;
 $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-6;
@@ -271,12 +269,12 @@ $toolbar-bg: $input-black;
 // -------------------------
 $warning-text-color: $warn;
 $error-text-color: #e84d4d;
-$success-text-color: $forest-light;
+$success-text-color: #12d95a;
 
-$alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
-$alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
+$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
+$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // popover
 $popover-bg: $dark-2;
@@ -305,7 +303,7 @@ $tooltipBackgroundError: $brand-danger;
 $checkboxImageUrl: '../img/checkbox.png';
 
 // info box
-$info-box-border-color: $sapphire-base;
+$info-box-border-color: $blue-base;
 
 // footer
 $footer-link-color: $gray-2;
@@ -336,8 +334,8 @@ $diff-arrow-color: $white;
 $diff-json-bg: $dark-9;
 $diff-json-fg: $gray-5;
 
-$diff-json-added: $sapphire-shade;
-$diff-json-deleted: $lobster-shade;
+$diff-json-added: $blue-shade;
+$diff-json-deleted: $red-shade;
 
 $diff-json-old: #a04338;
 $diff-json-new: #457740;
@@ -371,18 +369,18 @@ $panel-editor-shadow: 0 0 20px black;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
 $panel-editor-viz-item-shadow: 0 0 8px $dark-10;
 $panel-editor-viz-item-border: 1px solid $dark-10;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
-$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
 
-$panel-editor-viz-item-bg-hover: darken($sapphire-base, 46%);
+$panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-blue;
 
-$panel-grid-placeholder-bg: $sapphire-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $sapphire-shade;
+$panel-grid-placeholder-bg: $blue-faint;
+$panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
 
 // logs
 $logs-color-unkown: $gray-2;
