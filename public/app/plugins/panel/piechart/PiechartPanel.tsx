@@ -32,7 +32,7 @@ export class PiechartPanel extends PureComponent<Props> {
             // TODO: get name
             name: 'tmpName',
             // TODO: add color option
-            color: 'tmpColor'
+            color: 'tmpColor',
           });
         }
       });
