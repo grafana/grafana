@@ -135,16 +135,15 @@ jobs:
       - run:
           name: build and package grafana
           command: './scripts/build/build-all.sh'
-      # DISABLED for testing only
-      #- run:
-      #    name: sign packages
-      #    command: './scripts/build/sign_packages.sh'
-      #- run:
-      #    name: verify signed packages
-      #    command: |
-      #      mkdir -p ~/.rpmdb/pubkeys
-      #      curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
-      #      ./scripts/build/verify_signed_packages.sh dist/*.rpm
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: verify signed packages
+          command: |
+            mkdir -p ~/.rpmdb/pubkeys
+            curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+            ./scripts/build/verify_signed_packages.sh dist/*.rpm
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -437,9 +436,12 @@ jobs:
       - run:
           name: Create OSS MSI
           command: |
-            ls -al /
-            ls -al /master
             /master/ci-wrapper.sh
+      # script creates the final msi in /tmp/a
+      - persist_to_workspace:
+        root: /tmp/a
+        paths:
+        - grafana-*.msi
 
 workflows:
   version: 2
@@ -567,7 +569,7 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - build-all:
+        - build:
             filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
@@ -583,17 +585,7 @@ workflows:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
-              - build-all
-              - test-backend
-              - test-frontend
-              - codespell
-              - gometalinter
-              - mysql-integration-test
-              - postgres-integration-test
-            filters: *filter-not-release-or-master
-        - build-oss-msi:
-            requires:
-              - build-all
+              - build
               - test-backend
               - test-frontend
               - codespell
