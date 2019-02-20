@@ -21,6 +21,7 @@ const setup = (propOverrides?: object) => {
     value: 25,
     decimals: 0,
     theme: getTheme(),
+    orientation: 'horizontal',
   };
 
   Object.assign(props, propOverrides);

@@ -17,6 +17,7 @@ export interface Props extends Themeable {
   value: TimeSeriesValue;
   maxValue: number;
   minValue: number;
+  orientation: string;
   prefix?: string;
   suffix?: string;
   decimals?: number;
@@ -28,6 +29,7 @@ export class BarGauge extends PureComponent<Props> {
     minValue: 0,
     value: 100,
     unit: 'none',
+    orientation: 'horizontal',
     thresholds: [],
     valueMappings: [],
   };
@@ -75,35 +77,89 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
-  render() {
-    const { height, width, maxValue, minValue, unit, decimals } = this.props;
+  renderHorizontalBar(valueStyles: React.CSSProperties, valueFormatted: string, barStyles: React.CSSProperties) {
+    const { height, width } = this.props;
 
-    const numericValue = this.getNumericValue();
-    const barMaxHeight = height * 0.8; // 20% for value & name
-    const valuePercent = numericValue / (maxValue - minValue);
-    const barHeight = Math.max(valuePercent * barMaxHeight, 0);
-
-    const formatFunc = getValueFormat(unit);
-    const valueFormatted = formatFunc(numericValue, decimals);
-    const colors = this.getColors();
-
-    const containerStyles = { width: `${width}px`, height: `${height}px` };
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
-    const barStyles = {
-      height: `${barHeight}px`,
+    const containerStyles = {
       width: `${width}px`,
-      backgroundColor: colors.bar,
-      borderTop: `1px solid ${colors.border}`,
-    };
+      height: `${height}px`,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-end',
+    } as React.CSSProperties;
 
     return (
-      <div className="bar-gauge" style={containerStyles}>
+      <div style={containerStyles}>
         <div className="bar-gauge__value" style={valueStyles}>
           {valueFormatted}
         </div>
         <div style={barStyles} />
       </div>
     );
+  }
+
+  renderVerticalBar(valueFormatted: string, barStyles: React.CSSProperties) {
+    const { height, width } = this.props;
+    const colors = this.getColors();
+
+    const containerStyles = {
+      width: `${width}px`,
+      height: `${height}px`,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: '8px',
+    } as React.CSSProperties;
+
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
+
+    Object.assign(valueStyles, { marginLeft: '8px' });
+
+    return (
+      <div style={containerStyles}>
+        <div style={barStyles} />
+        <div className="bar-gauge__value" style={valueStyles}>
+          {valueFormatted}
+        </div>
+      </div>
+    );
+  }
+
+  render() {
+    const { height, width, maxValue, minValue, orientation, unit, decimals } = this.props;
+
+    const numericValue = this.getNumericValue();
+    const barMaxHeight = height * 0.8; // 20% for value & name
+    const barMaxWidth = width * 0.8;
+    const valuePercent = numericValue / (maxValue - minValue);
+    const barHeight = Math.max(valuePercent * barMaxHeight, 0);
+    const barWidth = Math.max(valuePercent * barMaxWidth, 0);
+
+    const formatFunc = getValueFormat(unit);
+    const valueFormatted = formatFunc(numericValue, decimals);
+    const colors = this.getColors();
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
+    const vertical = orientation === 'vertical';
+
+    const horizontalBarStyles = {
+      height: `${barHeight}px`,
+      width: `${width}px`,
+      backgroundColor: colors.bar,
+      borderTop: `1px solid ${colors.border}`,
+    };
+
+    const verticalBarStyles = {
+      height: `${height}px`,
+      width: `${barWidth}px`,
+      backgroundColor: colors.bar,
+      borderRight: `1px solid ${colors.border}`,
+    };
+
+    const barStyles = vertical ? verticalBarStyles : horizontalBarStyles;
+
+    return vertical
+      ? this.renderVerticalBar(valueFormatted, barStyles)
+      : this.renderHorizontalBar(valueStyles, valueFormatted, barStyles);
   }
 }
 
