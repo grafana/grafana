@@ -18,6 +18,9 @@ build-server:
 build-cli:
 	go run build.go build-cli
 
+vendor-go:
+	GO111MODULE=on go mod vendor
+
 build-js:
 	yarn run build
 

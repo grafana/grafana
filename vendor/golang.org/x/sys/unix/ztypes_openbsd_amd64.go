@@ -56,48 +56,31 @@ type Rlimit struct {
 
 type _Gid_t uint32
 
-const (
-	S_IFMT   = 0xf000
-	S_IFIFO  = 0x1000
-	S_IFCHR  = 0x2000
-	S_IFDIR  = 0x4000
-	S_IFBLK  = 0x6000
-	S_IFREG  = 0x8000
-	S_IFLNK  = 0xa000
-	S_IFSOCK = 0xc000
-	S_ISUID  = 0x800
-	S_ISGID  = 0x400
-	S_ISVTX  = 0x200
-	S_IRUSR  = 0x100
-	S_IWUSR  = 0x80
-	S_IXUSR  = 0x40
-)
-
 type Stat_t struct {
-	Mode           uint32
-	Dev            int32
-	Ino            uint64
-	Nlink          uint32
-	Uid            uint32
-	Gid            uint32
-	Rdev           int32
-	Atim           Timespec
-	Mtim           Timespec
-	Ctim           Timespec
-	Size           int64
-	Blocks         int64
-	Blksize        uint32
-	Flags          uint32
-	Gen            uint32
-	Pad_cgo_0      [4]byte
-	X__st_birthtim Timespec
+	Mode    uint32
+	Dev     int32
+	Ino     uint64
+	Nlink   uint32
+	Uid     uint32
+	Gid     uint32
+	Rdev    int32
+	Atim    Timespec
+	Mtim    Timespec
+	Ctim    Timespec
+	Size    int64
+	Blocks  int64
+	Blksize int32
+	Flags   uint32
+	Gen     uint32
+	_       [4]byte
+	_       Timespec
 }
 
 type Statfs_t struct {
 	F_flags       uint32
 	F_bsize       uint32
 	F_iosize      uint32
-	Pad_cgo_0     [4]byte
+	_             [4]byte
 	F_blocks      uint64
 	F_bfree       uint64
 	F_bavail      int64
@@ -116,7 +99,7 @@ type Statfs_t struct {
 	F_mntonname   [90]int8
 	F_mntfromname [90]int8
 	F_mntfromspec [90]int8
-	Pad_cgo_1     [2]byte
+	_             [2]byte
 	Mount_info    [160]byte
 }
 
@@ -129,13 +112,13 @@ type Flock_t struct {
 }
 
 type Dirent struct {
-	Fileno       uint64
-	Off          int64
-	Reclen       uint16
-	Type         uint8
-	Namlen       uint8
-	X__d_padding [4]uint8
-	Name         [256]int8
+	Fileno uint64
+	Off    int64
+	Reclen uint16
+	Type   uint8
+	Namlen uint8
+	_      [4]uint8
+	Name   [256]int8
 }
 
 type Fsid struct {
@@ -216,10 +199,10 @@ type IPv6Mreq struct {
 type Msghdr struct {
 	Name       *byte
 	Namelen    uint32
-	Pad_cgo_0  [4]byte
+	_          [4]byte
 	Iov        *Iovec
 	Iovlen     uint32
-	Pad_cgo_1  [4]byte
+	_          [4]byte
 	Control    *byte
 	Controllen uint32
 	Flags      int32
@@ -281,8 +264,8 @@ type FdSet struct {
 }
 
 const (
-	SizeofIfMsghdr         = 0xf8
-	SizeofIfData           = 0xe0
+	SizeofIfMsghdr         = 0xa8
+	SizeofIfData           = 0x90
 	SizeofIfaMsghdr        = 0x18
 	SizeofIfAnnounceMsghdr = 0x1a
 	SizeofRtMsghdr         = 0x60
@@ -311,7 +294,7 @@ type IfData struct {
 	Link_state   uint8
 	Mtu          uint32
 	Metric       uint32
-	Pad          uint32
+	Rdomain      uint32
 	Baudrate     uint64
 	Ipackets     uint64
 	Ierrors      uint64
@@ -323,12 +306,11 @@ type IfData struct {
 	Imcasts      uint64
 	Omcasts      uint64
 	Iqdrops      uint64
+	Oqdrops      uint64
 	Noproto      uint64
 	Capabilities uint32
-	Pad_cgo_0    [4]byte
+	_            [4]byte
 	Lastchange   Timeval
-	Mclpool      [7]Mclpool
-	Pad_cgo_1    [4]byte
 }
 
 type IfaMsghdr struct {
@@ -389,13 +371,7 @@ type RtMetrics struct {
 	Pad      uint32
 }
 
-type Mclpool struct {
-	Grown int32
-	Alive uint16
-	Hwm   uint16
-	Cwm   uint16
-	Lwm   uint16
-}
+type Mclpool struct{}
 
 const (
 	SizeofBpfVersion = 0x4
@@ -416,9 +392,9 @@ type BpfStat struct {
 }
 
 type BpfProgram struct {
-	Len       uint32
-	Pad_cgo_0 [4]byte
-	Insns     *BpfInsn
+	Len   uint32
+	_     [4]byte
+	Insns *BpfInsn
 }
 
 type BpfInsn struct {
@@ -429,11 +405,11 @@ type BpfInsn struct {
 }
 
 type BpfHdr struct {
-	Tstamp    BpfTimeval
-	Caplen    uint32
-	Datalen   uint32
-	Hdrlen    uint16
-	Pad_cgo_0 [2]byte
+	Tstamp  BpfTimeval
+	Caplen  uint32
+	Datalen uint32
+	Hdrlen  uint16
+	_       [2]byte
 }
 
 type BpfTimeval struct {

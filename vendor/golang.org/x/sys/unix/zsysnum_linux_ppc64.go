@@ -370,4 +370,6 @@ const (
 	SYS_PKEY_ALLOC             = 384
 	SYS_PKEY_FREE              = 385
 	SYS_PKEY_MPROTECT          = 386
+	SYS_RSEQ                   = 387
+	SYS_IO_PGETEVENTS          = 388
 )

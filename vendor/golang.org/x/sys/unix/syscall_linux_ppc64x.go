@@ -7,8 +7,9 @@
 
 package unix
 
-//sys	EpollWait(epfd int, events []EpollEvent, msec int) (n int, err error)
 //sys	Dup2(oldfd int, newfd int) (err error)
+//sysnb	EpollCreate(size int) (fd int, err error)
+//sys	EpollWait(epfd int, events []EpollEvent, msec int) (n int, err error)
 //sys	Fadvise(fd int, offset int64, length int64, advice int) (err error) = SYS_FADVISE64
 //sys	Fchown(fd int, uid int, gid int) (err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error)
@@ -43,8 +44,8 @@ package unix
 //sys	Splice(rfd int, roff *int64, wfd int, woff *int64, len int, flags int) (n int64, err error)
 //sys	Stat(path string, stat *Stat_t) (err error)
 //sys	Statfs(path string, buf *Statfs_t) (err error)
-//sys	SyncFileRange(fd int, off int64, n int64, flags int) (err error) = SYS_SYNC_FILE_RANGE2
 //sys	Truncate(path string, length int64) (err error)
+//sys	Ustat(dev int, ubuf *Ustat_t) (err error)
 //sys	accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error)
 //sys	accept4(s int, rsa *RawSockaddrAny, addrlen *_Socklen, flags int) (fd int, err error)
 //sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error)
@@ -63,10 +64,11 @@ package unix
 //sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error)
 //sys	mmap(addr uintptr, length uintptr, prot int, flags int, fd int, offset int64) (xaddr uintptr, err error)
 
+//sys	futimesat(dirfd int, path string, times *[2]Timeval) (err error)
 //sysnb	Gettimeofday(tv *Timeval) (err error)
 //sysnb	Time(t *Time_t) (tt Time_t, err error)
-
 //sys	Utime(path string, buf *Utimbuf) (err error)
+//sys	utimes(path string, times *[2]Timeval) (err error)
 
 func setTimespec(sec, nsec int64) Timespec {
 	return Timespec{Sec: sec, Nsec: nsec}
@@ -125,4 +127,12 @@ func Poll(fds []PollFd, timeout int) (n int, err error) {
 		return poll(nil, 0, timeout)
 	}
 	return poll(&fds[0], len(fds), timeout)
+}
+
+//sys	syncFileRange2(fd int, flags int, off int64, n int64) (err error) = SYS_SYNC_FILE_RANGE2
+
+func SyncFileRange(fd int, off int64, n int64, flags int) error {
+	// The sync_file_range and sync_file_range2 syscalls differ only in the
+	// order of their arguments.
+	return syncFileRange2(fd, flags, off, n)
 }

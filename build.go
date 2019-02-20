@@ -433,7 +433,6 @@ func gruntBuildArg(task string) []string {
 }
 
 func setup() {
-	runPrint("go", "get", "-v", "github.com/golang/dep")
 	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
 }
 

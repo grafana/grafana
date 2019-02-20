@@ -339,4 +339,6 @@ const (
 	SYS_PKEY_ALLOC             = 330
 	SYS_PKEY_FREE              = 331
 	SYS_STATX                  = 332
+	SYS_IO_PGETEVENTS          = 333
+	SYS_RSEQ                   = 334
 )
