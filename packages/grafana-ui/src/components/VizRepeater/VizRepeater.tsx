@@ -43,12 +43,12 @@ export class VizRepeater extends PureComponent<Props> {
     let vizWidth = width;
     let vizHeight = height;
 
-    if (orientation === 'horizontal' || width > height) {
+    if ((orientation && orientation === 'horizontal') || width > height) {
       vizContainerStyle = horizontalVisualization;
       vizWidth = repeatingVizWidth;
     }
 
-    if (orientation === 'vertical' || height > width) {
+    if ((orientation && orientation === 'vertical') || height > width) {
       vizContainerStyle = verticalVisualization;
       vizHeight = repeatingVizHeight;
     }

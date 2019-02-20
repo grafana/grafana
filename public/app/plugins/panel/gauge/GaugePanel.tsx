@@ -45,14 +45,14 @@ export class GaugePanel extends PureComponent<Props> {
     const { options, width, height } = this.props;
     const value = timeSeries[0].stats[options.valueOptions.stat];
 
-    return <div className="singlestat-panel">{this.renderGauge(value, width, height)}</div>;
+    return <div style={{ display: 'flex' }}>{this.renderGauge(value, width, height)}</div>;
   }
 
   renderGaugeWithTableData(panelData) {
     const { width, height } = this.props;
     const firstTableDataValue = panelData.tableData.rows[0].find(prop => prop > 0);
 
-    return <div className="singlestat-panel">{this.renderGauge(firstTableDataValue, width, height)}</div>;
+    return <div style={{ display: 'flex' }}>{this.renderGauge(firstTableDataValue, width, height)}</div>;
   }
 
   render() {
@@ -73,7 +73,7 @@ export class GaugePanel extends PureComponent<Props> {
                 const value = stat !== 'name' ? series.stats[stat] : series.label;
 
                 return (
-                  <div className="singlestat-panel" key={`${series.label}-${index}`} style={vizContainerStyle}>
+                  <div key={`${series.label}-${index}`} style={Object.assign(vizContainerStyle, { display: 'flex' })}>
                     {this.renderGauge(value, vizWidth, vizHeight)}
                   </div>
                 );

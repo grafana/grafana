@@ -175,7 +175,7 @@ export class Gauge extends PureComponent<Props> {
     return (
       <div
         style={{
-          height: `${height * 0.9}px`,
+          height: `${Math.min(height, width * 1.3)}px`,
           width: `${Math.min(width, height * 1.3)}px`,
           top: '10px',
           margin: 'auto',
