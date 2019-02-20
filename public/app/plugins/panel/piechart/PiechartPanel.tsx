@@ -25,17 +25,16 @@ export class PiechartPanel extends PureComponent<Props> {
         nullValueMode: NullValueMode.Null,
       });
 
-      vmSeries.forEach(serie => {
+      for (let i = 0; i < vmSeries.length; i++) {
+        const serie = vmSeries[i];
         if (serie) {
           datapoints.push({
             value: serie.stats[valueOptions.stat],
-            // TODO: get name
-            name: 'tmpName',
-            // TODO: add color option
-            color: 'tmpColor',
+            name: serie.label,
+            color: serie.color,
           });
         }
-      });
+      }
     }
     // TODO: support table data
 
