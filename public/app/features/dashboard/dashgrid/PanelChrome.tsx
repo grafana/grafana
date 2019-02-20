@@ -30,6 +30,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
+  isInView: boolean;
 }
 
 export interface State {
@@ -65,7 +66,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRefresh = () => {
     console.log('onRefresh');
-    if (!this.isVisible) {
+    if (!this.props.isInView) {
       return;
     }
 
@@ -120,10 +121,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
   }
 
-  get isVisible() {
-    return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
-  }
-
   get hasPanelSnapshot() {
     const { panel } = this.props;
     return panel.snapshotData && panel.snapshotData.length;
@@ -165,7 +162,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   renderPanelBody = (width: number, height: number): JSX.Element => {
-    const { panel } = this.props;
+    const { panel, isInView } = this.props;
     const { refreshCounter, timeRange } = this.state;
     const { datasource, targets } = panel;
     return (
@@ -176,7 +173,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             datasource={datasource}
             queries={targets}
             timeRange={timeRange}
-            isVisible={this.isVisible}
+            isInView={isInView}
             widthPixels={width}
             refreshCounter={refreshCounter}
             onDataResponse={this.onDataResponse}

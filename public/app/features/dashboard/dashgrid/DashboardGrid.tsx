@@ -83,6 +83,7 @@ export interface Props {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  scrollTop: number;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
@@ -187,6 +188,38 @@ export class DashboardGrid extends PureComponent<Props> {
     this.updateGridPos(newItem, layout);
   };
 
+  isInView = (panel: PanelModel): boolean => {
+    if (panel.fullscreen || panel.isEditing) {
+      return true;
+    }
+
+    // NOTE: this is not totally accurate, since it does not
+    // know how many rows there are and include GRID_CELL_VMARGIN
+    const top = panel.gridPos.y * GRID_CELL_HEIGHT;
+    const bot = top + panel.gridPos.h * GRID_CELL_HEIGHT;
+
+    // Assume things that are close are visible
+    const buffer = 50;
+
+    const viewTop = this.props.scrollTop;
+    if (viewTop > bot + buffer) {
+      //console.log( panel.id, 'Above', viewTop, bot );
+      return false; // The panel is above the viewport
+    }
+
+    // Use the whole browser height (larger than real value)
+    // TODO? is there a better way
+    const viewHeight = isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight;
+
+    const viewBot = viewTop + viewHeight;
+    if (top > viewBot + buffer) {
+      //console.log( panel.id, 'Below', viewBot, top );
+      return false;
+    }
+
+    return !this.props.dashboard.otherPanelInFullscreen(panel);
+  };
+
   renderPanels() {
     const panelElements = [];
 
@@ -199,6 +232,7 @@ export class DashboardGrid extends PureComponent<Props> {
             dashboard={this.props.dashboard}
             isEditing={panel.isEditing}
             isFullscreen={panel.fullscreen}
+            isInView={this.isInView(panel)}
           />
         </div>
       );

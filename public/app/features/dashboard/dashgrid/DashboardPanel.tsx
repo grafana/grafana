@@ -20,11 +20,13 @@ export interface Props {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  isInView: boolean;
 }
 
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
+  show: boolean; // For lazy loading
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -37,6 +39,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
+      show: props.isInView, // Lazy loading
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -98,7 +101,13 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.loadPlugin(this.props.panel.type);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    // Update the lazy loading
+    if (!this.state.show && this.props.isInView) {
+      console.log('Lazy Load:', this.props.panel.title, `(${this.props.panel.id})`);
+      this.setState({ show: true });
+    }
+
     if (!this.element || this.state.angularPanel) {
       return;
     }
@@ -131,10 +140,18 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isFullscreen } = this.props;
+    const { dashboard, panel, isFullscreen, isInView } = this.props;
     const { plugin } = this.state;
 
-    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} isFullscreen={isFullscreen} />;
+    return (
+      <PanelChrome
+        plugin={plugin}
+        panel={panel}
+        dashboard={dashboard}
+        isFullscreen={isFullscreen}
+        isInView={isInView}
+      />
+    );
   }
 
   renderAngularPanel() {
@@ -143,7 +160,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel } = this.state;
+    const { plugin, angularPanel, show } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
@@ -173,8 +190,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.exports.reactPanel && this.renderReactPanel()}
-              {plugin.exports.PanelCtrl && this.renderAngularPanel()}
+              {show && plugin.exports.reactPanel && this.renderReactPanel()}
+              {show && plugin.exports.PanelCtrl && this.renderAngularPanel()}
             </div>
           )}
         />
