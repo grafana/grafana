@@ -59,7 +59,7 @@ export class ElasticDatasource {
     const range = this.timeSrv.timeRange();
     const indexList = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
     if (_.isArray(indexList) && indexList.length) {
-      return this.request('GET', indexList[0] + url).then(results => {
+      return this.request('GET', indexList[indexList.length - 1] + url).then(results => {
         results.data.$$config = results.config;
         return results.data;
       });
