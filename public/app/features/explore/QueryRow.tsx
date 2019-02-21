@@ -9,14 +9,20 @@ import QueryEditor from './QueryEditor';
 import QueryTransactionStatus from './QueryTransactionStatus';
 
 // Actions
-import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
+import {
+  changeQuery,
+  modifyQueries,
+  runQueries,
+  addQueryRow,
+  highlightLogsExpression,
+  removeQueryRow,
+} from './state/actions';
 
 // Types
 import { StoreState } from 'app/types';
 import { RawTimeRange, DataQuery, ExploreDataSourceApi, QueryHint, QueryFixAction } from '@grafana/ui';
 import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
-import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 
 function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
@@ -32,7 +38,7 @@ interface QueryRowProps {
   className?: string;
   exploreId: ExploreId;
   datasourceInstance: ExploreDataSourceApi;
-  highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
+  highlightLogsExpression: typeof highlightLogsExpression;
   history: HistoryItem[];
   index: number;
   query: DataQuery;
@@ -40,7 +46,7 @@ interface QueryRowProps {
   queryTransactions: QueryTransaction[];
   exploreEvents: Emitter;
   range: RawTimeRange;
-  removeQueryRowAction: typeof removeQueryRowAction;
+  removeQueryRow: typeof removeQueryRow;
   runQueries: typeof runQueries;
 }
 
@@ -82,7 +88,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
 
   onClickRemoveButton = () => {
     const { exploreId, index } = this.props;
-    this.props.removeQueryRowAction(exploreId)({ index });
+    this.props.removeQueryRow(exploreId, index);
   };
 
   updateLogsHighlights = _.debounce((value: DataQuery) => {
@@ -90,7 +96,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
       const expressions = [datasourceInstance.getHighlighterExpression(value)];
-      this.props.highlightLogsExpressionAction(exploreId)({ expressions });
+      this.props.highlightLogsExpression(exploreId, expressions);
     }
   }, 500);
 
@@ -163,9 +169,9 @@ function mapStateToProps(state: StoreState, { exploreId, index }) {
 const mapDispatchToProps = {
   addQueryRow,
   changeQuery,
-  highlightLogsExpressionAction,
+  highlightLogsExpression,
   modifyQueries,
-  removeQueryRowAction,
+  removeQueryRow,
   runQueries,
 };
 

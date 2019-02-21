@@ -65,9 +65,15 @@ import {
   toggleLogsAction,
   toggleTableAction,
   updateUIStateAction,
+  toggleLogLevelAction,
+  ToggleLogLevelPayload,
+  HighlightLogsExpressionPayload,
+  highlightLogsExpressionAction,
+  removeQueryRowAction,
+  RemoveQueryRowPayload,
 } from './actionTypes';
 import { ActionOf, NoPayloadHigherOrderActionCreator } from 'app/core/redux/actionCreatorFactory';
-import { LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -765,4 +771,31 @@ export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy)
   return dispatch => {
     dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
   };
+};
+
+/**
+ * Toggles log level in graph
+ */
+export const toggleLogLevel = (
+  exploreId: ExploreId,
+  hiddenLogLevels: Set<LogLevel>
+): ActionOf<ToggleLogLevelPayload> => {
+  return toggleLogLevelAction(exploreId)({ hiddenLogLevels });
+};
+
+/**
+ * Highlight expressions in the log results
+ */
+export const highlightLogsExpression = (
+  exploreId: ExploreId,
+  expressions: string[]
+): ActionOf<HighlightLogsExpressionPayload> => {
+  return highlightLogsExpressionAction(exploreId)({ expressions });
+};
+
+/**
+ * Remove query row of the given index, as well as associated query results.
+ */
+export const removeQueryRow = (exploreId: ExploreId, index: number): ActionOf<RemoveQueryRowPayload> => {
+  return removeQueryRowAction(exploreId)({ index });
 };

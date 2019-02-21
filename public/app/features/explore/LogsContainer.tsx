@@ -7,10 +7,9 @@ import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
-import { toggleLogs, changeDedupStrategy } from './state/actions';
+import { toggleLogs, changeDedupStrategy, toggleLogLevel } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
-import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 
 interface LogsContainerProps {
@@ -28,7 +27,7 @@ interface LogsContainerProps {
   scanRange?: RawTimeRange;
   showingLogs: boolean;
   toggleLogs: typeof toggleLogs;
-  toggleLogLevelAction: typeof toggleLogLevelAction;
+  toggleLogLevel: typeof toggleLogLevel;
   changeDedupStrategy: typeof changeDedupStrategy;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: Set<LogLevel>;
@@ -46,7 +45,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
   hangleToggleLogLevel = (hiddenLogLevels: Set<LogLevel>) => {
     const { exploreId } = this.props;
-    this.props.toggleLogLevelAction(exploreId)({ hiddenLogLevels });
+    this.props.toggleLogLevel(exploreId, hiddenLogLevels);
   };
 
   render() {
@@ -121,7 +120,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
 const mapDispatchToProps = {
   toggleLogs,
   changeDedupStrategy,
-  toggleLogLevelAction,
+  toggleLogLevel,
 };
 
 export default hot(module)(

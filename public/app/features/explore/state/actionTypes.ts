@@ -288,7 +288,6 @@ export const splitCloseAction = noPayloadActionCreatorFactory('explore/SPLIT_CLO
  * The copy keeps all query modifications but wipes the query results.
  */
 export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
-export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
 
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
