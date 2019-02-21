@@ -4,7 +4,7 @@ import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsP
 import { ColorPickerProps, warnAboutColorPickerPropsDeprecation } from './ColorPicker';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import SpectrumPalette from './SpectrumPalette';
-import { GrafanaThemeType } from '@grafana/ui';
+import { GrafanaThemeType } from '../../types/theme';
 
 export interface Props<T> extends ColorPickerProps, PopperContentProps {
   customPickers?: T;
