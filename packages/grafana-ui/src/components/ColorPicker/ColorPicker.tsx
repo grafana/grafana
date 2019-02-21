@@ -1,6 +1,6 @@
 import React, { Component, createRef } from 'react';
-import PopperController from '../Tooltip/PopperController';
-import Popper from '../Tooltip/Popper';
+import { PopperController } from '../Tooltip/PopperController';
+import { Popper } from '../Tooltip/Popper';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { Themeable } from '../../types';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';

@@ -176,7 +176,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   render() {
-    const { panel } = this.props;
+    const { panel, dashboard } = this.props;
     const { currentDS, scrollTop } = this.state;
 
     const queryInspector: EditorToolbarView = {
@@ -205,6 +205,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                 dataSourceValue={query.datasource || panel.datasource}
                 key={query.refId}
                 panel={panel}
+                dashboard={dashboard}
                 query={query}
                 onChange={query => this.onQueryChange(query, index)}
                 onRemoveQuery={this.onRemoveQuery}

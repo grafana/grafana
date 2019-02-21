@@ -3,7 +3,8 @@ import { Threshold } from '../../types';
 import { ColorPicker } from '..';
 import { PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
-import { getColorFromHexRgbOrName, ThemeContext } from '@grafana/ui';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 
 export interface Props {
   thresholds: Threshold[];
