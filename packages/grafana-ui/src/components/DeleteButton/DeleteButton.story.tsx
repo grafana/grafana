@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { storiesOf } from '@storybook/react';
-import { DeleteButton } from '@grafana/ui';
+import { DeleteButton } from './DeleteButton';
 
 const CenteredStory: FunctionComponent<{}> = ({ children }) => {
   return (
