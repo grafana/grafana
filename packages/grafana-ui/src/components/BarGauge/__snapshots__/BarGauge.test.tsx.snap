@@ -2,10 +2,12 @@
 
 exports[`Render BarGauge with basic options should render 1`] = `
 <div
-  className="bar-gauge"
   style={
     Object {
+      "display": "flex",
+      "flexDirection": "column",
       "height": "300px",
+      "justifyContent": "flex-end",
       "width": "300px",
     }
   }
