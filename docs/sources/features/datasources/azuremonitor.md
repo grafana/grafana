@@ -20,7 +20,7 @@ The Azure Monitor Datasource supports multiple services in the Azure cloud:
 
 - **Azure Monitor** is the platform service that provides a single source for monitoring Azure resources. [Read more about Querying the Azure Monitor Service]({{< relref "#querying-the-azure-monitor-service" >}}).
 - **Application Insights** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies. [Read more about Querying the Application Insights Service]({{< relref "#querying-the-application-insights-service" >}}).
-- **Azure Log Analytics** (or Azure Logs) gives you access to log data collected by Azure Monitor. [Read more about Querying the Azure Log Analytics Service]({{< relref "#querying-the-azure-monitor-service" >}}).
+- **Azure Log Analytics** (or Azure Logs) gives you access to log data collected by Azure Monitor. [Read more about Querying the Azure Log Analytics Service]({{< relref "#querying-the-azure-log-analytics-service" >}}).
 - **Application Insights Analytics** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics. [Read more about Querying the Application Insights Analytics Service]({{< relref "#writing-analytics-queries-for-the-application-insights-service" >}}).
 
 ## Adding the data source to Grafana
