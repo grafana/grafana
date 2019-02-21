@@ -8,7 +8,7 @@ aliases = ["/datasources/cloudwatch"]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
 parent = "datasources"
-weight = 10
+weight = 5
 +++
 
 # Using AWS CloudWatch in Grafana
@@ -77,9 +77,9 @@ Here is a minimal policy example:
         },
         {
             "Sid": "AllowReadingResourcesForTags",
-            "Effect" : "Allow",      
-            "Action" : "tag:GetResources",      
-            "Resource" : "*"      
+            "Effect" : "Allow",
+            "Action" : "tag:GetResources",
+            "Resource" : "*"
         }
     ]
 }

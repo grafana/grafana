@@ -5,9 +5,9 @@ keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights
 type = "docs"
 aliases = ["/datasources/azuremonitor"]
 [menu.docs]
-name = "AzureMonitor"
+name = "Azure Monitor"
 parent = "datasources"
-weight = 11
+weight = 5
 +++
 
 # Using Azure Monitor in Grafana
@@ -216,7 +216,7 @@ AzureActivity
 Table queries are mainly used in the Table panel and row a list of columns and rows. This example query returns rows with the 6 specified columns:
 
 ```
-AzureActivity 
+AzureActivity
 | where $__timeFilter()
 | project TimeGenerated, ResourceGroup, Category, OperationName, ActivityStatus, Caller
 | order by TimeGenerated desc
@@ -232,7 +232,7 @@ To make writing queries easier there are several Grafana macros that can be used
     `TimeGenerated ≥ datetime(2018-06-05T18:09:58.907Z) and`
     `TimeGenerated ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
 
-- `$__timeFilter(datetimeColumn)` - Expands to 
+- `$__timeFilter(datetimeColumn)` - Expands to
     `datetimeColumn  ≥ datetime(2018-06-05T18:09:58.907Z) and`
     `datetimeColumn ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
 

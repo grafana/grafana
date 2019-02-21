@@ -94,7 +94,7 @@ aliases = ["v1.1", "guides/reference/admin"]
     </a>
     <a href="{{< relref "features/datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_cloudwatch.svg">
-      <h5>Cloudwatch</h5>
+      <h5>AWS CloudWatch</h5>
     </a>
     <a href="{{< relref "features/datasources/mysql.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_mysql.png" >
