@@ -46,6 +46,10 @@ const darkTheme: GrafanaTheme = {
   colors: {
     ...basicColors,
     inputBlack: '#09090b',
+    brandPrimary: basicColors.orange,
+    brandSuccess: basicColors.greenBase,
+    brandWarning: basicColors.orange,
+    brandDanger: basicColors.redBase,
     queryRed: basicColors.redBase,
     queryGreen: '#74e680',
     queryPurple: '#fe85fc',

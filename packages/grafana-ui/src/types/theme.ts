@@ -113,6 +113,10 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     queryPurple: string;
     queryKeyword: string;
     queryOrange: string;
+    brandPrimary: string;
+    brandSuccess: string;
+    brandWarning: string;
+    brandDanger: string;
 
     // Status colors
     online: string;
