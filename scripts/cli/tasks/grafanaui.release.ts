@@ -87,7 +87,7 @@ const publishPackage = async (name: string, version: string) => {
   const spinner = startSpinner(`Publishing ${name} @ ${version} to npm registry...`);
 
   try {
-    await execa('npm', ['publish']);
+    await execa('npm', ['publish', '--access', 'public']);
     spinner.succeed();
   } catch (e) {
     console.log(e);
