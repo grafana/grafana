@@ -33,7 +33,7 @@ The datasource can access metrics from four different services. You can configur
 
 1. Accessed from the Grafana main menu, newly installed data sources can be added immediately within the Data Sources section. Next, click the  "Add data source" button in the upper right. The data source will be available for selection in the Type select box.
 
-2. Select Azure Monitor from the Type dropdown:
+2. Select Azure Monitor from the Type dropdown:<br/>
 ![Data Source Type](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_1_select_type.png)
 3. In the name field, fill in a name for the data source. It can be anything. Some suggestions are Azure Monitor or App Insights.
 
@@ -43,8 +43,8 @@ The datasource can access metrics from four different services. You can configur
     - **Client Id** (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
     - **Client Secret** ( Azure Active Directory -> App Registrations -> Choose your app -> Keys)
 
-5. Paste these four items into the fields in the Azure Monitor API Details section:
-    ![Azure Monitor API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_2_azure_monitor_api_details.png)
+5. Paste these four items into the fields in the Azure Monitor API Details section:<br/>
+![Azure Monitor API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_2_azure_monitor_api_details.png)
 
 6. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
     - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
@@ -54,11 +54,11 @@ The datasource can access metrics from four different services. You can configur
     - Application ID
     - API Key
 
-8. Paste these two items into the appropriate fields in the Application Insights API Details section:
-    ![Application Insights API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_3_app_insights_api_details.png)
+8. Paste these two items into the appropriate fields in the Application Insights API Details section:<br/>
+![Application Insights API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_3_app_insights_api_details.png)
 
-9. Test that the configuration details are correct by clicking on the "Save & Test" button:
-    ![Azure Monitor API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_4_save_and_test.png)
+9. Test that the configuration details are correct by clicking on the "Save & Test" button:<br/>
+![Azure Monitor API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_4_save_and_test.png)
 
 Alternatively on step 4 if creating a new Azure Active Directory App, use the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest):
 
