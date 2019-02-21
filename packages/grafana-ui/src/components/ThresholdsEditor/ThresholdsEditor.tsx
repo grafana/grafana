@@ -55,7 +55,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const value = afterThresholdValue - (afterThresholdValue - beforeThresholdValue) / 2;
 
     // Set a color
-    const color = colors.filter(c => !newThresholds.some(t => t.color === c))[0];
+    const color = colors.filter(c => !newThresholds.some(t => t.color === c))[1];
 
     this.setState(
       {
