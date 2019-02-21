@@ -115,9 +115,9 @@ export class Gauge extends PureComponent<Props> {
 
   getFontScale(length: number): number {
     if (length > 12) {
-      return FONT_SCALE - (length * 5) / 120;
+      return FONT_SCALE - (length * 5) / 110;
     }
-    return FONT_SCALE - (length * 5) / 105;
+    return FONT_SCALE - (length * 5) / 100;
   }
 
   draw() {
