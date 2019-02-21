@@ -228,10 +228,6 @@ export class PanelModel {
     }, {});
   }
 
-  private saveCurrentPanelOptions() {
-    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
-  }
-
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
@@ -240,14 +236,11 @@ export class PanelModel {
     });
   }
 
-  changeType(pluginId: string, fromAngularPanel: boolean) {
-    this.saveCurrentPanelOptions();
-    this.type = pluginId;
+  changeType(pluginId: string, preserveOptions?: any) {
+    const oldOptions: any = this.getOptionsToRemember();
+    const oldPluginId = this.type;
 
-    // for angular panels only we need to remove all events and let angular panels do some cleanup
-    if (fromAngularPanel) {
-      this.destroy();
-    }
+    this.type = pluginId;
 
     // remove panel type specific  options
     for (const key of _.keys(this)) {
@@ -258,7 +251,13 @@ export class PanelModel {
       delete this[key];
     }
 
+    this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
+
+    if (preserveOptions && oldOptions) {
+      this.options = this.options || {};
+      Object.assign(this.options, preserveOptions(oldPluginId, oldOptions.options));
+    }
   }
 
   addQuery(query?: Partial<DataQuery>) {

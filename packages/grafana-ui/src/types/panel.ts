@@ -25,7 +25,7 @@ export interface PanelEditorProps<T = any> {
   onChange: (options: T) => void;
 }
 
-export type PreservePanelOptionsHandler<TOptions> = (pluginId: string, prevOptions: any) => Partial<TOptions>;
+export type PreservePanelOptionsHandler<TOptions = any> = (pluginId: string, prevOptions: any) => Partial<TOptions>;
 
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;

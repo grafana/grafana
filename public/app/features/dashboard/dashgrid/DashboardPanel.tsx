@@ -85,7 +85,14 @@ export class DashboardPanel extends PureComponent<Props, State> {
       }
 
       if (panel.type !== pluginId) {
-        this.props.panel.changeType(pluginId, fromAngularPanel);
+        if (fromAngularPanel) {
+          // for angular panels only we need to remove all events and let angular panels do some cleanup
+          panel.destroy();
+
+          this.props.panel.changeType(pluginId);
+        } else {
+          panel.changeType(pluginId, plugin.exports.reactPanel.preserveOptions);
+        }
       }
 
       this.setState({ plugin, angularPanel: null });
