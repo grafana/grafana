@@ -618,6 +618,17 @@ export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkRes
 }
 
 /**
+ * Stops a scan.
+ * @param exploreId Explore area
+ * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
+ */
+export function scanStop(exploreId: ExploreId): ThunkResult<void> {
+  return dispatch => {
+    dispatch(scanStopAction(exploreId)());
+  };
+}
+
+/**
  * Reset queries to the given queries. Any modifications will be discarded.
  * Use this action for clicks on query examples. Triggers a query run.
  */

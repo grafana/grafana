@@ -1,91 +1,139 @@
 import { reducerFactory } from './reducerFactory';
-import { actionCreatorFactory, ActionOf } from './actionCreatorFactory';
+import { actionCreatorFactory, ActionOf, higherOrderActionCreatorFactory } from './actionCreatorFactory';
 
-interface DummyReducerState {
-  n: number;
-  s: string;
-  b: boolean;
-  o: {
-    n: number;
-    s: string;
-    b: boolean;
-  };
+interface HigherOrderReducerState {
+  children: number;
+  [key: string]: ChildReducerState | number;
 }
 
-const dummyReducerIntialState: DummyReducerState = {
-  n: 1,
-  s: 'One',
-  b: true,
-  o: {
-    n: 2,
-    s: 'two',
-    b: false,
-  },
+interface ChildReducerState {
+  name: string;
+  age: number;
+}
+
+const higherOrderReducerIntialState: HigherOrderReducerState = {
+  children: 0,
 };
 
-const dummyActionCreator = actionCreatorFactory<DummyReducerState>('dummy').create();
+const childReducerIntialState: ChildReducerState = {
+  name: null,
+  age: 0,
+};
 
-const dummyReducer = reducerFactory(dummyReducerIntialState)
-  .addMapper({
-    filter: dummyActionCreator,
-    mapper: (state, action) => ({ ...state, ...action.payload }),
+const lowerOrderActionCreator = actionCreatorFactory<number>('lower-order').create();
+const higherOrderAction = higherOrderActionCreatorFactory<ChildReducerState>('higher-order').create();
+
+const childReducer = reducerFactory(childReducerIntialState)
+  .addHigherOrderMapper({
+    filter: higherOrderAction,
+    mapper: (state, action) => ({ ...state, name: action.payload.name, age: action.payload.age }),
   })
   .create();
 
-describe('reducerFactory', () => {
-  describe('given it is created with a defined handler', () => {
-    describe('when reducer is called with no state', () => {
-      describe('and with an action that the handler can not handle', () => {
-        it('then the resulting state should be intial state', () => {
-          const result = dummyReducer(undefined as DummyReducerState, {} as ActionOf<any>);
+const parentReducer = reducerFactory(higherOrderReducerIntialState)
+  .addMapper({
+    filter: lowerOrderActionCreator,
+    mapper: (state, action) => ({ ...state, children: action.payload }),
+  })
+  .addReducer(childReducer)
+  .create();
 
-          expect(result).toEqual(dummyReducerIntialState);
+describe('reducerFactory', () => {
+  describe('given it is created with a defined mapper', () => {
+    describe('when reducer is called with no state', () => {
+      describe('and with an action that the mapper can not handle', () => {
+        it('then the resulting state should be intial state', () => {
+          const result = parentReducer(undefined as HigherOrderReducerState, {} as ActionOf<any>);
+
+          expect(result).toEqual(higherOrderReducerIntialState);
         });
       });
 
-      describe('and with an action that the handler can handle', () => {
+      describe('and with an action that the mapper can handle', () => {
         it('then the resulting state should correct', () => {
-          const payload = { n: 10, s: 'ten', b: false, o: { n: 20, s: 'twenty', b: true } };
-          const result = dummyReducer(undefined as DummyReducerState, dummyActionCreator(payload));
+          const result = parentReducer(undefined as HigherOrderReducerState, lowerOrderActionCreator(1));
 
-          expect(result).toEqual(payload);
+          expect(result).toEqual({ children: 1 });
+        });
+      });
+
+      describe('and with an action that a child reducer mapper can handle', () => {
+        it('then the resulting state should correct', () => {
+          const result = parentReducer(
+            undefined as HigherOrderReducerState,
+            higherOrderAction('someId')({ age: 2, name: 'Kim' })
+          );
+
+          expect(result).toEqual({ children: 0, someId: { age: 2, name: 'Kim' } });
+        });
+      });
+
+      describe('and with an action that a child reducer mapper can handle but missing action.id', () => {
+        it('then the resulting state should correct', () => {
+          const result = parentReducer(
+            undefined as HigherOrderReducerState,
+            higherOrderAction(undefined)({ age: 2, name: 'Kim' })
+          );
+
+          expect(result).toEqual({ children: 0 });
         });
       });
     });
 
     describe('when reducer is called with a state', () => {
-      describe('and with an action that the handler can not handle', () => {
+      describe('and with an action that the mapper can not handle', () => {
         it('then the resulting state should be intial state', () => {
-          const result = dummyReducer(dummyReducerIntialState, {} as ActionOf<any>);
+          const result = parentReducer(higherOrderReducerIntialState, {} as ActionOf<any>);
 
-          expect(result).toEqual(dummyReducerIntialState);
+          expect(result).toEqual(higherOrderReducerIntialState);
         });
       });
 
-      describe('and with an action that the handler can handle', () => {
+      describe('and with an action that the mapper can handle', () => {
         it('then the resulting state should correct', () => {
-          const payload = { n: 10, s: 'ten', b: false, o: { n: 20, s: 'twenty', b: true } };
-          const result = dummyReducer(dummyReducerIntialState, dummyActionCreator(payload));
+          const result = parentReducer(higherOrderReducerIntialState, lowerOrderActionCreator(2));
 
-          expect(result).toEqual(payload);
+          expect(result).toEqual({ children: 2 });
+        });
+      });
+
+      describe('and with an action that a child reducer mapper can handle', () => {
+        it('then the resulting state should correct', () => {
+          const result = parentReducer(
+            higherOrderReducerIntialState,
+            higherOrderAction('someId')({ age: 4, name: 'Adrian' })
+          );
+
+          expect(result).toEqual({ children: 0, someId: { age: 4, name: 'Adrian' } });
+        });
+      });
+
+      describe('and with an action that a child reducer mapper can handle but missing action.id', () => {
+        it('then the resulting state should correct', () => {
+          const result = parentReducer(
+            higherOrderReducerIntialState,
+            higherOrderAction(undefined)({ age: 4, name: 'Adrian' })
+          );
+
+          expect(result).toEqual({ children: 0 });
         });
       });
     });
   });
 
-  describe('given a handler is added', () => {
-    describe('when a handler with the same creator is added', () => {
+  describe('given a mapper is added', () => {
+    describe('when a mapper with the same creator is added', () => {
       it('then is should throw', () => {
-        const faultyReducer = reducerFactory(dummyReducerIntialState).addMapper({
-          filter: dummyActionCreator,
+        const faultyReducer = reducerFactory(higherOrderReducerIntialState).addMapper({
+          filter: lowerOrderActionCreator,
           mapper: (state, action) => {
-            return { ...state, ...action.payload };
+            return { ...state, children: action.payload };
           },
         });
 
         expect(() => {
           faultyReducer.addMapper({
-            filter: dummyActionCreator,
+            filter: lowerOrderActionCreator,
             mapper: state => {
               return state;
             },

@@ -25,45 +25,6 @@ import {
 } from 'app/core/redux/actionCreatorFactory';
 import { LogLevel } from 'app/core/logs_model';
 
-/**  Higher order actions
- *
- */
-export enum ActionTypes {
-  InitializeExploreSplit = 'explore/INITIALIZE_EXPLORE_SPLIT',
-  SplitClose = 'explore/SPLIT_CLOSE',
-  SplitOpen = 'explore/SPLIT_OPEN',
-  ResetExplore = 'explore/RESET_EXPLORE',
-}
-
-export interface InitializeExploreSplitAction {
-  type: ActionTypes.InitializeExploreSplit;
-  id?: string;
-  payload: {};
-}
-
-export interface SplitCloseAction {
-  type: ActionTypes.SplitClose;
-  id?: string;
-  payload: {};
-}
-
-export interface SplitOpenAction {
-  type: ActionTypes.SplitOpen;
-  id?: string;
-  payload: {
-    itemState: ExploreItemState;
-  };
-}
-
-export interface ResetExploreAction {
-  type: ActionTypes.ResetExplore;
-  id?: string;
-  payload: {};
-}
-
-/**  Lower order actions
- *
- */
 export interface AddQueryRowPayload {
   index: number;
   query: DataQuery;
@@ -369,13 +330,6 @@ export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_E
 export const queriesImportedAction = higherOrderActionCreatorFactory<QueriesImportedPayload>(
   'explore/QueriesImported'
 ).create();
-
-export type HigherOrderAction =
-  | InitializeExploreSplitAction
-  | SplitCloseAction
-  | SplitOpenAction
-  | ResetExploreAction
-  | ActionOf<any>;
 
 export type Action =
   | ActionOf<AddQueryRowPayload>

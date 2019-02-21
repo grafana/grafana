@@ -18,7 +18,15 @@ import TableContainer from './TableContainer';
 import TimePicker, { parseTime } from './TimePicker';
 
 // Actions
-import { changeSize, changeTime, initializeExplore, modifyQueries, scanStart, setQueries } from './state/actions';
+import {
+  changeSize,
+  changeTime,
+  initializeExplore,
+  modifyQueries,
+  scanStart,
+  setQueries,
+  scanStop,
+} from './state/actions';
 
 // Types
 import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
@@ -27,7 +35,6 @@ import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
-import { scanStopAction } from './state/actionTypes';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -46,7 +53,7 @@ interface ExploreProps {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
-  scanStopAction: typeof scanStopAction;
+  scanStop: typeof scanStop;
   setQueries: typeof setQueries;
   split: boolean;
   showingStartPage?: boolean;
@@ -166,7 +173,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onStopScanning = () => {
-    this.props.scanStopAction(this.props.exploreId)();
+    const { scanStop, exploreId } = this.props;
+    scanStop(exploreId);
   };
 
   render() {
@@ -282,7 +290,7 @@ const mapDispatchToProps = {
   initializeExplore,
   modifyQueries,
   scanStart,
-  scanStopAction,
+  scanStop,
   setQueries,
 };
 

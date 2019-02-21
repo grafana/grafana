@@ -8,9 +8,12 @@ import {
 import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 
-import { HigherOrderAction, ActionTypes } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
+  splitCloseAction,
+  splitOpenAction,
+  initializeExploreSplitAction,
+  resetExploreAction,
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -480,37 +483,25 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   })
   .create();
 
-/**
- * Global Explore reducer that handles multiple Explore areas (left and right).
- * Actions that have an `exploreId` get routed to the ExploreItemReducer.
- */
-export const exploreReducer = (state = initialExploreState, action: HigherOrderAction): ExploreState => {
-  switch (action.type) {
-    case ActionTypes.SplitClose: {
-      return { ...state, split: false };
-    }
-
-    case ActionTypes.SplitOpen: {
-      return { ...state, split: true, right: action.payload.itemState };
-    }
-
-    case ActionTypes.InitializeExploreSplit: {
-      return { ...state, split: true };
-    }
-
-    case ActionTypes.ResetExplore: {
-      return initialExploreState;
-    }
-  }
-
-  if (action.id) {
-    const exploreId = action.id;
-    const exploreItemState = state[exploreId];
-    return { ...state, [exploreId]: itemReducer(exploreItemState, action) };
-  }
-
-  return state;
-};
+export const exploreReducer = reducerFactory<ExploreState>(initialExploreState)
+  .addMapper({
+    filter: splitCloseAction,
+    mapper: (state): ExploreState => ({ ...state, split: false }),
+  })
+  .addMapper({
+    filter: splitOpenAction,
+    mapper: (state, action): ExploreState => ({ ...state, split: true, right: action.payload.itemState }),
+  })
+  .addMapper({
+    filter: initializeExploreSplitAction,
+    mapper: (state): ExploreState => ({ ...state, split: true }),
+  })
+  .addMapper({
+    filter: resetExploreAction,
+    mapper: (): ExploreState => initialExploreState,
+  })
+  .addReducer(itemReducer)
+  .create();
 
 export default {
   explore: exploreReducer,

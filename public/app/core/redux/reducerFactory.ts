@@ -14,6 +14,7 @@ export interface HigherOrderMapperConfig<State, Payload> {
 }
 
 export interface AddMapper<State> {
+  addReducer: (reducer: Reducer<any, ActionOf<any>>) => CreateReducer<State>;
   addMapper: <Payload>(config: MapperConfig<State, Payload>) => CreateReducer<State>;
   addHigherOrderMapper: <Payload>(config: HigherOrderMapperConfig<State, Payload>) => CreateReducer<State>;
 }
@@ -24,6 +25,7 @@ export interface CreateReducer<State> extends AddMapper<State> {
 
 export const reducerFactory = <State>(initialState: State): AddMapper<State> => {
   const allMappers: { [key: string]: Mapper<State, any> } = {};
+  let childReducer: Reducer<any, ActionOf<any>> = null;
 
   const addMapper = <Payload>(config: MapperConfig<State, Payload>): CreateReducer<State> => {
     if (allMappers[config.filter.type]) {
@@ -45,6 +47,12 @@ export const reducerFactory = <State>(initialState: State): AddMapper<State> => 
     return instance;
   };
 
+  const addReducer = (reducer: Reducer<any, ActionOf<any>>): CreateReducer<State> => {
+    childReducer = reducer;
+
+    return instance;
+  };
+
   const create = (): Reducer<State, ActionOf<any>> => (state: State = initialState, action: ActionOf<any>): State => {
     const mapper = allMappers[action.type];
 
@@ -52,10 +60,14 @@ export const reducerFactory = <State>(initialState: State): AddMapper<State> => 
       return mapper(state, action);
     }
 
+    if (action.id && childReducer) {
+      return { ...state, [action.id]: childReducer(state[action.id], action) };
+    }
+
     return state;
   };
 
-  const instance: CreateReducer<State> = { addMapper, addHigherOrderMapper, create };
+  const instance: CreateReducer<State> = { addMapper, addHigherOrderMapper, addReducer, create };
 
   return instance;
 };
