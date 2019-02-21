@@ -60,9 +60,9 @@ aliases = ["v1.1", "guides/reference/admin"]
         <h4>Provisioning</h4>
         <p>A guide to help you automate your Grafana setup & configuration.</p>
     </a>
-    <a href="{{< relref "guides/whats-new-in-v5-4.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v5.4</h4>
-        <p>Article on all the new cool features and enhancements in v5.4</p>
+    <a href="{{< relref "guides/whats-new-in-v6-0.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v6.0</h4>
+        <p>Article on all the new cool features and enhancements in v6.0</p>
     </a>
     <a href="{{< relref "tutorials/screencasts.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Screencasts</h4>
@@ -89,12 +89,20 @@ aliases = ["v1.1", "guides/reference/admin"]
       <h5>Prometheus</h5>
     </a>
     <a href="{{< relref "features/datasources/stackdriver.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/stackdriver_logo.png">
+      <img src="/img/docs/logos/icon_stackdriver.svg">
       <h5>Google Stackdriver</h5>
     </a>
     <a href="{{< relref "features/datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
+    </a>
+    <a href="{{< relref "features/datasources/azuremonitor.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/icon_azure_monitor.jpg">
+      <h5>Azure Monitor</h5>
+    </a>
+    <a href="{{< relref "features/datasources/loki.md" >}}" class="nav-cards__item nav-cards__item--ds">
+      <img src="/img/docs/logos/icon_loki.svg">
+      <h5>Loki</h5>
     </a>
     <a href="{{< relref "features/datasources/mysql.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_mysql.png" >
