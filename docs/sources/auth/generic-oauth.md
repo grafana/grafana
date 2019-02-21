@@ -113,7 +113,7 @@ allowed_organizations =
     allowed_organizations =
     ```
 
-### Set up OAuth2 with Auth0
+## Set up OAuth2 with Auth0
 
 1.  Create a new Client in Auth0
     - Name: Grafana
@@ -139,7 +139,7 @@ allowed_organizations =
     api_url = https://<domain>/userinfo
     ```
 
-### Set up OAuth2 with Azure Active Directory
+## Set up OAuth2 with Azure Active Directory
 
 1.  Log in to portal.azure.com and click "Azure Active Directory" in the side menu, then click the "Properties" sub-menu item.
 

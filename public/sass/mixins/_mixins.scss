@@ -278,7 +278,7 @@
 }
 
 // Gradient Bar Colors for buttons and alerts
-@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0,0,0,0.25)) {
+@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0, 0, 0, 0.25)) {
   color: $text-color;
   text-shadow: $textShadow;
   @include gradient-vertical($primaryColor, $secondaryColor);

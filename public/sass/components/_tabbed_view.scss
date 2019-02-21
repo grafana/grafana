@@ -20,7 +20,7 @@
 .tabbed-view-title {
   float: left;
   padding-top: 0.5rem;
-  margin: 0 $spacer*3 0 0;
+  margin: 0 $spacer * 3 0 0;
 }
 
 .tabbed-view-panel-title {
@@ -45,7 +45,7 @@
 }
 
 .tabbed-view-body {
-  padding: $spacer*2 $spacer $spacer $spacer;
+  padding: $spacer * 2 $spacer $spacer $spacer;
   display: flex;
   flex-direction: column;
   flex: 1;

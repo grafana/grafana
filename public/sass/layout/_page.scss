@@ -39,8 +39,8 @@
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: $spacer*2;
-  padding-right: $spacer*2;
+  padding-left: $spacer * 2;
+  padding-right: $spacer * 2;
   max-width: 980px;
   @include clearfix();
 }
@@ -93,7 +93,7 @@
 }
 
 .page-body {
-  padding-top: $spacer*2;
+  padding-top: $spacer * 2;
 }
 
 .page-heading {
@@ -164,5 +164,5 @@
 }
 
 .page-sidebar-section {
-  margin-bottom: $spacer*2;
+  margin-bottom: $spacer * 2;
 }

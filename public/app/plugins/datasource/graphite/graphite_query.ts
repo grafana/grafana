@@ -154,6 +154,11 @@ export default class GraphiteQuery {
     this.functions = _.without(this.functions, func);
   }
 
+  moveFunction(func, offset) {
+    const index = this.functions.indexOf(func);
+    _.move(this.functions, index, index + offset);
+  }
+
   updateModelTarget(targets) {
     // render query
     if (!this.target.textEditor) {

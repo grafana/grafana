@@ -78,46 +78,48 @@ export default class InfluxDatasource {
     // replace templated variables
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
-    return this._seriesQuery(allQueries, options).then((data): any => {
-      if (!data || !data.results) {
-        return [];
-      }
-
-      const seriesList = [];
-      for (i = 0; i < data.results.length; i++) {
-        const result = data.results[i];
-        if (!result || !result.series) {
-          continue;
+    return this._seriesQuery(allQueries, options).then(
+      (data): any => {
+        if (!data || !data.results) {
+          return [];
         }
 
-        const target = queryTargets[i];
-        let alias = target.alias;
-        if (alias) {
-          alias = this.templateSrv.replace(target.alias, options.scopedVars);
-        }
-
-        const influxSeries = new InfluxSeries({
-          series: data.results[i].series,
-          alias: alias,
-        });
-
-        switch (target.resultFormat) {
-          case 'table': {
-            seriesList.push(influxSeries.getTable());
-            break;
+        const seriesList = [];
+        for (i = 0; i < data.results.length; i++) {
+          const result = data.results[i];
+          if (!result || !result.series) {
+            continue;
           }
-          default: {
-            const timeSeries = influxSeries.getTimeSeries();
-            for (y = 0; y < timeSeries.length; y++) {
-              seriesList.push(timeSeries[y]);
+
+          const target = queryTargets[i];
+          let alias = target.alias;
+          if (alias) {
+            alias = this.templateSrv.replace(target.alias, options.scopedVars);
+          }
+
+          const influxSeries = new InfluxSeries({
+            series: data.results[i].series,
+            alias: alias,
+          });
+
+          switch (target.resultFormat) {
+            case 'table': {
+              seriesList.push(influxSeries.getTable());
+              break;
             }
-            break;
+            default: {
+              const timeSeries = influxSeries.getTimeSeries();
+              for (y = 0; y < timeSeries.length; y++) {
+                seriesList.push(timeSeries[y]);
+              }
+              break;
+            }
           }
         }
-      }
 
-      return { data: seriesList };
-    });
+        return { data: seriesList };
+      }
+    );
   }
 
   annotationQuery(options) {
