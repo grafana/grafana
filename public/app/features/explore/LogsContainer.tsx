@@ -46,10 +46,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
   hangleToggleLogLevel = (hiddenLogLevels: Set<LogLevel>) => {
     const { exploreId } = this.props;
-    this.props.toggleLogLevelAction({
-      exploreId,
-      hiddenLogLevels,
-    });
+    this.props.toggleLogLevelAction(exploreId)({ hiddenLogLevels });
   };
 
   render() {

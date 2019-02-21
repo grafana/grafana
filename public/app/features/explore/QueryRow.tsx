@@ -82,7 +82,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
 
   onClickRemoveButton = () => {
     const { exploreId, index } = this.props;
-    this.props.removeQueryRowAction({ exploreId, index });
+    this.props.removeQueryRowAction(exploreId)({ index });
   };
 
   updateLogsHighlights = _.debounce((value: DataQuery) => {
@@ -90,7 +90,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
       const expressions = [datasourceInstance.getHighlighterExpression(value)];
-      this.props.highlightLogsExpressionAction({ exploreId, expressions });
+      this.props.highlightLogsExpressionAction(exploreId)({ expressions });
     }
   }, 500);
 

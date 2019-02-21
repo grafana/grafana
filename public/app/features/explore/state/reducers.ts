@@ -91,7 +91,7 @@ export const initialExploreState: ExploreState = {
  * Reducer for an Explore area, to be used by the global Explore reducer.
  */
 export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemState)
-  .addMapper({
+  .addHigherOrderMapper({
     filter: addQueryRowAction,
     mapper: (state, action): ExploreItemState => {
       const { queries, queryTransactions } = state;
@@ -120,7 +120,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: changeQueryAction,
     mapper: (state, action): ExploreItemState => {
       const { queries, queryTransactions } = state;
@@ -142,7 +142,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: changeSizeAction,
     mapper: (state, action): ExploreItemState => {
       const { range, datasourceInstance } = state;
@@ -155,13 +155,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return { ...state, containerWidth, queryIntervals };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: changeTimeAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, range: action.payload.range };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: clearQueriesAction,
     mapper: (state): ExploreItemState => {
       const queries = ensureQueries();
@@ -174,14 +174,14 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: highlightLogsExpressionAction,
     mapper: (state, action): ExploreItemState => {
       const { expressions } = action.payload;
       return { ...state, logsHighlighterExpressions: expressions };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
       const { containerWidth, eventBridge, exploreDatasources, queries, range, ui } = action.payload;
@@ -198,32 +198,32 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
       return { ...state, datasourceInstance, queryKeys: getQueryKeys(state.queries, datasourceInstance) };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: loadDatasourceFailureAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, datasourceError: action.payload.error, datasourceLoading: false };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: loadDatasourceMissingAction,
     mapper: (state): ExploreItemState => {
       return { ...state, datasourceMissing: true, datasourceLoading: false };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: loadDatasourcePendingAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.requestedDatasourceName };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: loadDatasourceSuccessAction,
     mapper: (state, action): ExploreItemState => {
       const { containerWidth, range } = state;
@@ -256,7 +256,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: modifyQueriesAction,
     mapper: (state, action): ExploreItemState => {
       const { queries, queryTransactions } = state;
@@ -297,14 +297,14 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: queryTransactionFailureAction,
     mapper: (state, action): ExploreItemState => {
       const { queryTransactions } = action.payload;
       return { ...state, queryTransactions, showingStartPage: false };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: queryTransactionStartAction,
     mapper: (state, action): ExploreItemState => {
       const { queryTransactions } = state;
@@ -320,7 +320,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return { ...state, queryTransactions: nextQueryTransactions, showingStartPage: false };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: queryTransactionSuccessAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance, queryIntervals } = state;
@@ -334,7 +334,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return { ...state, ...results, history, queryTransactions, showingStartPage: false };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: removeQueryRowAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance, queries, queryIntervals, queryTransactions, queryKeys } = state;
@@ -365,25 +365,25 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: runQueriesEmptyAction,
     mapper: (state): ExploreItemState => {
       return { ...state, queryTransactions: [] };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: scanRangeAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, scanRange: action.payload.range };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: scanStartAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, scanning: true, scanner: action.payload.scanner };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: scanStopAction,
     mapper: (state): ExploreItemState => {
       const { queryTransactions } = state;
@@ -397,7 +397,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: setQueriesAction,
     mapper: (state, action): ExploreItemState => {
       const { queries } = action.payload;
@@ -408,13 +408,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: updateUIStateAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, ...action.payload };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: toggleGraphAction,
     mapper: (state): ExploreItemState => {
       const showingGraph = !state.showingGraph;
@@ -426,7 +426,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return { ...state, queryTransactions: nextQueryTransactions };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: toggleLogsAction,
     mapper: (state): ExploreItemState => {
       const showingLogs = !state.showingLogs;
@@ -438,7 +438,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return { ...state, queryTransactions: nextQueryTransactions };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: toggleTableAction,
     mapper: (state): ExploreItemState => {
       const showingTable = !state.showingTable;
@@ -457,7 +457,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return { ...state, ...results, queryTransactions: nextQueryTransactions };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: queriesImportedAction,
     mapper: (state, action): ExploreItemState => {
       const { queries } = action.payload;
@@ -468,7 +468,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
+  .addHigherOrderMapper({
     filter: toggleLogLevelAction,
     mapper: (state, action): ExploreItemState => {
       const { hiddenLogLevels } = action.payload;
@@ -503,12 +503,10 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     }
   }
 
-  if (action.payload) {
-    const { exploreId } = action.payload as any;
-    if (exploreId !== undefined) {
-      const exploreItemState = state[exploreId];
-      return { ...state, [exploreId]: itemReducer(exploreItemState, action) };
-    }
+  if (action.id) {
+    const exploreId = action.id;
+    const exploreItemState = state[exploreId];
+    return { ...state, [exploreId]: itemReducer(exploreItemState, action) };
   }
 
   return state;

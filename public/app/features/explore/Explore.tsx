@@ -166,7 +166,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onStopScanning = () => {
-    this.props.scanStopAction({ exploreId: this.props.exploreId });
+    this.props.scanStopAction(this.props.exploreId)();
   };
 
   render() {
