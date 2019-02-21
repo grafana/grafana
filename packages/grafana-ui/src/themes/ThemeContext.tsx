@@ -1,5 +1,5 @@
 import React from 'react';
-import { getTheme } from './index';
+import { getTheme } from './getTheme';
 import { GrafanaThemeType, Themeable } from '../types/theme';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
