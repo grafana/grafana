@@ -1,7 +1,12 @@
 {
   "name": "@grafana/ui",
   "version": "0.0.0",
-  "description": "",
+  "description": "Grafana Components Library",
+  "keywords": [
+    "typescript",
+    "react",
+    "react-component"
+  ],
   "main": "src/index.ts",
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
