@@ -1,0 +1,31 @@
+.get-more-plugins-link {
+  color: $gray-3;
+  font-size: $font-size-sm;
+  position: relative;
+  top: 1.2rem;
+
+  &:hover {
+    color: $link-hover-color;
+  }
+
+  img {
+    vertical-align: top;
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .get-more-plugins-link {
+    display: none;
+  }
+}
+
+.plugin-info-list-item {
+  white-space: nowrap;
+  max-width: $page-sidebar-width;
+  text-overflow: ellipsis;
+  overflow: hidden;
+
+  img {
+    width: 16px;
+  }
+}
