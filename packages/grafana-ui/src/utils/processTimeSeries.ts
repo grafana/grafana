@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import isNumber from 'lodash/isNumber';
 
 import { colors } from './colors';
 
@@ -75,7 +75,7 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
       }
 
       if (currentValue !== null) {
-        if (_.isNumber(currentValue)) {
+        if (isNumber(currentValue)) {
           total += currentValue;
           allIsNull = false;
           nonNulls++;
