@@ -40,7 +40,7 @@ docker_tag_all () {
 }
 
 docker_build "debian:stretch-slim" "grafana-latest.linux-x64.tar.gz" "${_docker_repo}:${_grafana_version}"
-docker_build "alpine:3.8" "grafana-latest.linux-x64.tar.gz" "${_docker_repo}:${_grafana_version}-alpine" Dockerfile.alpine
+docker_build "alpine:3.9" "grafana-latest.linux-x64.tar.gz" "${_docker_repo}:${_grafana_version}-alpine" Dockerfile.alpine
 docker_build "arm32v7/debian:stretch-slim" "grafana-latest.linux-armv7.tar.gz" "${_docker_repo}-arm32v7-linux:${_grafana_version}"
 docker_build "arm64v8/debian:stretch-slim" "grafana-latest.linux-arm64.tar.gz" "${_docker_repo}-arm64v8-linux:${_grafana_version}"
 
