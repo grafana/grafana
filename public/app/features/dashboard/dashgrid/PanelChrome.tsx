@@ -20,7 +20,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { DataQueryResponse, TimeRange, LoadingState, PanelData, DataQueryError } from '@grafana/ui';
 
-import variables from 'sass/_variables.scss';
+import variables from 'sass/_variables.generated.scss';
 import templateSrv from 'app/features/templating/template_srv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';

@@ -1,10 +1,12 @@
-const theme = {
+import { GrafanaThemeCommons } from '../types/theme';
+
+const theme: GrafanaThemeCommons = {
   name: 'Grafana Default',
   typography: {
     fontFamily: {
-      sansSerif: "'Roboto', Helvetica, Arial, sans-serif;",
-      serif: "Georgia, 'Times New Roman', Times, serif;",
-      monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace;",
+      sansSerif: "'Roboto', Helvetica, Arial, sans-serif",
+      serif: "Georgia, 'Times New Roman', Times, serif",
+      monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
     },
     size: {
       base: '13px',
@@ -45,7 +47,6 @@ const theme = {
     s: '0.2rem',
     m: '1rem',
     l: '1.5rem',
-    xl: '3rem',
     gutter: '30px',
   },
   border: {

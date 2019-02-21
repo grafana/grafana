@@ -2,7 +2,7 @@ import { PlaylistSrv } from '../playlist_srv';
 
 const dashboards = [{ url: 'dash1' }, { url: 'dash2' }];
 
-const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any> }] => {
+const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any, any> }] => {
   const mockBackendSrv = {
     get: jest.fn(url => {
       switch (url) {
@@ -27,7 +27,7 @@ const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any> }] => 
   return [new PlaylistSrv(mockLocation, mockTimeout, mockBackendSrv), mockLocation];
 };
 
-const mockWindowLocation = (): [jest.MockInstance<any>, () => void] => {
+const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
   const oldLocation = window.location;
   const hrefMock = jest.fn();
 
@@ -50,7 +50,7 @@ const mockWindowLocation = (): [jest.MockInstance<any>, () => void] => {
 
 describe('PlaylistSrv', () => {
   let srv: PlaylistSrv;
-  let hrefMock: jest.MockInstance<any>;
+  let hrefMock: jest.MockInstance<any, any>;
   let unmockLocation: () => void;
   const initialUrl = 'http://localhost/playlist';
 
