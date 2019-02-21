@@ -65,8 +65,8 @@ $critical: $red-shade;
 
 // Scaffolding
 // -------------------------
-$body-bg: $gray-7;
-$page-bg: $gray-7;
+$body-bg: ${theme.colors.bodyBg};
+$page-bg: ${theme.colors.pageBg};
 
 $body-color: $gray-1;
 $text-color: $gray-1;

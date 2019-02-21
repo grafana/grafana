@@ -73,8 +73,8 @@ $critical: $red-base;
 
 // Scaffolding
 // -------------------------
-$body-bg: $dark-2;
-$page-bg: $dark-2;
+$body-bg: ${theme.colors.bodyBg};
+$page-bg: ${theme.colors.pageBg};
 
 $body-color: $gray-4;
 $text-color: $gray-4;
