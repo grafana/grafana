@@ -1,7 +1,14 @@
 import concurrently from 'concurrently';
+import { Task } from '..';
 
-export const startTask = async ({ watchThemes, hot }: { watchThemes: boolean; hot: boolean }) => {
+interface StartTaskOptions {
+  watchThemes: boolean;
+  hot: boolean;
+}
+
+const startTask: Task<StartTaskOptions> = async ({ watchThemes, hot }) => {
   const jobs = [];
+
   if (watchThemes) {
     jobs.push({
       command: 'nodemon -e ts -w ./packages/grafana-ui/src/themes -x yarn run themes:generate',
@@ -30,3 +37,5 @@ export const startTask = async ({ watchThemes, hot }: { watchThemes: boolean; ho
     process.exit(1);
   }
 };
+
+export default startTask;
