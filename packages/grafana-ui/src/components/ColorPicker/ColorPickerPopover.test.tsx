@@ -3,7 +3,7 @@ import { mount, ReactWrapper } from 'enzyme';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { getColorDefinitionByName, getNamedColorPalette } from '../../utils/namedColorsPalette';
 import { ColorSwatch } from './NamedColorsGroup';
-import { flatten } from 'lodash';
+import flatten from 'lodash/flatten';
 import { GrafanaThemeType } from '../../types';
 import { getTheme } from '../../themes';
 

@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-
-import { ValueMapping, Threshold, BasicGaugeColor, GrafanaThemeType } from '../../types';
 import { getMappedValue } from '../../utils/valueMappings';
-import { getColorFromHexRgbOrName, getValueFormat } from '../../utils';
-import { Themeable } from '../../index';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { Themeable, GrafanaThemeType } from '../../types/theme';
+import { ValueMapping, Threshold, BasicGaugeColor } from '../../types/panel';
+import { getValueFormat } from '../../utils/valueFormats/valueFormats';
 
 type TimeSeriesValue = string | number | null;
 

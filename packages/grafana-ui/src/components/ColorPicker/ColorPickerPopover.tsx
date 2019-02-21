@@ -1,23 +1,37 @@
 import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
-import { ColorPickerProps, warnAboutColorPickerPropsDeprecation } from './ColorPicker';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import SpectrumPalette from './SpectrumPalette';
-import { GrafanaThemeType } from '../../types/theme';
+import { GrafanaThemeType, Themeable } from '../../types/theme';
+import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 
+export type ColorPickerChangeHandler = (color: string) => void;
+
+export interface ColorPickerProps extends Themeable {
+  color: string;
+  onChange: ColorPickerChangeHandler;
+
+  /**
+   * @deprecated Use onChange instead
+   */
+  onColorChange?: ColorPickerChangeHandler;
+  enableNamedColors?: boolean;
+  children?: JSX.Element;
+}
 export interface Props<T> extends ColorPickerProps, PopperContentProps {
   customPickers?: T;
 }
 
 type PickerType = 'palette' | 'spectrum';
 
-interface CustomPickersDescriptor {
+export interface CustomPickersDescriptor {
   [key: string]: {
     tabComponent: React.ComponentType<ColorPickerProps>;
     name: string;
   };
 }
+
 interface State<T> {
   activePicker: PickerType | keyof T;
 }

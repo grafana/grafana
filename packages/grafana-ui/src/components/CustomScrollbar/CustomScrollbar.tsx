@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
 
@@ -41,7 +41,7 @@ export class CustomScrollbar extends PureComponent<Props> {
   updateScroll() {
     const ref = this.ref.current;
 
-    if (ref && !_.isNil(this.props.scrollTop)) {
+    if (ref && !isNil(this.props.scrollTop)) {
       if (this.props.scrollTop > 10000) {
         ref.scrollToBottom();
       } else {

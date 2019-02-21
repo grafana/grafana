@@ -1,6 +1,7 @@
 import darkTheme from './dark';
 import lightTheme from './light';
 import { GrafanaTheme } from '../types/theme';
+import { ThemeContext, withTheme } from './ThemeContext';
 
 let themeMock: ((name?: string) => GrafanaTheme) | null;
 
@@ -12,3 +13,5 @@ export const mockTheme = (mock: (name?: string) => GrafanaTheme) => {
     themeMock = null;
   };
 };
+
+export { ThemeContext, withTheme };

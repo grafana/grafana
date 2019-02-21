@@ -1,7 +1,9 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 
 import { MappingType, ValueMapping } from '../../types';
-import { FormField, FormLabel, Select } from '..';
+import { Select } from '../Select/Select';
+import { FormField } from '../FormField/FormField';
+import { FormLabel } from '../FormLabel/FormLabel';
 
 export interface Props {
   valueMapping: ValueMapping;

@@ -2,7 +2,8 @@ import React, { FunctionComponent } from 'react';
 import { Themeable } from '../../types';
 import { ColorDefinition, getColorForTheme } from '../../utils/namedColorsPalette';
 import { Color } from 'csstype';
-import { find, upperFirst } from 'lodash';
+import upperFirst from 'lodash/upperFirst';
+import find from 'lodash/find';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 type ColorChangeHandler = (color: ColorDefinition) => void;
