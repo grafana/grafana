@@ -32,7 +32,7 @@ $dark-5: ${theme.colors.dark5};
 $dark-6: ${theme.colors.dark6};
 $dark-7: ${theme.colors.dark7};
 $dark-8: ${theme.colors.dark8};
-$dark-9:${theme.colors.dark9};
+$dark-9: ${theme.colors.dark9};
 $dark-10: ${theme.colors.dark10};
 $gray-1: ${theme.colors.gray1};
 $gray-2: ${theme.colors.gray2};
