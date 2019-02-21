@@ -159,7 +159,7 @@ describe('mergeStreamsToLogs()', () => {
     ]);
   });
 
-  it('detect ANSI codes', () => {
+  it('detects ANSI codes', () => {
     expect(
       mergeStreamsToLogs([
         {
@@ -171,15 +171,32 @@ describe('mergeStreamsToLogs()', () => {
             },
           ],
         },
+        {
+          labels: '{bar="foo"}',
+          entries: [
+            {
+              line: "bar: 'foo'",
+              ts: '1970-01-01T00:00:00Z',
+            },
+          ],
+        },
       ]).rows
     ).toMatchObject([
       {
+        entry: "bar: 'foo'",
+        hasAnsi: false,
+        key: 'EK1970-01-01T00:00:00Z{bar="foo"}',
+        labels: { bar: 'foo' },
+        logLevel: 'unknown',
+        raw: "bar: 'foo'",
+      },
+      {
         entry: "foo: [32m'bar'[39m",
+        hasAnsi: true,
         key: 'EK1970-01-01T00:00:00Z{foo="bar"}',
         labels: { foo: 'bar' },
         logLevel: 'unknown',
         raw: "foo: 'bar'",
-        uniqueLabels: {},
       },
     ]);
   });
