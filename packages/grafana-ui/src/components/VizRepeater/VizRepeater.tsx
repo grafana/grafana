@@ -19,8 +19,8 @@ export class VizRepeater extends PureComponent<Props> {
   render() {
     const { children, orientation, height, timeSeries, width } = this.props;
 
-    const vizContainerWidth = 1 / timeSeries.length * 100;
-    const vizContainerHeight = 1 / timeSeries.length * 100;
+    const vizContainerWidth = (1 / timeSeries.length) * 100;
+    const vizContainerHeight = (1 / timeSeries.length) * 100;
     const repeatingVizWidth = Math.floor(width / timeSeries.length) - 10; // make Gauge slightly smaller than panel.
     const repeatingVizHeight = Math.floor(height / timeSeries.length) - 10;
 
