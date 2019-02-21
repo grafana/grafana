@@ -1,6 +1,6 @@
 import React, { Component, createRef } from 'react';
 import { PopperController } from '../Tooltip/PopperController';
-import {Popper} from '../Tooltip/Popper';
+import { Popper } from '../Tooltip/Popper';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
