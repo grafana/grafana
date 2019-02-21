@@ -15,19 +15,18 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$sapphire-faint: #041126;
-$sapphire-light: #5794f2;
-$sapphire-base: #3274d9;
-$sapphire-shade: #1f60c4;
-$lobster-base: #e02f44;
-$lobster-shade: #c4162a;
-$forest-light: #96d98d;
+$blue-faint: #041126;
+$blue-light: #5794f2;
+$blue-base: #3274d9;
+$blue-shade: #1f60c4;
+$red-base: #e02f44;
+$red-shade: #c4162a;
 $green-base: #299c46;
 $green-shade: #23843b;
 
 // Grays
 // -------------------------
-$black: #000;
+$black: #000000;
 $dark-1: #141414;
 $dark-2: #161719;
 $dark-3: #1f1f20;
@@ -52,20 +51,19 @@ $white: #ffffff;
 // Accent colors
 // -------------------------
 $blue: #33b5e5;
-$green: #299c46;
-$red: $lobster-base;
+$red: $red-base;
 $yellow: #ecbb13;
+$orange: #eb7b18;
 $purple: #9933cc;
 $variable: #32d1df;
-$orange: #eb7b18;
 
 $brand-primary: $orange;
 $brand-success: $green-base;
 $brand-warning: $brand-primary;
-$brand-danger: $lobster-base;
+$brand-danger: $red-base;
 
-$query-red: $lobster-base;
-$query-green: $forest-light;
+$query-red: $red-base;
+$query-green: #74e680;
 $query-purple: #fe85fc;
 $query-keyword: #66d9ef;
 $query-orange: $orange;
@@ -74,12 +72,12 @@ $query-orange: $orange;
 // -------------------------
 $online: $green-base;
 $warn: #f79520;
-$critical: $lobster-base;
+$critical: $red-base;
 
 // Scaffolding
 // -------------------------
-$body-bg: $dark-2;
-$page-bg: $dark-2;
+$body-bg: #161719;
+$page-bg: #161719;
 
 $body-color: $gray-4;
 $text-color: $gray-4;
@@ -107,7 +105,7 @@ $edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 $link-color: darken($white, 11%);
 $link-color-disabled: darken($link-color, 30%);
 $link-hover-color: $white;
-$external-link-color: $sapphire-light;
+$external-link-color: $blue-light;
 
 // Typography
 // -------------------------
@@ -167,8 +165,8 @@ $table-bg-hover: $dark-6;
 
 // Buttons
 // -------------------------
-$btn-secondary-bg: $sapphire-base;
-$btn-secondary-bg-hl: $sapphire-shade;
+$btn-secondary-bg: $blue-base;
+$btn-secondary-bg-hl: $blue-shade;
 
 $btn-primary-bg: $green-base;
 $btn-primary-bg-hl: $green-shade;
@@ -176,8 +174,8 @@ $btn-primary-bg-hl: $green-shade;
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
 
-$btn-danger-bg: $lobster-base;
-$btn-danger-bg-hl: $lobster-shade;
+$btn-danger-bg: $red-base;
+$btn-danger-bg-hl: $red-shade;
 
 $btn-inverse-bg: $dark-6;
 $btn-inverse-bg-hl: lighten($dark-6, 4%);
@@ -202,7 +200,7 @@ $input-color: $gray-4;
 $input-border-color: $dark-6;
 $input-box-shadow: inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-6 !default;
-$input-box-shadow-focus: $sapphire-light !default;
+$input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: $gray-1 !default;
 $input-label-bg: $gray-blue;
 $input-label-border-color: $dark-6;
@@ -274,12 +272,12 @@ $toolbar-bg: $input-black;
 // -------------------------
 $warning-text-color: $warn;
 $error-text-color: #e84d4d;
-$success-text-color: $forest-light;
+$success-text-color: #12d95a;
 
-$alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
-$alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
+$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
+$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // popover
 $popover-bg: $dark-2;
@@ -308,7 +306,7 @@ $tooltipBackgroundError: $brand-danger;
 $checkboxImageUrl: '../img/checkbox.png';
 
 // info box
-$info-box-border-color: $sapphire-base;
+$info-box-border-color: $blue-base;
 
 // footer
 $footer-link-color: $gray-2;
@@ -339,8 +337,8 @@ $diff-arrow-color: $white;
 $diff-json-bg: $dark-9;
 $diff-json-fg: $gray-5;
 
-$diff-json-added: $sapphire-shade;
-$diff-json-deleted: $lobster-shade;
+$diff-json-added: $blue-shade;
+$diff-json-deleted: $red-shade;
 
 $diff-json-old: #a04338;
 $diff-json-new: #457740;
@@ -374,18 +372,18 @@ $panel-editor-shadow: 0 0 20px black;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
 $panel-editor-viz-item-shadow: 0 0 8px $dark-10;
 $panel-editor-viz-item-border: 1px solid $dark-10;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
-$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
 
-$panel-editor-viz-item-bg-hover: darken($sapphire-base, 46%);
+$panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-blue;
 
-$panel-grid-placeholder-bg: $sapphire-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $sapphire-shade;
+$panel-grid-placeholder-bg: $blue-faint;
+$panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
 
 // logs
 $logs-color-unkown: $gray-2;
