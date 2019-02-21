@@ -1,6 +1,6 @@
 {
-  "name": "testing-ignore-this",
-  "version": "1.0.0-beta.0",
+  "name": "@grafana/ui",
+  "version": "0.0.0",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
