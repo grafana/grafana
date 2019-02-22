@@ -118,6 +118,7 @@ var (
 	ExternalUserMngInfo     string
 	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
+	EditorsCanOwn           bool
 
 	// Http auth
 	AdminUser            string
@@ -657,6 +658,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
 	ExternalUserMngInfo = users.Key("external_manage_info").String()
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	EditorsCanOwn = users.Key("editors_can_own").MustBool(false)
 
 	// auth
 	auth := iniFile.Section("auth")
