@@ -11,3 +11,7 @@ See [package source](https://github.com/grafana/grafana/tree/master/packages/gra
 `yarn add @grafana/ui`
 
 `npm install @grafana/ui`
+
+## Versioning
+To limit the confusion related to @grafana/ui and Grafana versioning we decided to keep the major version in sync between those two.
+This means, that first version of @grafana/ui is taged with 6.0.0-alpha.0 to keep version in sync with Grafana 6.0 release.
