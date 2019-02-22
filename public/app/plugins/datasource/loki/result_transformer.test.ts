@@ -191,12 +191,12 @@ describe('mergeStreamsToLogs()', () => {
         raw: "bar: 'foo'",
       },
       {
-        entry: "foo: [32m'bar'[39m",
+        entry: "foo: 'bar'",
         hasAnsi: true,
         key: 'EK1970-01-01T00:00:00Z{foo="bar"}',
         labels: { foo: 'bar' },
         logLevel: 'unknown',
-        raw: "foo: 'bar'",
+        raw: "foo: [32m'bar'[39m",
       },
     ]);
   });

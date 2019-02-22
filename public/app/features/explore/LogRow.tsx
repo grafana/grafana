@@ -133,7 +133,7 @@ export class LogRow extends PureComponent<Props, State> {
     const { entry, hasAnsi, raw } = row;
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter = highlights && highlights.length > 0;
+    const needsHighlighter = highlights && highlights.length > 0 && highlights[0].length > 0;
     const highlightClassName = classnames('logs-row__match-highlight', {
       'logs-row__match-highlight--preview': previewHighlights,
     });
@@ -164,20 +164,20 @@ export class LogRow extends PureComponent<Props, State> {
             <Highlighter
               autoEscape
               highlightTag={FieldHighlight(this.onClickHighlight)}
-              textToHighlight={raw}
+              textToHighlight={entry}
               searchWords={parsedFieldHighlights}
               highlightClassName="logs-row__field-highlight"
             />
           )}
           {!parsed && needsHighlighter && (
             <Highlighter
-              textToHighlight={raw}
+              textToHighlight={entry}
               searchWords={highlights}
               findChunks={findHighlightChunksInText}
               highlightClassName={highlightClassName}
             />
           )}
-          {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={entry} />}
+          {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
           {!hasAnsi && !parsed && !needsHighlighter && entry}
           {showFieldStats && (
             <div className="logs-row__stats">
