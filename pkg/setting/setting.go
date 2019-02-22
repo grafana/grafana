@@ -118,7 +118,6 @@ var (
 	ExternalUserMngInfo     string
 	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
-	EditorsCanOwn           bool
 
 	// Http auth
 	AdminUser            string
@@ -238,6 +237,9 @@ type Cfg struct {
 	LoginMaxInactiveLifetimeDays int
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
+
+	// User
+	EditorsCanOwn bool
 }
 
 type CommandLineArgs struct {
@@ -645,6 +647,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()
 
+	// users
 	users := iniFile.Section("users")
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
@@ -658,7 +661,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
 	ExternalUserMngInfo = users.Key("external_manage_info").String()
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
-	EditorsCanOwn = users.Key("editors_can_own").MustBool(false)
+	cfg.EditorsCanOwn = users.Key("editors_can_own").MustBool(false)
 
 	// auth
 	auth := iniFile.Section("auth")
