@@ -39,7 +39,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 		}
 
 		if setting.DisableLoginForm {
-			return Error(401, "User could not be found", nil)
+			return Error(404, "User could not be found", nil)
 		}
 	} else {
 		return inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
