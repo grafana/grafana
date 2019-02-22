@@ -23,7 +23,13 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
   }
 
   renderContent = ({ updatePopperPosition }) => {
-    const { onMoveLeft, onMoveRight, func: { def: { name, description } } } = this.props;
+    const {
+      onMoveLeft,
+      onMoveRight,
+      func: {
+        def: { name, description },
+      },
+    } = this.props;
     const { showingDescription } = this.state;
 
     if (showingDescription) {
