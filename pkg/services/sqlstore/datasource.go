@@ -180,7 +180,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 		}
 
-		affected, err := updateSession.Update(ds)
+		affected, err := updateSession.AllCols().Omit("created").Update(ds)
 		if err != nil {
 			return err
 		}
