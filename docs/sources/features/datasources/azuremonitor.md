@@ -18,10 +18,10 @@ As of Grafana 6.0, the Azure Monitor plugin has been moved into Grafana so it no
 
 The Azure Monitor Datasource supports multiple services in the Azure cloud:
 
-- **Azure Monitor** is the platform service that provides a single source for monitoring Azure resources. [Read more about Querying the Azure Monitor Service]({{< relref "#querying-the-azure-monitor-service" >}}).
-- **Application Insights** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies. [Read more about Querying the Application Insights Service]({{< relref "#querying-the-application-insights-service" >}}).
-- **Azure Log Analytics** (or Azure Logs) gives you access to log data collected by Azure Monitor. [Read more about Querying the Azure Log Analytics Service]({{< relref "#querying-the-azure-log-analytics-service" >}}).
-- **Application Insights Analytics** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics. [Read more about Querying the Application Insights Analytics Service]({{< relref "#writing-analytics-queries-for-the-application-insights-service" >}}).
+- **[Azure Monitor]({{< relref "#querying-the-azure-monitor-service" >}})** is the platform service that provides a single source for monitoring Azure resources.
+- **[Application Insights]({{< relref "#querying-the-application-insights-service" >}})** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies.
+- **[Azure Log Analytics]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Azure Logs) gives you access to log data collected by Azure Monitor.
+- **[Application Insights Analytics]({{< relref "#writing-analytics-queries-for-the-application-insights-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
 
 ## Adding the data source to Grafana
 
@@ -133,7 +133,7 @@ types of template variables.
 
 ### Azure Monitor Metrics Whitelist
 
-Not all metrics returned by the Azure Monitor API have values. The Grafana datasource has a whitelist to only return metric names if it is possible they might have values. This whitelist is updated regularly as new services and metrics are added to the Azure cloud. You can find the current whitelist [here](https://github.com/grafana/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
+Not all metrics returned by the Azure Monitor API have values. The Grafana datasource has a whitelist to only return metric names if it is possible they might have values. This whitelist is updated regularly as new services and metrics are added to the Azure cloud. You can find the current whitelist [here](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
 
 ### Azure Monitor Alerting
 
@@ -248,7 +248,7 @@ There are also some Grafana variables that can be used in Azure Log Analytics qu
 
 - `$__from` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T18:09:58.907Z)`.
 - `$__to` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T20:09:58.907Z)`.
-- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here](http://docs.grafana.org/reference/templating/#the-interval-variable). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
+- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "reference/templating.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
 ### Azure Log Analytics Alerting
 
