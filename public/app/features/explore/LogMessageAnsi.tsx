@@ -38,7 +38,7 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
     prevValue: '',
   };
 
-  static getDerivedStateFromProps(props, state) {
+  static getDerivedStateFromProps(props: Props, state: State) {
     if (props.value === state.prevValue) {
       return null;
     }
