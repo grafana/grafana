@@ -68,12 +68,12 @@ $critical: ${theme.colors.critical};
 $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.pageBg};
 
-$body-color: ${theme.colors.bodyColor};
-$text-color: ${theme.colors.textColor};
-$text-color-strong: ${theme.colors.textColorStrong};
-$text-color-weak: ${theme.colors.textColorWeak};
-$text-color-faint: ${theme.colors.textColorFaint};
-$text-color-emphasis: ${theme.colors.textColorEmphasis};
+$body-color: ${theme.colors.body};
+$text-color: ${theme.colors.text};
+$text-color-strong: ${theme.colors.textStrong};
+$text-color-weak: ${theme.colors.textWeak};
+$text-color-faint: ${theme.colors.textFaint};
+$text-color-emphasis: ${theme.colors.textEmphasis};
 
 $text-shadow-faint: none;
 
@@ -85,10 +85,10 @@ $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
-$link-color: ${theme.colors.linkColor};
-$link-color-disabled: ${theme.colors.linkColorDisabled};
-$link-hover-color: ${theme.colors.linkColorHover};
-$external-link-color: ${theme.colors.linkColorExternal};
+$link-color: ${theme.colors.link};
+$link-color-disabled: ${theme.colors.linkDisabled};
+$link-hover-color: ${theme.colors.linkHover};
+$external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
