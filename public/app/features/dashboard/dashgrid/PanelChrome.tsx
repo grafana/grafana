@@ -39,6 +39,7 @@ export interface State {
   timeInfo?: string;
   timeRange?: TimeRange;
   errorMessage: string | null;
+  refreshWhenInView: boolean;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -51,6 +52,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       refreshCounter: 0,
       renderCounter: 0,
       errorMessage: null,
+      refreshWhenInView: false,
     };
   }
 
@@ -64,19 +66,31 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.props.panel.events.off('refresh', this.onRefresh);
   }
 
+  componentDidUpdate(prevProps: Props) {
+    // Check if we need a delayed refresh
+    if (this.props.isInView && this.state.refreshWhenInView) {
+      this.onRefresh();
+    }
+  }
+
   onRefresh = () => {
-    console.log('onRefresh');
     if (!this.props.isInView) {
+      // always true when fullscreen
+      console.log('Refresh when panel is visible', this.props.panel.id);
+      this.setState({ refreshWhenInView: true });
       return;
     }
 
     const { panel } = this.props;
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
+    console.log('onRefresh', panel.id);
+
     this.setState({
       refreshCounter: this.state.refreshCounter + 1,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
+      refreshWhenInView: false,
     });
   };
 
@@ -162,7 +176,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   renderPanelBody = (width: number, height: number): JSX.Element => {
-    const { panel, isInView } = this.props;
+    const { panel } = this.props;
     const { refreshCounter, timeRange } = this.state;
     const { datasource, targets } = panel;
     return (
@@ -173,7 +187,6 @@ export class PanelChrome extends PureComponent<Props, State> {
             datasource={datasource}
             queries={targets}
             timeRange={timeRange}
-            isInView={isInView}
             widthPixels={width}
             refreshCounter={refreshCounter}
             onDataResponse={this.onDataResponse}

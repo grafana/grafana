@@ -102,9 +102,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    // Update the lazy loading
     if (!this.state.show && this.props.isInView) {
-      console.log('Lazy Load:', this.props.panel.title, `(${this.props.panel.id})`);
+      // const { panel } = this.props;
+      // console.log('Load Panel:', panel.title, `(id:${panel.id})`);
       this.setState({ show: true });
     }
 
@@ -177,6 +177,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
       'panel-wrapper--edit': isEditing,
       'panel-wrapper--view': isFullscreen && !isEditing,
     });
+
+    // console.log( panel.id, 'SHOW=', show, 'InView=', this.props.isInView);
 
     return (
       <div className={containerClass}>

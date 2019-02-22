@@ -87,8 +87,8 @@ export interface Props {
 }
 
 export class DashboardGrid extends PureComponent<Props> {
-  gridToPanelMap: any;
   panelMap: { [id: string]: PanelModel };
+  panelRef: { [id: string]: HTMLElement } = {};
 
   componentDidMount() {
     const { dashboard } = this.props;
@@ -150,6 +150,9 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
+
+    // Call render() after any changes.  This is called when the layour loads
+    this.forceUpdate();
   };
 
   triggerForceUpdate = () => {
@@ -175,7 +178,6 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
-    console.log();
     this.panelMap[newItem.i].updateGridPos(newItem);
   };
 
@@ -193,17 +195,23 @@ export class DashboardGrid extends PureComponent<Props> {
       return true;
     }
 
-    // NOTE: this is not totally accurate, since it does not
-    // know how many rows there are and include GRID_CELL_VMARGIN
-    const top = panel.gridPos.y * GRID_CELL_HEIGHT;
-    const bot = top + panel.gridPos.h * GRID_CELL_HEIGHT;
+    // elem is set *after* the first render
+    const elem = this.panelRef[panel.id.toString()];
+    if (!elem) {
+      return false;
+    }
 
-    // Assume things that are close are visible
-    const buffer = 50;
+    // TODO? Is there a better way to get this?
+    const top = parseInt(elem.style.top.replace('px', ''), 10);
+    const height = parseInt(elem.style.height.replace('px', ''), 10);
+    const bottom = top + height;
+
+    // Show things that are almost in the view
+    const buffer = 150;
 
     const viewTop = this.props.scrollTop;
-    if (viewTop > bot + buffer) {
-      //console.log( panel.id, 'Above', viewTop, bot );
+    if (viewTop > bottom + buffer) {
+      //      console.log( panel.id, 'Above', viewTop, bottom );
       return false; // The panel is above the viewport
     }
 
@@ -213,7 +221,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
     const viewBot = viewTop + viewHeight;
     if (top > viewBot + buffer) {
-      //console.log( panel.id, 'Below', viewBot, top );
+      //      console.log( panel.id, 'Below', viewBot, top );
       return false;
     }
 
@@ -225,8 +233,16 @@ export class DashboardGrid extends PureComponent<Props> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
+      const id = panel.id.toString();
       panelElements.push(
-        <div key={panel.id.toString()} className={panelClasses} id={`panel-${panel.id}`}>
+        <div
+          key={id}
+          className={panelClasses}
+          id={'panel-' + id}
+          ref={elem => {
+            this.panelRef[id] = elem;
+          }}
+        >
           <DashboardPanel
             panel={panel}
             dashboard={this.props.dashboard}
