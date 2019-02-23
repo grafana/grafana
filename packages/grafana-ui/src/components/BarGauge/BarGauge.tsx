@@ -81,7 +81,7 @@ export class BarGauge extends PureComponent<Props> {
           .toRgbString();
       } else {
         return tinycolor(color)
-          .setAlpha(0.65)
+          .setAlpha(0.7)
           .toRgbString();
       }
     }
@@ -197,6 +197,7 @@ export class BarGauge extends PureComponent<Props> {
         backgroundColor: cellColor,
         marginRight: '4px',
         height: `${height}px`,
+        borderRadius: '2px',
       };
 
       cells.push(<div style={cellStyles} />);
