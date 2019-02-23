@@ -126,6 +126,8 @@ One of the goals of the Grafana v6.0 release is to add support for the three maj
 
 The Azure Monitor datasource integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
+Please read [Using Azure Monitor in Grafana documentation](/features/datasources/azuremonitor/) for more detailed information on how to get started and use it.
+
 ## Provisioning support for alert notifiers
 
 Grafana now added support for provisioning alert notifiers from configuration files. Allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. Same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers that exists in the instance.
