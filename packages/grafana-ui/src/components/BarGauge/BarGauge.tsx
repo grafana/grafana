@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 import { getColorFromHexRgbOrName, getValueFormat, getThresholdForValue } from '../../utils';
 
 // Types
-import { Themeable, TimeSeriesValue, Threshold, ValueMapping } from '../../types';
+import { Themeable, TimeSeriesValue, Threshold, ValueMapping, VizOrientation } from '../../types';
 
 const BAR_SIZE_RATIO = 0.8;
 
@@ -19,7 +19,7 @@ export interface Props extends Themeable {
   value: TimeSeriesValue;
   maxValue: number;
   minValue: number;
-  orientation: string;
+  orientation: VizOrientation;
   prefix?: string;
   suffix?: string;
   decimals?: number;
@@ -31,7 +31,7 @@ export class BarGauge extends PureComponent<Props> {
     minValue: 0,
     value: 100,
     unit: 'none',
-    orientation: 'horizontal',
+    orientation: VizOrientation.Horizontal,
     thresholds: [],
     valueMappings: [],
   };
@@ -43,7 +43,7 @@ export class BarGauge extends PureComponent<Props> {
     return 0;
   }
 
-  getColors(): BarColors {
+  getValueColors(): BarColors {
     const { thresholds, theme, value } = this.props;
 
     const activeThreshold = getThresholdForValue(thresholds, value);
@@ -67,6 +67,28 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
+  getCellColor(positionValue: TimeSeriesValue): string {
+    const { thresholds, theme, value } = this.props;
+    const activeThreshold = getThresholdForValue(thresholds, positionValue);
+
+    if (activeThreshold !== null) {
+      const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
+
+      // if we are past real value the cell is not "on"
+      if (value === null || (positionValue !== null && positionValue > value)) {
+        return tinycolor(color)
+          .setAlpha(0.15)
+          .toRgbString();
+      } else {
+        return tinycolor(color)
+          .setAlpha(0.65)
+          .toRgbString();
+      }
+    }
+
+    return 'gray';
+  }
+
   getValueStyles(value: string, color: string, width: number): CSSProperties {
     const guess = width / (value.length * 1.1);
     const fontSize = Math.min(Math.max(guess, 14), 40);
@@ -82,7 +104,7 @@ export class BarGauge extends PureComponent<Props> {
 
     const maxHeight = height * BAR_SIZE_RATIO;
     const barHeight = Math.max(valuePercent * maxHeight, 0);
-    const colors = this.getColors();
+    const colors = this.getValueColors();
     const valueStyles = this.getValueStyles(valueFormatted, colors.value, width);
 
     const containerStyles: CSSProperties = {
@@ -115,7 +137,7 @@ export class BarGauge extends PureComponent<Props> {
 
     const maxWidth = width * BAR_SIZE_RATIO;
     const barWidth = Math.max(valuePercent * maxWidth, 0);
-    const colors = this.getColors();
+    const colors = this.getValueColors();
     const valueStyles = this.getValueStyles(valueFormatted, colors.value, width * (1 - BAR_SIZE_RATIO));
 
     valueStyles.marginLeft = '8px';
@@ -145,6 +167,51 @@ export class BarGauge extends PureComponent<Props> {
     );
   }
 
+  renderHorizontalLCD(valueFormatted: string, valuePercent: number) {
+    const { height, width, maxValue, minValue } = this.props;
+
+    const valueRange = maxValue - minValue;
+    const maxWidth = width * BAR_SIZE_RATIO;
+    const cellSpacing = 4;
+    const cellCount = 30;
+    const cellWidth = (maxWidth - cellSpacing * cellCount) / cellCount;
+    const colors = this.getValueColors();
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value, width * (1 - BAR_SIZE_RATIO));
+    valueStyles.marginLeft = '8px';
+
+    const containerStyles: CSSProperties = {
+      width: `${width}px`,
+      height: `${height}px`,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+    };
+
+    const cells: JSX.Element[] = [];
+
+    for (let i = 0; i < cellCount; i++) {
+      const currentValue = (valueRange / cellCount) * i;
+      const cellColor = this.getCellColor(currentValue);
+      const cellStyles: CSSProperties = {
+        width: `${cellWidth}px`,
+        backgroundColor: cellColor,
+        marginRight: '4px',
+        height: `${height}px`,
+      };
+
+      cells.push(<div style={cellStyles} />);
+    }
+
+    return (
+      <div style={containerStyles}>
+        {cells}
+        <div className="bar-gauge__value" style={valueStyles}>
+          {valueFormatted}
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { maxValue, minValue, orientation, unit, decimals } = this.props;
 
@@ -157,7 +224,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return vertical
       ? this.renderVerticalBar(valueFormatted, valuePercent)
-      : this.renderHorizontalBar(valueFormatted, valuePercent);
+      : this.renderHorizontalLCD(valueFormatted, valuePercent);
   }
 }
 

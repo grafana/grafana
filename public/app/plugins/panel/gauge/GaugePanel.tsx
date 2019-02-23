@@ -10,7 +10,7 @@ import { Gauge, VizRepeater } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps } from '@grafana/ui/src/types';
+import { PanelProps, VizOrientation } from '@grafana/ui/src/types';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
@@ -50,7 +50,7 @@ export class GaugePanel extends PureComponent<Props> {
     });
 
     return (
-      <VizRepeater height={height} width={width} values={values} orientation="horizontal">
+      <VizRepeater height={height} width={width} values={values} orientation={VizOrientation.Auto}>
         {({ vizHeight, vizWidth, valueInfo }) => this.renderGauge(valueInfo.value, vizWidth, vizHeight)}
       </VizRepeater>
     );

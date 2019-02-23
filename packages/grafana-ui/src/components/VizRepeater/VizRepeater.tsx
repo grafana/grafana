@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { SingleStatValueInfo } from '../../types';
+import { SingleStatValueInfo, VizOrientation } from '../../types';
 
 interface RenderProps {
   vizWidth: number;
@@ -12,20 +12,20 @@ interface Props {
   height: number;
   width: number;
   values: SingleStatValueInfo[];
-  orientation?: string;
+  orientation: VizOrientation;
 }
 
 const SPACE_BETWEEN = 10;
 
 export class VizRepeater extends PureComponent<Props> {
-  getOrientation() {
+  getOrientation(): VizOrientation {
     const { orientation, width, height } = this.props;
 
-    if (!orientation) {
+    if (orientation === VizOrientation.Auto) {
       if (width > height) {
-        return 'horizontal';
+        return VizOrientation.Vertical;
       } else {
-        return 'vertical';
+        return VizOrientation.Horizontal;
       }
     }
 
@@ -47,7 +47,7 @@ export class VizRepeater extends PureComponent<Props> {
     let vizHeight = height;
     let vizWidth = width;
 
-    if (orientation === 'horizontal') {
+    if (orientation === VizOrientation.Horizontal) {
       repeaterStyle.flexDirection = 'column';
       itemStyles.margin = `${SPACE_BETWEEN / 2}px 0`;
       vizWidth = width;

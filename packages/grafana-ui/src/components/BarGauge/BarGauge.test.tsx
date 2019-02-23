@@ -1,6 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { BarGauge, Props } from './BarGauge';
+import { VizOrientation } from '../../types';
 import { getTheme } from '../../themes';
 
 jest.mock('jquery', () => ({
@@ -21,7 +22,7 @@ const setup = (propOverrides?: object) => {
     value: 25,
     decimals: 0,
     theme: getTheme(),
-    orientation: 'horizontal',
+    orientation: VizOrientation.Horizontal,
   };
 
   Object.assign(props, propOverrides);
@@ -39,7 +40,7 @@ describe('Get font color', () => {
   it('should get first threshold color when only one threshold', () => {
     const { instance } = setup({ thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] });
 
-    expect(instance.getColors().value).toEqual('#7EB26D');
+    expect(instance.getValueColors().value).toEqual('#7EB26D');
   });
 
   it('should get the threshold color if value is same as a threshold', () => {
@@ -51,7 +52,7 @@ describe('Get font color', () => {
       ],
     });
 
-    expect(instance.getColors().value).toEqual('#EAB839');
+    expect(instance.getValueColors().value).toEqual('#EAB839');
   });
 });
 

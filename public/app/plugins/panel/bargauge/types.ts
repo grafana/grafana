@@ -1,29 +1,24 @@
-import { Threshold, SelectOptionItem, ValueMapping } from '@grafana/ui';
+import { Threshold, SelectOptionItem, ValueMapping, VizOrientation } from '@grafana/ui';
 import { SingleStatValueOptions } from '../gauge/types';
 
 export interface BarGaugeOptions {
   minValue: number;
   maxValue: number;
-  orientation: string;
+  orientation: VizOrientation;
   valueOptions: SingleStatValueOptions;
   valueMappings: ValueMapping[];
   thresholds: Threshold[];
 }
 
-export enum OrientationModes {
-  Vertical = 'vertical',
-  Horizontal = 'horizontal',
-}
-
 export const orientationOptions: SelectOptionItem[] = [
-  { value: OrientationModes.Horizontal, label: 'Horizontal' },
-  { value: OrientationModes.Vertical, label: 'Vertical' },
+  { value: VizOrientation.Horizontal, label: 'Horizontal' },
+  { value: VizOrientation.Vertical, label: 'Vertical' },
 ];
 
 export const defaults: BarGaugeOptions = {
   minValue: 0,
   maxValue: 100,
-  orientation: OrientationModes.Horizontal,
+  orientation: VizOrientation.Horizontal,
   valueOptions: {
     unit: 'none',
     stat: 'avg',

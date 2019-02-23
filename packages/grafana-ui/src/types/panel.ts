@@ -86,3 +86,9 @@ export interface RangeMap extends BaseMap {
   from: string;
   to: string;
 }
+
+export enum VizOrientation {
+  Auto = 'auto',
+  Vertical = 'vertical',
+  Horizontal = 'horizontal',
+}
