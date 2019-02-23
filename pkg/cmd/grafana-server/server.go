@@ -28,8 +28,8 @@ import (
 
 	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
+	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
-	_ "github.com/grafana/grafana/pkg/metrics"
 	_ "github.com/grafana/grafana/pkg/plugins"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
