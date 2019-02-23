@@ -15,51 +15,58 @@ interface Props {
   orientation?: string;
 }
 
+const SPACE_BETWEEN = 10;
+
 export class VizRepeater extends PureComponent<Props> {
+  getOrientation() {
+    const { orientation, width, height } = this.props;
+
+    if (!orientation) {
+      if (width > height) {
+        return 'horizontal';
+      } else {
+        return 'vertical';
+      }
+    }
+
+    return orientation;
+  }
+
   render() {
-    const { children, orientation, height, values, width } = this.props;
+    const { children, height, values, width } = this.props;
+    const orientation = this.getOrientation();
 
-    const vizContainerWidth = (1 / values.length) * 100;
-    const vizContainerHeight = (1 / values.length) * 100;
-    const repeatingVizWidth = Math.floor(width / values.length) - 10; // make Gauge slightly smaller than panel.
-    const repeatingVizHeight = Math.floor(height / values.length) - 10;
-
-    const horizontalVisualization = {
+    const itemStyles: React.CSSProperties = {
       display: 'flex',
-      height: height,
-      width: `${vizContainerWidth}%`,
     };
 
-    const verticalVisualization = {
+    const repeaterStyle: React.CSSProperties = {
       display: 'flex',
-      width: width,
-      height: `${vizContainerHeight}%`,
     };
 
-    const repeaterStyle = {
-      display: 'flex',
-      flexDirection: orientation === 'vertical' || height > width ? 'column' : 'row',
-    } as React.CSSProperties;
-
-    let vizContainerStyle = {};
-    let vizWidth = width;
     let vizHeight = height;
+    let vizWidth = width;
 
-    if ((orientation && orientation === 'horizontal') || width > height) {
-      vizContainerStyle = horizontalVisualization;
-      vizWidth = repeatingVizWidth;
+    if (orientation === 'horizontal') {
+      repeaterStyle.flexDirection = 'column';
+      itemStyles.margin = `${SPACE_BETWEEN / 2}px 0`;
+      vizWidth = width;
+      vizHeight = height / values.length - SPACE_BETWEEN;
+    } else {
+      repeaterStyle.flexDirection = 'row';
+      itemStyles.margin = `0 ${SPACE_BETWEEN / 2}px`;
+      vizHeight = height;
+      vizWidth = width / values.length - SPACE_BETWEEN;
     }
 
-    if ((orientation && orientation === 'vertical') || height > width) {
-      vizContainerStyle = verticalVisualization;
-      vizHeight = repeatingVizHeight;
-    }
+    itemStyles.width = `${vizWidth}px`;
+    itemStyles.height = `${vizHeight}px`;
 
     return (
       <div style={repeaterStyle}>
         {values.map((valueInfo, index) => {
           return (
-            <div key={index} style={vizContainerStyle}>
+            <div key={index} style={itemStyles}>
               {children({ vizHeight, vizWidth, valueInfo })}
             </div>
           );

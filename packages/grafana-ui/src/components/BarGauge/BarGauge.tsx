@@ -1,5 +1,5 @@
 // Library
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
@@ -65,7 +65,7 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
-  getValueStyles(value: string, color: string) {
+  getValueStyles(value: string, color: string): CSSProperties {
     const { width } = this.props;
 
     const guess = width / value.length;
@@ -77,16 +77,28 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
-  renderHorizontalBar(valueStyles: React.CSSProperties, valueFormatted: string, barStyles: React.CSSProperties) {
+  renderVerticalBar(valueFormatted: string, valuePercent: number) {
     const { height, width } = this.props;
 
-    const containerStyles = {
+    const maxHeight = width * 0.8;
+    const barHeight = Math.max(valuePercent * maxHeight, 0);
+    const colors = this.getColors();
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
+
+    const containerStyles: CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-end',
-    } as React.CSSProperties;
+    };
+
+    const barStyles: CSSProperties = {
+      height: `${barHeight}px`,
+      width: `${width}px`,
+      backgroundColor: colors.bar,
+      borderTop: `1px solid ${colors.border}`,
+    };
 
     return (
       <div style={containerStyles}>
@@ -98,22 +110,31 @@ export class BarGauge extends PureComponent<Props> {
     );
   }
 
-  renderVerticalBar(valueFormatted: string, barStyles: React.CSSProperties) {
+  renderHorizontalBar(valueFormatted: string, valuePercent: number) {
     const { height, width } = this.props;
-    const colors = this.getColors();
 
-    const containerStyles = {
+    const maxWidth = width - 0.8;
+    const barWidth = Math.max(valuePercent * maxWidth, 0);
+    const colors = this.getColors();
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
+
+    valueStyles.marginLeft = '8px';
+
+    const containerStyles: CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: '8px',
-    } as React.CSSProperties;
+    };
 
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
-
-    Object.assign(valueStyles, { marginLeft: '8px' });
+    const barStyles = {
+      height: `${height}px`,
+      width: `${barWidth}px`,
+      backgroundColor: colors.bar,
+      borderRight: `1px solid ${colors.border}`,
+    };
 
     return (
       <div style={containerStyles}>
@@ -126,40 +147,18 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width, maxValue, minValue, orientation, unit, decimals } = this.props;
+    const { maxValue, minValue, orientation, unit, decimals } = this.props;
 
     const numericValue = this.getNumericValue();
-    const barMaxHeight = height * 0.8; // 20% for value & name
-    const barMaxWidth = width * 0.8;
     const valuePercent = numericValue / (maxValue - minValue);
-    const barHeight = Math.max(valuePercent * barMaxHeight, 0);
-    const barWidth = Math.max(valuePercent * barMaxWidth, 0);
 
     const formatFunc = getValueFormat(unit);
     const valueFormatted = formatFunc(numericValue, decimals);
-    const colors = this.getColors();
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
     const vertical = orientation === 'vertical';
 
-    const horizontalBarStyles = {
-      height: `${barHeight}px`,
-      width: `${width}px`,
-      backgroundColor: colors.bar,
-      borderTop: `1px solid ${colors.border}`,
-    };
-
-    const verticalBarStyles = {
-      height: `${height}px`,
-      width: `${barWidth}px`,
-      backgroundColor: colors.bar,
-      borderRight: `1px solid ${colors.border}`,
-    };
-
-    const barStyles = vertical ? verticalBarStyles : horizontalBarStyles;
-
     return vertical
-      ? this.renderVerticalBar(valueFormatted, barStyles)
-      : this.renderHorizontalBar(valueStyles, valueFormatted, barStyles);
+      ? this.renderVerticalBar(valueFormatted, valuePercent)
+      : this.renderHorizontalBar(valueFormatted, valuePercent);
   }
 }
 
