@@ -45,13 +45,13 @@ func (dc *databaseCache) StartGC() {
 }
 
 func (dc *databaseCache) Get(key string) (interface{}, error) {
-	cacheHits := []CacheData{}
+	cacheHits := []cacheData{}
 	err := dc.SQLStore.NewSession().Where(`key = ?`, key).Find(&cacheHits)
 	if err != nil {
 		return nil, err
 	}
 
-	var cacheHit CacheData
+	var cacheHit cacheData
 	if len(cacheHits) == 0 {
 		return nil, ErrCacheItemNotFound
 	}
@@ -64,15 +64,15 @@ func (dc *databaseCache) Get(key string) (interface{}, error) {
 		}
 	}
 
-	item := &Item{}
-	if err = DecodeGob(cacheHit.Data, item); err != nil {
+	item := &cachedItem{}
+	if err = decodeGob(cacheHit.Data, item); err != nil {
 		return nil, err
 	}
 
 	return item.Val, nil
 }
 
-type CacheData struct {
+type cacheData struct {
 	Key       string
 	Data      []byte
 	Expires   int64
@@ -80,15 +80,15 @@ type CacheData struct {
 }
 
 func (dc *databaseCache) Put(key string, value interface{}, expire time.Duration) error {
-	item := &Item{Val: value}
-	data, err := EncodeGob(item)
+	item := &cachedItem{Val: value}
+	data, err := encodeGob(item)
 	if err != nil {
 		return err
 	}
 
 	now := getTime().Unix()
 
-	cacheHits := []CacheData{}
+	cacheHits := []cacheData{}
 	err = dc.SQLStore.NewSession().Where(`key = ?`, key).Find(&cacheHits)
 	if err != nil {
 		return err

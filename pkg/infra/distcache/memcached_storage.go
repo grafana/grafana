@@ -16,7 +16,7 @@ func newMemcacheStorage(connStr string) *memcacheStorage {
 	}
 }
 
-func NewItem(sid string, data []byte, expire int32) *memcache.Item {
+func newItem(sid string, data []byte, expire int32) *memcache.Item {
 	return &memcache.Item{
 		Key:        sid,
 		Value:      data,
@@ -26,14 +26,14 @@ func NewItem(sid string, data []byte, expire int32) *memcache.Item {
 
 // Set sets value to given key in the cache.
 func (s *memcacheStorage) Put(key string, val interface{}, expires time.Duration) error {
-	item := &Item{Val: val}
+	item := &cachedItem{Val: val}
 
-	bytes, err := EncodeGob(item)
+	bytes, err := encodeGob(item)
 	if err != nil {
 		return err
 	}
 
-	memcacheItem := NewItem(key, bytes, int32(expires))
+	memcacheItem := newItem(key, bytes, int32(expires))
 
 	s.c.Add(memcacheItem)
 	return nil
@@ -46,9 +46,9 @@ func (s *memcacheStorage) Get(key string) (interface{}, error) {
 		return nil, err
 	}
 
-	item := &Item{}
+	item := &cachedItem{}
 
-	err = DecodeGob(i.Value, item)
+	err = decodeGob(i.Value, item)
 	if err != nil {
 		return nil, err
 	}

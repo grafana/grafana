@@ -46,7 +46,7 @@ func createClient(opts CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
 	// 	return nil
 	// }
 
-	return newDatabaseCache(sqlstore) //&databaseCache{SQLStore: sqlstore}
+	return newDatabaseCache(sqlstore)
 }
 
 // DistributedCache allows Grafana to cache data outside its own process
@@ -56,19 +56,17 @@ type DistributedCache struct {
 	SQLStore *sqlstore.SqlStore `inject:""`
 }
 
-type Item struct {
-	Val     interface{}
-	Created int64
-	Expire  int64
+type cachedItem struct {
+	Val interface{}
 }
 
-func EncodeGob(item *Item) ([]byte, error) {
+func encodeGob(item *cachedItem) ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	err := gob.NewEncoder(buf).Encode(item)
 	return buf.Bytes(), err
 }
 
-func DecodeGob(data []byte, out *Item) error {
+func decodeGob(data []byte, out *cachedItem) error {
 	buf := bytes.NewBuffer(data)
 	return gob.NewDecoder(buf).Decode(&out)
 }

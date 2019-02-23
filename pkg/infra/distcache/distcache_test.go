@@ -27,7 +27,7 @@ func createTestClient(t *testing.T, name string) cacheStorage {
 }
 
 func TestAllCacheClients(t *testing.T) {
-	clients := []string{"database", "redis", "memcached"} // add redis, memcache, memory
+	clients := []string{"database", "redis"} // add redis, memcache, memory
 
 	for _, v := range clients {
 		client := createTestClient(t, v)
@@ -59,19 +59,15 @@ func CanPutGetAndDeleteCachedObjects(t *testing.T, name string, client cacheStor
 }
 
 func CanNotFetchExpiredItems(t *testing.T, name string, client cacheStorage) {
-	if name == "redis" {
-		t.Skip() //this test does not work with redis since it uses its own getTime fn
-	}
-
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
-	// insert cache item one day back
-	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-	err := client.Put("key", cacheableStruct, 10000*time.Second)
+	err := client.Put("key", cacheableStruct, time.Second)
 	assert.Equal(t, err, nil)
 
+	//not sure how this can be avoided when testing redis/memcached :/
+	<-time.After(time.Second + time.Millisecond)
+
 	// should not be able to read that value since its expired
-	getTime = time.Now
 	_, err = client.Get("key")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
