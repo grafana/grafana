@@ -88,18 +88,18 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
       )
     );
   // process data
-  seriesList = mergeSeriesByTime(seriesList);
+  const extendedDatapointsList = mergeSeriesByTime(seriesList);
 
   // make text
-  for (let i = 0; i < seriesList[0].datapoints.length; i += 1) {
-    const timestamp = moment(seriesList[0].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat);
+  for (let i = 0; i < extendedDatapointsList[0].length; i += 1) {
+    const timestamp = moment(extendedDatapointsList[0][i][POINT_TIME_INDEX]).format(dateTimeFormat);
     text += formatRow(
       [timestamp].concat(
-        seriesList.map(series => {
-          return series.datapoints[i][POINT_VALUE_INDEX];
+        extendedDatapointsList.map(datapoints => {
+          return datapoints[i][POINT_VALUE_INDEX].toString();
         })
       ),
-      i < seriesList[0].datapoints.length - 1
+      i < extendedDatapointsList[0].length - 1
     );
   }
 
@@ -124,16 +124,17 @@ function mergeSeriesByTime(seriesList) {
   for (let i = 0; i < seriesList.length; i++) {
     const seriesPoints = seriesList[i].datapoints;
     const seriesTimestamps = seriesPoints.map(p => p[POINT_TIME_INDEX]);
-    const extendedSeries = [];
+    const extendedDatapoints = [];
     for (let j = 0; j < timestamps.length; j++) {
-      const pointIndex = sortedIndexOf(seriesTimestamps, timestamps[j]);
+      const timestamp = timestamps[j];
+      const pointIndex = sortedIndexOf(seriesTimestamps, timestamp);
       if (pointIndex !== -1) {
-        extendedSeries.push(seriesPoints[pointIndex]);
+        extendedDatapoints.push(seriesPoints[pointIndex]);
       } else {
-        extendedSeries.push([null, timestamps[j]]);
+        extendedDatapoints.push([null, timestamp]);
       }
     }
-    result.push( { datapoints: extendedSeries });
+    result.push(extendedDatapoints);
   }
   return result;
 }
