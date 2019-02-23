@@ -96,7 +96,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     text += formatRow(
       [timestamp].concat(
         extendedDatapointsList.map(datapoints => {
-          return datapoints[i][POINT_VALUE_INDEX].toString();
+          return datapoints[i][POINT_VALUE_INDEX];
         })
       ),
       i < extendedDatapointsList[0].length - 1
