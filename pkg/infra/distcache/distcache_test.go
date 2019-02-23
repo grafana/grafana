@@ -27,18 +27,18 @@ func createTestClient(t *testing.T, name string) cacheStorage {
 }
 
 func TestAllCacheClients(t *testing.T) {
-	clients := []string{"database"} // add redis, memcache, memory
+	clients := []string{"database", "redis"} // add redis, memcache, memory
 
 	for _, v := range clients {
 		client := createTestClient(t, v)
 
-		CanPutGetAndDeleteCachedObjects(t, client)
-		CanNotFetchExpiredItems(t, client)
-		CanSetInfiniteCacheExpiration(t, client)
+		CanPutGetAndDeleteCachedObjects(t, v, client)
+		CanNotFetchExpiredItems(t, v, client)
+		CanSetInfiniteCacheExpiration(t, v, client)
 	}
 }
 
-func CanPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
+func CanPutGetAndDeleteCachedObjects(t *testing.T, name string, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	err := client.Put("key", cacheableStruct, 0)
@@ -58,12 +58,16 @@ func CanPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func CanNotFetchExpiredItems(t *testing.T, client cacheStorage) {
+func CanNotFetchExpiredItems(t *testing.T, name string, client cacheStorage) {
+	if name == "redis" {
+		t.Skip() //this test does not work with redis since it uses its own getTime fn
+	}
+
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	// insert cache item one day back
 	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-	err := client.Put("key", cacheableStruct, 10000)
+	err := client.Put("key", cacheableStruct, 10000*time.Second)
 	assert.Equal(t, err, nil)
 
 	// should not be able to read that value since its expired
@@ -72,7 +76,7 @@ func CanNotFetchExpiredItems(t *testing.T, client cacheStorage) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func CanSetInfiniteCacheExpiration(t *testing.T, client cacheStorage) {
+func CanSetInfiniteCacheExpiration(t *testing.T, name string, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	// insert cache item one day back

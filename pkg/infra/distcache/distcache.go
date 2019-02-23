@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -34,7 +35,7 @@ type CacheOpts struct {
 
 func createClient(opts CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
 	if opts.name == "redis" {
-		return nil
+		return newRedisStorage(nil)
 	}
 
 	if opts.name == "memcache" {
@@ -45,7 +46,7 @@ func createClient(opts CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
 		return nil
 	}
 
-	return &databaseCache{SQLStore: sqlstore}
+	return newDatabaseCache(sqlstore) //&databaseCache{SQLStore: sqlstore}
 }
 
 // DistributedCache allows Grafana to cache data outside its own process
@@ -77,7 +78,7 @@ type cacheStorage interface {
 	Get(key string) (interface{}, error)
 
 	// Puts an object into the cache
-	Put(key string, value interface{}, expire int64) error
+	Put(key string, value interface{}, expire time.Duration) error
 
 	// Delete object from cache
 	Delete(key string) error

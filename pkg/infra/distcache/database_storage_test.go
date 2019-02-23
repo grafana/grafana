@@ -22,15 +22,15 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 
 	//set time.now to 2 weeks ago
 	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-	db.Put("key1", obj, 1000)
-	db.Put("key2", obj, 1000)
-	db.Put("key3", obj, 1000)
+	db.Put("key1", obj, 1000*time.Second)
+	db.Put("key2", obj, 1000*time.Second)
+	db.Put("key3", obj, 1000*time.Second)
 
 	// insert object that should never expire
 	db.Put("key4", obj, 0)
 
 	getTime = time.Now
-	db.Put("key5", obj, 1000)
+	db.Put("key5", obj, 1000*time.Second)
 
 	//run GC
 	db.internalRunGC()

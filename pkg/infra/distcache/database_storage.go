@@ -18,7 +18,7 @@ func newDatabaseCache(sqlstore *sqlstore.SqlStore) *databaseCache {
 		log:      log.New("distcache.database"),
 	}
 
-	go dc.StartGC()
+	//go dc.StartGC() //TODO: start the GC somehow
 	return dc
 }
 
@@ -79,7 +79,7 @@ type CacheData struct {
 	CreatedAt int64
 }
 
-func (dc *databaseCache) Put(key string, value interface{}, expire int64) error {
+func (dc *databaseCache) Put(key string, value interface{}, expire time.Duration) error {
 	item := &Item{Val: value}
 	data, err := EncodeGob(item)
 	if err != nil {
@@ -94,10 +94,15 @@ func (dc *databaseCache) Put(key string, value interface{}, expire int64) error 
 		return err
 	}
 
+	var expiresInEpoch int64
+	if expire != 0 {
+		expiresInEpoch = int64(expire) / int64(time.Second)
+	}
+
 	if len(cacheHits) > 0 {
-		_, err = dc.SQLStore.NewSession().Exec("UPDATE cache_data SET data=?, created=?, expire=? WHERE key=?", data, now, expire, key)
+		_, err = dc.SQLStore.NewSession().Exec("UPDATE cache_data SET data=?, created=?, expire=? WHERE key=?", data, now, expiresInEpoch, key)
 	} else {
-		_, err = dc.SQLStore.NewSession().Exec("INSERT INTO cache_data(key,data,created_at,expires) VALUES(?,?,?,?)", key, data, now, expire)
+		_, err = dc.SQLStore.NewSession().Exec("INSERT INTO cache_data(key,data,created_at,expires) VALUES(?,?,?,?)", key, data, now, expiresInEpoch)
 	}
 
 	return err
