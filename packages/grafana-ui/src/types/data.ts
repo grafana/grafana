@@ -66,3 +66,12 @@ export interface TableData {
   type: string;
   columnMap: any;
 }
+
+export type SingleStatValue = number | string | null;
+
+/*
+ * So we can add meta info like tags & series name
+ */
+export interface SingleStatValueInfo {
+  value: SingleStatValue;
+}

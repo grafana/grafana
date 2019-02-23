@@ -1,35 +1,37 @@
 import React, { PureComponent } from 'react';
-import { TimeSeriesVMs } from '../../types';
+import { SingleStatValueInfo } from '../../types';
 
 interface RenderProps {
   vizWidth: number;
   vizHeight: number;
-  vizContainerStyle: React.CSSProperties;
+  valueInfo: SingleStatValueInfo;
 }
 
 interface Props {
   children: (renderProps: RenderProps) => JSX.Element | JSX.Element[];
   height: number;
   width: number;
-  timeSeries: TimeSeriesVMs;
+  values: SingleStatValueInfo[];
   orientation?: string;
 }
 
 export class VizRepeater extends PureComponent<Props> {
   render() {
-    const { children, orientation, height, timeSeries, width } = this.props;
+    const { children, orientation, height, values, width } = this.props;
 
-    const vizContainerWidth = (1 / timeSeries.length) * 100;
-    const vizContainerHeight = (1 / timeSeries.length) * 100;
-    const repeatingVizWidth = Math.floor(width / timeSeries.length) - 10; // make Gauge slightly smaller than panel.
-    const repeatingVizHeight = Math.floor(height / timeSeries.length) - 10;
+    const vizContainerWidth = (1 / values.length) * 100;
+    const vizContainerHeight = (1 / values.length) * 100;
+    const repeatingVizWidth = Math.floor(width / values.length) - 10; // make Gauge slightly smaller than panel.
+    const repeatingVizHeight = Math.floor(height / values.length) - 10;
 
     const horizontalVisualization = {
+      display: 'flex',
       height: height,
       width: `${vizContainerWidth}%`,
     };
 
     const verticalVisualization = {
+      display: 'flex',
       width: width,
       height: `${vizContainerHeight}%`,
     };
@@ -55,10 +57,12 @@ export class VizRepeater extends PureComponent<Props> {
 
     return (
       <div style={repeaterStyle}>
-        {children({
-          vizHeight,
-          vizWidth,
-          vizContainerStyle,
+        {values.map((valueInfo, index) => {
+          return (
+            <div key={index} style={vizContainerStyle}>
+              {children({ vizHeight, vizWidth, valueInfo })}
+            </div>
+          );
         })}
       </div>
     );

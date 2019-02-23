@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processTimeSeries } from '@grafana/ui';
+import { processSingleStatPanelData } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 // Components
@@ -10,7 +10,7 @@ import { BarGauge, VizRepeater } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { PanelProps, NullValueMode } from '@grafana/ui/src/types';
+import { PanelProps } from '@grafana/ui/src/types';
 
 interface Props extends PanelProps<BarGaugeOptions> {}
 
@@ -40,40 +40,16 @@ export class BarGaugePanel extends PureComponent<Props> {
 
   render() {
     const { panelData, options, width, height } = this.props;
-    const { stat } = options.valueOptions;
 
-    if (panelData.timeSeries) {
-      const timeSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
-        nullValueMode: NullValueMode.Null,
-      });
+    const values = processSingleStatPanelData({
+      panelData: panelData,
+      stat: options.valueOptions.stat,
+    });
 
-      if (timeSeries.length > 1) {
-        return (
-          <VizRepeater height={height} width={width} timeSeries={timeSeries} orientation={options.orientation}>
-            {({ vizHeight, vizWidth, vizContainerStyle }) => {
-              return timeSeries.map((series, index) => {
-                const value = stat !== 'name' ? series.stats[stat] : series.label;
-
-                return (
-                  <div key={index} style={vizContainerStyle}>
-                    {this.renderBarGauge(value, vizWidth, vizHeight)}
-                  </div>
-                );
-              });
-            }}
-          </VizRepeater>
-        );
-      } else if (timeSeries.length > 0) {
-        const value = timeSeries[0].stats[options.valueOptions.stat];
-        return this.renderBarGauge(value, width, height);
-      }
-    } else if (panelData.tableData) {
-      const value = panelData.tableData.rows[0].find(prop => prop > 0);
-
-      return this.renderBarGauge(value, width, height);
-    }
-
-    return <div className="singlestat-panel">No time series data available</div>;
+    return (
+      <VizRepeater height={height} width={width} values={values} orientation={options.orientation}>
+        {({ vizHeight, vizWidth, valueInfo }) => this.renderBarGauge(valueInfo.value, vizWidth, vizHeight)}
+      </VizRepeater>
+    );
   }
 }
