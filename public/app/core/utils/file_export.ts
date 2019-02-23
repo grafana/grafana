@@ -120,22 +120,22 @@ function mergeSeriesByTime(seriesList) {
   }
   timestamps = sortedUniq(timestamps.sort());
 
+  const result = [];
   for (let i = 0; i < seriesList.length; i++) {
     const seriesPoints = seriesList[i].datapoints;
     const seriesTimestamps = seriesPoints.map(p => p[POINT_TIME_INDEX]);
     const extendedSeries = [];
-    let pointIndex;
     for (let j = 0; j < timestamps.length; j++) {
-      pointIndex = sortedIndexOf(seriesTimestamps, timestamps[j]);
+      const pointIndex = sortedIndexOf(seriesTimestamps, timestamps[j]);
       if (pointIndex !== -1) {
         extendedSeries.push(seriesPoints[pointIndex]);
       } else {
         extendedSeries.push([null, timestamps[j]]);
       }
     }
-    seriesList[i].datapoints = extendedSeries;
+    result.push( { datapoints: extendedSeries });
   }
-  return seriesList;
+  return result;
 }
 
 export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
