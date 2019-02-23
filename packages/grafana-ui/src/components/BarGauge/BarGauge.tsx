@@ -8,6 +8,8 @@ import { getColorFromHexRgbOrName, getValueFormat, getThresholdForValue } from '
 // Types
 import { Themeable, TimeSeriesValue, Threshold, ValueMapping } from '../../types';
 
+const BAR_SIZE_RATIO = 0.8;
+
 export interface Props extends Themeable {
   height: number;
   unit: string;
@@ -65,10 +67,8 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
-  getValueStyles(value: string, color: string): CSSProperties {
-    const { width } = this.props;
-
-    const guess = width / value.length;
+  getValueStyles(value: string, color: string, width: number): CSSProperties {
+    const guess = width / (value.length * 1.1);
     const fontSize = Math.min(Math.max(guess, 14), 40);
 
     return {
@@ -80,10 +80,10 @@ export class BarGauge extends PureComponent<Props> {
   renderVerticalBar(valueFormatted: string, valuePercent: number) {
     const { height, width } = this.props;
 
-    const maxHeight = width * 0.8;
+    const maxHeight = height * BAR_SIZE_RATIO;
     const barHeight = Math.max(valuePercent * maxHeight, 0);
     const colors = this.getColors();
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value, width);
 
     const containerStyles: CSSProperties = {
       width: `${width}px`,
@@ -113,10 +113,10 @@ export class BarGauge extends PureComponent<Props> {
   renderHorizontalBar(valueFormatted: string, valuePercent: number) {
     const { height, width } = this.props;
 
-    const maxWidth = width - 0.8;
+    const maxWidth = width * BAR_SIZE_RATIO;
     const barWidth = Math.max(valuePercent * maxWidth, 0);
     const colors = this.getColors();
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value);
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value, width * (1 - BAR_SIZE_RATIO));
 
     valueStyles.marginLeft = '8px';
 
@@ -126,7 +126,6 @@ export class BarGauge extends PureComponent<Props> {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: '8px',
     };
 
     const barStyles = {
@@ -150,7 +149,7 @@ export class BarGauge extends PureComponent<Props> {
     const { maxValue, minValue, orientation, unit, decimals } = this.props;
 
     const numericValue = this.getNumericValue();
-    const valuePercent = numericValue / (maxValue - minValue);
+    const valuePercent = Math.min(numericValue / (maxValue - minValue), 1);
 
     const formatFunc = getValueFormat(unit);
     const valueFormatted = formatFunc(numericValue, decimals);
