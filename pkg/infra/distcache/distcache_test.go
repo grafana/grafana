@@ -27,7 +27,7 @@ func createTestClient(t *testing.T, name string) cacheStorage {
 }
 
 func TestAllCacheClients(t *testing.T) {
-	clients := []string{"database", "redis"} // add redis, memcache, memory
+	clients := []string{"database", "redis", "memcached"} // add redis, memcache, memory
 
 	for _, v := range clients {
 		client := createTestClient(t, v)

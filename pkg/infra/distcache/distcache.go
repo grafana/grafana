@@ -39,12 +39,12 @@ func createClient(opts CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
 	}
 
 	if opts.name == "memcache" {
-		return nil
+		return newMemcacheStorage("localhost:9090")
 	}
 
-	if opts.name == "memory" {
-		return nil
-	}
+	// if opts.name == "memory" {
+	// 	return nil
+	// }
 
 	return newDatabaseCache(sqlstore) //&databaseCache{SQLStore: sqlstore}
 }
