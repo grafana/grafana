@@ -30,6 +30,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
+	_ "github.com/grafana/grafana/pkg/infra/tracing"
 	_ "github.com/grafana/grafana/pkg/plugins"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
@@ -39,7 +40,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
-	_ "github.com/grafana/grafana/pkg/tracing"
 )
 
 func NewGrafanaServer() *GrafanaServerImpl {
