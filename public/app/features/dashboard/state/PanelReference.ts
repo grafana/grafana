@@ -61,14 +61,20 @@ export function parsePanelRefFromPath(path: string): PanelRef {
     dashboard: path,
     panelId: 0,
   };
+
   let idx = path.indexOf('d/');
   if (idx >= 0) {
     ref.dashboard = path.substring(idx + 2);
-    idx = ref.dashboard.indexOf('/');
-    if (idx > 0) {
-      ref.dashboard = ref.dashboard.substring(0, idx);
-    }
   }
+  idx = ref.dashboard.indexOf('/');
+  if (idx > 0) {
+    ref.dashboard = ref.dashboard.substring(0, idx);
+  }
+  idx = ref.dashboard.indexOf('?');
+  if (idx > 0) {
+    ref.dashboard = ref.dashboard.substring(0, idx);
+  }
+
   idx = path.indexOf('panelId=');
   if (idx > 0) {
     const id = path
@@ -110,23 +116,33 @@ export function loadPanelRef(ref: PanelRef): Promise<PanelReferenceInfo> {
 export function validateReference(path: string): Promise<PanelReferenceInfo> {
   const ref = parsePanelRefFromPath(path);
   if (!ref.dashboard) {
-    appEvents.emit('alert-warning', ['Reference Failed', 'Unable to parse dashboard']);
-    return Promise.reject('Unknown Dashboard');
+    const msg = 'Unable to parse dashboard';
+    appEvents.emit('alert-warning', ['Reference Failed', msg]);
+    return Promise.reject(msg);
   }
+
   return loadPanelRef(ref)
     .then(info => {
       if (info.dashboard) {
         if (!info.panel) {
           info.panel = info.dashboard.panels[0];
         }
+
+        // Don't allow double reference
+        if (info.panel.reference) {
+          throw new Error('Can not link to a panel with reference');
+        }
         return info;
       } else {
-        appEvents.emit('alert-warning', ['Reference Failed', 'Unable to load Dashboard']);
-        throw new Error('not found');
+        throw new Error('Unable to load Dashboard');
       }
     })
     .catch(err => {
-      appEvents.emit('alert-warning', ['Reference Failed', 'Unable to load Dashboard']);
+      let msg = 'Unable to load Dashboard';
+      if (err.message) {
+        msg = err.message;
+      }
+      appEvents.emit('alert-warning', ['Reference Failed', msg]);
       throw err;
     });
 }

@@ -5,6 +5,7 @@ import _ from 'lodash';
 // Types
 import { PanelModel } from '../state/PanelModel';
 
+import config from 'app/core/config';
 import { FormLabel, Select } from '@grafana/ui';
 import { validateReference, loadPanelRef, PanelReferenceInfo } from '../state/PanelReference';
 
@@ -50,16 +51,19 @@ export class ReferencedPanelEditor extends PureComponent<Props, State> {
       return null;
     }
 
-    return this.state.info.dashboard.panels.map((panel, idx) => {
-      return {
-        value: panel.id,
-        label: panel.title + ' (' + panel.id + ')',
-      };
-    });
+    return this.state.info.dashboard.panels
+      .filter(panel => !panel.reference)
+      .map((panel, idx) => {
+        const plugin = config.panels[panel.type];
+        return {
+          value: panel.id,
+          label: panel.title + ' (' + panel.id + ')',
+          imgUrl: plugin.info.logos.small,
+        };
+      });
   }
 
   onPanelChanged = (id: number) => {
-    console.log('Change the panel reference', id);
     const { panel, onReferenceChanged } = this.props;
     panel.reference.panelId = id;
     onReferenceChanged(); // should hide this editor
@@ -83,13 +87,17 @@ export class ReferencedPanelEditor extends PureComponent<Props, State> {
   loadDashboard = () => {
     const { path, changed } = this.state;
     if (changed) {
-      validateReference(path).then(info => {
-        const { panel, onReferenceChanged } = this.props;
-        panel.reference = info.toPanelRef();
-        this.setState({ edit: false, info });
-        onReferenceChanged();
-        panel.refresh();
-      });
+      validateReference(path)
+        .then(info => {
+          const { panel, onReferenceChanged } = this.props;
+          panel.reference = info.toPanelRef();
+          this.setState({ edit: false, info });
+          onReferenceChanged();
+          panel.refresh();
+        })
+        .catch(err => {
+          console.warn('Invalid Path', err);
+        });
     } else {
       this.setState({ edit: false });
     }
