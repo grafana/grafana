@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 import { QueriesTab } from './QueriesTab';
+import { ReferencedPanelEditor } from './ReferencedPanelEditor';
 import VisualizationTab from './VisualizationTab';
 import { GeneralTab } from './GeneralTab';
 import { AlertTab } from '../../alerting/AlertTab';
@@ -61,6 +62,13 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     super(props);
   }
 
+  onReferenceChanged = () => {
+    const { onTypeChanged, plugin, panel } = this.props;
+    onTypeChanged(plugin); // Will reload the reference
+    panel.render();
+    this.forceUpdate();
+  };
+
   onChangeTab = (tab: PanelEditorTab) => {
     store.dispatch(
       updateLocation({
@@ -76,7 +84,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
 
     switch (activeTab) {
       case 'advanced':
-        return <GeneralTab panel={panel} />;
+        return <GeneralTab panel={panel} onReferenceChanged={this.onReferenceChanged} />;
       case 'queries':
         return <QueriesTab panel={panel} dashboard={dashboard} />;
       case 'alert':
@@ -97,6 +105,10 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   }
 
   render() {
+    if (this.props.panel.reference) {
+      return <ReferencedPanelEditor panel={this.props.panel} onReferenceChanged={this.onReferenceChanged} />;
+    }
+
     const { plugin } = this.props;
     let activeTab: PanelEditorTabIds = store.getState().location.query.tab || PanelEditorTabIds.Queries;
 

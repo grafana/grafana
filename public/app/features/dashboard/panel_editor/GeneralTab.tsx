@@ -5,9 +5,11 @@ import { EditorTabBody } from './EditorTabBody';
 
 import { PanelModel } from '../state/PanelModel';
 import './../../panel/GeneralTabCtrl';
+import { GeneralTabReference } from './GeneralTabReference';
 
 interface Props {
   panel: PanelModel;
+  onReferenceChanged: () => void;
 }
 
 export class GeneralTab extends PureComponent<Props> {
@@ -43,9 +45,15 @@ export class GeneralTab extends PureComponent<Props> {
   }
 
   render() {
+    const { panel, onReferenceChanged } = this.props;
+
     return (
       <EditorTabBody heading="General" toolbarItems={[]}>
-        <div ref={element => (this.element = element)} />
+        <>
+          <div ref={element => (this.element = element)} />
+
+          <GeneralTabReference panel={panel} onReferenceChanged={onReferenceChanged} />
+        </>
       </EditorTabBody>
     );
   }

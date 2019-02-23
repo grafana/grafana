@@ -14,6 +14,7 @@ import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { PanelResizer } from './PanelResizer';
+import { loadPanelRef, copyReference } from '../state/PanelReference';
 
 export interface Props {
   panel: PanelModel;
@@ -65,6 +66,32 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
 
     const { panel } = this.props;
+
+    if (panel.reference) {
+      // TODO -- error handling!!!!
+      const ref = await loadPanelRef(panel.reference);
+      if (ref.error) {
+        console.error('TODO? Show an error for missing reference', ref);
+        const plugin = getPanelPluginNotFound('XXX: ' + ref.error);
+        this.setState({ plugin, angularPanel: null });
+        return;
+      }
+
+      // Check if the panel type is changing
+      const before = panel.type;
+      copyReference(panel, ref.panel);
+      if (before !== panel.type) {
+        console.log('Change plugin type to match reference!', before, '>>', panel.type);
+        if (this.state.angularPanel != null) {
+          panel.destroy();
+          this.cleanUpAngularPanel();
+        }
+      }
+
+      // Load the new panel type
+      pluginId = panel.type;
+      console.log('Load Panel from:', ref);
+    }
 
     // handle plugin loading & changing of plugin type
     if (!this.state.plugin || this.state.plugin.id !== pluginId) {

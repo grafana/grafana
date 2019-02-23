@@ -14,6 +14,11 @@ export interface GridPos {
   static?: boolean;
 }
 
+export interface PanelRef {
+  dashboard: string;
+  panelId: number;
+}
+
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
@@ -92,6 +97,7 @@ export class PanelModel {
   options: {
     [key: string]: any;
   };
+  reference?: PanelRef;
 
   maxDataPoints?: number;
   interval?: string;
