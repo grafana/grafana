@@ -53,7 +53,7 @@ export class Wrapper extends Component<WrapperProps> {
 
     return (
       <div className="page-scrollbar-wrapper">
-        <CustomScrollbar autoHeightMin={'100%'}>
+        <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">
           <div className="explore-wrapper">
             <ErrorBoundary>
               <Explore exploreId={ExploreId.left} urlState={leftState} />
@@ -82,4 +82,9 @@ const mapDispatchToProps = {
   resetExploreAction,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(Wrapper)
+);

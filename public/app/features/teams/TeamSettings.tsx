@@ -98,4 +98,7 @@ const mapDispatchToProps = {
   updateTeam,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TeamSettings);

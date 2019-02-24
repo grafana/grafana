@@ -92,4 +92,7 @@ const mapDispatchToProps = {
   setUsersSearchQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(UsersActionBar);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(UsersActionBar);

@@ -1,3 +1,10 @@
+/* tslint:disable:max-line-length */
+
+import { GrafanaTheme } from '../types';
+import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+
+export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>
+  `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
 // Global values
 // --------------------------------------------------
 
@@ -5,55 +12,55 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$sapphire-faint: #041126;
-$sapphire-light: #5794f2;
-$sapphire-base: #3274d9;
-$sapphire-shade: #1f60c4;
-$lobster-base: #e02f44;
-$lobster-shade: #c4162a;
-$forest-light: #96d98d;
-$forest-base: #37872d;
-$forest-shade: #19730e;
-$green-base: #299c46;
-$green-shade: #23843b;
+$blue-faint: ${theme.colors.blueFaint};
+$blue-light: ${theme.colors.blueLight};
+$blue-base: ${theme.colors.blueBase};
+$blue-shade: ${theme.colors.blueShade};
+$red-base: ${theme.colors.redBase};
+$red-shade: ${theme.colors.redShade};
+$green-base: ${theme.colors.greenBase};
+$green-shade: ${theme.colors.greenShade};
 
 // Grays
 // -------------------------
-$black: #000;
-$dark-1: #141414;
-$dark-2: #1f1f20;
-$dark-3: #262628;
-$dark-4: #333333;
-$dark-5: #444444;
-$gray-1: #555555;
-$gray-2: #8e8e8e;
-$gray-3: #b3b3b3;
-$gray-4: #d8d9da;
-$gray-5: #ececec;
-$gray-7: #fbfbfb;
+$black: ${theme.colors.black};
+$dark-1: ${theme.colors.dark1};
+$dark-2: ${theme.colors.dark2};
+$dark-3: ${theme.colors.dark3};
+$dark-4: ${theme.colors.dark4};
+$dark-5: ${theme.colors.dark5};
+$dark-6: ${theme.colors.dark6};
+$dark-7: ${theme.colors.dark7};
+$dark-8: ${theme.colors.dark8};
+$dark-9: ${theme.colors.dark9};
+$dark-10: ${theme.colors.dark10};
+$gray-1: ${theme.colors.gray1};
+$gray-2: ${theme.colors.gray2};
+$gray-3: ${theme.colors.gray3};
+$gray-4: ${theme.colors.gray4};
+$gray-5: ${theme.colors.gray5};
 
-$gray-blue: #212327;
+$gray-blue: ${theme.colors.grayBlue};
 $input-black: #09090b;
 
-$white: #fff;
+$white: ${theme.colors.white};
 
 // Accent colors
 // -------------------------
-$blue: #33b5e5;
-$green: #299c46;
-$red: $lobster-base;
-$yellow: #ecbb13;
-$purple: #9933cc;
-$variable: #32d1df;
-$orange: #eb7b18;
+$blue: ${theme.colors.blue};
+$red: $red-base;
+$yellow: ${theme.colors.yellow};
+$orange: ${theme.colors.orange};
+$purple: ${theme.colors.purple};
+$variable: ${theme.colors.variable};
 
 $brand-primary: $orange;
 $brand-success: $green-base;
 $brand-warning: $brand-primary;
-$brand-danger: $lobster-base;
+$brand-danger: $red-base;
 
-$query-red: $lobster-base;
-$query-green: $forest-light;
+$query-red: $red-base;
+$query-green: #74e680;
 $query-purple: #fe85fc;
 $query-keyword: #66d9ef;
 $query-orange: $orange;
@@ -62,18 +69,18 @@ $query-orange: $orange;
 // -------------------------
 $online: $green-base;
 $warn: #f79520;
-$critical: $lobster-base;
+$critical: $red-base;
 
 // Scaffolding
 // -------------------------
-$body-bg: rgb(23, 24, 25);
-$page-bg: rgb(22, 23, 25);
+$body-bg: ${theme.colors.bodyBg};
+$page-bg: ${theme.colors.pageBg};
 
 $body-color: $gray-4;
 $text-color: $gray-4;
 $text-color-strong: $white;
 $text-color-weak: $gray-2;
-$text-color-faint: $dark-5;
+$text-color-faint: $dark-10;
 $text-color-emphasis: $gray-5;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
@@ -87,55 +94,54 @@ $brand-gradient: linear-gradient(
   rgba(255, 68, 0, 0.7) 100%
 );
 
-$page-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 100px);
-$edit-gradient: linear-gradient(180deg, rgb(22, 23, 25) 50%, #090909);
+$page-gradient: linear-gradient(180deg, $dark-5 10px, dark-2 100px);
+$edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 
 // Links
 // -------------------------
 $link-color: darken($white, 11%);
 $link-color-disabled: darken($link-color, 30%);
 $link-hover-color: $white;
-$external-link-color: $sapphire-light;
+$external-link-color: $blue-light;
 
 // Typography
 // -------------------------
 $headings-color: darken($white, 11%);
-$abbr-border-color: $gray-3 !default;
+$abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
-$hr-border-color: $dark-4;
+$hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: #212124;
+$panel-bg: $dark-4;
 $panel-border: solid 1px $dark-1;
-$panel-header-hover-bg: $dark-4;
+$panel-header-hover-bg: $dark-9;
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: linear-gradient(90deg, #292a2d, black);
-$page-header-shadow: inset 0px -4px 14px $dark-2;
-$page-header-border-color: $dark-4;
+$page-header-bg: linear-gradient(90deg, $dark-7, $black);
+$page-header-shadow: inset 0px -4px 14px $dark-3;
+$page-header-border-color: $dark-9;
 
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-bg: $dark-3;
-$tight-form-func-bg: $dark-4;
-$tight-form-func-highlight-bg: $dark-5;
+$tight-form-func-bg: $dark-9;
+$tight-form-func-highlight-bg: $dark-10;
 
 $modal-backdrop-bg: #353c42;
 $code-tag-bg: $dark-1;
-$code-tag-border: $dark-4;
+$code-tag-border: $dark-9;
 
 // cards
-$card-background: linear-gradient(135deg, #2f2f32, #262628);
-$card-background-hover: linear-gradient(135deg, #343436, #262628);
+$card-background: linear-gradient(135deg, $dark-8, $dark-6);
+$card-background-hover: linear-gradient(135deg, $dark-9, $dark-6);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
 
 // Lists
 $list-item-bg: $card-background;
-$list-item-hover-bg: lighten($gray-blue, 2%);
+$list-item-hover-bg: $card-background-hover;
 $list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
 
@@ -143,23 +149,21 @@ $empty-list-cta-bg: $gray-blue;
 
 // Scrollbars
 $scrollbarBackground: #404357;
-$scrollbarBackground2: #3a3a3a;
+$scrollbarBackground2: $dark-10;
 $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg: transparent; // overall background-color
-$table-bg-accent: $dark-3; // for striping
-$table-border: $dark-3; // table and cell border
+$table-bg-accent: $dark-6; // for striping
+$table-border: $dark-6; // table and cell border
 
-$table-bg-odd: $dark-2;
-$table-bg-hover: $dark-3;
+$table-bg-odd: $dark-3;
+$table-bg-hover: $dark-6;
 
 // Buttons
 // -------------------------
-
-$btn-secondary-bg: $sapphire-base;
-$btn-secondary-bg-hl: $sapphire-shade;
+$btn-secondary-bg: $blue-base;
+$btn-secondary-bg-hl: $blue-shade;
 
 $btn-primary-bg: $green-base;
 $btn-primary-bg-hl: $green-shade;
@@ -167,11 +171,11 @@ $btn-primary-bg-hl: $green-shade;
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
 
-$btn-danger-bg: $lobster-base;
-$btn-danger-bg-hl: $lobster-shade;
+$btn-danger-bg: $red-base;
+$btn-danger-bg-hl: $red-shade;
 
-$btn-inverse-bg: $dark-3;
-$btn-inverse-bg-hl: lighten($dark-3, 4%);
+$btn-inverse-bg: $dark-6;
+$btn-inverse-bg-hl: lighten($dark-6, 4%);
 $btn-inverse-text-color: $link-color;
 $btn-inverse-text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
 
@@ -179,24 +183,24 @@ $btn-link-color: $gray-3;
 
 $iconContainerBackground: $black;
 
-$btn-divider-left: $dark-4;
-$btn-divider-right: $dark-2;
+$btn-divider-left: $dark-9;
+$btn-divider-right: $dark-3;
 
 $btn-drag-image: '../img/grab_dark.svg';
 
 // Forms
 // -------------------------
 $input-bg: $input-black;
-$input-bg-disabled: $dark-3;
+$input-bg-disabled: $dark-6;
 
 $input-color: $gray-4;
-$input-border-color: $dark-3;
+$input-border-color: $dark-6;
 $input-box-shadow: inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.1);
-$input-border-focus: $input-border-color;
-$input-box-shadow-focus: rgba(102, 175, 233, 0.6);
+$input-border-focus: $dark-6 !default;
+$input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: $gray-1 !default;
 $input-label-bg: $gray-blue;
-$input-label-border-color: $dark-3;
+$input-label-border-color: $dark-6;
 $input-color-select-arrow: $white;
 
 // Input placeholder text color
@@ -208,12 +212,12 @@ $search-filter-box-bg: $gray-blue;
 
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $black;
-$typeahead-selected-bg: $dark-4;
+$typeahead-selected-bg: $dark-9;
 $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $dark-3;
+$dropdownBackground: $dark-6;
 $dropdownBorder: rgba(0, 0, 0, 0.2);
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: #444;
@@ -222,7 +226,7 @@ $dropdownLinkColor: $text-color;
 $dropdownLinkColorHover: $white;
 $dropdownLinkColorActive: $white;
 
-$dropdownLinkBackgroundHover: $dark-4;
+$dropdownLinkBackgroundHover: $dark-9;
 
 // Horizontal forms & lists
 // -------------------------
@@ -233,10 +237,7 @@ $horizontalComponentOffset: 180px;
 $navbarHeight: 55px;
 
 $navbarBackground: $panel-bg;
-$navbarBorder: 1px solid $dark-3;
-$navbarShadow: 0 0 20px black;
-
-$navbarLinkColor: $gray-4;
+$navbarBorder: 1px solid $dark-6;
 
 $navbarButtonBackground: $navbarBackground;
 $navbarButtonBackgroundHighlight: $body-bg;
@@ -247,19 +248,19 @@ $navbar-button-border: #2f2f32;
 // -------------------------
 $side-menu-bg: $black;
 $side-menu-bg-mobile: $side-menu-bg;
-$side-menu-item-hover-bg: $dark-2;
+$side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;
 $side-menu-link-color: $link-color;
 
 // Menu dropdowns
 // -------------------------
 $menu-dropdown-bg: $body-bg;
-$menu-dropdown-hover-bg: $dark-2;
+$menu-dropdown-hover-bg: $dark-3;
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
 // Tabs
 // -------------------------
-$tab-border-color: $dark-4;
+$tab-border-color: $dark-9;
 
 // Toolbar
 $toolbar-bg: $input-black;
@@ -268,17 +269,17 @@ $toolbar-bg: $input-black;
 // -------------------------
 $warning-text-color: $warn;
 $error-text-color: #e84d4d;
-$success-text-color: $forest-light;
+$success-text-color: #12d95a;
 
-$alert-error-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
+$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $lobster-base, $lobster-shade);
-$alert-info-bg: linear-gradient(100deg, $sapphire-base, $sapphire-shade);
+$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
+$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // popover
-$popover-bg: $page-bg;
+$popover-bg: $dark-2;
 $popover-color: $text-color;
-$popover-border-color: $dark-4;
+$popover-border-color: $dark-9;
 $popover-shadow: 0 0 20px black;
 
 $popover-help-bg: $btn-secondary-bg;
@@ -302,7 +303,7 @@ $tooltipBackgroundError: $brand-danger;
 $checkboxImageUrl: '../img/checkbox.png';
 
 // info box
-$info-box-border-color: $sapphire-base;
+$info-box-border-color: $blue-base;
 
 // footer
 $footer-link-color: $gray-2;
@@ -324,17 +325,17 @@ $json-explorer-url-color: #027bff;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: $dark-2;
+$diff-label-bg: $dark-3;
 $diff-label-fg: $white;
 
-$diff-group-bg: $dark-4;
+$diff-group-bg: $dark-9;
 $diff-arrow-color: $white;
 
-$diff-json-bg: $dark-4;
+$diff-json-bg: $dark-9;
 $diff-json-fg: $gray-5;
 
-$diff-json-added: $sapphire-shade;
-$diff-json-deleted: $lobster-shade;
+$diff-json-added: $blue-shade;
+$diff-json-deleted: $red-shade;
 
 $diff-json-old: #a04338;
 $diff-json-new: #457740;
@@ -342,7 +343,7 @@ $diff-json-new: #457740;
 $diff-json-changed-fg: $gray-5;
 $diff-json-changed-num: $text-color;
 
-$diff-json-icon: $gray-7;
+$diff-json-icon: $gray-5;
 
 //Submenu
 $variable-option-bg: $dropdownLinkBackgroundHover;
@@ -350,7 +351,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 //Switch Slider
 // -------------------------
 $switch-bg: $input-bg;
-$switch-slider-color: $dark-2;
+$switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
 $switch-slider-on-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $switch-slider-shadow: 0 0 3px black;
@@ -366,20 +367,20 @@ $checkbox-color: $dark-1;
 // -------------------------
 $panel-editor-shadow: 0 0 20px black;
 $panel-editor-side-menu-shadow: drop-shadow(0 0 10px $black);
-$panel-editor-viz-item-shadow: 0 0 8px $dark-5;
-$panel-editor-viz-item-border: 1px solid $dark-5;
-$panel-editor-viz-item-shadow-hover: 0 0 4px $sapphire-light;
-$panel-editor-viz-item-border-hover: 1px solid $sapphire-light;
+$panel-editor-viz-item-shadow: 0 0 8px $dark-10;
+$panel-editor-viz-item-border: 1px solid $dark-10;
+$panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
+$panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
 
-$panel-editor-viz-item-bg-hover: darken($sapphire-base, 46%);
+$panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
 $panel-options-group-border: none;
 $panel-options-group-header-bg: $gray-blue;
 
-$panel-grid-placeholder-bg: $sapphire-faint;
-$panel-grid-placeholder-shadow: 0 0 4px $sapphire-shade;
+$panel-grid-placeholder-bg: $blue-faint;
+$panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
 
 // logs
 $logs-color-unkown: $gray-2;
@@ -387,8 +388,9 @@ $logs-color-unkown: $gray-2;
 // toggle-group
 $button-toggle-group-btn-active-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $black;
-$button-toggle-group-btn-seperator-border: 1px solid $page-bg;
+$button-toggle-group-btn-seperator-border: 1px solid $dark-2;
 
-$vertical-resize-handle-bg: $dark-5;
+$vertical-resize-handle-bg: $dark-10;
 $vertical-resize-handle-dots: $gray-1;
 $vertical-resize-handle-dots-hover: $gray-2;
+`;

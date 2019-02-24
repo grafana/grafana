@@ -200,43 +200,42 @@ export class Explore extends React.PureComponent<ExploreProps> {
           </div>
         )}
 
-        {datasourceInstance &&
-          !datasourceError && (
-            <div className="explore-container">
-              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-              <AutoSizer onResize={this.onResize} disableHeight>
-                {({ width }) => {
-                  if (width === 0) {
-                    return null;
-                  }
+        {datasourceInstance && !datasourceError && (
+          <div className="explore-container">
+            <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+            <AutoSizer onResize={this.onResize} disableHeight>
+              {({ width }) => {
+                if (width === 0) {
+                  return null;
+                }
 
-                  return (
-                    <main className="m-t-2" style={{ width }}>
-                      <ErrorBoundary>
-                        {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
-                        {!showingStartPage && (
-                          <>
-                            {supportsGraph && !supportsLogs && <GraphContainer width={width} exploreId={exploreId} />}
-                            {supportsTable && <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />}
-                            {supportsLogs && (
-                              <LogsContainer
-                                width={width}
-                                exploreId={exploreId}
-                                onChangeTime={this.onChangeTime}
-                                onClickLabel={this.onClickLabel}
-                                onStartScanning={this.onStartScanning}
-                                onStopScanning={this.onStopScanning}
-                              />
-                            )}
-                          </>
-                        )}
-                      </ErrorBoundary>
-                    </main>
-                  );
-                }}
-              </AutoSizer>
-            </div>
-          )}
+                return (
+                  <main className="m-t-2" style={{ width }}>
+                    <ErrorBoundary>
+                      {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
+                      {!showingStartPage && (
+                        <>
+                          {supportsGraph && !supportsLogs && <GraphContainer width={width} exploreId={exploreId} />}
+                          {supportsTable && <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />}
+                          {supportsLogs && (
+                            <LogsContainer
+                              width={width}
+                              exploreId={exploreId}
+                              onChangeTime={this.onChangeTime}
+                              onClickLabel={this.onClickLabel}
+                              onStartScanning={this.onStartScanning}
+                              onStopScanning={this.onStopScanning}
+                            />
+                          )}
+                        </>
+                      )}
+                    </ErrorBoundary>
+                  </main>
+                );
+              }}
+            </AutoSizer>
+          </div>
+        )}
       </div>
     );
   }
@@ -287,4 +286,9 @@ const mapDispatchToProps = {
   setQueries,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Explore));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(Explore)
+);

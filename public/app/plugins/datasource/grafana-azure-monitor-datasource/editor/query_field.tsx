@@ -311,8 +311,8 @@ class QueryField extends React.Component<any, any> {
     let selectedIndex = Math.max(this.state.typeaheadIndex, 0);
     const flattenedSuggestions = flattenSuggestions(suggestions);
     selectedIndex = selectedIndex % flattenedSuggestions.length || 0;
-    const selectedKeys = (flattenedSuggestions.length > 0 ? [flattenedSuggestions[selectedIndex]] : []).map(
-      i => (typeof i === 'object' ? i.text : i)
+    const selectedKeys = (flattenedSuggestions.length > 0 ? [flattenedSuggestions[selectedIndex]] : []).map(i =>
+      typeof i === 'object' ? i.text : i
     );
 
     // Create typeahead in DOM root so we can later position it absolutely

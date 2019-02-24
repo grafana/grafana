@@ -16,7 +16,7 @@ import SelectOptionGroup from './SelectOptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from './resetSelectStyles';
-import { CustomScrollbar } from '..';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export interface SelectOptionItem {
   label?: string;

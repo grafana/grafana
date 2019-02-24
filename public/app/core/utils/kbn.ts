@@ -143,7 +143,7 @@ kbn.secondsToHhmmss = seconds => {
 };
 
 kbn.to_percent = (nr, outof) => {
-  return Math.floor(nr / outof * 10000) / 100 + '%';
+  return Math.floor((nr / outof) * 10000) / 100 + '%';
 };
 
 kbn.addslashes = str => {

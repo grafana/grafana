@@ -9,7 +9,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
 ![](https://www.grafanacon.org/2019/images/grafanacon_la_nav-logo.png)
 
-Join us Feb 25-26 in Los Angeles, California for GrafanaCon - a two-day event with talks focused on Grafana and the surrounding open source monitoring ecosystem. Get deep dives into Loki, the Explore workflow and all of the new features of Grafana 6, plus participate in hands on workshops to help you get the most out of your data. 
+Join us Feb 25-26 in Los Angeles, California for GrafanaCon - a two-day event with talks focused on Grafana and the surrounding open source monitoring ecosystem. Get deep dives into Loki, the Explore workflow and all of the new features of Grafana 6, plus participate in hands on workshops to help you get the most out of your data.
 
 Time is running out - grab your ticket now! http://grafanacon.org
 
@@ -75,15 +75,15 @@ $GOPATH/bin/bra run
 Rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 
 ```bash
-yarn watch
+yarn start
 ```
 
 Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
 
 ```bash
-yarn start
+yarn start:hot
 # OR set a theme
-env GRAFANA_THEME=light yarn start
+env GRAFANA_THEME=light yarn start:hot
 ```
 
 *Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.*
@@ -158,7 +158,7 @@ GRAFANA_TEST_DB=postgres go test ./pkg/...
 
 If you have any ideas for improvement or have found a bug, do not hesitate to open an issue.
 And if you have time, clone this repo and submit a pull request to help me make Grafana
-the kickass metrics & devops dashboard we all dream about! 
+the kickass metrics & devops dashboard we all dream about!
 
 Read the [contributing](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guide then check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) label to find issues that are easy and that we would like help with.
 

@@ -7,7 +7,7 @@ aliases = ["/datasources/prometheus"]
 [menu.docs]
 name = "Prometheus"
 parent = "datasources"
-weight = 2
+weight = 1
 +++
 
 # Using Prometheus in Grafana
