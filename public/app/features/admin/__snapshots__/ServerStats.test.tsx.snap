@@ -5,7 +5,7 @@ exports[`ServerStats Should render table with stats 1`] = `
   className="page-scrollbar-wrapper"
 >
   <div
-    className="custom-scrollbars"
+    className="custom-scrollbar custom-scrollbar--page"
     style={
       Object {
         "height": "auto",

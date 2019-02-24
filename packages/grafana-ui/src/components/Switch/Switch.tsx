@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import uniqueId from 'lodash/uniqueId';
 
 export interface Props {
   label: string;
@@ -17,7 +17,7 @@ export interface State {
 
 export class Switch extends PureComponent<Props, State> {
   state = {
-    id: _.uniqueId('check-'),
+    id: uniqueId(),
   };
 
   internalOnChange = (event: React.FormEvent<HTMLInputElement>) => {

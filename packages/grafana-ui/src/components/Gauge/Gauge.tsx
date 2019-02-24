@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-
-import { ValueMapping, Threshold, BasicGaugeColor, GrafanaThemeType } from '../../types';
 import { getMappedValue } from '../../utils/valueMappings';
-import { getColorFromHexRgbOrName, getValueFormat } from '../../utils';
-import { Themeable } from '../../index';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { Themeable, GrafanaThemeType } from '../../types/theme';
+import { ValueMapping, Threshold, BasicGaugeColor } from '../../types/panel';
+import { getValueFormat } from '../../utils/valueFormats/valueFormats';
 
 type TimeSeriesValue = string | number | null;
 
@@ -115,9 +115,9 @@ export class Gauge extends PureComponent<Props> {
 
   getFontScale(length: number): number {
     if (length > 12) {
-      return FONT_SCALE - (length * 5) / 120;
+      return FONT_SCALE - (length * 5) / 110;
     }
-    return FONT_SCALE - (length * 5) / 105;
+    return FONT_SCALE - (length * 5) / 100;
   }
 
   draw() {

@@ -27,9 +27,10 @@ and the conditions that need to be met for the alert to change state and trigger
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `Elasticsearch`, `InfluxDB`, `OpenTSDB`, `MySQL`, `Postgres` and `Cloudwatch`.
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
+`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL` and `OpenTSDB`.
 
-> Alerting support for Elasticsearch is only available in Grafana v5.2 and above.
+> Alerting support for Azure Monitor is only available in Grafana v6.0 and above.
 
 ### Clustering
 
@@ -52,9 +53,9 @@ Here you can specify the name of the alert rule and how often the scheduler shou
 
 > This setting is available in Grafana 5.4 and above.
 
-If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications. 
+If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
 
-Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers. Looking at the `Alert list` or `Alert list panels` you will be able to see alerts in pending state. 
+Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers. Looking at the `Alert list` or `Alert list panels` you will be able to see alerts in pending state.
 
 Below you can see an example timeline of an alert using the `For` setting. At ~16:04 the alert state changes to `Pending` and after 4 minutes it changes to `Alerting` which is when alert notifications are sent. Once the series falls back to normal the alert rule goes back to `OK`.
 {{< imgbox img="/img/docs/v54/alerting-for-dark-theme.png" caption="Alerting For" >}}

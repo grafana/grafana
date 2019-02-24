@@ -3,7 +3,8 @@ import { Threshold } from '../../types';
 import { ColorPicker } from '..';
 import { PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
-import { getColorFromHexRgbOrName, ThemeContext } from '@grafana/ui';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 
 export interface Props {
   thresholds: Threshold[];
@@ -54,7 +55,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const value = afterThresholdValue - (afterThresholdValue - beforeThresholdValue) / 2;
 
     // Set a color
-    const color = colors.filter(c => !newThresholds.some(t => t.color === c))[0];
+    const color = colors.filter(c => !newThresholds.some(t => t.color === c))[1];
 
     this.setState(
       {

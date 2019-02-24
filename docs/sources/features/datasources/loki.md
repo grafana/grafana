@@ -7,7 +7,7 @@ aliases = ["/datasources/loki"]
 [menu.docs]
 name = "Loki"
 parent = "datasources"
-weight = 11
+weight = 6
 +++
 
 # Using Loki in Grafana

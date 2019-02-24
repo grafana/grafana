@@ -1,7 +1,7 @@
 ﻿import React, { PureComponent } from 'react';
 import * as PopperJS from 'popper.js';
 import { Manager, Popper as ReactPopper, PopperArrowProps } from 'react-popper';
-import { Portal } from '@grafana/ui';
+import { Portal } from '../Portal/Portal';
 import Transition from 'react-transition-group/Transition';
 import { PopperContent } from './PopperController';
 
