@@ -2,7 +2,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import * as dateMath from 'app/core/utils/datemath';
 import { angularMocks, sinon } from '../lib/common';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -143,7 +143,7 @@ export function DashboardViewStateStub(this: any) {
 }
 
 export function TimeSrvStub(this: any) {
-  this.init = sinon.spy();
+  this.init = () => {};
   this.time = { from: 'now-1h', to: 'now' };
   this.timeRange = function(parse) {
     if (parse === false) {
@@ -182,7 +182,7 @@ export function TemplateSrvStub(this: any) {
     return [];
   };
   this.fillVariableValuesForUrl = () => {};
-  this.updateTemplateData = () => {};
+  this.updateIndex = () => {};
   this.variableExists = () => {
     return false;
   };

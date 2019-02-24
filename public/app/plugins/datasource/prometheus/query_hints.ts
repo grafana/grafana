@@ -1,6 +1,5 @@
 import _ from 'lodash';
-
-import { QueryHint } from 'app/types/explore';
+import { QueryHint } from '@grafana/ui/src/types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
@@ -96,7 +95,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
     }
   }
 
-  if (series.length >= SUM_HINT_THRESHOLD_COUNT) {
+  if (series && series.length >= SUM_HINT_THRESHOLD_COUNT) {
     const simpleMetric = query.trim().match(/^\w+$/);
     if (simpleMetric) {
       hints.push({

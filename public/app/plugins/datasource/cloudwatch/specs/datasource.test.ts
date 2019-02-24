@@ -380,6 +380,33 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
+  describeMetricFindQuery('resource_arns(default,ec2:instance,{"environment":["production"]})', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              {
+                rows: [
+                  [
+                    'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
+                    'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
+                  ],
+                ],
+              },
+            ],
+          },
+        },
+      };
+    });
+
+    it('should call __ListMetrics and return result', () => {
+      expect(scenario.result[0].text).toContain('arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('resource_arns');
+    });
+  });
+
   it('should caclculate the correct period', () => {
     const hourSec = 60 * 60;
     const daySec = hourSec * 24;

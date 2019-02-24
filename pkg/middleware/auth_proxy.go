@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var AUTH_PROXY_SESSION_VAR = "authProxyHeaderValue"
+var (
+	AUTH_PROXY_SESSION_VAR = "authProxyHeaderValue"
+)
 
 func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	if !setting.AuthProxyEnabled {
@@ -39,6 +41,12 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 		log.Error(3, "Failed to start session. error %v", err)
 		return false
 	}
+
+	defer func() {
+		if err := ctx.Session.Release(); err != nil {
+			ctx.Logger.Error("failed to save session data", "error", err)
+		}
+	}()
 
 	query := &m.GetSignedInUserQuery{OrgId: orgID}
 
@@ -192,23 +200,47 @@ var syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
 	return nil
 }
 
+func getRequestUserId(c *m.ReqContext) int64 {
+	userID := c.Session.Get(session.SESS_KEY_USERID)
+
+	if userID != nil {
+		return userID.(int64)
+	}
+
+	return 0
+}
+
 func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error {
 	if len(strings.TrimSpace(setting.AuthProxyWhitelist)) == 0 {
 		return nil
 	}
 
 	proxies := strings.Split(setting.AuthProxyWhitelist, ",")
-	sourceIP, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		return err
+	var proxyObjs []*net.IPNet
+	for _, proxy := range proxies {
+		proxyObjs = append(proxyObjs, coerceProxyAddress(proxy))
 	}
 
-	// Compare allowed IP addresses to actual address
-	for _, proxyIP := range proxies {
-		if sourceIP == strings.TrimSpace(proxyIP) {
+	sourceIP, _, _ := net.SplitHostPort(remoteAddr)
+	sourceObj := net.ParseIP(sourceIP)
+
+	for _, proxyObj := range proxyObjs {
+		if proxyObj.Contains(sourceObj) {
 			return nil
 		}
 	}
-
 	return fmt.Errorf("Request for user (%s) from %s is not from the authentication proxy", proxyHeaderValue, sourceIP)
+}
+
+func coerceProxyAddress(proxyAddr string) *net.IPNet {
+	proxyAddr = strings.TrimSpace(proxyAddr)
+	if !strings.Contains(proxyAddr, "/") {
+		proxyAddr = strings.Join([]string{proxyAddr, "32"}, "/")
+	}
+
+	_, network, err := net.ParseCIDR(proxyAddr)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return network
 }

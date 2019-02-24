@@ -74,7 +74,8 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens`)
 
 	var stats m.SystemStats
 	_, err := x.SQL(sb.GetSqlString(), sb.params...).Get(&stats)

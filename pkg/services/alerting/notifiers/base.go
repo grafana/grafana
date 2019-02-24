@@ -16,7 +16,7 @@ const (
 type NotifierBase struct {
 	Name                  string
 	Type                  string
-	Id                    int64
+	Uid                   string
 	IsDeault              bool
 	UploadImage           bool
 	SendReminder          bool
@@ -34,7 +34,7 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 
 	return NotifierBase{
-		Id:                    model.Id,
+		Uid:                   model.Uid,
 		Name:                  model.Name,
 		IsDeault:              model.IsDefault,
 		Type:                  model.Type,
@@ -67,6 +67,16 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 	}
 
 	// Do not notify when we become OK for the first time.
+	if context.PrevAlertState == models.AlertStateUnknown && context.Rule.State == models.AlertStateOK {
+		return false
+	}
+
+	// Do not notify when we become OK for the first time.
+	if context.PrevAlertState == models.AlertStateUnknown && context.Rule.State == models.AlertStatePending {
+		return false
+	}
+
+	// Do not notify when we become OK from pending
 	if context.PrevAlertState == models.AlertStatePending && context.Rule.State == models.AlertStateOK {
 		return false
 	}
@@ -100,8 +110,8 @@ func (n *NotifierBase) NeedsImage() bool {
 	return n.UploadImage
 }
 
-func (n *NotifierBase) GetNotifierId() int64 {
-	return n.Id
+func (n *NotifierBase) GetNotifierUid() string {
+	return n.Uid
 }
 
 func (n *NotifierBase) GetIsDefault() bool {

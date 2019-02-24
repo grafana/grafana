@@ -14,6 +14,8 @@ describe('SingleStatCtrl', () => {
     get: () => {},
   };
 
+  const $sanitize = {};
+
   SingleStatCtrl.prototype.panel = {
     events: {
       on: () => {},
@@ -31,7 +33,7 @@ describe('SingleStatCtrl', () => {
     describe(desc, () => {
       ctx.setup = setupFunc => {
         beforeEach(() => {
-          ctx.ctrl = new SingleStatCtrl($scope, $injector, {});
+          ctx.ctrl = new SingleStatCtrl($scope, $injector, {}, $sanitize);
           setupFunc();
           ctx.ctrl.onDataReceived(ctx.data);
           ctx.data = ctx.ctrl.data;

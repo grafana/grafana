@@ -11,14 +11,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/live"
+	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -30,8 +24,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func init() {
@@ -49,13 +48,15 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister   routing.RouteRegister    `inject:""`
-	Bus             bus.Bus                  `inject:""`
-	RenderService   rendering.Service        `inject:""`
-	Cfg             *setting.Cfg             `inject:""`
-	HooksService    *hooks.HooksService      `inject:""`
-	CacheService    *cache.CacheService      `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
+	RouteRegister    routing.RouteRegister    `inject:""`
+	Bus              bus.Bus                  `inject:""`
+	RenderService    rendering.Service        `inject:""`
+	Cfg              *setting.Cfg             `inject:""`
+	HooksService     *hooks.HooksService      `inject:""`
+	CacheService     *cache.CacheService      `inject:""`
+	DatasourceCache  datasources.CacheService `inject:""`
+	AuthTokenService models.UserTokenService  `inject:""`
+	QuotaService     *quota.QuotaService      `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -64,6 +65,8 @@ func (hs *HTTPServer) Init() error {
 	hs.streamManager = live.NewStreamManager()
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
+
+	session.Init(&setting.SessionOptions, setting.SessionConnMaxLifetime)
 
 	return nil
 }
@@ -223,8 +226,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
-	m.Use(middleware.GetContextHandler())
-	m.Use(middleware.Sessioner(&setting.SessionOptions, setting.SessionConnMaxLifetime))
+	m.Use(middleware.GetContextHandler(hs.AuthTokenService))
 	m.Use(middleware.OrgRedirect())
 
 	// needs to be after context handler
@@ -242,6 +244,11 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 	}
 
 	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
+		return
+	}
+
+	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+		ctx.Resp.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
@@ -298,4 +305,8 @@ func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, 
 			AddHeaders:  headers,
 		},
 	))
+}
+
+func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
+	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
 }

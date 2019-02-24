@@ -2,25 +2,40 @@
 import React, { Component } from 'react';
 
 // Services
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-
+import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+// Utils
+import kbn from 'app/core/utils/kbn';
 // Types
-import { TimeRange, LoadingState, DataQueryOptions, DataQueryResponse, TimeSeries } from 'app/types';
+import {
+  DataQueryOptions,
+  DataQueryResponse,
+  DataQueryError,
+  LoadingState,
+  PanelData,
+  TableData,
+  TimeRange,
+  TimeSeries,
+} from '@grafana/ui';
 
 interface RenderProps {
   loading: LoadingState;
-  timeSeries: TimeSeries[];
+  panelData: PanelData;
 }
 
 export interface Props {
   datasource: string | null;
   queries: any[];
-  panelId?: number;
+  panelId: number;
   dashboardId?: number;
   isVisible?: boolean;
   timeRange?: TimeRange;
+  widthPixels: number;
   refreshCounter: number;
+  minInterval?: string;
+  maxDataPoints?: number;
   children: (r: RenderProps) => JSX.Element;
+  onDataResponse?: (data: DataQueryResponse) => void;
+  onError: (message: string, error: DataQueryError) => void;
 }
 
 export interface State {
@@ -32,9 +47,11 @@ export interface State {
 export class DataPanel extends Component<Props, State> {
   static defaultProps = {
     isVisible: true,
-    panelId: 1,
     dashboardId: 1,
   };
+
+  dataSourceSrv: DatasourceSrv = getDatasourceSrv();
+  isUnmounted = false;
 
   constructor(props: Props) {
     super(props);
@@ -49,7 +66,11 @@ export class DataPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    console.log('DataPanel mount');
+    this.issueQueries();
+  }
+
+  componentWillUnmount() {
+    this.isUnmounted = true;
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -61,11 +82,22 @@ export class DataPanel extends Component<Props, State> {
   }
 
   hasPropsChanged(prevProps: Props) {
-    return this.props.refreshCounter !== prevProps.refreshCounter || this.props.isVisible !== prevProps.isVisible;
+    return this.props.refreshCounter !== prevProps.refreshCounter;
   }
 
-  issueQueries = async () => {
-    const { isVisible, queries, datasource, panelId, dashboardId, timeRange } = this.props;
+  private issueQueries = async () => {
+    const {
+      isVisible,
+      queries,
+      datasource,
+      panelId,
+      dashboardId,
+      timeRange,
+      widthPixels,
+      maxDataPoints,
+      onDataResponse,
+      onError,
+    } = this.props;
 
     if (!isVisible) {
       return;
@@ -79,8 +111,11 @@ export class DataPanel extends Component<Props, State> {
     this.setState({ loading: LoadingState.Loading });
 
     try {
-      const dataSourceSrv = getDatasourceSrv();
-      const ds = await dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource);
+
+      // TODO interpolate variables
+      const minInterval = this.props.minInterval || ds.interval;
+      const intervalRes = kbn.calculateInterval(timeRange, widthPixels, minInterval);
 
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
@@ -88,17 +123,23 @@ export class DataPanel extends Component<Props, State> {
         dashboardId: dashboardId,
         range: timeRange,
         rangeRaw: timeRange.raw,
-        interval: '1s',
-        intervalMs: 60000,
+        interval: intervalRes.interval,
+        intervalMs: intervalRes.intervalMs,
         targets: queries,
-        maxDataPoints: 500,
+        maxDataPoints: maxDataPoints || widthPixels,
         scopedVars: {},
         cacheTimeout: null,
       };
 
-      console.log('Issuing DataPanel query', queryOptions);
       const resp = await ds.query(queryOptions);
-      console.log('Issuing DataPanel query Resp', resp);
+
+      if (this.isUnmounted) {
+        return;
+      }
+
+      if (onDataResponse) {
+        onDataResponse(resp);
+      }
 
       this.setState({
         loading: LoadingState.Done,
@@ -106,46 +147,72 @@ export class DataPanel extends Component<Props, State> {
         isFirstLoad: false,
       });
     } catch (err) {
-      console.log('Loading error', err);
-      this.setState({ loading: LoadingState.Error, isFirstLoad: false });
+      console.log('DataPanel error', err);
+
+      let message = 'Query error';
+
+      if (err.message) {
+        message = err.message;
+      } else if (err.data && err.data.message) {
+        message = err.data.message;
+      } else if (err.data && err.data.error) {
+        message = err.data.error;
+      } else if (err.status) {
+        message = `Query error: ${err.status} ${err.statusText}`;
+      }
+
+      onError(message, err);
+      this.setState({ isFirstLoad: false, loading: LoadingState.Error });
     }
   };
 
-  render() {
-    const { response, loading, isFirstLoad } = this.state;
-    console.log('data panel render');
-    const timeSeries = response.data;
+  getPanelData = () => {
+    const { response } = this.state;
 
+    if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
+      return {
+        tableData: response.data[0] as TableData,
+        timeSeries: null,
+      };
+    }
+
+    return {
+      timeSeries: response.data as TimeSeries[],
+      tableData: null,
+    };
+  };
+
+  render() {
+    const { queries } = this.props;
+    const { loading, isFirstLoad } = this.state;
+    const panelData = this.getPanelData();
+
+    // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+      return this.renderLoadingState();
+    }
+
+    if (!queries.length) {
       return (
-        <div className="loading">
-          <p>Loading</p>
+        <div className="panel-empty">
+          <p>Add a query to get some data!</p>
         </div>
       );
     }
 
     return (
       <>
-        {this.loadingSpinner}
-        {this.props.children({
-          timeSeries,
-          loading,
-        })}
+        {loading === LoadingState.Loading && this.renderLoadingState()}
+        {this.props.children({ loading, panelData })}
       </>
     );
   }
 
-  private get loadingSpinner(): JSX.Element {
-    const { loading } = this.state;
-
-    if (loading === LoadingState.Loading) {
-      return (
-        <div className="panel__loading">
-          <i className="fa fa-spinner fa-spin" />
-        </div>
-      );
-    }
-
-    return null;
+  private renderLoadingState(): JSX.Element {
+    return (
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
+      </div>
+    );
   }
 }

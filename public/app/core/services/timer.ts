@@ -2,7 +2,7 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
 // This service really just tracks a list of $timeout promises to give us a
-// method for cancelling them all when we need to
+// method for canceling them all when we need to
 export class Timer {
   timers = [];
 

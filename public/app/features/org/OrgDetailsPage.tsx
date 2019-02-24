@@ -1,36 +1,24 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import PageHeader from '../../core/components/PageHeader/PageHeader';
-import PageLoader from '../../core/components/PageLoader/PageLoader';
+import Page from 'app/core/components/Page/Page';
 import OrgProfile from './OrgProfile';
-import OrgPreferences from './OrgPreferences';
-import {
-  loadOrganization,
-  loadOrganizationPreferences,
-  setOrganizationName,
-  updateOrganization,
-} from './state/actions';
-import { loadStarredDashboards } from '../../core/actions/user';
-import { NavModel, Organization, OrganizationPreferences, StoreState } from 'app/types';
-import { getNavModel } from '../../core/selectors/navModel';
+import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
+import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
+import { NavModel, Organization, StoreState } from 'app/types';
+import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
   organization: Organization;
-  preferences: OrganizationPreferences;
   loadOrganization: typeof loadOrganization;
-  loadOrganizationPreferences: typeof loadOrganizationPreferences;
-  loadStarredDashboards: typeof loadStarredDashboards;
   setOrganizationName: typeof setOrganizationName;
   updateOrganization: typeof updateOrganization;
 }
 
 export class OrgDetailsPage extends PureComponent<Props> {
   async componentDidMount() {
-    await this.props.loadStarredDashboards();
     await this.props.loadOrganization();
-    await this.props.loadOrganizationPreferences();
   }
 
   onOrgNameChange = name => {
@@ -42,26 +30,24 @@ export class OrgDetailsPage extends PureComponent<Props> {
   };
 
   render() {
-    const { navModel, organization, preferences } = this.props;
+    const { navModel, organization } = this.props;
+    const isLoading = Object.keys(organization).length === 0;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
-          {Object.keys(organization).length === 0 || Object.keys(preferences).length === 0 ? (
-            <PageLoader pageName="Organization" />
-          ) : (
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={isLoading}>
+          {!isLoading && (
             <div>
               <OrgProfile
                 onOrgNameChange={name => this.onOrgNameChange(name)}
                 onSubmit={this.onUpdateOrganization}
                 orgName={organization.name}
               />
-              <OrgPreferences />
+              <SharedPreferences resourceUri="org" />
             </div>
           )}
-        </div>
-      </div>
+        </Page.Contents>
+      </Page>
     );
   }
 }
@@ -70,16 +56,18 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'org-settings'),
     organization: state.organization.organization,
-    preferences: state.organization.preferences,
   };
 }
 
 const mapDispatchToProps = {
   loadOrganization,
-  loadOrganizationPreferences,
-  loadStarredDashboards,
   setOrganizationName,
   updateOrganization,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(OrgDetailsPage)
+);

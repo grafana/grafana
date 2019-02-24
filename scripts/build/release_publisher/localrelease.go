@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -10,15 +9,20 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type releaseLocalSources struct {
-	path string
+	path                   string
 	artifactConfigurations []buildArtifact
 }
 
-func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, releaseNotesUrl string, nightly bool) (*release, error) {
-	buildData := r.findBuilds(baseArchiveUrl)
+func (r releaseLocalSources) prepareRelease(baseArchiveURL, whatsNewURL string, releaseNotesURL string, nightly bool) (*release, error) {
+	if !nightly {
+		return nil, errors.New("Local releases only supported for nightly builds")
+	}
+	buildData := r.findBuilds(baseArchiveURL)
 
 	rel := release{
 		Version:         buildData.version,
@@ -26,8 +30,8 @@ func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, 
 		Stable:          false,
 		Beta:            false,
 		Nightly:         nightly,
-		WhatsNewUrl:     whatsNewUrl,
-		ReleaseNotesUrl: releaseNotesUrl,
+		WhatsNewURL:     whatsNewURL,
+		ReleaseNotesURL: releaseNotesURL,
 		Builds:          buildData.builds,
 	}
 
@@ -36,16 +40,16 @@ func (r releaseLocalSources) prepareRelease(baseArchiveUrl, whatsNewUrl string, 
 
 type buildData struct {
 	version string
-	builds []build
+	builds  []build
 }
 
-func (r releaseLocalSources) findBuilds(baseArchiveUrl string) buildData {
+func (r releaseLocalSources) findBuilds(baseArchiveURL string) buildData {
 	data := buildData{}
-	filepath.Walk(r.path, createBuildWalker(r.path, &data, r.artifactConfigurations, baseArchiveUrl))
+	filepath.Walk(r.path, createBuildWalker(r.path, &data, r.artifactConfigurations, baseArchiveURL))
 	return data
 }
 
-func createBuildWalker(path string, data *buildData, archiveTypes []buildArtifact, baseArchiveUrl string) func(path string, f os.FileInfo, err error) error {
+func createBuildWalker(path string, data *buildData, archiveTypes []buildArtifact, baseArchiveURL string) func(path string, f os.FileInfo, err error) error {
 	return func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			log.Printf("error: %v", err)
@@ -70,7 +74,7 @@ func createBuildWalker(path string, data *buildData, archiveTypes []buildArtifac
 				data.version = version
 				data.builds = append(data.builds, build{
 					Os:     archive.os,
-					Url:    archive.getUrl(baseArchiveUrl, version, false),
+					URL:    archive.getURL(baseArchiveURL, version, NIGHTLY),
 					Sha256: string(shaBytes),
 					Arch:   archive.arch,
 				})
@@ -87,5 +91,5 @@ func grabVersion(name string, suffix string) (string, error) {
 		return string(match[2]), nil
 	}
 
-	return "", errors.New("No version found.")
+	return "", errors.New("No version found")
 }

@@ -1,10 +1,10 @@
 import { updateLocation } from 'app/core/actions';
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 
 import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
-import { PanelModel } from 'app/features/dashboard/panel_model';
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-import { PanelMenuItem } from 'app/types/panel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelMenuItem } from '@grafana/ui';
 
 export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   const onViewPanel = () => {
@@ -12,7 +12,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
       updateLocation({
         query: {
           panelId: panel.id,
-          edit: false,
+          edit: null,
           fullscreen: true,
         },
         partial: true,

@@ -173,7 +173,7 @@ func TestStackdriver(t *testing.T) {
 			Convey("and query has aggregation mean set", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"metricType":         "a/metric/type",
-					"primaryAggregation": "REDUCE_MEAN",
+					"crossSeriesReducer": "REDUCE_SUM",
 					"view":               "FULL",
 				})
 
@@ -182,11 +182,11 @@ func TestStackdriver(t *testing.T) {
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
-				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_MEAN&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
+				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_SUM&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
 				So(len(queries[0].Params), ShouldEqual, 7)
 				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
 				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
-				So(queries[0].Params["aggregation.crossSeriesReducer"][0], ShouldEqual, "REDUCE_MEAN")
+				So(queries[0].Params["aggregation.crossSeriesReducer"][0], ShouldEqual, "REDUCE_SUM")
 				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
 				So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, "+60s")
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
@@ -196,7 +196,7 @@ func TestStackdriver(t *testing.T) {
 			Convey("and query has group bys", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"metricType":         "a/metric/type",
-					"primaryAggregation": "REDUCE_NONE",
+					"crossSeriesReducer": "REDUCE_NONE",
 					"groupBys":           []interface{}{"metric.label.group1", "metric.label.group2"},
 					"view":               "FULL",
 				})

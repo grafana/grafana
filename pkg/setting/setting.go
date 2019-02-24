@@ -6,6 +6,7 @@ package setting
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -18,7 +19,7 @@ import (
 	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/ini.v1"
+	ini "gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -57,6 +58,9 @@ var (
 	IsEnterprise    bool
 	ApplicationName string
 
+	// packaging
+	Packaging = "unknown"
+
 	// Paths
 	HomePath       string
 	PluginsPath    string
@@ -74,19 +78,19 @@ var (
 	SocketPath         string
 	RouterLogging      bool
 	DataProxyLogging   bool
+	DataProxyTimeout   int
 	StaticRootPath     string
 	EnableGzip         bool
 	EnforceDomain      bool
 
 	// Security settings.
 	SecretKey                        string
-	LogInRememberDays                int
-	CookieUserName                   string
-	CookieRememberName               string
 	DisableGravatar                  bool
 	EmailCodeValidMinutes            int
 	DataProxyWhiteList               map[string]bool
 	DisableBruteForceLoginProtection bool
+	CookieSecure                     bool
+	CookieSameSite                   http.SameSite
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -112,11 +116,14 @@ var (
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
+	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
 
 	// Http auth
-	AdminUser     string
-	AdminPassword string
+	AdminUser            string
+	AdminPassword        string
+	LoginCookieName      string
+	LoginMaxLifetimeDays int
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -212,11 +219,27 @@ type Cfg struct {
 	RendererLimit         int
 	RendererLimitAlerting int
 
+	// Security
 	DisableBruteForceLoginProtection bool
+	CookieSecure                     bool
+	CookieSameSite                   http.SameSite
+
 	TempDataLifetime                 time.Duration
 	MetricsEndpointEnabled           bool
+	MetricsEndpointBasicAuthUsername string
+	MetricsEndpointBasicAuthPassword string
 	EnableAlphaPanels                bool
+	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
+
+	// Auth
+	LoginCookieName              string
+	LoginMaxInactiveLifetimeDays int
+	LoginMaxLifetimeDays         int
+	TokenRotationIntervalMinutes int
+
+	// User
+	EditorsCanOwn bool
 }
 
 type CommandLineArgs struct {
@@ -576,16 +599,32 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read data proxy settings
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
+	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
 
 	// read security settings
 	security := iniFile.Section("security")
 	SecretKey = security.Key("secret_key").String()
-	LogInRememberDays = security.Key("login_remember_days").MustInt()
-	CookieUserName = security.Key("cookie_username").String()
-	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
+
+	CookieSecure = security.Key("cookie_secure").MustBool(false)
+	cfg.CookieSecure = CookieSecure
+
+	samesiteString := security.Key("cookie_samesite").MustString("lax")
+	validSameSiteValues := map[string]http.SameSite{
+		"lax":    http.SameSiteLaxMode,
+		"strict": http.SameSiteStrictMode,
+		"none":   http.SameSiteDefaultMode,
+	}
+
+	if samesite, ok := validSameSiteValues[samesiteString]; ok {
+		CookieSameSite = samesite
+		cfg.CookieSameSite = CookieSameSite
+	} else {
+		CookieSameSite = http.SameSiteLaxMode
+		cfg.CookieSameSite = CookieSameSite
+	}
 
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
@@ -608,6 +647,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()
 
+	// users
 	users := iniFile.Section("users")
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
@@ -621,11 +661,26 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
 	ExternalUserMngInfo = users.Key("external_manage_info").String()
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	cfg.EditorsCanOwn = users.Key("editors_can_own").MustBool(false)
 
 	// auth
 	auth := iniFile.Section("auth")
+
+	LoginCookieName = auth.Key("login_cookie_name").MustString("grafana_session")
+	cfg.LoginCookieName = LoginCookieName
+	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
+
+	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
+	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+
+	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
+	if cfg.TokenRotationIntervalMinutes < 2 {
+		cfg.TokenRotationIntervalMinutes = 2
+	}
+
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
 	SignoutRedirectUrl = auth.Key("signout_redirect_url").String()
 
 	// anonymous access
@@ -676,6 +731,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
+	cfg.MetricsEndpointBasicAuthUsername = iniFile.Section("metrics").Key("basic_auth_username").String()
+	cfg.MetricsEndpointBasicAuthPassword = iniFile.Section("metrics").Key("basic_auth_password").String()
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -696,10 +753,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
 
 	explore := iniFile.Section("explore")
-	ExploreEnabled = explore.Key("enabled").MustBool(false)
+	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
 	panels := iniFile.Section("panels")
 	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
+	cfg.DisableSanitizeHtml = panels.Key("disable_sanitize_html").MustBool(false)
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()

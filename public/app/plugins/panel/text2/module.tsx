@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
-import { PanelProps } from 'app/types';
+import { PanelProps, ReactPanelPlugin } from '@grafana/ui';
 
 export class Text2 extends PureComponent<PanelProps> {
-  constructor(props) {
+  constructor(props: PanelProps) {
     super(props);
   }
 
@@ -11,4 +11,4 @@ export class Text2 extends PureComponent<PanelProps> {
   }
 }
 
-export { Text2 as PanelComponent };
+export const reactPanel = new ReactPanelPlugin(Text2);

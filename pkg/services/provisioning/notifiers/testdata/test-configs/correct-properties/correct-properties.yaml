@@ -1,0 +1,42 @@
+notifiers:
+  - name: default-slack-notification
+    type: slack
+    uid: notifier1
+    org_id: 2
+    uid: "notifier1"
+    is_default: true
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true
+      url: https://slack.com
+  - name: another-not-default-notification
+    type: email
+    settings:
+      addresses: example@exmaple.com
+    org_id: 3
+    uid: "notifier2"
+    is_default: false
+  - name: check-unset-is_default-is-false
+    type: slack
+    org_id: 3
+    uid: "notifier3"
+    settings:
+      url: https://slack.com
+  - name: Added notification with whitespaces in name
+    type: email
+    org_id: 3
+    uid: "notifier4"
+    settings:
+      addresses: example@exmaple.com
+delete_notifiers:
+  - name: default-slack-notification
+    org_id: 2
+    uid: notifier1
+  - name: deleted-notification-without-orgId
+    uid: "notifier2"
+  - name: deleted-notification-with-0-orgId
+    org_id: 0
+    uid: "notifier3"
+  - name: Deleted notification with whitespaces in name
+    uid: "notifier4"

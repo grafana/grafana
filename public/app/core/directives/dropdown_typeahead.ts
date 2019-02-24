@@ -12,7 +12,7 @@ export function dropdownTypeahead($compile) {
   const buttonTemplate =
     '<a class="gf-form-label tight-form-func dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="menuItems" data-toggle="dropdown"' +
-    ' data-placement="top"><i class="fa fa-plus"></i></a>';
+    ' ><i class="fa fa-plus"></i></a>';
 
   return {
     scope: {
@@ -130,7 +130,7 @@ export function dropdownTypeahead2($compile) {
   const buttonTemplate =
     '<a class="gf-form-input dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="menuItems" data-toggle="dropdown"' +
-    ' data-placement="top"><i class="fa fa-plus"></i></a>';
+    ' ><i class="fa fa-plus"></i></a>';
 
   return {
     scope: {
@@ -141,6 +141,9 @@ export function dropdownTypeahead2($compile) {
     link: ($scope, elem, attrs) => {
       const $input = $(inputTemplate);
       const $button = $(buttonTemplate);
+      const timeoutId = {
+        blur: null,
+      };
       $input.appendTo(elem);
       $button.appendTo(elem);
 
@@ -177,6 +180,14 @@ export function dropdownTypeahead2($compile) {
         []
       );
 
+      const closeDropdownMenu = () => {
+        $input.hide();
+        $input.val('');
+        $button.show();
+        $button.focus();
+        elem.removeClass('open');
+      };
+
       $scope.menuItemSelected = (index, subIndex) => {
         const menuItem = $scope.menuItems[index];
         const payload: any = { $item: menuItem };
@@ -184,6 +195,7 @@ export function dropdownTypeahead2($compile) {
           payload.$subItem = menuItem.submenu[subIndex];
         }
         $scope.dropdownTypeaheadOnSelect(payload);
+        closeDropdownMenu();
       };
 
       $input.attr('data-provide', 'typeahead');
@@ -223,16 +235,15 @@ export function dropdownTypeahead2($compile) {
         elem.toggleClass('open', $input.val() === '');
       });
 
+      elem.mousedown((evt: Event) => {
+        evt.preventDefault();
+        timeoutId.blur = null;
+      });
+
       $input.blur(() => {
-        $input.hide();
-        $input.val('');
-        $button.show();
-        $button.focus();
-        // clicking the function dropdown menu won't
-        // work if you remove class at once
-        setTimeout(() => {
-          elem.removeClass('open');
-        }, 200);
+        timeoutId.blur = setTimeout(() => {
+          closeDropdownMenu();
+        }, 1);
       });
 
       $compile(elem.contents())($scope);

@@ -21,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -28,7 +29,8 @@ import (
 
 type CloudWatchExecutor struct {
 	*models.DataSource
-	ec2Svc ec2iface.EC2API
+	ec2Svc  ec2iface.EC2API
+	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 }
 
 type DatasourceInfo struct {
@@ -126,6 +128,18 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		}
 
 		eg.Go(func() error {
+			defer func() {
+				if err := recover(); err != nil {
+					plog.Error("Execute Query Panic", "error", err, "stack", log.Stack(1))
+					if theErr, ok := err.(error); ok {
+						resultChan <- &tsdb.QueryResult{
+							RefId: query.RefId,
+							Error: theErr,
+						}
+					}
+				}
+			}()
+
 			queryRes, err := e.executeQuery(ectx, query, queryContext)
 			if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 				return err
@@ -146,6 +160,17 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		for region, getMetricDataQuery := range getMetricDataQueries {
 			q := getMetricDataQuery
 			eg.Go(func() error {
+				defer func() {
+					if err := recover(); err != nil {
+						plog.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
+						if theErr, ok := err.(error); ok {
+							resultChan <- &tsdb.QueryResult{
+								Error: theErr,
+							}
+						}
+					}
+				}()
+
 				queryResponses, err := e.executeGetMetricDataQuery(ectx, region, q, queryContext)
 				if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 					return err
@@ -188,8 +213,8 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, query *CloudWatch
 		return nil, err
 	}
 
-	if endTime.Before(startTime) {
-		return nil, fmt.Errorf("Invalid time range: End time can't be before start time")
+	if !startTime.Before(endTime) {
+		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
 	}
 
 	params := &cloudwatch.GetMetricStatisticsInput{

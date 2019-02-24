@@ -1,54 +1,24 @@
+// Libraries
 import _ from 'lodash';
-
 import $ from 'jquery';
+
+// Services & Utils
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
 import { BackendSrv } from 'app/core/services/backend_srv';
-
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
+import { expandRecordingRules } from './language_utils';
 
-export function alignRange(start, end, step) {
-  const alignedEnd = Math.ceil(end / step) * step;
-  const alignedStart = Math.floor(start / step) * step;
-  return {
-    end: alignedEnd,
-    start: alignedStart,
-  };
-}
+// Types
+import { PromQuery } from './types';
+import { DataQueryOptions, DataSourceApi } from '@grafana/ui/src/types';
+import { ExploreUrlState } from 'app/types/explore';
 
-export function extractRuleMappingFromGroups(groups: any[]) {
-  return groups.reduce(
-    (mapping, group) =>
-      group.rules.filter(rule => rule.type === 'recording').reduce(
-        (acc, rule) => ({
-          ...acc,
-          [rule.name]: rule.query,
-        }),
-        mapping
-      ),
-    {}
-  );
-}
-
-export function prometheusRegularEscape(value) {
-  if (typeof value === 'string') {
-    return value.replace(/'/g, "\\\\'");
-  }
-  return value;
-}
-
-export function prometheusSpecialRegexEscape(value) {
-  if (typeof value === 'string') {
-    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
-  }
-  return value;
-}
-
-export class PrometheusDatasource {
+export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   type: string;
   editorSrc: string;
   name: string;
@@ -146,7 +116,7 @@ export class PrometheusDatasource {
     return this.templateSrv.variableExists(target.expr);
   }
 
-  query(options) {
+  query(options: DataQueryOptions<PromQuery>) {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 
@@ -216,8 +186,9 @@ export class PrometheusDatasource {
     };
     const range = Math.ceil(end - start);
 
+    // options.interval is the dynamically calculated interval
     let interval = kbn.interval_to_seconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
+    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
     );
@@ -363,12 +334,13 @@ export class PrometheusDatasource {
     const step = annotation.step || '60s';
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
-    // Unsetting min interval
     const queryOptions = {
       ...options,
-      interval: '0s',
+      interval: step,
     };
-    const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
+    // Unsetting min interval for accurate event resolution
+    const minStep = '1s';
+    const query = this.createQuery({ expr, interval: minStep }, queryOptions, start, end);
 
     const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
@@ -418,24 +390,27 @@ export class PrometheusDatasource {
     });
   }
 
-  getExploreState(targets: any[]) {
-    let state = {};
-    if (targets && targets.length > 0) {
-      const queries = targets.map(t => ({
-        query: this.templateSrv.replace(t.expr, {}, this.interpolateQueryExpr),
-        format: t.format,
+  getExploreState(queries: PromQuery[]): Partial<ExploreUrlState> {
+    let state: Partial<ExploreUrlState> = { datasource: this.name };
+    if (queries && queries.length > 0) {
+      const expandedQueries = queries.map(query => ({
+        ...query,
+        expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+
+        // null out values we don't support in Explore yet
+        legendFormat: null,
+        step: null,
       }));
       state = {
         ...state,
-        queries,
-        datasource: this.name,
+        queries: expandedQueries,
       };
     }
     return state;
   }
 
-  getQueryHints(query: string, result: any[]) {
-    return getQueryHints(query, result, this);
+  getQueryHints(query: PromQuery, result: any[]) {
+    return getQueryHints(query.expr || '', result, this);
   }
 
   loadRules() {
@@ -453,31 +428,35 @@ export class PrometheusDatasource {
       });
   }
 
-  modifyQuery(query: string, action: any): string {
+  modifyQuery(query: PromQuery, action: any): PromQuery {
+    let expression = query.expr || '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        return addLabelToQuery(query, action.key, action.value);
+        expression = addLabelToQuery(expression, action.key, action.value);
+        break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
-        return `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+        expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
+        break;
       }
       case 'ADD_RATE': {
-        return `rate(${query}[5m])`;
+        expression = `rate(${expression}[5m])`;
+        break;
       }
       case 'ADD_SUM': {
-        return `sum(${query.trim()}) by ($1)`;
+        expression = `sum(${expression.trim()}) by ($1)`;
+        break;
       }
       case 'EXPAND_RULES': {
-        const mapping = action.mapping;
-        if (mapping) {
-          const ruleNames = Object.keys(mapping);
-          const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\()`, 'ig');
-          return query.replace(rulesRegex, (match, pre, name, post) => mapping[name]);
+        if (action.mapping) {
+          expression = expandRecordingRules(expression, action.mapping);
         }
+        break;
       }
       default:
-        return query;
+        break;
     }
+    return { ...query, expr: expression };
   }
 
   getPrometheusTime(date, roundUp) {
@@ -498,4 +477,43 @@ export class PrometheusDatasource {
   getOriginalMetricName(labelData) {
     return this.resultTransformer.getOriginalMetricName(labelData);
   }
+}
+
+export function alignRange(start, end, step) {
+  const alignedEnd = Math.ceil(end / step) * step;
+  const alignedStart = Math.floor(start / step) * step;
+  return {
+    end: alignedEnd,
+    start: alignedStart,
+  };
+}
+
+export function extractRuleMappingFromGroups(groups: any[]) {
+  return groups.reduce(
+    (mapping, group) =>
+      group.rules
+        .filter(rule => rule.type === 'recording')
+        .reduce(
+          (acc, rule) => ({
+            ...acc,
+            [rule.name]: rule.query,
+          }),
+          mapping
+        ),
+    {}
+  );
+}
+
+export function prometheusRegularEscape(value) {
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
+}
+
+export function prometheusSpecialRegexEscape(value) {
+  if (typeof value === 'string') {
+    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+  }
+  return value;
 }

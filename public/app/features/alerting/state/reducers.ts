@@ -3,7 +3,7 @@ import { AlertRuleDTO, AlertRule, AlertRulesState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import alertDef from './alertDef';
 
-export const initialState: AlertRulesState = { items: [], searchQuery: '' };
+export const initialState: AlertRulesState = { items: [], searchQuery: '', isLoading: false };
 
 function convertToAlertRule(rule, state): AlertRule {
   const stateModel = alertDef.getStateDisplayModel(state);
@@ -29,17 +29,21 @@ function convertToAlertRule(rule, state): AlertRule {
 export const alertRulesReducer = (state = initialState, action: Action): AlertRulesState => {
   switch (action.type) {
     case ActionTypes.LoadAlertRules: {
+      return { ...state, isLoading: true };
+    }
+
+    case ActionTypes.LoadedAlertRules: {
       const alertRules: AlertRuleDTO[] = action.payload;
 
       const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
         return convertToAlertRule(rule, rule.state);
       });
 
-      return { items: alertRulesViewModel, searchQuery: state.searchQuery };
+      return { ...state, items: alertRulesViewModel, isLoading: false };
     }
 
     case ActionTypes.SetSearchQuery:
-      return { items: state.items, searchQuery: action.payload };
+      return { ...state, searchQuery: action.payload };
   }
 
   return state;

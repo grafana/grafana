@@ -665,4 +665,70 @@ describe('ElasticResponse', () => {
       expect(result.data[0].datapoints[0].fieldProp).toBe('field');
     });
   });
+
+  describe('with bucket_script ', () => {
+    let result;
+
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [
+            { id: '1', type: 'sum', field: '@value' },
+            { id: '3', type: 'max', field: '@value' },
+            {
+              id: '4',
+              field: 'select field',
+              pipelineVariables: [{ name: 'var1', pipelineAgg: '1' }, { name: 'var2', pipelineAgg: '3' }],
+              settings: { script: 'params.var1 * params.var2' },
+              type: 'bucket_script',
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+        },
+      ];
+      response = {
+        responses: [
+          {
+            aggregations: {
+              '2': {
+                buckets: [
+                  {
+                    1: { value: 2 },
+                    3: { value: 3 },
+                    4: { value: 6 },
+                    doc_count: 60,
+                    key: 1000,
+                  },
+                  {
+                    1: { value: 3 },
+                    3: { value: 4 },
+                    4: { value: 12 },
+                    doc_count: 60,
+                    key: 2000,
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return 3 series', () => {
+      expect(result.data.length).toBe(3);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].target).toBe('Sum @value');
+      expect(result.data[1].target).toBe('Max @value');
+      expect(result.data[2].target).toBe('Sum @value * Max @value');
+      expect(result.data[0].datapoints[0][0]).toBe(2);
+      expect(result.data[1].datapoints[0][0]).toBe(3);
+      expect(result.data[2].datapoints[0][0]).toBe(6);
+      expect(result.data[0].datapoints[1][0]).toBe(3);
+      expect(result.data[1].datapoints[1][0]).toBe(4);
+      expect(result.data[2].datapoints[1][0]).toBe(12);
+    });
+  });
 });

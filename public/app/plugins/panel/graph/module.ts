@@ -1,13 +1,16 @@
 import './graph';
 import './series_overrides_ctrl';
 import './thresholds_form';
+import './time_regions_form';
 
 import template from './template';
 import _ from 'lodash';
-import config from 'app/core/config';
-import { MetricsPanelCtrl, alertTab } from 'app/plugins/sdk';
+
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
+import config from 'app/core/config';
+import { getColorFromHexRgbOrName } from '@grafana/ui';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -70,11 +73,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
-    spaceLength: 10,
+    paceLength: 10,
     // show hide points
     points: false,
     // point radius in pixels
-    pointradius: 5,
+    pointradius: 2,
     // show hide bars
     bars: false,
     // enable/disable stacking
@@ -111,6 +114,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     thresholds: [],
+    timeRegions: [],
   };
 
   /** @ngInject */
@@ -133,14 +137,10 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
-    this.addEditorTab('Axes', axesEditorComponent, 2);
-    this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
-
-    if (config.alertingEnabled) {
-      this.addEditorTab('Alert', alertTab, 5);
-    }
-
+    this.addEditorTab('Display options', 'public/app/plugins/panel/graph/tab_display.html');
+    this.addEditorTab('Axes', axesEditorComponent);
+    this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
+    this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
     this.subTabIndex = 0;
   }
 
@@ -244,8 +244,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series, color) => {
-    series.setColor(color);
-    this.panel.aliasColors[series.alias] = series.color;
+    series.setColor(getColorFromHexRgbOrName(color, config.theme.type));
+    this.panel.aliasColors[series.alias] = color;
     this.render();
   };
 
@@ -281,7 +281,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
-    this.refresh();
+    this.render();
   }
 
   legendValuesOptionChanged() {

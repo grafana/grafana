@@ -18,9 +18,12 @@ type NotificationTestCommand struct {
 	Settings *simplejson.Json
 }
 
+var (
+	logger = log.New("alerting.testnotification")
+)
+
 func init() {
 	bus.AddHandler("alerting", handleNotificationTestCommand)
-
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
@@ -32,10 +35,10 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		Settings: cmd.Settings,
 	}
 
-	notifiers, err := notifier.createNotifierFor(model)
+	notifiers, err := InitNotifier(model)
 
 	if err != nil {
-		log.Error2("Failed to create notifier", "error", err.Error())
+		logger.Error("Failed to create notifier", "error", err.Error())
 		return err
 	}
 

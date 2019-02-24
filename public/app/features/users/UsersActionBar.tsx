@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames/bind';
+import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/actions';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   searchQuery: string;
@@ -43,16 +44,13 @@ export class UsersActionBar extends PureComponent<Props> {
     return (
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
-          <label className="gf-form--has-input-icon">
-            <input
-              type="text"
-              className="gf-form-input width-20"
-              value={searchQuery}
-              onChange={event => setUsersSearchQuery(event.target.value)}
-              placeholder="Filter by name or type"
-            />
-            <i className="gf-form-input-icon fa fa-search" />
-          </label>
+          <FilterInput
+            labelClassName="gf-form--has-input-icon"
+            inputClassName="gf-form-input width-20"
+            value={searchQuery}
+            onChange={setUsersSearchQuery}
+            placeholder="Filter by name or type"
+          />
           {pendingInvitesCount > 0 && (
             <div style={{ marginLeft: '1rem' }}>
               <button className={usersButtonStyle} key="users" onClick={onShowInvites}>
@@ -65,12 +63,12 @@ export class UsersActionBar extends PureComponent<Props> {
           )}
           <div className="page-action-bar__spacer" />
           {canInvite && (
-            <a className="btn btn-success" href="org/users/invite">
+            <a className="btn btn-primary" href="org/users/invite">
               <span>Invite</span>
             </a>
           )}
           {externalUserMngLinkUrl && (
-            <a className="btn btn-success" href={externalUserMngLinkUrl} target="_blank">
+            <a className="btn btn-primary" href={externalUserMngLinkUrl} target="_blank">
               <i className="fa fa-external-link-square" /> {externalUserMngLinkName}
             </a>
           )}
@@ -94,4 +92,7 @@ const mapDispatchToProps = {
   setUsersSearchQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(UsersActionBar);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(UsersActionBar);

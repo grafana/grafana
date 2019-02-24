@@ -25,8 +25,6 @@ export class SearchCtrl {
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
     this.initialFolderFilterTitle = 'All';
-    this.getTags = this.getTags.bind(this);
-    this.onTagSelect = this.onTagSelect.bind(this);
     this.isEditor = contextSrv.isEditor;
     this.hasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
   }
@@ -162,7 +160,7 @@ export class SearchCtrl {
     const localSearchId = this.currentSearchId;
     const query = {
       ...this.query,
-      tag: this.query.tag.map(i => i.value),
+      tag: this.query.tag,
     };
 
     return this.searchSrv.search(query).then(results => {
@@ -195,14 +193,14 @@ export class SearchCtrl {
     evt.preventDefault();
   }
 
-  getTags() {
+  getTags = () => {
     return this.searchSrv.getDashboardTags();
-  }
+  };
 
-  onTagSelect(newTags) {
-    this.query.tag = newTags;
+  onTagFiltersChanged = (tags: string[]) => {
+    this.query.tag = tags;
     this.search();
-  }
+  };
 
   clearSearchFilter() {
     this.query.tag = [];

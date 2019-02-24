@@ -18,7 +18,6 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -208,14 +207,14 @@ func DeleteDashboardByUID(c *m.ReqContext) Response {
 	})
 }
 
-func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
+func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 
 	dash := cmd.GetDashboardModel()
 
 	if dash.Id == 0 && dash.Uid == "" {
-		limitReached, err := quota.QuotaReached(c, "dashboard")
+		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
 		if err != nil {
 			return Error(500, "failed to get quota", err)
 		}
@@ -277,10 +276,6 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		return Error(500, "Failed to save dashboard", err)
 	}
 
-	if err == m.ErrDashboardFailedToUpdateAlertData {
-		return Error(500, "Invalid alert data. Cannot save dashboard", err)
-	}
-
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	return JSON(200, util.DynMap{
 		"status":  "success",
@@ -293,7 +288,7 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 }
 
 func GetHomeDashboard(c *m.ReqContext) Response {
-	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
+	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
 	}
@@ -467,7 +462,7 @@ func CalculateDashboardDiff(c *m.ReqContext, apiOptions dtos.CalculateDiffOption
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
-func RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) Response {
+func (hs *HTTPServer) RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
@@ -494,7 +489,7 @@ func RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.RestoreDashboardVersio
 	saveCmd.Dashboard.Set("uid", dash.Uid)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
 
-	return PostDashboard(c, saveCmd)
+	return hs.PostDashboard(c, saveCmd)
 }
 
 func GetDashboardTags(c *m.ReqContext) {

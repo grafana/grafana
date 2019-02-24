@@ -32,4 +32,5 @@ export interface AlertRule {
 export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
+  isLoading: boolean;
 }

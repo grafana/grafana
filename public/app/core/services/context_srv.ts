@@ -59,6 +59,10 @@ export class ContextSrv {
     this.sidemenu = !this.sidemenu;
     store.set('grafana.sidemenu', this.sidemenu);
   }
+
+  hasAccessToExplore() {
+    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
+  }
 }
 
 const contextSrv = new ContextSrv();

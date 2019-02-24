@@ -5,7 +5,7 @@ $input-border: 1px solid $input-border-color;
   margin-bottom: $gf-form-margin;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   text-align: left;
   position: relative;
 
@@ -82,7 +82,11 @@ $input-border: 1px solid $input-border-color;
   align-content: flex-start;
 
   .gf-form + .gf-form {
-    margin-right: $gf-form-margin;
+    margin-left: $gf-form-margin;
+  }
+
+  &--nowrap {
+    flex-wrap: nowrap;
   }
 }
 
@@ -102,6 +106,7 @@ $input-border: 1px solid $input-border-color;
 
   background-color: $input-label-bg;
   display: block;
+  height: $gf-form-input-height;
 
   border: $input-btn-border-width solid $input-label-border-color;
   border-right: none;
@@ -109,16 +114,31 @@ $input-border: 1px solid $input-border-color;
 
   &--grow {
     flex-grow: 1;
-    min-height: 2.6rem;
   }
 
   &--error {
     color: $critical;
   }
 
-  &--small {
-    padding: ($input-padding-y / 2) ($input-padding-x / 2);
-    font-size: $font-size-xs;
+  &--transparent {
+    background-color: transparent;
+    border: 0;
+    text-align: right;
+    padding-left: 0px;
+  }
+
+  &--btn {
+    border-right: $input-btn-border-width solid $input-label-border-color;
+    border-radius: $border-radius;
+
+    &:hover {
+      background: $list-item-hover-bg;
+      color: $link-color;
+    }
+
+    .fa-caret-down {
+      padding-left: 4px;
+    }
   }
 
   &:disabled {
@@ -140,19 +160,6 @@ $input-border: 1px solid $input-border-color;
   @include border-radius($label-border-radius-sm);
 }
 
-.gf-form-checkbox {
-  flex-shrink: 0;
-  padding: $input-padding-y $input-padding-x;
-  line-height: $input-line-height;
-
-  .checkbox-label {
-    display: inline;
-    cursor: pointer;
-    padding: $input-padding-y 0.4rem;
-    line-height: $input-line-height;
-  }
-}
-
 .gf-form-textarea {
   max-width: 650px;
 }
@@ -160,8 +167,8 @@ $input-border: 1px solid $input-border-color;
 .gf-form-input {
   display: block;
   width: 100%;
+  height: $gf-form-input-height;
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
@@ -179,6 +186,7 @@ $input-border: 1px solid $input-border-color;
   @at-root textarea#{&} {
     overflow: auto;
     white-space: pre-wrap;
+    height: auto;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.
@@ -218,7 +226,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &--dropdown {
-    padding-right: $input-padding-x*2;
+    padding-right: $input-padding-x * 2;
 
     &::after {
       position: absolute;
@@ -255,7 +263,6 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-select-wrapper {
-  margin-right: $gf-form-margin;
   position: relative;
   background-color: $input-bg;
 
@@ -269,7 +276,7 @@ $input-border: 1px solid $input-border-color;
     & + .gf-form-input {
       position: relative;
       z-index: 2;
-      padding-left: $input-padding-x*3;
+      padding-left: $input-padding-x * 3;
       background-color: transparent;
 
       option {
@@ -286,7 +293,7 @@ $input-border: 1px solid $input-border-color;
   select.gf-form-input {
     text-indent: 0.01px;
     text-overflow: '';
-    padding-right: $input-padding-x*3;
+    padding-right: $input-padding-x * 3;
     appearance: none;
 
     &:-moz-focusring {
@@ -314,7 +321,7 @@ $input-border: 1px solid $input-border-color;
 
   &--has-help-icon {
     &::after {
-      right: $input-padding-x*3;
+      right: $input-padding-x * 3;
     }
   }
 }
@@ -345,9 +352,6 @@ $input-border: 1px solid $input-border-color;
 .gf-form-dropdown-typeahead {
   margin-right: $gf-form-margin;
   position: relative;
-  background-color: $input-bg;
-  border: $input-border;
-  border-radius: $input-border-radius;
 
   &::after {
     position: absolute;
@@ -359,10 +363,6 @@ $input-border: 1px solid $input-border-color;
     content: '\f0d7';
     pointer-events: none;
     font-size: 11px;
-  }
-
-  .gf-form-input {
-    border: none;
   }
 }
 
@@ -393,6 +393,10 @@ $input-border: 1px solid $input-border-color;
   &--no-padding {
     padding-left: 0;
   }
+
+  &:hover {
+    color: $text-color;
+  }
 }
 
 select.gf-form-input ~ .gf-form-help-icon {
@@ -411,11 +415,31 @@ select.gf-form-input ~ .gf-form-help-icon {
   padding: 1.5rem;
   background-color: $empty-list-cta-bg;
   margin-bottom: 2rem;
-  border-top: 3px solid $green;
+  border-top: 3px solid $green-base;
 }
 
 .cta-form__close {
+  background: transparent;
+  padding: 4px 8px 4px 9px;
+  border: none;
   position: absolute;
   right: 0;
-  top: 0;
+  top: -2px;
+  font-size: $font-size-md;
+
+  &:hover {
+    color: $text-color-strong;
+  }
+}
+
+.cta-form__bar {
+  display: flex;
+  align-items: center;
+  align-content: center;
+  margin-bottom: 20px;
+}
+
+.cta-form__bar-header {
+  font-size: $font-size-h4;
+  padding-right: 20px;
 }

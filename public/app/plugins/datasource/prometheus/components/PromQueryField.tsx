@@ -4,13 +4,16 @@ import Cascader from 'rc-cascader';
 import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
-import { TypeaheadOutput } from 'app/types/explore';
+import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-import TypeaheadField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import { PromQuery } from '../types';
+import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
+import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -35,15 +38,17 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   const metricsOptions = _.chain(metrics)
     .filter(metric => !ruleRegex.test(metric))
     .groupBy(metric => metric.split(delimiter)[0])
-    .map((metricsForPrefix: string[], prefix: string): CascaderOption => {
-      const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-      const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
-      return {
-        children,
-        label: prefix,
-        value: prefix,
-      };
-    })
+    .map(
+      (metricsForPrefix: string[], prefix: string): CascaderOption => {
+        const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
+        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
+        return {
+          children,
+          label: prefix,
+          value: prefix,
+        };
+      }
+    )
     .sortBy('label')
     .value();
 
@@ -84,27 +89,19 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface PromQueryFieldProps {
-  datasource: any;
-  error?: string | JSX.Element;
-  hint?: any;
-  history?: any[];
-  initialQuery?: string | null;
-  metricsByPrefix?: CascaderOption[];
-  onClickHintFix?: (action: any) => void;
-  onPressEnter?: () => void;
-  onQueryChange?: (value: string, override?: boolean) => void;
+interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, PromQuery> {
+  history: HistoryItem[];
 }
 
 interface PromQueryFieldState {
   metricsOptions: any[];
-  metricsByPrefix: CascaderOption[];
   syntaxLoaded: boolean;
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
   languageProvider: any;
+  languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context) {
     super(props, context);
@@ -115,7 +112,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onPressEnter }),
+      RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
         onlyIn: node => node.type === 'code_block',
         getSyntax: node => 'promql',
@@ -123,7 +120,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     ];
 
     this.state = {
-      metricsByPrefix: [],
       metricsOptions: [],
       syntaxLoaded: false,
     };
@@ -131,12 +127,23 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProvider
-        .start()
+      this.languageProviderInitializationPromise = makePromiseCancelable(this.languageProvider.start());
+      this.languageProviderInitializationPromise.promise
         .then(remaining => {
           remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
         })
-        .then(() => this.onUpdateLanguage());
+        .then(() => this.onUpdateLanguage())
+        .catch(({ isCanceled }) => {
+          if (isCanceled) {
+            console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+          }
+        });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.languageProviderInitializationPromise) {
+      this.languageProviderInitializationPromise.cancel();
     }
   }
 
@@ -163,16 +170,21 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { onQueryChange } = this.props;
+    const { query, onQueryChange, onExecuteQuery } = this.props;
     if (onQueryChange) {
-      onQueryChange(value, override);
+      const nextQuery: PromQuery = { ...query, expr: value };
+      onQueryChange(nextQuery);
+
+      if (override && onExecuteQuery) {
+        onExecuteQuery();
+      }
     }
   };
 
   onClickHintFix = () => {
-    const { hint, onClickHintFix } = this.props;
-    if (onClickHintFix && hint && hint.fix) {
-      onClickHintFix(hint.fix.action);
+    const { hint, onExecuteHint } = this.props;
+    if (onExecuteHint && hint && hint.fix) {
+      onExecuteHint(hint.fix.action);
     }
   };
 
@@ -227,45 +239,48 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, initialQuery } = this.props;
+    const { error, hint, query } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading matrics...';
+    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
 
     return (
-      <div className="prom-query-field">
-        <div className="prom-query-field-tools">
-          <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-            <button className="btn navbar-button navbar-button--tight" disabled={!syntaxLoaded}>
-              {chooserText}
-            </button>
-          </Cascader>
+      <>
+        <div className="gf-form-inline gf-form-inline--nowrap">
+          <div className="gf-form flex-shrink-0">
+            <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
+              <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
+                {chooserText} <i className="fa fa-caret-down" />
+              </button>
+            </Cascader>
+          </div>
+          <div className="gf-form gf-form--grow flex-shrink-1">
+            <QueryField
+              additionalPlugins={this.plugins}
+              cleanText={cleanText}
+              initialQuery={query.expr}
+              onTypeahead={this.onTypeahead}
+              onWillApplySuggestion={willApplySuggestion}
+              onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.props.onExecuteQuery}
+              placeholder="Enter a PromQL query"
+              portalOrigin="prometheus"
+              syntaxLoaded={syntaxLoaded}
+            />
+          </div>
         </div>
-        <div className="prom-query-field-wrapper">
-          <TypeaheadField
-            additionalPlugins={this.plugins}
-            cleanText={cleanText}
-            initialValue={initialQuery}
-            onTypeahead={this.onTypeahead}
-            onWillApplySuggestion={willApplySuggestion}
-            onValueChanged={this.onChangeQuery}
-            placeholder="Enter a PromQL query"
-            portalOrigin="prometheus"
-            syntaxLoaded={syntaxLoaded}
-          />
-          {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
-          {hint ? (
-            <div className="prom-query-field-info text-warning">
-              {hint.label}{' '}
-              {hint.fix ? (
-                <a className="text-link muted" onClick={this.onClickHintFix}>
-                  {hint.fix.label}
-                </a>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
+        {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
+        {hint ? (
+          <div className="prom-query-field-info text-warning">
+            {hint.label}{' '}
+            {hint.fix ? (
+              <a className="text-link muted" onClick={this.onClickHintFix}>
+                {hint.fix.label}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </>
     );
   }
 }

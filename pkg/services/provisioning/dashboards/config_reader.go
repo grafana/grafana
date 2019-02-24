@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -58,7 +59,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 	files, err := ioutil.ReadDir(cr.path)
 	if err != nil {
-		cr.log.Error("can't read dashboard provisioning files from directory", "path", cr.path)
+		cr.log.Error("can't read dashboard provisioning files from directory", "path", cr.path, "error", err)
 		return dashboards, nil
 	}
 
@@ -69,7 +70,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 		parsedDashboards, err := cr.parseConfigs(file)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not parse provisioning config file: %s error: %v", file.Name(), err)
 		}
 
 		if len(parsedDashboards) > 0 {

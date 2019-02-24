@@ -212,6 +212,10 @@ func GetAlertNotificationByID(c *m.ReqContext) Response {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
+	if query.Result == nil {
+		return Error(404, "Alert notification not found", nil)
+	}
+
 	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
@@ -295,7 +299,7 @@ func PauseAlert(c *m.ReqContext, dto dtos.PauseAlertCommand) Response {
 		return Error(500, "", err)
 	}
 
-	var response m.AlertStateType = m.AlertStatePending
+	var response m.AlertStateType = m.AlertStateUnknown
 	pausedState := "un-paused"
 	if cmd.Paused {
 		response = m.AlertStatePaused

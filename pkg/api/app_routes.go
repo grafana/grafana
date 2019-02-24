@@ -35,7 +35,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 
 	for _, plugin := range plugins.Apps {
 		for _, route := range plugin.Routes {
-			url := util.JoinUrlFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
+			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
 				ReqSignedIn: true,

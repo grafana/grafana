@@ -118,6 +118,7 @@ func (fr *fileReader) startWalkingDisk() error {
 
 	return nil
 }
+
 func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
 	if fr.Cfg.DisableDeletion {
 		return
@@ -180,7 +181,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 		dash.Dashboard.SetId(provisionedData.DashboardId)
 	}
 
-	fr.log.Debug("saving new dashboard", "file", path)
+	fr.log.Debug("saving new dashboard", "provisoner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
 	dp := &models.DashboardProvisioning{
 		ExternalId: path,
 		Name:       fr.Cfg.Name,
@@ -333,12 +334,12 @@ func (fr *fileReader) resolvePath(path string) string {
 	copy := path
 	path, err := filepath.Abs(path)
 	if err != nil {
-		fr.log.Error("Could not create absolute path ", "path", path)
+		fr.log.Error("Could not create absolute path", "path", copy, "error", err)
 	}
 
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		fr.log.Error("Failed to read content of symlinked path: %s", path)
+		fr.log.Error("Failed to read content of symlinked path", "path", copy, "error", err)
 	}
 
 	if path == "" {

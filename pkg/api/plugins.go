@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func GetPluginList(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetPluginList(c *m.ReqContext) Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
@@ -36,6 +36,10 @@ func GetPluginList(c *m.ReqContext) Response {
 
 		// filter on type
 		if typeFilter != "" && typeFilter != pluginDef.Type {
+			continue
+		}
+
+		if pluginDef.State == plugins.PluginStateAlpha && !hs.Cfg.EnableAlphaPanels {
 			continue
 		}
 
@@ -158,6 +162,14 @@ func GetPluginMarkdown(c *m.ReqContext) Response {
 		}
 
 		return Error(500, "Could not get markdown file", err)
+	}
+
+	// fallback try readme
+	if len(content) == 0 {
+		content, err = plugins.GetPluginMarkdown(pluginID, "readme")
+		if err != nil {
+			return Error(501, "Could not get markdown file", err)
+		}
 	}
 
 	resp := Respond(200, content)

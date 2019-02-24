@@ -1,4 +1,3 @@
-
 export default class AdminListOrgsCtrl {
   /** @ngInject */
   constructor($scope, backendSrv, navModelSrv) {
@@ -31,4 +30,3 @@ export default class AdminListOrgsCtrl {
     $scope.init();
   }
 }
-

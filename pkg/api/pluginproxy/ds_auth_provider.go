@@ -39,7 +39,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	req.URL.Scheme = routeURL.Scheme
 	req.URL.Host = routeURL.Host
 	req.Host = routeURL.Host
-	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxyPath)
+	req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
 
 	if err := addHeaders(&req.Header, route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
@@ -51,7 +51,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		if token, err := tokenProvider.getAccessToken(data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
 
@@ -60,7 +60,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
 
@@ -73,7 +73,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 			if err != nil {
 				logger.Error("Failed to get default access token from meta data server", "error", err)
 			} else {
-				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 			}
 		}
 	}

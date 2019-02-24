@@ -169,7 +169,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	}
 
 	if f.Name() == "node_modules" {
-		return util.WalkSkipDir
+		return util.ErrWalkSkipDir
 	}
 
 	if f.IsDir() {

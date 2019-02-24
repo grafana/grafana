@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+import '@babel/polyfill';
 import 'file-saver';
 import 'lodash';
 import 'jquery';
@@ -19,6 +19,7 @@ import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
 import moment from 'moment';
+import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
 
 // add move to lodash for backward compatabiltiy
 _.move = (array, fromIndex, toIndex) => {
@@ -45,6 +46,7 @@ export class GrafanaApp {
   preBootModules: any[];
 
   constructor() {
+    addClassIfNoOverlayScrollbar('no-overlay-scrollbar');
     this.preBootModules = [];
     this.registerFunctions = {};
     this.ngModuleDependencies = [];
