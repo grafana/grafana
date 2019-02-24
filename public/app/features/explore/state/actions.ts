@@ -597,7 +597,8 @@ function runQueriesForType(
         const res = await datasourceInstance.query(transaction.options);
         eventBridge.emit('data-received', res.data || []);
         const latency = Date.now() - now;
-        const results = resultGetter ? resultGetter(res.data) : res.data;
+        const { queryTransactions } = getState().explore[exploreId];
+        const results = resultGetter ? resultGetter(res.data, transaction, queryTransactions) : res.data;
         dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId));
       } catch (response) {
         eventBridge.emit('data-error', response);
