@@ -3,8 +3,7 @@ export enum GrafanaThemeType {
   Dark = 'dark',
 }
 
-export interface GrafanaTheme {
-  type: GrafanaThemeType;
+export interface GrafanaThemeCommons {
   name: string;
   // TODO: not sure if should be a part of theme
   brakpoints: {
@@ -62,6 +61,10 @@ export interface GrafanaTheme {
       m: string;
     };
   };
+}
+
+export interface GrafanaTheme extends GrafanaThemeCommons {
+  type: GrafanaThemeType;
   background: {
     dropdown: string;
     scrollbar: string;
@@ -75,6 +78,11 @@ export interface GrafanaTheme {
     dark3: string;
     dark4: string;
     dark5: string;
+    dark6: string;
+    dark7: string;
+    dark8: string;
+    dark9: string;
+    dark10: string;
     gray1: string;
     gray2: string;
     gray3: string;
@@ -87,12 +95,16 @@ export interface GrafanaTheme {
 
     // Accent colors
     blue: string;
+    blueBase: string;
+    blueShade: string;
     blueLight: string;
-    blueDark: string;
-    green: string;
+    blueFaint: string;
+    redBase: string;
+    redShade: string;
+    greenBase: string;
+    greenShade: string;
     red: string;
     yellow: string;
-    pink: string;
     purple: string;
     variable: string;
     orange: string;

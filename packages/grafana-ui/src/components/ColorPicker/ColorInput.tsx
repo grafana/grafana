@@ -1,7 +1,7 @@
 import React from 'react';
-import { ColorPickerProps } from './ColorPicker';
+import { ColorPickerProps } from './ColorPickerPopover';
 import tinycolor from 'tinycolor2';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 
 interface ColorInputState {
   previousColor: string;

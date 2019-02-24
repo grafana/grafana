@@ -36,6 +36,7 @@ export class Settings {
   loginHint: any;
   loginError: any;
   viewersCanEdit: boolean;
+  editorsCanOwn: boolean;
   disableSanitizeHtml: boolean;
   theme: GrafanaTheme;
 
@@ -57,6 +58,7 @@ export class Settings {
         isEnterprise: false,
       },
       viewersCanEdit: false,
+      editorsCanOwn: false,
       disableSanitizeHtml: false,
     };
 
