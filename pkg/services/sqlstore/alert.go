@@ -20,6 +20,7 @@ func init() {
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
 	bus.AddHandler("sql", SetAlertState)
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
+	bus.AddHandler("sql", GetTopAlerts)
 	bus.AddHandler("sql", PauseAlert)
 	bus.AddHandler("sql", PauseAllAlerts)
 }
@@ -369,6 +370,48 @@ func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error 
 
 	query.Result = make([]*m.AlertStateInfoDTO, 0)
 	err := x.SQL(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
+
+	return err
+}
+
+func GetTopAlerts(query *m.GetTopAlertsQuery) error {
+	builder := SqlBuilder{}
+
+	builder.Write(`SELECT
+        al.id as id,
+        al.name as name,
+        count(an.id) as alert_count,
+        max(an.updated) as latest_alert,
+        d.id as dashboard_id,
+        d.uid as dashboard_uid,
+        d.slug as dashboard_slug,
+        al.panel_id as panel_id
+      FROM alert al
+      LEFT JOIN annotation an ON al.id = an.alert_id
+      LEFT JOIN dashboard d ON al.dashboard_id = d.id`)
+	builder.Write(` WHERE an.new_state = ?`, "alerting")
+	builder.Write(` AND an.org_id = ?`, query.OrgId)
+	if query.From != 0 && query.To != 0 {
+		builder.Write(` AND an.epoch BETWEEN ? AND ?`, query.From, query.To)
+	}
+	if query.DashboardId != 0 {
+		builder.Write(` AND d.id = ?`, query.DashboardId)
+	}
+	builder.Write(` GROUP BY d.id, al.id`)
+	builder.Write(` ORDER BY alert_count DESC`)
+	if query.Limit != 0 {
+		builder.Write(` LIMIT ?`, query.Limit)
+	}
+
+	query.Result = make([]*m.TopAlertsDTO, 0)
+	err := x.SQL(builder.GetSqlString(), builder.params...).Find(&query.Result)
+	if err != nil {
+		return err
+	}
+
+	for _, alert := range query.Result {
+		alert.Url = m.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+	}
 
 	return err
 }

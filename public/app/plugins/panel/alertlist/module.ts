@@ -9,7 +9,11 @@ class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
   static scrollable = true;
 
-  showOptions = [{ text: 'Current state', value: 'current' }, { text: 'Recent state changes', value: 'changes' }];
+  showOptions = [
+    { text: 'Current state', value: 'current' },
+    { text: 'Top alerts', value: 'top' },
+    { text: 'Recent state changes', value: 'changes' },
+  ];
 
   sortOrderOptions = [
     { text: 'Alphabetical (asc)', value: 1 },
@@ -19,6 +23,7 @@ class AlertListPanel extends PanelCtrl {
 
   stateFilter: any = {};
   currentAlerts: any = [];
+  topAlerts: any = [];
   alertHistory: any = [];
   noAlertsMessage: string;
   templateSrv: string;
@@ -84,6 +89,10 @@ class AlertListPanel extends PanelCtrl {
 
     if (this.panel.show === 'current') {
       getAlertsPromise = this.getCurrentAlertState();
+    }
+
+    if (this.panel.show === 'top') {
+      getAlertsPromise = this.getTopAlerts();
     }
 
     if (this.panel.show === 'changes') {
@@ -169,6 +178,31 @@ class AlertListPanel extends PanelCtrl {
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
 
       return this.currentAlerts;
+    });
+  }
+
+  getTopAlerts() {
+    const params: any = {
+      limit: this.panel.limit,
+    };
+
+    if (this.panel.onlyAlertsOnDashboard) {
+      params.dashboardId = this.dashboard.id;
+    }
+
+    params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
+    params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
+
+    return this.backendSrv.get(`/api/alerts/top`, params).then(res => {
+      this.topAlerts = _.map(res, fa => {
+        fa.latestAlertDate = this.dashboard.formatDate(fa.latestAlert, 'MMM D, YYYY HH:mm:ss');
+        fa.stateModel = alertDef.getStateDisplayModel('alerting');
+        return fa;
+      });
+
+      this.noAlertsMessage = this.topAlerts.length === 0 ? 'No alerts in current time range' : '';
+
+      return this.topAlerts;
     });
   }
 

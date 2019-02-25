@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -44,6 +45,36 @@ func GetAlertStatesForDashboard(c *m.ReqContext) Response {
 	}
 
 	return JSON(200, query.Result)
+}
+
+//GET /api/alerts/top
+func GetTopAlerts(c *m.ReqContext) Response {
+
+	query := &m.GetTopAlertsQuery{
+		From:        c.QueryInt64("from"),
+		To:          c.QueryInt64("to"),
+		OrgId:       c.OrgId,
+		DashboardId: c.QueryInt64("dashboardId"),
+		Limit:       c.QueryInt64("limit"),
+	}
+
+	if query.To == 0 {
+		query.To = time.Now().UnixNano() / int64(time.Millisecond)
+	}
+
+	if query.From == 0 {
+		query.From = query.To - 86400000
+	}
+
+	if query.Limit == 0 {
+		query.Limit = 10
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return Error(500, "List top alerts failed", err)
+	}
+
+	return JSON(200, &query.Result)
 }
 
 // GET /api/alerts
