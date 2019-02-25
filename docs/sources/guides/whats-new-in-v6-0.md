@@ -14,8 +14,6 @@ weight = -11
 
 This update to Grafana introduces a new way of exploring your data, support for log data and tons of other features.
 
-Grafana v6.0 is out in **Beta**, [Download Now!](https://grafana.com/grafana/download/beta)
-
 The main highlights are:
 
 - [Explore]({{< relref "#explore" >}}) - A new query focused workflow for ad-hoc data exploration and troubleshooting.
@@ -107,9 +105,9 @@ continue to refine and start using in other panels.
 ### React Panels & Query Editors
 
 A major part of all the work that has gone into Grafana v6.0 has been on the migration to React. This investment
-is part of the future proofing of Grafana and it's code base and ecosystem. Starting in v6.0 **Panels** and **Data
+is part of the future proofing of Grafana's code base and ecosystem. Starting in v6.0 **Panels** and **Data
 source** plugins can be written in React using our published `@grafana/ui` sdk library. More information on this
-will be shared closer to or just after release.
+will be shared soon.
 
 {{< docs-imagebox img="/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
 <br />
@@ -122,7 +120,7 @@ To get started read the guide: [Using Google Stackdriver in Grafana](/features/d
 
 ## Azure Monitor Datasource
 
-One of the goals of the Grafana v6.0 release is to add support for the three major clouds. Amazon Cloudwatch has been a core datasource for years and Google Stackdriver is also now supported. We developed an external plugin for Azure Monitor last year and for this release the [plugin](https://grafana.com/plugins/grafana-azure-monitor-datasource) is being moved into Grafana to be one of the built-in datasources. For users of the external plugin, Grafana will automatically start using the built-in version. As a core datasource, the Azure Monitor datasource will get alerting support for the official 6.0 release.
+One of the goals of the Grafana v6.0 release is to add support for the three major clouds. Amazon Cloudwatch has been a core datasource for years and Google Stackdriver is also now supported. We developed an external plugin for Azure Monitor last year and for this release the [plugin](https://grafana.com/plugins/grafana-azure-monitor-datasource) is being moved into Grafana to be one of the built-in datasources. For users of the external plugin, Grafana will automatically start using the built-in version. As a core datasource, the Azure Monitor datasource is able to get alerting support, in the 6.0 release alerting is supported for the Azure Monitor service, with the rest to follow.
 
 The Azure Monitor datasource integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
