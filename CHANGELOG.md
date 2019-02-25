@@ -1,6 +1,4 @@
-# Unreleased
-
-# 6.0.0 stable (unreleased)
+# 6.0.0 stable (2019-02-25)
 
 ### Bug Fixes
 * **Stackdriver**: fix for float64 bounds for distribution metrics [#14509](https://github.com/grafana/grafana/issues/14509)
