@@ -14,8 +14,6 @@ weight = -11
 
 This update to Grafana introduces a new way of exploring your data, support for log data and tons of other features.
 
-Grafana v6.0 is out in **Beta**, [Download Now!](https://grafana.com/grafana/download/beta)
-
 The main highlights are:
 
 - [Explore]({{< relref "#explore" >}}) - A new query focused workflow for ad-hoc data exploration and troubleshooting.
