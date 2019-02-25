@@ -344,8 +344,8 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
-			Convey("when data from query is distribution", func() {
-				data, err := loadTestFile("./test-data/3-series-response-distribution.json")
+			Convey("when data from query is distribution with exponential bounds", func() {
+				data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
 				So(err, ShouldBeNil)
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
@@ -370,6 +370,14 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536669060000)
 				})
 
+				Convey("bucket bounds should be correct", func() {
+					So(res.Series[0].Name, ShouldEqual, "0")
+					So(res.Series[1].Name, ShouldEqual, "1")
+					So(res.Series[2].Name, ShouldEqual, "2")
+					So(res.Series[3].Name, ShouldEqual, "4")
+					So(res.Series[4].Name, ShouldEqual, "8")
+				})
+
 				Convey("value should be correct", func() {
 					So(res.Series[8].Points[0][0].Float64, ShouldEqual, 1)
 					So(res.Series[9].Points[0][0].Float64, ShouldEqual, 1)
@@ -383,6 +391,45 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
+			Convey("when data from query is distribution with explicit bounds", func() {
+				data, err := loadTestFile("./test-data/4-series-response-distribution-explicit.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				So(len(res.Series), ShouldEqual, 33)
+				for i := 0; i < 33; i++ {
+					if i == 0 {
+						So(res.Series[i].Name, ShouldEqual, "0")
+					}
+					So(len(res.Series[i].Points), ShouldEqual, 2)
+				}
+
+				Convey("timestamps should be in ascending order", func() {
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1550859086000)
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1550859146000)
+				})
+
+				Convey("bucket bounds should be correct", func() {
+					So(res.Series[0].Name, ShouldEqual, "0")
+					So(res.Series[1].Name, ShouldEqual, "0.01")
+					So(res.Series[2].Name, ShouldEqual, "0.05")
+					So(res.Series[3].Name, ShouldEqual, "0.1")
+				})
+
+				Convey("value should be correct", func() {
+					So(res.Series[8].Points[0][0].Float64, ShouldEqual, 381)
+					So(res.Series[9].Points[0][0].Float64, ShouldEqual, 212)
+					So(res.Series[10].Points[0][0].Float64, ShouldEqual, 56)
+					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 375)
+					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 213)
+					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 56)
+				})
+			})
 		})
 
 		Convey("when interpolating filter wildcards", func() {
